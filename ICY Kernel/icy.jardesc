@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="WINDOWS-1252" standalone="no"?>
+<jardesc>
+    <jar path="ICY Kernel/icy.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/ICY Kernel/icy.jardesc" exportErrors="false" exportWarnings="true" includeDirectoryEntries="true" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="false" manifestLocation="/ICY Kernel/MANIFEST.MF" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.image.colorspace"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.frame"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.type.value"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.system"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.type.collection"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.doc"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.component"/>
+        <file path="/ICY Kernel/plugins/kernel/canvas/Canvas2DPlugin.xml"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.performance"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.node"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.image.lut"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.math"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.inspector"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.network"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.sequence"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.update"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.frame.progress"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.preferences"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.script"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.system"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;plugins.kernel.canvas{Canvas2DPlugin.java"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.main"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.lut.abstract_"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.common"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.main"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.itk"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.resource.icon"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.plugin.interface_"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.painter"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.undo"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.viewer"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.plugin"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.util"/>
+        <file path="/ICY Kernel/plugins/kernel/canvas/Canvas3DPlugin_icon.png"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.preferences"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.type"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.frame.sequence"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.resource"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.type.collection.array"/>
+        <file path="/ICY Kernel/plugins/kernel/canvas/Canvas3DPlugin.xml"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.system.thread"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.vtk"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.workspace"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.type.collection.list"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.plugin.interface_.gui"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.file"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.util"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.image.colormodel"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.lut"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.dialog"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.canvas"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.menu.tools"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.menu"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.file.xls"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.system.profile"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.image"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.roi"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.component.renderer"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;plugins.kernel.canvas{Canvas3DPlugin.java"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.image.colormap"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.help"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.component.button"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.plugin.abstract_"/>
+        <file path="/ICY Kernel/plugins/kernel/canvas/Canvas2DPlugin_icon.png"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.swimmingPool"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.file.xml"/>
+        <javaElement handleIdentifier="=ICY Kernel/&lt;icy.gui.plugin"/>
+    </selectedElements>
+</jardesc>

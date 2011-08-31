@@ -1,0 +1,319 @@
+/*
+ * Copyright 2010, 2011 Institut Pasteur.
+ * 
+ * This file is part of ICY.
+ * 
+ * ICY is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * ICY is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with ICY. If not, see <http://www.gnu.org/licenses/>.
+ */
+package icy.plugin;
+
+import icy.gui.frame.ActionFrame;
+import icy.gui.frame.progress.AnnounceFrame;
+import icy.gui.frame.progress.CancelableProgressFrame;
+import icy.gui.frame.progress.ProgressFrame;
+import icy.gui.util.GuiUtil;
+import icy.system.thread.SingleProcessor;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.DefaultListModel;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
+/**
+ * @author stephane
+ */
+public class PluginUpdater extends ActionFrame
+{
+    private static class Checker implements Runnable
+    {
+        private boolean showProgress;
+        private boolean auto;
+
+        public Checker(boolean showProgress, boolean auto)
+        {
+            super();
+
+            this.showProgress = showProgress;
+            this.auto = auto;
+        }
+
+        @Override
+        public void run()
+        {
+            processCheckUpdate(showProgress, auto);
+        }
+    }
+
+    private final static int ANNOUNCE_SHOWTIME = 15;
+
+    private static final SingleProcessor processor = new SingleProcessor(false);
+
+    JList pluginList;
+    DefaultListModel listModel;
+
+    /**
+     * @param toInstallPlugins
+     */
+    PluginUpdater(final PluginRepositoryLoader loader, final ArrayList<PluginDescriptor> toInstallPlugins)
+    {
+        super("Plugin Update", true);
+
+        ThreadUtil.invokeLater(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                setPreferredSize(new Dimension(640, 500));
+
+                final JPanel titlePanel = GuiUtil.createCenteredBoldLabel("Select the plugin(s) to update in the list");
+                titlePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+                final JTextArea changeLogArea = new JTextArea();
+                changeLogArea.setEditable(false);
+                final JLabel changeLogTitleLabel = GuiUtil.createBoldLabel("Change log :");
+
+                listModel = new DefaultListModel();
+                pluginList = new JList(listModel);
+                for (PluginDescriptor plugin : toInstallPlugins)
+                    listModel.addElement(plugin);
+
+                pluginList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+                pluginList.getSelectionModel().addListSelectionListener(new ListSelectionListener()
+                {
+                    @Override
+                    public void valueChanged(ListSelectionEvent e)
+                    {
+                        if (pluginList.getSelectedValue() != null)
+                        {
+                            final PluginDescriptor plugin = (PluginDescriptor) pluginList.getSelectedValue();
+
+                            final String changeLog = plugin.getChangesLog();
+
+                            if (StringUtil.isEmpty(changeLog))
+                                changeLogArea.setText("no change log");
+                            else
+                                changeLogArea.setText(plugin.getChangesLog());
+                            changeLogArea.setCaretPosition(0);
+                            changeLogTitleLabel.setText(plugin.getName() + " change log");
+                        }
+                    }
+                });
+                pluginList.setSelectionInterval(0, toInstallPlugins.size() - 1);
+
+                getOkBtn().setText("Update");
+                getCancelBtn().setText("Close");
+                setCloseAfterAction(false);
+                setOkAction(new ActionListener()
+                {
+                    @Override
+                    public void actionPerformed(ActionEvent e)
+                    {
+                        // launch update
+                        PluginUpdater.this.doUpdate(loader);
+                    }
+                });
+
+                final JScrollPane medScrollPane = new JScrollPane(pluginList);
+                final JScrollPane changeLogScrollPane = new JScrollPane(GuiUtil.createTabArea(changeLogArea, 4));
+                final JPanel bottomPanel = GuiUtil.createPageBoxPanel(Box.createVerticalStrut(4),
+                        GuiUtil.createCenteredLabel(changeLogTitleLabel), Box.createVerticalStrut(4),
+                        changeLogScrollPane);
+
+                final JPanel mainPanel = getMainPanel();
+
+                final JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, medScrollPane, bottomPanel);
+
+                mainPanel.add(titlePanel, BorderLayout.NORTH);
+                mainPanel.add(splitPane, BorderLayout.CENTER);
+
+                pack();
+                addToMainDesktopPane();
+                setVisible(true);
+                center();
+                requestFocus();
+
+                // set splitter to middle
+                splitPane.setDividerLocation(0.5d);
+            }
+        });
+    }
+
+    /**
+     * update selected plugins
+     */
+    protected void doUpdate(PluginRepositoryLoader loader)
+    {
+        final ArrayList<PluginDescriptor> plugins = new ArrayList<PluginDescriptor>();
+
+        for (Object value : pluginList.getSelectedValues())
+            plugins.add((PluginDescriptor) value);
+
+        // process plugins update
+        updatePlugins(loader, plugins, true);
+
+        for (PluginDescriptor plugin : plugins)
+            listModel.removeElement(plugin);
+
+        // no more plugin to update ? close frame
+        if (listModel.isEmpty())
+            close();
+    }
+
+    static void updatePlugins(PluginRepositoryLoader loader, ArrayList<PluginDescriptor> plugins, boolean showProgress)
+    {
+        final boolean b = PluginLoader.getLogError();
+
+        PluginLoader.setLogError(false);
+        try
+        {
+            // update plugins with dependencies ordering
+            for (PluginDescriptor plugin : PluginInstaller.getDependenciesOrderedList(plugins))
+                PluginInstaller.install(loader, plugin, showProgress);
+        }
+        finally
+        {
+            PluginLoader.setLogError(b);
+            PluginLoader.reload(false);
+        }
+    }
+
+    /**
+     * Do the check update process
+     */
+    public static void checkUpdate(boolean showProgress, boolean auto)
+    {
+        processor.requestProcess(new Checker(showProgress, auto), false);
+    }
+
+    /**
+     * Check update for the specified plugin.
+     * 
+     * @param loader
+     *        Repository plugins loader (should be already loaded)
+     * @param plugin
+     *        local plugin we are looking update for
+     * @return
+     *         plugin descriptor of update if any (null if no update)
+     */
+    public static PluginDescriptor checkUpdate(PluginRepositoryLoader loader, PluginDescriptor plugin)
+    {
+        // find equivalent online plugins
+        final ArrayList<PluginDescriptor> onlinePlugins = PluginDescriptor.getPlugins(loader.getPlugins(),
+                plugin.getClassName());
+        final PluginDescriptor onlinePlugin;
+
+        // more than one online plugins availables ?
+        if (onlinePlugins.size() > 0)
+        {
+            PluginDescriptor lastVersion = null;
+
+            // find last version
+            for (PluginDescriptor currentVersion : onlinePlugins)
+                if ((lastVersion == null) || currentVersion.isNewer(lastVersion))
+                    lastVersion = currentVersion;
+
+            onlinePlugin = lastVersion;
+        }
+        // only one found
+        else if (onlinePlugins.size() == 1)
+            onlinePlugin = onlinePlugins.get(0);
+        // not found in repositories
+        else
+            onlinePlugin = null;
+
+        // we have an update available ?
+        if ((onlinePlugin != null) && onlinePlugin.getVersion().isGreater(plugin.getVersion()))
+            return onlinePlugin;
+
+        return null;
+    }
+
+    static void processCheckUpdate(boolean showProgress, boolean auto)
+    {
+        final ArrayList<PluginDescriptor> toInstallPlugins = new ArrayList<PluginDescriptor>();
+        final ArrayList<PluginDescriptor> localPlugins = PluginLoader.getPlugins();
+        final PluginRepositoryLoader loader = new PluginRepositoryLoader();
+        final ProgressFrame checkingFrame;
+
+        if (showProgress)
+            checkingFrame = new CancelableProgressFrame("checking for plugins update...");
+        else
+            checkingFrame = null;
+        try
+        {
+            // get online plugins from all active repositories
+            loader.loadAll(false, false);
+
+            for (PluginDescriptor localPlugin : localPlugins)
+            {
+                // find update
+                final PluginDescriptor onlinePlugin = checkUpdate(loader, localPlugin);
+
+                // update found, add to the list
+                if (onlinePlugin != null)
+                    toInstallPlugins.add(onlinePlugin);
+            }
+        }
+        finally
+        {
+            if (showProgress)
+                checkingFrame.close();
+        }
+
+        // some updates availables ?
+        if (!toInstallPlugins.isEmpty())
+        {
+            if (auto)
+            {
+                // automatically install all updates (orderer depending dependencies)
+                updatePlugins(loader, toInstallPlugins, false);
+            }
+            else
+            {
+                // show announcement for 15 seconds
+                new AnnounceFrame(toInstallPlugins.size() + " plugin updates are availables", "View", new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        // show pluginInstaller frame
+                        new PluginUpdater(loader, toInstallPlugins);
+                    }
+                }, ANNOUNCE_SHOWTIME);
+            }
+        }
+        else
+        {
+            // inform that there is no plugin update available
+            if (showProgress)
+                new AnnounceFrame("No plugin udpate available", 10);
+        }
+    }
+}
