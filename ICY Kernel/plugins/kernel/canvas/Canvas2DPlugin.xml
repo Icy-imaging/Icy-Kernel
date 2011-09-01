@@ -1,8 +1,0 @@
-<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
-<root>
-<name>Canvas 2D</name>
-<version>1.0.0.0</version>
-<description>2D Canvas (default)</description>
-<classname>plugins.kernel.canvas.Canvas2DPlugin</classname>
-<author>Kernel</author>
-</root>
