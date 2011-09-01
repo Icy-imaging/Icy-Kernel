@@ -1,0 +1,185 @@
+/*
+ * Copyright 2010, 2011 Institut Pasteur.
+ * 
+ * This file is part of ICY.
+ * 
+ * ICY is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * ICY is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with ICY. If not, see <http://www.gnu.org/licenses/>.
+ */
+package icy.gui.lut;
+
+import icy.gui.component.JCheckTabbedPane;
+import icy.gui.lut.abstract_.IcyLutViewer;
+import icy.gui.util.GuiUtil;
+import icy.gui.viewer.Viewer;
+import icy.image.lut.LUT;
+import icy.image.lut.LUTBand;
+import icy.sequence.Sequence;
+
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JRadioButton;
+import javax.swing.SwingConstants;
+
+public class LUTViewer extends IcyLutViewer
+{
+    private static final long serialVersionUID = 8385018166371243663L;
+
+    /**
+     * gui
+     */
+    final JCheckTabbedPane bottomPane;
+
+    final JCheckBox autoCheckBox;
+    private final ButtonGroup scaleGroup;
+    private final JRadioButton logButton;
+    private final JRadioButton linearButton;
+    // private final JButton updateBoundsButton;
+
+    /**
+     * data
+     */
+    private final ArrayList<LUTBandViewer> lutBandViewers;
+
+    public LUTViewer(final Viewer viewer, final LUT lut)
+    {
+        super(viewer, lut);
+
+        bottomPane = new JCheckTabbedPane(SwingConstants.BOTTOM);
+        bottomPane.setCheckVisible(false);
+        lutBandViewers = new ArrayList<LUTBandViewer>();
+
+        // GUI
+        if (lut != null)
+        {
+            for (LUTBand lutBand : lut.getLutBands())
+            {
+                final LUTBandViewer lbv = new LUTBandViewer(viewer, lutBand);
+                final int ch = lutBand.getComponent();
+                lutBandViewers.add(lbv);
+                bottomPane.addTab("ch " + ch, lbv);
+                bottomPane.setToolTipTextAt(ch, "Channel " + ch);
+            }
+        }
+
+        final boolean check;
+
+        if (getSequence() != null)
+            check = getSequence().isComponentUserBoundsAutoUpdate();
+        else
+            check = false;
+
+        autoCheckBox = new JCheckBox("auto adjust", check);
+        autoCheckBox.setToolTipText("Automatically ajdust bounds when data is modified");
+        autoCheckBox.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final Sequence sequence = getSequence();
+
+                if (sequence != null)
+                {
+                    sequence.setComponentUserBoundsAutoUpdate(autoCheckBox.isSelected());
+                    sequence.setComponentAbsBoundsAutoUpdate(autoCheckBox.isSelected());
+                }
+            }
+        });
+
+        final JLabel viewLabel = new JLabel("View");
+        viewLabel.setToolTipText("Selection histogram display type");
+
+        scaleGroup = new ButtonGroup();
+        logButton = new JRadioButton("log");
+        logButton.setToolTipText("Display histogram in a logarithm form");
+        logButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                setLogScale(true);
+            }
+        });
+        linearButton = new JRadioButton("linear");
+        linearButton.setToolTipText("Display histogram in a linear form");
+        linearButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                setLogScale(false);
+            }
+        });
+
+        scaleGroup.add(logButton);
+        scaleGroup.add(linearButton);
+
+        // default
+        setLogScale(true);
+        logButton.setSelected(true);
+
+        // updateBoundsButton = new JButton("Refresh");
+        // updateBoundsButton.setToolTipText("Force histogram and bounds recalculation");
+        // updateBoundsButton.addActionListener(new ActionListener()
+        // {
+        // @Override
+        // public void actionPerformed(ActionEvent e)
+        // {
+        // final Sequence sequence = getSequence();
+        //
+        // if ((sequence != null) && (lut != null))
+        // {
+        // sequence.updateComponentsBounds(true, true);
+        // lut.copyScalers(sequence.createCompatibleLUT());
+        // refreshHistogram();
+        // }
+        // }
+        // });
+
+        setLayout(new BorderLayout());
+
+        add(GuiUtil.createLineBoxPanel(autoCheckBox, Box.createHorizontalGlue(), // viewLabel,
+                Box.createHorizontalStrut(8), logButton, linearButton), BorderLayout.NORTH);
+        add(bottomPane, BorderLayout.CENTER);
+
+        validate();
+    }
+
+    Sequence getSequence()
+    {
+        if (viewer != null)
+            return viewer.getSequence();
+
+        return null;
+    }
+
+    void setLogScale(boolean value)
+    {
+        for (int i = 0; i < lutBandViewers.size(); i++)
+            lutBandViewers.get(i).getScalerPanel().getScalerViewer().setLogScale(value);
+    }
+
+    void refreshHistogram()
+    {
+        for (int i = 0; i < lutBandViewers.size(); i++)
+            lutBandViewers.get(i).getScalerPanel().refreshHistoData();
+    }
+
+}
