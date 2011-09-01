@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
+<root>
+<section name="icy">
+<section name="general">
+<key name="maxMemory" value="128"/>
+<key name="startupTooltip" value="false"/>
+<key name="exitConfirm" value="true"/>
+<key name="sequencePersistence" value="true"/>
+<key name="autoUpdate" value="false"/>
+<key name="autoCheckUpdate" value="false"/>
+<key name="alwaysOnTop" value="false"/>
+</section>
+<section name="repositories">
+<section name="repos0">
+<key name="name" value="default"/>
+<key name="location" value="http://www.bioimageanalysis.org/icy/repository/"/>
+<key name="enabled" value="true"/>
+<section name="authentication">
+<key name="login" value=""/>
+<key name="password" value=""/>
+<key name="enabled" value="false"/>
+</section>
+</section>
+</section>
+<section name="plugin">
+<section name="local"/>
+<section name="online"/>
+<key name="autoUpdate" value="false"/>
+<key name="autoCheckUpdate" value="false"/>
+<key name="allowBeta" value="false"/>
+</section>
+<section name="workspaces">
+<section name="local">
+<section name="actives"/>
+</section>
+<section name="online"/>
+<key name="autoUpdate" value="false"/>
+<key name="autoCheckUpdate" value="false"/>
+</section>
+<section name="loader">
+<section name="entry0">
+<key name="nbFile" value="0"/>
+</section>
+<section name="entry1">
+<key name="nbFile" value="0"/>
+</section>
+<section name="entry2">
+<key name="nbFile" value="0"/>
+</section>
+<section name="entry3">
+<key name="nbFile" value="0"/>
+</section>
+<section name="entry4">
+<key name="nbFile" value="0"/>
+</section>
+<section name="entry5">
+<key name="nbFile" value="0"/>
+</section>
+<section name="entry6">
+<key name="nbFile" value="0"/>
+</section>
+</section>
+<key name="os" value="win64"/>
+</section>
+<section name="plugins"/>
+<section name="frame">
+<section name="main">
+<key name="XE" value="104"/>
+<key name="YE" value="94"/>
+<key name="WidthE" value="952"/>
+<key name="HeightE" value="672"/>
+<key name="MinimizedE" value="false"/>
+<key name="MaximizedE" value="false"/>
+</section>
+<section name="inspector">
+<key name="XE" value="600"/>
+<key name="YE" value="140"/>
+<key name="XI" value="684"/>
+<key name="YI" value="0"/>
+<key name="WidthE" value="260"/>
+<key name="HeightE" value="600"/>
+<key name="WidthI" value="260"/>
+<key name="HeightI" value="510"/>
+<key name="Extern" value="false"/>
+<key name="MinimizedE" value="false"/>
+<key name="MaximizedE" value="false"/>
+</section>
+<section name="preference">
+<key name="XE" value="100"/>
+<key name="YE" value="100"/>
+<key name="XI" value="39"/>
+<key name="YI" value="3"/>
+<key name="WidthE" value="640"/>
+<key name="HeightE" value="480"/>
+<key name="WidthI" value="640"/>
+<key name="HeightI" value="480"/>
+<key name="Extern" value="false"/>
+<key name="MinimizedI" value="false"/>
+<key name="MaximizedI" value="false"/>
+<key name="MinimizedE" value="false"/>
+<key name="MaximizedE" value="false"/>
+</section>
+</section>
+</root>

@@ -14,5 +14,4 @@ Class-Path: resources.jar
             lib/slf4j-api.jar lib/slf4j-log4j.jar
             lib/sound.jar lib/substance.jar lib/substance-flamingo.jar
             lib/Tracking.jar lib/trident.jar lib/vecmath.jar lib/vtk.jar
-            version.xml log4j.xml
 Main-Class: icy.main.Icy
