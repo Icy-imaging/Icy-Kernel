@@ -1892,6 +1892,18 @@ public class Canvas2D extends IcyCanvas2D
     }
 
     /**
+     * Set zoom factor.<br>
+     * Only here for backward compatibility with ICY4IJ.<br>
+     * 
+     * @deprecated use setScale(...) instead
+     */
+    @Deprecated
+    public void setZoom(float zoom)
+    {
+        setScale(zoom, true, false);
+    }
+
+    /**
      * Get destination image size X in canvas pixel coordinate
      */
     public int getDestImageCanvasSizeX()
@@ -1997,6 +2009,17 @@ public class Canvas2D extends IcyCanvas2D
     public double getRotationZ()
     {
         return transform.getValue(ROT);
+    }
+
+    /**
+     * Only here for backward compatibility with ICY4IJ plugin.
+     * 
+     * @deprecated use getScaleX() or getScaleY() instead
+     */
+    @Deprecated
+    public double getZoomFactor()
+    {
+        return getScaleX();
     }
 
     /**
