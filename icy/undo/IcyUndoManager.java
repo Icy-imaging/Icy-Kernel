@@ -244,6 +244,21 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     }
 
     /**
+     * Undoes all changes.
+     * 
+     * @throws CannotUndoException
+     *         if one of the edits throws <code>CannotUndoException</code>
+     */
+    public void undoAll() throws CannotUndoException
+    {
+        while (indexOfNextAdd > 0)
+        {
+            final IcyUndoableEdit next = edits.elementAt(--indexOfNextAdd);
+            next.undo();
+        }
+    }
+
+    /**
      * Undoes all changes from the index of the next edit to <code>edit</code>, updating the index
      * of the next edit appropriately.
      * 
@@ -259,27 +274,6 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
             final IcyUndoableEdit next = edits.elementAt(--indexOfNextAdd);
             next.undo();
             done = (next == edit);
-        }
-    }
-
-    /**
-     * Undo or redo all changes until the specified edit.
-     */
-    public synchronized void undoOrRedoTo(IcyUndoableEdit edit) throws CannotRedoException, CannotUndoException
-    {
-        final int index = getIndex(edit);
-
-        // can undo or redo ?
-        if (index != -1)
-        {
-            // undo command ?
-            if (index < indexOfNextAdd)
-                undoTo(edit);
-            else
-                redoTo(edit);
-
-            // notify change
-            fireChangeEvent();
         }
     }
 
@@ -380,6 +374,38 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     {
         IcyUndoableEdit edit = editToBeRedone();
         return edit != null && edit.canRedo();
+    }
+
+    /**
+     * Undo or redo all changes until the specified edit.<br>
+     * The specified edit should be in "done" state after the operation.<br>
+     * That means redo operation is inclusive while undo is exclusive.<br>
+     * To undo all operations just use undoAll().
+     */
+    public synchronized void undoOrRedoTo(IcyUndoableEdit edit) throws CannotRedoException, CannotUndoException
+    {
+        final int index = getIndex(edit);
+
+        // can undo or redo ?
+        if (index != -1)
+        {
+            // we want indexOfNextAdd to change to (index + 1)
+            while ((indexOfNextAdd - 1) > index)
+            {
+                // process undo
+                final IcyUndoableEdit next = edits.elementAt(--indexOfNextAdd);
+                next.undo();
+            }
+            while (indexOfNextAdd <= index)
+            {
+                // process undo
+                IcyUndoableEdit next = edits.elementAt(indexOfNextAdd++);
+                next.redo();
+            }
+
+            // notify change
+            fireChangeEvent();
+        }
     }
 
     /**
@@ -624,6 +650,14 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
         }
 
         return null;
+    }
+
+    /**
+     * Return the next insert index.
+     */
+    public int getNextAddIndex()
+    {
+        return indexOfNextAdd;
     }
 
     /**

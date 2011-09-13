@@ -70,8 +70,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
-import javax.swing.SwingConstants;
+import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
@@ -505,7 +504,7 @@ public class Canvas2D extends IcyCanvas2D
                 // important to set it to false at beginning
                 needRebuild = false;
 
-                final IcyBufferedImage img = Canvas2D.this.getImage(getT(), getZ());
+                final IcyBufferedImage img = Canvas2D.this.getCurrentImage();
 
                 if (img != null)
                     imageCache = img.getARGBImage(getLut(), imageCache);
@@ -609,7 +608,7 @@ public class Canvas2D extends IcyCanvas2D
                     else
                     {
                         // auto FIT enabled
-                        if (zoomFitCanvas.isSelected())
+                        if (zoomFitCanvasButton.isSelected())
                             fitImageToCanvas(true);
                         else
                         {
@@ -1070,7 +1069,7 @@ public class Canvas2D extends IcyCanvas2D
                 g2.setFont(font);
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                if (Canvas2D.this.getImage(getT(), getZ()) != null)
+                if (Canvas2D.this.getCurrentImage() != null)
                     // cache not yet built
                     drawTextCenter(g2, "Loading...", 0.8f);
                 else
@@ -1356,7 +1355,9 @@ public class Canvas2D extends IcyCanvas2D
     // private JLabel zoomLabel;
     // private JLabel rotationLabel;
 
-    IcyToggleButton zoomFitCanvas;
+    IcyToggleButton zoomFitCanvasButton;
+    IcyButton zoomFitImageButton;
+    IcyButton centerImageButton;
 
     /**
      * preferences
@@ -1381,6 +1382,13 @@ public class Canvas2D extends IcyCanvas2D
     public Canvas2D(Viewer viewer)
     {
         super(viewer);
+
+        // arrange to our dimension format
+        if (posZ == -1)
+            posZ = 0;
+        if (posT == -1)
+            posT = 0;
+        posC = -1;
 
         // view panel
         canvasView = new CanvasView();
@@ -1443,7 +1451,7 @@ public class Canvas2D extends IcyCanvas2D
             public void stateChanged(ChangeEvent e)
             {
                 // set the new Z position
-                setZ(zNav.getValue());
+                setPositionZ(zNav.getValue());
             }
         });
 
@@ -1455,7 +1463,7 @@ public class Canvas2D extends IcyCanvas2D
             public void stateChanged(ChangeEvent e)
             {
                 // set the new T position
-                setT(tNav.getValue());
+                setPositionT(tNav.getValue());
             }
         });
 
@@ -1467,13 +1475,6 @@ public class Canvas2D extends IcyCanvas2D
         add(zNav, BorderLayout.WEST);
         add(canvasView, BorderLayout.CENTER);
         add(GuiUtil.createPageBoxPanel(tNav, mouseInfPanel), BorderLayout.SOUTH);
-
-        // arrange to our dimension format
-        if (getZ() == -1)
-            setZ(0);
-        if (getT() == -1)
-            setT(0);
-        setC(-1);
 
         // mouse infos panel setting
         mouseInfPanel.setInfoXVisible(true);
@@ -1604,9 +1605,10 @@ public class Canvas2D extends IcyCanvas2D
             }
         });
 
-        final IcyButton zoomFitImage = new IcyButton(ICON_FIT_IMAGE);
-        zoomFitImage.setToolTipText("Fit canvas to image size (if possible)");
-        zoomFitImage.addActionListener(new ActionListener()
+        zoomFitImageButton = new IcyButton(ICON_FIT_IMAGE);
+        zoomFitImageButton.setFocusable(false);
+        zoomFitImageButton.setToolTipText("Fit canvas to image size (if possible)");
+        zoomFitImageButton.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -1615,7 +1617,8 @@ public class Canvas2D extends IcyCanvas2D
             }
         });
 
-        final IcyButton centerImageButton = new IcyButton(ICON_CENTER_IMAGE);
+        centerImageButton = new IcyButton(ICON_CENTER_IMAGE);
+        centerImageButton.setFocusable(false);
         centerImageButton.setToolTipText("Center image in canvas");
         centerImageButton.addActionListener(new ActionListener()
         {
@@ -1626,21 +1629,22 @@ public class Canvas2D extends IcyCanvas2D
             }
         });
 
-        zoomFitCanvas = new IcyToggleButton(ICON_FIT_CANVAS);
-        zoomFitCanvas.setToolTipText("Keep image fitting to canvas size");
-        zoomFitCanvas.addActionListener(new ActionListener()
+        zoomFitCanvasButton = new IcyToggleButton(ICON_FIT_CANVAS);
+        zoomFitCanvasButton.setFocusable(false);
+        zoomFitCanvasButton.setToolTipText("Keep image fitting to canvas size");
+        zoomFitCanvasButton.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final boolean selected = zoomFitCanvas.isSelected();
+                final boolean selected = zoomFitCanvasButton.isSelected();
 
                 preferences.putBoolean(ID_FIT_CANVAS, selected);
 
                 zoomComboBox.setEnabled(!selected);
                 zoomPlus.setEnabled(!selected);
                 zoomMinus.setEnabled(!selected);
-                zoomFitImage.setEnabled(!selected);
+                zoomFitImageButton.setEnabled(!selected);
                 centerImageButton.setEnabled(!selected);
 
                 // fit if enabled
@@ -1649,13 +1653,13 @@ public class Canvas2D extends IcyCanvas2D
             }
         });
 
-        final boolean selected = zoomFitCanvas.isSelected();
+        final boolean selected = zoomFitCanvasButton.isSelected();
 
         // enabled or not depending checkbox state
         zoomComboBox.setEnabled(!selected);
         zoomPlus.setEnabled(!selected);
         zoomMinus.setEnabled(!selected);
-        zoomFitImage.setEnabled(!selected);
+        zoomFitImageButton.setEnabled(!selected);
         centerImageButton.setEnabled(!selected);
 
         // bottom sub panel
@@ -1672,15 +1676,21 @@ public class Canvas2D extends IcyCanvas2D
                 GuiUtil.createFixedWidthBoldLabel("°", 20), Box.createHorizontalGlue(), rotateUnclock,
                 Box.createHorizontalStrut(4), rotateClock, Box.createHorizontalStrut(4)));
         subPanel.add(Box.createVerticalStrut(4));
-        subPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), zoomFitCanvas, new JSeparator(
-                SwingConstants.VERTICAL), zoomFitImage, Box.createHorizontalStrut(8), centerImageButton, Box
-                .createHorizontalGlue()));
-        subPanel.add(Box.createVerticalStrut(4));
 
         panel.setLayout(new BorderLayout());
 
         panel.add(canvasMap, BorderLayout.CENTER);
         panel.add(subPanel, BorderLayout.SOUTH);
+    }
+
+    @Override
+    public void addViewerToolbarComponents(JToolBar toolBar)
+    {
+        toolBar.addSeparator();
+        toolBar.add(zoomFitCanvasButton);
+        toolBar.addSeparator();
+        toolBar.add(zoomFitImageButton);
+        toolBar.add(centerImageButton);
     }
 
     /**
@@ -1689,7 +1699,7 @@ public class Canvas2D extends IcyCanvas2D
     void updateZNav()
     {
         final int maxZ = getMaxZ();
-        final int z = getZ();
+        final int z = getPositionZ();
 
         zNav.setMaximum(maxZ);
         if (z != -1)
@@ -1703,7 +1713,7 @@ public class Canvas2D extends IcyCanvas2D
     void updateTNav()
     {
         final int maxT = getMaxT();
-        final int t = getT();
+        final int t = getPositionT();
 
         tNav.setMaximum(maxT);
         if (t != -1)
@@ -2118,33 +2128,33 @@ public class Canvas2D extends IcyCanvas2D
         {
             case KeyEvent.VK_LEFT:
                 if (EventUtil.isControlDown(e))
-                    setT(Math.max(getT() - 5, 0));
+                    setPositionT(Math.max(getPositionT() - 5, 0));
                 else
-                    setT(Math.max(getT() - 1, 0));
+                    setPositionT(Math.max(getPositionT() - 1, 0));
                 e.consume();
                 break;
 
             case KeyEvent.VK_RIGHT:
                 if (EventUtil.isControlDown(e))
-                    setT(getT() + 5);
+                    setPositionT(getPositionT() + 5);
                 else
-                    setT(getT() + 1);
+                    setPositionT(getPositionT() + 1);
                 e.consume();
                 break;
 
             case KeyEvent.VK_UP:
                 if (EventUtil.isControlDown(e))
-                    setZ(getZ() + 5);
+                    setPositionZ(getPositionZ() + 5);
                 else
-                    setZ(getZ() + 1);
+                    setPositionZ(getPositionZ() + 1);
                 e.consume();
                 break;
 
             case KeyEvent.VK_DOWN:
                 if (EventUtil.isControlDown(e))
-                    setZ(Math.max(getZ() - 5, 0));
+                    setPositionZ(Math.max(getPositionZ() - 5, 0));
                 else
-                    setZ(Math.max(getZ() - 1, 0));
+                    setPositionZ(Math.max(getPositionZ() - 1, 0));
                 e.consume();
                 break;
 
@@ -2221,13 +2231,17 @@ public class Canvas2D extends IcyCanvas2D
             return null;
 
         // save position
-        final int prevT = getT();
-        final int prevZ = getZ();
+        final int prevT = getPositionT();
+        final int prevZ = getPositionZ();
+        final boolean dl = drawLayers;
 
-        // set wanted position (needed for correct overlay drawing)
-        // we have to fire events else some stuff can miss the change
-        setT(t);
-        setZ(z);
+        if (dl)
+        {
+            // set wanted position (needed for correct overlay drawing)
+            // we have to fire events else some stuff can miss the change
+            setPositionT(t);
+            setPositionZ(z);
+        }
         try
         {
             // FIXME : not really optimal in memory and processing
@@ -2262,12 +2276,16 @@ public class Canvas2D extends IcyCanvas2D
             }
             else
             {
+                // no need to go further...
+                if (!dl)
+                    return img;
+
                 // use the image Graphics object directly
                 result = img;
                 g = result.createGraphics();
             }
 
-            if (drawLayers)
+            if (dl)
             {
                 final Sequence seq = getSequence();
 
@@ -2297,9 +2315,12 @@ public class Canvas2D extends IcyCanvas2D
         }
         finally
         {
-            // restore position
-            setT(prevT);
-            setZ(prevZ);
+            if (dl)
+            {
+                // restore position
+                setPositionT(prevT);
+                setPositionZ(prevZ);
+            }
         }
     }
 
@@ -2432,8 +2453,8 @@ public class Canvas2D extends IcyCanvas2D
         switch (type)
         {
             case POSITION_CHANGED:
-                final int curZ = getZ();
-                final int curT = getT();
+                final int curZ = getPositionZ();
+                final int curT = getPositionT();
 
                 switch (event.getDim())
                 {

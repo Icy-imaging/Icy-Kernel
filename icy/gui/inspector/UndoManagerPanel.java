@@ -95,17 +95,28 @@ public class UndoManagerPanel extends JPanel implements ListSelectionListener, I
             public int getRowCount()
             {
                 if (undoManager != null)
-                    return undoManager.getSignificantEditsCount();
+                    return undoManager.getSignificantEditsCount() + 1;
 
-                return 0;
+                return 1;
             }
 
             @Override
             public Object getValueAt(int row, int column)
             {
+                if (row == 0)
+                {
+                    if (column == 0)
+                        return null;
+
+                    if (undoManager != null)
+                        return "Initial state";
+
+                    return "No manager";
+                }
+
                 if (undoManager != null)
                 {
-                    final IcyUndoableEdit edit = undoManager.getSignificantEdit(row);
+                    final IcyUndoableEdit edit = undoManager.getSignificantEdit(row - 1);
 
                     switch (column)
                     {
@@ -181,7 +192,7 @@ public class UndoManagerPanel extends JPanel implements ListSelectionListener, I
         refreshTableData();
     }
 
-    protected void setUndoManager(IcyUndoManager value)
+    public void setUndoManager(IcyUndoManager value)
     {
         if (undoManager != value)
         {
@@ -198,35 +209,15 @@ public class UndoManagerPanel extends JPanel implements ListSelectionListener, I
         }
     }
 
-    /**
-     * Return index of specified Edit
-     */
-    protected int getEditIndex(IcyUndoableEdit edit)
-    {
-        if (undoManager != null)
-            return undoManager.getSignificantIndex(edit);
-
-        return -1;
-    }
-
-    /**
-     * Return index of specified ROI in the table
-     */
-    // protected int getRoiTableIndex(ROI roi)
+    // /**
+    // * Return index of specified Edit
+    // */
+    // protected int getEditIndex(IcyUndoableEdit edit)
     // {
-    // final int ind = getRoiModelIndex(roi);
+    // if (undoManager != null)
+    // return undoManager.getSignificantIndex(edit);
     //
-    // if (ind == -1)
-    // return ind;
-    //
-    // try
-    // {
-    // return table.convertRowIndexToView(ind);
-    // }
-    // catch (IndexOutOfBoundsException e)
-    // {
     // return -1;
-    // }
     // }
 
     public IcyUndoableEdit getLastSelectedEdit()
@@ -235,8 +226,8 @@ public class UndoManagerPanel extends JPanel implements ListSelectionListener, I
         {
             final int index = tableSelectionModel.getMaxSelectionIndex();
 
-            if (index >= 0)
-                return undoManager.getSignificantEdit(index);
+            if (index > 0)
+                return undoManager.getSignificantEdit(index - 1);
         }
 
         return null;
@@ -252,13 +243,12 @@ public class UndoManagerPanel extends JPanel implements ListSelectionListener, I
                 isSelectionAdjusting = true;
                 try
                 {
-                    final int minInd = tableSelectionModel.getMinSelectionIndex();
-                    final int maxInd = tableSelectionModel.getMaxSelectionIndex();
-
                     tableModel.fireTableDataChanged();
 
-                    if ((minInd != -1) && (maxInd != -1))
-                        tableSelectionModel.setSelectionInterval(minInd, maxInd);
+                    if (undoManager != null)
+                        tableSelectionModel.setSelectionInterval(0, undoManager.getNextAddIndex());
+                    else
+                        tableSelectionModel.setSelectionInterval(0, 0);
                 }
                 finally
                 {
@@ -275,7 +265,15 @@ public class UndoManagerPanel extends JPanel implements ListSelectionListener, I
     {
         // process undo / redo operation
         if (undoManager != null)
-            undoManager.undoOrRedoTo(getLastSelectedEdit());
+        {
+            final IcyUndoableEdit selectedEdit = getLastSelectedEdit();
+
+            // first entry
+            if (selectedEdit == null)
+                undoManager.undoAll();
+            else
+                undoManager.undoOrRedoTo(selectedEdit);
+        }
     }
 
     @Override

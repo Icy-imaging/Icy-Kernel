@@ -28,6 +28,11 @@ import java.awt.geom.Point2D;
 public interface PluginROI
 {
     /**
+     * Return the ROI class name
+     */
+    public String getROIClassName();
+
+    /**
      * Create and return a new ROI
      * 
      * @param pt

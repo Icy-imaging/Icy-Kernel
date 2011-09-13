@@ -27,7 +27,17 @@ import icy.gui.viewer.Viewer;
  */
 public interface PluginCanvas
 {
+    /**
+     * Return the ROI class name
+     */
     public String getCanvasClassName();
 
+    /**
+     * Create and return a new IcyCanvas
+     * 
+     * @param viewer
+     *        the viewer create and will contain the Canvas
+     * @return the new created Canvas
+     */
     public IcyCanvas createCanvas(Viewer viewer);
 }

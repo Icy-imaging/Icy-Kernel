@@ -158,6 +158,12 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
         initialized = false;
 
+        // arrange to our dimension format
+        if (posT == -1)
+            posT = 0;
+        posZ = -1;
+        posC = -1;
+
         final Sequence seq = getSequence();
 
         panel = GuiUtil.generatePanelWithoutBorder();
@@ -233,7 +239,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
             public void stateChanged(ChangeEvent e)
             {
                 // set the new T position
-                setT(tNav.getValue());
+                setPositionT(tNav.getValue());
             }
         });
 
@@ -336,12 +342,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         // called)
         setDefaultOpacity(lut);
 
-        // arrange to our dimension format
-        if (getT() == -1)
-            setT(0);
-        setZ(-1);
-        setC(-1);
-
         // update T nav bar
         updateTNav();
 
@@ -364,7 +364,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         // build image data
         internalBuildImageData();
         // update the color property
-        setupColorProperties(getC());
+        setupColorProperties(getPositionC());
 
         // add volume to renderer
         // TODO : add option to remove volume rendering
@@ -385,7 +385,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
             return;
 
         final int sizeC = seq.getSizeC();
-        final int posC = getC();
+        final int posC = getPositionC();
 
         if (useRaycastVolumeMapper())
         {
@@ -521,8 +521,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         final int sizeZ = sequence.getSizeZ();
         final int dataType = sequence.getDataType();
         final boolean signedDataType = sequence.isSignedDataType();
-        final int posT = getT();
-        final int posC = getC();
+        final int posT = getPositionT();
+        final int posC = getPositionC();
 
         // create a new image data structure
         final vtkImageData newImageData = new vtkImageData();
@@ -909,7 +909,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     private void setupVolumeComponent()
     {
         final int newPosC;
-        final int posC = getC();
+        final int posC = getPositionC();
 
         // get new component value
         if (useRaycastVolumeMapper())
@@ -920,7 +920,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         // changed ?
         if (posC != newPosC)
             // set new component value
-            setC(newPosC);
+            setPositionC(newPosC);
     }
 
     /**
@@ -929,7 +929,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     void updateTNav()
     {
         final int maxT = getMaxT();
-        final int t = getT();
+        final int t = getPositionT();
 
         tNav.setMaximum(maxT);
         if (t != -1)
@@ -1010,13 +1010,13 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     public BufferedImage getRenderedImage(int t, int c)
     {
         // save position
-        final int prevT = getT();
-        final int prevC = getC();
+        final int prevT = getPositionT();
+        final int prevC = getPositionC();
 
         // set wanted position (needed for correct overlay drawing)
         // we have to fire events else some stuff can miss the change
-        setT(t);
-        setC(c);
+        setPositionT(t);
+        setPositionC(c);
         try
         {
             // wait while processing 3D rendering
@@ -1055,8 +1055,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         finally
         {
             // restore position
-            setT(prevT);
-            setC(prevC);
+            setPositionT(prevT);
+            setPositionC(prevC);
         }
     }
 
@@ -1243,13 +1243,13 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
                     // we need to rebuild imageData volume
                     buildImageData();
                     // and update the color property
-                    setupColorProperties(getC());
+                    setupColorProperties(getPositionC());
                     // refresh
                     refresh();
                     break;
 
                 case T:
-                    final int curT = getT();
+                    final int curT = getPositionT();
 
                     // ensure T slider position is correct
                     if (curT != -1)
@@ -1277,7 +1277,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
             return;
 
         final LUT lut = getLut();
-        final int posC = getC();
+        final int posC = getPositionC();
 
         // refresh color properties for specified component
         if (component == -1)

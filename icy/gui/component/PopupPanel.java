@@ -257,5 +257,4 @@ public class PopupPanel extends JPanel
 
         mainPanel.setVisible(topPanel.isSelected());
     }
-
 }

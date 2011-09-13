@@ -348,11 +348,11 @@ public class OldCanvas2D extends IcyCanvas2D implements SmoothMoverListener, Too
                         if (layer.isVisible())
                         {
                             if (drag)
-                                layer.getPainter()
-                                        .mouseDrag(mouseEvent, (Point2D) mouseImagePos.clone(), OldCanvas2D.this);
+                                layer.getPainter().mouseDrag(mouseEvent, (Point2D) mouseImagePos.clone(),
+                                        OldCanvas2D.this);
                             else
-                                layer.getPainter()
-                                        .mouseMove(mouseEvent, (Point2D) mouseImagePos.clone(), OldCanvas2D.this);
+                                layer.getPainter().mouseMove(mouseEvent, (Point2D) mouseImagePos.clone(),
+                                        OldCanvas2D.this);
                         }
                     }
                 }
@@ -824,6 +824,13 @@ public class OldCanvas2D extends IcyCanvas2D implements SmoothMoverListener, Too
     {
         super(viewer);
 
+        // arrange to our dimension format
+        if (posZ == -1)
+            posZ = 0;
+        if (posT == -1)
+            posT = 0;
+        posC = -1;
+
         setDoubleBuffered(true);
         setLayout(new BorderLayout());
 
@@ -1044,13 +1051,6 @@ public class OldCanvas2D extends IcyCanvas2D implements SmoothMoverListener, Too
         panel.add(Box.createVerticalStrut(4));
         panel.add(Box.createVerticalGlue());
 
-        // arrange to our dimension format
-        if (getZ() == -1)
-            setZ(0);
-        if (getT() == -1)
-            setT(0);
-        setC(-1);
-
         mouseInfPanel.setInfoXVisible(true);
         mouseInfPanel.setInfoYVisible(true);
         // already visible in Z/T navigator
@@ -1177,6 +1177,7 @@ public class OldCanvas2D extends IcyCanvas2D implements SmoothMoverListener, Too
      * 
      * @return a Rectangle which represents the canvas visible area.
      */
+    @Override
     public Rectangle getCanvasVisibleRect()
     {
         return view2D.getVisibleRect();
@@ -1360,18 +1361,18 @@ public class OldCanvas2D extends IcyCanvas2D implements SmoothMoverListener, Too
     }
 
     @Override
-    protected void setZInternal(int z)
+    protected void setPositionZInternal(int z)
     {
-        super.setZInternal(z);
+        super.setPositionZInternal(z);
 
         // this also modify mouse image position
         mouseImagePositionChanged(DimensionId.Z);
     }
 
     @Override
-    protected void setTInternal(int t)
+    protected void setPositionTInternal(int t)
     {
-        super.setTInternal(t);
+        super.setPositionTInternal(t);
 
         // this also modify mouse image position
         mouseImagePositionChanged(DimensionId.T);

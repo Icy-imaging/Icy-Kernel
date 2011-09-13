@@ -615,7 +615,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * lut {@link LUT} is used for color calculation (internal lut is used if null).<br>
      * <br>
      * This function is faster than {@link #convertToBufferedImage(BufferedImage, LUT)} but the
-     * output<br> {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB)
+     * output<br>
+     * {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB)
      */
     public BufferedImage getARGBImage(LUT lut, BufferedImage out)
     {
@@ -749,8 +750,34 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        BufferedImage.TYPE_INT_RGB<br>
      *        BufferedImage.TYPE_BYTE_GRAY<br>
      * @return BufferedImage
+     * @deprecated uses {@link #convertToBufferedImage(int, LUT)} instead
      */
+    @Deprecated
     public BufferedImage convertToBufferedImage(LUT lut, int imageType)
+    {
+        if (imageType == BufferedImage.TYPE_INT_ARGB)
+            return getARGBImage(lut);
+
+        final BufferedImage outImg = new BufferedImage(getWidth(), getHeight(), imageType);
+
+        convertToBufferedImage(outImg, lut);
+
+        return outImg;
+    }
+
+    /**
+     * Return a {@link BufferedImage} containing color data of current image
+     * 
+     * @param imageType
+     *        wanted image type, only the following is accepted :<br>
+     *        BufferedImage.TYPE_INT_ARGB<br>
+     *        BufferedImage.TYPE_INT_RGB<br>
+     *        BufferedImage.TYPE_BYTE_GRAY<br>
+     * @param lut
+     *        lut used for color calculation (internal lut is used if null)
+     * @return BufferedImage
+     */
+    public BufferedImage convertToBufferedImage(int imageType, LUT lut)
     {
         if (imageType == BufferedImage.TYPE_INT_ARGB)
             return getARGBImage(lut);
@@ -3371,7 +3398,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
         switch (event.getType())
         {
-            // do here global process on image data change
+        // do here global process on image data change
             case DATA_CHANGED:
                 // update image components bounds
                 updateComponentsBounds(true, false);

@@ -19,7 +19,9 @@
 package icy.gui.frame.progress;
 
 import icy.common.ProgressListener;
+import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 
 import javax.swing.BoxLayout;
 import javax.swing.JProgressBar;
@@ -31,12 +33,11 @@ import javax.swing.JProgressBar;
  */
 public class ProgressFrame extends TaskFrame implements ProgressListener
 {
-    private static final long serialVersionUID = -8374018918054001693L;
-
     /**
      * gui
      */
     JProgressBar progressBar;
+
     /**
      * length (in bytes) of download
      */
@@ -46,6 +47,20 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
      */
     protected double position;
 
+    /**
+     * current message
+     */
+    protected String message;
+    /**
+     * current tooltip
+     */
+    protected String tooltip;
+
+    /**
+     * internals
+     */
+    private final SingleProcessor processor;
+
     public ProgressFrame(final String message)
     {
         super("");
@@ -53,6 +68,8 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
         // default
         length = 100d;
         position = -1d;
+        processor = new SingleProcessor(true);
+        this.message = message;
 
         ThreadUtil.invokeLater(new Runnable()
         {
@@ -79,6 +96,7 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
                 // setVisible(true);
             }
         });
+
     }
 
     protected String buildMessage(String message)
@@ -88,58 +106,61 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
 
     protected void updateDisplay()
     {
-        // information on position
-        if ((position != -1d) && (length > 0d))
-            setProgress((int) (position * 1000d / length));
-        else
-            setProgress(-1);
-    }
-
-    public void setProgress(final int value)
-    {
-        ThreadUtil.invokeLater(new Runnable()
+        processor.requestProcess(new Runnable()
         {
             @Override
             public void run()
             {
-                if (value == -1)
-                    progressBar.setIndeterminate(true);
+                // position information
+                if ((position != -1d) && (length > 0d))
+                {
+                    // remove indeterminate state
+                    if (progressBar.isIndeterminate())
+                        progressBar.setIndeterminate(false);
+
+                    // set progress
+                    final int value = (int) (position * 1000d / length);
+                    if (progressBar.getValue() != value)
+                        progressBar.setValue(value);
+                }
                 else
                 {
-                    progressBar.setIndeterminate(false);
-                    progressBar.setValue(value);
+                    // set indeterminate state
+                    if (!progressBar.isIndeterminate())
+                        progressBar.setIndeterminate(true);
                 }
+
+                final String text = buildMessage(message);
+
+                // set progress message
+                if (!StringUtil.equals(progressBar.getString(), text))
+                {
+                    progressBar.setString(text);
+                    // so component is resized according to its string length
+                    progressBar.invalidate();
+                    // repack frame
+                    pack();
+                }
+
+                // set tooltip
+                if (!StringUtil.equals(progressBar.getToolTipText(), tooltip))
+                    progressBar.setToolTipText(tooltip);
             }
-        });
+        }, true);
     }
 
-    public void setMessage(final String text)
+    public void setMessage(String value)
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                progressBar.setString(buildMessage(text));
-                // so component is resized according to its string length
-                progressBar.invalidate();
-                pack();
-            }
-        });
+        message = value;
+        updateDisplay();
     }
 
     // we want tooltip set on the progress component only
     @Override
-    public void setToolTipText(final String text)
+    public void setToolTipText(String value)
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                progressBar.setToolTipText(text);
-            }
-        });
+        tooltip = value;
+        updateDisplay();
     }
 
     /**
@@ -151,18 +172,13 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
     }
 
     /**
-     * @param length
+     * @param value
      *        the length to set
      */
-    public void setLength(double length)
+    public void setLength(double value)
     {
-        if (this.length != length)
-        {
-            this.length = length;
-
-            // refresh
-            updateDisplay();
-        }
+        length = value;
+        updateDisplay();
     }
 
     /**
@@ -182,25 +198,22 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
     }
 
     /**
-     * @param position
+     * @param value
      *        the position to set
      */
-    public void setPosition(double position)
+    public void setPosition(double value)
     {
-        if (this.position != position)
-        {
-            this.position = position;
-
-            // refresh
-            updateDisplay();
-        }
+        position = value;
+        updateDisplay();
     }
 
     @Override
     public boolean notifyProgress(double position, double length)
     {
-        setLength(length);
-        setPosition(position);
+        this.length = length;
+        this.position = position;
+
+        updateDisplay();
 
         return true;
     }

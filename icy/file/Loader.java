@@ -48,7 +48,7 @@ import ome.xml.model.primitives.PositiveFloat;
 /**
  * Loader
  * 
- * @author Fabrice de Chaumont
+ * @author Fabrice de Chaumont & Stephane
  */
 public class Loader
 {
@@ -137,8 +137,8 @@ public class Loader
             switch (pos)
             {
                 case ImagePosition.T_ID:
-                    // doesn't support value >= 2000 for T dimension
-                    if (value < 2000)
+                    // doesn't support value >= 10000 for T dimension
+                    if (value < 10000)
                         position.setT(value);
                     break;
 

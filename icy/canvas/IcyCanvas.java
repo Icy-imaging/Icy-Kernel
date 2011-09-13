@@ -23,6 +23,7 @@ import icy.canvas.Layer.LayerListener;
 import icy.canvas.LayersEvent.LayersEventType;
 import icy.common.EventHierarchicalChecker;
 import icy.common.IcyChangedListener;
+import icy.common.ProgressListener;
 import icy.common.UpdateEventHandler;
 import icy.gui.viewer.MouseImageInfosPanel;
 import icy.gui.viewer.Viewer;
@@ -55,6 +56,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JPanel;
+import javax.swing.JToolBar;
 
 /**
  * @author Fabrice de Chaumont & Stephane Dallongeville<br>
@@ -356,6 +358,17 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             if (event)
                 lutChanged(new LUTEvent(lut, -1));
         }
+    }
+
+    /**
+     * Called by the parent viewer when building its toolbar<br>
+     * so canvas can customize it at some point.
+     * 
+     * @param toolBar
+     */
+    public void addViewerToolbarComponents(JToolBar toolBar)
+    {
+
     }
 
     /**
@@ -727,7 +740,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * @return current Z (-1 if all selected)
+     * @deprecated uses getPositionZ() instead
      */
+    @Deprecated
     public int getZ()
     {
         return getPositionZ();
@@ -735,7 +750,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * @return current T (-1 if all selected)
+     * @deprecated uses getPositionT() instead
      */
+    @Deprecated
     public int getT()
     {
         return getPositionT();
@@ -743,7 +760,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * @return current C (-1 if all selected)
+     * @deprecated uses getPositionC() instead
      */
+    @Deprecated
     public int getC()
     {
         return getPositionC();
@@ -1557,7 +1576,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Set Z position
+     * 
+     * @deprecated uses setPositionZ(int) instead
      */
+    @Deprecated
     public void setZ(int z)
     {
         setPositionZ(z);
@@ -1565,7 +1587,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Set T position
+     * 
+     * @deprecated uses setPositionT(int) instead
      */
+    @Deprecated
     public void setT(int t)
     {
         setPositionT(t);
@@ -1573,7 +1598,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Set C position
+     * 
+     * @deprecated uses setPositionC(int) instead
      */
+    @Deprecated
     public void setC(int c)
     {
         setPositionC(c);
@@ -1586,8 +1614,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     {
         final int adjX = Math.max(-1, Math.min(x, getMaxX()));
 
-        if (getZ() != adjX)
-            setXInternal(adjX);
+        if (getPositionX() != adjX)
+            setPositionXInternal(adjX);
     }
 
     /**
@@ -1597,8 +1625,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     {
         final int adjY = Math.max(-1, Math.min(y, getMaxY()));
 
-        if (getZ() != adjY)
-            setYInternal(adjY);
+        if (getPositionY() != adjY)
+            setPositionYInternal(adjY);
     }
 
     /**
@@ -1608,8 +1636,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     {
         final int adjZ = Math.max(-1, Math.min(z, getMaxZ()));
 
-        if (getZ() != adjZ)
-            setZInternal(adjZ);
+        if (getPositionZ() != adjZ)
+            setPositionZInternal(adjZ);
     }
 
     /**
@@ -1619,8 +1647,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     {
         final int adjT = Math.max(-1, Math.min(t, getMaxT()));
 
-        if (getT() != adjT)
-            setTInternal(adjT);
+        if (getPositionT() != adjT)
+            setPositionTInternal(adjT);
     }
 
     /**
@@ -1630,14 +1658,14 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     {
         final int adjC = Math.max(-1, Math.min(c, getMaxC()));
 
-        if (getC() != adjC)
-            setCInternal(adjC);
+        if (getPositionC() != adjC)
+            setPositionCInternal(adjC);
     }
 
     /**
      * Set X position internal
      */
-    protected void setXInternal(int x)
+    protected void setPositionXInternal(int x)
     {
         posX = x;
         // common process on position change
@@ -1647,7 +1675,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Set Y position internal
      */
-    protected void setYInternal(int y)
+    protected void setPositionYInternal(int y)
     {
         posY = y;
         // common process on position change
@@ -1657,7 +1685,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Set Z position internal
      */
-    protected void setZInternal(int z)
+    protected void setPositionZInternal(int z)
     {
         posZ = z;
         // common process on position change
@@ -1667,7 +1695,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Set T position internal
      */
-    protected void setTInternal(int t)
+    protected void setPositionTInternal(int t)
     {
         posT = t;
         // common process on position change
@@ -1677,7 +1705,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Set C position internal
      */
-    protected void setCInternal(int c)
+    protected void setPositionCInternal(int c)
     {
         posC = c;
         // common process on position change
@@ -2633,7 +2661,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public IcyBufferedImage getCurrentImage()
     {
-        return getImage(getT(), getZ(), getC());
+        return getImage(getPositionT(), getPositionZ(), getPositionC());
     }
 
     /**
@@ -2703,73 +2731,138 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public Sequence getRenderedSequence(boolean canvasView)
     {
+        return getRenderedSequence(canvasView, null);
+    }
+
+    /**
+     * Return a sequence which contains rendered images.<br>
+     * Default implementation, override it if needed in your canvas.
+     * 
+     * @param canvasView
+     *        render with canvas view if true else use default sequence dimension
+     * @param progressListener
+     *        progress listener which receive notifications about progression
+     */
+    public Sequence getRenderedSequence(boolean canvasView, ProgressListener progressListener)
+    {
         final Sequence seqIn = getSequence();
         // create output sequence
         final Sequence result = new Sequence();
 
         if (seqIn != null)
         {
+            final int posT = getPositionT();
+            final int posZ = getPositionZ();
+            final int posC = getPositionC();
+            final int sizeT = seqIn.getSizeT();
+            final int sizeZ = seqIn.getSizeZ();
+            final int sizeC = seqIn.getSizeC();
+
+            int pos = 0;
+            int len = 1;
+            if (posT != -1)
+                len *= sizeT;
+            if (posZ != -1)
+                len *= sizeZ;
+            if (posC != -1)
+                len *= sizeC;
+
             result.beginUpdate();
             beginUpdate();
             try
             {
-                if (getT() != -1)
+                if (posT != -1)
                 {
-                    for (int t = 0; t < seqIn.getSizeT(); t++)
+                    for (int t = 0; t < sizeT; t++)
                     {
-                        if (getZ() != -1)
+                        if (posZ != -1)
                         {
-                            for (int z = 0; z < seqIn.getSizeZ(); z++)
+                            for (int z = 0; z < sizeZ; z++)
                             {
-                                if (getC() != -1)
+                                if (posC != -1)
                                 {
                                     final ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
 
-                                    for (int c = 0; c < seqIn.getSizeC(); c++)
+                                    for (int c = 0; c < sizeC; c++)
+                                    {
                                         images.add(getRenderedImage(t, z, c, canvasView));
+                                        pos++;
+                                        if (progressListener != null)
+                                            progressListener.notifyProgress(pos, len);
+                                    }
 
                                     result.setImage(t, z, IcyBufferedImage.createFrom(images));
                                 }
                                 else
+                                {
                                     result.setImage(t, z, getRenderedImage(t, z, -1, canvasView));
+                                    pos++;
+                                    if (progressListener != null)
+                                        progressListener.notifyProgress(pos, len);
+                                }
                             }
                         }
                         else
+                        {
                             result.setImage(t, 0, getRenderedImage(t, -1, -1, canvasView));
+                            pos++;
+                            if (progressListener != null)
+                                progressListener.notifyProgress(pos, len);
+                        }
                     }
                 }
                 else
                 {
-                    if (getZ() != -1)
+                    if (posZ != -1)
                     {
-                        for (int z = 0; z < seqIn.getSizeZ(); z++)
+                        for (int z = 0; z < sizeZ; z++)
                         {
-                            if (getC() != -1)
+                            if (posC != -1)
                             {
                                 final ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
 
-                                for (int c = 0; c < seqIn.getSizeC(); c++)
+                                for (int c = 0; c < sizeC; c++)
+                                {
                                     images.add(getRenderedImage(-1, z, c, canvasView));
+                                    pos++;
+                                    if (progressListener != null)
+                                        progressListener.notifyProgress(pos, len);
+                                }
 
                                 result.setImage(0, z, IcyBufferedImage.createFrom(images));
                             }
                             else
+                            {
                                 result.setImage(0, z, getRenderedImage(-1, z, -1, canvasView));
+                                pos++;
+                                if (progressListener != null)
+                                    progressListener.notifyProgress(pos, len);
+                            }
                         }
                     }
                     else
                     {
-                        if (getC() != -1)
+                        if (posC != -1)
                         {
                             final ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
 
-                            for (int c = 0; c < seqIn.getSizeC(); c++)
+                            for (int c = 0; c < sizeC; c++)
+                            {
                                 images.add(getRenderedImage(-1, -1, c, canvasView));
+                                pos++;
+                                if (progressListener != null)
+                                    progressListener.notifyProgress(pos, len);
+                            }
 
                             result.setImage(0, 0, IcyBufferedImage.createFrom(images));
                         }
                         else
+                        {
                             result.setImage(0, 0, getRenderedImage(-1, -1, -1, canvasView));
+                            pos++;
+                            if (progressListener != null)
+                                progressListener.notifyProgress(pos, len);
+                        }
                     }
                 }
             }

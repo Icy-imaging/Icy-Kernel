@@ -5,9 +5,9 @@ package icy.undo;
 
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
+import icy.util.StringUtil;
 
 import java.awt.Image;
-import java.lang.ref.WeakReference;
 
 import javax.swing.UIManager;
 import javax.swing.undo.CannotRedoException;
@@ -20,10 +20,12 @@ import javax.swing.undo.UndoableEdit;
 public class IcyUndoableEdit implements UndoableEdit
 {
     private static final IcyIcon DEFAULT_ICON = new IcyIcon("lighting", 16);
+
     /**
      * Source of the UndoableEdit (weak reference as it should not retain it)
      */
-    final private WeakReference<Object> source;
+    // final private WeakReference<Object> source;
+    private Object source;
 
     /**
      * Defaults to true; becomes false if this edit is undone, true
@@ -47,7 +49,8 @@ public class IcyUndoableEdit implements UndoableEdit
     {
         super();
 
-        this.source = new WeakReference<Object>(source);
+        // this.source = new WeakReference<Object>(source);
+        this.source = source;
         hasBeenDone = true;
         alive = true;
 
@@ -63,7 +66,7 @@ public class IcyUndoableEdit implements UndoableEdit
      */
     public IcyUndoableEdit(Object source, String iconName)
     {
-        this(source, ResourceUtil.getBlackIconAsImage(iconName));
+        this(source, ResourceUtil.getAlphaIconAsImage(iconName));
 
     }
 
@@ -81,7 +84,8 @@ public class IcyUndoableEdit implements UndoableEdit
      */
     public Object getSource()
     {
-        return source.get();
+        // return source.get();
+        return source;
     }
 
     /**
@@ -105,6 +109,9 @@ public class IcyUndoableEdit implements UndoableEdit
     public void die()
     {
         alive = false;
+        // clear source reference
+        // source.clear();
+        source = null;
     }
 
     /**
@@ -237,7 +244,7 @@ public class IcyUndoableEdit implements UndoableEdit
     }
 
     /**
-     * Retreives the value from the defaults table with key
+     * Retrieves the value from the defaults table with key
      * <code>AbstractUndoableEdit.undoText</code> and returns
      * that value followed by a space, followed by <code>getPresentationName</code>.
      * If <code>getPresentationName</code> returns "",
@@ -255,7 +262,7 @@ public class IcyUndoableEdit implements UndoableEdit
     {
         String name = getPresentationName();
 
-        if (!"".equals(name))
+        if (!StringUtil.isEmpty(name))
             name = UIManager.getString("AbstractUndoableEdit.undoText") + " " + name;
         else
             name = UIManager.getString("AbstractUndoableEdit.undoText");
@@ -264,7 +271,7 @@ public class IcyUndoableEdit implements UndoableEdit
     }
 
     /**
-     * Retreives the value from the defaults table with key
+     * Retrieves the value from the defaults table with key
      * <code>AbstractUndoableEdit.redoText</code> and returns
      * that value followed by a space, followed by <code>getPresentationName</code>.
      * If <code>getPresentationName</code> returns "",
@@ -282,7 +289,7 @@ public class IcyUndoableEdit implements UndoableEdit
     {
         String name = getPresentationName();
 
-        if (!"".equals(name))
+        if (!StringUtil.isEmpty(name))
             name = UIManager.getString("AbstractUndoableEdit.redoText") + " " + name;
         else
             name = UIManager.getString("AbstractUndoableEdit.redoText");

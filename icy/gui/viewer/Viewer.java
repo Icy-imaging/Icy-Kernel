@@ -83,8 +83,6 @@ import plugins.kernel.canvas.Canvas3DPlugin;
  */
 public class Viewer extends IcyFrame implements KeyListener, SequenceListener, IcyCanvasListener
 {
-    private static final long serialVersionUID = -2479362346207857007L;
-
     static final int ICON_SIZE = 20;
 
     static final Image ICON_LAYER = ResourceUtil.getAlphaIconAsImage("layers_2.png");
@@ -145,7 +143,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                         final ProgressFrame pf = new ProgressFrame("Rendering...");
                         try
                         {
-                            final Sequence seqOut = canvas.getRenderedSequence(true);
+                            final Sequence seqOut = canvas.getRenderedSequence(true, pf);
 
                             if (seqOut != null)
                             {
@@ -196,7 +194,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                         final ProgressFrame pf = new ProgressFrame("Rendering...");
                         try
                         {
-                            final Sequence seqOut = canvas.getRenderedSequence(false);
+                            final Sequence seqOut = canvas.getRenderedSequence(false, pf);
 
                             if (seqOut != null)
                             {
@@ -239,10 +237,13 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     private JPanel mainPanel;
     private IcyLutViewer lutPanel;
 
-    IcyButton switchStateButton;
-    IcyToggleButton layersEnabledButton;
     JComboBox canvasComboBox;
     JComboBox lockComboBox;
+    IcyToggleButton layersEnabledButton;
+    IcyButton screenShotButton;
+    IcyButton screenShotAlternateButton;
+    IcyButton duplicateButton;
+    IcyButton switchStateButton;
 
     /**
      * internals
@@ -580,8 +581,11 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      */
     private void buildToolBar()
     {
+        // build combo box
         buildLockCombo();
+        buildCanvasCombo();
 
+        // build buttons
         layersEnabledButton = new IcyToggleButton(ICON_LAYER, ICON_SIZE);
         layersEnabledButton.setToolTipText("Hide layers");
         layersEnabledButton.setFocusable(false);
@@ -605,36 +609,42 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             }
         });
 
-        buildCanvasCombo();
-
-        final IcyButton screenShotButton = new IcyButton(new ScreenShotAction());
+        screenShotButton = new IcyButton(new ScreenShotAction());
         screenShotButton.setFocusable(false);
         screenShotButton.setHideActionText(true);
-        final IcyButton screenShotAlternateButton = new IcyButton(new ScreenShotAlternateAction());
+        screenShotAlternateButton = new IcyButton(new ScreenShotAlternateAction());
         screenShotButton.setFocusable(false);
         screenShotButton.setHideActionText(true);
-
-        final IcyButton duplicateButton = new IcyButton(new DuplicateAction());
+        duplicateButton = new IcyButton(new DuplicateAction());
         duplicateButton.setFocusable(false);
         duplicateButton.setHideActionText(true);
-
         switchStateButton = new IcyButton(getSwitchStateAction());
         switchStateButton.setFocusable(false);
         switchStateButton.setHideActionText(true);
 
+        // and build the toolbar
         toolBar = new JToolBar();
         toolBar.setFloatable(false);
         // so we don't have any border
         toolBar.setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 0));
         ComponentUtil.setPreferredHeight(toolBar, 26);
 
+        updateToolbarComponents();
+    }
+
+    private void updateToolbarComponents()
+    {
+        toolBar.removeAll();
+
         toolBar.add(lockComboBox);
         toolBar.addSeparator();
         toolBar.add(canvasComboBox);
         toolBar.addSeparator();
         toolBar.add(layersEnabledButton);
-        toolBar.add(Box.createHorizontalStrut(12));
+        if (canvas != null)
+            canvas.addViewerToolbarComponents(toolBar);
         toolBar.add(Box.createHorizontalGlue());
+        toolBar.addSeparator();
         toolBar.add(screenShotButton);
         toolBar.add(screenShotAlternateButton);
         toolBar.addSeparator();
@@ -811,10 +821,16 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         // refresh viewer menu (so overlay checkbox is correctly set)
         updateSystemMenu();
+        updateToolbarComponents();
         refreshToolBar();
 
         // notify canvas changed to listener
         fireViewerChanged(ViewerEventType.CANVAS_CHANGED);
+    }
+
+    public JToolBar getToolBar()
+    {
+        return toolBar;
     }
 
     public IcyCanvas getCanvas()
@@ -861,7 +877,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     public void setT(int t)
     {
         if (canvas != null)
-            canvas.setT(t);
+            canvas.setPositionT(t);
     }
 
     /**
@@ -882,7 +898,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     public void setZ(int z)
     {
         if (canvas != null)
-            canvas.setZ(z);
+            canvas.setPositionZ(z);
     }
 
     /**
@@ -903,7 +919,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     public void setC(int c)
     {
         if (canvas != null)
-            canvas.setC(c);
+            canvas.setPositionC(c);
     }
 
     /**

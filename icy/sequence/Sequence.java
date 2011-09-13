@@ -38,6 +38,9 @@ import icy.roi.ROI2D;
 import icy.roi.ROI3D;
 import icy.roi.ROIEvent;
 import icy.roi.ROIListener;
+import icy.sequence.SequenceEdit.ROIAdd;
+import icy.sequence.SequenceEdit.ROIRemove;
+import icy.sequence.SequenceEdit.ROIRemoveAll;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.type.TypeUtil;
@@ -983,6 +986,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         return false;
     }
 
+    /**
+     * Return true if the sequence contains ROI of specified ROI class.
+     */
     public boolean hasROI(Class<? extends ROI> roiClass)
     {
         for (ROI roi : getROIs())
@@ -992,7 +998,26 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         return false;
     }
 
+    /**
+     * Add the specified ROI to the sequence.
+     * 
+     * @param roi
+     *        ROI to attach to the sequence
+     */
     public boolean addROI(ROI roi)
+    {
+        return addROI(roi, false);
+    }
+
+    /**
+     * Add the specified ROI to the sequence.
+     * 
+     * @param roi
+     *        ROI to attach to the sequence
+     * @param canUndo
+     *        If true the action can be canceled by the undo manager.
+     */
+    public boolean addROI(ROI roi, boolean canUndo)
     {
         if (contains(roi))
             return false;
@@ -1005,15 +1030,36 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         roi.addListener(this);
         // notify roi added
         roiChanged(roi, SequenceEventType.ADDED);
-
         // then add ROI painter to sequence
         addPainter(roi.getPainter());
+
+        if (canUndo)
+            undoManager.addEdit(new ROIAdd(this, roi));
 
         return true;
 
     }
 
+    /**
+     * Remove the specified ROI from the sequence.
+     * 
+     * @param roi
+     *        ROI to detach from the sequence
+     */
     public boolean removeROI(ROI roi)
+    {
+        return removeROI(roi, false);
+    }
+
+    /**
+     * Remove the specified ROI from the sequence.
+     * 
+     * @param roi
+     *        ROI to detach from the sequence
+     * @param canUndo
+     *        If true the action can be canceled by the undo manager.
+     */
+    public boolean removeROI(ROI roi, boolean canUndo)
     {
         if (contains(roi))
         {
@@ -1024,12 +1070,13 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
             {
                 ROIs.remove(roi);
             }
-
             // remove listener
             roi.removeListener(this);
-
             // notify roi removed
             roiChanged(roi, SequenceEventType.REMOVED);
+
+            if (canUndo)
+                undoManager.addEdit(new ROIRemove(this, roi));
 
             return true;
         }
@@ -1037,7 +1084,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         return false;
     }
 
+    /**
+     * Remove all ROI from the sequence.
+     */
     public void removeAllROI()
+    {
+        removeAllROI(false);
+    }
+
+    /**
+     * Remove all ROI from the sequence.
+     * 
+     * @param canUndo
+     *        If true the action can be canceled by the undo manager.
+     */
+    public void removeAllROI(boolean canUndo)
     {
         if (!ROIs.isEmpty())
         {
@@ -1065,14 +1126,16 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
 
             // notify roi removed
             roiChanged(null, SequenceEventType.REMOVED);
+
+            if (canUndo)
+                undoManager.addEdit(new ROIRemoveAll(this, allROIs));
         }
     }
 
     /**
-     * Add a painter to the sequence. Note: The painter sequence will not be refreshed until you
-     * call the method sequence.refresh or sequence.refreshPainters
-     * 
-     * @param painter
+     * Add a painter to the sequence.<br>
+     * Note: The painter sequence will not be refreshed until
+     * you call the method sequence.painterChanged(...)
      */
     public boolean addPainter(Painter painter)
     {
@@ -1091,10 +1154,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Remove a painter from the sequence. Note: The painter sequence will not be refreshed until
-     * you call the method sequence.refresh or sequence.refreshPainters
-     * 
-     * @param painter
+     * Remove a painter from the sequence.<br>
+     * Note: The painter sequence will not be refreshed until
+     * you call the method sequence.painterChanged(...)
      */
     public boolean removePainter(Painter painter)
     {
@@ -4658,7 +4720,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
 
         switch (event.getSourceType())
         {
-            // do here global process on sequence data change
+        // do here global process on sequence data change
             case SEQUENCE_DATA:
                 // automatic components bounds update enabled
                 if (componentAbsBoundsAutoUpdate)
