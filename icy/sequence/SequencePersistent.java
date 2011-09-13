@@ -37,13 +37,6 @@ public class SequencePersistent implements XMLPersistent
     private final static String ID_NAME = "name";
 
     private final static String ROOT_META = "meta";
-    private final static String ID_PIXELSIZE = "pixelSize";
-    private final static String ID_PIXELSPACING = "pixelSpacing";
-    private final static String ID_X = "x";
-    private final static String ID_Y = "y";
-    private final static String ID_Z = "z";
-    private final static String ID_T = "t";
-    private final static String ID_C = "c";
 
     private final static String ROOT_ROIS = "rois";
     private final static String ID_ROI = "roi";
@@ -129,49 +122,10 @@ public class SequencePersistent implements XMLPersistent
 
         if (nodeMeta != null)
         {
-            final Node nodePixelSize = XMLUtil.getElement(nodeMeta, ID_PIXELSIZE);
-
-            if (nodePixelSize != null)
-            {
-                final double xs = XMLUtil.getElementDoubleValue(nodePixelSize, ID_X, 0d);
-                final double ys = XMLUtil.getElementDoubleValue(nodePixelSize, ID_Y, 0d);
-                final double zs = XMLUtil.getElementDoubleValue(nodePixelSize, ID_Z, 0d);
-                final double ts = XMLUtil.getElementDoubleValue(nodePixelSize, ID_T, 0d);
-                final double cs = XMLUtil.getElementDoubleValue(nodePixelSize, ID_C, 0d);
-
-                if (xs != 0)
-                    sequence.setPixelSizeX(xs);
-                if (ys != 0)
-                    sequence.setPixelSizeY(ys);
-                if (zs != 0)
-                    sequence.setPixelSizeZ(zs);
-                if (ts != 0)
-                    sequence.setPixelSizeT(ts);
-                if (cs != 0)
-                    sequence.setPixelSizeC(cs);
-            }
-
-            final Node nodePixelSpacing = XMLUtil.getElement(nodeMeta, ID_PIXELSPACING);
-
-            if (nodePixelSpacing != null)
-            {
-                final double xs = XMLUtil.getElementDoubleValue(nodePixelSpacing, ID_X, 0d);
-                final double ys = XMLUtil.getElementDoubleValue(nodePixelSpacing, ID_Y, 0d);
-                final double zs = XMLUtil.getElementDoubleValue(nodePixelSpacing, ID_Z, 0d);
-                final double ts = XMLUtil.getElementDoubleValue(nodePixelSpacing, ID_T, 0d);
-                final double cs = XMLUtil.getElementDoubleValue(nodePixelSpacing, ID_C, 0d);
-
-                if (xs != 0)
-                    sequence.setPixelSpacingX(xs);
-                if (ys != 0)
-                    sequence.setPixelSpacingY(ys);
-                if (zs != 0)
-                    sequence.setPixelSpacingZ(zs);
-                if (ts != 0)
-                    sequence.setPixelSpacingT(ts);
-                if (cs != 0)
-                    sequence.setPixelSpacingC(cs);
-            }
+            sequence.setResolutionX(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_X, 1d));
+            sequence.setResolutionY(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_Y, 1d));
+            sequence.setResolutionZ(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_Z, 1d));
+            sequence.setResolutionT(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_T, 1d));
         }
     }
 
@@ -217,27 +171,10 @@ public class SequencePersistent implements XMLPersistent
 
         if (nodeMeta != null)
         {
-            final Node nodePixelSize = XMLUtil.setElement(nodeMeta, ID_PIXELSIZE);
-
-            if (node != null)
-            {
-                XMLUtil.setElementDoubleValue(nodePixelSize, ID_X, sequence.getPixelSizeX());
-                XMLUtil.setElementDoubleValue(nodePixelSize, ID_Y, sequence.getPixelSizeY());
-                XMLUtil.setElementDoubleValue(nodePixelSize, ID_Z, sequence.getPixelSizeZ());
-                XMLUtil.setElementDoubleValue(nodePixelSize, ID_T, sequence.getPixelSizeT());
-                XMLUtil.setElementDoubleValue(nodePixelSize, ID_C, sequence.getPixelSizeC());
-            }
-
-            final Node nodePixelSpacing = XMLUtil.setElement(nodeMeta, ID_PIXELSPACING);
-
-            if (node != null)
-            {
-                XMLUtil.setElementDoubleValue(nodePixelSpacing, ID_X, sequence.getPixelSpacingX());
-                XMLUtil.setElementDoubleValue(nodePixelSpacing, ID_Y, sequence.getPixelSpacingY());
-                XMLUtil.setElementDoubleValue(nodePixelSpacing, ID_Z, sequence.getPixelSpacingZ());
-                XMLUtil.setElementDoubleValue(nodePixelSpacing, ID_T, sequence.getPixelSpacingT());
-                XMLUtil.setElementDoubleValue(nodePixelSpacing, ID_C, sequence.getPixelSpacingC());
-            }
+            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_X, sequence.getResolutionX());
+            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_Y, sequence.getResolutionY());
+            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_Z, sequence.getResolutionZ());
+            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_T, sequence.getResolutionT());
         }
     }
 

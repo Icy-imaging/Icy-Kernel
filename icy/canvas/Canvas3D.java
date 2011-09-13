@@ -37,6 +37,7 @@ import icy.system.thread.SingleInstanceProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
+import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
 
 import java.awt.BorderLayout;
@@ -151,6 +152,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     private final Runnable volumeMapperBuilder;
     private final LUT lutSave;
     private boolean initialized;
+    private final double[] scaling;
 
     public Canvas3D(Viewer viewer)
     {
@@ -166,6 +168,13 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
         final Sequence seq = getSequence();
 
+        // X, Y, Z scaling
+        scaling = new double[3];
+
+        scaling[0] = seq.getResolutionX();
+        scaling[1] = seq.getResolutionY();
+        scaling[2] = seq.getResolutionZ();
+
         panel = GuiUtil.generatePanelWithoutBorder();
 
         // general Settings
@@ -180,10 +189,10 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         generalSettingsPanel.add(GuiUtil.besidesPanel(new JLabel("specular power"), specularPowerTextField));
         specularPowerTextField.getDocument().addDocumentListener(this);
         final JPanel spacingPanel = GuiUtil.besidesPanel(volumeXSpacing, volumeYSpacing, volumeZSpacing);
-        generalSettingsPanel.add(GuiUtil.besidesPanel(new JLabel("X / Y / Z Pixel size"), spacingPanel));
-        volumeXSpacing.setText(Double.toString(seq.getPixelSizeX()));
-        volumeYSpacing.setText(Double.toString(seq.getPixelSizeY()));
-        volumeZSpacing.setText(Double.toString(seq.getPixelSizeZ()));
+        generalSettingsPanel.add(GuiUtil.besidesPanel(new JLabel("X / Y / Z Scaling"), spacingPanel));
+        volumeXSpacing.setText(StringUtil.toString(getXScaling()));
+        volumeYSpacing.setText(StringUtil.toString(getYScaling()));
+        volumeZSpacing.setText(StringUtil.toString(getZScaling()));
         volumeXSpacing.getDocument().addDocumentListener(this);
         volumeYSpacing.getDocument().addDocumentListener(this);
         volumeZSpacing.getDocument().addDocumentListener(this);
@@ -850,9 +859,9 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
         if (seq != null)
         {
-            result[0] = seq.getPixelSizeX();
-            result[1] = seq.getPixelSizeY();
-            result[2] = seq.getPixelSizeZ();
+            result[0] = seq.getResolutionX();
+            result[1] = seq.getResolutionY();
+            result[2] = seq.getResolutionZ();
         }
 
         return result;
@@ -862,7 +871,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     {
         // update scale for all actors
         final vtkActorCollection actors = renderer.GetActors();
-        final double[] scaling = getScaling();
 
         actors.InitTraversal();
         vtkActor a = actors.GetNextItem();
@@ -949,28 +957,26 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
     public double getXScaling()
     {
-        return getSequence().getPixelSizeX();
+        return scaling[0];
     }
 
     public double getYScaling()
     {
-        return getSequence().getPixelSizeY();
+        return scaling[1];
     }
 
     public double getZScaling()
     {
-        return getSequence().getPixelSizeZ();
+        return scaling[2];
     }
 
     public void setXScaling(double value)
     {
-        final Sequence seq = getSequence();
-
-        if (seq.getPixelSizeX() != value)
+        if (scaling[0] != value)
         {
-            seq.setPixelSizeX(value);
+            scaling[0] = value;
 
-            // update spacing
+            // update scaling
             setupScaling();
             // refresh rendering
             refresh();
@@ -979,13 +985,11 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
     public void setYScaling(double value)
     {
-        final Sequence seq = getSequence();
-
-        if (seq.getPixelSizeY() != value)
+        if (scaling[1] != value)
         {
-            seq.setPixelSizeY(value);
+            scaling[1] = value;
 
-            // update spacing
+            // update scaling
             setupScaling();
             // refresh rendering
             refresh();
@@ -994,13 +998,11 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
     public void setZScaling(double value)
     {
-        final Sequence seq = getSequence();
-
-        if (seq.getPixelSizeZ() != value)
+        if (scaling[2] != value)
         {
-            seq.setPixelSizeZ(value);
+            scaling[2] = value;
 
-            // update spacing
+            // update scaling
             setupScaling();
             // refresh rendering
             refresh();
@@ -1289,6 +1291,20 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
         // refresh image
         refresh();
+    }
+
+    @Override
+    protected void sequenceMetaChanged(String metadataName)
+    {
+        super.sequenceMetaChanged(metadataName);
+
+        // check if X,Y or Z resolution changed
+        if (StringUtil.equals(metadataName, Sequence.ID_RESOLUTION_X))
+            volumeXSpacing.setText(StringUtil.toString(getSequence().getResolutionX()));
+        if (StringUtil.equals(metadataName, Sequence.ID_RESOLUTION_Y))
+            volumeYSpacing.setText(StringUtil.toString(getSequence().getResolutionY()));
+        if (StringUtil.equals(metadataName, Sequence.ID_RESOLUTION_Z))
+            volumeZSpacing.setText(StringUtil.toString(getSequence().getResolutionZ()));
     }
 
     @Override

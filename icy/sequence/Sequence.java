@@ -73,6 +73,11 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     public static final int TYPE_SHORT = TypeUtil.TYPE_SHORT;
     public static final int TYPE_UNDEFINED = TypeUtil.TYPE_UNDEFINED;
 
+    public static final String ID_RESOLUTION_X = "resolutionX";
+    public static final String ID_RESOLUTION_Y = "resolutionY";
+    public static final String ID_RESOLUTION_Z = "resolutionZ";
+    public static final String ID_RESOLUTION_T = "resolutionT";
+
     /**
      * id generator
      */
@@ -111,21 +116,15 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     private String filename;
     /**
-     * X, Y, Z, T, X pixel size
+     * X, Y, Z resolution (in mm)
      */
-    private double pixelSizeX;
-    private double pixelSizeY;
-    private double pixelSizeZ;
-    private double pixelSizeT;
-    private double pixelSizeC;
+    private double resolutionX;
+    private double resolutionY;
+    private double resolutionZ;
     /**
-     * X, Y, Z, T, X pixel spacing
+     * T resolution (in ms)
      */
-    private double pixelSpacingX;
-    private double pixelSpacingY;
-    private double pixelSpacingZ;
-    private double pixelSpacingT;
-    private double pixelSpacingC;
+    private double resolutionT;
     /**
      * automatic update of component absolute bounds
      */
@@ -173,16 +172,10 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
 
         name = DEFAULT_NAME;
         filename = null;
-        pixelSizeX = 1d;
-        pixelSizeY = 1d;
-        pixelSizeZ = 1d;
-        pixelSizeT = 1d;
-        pixelSizeC = 1d;
-        pixelSpacingX = 1d;
-        pixelSpacingY = 1d;
-        pixelSpacingZ = 1d;
-        pixelSpacingT = 1d;
-        pixelSpacingC = 1d;
+        resolutionX = 1d;
+        resolutionY = 1d;
+        resolutionZ = 1d;
+        resolutionT = 1d;
 
         volumetricImages = new TreeMap<Integer, VolumetricImage>();
         painters = new ArrayList<Painter>();
@@ -494,192 +487,82 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return X pixel spacing
+     * Return X pixel resolution (in mm)
      */
-    public double getPixelSpacingX()
+    public double getResolutionX()
     {
-        return pixelSpacingX;
+        return resolutionX;
     }
 
     /**
-     * Return Y pixel spacing
+     * Return Y pixel resolution (in mm)
      */
-    public double getPixelSpacingY()
+    public double getResolutionY()
     {
-        return pixelSpacingY;
+        return resolutionY;
     }
 
     /**
-     * Return Z pixel spacing
+     * Return Z pixel resolution (in mm)
      */
-    public double getPixelSpacingZ()
+    public double getResolutionZ()
     {
-        return pixelSpacingZ;
+        return resolutionZ;
     }
 
     /**
-     * Return T pixel spacing
+     * Return T time resolution (in ms)
      */
-    public double getPixelSpacingT()
+    public double getResolutionT()
     {
-        return pixelSpacingT;
+        return resolutionT;
     }
 
     /**
-     * Return C pixel spacing
+     * Set X pixel resolution
      */
-    public double getPixelSpacingC()
+    public void setResolutionX(double value)
     {
-        return pixelSpacingC;
-    }
-
-    /**
-     * Set X pixel spacing
-     */
-    public void setPixelSpacingX(double value)
-    {
-        if (pixelSpacingX != value)
+        if (resolutionX != value)
         {
-            pixelSpacingX = value;
+            resolutionX = value;
+            metaChanged(ID_RESOLUTION_X);
         }
     }
 
     /**
-     * Set Y pixel spacing
+     * Set Y pixel resolution
      */
-    public void setPixelSpacingY(double value)
+    public void setResolutionY(double value)
     {
-        if (pixelSpacingY != value)
+        if (resolutionY != value)
         {
-            pixelSpacingY = value;
+            resolutionY = value;
+            metaChanged(ID_RESOLUTION_Y);
         }
     }
 
     /**
-     * Set Z pixel spacing
+     * Set Z pixel resolution
      */
-    public void setPixelSpacingZ(double value)
+    public void setResolutionZ(double value)
     {
-        if (pixelSpacingZ != value)
+        if (resolutionZ != value)
         {
-            pixelSpacingZ = value;
+            resolutionZ = value;
+            metaChanged(ID_RESOLUTION_Z);
         }
     }
 
     /**
-     * Set T pixel spacing
+     * Set T time resolution
      */
-    public void setPixelSpacingT(double value)
+    public void setResolutionT(double value)
     {
-        if (pixelSpacingT != value)
+        if (resolutionT != value)
         {
-            pixelSpacingT = value;
-        }
-    }
-
-    /**
-     * Set C pixel spacing
-     */
-    public void setPixelSpacingC(double value)
-    {
-        if (pixelSpacingC != value)
-        {
-            pixelSpacingC = value;
-        }
-    }
-
-    /**
-     * Return X pixel spacing
-     */
-    public double getPixelSizeX()
-    {
-        return pixelSizeX;
-    }
-
-    /**
-     * Return Y pixel spacing
-     */
-    public double getPixelSizeY()
-    {
-        return pixelSizeY;
-    }
-
-    /**
-     * Return Z pixel spacing
-     */
-    public double getPixelSizeZ()
-    {
-        return pixelSizeZ;
-    }
-
-    /**
-     * Return T pixel spacing
-     */
-    public double getPixelSizeT()
-    {
-        return pixelSizeT;
-    }
-
-    /**
-     * Return C pixel spacing
-     */
-    public double getPixelSizeC()
-    {
-        return pixelSizeC;
-    }
-
-    /**
-     * Set X pixel spacing
-     */
-    public void setPixelSizeX(double value)
-    {
-        if (pixelSizeX != value)
-        {
-            pixelSizeX = value;
-        }
-    }
-
-    /**
-     * Set Y pixel spacing
-     */
-    public void setPixelSizeY(double value)
-    {
-        if (pixelSizeY != value)
-        {
-            pixelSizeY = value;
-        }
-    }
-
-    /**
-     * Set Z pixel spacing
-     */
-    public void setPixelSizeZ(double value)
-    {
-        if (pixelSizeZ != value)
-        {
-            pixelSizeZ = value;
-        }
-    }
-
-    /**
-     * Set T pixel spacing
-     */
-    public void setPixelSizeT(double value)
-    {
-        if (pixelSizeT != value)
-        {
-            pixelSizeT = value;
-        }
-    }
-
-    /**
-     * Set C pixel spacing
-     */
-    public void setPixelSizeC(double value)
-    {
-        if (pixelSizeC != value)
-        {
-            pixelSizeC = value;
+            resolutionT = value;
+            metaChanged(ID_RESOLUTION_T);
         }
     }
 
@@ -4582,6 +4465,14 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     private void nameChanged()
     {
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_NAME));
+    }
+
+    /**
+     * sequence meta has changed
+     */
+    private void metaChanged(String metaName)
+    {
+        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_META, metaName));
     }
 
     /**

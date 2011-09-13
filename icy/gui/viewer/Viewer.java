@@ -173,7 +173,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         public ScreenShotAlternateAction()
         {
             super("", new IcyIcon(ICON_PHOTO_SMALL, ICON_SIZE),
-                    "Take a screenshot of current view but with original sequence dimension");
+                    "Take a screenshot of current view with original sequence dimensions");
         }
 
         @Override

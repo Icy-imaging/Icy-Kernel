@@ -18,16 +18,19 @@
  */
 package icy.gui.component;
 
+import java.text.Format;
 import java.util.EventListener;
 
-import javax.swing.JTextField;
+import javax.swing.JFormattedTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 /**
+ * IcyTextField extends JFormattedTextField and provide easier change handling
+ * 
  * @author Stephane
  */
-public class IcyTextField extends JTextField implements DocumentListener
+public class IcyTextField extends JFormattedTextField implements DocumentListener
 {
     /**
      * 
@@ -39,10 +42,65 @@ public class IcyTextField extends JTextField implements DocumentListener
         public void textChanged(IcyTextField source);
     }
 
+    /**
+     * Creates a <code>IcyTextField</code> with no <code>AbstractFormatterFactory</code>. Use
+     * <code>setMask</code> or <code>setFormatterFactory</code> to configure the
+     * <code>JFormattedTextField</code> to edit a particular type of
+     * value.
+     */
     public IcyTextField()
     {
         super();
 
+        init();
+    }
+
+    /**
+     * Creates a <code>IcyTextField</code> with the specified <code>AbstractFormatter</code>. The
+     * <code>AbstractFormatter</code> is placed in an <code>AbstractFormatterFactory</code>.
+     * 
+     * @param formatter
+     *        AbstractFormatter to use for formatting.
+     */
+    public IcyTextField(AbstractFormatter formatter)
+    {
+        super(formatter);
+
+        init();
+    }
+
+    /**
+     * Creates a <code>IcyTextField</code>. <code>format</code> is
+     * wrapped in an appropriate <code>AbstractFormatter</code> which is
+     * then wrapped in an <code>AbstractFormatterFactory</code>.
+     * 
+     * @param format
+     *        Format used to look up an AbstractFormatter
+     */
+    public IcyTextField(Format format)
+    {
+        super(format);
+
+        init();
+    }
+
+    /**
+     * Creates a IcyTextField with the specified value. This will
+     * create an <code>AbstractFormatterFactory</code> based on the
+     * type of <code>value</code>.
+     * 
+     * @param value
+     *        Initial value for the IcyTextField
+     */
+    public IcyTextField(Object value)
+    {
+        super(value);
+
+        init();
+    }
+
+    private void init()
+    {
         getDocument().addDocumentListener(this);
     }
 

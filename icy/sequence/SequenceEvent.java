@@ -15,7 +15,7 @@ public class SequenceEvent implements EventHierarchicalChecker
 {
     public enum SequenceEventSourceType
     {
-        SEQUENCE_TYPE, SEQUENCE_NAME, SEQUENCE_COLORMAP, SEQUENCE_COMPONENTBOUNDS, SEQUENCE_DATA, SEQUENCE_ROI, SEQUENCE_PAINTER
+        SEQUENCE_TYPE, SEQUENCE_META, SEQUENCE_NAME, SEQUENCE_COLORMAP, SEQUENCE_COMPONENTBOUNDS, SEQUENCE_DATA, SEQUENCE_ROI, SEQUENCE_PAINTER
     }
 
     public enum SequenceEventType
@@ -32,6 +32,11 @@ public class SequenceEvent implements EventHierarchicalChecker
     public SequenceEvent(Sequence sequence, SequenceEventSourceType sourceType)
     {
         this(sequence, sourceType, null, SequenceEventType.CHANGED, -1);
+    }
+
+    public SequenceEvent(Sequence sequence, SequenceEventSourceType sourceType, Object source)
+    {
+        this(sequence, sourceType, source, SequenceEventType.CHANGED, -1);
     }
 
     public SequenceEvent(Sequence sequence, SequenceEventSourceType sourceType, Object source, int param)

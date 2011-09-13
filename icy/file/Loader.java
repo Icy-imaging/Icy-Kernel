@@ -455,33 +455,21 @@ public class Loader
      */
     public static void loadMetaData(Sequence sequence, MetadataRetrieve metaData)
     {
-        final double xs;
-        final double ys;
-        final double zs;
         PositiveFloat pf;
+        Double d;
 
         pf = metaData.getPixelsPhysicalSizeX(0);
         if (pf != null)
-            xs = pf.getValue().doubleValue();
-        else
-            xs = 0d;
+            sequence.setResolutionX(pf.getValue().doubleValue());
         pf = metaData.getPixelsPhysicalSizeY(0);
         if (pf != null)
-            ys = pf.getValue().doubleValue();
-        else
-            ys = 0d;
+            sequence.setResolutionZ(pf.getValue().doubleValue());
         pf = metaData.getPixelsPhysicalSizeZ(0);
         if (pf != null)
-            zs = pf.getValue().doubleValue();
-        else
-            zs = 0d;
-
-        if (xs != 0d)
-            sequence.setPixelSizeX(xs);
-        if (ys != 0d)
-            sequence.setPixelSizeY(ys);
-        if (zs != 0d)
-            sequence.setPixelSizeZ(zs);
+            sequence.setResolutionZ(pf.getValue().doubleValue());
+        d = metaData.getPixelsTimeIncrement(0);
+        if (d != null)
+            sequence.setResolutionT(d.doubleValue());
     }
 
     /**

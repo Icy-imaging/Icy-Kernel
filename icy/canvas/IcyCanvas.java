@@ -3185,6 +3185,14 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
+     * sequence meta data has changed
+     */
+    protected void sequenceMetaChanged(String metadataName)
+    {
+
+    }
+
+    /**
      * sequence type has changed
      */
     protected void sequenceTypeChanged()
@@ -3383,6 +3391,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     {
         switch (event.getSourceType())
         {
+            case SEQUENCE_META:
+                sequenceMetaChanged((String) event.getSource());
+                break;
+
             case SEQUENCE_TYPE:
                 sequenceTypeChanged();
                 break;
