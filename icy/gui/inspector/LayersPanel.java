@@ -415,7 +415,11 @@ public class LayersPanel extends JPanel implements ViewerListener, LayersListene
             if (v != null)
             {
                 v.addListener(this);
-                v.getCanvas().addLayersListener(this);
+
+                final IcyCanvas canvas = viewer.getCanvas();
+                // canvas can be null if viewer has just been closed
+                if (canvas != null)
+                    canvas.addLayersListener(this);
             }
 
             rebuildLayersPanel();

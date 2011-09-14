@@ -331,8 +331,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                         }
                     }
 
-                    // minimum size to start : 320, 240
-                    final Dimension size = new Dimension(Math.max(getWidth(), 320), Math.max(getHeight(), 240));
+                    // minimum size to start : 400, 240
+                    final Dimension size = new Dimension(Math.max(getWidth(), 400), Math.max(getHeight(), 240));
                     // minimum size global : 200, 140
                     final Dimension minSize = new Dimension(200, 140);
 

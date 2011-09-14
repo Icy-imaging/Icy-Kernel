@@ -24,6 +24,7 @@ import icy.gui.frame.ActionFrame;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.gui.frame.progress.DownloadFrame;
+import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.util.GuiUtil;
 import icy.main.Icy;
@@ -244,8 +245,11 @@ public class IcyUpdater
                     {
                         // download required files
                         if (prepareUpdate(elements, true))
-                            // restart application to finish udpate process
+                            // restart application to finish update process
                             doRestart.run();
+                        else
+                            new FailedAnnounceFrame(
+                                    "An error occured while downloading files (see details in console)", 10000);
                     }
                 });
             }
@@ -332,9 +336,8 @@ public class IcyUpdater
 
                     if (downloadingFrame != null)
                     {
-                        final String mess = "Downloading updates " + curFile + " / " + numFile;
                         // update progress frame message and position
-                        downloadingFrame.setMessageBase(mess);
+                        downloadingFrame.setMessage("Downloading updates " + curFile + " / " + numFile);
 
                         final String toolTip = "Downloading " + element.getName() + " : "
                                 + FileUtil.getFileName(elementFile.getLocalPath());
@@ -437,11 +440,11 @@ public class IcyUpdater
             }
 
             // this is not really needed...
-            // if (!canDoUpdate())
-            // {
-            // System.err.println("Can't process update : some required files are missing.");
-            // return false;
-            // }
+            if (!canDoUpdate())
+            {
+                System.err.println("Can't process update : some required files are missing.");
+                return false;
+            }
         }
 
         String params = "";

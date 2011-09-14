@@ -55,5 +55,4 @@ public class FailedAnnounceFrame extends AnnounceFrame
     {
         this(message, DEFAULT_LIVETIME);
     }
-
 }

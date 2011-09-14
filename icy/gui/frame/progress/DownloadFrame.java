@@ -35,7 +35,6 @@ public class DownloadFrame extends CancelableProgressFrame
     /**
      * internal
      */
-    private String messageBase;
     private final RateMeter meter;
 
     public DownloadFrame(String path)
@@ -47,19 +46,44 @@ public class DownloadFrame extends CancelableProgressFrame
     {
         super(StringUtil.limit("Downloading " + path, 64));
 
-        messageBase = StringUtil.limit("Downloading " + path, 64);
         meter = new RateMeter();
         this.length = length;
         rate = 0;
     }
 
+    /**
+     * @deprecated use setMessage(..) instead
+     */
+    @Deprecated
     public void setMessageBase(String messageBase)
     {
-        if (!this.messageBase.equals(messageBase))
-        {
-            this.messageBase = messageBase;
-            updateDisplay();
-        }
+        setMessage(messageBase);
+    }
+
+    @Override
+    protected String buildMessage(String text)
+    {
+        String mess = text + "  [";
+
+        // information on position
+        if (position != -1d)
+            mess += MathUtil.getBytesString(position);
+        else
+            mess += "???";
+
+        mess += " / ";
+
+        if (length > 0d)
+            mess += MathUtil.getBytesString(length);
+        else
+            mess += "???";
+
+        if (rate > 0)
+            mess += " - " + MathUtil.getBytesString(rate) + "/s";
+
+        mess += "]";
+
+        return super.buildMessage(mess);
     }
 
     @Override
@@ -83,31 +107,4 @@ public class DownloadFrame extends CancelableProgressFrame
         super.setPosition(position);
     }
 
-    @Override
-    protected void updateDisplay()
-    {
-        String mess = messageBase + "  [";
-
-        // information on position
-        if (position != -1d)
-            mess += MathUtil.getBytesString(position);
-        else
-            mess += "???";
-
-        mess += " / ";
-
-        if (length > 0d)
-            mess += MathUtil.getBytesString(length);
-        else
-            mess += "???";
-
-        if (rate > 0)
-            mess += " - " + MathUtil.getBytesString(rate) + "/s";
-
-        mess += "]";
-
-        setMessage(mess);
-
-        super.updateDisplay();
-    }
 }

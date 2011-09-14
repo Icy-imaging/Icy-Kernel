@@ -31,27 +31,58 @@ import javax.swing.Timer;
 
 public class AnnounceFrame extends TaskFrame implements ActionListener
 {
-    private static final long serialVersionUID = 4142697844941567437L;
-
     JButton button;
     JLabel label;
     Timer timer;
     Runnable action;
 
+    /**
+     * Show an announcement with specified message.
+     * 
+     * @param message
+     *        message to display in announcement
+     */
     public AnnounceFrame(final String message)
     {
         this(message, "Ok", null, 0);
     }
 
+    /**
+     * Show an announcement with specified parameters.
+     * 
+     * @param message
+     *        message to display in announcement
+     * @param btnAction
+     *        action on button click
+     */
     public AnnounceFrame(final String message, final Runnable btnAction)
     {
         this(message, "Ok", btnAction, 0);
     }
 
+    /**
+     * Show an announcement with specified parameters
+     * 
+     * @param message
+     *        message to display in announcement
+     * @param liveTime
+     *        life time in second (0 = infinite)
+     */
     public AnnounceFrame(final String message, final int liveTime)
     {
         this(message, "Ok", null, liveTime);
     }
+
+    /**
+     * Show an announcement with specified parameters
+     * 
+     * @param message
+     *        message to display in announcement
+     * @param btnAction
+     *        action on button click
+     * @param liveTime
+     *        life time in second (0 = infinite)
+     */
 
     public AnnounceFrame(final String message, final Runnable btnAction, final int liveTime)
     {
@@ -62,13 +93,14 @@ public class AnnounceFrame extends TaskFrame implements ActionListener
      * Show an announcement with specified parameters
      * 
      * @param message
+     *        message to display in announcement
      * @param buttonText
+     *        button text
      * @param btnAction
      *        action on button click
      * @param liveTime
      *        life time in second (0 = infinite)
      */
-
     public AnnounceFrame(final String message, final String buttonText, final Runnable btnAction, final int liveTime)
     {
         super("");
@@ -124,7 +156,6 @@ public class AnnounceFrame extends TaskFrame implements ActionListener
         this.action = action;
     }
 
-    
     @Override
     public void actionPerformed(ActionEvent e)
     {

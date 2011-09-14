@@ -373,7 +373,8 @@ public class NetworkUtil
                     if (urlString.startsWith(ApplicationPreferences.getUpdateRepositoryBase()))
                     {
                         if (e instanceof FileNotFoundException)
-                            System.err.println("Update site URL does not exists !");
+                            System.err.println("Update site URL does not exists or file '" + uc.getURL().getPath()
+                                    + "' does not exists.");
                         else if (e.getMessage().indexOf("HTTP response code: 500 ") != -1)
                             System.out.println("Network error : can't connect to update site");
                         else

@@ -27,8 +27,6 @@ import icy.util.StringUtil;
  */
 public class FileFrame extends CancelableProgressFrame
 {
-    private static final long serialVersionUID = 1348746254614416380L;
-
     private final String action;
     private String filename;
 

@@ -104,63 +104,74 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
         return "  " + message + "  ";
     }
 
-    protected void updateDisplay()
+    public void refresh()
     {
         processor.requestProcess(new Runnable()
         {
             @Override
             public void run()
             {
-                // position information
-                if ((position != -1d) && (length > 0d))
-                {
-                    // remove indeterminate state
-                    if (progressBar.isIndeterminate())
-                        progressBar.setIndeterminate(false);
-
-                    // set progress
-                    final int value = (int) (position * 1000d / length);
-                    if (progressBar.getValue() != value)
-                        progressBar.setValue(value);
-                }
-                else
-                {
-                    // set indeterminate state
-                    if (!progressBar.isIndeterminate())
-                        progressBar.setIndeterminate(true);
-                }
-
-                final String text = buildMessage(message);
-
-                // set progress message
-                if (!StringUtil.equals(progressBar.getString(), text))
-                {
-                    progressBar.setString(text);
-                    // so component is resized according to its string length
-                    progressBar.invalidate();
-                    // repack frame
-                    pack();
-                }
-
-                // set tooltip
-                if (!StringUtil.equals(progressBar.getToolTipText(), tooltip))
-                    progressBar.setToolTipText(tooltip);
+                updateDisplay();
             }
         }, true);
     }
 
+    protected void updateDisplay()
+    {
+        // position information
+        if ((position != -1d) && (length > 0d))
+        {
+            // remove indeterminate state
+            if (progressBar.isIndeterminate())
+                progressBar.setIndeterminate(false);
+
+            // set progress
+            final int value = (int) (position * 1000d / length);
+            if (progressBar.getValue() != value)
+                progressBar.setValue(value);
+        }
+        else
+        {
+            // set indeterminate state
+            if (!progressBar.isIndeterminate())
+                progressBar.setIndeterminate(true);
+        }
+
+        final String text = buildMessage(message);
+
+        // set progress message
+        if (!StringUtil.equals(progressBar.getString(), text))
+        {
+            progressBar.setString(text);
+            // so component is resized according to its string length
+            progressBar.invalidate();
+            // repack frame
+            pack();
+        }
+
+        // set tooltip
+        if (!StringUtil.equals(progressBar.getToolTipText(), tooltip))
+            progressBar.setToolTipText(tooltip);
+    }
+
     public void setMessage(String value)
     {
-        message = value;
-        updateDisplay();
+        if (message != value)
+        {
+            message = value;
+            refresh();
+        }
     }
 
     // we want tooltip set on the progress component only
     @Override
     public void setToolTipText(String value)
     {
-        tooltip = value;
-        updateDisplay();
+        if (tooltip != value)
+        {
+            tooltip = value;
+            refresh();
+        }
     }
 
     /**
@@ -177,8 +188,11 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
      */
     public void setLength(double value)
     {
-        length = value;
-        updateDisplay();
+        if (length != value)
+        {
+            length = value;
+            refresh();
+        }
     }
 
     /**
@@ -203,19 +217,24 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
      */
     public void setPosition(double value)
     {
-        position = value;
-        updateDisplay();
+        if (position != value)
+        {
+            position = value;
+            refresh();
+        }
     }
 
     @Override
     public boolean notifyProgress(double position, double length)
     {
-        this.length = length;
-        this.position = position;
+        if ((this.position != position) || (this.length != length))
+        {
+            this.length = length;
+            this.position = position;
 
-        updateDisplay();
+            refresh();
+        }
 
         return true;
     }
-
 }
