@@ -81,11 +81,9 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
         // JFrame doesn't have updateUI() method so we have to listen LAF skin change
         LookAndFeelUtil.addSkinChangeListener(this);
     }
-
-    private void updateTitlePane()
+    
+    protected void updateTitlePane(final SubstanceTitlePane pane)
     {
-        final SubstanceTitlePane pane = LookAndFeelUtil.getTitlePane(this);
-
         // update pane save
         if (pane != null)
         {
@@ -109,6 +107,12 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
 
         // refresh system menu
         updateSystemMenu();
+    	
+    }
+    
+    protected void updateTitlePane()
+    {
+        updateTitlePane(LookAndFeelUtil.getTitlePane(this));
     }
 
     /**

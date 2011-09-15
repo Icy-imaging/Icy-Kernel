@@ -112,11 +112,9 @@ public class IcyInternalFrame extends JInternalFrame
         titleBarVisible = true;
         initialized = true;
     }
-
-    private void updateTitlePane()
+    
+    protected void updateTitlePane(final SubstanceInternalFrameTitlePane pane)
     {
-        final SubstanceInternalFrameTitlePane pane = LookAndFeelUtil.getTitlePane(this);
-
         // update pane save
         if (pane != null)
         {
@@ -147,6 +145,11 @@ public class IcyInternalFrame extends JInternalFrame
 
         // refresh system menu whatever
         updateSystemMenu();
+    }
+    
+    protected void updateTitlePane()
+    {
+        updateTitlePane(LookAndFeelUtil.getTitlePane(this));
     }
 
     /**

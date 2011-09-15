@@ -60,13 +60,13 @@
 <key name="nbFile" value="0"/>
 </section>
 </section>
-<key name="os" value="win64"/>
+<key name="os" value="mac64"/>
 </section>
 <section name="plugins"/>
 <section name="frame">
 <section name="main">
 <key name="XE" value="104"/>
-<key name="YE" value="94"/>
+<key name="YE" value="321"/>
 <key name="WidthE" value="952"/>
 <key name="HeightE" value="672"/>
 <key name="MinimizedE" value="false"/>
