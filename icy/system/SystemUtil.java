@@ -128,6 +128,11 @@ public class SystemUtil
         return getDefaultScreenDevice().getDefaultConfiguration();
     }
 
+    public static ClassLoader getContextClassLoader()
+    {
+        return Thread.currentThread().getContextClassLoader();
+    }
+
     public static ClassLoader getSystemClassLoader()
     {
         return ClassLoader.getSystemClassLoader();

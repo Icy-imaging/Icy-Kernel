@@ -157,7 +157,7 @@ public class InspectorPanel extends ExternalizablePanel
         // mainPane.add("Active Plugin", pluginsPanel);
         mainPane.addTab("Layer", null, layersPanel, "Show all layers details");
         mainPane.addTab("ROI", null, roisPanel, "Manage / edit your ROI");
-        // mainPane.addTab("Undo", null, new UndoManagerPanel(), "");
+        mainPane.addTab("Undo", null, new UndoManagerPanel(), "");
         mainPane.addTab("Output", null, outputPanel);
 
         setMinimumSize(new Dimension(240, 480));

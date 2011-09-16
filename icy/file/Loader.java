@@ -279,6 +279,7 @@ public class Loader
                         newPos.setT(newPos.getT() + 1);
                         newPos.setZ(0);
                         prevPos.setT(position.getT());
+                        prevPos.setZ(0);
                     }
                     else if (prevPos.getZ() != position.getZ())
                     {
@@ -575,16 +576,18 @@ public class Loader
     {
         final List<File> result = FileUtil.explode(files, true, false);
 
-        // temporary remove XML File at load
+        // extensions based exclusion
         for (int i = result.size() - 1; i >= 0; i--)
         {
             final File file = result.get(i);
+            final String path = file.getPath();
+            final String ext = FileUtil.getFileExtension(path, false).toLowerCase();
 
-            if (FileUtil.getFileExtension(file.getPath(), false).equalsIgnoreCase("xml"))
-            {
+            // removes typical extension we can find mixed with image
+            if (StringUtil.equals(ext, "xml") || StringUtil.equals(ext, "txt") || StringUtil.equals(ext, "pdf")
+                    || StringUtil.equals(ext, "xls") || StringUtil.equals(ext, "doc") || StringUtil.equals(ext, "doc")
+                    || StringUtil.equals(ext, "docx"))
                 result.remove(i);
-                System.out.println("XML File ignored: " + file.getPath());
-            }
         }
 
         return result;

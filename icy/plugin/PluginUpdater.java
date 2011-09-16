@@ -193,7 +193,7 @@ public class PluginUpdater extends ActionFrame
         PluginLoader.setLogError(false);
         try
         {
-            // update plugins with dependencies ordering
+            // update plugins with ordered dependencies
             for (PluginDescriptor plugin : PluginInstaller.getDependenciesOrderedList(plugins))
                 PluginInstaller.install(loader, plugin, showProgress);
         }

@@ -113,10 +113,11 @@ public class IcyInternalFrame extends JInternalFrame
         initialized = true;
     }
 
-    private void updateTitlePane()
+    /**
+     * update internals informations linked to title pane with specified pane
+     */
+    protected void updateTitlePane(final SubstanceInternalFrameTitlePane pane)
     {
-        final SubstanceInternalFrameTitlePane pane = LookAndFeelUtil.getTitlePane(this);
-
         // update pane save
         if (pane != null)
         {
@@ -150,9 +151,17 @@ public class IcyInternalFrame extends JInternalFrame
     }
 
     /**
+     * update internals informations linked to title pane
+     */
+    protected void updateTitlePane()
+    {
+        updateTitlePane(LookAndFeelUtil.getTitlePane(this));
+    }
+
+    /**
      * Return true if specified point is located on title bar icon (system icon)
      */
-    boolean isOnSystemIcon(Point p)
+    protected boolean isOnSystemIcon(Point p)
     {
         if (titlePane == null)
             return false;

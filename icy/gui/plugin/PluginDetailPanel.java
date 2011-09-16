@@ -174,7 +174,7 @@ public class PluginDetailPanel extends IcyFrame
         // infos.add(createBooleanLabel(PluginDescriptor.TYPE_ROI));
         // infos.add(createBooleanLabel(PluginDescriptor.TYPE_UNDOABLE));
         infos.add(GuiUtil.createTabBoldLabel("Description", 1));
-        infos.add(GuiUtil.createTabArea(plugin.getDesc(), 32, 140));
+        infos.add(GuiUtil.createTabArea(plugin.getDescription(), 32, 140));
         infos.add(Box.createVerticalGlue());
 
         panel.add(infos);

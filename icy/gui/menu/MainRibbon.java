@@ -107,7 +107,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         final RichTooltip richToolTip = new RichTooltip(name, "Description: " + plugin.getDescription());
         richToolTip.setMainImage(plugin.getIconAsImage());
         richToolTip.addDescriptionSection("Name: " + plugin.getName());
-        richToolTip.addDescriptionSection("From: " + plugin.getWeb());
+        // TODO : uncomment when field is ready
+        // richToolTip.addDescriptionSection("Website: " + plugin.getWeb());
         richToolTip.addDescriptionSection("Author: " + plugin.getAuthor());
         richToolTip.setFooterImage(plugin.getImage());
         // richToolTip.addFooterSection("Workspace: basic");

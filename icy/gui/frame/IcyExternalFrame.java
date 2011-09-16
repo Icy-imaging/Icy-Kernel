@@ -82,10 +82,11 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
         LookAndFeelUtil.addSkinChangeListener(this);
     }
 
-    private void updateTitlePane()
+    /**
+     * update internals informations linked to title pane with specified pane
+     */
+    protected void updateTitlePane(final SubstanceTitlePane pane)
     {
-        final SubstanceTitlePane pane = LookAndFeelUtil.getTitlePane(this);
-
         // update pane save
         if (pane != null)
         {
@@ -109,6 +110,14 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
 
         // refresh system menu
         updateSystemMenu();
+    }
+
+    /**
+     * update internals informations linked to title pane
+     */
+    protected void updateTitlePane()
+    {
+        updateTitlePane(LookAndFeelUtil.getTitlePane(this));
     }
 
     /**

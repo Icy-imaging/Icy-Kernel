@@ -261,6 +261,12 @@ public class PluginDescriptor implements XMLPersistent
 
             return super.equals(obj);
         }
+
+        @Override
+        public String toString()
+        {
+            return className + " " + version.toString();
+        }
     }
 
     public static class PluginOnlineIdent extends PluginIdent

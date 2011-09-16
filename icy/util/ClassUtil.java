@@ -43,6 +43,14 @@ import java.util.jar.JarFile;
 public class ClassUtil
 {
     /**
+     * Return the current thread context class loader
+     */
+    public static ClassLoader getContextClassLoader()
+    {
+        return SystemUtil.getContextClassLoader();
+    }
+
+    /**
      * Return the system class loader
      */
     public static ClassLoader getSystemClassLoader()
@@ -542,8 +550,9 @@ public class ClassUtil
             }
             catch (NoSuchMethodException e)
             {
-                result = null;
+                // ignore
             }
+
             clazz = clazz.getSuperclass();
         }
 
@@ -587,7 +596,7 @@ public class ClassUtil
             }
             catch (NoSuchFieldException e)
             {
-                result = null;
+                // ignore
             }
 
             clazz = clazz.getSuperclass();
