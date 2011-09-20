@@ -18,11 +18,14 @@
  */
 package icy.roi;
 
+import icy.canvas.IcyCanvas;
 import icy.painter.Anchor2D;
+import icy.util.EventUtil;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Polygon;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -38,6 +41,27 @@ public class ROI2DPolyLine extends ROI2DShape
 {
     public static final String ID_POINTS = "points";
     public static final String ID_POINT = "point";
+
+    protected class ROI2DPolyLinePainter extends ROI2DShapePainter
+    {
+        @Override
+        public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        {
+            super.mouseClick(e, imagePoint, canvas);
+
+            if (EventUtil.isLeftMouseButton(e))
+            {
+                if (e.getClickCount() > 1)
+                {
+                    if (ROI2DPolyLine.this.selected)
+                    {
+                        ROI2DPolyLine.this.setSelected(false, false);
+                        e.consume();
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * 
@@ -62,6 +86,12 @@ public class ROI2DPolyLine extends ROI2DShape
     public ROI2DPolyLine()
     {
         this(new Point2D.Double());
+    }
+
+    @Override
+    protected ROI2DPolyLinePainter createPainter()
+    {
+        return new ROI2DPolyLinePainter();
     }
 
     protected Path2D getPath()

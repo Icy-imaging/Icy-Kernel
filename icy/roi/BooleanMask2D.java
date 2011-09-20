@@ -22,6 +22,8 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 
 /**
+ * Class to define a 2D boolean mask and make basic boolean operation between masks.
+ * 
  * @author Stephane
  */
 public class BooleanMask2D

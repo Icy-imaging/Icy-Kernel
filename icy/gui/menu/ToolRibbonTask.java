@@ -292,7 +292,7 @@ public class ToolRibbonTask extends RibbonTask
                 buttonGroup.setSelected(button, true);
 
                 currentTool = toolName;
-                fireChangedEvent(toolName);
+                toolChanged(toolName);
             }
         }
     }
@@ -302,8 +302,13 @@ public class ToolRibbonTask extends RibbonTask
         if (!currentTool.equals(toolName))
         {
             currentTool = toolName;
-            fireChangedEvent(toolName);
+            toolChanged(toolName);
         }
+    }
+
+    public void toolChanged(String toolName)
+    {
+        fireChangedEvent(toolName);
     }
 
     /**

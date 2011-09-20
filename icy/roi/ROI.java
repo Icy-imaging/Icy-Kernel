@@ -272,18 +272,19 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
     /**
      * ROI painter
      */
-    private final AbstractPainter painter;
+    protected final AbstractPainter painter;
     /**
      * ROI stroke (canvas coordinates)
      */
-    private double stroke;
+    protected double stroke;
 
-    private int id;
-    private Color color;
-    private Color selectedColor;
-    private String name;
-    private boolean focused;
-    private boolean selected;
+    protected int id;
+    protected Color color;
+    protected Color selectedColor;
+    protected String name;
+    protected boolean creating;
+    protected boolean focused;
+    protected boolean selected;
 
     /**
      * last mouse position (image coordinates)
@@ -310,20 +311,13 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
         color = DEFAULT_NORMAL_COLOR;
         selectedColor = DEFAULT_SELECTED_COLOR;
         name = "";
+        creating = true;
         focused = false;
         selected = false;
 
         mousePos = new Point2D.Double();
         listeners = new EventListenerList();
         updater = new UpdateEventHandler(this, false);
-    }
-
-    @Override
-    protected void finalize() throws Throwable
-    {
-        delete();
-
-        super.finalize();
     }
 
     protected abstract ROIPainter createPainter();
@@ -519,6 +513,14 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
     }
 
     /**
+     * @return the creating
+     */
+    public boolean isCreating()
+    {
+        return creating;
+    }
+
+    /**
      * @return the focused
      */
     public boolean isFocused()
@@ -612,6 +614,8 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
         if (selected != false)
         {
             selected = false;
+            // as soon ROI has been unselected, we're not in create mode anymore
+            creating = false;
             painterChanged();
         }
     }
@@ -689,13 +693,13 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
         if (node == null)
             return false;
 
-        XMLUtil.setElementValue(node, ID_CLASSNAME, getClass().getName());
+        XMLUtil.setElementValue(node, ID_CLASSNAME, getClassName());
         XMLUtil.setElementIntValue(node, ID_ID, id);
-        XMLUtil.setElementValue(node, ID_NAME, getName());
-        XMLUtil.setElementIntValue(node, ID_COLOR, getColor().getRGB());
-        XMLUtil.setElementIntValue(node, ID_SELECTED_COLOR, getSelectedColor().getRGB());
-        XMLUtil.setElementDoubleValue(node, ID_STROKE, getStroke());
-        XMLUtil.setElementBooleanValue(node, ID_SELECTED, isSelected());
+        XMLUtil.setElementValue(node, ID_NAME, name);
+        XMLUtil.setElementIntValue(node, ID_COLOR, color.getRGB());
+        XMLUtil.setElementIntValue(node, ID_SELECTED_COLOR, selectedColor.getRGB());
+        XMLUtil.setElementDoubleValue(node, ID_STROKE, stroke);
+        XMLUtil.setElementBooleanValue(node, ID_SELECTED, selected);
 
         return true;
     }
@@ -786,7 +790,7 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
 
         switch (event.getType())
         {
-            // do here global process on ROI change
+        // do here global process on ROI change
             case ROI_CHANGED:
             case PAINTER_CHANGED:
                 // painter of ROI changed

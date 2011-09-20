@@ -18,6 +18,8 @@
  */
 package icy.util;
 
+import icy.math.MathUtil;
+
 /**
  * @author stephane
  */
@@ -318,7 +320,38 @@ public class StringUtil
      */
     public static String toString(double value)
     {
+        final int i = (int) value;
+
+        if (i == value)
+            return toString(i);
+
         return Double.toString(value);
+    }
+
+    /**
+     * Returns a string representation of the <code>double</code> argument
+     * with specified number of decimal.
+     */
+    public static String toString(double value, int numDecimal)
+    {
+        return Double.toString(MathUtil.round(value, numDecimal));
+    }
+
+    /**
+     * Returns a string representation of the <code>double</code> argument with specified size :<br>
+     * <code>toString(1.23456, 5)</code> --> <code>"1.2345"</code><br>
+     * <code>toString(123.4567, 4)</code> --> <code>"123.4"</code><br>
+     * <code>toString(1234.567, 2)</code> --> <code>"1234"</code> as we never trunk integer part.<br>
+     * <code>toString(1234.5, 10)</code> --> <code>"1234.5"</code> as we never trunk integer part.<br>
+     */
+    public static String toStringEx(double value, int size)
+    {
+        final int i = (int) value;
+
+        if (i == value)
+            return toString(i);
+
+        return Double.toString(MathUtil.roundSignificant(value, size, true));
     }
 
     /**

@@ -231,7 +231,7 @@ public class MainFrame extends JRibbonFrame
     // private final BottomPanel bottomPanel;
     final InspectorPanel inspector;
     private final FileAndTextTransferHandler fileAndTextTransferHandler;
-    int splitLocation;
+    int lastInspectorWidth;
 
     /**
      * @throws HeadlessException
@@ -270,12 +270,12 @@ public class MainFrame extends JRibbonFrame
 
         final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, desktopPane, null);
         // take in account the divider size
-        splitLocation = getContentPane().getWidth() - (inspector.getPreferredSize().width + 6);
+        lastInspectorWidth = getContentPane().getWidth() - (inspector.getPreferredSize().width + 6);
         if (inspector.isInternalized())
         {
             splitPane.setRightComponent(inspector);
             splitPane.setDividerSize(6);
-            splitPane.setDividerLocation(splitLocation);
+            splitPane.setDividerLocation(lastInspectorWidth);
         }
         else
         {
@@ -292,7 +292,7 @@ public class MainFrame extends JRibbonFrame
                 {
                     // save diviser location
                     if (inspector.isInternalized())
-                        splitLocation = splitPane.getDividerLocation();
+                        lastInspectorWidth = getWidth() - splitPane.getDividerLocation();
 
                     inspector.switchState();
                 }
@@ -310,7 +310,7 @@ public class MainFrame extends JRibbonFrame
                 {
                     splitPane.setDividerSize(6);
                     // restore previous location
-                    splitPane.setDividerLocation(splitLocation);
+                    splitPane.setDividerLocation(getWidth() - lastInspectorWidth);
                 }
             }
         });

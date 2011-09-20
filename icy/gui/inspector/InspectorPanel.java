@@ -160,7 +160,7 @@ public class InspectorPanel extends ExternalizablePanel
         mainPane.addTab("Undo", null, new UndoManagerPanel(), "");
         mainPane.addTab("Output", null, outputPanel);
 
-        setMinimumSize(new Dimension(240, 480));
+        setMinimumSize(new Dimension(260, 480));
         setLayout(new BorderLayout());
 
         // add(viewerPanel, BorderLayout.NORTH);

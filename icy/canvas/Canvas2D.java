@@ -8,6 +8,7 @@ import icy.gui.component.ComponentUtil;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.menu.ToolRibbonTask;
+import icy.gui.menu.ToolRibbonTask.ToolRibbonTaskListener;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.TNavigationPanel;
 import icy.gui.viewer.Viewer;
@@ -82,7 +83,7 @@ import javax.swing.event.ChangeListener;
  * 
  * @author Stephane
  */
-public class Canvas2D extends IcyCanvas2D
+public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 {
     /**
      * 
@@ -1352,8 +1353,6 @@ public class Canvas2D extends IcyCanvas2D
 
     JComboBox zoomComboBox;
     JComboBox rotationComboBox;
-    // private JLabel zoomLabel;
-    // private JLabel rotationLabel;
 
     IcyToggleButton zoomFitCanvasButton;
     IcyButton zoomFitImageButton;
@@ -1493,6 +1492,24 @@ public class Canvas2D extends IcyCanvas2D
 
         // as scale isn't necessary changed (if already 100%)
         zoomComboBox.setSelectedItem(Integer.toString((int) (getScaleX() * 100)) + " %");
+
+        final ToolRibbonTask trt = Icy.getMainInterface().getToolRibbon();
+        if (trt != null)
+            trt.addListener(this);
+    }
+
+    @Override
+    public void shutDown()
+    {
+        super.shutDown();
+
+        // need to remove listener else internal timer keep a reference to Canvas2D
+        transform.removeAllListeners();
+        transform.stopAll();
+
+        final ToolRibbonTask trt = Icy.getMainInterface().getToolRibbon();
+        if (trt != null)
+            trt.removeListener(this);
     }
 
     /**
@@ -2550,7 +2567,7 @@ public class Canvas2D extends IcyCanvas2D
 
             case MOUSE_IMAGE_POSITION_CHANGED:
                 // mouse position changed outside mouse move event ?
-                if (!canvasView.handlingMouseMoveEvent && !canvasView.dragging)
+                if (!canvasView.handlingMouseMoveEvent && !canvasView.dragging && (!isSynchSlave()))
                 {
                     // mouse position in canvas
                     final Point mouseAbsolutePos = new Point(mouseCanvasPos);
@@ -2627,5 +2644,15 @@ public class Canvas2D extends IcyCanvas2D
             canvasView.imageChanged();
             canvasView.refresh();
         }
+    }
+
+    @Override
+    public void toolChanged(String command)
+    {
+        final Sequence seq = getSequence();
+
+        // unselected all ROI
+        if (seq != null)
+            seq.setSelectedROIs(null);
     }
 }

@@ -371,6 +371,11 @@ public class MultiSmoothMover implements ActionListener
         listeners.remove(listener);
     }
 
+    public void removeAllListeners()
+    {
+        listeners.clear();
+    }
+
     /**
      * Move started event
      */
@@ -426,4 +431,5 @@ public class MultiSmoothMover implements ActionListener
             if (moving[index])
                 updateCurrentValue(index, time);
     }
+
 }

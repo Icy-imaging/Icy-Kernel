@@ -80,7 +80,7 @@ public abstract class ROI2D extends ROI
             }
             // no exclusive --> add or remove selection
             else if (selected)
-                ROI2D.this.setSelected(!ROI2D.this.isSelected(), false);
+                ROI2D.this.setSelected(!ROI2D.this.selected, false);
 
             // no need to go further as we can have only one selected instance
             if (selected)
@@ -106,13 +106,13 @@ public abstract class ROI2D extends ROI
                         if (EventUtil.isShiftDown(e))
                         {
                             // roi focused ? --> delete ROI
-                            if (ROI2D.this.isFocused())
+                            if (ROI2D.this.focused)
                             {
                                 ROI2D.this.delete();
                                 e.consume();
                             }
                             // roi selected ?
-                            else if (ROI2D.this.isSelected())
+                            else if (ROI2D.this.selected)
                             {
                                 // remove point at current position
                                 if (removePointAt(canvas, imagePoint))
@@ -123,10 +123,10 @@ public abstract class ROI2D extends ROI
                         else
                         {
                             // roi focused ? --> update select
-                            if (ROI2D.this.isFocused())
+                            if (ROI2D.this.focused)
                                 updateSelect(e, imagePoint, canvas);
                             // roi selected and no point selected ?
-                            else if (ROI2D.this.isSelected() && !ROI2D.this.hasSelectedPoint())
+                            else if (ROI2D.this.selected && !ROI2D.this.hasSelectedPoint())
                             {
                                 // try to add point
                                 if (addPointAt(imagePoint, EventUtil.isControlDown(e)))
@@ -172,7 +172,7 @@ public abstract class ROI2D extends ROI
                                 e.consume();
                             }
                             // roi selected ?
-                            else if (ROI2D.this.isSelected())
+                            else if (ROI2D.this.selected)
                             {
                                 // remove point at current position
                                 if (removePointAt(canvas, imagePoint))
@@ -183,7 +183,7 @@ public abstract class ROI2D extends ROI
                         else
                         {
                             // roi focused ?
-                            if (ROI2D.this.isFocused())
+                            if (ROI2D.this.focused)
                             {
                                 final double dx = imagePoint.getX() - mousePos.getX();
                                 final double dy = imagePoint.getY() - mousePos.getY();
@@ -194,7 +194,7 @@ public abstract class ROI2D extends ROI
                                 e.consume();
                             }
                             // roi selected ?
-                            else if (ROI2D.this.isSelected())
+                            else if (ROI2D.this.selected)
                             {
                                 // add a new point
                                 if (addPointAt(imagePoint, EventUtil.isControlDown(e)))
@@ -239,7 +239,7 @@ public abstract class ROI2D extends ROI
                 {
                     case KeyEvent.VK_ESCAPE:
                         // shape selected ? --> unselect the ROI
-                        if (ROI2D.this.isSelected())
+                        if (ROI2D.this.selected)
                         {
                             ROI2D.this.setSelected(false, false);
                             e.consume();
@@ -249,7 +249,7 @@ public abstract class ROI2D extends ROI
                     case KeyEvent.VK_DELETE:
                     case KeyEvent.VK_BACK_SPACE:
                         // roi selected ?
-                        if (ROI2D.this.isSelected())
+                        if (ROI2D.this.selected)
                         {
                             // remove selected control point if there is one
                             if (removeSelectedPoint(canvas, imagePoint))
@@ -262,7 +262,7 @@ public abstract class ROI2D extends ROI
                             }
                         }
                         // roi focused ? --> delete ROI
-                        else if (ROI2D.this.isFocused())
+                        else if (ROI2D.this.focused)
                         {
                             ROI2D.this.delete();
                             e.consume();
@@ -369,7 +369,7 @@ public abstract class ROI2D extends ROI
      */
     public boolean isActiveFor(IcyCanvas canvas)
     {
-        return isActiveFor(canvas.getZ(), canvas.getT(), canvas.getC());
+        return isActiveFor(canvas.getPositionZ(), canvas.getPositionT(), canvas.getPositionC());
     }
 
     /**
@@ -691,11 +691,6 @@ public abstract class ROI2D extends ROI
      */
     public abstract void translate(double dx, double dy);
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI#loadFromXML(org.w3c.dom.Node)
-     */
     @Override
     public boolean loadFromXML(Node node)
     {
@@ -717,11 +712,6 @@ public abstract class ROI2D extends ROI
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI#saveToXML(org.w3c.dom.Node)
-     */
     @Override
     public boolean saveToXML(Node node)
     {

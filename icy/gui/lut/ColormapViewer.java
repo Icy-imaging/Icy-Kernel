@@ -149,11 +149,6 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         addMouseMotionListener(this);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see javax.swing.JComponent#addNotify()
-     */
     @Override
     public void addNotify()
     {
@@ -163,11 +158,6 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         lutBand.addListener(this);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see javax.swing.JComponent#removeNotify()
-     */
     @Override
     public void removeNotify()
     {

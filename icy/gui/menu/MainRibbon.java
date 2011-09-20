@@ -65,6 +65,7 @@ import java.util.Collections;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 
@@ -656,7 +657,12 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                             @Override
                             public JPopupPanel getPopupPanel(JCommandButton commandButton)
                             {
-                                othersPluginsMenu.getPopupMenu().show(btn, 0, btn.getHeight());
+                                final JPopupMenu popupMenu = othersPluginsMenu.getPopupMenu();
+
+                                // FIXME : set as heavy weight component for VTK (doesn't work)
+                                // popupMenu.setLightWeightPopupEnabled(false);
+                                popupMenu.show(btn, 0, btn.getHeight());
+
                                 return null;
                             }
                         });

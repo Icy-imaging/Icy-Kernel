@@ -39,6 +39,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
@@ -170,8 +171,12 @@ public class TNavigationPanel extends JPanel
             }
         });
 
-        frameRate = new JSpinner(new SpinnerNumberModel(DEFAULT_FRAME_RATE, 1, 200, 1));
+        frameRate = new JSpinner(new SpinnerNumberModel(DEFAULT_FRAME_RATE, 1, 60, 1));
         frameRate.setFocusable(false);
+        // no manual edition and edition focus
+        final JTextField tf = ((JSpinner.DefaultEditor) frameRate.getEditor()).getTextField();
+        tf.setEditable(false);
+        tf.setFocusable(false);
         frameRate.setToolTipText("Change playback frame rate");
         frameRate.addChangeListener(new ChangeListener()
         {

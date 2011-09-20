@@ -445,9 +445,31 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         return syncId > 0;
     }
 
+    /**
+     * Return true if current canvas is synchronized and is currently the synchronize leader.
+     */
     public boolean isSynchHeader()
     {
         return synchHeader;
+    }
+
+    /**
+     * Return true if current view is synchronized and it's not the synchronize header
+     */
+    public boolean isSynchSlave()
+    {
+        if (isSynchronized())
+        {
+            if (isSynchHeader())
+                return false;
+
+            // search for a header in synchronized canvas
+            for (IcyCanvas cnv : getSynchronizedCanvas())
+                if (cnv.isSynchHeader())
+                    return true;
+        }
+
+        return false;
     }
 
     /**

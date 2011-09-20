@@ -3,6 +3,7 @@
  */
 package icy.gui.inspector;
 
+import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.IcyTextListener;
 import icy.gui.util.GuiUtil;
@@ -56,6 +57,8 @@ public class SequenceInfosPanel extends JPanel
         internalSequence = new WeakReference<Sequence>(null);
 
         nameField = new IcyTextField();
+        // we have to set a preferred size else it resize its container on enlarging
+        ComponentUtil.setPreferredWidth(nameField, 100);
         nameField.addTextListener(new IcyTextListener()
         {
             @Override

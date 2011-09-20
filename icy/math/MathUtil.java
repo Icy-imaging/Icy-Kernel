@@ -615,11 +615,11 @@ public class MathUtil
 
     /**
      * Round specified value to specified number of significant digit.<br>
-     * If keepInteger is true then the integer part of number is entirely conserved.
+     * If keepInteger is true then integer part of number is entirely conserved.
      */
     public static double roundSignificant(double d, int numDigit, boolean keepInteger)
     {
-        final double digit = Math.ceil(Math.log10(d));
+        final double digit = Math.ceil(Math.log10(Math.abs(d)));
         if ((digit >= numDigit) && keepInteger)
             return Math.round(d);
 

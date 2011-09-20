@@ -88,7 +88,7 @@ public class ROI2DArea extends ROI2D
             cursor.setFrameFromDiagonal(x - cursorSize, y - cursorSize, x + cursorSize, y + cursorSize);
 
             // if roi selected (cursor displayed) --> painter changed
-            if (isSelected())
+            if (selected)
                 changed();
         }
 
@@ -230,12 +230,12 @@ public class ROI2DArea extends ROI2D
                     switch (e.getKeyCode())
                     {
                         case KeyEvent.VK_ADD:
-                            if (ROI2DArea.this.isSelected())
+                            if (ROI2DArea.this.selected)
                                 setCursorSize(cursorSize * 1.1f);
                             break;
 
                         case KeyEvent.VK_SUBTRACT:
-                            if (ROI2DArea.this.isSelected())
+                            if (ROI2DArea.this.selected)
                                 setCursorSize(cursorSize * 0.9f);
                             break;
                     }
@@ -270,13 +270,13 @@ public class ROI2DArea extends ROI2D
                     if (EventUtil.isRightMouseButton(e))
                     {
                         // roi selected ?
-                        if (ROI2DArea.this.isSelected())
+                        if (ROI2DArea.this.selected)
                         {
                             // inside bounds ?
                             if (getBounds2D().intersects(cursor.getBounds2D()))
                             {
                                 // roi not focused ? --> remove point from mask
-                                if (!isFocused())
+                                if (!focused)
                                     removePointAt(canvas, imagePoint);
                             }
                             else
@@ -329,13 +329,13 @@ public class ROI2DArea extends ROI2D
                     if (EventUtil.isRightMouseButton(e))
                     {
                         // roi selected ?
-                        if (ROI2DArea.this.isSelected())
+                        if (ROI2DArea.this.selected)
                         {
                             // inside bounds ? --> remove point from mask
                             if (getBounds2D().intersects(cursor.getBounds2D()))
                             {
                                 // roi not focused ? --> remove point from mask
-                                if (!isFocused())
+                                if (!focused)
                                     removePointAt(canvas, imagePoint);
                             }
                         }
@@ -348,12 +348,6 @@ public class ROI2DArea extends ROI2D
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see icy.roi.ROI2D.ROI2DPainter#paint(java.awt.Graphics2D, icy.sequence.Sequence,
-         * icy.canvas.IcyCanvas)
-         */
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
@@ -362,10 +356,10 @@ public class ROI2DArea extends ROI2D
 
             // prepare color and stroke
             g.setColor(getDisplayColor());
-            if (ROI2DArea.this.isSelected())
-                g.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, ROI2DArea.this.getStroke() + 1d)));
+            if (ROI2DArea.this.selected)
+                g.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, ROI2DArea.this.stroke + 1d)));
             else
-                g.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, ROI2DArea.this.getStroke())));
+                g.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, ROI2DArea.this.stroke)));
 
             // draw bounds
             g.draw(bounds);
@@ -373,7 +367,7 @@ public class ROI2DArea extends ROI2D
             g.drawImage(mask, null, bounds.x, bounds.y);
 
             // ROI selected ? draw cursor
-            if (isSelected() && !isFocused())
+            if (selected && !focused)
             {
                 // set alpha
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaLevel));
@@ -677,7 +671,7 @@ public class ROI2DArea extends ROI2D
     @Override
     public ROI2DAreaPainter getPainter()
     {
-        return (ROI2DAreaPainter) super.getPainter();
+        return (ROI2DAreaPainter) super.painter;
     }
 
     @Override

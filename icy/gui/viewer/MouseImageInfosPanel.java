@@ -27,6 +27,7 @@ import icy.image.lut.LUT;
 import icy.math.MathUtil;
 import icy.sequence.Sequence;
 import icy.type.collection.array.ArrayUtil;
+import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -310,25 +311,25 @@ public class MouseImageInfosPanel extends JPanel
             final String cs;
 
             if (x == xi)
-                xs = Integer.toString(xi);
+                xs = StringUtil.toString(xi);
             else
-                xs = Double.toString(MathUtil.roundSignificant(x, SIGNIFICANT_DIGIT, true));
+                xs = StringUtil.toStringEx(x, SIGNIFICANT_DIGIT);
             if (y == yi)
-                ys = Integer.toString(yi);
+                ys = StringUtil.toString(yi);
             else
-                ys = Double.toString(MathUtil.roundSignificant(y, SIGNIFICANT_DIGIT, true));
+                ys = StringUtil.toStringEx(y, SIGNIFICANT_DIGIT);
             if (z == zi)
-                zs = Integer.toString(zi);
+                zs = StringUtil.toString(zi);
             else
-                zs = Double.toString(MathUtil.roundSignificant(z, SIGNIFICANT_DIGIT, true));
+                zs = StringUtil.toStringEx(z, SIGNIFICANT_DIGIT);
             if (t == ti)
-                ts = Integer.toString(ti);
+                ts = StringUtil.toString(ti);
             else
-                ts = Double.toString(MathUtil.roundSignificant(t, SIGNIFICANT_DIGIT, true));
+                ts = StringUtil.toStringEx(t, SIGNIFICANT_DIGIT);
             if (c == ci)
-                cs = Integer.toString(ci);
+                cs = StringUtil.toString(ci);
             else
-                cs = Double.toString(MathUtil.roundSignificant(c, SIGNIFICANT_DIGIT, true));
+                cs = StringUtil.toStringEx(c, SIGNIFICANT_DIGIT);
 
             xValue.setText(xs);
             yValue.setText(ys);

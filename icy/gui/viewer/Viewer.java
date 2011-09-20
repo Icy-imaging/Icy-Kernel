@@ -412,6 +412,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         lutPanel.removeAll();
         mainPanel.removeAll();
+        toolBar.removeAll();
 
         // remove all listeners for this viewer
         ViewerListener[] vls = listeners.getListeners(ViewerListener.class);
@@ -424,6 +425,14 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         canvas = null;
         sequence = null;
         lut = null;
+        toolBar = null;
+        canvasComboBox = null;
+        lockComboBox = null;
+        duplicateButton = null;
+        layersEnabledButton = null;
+        screenShotAlternateButton = null;
+        screenShotButton = null;
+        switchStateButton = null;
 
         super.onClosed();
     }
