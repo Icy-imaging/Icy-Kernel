@@ -55,6 +55,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.WindowConstants;
+import javax.swing.border.Border;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.InternalFrameEvent;
 import javax.swing.event.InternalFrameListener;
@@ -1860,25 +1861,6 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     }
 
     /**
-     * Implement setLayout method
-     */
-    public void setLayout(final LayoutManager layout)
-    {
-        // AWT safe
-        ThreadUtil.invoke(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                if (isInternalized())
-                    internalFrame.setLayout(layout);
-                else
-                    externalFrame.setLayout(layout);
-            }
-        }, syncProcess);
-    }
-
-    /**
      * Implement setClosable method
      */
     public void setClosable(final boolean value)
@@ -1995,6 +1977,41 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             {
                 // internal frame only
                 internalFrame.setTitleBarVisible(value);
+            }
+        }, syncProcess);
+    }
+
+    /**
+     * Implement setLayout method
+     */
+    public void setLayout(final LayoutManager layout)
+    {
+        // AWT safe
+        ThreadUtil.invoke(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                if (isInternalized())
+                    internalFrame.setLayout(layout);
+                else
+                    externalFrame.setLayout(layout);
+            }
+        }, syncProcess);
+    }
+
+    /**
+     * Implement setBorder method (only for internal frame)
+     */
+    public void setBorder(final Border border)
+    {
+        // AWT safe
+        ThreadUtil.invoke(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                internalFrame.setBorder(border);
             }
         }, syncProcess);
     }

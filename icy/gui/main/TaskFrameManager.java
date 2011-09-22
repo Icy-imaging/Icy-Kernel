@@ -187,8 +187,7 @@ public class TaskFrameManager implements ActionListener
 
                 // frame need to be removed ?
                 if (frameInformation.canBeRemoved)
-                    // if ((!frame.isVisible()) || ((location.x > desktopSize.width) &&
-                    // (frame.isCanBeRemoved())))
+                {
                     if ((!frame.isVisible()) || ((location.x > desktopSize.width)))
                     {
                         // remove it from list
@@ -197,6 +196,7 @@ public class TaskFrameManager implements ActionListener
                         // and close it definitely
                         frame.internalClose();
                     }
+                }
             }
 
             // calculate current Y position
@@ -216,7 +216,7 @@ public class TaskFrameManager implements ActionListener
                     // System.out.println("enter");
                     int xTarget = desktopSize.width - frame.getWidth();
                     // if (frame.isCanBeRemoved())
-                    if (frameInformation.isCanBeRemoved())
+                    if (frameInformation.canBeRemoved)
                     {
                         xTarget = desktopSize.width + 20;
                     }
@@ -256,17 +256,21 @@ public class TaskFrameManager implements ActionListener
                         positionNew.y = positionTarget.y;
 
                     framePosition.put(frame, positionNew);
+
+                    // no enough space to display frame, close it
+                    if (positionNew.y < 0)
+                        frame.close();
+
                     currentY += frame.getHeight();
                 }
             }
 
             for (TaskFrame frame : taskFrames)
             {
-                Point location = framePosition.get(frame);
+                final Point location = framePosition.get(frame);
+
                 if (location != null)
-                {
                     frame.setLocation(location);
-                }
             }
         }
 
@@ -279,5 +283,4 @@ public class TaskFrameManager implements ActionListener
     {
         animate();
     }
-
 }

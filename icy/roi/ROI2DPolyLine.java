@@ -19,16 +19,21 @@
 package icy.roi;
 
 import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
 import icy.painter.Anchor2D;
-import icy.util.EventUtil;
+import icy.sequence.Sequence;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.Polygon;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.util.ArrayList;
 
 import org.w3c.dom.Element;
@@ -45,20 +50,30 @@ public class ROI2DPolyLine extends ROI2DShape
     protected class ROI2DPolyLinePainter extends ROI2DShapePainter
     {
         @Override
-        public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
-            super.mouseClick(e, imagePoint, canvas);
-
-            if (EventUtil.isLeftMouseButton(e))
+            if (canvas instanceof IcyCanvas2D)
             {
-                if (e.getClickCount() > 1)
+                final Graphics2D g2 = (Graphics2D) g.create();
+
+                g2.setColor(getDisplayColor());
+
+                // ROI selected ?
+                if (selected)
+                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 1d)));
+                else
+                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke)));
+
+                g2.draw(shape);
+
+                if (selected)
                 {
-                    if (ROI2DPolyLine.this.selected)
-                    {
-                        ROI2DPolyLine.this.setSelected(false, false);
-                        e.consume();
-                    }
+                    // draw control point if selected
+                    for (Anchor2D pt : controlPoints)
+                        pt.paint(g2, sequence, canvas);
                 }
+
+                g2.dispose();
             }
         }
     }
@@ -126,6 +141,12 @@ public class ROI2DPolyLine extends ROI2DShape
     }
 
     @Override
+    protected double getTotalDistance(ArrayList<Point2D> points)
+    {
+        return getTotalDistance(points, false);
+    }
+
+    @Override
     protected void updateShape()
     {
         final Path2D path = getPath();
@@ -155,68 +176,40 @@ public class ROI2DPolyLine extends ROI2DShape
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI2DShape#contains(double, double, double, double)
-     */
     @Override
     public boolean contains(double x, double y, double w, double h)
     {
-        return contains(new Rectangle2D.Double(x, y, w, h));
+        // this ROI doesn't contains anything
+        return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI2DShape#contains(double, double)
-     */
     @Override
     public boolean contains(double x, double y)
     {
-        return contains(new Point2D.Double(x, y));
+        // this ROI doesn't contains anything
+        return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI2DShape#contains(java.awt.geom.Point2D)
-     */
     @Override
     public boolean contains(Point2D p)
     {
-        // this ROI doesn't contains area
+        // this ROI doesn't contains anything
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI2DShape#contains(java.awt.geom.Rectangle2D)
-     */
     @Override
     public boolean contains(Rectangle2D r)
     {
-        // this ROI doesn't contains area
+        // this ROI doesn't contains anything
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI2DShape#intersects(double, double, double, double)
-     */
     @Override
     public boolean intersects(double x, double y, double w, double h)
     {
         return intersects(new Rectangle2D.Double(x, y, w, h));
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI2DShape#intersects(java.awt.geom.Rectangle2D)
-     */
     @Override
     public boolean intersects(Rectangle2D r)
     {
@@ -224,16 +217,33 @@ public class ROI2DPolyLine extends ROI2DShape
         return ShapeUtil.pathIntersects(getPathIterator(null, 0.1), r);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI2D#getAsBooleanMask(int, int, int, int)
-     */
     @Override
-    public boolean[] getAsBooleanMask(int x, int y, int w, int h)
+    public boolean[] getAsBooleanMask(int x, int y, int w, int h, boolean inclusive)
     {
+        if ((w <= 0) || (h <= 0))
+            return new boolean[0];
+
         // this ROI doesn't contains area
-        return new boolean[w * h];
+        if (!inclusive)
+            return new boolean[w * h];
+
+        final BufferedImage maskImg = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_GRAY);
+        final Graphics2D g = maskImg.createGraphics();
+
+        // draw shape in image
+        g.setColor(Color.white);
+        g.translate(-x, -y);
+        g.draw(shape);
+        g.dispose();
+
+        // use the image to define the mask
+        final byte[] maskData = ((DataBufferByte) maskImg.getRaster().getDataBuffer()).getData();
+        final boolean[] result = new boolean[w * h];
+
+        for (int i = 0; i < result.length; i++)
+            result[i] = (maskData[i] != 0);
+
+        return result;
     }
 
     @Override
@@ -278,5 +288,4 @@ public class ROI2DPolyLine extends ROI2DShape
 
         return true;
     }
-
 }

@@ -3254,7 +3254,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     protected void sequenceDataChanged(IcyBufferedImage image, SequenceEventType type)
     {
-
+        // refresh mouse panel informations (data values can have changed)
+        mouseInfPanel.updateInfos(this);
     }
 
     /**

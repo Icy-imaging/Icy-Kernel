@@ -1377,6 +1377,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     Point mouseCanvasPos;
     Point2D.Double mouseImagePos;
     String textInfos;
+    boolean modifyingZoom;
+    boolean modifyingRotation;
 
     public Canvas2D(Viewer viewer)
     {
@@ -1405,6 +1407,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         mouseCanvasPos = new Point();
         mouseImagePos = new Point2D.Double();
         textInfos = null;
+        modifyingZoom = false;
+        modifyingRotation = false;
 
         transform.addListener(new MultiSmoothMoverAdapter()
         {
@@ -1530,7 +1534,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                if (zoomComboBox.isEnabled())
+                if (!modifyingZoom)
                 {
                     try
                     {
@@ -1556,7 +1560,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                if (rotationComboBox.isEnabled())
+                if (!modifyingRotation)
                 {
                     try
                     {
@@ -2093,6 +2097,12 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     }
 
     @Override
+    protected void setPositionCInternal(int c)
+    {
+        // not supported in this canvas, C should stay at -1
+    }
+
+    @Override
     protected void setMouseImagePosXInternal(double value)
     {
         mouseImagePos.x = value;
@@ -2538,12 +2548,24 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 {
                     final String zoomInfo = Integer.toString((int) (getScaleX() * 100));
 
-                    // in panel
-                    final boolean save = zoomComboBox.isEnabled();
-                    // TODO : check this as it can take up sometime !
-                    zoomComboBox.setEnabled(false);
-                    zoomComboBox.setSelectedItem(zoomInfo);
-                    zoomComboBox.setEnabled(save);
+                    ThreadUtil.invokeLater(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            // in panel
+                            modifyingZoom = true;
+                            try
+                            {
+                                zoomComboBox.setSelectedItem(zoomInfo);
+                            }
+                            finally
+                            {
+                                modifyingZoom = false;
+                            }
+                        }
+                    });
+
                     // and in canvas
                     canvasView.setZoomMessage("Zoom : " + zoomInfo + " %", 500);
                 }
@@ -2551,12 +2573,24 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 {
                     final String rotInfo = Integer.toString((int) Math.round(getRotation() * 180d / Math.PI));
 
-                    // in panel
-                    final boolean save = rotationComboBox.isEnabled();
-                    // TODO : check this as it can take up sometime !
-                    rotationComboBox.setEnabled(false);
-                    rotationComboBox.setSelectedItem(rotInfo);
-                    rotationComboBox.setEnabled(save);
+                    ThreadUtil.invokeLater(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            // in panel
+                            modifyingRotation = true;
+                            try
+                            {
+                                rotationComboBox.setSelectedItem(rotInfo);
+                            }
+                            finally
+                            {
+                                modifyingRotation = false;
+                            }
+                        }
+                    });
+
                     // and in canvas
                     canvasView.setRotationMessage("Rotation : " + rotInfo + " °", 500);
                 }

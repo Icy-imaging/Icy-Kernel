@@ -43,6 +43,7 @@ import icy.sequence.SequenceEdit.ROIRemove;
 import icy.sequence.SequenceEdit.ROIRemoveAll;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.sequence.SequenceEvent.SequenceEventType;
+import icy.system.thread.ThreadUtil;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
 import icy.undo.IcyUndoManager;
@@ -262,8 +263,18 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     {
         // Sequence persistence enabled ?
         if (GeneralPreferences.getSequencePersistence())
-            // save XML
-            saveXMLData();
+        {
+            // saving XML data can take sometime, do it in background...
+            ThreadUtil.bgRun(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    // save XML
+                    saveXMLData();
+                }
+            });
+        }
         // notify close
         fireCloseEvent();
     }
@@ -1238,10 +1249,18 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public IcyBufferedImage getFirstNonNullImage()
     {
-        for (VolumetricImage volImg : getAllVolumetricImage())
-            for (IcyBufferedImage img : volImg.getAllImage())
-                if (img != null)
-                    return img;
+        synchronized (volumetricImages)
+        {
+            for (VolumetricImage volImg : volumetricImages.values())
+            {
+                synchronized (volImg.images)
+                {
+                    for (IcyBufferedImage img : volImg.images.values())
+                        if (img != null)
+                            return img;
+                }
+            }
+        }
 
         return null;
     }
@@ -1314,10 +1333,17 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     public ArrayList<IcyBufferedImage> getAllImage()
     {
         final ArrayList<IcyBufferedImage> result = new ArrayList<IcyBufferedImage>();
-        final ArrayList<VolumetricImage> volumes = getAllVolumetricImage();
 
-        for (VolumetricImage volImg : volumes)
-            result.addAll(volImg.getAllImage());
+        synchronized (volumetricImages)
+        {
+            for (VolumetricImage volImg : volumetricImages.values())
+            {
+                synchronized (volImg.images)
+                {
+                    result.addAll(volImg.images.values());
+                }
+            }
+        }
 
         return result;
     }
@@ -1633,9 +1659,17 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the height of the sequence (0 if the sequence contains no image).
+     * Same as {@link #getSizeY()}
      */
     public int getHeight()
+    {
+        return getSizeY();
+    }
+
+    /**
+     * Return the height of the sequence (0 if the sequence contains no image).
+     */
+    public int getSizeY()
     {
         final IcyBufferedImage img = getFirstNonNullImage();
 
@@ -1646,17 +1680,17 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Same as {@link #getHeight()}
+     * Same as {@link #getSizeX()}
      */
-    public int getSizeY()
+    public int getWidth()
     {
-        return getHeight();
+        return getSizeX();
     }
 
     /**
      * Return the width of the sequence (0 if the sequence contains no image).
      */
-    public int getWidth()
+    public int getSizeX()
     {
         final IcyBufferedImage img = getFirstNonNullImage();
 
@@ -1664,14 +1698,6 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
             return img.getWidth();
 
         return 0;
-    }
-
-    /**
-     * Same as {@link #getWidth()}
-     */
-    public int getSizeX()
-    {
-        return getWidth();
     }
 
     /**
@@ -1837,14 +1863,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         if ((colorModel == null) || isEmpty())
             return;
 
-        final ArrayList<VolumetricImage> volumes = getAllVolumetricImage();
         double[][] bounds;
 
         bounds = null;
         // recalculate bounds from all images
-        for (VolumetricImage volImg : volumes)
-            for (IcyBufferedImage img : volImg.getAllImage())
-                bounds = adjustBounds(img.getComponentsAbsBounds(), bounds);
+        synchronized (volumetricImages)
+        {
+            for (VolumetricImage volImg : volumetricImages.values())
+            {
+                synchronized (volImg.images)
+                {
+                    for (IcyBufferedImage img : volImg.images.values())
+                        bounds = adjustBounds(img.getComponentsAbsBounds(), bounds);
+                }
+            }
+        }
 
         // set new computed bounds
         setComponentsAbsBounds(bounds);
@@ -1853,9 +1886,17 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         {
             bounds = null;
             // recalculate user bounds from all images
-            for (VolumetricImage volImg : volumes)
-                for (IcyBufferedImage img : volImg.getAllImage())
-                    bounds = adjustBounds(img.getComponentsUserBounds(), bounds);
+            synchronized (volumetricImages)
+            {
+                for (VolumetricImage volImg : volumetricImages.values())
+                {
+                    synchronized (volImg.images)
+                    {
+                        for (IcyBufferedImage img : volImg.images.values())
+                            bounds = adjustBounds(img.getComponentsUserBounds(), bounds);
+                    }
+                }
+            }
 
             // set new computed bounds
             setComponentsUserBounds(bounds);
@@ -4287,7 +4328,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Synchronize XML data with sequence data:
+     * Synchronize XML data with sequence data :<br>
      * This function refresh all the meta data and ROIs of the sequence and put it in the current
      * XML Document.
      */

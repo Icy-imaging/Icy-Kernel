@@ -1009,6 +1009,12 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         }
     }
 
+    @Override
+    protected void setPositionZInternal(int z)
+    {
+        // not supported, Z should stay at -1
+    }
+
     public BufferedImage getRenderedImage(int t, int c)
     {
         // save position
@@ -1029,8 +1035,16 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
             final int[] size = renderWindow.GetSize();
             final vtkUnsignedCharArray array = new vtkUnsignedCharArray();
 
-            // NOTE: in vtk the [0,0] pixel is bottom left, so a vertical flip will be required
-            renderWindow.GetRGBACharPixelData(0, 0, size[0] - 1, size[1] - 1, 1, array);
+            // VTK need this to be called in the EDT :-(
+            ThreadUtil.invokeNow(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    // NOTE: in vtk the [0,0] pixel is bottom left, so a vertical flip is required
+                    renderWindow.GetRGBACharPixelData(0, 0, size[0] - 1, size[1] - 1, 1, array);
+                }
+            });
 
             // convert the vtk array into a IcyBufferedImage
             final byte[] data = array.GetJavaArray();
@@ -1051,8 +1065,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
                     c_xy[3][xy] = data[offset++]; // 1
                 }
             }
-            return image;
 
+            return image;
         }
         finally
         {

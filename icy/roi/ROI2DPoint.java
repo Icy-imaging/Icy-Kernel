@@ -27,6 +27,9 @@ import java.awt.geom.Rectangle2D;
 import org.w3c.dom.Node;
 
 /**
+ * ROI Point class.<br>
+ * Define a single point ROI which is both contained and intersected :<br>
+ * 
  * @author Stephane
  */
 public class ROI2DPoint extends ROI2DShape
@@ -80,6 +83,11 @@ public class ROI2DPoint extends ROI2DShape
         return (Rectangle2D) shape;
     }
 
+    public Point2D getPoint()
+    {
+        return position.getPosition();
+    }
+
     @Override
     protected void updateShape()
     {
@@ -121,11 +129,6 @@ public class ROI2DPoint extends ROI2DShape
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI#saveToXML(org.w3c.dom.Node)
-     */
     @Override
     public boolean saveToXML(Node node)
     {
@@ -136,5 +139,4 @@ public class ROI2DPoint extends ROI2DShape
 
         return true;
     }
-
 }

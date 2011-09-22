@@ -1026,7 +1026,10 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                                         @Override
                                         public void run()
                                         {
-                                            // focus viewer
+                                            // remove minimized state
+                                            if (v.isMinimized())
+                                                v.setMinimized(false);
+                                            // then grab focus
                                             v.requestFocus();
                                         }
                                     }, true);

@@ -122,11 +122,6 @@ public class ROI2DLine extends ROI2DShape
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI#loadFromXML(org.w3c.dom.Node)
-     */
     @Override
     public boolean loadFromXML(Node node)
     {
@@ -147,11 +142,6 @@ public class ROI2DLine extends ROI2DShape
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI#saveToXML(org.w3c.dom.Node)
-     */
     @Override
     public boolean saveToXML(Node node)
     {

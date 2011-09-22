@@ -28,6 +28,9 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.IndexColorModel;
+import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -36,6 +39,8 @@ import java.io.InputStream;
 import java.net.URL;
 
 import javax.imageio.ImageIO;
+
+import sun.awt.image.SunWritableRaster;
 
 /**
  * 
@@ -96,6 +101,18 @@ public class ImageUtil
             default:
                 return "UNKNOWN TRANSPARENCY";
         }
+    }
+
+    /**
+     * Create a 8 bits indexed buffered image from specified <code>IndexColorModel</code><br>
+     * and byte array data.
+     */
+    public static BufferedImage createIndexedImage(int w, int h, IndexColorModel cm, byte[] data)
+    {
+        final SunWritableRaster raster = (SunWritableRaster) Raster.createInterleavedRaster(new DataBufferByte(data, w
+                * h, 0), w, h, w, 1, new int[] {0}, null);
+        raster.setStolen(false);
+        return new BufferedImage(cm, raster, false, null);
     }
 
     /**

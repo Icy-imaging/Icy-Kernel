@@ -445,15 +445,21 @@ public class PluginLoader
                     // then try to load the plugin class as Plugin class
                     loader.loadClass(plugin.getClassName()).asSubclass(Plugin.class);
                 }
-                catch (Error err)
+                catch (Error e)
                 {
                     return "Fatal error while loading " + plugin.getClassName() + " from " + plugin.getJarFilename()
-                            + " :\n" + err.toString();
+                            + " :\n" + e.toString();
                 }
-                catch (Exception exc)
+                catch (ClassCastException e)
                 {
                     return "Fatal error while loading " + plugin.getClassName() + " from " + plugin.getJarFilename()
-                            + " :\n" + exc.toString();
+                            + " :\n" + e.toString() + "\n"
+                            + "Your plugin class should extends 'icy.plugin.abstract_.Plugin' class !";
+                }
+                catch (Exception e)
+                {
+                    return "Fatal error while loading " + plugin.getClassName() + " from " + plugin.getJarFilename()
+                            + " :\n" + e.toString() + "\n";
                 }
             }
         }

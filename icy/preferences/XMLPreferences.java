@@ -301,9 +301,11 @@ public class XMLPreferences
         }
     }
 
+    /**
+     * Remove all direct children of this node
+     */
     public void clear()
     {
-        // remove direct children
         XMLUtil.removeChilds(currentElement, TYPE_KEY);
     }
 

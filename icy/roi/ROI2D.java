@@ -122,7 +122,7 @@ public abstract class ROI2D extends ROI
                         // normal action
                         else
                         {
-                            // roi focused ? --> update select
+                            // roi focused (mouse over ROI bounds) ? --> update select
                             if (ROI2D.this.focused)
                                 updateSelect(e, imagePoint, canvas);
                             // roi selected and no point selected ?
@@ -225,6 +225,29 @@ public abstract class ROI2D extends ROI
 
             // update mouse position
             setMousePos(imagePoint);
+        }
+
+        @Override
+        public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        {
+            if (!isActiveFor(canvas))
+                return;
+
+            if (!e.isConsumed())
+            {
+                if (EventUtil.isLeftMouseButton(e))
+                {
+                    // unselect ROI on double click
+                    if (e.getClickCount() > 1)
+                    {
+                        if (ROI2D.this.selected)
+                        {
+                            ROI2D.this.setSelected(false, false);
+                            e.consume();
+                        }
+                    }
+                }
+            }
         }
 
         @Override
@@ -595,7 +618,6 @@ public abstract class ROI2D extends ROI
      *         and intersection calculations would be too expensive to perform; <code>false</code>
      *         otherwise.
      * @see #intersects(double, double, double, double)
-     * @since 1.2
      */
     public boolean intersects(Rectangle2D r)
     {
@@ -637,21 +659,90 @@ public abstract class ROI2D extends ROI
      * It contains the rectangle mask bounds and the associated boolean array mask.<br>
      * if the pixel (x,y) is contained in the roi then result.mask[(y * w) + x] = true<br>
      * if the pixel (x,y) is not contained in the roi then result.mask[(y * w) + x] = false
+     * 
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask2D getAsBooleanMask(boolean inclusive)
+    {
+        final Rectangle bounds = getBounds();
+        return new BooleanMask2D(bounds, getAsBooleanMask(bounds, inclusive));
+    }
+
+    /**
+     * Get the roi as a boolean bitmap mask for the specified rectangular area.<br>
+     * if the pixel (x,y) is contained in the roi then result[(y * w) + x] = true<br>
+     * if the pixel (x,y) is not contained in the roi then result[(y * w) + x] = false
+     * 
+     * @param rect
+     *        area we want to retrieve the boolean mask
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public boolean[] getAsBooleanMask(Rectangle rect, boolean inclusive)
+    {
+        return getAsBooleanMask(rect.x, rect.y, rect.width, rect.height);
+    }
+
+    /**
+     * Get the roi as a boolean bitmap mask for the specified rectangular area.<br>
+     * if the pixel (x,y) is contained in the roi then result[(y * w) + x] = true<br>
+     * if the pixel (x,y) is not contained in the roi then result[(y * w) + x] = false
+     * 
+     * @param x
+     *        the X coordinate of the upper-left corner of the specified rectangular area
+     * @param y
+     *        the Y coordinate of the upper-left corner of the specified rectangular area
+     * @param w
+     *        the width of the specified rectangular area
+     * @param h
+     *        the height of the specified rectangular area
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     * @return the boolean bitmap mask
+     */
+    public boolean[] getAsBooleanMask(int x, int y, int w, int h, boolean inclusive)
+    {
+        final boolean[] result = new boolean[w * h];
+
+        // simple and basic implementation, override it to have better performance
+        int offset = 0;
+        for (int j = 0; j < h; j++)
+        {
+            for (int i = 0; i < w; i++)
+            {
+                result[offset] = contains(x + i, y + j);
+                if (inclusive)
+                    result[offset] |= intersects(x + i, y + j, 1, 1);
+                offset++;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Get the roi as a BooleanMask2D object.<br>
+     * It contains the rectangle mask bounds and the associated boolean array mask.<br>
+     * if the pixel (x,y) is contained in the roi then result.mask[(y * w) + x] = true<br>
+     * if the pixel (x,y) is not contained in the roi then result.mask[(y * w) + x] = false
      */
     public BooleanMask2D getAsBooleanMask()
     {
-        final Rectangle bounds = getBounds();
-        return new BooleanMask2D(bounds, getAsBooleanMask(bounds));
+        return getAsBooleanMask(false);
     }
 
     /**
      * Get the roi as a bitmap mask for the specified rectangular area.<br>
      * if the pixel (x,y) is contained in the roi then result[(y * w) + x] = true<br>
      * if the pixel (x,y) is not contained in the roi then result[(y * w) + x] = false
+     * 
+     * @param rect
+     *        area we want to retrieve the boolean mask
      */
     public boolean[] getAsBooleanMask(Rectangle rect)
     {
-        return getAsBooleanMask(rect.x, rect.y, rect.width, rect.height);
+        return getAsBooleanMask(rect, false);
     }
 
     /**
@@ -671,16 +762,7 @@ public abstract class ROI2D extends ROI
      */
     public boolean[] getAsBooleanMask(int x, int y, int w, int h)
     {
-        final boolean[] result = new boolean[w * h];
-
-        // simple and basic implementation
-        // override it to have better performance
-        int offset = 0;
-        for (int j = 0; j < h; j++)
-            for (int i = 0; i < w; i++)
-                result[offset++] = contains(x + i, y + j);
-
-        return result;
+        return getAsBooleanMask(x, y, w, h, false);
     }
 
     /**

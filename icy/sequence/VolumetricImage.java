@@ -29,8 +29,8 @@ import java.util.TreeMap;
  */
 public class VolumetricImage
 {
-    private final Sequence sequence;
-    private final TreeMap<Integer, IcyBufferedImage> images;
+    final Sequence sequence;
+    final TreeMap<Integer, IcyBufferedImage> images;
 
     public VolumetricImage(Sequence seq)
     {

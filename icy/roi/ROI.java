@@ -120,8 +120,8 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
         }
 
         // attach to sequence once ROI is initialized
-        if (result != null)
-            result.attachTo(seq);
+        if ((seq != null) && (result != null))
+            seq.addROI(result);
 
         return result;
     }
@@ -333,26 +333,40 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
         }
     }
 
+    /**
+     * @deprecated use {@link Sequence#addROI(ROI)} instead
+     */
+    @Deprecated
     public void attachTo(Sequence sequence)
     {
         if (sequence != null)
             sequence.addROI(this);
     }
 
+    /**
+     * @deprecated use {@link Sequence#removeROI(ROI)} instead
+     */
+    @Deprecated
     public void detachFrom(Sequence sequence)
     {
         if (sequence != null)
             sequence.removeROI(this);
     }
 
+    /**
+     * Remove this ROI from all attached sequence
+     */
     public void detachFromAll()
     {
         final ArrayList<Sequence> sequences = Icy.getMainInterface().getSequencesContaining(this);
 
         for (Sequence sequence : sequences)
-            detachFrom(sequence);
+            sequence.removeROI(this);
     }
 
+    /**
+     * Return true is this ROI is attached to at least one sequence
+     */
     public boolean isAttached(Sequence sequence)
     {
         if (sequence != null)
@@ -377,6 +391,9 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
         return Icy.getMainInterface().getSequencesContaining(this);
     }
 
+    /**
+     * Delete this ROI (detach from all sequence)
+     */
     public void delete()
     {
         detachFromAll();
@@ -407,6 +424,9 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
         return Math.max(canvasToImageLogDeltaX(canvas, strk), canvasToImageLogDeltaY(canvas, strk));
     }
 
+    /**
+     * Get adjusted stroke for the current canvas transformation
+     */
     public double getAdjustedStroke(IcyCanvas canvas)
     {
         return getAdjustedStroke(canvas, stroke);

@@ -21,7 +21,7 @@ import javax.swing.JPanel;
  * 
  * @author Fabrice de Chaumont
  */
-public class ToolTipFrame extends TitledFrame implements ActionListener
+public class GeneralToolTipFrame extends TitledFrame implements ActionListener
 {
     String[] tipText = {
             "Welcome ! This window shows tooltips about ICY<br>Press '>' button to read them.",
@@ -30,8 +30,7 @@ public class ToolTipFrame extends TitledFrame implements ActionListener
             "To download new plugins, click on the 'Plugins' tab and then 'online plugins'.",
             "If you download plugins one by one, they will appear in the 'Plugins' tab. If you download a full workspace, ICY will ask to restart, and a new tab will be created.",
             "The first time ICY starts, it sets up the amount of memory, you can override this setting in the 'preferences' menu.",
-            "If you wish to develop plugins, you can browse the tutorial section and look at the source code, or the online documentation.",
-            "Press F6 in a viewer to switch to 3D, F5 to go back to 2D."};
+            "If you wish to develop plugins, you can browse the tutorial section and look at the source code, or the online documentation.",};
 
     JButton nextButton = new JButton(">");
     JButton previousButton = new JButton("<");
@@ -41,7 +40,7 @@ public class ToolTipFrame extends TitledFrame implements ActionListener
     int currentToolTip = 0;
     JEditorPane editorPane = new JEditorPane("text/html", "text/html");
 
-    public ToolTipFrame()
+    public GeneralToolTipFrame()
     {
         super("Startup tips", new Dimension(200, 100), false, true, false, false);
 

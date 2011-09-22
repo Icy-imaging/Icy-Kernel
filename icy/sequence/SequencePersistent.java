@@ -145,7 +145,7 @@ public class SequencePersistent implements XMLPersistent
 
                     // add to sequence
                     if (roi != null)
-                        roi.attachTo(sequence);
+                        sequence.addROI(roi);
                 }
             }
         }

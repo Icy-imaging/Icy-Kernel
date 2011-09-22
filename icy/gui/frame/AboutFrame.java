@@ -28,8 +28,6 @@ import javax.swing.JTabbedPane;
 
 public class AboutFrame extends IcyFrame
 {
-    private static final long serialVersionUID = -2689223743346338819L;
-
     JTabbedPane tabbedPane = new JTabbedPane();
 
     public AboutFrame()

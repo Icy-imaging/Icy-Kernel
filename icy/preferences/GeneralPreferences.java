@@ -14,6 +14,7 @@ public class GeneralPreferences
      * pref id
      */
     private static final String PREF_GENERAL_ID = "general";
+    private static final String TOOLTIPS_ID = "toolTips";
     // private static final String PREF_LOADER_ID = "loader";
 
     /**
@@ -38,6 +39,7 @@ public class GeneralPreferences
      * preferences
      */
     private static XMLPreferences prefGeneral;
+    private static XMLPreferences prefToolTips;
 
     // private static XMLPreferences prefCanvas2D;
 
@@ -45,6 +47,7 @@ public class GeneralPreferences
     {
         // load preferences
         prefGeneral = ApplicationPreferences.getPreferences().node(GeneralPreferences.PREF_GENERAL_ID);
+        prefToolTips = prefGeneral.node(TOOLTIPS_ID);
         // prefCanvas2D =
         // ApplicationPreferences.getPreferences().node(GeneralPreferences.PREF_CANVAS2D_ID);
 
@@ -54,10 +57,28 @@ public class GeneralPreferences
 
     /**
      * @return the prefGeneral
+     * @deprecated uses {@link #getPreferences()} instead
      */
+    @Deprecated
     public static XMLPreferences getPreferencesGeneral()
     {
+        return getPreferences();
+    }
+
+    /**
+     * @return the preferences
+     */
+    public static XMLPreferences getPreferences()
+    {
         return prefGeneral;
+    }
+
+    /**
+     * @return the preferences for toolTips
+     */
+    public static XMLPreferences getPreferencesToolTips()
+    {
+        return prefToolTips;
     }
 
     /**

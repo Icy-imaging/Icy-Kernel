@@ -530,7 +530,8 @@ public class ClassUtil
             if ((innerChar >= '0') && (innerChar <= '9'))
                 return null;
 
-            return result.replace('$', '.');
+            // TODO: check we really don't need to replace '$' by '.'
+            // return result.replace('$', '.');
         }
 
         return result;

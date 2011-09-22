@@ -194,8 +194,15 @@ public class IcyUpdater
             }
             else
             {
+                final String mess;
+
+                if (toUpdate.size() > 1)
+                    mess = "Some updates are availables...";
+                else
+                    mess = "An update is available...";
+
                 // show announcement for 15 seconds
-                new AnnounceFrame("A new version is available...", "View", new Runnable()
+                new AnnounceFrame(mess, "View", new Runnable()
                 {
                     @Override
                     public void run()

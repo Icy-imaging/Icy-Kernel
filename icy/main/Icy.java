@@ -24,7 +24,7 @@ import icy.gui.dialog.ConfirmDialog;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.SplashScreenFrame;
-import icy.gui.frame.ToolTipFrame;
+import icy.gui.frame.GeneralToolTipFrame;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.main.MainInterface;
 import icy.gui.main.MainInterfaceBatch;
@@ -198,7 +198,7 @@ public class Icy
                 // we can now hide splash as we have interface
                 splashScreen.dispose();
                 // show tool tip
-                new ToolTipFrame();
+                new GeneralToolTipFrame();
             }
         });
 

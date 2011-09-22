@@ -50,9 +50,15 @@ public class SequenceInfosPanel extends JPanel
     private final SequenceListener sequenceListener;
     private final WeakSequenceListener weakSequenceListener;
 
+    boolean updatingName;
+    boolean updatingRes;
+
     public SequenceInfosPanel()
     {
         super(true);
+
+        updatingName = false;
+        updatingRes = false;
 
         internalSequence = new WeakReference<Sequence>(null);
 
@@ -64,10 +70,13 @@ public class SequenceInfosPanel extends JPanel
             @Override
             public void textChanged(IcyTextField source)
             {
-                final Sequence seq = internalSequence.get();
+                if (!updatingName)
+                {
+                    final Sequence seq = internalSequence.get();
 
-                if (seq != null)
-                    seq.setName(source.getText());
+                    if (seq != null)
+                        seq.setName(source.getText());
+                }
             }
         });
 
@@ -77,10 +86,13 @@ public class SequenceInfosPanel extends JPanel
             @Override
             public void textChanged(IcyTextField source)
             {
-                final Sequence seq = internalSequence.get();
+                if (!updatingRes)
+                {
+                    final Sequence seq = internalSequence.get();
 
-                if (seq != null)
-                    seq.setResolutionX(StringUtil.parseDouble(resXField.getText(), 1d));
+                    if (seq != null)
+                        seq.setResolutionX(StringUtil.parseDouble(resXField.getText(), 1d));
+                }
             }
         });
         resYField = new IcyTextField();
@@ -89,10 +101,13 @@ public class SequenceInfosPanel extends JPanel
             @Override
             public void textChanged(IcyTextField source)
             {
-                final Sequence seq = internalSequence.get();
+                if (!updatingRes)
+                {
+                    final Sequence seq = internalSequence.get();
 
-                if (seq != null)
-                    seq.setResolutionY(StringUtil.parseDouble(resYField.getText(), 1d));
+                    if (seq != null)
+                        seq.setResolutionY(StringUtil.parseDouble(resYField.getText(), 1d));
+                }
             }
         });
         resZField = new IcyTextField();
@@ -101,10 +116,13 @@ public class SequenceInfosPanel extends JPanel
             @Override
             public void textChanged(IcyTextField source)
             {
-                final Sequence seq = internalSequence.get();
+                if (!updatingRes)
+                {
+                    final Sequence seq = internalSequence.get();
 
-                if (seq != null)
-                    seq.setResolutionZ(StringUtil.parseDouble(resZField.getText(), 1d));
+                    if (seq != null)
+                        seq.setResolutionZ(StringUtil.parseDouble(resZField.getText(), 1d));
+                }
             }
         });
         resTField = new IcyTextField();
@@ -113,10 +131,13 @@ public class SequenceInfosPanel extends JPanel
             @Override
             public void textChanged(IcyTextField source)
             {
-                final Sequence seq = internalSequence.get();
+                if (!updatingRes)
+                {
+                    final Sequence seq = internalSequence.get();
 
-                if (seq != null)
-                    seq.setResolutionT(StringUtil.parseDouble(resTField.getText(), 1d));
+                    if (seq != null)
+                        seq.setResolutionT(StringUtil.parseDouble(resTField.getText(), 1d));
+                }
             }
         });
 
@@ -185,6 +206,7 @@ public class SequenceInfosPanel extends JPanel
             }
         };
 
+        // weak reference --> released when SequenceInfosPanel is released
         weakSequenceListener = new WeakSequenceListener(sequenceListener);
     }
 
@@ -251,81 +273,87 @@ public class SequenceInfosPanel extends JPanel
 
     public void updateName(Sequence sequence)
     {
-        if (sequence != null)
+        updatingName = true;
+        try
         {
-            try
+            if (sequence != null)
             {
-                nameField.setText(sequence.getName());
+                try
+                {
+                    nameField.setText(sequence.getName());
+                }
+                catch (IllegalStateException e)
+                {
+                    // ignore as it can't sometime happen in multi threaded env
+
+                }
+
+                nameField.setToolTipText(sequence.getName());
+                nameField.setEnabled(true);
             }
-            catch (IllegalStateException e)
+            else
             {
-                // ignore as it can't sometime happen in multi threaded env
-
+                nameField.setText("-");
+                nameField.setToolTipText("");
+                nameField.setEnabled(false);
             }
-
-            nameField.setToolTipText(sequence.getName());
-            nameField.setEnabled(true);
-            nameField.setEditable(true);
         }
-        else
+        finally
         {
-            nameField.setText("-");
-            nameField.setToolTipText("");
-            nameField.setEditable(false);
-            nameField.setEnabled(false);
+            updatingName = false;
         }
     }
 
     public void updateResolutions(Sequence sequence)
     {
-        if (sequence != null)
+        updatingRes = true;
+        try
         {
-            try
+            if (sequence != null)
             {
-                resXField.setText(StringUtil.toString(sequence.getResolutionX()));
-                resYField.setText(StringUtil.toString(sequence.getResolutionY()));
-                resZField.setText(StringUtil.toString(sequence.getResolutionZ()));
-                resTField.setText(StringUtil.toString(sequence.getResolutionT()));
+                try
+                {
+                    resXField.setText(StringUtil.toString(sequence.getResolutionX()));
+                    resYField.setText(StringUtil.toString(sequence.getResolutionY()));
+                    resZField.setText(StringUtil.toString(sequence.getResolutionZ()));
+                    resTField.setText(StringUtil.toString(sequence.getResolutionT()));
+                }
+                catch (IllegalStateException e)
+                {
+                    // ignore as it can't sometime happen in multi threaded env
+                }
+
+                resXField.setToolTipText("X pixel resolution (in mm) : " + resXField.getText());
+                resYField.setToolTipText("Y pixel resolution (in mm) : " + resYField.getText());
+                resZField.setToolTipText("Z pixel resolution (in mm) : " + resZField.getText());
+                resTField.setToolTipText("T time resolution (in ms) : " + resTField.getText());
+
+                resXField.setEnabled(true);
+                resYField.setEnabled(true);
+                resZField.setEnabled(true);
+                resTField.setEnabled(true);
             }
-            catch (IllegalStateException e)
+            else
             {
-                // ignore as it can't sometime happen in multi threaded env
+                resXField.setText("-");
+                resYField.setText("-");
+                resZField.setText("-");
+                resTField.setText("-");
+
+                resXField.setToolTipText("X pixel resolution (in mm)");
+                resYField.setToolTipText("Y pixel resolution (in mm)");
+                resZField.setToolTipText("Z pixel resolution (in mm)");
+                resTField.setToolTipText("T time resolution (in ms)");
+
+                resXField.setEnabled(false);
+                resYField.setEnabled(false);
+                resZField.setEnabled(false);
+                resTField.setEnabled(false);
             }
-
-            resXField.setToolTipText("X pixel resolution (in mm) : " + resXField.getText());
-            resYField.setToolTipText("Y pixel resolution (in mm) : " + resYField.getText());
-            resZField.setToolTipText("Z pixel resolution (in mm) : " + resZField.getText());
-            resTField.setToolTipText("T time resolution (in ms) : " + resTField.getText());
-
-            resXField.setEnabled(true);
-            resXField.setEditable(true);
-            resYField.setEnabled(true);
-            resYField.setEditable(true);
-            resZField.setEnabled(true);
-            resZField.setEditable(true);
-            resTField.setEnabled(true);
-            resTField.setEditable(true);
         }
-        else
+        finally
         {
-            resXField.setText("-");
-            resYField.setText("-");
-            resZField.setText("-");
-            resTField.setText("-");
-
-            resXField.setToolTipText("X pixel resolution (in mm)");
-            resYField.setToolTipText("Y pixel resolution (in mm)");
-            resZField.setToolTipText("Z pixel resolution (in mm)");
-            resTField.setToolTipText("T time resolution (in ms)");
-
-            resXField.setEnabled(false);
-            resXField.setEditable(false);
-            resYField.setEnabled(false);
-            resYField.setEditable(false);
-            resZField.setEnabled(false);
-            resZField.setEditable(false);
-            resTField.setEnabled(false);
-            resTField.setEditable(false);
+            updatingRes = false;
         }
     }
 }

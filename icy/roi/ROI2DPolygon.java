@@ -18,13 +18,10 @@
  */
 package icy.roi;
 
-import icy.canvas.IcyCanvas;
 import icy.painter.Anchor2D;
-import icy.util.EventUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Polygon;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
@@ -38,27 +35,6 @@ public class ROI2DPolygon extends ROI2DShape
 {
     public static final String ID_POINTS = "points";
     public static final String ID_POINT = "point";
-
-    protected class ROI2DPolygonPainter extends ROI2DShapePainter
-    {
-        @Override
-        public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
-        {
-            super.mouseClick(e, imagePoint, canvas);
-
-            if (EventUtil.isLeftMouseButton(e))
-            {
-                if (e.getClickCount() > 1)
-                {
-                    if (ROI2DPolygon.this.selected)
-                    {
-                        ROI2DPolygon.this.setSelected(false, false);
-                        e.consume();
-                    }
-                }
-            }
-        }
-    }
 
     /**
      * 
@@ -83,12 +59,6 @@ public class ROI2DPolygon extends ROI2DShape
     public ROI2DPolygon()
     {
         this(new Point2D.Double());
-    }
-
-    @Override
-    protected ROI2DPolygonPainter createPainter()
-    {
-        return new ROI2DPolygonPainter();
     }
 
     public Polygon getPolygon()

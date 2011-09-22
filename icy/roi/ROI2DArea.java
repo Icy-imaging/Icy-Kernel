@@ -20,8 +20,8 @@ package icy.roi;
 
 import icy.canvas.IcyCanvas;
 import icy.common.EventHierarchicalChecker;
+import icy.image.ImageUtil;
 import icy.sequence.Sequence;
-import icy.type.collection.array.ArrayUtil;
 import icy.util.EventUtil;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
@@ -39,7 +39,8 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
+import java.awt.image.DataBufferByte;
+import java.awt.image.IndexColorModel;
 
 import org.w3c.dom.Node;
 
@@ -66,6 +67,7 @@ public class ROI2DArea extends ROI2D
         private Point2D.Double cursorPosition;
         private Color cursorColor;
         private float alphaLevel;
+        private boolean drawing;
 
         /**
          * 
@@ -78,6 +80,7 @@ public class ROI2DArea extends ROI2D
             cursorPosition = new Point2D.Double();
             cursorColor = Color.red;
             alphaLevel = DEFAULT_ALPHA;
+
         }
 
         void updateCursor()
@@ -192,11 +195,6 @@ public class ROI2DArea extends ROI2D
             updateMask(cursor, true);
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see icy.painter.AbstractPainter#onChanged(icy.common.EventHierarchicalChecker)
-         */
         @Override
         public void onChanged(EventHierarchicalChecker object)
         {
@@ -247,12 +245,6 @@ public class ROI2DArea extends ROI2D
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see icy.roi.ROI2D.ROI2DPainter#mousePressed(java.awt.event.MouseEvent,
-         * java.awt.geom.Point2D, icy.canvas.IcyCanvas)
-         */
         @Override
         public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
@@ -277,7 +269,8 @@ public class ROI2DArea extends ROI2D
                             {
                                 // roi not focused ? --> remove point from mask
                                 if (!focused)
-                                    removePointAt(canvas, imagePoint);
+                                    if (removePointAt(canvas, imagePoint))
+                                        e.consume();
                             }
                             else
                                 // else just unselect the roi
@@ -292,12 +285,6 @@ public class ROI2DArea extends ROI2D
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see icy.painter.AbstractPainter#mouseReleased(java.awt.event.MouseEvent,
-         * java.awt.geom.Point2D, icy.canvas.IcyCanvas)
-         */
         @Override
         public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
@@ -306,12 +293,6 @@ public class ROI2DArea extends ROI2D
                 optimizeBounds(true);
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see icy.roi.ROI2D.ROI2DPainter#mouseDrag(java.awt.event.MouseEvent,
-         * java.awt.geom.Point2D, icy.canvas.IcyCanvas)
-         */
         @Override
         public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
@@ -363,21 +344,23 @@ public class ROI2DArea extends ROI2D
 
             // draw bounds
             g.draw(bounds);
+
+            // set alpha
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaLevel));
             // draw mask
-            g.drawImage(mask, null, bounds.x, bounds.y);
+            g.drawImage(imageMask, null, bounds.x, bounds.y);
 
             // ROI selected ? draw cursor
             if (selected && !focused)
             {
-                // set alpha
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaLevel));
                 // cursor color
                 g.setColor(cursorColor);
                 // draw cursor
                 g.fill(cursor);
-                // set alpha back to normal
-                g.setComposite(AlphaComposite.SrcOver);
             }
+
+            // set alpha back to normal
+            g.setComposite(AlphaComposite.SrcOver);
         }
 
     }
@@ -392,7 +375,7 @@ public class ROI2DArea extends ROI2D
     /**
      * image containing the mask
      */
-    BufferedImage mask;
+    BufferedImage imageMask;
     /**
      * rectangle bounds
      */
@@ -401,7 +384,11 @@ public class ROI2DArea extends ROI2D
     /**
      * internals
      */
-    int[] maskData;
+    final byte[] red;
+    final byte[] green;
+    final byte[] blue;
+    IndexColorModel colorModel;
+    byte[] maskData; // 0 = false, 1 = true
     boolean boundsNeedUpdate;
     double translateX, translateY;
     Color previousColor;
@@ -417,9 +404,24 @@ public class ROI2DArea extends ROI2D
         // keep trace of previous color
         previousColor = getDisplayColor();
 
-        // default image
-        mask = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-        maskData = ((DataBufferInt) mask.getRaster().getDataBuffer()).getData();
+        // prepare indexed image
+        red = new byte[256];
+        green = new byte[256];
+        blue = new byte[256];
+
+        final Color c = getDisplayColor();
+
+        // set colormap
+        red[1] = (byte) c.getRed();
+        green[1] = (byte) c.getGreen();
+        blue[1] = (byte) c.getBlue();
+
+        // classic 8 bits indexed with one transparent color (index = 0)
+        colorModel = new IndexColorModel(8, 256, red, green, blue, 0);
+        // create default image
+        imageMask = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_INDEXED, colorModel);
+        // get data pointer
+        maskData = ((DataBufferByte) imageMask.getRaster().getDataBuffer()).getData();
 
         if (position != null)
         {
@@ -462,8 +464,9 @@ public class ROI2DArea extends ROI2D
 
     /**
      * Optimize the bounds size to the minimum surface which still include all mask<br>
+     * You should call it after consecutive remove operations.
      */
-    void optimizeBounds(boolean removeIfEmpty)
+    public void optimizeBounds(boolean removeIfEmpty)
     {
         // bounds are being updated
         boundsNeedUpdate = false;
@@ -472,8 +475,8 @@ public class ROI2DArea extends ROI2D
         final Rectangle oldBounds = new Rectangle(bounds);
 
         // recompute bound from the mask data
-        final int sizeX = mask.getWidth();
-        final int sizeY = mask.getHeight();
+        final int sizeX = imageMask.getWidth();
+        final int sizeY = imageMask.getHeight();
 
         int minX, minY, maxX, maxY;
         minX = maxX = minY = maxY = 0;
@@ -527,15 +530,20 @@ public class ROI2DArea extends ROI2D
 
     void updateMaskColor()
     {
-        final int maskColor = getMaskColor();
-        final int len = mask.getWidth() * mask.getHeight();
+        final Color c = getDisplayColor();
 
-        for (int offset = 0; offset < len; offset++)
-        {
-            // change the color where we already have color data
-            if (maskData[offset] != 0)
-                maskData[offset] = maskColor;
-        }
+        // set colormap
+        red[1] = (byte) c.getRed();
+        green[1] = (byte) c.getGreen();
+        blue[1] = (byte) c.getBlue();
+
+        // and rebuild image
+        final int w = imageMask.getWidth();
+        final int h = imageMask.getHeight();
+
+        colorModel = new IndexColorModel(8, 256, red, green, blue, 0);
+        // recreate image from array data
+        imageMask = ImageUtil.createIndexedImage(w, h, colorModel, maskData);
     }
 
     void updateImage(Rectangle oldBnd, Rectangle newBnd)
@@ -551,9 +559,9 @@ public class ROI2DArea extends ROI2D
         // dimension changed ?
         if ((oldBounds.width != newBounds.width) || (oldBounds.height != newBounds.height))
         {
-            final BufferedImage newMask = new BufferedImage(newBounds.width, newBounds.height,
-                    BufferedImage.TYPE_INT_ARGB);
-            final int[] newMaskData = ((DataBufferInt) newMask.getRaster().getDataBuffer()).getData();
+            final BufferedImage newImageMask = new BufferedImage(newBounds.width, newBounds.height,
+                    BufferedImage.TYPE_BYTE_INDEXED, colorModel);
+            final byte[] newMaskData = ((DataBufferByte) newImageMask.getRaster().getDataBuffer()).getData();
 
             final Rectangle intersect = newBounds.intersection(oldBounds);
 
@@ -584,7 +592,7 @@ public class ROI2DArea extends ROI2D
             }
 
             // set new image and maskData
-            mask = newMask;
+            imageMask = newImageMask;
             maskData = newMaskData;
         }
     }
@@ -594,34 +602,21 @@ public class ROI2DArea extends ROI2D
      */
     public void updateMask(int x, int y, boolean remove)
     {
-        // first update bounds
         if (remove)
-            // bounds need to be entirely computed
+            // mark that bounds need to be updated
             boundsNeedUpdate = true;
         else
             // update bounds (this update the image dimension if needed)
             addToBounds(new Rectangle(x, y, 1, 1));
 
-        // get image graphics object
-        final Graphics2D g = mask.createGraphics();
-
-        // set no alpha
-        g.setComposite(AlphaComposite.Src);
-
         final int adjX = x - bounds.x;
         final int adjY = y - bounds.y;
-        final int value;
 
         // set color depending remove or adding to mask
-        if (remove)
-            value = 0;
-        else
-            value = getMaskColor();
-
-        maskData[adjX + (adjY * bounds.width)] = value;
+        maskData[adjX + (adjY * bounds.width)] = (byte) (remove ? 0 : 1);
 
         // notify roi changed
-        ROI2DArea.this.roiChanged();
+        roiChanged();
     }
 
     /**
@@ -629,24 +624,22 @@ public class ROI2DArea extends ROI2D
      */
     public void updateMask(Shape shape, boolean remove)
     {
-        // first update bounds
         if (remove)
-            // bounds need to be entirely computed
+            // mark that bounds need to be updated
             boundsNeedUpdate = true;
         else
             // update bounds (this update the image dimension if needed)
             addToBounds(shape.getBounds());
 
         // get image graphics object
-        final Graphics2D g = mask.createGraphics();
+        final Graphics2D g = imageMask.createGraphics();
 
-        // set no alpha
         g.setComposite(AlphaComposite.Src);
         // set color depending remove or adding to mask
         if (remove)
-            g.setColor(new Color(0x00000000, true));
+            g.setColor(new Color(colorModel.getRGB(0), true));
         else
-            g.setColor(new Color(getMaskColor(), true));
+            g.setColor(new Color(colorModel.getRGB(1), true));
         // translate to origin of image
         g.translate(-bounds.x, -bounds.y);
         // draw cursor in the mask
@@ -655,7 +648,7 @@ public class ROI2DArea extends ROI2D
         g.dispose();
 
         // notify roi changed
-        ROI2DArea.this.roiChanged();
+        roiChanged();
     }
 
     @Override
@@ -736,7 +729,9 @@ public class ROI2DArea extends ROI2D
     }
 
     /**
-     * Remove a point to the mask
+     * Remove a point to the mask.<br>
+     * Don't forget to call optimizeBounds() after consecutive remove operation<br>
+     * to refresh the mask bounds.
      */
     public void removePoint(Point pos)
     {
@@ -744,7 +739,9 @@ public class ROI2DArea extends ROI2D
     }
 
     /**
-     * Remove a point to the mask
+     * Remove a point to the mask.<br>
+     * Don't forget to call optimizeBounds() after consecutive remove operation<br>
+     * to refresh the mask bounds.
      */
     public void removePoint(int x, int y)
     {
@@ -768,7 +765,9 @@ public class ROI2DArea extends ROI2D
     }
 
     /**
-     * Remove a rectangle from the mask
+     * Remove a rectangle from the mask.<br>
+     * Don't forget to call optimizeBounds() after consecutive remove operation<br>
+     * to refresh the mask bounds.
      */
     public void removeRect(Rectangle r)
     {
@@ -776,11 +775,39 @@ public class ROI2DArea extends ROI2D
     }
 
     /**
-     * Remove a rectangle from the mask
+     * Remove a rectangle from the mask.<br>
+     * Don't forget to call optimizeBounds() after consecutive remove operation<br>
+     * to refresh the mask bounds.
      */
     public void removeRect(int x, int y, int w, int h)
     {
         removeRect(new Rectangle(x, y, w, h));
+    }
+
+    /**
+     * Add a shape to the mask
+     */
+    public void addShape(Shape s)
+    {
+        updateMask(s, false);
+    }
+
+    /**
+     * Remove a shape to the mask.<br>
+     * Don't forget to call optimizeBounds() after consecutive remove operation<br>
+     * to refresh the mask bounds.
+     */
+    public void removeShape(Shape s)
+    {
+        updateMask(s, true);
+    }
+
+    /**
+     * Return true if bounds need to be updated by calling optimizeBounds() method.
+     */
+    public boolean getBoundsNeedUpdate()
+    {
+        return boundsNeedUpdate;
     }
 
     /**
@@ -800,7 +827,8 @@ public class ROI2DArea extends ROI2D
     @Override
     public boolean isOver(IcyCanvas canvas, double x, double y)
     {
-        final double strk = getAdjustedStroke(canvas) * 1.8;
+        // use bigger stroke for isOver test for easier intersection
+        final double strk = getAdjustedStroke(canvas) * 3;
         final Rectangle2D rect = new Rectangle2D.Double(x - (strk * 0.5), y - (strk * 0.5), strk, strk);
         // use flatten path, intersects on curved shape return incorrect result
         return ShapeUtil.pathIntersects(bounds.getPathIterator(null, 0.1), rect);
@@ -823,7 +851,7 @@ public class ROI2DArea extends ROI2D
         final int xi = (int) x - bounds.x;
         final int yi = (int) y - bounds.y;
 
-        return (maskData[(yi * mask.getWidth()) + xi] != 0);
+        return (maskData[(yi * imageMask.getWidth()) + xi] != 0);
     }
 
     @Override
@@ -909,7 +937,7 @@ public class ROI2DArea extends ROI2D
     }
 
     @Override
-    public boolean[] getAsBooleanMask(Rectangle r)
+    public boolean[] getAsBooleanMask(Rectangle r, boolean inclusive)
     {
         final boolean[] result = new boolean[r.width * r.height];
 
@@ -920,6 +948,7 @@ public class ROI2DArea extends ROI2D
         if (intersect.isEmpty())
             return result;
 
+        // this ROI doesn't take care of inclusive parameter as intersect = contains
         int offSrc = 0;
         int offDst = 0;
 
@@ -947,9 +976,9 @@ public class ROI2DArea extends ROI2D
     }
 
     @Override
-    public boolean[] getAsBooleanMask(int x, int y, int w, int h)
+    public boolean[] getAsBooleanMask(int x, int y, int w, int h, boolean inclusive)
     {
-        return getAsBooleanMask(new Rectangle(x, y, w, h));
+        return getAsBooleanMask(new Rectangle(x, y, w, h), inclusive);
     }
 
     @Override
@@ -985,6 +1014,30 @@ public class ROI2DArea extends ROI2D
      * @param r
      * @param booleanMask
      */
+    private void setAsByteMask(Rectangle r, byte[] mask)
+    {
+        // save previous bounds
+        final Rectangle oldBounds = new Rectangle(bounds);
+
+        // reset image with new rectangle
+        bounds.setBounds(r);
+        updateImage(oldBounds, r);
+
+        final int len = r.width * r.height;
+
+        for (int i = 0; i < len; i++)
+            maskData[i] = mask[i];
+
+        optimizeBounds(false);
+    }
+
+    /**
+     * Set the mask from a boolean array.<br>
+     * r represents the region defined by the boolean array.
+     * 
+     * @param r
+     * @param booleanMask
+     */
     public void setAsBooleanMask(Rectangle r, boolean[] booleanMask)
     {
         // save previous bounds
@@ -994,16 +1047,10 @@ public class ROI2DArea extends ROI2D
         bounds.setBounds(r);
         updateImage(oldBounds, r);
 
-        final int maskColor = getMaskColor();
         final int len = r.width * r.height;
 
         for (int i = 0; i < len; i++)
-        {
-            if (booleanMask[i])
-                maskData[i] = maskColor;
-            else
-                maskData[i] = 0;
-        }
+            maskData[i] = (byte) (booleanMask[i] ? 1 : 0);
 
         optimizeBounds(false);
     }
@@ -1013,11 +1060,6 @@ public class ROI2DArea extends ROI2D
         setAsBooleanMask(new Rectangle(x, y, w, h), booleanMask);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI#loadFromXML(org.w3c.dom.Node)
-     */
     @Override
     public boolean loadFromXML(Node node)
     {
@@ -1038,7 +1080,7 @@ public class ROI2DArea extends ROI2D
             // retrieve mask data
             final byte[] data = XMLUtil.getElementBytesValue(node, ID_BOOLMASK_DATA, new byte[0]);
             // set the ROI from the unpacked boolean mask
-            setAsBooleanMask(rect, ArrayUtil.toBooleanArray1D(data));
+            setAsByteMask(rect, data);
         }
         finally
         {
@@ -1048,11 +1090,6 @@ public class ROI2DArea extends ROI2D
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI#saveToXML(org.w3c.dom.Node)
-     */
     @Override
     public boolean saveToXML(Node node)
     {
@@ -1065,30 +1102,9 @@ public class ROI2DArea extends ROI2D
         XMLUtil.setElementIntValue(node, ID_BOUNDS_W, bounds.width);
         XMLUtil.setElementIntValue(node, ID_BOUNDS_H, bounds.height);
 
-        // retrieve the boolean mask
-        final boolean[] mask = getAsBooleanMask(bounds);
         // set mask data as byte array
-        XMLUtil.setElementBytesValue(node, ID_BOOLMASK_DATA, ArrayUtil.toByteArray1D(mask));
+        XMLUtil.setElementBytesValue(node, ID_BOOLMASK_DATA, maskData);
 
         return true;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI#endUpdate()
-     */
-    @Override
-    public void endUpdate()
-    {
-        super.endUpdate();
-
-        // update done ?
-        if (!isUpdating())
-        {
-            // update only on release as it can be long
-            if (boundsNeedUpdate)
-                optimizeBounds(true);
-        }
     }
 }

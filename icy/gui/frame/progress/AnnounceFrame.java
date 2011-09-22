@@ -18,7 +18,6 @@
  */
 package icy.gui.frame.progress;
 
-import icy.gui.util.GuiUtil;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.event.ActionEvent;
@@ -128,13 +127,10 @@ public class AnnounceFrame extends TaskFrame implements ActionListener
 
                 setLayout(new BoxLayout(getContentPane(), BoxLayout.LINE_AXIS));
 
-                add(GuiUtil.besidesPanel(label));
-                add(GuiUtil.besidesPanel(button));
+                add(label);
+                add(button);
 
                 pack();
-
-                // automatically done with TaskManager
-                // setVisible(true);
             }
         });
     }

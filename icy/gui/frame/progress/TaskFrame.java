@@ -94,11 +94,6 @@ public abstract class TaskFrame extends IcyFrame
             tfm.addTaskWindow(this);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.frame.IcyFrame#close()
-     */
     @Override
     public void close()
     {

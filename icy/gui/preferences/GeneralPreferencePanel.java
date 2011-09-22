@@ -18,6 +18,7 @@
  */
 package icy.gui.preferences;
 
+import icy.gui.dialog.MessageDialog;
 import icy.gui.util.GuiUtil;
 import icy.math.MathUtil;
 import icy.preferences.GeneralPreferences;
@@ -27,6 +28,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
@@ -56,6 +58,7 @@ public class GeneralPreferencePanel extends PreferencePanel
     // private final JCheckBox zoomSmooth;
     private final JSpinner maxMemoryMBSpinner;
     private final JSpinner uiFontSizeSpinner;
+    private final JButton reenableAllToolTipButton;
 
     /**
      * @param parent
@@ -93,6 +96,21 @@ public class GeneralPreferencePanel extends PreferencePanel
         uiFontSizeSpinner = new JSpinner(new SpinnerNumberModel(7, 7, 24, 1));
         uiFontSizeSpinner.setToolTipText("");
 
+        reenableAllToolTipButton = new JButton("Reactivate tooltips");
+        reenableAllToolTipButton.setToolTipText("All hidden tooltips will be made visible again");
+        reenableAllToolTipButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                // clear the saved tool tips preference to re-enable them
+                GeneralPreferences.getPreferencesToolTips().removeChildren();
+                GeneralPreferences.getPreferencesToolTips().clear();
+
+                MessageDialog.showDialog("All tooltips are now enabled again !");
+            }
+        });
+
         load();
 
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
@@ -117,6 +135,8 @@ public class GeneralPreferencePanel extends PreferencePanel
                 " MB (max = " + maxMemLimit + " MB)"), Box.createHorizontalGlue()));
         mainPanel.add(Box.createVerticalStrut(6));
         mainPanel.add(Box.createVerticalGlue());
+        mainPanel.add(GuiUtil.createLineBoxPanel(reenableAllToolTipButton, Box.createHorizontalGlue()));
+        mainPanel.add(Box.createVerticalStrut(6));
 
         mainPanel.validate();
     }

@@ -21,7 +21,9 @@ package icy.gui.menu;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandToggleButton;
 import icy.gui.dialog.ImageLoaderDialog;
+import icy.gui.frame.progress.ToolTipFrame;
 import icy.gui.util.RibbonUtil;
+import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
 import icy.plugin.interface_.PluginROI;
@@ -34,6 +36,7 @@ import icy.roi.ROI2DPoint;
 import icy.roi.ROI2DPolyLine;
 import icy.roi.ROI2DPolygon;
 import icy.roi.ROI2DRectangle;
+import icy.util.StringUtil;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -56,6 +59,27 @@ public class ToolRibbonTask extends RibbonTask
 
     public static final String SELECT = "Selection";
     public static final String MOVE = "Move";
+
+    private static final String TOOLTIP_ROI2D_POINT = "<b>ROI Point : single point type ROI</b><br><br>"
+            + "Click on the image where you want to set your point.";
+    private static final String TOOLTIP_ROI2D_LINE = "<b>ROI Line : single line type ROI</b><br><br>"
+            + "Drag from start point to destination point.";
+    private static final String TOOLTIP_ROI2D_POLYLINE = "<b>ROI Polyline : multi line type ROI</b><br><br>"
+            + "Add a new point with left click then end draw with right click, double click or ESC key.<br>"
+            + "You can add new point (after end draw) by pressing control key while clicking.";
+    private static final String TOOLTIP_ROI2D_RECTANGLE = "<b>ROI Rectangle : rectangle type ROI</b><br><br>"
+            + "Drag from start point to destination point.";
+    private static final String TOOLTIP_ROI2D_ELLIPSE = "<b>ROI Ellipse : ellipse type ROI</b><br><br>"
+            + "Drag from start point to destination point.";
+    private static final String TOOLTIP_ROI2D_POLYGON = "<b>ROI Polygon : polygon type ROI</b><br><br>"
+            + "Add a new point with left click then end draw with right click, double click or ESC key.<br>"
+            + "You can add new point (after end draw) by pressing control key while clicking.";
+    private static final String TOOLTIP_ROI2D_AREA = "<b>ROI Area : bitmap mask area type ROI</b><br><br>"
+            + "Draw in with left mouse button and erase with right button.<br>"
+            + "Double click, press ESC or right click outside ROI bounds to end draw.<br>"
+            + "Increase or decrease the pencil size with '+' / '-' keys";
+
+    private static final int TOOLTIP_LIVETIME = 10; // 10 seconds
 
     public static boolean isROITool(String command)
     {
@@ -174,12 +198,14 @@ public class ToolRibbonTask extends RibbonTask
 
             button = new IcyCommandToggleButton("Rectangle", "roi_rectangle");
             button.setName(ROI2DRectangle.class.getName());
-            button.setActionRichTooltip(new RichTooltip("ROI Rectangle", "Create a rectangle type ROI"));
+            button.setActionRichTooltip(new RichTooltip("ROI Rectangle",
+                    "Create a rectangle type ROI.  Drag from start point to destination point."));
             addCommandButton(button, RibbonElementPriority.TOP);
 
             button = new IcyCommandToggleButton("Ellipse", "roi_oval");
             button.setName(ROI2DEllipse.class.getName());
-            button.setActionRichTooltip(new RichTooltip("ROI Ellipse", "Create a ellipse type ROI"));
+            button.setActionRichTooltip(new RichTooltip("ROI Ellipse",
+                    "Create a ellipse type ROI. Drag from start point to destination point."));
             addCommandButton(button, RibbonElementPriority.TOP);
 
             button = new IcyCommandToggleButton("Polygon", "roi_polygon");
@@ -297,13 +323,49 @@ public class ToolRibbonTask extends RibbonTask
         }
     }
 
+    /**
+     * Called when user click on one of the tool button
+     */
     void internalSetSelected(String toolName)
     {
         if (!currentTool.equals(toolName))
         {
             currentTool = toolName;
+
+            displayToolTip(toolName);
             toolChanged(toolName);
         }
+    }
+
+    /**
+     * Display tips for specified tool
+     */
+    private void displayToolTip(String toolName)
+    {
+        if (StringUtil.isEmpty(toolName) || (Icy.getMainInterface().getFocusedViewer() == null))
+            return;
+
+        final String tips;
+
+        if (toolName.equals(ROI2DPoint.class.getName()))
+            tips = TOOLTIP_ROI2D_POINT;
+        else if (toolName.equals(ROI2DLine.class.getName()))
+            tips = TOOLTIP_ROI2D_LINE;
+        else if (toolName.equals(ROI2DPolyLine.class.getName()))
+            tips = TOOLTIP_ROI2D_POLYLINE;
+        else if (toolName.equals(ROI2DRectangle.class.getName()))
+            tips = TOOLTIP_ROI2D_RECTANGLE;
+        else if (toolName.equals(ROI2DEllipse.class.getName()))
+            tips = TOOLTIP_ROI2D_ELLIPSE;
+        else if (toolName.equals(ROI2DPolygon.class.getName()))
+            tips = TOOLTIP_ROI2D_POLYGON;
+        else if (toolName.equals(ROI2DArea.class.getName()))
+            tips = TOOLTIP_ROI2D_AREA;
+        else
+            tips = null;
+
+        if (tips != null)
+            new ToolTipFrame(tips, TOOLTIP_LIVETIME, toolName);
     }
 
     public void toolChanged(String toolName)

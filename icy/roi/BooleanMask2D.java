@@ -23,6 +23,8 @@ import java.util.ArrayList;
 
 /**
  * Class to define a 2D boolean mask and make basic boolean operation between masks.
+ * The bounds property of this object define the area of the mask.
+ * The mask contains the boolean mask itself.
  * 
  * @author Stephane
  */
@@ -251,9 +253,23 @@ public class BooleanMask2D
         this(new Rectangle(), new boolean[0]);
     }
 
+    /**
+     * Return true if boolean mask is empty<br>
+     */
     public boolean isEmpty()
     {
         return bounds.isEmpty();
+    }
+
+    /**
+     * Return true if mask contains the specified point
+     */
+    public boolean contains(int x, int y)
+    {
+        if (bounds.contains(x, y))
+            return mask[(x - bounds.x) + ((y - bounds.y) * bounds.width)];
+
+        return false;
     }
 
     /**

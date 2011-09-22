@@ -34,6 +34,7 @@ import icy.util.ShapeUtil;
 import icy.util.StringUtil;
 import icy.vtk.VtkUtil;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
@@ -150,57 +151,43 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             }
         }
 
-        @Override
-        public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        /**
+         * Draw the ROI itself
+         */
+        protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
-            if (!isActiveFor(canvas))
-                return;
-
             if (canvas instanceof IcyCanvas2D)
             {
-                final Graphics2D graphics = (Graphics2D) g.create();
+                final Graphics2D g2 = (Graphics2D) g.create();
 
-                // default paint for ROI2D
-                graphics.setColor(getDisplayColor());
-                if (ROI2DShape.this.selected)
-                    graphics.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, ROI2DShape.this.stroke + 1d)));
+                g2.setColor(getDisplayColor());
+
+                // ROI selected ?
+                if (selected)
+                {
+                    // show content
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+                    g2.fill(shape);
+                    g2.setComposite(AlphaComposite.Src);
+                }
+
+                if (selected)
+                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 1d)));
                 else
-                    graphics.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, ROI2DShape.this.stroke)));
+                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke)));
 
-                graphics.draw(shape);
+                g2.draw(shape);
                 // draw from flatten shape as we use it for collision detection
                 // ShapeUtil.drawFromPath(getPathIterator(null, 0.1), g);
 
-                // draw control point if selected
-                if (ROI2DShape.this.selected)
+                if (selected)
                 {
+                    // draw control point if selected
                     for (Anchor2D pt : controlPoints)
-                        pt.paint(graphics, sequence, canvas);
-
-                    // draw position and size
-                    final Rectangle2D bounds = getBounds2D();
-
-                    String roiPositionString = "(" + StringUtil.toString(bounds.getX(), 1) + ";"
-                            + StringUtil.toString(bounds.getY(), 1) + ")";
-                    String roiBoundingSizeString = "[" + StringUtil.toString(bounds.getWidth(), 1) + ";"
-                            + StringUtil.toString(bounds.getHeight(), 1) + "]";
-                    String roiInfoString = roiPositionString + " " + roiBoundingSizeString;
-
-                    Font font;
-                    Rectangle2D stringBounds;
-                    int xPos, yPos;
-
-                    font = new Font("Arial", Font.BOLD, (int) ROI.canvasToImageLogDeltaX(canvas, 15));
-                    stringBounds = GuiUtil.getStringBounds(g, font, roiInfoString);
-                    xPos = (int) (bounds.getX() + bounds.getWidth() / 2 - stringBounds.getWidth() / 2);
-                    yPos = (int) (bounds.getY() - stringBounds.getHeight() / 2);
-
-                    graphics.setColor(getDisplayColor());
-                    graphics.setFont(font);
-                    graphics.drawString(roiInfoString, xPos, yPos);
+                        pt.paint(g2, sequence, canvas);
                 }
 
-                graphics.dispose();
+                g2.dispose();
             }
 
             if (canvas instanceof Canvas3D)
@@ -319,6 +306,56 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                 polyData.SetPolys(cells);
                 polyData.SetPoints(points);
             }
+        }
+
+        /**
+         * Draw extras informations as name, size and position
+         */
+        protected void drawInfos(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            if (canvas instanceof IcyCanvas2D)
+            {
+                if (selected)
+                {
+                    final Graphics2D g2 = (Graphics2D) g.create();
+
+                    g2.setColor(getDisplayColor());
+
+                    // draw position and size
+                    final Rectangle2D bounds = getBounds2D();
+
+                    String roiPositionString = "(" + StringUtil.toString(bounds.getX(), 1) + ";"
+                            + StringUtil.toString(bounds.getY(), 1) + ")";
+                    String roiBoundingSizeString = "[" + StringUtil.toString(bounds.getWidth(), 1) + ";"
+                            + StringUtil.toString(bounds.getHeight(), 1) + "]";
+                    String roiInfoString = roiPositionString + " " + roiBoundingSizeString;
+
+                    Font font;
+                    Rectangle2D stringBounds;
+                    int xPos, yPos;
+
+                    font = new Font("Arial", Font.BOLD, (int) ROI.canvasToImageLogDeltaX(canvas, 15));
+                    stringBounds = GuiUtil.getStringBounds(g, font, roiInfoString);
+                    xPos = (int) (bounds.getX() + bounds.getWidth() / 2 - stringBounds.getWidth() / 2);
+                    yPos = (int) (bounds.getY() - stringBounds.getHeight() / 2);
+
+                    g2.setColor(getDisplayColor());
+                    g2.setFont(font);
+                    g2.drawString(roiInfoString, xPos, yPos);
+
+                    g2.dispose();
+                }
+            }
+        }
+
+        @Override
+        public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            if (!isActiveFor(canvas))
+                return;
+
+            drawROI(g, sequence, canvas);
+            drawInfos(g, sequence, canvas);
         }
     }
 
@@ -520,17 +557,49 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         roiChanged(ROIPointEventType.POINT_ADDED, pt);
     }
 
+    /**
+     * internal use only
+     */
+    protected void addPoint(Anchor2D pt, int index)
+    {
+        pt.addListener(this);
+        controlPoints.add(index, pt);
+        roiChanged(ROIPointEventType.POINT_ADDED, pt);
+    }
+
     @Override
     public boolean addPointAt(Point2D pos, boolean ctrl)
     {
         if (!canAddPoint())
             return false;
 
-        final Anchor2D pt = createAnchor(pos);
-        addPoint(pt);
-        // select point is control is not pressed
-        pt.setSelected(!ctrl);
-        return true;
+        // creation mode
+        if (creating)
+        {
+            final Anchor2D pt = createAnchor(pos);
+
+            // just add the new point at last position
+            addPoint(pt);
+            // and select point is control is not pressed
+            pt.setSelected(!ctrl);
+
+            return true;
+        }
+
+        // modification mode, add point only if control is pressed
+        if (ctrl)
+        {
+            final Anchor2D pt = createAnchor(pos);
+
+            // place the new point with closest points
+            addPoint(pt, getInsertPointPosition(pos));
+            // always select
+            pt.setSelected(true);
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -693,12 +762,80 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     /**
+     * Return total distance of the specified list of points.
+     */
+    protected double getTotalDistance(ArrayList<Point2D> points, boolean connectLastPoint)
+    {
+        final int size = points.size();
+        double result = 0;
+
+        if (size > 1)
+        {
+            for (int i = 0; i < size - 1; i++)
+                result += points.get(i).distance(points.get(i + 1));
+
+            // add last to first point distance
+            if (connectLastPoint)
+                result += points.get(size - 1).distance(points.get(0));
+        }
+
+        return result;
+    }
+
+    /**
+     * Return total distance of the specified list of points.
+     */
+    protected double getTotalDistance(ArrayList<Point2D> points)
+    {
+        return getTotalDistance(points, true);
+    }
+
+    /**
+     * Find best insert position for specified point
+     */
+    protected int getInsertPointPosition(Point2D pos)
+    {
+        final ArrayList<Point2D> points = new ArrayList<Point2D>();
+
+        for (Anchor2D pt : controlPoints)
+            points.add(pt.getPosition());
+
+        final int size = points.size();
+        // by default we use last position
+        int result = size;
+        double minDistance = Double.MAX_VALUE;
+
+        // we try all cases
+        for (int i = size; i >= 0; i--)
+        {
+            // add point at current position
+            points.add(i, pos);
+
+            // calculate total distance
+            final double d = getTotalDistance(points);
+            // minimum distance ?
+            if (d < minDistance)
+            {
+                // save index
+                minDistance = d;
+                result = i;
+            }
+
+            // remove point from current position
+            points.remove(i);
+        }
+
+        return result;
+    }
+
+    /**
      * return true if specified point coordinates overlap the ROI (without control point)
      */
     @Override
     public boolean isOver(IcyCanvas canvas, double x, double y)
     {
-        final double strk = getAdjustedStroke(canvas) * 2;
+        // use bigger stroke for isOver test for easier intersection
+        final double strk = getAdjustedStroke(canvas) * 3;
         final Rectangle2D rect = new Rectangle2D.Double(x - (strk * 0.5), y - (strk * 0.5), strk, strk);
         // use flatten path, intersects on curved shape return incorrect result
         return ShapeUtil.pathIntersects(getPathIterator(null, 0.1), rect);
@@ -788,7 +925,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     @Override
-    public boolean[] getAsBooleanMask(int x, int y, int w, int h)
+    public boolean[] getAsBooleanMask(int x, int y, int w, int h, boolean inclusive)
     {
         if ((w <= 0) || (h <= 0))
             return new boolean[0];
@@ -800,6 +937,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         g.setColor(Color.white);
         g.translate(-x, -y);
         g.fill(shape);
+        if (inclusive)
+            g.draw(shape);
         g.dispose();
 
         // use the image to define the mask
