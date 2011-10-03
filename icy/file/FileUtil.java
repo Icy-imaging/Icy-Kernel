@@ -128,7 +128,7 @@ public class FileUtil
             {
                 file.createNewFile();
             }
-            catch (IOException e)
+            catch (Exception e)
             {
                 IcyExceptionHandler.showErrorMessage(e, false);
                 return null;
@@ -189,25 +189,30 @@ public class FileUtil
 
     public static boolean save(File file, byte[] data, boolean displayError)
     {
-        try
-        {
-            final File f = createFile(file);
+        final File f = createFile(file);
 
-            if (f != null)
+        if (f != null)
+        {
+            try
             {
-                FileOutputStream out = new FileOutputStream(f);
+                final FileOutputStream out = new FileOutputStream(f);
+
                 out.write(data, 0, data.length);
                 out.close();
             }
-        }
-        catch (IOException e)
-        {
-            if (displayError)
-                System.err.println(e.getMessage());
-            return false;
+            catch (Exception e)
+            {
+                if (displayError)
+                    System.err.println(e.getMessage());
+                // delete incorrect file
+                f.delete();
+                return false;
+            }
+
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     /**

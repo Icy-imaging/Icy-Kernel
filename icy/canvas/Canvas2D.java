@@ -1628,7 +1628,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         zoomFitImageButton = new IcyButton(ICON_FIT_IMAGE);
         zoomFitImageButton.setFocusable(false);
-        zoomFitImageButton.setToolTipText("Fit canvas to image size (if possible)");
+        zoomFitImageButton.setToolTipText("Fit canvas to image size");
         zoomFitImageButton.addActionListener(new ActionListener()
         {
             @Override

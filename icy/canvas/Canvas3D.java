@@ -712,6 +712,21 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         imageData = newImageData;
     }
 
+    /**
+     * Adjust the volume image resolution rendering.<br>
+     * <ul>
+     * <li>0 = auto selection</li>
+     * <li>1 = highest resolution (slow)</li>
+     * <li>10 = lowest resolution (fast)</li>
+     * </ul>
+     * 
+     * @param value
+     */
+    public void setVolumeDistanceSample(int value)
+    {
+        volumeImageSampleDistanceCombo.setSelectedIndex(value);
+    }
+
     void setupColorProperties(int c)
     {
         final LUT lut = getLut();
@@ -821,8 +836,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
                 mapper.AutoAdjustSampleDistancesOn();
             else
             {
-                mapper.SetImageSampleDistance(distance);
                 mapper.AutoAdjustSampleDistancesOff();
+                mapper.SetImageSampleDistance(distance);
             }
         }
     }
