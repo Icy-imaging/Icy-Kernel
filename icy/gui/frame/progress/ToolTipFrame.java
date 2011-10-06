@@ -32,9 +32,9 @@ public class ToolTipFrame extends TaskFrame
     // property
     final private static String ID_DISPLAY = "display";
 
-    final Timer timer;
-    final JEditorPane editorPane;
-    final JCheckBox doNotDisplayCheckbox;
+    Timer timer;
+    JEditorPane editorPane;
+    JCheckBox doNotDisplayCheckbox;
 
     final int liveTime;
     final String id;
@@ -51,43 +51,12 @@ public class ToolTipFrame extends TaskFrame
      *        toolTip id, it's used to display the "Do not display in future" checkbox<br>
      *        and remember its value
      */
-    public ToolTipFrame(String message, int liveTime, String id)
+    public ToolTipFrame(final String message, int liveTime, String id)
     {
         super();
 
         this.liveTime = liveTime;
         this.id = id;
-
-        timer = new Timer(liveTime * 1000, new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                processClose();
-            }
-        });
-        timer.setRepeats(false);
-
-        editorPane = new JEditorPane("text/html", message);
-        editorPane.setMinimumSize(new Dimension(240, 60));
-        editorPane.setEditable(false);
-        editorPane.setToolTipText("Click to close the tool tip");
-        // set same font as JLabel for JEditorPane
-        final Font font = UIManager.getFont("Label.font");
-        final String bodyRule = "body { font-family: " + font.getFamily() + "; " + "font-size: " + font.getSize()
-                + "pt; }";
-        ((HTMLDocument) editorPane.getDocument()).getStyleSheet().addRule(bodyRule);
-        editorPane.addMouseListener(new MouseAdapter()
-        {
-            @Override
-            public void mouseClicked(MouseEvent e)
-            {
-                processClose();
-            }
-        });
-
-        doNotDisplayCheckbox = new JCheckBox("Do not display in future", false);
-        doNotDisplayCheckbox.setToolTipText("Do not display this tooltip the next time");
 
         if (!StringUtil.isEmpty(id))
         {
@@ -104,11 +73,42 @@ public class ToolTipFrame extends TaskFrame
         else
             pref = null;
 
+        timer = new Timer(liveTime * 1000, new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                processClose();
+            }
+        });
+        timer.setRepeats(false);
+
         ThreadUtil.invokeLater(new Runnable()
         {
             @Override
             public void run()
             {
+                editorPane = new JEditorPane("text/html", message);
+                editorPane.setMinimumSize(new Dimension(240, 60));
+                editorPane.setEditable(false);
+                editorPane.setToolTipText("Click to close the tool tip");
+                // set same font as JLabel for JEditorPane
+                final Font font = UIManager.getFont("Label.font");
+                final String bodyRule = "body { font-family: " + font.getFamily() + "; " + "font-size: "
+                        + font.getSize() + "pt; }";
+                ((HTMLDocument) editorPane.getDocument()).getStyleSheet().addRule(bodyRule);
+                editorPane.addMouseListener(new MouseAdapter()
+                {
+                    @Override
+                    public void mouseClicked(MouseEvent e)
+                    {
+                        processClose();
+                    }
+                });
+
+                doNotDisplayCheckbox = new JCheckBox("Do not display in future", false);
+                doNotDisplayCheckbox.setToolTipText("Do not display this tooltip the next time");
+
                 // no title bar
                 setTitleBarVisible(false);
 
