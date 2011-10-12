@@ -122,10 +122,10 @@ public class SequencePersistent implements XMLPersistent
 
         if (nodeMeta != null)
         {
-            sequence.setResolutionX(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_X, 1d));
-            sequence.setResolutionY(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_Y, 1d));
-            sequence.setResolutionZ(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_Z, 1d));
-            sequence.setResolutionT(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_T, 1d));
+            sequence.setPixelSizeX(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXELS_SIZE_X, 1d));
+            sequence.setPixelSizeY(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXELS_SIZE_Y, 1d));
+            sequence.setPixelSizeZ(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXELS_SIZE_Z, 1d));
+            sequence.setPixelSizeT(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXELS_SIZE_T, 1d));
         }
     }
 
@@ -171,10 +171,10 @@ public class SequencePersistent implements XMLPersistent
 
         if (nodeMeta != null)
         {
-            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_X, sequence.getResolutionX());
-            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_Y, sequence.getResolutionY());
-            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_Z, sequence.getResolutionZ());
-            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_RESOLUTION_T, sequence.getResolutionT());
+            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_PIXELS_SIZE_X, sequence.getPixelSizeX());
+            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_PIXELS_SIZE_Y, sequence.getPixelSizeY());
+            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_PIXELS_SIZE_Z, sequence.getPixelSizeZ());
+            XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_PIXELS_SIZE_T, sequence.getPixelSizeT());
         }
     }
 

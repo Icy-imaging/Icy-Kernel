@@ -50,6 +50,11 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
 
     public static void showErrorMessage(Throwable t, boolean printStackTrace)
     {
+        showErrorMessage(t, printStackTrace, true);
+    }
+
+    public static void showErrorMessage(Throwable t, boolean printStackTrace, boolean error)
+    {
         if (t != null)
         {
             showSimpleErrorMessage(t.getCause());
@@ -109,10 +114,12 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                 }
                 else
                 {
-                    // search plugin class
-                    for (StackTraceElement elem : throwable.getStackTrace())
+                    final StackTraceElement[] stackTrace = throwable.getStackTrace();
+
+                    // search plugin class (start from the end of stack trace)
+                    for (int i = stackTrace.length - 1; i >= 0; i--)
                     {
-                        final String className = elem.getClassName();
+                        final String className = stackTrace[i].getClassName();
 
                         // plugin class ?
                         if (className.startsWith(PluginLoader.PLUGIN_PACKAGE + "."))
@@ -124,8 +131,8 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                             if (plugin != null)
                             {
                                 handlePluginException(plugin, throwable, false);
-                                // TODO : maybe add a break here to prevent severals plugins to
-                                // receive it
+                                // only send to last plugin raising the exception
+                                break;
                             }
                         }
                     }

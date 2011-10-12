@@ -290,7 +290,7 @@ public class ImageRibbonTask extends RibbonTask
             comp = new JRibbonComponent(typeButton);
             addRibbonComponent(comp);
 
-            scaledCheckBox = new JCheckBox("Scale data");
+            scaledCheckBox = new JCheckBox("Scale data", true);
             scaledCheckBox.setToolTipText("Scale the data during conversion to best fit with result data type");
             comp = new JRibbonComponent(scaledCheckBox);
             addRibbonComponent(comp);

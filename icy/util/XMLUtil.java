@@ -23,7 +23,7 @@ import icy.network.AuthenticationInfo;
 import icy.network.NetworkUtil;
 import icy.network.URLUtil;
 import icy.system.IcyExceptionHandler;
-import icy.type.TypeUtil;
+import icy.type.DataType;
 import icy.type.collection.array.ArrayUtil;
 
 import java.io.File;
@@ -767,7 +767,7 @@ public class XMLUtil
             return def;
 
         // get packed byte data
-        final byte[] result = (byte[]) ArrayUtil.stringToArray1D(value, TypeUtil.TYPE_BYTE, true, ":");
+        final byte[] result = (byte[]) ArrayUtil.stringToArray1D(value, DataType.BYTE, true, ":");
 
         if (result == null)
             return def;

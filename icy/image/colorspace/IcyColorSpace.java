@@ -29,7 +29,7 @@ import icy.image.colormap.IcyColorMapListener;
 import icy.image.colormap.LinearColorMap;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colorspace.IcyColorSpaceEvent.IcyColorSpaceEventType;
-import icy.type.TypeUtil;
+import icy.type.DataType;
 import icy.type.collection.array.ArrayUtil;
 
 import java.awt.color.ColorSpace;
@@ -116,7 +116,7 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
             // define default colormaps depending the number of component
             switch (numComponents)
             {
-                // Gray
+            // Gray
                 case 1:
                     copyColormap(0, LinearColorMap.white_);
                     break;
@@ -613,9 +613,9 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
         {
             // get datatype and numComponent of source colorModel
             final Object srcElem = cm.getDataElements(0x0, null);
-            final int srcDataType = TypeUtil.getDataType(srcElem);
+            final DataType srcDataType = ArrayUtil.getDataType(srcElem);
             final int srcNumComponents = ArrayUtil.getLength(srcElem);
-            final int dataType = cm.getTransferType();
+            final DataType dataType = DataType.getDataTypeFromDataBufferType(cm.getTransferType());
             final int numComponents = getNumComponents();
 
             // can't recover colormap if we have different dataType or numComponents
@@ -639,9 +639,9 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
 
                     for (int index = 0; index < IcyColorMap.SIZE; index++)
                     {
-                        switch (dataType)
+                        switch (dataType.getJavaType())
                         {
-                            case TypeUtil.TYPE_BYTE:
+                            case BYTE:
                             {
                                 final byte bvalues[] = new byte[numComponents];
 
@@ -664,7 +664,7 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
                                 break;
                             }
 
-                            case TypeUtil.TYPE_SHORT:
+                            case SHORT:
                             {
                                 final short svalues[] = new short[numComponents];
 
@@ -687,7 +687,7 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
                                 break;
                             }
 
-                            case TypeUtil.TYPE_INT:
+                            case INT:
                             {
                                 final int ivalues[] = new int[numComponents];
 
@@ -710,7 +710,30 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
                                 break;
                             }
 
-                            case TypeUtil.TYPE_FLOAT:
+                            case LONG:
+                            {
+                                final long lvalues[] = new long[numComponents];
+
+                                // build an pixel element
+                                for (int i = 0; i < numComponents; i++)
+                                {
+                                    if (i == comp)
+                                        lvalues[i] = (index * (1 << 32) / IcyColorMap.SIZE);
+                                    else if (hasAlpha && (i == (numComponents - 1)))
+                                        lvalues[i] = (IcyColorMap.MAX_INDEX * (1 << 32) / IcyColorMap.SIZE);
+                                    else
+                                        lvalues[i] = 0;
+                                }
+
+                                // set colormap data
+                                map.setAlpha(index, (short) cm.getAlpha(lvalues));
+                                map.setRed(index, (short) cm.getRed(lvalues));
+                                map.setGreen(index, (short) cm.getGreen(lvalues));
+                                map.setBlue(index, (short) cm.getBlue(lvalues));
+                                break;
+                            }
+
+                            case FLOAT:
                             {
                                 final float fvalues[] = new float[numComponents];
 
@@ -733,7 +756,7 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
                                 break;
                             }
 
-                            case TypeUtil.TYPE_DOUBLE:
+                            case DOUBLE:
                             {
                                 final double dvalues[] = new double[numComponents];
 

@@ -35,7 +35,7 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.thread.SingleInstanceProcessor;
 import icy.system.thread.ThreadUtil;
-import icy.type.TypeUtil;
+import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
@@ -171,9 +171,9 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         // X, Y, Z scaling
         scaling = new double[3];
 
-        scaling[0] = seq.getResolutionX();
-        scaling[1] = seq.getResolutionY();
-        scaling[2] = seq.getResolutionZ();
+        scaling[0] = seq.getPixelSizeX();
+        scaling[1] = seq.getPixelSizeY();
+        scaling[2] = seq.getPixelSizeZ();
 
         panel = GuiUtil.generatePanelWithoutBorder();
 
@@ -528,8 +528,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         final int sizeX = sequence.getSizeX();
         final int sizeY = sequence.getSizeY();
         final int sizeZ = sequence.getSizeZ();
-        final int dataType = sequence.getDataType();
-        final boolean signedDataType = sequence.isSignedDataType();
+        final DataType dataType = sequence.getDataType_();
         final int posT = getPositionT();
         final int posC = getPositionC();
 
@@ -544,138 +543,155 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
             newImageData.SetNumberOfScalarComponents(1);
         newImageData.SetWholeExtent(0, sizeX - 1, 0, sizeY - 1, 0, sizeZ - 1);
 
+        vtkDataArray array;
+
         switch (dataType)
         {
-            case TypeUtil.TYPE_BYTE:
+            case UBYTE:
+                newImageData.SetScalarTypeToUnsignedChar();
+                // pre-allocate data
+                newImageData.AllocateScalars();
+                // get array structure
+                array = newImageData.GetPointData().GetScalars();
+                // set frame sequence data in the array structure
+                if (posC == -1)
+                    ((vtkUnsignedCharArray) array).SetJavaArray(sequence.getDataCopyCXYZAsByte(posT));
+                else
+                    ((vtkUnsignedCharArray) array).SetJavaArray(sequence.getDataCopyXYZAsByte(posT, posC));
+                break;
+
+            case BYTE:
                 // FIXME: signed char not supported by VTK java wrapper ??
-                if (signedDataType)
-                {
-                    // imageData.SetScalarTypeToChar();
-                    // // pre-allocate data
-                    // imageData.AllocateScalars();
-                    // // get array structure
-                    // final vtkCharArray array = (vtkCharArray)
-                    // imageData.GetPointData().GetScalars();
-                    // // set frame sequence data in the array structure
-                    // if (posC == -1)
-                    // array.SetJavaArray(sequence.getDataCopyCXYZAsByte(posT));
-                    // else
-                    // array.SetJavaArray(sequence.getDataCopyXYZAsByte(posT, posC));
+                // imageData.SetScalarTypeToChar();
+                // // pre-allocate data
+                // imageData.AllocateScalars();
+                // // get array structure
+                // final vtkCharArray array = (vtkCharArray)
+                // imageData.GetPointData().GetScalars();
+                // // set frame sequence data in the array structure
+                // if (posC == -1)
+                // array.SetJavaArray(sequence.getDataCopyCXYZAsByte(posT));
+                // else
+                // array.SetJavaArray(sequence.getDataCopyXYZAsByte(posT, posC));
 
-                    newImageData.SetScalarTypeToUnsignedChar();
-                    // pre-allocate data
-                    newImageData.AllocateScalars();
-                    // get array structure
-                    final vtkUnsignedCharArray array = (vtkUnsignedCharArray) newImageData.GetPointData().GetScalars();
-                    // set frame sequence data in the array structure
-                    if (posC == -1)
-                        array.SetJavaArray(sequence.getDataCopyCXYZAsByte(posT));
-                    else
-                        array.SetJavaArray(sequence.getDataCopyXYZAsByte(posT, posC));
-                }
+                newImageData.SetScalarTypeToUnsignedChar();
+                // pre-allocate data
+                newImageData.AllocateScalars();
+                // get array structure
+                array = newImageData.GetPointData().GetScalars();
+                // set frame sequence data in the array structure
+                if (posC == -1)
+                    ((vtkUnsignedCharArray) array).SetJavaArray(sequence.getDataCopyCXYZAsByte(posT));
                 else
-                {
-                    newImageData.SetScalarTypeToUnsignedChar();
-                    // pre-allocate data
-                    newImageData.AllocateScalars();
-                    // get array structure
-                    final vtkUnsignedCharArray array = (vtkUnsignedCharArray) newImageData.GetPointData().GetScalars();
-                    // set frame sequence data in the array structure
-                    if (posC == -1)
-                        array.SetJavaArray(sequence.getDataCopyCXYZAsByte(posT));
-                    else
-                        array.SetJavaArray(sequence.getDataCopyXYZAsByte(posT, posC));
-                }
+                    ((vtkUnsignedCharArray) array).SetJavaArray(sequence.getDataCopyXYZAsByte(posT, posC));
                 break;
 
-            case TypeUtil.TYPE_SHORT:
-                if (signedDataType)
-                {
-                    newImageData.SetScalarTypeToShort();
-                    // pre-allocate data
-                    newImageData.AllocateScalars();
-                    // get array structure
-                    final vtkShortArray array = (vtkShortArray) newImageData.GetPointData().GetScalars();
-                    // set frame sequence data in the array structure
-                    if (posC == -1)
-                        array.SetJavaArray(sequence.getDataCopyCXYZAsShort(posT));
-                    else
-                        array.SetJavaArray(sequence.getDataCopyXYZAsShort(posT, posC));
-                }
+            case USHORT:
+                newImageData.SetScalarTypeToUnsignedShort();
+                // pre-allocate data
+                newImageData.AllocateScalars();
+                // get array structure
+                array = newImageData.GetPointData().GetScalars();
+                // set frame sequence data in the array structure
+                if (posC == -1)
+                    ((vtkUnsignedShortArray) array).SetJavaArray(sequence.getDataCopyCXYZAsShort(posT));
                 else
-                {
-                    newImageData.SetScalarTypeToUnsignedShort();
-                    // pre-allocate data
-                    newImageData.AllocateScalars();
-                    // get array structure
-                    final vtkUnsignedShortArray array = (vtkUnsignedShortArray) newImageData.GetPointData()
-                            .GetScalars();
-                    // set frame sequence data in the array structure
-                    if (posC == -1)
-                        array.SetJavaArray(sequence.getDataCopyCXYZAsShort(posT));
-                    else
-                        array.SetJavaArray(sequence.getDataCopyXYZAsShort(posT, posC));
-                }
+                    ((vtkUnsignedShortArray) array).SetJavaArray(sequence.getDataCopyXYZAsShort(posT, posC));
                 break;
 
-            case TypeUtil.TYPE_INT:
-                if (signedDataType)
-                {
-                    newImageData.SetScalarTypeToInt();
-                    // pre-allocate data
-                    newImageData.AllocateScalars();
-                    // get array structure
-                    final vtkIntArray array = (vtkIntArray) newImageData.GetPointData().GetScalars();
-                    // set frame sequence data in the array structure
-                    if (posC == -1)
-                        array.SetJavaArray(sequence.getDataCopyCXYZAsInt(posT));
-                    else
-                        array.SetJavaArray(sequence.getDataCopyXYZAsInt(posT, posC));
-                }
+            case SHORT:
+                newImageData.SetScalarTypeToShort();
+                // pre-allocate data
+                newImageData.AllocateScalars();
+                // get array structure
+                array = newImageData.GetPointData().GetScalars();
+                // set frame sequence data in the array structure
+                if (posC == -1)
+                    ((vtkShortArray) array).SetJavaArray(sequence.getDataCopyCXYZAsShort(posT));
                 else
-                {
-                    newImageData.SetScalarTypeToUnsignedInt();
-                    // pre-allocate data
-                    newImageData.AllocateScalars();
-                    // get array structure
-                    final vtkUnsignedIntArray array = (vtkUnsignedIntArray) newImageData.GetPointData().GetScalars();
-                    // set frame sequence data in the array structure
-                    if (posC == -1)
-                        array.SetJavaArray(sequence.getDataCopyCXYZAsInt(posT));
-                    else
-                        array.SetJavaArray(sequence.getDataCopyXYZAsInt(posT, posC));
-                }
+                    ((vtkShortArray) array).SetJavaArray(sequence.getDataCopyXYZAsShort(posT, posC));
                 break;
 
-            case TypeUtil.TYPE_FLOAT:
-            {
+            case UINT:
+                newImageData.SetScalarTypeToUnsignedInt();
+                // pre-allocate data
+                newImageData.AllocateScalars();
+                // get array structure
+                array = newImageData.GetPointData().GetScalars();
+                // set frame sequence data in the array structure
+                if (posC == -1)
+                    ((vtkUnsignedIntArray) array).SetJavaArray(sequence.getDataCopyCXYZAsInt(posT));
+                else
+                    ((vtkUnsignedIntArray) array).SetJavaArray(sequence.getDataCopyXYZAsInt(posT, posC));
+                break;
+
+            case INT:
+                newImageData.SetScalarTypeToInt();
+                // pre-allocate data
+                newImageData.AllocateScalars();
+                // get array structure
+                array = newImageData.GetPointData().GetScalars();
+                // set frame sequence data in the array structure
+                if (posC == -1)
+                    ((vtkIntArray) array).SetJavaArray(sequence.getDataCopyCXYZAsInt(posT));
+                else
+                    ((vtkIntArray) array).SetJavaArray(sequence.getDataCopyXYZAsInt(posT, posC));
+                break;
+
+            // not supported because DataBufferLong doesn't exist
+            // case ULONG:
+            // newImageData.SetScalarTypeToUnsignedInt();
+            // // pre-allocate data
+            // newImageData.AllocateScalars();
+            // // get array structure
+            // array = newImageData.GetPointData().GetScalars();
+            // // set frame sequence data in the array structure
+            // if (posC == -1)
+            // ((vtkUnsignedLongArray) array).SetJavaArray(sequence.getDataCopyCXYZAsInt(posT));
+            // else
+            // ((vtkUnsignedLongArray) array).SetJavaArray(sequence.getDataCopyXYZAsInt(posT,
+            // posC));
+            // break;
+
+            // not supported because DataBufferLong doesn't exist
+            // case LONG:
+            // newImageData.SetScalarTypeToInt();
+            // // pre-allocate data
+            // newImageData.AllocateScalars();
+            // // get array structure
+            // array = newImageData.GetPointData().GetScalars();
+            // // set frame sequence data in the array structure
+            // if (posC == -1)
+            // ((vtkLongArray) array).SetJavaArray(sequence.getDataCopyCXYZAsInt(posT));
+            // else
+            // ((vtkLongArray) array).SetJavaArray(sequence.getDataCopyXYZAsInt(posT, posC));
+            // break;
+
+            case FLOAT:
                 newImageData.SetScalarTypeToFloat();
                 // pre-allocate data
                 newImageData.AllocateScalars();
                 // get array structure
-                final vtkFloatArray array = (vtkFloatArray) newImageData.GetPointData().GetScalars();
+                array = newImageData.GetPointData().GetScalars();
                 // set frame sequence data in the array structure
                 if (posC == -1)
-                    array.SetJavaArray(sequence.getDataCopyCXYZAsFloat(posT));
+                    ((vtkFloatArray) array).SetJavaArray(sequence.getDataCopyCXYZAsFloat(posT));
                 else
-                    array.SetJavaArray(sequence.getDataCopyXYZAsFloat(posT, posC));
+                    ((vtkFloatArray) array).SetJavaArray(sequence.getDataCopyXYZAsFloat(posT, posC));
                 break;
-            }
 
-            case TypeUtil.TYPE_DOUBLE:
-            {
+            case DOUBLE:
                 newImageData.SetScalarTypeToDouble();
                 // pre-allocate data
                 newImageData.AllocateScalars();
                 // get array structure
-                final vtkDoubleArray array = (vtkDoubleArray) newImageData.GetPointData().GetScalars();
+                array = newImageData.GetPointData().GetScalars();
                 // set frame sequence data in the array structure
                 if (posC == -1)
-                    array.SetJavaArray(sequence.getDataCopyCXYZAsDouble(posT));
+                    ((vtkDoubleArray) array).SetJavaArray(sequence.getDataCopyCXYZAsDouble(posT));
                 else
-                    array.SetJavaArray(sequence.getDataCopyXYZAsDouble(posT, posC));
+                    ((vtkDoubleArray) array).SetJavaArray(sequence.getDataCopyXYZAsDouble(posT, posC));
                 break;
-            }
 
             default:
                 // we probably have an empty sequence
@@ -874,9 +890,9 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
         if (seq != null)
         {
-            result[0] = seq.getResolutionX();
-            result[1] = seq.getResolutionY();
-            result[2] = seq.getResolutionZ();
+            result[0] = seq.getPixelSizeX();
+            result[1] = seq.getPixelSizeY();
+            result[2] = seq.getPixelSizeZ();
         }
 
         return result;
@@ -1063,7 +1079,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
             // convert the vtk array into a IcyBufferedImage
             final byte[] data = array.GetJavaArray();
-            final IcyBufferedImage image = new IcyBufferedImage(size[0], size[1], 4, TypeUtil.TYPE_BYTE);
+            final IcyBufferedImage image = new IcyBufferedImage(size[0], size[1], 4, DataType.UBYTE);
             final byte[][] c_xy = image.getDataXYCAsByte();
 
             int offset = 0;
@@ -1327,19 +1343,25 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     {
         super.sequenceMetaChanged(metadataName);
 
+        if (!initialized)
+            return;
+
         // check if X,Y or Z resolution changed
-        if (StringUtil.equals(metadataName, Sequence.ID_RESOLUTION_X))
-            volumeXSpacing.setText(StringUtil.toString(getSequence().getResolutionX()));
-        if (StringUtil.equals(metadataName, Sequence.ID_RESOLUTION_Y))
-            volumeYSpacing.setText(StringUtil.toString(getSequence().getResolutionY()));
-        if (StringUtil.equals(metadataName, Sequence.ID_RESOLUTION_Z))
-            volumeZSpacing.setText(StringUtil.toString(getSequence().getResolutionZ()));
+        if (StringUtil.equals(metadataName, Sequence.ID_PIXELS_SIZE_X))
+            volumeXSpacing.setText(StringUtil.toString(getSequence().getPixelSizeX()));
+        if (StringUtil.equals(metadataName, Sequence.ID_PIXELS_SIZE_Y))
+            volumeYSpacing.setText(StringUtil.toString(getSequence().getPixelSizeY()));
+        if (StringUtil.equals(metadataName, Sequence.ID_PIXELS_SIZE_Z))
+            volumeZSpacing.setText(StringUtil.toString(getSequence().getPixelSizeZ()));
     }
 
     @Override
     protected void sequenceTypeChanged()
     {
         super.sequenceTypeChanged();
+
+        if (!initialized)
+            return;
 
         ThreadUtil.invokeLater(new Runnable()
         {
@@ -1356,6 +1378,9 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     protected void sequenceDataChanged(IcyBufferedImage image, SequenceEventType type)
     {
         super.sequenceDataChanged(image, type);
+
+        if (!initialized)
+            return;
 
         ThreadUtil.invokeLater(new Runnable()
         {
@@ -1376,6 +1401,9 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     protected void sequencePainterChanged(Painter painter, SequenceEventType type)
     {
         super.sequencePainterChanged(painter, type);
+
+        if (!initialized)
+            return;
 
         // refresh
         refresh();

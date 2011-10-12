@@ -19,7 +19,6 @@
 package icy.gui.component;
 
 import icy.gui.frame.IcyExternalFrame;
-import icy.main.Icy;
 
 import java.awt.Container;
 import java.awt.Dimension;
@@ -105,16 +104,12 @@ public class ExternalizablePanel extends JPanel
             if (p != frame.getContentPane())
                 parent = p;
         }
-
-        Icy.getMainInterface().registerExternalFrame(frame);
     }
 
     @Override
     public void removeNotify()
     {
         super.removeNotify();
-
-        Icy.getMainInterface().unRegisterExternalFrame(frame);
     }
 
     public void setParent(Container value)

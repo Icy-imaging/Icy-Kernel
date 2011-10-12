@@ -19,16 +19,15 @@
 package icy.image.colormodel;
 
 import icy.image.lut.LUT;
-import icy.type.TypeUtil;
+import icy.type.DataType;
 
 /**
  * @author stephane
  */
 public class IntColorModel extends IcyColorModel
 {
-
     /**
-     * Define a new IntColorModel
+     * Create a new IntColorModel
      * 
      * @param numComponents
      *        number of color component
@@ -36,14 +35,9 @@ public class IntColorModel extends IcyColorModel
      */
     public IntColorModel(int numComponents, int[] bits)
     {
-        super(numComponents, TypeUtil.TYPE_INT, true, bits);
+        super(numComponents, DataType.INT, bits);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.awt.image.ColorModel#getRGB(java.lang.Object)
-     */
     @Override
     public int getRGB(Object pixel)
     {

@@ -149,10 +149,10 @@ public class MainInterfaceBatch implements MainInterface
     {
     }
 
-//    @Override
-//    public void registerStreamPlugin(PluginStreamGenerator pluginStreamGenerator)
-//    {
-//    }
+    // @Override
+    // public void registerStreamPlugin(PluginStreamGenerator pluginStreamGenerator)
+    // {
+    // }
 
     @Override
     public MainFrame getFrame()
@@ -307,11 +307,13 @@ public class MainInterfaceBatch implements MainInterface
     {
     }
 
+    @Deprecated
     @Override
     public void registerExternalFrame(JFrame frame)
     {
     }
 
+    @Deprecated
     @Override
     public void unRegisterExternalFrame(JFrame frame)
     {

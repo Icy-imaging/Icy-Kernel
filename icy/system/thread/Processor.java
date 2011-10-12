@@ -185,8 +185,8 @@ public class Processor extends ThreadPoolExecutor
      */
     public void waitAll()
     {
-        while (getActiveCount() > 0)
-            ThreadUtil.sleep(10);
+        while (isProcessing())
+            ThreadUtil.sleep(1);
     }
 
     /**
@@ -196,7 +196,7 @@ public class Processor extends ThreadPoolExecutor
     {
         shutdown();
         while (!isTerminated())
-            ThreadUtil.sleep(10);
+            ThreadUtil.sleep(1);
     }
 
     /**

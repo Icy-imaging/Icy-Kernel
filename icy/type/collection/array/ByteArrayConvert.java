@@ -3,12 +3,12 @@
  */
 package icy.type.collection.array;
 
-import icy.type.TypeUtil;
+import icy.type.DataType;
 
 /**
  * @author Stephane
  */
-public class ArrayConvert
+public class ByteArrayConvert
 {
     /**
      * Get maximum length in bytes for a copy from in to out with specified offset and step.<br>
@@ -68,7 +68,7 @@ public class ArrayConvert
      */
     public static int getCopyLengthInBytes(Object array, int offset, int step)
     {
-        final int result = ArrayUtil.getCopyLength(array, offset) * TypeUtil.sizeOf(TypeUtil.getDataType(array));
+        final int result = ArrayUtil.getCopyLength(array, offset) * ArrayUtil.getDataType(array).getSize();
 
         // ex : data.lenght = 10, offset = 2, step = 3
         // data[2], data[5], data[8] can be copied
@@ -84,7 +84,7 @@ public class ArrayConvert
      */
     public static int getCopyLengthInBytes(Object array, int offset)
     {
-        return ArrayUtil.getCopyLength(array, offset) * TypeUtil.sizeOf(TypeUtil.getDataType(array));
+        return ArrayUtil.getCopyLength(array, offset) * ArrayUtil.getDataType(array).getSize();
     }
 
     /**
@@ -380,6 +380,114 @@ public class ArrayConvert
     }
 
     /**
+     * Bit transform and return the 'in' byte array in 'out' long array
+     * 
+     * @param in
+     *        input array
+     * @param inOffset
+     *        position where we start read data from
+     * @param inStep
+     *        input offset increment step (given in output type unit)
+     * @param out
+     *        output array which is used to receive result (and so define wanted type)
+     * @param outOffset
+     *        position where we start to write data to
+     * @param outStep
+     *        output offset increment step
+     * @param byteLength
+     *        number of bytes to compute (-1 means we will use the maximum possible)
+     * @param little
+     *        little endian order
+     */
+    public static long[] byteArrayToLongArray(byte[] in, int inOffset, int inStep, long[] out, int outOffset,
+            int outStep, int byteLength, boolean little)
+    {
+        final int adjInStep = inStep * 8;
+        final int len = getCopyLengthInBytes(in, inOffset, adjInStep, out, outOffset, outStep, byteLength) / 8;
+        final long[] result = Array1DUtil.allocIfNull(out, outOffset + (len * outStep));
+
+        int inOff = inOffset;
+        int outOff = outOffset;
+
+        if (little)
+        {
+            for (int i = 0; i < len; i++)
+            {
+                result[outOff] = ((in[inOff + 0] & 0xFF) << 0) + ((in[inOff + 1] & 0xFF) << 8)
+                        + ((in[inOff + 2] & 0xFF) << 16) + ((in[inOff + 3] & 0xFF) << 24)
+                        + ((in[inOff + 4] & 0xFF) << 32) + ((in[inOff + 5] & 0xFF) << 40)
+                        + ((in[inOff + 6] & 0xFF) << 48) + ((in[inOff + 7] & 0xFF) << 56);
+                inOff += 8;
+                outOff += outStep;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < len; i++)
+            {
+                result[outOff] = ((in[inOff + 0] & 0xFF) << 56) + ((in[inOff + 1] & 0xFF) << 48)
+                        + ((in[inOff + 2] & 0xFF) << 40) + ((in[inOff + 3] & 0xFF) << 32)
+                        + ((in[inOff + 4] & 0xFF) << 24) + ((in[inOff + 5] & 0xFF) << 16)
+                        + ((in[inOff + 6] & 0xFF) << 8) + ((in[inOff + 7] & 0xFF) << 0);
+                inOff += 8;
+                outOff += outStep;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Bit transform and return the 'in' byte array in the specified data type array
+     * 
+     * @param in
+     *        input array
+     * @param inOffset
+     *        position where we start read data from
+     * @param out
+     *        output array which is used to receive result (and so define wanted type)
+     * @param outOffset
+     *        position where we start to write data to
+     * @param byteLength
+     *        number of bytes to compute (-1 means we will use the maximum possible)
+     * @param little
+     *        little endian order
+     */
+    public static long[] byteArrayToLongArray(byte[] in, int inOffset, long[] out, int outOffset, int byteLength,
+            boolean little)
+    {
+        return byteArrayToLongArray(in, inOffset, 1, out, outOffset, 1, byteLength, little);
+    }
+
+    /**
+     * Bit transform and return the 'in' byte array in the specified data type array
+     * 
+     * @param in
+     *        input array
+     * @param out
+     *        output array which is used to receive result (and so define wanted type)
+     * @param little
+     *        little endian order
+     */
+    public static long[] byteArrayToLongArray(byte[] in, long[] out, boolean little)
+    {
+        return byteArrayToLongArray(in, 0, 1, out, 0, 1, -1, little);
+    }
+
+    /**
+     * Bit transform and return the 'in' byte array in the specified data type array
+     * 
+     * @param in
+     *        input array
+     * @param little
+     *        little endian order
+     */
+    public static long[] byteArrayToLongArray(byte[] in, boolean little)
+    {
+        return byteArrayToLongArray(in, 0, 1, null, 0, 1, -1, little);
+    }
+
+    /**
      * Bit transform and return the 'in' byte array in 'out' float array
      * 
      * @param in
@@ -519,13 +627,11 @@ public class ArrayConvert
         {
             for (int i = 0; i < len; i++)
             {
-                final int v1 = ((in[inOff + 0] & 0xFF) << 0) + ((in[inOff + 1] & 0xFF) << 8)
-                        + ((in[inOff + 2] & 0xFF) << 16) + ((in[inOff + 3] & 0xFF) << 24);
-                inOff += 4;
-                final int v2 = (in[inOff] & 0xFF) + ((in[inOff + 1] & 0xFF) << 8) + ((in[inOff + 2] & 0xFF) << 16)
-                        + ((in[inOff + 3] & 0xFF) << 24);
-                inOff += adjInStep - 4;
-                result[outOff] = Double.longBitsToDouble(((long) v1 << 0) + ((long) v2 << 32));
+                result[outOff] = Double.longBitsToDouble(((in[inOff + 0] & 0xFF) << 0) + ((in[inOff + 1] & 0xFF) << 8)
+                        + ((in[inOff + 2] & 0xFF) << 16) + ((in[inOff + 3] & 0xFF) << 24)
+                        + ((in[inOff + 4] & 0xFF) << 32) + ((in[inOff + 5] & 0xFF) << 40)
+                        + ((in[inOff + 6] & 0xFF) << 48) + ((in[inOff + 7] & 0xFF) << 56));
+                inOff += 8;
                 outOff += outStep;
             }
         }
@@ -533,13 +639,12 @@ public class ArrayConvert
         {
             for (int i = 0; i < len; i++)
             {
-                final int v1 = ((in[inOff + 0] & 0xFF) << 24) + ((in[inOff + 1] & 0xFF) << 16)
-                        + ((in[inOff + 2] & 0xFF) << 8) + ((in[inOff + 3] & 0xFF) << 0);
-                inOff += 4;
-                final int v2 = ((in[inOff + 0] & 0xFF) << 24) + ((in[inOff + 1] & 0xFF) << 16)
-                        + ((in[inOff + 2] & 0xFF) << 8) + ((in[inOff + 3] & 0xFF) << 0);
-                inOff += adjInStep - 4;
-                result[outOff] = Double.longBitsToDouble(((long) v1 << 32) + ((long) v2 << 0));
+                result[outOff] = Double.longBitsToDouble(((in[inOff + 0] & 0xFF) << 56)
+                        + ((in[inOff + 1] & 0xFF) << 48) + ((in[inOff + 2] & 0xFF) << 40)
+                        + ((in[inOff + 3] & 0xFF) << 32) + ((in[inOff + 4] & 0xFF) << 24)
+                        + ((in[inOff + 5] & 0xFF) << 16) + ((in[inOff + 6] & 0xFF) << 8)
+                        + ((in[inOff + 7] & 0xFF) << 0));
+                inOff += 8;
                 outOff += outStep;
             }
         }
@@ -714,6 +819,74 @@ public class ArrayConvert
     }
 
     /**
+     * Bit transform and return the 'in' long array as byte array
+     * 
+     * @param in
+     *        input array
+     * @param inOffset
+     *        position where we start read data from
+     * @param inStep
+     *        input offset increment step
+     * @param out
+     *        output byte array which is used to receive result
+     * @param outOffset
+     *        position where we start to write data to
+     * @param outStep
+     *        output offset increment step (given in input type unit)
+     * @param byteLength
+     *        number of bytes to compute (-1 means we will use the maximum possible)
+     * @param little
+     *        little endian order
+     */
+    public static byte[] longArrayToByteArray(long[] in, int inOffset, int inStep, byte[] out, int outOffset,
+            int outStep, int byteLength, boolean little)
+    {
+        final int adjOutStep = outStep * 8;
+        final int len = getCopyLengthInBytes(in, inOffset, inStep, out, outOffset, adjOutStep, byteLength);
+        final byte[] result = Array1DUtil.allocIfNull(out, outOffset + (len * adjOutStep));
+
+        int inOff = inOffset;
+        int outOff = outOffset;
+
+        if (little)
+        {
+            for (int i = 0; i < len; i++)
+            {
+                final long value = in[inOff];
+                inOff += inStep;
+                result[outOff + 0] = (byte) (value >> 0);
+                result[outOff + 1] = (byte) (value >> 8);
+                result[outOff + 2] = (byte) (value >> 16);
+                result[outOff + 3] = (byte) (value >> 24);
+                result[outOff + 4] = (byte) (value >> 32);
+                result[outOff + 5] = (byte) (value >> 40);
+                result[outOff + 6] = (byte) (value >> 48);
+                result[outOff + 7] = (byte) (value >> 56);
+                outOff += 8;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < len; i++)
+            {
+                final long value = in[inOff];
+                inOff += inStep;
+                result[outOff + 0] = (byte) (value >> 56);
+                result[outOff + 1] = (byte) (value >> 48);
+                result[outOff + 2] = (byte) (value >> 40);
+                result[outOff + 3] = (byte) (value >> 32);
+                result[outOff + 4] = (byte) (value >> 24);
+                result[outOff + 5] = (byte) (value >> 16);
+                result[outOff + 6] = (byte) (value >> 8);
+                result[outOff + 7] = (byte) (value >> 0);
+                outOff += 8;
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * Bit transform and return the 'in' float array as byte array
      * 
      * @param in
@@ -809,18 +982,15 @@ public class ArrayConvert
             {
                 final long value = Double.doubleToRawLongBits(in[inOff]);
                 inOff += inStep;
-                final int v1 = (int) (value >> 0);
-                result[outOff + 0] = (byte) (v1 >> 0);
-                result[outOff + 1] = (byte) (v1 >> 8);
-                result[outOff + 2] = (byte) (v1 >> 16);
-                result[outOff + 3] = (byte) (v1 >> 24);
-                outOff += 4;
-                final int v2 = (int) (value >> 32);
-                result[outOff + 0] = (byte) (v2 >> 0);
-                result[outOff + 1] = (byte) (v2 >> 8);
-                result[outOff + 2] = (byte) (v2 >> 16);
-                result[outOff + 3] = (byte) (v2 >> 24);
-                outOff += adjOutStep - 4;
+                result[outOff + 0] = (byte) (value >> 0);
+                result[outOff + 1] = (byte) (value >> 8);
+                result[outOff + 2] = (byte) (value >> 16);
+                result[outOff + 3] = (byte) (value >> 24);
+                result[outOff + 4] = (byte) (value >> 32);
+                result[outOff + 5] = (byte) (value >> 40);
+                result[outOff + 6] = (byte) (value >> 48);
+                result[outOff + 7] = (byte) (value >> 56);
+                outOff += 8;
             }
         }
         else
@@ -829,18 +999,15 @@ public class ArrayConvert
             {
                 final long value = Double.doubleToRawLongBits(in[inOff]);
                 inOff += inStep;
-                final int v1 = (int) (value >> 32);
-                result[outOff + 0] = (byte) (v1 >> 24);
-                result[outOff + 1] = (byte) (v1 >> 16);
-                result[outOff + 2] = (byte) (v1 >> 8);
-                result[outOff + 3] = (byte) (v1 >> 0);
-                outOff += 4;
-                final int v2 = (int) (value >> 0);
-                result[outOff + 0] = (byte) (v2 >> 24);
-                result[outOff + 1] = (byte) (v2 >> 16);
-                result[outOff + 2] = (byte) (v2 >> 8);
-                result[outOff + 3] = (byte) (v2 >> 0);
-                outOff += adjOutStep - 4;
+                result[outOff + 0] = (byte) (value >> 56);
+                result[outOff + 1] = (byte) (value >> 48);
+                result[outOff + 2] = (byte) (value >> 40);
+                result[outOff + 3] = (byte) (value >> 32);
+                result[outOff + 4] = (byte) (value >> 24);
+                result[outOff + 5] = (byte) (value >> 16);
+                result[outOff + 6] = (byte) (value >> 8);
+                result[outOff + 7] = (byte) (value >> 0);
+                outOff += 8;
             }
         }
 
@@ -873,28 +1040,26 @@ public class ArrayConvert
         if (out == null)
             return null;
 
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToByteArray(in, inOffset, inStep, (byte[]) out, outOffset, outStep, byteLength);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return byteArrayToShortArray(in, inOffset, inStep, (short[]) out, outOffset, outStep, byteLength,
                         little);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return byteArrayToIntArray(in, inOffset, inStep, (int[]) out, outOffset, outStep, byteLength, little);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return byteArrayToLongArray(in, inOffset, inStep, (long[]) out, outOffset, outStep, byteLength, little);
+            case FLOAT:
                 return byteArrayToFloatArray(in, inOffset, inStep, (float[]) out, outOffset, outStep, byteLength,
                         little);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return byteArrayToDoubleArray(in, inOffset, inStep, (double[]) out, outOffset, outStep, byteLength,
                         little);
+            default:
+                return out;
         }
-
-        return out;
     }
 
     /**
@@ -985,28 +1150,26 @@ public class ArrayConvert
      * @param little
      *        little endian order
      */
-    public static Object byteArrayTo(byte[] in, int inOffset, int inStep, int outDataType, int outOffset, int outStep,
-            int byteLength, boolean little)
+    public static Object byteArrayTo(byte[] in, int inOffset, int inStep, DataType outDataType, int outOffset,
+            int outStep, int byteLength, boolean little)
     {
-        switch (outDataType)
+        switch (outDataType.getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToByteArray(in, inOffset, inStep, null, outOffset, outStep, byteLength);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return byteArrayToShortArray(in, inOffset, inStep, null, outOffset, outStep, byteLength, little);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return byteArrayToIntArray(in, inOffset, inStep, null, outOffset, outStep, byteLength, little);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return byteArrayToLongArray(in, inOffset, inStep, null, outOffset, outStep, byteLength, little);
+            case FLOAT:
                 return byteArrayToFloatArray(in, inOffset, inStep, null, outOffset, outStep, byteLength, little);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return byteArrayToDoubleArray(in, inOffset, inStep, null, outOffset, outStep, byteLength, little);
+            default:
+                return null;
         }
-
-        return null;
     }
 
     /**
@@ -1023,7 +1186,7 @@ public class ArrayConvert
      * @param little
      *        little endian order
      */
-    public static Object byteArrayTo(byte[] in, int inOffset, int outDataType, int byteLength, boolean little)
+    public static Object byteArrayTo(byte[] in, int inOffset, DataType outDataType, int byteLength, boolean little)
     {
         return byteArrayTo(in, inOffset, 1, outDataType, 0, 1, byteLength, little);
     }
@@ -1038,9 +1201,39 @@ public class ArrayConvert
      * @param little
      *        little endian order
      */
-    public static Object byteArrayTo(byte[] in, int outDataType, boolean little)
+    public static Object byteArrayTo(byte[] in, DataType outDataType, boolean little)
     {
         return byteArrayTo(in, 0, 1, outDataType, 0, 1, -1, little);
+    }
+
+    /**
+     * @deprecated use {@link #byteArrayTo(byte[], int, int, DataType, int , int ,int , boolean)}
+     *             instead
+     */
+    @Deprecated
+    public static Object byteArrayTo(byte[] in, int inOffset, int inStep, int outDataType, int outOffset, int outStep,
+            int byteLength, boolean little)
+    {
+        return byteArrayTo(in, inOffset, inStep, DataType.getDataType(outDataType), outOffset, outStep, byteLength,
+                little);
+    }
+
+    /**
+     * @deprecated use {@link #byteArrayTo(byte[], int , DataType , int , boolean )} instead
+     */
+    @Deprecated
+    public static Object byteArrayTo(byte[] in, int inOffset, int outDataType, int byteLength, boolean little)
+    {
+        return byteArrayTo(in, inOffset, 1, DataType.getDataType(outDataType), 0, 1, byteLength, little);
+    }
+
+    /**
+     * @deprecated use {@link #byteArrayTo(byte[], DataType , boolean )} instead
+     */
+    @Deprecated
+    public static Object byteArrayTo(byte[] in, int outDataType, boolean little)
+    {
+        return byteArrayTo(in, 0, 1, DataType.getDataType(outDataType), 0, 1, -1, little);
     }
 
     /**
@@ -1069,28 +1262,26 @@ public class ArrayConvert
         if (out == null)
             return null;
 
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToByteArray((byte[]) in, inOffset, inStep, out, outOffset, outStep, byteLength);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToByteArray((short[]) in, inOffset, inStep, out, outOffset, outStep, byteLength,
                         little);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToByteArray((int[]) in, inOffset, inStep, out, outOffset, outStep, byteLength, little);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToByteArray((long[]) in, inOffset, inStep, out, outOffset, outStep, byteLength, little);
+            case FLOAT:
                 return floatArrayToByteArray((float[]) in, inOffset, inStep, out, outOffset, outStep, byteLength,
                         little);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToByteArray((double[]) in, inOffset, inStep, out, outOffset, outStep, byteLength,
                         little);
+            default:
+                return out;
         }
-
-        return out;
     }
 
     /**

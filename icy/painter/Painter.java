@@ -26,14 +26,22 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 
+/**
+ * Painter interface used by IcyCanvas subclasses to forward mouse and key events to sequence
+ * painters.
+ * 
+ * @author Stephane
+ */
 public interface Painter
 {
     /**
-     * paint method called to draw the painter
+     * Paint method called to draw the painter.
      */
     public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas);
 
     /**
+     * Mouse press event forwarded to the painter.
+     * 
      * @param e
      *        mouse event
      * @param imagePoint
@@ -44,6 +52,8 @@ public interface Painter
     public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas);
 
     /**
+     * Mouse release event forwarded to the painter.
+     * 
      * @param e
      *        mouse event
      * @param imagePoint
@@ -54,6 +64,8 @@ public interface Painter
     public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas);
 
     /**
+     * Mouse click event forwarded to the painter.
+     * 
      * @param e
      *        mouse event
      * @param imagePoint
@@ -64,6 +76,8 @@ public interface Painter
     public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas);
 
     /**
+     * Mouse move event forwarded to the painter.
+     * 
      * @param e
      *        mouse event
      * @param imagePoint
@@ -74,6 +88,8 @@ public interface Painter
     public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas);
 
     /**
+     * Mouse drag event forwarded to the painter.
+     * 
      * @param e
      *        mouse event
      * @param imagePoint
@@ -84,6 +100,8 @@ public interface Painter
     public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas);
 
     /**
+     * Key press event forwarded to the painter.
+     * 
      * @param e
      *        key event
      * @param imagePoint
@@ -94,6 +112,8 @@ public interface Painter
     public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas);
 
     /**
+     * Key release event forwarded to the painter.
+     * 
      * @param e
      *        key event
      * @param imagePoint

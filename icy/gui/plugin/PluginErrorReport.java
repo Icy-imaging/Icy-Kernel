@@ -145,7 +145,7 @@ public class PluginErrorReport
         ComponentUtil.setFixedSize(scrollPane, new Dimension(600, 150));
 
         final JLabel label = new JLabel("<html><center><br>The plugin named <b>" + plugin.getName()
-                + "</b> has encounter a problem.<br><br>"
+                + "</b> has encountered a problem.<br><br>"
                 + "Reporting this problem is anonymous and will help improving this plugin" + "<br><br></html>",
                 SwingConstants.CENTER);
         final JButton reportButton = new JButton("Report");

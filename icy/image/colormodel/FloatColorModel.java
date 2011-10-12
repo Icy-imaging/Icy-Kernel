@@ -19,16 +19,15 @@
 package icy.image.colormodel;
 
 import icy.image.lut.LUT;
-import icy.type.TypeUtil;
+import icy.type.DataType;
 
 /**
  * @author stephane
  */
 public class FloatColorModel extends IcyColorModel
 {
-
     /**
-     * Define a new IntColorModel
+     * Create a new FloatColorModel
      * 
      * @param numComponents
      *        number of color component
@@ -36,14 +35,9 @@ public class FloatColorModel extends IcyColorModel
      */
     public FloatColorModel(int numComponents, int[] bits)
     {
-        super(numComponents, TypeUtil.TYPE_FLOAT, true, bits);
+        super(numComponents, DataType.FLOAT, bits);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.awt.image.ColorModel#getRGB(java.lang.Object)
-     */
     @Override
     public int getRGB(Object pixel)
     {

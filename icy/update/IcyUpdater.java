@@ -154,7 +154,7 @@ public class IcyUpdater
             // error (or cancel) while downloading XML ?
             if (!downloadAndSaveForUpdate(
                     ApplicationPreferences.getUpdateRepositoryBase() + ApplicationPreferences.getUpdateRepositoryFile()
-                            + SystemUtil.getOSArchIdString(), Updater.UPDATE_NAME, checkingFrame))
+                            + SystemUtil.getOSArchIdString(), Updater.UPDATE_NAME, checkingFrame, showProgress))
             {
                 // remove partially downloaded files
                 FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
@@ -369,7 +369,7 @@ public class IcyUpdater
                             // error (or cancel) while downloading ?
                             if (!downloadAndSaveForUpdate(URLUtil.getNetworkURLString(
                                     ApplicationPreferences.getUpdateRepositoryBase(), elementFile.getOnlinePath()),
-                                    elementFile.getLocalPath(), downloadingFrame))
+                                    elementFile.getLocalPath(), downloadingFrame, showProgress))
                             {
                                 // remove partially downloaded files
                                 FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
@@ -389,12 +389,13 @@ public class IcyUpdater
         return true;
     }
 
-    private static boolean downloadAndSaveForUpdate(String downloadPath, String savePath, ProgressFrame frame)
+    private static boolean downloadAndSaveForUpdate(String downloadPath, String savePath, ProgressFrame frame,
+            boolean displayError)
     {
         // get data
         final byte[] data;
 
-        data = NetworkUtil.download(downloadPath, frame, true);
+        data = NetworkUtil.download(downloadPath, frame, displayError);
         if (data == null)
             return false;
 
@@ -406,7 +407,7 @@ public class IcyUpdater
         else
             saveFilename += savePath;
 
-        if (!FileUtil.save(saveFilename, data, true))
+        if (!FileUtil.save(saveFilename, data, displayError))
             return false;
 
         return true;

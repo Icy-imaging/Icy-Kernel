@@ -18,9 +18,13 @@
  */
 package icy.type;
 
+import icy.type.collection.array.ArrayDataType;
+
 /**
  * @author Stephane
+ * @deprecated use {@link ArrayDataType} instead
  */
+@Deprecated
 public class ArrayTypeInfo
 {
     public int type;
@@ -34,11 +38,6 @@ public class ArrayTypeInfo
         this.dim = dim;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
     @Override
     public boolean equals(Object obj)
     {

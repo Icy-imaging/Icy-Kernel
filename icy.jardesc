@@ -64,14 +64,14 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.util"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.swimmingPool"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.list"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.undo"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.math"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.undo"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.preferences"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.array"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.menu.tools"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.array"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.itk"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.performance"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.script"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.lut.abstract_"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.script"/>
     </selectedElements>
 </jardesc>

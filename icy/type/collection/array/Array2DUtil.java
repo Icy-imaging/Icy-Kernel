@@ -3,7 +3,7 @@
  */
 package icy.type.collection.array;
 
-import icy.type.TypeUtil;
+import icy.type.DataType;
 
 /**
  * @author Stephane
@@ -50,6 +50,24 @@ public class Array2DUtil
      * Return the total number of element of the specified array
      */
     public static int getTotalLength(int[][] array)
+    {
+        int result = 0;
+
+        if (array != null)
+        {
+            final int len = array.length;
+
+            for (int i = 0; i < len; i++)
+                result += Array1DUtil.getTotalLength(array[i]);
+        }
+
+        return result;
+    }
+
+    /**
+     * Return the total number of element of the specified array
+     */
+    public static int getTotalLength(long[][] array)
     {
         int result = 0;
 
@@ -154,27 +172,34 @@ public class Array2DUtil
     /**
      * Create a new 2D array with specified data type and length
      */
+    public static Object[] createArray(DataType dataType, int len)
+    {
+        switch (dataType.getJavaType())
+        {
+            case BYTE:
+                return new byte[len][];
+            case SHORT:
+                return new short[len][];
+            case INT:
+                return new int[len][];
+            case LONG:
+                return new long[len][];
+            case FLOAT:
+                return new float[len][];
+            case DOUBLE:
+                return new double[len][];
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static Object[] createArray(int dataType, int len)
     {
-        switch (dataType)
-        {
-            case TypeUtil.TYPE_BYTE:
-                return new byte[len][];
-
-            case TypeUtil.TYPE_SHORT:
-                return new short[len][];
-
-            case TypeUtil.TYPE_INT:
-                return new int[len][];
-
-            case TypeUtil.TYPE_FLOAT:
-                return new float[len][];
-
-            case TypeUtil.TYPE_DOUBLE:
-                return new double[len][];
-        }
-
-        return null;
+        return createArray(DataType.getDataType(dataType), len);
     }
 
     /**
@@ -206,6 +231,17 @@ public class Array2DUtil
     {
         if (out == null)
             return new int[len][];
+
+        return out;
+    }
+
+    /**
+     * Allocate the specified 2D array if it's defined to null with the specified len
+     */
+    public static long[][] allocIfNull(long[][] out, int len)
+    {
+        if (out == null)
+            return new long[len][];
 
         return out;
     }
@@ -278,6 +314,23 @@ public class Array2DUtil
 
         for (int i = 0; i < len; i++)
             if (!Array1DUtil.arrayIntCompare(array1[i], array2[i]))
+                return false;
+
+        return true;
+    }
+
+    /**
+     * Return true is the specified arrays are equals
+     */
+    public static boolean arrayLongCompare(long[][] array1, long[][] array2)
+    {
+        final int len = array1.length;
+
+        if (len != array2.length)
+            return false;
+
+        for (int i = 0; i < len; i++)
+            if (!Array1DUtil.arrayLongCompare(array1[i], array2[i]))
                 return false;
 
         return true;
@@ -449,6 +502,35 @@ public class Array2DUtil
      * The resulting array is returned in 'out' and from the specified if any.<br>
      * If (out == null) a new array is allocated.
      */
+    public static long[] toLongArray1D(long[][] in, long[] out, int offset)
+    {
+        final long[] result = Array1DUtil.allocIfNull(out, offset + getTotalLength(in));
+
+        if (in != null)
+        {
+            final int len = in.length;
+
+            int off = offset;
+            for (int i = 0; i < len; i++)
+            {
+                final long[] s_in = in[i];
+
+                if (s_in != null)
+                {
+                    Array1DUtil.toLongArray1D(s_in, result, off);
+                    off += s_in.length;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Return the 2 dimensions 'in' array as a single dimension array.<br>
+     * The resulting array is returned in 'out' and from the specified if any.<br>
+     * If (out == null) a new array is allocated.
+     */
     public static float[] toFloatArray1D(float[][] in, float[] out, int offset)
     {
         final float[] result = Array1DUtil.allocIfNull(out, offset + getTotalLength(in));
@@ -520,26 +602,23 @@ public class Array2DUtil
      */
     public static Object arrayToArray(Object in, int inOffset, Object out, int outOffset, int length, boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
-                return Array2DUtil.byteArrayToArray((byte[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
-                return Array2DUtil.shortArrayToArray((short[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
-                return Array2DUtil.intArrayToArray((int[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
-                return Array2DUtil.floatArrayToArray((float[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
-                return Array2DUtil.doubleArrayToArray((double[][]) in, inOffset, out, outOffset, length);
+            case BYTE:
+                return byteArrayToArray((byte[][]) in, inOffset, out, outOffset, length, signed);
+            case SHORT:
+                return shortArrayToArray((short[][]) in, inOffset, out, outOffset, length, signed);
+            case INT:
+                return intArrayToArray((int[][]) in, inOffset, out, outOffset, length, signed);
+            case LONG:
+                return longArrayToArray((long[][]) in, inOffset, out, outOffset, length, signed);
+            case FLOAT:
+                return floatArrayToArray((float[][]) in, inOffset, out, outOffset, length);
+            case DOUBLE:
+                return doubleArrayToArray((double[][]) in, inOffset, out, outOffset, length);
+            default:
+                return out;
         }
-
-        // not yet implemented
-        return out;
     }
 
     /**
@@ -573,23 +652,20 @@ public class Array2DUtil
      */
     public static Object doubleArrayToArray(double[][] in, int inOffset, Object out, int outOffset, int length)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return doubleArrayToByteArray(in, inOffset, (byte[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return doubleArrayToShortArray(in, inOffset, (short[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return doubleArrayToIntArray(in, inOffset, (int[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return doubleArrayToLongArray(in, inOffset, (long[][]) out, outOffset, length);
+            case FLOAT:
                 return doubleArrayToFloatArray(in, inOffset, (float[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToDoubleArray(in, inOffset, (double[][]) out, outOffset, length);
-
             default:
                 return out;
         }
@@ -624,23 +700,20 @@ public class Array2DUtil
      */
     public static Object floatArrayToArray(float[][] in, int inOffset, Object out, int outOffset, int length)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return floatArrayToByteArray(in, inOffset, (byte[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return floatArrayToShortArray(in, inOffset, (short[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return floatArrayToIntArray(in, inOffset, (int[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return floatArrayToLongArray(in, inOffset, (long[][]) out, outOffset, length);
+            case FLOAT:
                 return floatArrayToFloatArray(in, inOffset, (float[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return floatArrayToDoubleArray(in, inOffset, (double[][]) out, outOffset, length);
-
             default:
                 return out;
         }
@@ -657,6 +730,59 @@ public class Array2DUtil
     public static Object floatArrayToArray(float[][] in, Object out)
     {
         return floatArrayToArray(in, 0, out, 0, -1);
+    }
+
+    /**
+     * Convert and return the 'in' long array in 'out' array type.<br>
+     * 
+     * @param in
+     *        input array
+     * @param inOffset
+     *        position where we start read data from
+     * @param out
+     *        output array which is used to receive result (and so define wanted type)
+     * @param outOffset
+     *        position where we start to write data to
+     * @param length
+     *        number of value to convert (-1 means we will use the maximum possible length)
+     * @param signed
+     *        assume input data as signed data
+     */
+    public static Object longArrayToArray(long[][] in, int inOffset, Object out, int outOffset, int length,
+            boolean signed)
+    {
+        switch (ArrayUtil.getDataType(out))
+        {
+            case BYTE:
+                return longArrayToByteArray(in, inOffset, (byte[][]) out, outOffset, length);
+            case SHORT:
+                return longArrayToShortArray(in, inOffset, (short[][]) out, outOffset, length);
+            case INT:
+                return longArrayToIntArray(in, inOffset, (int[][]) out, outOffset, length);
+            case LONG:
+                return longArrayToLongArray(in, inOffset, (long[][]) out, outOffset, length);
+            case FLOAT:
+                return longArrayToFloatArray(in, inOffset, (float[][]) out, outOffset, length, signed);
+            case DOUBLE:
+                return longArrayToDoubleArray(in, inOffset, (double[][]) out, outOffset, length, signed);
+            default:
+                return out;
+        }
+    }
+
+    /**
+     * Convert and return the 'in' long array in 'out' array type.<br>
+     * 
+     * @param in
+     *        input array
+     * @param out
+     *        output array which is used to receive result (and so define wanted type)
+     * @param signed
+     *        assume input data as signed data
+     */
+    public static Object longArrayToArray(long[][] in, Object out, boolean signed)
+    {
+        return longArrayToArray(in, 0, out, 0, -1, signed);
     }
 
     /**
@@ -677,23 +803,20 @@ public class Array2DUtil
      */
     public static Object intArrayToArray(int[][] in, int inOffset, Object out, int outOffset, int length, boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return intArrayToByteArray(in, inOffset, (byte[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return intArrayToShortArray(in, inOffset, (short[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToIntArray(in, inOffset, (int[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return intArrayToLongArray(in, inOffset, (long[][]) out, outOffset, length, signed);
+            case FLOAT:
                 return intArrayToFloatArray(in, inOffset, (float[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return intArrayToDoubleArray(in, inOffset, (double[][]) out, outOffset, length, signed);
-
             default:
                 return out;
         }
@@ -733,23 +856,20 @@ public class Array2DUtil
     public static Object shortArrayToArray(short[][] in, int inOffset, Object out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return shortArrayToByteArray(in, inOffset, (byte[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToShortArray(in, inOffset, (short[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return shortArrayToIntArray(in, inOffset, (int[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return shortArrayToLongArray(in, inOffset, (long[][]) out, outOffset, length, signed);
+            case FLOAT:
                 return shortArrayToFloatArray(in, inOffset, (float[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return shortArrayToDoubleArray(in, inOffset, (double[][]) out, outOffset, length, signed);
-
             default:
                 return out;
         }
@@ -789,23 +909,20 @@ public class Array2DUtil
     public static Object byteArrayToArray(byte[][] in, int inOffset, Object out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToByteArray(in, inOffset, (byte[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return byteArrayToShortArray(in, inOffset, (short[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return byteArrayToIntArray(in, inOffset, (int[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return byteArrayToLongArray(in, inOffset, (long[][]) out, outOffset, length, signed);
+            case FLOAT:
                 return byteArrayToFloatArray(in, inOffset, (float[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return byteArrayToDoubleArray(in, inOffset, (double[][]) out, outOffset, length, signed);
-
             default:
                 return out;
         }
@@ -845,23 +962,20 @@ public class Array2DUtil
     public static double[][] arrayToDoubleArray(Object in, int inOffset, double[][] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToDoubleArray((byte[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToDoubleArray((short[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToDoubleArray((int[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToDoubleArray((long[][]) in, inOffset, out, outOffset, length, signed);
+            case FLOAT:
                 return floatArrayToDoubleArray((float[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToDoubleArray((double[][]) in, inOffset, out, outOffset, length);
-
             default:
                 return out;
         }
@@ -914,23 +1028,20 @@ public class Array2DUtil
     public static float[][] arrayToFloatArray(Object in, int inOffset, float[][] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToFloatArray((byte[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToFloatArray((short[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToFloatArray((int[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToFloatArray((long[][]) in, inOffset, out, outOffset, length, signed);
+            case FLOAT:
                 return floatArrayToFloatArray((float[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToFloatArray((double[][]) in, inOffset, out, outOffset, length);
-
             default:
                 return out;
         }
@@ -983,23 +1094,20 @@ public class Array2DUtil
     public static int[][] arrayToIntArray(Object in, int inOffset, int[][] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToIntArray((byte[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToIntArray((short[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToIntArray((int[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToIntArray((long[][]) in, inOffset, out, outOffset, length);
+            case FLOAT:
                 return floatArrayToIntArray((float[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToIntArray((double[][]) in, inOffset, out, outOffset, length);
-
             default:
                 return out;
         }
@@ -1052,23 +1160,20 @@ public class Array2DUtil
     public static short[][] arrayToShortArray(Object in, int inOffset, short[][] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToShortArray((byte[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToShortArray((short[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToShortArray((int[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToShortArray((long[][]) in, inOffset, out, outOffset, length);
+            case FLOAT:
                 return floatArrayToShortArray((float[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToShortArray((double[][]) in, inOffset, out, outOffset, length);
-
             default:
                 return out;
         }
@@ -1118,23 +1223,20 @@ public class Array2DUtil
      */
     public static byte[][] arrayToByteArray(Object in, int inOffset, byte[][] out, int outOffset, int length)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToByteArray((byte[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToByteArray((short[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToByteArray((int[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToByteArray((long[][]) in, inOffset, out, outOffset, length);
+            case FLOAT:
                 return floatArrayToByteArray((float[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToByteArray((double[][]) in, inOffset, out, outOffset, length);
-
             default:
                 return out;
         }
@@ -1204,6 +1306,18 @@ public class Array2DUtil
         return result;
     }
 
+    public static long[][] doubleArrayToLongArray(double[][] in, int inOffset, long[][] out, int outOffset, int length)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[][] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = Array1DUtil.doubleArrayToLongArray(in[i + inOffset], 0, result[i + outOffset], 0,
+                    -1);
+
+        return result;
+    }
+
     public static int[][] doubleArrayToIntArray(double[][] in, int inOffset, int[][] out, int outOffset, int length)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
@@ -1266,6 +1380,18 @@ public class Array2DUtil
         return result;
     }
 
+    public static long[][] floatArrayToLongArray(float[][] in, int inOffset, long[][] out, int outOffset, int length)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[][] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = Array1DUtil
+                    .floatArrayToLongArray(in[i + inOffset], 0, result[i + outOffset], 0, -1);
+
+        return result;
+    }
+
     public static int[][] floatArrayToIntArray(float[][] in, int inOffset, int[][] out, int outOffset, int length)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
@@ -1301,6 +1427,77 @@ public class Array2DUtil
         return result;
     }
 
+    public static double[][] longArrayToDoubleArray(long[][] in, int inOffset, double[][] out, int outOffset,
+            int length, boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final double[][] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = Array1DUtil.longArrayToDoubleArray(in[i + inOffset], 0, result[i + outOffset], 0,
+                    -1, signed);
+
+        return result;
+    }
+
+    public static float[][] longArrayToFloatArray(long[][] in, int inOffset, float[][] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final float[][] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = Array1DUtil.longArrayToFloatArray(in[i + inOffset], 0, result[i + outOffset], 0,
+                    -1, signed);
+
+        return result;
+    }
+
+    public static long[][] longArrayToLongArray(long[][] in, int inOffset, long[][] out, int outOffset, int length)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[][] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = Array1DUtil.longArrayToLongArray(in[i + inOffset], 0, result[i + outOffset], 0, -1);
+
+        return result;
+    }
+
+    public static int[][] longArrayToIntArray(long[][] in, int inOffset, int[][] out, int outOffset, int length)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final int[][] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = Array1DUtil.longArrayToIntArray(in[i + inOffset], 0, result[i + outOffset], 0, -1);
+
+        return result;
+    }
+
+    public static short[][] longArrayToShortArray(long[][] in, int inOffset, short[][] out, int outOffset, int length)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final short[][] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = Array1DUtil
+                    .longArrayToShortArray(in[i + inOffset], 0, result[i + outOffset], 0, -1);
+
+        return result;
+    }
+
+    public static byte[][] longArrayToByteArray(long[][] in, int inOffset, byte[][] out, int outOffset, int length)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final byte[][] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = Array1DUtil.longArrayToByteArray(in[i + inOffset], 0, result[i + outOffset], 0, -1);
+
+        return result;
+    }
+
     public static double[][] intArrayToDoubleArray(int[][] in, int inOffset, double[][] out, int outOffset, int length,
             boolean signed)
     {
@@ -1322,6 +1519,19 @@ public class Array2DUtil
 
         for (int i = 0; i < len; i++)
             result[i + outOffset] = Array1DUtil.intArrayToFloatArray(in[i + inOffset], 0, result[i + outOffset], 0, -1,
+                    signed);
+
+        return result;
+    }
+
+    public static long[][] intArrayToLongArray(int[][] in, int inOffset, long[][] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[][] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = Array1DUtil.intArrayToLongArray(in[i + inOffset], 0, result[i + outOffset], 0, -1,
                     signed);
 
         return result;
@@ -1386,6 +1596,19 @@ public class Array2DUtil
         return result;
     }
 
+    public static long[][] shortArrayToLongArray(short[][] in, int inOffset, long[][] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[][] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = Array1DUtil.shortArrayToLongArray(in[i + inOffset], 0, result[i + outOffset], 0,
+                    -1, signed);
+
+        return result;
+    }
+
     public static int[][] shortArrayToIntArray(short[][] in, int inOffset, int[][] out, int outOffset, int length,
             boolean signed)
     {
@@ -1445,6 +1668,19 @@ public class Array2DUtil
         for (int i = 0; i < len; i++)
             result[i + outOffset] = Array1DUtil.byteArrayToFloatArray(in[i + inOffset], 0, result[i + outOffset], 0,
                     -1, signed);
+
+        return result;
+    }
+
+    public static long[][] byteArrayToLongArray(byte[][] in, int inOffset, long[][] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[][] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = Array1DUtil.byteArrayToLongArray(in[i + inOffset], 0, result[i + outOffset], 0, -1,
+                    signed);
 
         return result;
     }
@@ -1598,21 +1834,24 @@ public class Array2DUtil
     public static Object doubleArrayToSafeArray(double[][] in, int inOffset, Object out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return doubleArrayToSafeByteArray(in, inOffset, (byte[][]) out, outOffset, length, signed);
 
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return doubleArrayToSafeShortArray(in, inOffset, (short[][]) out, outOffset, length, signed);
 
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return doubleArrayToSafeIntArray(in, inOffset, (int[][]) out, outOffset, length, signed);
 
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return doubleArrayToSafeLongArray(in, inOffset, (long[][]) out, outOffset, length, signed);
+
+            case FLOAT:
                 return doubleArrayToFloatArray(in, inOffset, (float[][]) out, outOffset, length);
 
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToDoubleArray(in, inOffset, (double[][]) out, outOffset, length);
 
             default:
@@ -1628,23 +1867,20 @@ public class Array2DUtil
     public static Object floatArrayToSafeArray(float[][] in, int inOffset, Object out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return floatArrayToSafeByteArray(in, inOffset, (byte[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return floatArrayToSafeShortArray(in, inOffset, (short[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return floatArrayToSafeIntArray(in, inOffset, (int[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return floatArrayToSafeLongArray(in, inOffset, (long[][]) out, outOffset, length, signed);
+            case FLOAT:
                 return floatArrayToFloatArray(in, inOffset, (float[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return floatArrayToDoubleArray(in, inOffset, (double[][]) out, outOffset, length);
-
             default:
                 return out;
         }
@@ -1655,26 +1891,50 @@ public class Array2DUtil
         return floatArrayToSafeArray(in, 0, out, 0, -1, signed);
     }
 
+    public static Object longArrayToSafeArray(long[][] in, int inOffset, Object out, int outOffset, int length,
+            boolean signed)
+    {
+        switch (ArrayUtil.getDataType(out))
+        {
+            case BYTE:
+                return longArrayToSafeByteArray(in, inOffset, (byte[][]) out, outOffset, length, signed);
+            case SHORT:
+                return longArrayToSafeShortArray(in, inOffset, (short[][]) out, outOffset, length, signed);
+            case INT:
+                return longArrayToSafeIntArray(in, inOffset, (int[][]) out, outOffset, length, signed);
+            case LONG:
+                return longArrayToLongArray(in, inOffset, (long[][]) out, outOffset, length);
+            case FLOAT:
+                return longArrayToFloatArray(in, inOffset, (float[][]) out, outOffset, length, signed);
+            case DOUBLE:
+                return longArrayToDoubleArray(in, inOffset, (double[][]) out, outOffset, length, signed);
+            default:
+                return out;
+        }
+    }
+
+    public static Object longArrayToSafeArray(long[][] in, Object out, boolean signed)
+    {
+        return longArrayToSafeArray(in, 0, out, 0, -1, signed);
+    }
+
     public static Object intArrayToSafeArray(int[][] in, int inOffset, Object out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return intArrayToSafeByteArray(in, inOffset, (byte[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return intArrayToSafeShortArray(in, inOffset, (short[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToIntArray(in, inOffset, (int[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return intArrayToLongArray(in, inOffset, (long[][]) out, outOffset, length, signed);
+            case FLOAT:
                 return intArrayToFloatArray(in, inOffset, (float[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return intArrayToDoubleArray(in, inOffset, (double[][]) out, outOffset, length, signed);
-
             default:
                 return out;
         }
@@ -1688,23 +1948,20 @@ public class Array2DUtil
     public static Object shortArrayToSafeArray(short[][] in, int inOffset, Object out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return shortArrayToSafeByteArray(in, inOffset, (byte[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToShortArray(in, inOffset, (short[][]) out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return shortArrayToIntArray(in, inOffset, (int[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return shortArrayToLongArray(in, inOffset, (long[][]) out, outOffset, length, signed);
+            case FLOAT:
                 return shortArrayToFloatArray(in, inOffset, (float[][]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return shortArrayToDoubleArray(in, inOffset, (double[][]) out, outOffset, length, signed);
-
             default:
                 return out;
         }
@@ -1715,29 +1972,53 @@ public class Array2DUtil
         return shortArrayToSafeArray(in, 0, out, 0, -1, signed);
     }
 
-    public static int[][] arrayToSafeIntArray(Object in, int inOffset, int[][] out, int outOffset, int length,
+    public static long[][] arrayToSafeLongArray(Object in, int inOffset, long[][] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
-                return byteArrayToIntArray((byte[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
-                return shortArrayToIntArray((short[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
-                return intArrayToIntArray((int[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
-                return floatArrayToSafeIntArray((float[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
-                return doubleArrayToSafeIntArray((double[][]) in, inOffset, out, outOffset, length, signed);
-
+            case BYTE:
+                return byteArrayToLongArray((byte[][]) in, inOffset, out, outOffset, length, signed);
+            case SHORT:
+                return shortArrayToLongArray((short[][]) in, inOffset, out, outOffset, length, signed);
+            case INT:
+                return intArrayToLongArray((int[][]) in, inOffset, out, outOffset, length, signed);
+            case LONG:
+                return longArrayToLongArray((long[][]) in, inOffset, out, outOffset, length);
+            case FLOAT:
+                return floatArrayToSafeLongArray((float[][]) in, inOffset, out, outOffset, length, signed);
+            case DOUBLE:
+                return doubleArrayToSafeLongArray((double[][]) in, inOffset, out, outOffset, length, signed);
             default:
                 return out;
 
+        }
+    }
+
+    public static long[][] arrayToSafeLongArray(Object in, long[][] out, boolean signed)
+    {
+        return arrayToSafeLongArray(in, 0, out, 0, -1, signed);
+    }
+
+    public static int[][] arrayToSafeIntArray(Object in, int inOffset, int[][] out, int outOffset, int length,
+            boolean signed)
+    {
+        switch (ArrayUtil.getDataType(in))
+        {
+            case BYTE:
+                return byteArrayToIntArray((byte[][]) in, inOffset, out, outOffset, length, signed);
+            case SHORT:
+                return shortArrayToIntArray((short[][]) in, inOffset, out, outOffset, length, signed);
+            case INT:
+                return intArrayToIntArray((int[][]) in, inOffset, out, outOffset, length);
+            case LONG:
+                return longArrayToSafeIntArray((long[][]) in, inOffset, out, outOffset, length, signed);
+            case FLOAT:
+                return floatArrayToSafeIntArray((float[][]) in, inOffset, out, outOffset, length, signed);
+            case DOUBLE:
+                return doubleArrayToSafeIntArray((double[][]) in, inOffset, out, outOffset, length, signed);
+            default:
+                return out;
         }
     }
 
@@ -1749,26 +2030,22 @@ public class Array2DUtil
     public static short[][] arrayToSafeShortArray(Object in, int inOffset, short[][] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToShortArray((byte[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToShortArray((short[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToSafeShortArray((int[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToSafeShortArray((long[][]) in, inOffset, out, outOffset, length, signed);
+            case FLOAT:
                 return floatArrayToSafeShortArray((float[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToSafeShortArray((double[][]) in, inOffset, out, outOffset, length, signed);
-
             default:
                 return out;
-
         }
     }
 
@@ -1780,23 +2057,20 @@ public class Array2DUtil
     public static byte[][] arrayToSafeByteArray(Object in, int inOffset, byte[][] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToByteArray((byte[][]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToSafeByteArray((short[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToSafeByteArray((int[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToSafeByteArray((long[][]) in, inOffset, out, outOffset, length, signed);
+            case FLOAT:
                 return floatArrayToSafeByteArray((float[][]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToSafeByteArray((double[][]) in, inOffset, out, outOffset, length, signed);
-
             default:
                 return out;
         }
@@ -1815,6 +2089,19 @@ public class Array2DUtil
     //
     //
     //
+
+    public static long[][] doubleArrayToSafeLongArray(double[][] in, int inOffset, long[][] out, int outOffset,
+            int length, boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[][] outArray = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            outArray[i + outOffset] = Array1DUtil.doubleArrayToSafeLongArray(in[i + inOffset], 0, outArray[i
+                    + outOffset], 0, -1, signed);
+
+        return outArray;
+    }
 
     public static int[][] doubleArrayToSafeIntArray(double[][] in, int inOffset, int[][] out, int outOffset,
             int length, boolean signed)
@@ -1855,6 +2142,19 @@ public class Array2DUtil
         return outArray;
     }
 
+    public static long[][] floatArrayToSafeLongArray(float[][] in, int inOffset, long[][] out, int outOffset,
+            int length, boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[][] outArray = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            outArray[i + outOffset] = Array1DUtil.floatArrayToSafeLongArray(in[i + inOffset], 0,
+                    outArray[i + outOffset], 0, -1, signed);
+
+        return outArray;
+    }
+
     public static int[][] floatArrayToSafeIntArray(float[][] in, int inOffset, int[][] out, int outOffset, int length,
             boolean signed)
     {
@@ -1889,6 +2189,45 @@ public class Array2DUtil
 
         for (int i = 0; i < len; i++)
             outArray[i + outOffset] = Array1DUtil.floatArrayToSafeByteArray(in[i + inOffset], 0,
+                    outArray[i + outOffset], 0, -1, signed);
+
+        return outArray;
+    }
+
+    public static int[][] longArrayToSafeIntArray(long[][] in, int inOffset, int[][] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final int[][] outArray = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            outArray[i + outOffset] = Array1DUtil.longArrayToSafeIntArray(in[i + inOffset], 0, outArray[i + outOffset],
+                    0, -1, signed);
+
+        return outArray;
+    }
+
+    public static short[][] longArrayToSafeShortArray(long[][] in, int inOffset, short[][] out, int outOffset,
+            int length, boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final short[][] outArray = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            outArray[i + outOffset] = Array1DUtil.longArrayToSafeShortArray(in[i + inOffset], 0,
+                    outArray[i + outOffset], 0, -1, signed);
+
+        return outArray;
+    }
+
+    public static byte[][] longArrayToSafeByteArray(long[][] in, int inOffset, byte[][] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final byte[][] outArray = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            outArray[i + outOffset] = Array1DUtil.longArrayToSafeByteArray(in[i + inOffset], 0,
                     outArray[i + outOffset], 0, -1, signed);
 
         return outArray;

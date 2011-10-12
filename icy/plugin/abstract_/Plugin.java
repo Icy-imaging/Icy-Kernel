@@ -149,7 +149,7 @@ public abstract class Plugin
     }
 
     /**
-     * Return the resource as data stream rom given resource name
+     * Return the resource as data stream from given resource name
      * 
      * @param name
      *        resource name

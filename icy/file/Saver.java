@@ -23,7 +23,7 @@ import icy.gui.frame.progress.FileFrame;
 import icy.image.IcyBufferedImage;
 import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
-import icy.type.TypeUtil;
+import icy.type.DataType;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +39,6 @@ import loci.formats.out.OMETiffWriter;
 import loci.formats.services.OMEXMLService;
 import loci.formats.services.OMEXMLServiceImpl;
 import ome.xml.model.enums.DimensionOrder;
-import ome.xml.model.enums.PixelType;
 import ome.xml.model.primitives.PositiveInteger;
 
 /**
@@ -55,13 +54,11 @@ public class Saver
      * @return OMEXMLMetadata
      * @throws ServiceException
      */
-    public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT, int dataType,
-            boolean signedDataType) throws ServiceException
+    public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
+            DataType dataType) throws ServiceException
     {
         final OMEXMLService omeService = new OMEXMLServiceImpl();
         final OMEXMLMetadata meta = omeService.createOMEXMLMetadata();
-        // define PixelType
-        final PixelType pixelType = TypeUtil.dataTypeToPixelType(dataType, signedDataType);
 
         meta.createRoot();
         meta.setImageID(MetadataTools.createLSID("Image", 0), 0);
@@ -69,7 +66,7 @@ public class Saver
         meta.setPixelsID(MetadataTools.createLSID("Pixels", 0), 0);
         meta.setPixelsBinDataBigEndian(Boolean.TRUE, 0, 0);
         meta.setPixelsDimensionOrder(DimensionOrder.XYCZT, 0);
-        meta.setPixelsType(pixelType, 0);
+        meta.setPixelsType(dataType.toPixelType(), 0);
         meta.setPixelsSizeX(new PositiveInteger(Integer.valueOf(sizeX)), 0);
         meta.setPixelsSizeY(new PositiveInteger(Integer.valueOf(sizeY)), 0);
         meta.setPixelsSizeC(new PositiveInteger(Integer.valueOf(sizeC)), 0);
@@ -82,15 +79,35 @@ public class Saver
     }
 
     /**
+     * @deprecated use {@link #generateMetaData(int, int, int, int, int, DataType)} instead
+     */
+    @Deprecated
+    public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT, int dataType,
+            boolean signedDataType) throws ServiceException
+    {
+        return generateMetaData(sizeX, sizeY, sizeC, sizeZ, sizeT, DataType.getDataType(dataType, signedDataType));
+    }
+
+    /**
      * Generates Meta Data for the given arguments
      * 
      * @return OMEXMLMetadata
      * @throws ServiceException
      */
+    public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, DataType dataType)
+            throws ServiceException
+    {
+        return generateMetaData(sizeX, sizeY, sizeC, 1, 1, dataType);
+    }
+
+    /**
+     * @deprecated use {@link #generateMetaData(int, int, int, DataType)} instead
+     */
+    @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int dataType, boolean signedDataType)
             throws ServiceException
     {
-        return generateMetaData(sizeX, sizeY, sizeC, 1, 1, dataType, signedDataType);
+        return generateMetaData(sizeX, sizeY, sizeC, DataType.getDataType(dataType, signedDataType));
     }
 
     /**
@@ -101,8 +118,7 @@ public class Saver
      */
     static OMEXMLMetadata generateMetaData(IcyBufferedImage image) throws ServiceException
     {
-        return generateMetaData(image.getSizeX(), image.getSizeY(), image.getSizeC(), image.getDataType(),
-                image.isSignedDataType());
+        return generateMetaData(image.getSizeX(), image.getSizeY(), image.getSizeC(), image.getDataType_());
     }
 
     /**
@@ -114,8 +130,7 @@ public class Saver
     static OMEXMLMetadata generateMetaData(Sequence sequence, boolean useZ, boolean useT) throws ServiceException
     {
         return generateMetaData(sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(),
-                useZ ? sequence.getSizeZ() : 1, useT ? sequence.getSizeT() : 1, sequence.getDataType(),
-                sequence.isSignedDataType());
+                useZ ? sequence.getSizeZ() : 1, useT ? sequence.getSizeT() : 1, sequence.getDataType_());
     }
 
     /**
@@ -127,7 +142,7 @@ public class Saver
     static OMEXMLMetadata generateMetaData(Sequence sequence, int sizeZ, int sizeT) throws ServiceException
     {
         return generateMetaData(sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(), sizeZ, sizeT,
-                sequence.getDataType(), sequence.isSignedDataType());
+                sequence.getDataType_());
     }
 
     /**

@@ -18,10 +18,10 @@
  */
 package icy.roi;
 
-import java.util.ArrayList;
-
 import icy.canvas.IcyCanvas;
 import icy.util.XMLUtil;
+
+import java.util.ArrayList;
 
 import org.w3c.dom.Node;
 
@@ -113,7 +113,7 @@ public abstract class ROI3D extends ROI
      */
     public boolean isActiveFor(IcyCanvas canvas)
     {
-        return isActiveFor(canvas.getT(), canvas.getC());
+        return isActiveFor(canvas.getPositionT(), canvas.getPositionC());
     }
 
     /**
@@ -140,11 +140,6 @@ public abstract class ROI3D extends ROI
         return (this.c == -1) || (this.c == c);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI#loadFromXML(org.w3c.dom.Node)
-     */
     @Override
     public boolean loadFromXML(Node node)
     {
@@ -165,11 +160,6 @@ public abstract class ROI3D extends ROI
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.roi.ROI#saveToXML(org.w3c.dom.Node)
-     */
     @Override
     public boolean saveToXML(Node node)
     {

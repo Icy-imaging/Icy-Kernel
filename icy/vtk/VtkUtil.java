@@ -18,8 +18,8 @@
  */
 package icy.vtk;
 
-import icy.type.TypeUtil;
 import icy.type.collection.array.Array2DUtil;
+import icy.type.collection.array.ArrayUtil;
 import vtk.vtkActor;
 import vtk.vtkActor2D;
 import vtk.vtkActor2DCollection;
@@ -168,29 +168,29 @@ public class VtkUtil
 
     public static vtkDataArray getVtkArray(Object array, boolean signed)
     {
-        switch (TypeUtil.getDataType(array))
+        switch (ArrayUtil.getDataType(array))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getUCharArray((byte[]) array);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 if (signed)
                     return getUShortArray((short[]) array);
                 return getShortArray((short[]) array);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 if (signed)
                     return getUIntArray((int[]) array);
                 return getIntArray((int[]) array);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                if (signed)
+                    return getULongArray((long[]) array);
+                return getLongArray((long[]) array);
+            case FLOAT:
                 return getFloatArray((float[]) array);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDoubleArray((double[]) array);
+            default:
+                return null;
         }
-
-        return null;
     }
 
     public static vtkUnsignedCharArray getUCharArray(byte[] array)

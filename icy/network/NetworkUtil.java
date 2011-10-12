@@ -23,11 +23,11 @@ import icy.preferences.ApplicationPreferences;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
-import icy.type.collection.array.DynamicArray;
 
 import java.awt.Desktop;
 import java.awt.Desktop.Action;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
@@ -55,7 +55,6 @@ import sun.misc.BASE64Encoder;
 public class NetworkUtil
 {
     static final String REPORT_URL = "http://www.bioimageanalysis.org/icy/index.php";
-
     public static final String USER_INTERRUPT_MESS = "Load interrupted by user";
 
     public static void init()
@@ -165,7 +164,7 @@ public class NetworkUtil
             return download(url, listener, displayError);
 
         if (displayError)
-            System.err.println("Can't download '" + path + "', incorrect path !");
+            System.out.println("Can't download '" + path + "', incorrect path !");
 
         return null;
     }
@@ -185,7 +184,7 @@ public class NetworkUtil
             catch (URISyntaxException e)
             {
                 if (displayError)
-                    System.err.println("Can't download '" + url + "', incorrect path !");
+                    System.out.println("Can't download '" + url + "', incorrect path !");
 
                 return null;
             }
@@ -211,11 +210,11 @@ public class NetworkUtil
 
                     // obfuscation
                     if (urlString.startsWith(updateUrlBase))
-                        System.err.println("Can't connect to update site...");
+                        System.out.println("Can't connect to update site...");
                     else
                     {
-                        System.err.println("Error while downloading from '" + urlString + "' :");
-                        IcyExceptionHandler.showErrorMessage(e, false);
+                        System.out.println("Error while downloading from '" + urlString + "' :");
+                        IcyExceptionHandler.showErrorMessage(e, false, false);
                     }
 
                     return null;
@@ -263,7 +262,7 @@ public class NetworkUtil
         {
             if (displayError)
             {
-                System.err.println("NetworkUtil.download('" + f.getPath() + "',...) error :");
+                System.out.println("NetworkUtil.download('" + f.getPath() + "',...) error :");
                 IcyExceptionHandler.showErrorMessage(e, false);
             }
             return null;
@@ -276,43 +275,48 @@ public class NetworkUtil
     public static byte[] download(InputStream in, long len, ProgressListener listener) throws IOException
     {
         final int READ_BLOCKSIZE = 64 * 1024;
-        final DynamicArray.Byte buffer = new DynamicArray.Byte();
+        final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         // read per block of 64 KB
         final byte[] data = new byte[READ_BLOCKSIZE];
 
-        int off = 0;
-        int count = 0;
-        while (count >= 0)
+        try
         {
-            count = in.read(data);
-            if (count < 0)
+            int off = 0;
+            int count = 0;
+            while (count >= 0)
             {
-                // unexpected length
-                if ((len != -1) && (off != len))
-                    throw new EOFException();
-            }
-            else
-                off += count;
-
-            // copy to dynamic buffer
-            if (count > 0)
-                buffer.add(data, 0, count);
-
-            if (listener != null)
-            {
-                // download canceled ?
-                if (!listener.notifyProgress(off, len))
+                count = in.read(data);
+                if (count < 0)
                 {
-                    in.close();
-                    System.out.println(USER_INTERRUPT_MESS);
-                    return null;
+                    // unexpected length
+                    if ((len != -1) && (off != len))
+                        throw new EOFException();
+                }
+                else
+                    off += count;
+
+                // copy to dynamic buffer
+                if (count > 0)
+                    buffer.write(data, 0, count);
+
+                if (listener != null)
+                {
+                    // download canceled ?
+                    if (!listener.notifyProgress(off, len))
+                    {
+                        in.close();
+                        System.out.println(USER_INTERRUPT_MESS);
+                        return null;
+                    }
                 }
             }
         }
+        finally
+        {
+            in.close();
+        }
 
-        in.close();
-
-        return buffer.asArray();
+        return buffer.toByteArray();
     }
 
     public static URLConnection openConnection(String path, boolean disableCache, boolean displayError)
@@ -335,8 +339,8 @@ public class NetworkUtil
         {
             if (displayError)
             {
-                System.err.println("NetworkUtil.openConnection('" + url + "',...) error :");
-                IcyExceptionHandler.showErrorMessage(e, false);
+                System.out.println("NetworkUtil.openConnection('" + url + "',...) error :");
+                IcyExceptionHandler.showErrorMessage(e, false, false);
             }
         }
 
@@ -356,7 +360,7 @@ public class NetworkUtil
                 if (!uc.getURL().toString().toLowerCase().equals(prevUrl.toString().toLowerCase()))
                 {
                     // TODO : do something better
-                    System.err.println("Host URL change rejected : " + prevUrl.toString() + " --> "
+                    System.out.println("Host URL change rejected : " + prevUrl.toString() + " --> "
                             + uc.getURL().toString());
                     return null;
                 }
@@ -373,12 +377,12 @@ public class NetworkUtil
                     if (urlString.startsWith(ApplicationPreferences.getUpdateRepositoryBase()))
                     {
                         if (e instanceof FileNotFoundException)
-                            System.err.println("Update site URL does not exists or file '" + uc.getURL().getPath()
+                            System.out.println("Update site URL does not exists or file '" + uc.getURL().getPath()
                                     + "' does not exists.");
                         else if (e.getMessage().indexOf("HTTP response code: 500 ") != -1)
                             System.out.println("Network error : can't connect to update site");
                         else
-                            System.err.println("Can't connect to update site...");
+                            System.out.println("Can't connect to update site...");
                     }
                     else
                     {
@@ -390,8 +394,8 @@ public class NetworkUtil
                             System.out.println("Network error : can't connect to " + urlString);
                         else
                         {
-                            System.err.println("NetworkUtil.getInputStream(" + urlString + ",...) error :");
-                            IcyExceptionHandler.showErrorMessage(e, false);
+                            System.out.println("NetworkUtil.getInputStream(" + urlString + ",...) error :");
+                            IcyExceptionHandler.showErrorMessage(e, false, false);
                         }
                     }
                 }
@@ -417,8 +421,8 @@ public class NetworkUtil
             {
                 if (displayError)
                 {
-                    System.err.println("NetworkUtil.getInputStream(" + url + ", ...) error :");
-                    IcyExceptionHandler.showErrorMessage(e, false);
+                    System.out.println("NetworkUtil.getInputStream(" + url + ", ...) error :");
+                    IcyExceptionHandler.showErrorMessage(e, false, false);
                 }
             }
         }
@@ -536,9 +540,9 @@ public class NetworkUtil
                 }
                 catch (IOException e)
                 {
-                    System.err.println("Error while reporting data :");
-                    System.err.println("postData(REPORT_URL) error :");
-                    System.err.println(e.getMessage());
+                    System.out.println("Error while reporting data :");
+                    System.out.println("postData(REPORT_URL) error :");
+                    System.out.println(e.getMessage());
                 }
             }
         });

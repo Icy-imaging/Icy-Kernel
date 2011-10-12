@@ -111,7 +111,7 @@ public class LUT implements LUTBandListener, IcyChangedListener
     }
 
     /**
-     * 
+     * Return the LUTBand for specified channel index
      */
     public LUTBand getLutBand(int band)
     {
@@ -119,9 +119,16 @@ public class LUT implements LUTBandListener, IcyChangedListener
     }
 
     /**
+     * Copy LUT from the specified source lut
+     */
+    public void copyFrom(LUT lut)
+    {
+        copyColormaps(lut);
+        copyScalers(lut);
+    }
+
+    /**
      * Copy the scalers from the specified source lut
-     * 
-     * @param lut
      */
     public void copyScalers(LUT lut)
     {
@@ -149,14 +156,16 @@ public class LUT implements LUTBandListener, IcyChangedListener
 
     /**
      * Copy colormaps from the specified source lut
-     * 
-     * @param lut
      */
     public void copyColormaps(LUT lut)
     {
         getColorSpace().copyColormaps(lut.getColorSpace());
     }
 
+    /**
+     * Return true if LUT is compatible with specified ColorModel.<br>
+     * (Same number of channels with same data type)
+     */
     public boolean isCompatible(IcyColorModel colorModel)
     {
         if (numComponents == colorModel.getNumComponents())
@@ -232,4 +241,5 @@ public class LUT implements LUTBandListener, IcyChangedListener
     {
         return updater.isUpdating();
     }
+
 }

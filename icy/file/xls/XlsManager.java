@@ -18,9 +18,6 @@
  */
 package icy.file.xls;
 
-import icy.file.FileUtil;
-
-import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 
@@ -48,35 +45,38 @@ public class XlsManager
 
     /**
      * Create a new file, overwritting existing one.
+     * 
      * @param file
      * @throws IOException
      */
     public XlsManager(File file) throws IOException
-    {    	
-    	excelWorkbook = Workbook.createWorkbook(file);
-    	//excelPage = excelWorkbook.createSheet("results", 0);
+    {
+        excelWorkbook = Workbook.createWorkbook(file);
+        // excelPage = excelWorkbook.createSheet("results", 0);
     }
 
     /**
      * load from existing file
+     * 
      * @param file
      * @param load
      * @throws IOException
      * @throws BiffException
      */
-    public XlsManager(File file , boolean load ) throws IOException, BiffException
-    {    	
-    	if ( load )
-    	{
-    		if ( ! file.exists() )
-    		{
-    			excelWorkbook = Workbook.createWorkbook(file);
-    		}else
-    		{
-    			excelWorkbook = Workbook.createWorkbook( file , Workbook.getWorkbook( file ) );
-    		}
-    	}
-    	// FIXME: no else here. Class should be changed now that it can load data.
+    public XlsManager(File file, boolean load) throws IOException, BiffException
+    {
+        if (load)
+        {
+            if (!file.exists())
+            {
+                excelWorkbook = Workbook.createWorkbook(file);
+            }
+            else
+            {
+                excelWorkbook = Workbook.createWorkbook(file, Workbook.getWorkbook(file));
+            }
+        }
+        // FIXME: no else here. Class should be changed now that it can load data.
     }
 
     public XlsManager(String file) throws IOException
@@ -104,30 +104,29 @@ public class XlsManager
 
     /**
      * Create a new page. If the page already exists, add an incremented number for distinction.
+     * 
      * @param title
      */
     public void createNewPage(String title)
     {
-    	boolean ok = false;
-    	int counter = 2;
-    	String pageName = title;
-    	while (!ok)
-    	{    		
-    		if ( excelWorkbook.getSheet( pageName ) == null )
-    		{    		
-    			excelPage = excelWorkbook.createSheet(pageName, excelWorkbook.getNumberOfSheets()+1 );
-    			ok = true;
-    		}
-    		pageName = title + " " + counter;
-    		counter++;
-    	}
+        boolean ok = false;
+        int counter = 2;
+        String pageName = title;
+        while (!ok)
+        {
+            if (excelWorkbook.getSheet(pageName) == null)
+            {
+                excelPage = excelWorkbook.createSheet(pageName, excelWorkbook.getNumberOfSheets() + 1);
+                ok = true;
+            }
+            pageName = title + " " + counter;
+            counter++;
+        }
     }
-    
-    
-    
-    public void setPageName( String name )
+
+    public void setPageName(String name)
     {
-    	excelPage.setName( name );
+        excelPage.setName(name);
     }
 
     public void addImage(WritableImage image)
@@ -144,13 +143,13 @@ public class XlsManager
     }
 
     public void setLabel(int x, int y, String texte, Colour background)
-//    public void setLabel(int x, int y, String texte, Color background)
+    // public void setLabel(int x, int y, String texte, Color background)
     {
         WritableCellFormat wcf = new WritableCellFormat();
         try
         {
-        	//Colour colour = Colour.getInternalColour( background.getRGB() );
-            wcf.setBackground( background );
+            // Colour colour = Colour.getInternalColour( background.getRGB() );
+            wcf.setBackground(background);
         }
         catch (WriteException e1)
         {
@@ -186,9 +185,9 @@ public class XlsManager
         WritableCellFormat wcf = new WritableCellFormat();
         try
         {
-        //	Colour colour = Colour.getInternalColour( background.getRGB() );
-        //    wcf.setBackground( colour );
-            wcf.setBackground( background );
+            // Colour colour = Colour.getInternalColour( background.getRGB() );
+            // wcf.setBackground( colour );
+            wcf.setBackground(background);
         }
         catch (WriteException e1)
         {

@@ -379,25 +379,29 @@ public class Scaler implements IcyChangedListener, XMLPersistent
         if ((src == null) || (dest == null))
             throw new IllegalArgumentException("Parameters 'src' and 'dest' should not be null !");
 
-        switch (TypeUtil.getDataType(src))
+        switch (ArrayUtil.getDataType(src))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 scale((byte[]) src, srcOffset, dest, destOffset, len, signed);
                 break;
 
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 scale((short[]) src, srcOffset, dest, destOffset, len, signed);
                 break;
 
-            case TypeUtil.TYPE_INT:
+            case INT:
                 scale((int[]) src, srcOffset, dest, destOffset, len, signed);
                 break;
 
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                scale((long[]) src, srcOffset, dest, destOffset, len, signed);
+                break;
+
+            case FLOAT:
                 scale((float[]) src, srcOffset, dest, destOffset, len);
                 break;
 
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 scale((double[]) src, srcOffset, dest, destOffset, len);
                 break;
         }
@@ -434,7 +438,7 @@ public class Scaler implements IcyChangedListener, XMLPersistent
         {
             // unsigned
             for (int i = 0; i < len; i++)
-                dest[destOffset + i] = (int) scale(src[srcOffset + i] & 0xFF);
+                dest[destOffset + i] = (int) scale(TypeUtil.unsign(src[srcOffset + i]));
         }
     }
 
@@ -469,7 +473,7 @@ public class Scaler implements IcyChangedListener, XMLPersistent
         {
             // unsigned
             for (int i = 0; i < len; i++)
-                dest[destOffset + i] = (int) scale(src[srcOffset + i] & 0xFFFF);
+                dest[destOffset + i] = (int) scale(TypeUtil.unsign(src[srcOffset + i]));
         }
     }
 
@@ -504,7 +508,42 @@ public class Scaler implements IcyChangedListener, XMLPersistent
         {
             // unsigned
             for (int i = 0; i < len; i++)
-                dest[destOffset + i] = (int) scale(src[srcOffset + i] & 0xFFFFFFFFL);
+                dest[destOffset + i] = (int) scale(TypeUtil.unsign(src[srcOffset + i]));
+        }
+    }
+
+    /**
+     * Scale each value in the "src" array and return result in "dest" array
+     * 
+     * @param src
+     *        array of long (unscaled values)
+     * @param srcOffset
+     *        offset for src buffer
+     * @param dest
+     *        result as array of int (scaled values)
+     * @param destOffset
+     *        offset for dest buffer
+     * @param len
+     *        length to compute
+     * @param signed
+     *        signed/unsigned src data flag
+     */
+    public void scale(long[] src, int srcOffset, int[] dest, int destOffset, int len, boolean signed)
+    {
+        if ((src == null) || (dest == null))
+            throw new IllegalArgumentException("Parameters 'src' and 'dest' should not be null !");
+
+        if (signed)
+        {
+            // signed
+            for (int i = 0; i < len; i++)
+                dest[destOffset + i] = (int) scale(src[srcOffset + i]);
+        }
+        else
+        {
+            // unsigned
+            for (int i = 0; i < len; i++)
+                dest[destOffset + i] = (int) scale(TypeUtil.unsign(src[srcOffset + i]));
         }
     }
 
@@ -585,7 +624,7 @@ public class Scaler implements IcyChangedListener, XMLPersistent
         {
             // unsigned
             for (int i = 0; i < len; i++)
-                dest[destOffset + i] = scale(src[srcOffset + i] & 0xFF);
+                dest[destOffset + i] = scale(TypeUtil.unsign(src[srcOffset + i]));
         }
     }
 
@@ -620,7 +659,7 @@ public class Scaler implements IcyChangedListener, XMLPersistent
         {
             // unsigned
             for (int i = 0; i < len; i++)
-                dest[destOffset + i] = scale(src[srcOffset + i] & 0xFFFF);
+                dest[destOffset + i] = scale(TypeUtil.unsign(src[srcOffset + i]));
         }
     }
 
@@ -655,7 +694,42 @@ public class Scaler implements IcyChangedListener, XMLPersistent
         {
             // unsigned
             for (int i = 0; i < len; i++)
-                dest[destOffset + i] = scale(src[srcOffset + i] & 0xFFFFFFFFL);
+                dest[destOffset + i] = scale(TypeUtil.unsign(src[srcOffset + i]));
+        }
+    }
+
+    /**
+     * Scale each value in the "src" array and return result in "dest" array
+     * 
+     * @param src
+     *        array of long (unscaled values)
+     * @param srcOffset
+     *        offset for src buffer
+     * @param dest
+     *        result as array of double (scaled values)
+     * @param destOffset
+     *        offset for dest buffer
+     * @param len
+     *        length to compute
+     * @param signed
+     *        signed/unsigned src data flag
+     */
+    public void scale(long[] src, int srcOffset, double[] dest, int destOffset, int len, boolean signed)
+    {
+        if ((src == null) || (dest == null))
+            throw new IllegalArgumentException("Parameters 'src' and 'dest' should not be null !");
+
+        if (signed)
+        {
+            // signed
+            for (int i = 0; i < len; i++)
+                dest[destOffset + i] = scale(src[srcOffset + i]);
+        }
+        else
+        {
+            // unsigned
+            for (int i = 0; i < len; i++)
+                dest[destOffset + i] = scale(TypeUtil.unsign(src[srcOffset + i]));
         }
     }
 

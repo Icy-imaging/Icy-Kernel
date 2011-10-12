@@ -18,101 +18,107 @@
  */
 package icy.type.collection.array;
 
-import icy.type.ArrayTypeInfo;
+import icy.type.DataType;
 import icy.type.TypeUtil;
 
+import java.lang.reflect.Array;
+
 /**
- * Array utilities :<br>
- * Basic array type conversion and misc tools
+ * General array utilities :<br>
+ * Basic array manipulation, conversion and tools.<br>
  * 
+ * @see Array1DUtil
+ * @see Array2DUtil
+ * @see Array3DUtil
+ * @see ByteArrayConvert
  * @author stephane
  */
 public class ArrayUtil
 {
+    /**
+     * Return the ArrayDataType of the specified array.
+     * 
+     * @see DataType
+     */
+    public static ArrayDataType getArrayDataType(Object array)
+    {
+        int dim = 0;
+
+        Class<? extends Object> arrayClass = array.getClass();
+        while (arrayClass.isArray())
+        {
+            dim++;
+            arrayClass = arrayClass.getComponentType();
+        }
+
+        return new ArrayDataType(DataType.getDataType(arrayClass), dim);
+    }
+
+    /**
+     * Return the number of dimension of the specified array
+     */
+    public static int getDim(Object array)
+    {
+        int result = 0;
+
+        Class<? extends Object> arrayClass = array.getClass();
+        while (arrayClass.isArray())
+        {
+            result++;
+            arrayClass = arrayClass.getComponentType();
+        }
+
+        return result;
+    }
+
+    /**
+     * Return the DataType (java type only) of the specified array.
+     * 
+     * @see DataType
+     */
+    public static DataType getDataType(Object array)
+    {
+        Class<? extends Object> arrayClass = array.getClass();
+        while (arrayClass.isArray())
+            arrayClass = arrayClass.getComponentType();
+
+        return DataType.getDataType(arrayClass);
+    }
+
+    /**
+     * Return the DataType of the specified array
+     */
+    public static DataType getDataType(Object array, boolean signed)
+    {
+        final DataType result = getDataType(array);
+
+        if (signed)
+            return result;
+
+        switch (result)
+        {
+            case BYTE:
+                return DataType.UBYTE;
+            case SHORT:
+                return DataType.USHORT;
+            case INT:
+                return DataType.UINT;
+            case LONG:
+                return DataType.ULONG;
+            default:
+                return result;
+        }
+    }
+
     /**
      * Return the number of element of the specified array
      */
     public static int getLength(Object array)
     {
         if (array != null)
-        {
-            final ArrayTypeInfo typeInfo = TypeUtil.getTypeInfo(array);
+            return Array.getLength(array);
 
-            switch (typeInfo.type)
-            {
-                case TypeUtil.TYPE_BYTE:
-                    switch (typeInfo.dim)
-                    {
-                        case 1:
-                            return ((byte[]) array).length;
-
-                        case 2:
-                            return ((byte[][]) array).length;
-
-                        case 3:
-                            return ((byte[][][]) array).length;
-                    }
-                    break;
-
-                case TypeUtil.TYPE_SHORT:
-                    switch (typeInfo.dim)
-                    {
-                        case 1:
-                            return ((short[]) array).length;
-
-                        case 2:
-                            return ((short[][]) array).length;
-
-                        case 3:
-                            return ((short[][][]) array).length;
-                    }
-                    break;
-
-                case TypeUtil.TYPE_INT:
-                    switch (typeInfo.dim)
-                    {
-                        case 1:
-                            return ((int[]) array).length;
-
-                        case 2:
-                            return ((int[][]) array).length;
-
-                        case 3:
-                            return ((int[][][]) array).length;
-                    }
-                    break;
-
-                case TypeUtil.TYPE_FLOAT:
-                    switch (typeInfo.dim)
-                    {
-                        case 1:
-                            return ((float[]) array).length;
-
-                        case 2:
-                            return ((float[][]) array).length;
-
-                        case 3:
-                            return ((float[][][]) array).length;
-                    }
-                    break;
-
-                case TypeUtil.TYPE_DOUBLE:
-                    switch (typeInfo.dim)
-                    {
-                        case 1:
-                            return ((double[]) array).length;
-
-                        case 2:
-                            return ((double[][]) array).length;
-
-                        case 3:
-                            return ((double[][][]) array).length;
-                    }
-                    break;
-            }
-        }
-
-        // not yet supported or null array
+        // null array
         return 0;
     }
 
@@ -131,86 +137,20 @@ public class ArrayUtil
      */
     public static int getTotalLength(Object array)
     {
-        if (array != null)
+        int result = 1;
+        Object subArray = array;
+
+        Class<? extends Object> arrayClass = array.getClass();
+        while (arrayClass.isArray())
         {
-            final ArrayTypeInfo typeInfo = TypeUtil.getTypeInfo(array);
+            result *= Array.getLength(subArray);
 
-            switch (typeInfo.type)
-            {
-                case TypeUtil.TYPE_BYTE:
-                    switch (typeInfo.dim)
-                    {
-                        case 1:
-                            return Array1DUtil.getTotalLength((byte[]) array);
-
-                        case 2:
-                            return Array2DUtil.getTotalLength((byte[][]) array);
-
-                        case 3:
-                            return Array3DUtil.getTotalLength((byte[][][]) array);
-                    }
-                    break;
-
-                case TypeUtil.TYPE_SHORT:
-                    switch (typeInfo.dim)
-                    {
-                        case 1:
-                            return Array1DUtil.getTotalLength((short[]) array);
-
-                        case 2:
-                            return Array2DUtil.getTotalLength((short[][]) array);
-
-                        case 3:
-                            return Array3DUtil.getTotalLength((short[][][]) array);
-                    }
-                    break;
-
-                case TypeUtil.TYPE_INT:
-                    switch (typeInfo.dim)
-                    {
-                        case 1:
-                            return Array1DUtil.getTotalLength((int[]) array);
-
-                        case 2:
-                            return Array2DUtil.getTotalLength((int[][]) array);
-
-                        case 3:
-                            return Array3DUtil.getTotalLength((int[][][]) array);
-                    }
-                    break;
-
-                case TypeUtil.TYPE_FLOAT:
-                    switch (typeInfo.dim)
-                    {
-                        case 1:
-                            return Array1DUtil.getTotalLength((float[]) array);
-
-                        case 2:
-                            return Array2DUtil.getTotalLength((float[][]) array);
-
-                        case 3:
-                            return Array3DUtil.getTotalLength((float[][][]) array);
-                    }
-                    break;
-
-                case TypeUtil.TYPE_DOUBLE:
-                    switch (typeInfo.dim)
-                    {
-                        case 1:
-                            return Array1DUtil.getTotalLength((double[]) array);
-
-                        case 2:
-                            return Array2DUtil.getTotalLength((double[][]) array);
-
-                        case 3:
-                            return Array3DUtil.getTotalLength((double[][][]) array);
-                    }
-                    break;
-            }
+            arrayClass = arrayClass.getComponentType();
+            if (result > 0)
+                subArray = Array.get(array, 0);
         }
 
-        // not yet supported
-        return 0;
+        return result;
     }
 
     /**
@@ -227,7 +167,7 @@ public class ArrayUtil
      * Create a new 1D array with specified data type and length
      * 
      * @deprecated
-     *             use Array1DUtil.createArray instead
+     *             use {@link Array1DUtil#createArray} instead
      */
     @Deprecated
     public static Object createArray1D(int dataType, int len)
@@ -239,7 +179,7 @@ public class ArrayUtil
      * Create a new 2D array with specified data type and length
      * 
      * @deprecated
-     *             use Array2DUtil.createArray instead
+     *             use {@link Array2DUtil#createArray} instead
      */
     @Deprecated
     public static Object createArray2D(int dataType, int len)
@@ -251,7 +191,7 @@ public class ArrayUtil
      * Create a new 3D array with specified data type and length
      * 
      * @deprecated
-     *             use Array2DUtil.createArray instead
+     *             use {@link Array2DUtil#createArray(int, int)} instead
      */
     @Deprecated
     public static Object createArray3D(int dataType, int len)
@@ -260,10 +200,46 @@ public class ArrayUtil
     }
 
     /**
+     * Allocate the specified array data type with specified number of dimension.<br>
+     * 
+     * @param dataType
+     *        array data type
+     * @param dim
+     *        number of dimension of the allocated array
+     * @param len
+     *        size of first dimension
+     */
+    public static Object createArray(DataType dataType, int dim, int len)
+    {
+        final int[] dims = new int[dim];
+        dims[0] = len;
+        return Array.newInstance(dataType.toPrimitiveClass(), dims);
+    }
+
+    /**
+     * Allocate the specified array data type with specified len for the first dimension
+     */
+    public static Object createArray(ArrayDataType arrayDataType, int len)
+    {
+        return createArray(arrayDataType.getDataType(), arrayDataType.getDim(), len);
+    }
+
+    /**
+     * Allocate the specified array if it's defined to null with the specified len
+     */
+    public static Object allocIfNull(Object array, ArrayDataType arrayDataType, int len)
+    {
+        if (array == null)
+            return createArray(arrayDataType, len);
+
+        return array;
+    }
+
+    /**
      * Get value as double from specified 1D array and offset.<br>
      * If signed is true then any integer primitive is considered as signed data
      * 
-     * @deprecated use Array1DUtil.getValue(Object, int, boolean) instead
+     * @deprecated use {@link Array1DUtil#getValue(Object, int, boolean)} instead
      */
     @Deprecated
     public static double getValue(Object array, int offset, boolean signed)
@@ -275,37 +251,19 @@ public class ArrayUtil
      * Get value as double from specified 1D array and offset.<br>
      * If signed is true then any integer primitive is considered as signed data
      * 
-     * @deprecated use Array1DUtil.getValue(Object, int, int, boolean) instead
+     * @deprecated use {@link Array1DUtil#getValue(Object, int, int, boolean)} instead
      */
     @Deprecated
     public static double getValue(Object array, int offset, int dataType, boolean signed)
     {
-        switch (dataType)
-        {
-            case TypeUtil.TYPE_BYTE:
-                return Array1DUtil.getValue((byte[]) array, offset, signed);
-
-            case TypeUtil.TYPE_SHORT:
-                return Array1DUtil.getValue((short[]) array, offset, signed);
-
-            case TypeUtil.TYPE_INT:
-                return Array1DUtil.getValue((int[]) array, offset, signed);
-
-            case TypeUtil.TYPE_FLOAT:
-                return Array1DUtil.getValue((float[]) array, offset);
-
-            case TypeUtil.TYPE_DOUBLE:
-                return Array1DUtil.getValue((double[]) array, offset);
-        }
-
-        return 0;
+        return Array1DUtil.getValue(array, offset, dataType, signed);
     }
 
     /**
      * Get value as float from specified 1D array and offset.<br>
      * If signed is true then any integer primitive is considered as signed data
      * 
-     * @deprecated use Array1DUtil.getValueAsFloat(Object, int, boolean) instead
+     * @deprecated use {@link Array1DUtil#getValueAsFloat(Object, int, boolean)} instead
      */
     @Deprecated
     public static float getValueAsFloat(Object array, int offset, boolean signed)
@@ -317,37 +275,19 @@ public class ArrayUtil
      * Get value as float from specified 1D array and offset.<br>
      * If signed is true then any integer primitive is considered as signed data
      * 
-     * @deprecated use Array1DUtil.getValueAsFloat(Object, int,int, boolean) instead
+     * @deprecated use {@link Array1DUtil#getValueAsFloat(Object, int,int, boolean)} instead
      */
     @Deprecated
     public static float getValueAsFloat(Object array, int offset, int dataType, boolean signed)
     {
-        switch (dataType)
-        {
-            case TypeUtil.TYPE_BYTE:
-                return Array1DUtil.getValueAsFloat((byte[]) array, offset, signed);
-
-            case TypeUtil.TYPE_SHORT:
-                return Array1DUtil.getValueAsFloat((short[]) array, offset, signed);
-
-            case TypeUtil.TYPE_INT:
-                return Array1DUtil.getValueAsFloat((int[]) array, offset, signed);
-
-            case TypeUtil.TYPE_FLOAT:
-                return Array1DUtil.getValueAsFloat((float[]) array, offset);
-
-            case TypeUtil.TYPE_DOUBLE:
-                return Array1DUtil.getValueAsFloat((double[]) array, offset);
-        }
-
-        return 0;
+        return Array1DUtil.getValueAsFloat(array, offset, dataType, signed);
     }
 
     /**
      * Get value as integer from specified 1D array and offset.<br>
      * If signed is true then any integer primitive is considered as signed data
      * 
-     * @deprecated use Array1DUtil.getValueAsInt(Object, int, boolean) instead
+     * @deprecated use {@link Array1DUtil#getValueAsInt(Object, int, boolean)} instead
      */
     @Deprecated
     public static int getValueAsInt(Object array, int offset, boolean signed)
@@ -359,36 +299,18 @@ public class ArrayUtil
      * Get value as integer from specified 1D array and offset.<br>
      * If signed is true then any integer primitive is considered as signed data
      * 
-     * @deprecated use Array1DUtil.getValueAsInt(Object, int, int, boolean) instead
+     * @deprecated use {@link Array1DUtil#getValueAsInt(Object, int, int, boolean)} instead
      */
     @Deprecated
     public static int getValueAsInt(Object array, int offset, int dataType, boolean signed)
     {
-        switch (dataType)
-        {
-            case TypeUtil.TYPE_BYTE:
-                return Array1DUtil.getValueAsInt((byte[]) array, offset, signed);
-
-            case TypeUtil.TYPE_SHORT:
-                return Array1DUtil.getValueAsInt((short[]) array, offset, signed);
-
-            case TypeUtil.TYPE_INT:
-                return Array1DUtil.getValueAsInt((int[]) array, offset);
-
-            case TypeUtil.TYPE_FLOAT:
-                return Array1DUtil.getValueAsInt((float[]) array, offset);
-
-            case TypeUtil.TYPE_DOUBLE:
-                return Array1DUtil.getValueAsInt((double[]) array, offset);
-        }
-
-        return 0;
+        return Array1DUtil.getValueAsInt(array, offset, dataType, signed);
     }
 
     /**
      * Set value at specified offset as double value.
      * 
-     * @deprecated use Array1DUtil.setValue(Object, int, double) instead
+     * @deprecated use {@link Array1DUtil#setValue(Object, int, double)} instead
      */
     @Deprecated
     public static void setValue(Object array, int offset, double value)
@@ -399,108 +321,114 @@ public class ArrayUtil
     /**
      * Set value at specified offset as double value.
      * 
-     * @deprecated use Array1DUtil.setValue(Object, int, int,double) instead
+     * @deprecated use {@link Array1DUtil#setValue(Object, int, int,double)} instead
      */
     @Deprecated
     public static void setValue(Object array, int offset, int dataType, double value)
     {
-        switch (dataType)
-        {
-            case TypeUtil.TYPE_BYTE:
-                Array1DUtil.setValue((byte[]) array, offset, value);
-                break;
-
-            case TypeUtil.TYPE_SHORT:
-                Array1DUtil.setValue((short[]) array, offset, value);
-                break;
-
-            case TypeUtil.TYPE_INT:
-                Array1DUtil.setValue((int[]) array, offset, value);
-                break;
-
-            case TypeUtil.TYPE_FLOAT:
-                Array1DUtil.setValue((float[]) array, offset, value);
-                break;
-
-            case TypeUtil.TYPE_DOUBLE:
-                Array1DUtil.setValue((double[]) array, offset, value);
-                break;
-        }
+        Array1DUtil.setValue(array, offset, dataType, value);
     }
 
     /**
-     * Return true if the specified array has the same type<br>
-     * and the same number of dimension
+     * Return true if the specified array has the same data type<br>
+     * and the same number of dimension.
      */
     public static boolean arrayTypeCompare(Object array1, Object array2)
     {
-        return TypeUtil.getTypeInfo(array1).equals(TypeUtil.getTypeInfo(array2));
+        return getArrayDataType(array1).equals(getArrayDataType(array2));
     }
 
     /**
      * Return true if the specified array are equals (same type, dimension and data).<br>
-     * Only 1D & 2D arrays supported.
      */
     public static boolean arrayCompare(Object array1, Object array2)
     {
-        final ArrayTypeInfo info1 = TypeUtil.getTypeInfo(array1);
-        final ArrayTypeInfo info2 = TypeUtil.getTypeInfo(array2);
+        if (array1 == array2)
+            return true;
 
-        if (!info1.equals(info2))
+        if (array1 == null || array2 == null)
             return false;
 
-        switch (info1.type)
+        final ArrayDataType type = getArrayDataType(array1);
+
+        if (!type.equals(getArrayDataType(array2)))
+            return false;
+
+        final int dim = type.getDim();
+
+        // more than 2 dimensions --> use generic code
+        if (dim > 2)
         {
-            case TypeUtil.TYPE_BYTE:
-                switch (info1.dim)
+            final int len = Array.getLength(array1);
+
+            if (len != Array.getLength(array2))
+                return false;
+
+            for (int i = 0; i < len; i++)
+                if (!arrayCompare(Array.get(array1, i), Array.get(array2, i)))
+                    return false;
+
+            return true;
+        }
+
+        // single dimension array
+        switch (type.getDataType().getJavaType())
+        {
+            case BYTE:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.arrayByteCompare((byte[]) array1, (byte[]) array2);
-
                     case 2:
                         return Array2DUtil.arrayByteCompare((byte[][]) array1, (byte[][]) array2);
                 }
                 break;
 
-            case TypeUtil.TYPE_SHORT:
-                switch (info1.dim)
+            case SHORT:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.arrayShortCompare((short[]) array1, (short[]) array2);
-
                     case 2:
                         return Array2DUtil.arrayShortCompare((short[][]) array1, (short[][]) array2);
                 }
                 break;
 
-            case TypeUtil.TYPE_INT:
-                switch (info1.dim)
+            case INT:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.arrayIntCompare((int[]) array1, (int[]) array2);
-
                     case 2:
                         return Array2DUtil.arrayIntCompare((int[][]) array1, (int[][]) array2);
                 }
                 break;
 
-            case TypeUtil.TYPE_FLOAT:
-                switch (info1.dim)
+            case LONG:
+                switch (dim)
+                {
+                    case 1:
+                        return Array1DUtil.arrayLongCompare((long[]) array1, (long[]) array2);
+                    case 2:
+                        return Array2DUtil.arrayLongCompare((long[][]) array1, (long[][]) array2);
+                }
+                break;
+
+            case FLOAT:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.arrayFloatCompare((float[]) array1, (float[]) array2);
-
                     case 2:
                         return Array2DUtil.arrayFloatCompare((float[][]) array1, (float[][]) array2);
                 }
                 break;
 
-            case TypeUtil.TYPE_DOUBLE:
-                switch (info1.dim)
+            case DOUBLE:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.arrayDoubleCompare((double[]) array1, (double[]) array2);
-
                     case 2:
                         return Array2DUtil.arrayDoubleCompare((double[][]) array1, (double[][]) array2);
                 }
@@ -511,61 +439,121 @@ public class ArrayUtil
     }
 
     /**
-     * Same as Arrays.fill() but applied to Object array (1D only)
+     * Same as Arrays.fill() but applied to Object array (1D only) from a double value
      */
     public static void fill(Object array, int from, int to, double value)
     {
-        switch (TypeUtil.getDataType(array))
+        switch (getDataType(array))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 Array1DUtil.fill((byte[]) array, from, to, (byte) value);
                 break;
 
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 Array1DUtil.fill((short[]) array, from, to, (short) value);
                 break;
 
-            case TypeUtil.TYPE_INT:
+            case INT:
                 Array1DUtil.fill((int[]) array, from, to, (int) value);
                 break;
 
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                Array1DUtil.fill((long[]) array, from, to, (long) value);
+                break;
+
+            case FLOAT:
                 Array1DUtil.fill((float[]) array, from, to, (float) value);
                 break;
 
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 Array1DUtil.fill((double[]) array, from, to, value);
                 break;
         }
     }
 
     /**
-     * Copy 'cnt' elements from 'from' index to 'to' index in a safe manner
+     * Copy 'cnt' elements from 'from' index to 'to' index in a safe manner.<br>
+     * i.e: without overriding any data
      */
     public static void innerCopy(Object array, int from, int to, int cnt)
     {
-        switch (TypeUtil.getDataType(array))
+        if (array == null)
+            return;
+
+        final int dim = getDim(array);
+
+        if (dim == 1)
         {
-            case TypeUtil.TYPE_BYTE:
-                Array1DUtil.innerCopy((byte[]) array, from, to, cnt);
-                break;
+            switch (ArrayUtil.getDataType(array))
+            {
+                case BYTE:
+                    Array1DUtil.innerCopy((byte[]) array, from, to, cnt);
+                    return;
 
-            case TypeUtil.TYPE_SHORT:
-                Array1DUtil.innerCopy((short[]) array, from, to, cnt);
-                break;
+                case SHORT:
+                    Array1DUtil.innerCopy((short[]) array, from, to, cnt);
+                    return;
 
-            case TypeUtil.TYPE_INT:
-                Array1DUtil.innerCopy((int[]) array, from, to, cnt);
-                break;
+                case INT:
+                    Array1DUtil.innerCopy((int[]) array, from, to, cnt);
+                    return;
 
-            case TypeUtil.TYPE_FLOAT:
-                Array1DUtil.innerCopy((float[]) array, from, to, cnt);
-                break;
+                case LONG:
+                    Array1DUtil.innerCopy((long[]) array, from, to, cnt);
+                    return;
 
-            case TypeUtil.TYPE_DOUBLE:
-                Array1DUtil.innerCopy((double[]) array, from, to, cnt);
-                break;
+                case FLOAT:
+                    Array1DUtil.innerCopy((float[]) array, from, to, cnt);
+                    return;
+
+                case DOUBLE:
+                    Array1DUtil.innerCopy((double[]) array, from, to, cnt);
+                    return;
+            }
         }
+
+        // use generic code
+        final int delta = to - from;
+
+        if (delta == 0)
+            return;
+
+        final int length = Array.getLength(array);
+
+        if ((from < 0) || (to < 0) || (from >= length) || (to >= length))
+            return;
+
+        final int adjCnt;
+
+        // forward copy
+        if (delta < 0)
+        {
+            // adjust copy size
+            if ((from + cnt) >= length)
+                adjCnt = length - from;
+            else
+                adjCnt = cnt;
+
+            int to_ = to;
+            int from_ = from;
+            for (int i = 0; i < adjCnt; i++)
+                Array.set(array, to_++, Array.get(array, from_++));
+        }
+        else
+        // backward copy
+        {
+            // adjust copy size
+            if ((to + cnt) >= length)
+                adjCnt = length - to;
+            else
+                adjCnt = cnt;
+
+            int to_ = to + cnt;
+            int from_ = from + cnt;
+            for (int i = 0; i < adjCnt; i++)
+                Array.set(array, --to_, Array.get(array, --from_));
+        }
+
     }
 
     /**
@@ -575,75 +563,103 @@ public class ArrayUtil
      */
     public static Object toArray1D(Object in, Object out, int offset)
     {
-        final ArrayTypeInfo info = TypeUtil.getTypeInfo(in);
+        final ArrayDataType type = getArrayDataType(in);
 
-        switch (info.type)
+        final DataType dataType = type.getDataType();
+        final int dim = type.getDim();
+
+        // more than 3 dimensions --> use generic code
+        if (dim > 3)
         {
-            case TypeUtil.TYPE_BYTE:
-                switch (info.dim)
+            final Object result = Array1DUtil.allocIfNull(out, dataType, offset + getTotalLength(in));
+
+            if (in != null)
+            {
+                final int len = Array.getLength(in);
+
+                int off = offset;
+                for (int i = 0; i < len; i++)
+                {
+                    final Object s_in = Array.get(in, i);
+
+                    if (s_in != null)
+                    {
+                        toArray1D(s_in, result, off);
+                        off += Array.getLength(s_in);
+                    }
+                }
+            }
+        }
+
+        switch (dataType.getJavaType())
+        {
+            case BYTE:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.toByteArray1D((byte[]) in, (byte[]) out, offset);
-
                     case 2:
                         return Array2DUtil.toByteArray1D((byte[][]) in, (byte[]) out, offset);
-
                     case 3:
                         return Array3DUtil.toByteArray1D((byte[][][]) in, (byte[]) out, offset);
                 }
                 break;
 
-            case TypeUtil.TYPE_SHORT:
-                switch (info.dim)
+            case SHORT:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.toShortArray1D((short[]) in, (short[]) out, offset);
-
                     case 2:
                         return Array2DUtil.toShortArray1D((short[][]) in, (short[]) out, offset);
-
                     case 3:
                         return Array3DUtil.toShortArray1D((short[][][]) in, (short[]) out, offset);
                 }
                 break;
 
-            case TypeUtil.TYPE_INT:
-                switch (info.dim)
+            case INT:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.toIntArray1D((int[]) in, (int[]) out, offset);
-
                     case 2:
                         return Array2DUtil.toIntArray1D((int[][]) in, (int[]) out, offset);
-
                     case 3:
                         return Array3DUtil.toIntArray1D((int[][][]) in, (int[]) out, offset);
                 }
                 break;
 
-            case TypeUtil.TYPE_FLOAT:
-                switch (info.dim)
+            case LONG:
+                switch (dim)
+                {
+                    case 1:
+                        return Array1DUtil.toLongArray1D((long[]) in, (long[]) out, offset);
+                    case 2:
+                        return Array2DUtil.toLongArray1D((long[][]) in, (long[]) out, offset);
+                    case 3:
+                        return Array3DUtil.toLongArray1D((long[][][]) in, (long[]) out, offset);
+                }
+                break;
+
+            case FLOAT:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.toFloatArray1D((float[]) in, (float[]) out, offset);
-
                     case 2:
                         return Array2DUtil.toFloatArray1D((float[][]) in, (float[]) out, offset);
-
                     case 3:
                         return Array3DUtil.toFloatArray1D((float[][][]) in, (float[]) out, offset);
                 }
                 break;
 
-            case TypeUtil.TYPE_DOUBLE:
-                switch (info.dim)
+            case DOUBLE:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.toDoubleArray1D((double[]) in, (double[]) out, offset);
-
                     case 2:
                         return Array2DUtil.toDoubleArray1D((double[][]) in, (double[]) out, offset);
-
                     case 3:
                         return Array3DUtil.toDoubleArray1D((double[][][]) in, (double[]) out, offset);
                 }
@@ -705,67 +721,86 @@ public class ArrayUtil
      */
     public static Object arrayToArray(Object in, int inOffset, Object out, int outOffset, int length, boolean signed)
     {
-        final ArrayTypeInfo typeInfo = TypeUtil.getTypeInfo(in);
+        final ArrayDataType type = getArrayDataType(in);
 
-        switch (typeInfo.type)
+        final int dim = type.getDim();
+
+        // more than 2 dimensions --> use generic code
+        if (dim > 2)
         {
-            case TypeUtil.TYPE_BYTE:
-                switch (typeInfo.dim)
+            final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+            final Object result = allocIfNull(out, type, outOffset + len);
+
+            for (int i = 0; i < len; i++)
+                Array.set(result, i + outOffset,
+                        arrayToArray(Array.get(in, i + inOffset), 0, Array.get(result, i + outOffset), 0, -1, signed));
+
+            return result;
+        }
+
+        switch (type.getDataType().getJavaType())
+        {
+            case BYTE:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.byteArrayToArray((byte[]) in, inOffset, out, outOffset, length, signed);
-
                     case 2:
                         return Array2DUtil.byteArrayToArray((byte[][]) in, inOffset, out, outOffset, length, signed);
                 }
                 break;
 
-            case TypeUtil.TYPE_SHORT:
-                switch (typeInfo.dim)
+            case SHORT:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.shortArrayToArray((short[]) in, inOffset, out, outOffset, length, signed);
-
                     case 2:
                         return Array2DUtil.shortArrayToArray((short[][]) in, inOffset, out, outOffset, length, signed);
                 }
                 break;
 
-            case TypeUtil.TYPE_INT:
-                switch (typeInfo.dim)
+            case INT:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.intArrayToArray((int[]) in, inOffset, out, outOffset, length, signed);
-
                     case 2:
                         return Array2DUtil.intArrayToArray((int[][]) in, inOffset, out, outOffset, length, signed);
                 }
                 break;
 
-            case TypeUtil.TYPE_FLOAT:
-                switch (typeInfo.dim)
+            case LONG:
+                switch (dim)
+                {
+                    case 1:
+                        return Array1DUtil.longArrayToArray((long[]) in, inOffset, out, outOffset, length, signed);
+                    case 2:
+                        return Array2DUtil.longArrayToArray((long[][]) in, inOffset, out, outOffset, length, signed);
+                }
+                break;
+
+            case FLOAT:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.floatArrayToArray((float[]) in, inOffset, out, outOffset, length);
-
                     case 2:
                         return Array2DUtil.floatArrayToArray((float[][]) in, inOffset, out, outOffset, length);
                 }
                 break;
 
-            case TypeUtil.TYPE_DOUBLE:
-                switch (typeInfo.dim)
+            case DOUBLE:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.doubleArrayToArray((double[]) in, inOffset, out, outOffset, length);
-
                     case 2:
                         return Array2DUtil.doubleArrayToArray((double[][]) in, inOffset, out, outOffset, length);
                 }
                 break;
         }
 
-        // not yet implemented
         return out;
     }
 
@@ -1787,7 +1822,12 @@ public class ArrayUtil
 
     public static Object arrayToDoubleArray(Object array, boolean signed)
     {
-        switch (TypeUtil.getNumDimension(array))
+        if (array == null)
+            return null;
+
+        final int dim = getDim(array);
+
+        switch (dim)
         {
             case 1:
                 return Array1DUtil.arrayToDoubleArray(array, signed);
@@ -1796,14 +1836,25 @@ public class ArrayUtil
                 return Array2DUtil.arrayToDoubleArray(array, signed);
 
             default:
-                // not yet implemented
-                return null;
+                // use generic code
+                final int len = Array.getLength(array);
+                final Object result = createArray(DataType.DOUBLE, dim, len);
+
+                for (int i = 0; i < len; i++)
+                    Array.set(result, i, arrayToDoubleArray(Array.get(array, i), signed));
+
+                return result;
         }
     }
 
     public static Object arrayToFloatArray(Object array, boolean signed)
     {
-        switch (TypeUtil.getNumDimension(array))
+        if (array == null)
+            return null;
+
+        final int dim = getDim(array);
+
+        switch (dim)
         {
             case 1:
                 return Array1DUtil.arrayToFloatArray(array, signed);
@@ -1812,14 +1863,25 @@ public class ArrayUtil
                 return Array2DUtil.arrayToFloatArray(array, signed);
 
             default:
-                // not yet implemented
-                return null;
+                // use generic code
+                final int len = Array.getLength(array);
+                final Object result = createArray(DataType.FLOAT, dim, len);
+
+                for (int i = 0; i < len; i++)
+                    Array.set(result, i, arrayToFloatArray(Array.get(array, i), signed));
+
+                return result;
         }
     }
 
-    public static Object arrayToIntArray(Object array, boolean signed)
+    public static Object arrayToLongArray(Object array, boolean signed)
     {
-        switch (TypeUtil.getNumDimension(array))
+        if (array == null)
+            return null;
+
+        final int dim = getDim(array);
+
+        switch (dim)
         {
             case 1:
                 return Array1DUtil.arrayToIntArray(array, signed);
@@ -1828,14 +1890,54 @@ public class ArrayUtil
                 return Array2DUtil.arrayToIntArray(array, signed);
 
             default:
-                // not yet implemented
-                return null;
+                // use generic code
+                final int len = Array.getLength(array);
+                final Object result = createArray(DataType.LONG, dim, len);
+
+                for (int i = 0; i < len; i++)
+                    Array.set(result, i, arrayToLongArray(Array.get(array, i), signed));
+
+                return result;
+
+        }
+    }
+
+    public static Object arrayToIntArray(Object array, boolean signed)
+    {
+        if (array == null)
+            return null;
+
+        final int dim = getDim(array);
+
+        switch (dim)
+        {
+            case 1:
+                return Array1DUtil.arrayToIntArray(array, signed);
+
+            case 2:
+                return Array2DUtil.arrayToIntArray(array, signed);
+
+            default:
+                // use generic code
+                final int len = Array.getLength(array);
+                final Object result = createArray(DataType.INT, dim, len);
+
+                for (int i = 0; i < len; i++)
+                    Array.set(result, i, arrayToIntArray(Array.get(array, i), signed));
+
+                return result;
+
         }
     }
 
     public static Object arrayToShortArray(Object array, boolean signed)
     {
-        switch (TypeUtil.getNumDimension(array))
+        if (array == null)
+            return null;
+
+        final int dim = getDim(array);
+
+        switch (dim)
         {
             case 1:
                 return Array1DUtil.arrayToShortArray(array, signed);
@@ -1844,14 +1946,26 @@ public class ArrayUtil
                 return Array2DUtil.arrayToShortArray(array, signed);
 
             default:
-                // not yet implemented
-                return null;
+                // use generic code
+                final int len = Array.getLength(array);
+                final Object result = createArray(DataType.SHORT, dim, len);
+
+                for (int i = 0; i < len; i++)
+                    Array.set(result, i, arrayToShortArray(Array.get(array, i), signed));
+
+                return result;
+
         }
     }
 
     public static Object arrayToByteArray(Object array)
     {
-        switch (TypeUtil.getNumDimension(array))
+        if (array == null)
+            return null;
+
+        final int dim = getDim(array);
+
+        switch (dim)
         {
             case 1:
                 return Array1DUtil.arrayToByteArray(array);
@@ -1860,8 +1974,14 @@ public class ArrayUtil
                 return Array2DUtil.arrayToByteArray(array);
 
             default:
-                // not yet implemented
-                return null;
+                // use generic code
+                final int len = Array.getLength(array);
+                final Object result = createArray(DataType.BYTE, dim, len);
+
+                for (int i = 0; i < len; i++)
+                    Array.set(result, i, arrayToByteArray(Array.get(array, i)));
+
+                return result;
         }
     }
 
@@ -1889,12 +2009,30 @@ public class ArrayUtil
      */
     public static Object arrayToSafeArray(Object in, int inOffset, Object out, int outOffset, int length, boolean signed)
     {
-        final ArrayTypeInfo typeInfo = TypeUtil.getTypeInfo(in);
+        final ArrayDataType type = getArrayDataType(in);
 
-        switch (typeInfo.type)
+        final int dim = type.getDim();
+
+        // more than 2 dimensions --> use generic code
+        if (dim > 2)
         {
-            case TypeUtil.TYPE_BYTE:
-                switch (typeInfo.dim)
+            final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+            final Object result = allocIfNull(out, type, outOffset + len);
+
+            for (int i = 0; i < len; i++)
+                Array.set(
+                        result,
+                        i + outOffset,
+                        arrayToSafeArray(Array.get(in, i + inOffset), 0, Array.get(result, i + outOffset), 0, -1,
+                                signed));
+
+            return result;
+        }
+
+        switch (type.getDataType().getJavaType())
+        {
+            case BYTE:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.byteArrayToArray((byte[]) in, inOffset, out, outOffset, length, signed);
@@ -1904,8 +2042,8 @@ public class ArrayUtil
                 }
                 break;
 
-            case TypeUtil.TYPE_SHORT:
-                switch (typeInfo.dim)
+            case SHORT:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil
@@ -1917,8 +2055,8 @@ public class ArrayUtil
                 }
                 break;
 
-            case TypeUtil.TYPE_INT:
-                switch (typeInfo.dim)
+            case INT:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.intArrayToSafeArray((int[]) in, inOffset, out, outOffset, length, signed);
@@ -1928,8 +2066,20 @@ public class ArrayUtil
                 }
                 break;
 
-            case TypeUtil.TYPE_FLOAT:
-                switch (typeInfo.dim)
+            case LONG:
+                switch (dim)
+                {
+                    case 1:
+                        return Array1DUtil.longArrayToSafeArray((long[]) in, inOffset, out, outOffset, length, signed);
+
+                    case 2:
+                        return Array2DUtil
+                                .longArrayToSafeArray((long[][]) in, inOffset, out, outOffset, length, signed);
+                }
+                break;
+
+            case FLOAT:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil
@@ -1941,8 +2091,8 @@ public class ArrayUtil
                 }
                 break;
 
-            case TypeUtil.TYPE_DOUBLE:
-                switch (typeInfo.dim)
+            case DOUBLE:
+                switch (dim)
                 {
                     case 1:
                         return Array1DUtil.doubleArrayToSafeArray((double[]) in, inOffset, out, outOffset, length,
@@ -1955,7 +2105,6 @@ public class ArrayUtil
                 break;
         }
 
-        // not yet implemented
         return out;
     }
 
@@ -2342,9 +2491,41 @@ public class ArrayUtil
     //
     //
 
+    public static Object arrayToSafeLongArray(Object array, boolean signed)
+    {
+        if (array == null)
+            return null;
+
+        final int dim = getDim(array);
+
+        switch (dim)
+        {
+            case 1:
+                return Array1DUtil.arrayToSafeLongArray(array, null, signed);
+
+            case 2:
+                return Array2DUtil.arrayToSafeLongArray(array, null, signed);
+
+            default:
+                // use generic code
+                final int len = Array.getLength(array);
+                final Object result = createArray(DataType.LONG, dim, len);
+
+                for (int i = 0; i < len; i++)
+                    Array.set(result, i, arrayToSafeLongArray(Array.get(array, i), signed));
+
+                return result;
+        }
+    }
+
     public static Object arrayToSafeIntArray(Object array, boolean signed)
     {
-        switch (TypeUtil.getNumDimension(array))
+        if (array == null)
+            return null;
+
+        final int dim = getDim(array);
+
+        switch (dim)
         {
             case 1:
                 return Array1DUtil.arrayToSafeIntArray(array, null, signed);
@@ -2353,14 +2534,26 @@ public class ArrayUtil
                 return Array2DUtil.arrayToSafeIntArray(array, null, signed);
 
             default:
-                // not yet implemented
-                return null;
+                // use generic code
+                final int len = Array.getLength(array);
+                final Object result = createArray(DataType.INT, dim, len);
+
+                for (int i = 0; i < len; i++)
+                    Array.set(result, i, arrayToSafeIntArray(Array.get(array, i), signed));
+
+                return result;
         }
     }
 
     public static Object arrayToSafeShortArray(Object array, boolean signed)
     {
-        switch (TypeUtil.getNumDimension(array))
+        if (array == null)
+            return null;
+
+        final int dim = getDim(array);
+
+        switch (dim)
+
         {
             case 1:
                 return Array1DUtil.arrayToSafeShortArray(array, null, signed);
@@ -2369,14 +2562,26 @@ public class ArrayUtil
                 return Array2DUtil.arrayToSafeShortArray(array, null, signed);
 
             default:
-                // not yet implemented
-                return null;
+                // use generic code
+                final int len = Array.getLength(array);
+                final Object result = createArray(DataType.SHORT, dim, len);
+
+                for (int i = 0; i < len; i++)
+                    Array.set(result, i, arrayToSafeIntArray(Array.get(array, i), signed));
+
+                return result;
         }
     }
 
     public static Object arrayToSafeByteArray(Object array, boolean signed)
     {
-        switch (TypeUtil.getNumDimension(array))
+        if (array == null)
+            return null;
+
+        final int dim = getDim(array);
+
+        switch (dim)
+
         {
             case 1:
                 return Array1DUtil.arrayToSafeByteArray(array, null, signed);
@@ -2385,8 +2590,14 @@ public class ArrayUtil
                 return Array2DUtil.arrayToSafeByteArray(array, null, signed);
 
             default:
-                // not yet implemented
-                return null;
+                // use generic code
+                final int len = Array.getLength(array);
+                final Object result = createArray(DataType.BYTE, dim, len);
+
+                for (int i = 0; i < len; i++)
+                    Array.set(result, i, arrayToSafeIntArray(Array.get(array, i), signed));
+
+                return result;
         }
     }
 
@@ -2415,7 +2626,13 @@ public class ArrayUtil
      */
     public static String arrayToString(Object array)
     {
-        switch (TypeUtil.getNumDimension(array))
+        if (array == null)
+            return null;
+
+        final int dim = getDim(array);
+
+        switch (dim)
+
         {
             case 1:
                 return Array1DUtil.arrayToString(array);
@@ -2443,7 +2660,13 @@ public class ArrayUtil
      */
     public static String array1DToString(Object array, boolean signed, boolean hexa, String separator, int size)
     {
-        switch (TypeUtil.getNumDimension(array))
+        if (array == null)
+            return null;
+
+        final int dim = getDim(array);
+
+        switch (dim)
+
         {
             case 1:
                 return Array1DUtil.arrayToString(array, signed, hexa, separator, size);
@@ -2465,9 +2688,18 @@ public class ArrayUtil
      * @param dataType
      *        specify the values data type and also the output array data type string
      */
-    public static Object stringToArray1D(String value, int dataType)
+    public static Object stringToArray1D(String value, DataType dataType)
     {
         return Array1DUtil.stringToArray(value, dataType);
+    }
+
+    /**
+     * @deprecated use {@link #stringToArray1D(String, DataType)} instead
+     */
+    @Deprecated
+    public static Object stringToArray1D(String value, int dataType)
+    {
+        return stringToArray1D(value, DataType.getDataType(dataType));
     }
 
     /**
@@ -2483,9 +2715,18 @@ public class ArrayUtil
      * @param separator
      *        specify the separator used between each value in the input string
      */
-    public static Object stringToArray1D(String value, int dataType, boolean hexa, String separator)
+    public static Object stringToArray1D(String value, DataType dataType, boolean hexa, String separator)
     {
         return Array1DUtil.stringToArray(value, dataType, hexa, separator);
+    }
+
+    /**
+     * @deprecated use {@link #stringToArray1D(String, DataType, boolean , String )} instead
+     */
+    @Deprecated
+    public static Object stringToArray1D(String value, int dataType, boolean hexa, String separator)
+    {
+        return stringToArray1D(value, DataType.getDataType(dataType), hexa, separator);
     }
 
     //
@@ -2545,7 +2786,10 @@ public class ArrayUtil
 
     /**
      * Convert a boolean array to a byte array (unpacked form : 1 boolean --> 1 byte)
+     * 
+     * @deprecated use {@link Array1DUtil#toByteArray(boolean[])} instead
      */
+    @Deprecated
     public static byte[] toByteArray1D(boolean[] array)
     {
         return Array1DUtil.toByteArray(array, null, 0);
@@ -2555,7 +2799,10 @@ public class ArrayUtil
      * Convert a boolean array to a byte array (unpacked form : 1 boolean --> 1 byte)
      * The resulting array is returned in 'out' and from the specified if any.<br>
      * If (out == null) a new array is allocated.
+     * 
+     * @deprecated use {@link Array1DUtil#toByteArray(boolean[], byte[], int)} instead
      */
+    @Deprecated
     public static byte[] toByteArray1D(boolean[] in, byte[] out, int offset)
     {
         return Array1DUtil.toByteArray(in, out, offset);
@@ -2563,7 +2810,10 @@ public class ArrayUtil
 
     /**
      * Convert a byte array (unpacked form : 1 byte --> 1 boolean) to a boolean array
+     * 
+     * @deprecated use {@link Array1DUtil#toBooleanArray(byte[])} instead
      */
+    @Deprecated
     public static boolean[] toBooleanArray1D(byte[] array)
     {
         return Array1DUtil.toBooleanArray(array);
@@ -2573,7 +2823,10 @@ public class ArrayUtil
      * Convert a boolean array to a byte array (unpacked form : 1 boolean --> 1 byte)
      * The resulting array is returned in 'out' and from the specified if any.<br>
      * If (out == null) a new array is allocated.
+     * 
+     * @deprecated use {@link Array1DUtil#toBooleanArray(byte[], boolean[], int)} instead
      */
+    @Deprecated
     public static boolean[] toBooleanArray1D(byte[] in, boolean[] out, int offset)
     {
         return Array1DUtil.toBooleanArray(in, out, offset);

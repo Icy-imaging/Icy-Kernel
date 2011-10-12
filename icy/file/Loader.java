@@ -137,8 +137,8 @@ public class Loader
             switch (pos)
             {
                 case ImagePosition.T_ID:
-                    // doesn't support value >= 10000 for T dimension
-                    if (value < 10000)
+                    // doesn't support value >= 100000 for T dimension
+                    if (value < 100000)
                         position.setT(value);
                     break;
 
@@ -156,6 +156,9 @@ public class Loader
             }
         }
 
+        /**
+         * Return a BandPosition from the specified filename.
+         */
         public BandPosition getPositionFromFilename(String filename)
         {
             final ArrayList<String> numbers = new ArrayList<String>();
@@ -225,6 +228,38 @@ public class Loader
                 // build position list
                 for (File file : files)
                     filePositions.add(new FilePosition(file, getPositionFromFilename(file.getAbsolutePath())));
+
+                BandPosition pos = filePositions.get(0).position;
+                int t = pos.getT();
+                int z = pos.getZ();
+                int c = pos.getC();
+                boolean sameT = true;
+                boolean sameZ = true;
+                boolean sameC = true;
+
+                // remove "empty" dimension
+                for (FilePosition filePos : filePositions)
+                {
+                    pos = filePos.position;
+
+                    sameT &= t == pos.getT();
+                    sameZ &= z == pos.getZ();
+                    sameC &= c == pos.getC();
+                }
+
+                // remove T dimension
+                if (sameT)
+                    for (FilePosition filePos : filePositions)
+                        filePos.position.switchLeft();
+                // remove Z dimension
+                if (sameZ)
+                    for (FilePosition filePos : filePositions)
+                        filePos.position.switchLeft();
+                // remove C dimension
+                if (sameC)
+                    for (FilePosition filePos : filePositions)
+                        filePos.position.switchLeft();
+
                 // sort on position
                 Collections.sort(filePositions);
 
@@ -461,16 +496,16 @@ public class Loader
 
         pf = metaData.getPixelsPhysicalSizeX(0);
         if (pf != null)
-            sequence.setResolutionX(pf.getValue().doubleValue());
+            sequence.setPixelSizeX(pf.getValue().doubleValue());
         pf = metaData.getPixelsPhysicalSizeY(0);
         if (pf != null)
-            sequence.setResolutionZ(pf.getValue().doubleValue());
+            sequence.setPixelSizeZ(pf.getValue().doubleValue());
         pf = metaData.getPixelsPhysicalSizeZ(0);
         if (pf != null)
-            sequence.setResolutionZ(pf.getValue().doubleValue());
+            sequence.setPixelSizeZ(pf.getValue().doubleValue());
         d = metaData.getPixelsTimeIncrement(0);
         if (d != null)
-            sequence.setResolutionT(d.doubleValue());
+            sequence.setPixelSizeT(d.doubleValue());
     }
 
     /**

@@ -4,6 +4,7 @@
 package icy.type.collection.array;
 
 import icy.math.MathUtil;
+import icy.type.DataType;
 import icy.type.TypeUtil;
 
 import java.util.Arrays;
@@ -39,6 +40,17 @@ public class Array1DUtil
      * Return the total number of element of the specified array
      */
     public static int getTotalLength(int[] array)
+    {
+        if (array != null)
+            return array.length;
+
+        return 0;
+    }
+
+    /**
+     * Return the total number of element of the specified array
+     */
+    public static int getTotalLength(long[] array)
     {
         if (array != null)
             return array.length;
@@ -121,27 +133,63 @@ public class Array1DUtil
     /**
      * Create a new 1D array with specified data type and length
      */
+    public static Object createArray(DataType dataType, int len)
+    {
+        switch (dataType.getJavaType())
+        {
+            case BYTE:
+                return new byte[len];
+            case SHORT:
+                return new short[len];
+            case INT:
+                return new int[len];
+            case LONG:
+                return new long[len];
+            case FLOAT:
+                return new float[len];
+            case DOUBLE:
+                return new double[len];
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Create a new 1D array with specified data type and length
+     * 
+     * @deprecated use {@link #createArray(DataType, int)} instead
+     */
+    @Deprecated
     public static Object createArray(int dataType, int len)
     {
-        switch (dataType)
+        return createArray(DataType.getDataType(dataType), len);
+    }
+
+    /**
+     * Allocate the specified 1D array if it's defined to null with the specified len
+     */
+    public static Object allocIfNull(Object out, DataType dataType, int len)
+    {
+        if (out == null)
         {
-            case TypeUtil.TYPE_BYTE:
-                return new byte[len];
-
-            case TypeUtil.TYPE_SHORT:
-                return new short[len];
-
-            case TypeUtil.TYPE_INT:
-                return new int[len];
-
-            case TypeUtil.TYPE_FLOAT:
-                return new float[len];
-
-            case TypeUtil.TYPE_DOUBLE:
-                return new double[len];
+            switch (dataType.getJavaType())
+            {
+                case BYTE:
+                    return new byte[len];
+                case SHORT:
+                    return new short[len];
+                case INT:
+                    return new int[len];
+                case LONG:
+                    return new long[len];
+                case FLOAT:
+                    return new float[len];
+                case DOUBLE:
+                    return new double[len];
+            }
         }
 
-        return null;
+        return out;
     }
 
     /**
@@ -191,6 +239,17 @@ public class Array1DUtil
     /**
      * Allocate the specified array if it's defined to null with the specified len
      */
+    public static long[] allocIfNull(long[] out, int len)
+    {
+        if (out == null)
+            return new long[len];
+
+        return out;
+    }
+
+    /**
+     * Allocate the specified array if it's defined to null with the specified len
+     */
     public static float[] allocIfNull(float[] out, int len)
     {
         if (out == null)
@@ -221,34 +280,52 @@ public class Array1DUtil
      */
     public static double getValue(Object array, int offset, boolean signed)
     {
-        return getValue(array, offset, TypeUtil.getDataType(array), signed);
+        return getValue(array, offset, ArrayUtil.getDataType(array, signed));
+    }
+
+    /**
+     * Get value as double from specified 1D array and offset.<br>
+     * Use specified DataType to case input array (no type check)
+     */
+    public static double getValue(Object array, int offset, DataType dataType)
+    {
+        switch (dataType)
+        {
+            case BYTE:
+                return getValue((byte[]) array, offset, true);
+            case UBYTE:
+                return getValue((byte[]) array, offset, false);
+            case SHORT:
+                return getValue((short[]) array, offset, true);
+            case USHORT:
+                return getValue((short[]) array, offset, false);
+            case INT:
+                return getValue((int[]) array, offset, true);
+            case UINT:
+                return getValue((int[]) array, offset, false);
+            case LONG:
+                return getValue((long[]) array, offset, true);
+            case ULONG:
+                return getValue((long[]) array, offset, false);
+            case FLOAT:
+                return getValue((float[]) array, offset);
+            case DOUBLE:
+                return getValue((double[]) array, offset);
+            default:
+                return 0d;
+        }
     }
 
     /**
      * Get value as double from specified 1D array and offset.<br>
      * If signed is true then any integer primitive is considered as signed data
+     * 
+     * @deprecated use {@link #getValue(Object, int, DataType)} instead
      */
+    @Deprecated
     public static double getValue(Object array, int offset, int dataType, boolean signed)
     {
-        switch (dataType)
-        {
-            case TypeUtil.TYPE_BYTE:
-                return getValue((byte[]) array, offset, signed);
-
-            case TypeUtil.TYPE_SHORT:
-                return getValue((short[]) array, offset, signed);
-
-            case TypeUtil.TYPE_INT:
-                return getValue((int[]) array, offset, signed);
-
-            case TypeUtil.TYPE_FLOAT:
-                return getValue((float[]) array, offset);
-
-            case TypeUtil.TYPE_DOUBLE:
-                return getValue((double[]) array, offset);
-        }
-
-        return 0;
+        return getValue(array, offset, DataType.getDataType(dataType, signed));
     }
 
     /**
@@ -257,34 +334,52 @@ public class Array1DUtil
      */
     public static float getValueAsFloat(Object array, int offset, boolean signed)
     {
-        return getValueAsFloat(array, offset, TypeUtil.getDataType(array), signed);
+        return getValueAsFloat(array, offset, ArrayUtil.getDataType(array, signed));
+    }
+
+    /**
+     * Get value as float from specified 1D array and offset.<br>
+     * Use specified DataType to case input array (no type check)
+     */
+    public static float getValueAsFloat(Object array, int offset, DataType dataType)
+    {
+        switch (dataType)
+        {
+            case BYTE:
+                return getValueAsFloat((byte[]) array, offset, true);
+            case UBYTE:
+                return getValueAsFloat((byte[]) array, offset, false);
+            case SHORT:
+                return getValueAsFloat((short[]) array, offset, true);
+            case USHORT:
+                return getValueAsFloat((short[]) array, offset, false);
+            case INT:
+                return getValueAsFloat((int[]) array, offset, true);
+            case UINT:
+                return getValueAsFloat((int[]) array, offset, false);
+            case LONG:
+                return getValueAsFloat((long[]) array, offset, true);
+            case ULONG:
+                return getValueAsFloat((long[]) array, offset, false);
+            case FLOAT:
+                return getValueAsFloat((float[]) array, offset);
+            case DOUBLE:
+                return getValueAsFloat((double[]) array, offset);
+            default:
+                return 0;
+        }
     }
 
     /**
      * Get value as float from specified 1D array and offset.<br>
      * If signed is true then any integer primitive is considered as signed data
+     * 
+     * @deprecated use {@link #getValueAsFloat(Object, int, DataType)} instead
      */
+    @Deprecated
     public static float getValueAsFloat(Object array, int offset, int dataType, boolean signed)
     {
-        switch (dataType)
-        {
-            case TypeUtil.TYPE_BYTE:
-                return getValueAsFloat((byte[]) array, offset, signed);
-
-            case TypeUtil.TYPE_SHORT:
-                return getValueAsFloat((short[]) array, offset, signed);
-
-            case TypeUtil.TYPE_INT:
-                return getValueAsFloat((int[]) array, offset, signed);
-
-            case TypeUtil.TYPE_FLOAT:
-                return getValueAsFloat((float[]) array, offset);
-
-            case TypeUtil.TYPE_DOUBLE:
-                return getValueAsFloat((double[]) array, offset);
-        }
-
-        return 0;
+        return getValueAsFloat(array, offset, DataType.getDataType(dataType, signed));
     }
 
     /**
@@ -293,34 +388,103 @@ public class Array1DUtil
      */
     public static int getValueAsInt(Object array, int offset, boolean signed)
     {
-        return getValueAsInt(array, offset, TypeUtil.getDataType(array), signed);
+        return getValueAsInt(array, offset, ArrayUtil.getDataType(array, signed));
+    }
+
+    /**
+     * Get value as integer from specified 1D array and offset.<br>
+     * Use specified DataType to case input array (no type check)
+     */
+    public static int getValueAsInt(Object array, int offset, DataType dataType)
+    {
+        switch (dataType)
+        {
+            case BYTE:
+                return getValueAsInt((byte[]) array, offset, true);
+            case UBYTE:
+                return getValueAsInt((byte[]) array, offset, false);
+            case SHORT:
+                return getValueAsInt((short[]) array, offset, true);
+            case USHORT:
+                return getValueAsInt((short[]) array, offset, false);
+            case INT:
+            case UINT:
+                return getValueAsInt((int[]) array, offset);
+            case LONG:
+            case ULONG:
+                return getValueAsInt((long[]) array, offset);
+            case FLOAT:
+                return getValueAsInt((float[]) array, offset);
+            case DOUBLE:
+                return getValueAsInt((double[]) array, offset);
+            default:
+                return 0;
+        }
+    }
+
+    /**
+     * Get value as float from specified 1D array and offset.<br>
+     * If signed is true then any integer primitive is considered as signed data
+     * 
+     * @deprecated use {@link #getValueAsInt(Object, int, DataType)} instead
+     */
+    @Deprecated
+    public static int getValueAsInt(Object array, int offset, int dataType, boolean signed)
+    {
+        return getValueAsInt(array, offset, DataType.getDataType(dataType, signed));
     }
 
     /**
      * Get value as integer from specified 1D array and offset.<br>
      * If signed is true then any integer primitive is considered as signed data
      */
-    public static int getValueAsInt(Object array, int offset, int dataType, boolean signed)
+    public static long getValueAsLong(Object array, int offset, boolean signed)
+    {
+        return getValueAsLong(array, offset, ArrayUtil.getDataType(array, signed));
+    }
+
+    /**
+     * Get value as integer from specified 1D array and offset.<br>
+     * Use specified DataType to case input array (no type check)
+     */
+    public static long getValueAsLong(Object array, int offset, DataType dataType)
     {
         switch (dataType)
         {
-            case TypeUtil.TYPE_BYTE:
-                return getValueAsInt((byte[]) array, offset, signed);
-
-            case TypeUtil.TYPE_SHORT:
-                return getValueAsInt((short[]) array, offset, signed);
-
-            case TypeUtil.TYPE_INT:
-                return getValueAsInt((int[]) array, offset);
-
-            case TypeUtil.TYPE_FLOAT:
-                return getValueAsInt((float[]) array, offset);
-
-            case TypeUtil.TYPE_DOUBLE:
-                return getValueAsInt((double[]) array, offset);
+            case BYTE:
+                return getValueAsLong((byte[]) array, offset, true);
+            case UBYTE:
+                return getValueAsLong((byte[]) array, offset, false);
+            case SHORT:
+                return getValueAsLong((short[]) array, offset, true);
+            case USHORT:
+                return getValueAsLong((short[]) array, offset, false);
+            case INT:
+                return getValueAsLong((int[]) array, offset, true);
+            case UINT:
+                return getValueAsLong((int[]) array, offset, false);
+            case LONG:
+            case ULONG:
+                return getValueAsLong((long[]) array, offset);
+            case FLOAT:
+                return getValueAsLong((float[]) array, offset);
+            case DOUBLE:
+                return getValueAsLong((double[]) array, offset);
+            default:
+                return 0;
         }
+    }
 
-        return 0;
+    /**
+     * Get value as float from specified 1D array and offset.<br>
+     * If signed is true then any integer primitive is considered as signed data
+     * 
+     * @deprecated use {@link #getValueAsLong(Object, int, DataType)} instead
+     */
+    @Deprecated
+    public static long getValueAsLong(Object array, int offset, int dataType, boolean signed)
+    {
+        return getValueAsLong(array, offset, DataType.getDataType(dataType, signed));
     }
 
     /**
@@ -328,36 +492,51 @@ public class Array1DUtil
      */
     public static void setValue(Object array, int offset, double value)
     {
-        setValue(array, offset, TypeUtil.getDataType(array), value);
+        setValue(array, offset, ArrayUtil.getDataType(array), value);
     }
 
     /**
      * Set value at specified offset as double value.
      */
-    public static void setValue(Object array, int offset, int dataType, double value)
+    public static void setValue(Object array, int offset, DataType dataType, double value)
     {
-        switch (dataType)
+        switch (dataType.getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 setValue((byte[]) array, offset, value);
                 break;
 
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 setValue((short[]) array, offset, value);
                 break;
 
-            case TypeUtil.TYPE_INT:
+            case INT:
                 setValue((int[]) array, offset, value);
                 break;
 
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                setValue((long[]) array, offset, value);
+                break;
+
+            case FLOAT:
                 setValue((float[]) array, offset, value);
                 break;
 
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 setValue((double[]) array, offset, value);
                 break;
         }
+    }
+
+    /**
+     * Set value at specified offset as double value.
+     * 
+     * @deprecated use {@link #setValue(Object, int, DataType, double)} instead
+     */
+    @Deprecated
+    public static void setValue(Object array, int offset, int dataType, double value)
+    {
+        setValue(array, offset, DataType.getDataType(dataType), value);
     }
 
     /**
@@ -366,10 +545,7 @@ public class Array1DUtil
      */
     public static double getValue(byte[] array, int offset, boolean signed)
     {
-        if (signed)
-            return array[offset];
-
-        return array[offset] & 0xFF;
+        return TypeUtil.toDouble(array[offset], signed);
     }
 
     /**
@@ -378,10 +554,7 @@ public class Array1DUtil
      */
     public static double getValue(short[] array, int offset, boolean signed)
     {
-        if (signed)
-            return array[offset];
-
-        return array[offset] & 0xFFFF;
+        return TypeUtil.toDouble(array[offset], signed);
     }
 
     /**
@@ -390,10 +563,16 @@ public class Array1DUtil
      */
     public static double getValue(int[] array, int offset, boolean signed)
     {
-        if (signed)
-            return array[offset];
+        return TypeUtil.toDouble(array[offset], signed);
+    }
 
-        return array[offset] & 0xFFFFFFFFL;
+    /**
+     * Get value as double from specified long array and offset.<br>
+     * If signed is true then we consider data as signed
+     */
+    public static double getValue(long[] array, int offset, boolean signed)
+    {
+        return TypeUtil.toDouble(array[offset], signed);
     }
 
     /**
@@ -420,10 +599,7 @@ public class Array1DUtil
      */
     public static float getValueAsFloat(byte[] array, int offset, boolean signed)
     {
-        if (signed)
-            return array[offset];
-
-        return array[offset] & 0xFF;
+        return TypeUtil.toFloat(array[offset], signed);
     }
 
     /**
@@ -432,10 +608,7 @@ public class Array1DUtil
      */
     public static float getValueAsFloat(short[] array, int offset, boolean signed)
     {
-        if (signed)
-            return array[offset];
-
-        return array[offset] & 0xFFFF;
+        return TypeUtil.toFloat(array[offset], signed);
     }
 
     /**
@@ -444,10 +617,16 @@ public class Array1DUtil
      */
     public static float getValueAsFloat(int[] array, int offset, boolean signed)
     {
-        if (signed)
-            return array[offset];
+        return TypeUtil.toFloat(array[offset], signed);
+    }
 
-        return array[offset] & 0xFFFFFFFFL;
+    /**
+     * Get value as float from specified long array and offset.<br>
+     * If signed is true then we consider data as signed
+     */
+    public static float getValueAsFloat(long[] array, int offset, boolean signed)
+    {
+        return TypeUtil.toFloat(array[offset], signed);
     }
 
     /**
@@ -474,10 +653,7 @@ public class Array1DUtil
      */
     public static int getValueAsInt(byte[] array, int offset, boolean signed)
     {
-        if (signed)
-            return array[offset];
-
-        return array[offset] & 0xFF;
+        return TypeUtil.toInt(array[offset], signed);
     }
 
     /**
@@ -486,10 +662,7 @@ public class Array1DUtil
      */
     public static int getValueAsInt(short[] array, int offset, boolean signed)
     {
-        if (signed)
-            return array[offset];
-
-        return array[offset] & 0xFFFF;
+        return TypeUtil.toInt(array[offset], signed);
     }
 
     /**
@@ -499,6 +672,14 @@ public class Array1DUtil
     {
         // can't unsign here
         return array[offset];
+    }
+
+    /**
+     * Get value as int from specified long array and offset.<br>
+     */
+    public static int getValueAsInt(long[] array, int offset)
+    {
+        return (int) array[offset];
     }
 
     /**
@@ -515,6 +696,61 @@ public class Array1DUtil
     public static int getValueAsInt(double[] array, int offset)
     {
         return (int) array[offset];
+    }
+
+    //
+
+    /**
+     * Get value as int from specified byte array and offset.<br>
+     * If signed is true then we consider data as signed
+     */
+    public static long getValueAsLong(byte[] array, int offset, boolean signed)
+    {
+        return TypeUtil.toLong(array[offset], signed);
+    }
+
+    /**
+     * Get value as int from specified short array and offset.<br>
+     * If signed is true then we consider data as signed
+     */
+    public static long getValueAsLong(short[] array, int offset, boolean signed)
+    {
+        return TypeUtil.toLong(array[offset], signed);
+
+    }
+
+    /**
+     * Get value as int from specified int array and offset.<br>
+     */
+    public static long getValueAsLong(int[] array, int offset, boolean signed)
+    {
+        return TypeUtil.toLong(array[offset], signed);
+
+    }
+
+    /**
+     * Get value as int from specified long array and offset.<br>
+     */
+    public static long getValueAsLong(long[] array, int offset)
+    {
+        // can't unsign here
+        return array[offset];
+    }
+
+    /**
+     * Get value as int from specified float array and offset.
+     */
+    public static long getValueAsLong(float[] array, int offset)
+    {
+        return (long) array[offset];
+    }
+
+    /**
+     * Get value as int from specified double array and offset.
+     */
+    public static long getValueAsLong(double[] array, int offset)
+    {
+        return (long) array[offset];
     }
 
     /**
@@ -539,6 +775,14 @@ public class Array1DUtil
     public static void setValue(int[] array, int offset, double value)
     {
         array[offset] = (int) value;
+    }
+
+    /**
+     * Set value at specified offset as double value.
+     */
+    public static void setValue(long[] array, int offset, double value)
+    {
+        array[offset] = (long) value;
     }
 
     /**
@@ -584,6 +828,14 @@ public class Array1DUtil
     /**
      * Return true is the specified arrays are equals
      */
+    public static boolean arrayLongCompare(long[] array1, long[] array2)
+    {
+        return Arrays.equals(array1, array2);
+    }
+
+    /**
+     * Return true is the specified arrays are equals
+     */
     public static boolean arrayFloatCompare(float[] array1, float[] array2)
     {
         return Arrays.equals(array1, array2);
@@ -598,43 +850,57 @@ public class Array1DUtil
     }
 
     /**
-     * Same as Arrays.fill()
+     * Same as {@link Arrays#fill(byte[], int, int, byte)}
      */
     public static void fill(byte[] array, int from, int to, byte value)
     {
-        Arrays.fill(array, from, to, value);
+        for (int i = from; i < to; i++)
+            array[i] = value;
     }
 
     /**
-     * Same as Arrays.fill()
+     * Same as {@link Arrays#fill(short[], int, int, short)}
      */
     public static void fill(short[] array, int from, int to, short value)
     {
-        Arrays.fill(array, from, to, value);
+        for (int i = from; i < to; i++)
+            array[i] = value;
     }
 
     /**
-     * Same as Arrays.fill()
+     * Same as {@link Arrays#fill(int[], int, int, int)}
      */
     public static void fill(int[] array, int from, int to, int value)
     {
-        Arrays.fill(array, from, to, value);
+        for (int i = from; i < to; i++)
+            array[i] = value;
     }
 
     /**
-     * Same as Arrays.fill()
+     * Same as {@link Arrays#fill(long[], int, int, long)}
+     */
+    public static void fill(long[] array, int from, int to, long value)
+    {
+        for (int i = from; i < to; i++)
+            array[i] = value;
+    }
+
+    /**
+     * Same as {@link Arrays#fill(float[], int, int, float)}
      */
     public static void fill(float[] array, int from, int to, float value)
     {
-        Arrays.fill(array, from, to, value);
+        for (int i = from; i < to; i++)
+            array[i] = value;
     }
 
     /**
-     * Same as Arrays.fill()
+     * Same as {@link Arrays#fill(double[], int, int, double)}
      */
     public static void fill(double[] array, int from, int to, double value)
     {
-        Arrays.fill(array, from, to, value);
+        for (int i = from; i < to; i++)
+            array[i] = value;
     }
 
     /**
@@ -735,6 +1001,53 @@ public class Array1DUtil
      * Copy 'cnt' elements from 'from' index to 'to' index in a safe manner (no overlap)
      */
     public static void innerCopy(int[] array, int from, int to, int cnt)
+    {
+        final int delta = to - from;
+
+        if ((array == null) || (delta == 0))
+            return;
+
+        final int length = array.length;
+
+        if ((from < 0) || (to < 0) || (from >= length) || (to >= length))
+            return;
+
+        final int adjCnt;
+
+        // forward copy
+        if (delta < 0)
+        {
+            // adjust copy size
+            if ((from + cnt) >= length)
+                adjCnt = length - from;
+            else
+                adjCnt = cnt;
+
+            int to_ = to;
+            int from_ = from;
+            for (int i = 0; i < adjCnt; i++)
+                array[to_++] = array[from_++];
+        }
+        else
+        // backward copy
+        {
+            // adjust copy size
+            if ((to + cnt) >= length)
+                adjCnt = length - to;
+            else
+                adjCnt = cnt;
+
+            int to_ = to + cnt;
+            int from_ = from + cnt;
+            for (int i = 0; i < adjCnt; i++)
+                array[--to_] = array[--from_];
+        }
+    }
+
+    /**
+     * Copy 'cnt' elements from 'from' index to 'to' index in a safe manner (no overlap)
+     */
+    public static void innerCopy(long[] array, int from, int to, int cnt)
     {
         final int delta = to - from;
 
@@ -914,7 +1227,7 @@ public class Array1DUtil
 
     /**
      * Return the 'in' array as a single dimension array.<br>
-     * The resulting array is returned in 'out' and from the specified if any.<br>
+     * The resulting array is returned in 'out' at specified offset.<br>
      * If (out == null) a new array is allocated.
      */
     public static byte[] toByteArray1D(byte[] in, byte[] out, int offset)
@@ -930,7 +1243,7 @@ public class Array1DUtil
 
     /**
      * Return the 'in' array as a single dimension array.<br>
-     * The resulting array is returned in 'out' and from the specified if any.<br>
+     * The resulting array is returned in 'out' at specified offset.<br>
      * If (out == null) a new array is allocated.
      */
     public static short[] toShortArray1D(short[] in, short[] out, int offset)
@@ -946,7 +1259,7 @@ public class Array1DUtil
 
     /**
      * Return the 'in' array as a single dimension array.<br>
-     * The resulting array is returned in 'out' and from the specified if any.<br>
+     * The resulting array is returned in 'out' at specified offset.<br>
      * If (out == null) a new array is allocated.
      */
     public static int[] toIntArray1D(int[] in, int[] out, int offset)
@@ -962,7 +1275,23 @@ public class Array1DUtil
 
     /**
      * Return the 'in' array as a single dimension array.<br>
-     * The resulting array is returned in 'out' and from the specified if any.<br>
+     * The resulting array is returned in 'out' at specified offset.<br>
+     * If (out == null) a new array is allocated.
+     */
+    public static long[] toLongArray1D(long[] in, long[] out, int offset)
+    {
+        final int len = getTotalLength(in);
+        final long[] result = allocIfNull(out, offset + len);
+
+        if (in != null)
+            System.arraycopy(in, 0, result, offset, len);
+
+        return result;
+    }
+
+    /**
+     * Return the 'in' array as a single dimension array.<br>
+     * The resulting array is returned in 'out' at specified offset.<br>
      * If (out == null) a new array is allocated.
      */
     public static float[] toFloatArray1D(float[] in, float[] out, int offset)
@@ -978,7 +1307,7 @@ public class Array1DUtil
 
     /**
      * Return the 'in' array as a single dimension array.<br>
-     * The resulting array is returned in 'out' and from the specified if any.<br>
+     * The resulting array is returned in 'out' at specified offset.<br>
      * If (out == null) a new array is allocated.
      */
     public static double[] toDoubleArray1D(double[] in, double[] out, int offset)
@@ -1010,26 +1339,23 @@ public class Array1DUtil
      */
     public static Object arrayToArray(Object in, int inOffset, Object out, int outOffset, int length, boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToArray((byte[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
-                return Array1DUtil.shortArrayToArray((short[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
-                return Array1DUtil.intArrayToArray((int[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
-                return Array1DUtil.floatArrayToArray((float[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
-                return Array1DUtil.doubleArrayToArray((double[]) in, inOffset, out, outOffset, length);
+            case SHORT:
+                return shortArrayToArray((short[]) in, inOffset, out, outOffset, length, signed);
+            case INT:
+                return intArrayToArray((int[]) in, inOffset, out, outOffset, length, signed);
+            case LONG:
+                return longArrayToArray((long[]) in, inOffset, out, outOffset, length, signed);
+            case FLOAT:
+                return floatArrayToArray((float[]) in, inOffset, out, outOffset, length);
+            case DOUBLE:
+                return doubleArrayToArray((double[]) in, inOffset, out, outOffset, length);
+            default:
+                return out;
         }
-
-        // not yet implemented
-        return out;
     }
 
     /**
@@ -1063,23 +1389,20 @@ public class Array1DUtil
      */
     public static Object doubleArrayToArray(double[] in, int inOffset, Object out, int outOffset, int length)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return doubleArrayToByteArray(in, inOffset, (byte[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return doubleArrayToShortArray(in, inOffset, (short[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return doubleArrayToIntArray(in, inOffset, (int[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return doubleArrayToLongArray(in, inOffset, (long[]) out, outOffset, length);
+            case FLOAT:
                 return doubleArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length);
-
             default:
                 return out;
         }
@@ -1114,23 +1437,20 @@ public class Array1DUtil
      */
     public static Object floatArrayToArray(float[] in, int inOffset, Object out, int outOffset, int length)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return floatArrayToByteArray(in, inOffset, (byte[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return floatArrayToShortArray(in, inOffset, (short[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return floatArrayToIntArray(in, inOffset, (int[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return floatArrayToLongArray(in, inOffset, (long[]) out, outOffset, length);
+            case FLOAT:
                 return floatArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return floatArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length);
-
             default:
                 return out;
         }
@@ -1147,6 +1467,58 @@ public class Array1DUtil
     public static Object floatArrayToArray(float[] in, Object out)
     {
         return floatArrayToArray(in, 0, out, 0, -1);
+    }
+
+    /**
+     * Convert and return the 'in' long array in 'out' array type.<br>
+     * 
+     * @param in
+     *        input array
+     * @param inOffset
+     *        position where we start read data from
+     * @param out
+     *        output array which is used to receive result (and so define wanted type)
+     * @param outOffset
+     *        position where we start to write data to
+     * @param length
+     *        number of value to convert (-1 means we will use the maximum possible length)
+     * @param signed
+     *        assume input data as signed data
+     */
+    public static Object longArrayToArray(long[] in, int inOffset, Object out, int outOffset, int length, boolean signed)
+    {
+        switch (ArrayUtil.getDataType(out))
+        {
+            case BYTE:
+                return longArrayToByteArray(in, inOffset, (byte[]) out, outOffset, length);
+            case SHORT:
+                return longArrayToShortArray(in, inOffset, (short[]) out, outOffset, length);
+            case INT:
+                return longArrayToIntArray(in, inOffset, (int[]) out, outOffset, length);
+            case LONG:
+                return longArrayToLongArray(in, inOffset, (long[]) out, outOffset, length);
+            case FLOAT:
+                return longArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, signed);
+            case DOUBLE:
+                return longArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, signed);
+            default:
+                return out;
+        }
+    }
+
+    /**
+     * Convert and return the 'in' long array in 'out' array type.<br>
+     * 
+     * @param in
+     *        input array
+     * @param out
+     *        output array which is used to receive result (and so define wanted type)
+     * @param signed
+     *        assume input data as signed data
+     */
+    public static Object longArrayToArray(long[] in, Object out, boolean signed)
+    {
+        return longArrayToArray(in, 0, out, 0, -1, signed);
     }
 
     /**
@@ -1167,23 +1539,20 @@ public class Array1DUtil
      */
     public static Object intArrayToArray(int[] in, int inOffset, Object out, int outOffset, int length, boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return intArrayToByteArray(in, inOffset, (byte[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return intArrayToShortArray(in, inOffset, (short[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToIntArray(in, inOffset, (int[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return intArrayToLongArray(in, inOffset, (long[]) out, outOffset, length, signed);
+            case FLOAT:
                 return intArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return intArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, signed);
-
             default:
                 return out;
         }
@@ -1223,23 +1592,20 @@ public class Array1DUtil
     public static Object shortArrayToArray(short[] in, int inOffset, Object out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return shortArrayToByteArray(in, inOffset, (byte[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToShortArray(in, inOffset, (short[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return shortArrayToIntArray(in, inOffset, (int[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return shortArrayToLongArray(in, inOffset, (long[]) out, outOffset, length, signed);
+            case FLOAT:
                 return shortArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return shortArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, signed);
-
             default:
                 return out;
         }
@@ -1278,23 +1644,20 @@ public class Array1DUtil
      */
     public static Object byteArrayToArray(byte[] in, int inOffset, Object out, int outOffset, int length, boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToByteArray(in, inOffset, (byte[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return byteArrayToShortArray(in, inOffset, (short[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return byteArrayToIntArray(in, inOffset, (int[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return byteArrayToLongArray(in, inOffset, (long[]) out, outOffset, length, signed);
+            case FLOAT:
                 return byteArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return byteArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, signed);
-
             default:
                 return out;
         }
@@ -1334,23 +1697,20 @@ public class Array1DUtil
     public static double[] arrayToDoubleArray(Object in, int inOffset, double[] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToDoubleArray((byte[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToDoubleArray((short[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToDoubleArray((int[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToDoubleArray((long[]) in, inOffset, out, outOffset, length, signed);
+            case FLOAT:
                 return floatArrayToDoubleArray((float[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToDoubleArray((double[]) in, inOffset, out, outOffset, length);
-
             default:
                 return out;
         }
@@ -1403,23 +1763,20 @@ public class Array1DUtil
     public static float[] arrayToFloatArray(Object in, int inOffset, float[] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToFloatArray((byte[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToFloatArray((short[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToFloatArray((int[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToFloatArray((long[]) in, inOffset, out, outOffset, length, signed);
+            case FLOAT:
                 return floatArrayToFloatArray((float[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToFloatArray((double[]) in, inOffset, out, outOffset, length);
-
             default:
                 return out;
         }
@@ -1471,23 +1828,20 @@ public class Array1DUtil
      */
     public static int[] arrayToIntArray(Object in, int inOffset, int[] out, int outOffset, int length, boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToIntArray((byte[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToIntArray((short[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToIntArray((int[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToIntArray((long[]) in, inOffset, out, outOffset, length);
+            case FLOAT:
                 return floatArrayToIntArray((float[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToIntArray((double[]) in, inOffset, out, outOffset, length);
-
             default:
                 return out;
         }
@@ -1540,23 +1894,20 @@ public class Array1DUtil
     public static short[] arrayToShortArray(Object in, int inOffset, short[] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToShortArray((byte[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToShortArray((short[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToShortArray((int[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToShortArray((long[]) in, inOffset, out, outOffset, length);
+            case FLOAT:
                 return floatArrayToShortArray((float[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToShortArray((double[]) in, inOffset, out, outOffset, length);
-
             default:
                 return out;
         }
@@ -1606,23 +1957,20 @@ public class Array1DUtil
      */
     public static byte[] arrayToByteArray(Object in, int inOffset, byte[] out, int outOffset, int length)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToByteArray((byte[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToByteArray((short[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToByteArray((int[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToByteArray((long[]) in, inOffset, out, outOffset, length);
+            case FLOAT:
                 return floatArrayToByteArray((float[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToByteArray((double[]) in, inOffset, out, outOffset, length);
-
             default:
                 return out;
         }
@@ -1673,13 +2021,24 @@ public class Array1DUtil
         return result;
     }
 
+    public static long[] doubleArrayToLongArray(double[] in, int inOffset, long[] out, int outOffset, int length)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = TypeUtil.toLong(in[i + inOffset]);
+
+        return result;
+    }
+
     public static int[] doubleArrayToIntArray(double[] in, int inOffset, int[] out, int outOffset, int length)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final int[] result = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            result[i + outOffset] = (int) in[i + inOffset];
+            result[i + outOffset] = TypeUtil.toInt(in[i + inOffset]);
 
         return result;
     }
@@ -1727,13 +2086,24 @@ public class Array1DUtil
         return result;
     }
 
+    public static long[] floatArrayToLongArray(float[] in, int inOffset, long[] out, int outOffset, int length)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = TypeUtil.toLong(in[i + inOffset]);
+
+        return result;
+    }
+
     public static int[] floatArrayToIntArray(float[] in, int inOffset, int[] out, int outOffset, int length)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final int[] result = allocIfNull(out, outOffset + len);
 
         for (int i = 0; i < len; i++)
-            result[i + outOffset] = (int) in[i + inOffset];
+            result[i + outOffset] = TypeUtil.toInt(in[i + inOffset]);
 
         return result;
     }
@@ -1760,6 +2130,89 @@ public class Array1DUtil
         return result;
     }
 
+    public static double[] longArrayToDoubleArray(long[] in, int inOffset, double[] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final double[] result = allocIfNull(out, outOffset + len);
+
+        if (signed)
+        {
+            for (int i = 0; i < len; i++)
+                result[i + outOffset] = in[i + inOffset];
+        }
+        else
+        {
+            for (int i = 0; i < len; i++)
+                result[i + outOffset] = TypeUtil.unsign(in[i + inOffset]);
+        }
+
+        return result;
+    }
+
+    public static float[] longArrayToFloatArray(long[] in, int inOffset, float[] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final float[] result = allocIfNull(out, outOffset + len);
+
+        if (signed)
+        {
+            for (int i = 0; i < len; i++)
+                result[i + outOffset] = in[i + inOffset];
+        }
+        else
+        {
+            for (int i = 0; i < len; i++)
+                result[i + outOffset] = TypeUtil.unsignF(in[i + inOffset]);
+        }
+
+        return result;
+    }
+
+    public static long[] longArrayToLongArray(long[] in, int inOffset, long[] out, int outOffset, int length)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[] result = allocIfNull(out, outOffset + len);
+
+        System.arraycopy(in, inOffset, result, outOffset, len);
+
+        return result;
+    }
+
+    public static int[] longArrayToIntArray(long[] in, int inOffset, int[] out, int outOffset, int length)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final int[] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = (int) in[i + inOffset];
+
+        return result;
+    }
+
+    public static short[] longArrayToShortArray(long[] in, int inOffset, short[] out, int outOffset, int length)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final short[] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = (short) in[i + inOffset];
+
+        return result;
+    }
+
+    public static byte[] longArrayToByteArray(long[] in, int inOffset, byte[] out, int outOffset, int length)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final byte[] result = allocIfNull(out, outOffset + len);
+
+        for (int i = 0; i < len; i++)
+            result[i + outOffset] = (byte) in[i + inOffset];
+
+        return result;
+    }
+
     public static double[] intArrayToDoubleArray(int[] in, int inOffset, double[] out, int outOffset, int length,
             boolean signed)
     {
@@ -1774,7 +2227,7 @@ public class Array1DUtil
         else
         {
             for (int i = 0; i < len; i++)
-                result[i + outOffset] = in[i + inOffset] & 0xFFFFFFFFL;
+                result[i + outOffset] = TypeUtil.unsign(in[i + inOffset]);
         }
 
         return result;
@@ -1794,7 +2247,27 @@ public class Array1DUtil
         else
         {
             for (int i = 0; i < len; i++)
-                result[i + outOffset] = in[i + inOffset] & 0xFFFFFFFFL;
+                result[i + outOffset] = TypeUtil.unsign(in[i + inOffset]);
+        }
+
+        return result;
+    }
+
+    public static long[] intArrayToLongArray(int[] in, int inOffset, long[] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[] result = allocIfNull(out, outOffset + len);
+
+        if (signed)
+        {
+            for (int i = 0; i < len; i++)
+                result[i + outOffset] = in[i + inOffset];
+        }
+        else
+        {
+            for (int i = 0; i < len; i++)
+                result[i + outOffset] = TypeUtil.unsign(in[i + inOffset]);
         }
 
         return result;
@@ -1846,7 +2319,7 @@ public class Array1DUtil
         else
         {
             for (int i = 0; i < len; i++)
-                result[i + outOffset] = in[i + inOffset] & 0xFFFF;
+                result[i + outOffset] = TypeUtil.unsign(in[i + inOffset]);
         }
 
         return result;
@@ -1866,7 +2339,27 @@ public class Array1DUtil
         else
         {
             for (int i = 0; i < len; i++)
-                result[i + outOffset] = in[i + inOffset] & 0xFFFF;
+                result[i + outOffset] = TypeUtil.unsign(in[i + inOffset]);
+        }
+
+        return result;
+    }
+
+    public static long[] shortArrayToLongArray(short[] in, int inOffset, long[] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[] result = allocIfNull(out, outOffset + len);
+
+        if (signed)
+        {
+            for (int i = 0; i < len; i++)
+                result[i + outOffset] = in[i + inOffset];
+        }
+        else
+        {
+            for (int i = 0; i < len; i++)
+                result[i + outOffset] = TypeUtil.unsignL(in[i + inOffset]);
         }
 
         return result;
@@ -1886,7 +2379,7 @@ public class Array1DUtil
         else
         {
             for (int i = 0; i < len; i++)
-                result[i + outOffset] = in[i + inOffset] & 0xFFFF;
+                result[i + outOffset] = TypeUtil.unsign(in[i + inOffset]);
         }
 
         return result;
@@ -1927,7 +2420,7 @@ public class Array1DUtil
         else
         {
             for (int i = 0; i < len; i++)
-                result[i + outOffset] = in[i + inOffset] & 0xFF;
+                result[i + outOffset] = TypeUtil.unsign(in[i + inOffset]);
         }
 
         return result;
@@ -1947,7 +2440,27 @@ public class Array1DUtil
         else
         {
             for (int i = 0; i < len; i++)
-                result[i + outOffset] = in[i + inOffset] & 0xFF;
+                result[i + outOffset] = TypeUtil.unsign(in[i + inOffset]);
+        }
+
+        return result;
+    }
+
+    public static long[] byteArrayToLongArray(byte[] in, int inOffset, long[] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[] result = allocIfNull(out, outOffset + len);
+
+        if (signed)
+        {
+            for (int i = 0; i < len; i++)
+                result[i + outOffset] = in[i + inOffset];
+        }
+        else
+        {
+            for (int i = 0; i < len; i++)
+                result[i + outOffset] = TypeUtil.unsignL(in[i + inOffset]);
         }
 
         return result;
@@ -1967,7 +2480,7 @@ public class Array1DUtil
         else
         {
             for (int i = 0; i < len; i++)
-                result[i + outOffset] = in[i + inOffset] & 0xFF;
+                result[i + outOffset] = TypeUtil.unsign(in[i + inOffset]);
         }
 
         return result;
@@ -1987,7 +2500,7 @@ public class Array1DUtil
         else
         {
             for (int i = 0; i < len; i++)
-                result[i + outOffset] = (short) (in[i + inOffset] & 0xFF);
+                result[i + outOffset] = (short) TypeUtil.unsign(in[i + inOffset]);
         }
 
         return result;
@@ -2006,6 +2519,11 @@ public class Array1DUtil
     public static float[] doubleArrayToFloatArray(double[] array)
     {
         return doubleArrayToFloatArray(array, 0, null, 0, array.length);
+    }
+
+    public static long[] doubleArrayToLongArray(double[] array)
+    {
+        return doubleArrayToLongArray(array, 0, null, 0, array.length);
     }
 
     public static int[] doubleArrayToIntArray(double[] array)
@@ -2028,6 +2546,11 @@ public class Array1DUtil
         return floatArrayToDoubleArray(array, 0, null, 0, array.length);
     }
 
+    public static long[] floatArrayToLongArray(float[] array)
+    {
+        return floatArrayToLongArray(array, 0, null, 0, array.length);
+    }
+
     public static int[] floatArrayToIntArray(float[] array)
     {
         return floatArrayToIntArray(array, 0, null, 0, array.length);
@@ -2043,6 +2566,26 @@ public class Array1DUtil
         return floatArrayToByteArray(array, 0, null, 0, array.length);
     }
 
+    public static double[] longArrayToDoubleArray(long[] array, boolean signed)
+    {
+        return longArrayToDoubleArray(array, 0, null, 0, array.length, signed);
+    }
+
+    public static float[] longArrayToFloatArray(long[] array, boolean signed)
+    {
+        return longArrayToFloatArray(array, 0, null, 0, array.length, signed);
+    }
+
+    public static short[] longArrayToShortArray(long[] array)
+    {
+        return longArrayToShortArray(array, 0, null, 0, array.length);
+    }
+
+    public static byte[] longArrayToByteArray(long[] array)
+    {
+        return longArrayToByteArray(array, 0, null, 0, array.length);
+    }
+
     public static double[] intArrayToDoubleArray(int[] array, boolean signed)
     {
         return intArrayToDoubleArray(array, 0, null, 0, array.length, signed);
@@ -2051,6 +2594,11 @@ public class Array1DUtil
     public static float[] intArrayToFloatArray(int[] array, boolean signed)
     {
         return intArrayToFloatArray(array, 0, null, 0, array.length, signed);
+    }
+
+    public static long[] intArrayToLongArray(int[] array, boolean signed)
+    {
+        return intArrayToLongArray(array, 0, null, 0, array.length, signed);
     }
 
     public static short[] intArrayToShortArray(int[] array)
@@ -2073,6 +2621,11 @@ public class Array1DUtil
         return shortArrayToFloatArray(array, 0, null, 0, array.length, signed);
     }
 
+    public static long[] shortArrayToLongArray(short[] array, boolean signed)
+    {
+        return shortArrayToLongArray(array, 0, null, 0, array.length, signed);
+    }
+
     public static int[] shortArrayToIntArray(short[] array, boolean signed)
     {
         return shortArrayToIntArray(array, 0, null, 0, array.length, signed);
@@ -2091,6 +2644,11 @@ public class Array1DUtil
     public static float[] byteArrayToFloatArray(byte[] array, boolean signed)
     {
         return byteArrayToFloatArray(array, 0, null, 0, array.length, signed);
+    }
+
+    public static long[] byteArrayToLongArray(byte[] array, boolean signed)
+    {
+        return byteArrayToLongArray(array, 0, null, 0, array.length, signed);
     }
 
     public static int[] byteArrayToIntArray(byte[] array, boolean signed)
@@ -2115,23 +2673,20 @@ public class Array1DUtil
     public static Object doubleArrayToSafeArray(double[] in, int inOffset, Object out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return doubleArrayToSafeByteArray(in, inOffset, (byte[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return doubleArrayToSafeShortArray(in, inOffset, (short[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return doubleArrayToSafeIntArray(in, inOffset, (int[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return doubleArrayToSafeLongArray(in, inOffset, (long[]) out, outOffset, length, signed);
+            case FLOAT:
                 return doubleArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length);
-
             default:
                 return out;
         }
@@ -2145,23 +2700,20 @@ public class Array1DUtil
     public static Object floatArrayToSafeArray(float[] in, int inOffset, Object out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return floatArrayToSafeByteArray(in, inOffset, (byte[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return floatArrayToSafeShortArray(in, inOffset, (short[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return floatArrayToSafeIntArray(in, inOffset, (int[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return floatArrayToSafeLongArray(in, inOffset, (long[]) out, outOffset, length, signed);
+            case FLOAT:
                 return floatArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return floatArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length);
-
             default:
                 return out;
         }
@@ -2172,26 +2724,50 @@ public class Array1DUtil
         return floatArrayToSafeArray(in, 0, out, 0, -1, signed);
     }
 
+    public static Object longArrayToSafeArray(long[] in, int inOffset, Object out, int outOffset, int length,
+            boolean signed)
+    {
+        switch (ArrayUtil.getDataType(out))
+        {
+            case BYTE:
+                return longArrayToSafeByteArray(in, inOffset, (byte[]) out, outOffset, length, signed);
+            case SHORT:
+                return longArrayToSafeShortArray(in, inOffset, (short[]) out, outOffset, length, signed);
+            case INT:
+                return longArrayToSafeIntArray(in, inOffset, (int[]) out, outOffset, length, signed);
+            case LONG:
+                return longArrayToLongArray(in, inOffset, (long[]) out, outOffset, length);
+            case FLOAT:
+                return longArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, signed);
+            case DOUBLE:
+                return longArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, signed);
+            default:
+                return out;
+        }
+    }
+
+    public static Object longArrayToSafeArray(long[] in, Object out, boolean signed)
+    {
+        return longArrayToSafeArray(in, 0, out, 0, -1, signed);
+    }
+
     public static Object intArrayToSafeArray(int[] in, int inOffset, Object out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return intArrayToSafeByteArray(in, inOffset, (byte[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return intArrayToSafeShortArray(in, inOffset, (short[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToIntArray(in, inOffset, (int[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return intArrayToLongArray(in, inOffset, (long[]) out, outOffset, length, signed);
+            case FLOAT:
                 return intArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return intArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, signed);
-
             default:
                 return out;
         }
@@ -2205,23 +2781,20 @@ public class Array1DUtil
     public static Object shortArrayToSafeArray(short[] in, int inOffset, Object out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(out))
+        switch (ArrayUtil.getDataType(out))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return shortArrayToSafeByteArray(in, inOffset, (byte[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToShortArray(in, inOffset, (short[]) out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return shortArrayToIntArray(in, inOffset, (int[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return shortArrayToLongArray(in, inOffset, (long[]) out, outOffset, length, signed);
+            case FLOAT:
                 return shortArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return shortArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, signed);
-
             default:
                 return out;
         }
@@ -2232,29 +2805,52 @@ public class Array1DUtil
         return shortArrayToSafeArray(in, 0, out, 0, -1, signed);
     }
 
+    public static long[] arrayToSafeLongArray(Object in, int inOffset, long[] out, int outOffset, int length,
+            boolean signed)
+    {
+        switch (ArrayUtil.getDataType(in))
+        {
+            case BYTE:
+                return byteArrayToLongArray((byte[]) in, inOffset, out, outOffset, length, signed);
+            case SHORT:
+                return shortArrayToLongArray((short[]) in, inOffset, out, outOffset, length, signed);
+            case INT:
+                return intArrayToLongArray((int[]) in, inOffset, out, outOffset, length, signed);
+            case LONG:
+                return longArrayToLongArray((long[]) in, inOffset, out, outOffset, length);
+            case FLOAT:
+                return floatArrayToSafeLongArray((float[]) in, inOffset, out, outOffset, length, signed);
+            case DOUBLE:
+                return doubleArrayToSafeLongArray((double[]) in, inOffset, out, outOffset, length, signed);
+            default:
+                return out;
+        }
+    }
+
+    public static long[] arrayToSafeLongArray(Object in, long[] out, boolean signed)
+    {
+        return arrayToSafeLongArray(in, 0, out, 0, -1, signed);
+    }
+
     public static int[] arrayToSafeIntArray(Object in, int inOffset, int[] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToIntArray((byte[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToIntArray((short[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToIntArray((int[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToSafeIntArray((long[]) in, inOffset, out, outOffset, length, signed);
+            case FLOAT:
                 return floatArrayToSafeIntArray((float[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToSafeIntArray((double[]) in, inOffset, out, outOffset, length, signed);
-
             default:
                 return out;
-
         }
     }
 
@@ -2266,26 +2862,22 @@ public class Array1DUtil
     public static short[] arrayToSafeShortArray(Object in, int inOffset, short[] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToShortArray((byte[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToShortArray((short[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToSafeShortArray((int[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToSafeShortArray((long[]) in, inOffset, out, outOffset, length, signed);
+            case FLOAT:
                 return floatArrayToSafeShortArray((float[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToSafeShortArray((double[]) in, inOffset, out, outOffset, length, signed);
-
             default:
                 return out;
-
         }
     }
 
@@ -2297,26 +2889,22 @@ public class Array1DUtil
     public static byte[] arrayToSafeByteArray(Object in, int inOffset, byte[] out, int outOffset, int length,
             boolean signed)
     {
-        switch (TypeUtil.getDataType(in))
+        switch (ArrayUtil.getDataType(in))
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return byteArrayToByteArray((byte[]) in, inOffset, out, outOffset, length);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return shortArrayToSafeByteArray((short[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return intArrayToSafeByteArray((int[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
+                return longArrayToSafeByteArray((long[]) in, inOffset, out, outOffset, length, signed);
+            case FLOAT:
                 return floatArrayToSafeByteArray((float[]) in, inOffset, out, outOffset, length, signed);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return doubleArrayToSafeByteArray((double[]) in, inOffset, out, outOffset, length, signed);
-
             default:
                 return out;
-
         }
     }
 
@@ -2352,6 +2940,44 @@ public class Array1DUtil
     //
     //
 
+    public static long[] doubleArrayToSafeLongArray(double[] in, int inOffset, long[] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[] outArray = allocIfNull(out, outOffset + len);
+
+        if (signed)
+        {
+            // by default value is clamped to [Long.MIN_VALUE..Long.MAX_VALUE] range
+            for (int i = 0; i < len; i++)
+                outArray[i + outOffset] = (long) in[i + inOffset];
+        }
+        else
+        {
+            final double minValue = 0d;
+            final double maxValue = DataType.ULONG_MAX_VALUE;
+            final long minValueT = 0L;
+            final long maxValueT = 0xFFFFFFFFFFFFFFFFL;
+
+            for (int i = 0; i < len; i++)
+            {
+                final double value = in[i + inOffset];
+                final long result;
+
+                if (value >= maxValue)
+                    result = maxValueT;
+                else if (value <= minValue)
+                    result = minValueT;
+                else
+                    result = TypeUtil.toLong(value);
+
+                outArray[i + outOffset] = result;
+            }
+        }
+
+        return outArray;
+    }
+
     public static int[] doubleArrayToSafeIntArray(double[] in, int inOffset, int[] out, int outOffset, int length,
             boolean signed)
     {
@@ -2360,34 +2986,28 @@ public class Array1DUtil
 
         if (signed)
         {
+            // by default value is clamped to [Integer.MIN_VALUE..Integer.MAX_VALUE] range
             for (int i = 0; i < len; i++)
-            {
-                final double value = in[i + inOffset];
-                final int result;
-
-                if (value >= Integer.MAX_VALUE)
-                    result = Integer.MAX_VALUE;
-                else if (value <= Integer.MIN_VALUE)
-                    result = Integer.MIN_VALUE;
-                else
-                    result = (int) value;
-
-                outArray[i + outOffset] = result;
-            }
+                outArray[i + outOffset] = (int) in[i + inOffset];
         }
         else
         {
+            final double minValue = 0d;
+            final double maxValue = DataType.UINT_MAX_VALUE;
+            final int minValueT = 0;
+            final int maxValueT = 0xFFFFFFFF;
+
             for (int i = 0; i < len; i++)
             {
                 final double value = in[i + inOffset];
                 final int result;
 
-                if (value >= 0xFFFFFFFFL)
-                    result = 0xFFFFFFFF;
-                else if (value <= 0)
-                    result = 0;
+                if (value >= maxValue)
+                    result = maxValueT;
+                else if (value <= minValue)
+                    result = minValueT;
                 else
-                    result = (int) value;
+                    result = TypeUtil.toInt(value);
 
                 outArray[i + outOffset] = result;
             }
@@ -2402,39 +3022,36 @@ public class Array1DUtil
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final short[] outArray = allocIfNull(out, outOffset + len);
 
+        final double minValue;
+        final double maxValue;
+
         if (signed)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final double value = in[i + inOffset];
-                final short result;
-
-                if (value >= Short.MAX_VALUE)
-                    result = Short.MAX_VALUE;
-                else if (value <= Short.MIN_VALUE)
-                    result = Short.MIN_VALUE;
-                else
-                    result = (short) value;
-
-                outArray[i + outOffset] = result;
-            }
+            minValue = DataType.SHORT.getMinValue();
+            maxValue = DataType.SHORT.getMaxValue();
         }
         else
         {
-            for (int i = 0; i < len; i++)
-            {
-                final double value = in[i + inOffset];
-                final short result;
+            minValue = DataType.USHORT.getMinValue();
+            maxValue = DataType.USHORT.getMaxValue();
+        }
 
-                if (value >= 0xFFFF)
-                    result = (short) 0xFFFF;
-                else if (value <= 0)
-                    result = 0;
-                else
-                    result = (short) value;
+        final short minValueT = (short) minValue;
+        final short maxValueT = (short) maxValue;
 
-                outArray[i + outOffset] = result;
-            }
+        for (int i = 0; i < len; i++)
+        {
+            final double value = in[i + inOffset];
+            final short result;
+
+            if (value >= maxValue)
+                result = maxValueT;
+            else if (value <= minValue)
+                result = minValueT;
+            else
+                result = (short) value;
+
+            outArray[i + outOffset] = result;
         }
 
         return outArray;
@@ -2446,36 +3063,71 @@ public class Array1DUtil
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final byte[] outArray = allocIfNull(out, outOffset + len);
 
+        final double minValue;
+        final double maxValue;
+
         if (signed)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final double value = in[i + inOffset];
-                final byte result;
-
-                if (value >= Byte.MAX_VALUE)
-                    result = Byte.MAX_VALUE;
-                else if (value <= Short.MIN_VALUE)
-                    result = Byte.MIN_VALUE;
-                else
-                    result = (byte) value;
-
-                outArray[i + outOffset] = result;
-            }
+            minValue = DataType.BYTE.getMinValue();
+            maxValue = DataType.BYTE.getMaxValue();
         }
         else
         {
+            minValue = DataType.UBYTE.getMinValue();
+            maxValue = DataType.UBYTE.getMaxValue();
+        }
+
+        final byte minValueT = (byte) minValue;
+        final byte maxValueT = (byte) maxValue;
+
+        for (int i = 0; i < len; i++)
+        {
+            final double value = in[i + inOffset];
+            final byte result;
+
+            if (value >= maxValue)
+                result = maxValueT;
+            else if (value <= minValue)
+                result = minValueT;
+            else
+                result = (byte) value;
+
+            outArray[i + outOffset] = result;
+        }
+
+        return outArray;
+    }
+
+    public static long[] floatArrayToSafeLongArray(float[] in, int inOffset, long[] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[] outArray = allocIfNull(out, outOffset + len);
+
+        if (signed)
+        {
+            // by default value is clamped to [Long.MIN_VALUE..Long.MAX_VALUE] range
+            for (int i = 0; i < len; i++)
+                outArray[i + outOffset] = (long) in[i + inOffset];
+        }
+        else
+        {
+            final float minValue = 0f;
+            final float maxValue = DataType.ULONG_MAX_VALUE_F;
+            final long minValueT = 0L;
+            final long maxValueT = 0xFFFFFFFFFFFFFFFFL;
+
             for (int i = 0; i < len; i++)
             {
-                final double value = in[i + inOffset];
-                final byte result;
+                final float value = in[i + inOffset];
+                final long result;
 
-                if (value >= 0xFF)
-                    result = (byte) 0xFF;
-                else if (value <= 0)
-                    result = 0;
+                if (value >= maxValue)
+                    result = maxValueT;
+                else if (value <= minValue)
+                    result = minValueT;
                 else
-                    result = (byte) value;
+                    result = TypeUtil.toLong(value);
 
                 outArray[i + outOffset] = result;
             }
@@ -2492,34 +3144,28 @@ public class Array1DUtil
 
         if (signed)
         {
+            // by default value is clamped to [Integer.MIN_VALUE..Integer.MAX_VALUE] range
             for (int i = 0; i < len; i++)
-            {
-                final float value = in[i + inOffset];
-                final int result;
-
-                if (value >= Integer.MAX_VALUE)
-                    result = Integer.MAX_VALUE;
-                else if (value <= Integer.MIN_VALUE)
-                    result = Integer.MIN_VALUE;
-                else
-                    result = (int) value;
-
-                outArray[i + outOffset] = result;
-            }
+                outArray[i + outOffset] = (int) in[i + inOffset];
         }
         else
         {
+            final float minValue = 0f;
+            final float maxValue = DataType.UINT_MAX_VALUE_F;
+            final int minValueT = 0;
+            final int maxValueT = 0xFFFFFFFF;
+
             for (int i = 0; i < len; i++)
             {
                 final float value = in[i + inOffset];
                 final int result;
 
-                if (value >= 0xFFFFFFFFL)
-                    result = 0xFFFFFFFF;
-                else if (value <= 0)
-                    result = 0;
+                if (value >= maxValue)
+                    result = maxValueT;
+                else if (value <= minValue)
+                    result = minValueT;
                 else
-                    result = (int) value;
+                    result = TypeUtil.toInt(value);
 
                 outArray[i + outOffset] = result;
             }
@@ -2534,39 +3180,36 @@ public class Array1DUtil
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final short[] outArray = allocIfNull(out, outOffset + len);
 
+        final float minValue;
+        final float maxValue;
+
         if (signed)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final float value = in[i + inOffset];
-                final short result;
-
-                if (value >= Short.MAX_VALUE)
-                    result = Short.MAX_VALUE;
-                else if (value <= Short.MIN_VALUE)
-                    result = Short.MIN_VALUE;
-                else
-                    result = (short) value;
-
-                outArray[i + outOffset] = result;
-            }
+            minValue = (float) DataType.SHORT.getMinValue();
+            maxValue = (float) DataType.SHORT.getMaxValue();
         }
         else
         {
-            for (int i = 0; i < len; i++)
-            {
-                final float value = in[i + inOffset];
-                final short result;
+            minValue = (float) DataType.USHORT.getMinValue();
+            maxValue = (float) DataType.USHORT.getMaxValue();
+        }
 
-                if (value >= 0xFFFF)
-                    result = (short) 0xFFFF;
-                else if (value <= 0)
-                    result = 0;
-                else
-                    result = (short) value;
+        final short minValueT = (short) minValue;
+        final short maxValueT = (short) maxValue;
 
-                outArray[i + outOffset] = result;
-            }
+        for (int i = 0; i < len; i++)
+        {
+            final float value = in[i + inOffset];
+            final short result;
+
+            if (value >= maxValue)
+                result = maxValueT;
+            else if (value <= minValue)
+                result = minValueT;
+            else
+                result = (short) value;
+
+            outArray[i + outOffset] = result;
         }
 
         return outArray;
@@ -2578,39 +3221,159 @@ public class Array1DUtil
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final byte[] outArray = allocIfNull(out, outOffset + len);
 
+        final float minValue;
+        final float maxValue;
+
         if (signed)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final float value = in[i + inOffset];
-                final byte result;
-
-                if (value >= Byte.MAX_VALUE)
-                    result = Byte.MAX_VALUE;
-                else if (value <= Byte.MIN_VALUE)
-                    result = Byte.MIN_VALUE;
-                else
-                    result = (byte) value;
-
-                outArray[i + outOffset] = result;
-            }
+            minValue = (float) DataType.BYTE.getMinValue();
+            maxValue = (float) DataType.BYTE.getMaxValue();
         }
         else
         {
-            for (int i = 0; i < len; i++)
-            {
-                final float value = in[i + inOffset];
-                final byte result;
+            minValue = (float) DataType.UBYTE.getMinValue();
+            maxValue = (float) DataType.UBYTE.getMaxValue();
+        }
 
-                if (value >= 0xFF)
-                    result = (byte) 0xFF;
-                else if (value <= 0)
-                    result = 0;
-                else
-                    result = (byte) value;
+        final byte minValueT = (byte) minValue;
+        final byte maxValueT = (byte) maxValue;
 
-                outArray[i + outOffset] = result;
-            }
+        for (int i = 0; i < len; i++)
+        {
+            final float value = in[i + inOffset];
+            final byte result;
+
+            if (value >= maxValue)
+                result = maxValueT;
+            else if (value <= minValue)
+                result = minValueT;
+            else
+                result = (byte) value;
+
+            outArray[i + outOffset] = result;
+        }
+
+        return outArray;
+    }
+
+    public static int[] longArrayToSafeIntArray(long[] in, int inOffset, int[] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final int[] outArray = allocIfNull(out, outOffset + len);
+
+        final long minValue;
+        final long maxValue;
+
+        if (signed)
+        {
+            minValue = (long) DataType.INT.getMinValue();
+            maxValue = (long) DataType.INT.getMaxValue();
+        }
+        else
+        {
+            minValue = (long) DataType.UINT.getMinValue();
+            maxValue = (long) DataType.UINT.getMaxValue();
+        }
+
+        final int minValueT = (int) minValue;
+        final int maxValueT = (int) maxValue;
+
+        for (int i = 0; i < len; i++)
+        {
+            final long value = in[i + inOffset];
+            final int result;
+
+            if (value >= maxValue)
+                result = maxValueT;
+            else if (value <= minValue)
+                result = minValueT;
+            else
+                result = (int) value;
+
+            outArray[i + outOffset] = result;
+        }
+
+        return outArray;
+    }
+
+    public static short[] longArrayToSafeShortArray(long[] in, int inOffset, short[] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final short[] outArray = allocIfNull(out, outOffset + len);
+
+        final long minValue;
+        final long maxValue;
+
+        if (signed)
+        {
+            minValue = (long) DataType.SHORT.getMinValue();
+            maxValue = (long) DataType.SHORT.getMaxValue();
+        }
+        else
+        {
+            minValue = (long) DataType.USHORT.getMinValue();
+            maxValue = (long) DataType.USHORT.getMaxValue();
+        }
+
+        final short minValueT = (short) minValue;
+        final short maxValueT = (short) maxValue;
+
+        for (int i = 0; i < len; i++)
+        {
+            final long value = in[i + inOffset];
+            final short result;
+
+            if (value >= maxValue)
+                result = maxValueT;
+            else if (value <= minValue)
+                result = minValueT;
+            else
+                result = (short) value;
+
+            outArray[i + outOffset] = result;
+        }
+
+        return outArray;
+    }
+
+    public static byte[] longArrayToSafeByteArray(long[] in, int inOffset, byte[] out, int outOffset, int length,
+            boolean signed)
+    {
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final byte[] outArray = allocIfNull(out, outOffset + len);
+
+        final long minValue;
+        final long maxValue;
+
+        if (signed)
+        {
+            minValue = (long) DataType.BYTE.getMinValue();
+            maxValue = (long) DataType.BYTE.getMaxValue();
+        }
+        else
+        {
+            minValue = (long) DataType.UBYTE.getMinValue();
+            maxValue = (long) DataType.UBYTE.getMaxValue();
+        }
+
+        final byte minValueT = (byte) minValue;
+        final byte maxValueT = (byte) maxValue;
+
+        for (int i = 0; i < len; i++)
+        {
+            final long value = in[i + inOffset];
+            final byte result;
+
+            if (value >= maxValue)
+                result = maxValueT;
+            else if (value <= minValue)
+                result = minValueT;
+            else
+                result = (byte) value;
+
+            outArray[i + outOffset] = result;
         }
 
         return outArray;
@@ -2622,39 +3385,36 @@ public class Array1DUtil
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final short[] outArray = allocIfNull(out, outOffset + len);
 
+        final int minValue;
+        final int maxValue;
+
         if (signed)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final int value = in[i + inOffset];
-                final short result;
-
-                if (value >= Short.MAX_VALUE)
-                    result = Short.MAX_VALUE;
-                else if (value <= Short.MIN_VALUE)
-                    result = Short.MIN_VALUE;
-                else
-                    result = (short) value;
-
-                outArray[i + outOffset] = result;
-            }
+            minValue = (int) DataType.SHORT.getMinValue();
+            maxValue = (int) DataType.SHORT.getMaxValue();
         }
         else
         {
-            for (int i = 0; i < len; i++)
-            {
-                final int value = in[i + inOffset];
-                final short result;
+            minValue = (int) DataType.USHORT.getMinValue();
+            maxValue = (int) DataType.USHORT.getMaxValue();
+        }
 
-                if (value >= 0xFFFF)
-                    result = (short) 0xFFFF;
-                else if (value <= 0)
-                    result = 0;
-                else
-                    result = (short) value;
+        final short minValueT = (short) minValue;
+        final short maxValueT = (short) maxValue;
 
-                outArray[i + outOffset] = result;
-            }
+        for (int i = 0; i < len; i++)
+        {
+            final int value = in[i + inOffset];
+            final short result;
+
+            if (value >= maxValue)
+                result = maxValueT;
+            else if (value <= minValue)
+                result = minValueT;
+            else
+                result = (short) value;
+
+            outArray[i + outOffset] = result;
         }
 
         return outArray;
@@ -2666,39 +3426,36 @@ public class Array1DUtil
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final byte[] outArray = allocIfNull(out, outOffset + len);
 
+        final int minValue;
+        final int maxValue;
+
         if (signed)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final int value = in[i + inOffset];
-                final byte result;
-
-                if (value >= Byte.MAX_VALUE)
-                    result = Byte.MAX_VALUE;
-                else if (value <= Byte.MIN_VALUE)
-                    result = Byte.MIN_VALUE;
-                else
-                    result = (byte) value;
-
-                outArray[i + outOffset] = result;
-            }
+            minValue = (int) DataType.BYTE.getMinValue();
+            maxValue = (int) DataType.BYTE.getMaxValue();
         }
         else
         {
-            for (int i = 0; i < len; i++)
-            {
-                final int value = in[i + inOffset];
-                final byte result;
+            minValue = (int) DataType.UBYTE.getMinValue();
+            maxValue = (int) DataType.UBYTE.getMaxValue();
+        }
 
-                if (value >= 0xFF)
-                    result = (byte) 0xFF;
-                else if (value <= 0)
-                    result = 0;
-                else
-                    result = (byte) value;
+        final byte minValueT = (byte) minValue;
+        final byte maxValueT = (byte) maxValue;
 
-                outArray[i + outOffset] = result;
-            }
+        for (int i = 0; i < len; i++)
+        {
+            final int value = in[i + inOffset];
+            final byte result;
+
+            if (value >= maxValue)
+                result = maxValueT;
+            else if (value <= minValue)
+                result = minValueT;
+            else
+                result = (byte) value;
+
+            outArray[i + outOffset] = result;
         }
 
         return outArray;
@@ -2710,39 +3467,36 @@ public class Array1DUtil
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final byte[] outArray = allocIfNull(out, outOffset + len);
 
+        final short minValue;
+        final short maxValue;
+
         if (signed)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final short value = in[i + inOffset];
-                final byte result;
-
-                if (value >= Byte.MAX_VALUE)
-                    result = Byte.MAX_VALUE;
-                else if (value <= Byte.MIN_VALUE)
-                    result = Byte.MIN_VALUE;
-                else
-                    result = (byte) value;
-
-                outArray[i + outOffset] = result;
-            }
+            minValue = (short) DataType.BYTE.getMinValue();
+            maxValue = (short) DataType.BYTE.getMaxValue();
         }
         else
         {
-            for (int i = 0; i < len; i++)
-            {
-                final short value = in[i + inOffset];
-                final byte result;
+            minValue = (short) DataType.UBYTE.getMinValue();
+            maxValue = (short) DataType.UBYTE.getMaxValue();
+        }
 
-                if (value >= 0xFF)
-                    result = (byte) 0xFF;
-                else if (value <= 0)
-                    result = 0;
-                else
-                    result = (byte) value;
+        final byte minValueT = (byte) minValue;
+        final byte maxValueT = (byte) maxValue;
 
-                outArray[i + outOffset] = result;
-            }
+        for (int i = 0; i < len; i++)
+        {
+            final short value = in[i + inOffset];
+            final byte result;
+
+            if (value >= maxValue)
+                result = maxValueT;
+            else if (value <= minValue)
+                result = minValueT;
+            else
+                result = (byte) value;
+
+            outArray[i + outOffset] = result;
         }
 
         return outArray;
@@ -2755,6 +3509,11 @@ public class Array1DUtil
     //
     //
     //
+
+    public static long[] doubleArrayToSafeLongArray(double[] array, boolean signed)
+    {
+        return doubleArrayToSafeLongArray(array, 0, null, 0, array.length, signed);
+    }
 
     public static int[] doubleArrayToSafeIntArray(double[] array, boolean signed)
     {
@@ -2771,6 +3530,11 @@ public class Array1DUtil
         return doubleArrayToSafeByteArray(array, 0, null, 0, array.length, signed);
     }
 
+    public static long[] floatArrayToSafeLongArray(float[] array, boolean signed)
+    {
+        return floatArrayToSafeLongArray(array, 0, null, 0, array.length, signed);
+    }
+
     public static int[] floatArrayToSafeIntArray(float[] array, boolean signed)
     {
         return floatArrayToSafeIntArray(array, 0, null, 0, array.length, signed);
@@ -2784,6 +3548,21 @@ public class Array1DUtil
     public static byte[] floatArrayToSafeByteArray(float[] array, boolean signed)
     {
         return floatArrayToSafeByteArray(array, 0, null, 0, array.length, signed);
+    }
+
+    public static int[] longArrayToSafeIntArray(long[] array, boolean signed)
+    {
+        return longArrayToSafeIntArray(array, 0, null, 0, array.length, signed);
+    }
+
+    public static short[] longArrayToSafeShortArray(long[] array, boolean signed)
+    {
+        return longArrayToSafeShortArray(array, 0, null, 0, array.length, signed);
+    }
+
+    public static byte[] longArrayToSafeByteArray(long[] array, boolean signed)
+    {
+        return longArrayToSafeByteArray(array, 0, null, 0, array.length, signed);
     }
 
     public static short[] intArrayToSafeShortArray(int[] array, boolean signed)
@@ -2838,94 +3617,125 @@ public class Array1DUtil
     public static String arrayToString(Object array, boolean signed, boolean hexa, String separator, int size)
     {
         final int len = ArrayUtil.getLength(array);
-        final int dataType = TypeUtil.getDataType(array);
+        final DataType dataType = ArrayUtil.getDataType(array, signed);
         final StringBuilder result = new StringBuilder();
         final int base = hexa ? 16 : 10;
 
         switch (dataType)
         {
-            case TypeUtil.TYPE_BYTE:
+            case UBYTE:
             {
                 final byte[] data = (byte[]) array;
 
-                if (signed)
+                if (len > 0)
+                    result.append(Integer.toString(data[0] & 0xFF, base));
+                for (int i = 1; i < len; i++)
                 {
-                    if (len > 0)
-                        result.append(Integer.toString(data[0], base));
-                    for (int i = 1; i < len; i++)
-                    {
-                        result.append(separator);
-                        result.append(Integer.toString(data[i], base));
-                    }
-                }
-                else
-                {
-                    if (len > 0)
-                        result.append(Integer.toString(data[0] & 0xFF, base));
-                    for (int i = 1; i < len; i++)
-                    {
-                        result.append(separator);
-                        result.append(Integer.toString(data[i] & 0xFF, base));
-                    }
+                    result.append(separator);
+                    result.append(Integer.toString(data[i] & 0xFF, base));
                 }
                 break;
             }
 
-            case TypeUtil.TYPE_SHORT:
+            case BYTE:
+            {
+                final byte[] data = (byte[]) array;
+
+                if (len > 0)
+                    result.append(Integer.toString(data[0], base));
+                for (int i = 1; i < len; i++)
+                {
+                    result.append(separator);
+                    result.append(Integer.toString(data[i], base));
+                }
+                break;
+            }
+
+            case USHORT:
             {
                 final short[] data = (short[]) array;
 
-                if (signed)
+                if (len > 0)
+                    result.append(Integer.toString(data[0] & 0xFFFF, base));
+                for (int i = 1; i < len; i++)
                 {
-                    if (len > 0)
-                        result.append(Integer.toString(data[0], base));
-                    for (int i = 1; i < len; i++)
-                    {
-                        result.append(separator);
-                        result.append(Integer.toString(data[i], base));
-                    }
+                    result.append(separator);
+                    result.append(Integer.toString(data[i] & 0xFFFF, base));
                 }
-                else
+                break;
+            }
+            case SHORT:
+            {
+                final short[] data = (short[]) array;
+
+                if (len > 0)
+                    result.append(Integer.toString(data[0], base));
+                for (int i = 1; i < len; i++)
                 {
-                    if (len > 0)
-                        result.append(Integer.toString(data[0] & 0xFFFF, base));
-                    for (int i = 1; i < len; i++)
-                    {
-                        result.append(separator);
-                        result.append(Integer.toString(data[i] & 0xFFFF, base));
-                    }
+                    result.append(separator);
+                    result.append(Integer.toString(data[i], base));
                 }
                 break;
             }
 
-            case TypeUtil.TYPE_INT:
+            case UINT:
             {
                 final int[] data = (int[]) array;
 
-                if (signed)
+                if (len > 0)
+                    result.append(Long.toString(data[0] & 0xFFFFFFFFL, base));
+                for (int i = 1; i < len; i++)
                 {
-                    if (len > 0)
-                        result.append(Integer.toString(data[0], base));
-                    for (int i = 1; i < len; i++)
-                    {
-                        result.append(separator);
-                        result.append(Integer.toString(data[i], base));
-                    }
-                }
-                else
-                {
-                    if (len > 0)
-                        result.append(Long.toString(data[0] & 0xFFFFFFFFL, base));
-                    for (int i = 1; i < len; i++)
-                    {
-                        result.append(separator);
-                        result.append(Long.toString(data[i] & 0xFFFFFFFFL, base));
-                    }
+                    result.append(separator);
+                    result.append(Long.toString(data[i] & 0xFFFFFFFFL, base));
                 }
                 break;
             }
 
-            case TypeUtil.TYPE_FLOAT:
+            case INT:
+            {
+                final int[] data = (int[]) array;
+
+                if (len > 0)
+                    result.append(Integer.toString(data[0], base));
+                for (int i = 1; i < len; i++)
+                {
+                    result.append(separator);
+                    result.append(Integer.toString(data[i], base));
+                }
+                break;
+            }
+
+            case ULONG:
+            {
+                final long[] data = (long[]) array;
+
+                // we lost highest bit as java doesn't have bigger than long type
+                if (len > 0)
+                    result.append(Long.toString(data[0] & 0x7FFFFFFFFFFFFFFFL, base));
+                for (int i = 1; i < len; i++)
+                {
+                    result.append(separator);
+                    result.append(Long.toString(data[i] & 0x7FFFFFFFFFFFFFFFL, base));
+                }
+                break;
+            }
+
+            case LONG:
+            {
+                final long[] data = (long[]) array;
+
+                if (len > 0)
+                    result.append(Long.toString(data[0], base));
+                for (int i = 1; i < len; i++)
+                {
+                    result.append(separator);
+                    result.append(Long.toString(data[i], base));
+                }
+                break;
+            }
+
+            case FLOAT:
             {
                 final float[] data = (float[]) array;
 
@@ -2952,7 +3762,7 @@ public class Array1DUtil
                 break;
             }
 
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
             {
                 final double[] data = (double[]) array;
 
@@ -2993,9 +3803,18 @@ public class Array1DUtil
      * @param dataType
      *        specify the values data type and also the output array data type string
      */
-    public static Object stringToArray(String value, int dataType)
+    public static Object stringToArray(String value, DataType dataType)
     {
         return stringToArray(value, dataType, false, ":");
+    }
+
+    /**
+     * @deprecated use {@link #stringToArray(String, DataType)} instead
+     */
+    @Deprecated
+    public static Object stringToArray(String value, int dataType)
+    {
+        return stringToArray(value, DataType.getDataType(dataType), false, ":");
     }
 
     /**
@@ -3011,7 +3830,7 @@ public class Array1DUtil
      * @param separator
      *        specify the separator used between each value in the input string
      */
-    public static Object stringToArray(String value, int dataType, boolean hexa, String separator)
+    public static Object stringToArray(String value, DataType dataType, boolean hexa, String separator)
     {
         if (value == null)
             return createArray(dataType, 0);
@@ -3020,9 +3839,9 @@ public class Array1DUtil
         final int len = values.length;
         final int base = hexa ? 16 : 10;
 
-        switch (dataType)
+        switch (dataType.getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
             {
                 final byte[] result = new byte[len];
 
@@ -3032,7 +3851,7 @@ public class Array1DUtil
                 return result;
             }
 
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
             {
                 final short[] result = new short[len];
 
@@ -3042,7 +3861,7 @@ public class Array1DUtil
                 return result;
             }
 
-            case TypeUtil.TYPE_INT:
+            case INT:
             {
                 final int[] result = new int[len];
 
@@ -3052,28 +3871,47 @@ public class Array1DUtil
                 return result;
             }
 
-            case TypeUtil.TYPE_FLOAT:
+            case LONG:
             {
-                final float[] result = new float[len];
+                final long[] result = new long[len];
 
                 for (int i = 0; i < len; i++)
-                    result[i] = Integer.parseInt(values[i], base);
+                    result[i] = Long.parseLong(values[i], base);
 
                 return result;
             }
 
-            case TypeUtil.TYPE_DOUBLE:
+            case FLOAT:
+            {
+                final float[] result = new float[len];
+
+                for (int i = 0; i < len; i++)
+                    result[i] = Float.parseFloat(values[i]);
+
+                return result;
+            }
+
+            case DOUBLE:
             {
                 final double[] result = new double[len];
 
                 for (int i = 0; i < len; i++)
-                    result[i] = Integer.parseInt(values[i], base);
+                    result[i] = Double.parseDouble(values[i]);
 
                 return result;
             }
         }
 
         return null;
+    }
+
+    /**
+     * @deprecated use {@link #stringToArray(String, DataType, boolean, String)} instead
+     */
+    @Deprecated
+    public static Object stringToArray(String value, int dataType, boolean hexa, String separator)
+    {
+        return stringToArray(value, DataType.getDataType(dataType, false), hexa, separator);
     }
 
     //

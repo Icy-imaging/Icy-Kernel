@@ -68,7 +68,7 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
      *        position in image coordinates
      * @param creation
      *        specify if roi is created in "creation mode"
-     * @return ROI (null if command is an incorrect ROI command name)
+     * @return ROI (null if command is an incorrect ROI class name)
      */
     public static ROI create(String className, Sequence seq, Point2D imagePoint, boolean creation)
     {

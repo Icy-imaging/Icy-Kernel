@@ -18,6 +18,7 @@
  */
 package icy.type.collection.array;
 
+import icy.type.DataType;
 import icy.type.TypeUtil;
 
 import java.util.ArrayList;
@@ -31,29 +32,38 @@ public abstract class DynamicArray
     public static final int BLOCK_SIZE = 1 << 16;
 
     /**
-     * Create a DynamicArray with specified type (TypeUtil constant)
+     * Create a DynamicArray with specified type
      */
+    public static DynamicArray create(DataType type)
+    {
+        switch (type.getJavaType())
+        {
+            case BYTE:
+                return new DynamicArray.Byte();
+            case SHORT:
+                return new DynamicArray.Short();
+            case INT:
+                return new DynamicArray.Int();
+            case LONG:
+                return new DynamicArray.Long();
+            case FLOAT:
+                return new DynamicArray.Float();
+            case DOUBLE:
+                return new DynamicArray.Double();
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Create a DynamicArray with specified type ({@link TypeUtil} constant)
+     * 
+     * @deprecated
+     */
+    @Deprecated
     public static DynamicArray create(int type)
     {
-        switch (type)
-        {
-            case TypeUtil.TYPE_BYTE:
-                return new DynamicArray.Byte();
-
-            case TypeUtil.TYPE_SHORT:
-                return new DynamicArray.Byte();
-
-            case TypeUtil.TYPE_INT:
-                return new DynamicArray.Byte();
-
-            case TypeUtil.TYPE_FLOAT:
-                return new DynamicArray.Byte();
-
-            case TypeUtil.TYPE_DOUBLE:
-                return new DynamicArray.Byte();
-        }
-
-        return null;
+        return create(DataType.getDataType(type));
     }
 
     public static class Byte extends DynamicArray
@@ -116,6 +126,27 @@ public abstract class DynamicArray
         public int[] asArray()
         {
             return (int[]) super.asArray();
+        }
+    }
+
+    public static class Long extends DynamicArray
+    {
+        @Override
+        protected Object createArray(int size)
+        {
+            return new long[size];
+        }
+
+        @Override
+        protected int getArraySize(Object array)
+        {
+            return ((long[]) array).length;
+        }
+
+        @Override
+        public long[] asArray()
+        {
+            return (long[]) super.asArray();
         }
     }
 

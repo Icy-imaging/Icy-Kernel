@@ -378,13 +378,13 @@ public class PluginInstaller
     {
         if (!FileUtil.delete(plugin.getJarFilename(), false))
         {
-            System.err.println("deletePlugin : Can't delete " + plugin.getJarFilename());
+            System.err.println("deletePlugin() : Can't delete " + plugin.getJarFilename());
             // fatal error
             return false;
         }
         if (FileUtil.exist(plugin.getXMLFilename()))
             if (!FileUtil.delete(plugin.getXMLFilename(), false))
-                System.err.println("deletePlugin : Can't delete " + plugin.getXMLFilename());
+                System.err.println("deletePlugin() : Can't delete " + plugin.getXMLFilename());
 
         FileUtil.delete(plugin.getImageFilename(), false);
         FileUtil.delete(plugin.getIconFilename(), false);
@@ -713,6 +713,7 @@ public class PluginInstaller
                     }
                 }
 
+                // verify
                 if (StringUtil.isEmpty(error))
                 {
                     if (taskFrame != null)

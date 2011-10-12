@@ -39,6 +39,7 @@ import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
 import icy.swimmingPool.SwimmingPool;
 
+import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyVetoException;
@@ -61,17 +62,13 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     private final UpdateEventHandler updater;
     private final SequenceListener sequenceListener;
 
-    private final ArrayList<JFrame> externalFrames;
     private final ArrayList<Viewer> viewers;
     private final ArrayList<WeakReference<Plugin>> activePlugins;
-    // FIXME : mettre ca dans un stream Plugin Manager ?
-    // private final ArrayList<PluginStreamGenerator> pluginStreamGeneratorList;
 
     private final SwimmingPool swimmingPool;
     private final TaskFrameManager taskFrameManager;
 
     MainFrame mainFrame;
-    // MainMenuBar mainMenuBar;
 
     Viewer focusedViewer;
     private Sequence focusedSequence;
@@ -84,11 +81,8 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         listeners = new EventListenerList();
         // try to not dispatch on AWT when possible !
         updater = new UpdateEventHandler(this, false);
-        // updater = new UpdateEventHandler(this, true);
-        externalFrames = new ArrayList<JFrame>();
         viewers = new ArrayList<Viewer>();
         activePlugins = new ArrayList<WeakReference<Plugin>>();
-        // pluginStreamGeneratorList = new ArrayList<PluginStreamGenerator>();
         swimmingPool = new SwimmingPool();
         taskFrameManager = new TaskFrameManager();
 
@@ -168,7 +162,14 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     @Override
     public ArrayList<JFrame> getExternalFrames()
     {
-        return new ArrayList<JFrame>(externalFrames);
+        final ArrayList<JFrame> result = new ArrayList<JFrame>();
+        final Window[] windows = Window.getWindows();
+
+        for (Window w : windows)
+            if (w instanceof JFrame)
+                result.add((JFrame) w);
+
+        return result;
     }
 
     /**
@@ -291,11 +292,6 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         return mainFrame.getApplicationMenu();
     }
 
-    // public MainMenuBar getMainMenuBar()
-    // {
-    // return mainMenuBar;
-    // }
-
     @Override
     public TaskFrameManager getTaskWindowManager()
     {
@@ -311,16 +307,18 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         return null;
     }
 
+    @Deprecated
     @Override
     public void registerExternalFrame(JFrame frame)
     {
-        externalFrames.add(frame);
+
     }
 
+    @Deprecated
     @Override
     public void unRegisterExternalFrame(JFrame frame)
     {
-        externalFrames.remove(frame);
+
     }
 
     @Override
@@ -370,13 +368,6 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         else
             viewers.get(viewers.size() - 1).requestFocus();
     }
-
-    // // FIXME : a mettre dans un stream Plugin Manager
-    // @Override
-    // public void registerStreamPlugin(PluginStreamGenerator pluginStreamGenerator)
-    // {
-    // pluginStreamGeneratorList.add(pluginStreamGenerator);
-    // }
 
     @Override
     public MainFrame getFrame()

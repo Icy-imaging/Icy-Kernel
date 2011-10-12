@@ -140,7 +140,7 @@ class ARGBImageBuilder
 
                 // update output image buffer
                 final Scaler[] scalers = lut.getScalers();
-                final boolean signed = image.getIcyColorModel().isSignedDataType();
+                final boolean signed = image.getIcyColorModel().getDataType_().isSigned();
 
                 // scale component values
                 for (int comp = 0; comp < numComponents; comp++)

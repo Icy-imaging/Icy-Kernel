@@ -29,13 +29,15 @@ import icy.image.colormodel.IcyColorModelEvent;
 import icy.image.colormodel.IcyColorModelListener;
 import icy.image.colorspace.IcyColorSpace;
 import icy.image.lut.LUT;
+import icy.math.ArrayMath;
 import icy.math.MathUtil;
 import icy.math.Scaler;
+import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
 import icy.type.collection.array.Array2DUtil;
-import icy.type.collection.array.ArrayConvert;
 import icy.type.collection.array.ArrayUtil;
+import icy.type.collection.array.ByteArrayConvert;
 
 import java.awt.Dimension;
 import java.awt.Point;
@@ -239,15 +241,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 break;
         }
 
-        // convert initial data type in our data type and sign
-        final int transfertType = temp.getColorModel().getTransferType();
-        final int dataType = TypeUtil.dataBufferTypeToDataType(transfertType);
-        final boolean signed = TypeUtil.isSignedDataBufferType(transfertType);
+        // convert initial data type in our data type
+        final DataType dataType = DataType.getDataTypeFromDataBufferType(temp.getColorModel().getTransferType());
         // get number of components
         final int numComponents = temp.getRaster().getNumBands();
 
         // create a compatible image in our format
-        final IcyBufferedImage result = new IcyBufferedImage(w, h, numComponents, dataType, signed);
+        final IcyBufferedImage result = new IcyBufferedImage(w, h, numComponents, dataType);
 
         // copy data from the source image
         result.copyData(temp);
@@ -286,10 +286,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             return createFrom(imageList);
         }
 
-        final int pixelType = reader.getPixelType();
-        final int dataType = TypeUtil.formatToolsTypeToDataType(pixelType);
-        final boolean signed = TypeUtil.isSignedFormatToolsType(pixelType);
-
+        // convert in our data type
+        final DataType dataType = DataType.getDataTypeFromFormatToolsType(reader.getPixelType());
+        // prepare informations
         final int sizeX = reader.getSizeX();
         final int sizeY = reader.getSizeY();
         final int sizeXY = sizeX * sizeY;
@@ -300,7 +299,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         final boolean interleaved = reader.isInterleaved();
         final boolean little = reader.isLittleEndian();
 
-        // System.out.println("Opening image " + TypeUtil.toString(dataType, signed));
+        // System.out.println("Opening image " + dataType);
         // System.out.println("Size X*Y*C : " + sizeX + "*" + sizeY + "*" + sizeC);
         // System.out.println("Effective C : " + effSizeC + "     RGB Channel : " + rgbChanCount);
         // System.out.println("Indexed : " + Boolean.toString(indexed) + "    Interleaved : "
@@ -328,8 +327,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             {
                 for (int sc = 0; sc < rgbChanCount; sc++)
                 {
-                    ArrayConvert.byteArrayTo(byteData, inOffset, rgbChanCount, data[c + sc], 0, 1, componentByteLen,
-                            little);
+                    ByteArrayConvert.byteArrayTo(byteData, inOffset, rgbChanCount, data[c + sc], 0, 1,
+                            componentByteLen, little);
                     inOffset++;
                 }
             }
@@ -337,7 +336,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             {
                 for (int sc = 0; sc < rgbChanCount; sc++)
                 {
-                    ArrayConvert.byteArrayTo(byteData, inOffset, 1, data[c + sc], 0, 1, componentByteLen, little);
+                    ByteArrayConvert.byteArrayTo(byteData, inOffset, 1, data[c + sc], 0, 1, componentByteLen, little);
                     inOffset += componentByteLen;
                 }
             }
@@ -351,9 +350,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 boolean ok = false;
 
                 // only 8 bits and 16 bits lookup table supported
-                switch (dataType)
+                switch (dataType.getJavaType())
                 {
-                    case TypeUtil.TYPE_BYTE:
+                    case BYTE:
                     {
                         final byte[][] maps = reader.get8BitLookupTable();
 
@@ -366,7 +365,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                         break;
                     }
 
-                    case TypeUtil.TYPE_SHORT:
+                    case SHORT:
                     {
                         final short[][] maps = reader.get16BitLookupTable();
 
@@ -387,7 +386,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             }
         }
 
-        final IcyBufferedImage result = new IcyBufferedImage(sizeX, sizeY, data, signed);
+        final IcyBufferedImage result = new IcyBufferedImage(sizeX, sizeY, data, dataType.isSigned());
 
         if (indexed)
         {
@@ -424,7 +423,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     static public IcyBufferedImage createEmptyImage(int width, int height, IcyColorModel cm)
     {
-        return new IcyBufferedImage(width, height, cm.getNumComponents(), cm.getDataType(), cm.isSignedDataType());
+        return new IcyBufferedImage(width, height, cm.getNumComponents(), cm.getDataType_());
     }
 
     @SuppressWarnings("unused")
@@ -456,11 +455,35 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     @SuppressWarnings("unused")
     private static final int TYPE_BYTE_INDEXED = 13;
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static int TYPE_BYTE = TypeUtil.TYPE_BYTE;
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static int TYPE_DOUBLE = TypeUtil.TYPE_DOUBLE;
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static int TYPE_FLOAT = TypeUtil.TYPE_FLOAT;
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static int TYPE_INT = TypeUtil.TYPE_INT;
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static int TYPE_SHORT = TypeUtil.TYPE_SHORT;
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static int TYPE_UNDEFINED = TypeUtil.TYPE_UNDEFINED;
 
     /**
@@ -534,7 +557,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public IcyBufferedImage(int width, int height, Object[] data, boolean signed)
     {
-        this(IcyColorModel.createInstance(data.length, TypeUtil.getDataType(data[0]), signed), data, width, height);
+        this(IcyColorModel.createInstance(data.length, ArrayUtil.getDataType(data[0], signed)), data, width, height);
     }
 
     /**
@@ -562,24 +585,26 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * @param height
      * @param numComponents
      * @param dataType
-     *        refer to icy.type.TypeUtil
-     * @param signed
-     *        use signed data for data type
+     *        image data type {@link DataType}
      */
+    public IcyBufferedImage(int width, int height, int numComponents, DataType dataType)
+    {
+        this(IcyColorModel.createInstance(numComponents, dataType), width, height);
+    }
+
+    /**
+     * @deprecated use {@link #IcyBufferedImage(int, int, int, DataType)} instead
+     */
+    @Deprecated
     public IcyBufferedImage(int width, int height, int numComponents, int dataType, boolean signed)
     {
         this(IcyColorModel.createInstance(numComponents, dataType, signed), width, height);
     }
 
     /**
-     * Build a IcyBufferedImage with specified width, height, number of component and dataType<br>
-     * 
-     * @param width
-     * @param height
-     * @param numComponents
-     * @param dataType
-     *        (unsigned) refer to icy.type.TypeUtil
+     * @deprecated use {@link #IcyBufferedImage(int, int, int, DataType)} instead
      */
+    @Deprecated
     public IcyBufferedImage(int width, int height, int numComponents, int dataType)
     {
         this(IcyColorModel.createInstance(numComponents, dataType, false), width, height);
@@ -673,20 +698,20 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        scaler for scaling internal data during conversion
      * @return converted image
      */
-    public IcyBufferedImage convertToType(int dataType, boolean signed, Scaler scaler)
+    public IcyBufferedImage convertToType(DataType dataType, Scaler scaler)
     {
-        final int srcDataType = getDataType();
-        final boolean srcSigned = isSignedDataType();
+        final DataType srcDataType = getDataType_();
 
         // no conversion needed
-        if ((srcDataType == dataType) && (srcSigned == signed) && (scaler.isNull()))
+        if ((srcDataType == dataType) && scaler.isNull())
             return this;
         // can't convert
-        if ((srcDataType == DataBuffer.TYPE_UNDEFINED) || (dataType == DataBuffer.TYPE_UNDEFINED))
+        if ((srcDataType == DataType.UNDEFINED) || (dataType == DataType.UNDEFINED))
             return null;
 
+        final boolean srcSigned = srcDataType.isSigned();
         final int numComponents = getNumComponents();
-        final IcyBufferedImage result = new IcyBufferedImage(getWidth(), getHeight(), numComponents, dataType, signed);
+        final IcyBufferedImage result = new IcyBufferedImage(getWidth(), getHeight(), numComponents, dataType);
 
         for (int c = 0; c < numComponents; c++)
         {
@@ -714,6 +739,15 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
+     * @deprecated use {@link #convertToType(DataType, Scaler)} instead
+     */
+    @Deprecated
+    public IcyBufferedImage convertToType(int dataType, boolean signed, Scaler scaler)
+    {
+        return convertToType(DataType.getDataType(dataType, signed), scaler);
+    }
+
+    /**
      * Return an image of specified type from current image<br>
      * Create a copy if conversion needed else return current image
      * 
@@ -723,20 +757,29 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        indicate if we want to scale data value according to data type range
      * @return converted image
      */
-    public IcyBufferedImage convertToType(int dataType, boolean signed, boolean rescale)
+    public IcyBufferedImage convertToType(DataType dataType, boolean rescale)
     {
         final double boundsSrc[] = getGlobalComponentAbsBounds();
         final double boundsDst[];
 
         if (rescale)
-            boundsDst = TypeUtil.getDefaultBounds(dataType, signed);
+            boundsDst = dataType.getBounds();
         else
             boundsDst = boundsSrc;
 
         // use scaler to scale data
         final Scaler scaler = new Scaler(boundsSrc[0], boundsSrc[1], boundsDst[0], boundsDst[1], false);
 
-        return convertToType(dataType, signed, scaler);
+        return convertToType(dataType, scaler);
+    }
+
+    /**
+     * @deprecated use {@link #convertToType(DataType, boolean)} instead
+     */
+    @Deprecated
+    public IcyBufferedImage convertToType(int dataType, boolean signed, boolean rescale)
+    {
+        return convertToType(DataType.getDataType(dataType, signed), rescale);
     }
 
     /**
@@ -796,7 +839,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     {
         // create a compatible image
         final IcyBufferedImage result = new IcyBufferedImage(getWidth(), getHeight(), getNumComponents(),
-                getDataType(), isSignedDataType());
+                getDataType_());
         // copy data from this image
         result.copyData(this);
 
@@ -813,12 +856,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         // adjust rectangle
         final Rectangle r = new Rectangle(x, y, w, h).intersection(getBounds());
 
-        final boolean signed = isSignedDataType();
+        final DataType dataType = getDataType_();
+        final boolean signed = dataType.isSigned();
         final int sizeC = getSizeC();
         final int dstSizeX = r.width;
         final int dstSizeY = r.height;
 
-        final IcyBufferedImage result = new IcyBufferedImage(dstSizeX, dstSizeY, sizeC, getDataType(), signed);
+        final IcyBufferedImage result = new IcyBufferedImage(dstSizeX, dstSizeY, sizeC, dataType);
 
         final int srcSizeX = getSizeX();
 
@@ -1201,15 +1245,17 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     private double[] getCalculatedComponentBounds(int component, boolean adjustByteToo)
     {
-        // return default bounds ([0..255] / [-128..127]) for BYTE data type
-        if ((!adjustByteToo) && (getDataType() == DataBuffer.TYPE_BYTE))
-            return getIcyColorModel().getDefaultComponentBounds();
+        final DataType dataType = getDataType_();
 
-        final boolean signed = isSignedDataType();
+        // return default bounds ([0..255] / [-128..127]) for BYTE data type
+        if ((!adjustByteToo) && (dataType.getJavaType() == DataType.BYTE))
+            return dataType.getBounds();
+
+        final boolean signed = dataType.isSigned();
         final Object data = getDataXY(component);
 
-        final double min = MathUtil.min(data, signed);
-        final double max = MathUtil.max(data, signed);
+        final double min = ArrayMath.min(data, signed);
+        final double max = ArrayMath.max(data, signed);
 
         return new double[] {min, max};
     }
@@ -1231,20 +1277,23 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         if (max < 0d)
             max = 0d;
 
-        switch (getDataType())
-        {
-            case DataBuffer.TYPE_BYTE:
-                // return default bounds ([0..255] / [-128..127])
-                return getIcyColorModel().getDefaultComponentBounds();
+        final DataType dataType = getDataType_();
 
-            case DataBuffer.TYPE_SHORT:
-            case DataBuffer.TYPE_INT:
-                min = MathUtil.prevPow2((long) min);
+        switch (dataType.getJavaType())
+        {
+            case BYTE:
+                // return default bounds ([0..255] / [-128..127])
+                return dataType.getBounds();
+
+            case SHORT:
+            case INT:
+            case LONG:
+                min = MathUtil.prevPow2((long) min + 1);
                 max = MathUtil.nextPow2Mask((long) max);
                 break;
 
-            case DataBuffer.TYPE_FLOAT:
-            case DataBuffer.TYPE_DOUBLE:
+            case FLOAT:
+            case DOUBLE:
                 // if [min..max] is included in [-1..1]
                 if ((min >= -1d) && (max <= 1d))
                 {
@@ -1352,97 +1401,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Set component absolute minimum value
-     */
-    public void setComponentAbsMinValue(int component, double min)
-    {
-        getIcyColorModel().setComponentAbsMinValue(component, min);
-    }
-
-    /**
-     * Set component absolute maximum value
-     */
-    public void setComponentAbsMaxValue(int component, double max)
-    {
-        getIcyColorModel().setComponentAbsMaxValue(component, max);
-    }
-
-    /**
-     * Set component absolute bounds (min and max values)
-     */
-    public void setComponentAbsBounds(int component, double[] bounds)
-    {
-        getIcyColorModel().setComponentAbsBounds(component, bounds);
-    }
-
-    /**
-     * Set component absolute bounds (min and max values)
-     */
-    public void setComponentAbsBounds(int component, double min, double max)
-    {
-        getIcyColorModel().setComponentAbsBounds(component, min, max);
-    }
-
-    /**
-     * Set components absolute bounds (min and max values)
-     */
-    public void setComponentsAbsBounds(double[][] bounds)
-    {
-        getIcyColorModel().setComponentsAbsBounds(bounds);
-    }
-
-    /**
-     * Set component user minimum value
-     */
-    public void setComponentUserMinValue(int component, double min)
-    {
-        getIcyColorModel().setComponentUserMinValue(component, min);
-    }
-
-    /**
-     * Set component user maximum value
-     */
-    public void setComponentUserMaxValue(int component, double max)
-    {
-        getIcyColorModel().setComponentUserMaxValue(component, max);
-    }
-
-    /**
-     * Set component user bounds (min and max values)
-     */
-    public void setComponentUserBounds(int component, double[] bounds)
-    {
-        getIcyColorModel().setComponentUserBounds(component, bounds);
-    }
-
-    /**
-     * Set component user bounds (min and max values)
-     */
-    public void setComponentUserBounds(int component, double min, double max)
-    {
-        getIcyColorModel().setComponentUserBounds(component, min, max);
-    }
-
-    /**
-     * Set components user bounds (min and max values)
-     */
-    public void setComponentsUserBounds(double[][] bounds)
-    {
-        getIcyColorModel().setComponentsUserBounds(bounds);
-    }
-
-    /**
      * Update components bounds (min and max values)
      */
     public void updateComponentsBounds(boolean updateUserBounds, boolean adjustByteToo)
     {
         final int numComponents = getNumComponents();
+        final IcyColorModel cm = getIcyColorModel();
 
         for (int component = 0; component < numComponents; component++)
         {
             final double[] bounds = getCalculatedComponentBounds(component, adjustByteToo);
 
-            setComponentAbsBounds(component, adjustComponentBounds(bounds));
+            cm.setComponentAbsBounds(component, adjustComponentBounds(bounds));
+
             if (updateUserBounds)
             {
                 final IcyColorModel colorModel = getIcyColorModel();
@@ -1453,7 +1424,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
                     // we do user bounds adjustment on "non ALPHA" component only
                     if (colorMap.getType() != IcyColorMapType.ALPHA)
-                        setComponentUserBounds(component, bounds);
+                        cm.setComponentUserBounds(component, bounds);
                 }
             }
         }
@@ -1502,26 +1473,38 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Return the dataType
+     * Return the data type of this image
      * 
      * @return dataType
+     * @see DataType
      */
+    public DataType getDataType_()
+    {
+        return getIcyColorModel().getDataType_();
+    }
+
+    /**
+     * @deprecated use {@link #getDataType_()} instead
+     */
+    @Deprecated
     public int getDataType()
     {
         return getIcyColorModel().getDataType();
     }
 
     /**
-     * Return true if image is float typed
+     * @deprecated use {@link #getDataType_()} instead
      */
+    @Deprecated
     public boolean isFloatDataType()
     {
         return getIcyColorModel().isFloatDataType();
     }
 
     /**
-     * Return true if image type is signed
+     * @deprecated use {@link #getDataType_()} instead
      */
+    @Deprecated
     public boolean isSignedDataType()
     {
         return getIcyColorModel().isSignedDataType();
@@ -1606,23 +1589,18 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public Object getDataXYC()
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataXYCAsByte();
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataXYCAsShort();
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataXYCAsInt();
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataXYCAsFloat();
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataXYCAsDouble();
-
             default:
                 return null;
         }
@@ -1633,23 +1611,18 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public Object getDataXY(int c)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataXYAsByte(c);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataXYAsShort(c);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataXYAsInt(c);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataXYAsFloat(c);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataXYAsDouble(c);
-
             default:
                 return null;
         }
@@ -1669,23 +1642,18 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public Object getDataCopyXYC(Object out, int offset)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataCopyXYCAsByte((byte[]) out, offset);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataCopyXYCAsShort((short[]) out, offset);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataCopyXYCAsInt((int[]) out, offset);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataCopyXYCAsFloat((float[]) out, offset);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataCopyXYCAsDouble((double[]) out, offset);
-
             default:
                 return null;
         }
@@ -1705,23 +1673,18 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public Object getDataCopyXY(int c, Object out, int offset)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataCopyXYAsByte(c, (byte[]) out, offset);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataCopyXYAsShort(c, (short[]) out, offset);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataCopyXYAsInt(c, (int[]) out, offset);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataCopyXYAsFloat(c, (float[]) out, offset);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataCopyXYAsDouble(c, (double[]) out, offset);
-
             default:
                 return null;
         }
@@ -1741,23 +1704,18 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public Object getDataCopyCXY(Object out, int offset)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataCopyCXYAsByte((byte[]) out, offset);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataCopyCXYAsShort((short[]) out, offset);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataCopyCXYAsInt((int[]) out, offset);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataCopyCXYAsFloat((float[]) out, offset);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataCopyCXYAsDouble((double[]) out, offset);
-
             default:
                 return null;
         }
@@ -1778,23 +1736,18 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public Object getDataCopyC(int x, int y, Object out, int offset)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataCopyCAsByte(x, y, (byte[]) out, offset);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataCopyCAsShort(x, y, (short[]) out, offset);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataCopyCAsInt(x, y, (int[]) out, offset);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataCopyCAsFloat(x, y, (float[]) out, offset);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataCopyCAsDouble(x, y, (double[]) out, offset);
-
             default:
                 return null;
         }
@@ -1805,7 +1758,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public void setDataXY(int c, Object values)
     {
-        ArrayUtil.arrayToArray(values, getDataXY(c), getIcyColorModel().isSignedDataType());
+        ArrayUtil.arrayToArray(values, getDataXY(c), getDataType_().isSigned());
 
         // notify data changed
         dataChanged();
@@ -1816,25 +1769,25 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public void setDataC(int x, int y, Object values)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 setDataCAsByte(x, y, (byte[]) values);
                 break;
 
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 setDataCAsShort(x, y, (short[]) values);
                 break;
 
-            case TypeUtil.TYPE_INT:
+            case INT:
                 setDataCAsInt(x, y, (int[]) values);
                 break;
 
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 setDataCAsFloat(x, y, (float[]) values);
                 break;
 
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 setDataCAsDouble(x, y, (double[]) values);
                 break;
         }
@@ -2611,7 +2564,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public double getData(int x, int y, int c)
     {
-        return Array1DUtil.getValue(getDataXY(c), getOffset(x, y), getDataType(), isSignedDataType());
+        return Array1DUtil.getValue(getDataXY(c), getOffset(x, y), getDataType_());
     }
 
     /**
@@ -2620,7 +2573,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public void setData(int x, int y, int c, double value)
     {
-        Array1DUtil.setValue(getDataXY(c), getOffset(x, y), getDataType(), value);
+        Array1DUtil.setValue(getDataXY(c), getOffset(x, y), getDataType_(), value);
 
         // notify data changed
         dataChanged();
@@ -2782,7 +2735,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         if ((w == 0) || (h == 0))
             return;
 
-        final boolean signed = srcImage.getIcyColorModel().isSignedDataType();
+        final boolean signed = srcImage.getDataType_().isSigned();
 
         final Object src = srcImage.getDataXY(srcComp);
         final Object dst = getDataXY(dstComp);
@@ -2816,7 +2769,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         final ComponentSampleModel sm = (ComponentSampleModel) srcImage.getSampleModel();
 
         // not compatible sample model
-        if (TypeUtil.dataBufferTypeToDataType(sm.getDataType()) != getDataType())
+        if (DataType.getDataTypeFromDataBufferType(sm.getDataType()) != getDataType_())
             return false;
 
         final WritableRaster src_wr = srcImage.getRaster();
@@ -2839,9 +2792,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             final int bank = indices[band];
             final int offset = band_offsets[band] + bank_offsets[bank] - decOffsetSrc;
 
-            switch (getDataType())
+            switch (getDataType_().getJavaType())
             {
-                case TypeUtil.TYPE_BYTE:
+                case BYTE:
                 {
                     final byte[] src;
                     final byte[] dst = ((DataBufferByte) dst_db).getData(band);
@@ -2872,7 +2825,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                     break;
                 }
 
-                case TypeUtil.TYPE_SHORT:
+                case SHORT:
                 {
                     final short[] src;
                     final short[] dst;
@@ -2910,7 +2863,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                     break;
                 }
 
-                case TypeUtil.TYPE_INT:
+                case INT:
                 {
                     final int[] src;
                     final int[] dst = ((DataBufferInt) dst_db).getData(band);
@@ -2941,7 +2894,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                     break;
                 }
 
-                case TypeUtil.TYPE_FLOAT:
+                case FLOAT:
                 {
                     final float[] src = ((DataBufferFloat) src_db).getData(bank);
                     final float[] dst = ((DataBufferFloat) dst_db).getData(band);
@@ -2966,7 +2919,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                     break;
                 }
 
-                case TypeUtil.TYPE_DOUBLE:
+                case DOUBLE:
                 {
                     final double[] src = ((DataBufferDouble) src_db).getData(bank);
                     final double[] dst = ((DataBufferDouble) dst_db).getData(band);
@@ -3109,10 +3062,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public byte[] getRawData(int c, byte[] out, int offset, int step, boolean little)
     {
         // alloc output array if needed
-        final byte[] result = Array1DUtil.allocIfNull(out,
-                offset + (getSizeX() * getSizeY() * TypeUtil.sizeOf(getDataType())));
+        final byte[] result = Array1DUtil.allocIfNull(out, offset
+                + (getSizeX() * getSizeY() * getDataType_().getSize()));
 
-        return ArrayConvert.toByteArray(getDataXY(c), result, offset, step, little);
+        return ByteArrayConvert.toByteArray(getDataXY(c), result, offset, step, little);
     }
 
     /**
@@ -3161,7 +3114,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     {
         final int sizeXY = getSizeX() * getSizeY();
         final int sizeC = getSizeC();
-        final int sizeType = TypeUtil.sizeOf(getDataType());
+        final int sizeType = getDataType_().getSize();
 
         // alloc output array if needed
         final byte[] result = Array1DUtil.allocIfNull(out, offset + (sizeC * sizeXY * sizeType));
@@ -3220,7 +3173,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         if (data == null)
             return;
 
-        ArrayConvert.byteArrayTo(data, offset, step, getDataXY(c), little);
+        ByteArrayConvert.byteArrayTo(data, offset, step, getDataXY(c), little);
 
         // notify data changed
         dataChanged();
@@ -3277,7 +3230,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
         final int sizeXY = getSizeX() * getSizeY();
         final int sizeC = getSizeC();
-        final int sizeType = TypeUtil.sizeOf(getDataType());
+        final int sizeType = getDataType_().getSize();
 
         beginUpdate();
         try

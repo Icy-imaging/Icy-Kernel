@@ -26,8 +26,8 @@ public class ImagePosition implements Comparable<ImagePosition>
     public static final char T_ID = 'T';
     public static final char Z_ID = 'Z';
 
-    private int t;
-    private int z;
+    protected int t;
+    protected int z;
 
     /**
      * @param t
@@ -48,8 +48,20 @@ public class ImagePosition implements Comparable<ImagePosition>
 
     public void copyFrom(ImagePosition ip)
     {
-        t = ip.getT();
-        z = ip.getZ();
+        t = ip.t;
+        z = ip.z;
+    }
+
+    public void switchLeft()
+    {
+        t = z;
+        z = 0;
+    }
+
+    public void switchRight()
+    {
+        z = t;
+        t = 0;
     }
 
     /**
@@ -161,12 +173,12 @@ public class ImagePosition implements Comparable<ImagePosition>
             case T_ID:
                 if (t == -1)
                     return false;
-                return (ip.getT() == t);
+                return (ip.t == t);
 
             case Z_ID:
                 if ((t == -1) || (z == -1))
                     return false;
-                return (ip.getT() == t) && (ip.getZ() == z);
+                return (ip.t == t) && (ip.z == z);
         }
 
         return false;
@@ -175,8 +187,8 @@ public class ImagePosition implements Comparable<ImagePosition>
     @Override
     public int compareTo(ImagePosition ip)
     {
-        final int ot = ip.getT();
-        final int oz = ip.getZ();
+        final int ot = ip.t;
+        final int oz = ip.z;
 
         if (t > ot)
             return 1;

@@ -109,7 +109,16 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            new Viewer(sequence);
+            ThreadUtil.invokeLater(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    final Viewer v = new Viewer(sequence);
+                    // copy LUT
+                    v.getLut().copyFrom(getLut());
+                }
+            });
         }
     }
 
@@ -661,7 +670,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         toolBar.add(switchStateButton);
     }
 
-    private void refreshLockCombo()
+    void refreshLockCombo()
     {
         lockComboBox.setEnabled(isSynchronizedViewSupported());
 
@@ -1232,7 +1241,14 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 break;
 
             case SYNC_CHANGED:
-                refreshLockCombo();
+                ThreadUtil.invokeLater(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        refreshLockCombo();
+                    }
+                });
                 break;
         }
     }

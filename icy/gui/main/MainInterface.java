@@ -74,8 +74,10 @@ public interface MainInterface
 
     public abstract TaskFrameManager getTaskWindowManager();
 
+    @Deprecated
     public abstract void registerExternalFrame(JFrame frame);
 
+    @Deprecated
     public abstract void unRegisterExternalFrame(JFrame frame);
 
     public abstract void registerPlugin(Plugin plugin);
@@ -86,7 +88,7 @@ public interface MainInterface
 
     public abstract void unRegisterViewer(Viewer viewer);
 
-    //public abstract void registerStreamPlugin(PluginStreamGenerator pluginStreamGenerator);
+    // public abstract void registerStreamPlugin(PluginStreamGenerator pluginStreamGenerator);
 
     public abstract MainFrame getFrame();
 

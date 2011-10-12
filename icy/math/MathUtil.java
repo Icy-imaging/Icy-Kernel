@@ -18,13 +18,20 @@
  */
 package icy.math;
 
-import icy.type.TypeUtil;
-
 /**
  * @author stephane
  */
 public class MathUtil
 {
+    public static final double POW2_8_DOUBLE = Math.pow(2, 8);
+    public static final float POW2_8_FLOAT = (float) POW2_8_DOUBLE;
+    public static final double POW2_16_DOUBLE = Math.pow(2, 16);
+    public static final float POW2_16_FLOAT = (float) POW2_16_DOUBLE;
+    public static final double POW2_32_DOUBLE = Math.pow(2, 32);
+    public static final float POW2_32_FLOAT = (float) POW2_32_DOUBLE;
+    public static final double POW2_64_DOUBLE = Math.pow(2, 64);
+    public static final float POW2_64_FLOAT = (float) POW2_64_DOUBLE;
+
     /**
      * Return the specified value as "bytes" string :<br>
      * 1024 --> "1 KB"<br>
@@ -62,12 +69,12 @@ public class MathUtil
      */
     public static void normalize(float[] array)
     {
-        final float max = max(array);
+        final float max = ArrayMath.max(array);
         if (max != 0)
             divide(array, max);
         else
         {
-            final float min = min(array);
+            final float min = ArrayMath.min(array);
             if (min != 0)
                 divide(array, min);
         }
@@ -81,12 +88,12 @@ public class MathUtil
      */
     public static void normalize(double[] array)
     {
-        final double max = max(array);
+        final double max = ArrayMath.max(array);
         if (max != 0)
             divide(array, max);
         else
         {
-            final double min = min(array);
+            final double min = ArrayMath.min(array);
             if (min != 0)
                 divide(array, min);
         }
@@ -255,362 +262,112 @@ public class MathUtil
     }
 
     /**
-     * Find the minimum value of a generic array
-     * 
-     * @param array
-     *        an array
-     * @param signed
-     *        signed / unsigned flag
-     * @return the min value of the array
+     * @deprecated use {@link ArrayMath#min(Object, boolean)} instead
      */
+    @Deprecated
     public static double min(Object array, boolean signed)
     {
-        switch (TypeUtil.getDataType(array))
-        {
-            case TypeUtil.TYPE_BYTE:
-                return min((byte[]) array, signed);
-
-            case TypeUtil.TYPE_SHORT:
-                return min((short[]) array, signed);
-
-            case TypeUtil.TYPE_INT:
-                return min((int[]) array, signed);
-
-            case TypeUtil.TYPE_FLOAT:
-                return min((float[]) array);
-
-            case TypeUtil.TYPE_DOUBLE:
-                return min((double[]) array);
-
-            default:
-                return 0;
-        }
+        return ArrayMath.min(array, signed);
     }
 
     /**
-     * Find the minimum value of an array
-     * 
-     * @param array
-     *        an array
-     * @param signed
-     *        signed / unsigned flag
-     * @return the min value of the array
+     * @deprecated use {@link ArrayMath#min(byte[], boolean)} instead
      */
+    @Deprecated
     public static int min(byte[] array, boolean signed)
     {
-        final int len = array.length;
-
-        if (signed)
-        {
-            byte min = array[0];
-
-            for (int i = 1; i < len; i++)
-                if (array[i] < min)
-                    min = array[i];
-
-            return min;
-        }
-
-        int min = array[0] & 0XFF;
-
-        for (int i = 1; i < len; i++)
-        {
-            final int value = array[i] & 0XFF;
-            if (value < min)
-                min = value;
-        }
-
-        return min;
+        return ArrayMath.min(array, signed);
     }
 
     /**
-     * Find the minimum value of an array
-     * 
-     * @param array
-     *        an array
-     * @param signed
-     *        signed / unsigned flag
-     * @return the min value of the array
+     * @deprecated use {@link ArrayMath#min(short[], boolean)} instead
      */
+    @Deprecated
     public static int min(short[] array, boolean signed)
     {
-        final int len = array.length;
-
-        if (signed)
-        {
-            short min = array[0];
-
-            for (int i = 1; i < len; i++)
-                if (array[i] < min)
-                    min = array[i];
-
-            return min;
-        }
-
-        int min = array[0] & 0XFFFF;
-
-        for (int i = 1; i < len; i++)
-        {
-            final int value = array[i] & 0xFFFF;
-            if (value < min)
-                min = value;
-        }
-
-        return min;
+        return ArrayMath.min(array, signed);
     }
 
     /**
-     * Find the minimum value of an array
-     * 
-     * @param array
-     *        an array
-     * @param signed
-     *        signed / unsigned flag
-     * @return the min value of the array
+     * @deprecated use {@link ArrayMath#min(int[], boolean)} instead
      */
+    @Deprecated
     public static long min(int[] array, boolean signed)
     {
-        final int len = array.length;
-
-        if (signed)
-        {
-            int min = array[0];
-
-            for (int i = 1; i < len; i++)
-                if (array[i] < min)
-                    min = array[i];
-
-            return min;
-        }
-
-        long min = array[0] & 0xFFFFFFFFL;
-
-        for (int i = 1; i < len; i++)
-        {
-            final long value = array[i] & 0xFFFFFFFFL;
-            if (value < min)
-                min = value;
-        }
-
-        return min;
+        return ArrayMath.min(array, signed);
     }
 
     /**
-     * Find the minimum value of an array
-     * 
-     * @param array
-     *        an array
-     * @return the min value of the array
+     * @deprecated use {@link ArrayMath#min(float[])} instead
      */
+    @Deprecated
     public static float min(float[] array)
     {
-        final int len = array.length;
-        float min = array[0];
-
-        for (int i = 0; i < len; i++)
-            if (array[i] < min)
-                min = array[i];
-
-        return min;
+        return ArrayMath.min(array);
     }
 
     /**
-     * Find the minimum value of an array
-     * 
-     * @param array
-     *        an array
-     * @return the min value of the array
+     * @deprecated use {@link ArrayMath#min(double[])} instead
      */
+    @Deprecated
     public static double min(double[] array)
     {
-        final int len = array.length;
-        double min = array[0];
+        return ArrayMath.min(array);
 
-        for (int i = 0; i < len; i++)
-            if (array[i] < min)
-                min = array[i];
-
-        return min;
     }
 
     /**
-     * Find the maximum value of a generic array
-     * 
-     * @param array
-     *        an array
-     * @param signed
-     *        signed / unsigned flag
-     * @return the max value of the array
+     * @deprecated use {@link ArrayMath#max(Object, boolean)} instead
      */
+    @Deprecated
     public static double max(Object array, boolean signed)
     {
-        switch (TypeUtil.getDataType(array))
-        {
-            case TypeUtil.TYPE_BYTE:
-                return max((byte[]) array, signed);
-
-            case TypeUtil.TYPE_SHORT:
-                return max((short[]) array, signed);
-
-            case TypeUtil.TYPE_INT:
-                return max((int[]) array, signed);
-
-            case TypeUtil.TYPE_FLOAT:
-                return max((float[]) array);
-
-            case TypeUtil.TYPE_DOUBLE:
-                return max((double[]) array);
-
-            default:
-                return 0;
-        }
+        return ArrayMath.max(array, signed);
     }
 
     /**
-     * Find the maximum value of an array
-     * 
-     * @param array
-     *        an array
-     * @param signed
-     *        signed / unsigned flag
-     * @return the max value of the array
+     * @deprecated use {@link ArrayMath#max(byte[], boolean)} instead
      */
+    @Deprecated
     public static int max(byte[] array, boolean signed)
     {
-        final int len = array.length;
-
-        if (signed)
-        {
-            byte max = array[0];
-
-            for (int i = 1; i < len; i++)
-                if (array[i] > max)
-                    max = array[i];
-
-            return max;
-        }
-
-        int max = array[0] & 0XFF;
-
-        for (int i = 1; i < len; i++)
-        {
-            final int value = array[i] & 0XFF;
-            if (value > max)
-                max = value;
-        }
-
-        return max;
-
+        return ArrayMath.max(array, signed);
     }
 
     /**
-     * Find the maximum value of an array
-     * 
-     * @param array
-     *        an array
-     * @param signed
-     *        signed / unsigned flag
-     * @return the max value of the array
+     * @deprecated use {@link ArrayMath#max(short[], boolean)} instead
      */
+    @Deprecated
     public static int max(short[] array, boolean signed)
     {
-        final int len = array.length;
-
-        if (signed)
-        {
-            short max = array[0];
-
-            for (int i = 1; i < len; i++)
-                if (array[i] > max)
-                    max = array[i];
-
-            return max;
-        }
-
-        int max = array[0] & 0XFFFF;
-
-        for (int i = 1; i < len; i++)
-        {
-            final int value = array[i] & 0XFFFF;
-            if (value > max)
-                max = value;
-        }
-
-        return max;
+        return ArrayMath.max(array, signed);
     }
 
     /**
-     * Find the maximum value of an array
-     * 
-     * @param array
-     *        an array
-     * @param signed
-     *        signed / unsigned flag
-     * @return the max value of the array
+     * @deprecated use {@link ArrayMath#max(int[], boolean)} instead
      */
+    @Deprecated
     public static long max(int[] array, boolean signed)
     {
-        final int len = array.length;
-
-        if (signed)
-        {
-            int max = array[0];
-
-            for (int i = 1; i < len; i++)
-                if (array[i] > max)
-                    max = array[i];
-
-            return max;
-        }
-
-        long max = array[0] & 0XFFFFFFFFL;
-
-        for (int i = 1; i < len; i++)
-        {
-            final long value = array[i] & 0XFFFFFFFFL;
-            if (value > max)
-                max = value;
-        }
-
-        return max;
+        return ArrayMath.max(array, signed);
     }
 
     /**
-     * Find the maximum value of an array
-     * 
-     * @param array
-     *        an array
-     * @return the max value of the array
+     * @deprecated use {@link ArrayMath#max(float[])} instead
      */
+    @Deprecated
     public static float max(float[] array)
     {
-        final int len = array.length;
-        float max = array[0];
-
-        for (int i = 0; i < len; i++)
-            if (array[i] > max)
-                max = array[i];
-
-        return max;
+        return ArrayMath.max(array);
     }
 
     /**
-     * Find the maximum value of an array
-     * 
-     * @param array
-     *        an array
-     * @return the max value of the array
+     * @deprecated use {@link ArrayMath#max(double[])} instead
      */
+    @Deprecated
     public static double max(double[] array)
     {
-        final int len = array.length;
-        double max = array[0];
-
-        for (int i = 0; i < len; i++)
-            if (array[i] > max)
-                max = array[i];
-
-        return max;
+        return ArrayMath.max(array);
     }
 
     /**

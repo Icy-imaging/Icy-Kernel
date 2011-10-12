@@ -44,6 +44,7 @@ import icy.sequence.SequenceEdit.ROIRemoveAll;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.thread.ThreadUtil;
+import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
 import icy.undo.IcyUndoManager;
@@ -67,17 +68,41 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
 {
     private static final String DEFAULT_NAME = "no name";
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static final int TYPE_BYTE = TypeUtil.TYPE_BYTE;
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static final int TYPE_DOUBLE = TypeUtil.TYPE_DOUBLE;
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static final int TYPE_FLOAT = TypeUtil.TYPE_FLOAT;
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static final int TYPE_INT = TypeUtil.TYPE_INT;
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static final int TYPE_SHORT = TypeUtil.TYPE_SHORT;
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static final int TYPE_UNDEFINED = TypeUtil.TYPE_UNDEFINED;
 
-    public static final String ID_RESOLUTION_X = "resolutionX";
-    public static final String ID_RESOLUTION_Y = "resolutionY";
-    public static final String ID_RESOLUTION_Z = "resolutionZ";
-    public static final String ID_RESOLUTION_T = "resolutionT";
+    public static final String ID_PIXELS_SIZE_X = "pixelSizeX";
+    public static final String ID_PIXELS_SIZE_Y = "pixelSizeY";
+    public static final String ID_PIXELS_SIZE_Z = "pixelSizeZ";
+    public static final String ID_PIXELS_SIZE_T = "pixelSizeT";
 
     /**
      * id generator
@@ -119,13 +144,13 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * X, Y, Z resolution (in mm)
      */
-    private double resolutionX;
-    private double resolutionY;
-    private double resolutionZ;
+    private double pixelSizeX;
+    private double pixelSizeY;
+    private double pixelSizeZ;
     /**
      * T resolution (in ms)
      */
-    private double resolutionT;
+    private double pixelSizeT;
     /**
      * automatic update of component absolute bounds
      */
@@ -173,10 +198,10 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
 
         name = DEFAULT_NAME;
         filename = null;
-        resolutionX = 1d;
-        resolutionY = 1d;
-        resolutionZ = 1d;
-        resolutionT = 1d;
+        pixelSizeX = 1d;
+        pixelSizeY = 1d;
+        pixelSizeZ = 1d;
+        pixelSizeT = 1d;
 
         volumetricImages = new TreeMap<Integer, VolumetricImage>();
         painters = new ArrayList<Painter>();
@@ -308,7 +333,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      *        indicate if we want to scale data value according to data type range
      * @return converted sequence
      */
-    public Sequence convertToType(int dataType, boolean signed, boolean rescale)
+    public Sequence convertToType(DataType dataType, boolean rescale)
     {
         final Sequence output = new Sequence();
 
@@ -316,7 +341,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         final double boundsDst[];
 
         if (rescale)
-            boundsDst = TypeUtil.getDefaultBounds(dataType, signed);
+            boundsDst = dataType.getBounds();
         else
             boundsDst = boundsSrc;
 
@@ -330,7 +355,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
             {
                 for (int z = 0; z < getSizeZ(); z++)
                 {
-                    final IcyBufferedImage converted = getImage(t, z).convertToType(dataType, signed, scaler);
+                    final IcyBufferedImage converted = getImage(t, z).convertToType(dataType, scaler);
 
                     // FIXME : why we did that ??
                     // this is not a good idea to force bounds when rescale = false
@@ -346,7 +371,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
                 }
             }
 
-            output.setName(getName() + " (" + TypeUtil.toString(output.getDataType()) + " data type)");
+            output.setName(getName() + " (" + output.getDataType_() + " data type)");
         }
         finally
         {
@@ -354,6 +379,15 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         }
 
         return output;
+    }
+
+    /**
+     * @deprecated use {@link #convertToType(DataType, boolean)} instead
+     */
+    @Deprecated
+    public Sequence convertToType(int dataType, boolean signed, boolean rescale)
+    {
+        return convertToType(DataType.getDataType(dataType, signed), rescale);
     }
 
     /**
@@ -498,82 +532,82 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return X pixel resolution (in mm)
+     * Return X pixel size (in mm)
      */
-    public double getResolutionX()
+    public double getPixelSizeX()
     {
-        return resolutionX;
+        return pixelSizeX;
     }
 
     /**
-     * Return Y pixel resolution (in mm)
+     * Return Y pixel size (in mm)
      */
-    public double getResolutionY()
+    public double getPixelSizeY()
     {
-        return resolutionY;
+        return pixelSizeY;
     }
 
     /**
-     * Return Z pixel resolution (in mm)
+     * Return Z pixel size (in mm)
      */
-    public double getResolutionZ()
+    public double getPixelSizeZ()
     {
-        return resolutionZ;
+        return pixelSizeZ;
     }
 
     /**
-     * Return T time resolution (in ms)
+     * Return T time size (in ms)
      */
-    public double getResolutionT()
+    public double getPixelSizeT()
     {
-        return resolutionT;
+        return pixelSizeT;
     }
 
     /**
-     * Set X pixel resolution
+     * Set X pixel size
      */
-    public void setResolutionX(double value)
+    public void setPixelSizeX(double value)
     {
-        if (resolutionX != value)
+        if (pixelSizeX != value)
         {
-            resolutionX = value;
-            metaChanged(ID_RESOLUTION_X);
+            pixelSizeX = value;
+            metaChanged(ID_PIXELS_SIZE_X);
         }
     }
 
     /**
-     * Set Y pixel resolution
+     * Set Y pixel size
      */
-    public void setResolutionY(double value)
+    public void setPixelSizeY(double value)
     {
-        if (resolutionY != value)
+        if (pixelSizeY != value)
         {
-            resolutionY = value;
-            metaChanged(ID_RESOLUTION_Y);
+            pixelSizeY = value;
+            metaChanged(ID_PIXELS_SIZE_Y);
         }
     }
 
     /**
-     * Set Z pixel resolution
+     * Set Z pixel size
      */
-    public void setResolutionZ(double value)
+    public void setPixelSizeZ(double value)
     {
-        if (resolutionZ != value)
+        if (pixelSizeZ != value)
         {
-            resolutionZ = value;
-            metaChanged(ID_RESOLUTION_Z);
+            pixelSizeZ = value;
+            metaChanged(ID_PIXELS_SIZE_Z);
         }
     }
 
     /**
      * Set T time resolution
      */
-    public void setResolutionT(double value)
+    public void setPixelSizeT(double value)
     {
-        if (resolutionT != value)
+        if (pixelSizeT != value)
         {
-            resolutionT = value;
-            metaChanged(ID_RESOLUTION_T);
+            pixelSizeT = value;
+            metaChanged(ID_PIXELS_SIZE_T);
         }
     }
 
@@ -1779,6 +1813,20 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Return the data type of sequence
      */
+    public DataType getDataType_()
+    {
+        if (colorModel == null)
+            return DataType.UNDEFINED;
+
+        return colorModel.getDataType_();
+    }
+
+    /**
+     * Return the data type of sequence
+     * 
+     * @deprecated use {@link #getDataType_()} instead
+     */
+    @Deprecated
     public int getDataType()
     {
         if (colorModel == null)
@@ -1788,25 +1836,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return true if image is float typed
+     * @deprecated use {@link #getDataType_()} instead
      */
+    @Deprecated
     public boolean isFloatDataType()
     {
-        if (colorModel == null)
-            return false;
-
-        return colorModel.isFloatDataType();
+        return getDataType_().isFloat();
     }
 
     /**
-     * Return true if image type is signed
+     * @deprecated use {@link #getDataType_()} instead
      */
+    @Deprecated
     public boolean isSignedDataType()
     {
-        if (colorModel == null)
-            return false;
-
-        return colorModel.isSignedDataType();
+        return getDataType_().isSigned();
     }
 
     private double[][] adjustBounds(double[][] curBounds, double[][] bounds)
@@ -1880,7 +1924,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         }
 
         // set new computed bounds
-        setComponentsAbsBounds(bounds);
+        colorModel.setComponentsAbsBounds(bounds);
 
         if (componentUserBoundsAutoUpdate)
         {
@@ -1899,7 +1943,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
             }
 
             // set new computed bounds
-            setComponentsUserBounds(bounds);
+            colorModel.setComponentsUserBounds(bounds);
         }
     }
 
@@ -1978,11 +2022,11 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public double[][] getComponentsAbsBounds()
     {
-        final int numComponents = getNumComponents();
-        final double[][] result = new double[numComponents][];
+        final int sizeC = getSizeC();
+        final double[][] result = new double[sizeC][];
 
-        for (int component = 0; component < numComponents; component++)
-            result[component] = getComponentAbsBounds(component);
+        for (int c = 0; c < sizeC; c++)
+            result[c] = getComponentAbsBounds(c);
 
         return result;
     }
@@ -1992,12 +2036,12 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public double[] getGlobalComponentAbsBounds()
     {
-        final int numComponents = getNumComponents();
+        final int sizeC = getSizeC();
         final double[] result = getComponentAbsBounds(0);
 
-        for (int component = 1; component < numComponents; component++)
+        for (int c = 1; c < sizeC; c++)
         {
-            final double[] bounds = getComponentAbsBounds(component);
+            final double[] bounds = getComponentAbsBounds(c);
             result[0] = Math.min(bounds[0], result[0]);
             result[1] = Math.max(bounds[1], result[1]);
         }
@@ -2034,93 +2078,13 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public double[][] getComponentsUserBounds()
     {
-        final int numComponents = getNumComponents();
-        final double[][] result = new double[numComponents][];
+        final int c = getSizeC();
+        final double[][] result = new double[c][];
 
-        for (int component = 0; component < numComponents; component++)
+        for (int component = 0; component < c; component++)
             result[component] = getComponentUserBounds(component);
 
         return result;
-    }
-
-    /**
-     * Set component absolute minimum value
-     */
-    public void setComponentAbsMinValue(int component, double min)
-    {
-        colorModel.setComponentAbsMinValue(component, min);
-    }
-
-    /**
-     * Set component absolute maximum value
-     */
-    public void setComponentAbsMaxValue(int component, double max)
-    {
-        colorModel.setComponentAbsMaxValue(component, max);
-    }
-
-    /**
-     * Set component absolute bounds (min and max values)
-     */
-    public void setComponentAbsBounds(int component, double[] bounds)
-    {
-        colorModel.setComponentAbsBounds(component, bounds);
-    }
-
-    /**
-     * Set component absolute bounds (min and max values)
-     */
-    public void setComponentAbsBounds(int component, double min, double max)
-    {
-        colorModel.setComponentAbsBounds(component, min, max);
-    }
-
-    /**
-     * Set components absolute bounds (min and max values)
-     */
-    public void setComponentsAbsBounds(double[][] bounds)
-    {
-        colorModel.setComponentsAbsBounds(bounds);
-    }
-
-    /**
-     * Set component user minimum value
-     */
-    public void setComponentUserMinValue(int component, double min)
-    {
-        colorModel.setComponentUserMinValue(component, min);
-    }
-
-    /**
-     * Set component user maximum value
-     */
-    public void setComponentUserMaxValue(int component, double max)
-    {
-        colorModel.setComponentUserMaxValue(component, max);
-    }
-
-    /**
-     * Set component user bounds (min and max values)
-     */
-    public void setComponentUserBounds(int component, double[] bounds)
-    {
-        colorModel.setComponentUserBounds(component, bounds);
-    }
-
-    /**
-     * Set component user bounds (min and max values)
-     */
-    public void setComponentUserBounds(int component, double min, double max)
-    {
-        colorModel.setComponentUserBounds(component, min, max);
-    }
-
-    /**
-     * Set components user bounds (min and max values)
-     */
-    public void setComponentsUserBounds(double[][] bounds)
-    {
-        colorModel.setComponentsUserBounds(bounds);
     }
 
     /**
@@ -2128,25 +2092,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public Object getDataXYCZT()
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataXYCZTAsByte();
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataXYCZTAsShort();
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataXYCZTAsInt();
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataXYCZTAsFloat();
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataXYCZTAsDouble();
+            default:
+                return null;
         }
-
-        return null;
     }
 
     /**
@@ -2154,25 +2114,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public Object getDataXYCZ(int t)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataXYCZAsByte(t);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataXYCZAsShort(t);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataXYCZAsInt(t);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataXYCZAsFloat(t);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataXYCZAsDouble(t);
+            default:
+                return null;
         }
-
-        return null;
     }
 
     /**
@@ -2206,23 +2162,18 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public Object getDataXYZT(int c)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataXYZTAsByte(c);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataXYZTAsShort(c);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataXYZTAsInt(c);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataXYZTAsFloat(c);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataXYZTAsDouble(c);
-
             default:
                 return null;
         }
@@ -2233,25 +2184,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public Object getDataXYZ(int t, int c)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataXYZAsByte(t, c);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataXYZAsShort(t, c);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataXYZAsInt(t, c);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataXYZAsFloat(t, c);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataXYZAsDouble(t, c);
+            default:
+                return null;
         }
-
-        return null;
     }
 
     /**
@@ -2268,25 +2215,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public Object getDataCopyXYCZT(Object out, int off)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataCopyXYCZTAsByte((byte[]) out, off);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataCopyXYCZTAsShort((short[]) out, off);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataCopyXYCZTAsInt((int[]) out, off);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataCopyXYCZTAsFloat((float[]) out, off);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataCopyXYCZTAsDouble((double[]) out, off);
+            default:
+                return null;
         }
-
-        return null;
     }
 
     /**
@@ -2303,25 +2246,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public Object getDataCopyXYCZ(int t, Object out, int off)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataCopyXYCZAsByte(t, (byte[]) out, off);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataCopyXYCZAsShort(t, (short[]) out, off);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataCopyXYCZAsInt(t, (int[]) out, off);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataCopyXYCZAsFloat(t, (float[]) out, off);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataCopyXYCZAsDouble(t, (double[]) out, off);
+            default:
+                return null;
         }
-
-        return null;
     }
 
     /**
@@ -2382,25 +2321,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public Object getDataCopyCXYZT(Object out, int off)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataCopyCXYZTAsByte((byte[]) out, off);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataCopyCXYZTAsShort((short[]) out, off);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataCopyCXYZTAsInt((int[]) out, off);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataCopyCXYZTAsFloat((float[]) out, off);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataCopyCXYZTAsDouble((double[]) out, off);
+            default:
+                return null;
         }
-
-        return null;
     }
 
     /**
@@ -2417,25 +2352,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public Object getDataCopyCXYZ(int t, Object out, int off)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataCopyCXYZAsByte(t, (byte[]) out, off);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataCopyCXYZAsShort(t, (short[]) out, off);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataCopyCXYZAsInt(t, (int[]) out, off);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataCopyCXYZAsFloat(t, (float[]) out, off);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataCopyCXYZAsDouble(t, (double[]) out, off);
+            default:
+                return null;
         }
-
-        return null;
     }
 
     /**
@@ -2496,25 +2427,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public Object getDataCopyXYZT(int c, Object out, int off)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataCopyXYZTAsByte(c, (byte[]) out, off);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataCopyXYZTAsShort(c, (short[]) out, off);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataCopyXYZTAsInt(c, (int[]) out, off);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataCopyXYZTAsFloat(c, (float[]) out, off);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataCopyXYZTAsDouble(c, (double[]) out, off);
+            default:
+                return null;
         }
-
-        return null;
     }
 
     /**
@@ -2531,25 +2458,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public Object getDataCopyXYZ(int t, int c, Object out, int off)
     {
-        switch (getDataType())
+        switch (getDataType_().getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return getDataCopyXYZAsByte(t, c, (byte[]) out, off);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return getDataCopyXYZAsShort(t, c, (short[]) out, off);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return getDataCopyXYZAsInt(t, c, (int[]) out, off);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return getDataCopyXYZAsFloat(t, c, (float[]) out, off);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return getDataCopyXYZAsDouble(t, c, (double[]) out, off);
+            default:
+                return null;
         }
-
-        return null;
     }
 
     /**

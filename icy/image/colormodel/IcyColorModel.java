@@ -30,13 +30,12 @@ import icy.image.lut.LUT;
 import icy.math.Scaler;
 import icy.math.ScalerEvent;
 import icy.math.ScalerListener;
-import icy.type.TypeUtil;
+import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
 
 import java.awt.image.BandedSampleModel;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentSampleModel;
-import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferDouble;
 import java.awt.image.DataBufferFloat;
@@ -64,9 +63,9 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     protected final Scaler[] colormapScalers;
 
     /**
-     * used signed data type (only for non float type)
+     * data type
      */
-    protected final boolean signedDataType;
+    protected final DataType dataType;
 
     /**
      * overridden variables
@@ -85,12 +84,12 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     private final UpdateEventHandler updater;
 
     /**
-     * @param bits
+     * Default constructor
      */
-    public IcyColorModel(int numComponents, int dataType, boolean signed, int bits[])
+    IcyColorModel(int numComponents, DataType dataType, int[] bits)
     {
-        super(DataBuffer.getDataTypeSize(dataType), bits, new IcyColorSpace(numComponents), true, false, TRANSLUCENT,
-                dataType);
+        super(dataType.getBitSize(), bits, new IcyColorSpace(numComponents), true, false, TRANSLUCENT, dataType
+                .toDataBufferType());
 
         if (numComponents == 0)
             throw new IllegalArgumentException("Number of components should be > 0");
@@ -98,19 +97,15 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
         listeners = new EventListenerList();
         updater = new UpdateEventHandler(this, false);
 
-        // float type flag
-        final boolean isFloat = isFloatDataType();
-
-        // signed data type information
-        if (!isFloat)
-            signedDataType = signed;
-        else
-            signedDataType = true;
+        // data type information
+        this.dataType = dataType;
 
         // get default min and max for datatype
-        final double[] defaultBounds = TypeUtil.getDefaultBounds(dataType, signedDataType);
+        final double[] defaultBounds = dataType.getBounds();
         final double min = defaultBounds[0];
         final double max = defaultBounds[1];
+        // float type flag
+        final boolean isFloat = dataType.isFloat();
 
         // allocating scalers
         normalScalers = new Scaler[numComponents];
@@ -135,18 +130,27 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
+     * @deprecated use {@link #IcyColorModel(int, DataType, int[])} instead
+     */
+    @Deprecated
+    IcyColorModel(int numComponents, int dataType, boolean signed, int[] bits)
+    {
+        this(numComponents, DataType.getDataType(dataType, signed), bits);
+    }
+
+    /**
      * Creates a new ColorModel with the given color component and image data type
      * 
      * @param numComponents
      *        number of component
      * @param dataType
-     *        the type of image data (one of the icy.type.TypeUtil.TYPE_* constants)
+     *        the type of image data (see {@link DataType})
      * @return a IcyColorModel object
      */
-    public static IcyColorModel createInstance(int numComponents, int dataType, boolean signed)
+    public static IcyColorModel createInstance(int numComponents, DataType dataType)
     {
         // define bits size
-        final int bits = DataBuffer.getDataTypeSize(dataType);
+        final int bits = dataType.getBitSize();
         // we have to fake one more extra component for alpha in ColorModel class
         final int numComponentFixed = numComponents + 1;
         final int[] componentBits = new int[numComponentFixed];
@@ -156,30 +160,38 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
 
         switch (dataType)
         {
-            case TypeUtil.TYPE_BYTE:
-                if (signed)
-                    return new ByteColorModel(numComponents, componentBits);
+            case UBYTE:
                 return new UByteColorModel(numComponents, componentBits);
-
-            case TypeUtil.TYPE_SHORT:
-                if (signed)
-                    return new ShortColorModel(numComponents, componentBits);
+            case BYTE:
+                return new ByteColorModel(numComponents, componentBits);
+            case USHORT:
                 return new UShortColorModel(numComponents, componentBits);
-
-            case TypeUtil.TYPE_INT:
-                if (signed)
-                    return new IntColorModel(numComponents, componentBits);
+            case SHORT:
+                return new ShortColorModel(numComponents, componentBits);
+            case UINT:
                 return new UIntColorModel(numComponents, componentBits);
-
-            case TypeUtil.TYPE_FLOAT:
+            case INT:
+                return new IntColorModel(numComponents, componentBits);
+            case ULONG:
+                return new ULongColorModel(numComponents, componentBits);
+            case LONG:
+                return new LongColorModel(numComponents, componentBits);
+            case FLOAT:
                 return new FloatColorModel(numComponents, componentBits);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return new DoubleColorModel(numComponents, componentBits);
-
             default:
                 throw new IllegalArgumentException("Unsupported data type !");
         }
+    }
+
+    /**
+     * @deprecated use {@link #createInstance(int, DataType)} instead
+     */
+    @Deprecated
+    public static IcyColorModel createInstance(int numComponents, int dataType, boolean signed)
+    {
+        return createInstance(numComponents, DataType.getDataType(dataType, signed));
     }
 
     /**
@@ -196,7 +208,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     public static IcyColorModel createInstance(IcyColorModel colorModel, boolean copyColormap, boolean copyBounds)
     {
         final IcyColorModel result = IcyColorModel.createInstance(colorModel.getNumComponents(),
-                colorModel.getDataType(), colorModel.isSignedDataType());
+                colorModel.getDataType_());
 
         result.beginUpdate();
         try
@@ -221,7 +233,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public static IcyColorModel createInstance()
     {
-        return createInstance(4, TypeUtil.TYPE_BYTE, false);
+        return createInstance(4, DataType.UBYTE);
     }
 
     @Override
@@ -245,25 +257,22 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     {
         final SampleModel sm = createCompatibleSampleModel(w, h);
 
-        switch (getDataType())
+        switch (dataType.getJavaType())
         {
-            case TypeUtil.TYPE_BYTE:
+            case BYTE:
                 return Raster.createWritableRaster(sm, new DataBufferByte((byte[][]) data, w * h), null);
-
-            case TypeUtil.TYPE_SHORT:
+            case SHORT:
                 return Raster.createWritableRaster(sm, new DataBufferShort((short[][]) data, w * h), null);
-
-            case TypeUtil.TYPE_INT:
+            case INT:
                 return Raster.createWritableRaster(sm, new DataBufferInt((int[][]) data, w * h), null);
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return Raster.createWritableRaster(sm, new DataBufferFloat((float[][]) data, w * h), null);
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return Raster.createWritableRaster(sm, new DataBufferDouble((double[][]) data, w * h), null);
+            default:
+                throw new IllegalArgumentException(
+                        "IcyColorModel.createWritableRaster(..) error : unsupported data type : " + dataType);
         }
-
-        return null;
     }
 
     /**
@@ -630,13 +639,22 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-     * Return data type (same as getTransferType)
-     * 
-     * @return data type
+     * @deprecated use {@link #getDataType_()} instead
      */
+    @Deprecated
     public int getDataType()
     {
         return transferType;
+    }
+
+    /**
+     * Return data type for this colormodel
+     * 
+     * @see DataType
+     */
+    public DataType getDataType_()
+    {
+        return dataType;
     }
 
     /**
@@ -644,7 +662,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public double[] getDefaultComponentBounds()
     {
-        return TypeUtil.getDefaultBounds(transferType, signedDataType);
+        return dataType.getBounds();
     }
 
     /**
@@ -815,18 +833,24 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
 
     /**
      * Return true if colorModel is float typed
+     * 
+     * @deprecated use {@link #getDataType_()} instead
      */
+    @Deprecated
     public boolean isFloatDataType()
     {
-        return TypeUtil.isFloat(transferType);
+        return dataType.isFloat();
     }
 
     /**
      * Return true if colorModel type is signed
+     * 
+     * @deprecated use {@link #getDataType_()} instead
      */
+    @Deprecated
     public boolean isSignedDataType()
     {
-        return signedDataType;
+        return dataType.isSigned();
     }
 
     /**
@@ -839,8 +863,8 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     @Override
     public String toString()
     {
-        return new String("ColorModel: dataType = " + TypeUtil.toString(transferType) + " numComponents = "
-                + numComponents + " color space = " + colorSpace);
+        return new String("ColorModel: dataType = " + dataType + " numComponents = " + numComponents
+                + " color space = " + colorSpace);
     }
 
     /**

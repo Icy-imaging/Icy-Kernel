@@ -353,8 +353,8 @@ public class MouseImageInfosPanel extends JPanel
                 if (ci == -1)
                 {
                     // all components values
-                    dataValue.setText(ArrayUtil.array1DToString(image.getDataCopyC(xi, yi), image.isSignedDataType(),
-                            false, " : ", 5));
+                    dataValue.setText(ArrayUtil.array1DToString(image.getDataCopyC(xi, yi), image.getDataType_()
+                            .isSigned(), false, " : ", 5));
                 }
                 else
                 {

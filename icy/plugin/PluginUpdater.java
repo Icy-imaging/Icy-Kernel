@@ -176,7 +176,8 @@ public class PluginUpdater extends ActionFrame
             plugins.add((PluginDescriptor) value);
 
         // process plugins update
-        updatePlugins(loader, plugins, true);
+        if (!plugins.isEmpty())
+            updatePlugins(loader, plugins, true);
 
         for (PluginDescriptor plugin : plugins)
             listModel.removeElement(plugin);

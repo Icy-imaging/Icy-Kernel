@@ -19,14 +19,13 @@
 package icy.image.colormodel;
 
 import icy.image.lut.LUT;
-import icy.type.TypeUtil;
+import icy.type.DataType;
 
 /**
  * @author stephane
  */
 public class ShortColorModel extends IcyColorModel
 {
-
     /**
      * Define a new ShortColorModel
      * 
@@ -36,14 +35,9 @@ public class ShortColorModel extends IcyColorModel
      */
     public ShortColorModel(int numComponents, int[] bits)
     {
-        super(numComponents, TypeUtil.TYPE_SHORT, true, bits);
+        super(numComponents, DataType.SHORT, bits);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.awt.image.ColorModel#getRGB(java.lang.Object)
-     */
     @Override
     public int getRGB(Object pixel)
     {

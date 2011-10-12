@@ -18,6 +18,10 @@
  */
 package icy.type;
 
+import icy.math.MathUtil;
+import icy.type.collection.array.ArrayDataType;
+import icy.type.collection.array.ArrayUtil;
+
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.geom.Point2D;
@@ -31,27 +35,60 @@ import ome.xml.model.enums.PixelType;
  */
 public class TypeUtil
 {
-    /** Tag for byte data (use DataBuffer reference) */
+    /**
+     * Tag for byte data (use DataBuffer reference)
+     * 
+     * @deprecated use {@link DataType#BYTE} instead
+     */
+    @Deprecated
     public static final int TYPE_BYTE = DataBuffer.TYPE_BYTE;
 
-    /** Tag for short data (use DataBuffer reference) */
+    /**
+     * Tag for short data (use DataBuffer reference)
+     * 
+     * @deprecated use {@link DataType#SHORT} instead
+     */
+    @Deprecated
     public static final int TYPE_SHORT = DataBuffer.TYPE_SHORT;
 
-    /** Tag for int data (use DataBuffer reference) */
+    /**
+     * Tag for int data (use DataBuffer reference)
+     * 
+     * @deprecated use {@link DataType#INT} instead
+     */
+    @Deprecated
     public static final int TYPE_INT = DataBuffer.TYPE_INT;
 
-    /** Tag for float data (use DataBuffer reference) */
+    /**
+     * Tag for float data (use DataBuffer reference)
+     * 
+     * @deprecated use {@link DataType#FLOAT} instead
+     */
+    @Deprecated
     public static final int TYPE_FLOAT = DataBuffer.TYPE_FLOAT;
 
-    /** Tag for double data (use DataBuffer reference) */
+    /**
+     * Tag for double data (use DataBuffer reference)
+     * 
+     * @deprecated use {@link DataType#DOUBLE} instead
+     */
+    @Deprecated
     public static final int TYPE_DOUBLE = DataBuffer.TYPE_DOUBLE;
 
-    /** Tag for undefined data (use DataBuffer reference) */
+    /**
+     * Tag for undefined data (use DataBuffer reference)
+     * 
+     * @deprecated use {@link DataType#UNDEFINED} instead
+     */
+    @Deprecated
     public static final int TYPE_UNDEFINED = DataBuffer.TYPE_UNDEFINED;
 
     /**
      * Return the size (in byte) of the specified dataType
+     * 
+     * @deprecated use {@link DataType} method instead
      */
+    @Deprecated
     public static int sizeOf(int dataType)
     {
         switch (dataType)
@@ -73,15 +110,21 @@ public class TypeUtil
 
     /**
      * Return true if specified dataType is a float type
+     * 
+     * @deprecated use {@link DataType} method instead
      */
+    @Deprecated
     public static boolean isFloat(int dataType)
     {
         return (dataType == TYPE_FLOAT) || (dataType == TYPE_DOUBLE);
     }
 
     /**
-     * convert dataType to String
+     * Convert dataType to String
+     * 
+     * @deprecated use {@link DataType} method instead
      */
+    @Deprecated
     public static String toLongString(int dataType)
     {
         switch (dataType)
@@ -103,7 +146,10 @@ public class TypeUtil
 
     /**
      * convert dataType to String
+     * 
+     * @deprecated use {@link DataType} method instead
      */
+    @Deprecated
     public static String toString(int dataType)
     {
         switch (dataType)
@@ -148,8 +194,11 @@ public class TypeUtil
     }
 
     /**
-     * return all data type as String items (can be used for ComboBox)
+     * Return all data type as String items (can be used for ComboBox)
+     * 
+     * @deprecated use {@link DataType#getItems(boolean, boolean, boolean)} instead
      */
+    @Deprecated
     public static String[] getItems(boolean longString, boolean wantUndef)
     {
         final String[] result;
@@ -181,12 +230,14 @@ public class TypeUtil
         }
 
         return result;
-
     }
 
     /**
      * Return the dataType of specified array (passed as Object)
+     * 
+     * @deprecated use {@link ArrayDataType#getArrayDataType(Object)} instead
      */
+    @Deprecated
     public static ArrayTypeInfo getTypeInfo(Object value)
     {
         final ArrayTypeInfo result = new ArrayTypeInfo(TYPE_UNDEFINED, 0);
@@ -321,8 +372,33 @@ public class TypeUtil
     }
 
     /**
-     * Return the dataType from string
+     * Return the dataType of specified array (passed as Object)
+     * 
+     * @deprecated use {@link ArrayUtil#getDataType(Object)} method instead
      */
+    @Deprecated
+    public static int getDataType(Object value)
+    {
+        return getTypeInfo(value).type;
+    }
+
+    /**
+     * Return the number of dimension specified array (passed as Object)
+     * 
+     * @deprecated use {@link ArrayUtil#getDim(Object)} method instead
+     */
+    @Deprecated
+    public static int getNumDimension(Object value)
+    {
+        return getTypeInfo(value).dim;
+    }
+
+    /**
+     * Return the dataType from string
+     * 
+     * @deprecated use {@link DataType#getDataType(String)} method instead
+     */
+    @Deprecated
     public static int getDataType(String value)
     {
         final String s = value.toLowerCase();
@@ -342,16 +418,11 @@ public class TypeUtil
     }
 
     /**
-     * Return the dataType of specified array (passed as Object)
-     */
-    public static int getDataType(Object value)
-    {
-        return getTypeInfo(value).type;
-    }
-
-    /**
      * Return the dataType corresponding to the specified DataBuffer type
+     * 
+     * @deprecated use {@link DataType#getDataTypeFromDataBufferType(int)} instead
      */
+    @Deprecated
     public static int dataBufferTypeToDataType(int dataBufferType)
     {
         switch (dataBufferType)
@@ -411,7 +482,10 @@ public class TypeUtil
 
     /**
      * Return the data type corresponding to the specified FormatTools type
+     * 
+     * @deprecated use {@link DataType#getDataTypeFromFormatToolsType(int)} instead
      */
+    @Deprecated
     public static int formatToolsTypeToDataType(int type)
     {
         switch (type)
@@ -465,7 +539,10 @@ public class TypeUtil
 
     /**
      * Return the dataType corresponding to the specified PixelType
+     * 
+     * @deprecated use {@link DataType#getDataTypeFromPixelType(PixelType)} instead
      */
+    @Deprecated
     public static int pixelTypeToDataType(PixelType type)
     {
         switch (type)
@@ -519,7 +596,10 @@ public class TypeUtil
 
     /**
      * Return the PixelType corresponding to the specified data type
+     * 
+     * @deprecated use {@link DataType#toPixelType()} instead
      */
+    @Deprecated
     public static PixelType dataTypeToPixelType(int dataType, boolean signed)
     {
         switch (dataType)
@@ -548,11 +628,67 @@ public class TypeUtil
     }
 
     /**
-     * Return the number of dimension specified array (passed as Object)
+     * Unsign the specified byte value and return it as int
      */
-    public static int getNumDimension(Object value)
+    public static int unsign(byte value)
     {
-        return getTypeInfo(value).dim;
+        return value & 0xFF;
+    }
+
+    /**
+     * Unsign the specified short value and return it as int
+     */
+    public static int unsign(short value)
+    {
+        return value & 0xFFFF;
+    }
+
+    /**
+     * Unsign the specified byte value and return it as long
+     */
+    public static long unsignL(byte value)
+    {
+        return value & 0xFFL;
+    }
+
+    /**
+     * Unsign the specified short value and return it as long
+     */
+    public static long unsignL(short value)
+    {
+        return value & 0xFFFFL;
+    }
+
+    /**
+     * Unsign the specified int value and return it as long
+     */
+    public static long unsign(int value)
+    {
+        return value & 0xFFFFFFFFL;
+    }
+
+    /**
+     * Unsign the specified long value and return it as double (possible information loss)
+     */
+    public static double unsign(long value)
+    {
+        final double result = value;
+        if (result < 0d)
+            return MathUtil.POW2_64_DOUBLE + result;
+
+        return result;
+    }
+
+    /**
+     * Unsign the specified long value and return it as float (possible information loss)
+     */
+    public static float unsignF(long value)
+    {
+        final float result = value;
+        if (result < 0f)
+            return MathUtil.POW2_64_FLOAT + result;
+
+        return result;
     }
 
     public static int toShort(byte value, boolean signed)
@@ -560,7 +696,7 @@ public class TypeUtil
         if (signed)
             return value;
 
-        return value & 0xFF;
+        return unsign(value);
     }
 
     public static int toInt(byte value, boolean signed)
@@ -568,7 +704,7 @@ public class TypeUtil
         if (signed)
             return value;
 
-        return value & 0xFF;
+        return unsign(value);
     }
 
     public static int toInt(short value, boolean signed)
@@ -576,7 +712,63 @@ public class TypeUtil
         if (signed)
             return value;
 
-        return value & 0xFFFF;
+        return unsign(value);
+    }
+
+    public static int toInt(float value)
+    {
+        // we have to cast to long before else value is limited to
+        // [Integer.MIN_VALUE..Integer.MAX_VALUE] range
+        return (int) (long) value;
+    }
+
+    public static int toInt(double value)
+    {
+        // we have to cast to long before else value is limited to
+        // [Integer.MIN_VALUE..Integer.MAX_VALUE] range
+        return (int) (long) value;
+    }
+
+    public static long toLong(byte value, boolean signed)
+    {
+        if (signed)
+            return value;
+
+        return unsignL(value);
+    }
+
+    public static long toLong(short value, boolean signed)
+    {
+        if (signed)
+            return value;
+
+        return unsignL(value);
+    }
+
+    public static long toLong(int value, boolean signed)
+    {
+        if (signed)
+            return value;
+
+        return unsign(value);
+    }
+
+    public static long toLong(float value)
+    {
+        // handle unsigned long type (else value is clamped to Long.MAX_VALUE)
+        if (value > DataType.LONG_MAX_VALUE_F)
+            return ((long) (value - DataType.LONG_MAX_VALUE_F)) + 0x8000000000000000L;
+
+        return (long) value;
+    }
+
+    public static long toLong(double value)
+    {
+        // handle unsigned long type (else value is clamped to Long.MAX_VALUE)
+        if (value > DataType.LONG_MAX_VALUE)
+            return ((long) (value - DataType.LONG_MAX_VALUE)) + 0x8000000000000000L;
+
+        return (long) value;
     }
 
     public static float toFloat(byte value, boolean signed)
@@ -584,7 +776,7 @@ public class TypeUtil
         if (signed)
             return value;
 
-        return value & 0xFF;
+        return unsign(value);
     }
 
     public static float toFloat(short value, boolean signed)
@@ -592,7 +784,7 @@ public class TypeUtil
         if (signed)
             return value;
 
-        return value & 0xFFFF;
+        return unsign(value);
     }
 
     public static float toFloat(int value, boolean signed)
@@ -600,12 +792,15 @@ public class TypeUtil
         if (signed)
             return value;
 
-        return (long) value & 0xFFFFFFFF;
+        return unsign(value);
     }
 
-    public static float toFloat(double value)
+    public static float toFloat(long value, boolean signed)
     {
-        return (float) value;
+        if (signed)
+            return value;
+
+        return unsignF(value);
     }
 
     public static double toDouble(byte value, boolean signed)
@@ -613,7 +808,7 @@ public class TypeUtil
         if (signed)
             return value;
 
-        return value & 0xFF;
+        return unsign(value);
     }
 
     public static double toDouble(short value, boolean signed)
@@ -621,7 +816,7 @@ public class TypeUtil
         if (signed)
             return value;
 
-        return value & 0xFFFF;
+        return unsign(value);
     }
 
     public static double toDouble(int value, boolean signed)
@@ -629,22 +824,15 @@ public class TypeUtil
         if (signed)
             return value;
 
-        return (long) value & 0xFFFFFFFF;
+        return unsign(value);
     }
 
-    public static int unsign(byte value)
+    public static double toDouble(long value, boolean signed)
     {
-        return value & 0xFF;
-    }
+        if (signed)
+            return value;
 
-    public static int unsign(short value)
-    {
-        return value & 0xFFFF;
-    }
-
-    public static long unsign(int value)
-    {
-        return ((long) value) & 0xFFFFFFFF;
+        return unsign(value);
     }
 
     public static Point toPoint(Point2D p)
@@ -674,7 +862,10 @@ public class TypeUtil
 
     /**
      * Return the minimum value for the specified dataType
+     * 
+     * @deprecated use {@link DataType#getMinValue()} instead
      */
+    @Deprecated
     public static double getMinValue(int dataType, boolean signed)
     {
         return getDefaultBounds(dataType, signed)[0];
@@ -682,7 +873,10 @@ public class TypeUtil
 
     /**
      * Return the maximum value for the specified dataType
+     * 
+     * @deprecated use {@link DataType#getMaxValue()} instead
      */
+    @Deprecated
     public static double getMaxValue(int dataType, boolean signed)
     {
         return getDefaultBounds(dataType, signed)[1];
@@ -690,7 +884,10 @@ public class TypeUtil
 
     /**
      * Get the default bounds for the specified dataType
+     * 
+     * @deprecated use {@link DataType#getBounds()} instead
      */
+    @Deprecated
     public static double[] getDefaultBounds(int dataType, boolean signed)
     {
         final double min;

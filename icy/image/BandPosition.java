@@ -26,7 +26,7 @@ public class BandPosition extends ImagePosition
     public static final char C_ID = 'C';
     public static final char C_ID_ALTERNATE = 'B';
 
-    private int c;
+    protected int c;
 
     /**
      * @param t
@@ -46,9 +46,25 @@ public class BandPosition extends ImagePosition
 
     public void copyFrom(BandPosition bp)
     {
-        setT(bp.getT());
-        setZ(bp.getZ());
-        c = bp.getC();
+        t = bp.t;
+        z = bp.z;
+        c = bp.c;
+    }
+
+    @Override
+    public void switchLeft()
+    {
+        t = z;
+        z = c;
+        c = 0;
+    }
+
+    @Override
+    public void switchRight()
+    {
+        c = z;
+        z = t;
+        t = 0;
     }
 
     /**
@@ -178,9 +194,9 @@ public class BandPosition extends ImagePosition
         {
             case C_ID:
             case C_ID_ALTERNATE:
-                if ((getT() == -1) || (getZ() == -1) || (c == -1))
+                if ((t == -1) || (z == -1) || (c == -1))
                     return false;
-                return (bp.getT() == getT()) && (bp.getZ() == getZ()) && (bp.getC() == c);
+                return (bp.t == t) && (bp.z == z) && (bp.c == c);
 
         }
 
@@ -197,7 +213,7 @@ public class BandPosition extends ImagePosition
 
         if ((result == 0) && (ip instanceof BandPosition))
         {
-            final int oc = ((BandPosition) ip).getC();
+            final int oc = ((BandPosition) ip).c;
 
             if (c > oc)
                 return 1;
@@ -213,7 +229,7 @@ public class BandPosition extends ImagePosition
      */
     public int alternateCompareTo(BandPosition bp)
     {
-        final int oc = bp.getC();
+        final int oc = bp.c;
 
         if (c > oc)
             return 1;

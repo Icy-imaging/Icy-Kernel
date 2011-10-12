@@ -48,8 +48,8 @@ public class JCheckTabbedPane extends JTabbedPane
      */
     private static final long serialVersionUID = 1274171822668858593L;
 
-    private static final Image IMAGE_CHECK = ResourceUtil.getBlackIconAsImage("checkbox_checked.png", 16);
-    private static final Image IMAGE_UNCHECK = ResourceUtil.getBlackIconAsImage("checkbox_unchecked.png", 16);
+    private static final Image IMAGE_CHECK = ResourceUtil.getAlphaIconAsImage("checkbox_checked.png", 16);
+    private static final Image IMAGE_UNCHECK = ResourceUtil.getAlphaIconAsImage("checkbox_unchecked.png", 16);
 
     boolean checkVisible;
     private ArrayList<Rectangle> iconsRect;

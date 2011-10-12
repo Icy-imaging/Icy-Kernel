@@ -67,7 +67,6 @@ public class ROI2DArea extends ROI2D
         private Point2D.Double cursorPosition;
         private Color cursorColor;
         private float alphaLevel;
-        private boolean drawing;
 
         /**
          * 

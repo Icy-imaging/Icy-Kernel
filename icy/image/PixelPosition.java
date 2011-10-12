@@ -49,11 +49,31 @@ public class PixelPosition extends BandPosition
 
     public void copyFrom(PixelPosition pp)
     {
-        setT(pp.getT());
-        setZ(pp.getZ());
-        setC(pp.getC());
-        y = pp.getY();
-        x = pp.getX();
+        t = pp.t;
+        z = pp.z;
+        c = pp.c;
+        y = pp.y;
+        x = pp.x;
+    }
+
+    @Override
+    public void switchLeft()
+    {
+        t = z;
+        z = c;
+        c = y;
+        y = x;
+        x = 0;
+    }
+
+    @Override
+    public void switchRight()
+    {
+        x = y;
+        y = c;
+        c = z;
+        z = t;
+        t = 0;
     }
 
     /**
@@ -181,15 +201,14 @@ public class PixelPosition extends BandPosition
         switch (id)
         {
             case X_ID:
-                if ((getT() == -1) || (getZ() == -1) || (getC() == -1) || (x == -1))
+                if ((t == -1) || (z == -1) || (c == -1) || (x == -1))
                     return false;
-                return (pp.getT() == getT()) && (pp.getZ() == getZ()) && (pp.getC() == getC()) && (pp.getX() == x);
+                return (pp.t == t) && (pp.z == z) && (pp.c == c) && (pp.x == x);
 
             case Y_ID:
-                if ((getT() == -1) || (getZ() == -1) || (getC() == -1) || (x == -1) || (y == -1))
+                if ((t == -1) || (z == -1) || (c == -1) || (x == -1) || (y == -1))
                     return false;
-                return (pp.getT() == getT()) && (pp.getZ() == getZ()) && (pp.getC() == getC()) && (pp.getX() == x)
-                        && (pp.getY() == y);
+                return (pp.t == t) && (pp.z == z) && (pp.c == c) && (pp.x == x) && (pp.y == y);
         }
 
         return super.isSamePos(pp, posIdent);
@@ -204,8 +223,8 @@ public class PixelPosition extends BandPosition
         {
             final PixelPosition pp = (PixelPosition) ip;
 
-            final int ox = pp.getX();
-            final int oy = pp.getY();
+            final int ox = pp.x;
+            final int oy = pp.y;
 
             if (x > ox)
                 return 1;
@@ -219,5 +238,4 @@ public class PixelPosition extends BandPosition
 
         return result;
     }
-
 }

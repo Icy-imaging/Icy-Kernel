@@ -91,7 +91,7 @@ public class SequenceInfosPanel extends JPanel
                     final Sequence seq = internalSequence.get();
 
                     if (seq != null)
-                        seq.setResolutionX(StringUtil.parseDouble(resXField.getText(), 1d));
+                        seq.setPixelSizeX(StringUtil.parseDouble(resXField.getText(), 1d));
                 }
             }
         });
@@ -106,7 +106,7 @@ public class SequenceInfosPanel extends JPanel
                     final Sequence seq = internalSequence.get();
 
                     if (seq != null)
-                        seq.setResolutionY(StringUtil.parseDouble(resYField.getText(), 1d));
+                        seq.setPixelSizeY(StringUtil.parseDouble(resYField.getText(), 1d));
                 }
             }
         });
@@ -121,7 +121,7 @@ public class SequenceInfosPanel extends JPanel
                     final Sequence seq = internalSequence.get();
 
                     if (seq != null)
-                        seq.setResolutionZ(StringUtil.parseDouble(resZField.getText(), 1d));
+                        seq.setPixelSizeZ(StringUtil.parseDouble(resZField.getText(), 1d));
                 }
             }
         });
@@ -136,7 +136,7 @@ public class SequenceInfosPanel extends JPanel
                     final Sequence seq = internalSequence.get();
 
                     if (seq != null)
-                        seq.setResolutionT(StringUtil.parseDouble(resTField.getText(), 1d));
+                        seq.setPixelSizeT(StringUtil.parseDouble(resTField.getText(), 1d));
                 }
             }
         });
@@ -165,8 +165,8 @@ public class SequenceInfosPanel extends JPanel
         label.setToolTipText("Size");
         add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, sizeLabel, Box.createHorizontalStrut(4),
                 Box.createHorizontalGlue()));
-        label = GuiUtil.createFixedWidthLabel("Resolution", 68);
-        label.setToolTipText("Pixel resolution for X, Y, Z dimension (in mm) and time resolution for T dimension (in ms)");
+        label = GuiUtil.createFixedWidthLabel("Pixel size", 68);
+        label.setToolTipText("Pixel size for X, Y, Z dimension (in mm) and time resolution for T dimension (in ms)");
         add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, resXField, resYField, resZField, resTField,
                 Box.createHorizontalStrut(2), Box.createHorizontalGlue()));
 
@@ -313,10 +313,10 @@ public class SequenceInfosPanel extends JPanel
             {
                 try
                 {
-                    resXField.setText(StringUtil.toString(sequence.getResolutionX()));
-                    resYField.setText(StringUtil.toString(sequence.getResolutionY()));
-                    resZField.setText(StringUtil.toString(sequence.getResolutionZ()));
-                    resTField.setText(StringUtil.toString(sequence.getResolutionT()));
+                    resXField.setText(StringUtil.toString(sequence.getPixelSizeX()));
+                    resYField.setText(StringUtil.toString(sequence.getPixelSizeY()));
+                    resZField.setText(StringUtil.toString(sequence.getPixelSizeZ()));
+                    resTField.setText(StringUtil.toString(sequence.getPixelSizeT()));
                 }
                 catch (IllegalStateException e)
                 {

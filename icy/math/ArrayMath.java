@@ -18,6 +18,10 @@
  */
 package icy.math;
 
+import icy.type.TypeUtil;
+import icy.type.collection.array.Array1DUtil;
+import icy.type.collection.array.ArrayUtil;
+
 /**
  * Class defining basic arithmetic and statistic operations on 1D double arrays.
  * 
@@ -28,235 +32,1848 @@ public class ArrayMath
     /**
      * Element-wise addition of two arrays
      * 
-     * @param a1
-     * @param a2
-     * @return
+     * @param out
+     *        the array receiving the result
      */
-    public static double[] add(double[] a1, double[] a2)
+    public static Object add(Object a1, Object a2, Object out)
     {
-        double[] result = new double[a1.length];
-        add(a1, a2, result);
-        return result;
+        switch (ArrayUtil.getDataType(a1))
+        {
+            case BYTE:
+                return add((byte[]) a1, (byte[]) a2, (byte[]) out);
+            case SHORT:
+                return add((short[]) a1, (short[]) a2, (short[]) out);
+            case INT:
+                return add((int[]) a1, (int[]) a2, (int[]) out);
+            case LONG:
+                return add((long[]) a1, (long[]) a2, (long[]) out);
+            case FLOAT:
+                return add((float[]) a1, (float[]) a2, (float[]) out);
+            case DOUBLE:
+                return add((double[]) a1, (double[]) a2, (double[]) out);
+            default:
+                return null;
+        }
     }
 
     /**
      * Element-wise addition of two arrays
+     */
+    public static Object add(Object a1, Object a2)
+    {
+        return add(a1, a2, null);
+    }
+
+    /**
+     * Element-wise addition of two double arrays (result in output if defined)
      * 
-     * @param a1
-     * @param a2
-     * @param output
+     * @param out
      *        the array receiving the result
      */
-    public static void add(double[] a1, double[] a2, double[] output)
+    public static double[] add(double[] a1, double[] a2, double[] out)
     {
+        final double[] result = Array1DUtil.allocIfNull(out, a1.length);
+
         for (int i = 0; i < a1.length; i++)
-            output[i] = a1[i] + a2[i];
-    }
+            result[i] = a1[i] + a2[i];
 
-    /**
-     * Adds a value to all elements of the given array
-     * 
-     * @param array
-     * @param value
-     * @param output
-     *        the array receiving the result
-     */
-    public static void add(double[] array, double value, double[] output)
-    {
-        for (int i = 0; i < array.length; i++)
-            output[i] = array[i] + value;
-    }
-
-    /**
-     * Adds a value to all elements of the given array
-     * 
-     * @param array
-     * @param value
-     * @param output
-     *        the array receiving the result
-     */
-    public static void add(double value, double[] array, double[] output)
-    {
-        add(array, value, output); // for commutativity purposes
-    }
-
-    /**
-     * Element-wise subtraction of two arrays
-     * 
-     * @param a1
-     * @param a2
-     * @return
-     */
-    public static double[] subtract(double[] a1, double[] a2)
-    {
-        double[] result = new double[a1.length];
-        subtract(a1, a2, result);
         return result;
     }
 
     /**
-     * Element-wise subtraction of two arrays
+     * Element-wise addition of two double arrays
+     */
+    public static double[] add(double[] a1, double[] a2)
+    {
+        return add(a1, a2, null);
+    }
+
+    /**
+     * Element-wise addition of two float arrays (result in output if defined)
      * 
-     * @param a1
-     * @param a2
-     * @param output
+     * @param out
      *        the array receiving the result
      */
-    public static void subtract(double[] a1, double[] a2, double[] output)
+    public static float[] add(float[] a1, float[] a2, float[] out)
     {
+        final float[] result = Array1DUtil.allocIfNull(out, a1.length);
+
         for (int i = 0; i < a1.length; i++)
-            output[i] = a1[i] - a2[i];
+            result[i] = a1[i] + a2[i];
+
+        return result;
+    }
+
+    /**
+     * Element-wise addition of two float arrays
+     */
+    public static float[] add(float[] a1, float[] a2)
+    {
+        return add(a1, a2, null);
+    }
+
+    /**
+     * Element-wise addition of two long arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static long[] add(long[] a1, long[] a2, long[] out)
+    {
+        final long[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] + a2[i];
+
+        return result;
+    }
+
+    /**
+     * Element-wise addition of two long arrays
+     */
+    public static long[] add(long[] a1, long[] a2)
+    {
+        return add(a1, a2, null);
+    }
+
+    /**
+     * Element-wise addition of two int arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static int[] add(int[] a1, int[] a2, int[] out)
+    {
+        final int[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] + a2[i];
+
+        return result;
+    }
+
+    /**
+     * Element-wise addition of two int arrays
+     */
+    public static int[] add(int[] a1, int[] a2)
+    {
+        return add(a1, a2, null);
+    }
+
+    /**
+     * Element-wise addition of two short arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static short[] add(short[] a1, short[] a2, short[] out)
+    {
+        final short[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = (short) (a1[i] + a2[i]);
+
+        return result;
+    }
+
+    /**
+     * Element-wise addition of two short arrays
+     */
+    public static short[] add(short[] a1, short[] a2)
+    {
+        return add(a1, a2, null);
+    }
+
+    /**
+     * Element-wise addition of two byte arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static byte[] add(byte[] a1, byte[] a2, byte[] out)
+    {
+        final byte[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = (byte) (a1[i] + a2[i]);
+
+        return result;
+    }
+
+    /**
+     * Element-wise addition of two byte arrays
+     */
+    public static byte[] add(byte[] a1, byte[] a2)
+    {
+        return add(a1, a2, null);
+    }
+
+    /**
+     * Adds a value to all elements of the given array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static Object add(Object array, Number value, Object out)
+    {
+        switch (ArrayUtil.getDataType(array))
+        {
+            case BYTE:
+                return add((byte[]) array, value.byteValue(), (byte[]) out);
+            case SHORT:
+                return add((short[]) array, value.shortValue(), (short[]) out);
+            case INT:
+                return add((int[]) array, value.intValue(), (int[]) out);
+            case LONG:
+                return add((long[]) array, value.longValue(), (long[]) out);
+            case FLOAT:
+                return add((float[]) array, value.floatValue(), (float[]) out);
+            case DOUBLE:
+                return add((double[]) array, value.doubleValue(), (double[]) out);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Adds a value to all elements of the given array
+     */
+    public static Object add(Object array, Number value)
+    {
+        return add(array, value, null);
+    }
+
+    /**
+     * Adds a value to all elements of the given double array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static double[] add(double[] array, double value, double[] out)
+    {
+        final double[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] + value;
+
+        return result;
+    }
+
+    /**
+     * @deprecated use {@link #add(double[] , double , double[])} instead
+     */
+    @Deprecated
+    public static double[] add(double value, double[] array, double[] out)
+    {
+        return add(array, value, out);
+    }
+
+    /**
+     * Adds a value to all elements of the given double array
+     */
+    public static double[] add(double[] array, double value)
+    {
+        return add(array, value, null);
+    }
+
+    /**
+     * Adds a value to all elements of the given float array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static float[] add(float[] array, float value, float[] out)
+    {
+        final float[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] + value;
+
+        return result;
+    }
+
+    /**
+     * Adds a value to all elements of the float given array
+     */
+    public static float[] add(float[] array, float value)
+    {
+        return add(array, value, null);
+    }
+
+    /**
+     * Adds a value to all elements of the given long array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static long[] add(long[] array, long value, long[] out)
+    {
+        final long[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] + value;
+
+        return result;
+    }
+
+    /**
+     * Adds a value to all elements of the given long array
+     */
+    public static long[] add(long[] array, long value)
+    {
+        return add(array, value, null);
+    }
+
+    /**
+     * Adds a value to all elements of the given int array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static int[] add(int[] array, int value, int[] out)
+    {
+        final int[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] + value;
+
+        return result;
+    }
+
+    /**
+     * Adds a value to all elements of the given int array
+     */
+    public static int[] add(int[] array, int value)
+    {
+        return add(array, value, null);
+    }
+
+    /**
+     * Adds a value to all elements of the given short array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static short[] add(short[] array, short value, short[] out)
+    {
+        final short[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = (short) (array[i] + value);
+
+        return result;
+    }
+
+    /**
+     * Adds a value to all elements of the given short array
+     */
+    public static short[] add(short[] array, short value)
+    {
+        return add(array, value, null);
+    }
+
+    /**
+     * Adds a value to all elements of the given byte array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static byte[] add(byte[] array, byte value, byte[] out)
+    {
+        final byte[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = (byte) (array[i] + value);
+
+        return result;
+    }
+
+    /**
+     * Adds a value to all elements of the given byte array
+     */
+    public static byte[] add(byte[] array, byte value)
+    {
+        return add(array, value, null);
+    }
+
+    /**
+     * Element-wise subtraction of two arrays
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static Object subtract(Object a1, Object a2, Object out)
+    {
+        switch (ArrayUtil.getDataType(a1))
+        {
+            case BYTE:
+                return subtract((byte[]) a1, (byte[]) a2, (byte[]) out);
+            case SHORT:
+                return subtract((short[]) a1, (short[]) a2, (short[]) out);
+            case INT:
+                return subtract((int[]) a1, (int[]) a2, (int[]) out);
+            case LONG:
+                return subtract((long[]) a1, (long[]) a2, (long[]) out);
+            case FLOAT:
+                return subtract((float[]) a1, (float[]) a2, (float[]) out);
+            case DOUBLE:
+                return subtract((double[]) a1, (double[]) a2, (double[]) out);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Element-wise subtraction of two arrays
+     */
+    public static Object subtract(Object a1, Object a2)
+    {
+        return subtract(a1, a2, null);
+    }
+
+    /**
+     * Element-wise subtraction of two double arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static double[] subtract(double[] a1, double[] a2, double[] out)
+    {
+        final double[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] - a2[i];
+
+        return result;
+    }
+
+    /**
+     * Element-wise subtraction of two double arrays
+     */
+    public static double[] subtract(double[] a1, double[] a2)
+    {
+        return subtract(a1, a2, null);
+    }
+
+    /**
+     * Element-wise subtraction of two float arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static float[] subtract(float[] a1, float[] a2, float[] out)
+    {
+        final float[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] - a2[i];
+
+        return result;
+    }
+
+    /**
+     * Element-wise subtraction of two float arrays
+     */
+    public static float[] subtract(float[] a1, float[] a2)
+    {
+        return subtract(a1, a2, null);
+    }
+
+    /**
+     * Element-wise subtraction of two long arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static long[] subtract(long[] a1, long[] a2, long[] out)
+    {
+        final long[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] - a2[i];
+
+        return result;
+    }
+
+    /**
+     * Element-wise subtraction of two long arrays
+     */
+    public static long[] subtract(long[] a1, long[] a2)
+    {
+        return subtract(a1, a2, null);
+    }
+
+    /**
+     * Element-wise subtraction of two int arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static int[] subtract(int[] a1, int[] a2, int[] out)
+    {
+        final int[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] - a2[i];
+
+        return result;
+    }
+
+    /**
+     * Element-wise subtraction of two int arrays
+     */
+    public static int[] subtract(int[] a1, int[] a2)
+    {
+        return subtract(a1, a2, null);
+    }
+
+    /**
+     * Element-wise subtraction of two short arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static short[] subtract(short[] a1, short[] a2, short[] out)
+    {
+        final short[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = (short) (a1[i] - a2[i]);
+
+        return result;
+    }
+
+    /**
+     * Element-wise subtraction of two short arrays
+     */
+    public static short[] subtract(short[] a1, short[] a2)
+    {
+        return subtract(a1, a2, null);
+    }
+
+    /**
+     * Element-wise subtraction of two byte arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static byte[] subtract(byte[] a1, byte[] a2, byte[] out)
+    {
+        final byte[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = (byte) (a1[i] - a2[i]);
+
+        return result;
+    }
+
+    /**
+     * Element-wise subtraction of two byte arrays
+     */
+    public static byte[] subtract(byte[] a1, byte[] a2)
+    {
+        return subtract(a1, a2, null);
     }
 
     /**
      * Subtracts a value to all elements of the given array
      * 
-     * @param array
-     * @param value
-     * @param output
+     * @param out
      *        the array receiving the result
      */
-    public static void subtract(double[] array, double value, double[] output)
+    public static Object subtract(Object array, Number value, Object out)
     {
+        switch (ArrayUtil.getDataType(array))
+        {
+            case BYTE:
+                return subtract((byte[]) array, value.byteValue(), (byte[]) out);
+            case SHORT:
+                return subtract((short[]) array, value.shortValue(), (short[]) out);
+            case INT:
+                return subtract((int[]) array, value.intValue(), (int[]) out);
+            case LONG:
+                return subtract((long[]) array, value.longValue(), (long[]) out);
+            case FLOAT:
+                return subtract((float[]) array, value.floatValue(), (float[]) out);
+            case DOUBLE:
+                return subtract((double[]) array, value.doubleValue(), (double[]) out);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Subtracts a value to all elements of the given array
+     */
+    public static Object subtract(Object array, Number value)
+    {
+        return subtract(array, value, null);
+    }
+
+    /**
+     * Subtracts a value to all elements of the given double array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static double[] subtract(double[] array, double value, double[] out)
+    {
+        final double[] result = Array1DUtil.allocIfNull(out, array.length);
+
         for (int i = 0; i < array.length; i++)
-            output[i] = array[i] - value;
+            result[i] = array[i] - value;
+
+        return result;
+    }
+
+    /**
+     * Subtracts a value to all elements of the given double array
+     */
+    public static double[] subtract(double[] array, double value)
+    {
+        return subtract(array, value, null);
+    }
+
+    /**
+     * Subtracts a value to all elements of the given float array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static float[] subtract(float[] array, float value, float[] out)
+    {
+        final float[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] - value;
+
+        return result;
+    }
+
+    /**
+     * Subtracts a value to all elements of the float given array
+     */
+    public static float[] subtract(float[] array, float value)
+    {
+        return subtract(array, value, null);
+    }
+
+    /**
+     * Subtracts a value to all elements of the given long array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static long[] subtract(long[] array, long value, long[] out)
+    {
+        final long[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] - value;
+
+        return result;
+    }
+
+    /**
+     * Subtracts a value to all elements of the given long array
+     */
+    public static long[] subtract(long[] array, long value)
+    {
+        return subtract(array, value, null);
+    }
+
+    /**
+     * Subtracts a value to all elements of the given int array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static int[] subtract(int[] array, int value, int[] out)
+    {
+        final int[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] - value;
+
+        return result;
+    }
+
+    /**
+     * Subtracts a value to all elements of the given int array
+     */
+    public static int[] subtract(int[] array, int value)
+    {
+        return subtract(array, value, null);
+    }
+
+    /**
+     * Subtracts a value to all elements of the given short array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static short[] subtract(short[] array, short value, short[] out)
+    {
+        final short[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = (short) (array[i] - value);
+
+        return result;
+    }
+
+    /**
+     * Subtracts a value to all elements of the given short array
+     */
+    public static short[] subtract(short[] array, short value)
+    {
+        return subtract(array, value, null);
+    }
+
+    /**
+     * Subtracts a value to all elements of the given byte array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static byte[] subtract(byte[] array, byte value, byte[] out)
+    {
+        final byte[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = (byte) (array[i] - value);
+
+        return result;
+    }
+
+    /**
+     * Subtracts a value to all elements of the given byte array
+     */
+    public static byte[] subtract(byte[] array, byte value)
+    {
+        return subtract(array, value, null);
     }
 
     /**
      * Subtracts a value by all elements of the given array
      * 
-     * @param array
-     * @param value
-     * @param output
+     * @param out
      *        the array receiving the result
      */
-    public static void subtract(double value, double[] array, double[] output)
+    public static Object subtract(Number value, Object array, Object out)
     {
+        switch (ArrayUtil.getDataType(array))
+        {
+            case BYTE:
+                return subtract(value.byteValue(), (byte[]) array, (byte[]) out);
+            case SHORT:
+                return subtract(value.shortValue(), (short[]) array, (short[]) out);
+            case INT:
+                return subtract(value.intValue(), (int[]) array, (int[]) out);
+            case LONG:
+                return subtract(value.longValue(), (long[]) array, (long[]) out);
+            case FLOAT:
+                return subtract(value.floatValue(), (float[]) array, (float[]) out);
+            case DOUBLE:
+                return subtract(value.doubleValue(), (double[]) array, (double[]) out);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Subtracts a value by all elements of the given array
+     */
+    public static Object subtract(Number value, Object array)
+    {
+        return subtract(value, array, null);
+    }
+
+    /**
+     * Subtracts a value by all elements of the given double array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static double[] subtract(double value, double[] array, double[] out)
+    {
+        final double[] result = Array1DUtil.allocIfNull(out, array.length);
+
         for (int i = 0; i < array.length; i++)
-            output[i] = value - array[i];
+            result[i] = value - array[i];
+
+        return result;
+    }
+
+    /**
+     * Subtracts a value by all elements of the given double array
+     */
+    public static double[] subtract(double value, double[] array)
+    {
+        return subtract(array, value, null);
+    }
+
+    /**
+     * Subtracts a value by all elements of the given float array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static float[] subtract(float value, float[] array, float[] out)
+    {
+        final float[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = value - array[i];
+
+        return result;
+    }
+
+    /**
+     * Subtracts a value by all elements of the float given array
+     */
+    public static float[] subtract(float value, float[] array)
+    {
+        return subtract(array, value, null);
+    }
+
+    /**
+     * Subtracts a value by all elements of the given long array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static long[] subtract(long value, long[] array, long[] out)
+    {
+        final long[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = value - array[i];
+
+        return result;
+    }
+
+    /**
+     * Subtracts a value by all elements of the given long array
+     */
+    public static long[] subtract(long value, long[] array)
+    {
+        return subtract(array, value, null);
+    }
+
+    /**
+     * Subtracts a value by all elements of the given int array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static int[] subtract(int value, int[] array, int[] out)
+    {
+        final int[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = value - array[i];
+
+        return result;
+    }
+
+    /**
+     * Subtracts a value by all elements of the given int array
+     */
+    public static int[] subtract(int value, int[] array)
+    {
+        return subtract(array, value, null);
+    }
+
+    /**
+     * Subtracts a value by all elements of the given short array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static short[] subtract(short value, short[] array, short[] out)
+    {
+        final short[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = (short) (value - array[i]);
+
+        return result;
+    }
+
+    /**
+     * Subtracts a value by all elements of the given short array
+     */
+    public static short[] subtract(short value, short[] array)
+    {
+        return subtract(array, value, null);
+    }
+
+    /**
+     * Subtracts a value by all elements of the given byte array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static byte[] subtract(byte value, byte[] array, byte[] out)
+    {
+        final byte[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = (byte) (value - array[i]);
+
+        return result;
+    }
+
+    /**
+     * Subtracts a value by all elements of the given byte array
+     */
+    public static byte[] subtract(byte value, byte[] array)
+    {
+        return subtract(array, value, null);
     }
 
     /**
      * Element-wise multiplication of two arrays
      * 
-     * @param a1
-     * @param a2
-     * @return
+     * @param out
+     *        the array receiving the result
+     */
+    public static Object multiply(Object a1, Object a2, Object out)
+    {
+        switch (ArrayUtil.getDataType(a1))
+        {
+            case BYTE:
+                return multiply((byte[]) a1, (byte[]) a2, (byte[]) out);
+            case SHORT:
+                return multiply((short[]) a1, (short[]) a2, (short[]) out);
+            case INT:
+                return multiply((int[]) a1, (int[]) a2, (int[]) out);
+            case LONG:
+                return multiply((long[]) a1, (long[]) a2, (long[]) out);
+            case FLOAT:
+                return multiply((float[]) a1, (float[]) a2, (float[]) out);
+            case DOUBLE:
+                return multiply((double[]) a1, (double[]) a2, (double[]) out);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Element-wise multiplication of two arrays
+     */
+    public static Object multiply(Object a1, Object a2)
+    {
+        return multiply(a1, a2, null);
+    }
+
+    /**
+     * Element-wise multiplication of two double arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static double[] multiply(double[] a1, double[] a2, double[] out)
+    {
+        final double[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] * a2[i];
+
+        return result;
+    }
+
+    /**
+     * Element-wise multiplication of two double arrays
      */
     public static double[] multiply(double[] a1, double[] a2)
     {
-        double[] result = new double[a1.length];
-        multiply(a1, a2, result);
+        return multiply(a1, a2, null);
+    }
+
+    /**
+     * Element-wise multiplication of two float arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static float[] multiply(float[] a1, float[] a2, float[] out)
+    {
+        final float[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] * a2[i];
+
         return result;
     }
 
     /**
-     * Element-wise multiplication of two arrays
+     * Element-wise multiplication of two float arrays
+     */
+    public static float[] multiply(float[] a1, float[] a2)
+    {
+        return multiply(a1, a2, null);
+    }
+
+    /**
+     * Element-wise multiplication of two long arrays (result in output if defined)
      * 
-     * @param a1
-     * @param a2
-     * @param output
+     * @param out
      *        the array receiving the result
      */
-    public static void multiply(double[] a1, double[] a2, double[] output)
+    public static long[] multiply(long[] a1, long[] a2, long[] out)
     {
+        final long[] result = Array1DUtil.allocIfNull(out, a1.length);
+
         for (int i = 0; i < a1.length; i++)
-            output[i] = a1[i] * a2[i];
+            result[i] = a1[i] * a2[i];
+
+        return result;
     }
 
     /**
-     * Multiplies a value by all elements of the given array
+     * Element-wise multiplication of two long arrays
+     */
+    public static long[] multiply(long[] a1, long[] a2)
+    {
+        return multiply(a1, a2, null);
+    }
+
+    /**
+     * Element-wise multiplication of two int arrays (result in output if defined)
      * 
-     * @param array
-     * @param value
-     * @param output
+     * @param out
      *        the array receiving the result
      */
-    public static void multiply(double[] array, double value, double[] output)
+    public static int[] multiply(int[] a1, int[] a2, int[] out)
     {
+        final int[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] * a2[i];
+
+        return result;
+    }
+
+    /**
+     * Element-wise multiplication of two int arrays
+     */
+    public static int[] multiply(int[] a1, int[] a2)
+    {
+        return multiply(a1, a2, null);
+    }
+
+    /**
+     * Element-wise multiplication of two short arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static short[] multiply(short[] a1, short[] a2, short[] out)
+    {
+        final short[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = (short) (a1[i] * a2[i]);
+
+        return result;
+    }
+
+    /**
+     * Element-wise multiplication of two short arrays
+     */
+    public static short[] multiply(short[] a1, short[] a2)
+    {
+        return multiply(a1, a2, null);
+    }
+
+    /**
+     * Element-wise multiplication of two byte arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static byte[] multiply(byte[] a1, byte[] a2, byte[] out)
+    {
+        final byte[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = (byte) (a1[i] * a2[i]);
+
+        return result;
+    }
+
+    /**
+     * Element-wise multiplication of two byte arrays
+     */
+    public static byte[] multiply(byte[] a1, byte[] a2)
+    {
+        return multiply(a1, a2, null);
+    }
+
+    /**
+     * Multiplies a value to all elements of the given array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static Object multiply(Object array, Number value, Object out)
+    {
+        switch (ArrayUtil.getDataType(array))
+        {
+            case BYTE:
+                return multiply((byte[]) array, value.byteValue(), (byte[]) out);
+            case SHORT:
+                return multiply((short[]) array, value.shortValue(), (short[]) out);
+            case INT:
+                return multiply((int[]) array, value.intValue(), (int[]) out);
+            case LONG:
+                return multiply((long[]) array, value.longValue(), (long[]) out);
+            case FLOAT:
+                return multiply((float[]) array, value.floatValue(), (float[]) out);
+            case DOUBLE:
+                return multiply((double[]) array, value.doubleValue(), (double[]) out);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Multiplies a value to all elements of the given array
+     */
+    public static Object multiply(Object array, Number value)
+    {
+        return multiply(array, value, null);
+    }
+
+    /**
+     * Multiplies a value to all elements of the given double array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static double[] multiply(double[] array, double value, double[] out)
+    {
+        final double[] result = Array1DUtil.allocIfNull(out, array.length);
+
         for (int i = 0; i < array.length; i++)
-            output[i] = array[i] * value;
+            result[i] = array[i] * value;
+
+        return result;
     }
 
     /**
-     * Multiplies a value by all elements of the given array
+     * @deprecated use {@link #multiply(double[] , double , double[])} instead
+     */
+    @Deprecated
+    public static double[] multiply(double value, double[] array, double[] out)
+    {
+        return multiply(array, value, out);
+    }
+
+    /**
+     * Multiplies a value to all elements of the given double array
+     */
+    public static double[] multiply(double[] array, double value)
+    {
+        return multiply(array, value, null);
+    }
+
+    /**
+     * Multiplies a value to all elements of the given float array
      * 
-     * @param array
-     * @param value
-     * @param output
+     * @param out
      *        the array receiving the result
      */
-    public static void multiply(double value, double[] array, double[] output)
+    public static float[] multiply(float[] array, float value, float[] out)
     {
-        multiply(array, value, output); // for commutativity purposes
+        final float[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] * value;
+
+        return result;
+    }
+
+    /**
+     * Multiplies a value to all elements of the float given array
+     */
+    public static float[] multiply(float[] array, float value)
+    {
+        return multiply(array, value, null);
+    }
+
+    /**
+     * Multiplies a value to all elements of the given long array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static long[] multiply(long[] array, long value, long[] out)
+    {
+        final long[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] * value;
+
+        return result;
+    }
+
+    /**
+     * Multiplies a value to all elements of the given long array
+     */
+    public static long[] multiply(long[] array, long value)
+    {
+        return multiply(array, value, null);
+    }
+
+    /**
+     * Multiplies a value to all elements of the given int array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static int[] multiply(int[] array, int value, int[] out)
+    {
+        final int[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] * value;
+
+        return result;
+    }
+
+    /**
+     * Multiplies a value to all elements of the given int array
+     */
+    public static int[] multiply(int[] array, int value)
+    {
+        return multiply(array, value, null);
+    }
+
+    /**
+     * Multiplies a value to all elements of the given short array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static short[] multiply(short[] array, short value, short[] out)
+    {
+        final short[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = (short) (array[i] * value);
+
+        return result;
+    }
+
+    /**
+     * Multiplies a value to all elements of the given short array
+     */
+    public static short[] multiply(short[] array, short value)
+    {
+        return multiply(array, value, null);
+    }
+
+    /**
+     * Multiplies a value to all elements of the given byte array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static byte[] multiply(byte[] array, byte value, byte[] out)
+    {
+        final byte[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = (byte) (array[i] * value);
+
+        return result;
+    }
+
+    /**
+     * Multiplies a value to all elements of the given byte array
+     */
+    public static byte[] multiply(byte[] array, byte value)
+    {
+        return multiply(array, value, null);
     }
 
     /**
      * Element-wise division of two arrays
      * 
-     * @param a1
-     * @param a2
-     * @return
+     * @param out
+     *        the array receiving the result
+     */
+    public static Object divide(Object a1, Object a2, Object out)
+    {
+        switch (ArrayUtil.getDataType(a1))
+        {
+            case BYTE:
+                return divide((byte[]) a1, (byte[]) a2, (byte[]) out);
+            case SHORT:
+                return divide((short[]) a1, (short[]) a2, (short[]) out);
+            case INT:
+                return divide((int[]) a1, (int[]) a2, (int[]) out);
+            case LONG:
+                return divide((long[]) a1, (long[]) a2, (long[]) out);
+            case FLOAT:
+                return divide((float[]) a1, (float[]) a2, (float[]) out);
+            case DOUBLE:
+                return divide((double[]) a1, (double[]) a2, (double[]) out);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Element-wise division of two arrays
+     */
+    public static Object divide(Object a1, Object a2)
+    {
+        return divide(a1, a2, null);
+    }
+
+    /**
+     * Element-wise division of two double arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static double[] divide(double[] a1, double[] a2, double[] out)
+    {
+        final double[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] / a2[i];
+
+        return result;
+    }
+
+    /**
+     * Element-wise division of two double arrays
      */
     public static double[] divide(double[] a1, double[] a2)
     {
-        double[] result = new double[a1.length];
-        divide(a1, a2, result);
+        return divide(a1, a2, null);
+    }
+
+    /**
+     * Element-wise division of two float arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static float[] divide(float[] a1, float[] a2, float[] out)
+    {
+        final float[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] / a2[i];
+
         return result;
     }
 
     /**
-     * Element-wise division of two arrays
-     * 
-     * @param a1
-     * @param a2
-     * @param output
-     *        the array receiving the result
+     * Element-wise division of two float arrays
      */
-    public static void divide(double[] a1, double[] a2, double[] output)
+    public static float[] divide(float[] a1, float[] a2)
     {
-        for (int i = 0; i < a1.length; i++)
-            output[i] = a1[i] / a2[i];
+        return divide(a1, a2, null);
     }
 
     /**
-     * Divides all elements of the given array by the specified value
+     * Element-wise division of two long arrays (result in output if defined)
      * 
-     * @param array
-     * @param value
-     * @param output
+     * @param out
      *        the array receiving the result
      */
-    public static void divide(double[] array, double value, double[] output)
+    public static long[] divide(long[] a1, long[] a2, long[] out)
     {
+        final long[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] / a2[i];
+
+        return result;
+    }
+
+    /**
+     * Element-wise division of two long arrays
+     */
+    public static long[] divide(long[] a1, long[] a2)
+    {
+        return divide(a1, a2, null);
+    }
+
+    /**
+     * Element-wise division of two int arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static int[] divide(int[] a1, int[] a2, int[] out)
+    {
+        final int[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = a1[i] / a2[i];
+
+        return result;
+    }
+
+    /**
+     * Element-wise division of two int arrays
+     */
+    public static int[] divide(int[] a1, int[] a2)
+    {
+        return divide(a1, a2, null);
+    }
+
+    /**
+     * Element-wise division of two short arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static short[] divide(short[] a1, short[] a2, short[] out)
+    {
+        final short[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = (short) (a1[i] / a2[i]);
+
+        return result;
+    }
+
+    /**
+     * Element-wise division of two short arrays
+     */
+    public static short[] divide(short[] a1, short[] a2)
+    {
+        return divide(a1, a2, null);
+    }
+
+    /**
+     * Element-wise division of two byte arrays (result in output if defined)
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static byte[] divide(byte[] a1, byte[] a2, byte[] out)
+    {
+        final byte[] result = Array1DUtil.allocIfNull(out, a1.length);
+
+        for (int i = 0; i < a1.length; i++)
+            result[i] = (byte) (a1[i] / a2[i]);
+
+        return result;
+    }
+
+    /**
+     * Element-wise division of two byte arrays
+     */
+    public static byte[] divide(byte[] a1, byte[] a2)
+    {
+        return divide(a1, a2, null);
+    }
+
+    /**
+     * Divides a value to all elements of the given array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static Object divide(Object array, Number value, Object out)
+    {
+        switch (ArrayUtil.getDataType(array))
+        {
+            case BYTE:
+                return divide((byte[]) array, value.byteValue(), (byte[]) out);
+            case SHORT:
+                return divide((short[]) array, value.shortValue(), (short[]) out);
+            case INT:
+                return divide((int[]) array, value.intValue(), (int[]) out);
+            case LONG:
+                return divide((long[]) array, value.longValue(), (long[]) out);
+            case FLOAT:
+                return divide((float[]) array, value.floatValue(), (float[]) out);
+            case DOUBLE:
+                return divide((double[]) array, value.doubleValue(), (double[]) out);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Divides a value to all elements of the given array
+     */
+    public static Object divide(Object array, Number value)
+    {
+        return divide(array, value, null);
+    }
+
+    /**
+     * Divides a value to all elements of the given double array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static double[] divide(double[] array, double value, double[] out)
+    {
+        final double[] result = Array1DUtil.allocIfNull(out, array.length);
+
         for (int i = 0; i < array.length; i++)
-            output[i] = array[i] / value;
+            result[i] = array[i] / value;
+
+        return result;
+    }
+
+    /**
+     * Divides a value to all elements of the given double array
+     */
+    public static double[] divide(double[] array, double value)
+    {
+        return divide(array, value, null);
+    }
+
+    /**
+     * Divides a value to all elements of the given float array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static float[] divide(float[] array, float value, float[] out)
+    {
+        final float[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] / value;
+
+        return result;
+    }
+
+    /**
+     * Divides a value to all elements of the float given array
+     */
+    public static float[] divide(float[] array, float value)
+    {
+        return divide(array, value, null);
+    }
+
+    /**
+     * Divides a value to all elements of the given long array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static long[] divide(long[] array, long value, long[] out)
+    {
+        final long[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] / value;
+
+        return result;
+    }
+
+    /**
+     * Divides a value to all elements of the given long array
+     */
+    public static long[] divide(long[] array, long value)
+    {
+        return divide(array, value, null);
+    }
+
+    /**
+     * Divides a value to all elements of the given int array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static int[] divide(int[] array, int value, int[] out)
+    {
+        final int[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = array[i] / value;
+
+        return result;
+    }
+
+    /**
+     * Divides a value to all elements of the given int array
+     */
+    public static int[] divide(int[] array, int value)
+    {
+        return divide(array, value, null);
+    }
+
+    /**
+     * Divides a value to all elements of the given short array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static short[] divide(short[] array, short value, short[] out)
+    {
+        final short[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = (short) (array[i] / value);
+
+        return result;
+    }
+
+    /**
+     * Divides a value to all elements of the given short array
+     */
+    public static short[] divide(short[] array, short value)
+    {
+        return divide(array, value, null);
+    }
+
+    /**
+     * Divides a value to all elements of the given byte array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static byte[] divide(byte[] array, byte value, byte[] out)
+    {
+        final byte[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = (byte) (array[i] / value);
+
+        return result;
+    }
+
+    /**
+     * Divides a value to all elements of the given byte array
+     */
+    public static byte[] divide(byte[] array, byte value)
+    {
+        return divide(array, value, null);
     }
 
     /**
      * Divides a value by all elements of the given array
      * 
-     * @param array
-     * @param value
-     * @param output
+     * @param out
      *        the array receiving the result
      */
-    public static void divide(double value, double[] array, double[] output)
+    public static Object divide(Number value, Object array, Object out)
     {
+        switch (ArrayUtil.getDataType(array))
+        {
+            case BYTE:
+                return divide(value.byteValue(), (byte[]) array, (byte[]) out);
+            case SHORT:
+                return divide(value.shortValue(), (short[]) array, (short[]) out);
+            case INT:
+                return divide(value.intValue(), (int[]) array, (int[]) out);
+            case LONG:
+                return divide(value.longValue(), (long[]) array, (long[]) out);
+            case FLOAT:
+                return divide(value.floatValue(), (float[]) array, (float[]) out);
+            case DOUBLE:
+                return divide(value.doubleValue(), (double[]) array, (double[]) out);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Divides a value by all elements of the given array
+     */
+    public static Object divide(Number value, Object array)
+    {
+        return divide(value, array, null);
+    }
+
+    /**
+     * Subtracts a value by all elements of the given double array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static double[] divide(double value, double[] array, double[] out)
+    {
+        final double[] result = Array1DUtil.allocIfNull(out, array.length);
+
         for (int i = 0; i < array.length; i++)
-            output[i] = value / array[i];
+            result[i] = value / array[i];
+
+        return result;
+    }
+
+    /**
+     * Divides a value by all elements of the given double array
+     */
+    public static double[] divide(double value, double[] array)
+    {
+        return divide(array, value, null);
+    }
+
+    /**
+     * Divides a value by all elements of the given float array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static float[] divide(float value, float[] array, float[] out)
+    {
+        final float[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = value / array[i];
+
+        return result;
+    }
+
+    /**
+     * Divides a value by all elements of the float given array
+     */
+    public static float[] divide(float value, float[] array)
+    {
+        return divide(array, value, null);
+    }
+
+    /**
+     * Divides a value by all elements of the given long array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static long[] divide(long value, long[] array, long[] out)
+    {
+        final long[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = value / array[i];
+
+        return result;
+    }
+
+    /**
+     * Divides a value by all elements of the given long array
+     */
+    public static long[] divide(long value, long[] array)
+    {
+        return divide(array, value, null);
+    }
+
+    /**
+     * Divides a value by all elements of the given int array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static int[] divide(int value, int[] array, int[] out)
+    {
+        final int[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = value / array[i];
+
+        return result;
+    }
+
+    /**
+     * Divides a value by all elements of the given int array
+     */
+    public static int[] divide(int value, int[] array)
+    {
+        return divide(array, value, null);
+    }
+
+    /**
+     * Divides a value by all elements of the given short array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static short[] divide(short value, short[] array, short[] out)
+    {
+        final short[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = (short) (value / array[i]);
+
+        return result;
+    }
+
+    /**
+     * Divides a value by all elements of the given short array
+     */
+    public static short[] divide(short value, short[] array)
+    {
+        return divide(array, value, null);
+    }
+
+    /**
+     * Divides a value by all elements of the given byte array
+     * 
+     * @param out
+     *        the array receiving the result
+     */
+    public static byte[] divide(byte value, byte[] array, byte[] out)
+    {
+        final byte[] result = Array1DUtil.allocIfNull(out, array.length);
+
+        for (int i = 0; i < array.length; i++)
+            result[i] = (byte) (value / array[i]);
+
+        return result;
+    }
+
+    /**
+     * Divides a value by all elements of the given byte array
+     */
+    public static byte[] divide(byte value, byte[] array)
+    {
+        return divide(array, value, null);
     }
 
     /**
      * Computes the absolute value of each value of the given array
      * 
-     * @param input
+     * @param overwrite
+     *        true : overwrites the input data<br>
+     *        false: returns the result in a new array
+     */
+    public static Object abs(Object array, boolean overwrite)
+    {
+        switch (ArrayUtil.getDataType(array))
+        {
+            case BYTE:
+                return abs((byte[]) array, overwrite);
+            case SHORT:
+                return abs((short[]) array, overwrite);
+            case INT:
+                return abs((int[]) array, overwrite);
+            case LONG:
+                return abs((long[]) array, overwrite);
+            case FLOAT:
+                return abs((float[]) array, overwrite);
+            case DOUBLE:
+                return abs((double[]) array, overwrite);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Computes the absolute value of each value of the given double array
+     * 
      * @param overwrite
      *        true overwrites the input data, false returns the result in a new structure
      */
     public static double[] abs(double[] input, boolean overwrite)
     {
-        double[] result = overwrite ? input : new double[input.length];
+        final double[] result = overwrite ? input : new double[input.length];
 
         for (int i = 0; i < input.length; i++)
             result[i] = Math.abs(input[i]);
@@ -265,19 +1882,491 @@ public class ArrayMath
     }
 
     /**
-     * Computes the minimum value of an array
+     * Computes the absolute value of each value of the given float array
      * 
-     * @param input
-     *        a double array
+     * @param overwrite
+     *        true overwrites the input data, false returns the result in a new structure
+     */
+    public static float[] abs(float[] input, boolean overwrite)
+    {
+        final float[] result = overwrite ? input : new float[input.length];
+
+        for (int i = 0; i < input.length; i++)
+            result[i] = Math.abs(input[i]);
+
+        return result;
+    }
+
+    /**
+     * Computes the absolute value of each value of the given long array
+     * 
+     * @param overwrite
+     *        true overwrites the input data, false returns the result in a new structure
+     */
+    public static long[] abs(long[] input, boolean overwrite)
+    {
+        final long[] result = overwrite ? input : new long[input.length];
+
+        for (int i = 0; i < input.length; i++)
+            result[i] = Math.abs(input[i]);
+
+        return result;
+    }
+
+    /**
+     * Computes the absolute value of each value of the given int array
+     * 
+     * @param overwrite
+     *        true overwrites the input data, false returns the result in a new structure
+     */
+    public static int[] abs(int[] input, boolean overwrite)
+    {
+        final int[] result = overwrite ? input : new int[input.length];
+
+        for (int i = 0; i < input.length; i++)
+            result[i] = Math.abs(input[i]);
+
+        return result;
+    }
+
+    /**
+     * Computes the absolute value of each value of the given short array
+     * 
+     * @param overwrite
+     *        true overwrites the input data, false returns the result in a new structure
+     */
+    public static short[] abs(short[] input, boolean overwrite)
+    {
+        final short[] result = overwrite ? input : new short[input.length];
+
+        for (int i = 0; i < input.length; i++)
+            result[i] = (short) Math.abs(input[i]);
+
+        return result;
+    }
+
+    /**
+     * Computes the absolute value of each value of the given byte array
+     * 
+     * @param overwrite
+     *        true overwrites the input data, false returns the result in a new structure
+     */
+    public static byte[] abs(byte[] input, boolean overwrite)
+    {
+        final byte[] result = overwrite ? input : new byte[input.length];
+
+        for (int i = 0; i < input.length; i++)
+            result[i] = (byte) Math.abs(input[i]);
+
+        return result;
+    }
+
+    /**
+     * Find the minimum value of a generic array
+     * 
+     * @param array
+     *        an array
+     * @param signed
+     *        signed / unsigned flag
      * @return the min value of the array
      */
-    public static double min(double[] input)
+    public static double min(Object array, boolean signed)
     {
-        double min = Double.POSITIVE_INFINITY;
-        for (double d : input)
-            if (d < min)
-                min = d;
+        switch (ArrayUtil.getDataType(array))
+        {
+            case BYTE:
+                return min((byte[]) array, signed);
+            case SHORT:
+                return min((short[]) array, signed);
+            case INT:
+                return min((int[]) array, signed);
+            case LONG:
+                return min((long[]) array, signed);
+            case FLOAT:
+                return min((float[]) array);
+            case DOUBLE:
+                return min((double[]) array);
+            default:
+                return 0;
+        }
+    }
+
+    /**
+     * Find the minimum value of an array
+     * 
+     * @param array
+     *        an array
+     * @param signed
+     *        signed / unsigned flag
+     * @return the min value of the array
+     */
+    public static int min(byte[] array, boolean signed)
+    {
+        if (signed)
+        {
+            byte min = Byte.MAX_VALUE;
+
+            for (byte v : array)
+                if (v < min)
+                    min = v;
+
+            return min;
+        }
+
+        int min = Integer.MAX_VALUE;
+
+        for (int i = 0; i < array.length; i++)
+        {
+            final int v = TypeUtil.unsign(array[i]);
+            if (v < min)
+                min = v;
+        }
+
         return min;
+    }
+
+    /**
+     * Find the minimum value of an array
+     * 
+     * @param array
+     *        an array
+     * @param signed
+     *        signed / unsigned flag
+     * @return the min value of the array
+     */
+    public static int min(short[] array, boolean signed)
+    {
+        if (signed)
+        {
+            short min = Short.MAX_VALUE;
+
+            for (short v : array)
+                if (v < min)
+                    min = v;
+
+            return min;
+        }
+
+        int min = Integer.MAX_VALUE;
+
+        for (int i = 0; i < array.length; i++)
+        {
+            final int v = TypeUtil.unsign(array[i]);
+            if (v < min)
+                min = v;
+        }
+
+        return min;
+    }
+
+    /**
+     * Find the minimum value of an array
+     * 
+     * @param array
+     *        an array
+     * @param signed
+     *        signed / unsigned flag
+     * @return the min value of the array
+     */
+    public static long min(int[] array, boolean signed)
+    {
+        if (signed)
+        {
+            int min = Integer.MAX_VALUE;
+
+            for (int v : array)
+                if (v < min)
+                    min = v;
+
+            return min;
+        }
+
+        long min = Long.MAX_VALUE;
+
+        for (int i = 0; i < array.length; i++)
+        {
+            final long v = TypeUtil.unsign(array[i]);
+            if (v < min)
+                min = v;
+        }
+
+        return min;
+    }
+
+    /**
+     * Find the minimum value of an array
+     * 
+     * @param array
+     *        an array
+     * @param signed
+     *        signed / unsigned flag
+     * @return the min value of the array
+     */
+    public static long min(long[] array, boolean signed)
+    {
+        if (signed)
+        {
+            long min = Integer.MAX_VALUE;
+
+            for (long v : array)
+                if (v < min)
+                    min = v;
+
+            return min;
+        }
+
+        double min = Long.MAX_VALUE;
+
+        for (int i = 0; i < array.length; i++)
+        {
+            final double v = TypeUtil.unsign(array[i]);
+            // need to compare in double
+            if (v < min)
+                min = v;
+        }
+
+        // convert back to long (need to be interpreted as unsigned)
+        return TypeUtil.toLong(min);
+    }
+
+    /**
+     * Find the minimum value of an array
+     * 
+     * @param array
+     *        an array
+     * @return the min value of the array
+     */
+    public static float min(float[] array)
+    {
+        float min = Float.MAX_VALUE;
+
+        for (float v : array)
+            if (v < min)
+                min = v;
+
+        return min;
+    }
+
+    /**
+     * Find the minimum value of an array
+     * 
+     * @param array
+     *        an array
+     * @return the min value of the array
+     */
+    public static double min(double[] array)
+    {
+        double min = Double.MAX_VALUE;
+
+        for (double v : array)
+            if (v < min)
+                min = v;
+
+        return min;
+    }
+
+    /**
+     * Find the maximum value of a generic array
+     * 
+     * @param array
+     *        an array
+     * @param signed
+     *        signed / unsigned flag
+     * @return the max value of the array
+     */
+    public static double max(Object array, boolean signed)
+    {
+        switch (ArrayUtil.getDataType(array))
+        {
+            case BYTE:
+                return max((byte[]) array, signed);
+            case SHORT:
+                return max((short[]) array, signed);
+            case INT:
+                return max((int[]) array, signed);
+            case LONG:
+                return max((long[]) array, signed);
+            case FLOAT:
+                return max((float[]) array);
+            case DOUBLE:
+                return max((double[]) array);
+            default:
+                return 0;
+        }
+    }
+
+    /**
+     * Find the maximum value of an array
+     * 
+     * @param array
+     *        an array
+     * @param signed
+     *        signed / unsigned flag
+     * @return the max value of the array
+     */
+    public static int max(byte[] array, boolean signed)
+    {
+        if (signed)
+        {
+            byte max = Byte.MAX_VALUE;
+
+            for (byte v : array)
+                if (v > max)
+                    max = v;
+
+            return max;
+        }
+
+        int max = Integer.MAX_VALUE;
+
+        for (int i = 0; i < array.length; i++)
+        {
+            final int v = TypeUtil.unsign(array[i]);
+            if (v > max)
+                max = v;
+        }
+
+        return max;
+    }
+
+    /**
+     * Find the maximum value of an array
+     * 
+     * @param array
+     *        an array
+     * @param signed
+     *        signed / unsigned flag
+     * @return the max value of the array
+     */
+    public static int max(short[] array, boolean signed)
+    {
+        if (signed)
+        {
+            short max = Short.MAX_VALUE;
+
+            for (short v : array)
+                if (v > max)
+                    max = v;
+
+            return max;
+        }
+
+        int max = Integer.MAX_VALUE;
+
+        for (int i = 0; i < array.length; i++)
+        {
+            final int v = TypeUtil.unsign(array[i]);
+            if (v > max)
+                max = v;
+        }
+
+        return max;
+    }
+
+    /**
+     * Find the maximum value of an array
+     * 
+     * @param array
+     *        an array
+     * @param signed
+     *        signed / unsigned flag
+     * @return the max value of the array
+     */
+    public static long max(int[] array, boolean signed)
+    {
+        if (signed)
+        {
+            int max = Integer.MAX_VALUE;
+
+            for (int v : array)
+                if (v > max)
+                    max = v;
+
+            return max;
+        }
+
+        long max = Long.MAX_VALUE;
+
+        for (int i = 0; i < array.length; i++)
+        {
+            final long v = TypeUtil.unsign(array[i]);
+            if (v > max)
+                max = v;
+        }
+
+        return max;
+    }
+
+    /**
+     * Find the maximum value of an array
+     * 
+     * @param array
+     *        an array
+     * @param signed
+     *        signed / unsigned flag
+     * @return the max value of the array
+     */
+    public static long max(long[] array, boolean signed)
+    {
+        if (signed)
+        {
+            long max = Integer.MAX_VALUE;
+
+            for (long v : array)
+                if (v > max)
+                    max = v;
+
+            return max;
+        }
+
+        double max = Long.MAX_VALUE;
+
+        for (int i = 0; i < array.length; i++)
+        {
+            final double v = TypeUtil.unsign(array[i]);
+            // need to compare in double
+            if (v > max)
+                max = v;
+        }
+
+        // convert back to long (need to be interpreted as unsigned)
+        return TypeUtil.toLong(max);
+    }
+
+    /**
+     * Find the maximum value of an array
+     * 
+     * @param array
+     *        an array
+     * @return the max value of the array
+     */
+    public static float max(float[] array)
+    {
+        float max = Float.MAX_VALUE;
+
+        for (float v : array)
+            if (v > max)
+                max = v;
+
+        return max;
+    }
+
+    /**
+     * Find the maximum value of an array
+     * 
+     * @param array
+     *        an array
+     * @return the max value of the array
+     */
+    public static double max(double[] array)
+    {
+        double max = Double.MAX_VALUE;
+
+        for (double v : array)
+            if (v > max)
+                max = v;
+
+        return max;
     }
 
     /**
@@ -292,7 +2381,6 @@ public class ArrayMath
      */
     public static void min(double[] a1, double[] a2, double[] output)
     {
-
         for (int i = 0; i < a1.length; i++)
             if (a1[i] <= a2[i])
                 output[i] = a1[i];
@@ -311,27 +2399,9 @@ public class ArrayMath
      */
     public static double[] min(double[] a1, double[] a2)
     {
-
         double[] result = new double[a1.length];
         min(a1, a2, result);
         return result;
-
-    }
-
-    /**
-     * Computes the maximum value of an array
-     * 
-     * @param input
-     *        a double array
-     * @return the max value of the array
-     */
-    public static double max(double[] input)
-    {
-        double max = Double.NEGATIVE_INFINITY;
-        for (double d : input)
-            if (d > max)
-                max = d;
-        return max;
     }
 
     /**
@@ -346,7 +2416,6 @@ public class ArrayMath
      */
     public static void max(double[] a1, double[] a2, double[] output)
     {
-
         for (int i = 0; i < a1.length; i++)
             if (a1[i] >= a2[i])
                 output[i] = a1[i];

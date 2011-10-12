@@ -1,20 +1,5 @@
-/*
- * Copyright 2010, 2011 Institut Pasteur.
+/**
  * 
- * This file is part of ICY.
- * 
- * ICY is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * ICY is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with ICY. If not, see <http://www.gnu.org/licenses/>.
  */
 package icy.image.colormodel;
 
@@ -25,24 +10,24 @@ import icy.type.TypeUtil;
 /**
  * @author Stephane
  */
-public class UIntColorModel extends IcyColorModel
+public class ULongColorModel extends IcyColorModel
 {
     /**
-     * Define a new UIntColorModel
+     * Define a new ULongColorModel
      * 
      * @param numComponents
      *        number of color component
      * @param bits
      */
-    public UIntColorModel(int numComponents, int[] bits)
+    public ULongColorModel(int numComponents, int[] bits)
     {
-        super(numComponents, DataType.UINT, bits);
+        super(numComponents, DataType.ULONG, bits);
     }
 
     @Override
     public int getRGB(Object pixel)
     {
-        final int[] pix = (int[]) pixel;
+        final long[] pix = (long[]) pixel;
         final int[] scaledData = new int[numComponents];
 
         for (int comp = 0; comp < numComponents; comp++)
@@ -59,7 +44,7 @@ public class UIntColorModel extends IcyColorModel
     @Override
     public int getRGB(Object pixel, LUT lut)
     {
-        final int[] pix = (int[]) pixel;
+        final long[] pix = (long[]) pixel;
         final int[] scaledData = new int[numComponents];
 
         for (int comp = 0; comp < numComponents; comp++)
@@ -83,11 +68,11 @@ public class UIntColorModel extends IcyColorModel
             result = components;
         }
 
-        final int data[] = (int[]) pixel;
+        final long data[] = (long[]) pixel;
         final int len = data.length;
 
         for (int i = 0; i < len; i++)
-            result[offset + i] = data[i];
+            result[offset + i] = (int) data[i];
 
         return result;
     }
@@ -98,13 +83,13 @@ public class UIntColorModel extends IcyColorModel
         if ((components.length - offset) < numComponents)
             throw new IllegalArgumentException("Component array too small" + " (should be " + numComponents);
 
-        final int[] pixel;
+        final long[] pixel;
         final int len = components.length;
 
         if (obj == null)
-            pixel = new int[numComponents];
+            pixel = new long[numComponents];
         else
-            pixel = (int[]) obj;
+            pixel = (long[]) obj;
 
         for (int i = 0; i < len; i++)
             pixel[i] = components[offset + i];
@@ -115,15 +100,15 @@ public class UIntColorModel extends IcyColorModel
     @Override
     public Object getDataElements(float[] normComponents, int offset, Object obj)
     {
-        final int[] pixel;
+        final long[] pixel;
 
         if (obj == null)
-            pixel = new int[numComponents];
+            pixel = new long[numComponents];
         else
-            pixel = (int[]) obj;
+            pixel = (long[]) obj;
 
         for (int c = 0, nc = offset; c < numComponents; c++, nc++)
-            pixel[c] = TypeUtil.toInt(normalScalers[c].unscale(normComponents[nc]));
+            pixel[c] = TypeUtil.toLong(normalScalers[c].unscale(normComponents[nc]));
 
         return pixel;
     }
@@ -138,7 +123,7 @@ public class UIntColorModel extends IcyColorModel
         else
             result = normComponents;
 
-        final int[] data = (int[]) pixel;
+        final long[] data = (long[]) pixel;
 
         for (int c = 0, nc = normOffset; c < numComponents; c++, nc++)
             result[nc] = (float) normalScalers[c].scale(TypeUtil.unsign(data[c]));
