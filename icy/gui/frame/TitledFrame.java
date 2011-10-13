@@ -31,6 +31,7 @@ import javax.swing.JPanel;
 public class TitledFrame extends IcyFrame
 {
     protected final JPanel mainPanel;
+    protected final IcyLogo logo;
 
     public TitledFrame(String title)
     {
@@ -67,7 +68,9 @@ public class TitledFrame extends IcyFrame
 
         setLayout(new BorderLayout());
 
-        add(new IcyLogo(title, dim), BorderLayout.NORTH);
+        logo = new IcyLogo(title, dim);
+
+        add(logo, BorderLayout.NORTH);
         add(mainPanel, BorderLayout.CENTER);
     }
 
@@ -79,4 +82,19 @@ public class TitledFrame extends IcyFrame
         return mainPanel;
     }
 
+    /**
+     * Display or not the ICY black title
+     */
+    public void setTitleVisible(boolean value)
+    {
+        logo.setVisible(value);
+    }
+
+    /**
+     * Return true if ICY black title is visible
+     */
+    public boolean isTitleVisible()
+    {
+        return logo.isVisible();
+    }
 }

@@ -20,6 +20,7 @@ package icy.gui.lut.abstract_;
 
 import icy.gui.viewer.Viewer;
 import icy.image.lut.LUT;
+import icy.sequence.Sequence;
 
 import javax.swing.JPanel;
 
@@ -63,4 +64,14 @@ public class IcyLutViewer extends JPanel
         return lut;
     }
 
+    /**
+     * @return the sequence
+     */
+    public Sequence getSequence()
+    {
+        if (viewer != null)
+            return viewer.getSequence();
+
+        return null;
+    }
 }

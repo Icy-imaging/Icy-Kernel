@@ -54,7 +54,7 @@ public class IcyLogo extends IcyPanel // implements ComponentListener
         if (dim != null)
             setPreferredSize(dim);
         else
-            setPreferredSize(new Dimension(600, 100));
+            ComponentUtil.setPreferredHeight(this, 70);
 
         icyFont = new Font("Arial", Font.PLAIN, 40);
         titleFont = new Font("Arial", Font.BOLD, 20);

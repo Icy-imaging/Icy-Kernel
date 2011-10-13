@@ -41,6 +41,7 @@ import java.awt.image.DataBufferDouble;
 import java.awt.image.DataBufferFloat;
 import java.awt.image.DataBufferInt;
 import java.awt.image.DataBufferShort;
+import java.awt.image.DataBufferUShort;
 import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
@@ -257,12 +258,16 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     {
         final SampleModel sm = createCompatibleSampleModel(w, h);
 
-        switch (dataType.getJavaType())
+        switch (dataType)
         {
+            case UBYTE:
             case BYTE:
                 return Raster.createWritableRaster(sm, new DataBufferByte((byte[][]) data, w * h), null);
             case SHORT:
                 return Raster.createWritableRaster(sm, new DataBufferShort((short[][]) data, w * h), null);
+            case USHORT:
+                return Raster.createWritableRaster(sm, new DataBufferUShort((short[][]) data, w * h), null);
+            case UINT:
             case INT:
                 return Raster.createWritableRaster(sm, new DataBufferInt((int[][]) data, w * h), null);
             case FLOAT:

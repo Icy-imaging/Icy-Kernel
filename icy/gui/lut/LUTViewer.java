@@ -162,14 +162,6 @@ public class LUTViewer extends IcyLutViewer
         validate();
     }
 
-    Sequence getSequence()
-    {
-        if (viewer != null)
-            return viewer.getSequence();
-
-        return null;
-    }
-
     void setLogScale(boolean value)
     {
         for (int i = 0; i < lutBandViewers.size(); i++)

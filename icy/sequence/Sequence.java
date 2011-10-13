@@ -48,6 +48,7 @@ import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
 import icy.undo.IcyUndoManager;
+import icy.util.StringUtil;
 
 import java.awt.Dimension;
 import java.awt.Rectangle;
@@ -99,10 +100,14 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     @Deprecated
     public static final int TYPE_UNDEFINED = TypeUtil.TYPE_UNDEFINED;
 
-    public static final String ID_PIXELS_SIZE_X = "pixelSizeX";
-    public static final String ID_PIXELS_SIZE_Y = "pixelSizeY";
-    public static final String ID_PIXELS_SIZE_Z = "pixelSizeZ";
-    public static final String ID_PIXELS_SIZE_T = "pixelSizeT";
+    public static final String ID_PIXEL_SIZE_X = "pixelSizeX";
+    public static final String ID_PIXEL_SIZE_Y = "pixelSizeY";
+    public static final String ID_PIXEL_SIZE_Z = "pixelSizeZ";
+    public static final String ID_TIME_INTERVAL = "timeInterval";
+
+    public static final String ID_CHANNEL_NAME = "channelName";
+
+    public static final String DEFAULT_CHANNEL_NAME = "ch ";
 
     /**
      * id generator
@@ -150,7 +155,12 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * T resolution (in ms)
      */
-    private double pixelSizeT;
+    private double timeInterval;
+    /**
+     * channels name
+     */
+    private String channelsName[];
+
     /**
      * automatic update of component absolute bounds
      */
@@ -201,7 +211,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         pixelSizeX = 1d;
         pixelSizeY = 1d;
         pixelSizeZ = 1d;
-        pixelSizeT = 1d;
+        timeInterval = 1d;
 
         volumetricImages = new TreeMap<Integer, VolumetricImage>();
         painters = new ArrayList<Painter>();
@@ -215,6 +225,8 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         // updater = new UpdateEventHandler(this, true);
         listeners = new EventListenerList();
 
+        // empty by default
+        channelsName = new String[0];
         // no colorModel yet
         colorModel = null;
         componentBoundsInvalid = false;
@@ -558,9 +570,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Return T time size (in ms)
      */
-    public double getPixelSizeT()
+    public double getTimeInterval()
     {
-        return pixelSizeT;
+        return timeInterval;
     }
 
     /**
@@ -571,7 +583,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         if (pixelSizeX != value)
         {
             pixelSizeX = value;
-            metaChanged(ID_PIXELS_SIZE_X);
+            metaChanged(ID_PIXEL_SIZE_X);
         }
     }
 
@@ -583,7 +595,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         if (pixelSizeY != value)
         {
             pixelSizeY = value;
-            metaChanged(ID_PIXELS_SIZE_Y);
+            metaChanged(ID_PIXEL_SIZE_Y);
         }
     }
 
@@ -595,19 +607,39 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         if (pixelSizeZ != value)
         {
             pixelSizeZ = value;
-            metaChanged(ID_PIXELS_SIZE_Z);
+            metaChanged(ID_PIXEL_SIZE_Z);
         }
     }
 
     /**
      * Set T time resolution
      */
-    public void setPixelSizeT(double value)
+    public void setTimeInterval(double value)
     {
-        if (pixelSizeT != value)
+        if (timeInterval != value)
         {
-            pixelSizeT = value;
-            metaChanged(ID_PIXELS_SIZE_T);
+            timeInterval = value;
+            metaChanged(ID_TIME_INTERVAL);
+        }
+    }
+
+    /**
+     * Get channel name
+     */
+    public String getChannelName(int index)
+    {
+        return channelsName[index];
+    }
+
+    /**
+     * Set channel name
+     */
+    public void setChannelName(int index, String value)
+    {
+        if (!StringUtil.equals(channelsName[index], value))
+        {
+            channelsName[index] = value;
+            metaChanged(ID_CHANNEL_NAME, index);
         }
     }
 
@@ -4440,11 +4472,37 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * sequence type (colorModel) changed
+     * sequence meta has changed
+     */
+    private void metaChanged(String metaName, int param)
+    {
+        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_META, metaName, null, param));
+    }
+
+    /**
+     * sequence type (colorModel, size) changed
      */
     private void typeChanged()
     {
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_TYPE));
+
+        final String[] cn = new String[getSizeC()];
+
+        final int len = Math.min(channelsName.length, cn.length);
+        int c = 0;
+        // preserve previous channels name
+        for (; c < len; c++)
+            cn[c] = channelsName[c];
+        // default channels name
+        for (; c < cn.length; c++)
+            cn[c] = DEFAULT_CHANNEL_NAME + c;
+
+        // set new channels names
+        channelsName = cn;
+
+        // only if some changes happened in channels name
+        if (len != cn.length)
+            metaChanged(ID_CHANNEL_NAME);
     }
 
     /**

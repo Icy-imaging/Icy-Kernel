@@ -205,6 +205,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
 
         colormapSettingPanel.add(colorMapTypeCombo);
         colormapSettingPanel.add(Box.createHorizontalStrut(6));
+        colormapSettingPanel.add(Box.createHorizontalGlue());
         colormapSettingPanel.add(restoreDefaultButton);
         colormapSettingPanel.add(Box.createHorizontalStrut(2));
         colormapSettingPanel.add(loadModelButton);
@@ -215,7 +216,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         // colormapSettingPanel.add(Box.createHorizontalStrut(6));
         // colormapSettingPanel.add(alphaEnabled);
 
-        colormapSettingPanel.add(Box.createHorizontalGlue());
+        colormapSettingPanel.add(Box.createHorizontalStrut(2));
         colormapSettingPanel.validate();
 
         bottomPanel.add(Box.createVerticalStrut(4));
@@ -395,11 +396,9 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
     {
         switch (e.getType())
         {
-            // colormap type has changed ?
             case TYPE_CHANGED:
-                // update combo state
+                // colormap type has changed ? --> update combo state
                 colorMapTypeCombo.setSelectedItem(typeToItem(e.getColormap().getType()));
-                // getRadioButton(e.getColormap().getType()).setSelected(true);
                 break;
 
             case MAP_CHANGED:

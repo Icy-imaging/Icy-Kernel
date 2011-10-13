@@ -47,6 +47,7 @@ public class ResourceUtil
     public static final Image ICON_DOCCOPY = ResourceUtil.getAlphaIconAsImage("doc_copy.png");
     public static final Image ICON_DOCIMPORT = ResourceUtil.getAlphaIconAsImage("doc_import.png");
     public static final Image ICON_DOCEXPORT = ResourceUtil.getAlphaIconAsImage("doc_export.png");
+    public static final Image ICON_DOCEDIT = ResourceUtil.getAlphaIconAsImage("doc_edit.png");
     public static final Image ICON_OPEN = ResourceUtil.getAlphaIconAsImage("folder_open.png");
     public static final Image ICON_SAVE = ResourceUtil.getAlphaIconAsImage("save.png");
     public static final Image ICON_CLOSE = ResourceUtil.getAlphaIconAsImage("round_delete.png");

@@ -1806,7 +1806,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public short[][] getDataXYCAsShort()
     {
-        return ((DataBufferShort) getRaster().getDataBuffer()).getBankData();
+        final DataBuffer db = getRaster().getDataBuffer();
+        if (db instanceof DataBufferUShort)
+            return ((DataBufferUShort) db).getBankData();
+        return ((DataBufferShort) db).getBankData();
     }
 
     /**
@@ -1846,7 +1849,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public short[] getDataXYAsShort(int c)
     {
-        return ((DataBufferShort) getRaster().getDataBuffer()).getData(c);
+        final DataBuffer db = getRaster().getDataBuffer();
+        if (db instanceof DataBufferUShort)
+            return ((DataBufferUShort) db).getData(c);
+        return ((DataBufferShort) db).getData(c);
     }
 
     /**
@@ -1919,7 +1925,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     {
         final int len = getSizeX() * getSizeY();
         final int sizeC = getSizeC();
-        final short[][] banks = ((DataBufferShort) getRaster().getDataBuffer()).getBankData();
+        final DataBuffer db = getRaster().getDataBuffer();
+        final short[][] banks;
+        if (db instanceof DataBufferUShort)
+            banks = ((DataBufferUShort) db).getBankData();
+        else
+            banks = ((DataBufferShort) db).getBankData();
         final short[] result = Array1DUtil.allocIfNull(out, len * sizeC);
         int offset = off;
 
@@ -2061,7 +2072,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public short[] getDataCopyXYAsShort(int c, short[] out, int off)
     {
         final int len = getSizeX() * getSizeY();
-        final short[] src = ((DataBufferShort) getRaster().getDataBuffer()).getData(c);
+        final DataBuffer db = getRaster().getDataBuffer();
+        final short[] src;
+        if (db instanceof DataBufferUShort)
+            src = ((DataBufferUShort) db).getData(c);
+        else
+            src = ((DataBufferShort) db).getData(c);
         final short[] result = Array1DUtil.allocIfNull(out, len);
 
         System.arraycopy(src, 0, result, off, len);
@@ -2184,7 +2200,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     {
         final int len = getSizeX() * getSizeY();
         final int sizeC = getSizeC();
-        final short[][] banks = ((DataBufferShort) getRaster().getDataBuffer()).getBankData();
+        final DataBuffer db = getRaster().getDataBuffer();
+        final short[][] banks;
+        if (db instanceof DataBufferUShort)
+            banks = ((DataBufferUShort) db).getBankData();
+        else
+            banks = ((DataBufferShort) db).getBankData();
         final short[] result = Array1DUtil.allocIfNull(out, len * sizeC);
 
         for (int c = 0; c < sizeC; c++)
@@ -2330,7 +2351,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     {
         final int sizeC = getSizeC();
         final int offset = x + (y * getWidth());
-        final short[][] data = ((DataBufferShort) getRaster().getDataBuffer()).getBankData();
+        final DataBuffer db = getRaster().getDataBuffer();
+        final short[][] data;
+        if (db instanceof DataBufferUShort)
+            data = ((DataBufferUShort) db).getBankData();
+        else
+            data = ((DataBufferShort) db).getBankData();
         final short[] result = Array1DUtil.allocIfNull(out, sizeC);
 
         for (int c = 0; c < sizeC; c++)
@@ -2497,7 +2523,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     {
         final int offset = x + (y * getWidth());
         final int len = values.length;
-        final short[][] data = ((DataBufferShort) getRaster().getDataBuffer()).getBankData();
+        final DataBuffer db = getRaster().getDataBuffer();
+        final short[][] data;
+        if (db instanceof DataBufferUShort)
+            data = ((DataBufferUShort) db).getBankData();
+        else
+            data = ((DataBufferShort) db).getBankData();
 
         for (int comp = 0; comp < len; comp++)
             // ignore band offset as it's always 0 here
@@ -2606,7 +2637,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public short getDataAsShort(int x, int y, int c)
     {
         // ignore band offset as it's always 0 here
-        return (((DataBufferShort) getRaster().getDataBuffer()).getData(c))[x + (y * getWidth())];
+        final DataBuffer db = getRaster().getDataBuffer();
+
+        if (db instanceof DataBufferUShort)
+            return (((DataBufferUShort) db).getData(c))[x + (y * getWidth())];
+
+        return (((DataBufferShort) db).getData(c))[x + (y * getWidth())];
     }
 
     /**
@@ -2614,8 +2650,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public void setDataAsShort(int x, int y, int c, short value)
     {
-        // ignore band offset as it's always 0 here
-        (((DataBufferShort) getRaster().getDataBuffer()).getData(c))[x + (y * getWidth())] = value;
+        final DataBuffer db = getRaster().getDataBuffer();
+        if (db instanceof DataBufferUShort)
+            // ignore band offset as it's always 0 here
+            (((DataBufferUShort) db).getData(c))[x + (y * getWidth())] = value;
+        else
+            (((DataBufferShort) db).getData(c))[x + (y * getWidth())] = value;
 
         // notify data changed
         dataChanged();

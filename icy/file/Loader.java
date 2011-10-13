@@ -505,7 +505,7 @@ public class Loader
             sequence.setPixelSizeZ(pf.getValue().doubleValue());
         d = metaData.getPixelsTimeIncrement(0);
         if (d != null)
-            sequence.setPixelSizeT(d.doubleValue());
+            sequence.setTimeInterval(d.doubleValue());
     }
 
     /**

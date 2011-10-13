@@ -1347,11 +1347,11 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
             return;
 
         // check if X,Y or Z resolution changed
-        if (StringUtil.equals(metadataName, Sequence.ID_PIXELS_SIZE_X))
+        if (StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_X))
             volumeXSpacing.setText(StringUtil.toString(getSequence().getPixelSizeX()));
-        if (StringUtil.equals(metadataName, Sequence.ID_PIXELS_SIZE_Y))
+        if (StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_Y))
             volumeYSpacing.setText(StringUtil.toString(getSequence().getPixelSizeY()));
-        if (StringUtil.equals(metadataName, Sequence.ID_PIXELS_SIZE_Z))
+        if (StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_Z))
             volumeZSpacing.setText(StringUtil.toString(getSequence().getPixelSizeZ()));
     }
 

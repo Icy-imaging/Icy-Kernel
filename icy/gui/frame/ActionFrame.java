@@ -59,7 +59,6 @@ public class ActionFrame extends TitledFrame implements ActionListener
         final JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-        // buttonPanel.setPreferredSize(new Dimension(600, 34));
 
         okBtn = new JButton("Ok");
         cancelBtn = new JButton("Cancel");

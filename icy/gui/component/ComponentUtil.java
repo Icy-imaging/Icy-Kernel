@@ -79,6 +79,16 @@ public class ComponentUtil
         c.setPreferredSize(new Dimension(c.getPreferredSize().width, h));
     }
 
+    public static void setPreferredWidth(IcyFrame frm, int w)
+    {
+        frm.setPreferredSize(new Dimension(w, frm.getPreferredSize().height));
+    }
+
+    public static void setPreferredHeight(IcyFrame frm, int h)
+    {
+        frm.setPreferredSize(new Dimension(frm.getPreferredSize().width, h));
+    }
+
     public static void setFixedSize(IcyFrame frm, Dimension d)
     {
         frm.setMinimumSize(d);
