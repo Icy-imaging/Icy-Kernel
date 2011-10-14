@@ -1221,7 +1221,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 // search if we are overriding ROI control points
                 for (ROI2D selectedRoi : selectedRois2D)
                 {
-                    if (getLayer(selectedRoi).isVisible() && selectedRoi.hasSelectedPoint())
+                    final Layer layer = getLayer(selectedRoi);
+
+                    if ((layer != null) && layer.isVisible() && selectedRoi.hasSelectedPoint())
                     {
                         GuiUtil.setCursor(this, Cursor.HAND_CURSOR);
                         return;
@@ -1231,10 +1233,15 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 final ROI overlappedRoi = seq.getFocusedROI();
 
                 // overlapping an ROI ?
-                if ((overlappedRoi != null) && getLayer(overlappedRoi).isVisible())
+                if (overlappedRoi != null)
                 {
-                    GuiUtil.setCursor(this, Cursor.HAND_CURSOR);
-                    return;
+                    final Layer layer = getLayer(overlappedRoi);
+
+                    if ((layer != null) && layer.isVisible())
+                    {
+                        GuiUtil.setCursor(this, Cursor.HAND_CURSOR);
+                        return;
+                    }
                 }
             }
 

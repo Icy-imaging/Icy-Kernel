@@ -57,5 +57,4 @@ public class BooleanValue extends AbstractValue<Boolean>
 
         return false;
     }
-
 }

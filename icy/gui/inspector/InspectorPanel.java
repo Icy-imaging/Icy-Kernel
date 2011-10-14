@@ -23,6 +23,7 @@ import icy.gui.main.MainAdapter;
 import icy.gui.main.MainEvent;
 import icy.gui.main.MainListener;
 import icy.gui.main.WeakMainListener;
+import icy.gui.sequence.SequenceInfosPanel;
 import icy.gui.system.MemoryMonitorPanel;
 import icy.gui.system.OutputConsolePanel;
 import icy.gui.system.OutputConsolePanel.OutputConsoleChangeListener;

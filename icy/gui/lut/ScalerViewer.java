@@ -25,6 +25,7 @@ import icy.image.lut.LUTBand;
 import icy.image.lut.LUTBandEvent;
 import icy.image.lut.LUTBandEvent.LUTBandEventType;
 import icy.image.lut.LUTBandListener;
+import icy.math.ArrayMath;
 import icy.math.MathUtil;
 import icy.math.Scaler;
 import icy.system.thread.SingleProcessor;
@@ -426,7 +427,7 @@ public class ScalerViewer extends BorderedPanel implements MouseListener, MouseM
         }
 
         // we want all values to >= 1
-        final double min = MathUtil.min(newHistoData);
+        final double min = ArrayMath.min(newHistoData);
         MathUtil.add(newHistoData, min + 1f);
         // log
         if (logScale)

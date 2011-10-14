@@ -72,15 +72,17 @@ public class ActionDialog extends JDialog implements ActionListener
         final JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-        // buttonPanel.setPreferredSize(new Dimension(400, 34));
 
         okBtn = new JButton("Ok");
         cancelBtn = new JButton("Cancel");
 
+        buttonPanel.add(Box.createHorizontalStrut(10));
         buttonPanel.add(Box.createHorizontalGlue());
         buttonPanel.add(okBtn);
         buttonPanel.add(Box.createHorizontalStrut(10));
         buttonPanel.add(cancelBtn);
+        buttonPanel.add(Box.createHorizontalGlue());
+        buttonPanel.add(Box.createHorizontalStrut(10));
 
         add(mainPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);

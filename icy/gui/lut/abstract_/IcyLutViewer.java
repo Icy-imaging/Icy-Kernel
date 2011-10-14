@@ -69,9 +69,6 @@ public class IcyLutViewer extends JPanel
      */
     public Sequence getSequence()
     {
-        if (viewer != null)
-            return viewer.getSequence();
-
-        return null;
+        return viewer.getSequence();
     }
 }

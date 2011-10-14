@@ -2208,7 +2208,7 @@ public class ArrayMath
     {
         if (signed)
         {
-            byte max = Byte.MAX_VALUE;
+            byte max = Byte.MIN_VALUE;
 
             for (byte v : array)
                 if (v > max)
@@ -2217,7 +2217,7 @@ public class ArrayMath
             return max;
         }
 
-        int max = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
 
         for (int i = 0; i < array.length; i++)
         {
@@ -2242,7 +2242,7 @@ public class ArrayMath
     {
         if (signed)
         {
-            short max = Short.MAX_VALUE;
+            short max = Short.MIN_VALUE;
 
             for (short v : array)
                 if (v > max)
@@ -2251,7 +2251,7 @@ public class ArrayMath
             return max;
         }
 
-        int max = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
 
         for (int i = 0; i < array.length; i++)
         {
@@ -2276,7 +2276,7 @@ public class ArrayMath
     {
         if (signed)
         {
-            int max = Integer.MAX_VALUE;
+            int max = Integer.MIN_VALUE;
 
             for (int v : array)
                 if (v > max)
@@ -2285,7 +2285,7 @@ public class ArrayMath
             return max;
         }
 
-        long max = Long.MAX_VALUE;
+        long max = Long.MIN_VALUE;
 
         for (int i = 0; i < array.length; i++)
         {
@@ -2310,7 +2310,7 @@ public class ArrayMath
     {
         if (signed)
         {
-            long max = Integer.MAX_VALUE;
+            long max = Integer.MIN_VALUE;
 
             for (long v : array)
                 if (v > max)
@@ -2319,7 +2319,7 @@ public class ArrayMath
             return max;
         }
 
-        double max = Long.MAX_VALUE;
+        double max = Long.MIN_VALUE;
 
         for (int i = 0; i < array.length; i++)
         {
@@ -2342,7 +2342,7 @@ public class ArrayMath
      */
     public static float max(float[] array)
     {
-        float max = Float.MAX_VALUE;
+        float max = Float.MIN_VALUE;
 
         for (float v : array)
             if (v > max)
@@ -2360,7 +2360,7 @@ public class ArrayMath
      */
     public static double max(double[] array)
     {
-        double max = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
 
         for (double v : array)
             if (v > max)
@@ -2447,7 +2447,6 @@ public class ArrayMath
      * @param input
      * @param preserveData
      *        set to true if the given array should not be changed (a copy will be made)
-     * @return
      */
     public static double median(double[] input, boolean preserveData)
     {
@@ -2460,7 +2459,6 @@ public class ArrayMath
      * @param input
      * @param normalPopulation
      *        normalizes the population by 1.4826
-     * @return
      */
     public static double mad(double[] input, boolean normalPopulation)
     {
@@ -2570,7 +2568,6 @@ public class ArrayMath
      * 
      * @param input
      *        the array to sum up
-     * @return
      */
     public static double sum(double[] input)
     {
@@ -2584,7 +2581,6 @@ public class ArrayMath
      * Computes the mean value of the given array
      * 
      * @param input
-     * @return
      */
     public static double mean(double[] input)
     {
@@ -2625,8 +2621,6 @@ public class ArrayMath
      * 
      * @param input
      *        the input array
-     * @param output
-     *        the output (rescaled) array
      * @param newMin
      *        the new min bound
      * @param newMax

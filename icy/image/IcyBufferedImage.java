@@ -1498,7 +1498,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     @Deprecated
     public boolean isFloatDataType()
     {
-        return getIcyColorModel().isFloatDataType();
+        return getDataType_().isFloat();
     }
 
     /**
@@ -1507,7 +1507,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     @Deprecated
     public boolean isSignedDataType()
     {
-        return getIcyColorModel().isSignedDataType();
+        return getDataType_().isSigned();
     }
 
     /**

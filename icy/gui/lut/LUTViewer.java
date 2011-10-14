@@ -25,6 +25,11 @@ import icy.gui.viewer.Viewer;
 import icy.image.lut.LUT;
 import icy.image.lut.LUTBand;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceAdapter;
+import icy.sequence.SequenceEvent;
+import icy.sequence.SequenceListener;
+import icy.sequence.WeakSequenceListener;
+import icy.system.thread.ThreadUtil;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -57,6 +62,12 @@ public class LUTViewer extends IcyLutViewer
      * data
      */
     private final ArrayList<LUTBandViewer> lutBandViewers;
+
+    /**
+     * internals
+     */
+    private final SequenceListener sequenceListener;
+    private final WeakSequenceListener weakSequenceListener;
 
     public LUTViewer(final Viewer viewer, final LUT lut)
     {
@@ -160,6 +171,33 @@ public class LUTViewer extends IcyLutViewer
         add(bottomPane, BorderLayout.CENTER);
 
         validate();
+
+        sequenceListener = new SequenceAdapter()
+        {
+            @Override
+            public void sequenceChanged(SequenceEvent event)
+            {
+                final SequenceEvent e = event;
+
+                ThreadUtil.invokeLater(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        switch (e.getSourceType())
+                        {
+                            case SEQUENCE_META:
+                                refreshChannelsName();
+                                break;
+                        }
+                    }
+                });
+            }
+        };
+
+        // weak reference --> released when LUTViewer is released
+        weakSequenceListener = new WeakSequenceListener(sequenceListener);
+        getSequence().addListener(weakSequenceListener);
     }
 
     void setLogScale(boolean value)
@@ -172,6 +210,15 @@ public class LUTViewer extends IcyLutViewer
     {
         for (int i = 0; i < lutBandViewers.size(); i++)
             lutBandViewers.get(i).getScalerPanel().refreshHistoData();
+    }
+
+    void refreshChannelsName()
+    {
+        final Sequence seq = getSequence();
+        final int sizeC = seq.getSizeC();
+
+        for (int c = 0; c < sizeC; c++)
+            bottomPane.setTitleAt(c, seq.getChannelName(c));
     }
 
 }
