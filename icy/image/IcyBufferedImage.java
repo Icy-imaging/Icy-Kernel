@@ -1401,6 +1401,86 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
+     * Set component absolute minimum value
+     */
+    public void setComponentAbsMinValue(int component, double min)
+    {
+        getIcyColorModel().setComponentAbsMinValue(component, min);
+    }
+
+    /**
+     * Set component absolute maximum value
+     */
+    public void setComponentAbsMaxValue(int component, double max)
+    {
+        getIcyColorModel().setComponentAbsMaxValue(component, max);
+    }
+
+    /**
+     * Set component absolute bounds (min and max values)
+     */
+    public void setComponentAbsBounds(int component, double[] bounds)
+    {
+        getIcyColorModel().setComponentAbsBounds(component, bounds);
+    }
+
+    /**
+     * Set component absolute bounds (min and max values)
+     */
+    public void setComponentAbsBounds(int component, double min, double max)
+    {
+        getIcyColorModel().setComponentAbsBounds(component, min, max);
+    }
+
+    /**
+     * Set components absolute bounds (min and max values)
+     */
+    public void setComponentsAbsBounds(double[][] bounds)
+    {
+        getIcyColorModel().setComponentsAbsBounds(bounds);
+    }
+
+    /**
+     * Set component user minimum value
+     */
+    public void setComponentUserMinValue(int component, double min)
+    {
+        getIcyColorModel().setComponentUserMinValue(component, min);
+    }
+
+    /**
+     * Set component user maximum value
+     */
+    public void setComponentUserMaxValue(int component, double max)
+    {
+        getIcyColorModel().setComponentUserMaxValue(component, max);
+    }
+
+    /**
+     * Set component user bounds (min and max values)
+     */
+    public void setComponentUserBounds(int component, double[] bounds)
+    {
+        getIcyColorModel().setComponentUserBounds(component, bounds);
+    }
+
+    /**
+     * Set component user bounds (min and max values)
+     */
+    public void setComponentUserBounds(int component, double min, double max)
+    {
+        getIcyColorModel().setComponentUserBounds(component, min, max);
+    }
+
+    /**
+     * Set components user bounds (min and max values)
+     */
+    public void setComponentsUserBounds(double[][] bounds)
+    {
+        getIcyColorModel().setComponentsUserBounds(bounds);
+    }
+
+    /**
      * Update components bounds (min and max values)
      */
     public void updateComponentsBounds(boolean updateUserBounds, boolean adjustByteToo)
