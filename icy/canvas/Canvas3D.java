@@ -19,6 +19,7 @@
 package icy.canvas;
 
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
+import icy.gui.component.ComponentUtil;
 import icy.gui.component.button.ColorChooserButton;
 import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
 import icy.gui.util.GuiUtil;
@@ -178,21 +179,35 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         panel = GuiUtil.generatePanelWithoutBorder();
 
         // general Settings
-        JPanel generalSettingsPanel = GuiUtil.generatePanel("General Settings");
-        backGroundColor.setColorChooseText("3D Background Color");
+        final JPanel generalSettingsPanel = GuiUtil.generatePanel("General Settings");
+
         // default is white
+        backGroundColor.setColorChooseText("3D Background Color");
         backGroundColor.setColor(Color.white);
         backGroundColor.addColorChangeListener(this);
-        generalSettingsPanel.add(GuiUtil.besidesPanel(new JLabel("Background Color"), backGroundColor));
-        generalSettingsPanel.add(GuiUtil.besidesPanel(new JLabel("Specular"), specularTextField));
+
+        generalSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
+                GuiUtil.createFixedWidthLabel("Background color", 100), Box.createHorizontalStrut(8), backGroundColor,
+                Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
+        generalSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
+                GuiUtil.createFixedWidthLabel("Specular", 100), Box.createHorizontalStrut(8), specularTextField,
+                Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
+        generalSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
+                GuiUtil.createFixedWidthLabel("Specular power", 100), Box.createHorizontalStrut(8),
+                specularPowerTextField, Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
+        generalSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
+                GuiUtil.createFixedWidthLabel("X / Y / Z Scaling", 100), Box.createHorizontalStrut(8), volumeXSpacing,
+                Box.createHorizontalStrut(2), volumeYSpacing, Box.createHorizontalStrut(2), volumeZSpacing,
+                Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
+
         specularTextField.getDocument().addDocumentListener(this);
-        generalSettingsPanel.add(GuiUtil.besidesPanel(new JLabel("specular power"), specularPowerTextField));
         specularPowerTextField.getDocument().addDocumentListener(this);
-        final JPanel spacingPanel = GuiUtil.besidesPanel(volumeXSpacing, volumeYSpacing, volumeZSpacing);
-        generalSettingsPanel.add(GuiUtil.besidesPanel(new JLabel("X / Y / Z Scaling"), spacingPanel));
         volumeXSpacing.setText(StringUtil.toString(getXScaling()));
+        volumeXSpacing.setColumns(2);
         volumeYSpacing.setText(StringUtil.toString(getYScaling()));
+        volumeYSpacing.setColumns(2);
         volumeZSpacing.setText(StringUtil.toString(getZScaling()));
+        volumeZSpacing.setColumns(2);
         volumeXSpacing.getDocument().addDocumentListener(this);
         volumeYSpacing.getDocument().addDocumentListener(this);
         volumeZSpacing.getDocument().addDocumentListener(this);
@@ -201,19 +216,31 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
         // volume Settings
         final JPanel volumeSettingsPanel = GuiUtil.generatePanel("Volume Render Settings");
-        volumeSettingsPanel.add(GuiUtil.besidesPanel(new JLabel("Mapper"), volumeMapperCombo));
-        volumeMapperCombo.addActionListener(this);
-        volumeComponentPanel = GuiUtil.besidesPanel(new JLabel("Component"), volumeComponentCombo);
+
+        volumeSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
+                GuiUtil.createFixedWidthLabel("Mapper", 80), Box.createHorizontalStrut(8), volumeMapperCombo,
+                Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
+        volumeComponentPanel = GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
+                GuiUtil.createFixedWidthLabel("Component", 80), Box.createHorizontalStrut(8), volumeComponentCombo,
+                Box.createHorizontalGlue(), Box.createHorizontalStrut(4));
         volumeSettingsPanel.add(volumeComponentPanel);
-        volumeComponentCombo.addActionListener(this);
-        volumeSettingsPanel.add(GuiUtil.besidesPanel(new JLabel("Interpolation"), volumeInterpolationCombo));
-        volumeInterpolationCombo.addActionListener(this);
+        volumeSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
+                GuiUtil.createFixedWidthLabel("Interpolation", 80), Box.createHorizontalStrut(8),
+                volumeInterpolationCombo, Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
         final JLabel maxVolumeSampleLabel = new JLabel("Sample");
+        ComponentUtil.setFixedWidth(maxVolumeSampleLabel, 80);
         maxVolumeSampleLabel
                 .setToolTipText("Use low value for fine (but slow) render and high value for fast (but draft) render");
-        volumeSettingsPanel.add(GuiUtil.besidesPanel(maxVolumeSampleLabel, volumeImageSampleDistanceCombo));
+        volumeSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), maxVolumeSampleLabel,
+                Box.createHorizontalStrut(8), volumeImageSampleDistanceCombo, Box.createHorizontalGlue(),
+                Box.createHorizontalStrut(4)));
+        volumeSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), volumeShadeCheckBox,
+                Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
+
+        volumeMapperCombo.addActionListener(this);
+        volumeComponentCombo.addActionListener(this);
+        volumeInterpolationCombo.addActionListener(this);
         volumeImageSampleDistanceCombo.addActionListener(this);
-        volumeSettingsPanel.add(GuiUtil.besidesPanel(volumeShadeCheckBox));
         volumeShadeCheckBox.addActionListener(this);
 
         panel.add(volumeSettingsPanel);
@@ -445,8 +472,12 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
         // rebuild component panel
         volumeComponentPanel.removeAll();
-        volumeComponentPanel.add(new JLabel("Component"));
+        volumeComponentPanel.add(Box.createHorizontalStrut(4));
+        volumeComponentPanel.add(GuiUtil.createFixedWidthLabel("Component", 80));
+        volumeComponentPanel.add(Box.createHorizontalStrut(8));
         volumeComponentPanel.add(volumeComponentCombo);
+        volumeComponentPanel.add(Box.createHorizontalGlue());
+        volumeComponentPanel.add(Box.createHorizontalStrut(4));
         volumeComponentPanel.validate();
     }
 

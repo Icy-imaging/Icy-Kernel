@@ -86,11 +86,6 @@ public abstract class Plugin
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#finalize()
-     */
     @Override
     protected void finalize() throws Throwable
     {

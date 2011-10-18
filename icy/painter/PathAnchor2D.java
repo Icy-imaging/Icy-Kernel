@@ -7,6 +7,7 @@ import icy.sequence.Sequence;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 
 import org.w3c.dom.Node;
@@ -81,7 +82,7 @@ public class PathAnchor2D extends Anchor2D
     {
         this(null, 0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
     }
-    
+
     public PathAnchor2D()
     {
         this(null, 0d, 0d, 0d, 0d, 0, 0, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
@@ -96,6 +97,9 @@ public class PathAnchor2D extends Anchor2D
     }
 
     /**
+     * Set the type of this segment
+     * 
+     * @see PathIterator
      * @param value
      *        the type to set
      */

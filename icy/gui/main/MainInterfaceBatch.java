@@ -19,6 +19,7 @@
 
 package icy.gui.main;
 
+import icy.common.AcceptListener;
 import icy.common.EventHierarchicalChecker;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
@@ -287,6 +288,16 @@ public class MainInterfaceBatch implements MainInterface
     }
 
     @Override
+    public void addCanExitListener(AcceptListener listener)
+    {
+    }
+
+    @Override
+    public void removeCanExitListener(AcceptListener listener)
+    {
+    }
+
+    @Override
     public void beginUpdate()
     {
     }
@@ -328,29 +339,30 @@ public class MainInterfaceBatch implements MainInterface
     @Override
     public Sequence getFirstSequenceContaining(ROI roi)
     {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public Sequence getFirstSequenceContaining(Painter painter)
     {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public Viewer getFirstViewerContaining(ROI roi)
     {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public Viewer getFirstViewerContaining(Painter painter)
     {
-        // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
+    public boolean canExitExternal()
+    {
+        return true;
+    }
 }

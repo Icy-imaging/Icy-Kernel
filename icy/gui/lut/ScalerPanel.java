@@ -32,6 +32,7 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.sequence.SequenceListener;
+import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
 
 import java.awt.BorderLayout;
@@ -68,8 +69,7 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
     private int maxSamplePosT;
     private int maxSamplePosZ;
     private int maxSamplePosXY;
-    private int sampleDataType;
-    private boolean sampleSignedType;
+    private DataType sampleDataType;
     private boolean noMoreSample;
 
     /**
@@ -159,8 +159,7 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
         samplePosXY = 0;
         maxSamplePosXY = (sequence.getSizeX() * sequence.getSizeY()) - 1;
 
-        sampleDataType = sequence.getDataType();
-        sampleSignedType = sequence.isSignedDataType();
+        sampleDataType = sequence.getDataType_();
         sampleData = sequence.getDataXY(samplePosT, samplePosZ, component);
 
         noMoreSample = (samplePosXY > maxSamplePosXY) || (samplePosZ > maxSamplePosZ) || (samplePosT > maxSamplePosT);
@@ -243,7 +242,7 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
         final double result;
 
         if (sampleData != null)
-            result = Array1DUtil.getValue(sampleData, samplePosXY, sampleDataType, sampleSignedType);
+            result = Array1DUtil.getValue(sampleData, samplePosXY, sampleDataType);
         else
             result = 0d;
 

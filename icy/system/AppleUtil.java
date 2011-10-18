@@ -43,7 +43,7 @@ public class AppleUtil
 
                             if (method.getName().equals("handleQuit"))
                             {
-                                m.invoke(applicationEvent, Boolean.valueOf(Icy.exit(false, false)));
+                                m.invoke(applicationEvent, Boolean.valueOf(Icy.exit(false)));
                             }
                             if (method.getName().equals("handleAbout"))
                             {

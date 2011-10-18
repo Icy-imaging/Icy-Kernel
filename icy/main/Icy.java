@@ -22,9 +22,9 @@ import icy.common.Version;
 import icy.file.FileUtil;
 import icy.gui.dialog.ConfirmDialog;
 import icy.gui.dialog.MessageDialog;
+import icy.gui.frame.GeneralToolTipFrame;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.SplashScreenFrame;
-import icy.gui.frame.GeneralToolTipFrame;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.main.MainInterface;
 import icy.gui.main.MainInterfaceBatch;
@@ -293,7 +293,7 @@ public class Icy
 
         if (ConfirmDialog.confirm(mess))
             // restart application now
-            exit(true, false);
+            exit(true);
     }
 
     /**
@@ -322,7 +322,7 @@ public class Icy
             public void run()
             {
                 // restart application now
-                exit(true, false);
+                exit(true);
             }
         }, 20);
     }
@@ -333,6 +333,10 @@ public class Icy
      */
     public static boolean canExit(boolean showConfirm)
     {
+        // we first check if externals listeners allow existing
+        if (!getMainInterface().canExitExternal())
+            return false;
+
         // PluginInstaller or WorkspaceInstaller not running
         final boolean safeExit = (!PluginInstaller.isProcessing()) && (!WorkspaceInstaller.isProcessing());
 
@@ -361,10 +365,10 @@ public class Icy
     /**
      * exit
      */
-    public static boolean exit(final boolean restart, boolean force)
+    public static boolean exit(final boolean restart)
     {
         // check we can exit application
-        if ((!force) && (!canExit(!restart)))
+        if (!canExit(!restart))
             return false;
 
         ThreadUtil.invokeLater(new Runnable()
@@ -412,6 +416,16 @@ public class Icy
         });
 
         return true;
+    }
+
+    /**
+     * @param force
+     * @deprecated use <code>exit(boolean)</code> instead
+     */
+    @Deprecated
+    public static boolean exit(final boolean restart, boolean force)
+    {
+        return exit(restart);
     }
 
     public static MainInterface getMainInterface()

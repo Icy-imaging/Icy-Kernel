@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.event.EventListenerList;
@@ -118,7 +119,16 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
 
     public ColormapViewer(LUTBand lutBand)
     {
-        super(BORDER_WIDTH, BORDER_HEIGHT);
+        super();
+
+        // dimension (don't change or you will regret !)
+        setMinimumSize(new Dimension(100, 100));
+        setPreferredSize(new Dimension(210, 100));
+        setMaximumSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
+        // faster draw
+        setOpaque(true);
+        // set border
+        setBorder(BorderFactory.createEmptyBorder(BORDER_HEIGHT, BORDER_WIDTH, BORDER_HEIGHT, BORDER_WIDTH));
 
         this.lutBand = lutBand;
         colormap = lutBand.getColorMap();
@@ -133,13 +143,6 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         action = ActionType.NULL;
         currentColormapBand = null;
         currentControlPoint = null;
-
-        // dimension (don't change or you will regret !)
-        setMinimumSize(new Dimension(100, 100));
-        setPreferredSize(new Dimension(210, 100));
-        // faster draw
-        setOpaque(true);
-        setDoubleBuffered(true);
 
         // calculate ratios
         updateRatios();

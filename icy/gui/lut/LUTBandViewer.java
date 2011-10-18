@@ -59,7 +59,7 @@ class LUTBandViewer extends IcyLutBandViewer
                 if (index != -1d)
                 {
                     if (lutBand.getScaler().isIntegerData())
-                        indexLabel.setText(Integer.toString((int) index));
+                        indexLabel.setText(Integer.toString((int) Math.round(index)));
                     else
                         indexLabel.setText(Double.toString(MathUtil.round(index, 2)));
                 }

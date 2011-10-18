@@ -96,7 +96,7 @@ public class IcyUpdater
 
             // ask to update and restart application now
             if (ConfirmDialog.confirm("Application need to be restarted, do you want to do it now ?"))
-                Icy.exit(true, false);
+                Icy.exit(true);
         }
     };
 

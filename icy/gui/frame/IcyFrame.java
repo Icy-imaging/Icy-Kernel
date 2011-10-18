@@ -258,9 +258,6 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 {
                     frames.add(IcyFrame.this);
                 }
-
-                // register to global external frame
-                Icy.getMainInterface().registerExternalFrame(externalFrame);
             }
         }, waitCreate);
     }

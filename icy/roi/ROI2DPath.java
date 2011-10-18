@@ -11,7 +11,6 @@ import icy.util.XMLUtil;
 import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 import org.w3c.dom.Element;
@@ -29,6 +28,17 @@ public class ROI2DPath extends ROI2DShape
     public static final String ID_POINTS = "points";
     public static final String ID_POINT = "point";
     public static final String ID_WINDING = "winding";
+
+    static Path2D initPath(Point2D position)
+    {
+        final Path2D result = new Path2D.Double();
+
+        result.reset();
+        if (position != null)
+            result.moveTo(position.getX(), position.getY());
+
+        return result;
+    }
 
     public ROI2DPath(Path2D path)
     {
@@ -55,8 +65,7 @@ public class ROI2DPath extends ROI2DShape
     public ROI2DPath(Point2D position, boolean cm)
     {
         // ignore creation mode flag
-        this((position == null) ? new Rectangle2D.Double() : new Rectangle2D.Double(position.getX(), position.getY(),
-                1d, 1d));
+        this(initPath(position));
     }
 
     @Override

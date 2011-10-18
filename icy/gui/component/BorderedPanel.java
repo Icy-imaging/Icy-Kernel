@@ -18,6 +18,8 @@
  */
 package icy.gui.component;
 
+import java.awt.Insets;
+
 import javax.swing.JPanel;
 
 /**
@@ -28,79 +30,27 @@ public class BorderedPanel extends JPanel
     /**
      * 
      */
-    private static final long serialVersionUID = -8365817252289450916L;
-
-    private static final int DEFAULT_BORDER_SIZE = 4;
-
-    private int borderWidth;
-    private int borderHeight;
-
-    /**
-     * @param borderWidth
-     * @param borderHeight
-     * @param isDoubleBuffered
-     */
-    public BorderedPanel(int borderWidth, int borderHeight, boolean isDoubleBuffered)
-    {
-        super(isDoubleBuffered);
-
-        this.borderWidth = borderWidth;
-        this.borderHeight = borderHeight;
-    }
-
-    /**
-     * @param borderWidth
-     * @param borderHeight
-     */
-    public BorderedPanel(int borderWidth, int borderHeight)
-    {
-        this(borderWidth, borderHeight, true);
-    }
-
-    /**
-     * @param isDoubleBuffered
-     */
-    public BorderedPanel(boolean isDoubleBuffered)
-    {
-        this(DEFAULT_BORDER_SIZE, DEFAULT_BORDER_SIZE, isDoubleBuffered);
-    }
-
-    /**
-     * 
-     */
-    public BorderedPanel()
-    {
-        this(DEFAULT_BORDER_SIZE, DEFAULT_BORDER_SIZE, true);
-    }
+    private static final long serialVersionUID = 6826826211630147354L;
 
     public int getClientY()
     {
-        return borderHeight;
+        return getInsets().top;
     }
 
     public int getClientX()
     {
-        return borderWidth;
+        return getInsets().left;
     }
 
     public int getClientHeight()
     {
-        final int h = getHeight() - (borderHeight * 2);
-
-        if (h > 0)
-            return h;
-
-        return 0;
+        final Insets insets = getInsets();
+        return getHeight() - (insets.top + insets.bottom);
     }
 
     public int getClientWidth()
     {
-        final int w = getWidth() - (borderWidth * 2);
-
-        if (w > 0)
-            return w;
-
-        return 0;
+        final Insets insets = getInsets();
+        return getWidth() - (insets.left + insets.right);
     }
-
 }

@@ -18,9 +18,11 @@
  */
 package icy.gui.main;
 
+import icy.common.AcceptListener;
 import icy.common.EventHierarchicalChecker;
 import icy.common.IcyChangedListener;
 import icy.common.UpdateEventHandler;
+import icy.common.WeakAcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.main.MainEvent.MainEventSourceType;
 import icy.gui.main.MainEvent.MainEventType;
@@ -154,7 +156,7 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
             public void windowClosing(WindowEvent e)
             {
                 // exit application
-                Icy.exit(false, false);
+                Icy.exit(false);
             }
         });
     }
@@ -689,6 +691,34 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     }
 
     /**
+     * Add "can exit" listener.<br>
+     * <br>
+     * CAUTION : A weak reference is used to reference the listener for easier release<br>
+     * so you should hava a hard reference to your listener to keep it alive
+     * 
+     * @param listener
+     */
+    @Override
+    public void addCanExitListener(AcceptListener listener)
+    {
+        listeners.add(AcceptListener.class, new WeakAcceptListener(listener));
+    }
+
+    /**
+     * Remove "can exit" listener
+     * 
+     * @param listener
+     */
+    @Override
+    public void removeCanExitListener(AcceptListener listener)
+    {
+        // we use weak reference so we have to find base listener...
+        for (AcceptListener l : listeners.getListeners(AcceptListener.class))
+            if (listener == ((WeakAcceptListener) l).getListener())
+                listeners.remove(AcceptListener.class, l);
+    }
+
+    /**
      * fire plugin opened event
      */
     private void firePluginOpenedEvent(MainEvent event)
@@ -794,6 +824,19 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     {
         for (MainListener listener : listeners.getListeners(MainListener.class))
             listener.painterRemoved(event);
+    }
+
+    /**
+     * check if exit is allowed from registered listeners
+     */
+    @Override
+    public boolean canExitExternal()
+    {
+        for (AcceptListener listener : listeners.getListeners(AcceptListener.class))
+            if (!listener.accept(getFrame()))
+                return false;
+
+        return true;
     }
 
     /**

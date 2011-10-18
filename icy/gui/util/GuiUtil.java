@@ -67,6 +67,7 @@ public class GuiUtil
             result.setLayout(new BorderLayout());
             result.add(comp, BorderLayout.CENTER);
         }
+        result.validate();
 
         return result;
     }
@@ -81,6 +82,7 @@ public class GuiUtil
             result.setLayout(new BorderLayout());
             result.add(comp, BorderLayout.CENTER);
         }
+        result.validate();
 
         return result;
     }
@@ -163,6 +165,7 @@ public class GuiUtil
             panel.add(Box.createHorizontalStrut(width));
         panel.add(label);
         panel.add(Box.createHorizontalGlue());
+        panel.validate();
 
         return panel;
     }
@@ -189,8 +192,7 @@ public class GuiUtil
         if (width > 0)
             panel.add(Box.createHorizontalStrut(width));
         panel.add(area);
-
-        // area.setPreferredSize(new Dimension(10, 10));
+        panel.validate();
 
         return panel;
     }
@@ -217,6 +219,7 @@ public class GuiUtil
         if (width > 0)
             panel.add(Box.createHorizontalStrut(width));
         panel.add(scrollArea);
+        panel.validate();
 
         return panel;
     }
@@ -226,9 +229,9 @@ public class GuiUtil
         final JPanel result = new JPanel();
 
         result.setLayout(new BoxLayout(result, BoxLayout.LINE_AXIS));
-
         for (Component c : componentArray)
             result.add(c);
+        result.validate();
 
         return result;
     }
@@ -238,9 +241,9 @@ public class GuiUtil
         final JPanel result = new JPanel();
 
         result.setLayout(new BoxLayout(result, BoxLayout.PAGE_AXIS));
-
         for (Component c : componentArray)
             result.add(c);
+        result.validate();
 
         return result;
     }
@@ -253,14 +256,13 @@ public class GuiUtil
     public static JPanel besidesPanel(Component jc1, Component jc2, int widthOfSecondComponent)
     {
         JPanel panel = new JPanel();
-        panel.setOpaque(false);
+
         panel.setLayout(new BorderLayout());
         panel.add(jc1, BorderLayout.CENTER);
         panel.add(jc2, BorderLayout.EAST);
-        // jc2.setMaximumSize( new Dimension( widthOfSecondComponent , 20 ) );
-        // jc2.setMinimumSize( new Dimension( widthOfSecondComponent , 20 ) );
-        // jc2.setSize( widthOfSecondComponent , 0 );
         jc2.setPreferredSize(new Dimension(widthOfSecondComponent, jc2.getPreferredSize().height));
+        panel.validate();
+
         return panel;
     }
 
@@ -270,12 +272,12 @@ public class GuiUtil
     public static JPanel besidesPanel(Component... componentArray)
     {
         JPanel panel = new JPanel();
-        panel.setOpaque(false);
+
         panel.setLayout(new GridLayout(1, componentArray.length));
         for (int i = 0; i < componentArray.length; i++)
-        {
             panel.add(componentArray[i]);
-        }
+        panel.validate();
+
         return panel;
     }
 
@@ -288,24 +290,29 @@ public class GuiUtil
     public static JPanel generatePanel()
     {
         JPanel panel = new JPanel();
-        panel.setOpaque(false);
+
         panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
         return panel;
     }
 
     public static JPanel generatePanel(String string)
     {
         JPanel panel = generatePanel();
+
         panel.setBorder(new TitledBorder(string));
+        panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+
         return panel;
     }
 
     public static JPanel generatePanelWithoutBorder()
     {
         JPanel panel = new JPanel();
-        panel.setOpaque(false);
+
         panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+
         return panel;
     }
 
@@ -315,13 +322,10 @@ public class GuiUtil
      */
     public static void setEnableContainer(Container container, boolean enable)
     {
-
         for (Component c : container.getComponents())
         {
             if (c instanceof Container)
-            {
                 setEnableContainer((Container) c, enable);
-            }
             c.setEnabled(enable);
         }
     }

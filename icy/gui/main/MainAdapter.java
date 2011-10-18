@@ -23,136 +23,76 @@ package icy.gui.main;
  */
 public abstract class MainAdapter implements MainListener
 {
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.main.MainListener#painterAdded(icy.gui.main.MainEvent)
-     */
+
     @Override
     public void painterAdded(MainEvent event)
     {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.main.MainListener#painterRemoved(icy.gui.main.MainEvent)
-     */
     @Override
     public void painterRemoved(MainEvent event)
     {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.main.MainListener#roiAdded(icy.gui.main.MainEvent)
-     */
     @Override
     public void roiAdded(MainEvent event)
     {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.main.MainListener#roiRemoved(icy.gui.main.MainEvent)
-     */
     @Override
     public void roiRemoved(MainEvent event)
     {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.main.MainListener#sequenceClosed(icy.gui.main.MainEvent)
-     */
     @Override
     public void sequenceClosed(MainEvent event)
     {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.main.MainListener#sequenceFocused(icy.gui.main.MainEvent)
-     */
     @Override
     public void sequenceFocused(MainEvent event)
     {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.main.MainListener#sequenceOpened(icy.gui.main.MainEvent)
-     */
     @Override
     public void sequenceOpened(MainEvent event)
     {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.main.MainListener#viewerClosed(icy.gui.main.MainEvent)
-     */
     @Override
     public void viewerClosed(MainEvent event)
     {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.main.MainListener#viewerFocused(icy.gui.main.MainEvent)
-     */
     @Override
     public void viewerFocused(MainEvent event)
     {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.main.MainListener#viewerOpened(icy.gui.main.MainEvent)
-     */
     @Override
     public void viewerOpened(MainEvent event)
     {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.main.MainListener#pluginClosed(icy.gui.main.MainEvent)
-     */
     @Override
     public void pluginClosed(MainEvent event)
     {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.main.MainListener#pluginOpened(icy.gui.main.MainEvent)
-     */
     @Override
     public void pluginOpened(MainEvent event)
     {
 
     }
-
 }

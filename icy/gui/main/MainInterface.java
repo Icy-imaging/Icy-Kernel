@@ -19,6 +19,7 @@
 
 package icy.gui.main;
 
+import icy.common.AcceptListener;
 import icy.common.EventHierarchicalChecker;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
@@ -47,6 +48,11 @@ import javax.swing.JInternalFrame;
 public interface MainInterface
 {
     public abstract void init();
+
+    /**
+     * check if exit is allowed from registered listeners
+     */
+    public abstract boolean canExitExternal();
 
     public abstract ArrayList<JFrame> getExternalFrames();
 
@@ -169,6 +175,10 @@ public interface MainInterface
     public abstract void addListener(MainListener listener);
 
     public abstract void removeListener(MainListener listener);
+
+    public abstract void addCanExitListener(AcceptListener listener);
+
+    public abstract void removeCanExitListener(AcceptListener listener);
 
     public abstract void beginUpdate();
 
