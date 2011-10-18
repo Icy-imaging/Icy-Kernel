@@ -14,6 +14,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.lut"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.frame.sequence"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.math"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.network"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.colorspace"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.vtk"/>
@@ -42,6 +43,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.system"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.interface_.gui"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.interface_"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.sequence"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.viewer"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.roi"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file"/>
