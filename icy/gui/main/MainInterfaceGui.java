@@ -694,7 +694,7 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
      * Add "can exit" listener.<br>
      * <br>
      * CAUTION : A weak reference is used to reference the listener for easier release<br>
-     * so you should hava a hard reference to your listener to keep it alive
+     * so you should have a hard reference to your listener to keep it alive
      * 
      * @param listener
      */

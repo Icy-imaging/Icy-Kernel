@@ -353,7 +353,7 @@ public class Updater
     public static boolean restore()
     {
         final int len = BACKUP_DIRECTORY.length();
-        final ArrayList<String> paths = FileUtil.getFileListAsString(BACKUP_DIRECTORY, true, true);
+        final ArrayList<String> paths = FileUtil.getFileListAsString(BACKUP_DIRECTORY, false, true, false);
         boolean result = true;
 
         for (String backupPath : paths)
@@ -362,7 +362,8 @@ public class Updater
 
             if (!FileUtil.move(backupPath, finalPath, true, false))
             {
-                System.err.println("Can't move file '" + backupPath + "' to '" + finalPath + "'");
+                // move failed (FileUtil.move is already displaying error messages if needed)
+                System.err.println("Updater.restore() cannot restore '" + finalPath + "', you should do it manually.");
                 result = false;
             }
         }

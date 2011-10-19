@@ -345,19 +345,19 @@ public class FileUtil
             {
                 if (force)
                 {
-                    if (!dst.delete())
+                    if (!delete(dst, true))
                     {
-                        System.err.println("Can't move file '" + src.getName() + "' to '" + dst.getName() + "'");
-                        System.err.println("Reason : destination file cannot be overwritten.");
-                        System.err.println("Verify your file is not locked by another program (as Eclipse)");
+                        System.err.println("Can't move '" + src.getName() + "' to '" + dst.getName() + "'");
+                        System.err.println("Reason : destination cannot be overwritten.");
+                        System.err.println("Verify it is not locked by another program (as Eclipse)");
                         System.err.println("also check you've the rights to do this operation.");
                         return false;
                     }
                 }
                 else
                 {
-                    System.err.println("Can't move file '" + src.getName() + "' to '" + dst.getName() + "'");
-                    System.err.println("The destination file already exists.");
+                    System.err.println("Can't move '" + src.getName() + "' to '" + dst.getName() + "'");
+                    System.err.println("The destination already exists.");
                     return false;
                 }
             }
@@ -367,7 +367,7 @@ public class FileUtil
 
             if (!src.renameTo(dst))
             {
-                System.err.println("Can't move file '" + src.getName() + "' to '" + dst.getName() + "'");
+                System.err.println("Can't move '" + src.getName() + "' to '" + dst.getName() + "'");
                 System.err.println("Reason : unknown");
                 return false;
             }
