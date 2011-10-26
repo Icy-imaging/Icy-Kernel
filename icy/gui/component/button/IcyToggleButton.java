@@ -191,6 +191,21 @@ public class IcyToggleButton extends JToggleButton
     }
 
     /**
+     * @param iconImage
+     *        the iconImage to set
+     */
+    public void setIconImage(Image iconImage)
+    {
+        final IcyIcon icon = getIcyIcon();
+
+        if (icon != null)
+        {
+            icon.setImage(iconImage);
+            updateSize();
+        }
+    }
+
+    /**
      * @return the icon size
      */
     public int getIconSize()

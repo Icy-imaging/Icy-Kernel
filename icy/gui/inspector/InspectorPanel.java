@@ -203,7 +203,7 @@ public class InspectorPanel extends ExternalizablePanel
                             // change output console tab color when new data
                             if (fIsError)
                                 mainPane.setBackgroundAt(outputConsoleTabIndex, Color.red);
-                            else
+                            else if (!mainPane.getBackgroundAt(outputConsoleTabIndex).equals(Color.red))
                                 mainPane.setBackgroundAt(outputConsoleTabIndex, Color.blue);
                         }
                     });

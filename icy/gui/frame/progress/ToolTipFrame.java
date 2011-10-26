@@ -183,4 +183,13 @@ public class ToolTipFrame extends TaskFrame
             }
         });
     }
+
+    @Override
+    public void internalClose()
+    {
+        // stop timer
+        timer.stop();
+
+        super.internalClose();
+    }
 }

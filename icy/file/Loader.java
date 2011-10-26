@@ -46,13 +46,13 @@ import loci.formats.meta.MetadataRetrieve;
 import ome.xml.model.primitives.PositiveFloat;
 
 /**
- * Loader
+ * Sequence / Image loader class.
  * 
  * @author Fabrice de Chaumont & Stephane
  */
 public class Loader
 {
-    static class FilePosition implements Comparable<FilePosition>
+    private static class FilePosition implements Comparable<FilePosition>
     {
         public final File file;
         public final BandPosition position;
@@ -76,15 +76,16 @@ public class Loader
         }
     }
 
-    public static class SequenceLoader implements Runnable
+    private static class SequenceLoader implements Runnable
     {
         final List<File> files;
         final FileFrame loaderFrame;
         final List<Sequence> sequences;
         final ImageReader mainReader;
+        final boolean display;
         IFormatReader lastUsedReader;
 
-        public SequenceLoader(List<File> files)
+        public SequenceLoader(List<File> files, boolean display)
         {
             super();
 
@@ -94,120 +95,12 @@ public class Loader
             sequences = new ArrayList<Sequence>();
             mainReader = new ImageReader();
             lastUsedReader = null;
+            this.display = display;
         }
 
-        public SequenceLoader(File file)
+        public SequenceLoader(File file, boolean display)
         {
-            this(CollectionUtil.createArrayList(file));
-        }
-
-        // FilePosition getElement(ArrayList<FilePosition> positions, int index)
-        // {
-        // if ((index >= 0) && (index < positions.size()))
-        // return positions.get(index);
-        //
-        // return null;
-        // }
-
-        private void setPositionFromNumberString(BandPosition position, String number)
-        {
-            final int value;
-
-            // try to get position letter from number string
-            char pos = Character.toUpperCase(number.charAt(0));
-            final char lastEmptyPos = position.getFirstEmptyPos();
-
-            // first char is not digit ?
-            if (!Character.isDigit(pos))
-            {
-                // if pos is not a valid position, we use the first available one
-                if (!position.isValidIdent(pos))
-                    pos = lastEmptyPos;
-                // get number from the rest of the string
-                value = StringUtil.parseInt(number.substring(1), -1);
-            }
-            else
-            {
-                // use the first available position
-                pos = lastEmptyPos;
-                // obtain number from full string
-                value = StringUtil.parseInt(number, -1);
-            }
-
-            switch (pos)
-            {
-                case ImagePosition.T_ID:
-                    // doesn't support value >= 100000 for T dimension
-                    if (value < 100000)
-                        position.setT(value);
-                    break;
-
-                case ImagePosition.Z_ID:
-                    // doesn't support value >= 10000 for Z dimension
-                    if (value < 10000)
-                        position.setZ(value);
-                    break;
-
-                case BandPosition.C_ID:
-                case BandPosition.C_ID_ALTERNATE:
-                    // loaded as separate sequence, no limit
-                    position.setC(value);
-                    break;
-            }
-        }
-
-        /**
-         * Return a BandPosition from the specified filename.
-         */
-        public BandPosition getPositionFromFilename(String filename)
-        {
-            final ArrayList<String> numbers = new ArrayList<String>();
-            // get filename without extension
-            final String value = FileUtil.getFileName(filename, false);
-
-            final int len = value.length();
-
-            int index = 0;
-            while (index < len)
-            {
-                // get starting digit char index
-                final int startInd = StringUtil.getNextDigitCharIndex(value, index);
-
-                // we find a digit char ?
-                if (startInd >= 0)
-                {
-                    final String number;
-
-                    // get ending digit char index
-                    int endInd = StringUtil.getNextNonDigitCharIndex(value, startInd);
-                    if (endInd < 0)
-                        endInd = len;
-
-                    // we want to get number + preceding letter
-                    number = value.substring(Math.max(0, startInd - 1), endInd);
-                    // add number only if < X10000
-                    if (number.length() < 6)
-                        // add the found number to the list
-                        numbers.add(number);
-
-                    // adjust index
-                    index = endInd;
-                }
-                else
-                    index = len;
-            }
-
-            final BandPosition result = new BandPosition();
-
-            // keep only the last 3 numbers
-            while (numbers.size() > 3)
-                numbers.remove(0);
-
-            // set numbers to to position
-            for (String number : numbers)
-                setPositionFromNumberString(result, number);
-
-            return result;
+            this(CollectionUtil.createArrayList(file), display);
         }
 
         @Override
@@ -350,7 +243,8 @@ public class Loader
                     if (GeneralPreferences.getSequencePersistence())
                         seq.loadXMLData();
                     // then display them
-                    Icy.addSequence(seq);
+                    if (display)
+                        Icy.addSequence(seq);
                 }
             }
             catch (Exception e)
@@ -550,7 +444,7 @@ public class Loader
             mainMenu.addRecentLoadedFile(file);
 
         // create sequence loader
-        final SequenceLoader seqLoader = new SequenceLoader(file);
+        final SequenceLoader seqLoader = new SequenceLoader(file, false);
 
         // run sequence loader
         seqLoader.run();
@@ -651,7 +545,7 @@ public class Loader
                                 mainMenu.addRecentLoadedFile(file);
 
                             // create sequence loader
-                            final SequenceLoader loadingThread = new SequenceLoader(file);
+                            final SequenceLoader loadingThread = new SequenceLoader(file, true);
                             // load file using background processor
                             ThreadUtil.bgRunWait(loadingThread);
                         }
@@ -662,7 +556,7 @@ public class Loader
                         if (mainMenu != null)
                             mainMenu.addRecentLoadedFile(files);
                         // create and run sequence loader
-                        new SequenceLoader(files).run();
+                        new SequenceLoader(files, true).run();
                     }
                 }
                 finally
@@ -671,5 +565,106 @@ public class Loader
                 }
             }
         });
+    }
+
+    private static void setPositionFromNumberString(BandPosition position, String number)
+    {
+        final int value;
+
+        // try to get position letter from number string
+        char pos = Character.toUpperCase(number.charAt(0));
+        final char lastEmptyPos = position.getFirstEmptyPos();
+
+        // first char is not digit ?
+        if (!Character.isDigit(pos))
+        {
+            // if pos is not a valid position, we use the first available one
+            if (!position.isValidIdent(pos))
+                pos = lastEmptyPos;
+            // get number from the rest of the string
+            value = StringUtil.parseInt(number.substring(1), -1);
+        }
+        else
+        {
+            // use the first available position
+            pos = lastEmptyPos;
+            // obtain number from full string
+            value = StringUtil.parseInt(number, -1);
+        }
+
+        switch (pos)
+        {
+            case ImagePosition.T_ID:
+                // doesn't support value >= 100000 for T dimension
+                if (value < 100000)
+                    position.setT(value);
+                break;
+
+            case ImagePosition.Z_ID:
+                // doesn't support value >= 10000 for Z dimension
+                if (value < 10000)
+                    position.setZ(value);
+                break;
+
+            case BandPosition.C_ID:
+            case BandPosition.C_ID_ALTERNATE:
+                // loaded as separate sequence, no limit
+                position.setC(value);
+                break;
+        }
+    }
+
+    /**
+     * Return a BandPosition from the specified filename.
+     */
+    public static BandPosition getPositionFromFilename(String filename)
+    {
+        final ArrayList<String> numbers = new ArrayList<String>();
+        // get filename without extension
+        final String value = FileUtil.getFileName(filename, false);
+
+        final int len = value.length();
+
+        int index = 0;
+        while (index < len)
+        {
+            // get starting digit char index
+            final int startInd = StringUtil.getNextDigitCharIndex(value, index);
+
+            // we find a digit char ?
+            if (startInd >= 0)
+            {
+                final String number;
+
+                // get ending digit char index
+                int endInd = StringUtil.getNextNonDigitCharIndex(value, startInd);
+                if (endInd < 0)
+                    endInd = len;
+
+                // we want to get number + preceding letter
+                number = value.substring(Math.max(0, startInd - 1), endInd);
+                // add number only if < X10000
+                if (number.length() < 6)
+                    // add the found number to the list
+                    numbers.add(number);
+
+                // adjust index
+                index = endInd;
+            }
+            else
+                index = len;
+        }
+
+        final BandPosition result = new BandPosition();
+
+        // keep only the last 3 numbers
+        while (numbers.size() > 3)
+            numbers.remove(0);
+
+        // set numbers to to position
+        for (String number : numbers)
+            setPositionFromNumberString(result, number);
+
+        return result;
     }
 }

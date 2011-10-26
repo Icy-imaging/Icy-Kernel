@@ -7,6 +7,7 @@ import icy.common.IcyAbstractAction;
 import icy.common.MenuCallback;
 import icy.gui.component.ComponentUtil;
 import icy.gui.util.LookAndFeelUtil;
+import icy.gui.util.LookAndFeelUtil.WeakSubstanceSkinChangeListener;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.system.SystemUtil;
@@ -79,7 +80,7 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
         updateTitlePane();
 
         // JFrame doesn't have updateUI() method so we have to listen LAF skin change
-        LookAndFeelUtil.addSkinChangeListener(this);
+        LookAndFeelUtil.addSkinChangeListener(new WeakSubstanceSkinChangeListener(this));
     }
 
     /**

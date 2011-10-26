@@ -664,9 +664,9 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
         final ROI result = createFromXML(node);
 
         // then generate id and modify name
-        id = generateId();
+        result.id = generateId();
         // change name too
-        setName(name + " copy");
+        result.setName(name + " copy");
 
         return result;
     }

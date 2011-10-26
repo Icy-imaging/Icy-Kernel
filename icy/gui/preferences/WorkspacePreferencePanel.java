@@ -21,7 +21,6 @@ package icy.gui.preferences;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.main.MainFrame;
 import icy.main.Icy;
-import icy.preferences.WorkspacePreferences;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -90,10 +89,10 @@ public class WorkspacePreferencePanel extends PreferencePanel
 
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
 
-        mainPanel.add(autoUpdateCheckBox);
-        mainPanel.add(Box.createVerticalStrut(10));
-        mainPanel.add(autoCheckUpdateCheckBox);
-        mainPanel.add(Box.createVerticalStrut(10));
+        // mainPanel.add(autoUpdateCheckBox);
+        // mainPanel.add(Box.createVerticalStrut(10));
+        // mainPanel.add(autoCheckUpdateCheckBox);
+        // mainPanel.add(Box.createVerticalStrut(10));
         mainPanel.add(cleanButton);
         mainPanel.add(Box.createVerticalStrut(10));
         mainPanel.add(Box.createVerticalGlue());
@@ -102,17 +101,17 @@ public class WorkspacePreferencePanel extends PreferencePanel
     @Override
     protected void load()
     {
-        autoUpdateCheckBox.setSelected(WorkspacePreferences.getAutomaticUpdate());
-        autoCheckUpdateCheckBox.setSelected(WorkspacePreferences.getAutomaticCheckUpdate()
-                || autoUpdateCheckBox.isSelected());
+        // autoUpdateCheckBox.setSelected(WorkspacePreferences.getAutomaticUpdate());
+        // autoCheckUpdateCheckBox.setSelected(WorkspacePreferences.getAutomaticCheckUpdate()
+        // || autoUpdateCheckBox.isSelected());
         autoCheckUpdateCheckBox.setEnabled(!autoUpdateCheckBox.isSelected());
     }
 
     @Override
     protected void save()
     {
-        WorkspacePreferences.setAutomaticUpdate(autoUpdateCheckBox.isSelected());
-        WorkspacePreferences.setAutomaticCheckUpdate(autoCheckUpdateCheckBox.isSelected());
+        // WorkspacePreferences.setAutomaticUpdate(autoUpdateCheckBox.isSelected());
+        // WorkspacePreferences.setAutomaticCheckUpdate(autoCheckUpdateCheckBox.isSelected());
     }
 
 }

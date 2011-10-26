@@ -26,7 +26,7 @@ public class WeakAcceptListener implements AcceptListener
         final AcceptListener listener = listenerRef.get();
 
         if (listener == null)
-            Icy.getMainInterface().removeCanExitListener(this);
+            Icy.getMainInterface().internalRemoveCanExitListener(this);
 
         return listener;
     }

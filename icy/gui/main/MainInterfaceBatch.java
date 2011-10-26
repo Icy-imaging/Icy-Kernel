@@ -21,6 +21,7 @@ package icy.gui.main;
 
 import icy.common.AcceptListener;
 import icy.common.EventHierarchicalChecker;
+import icy.common.WeakAcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.ToolRibbonTask;
@@ -47,7 +48,6 @@ import javax.swing.JInternalFrame;
  */
 public class MainInterfaceBatch implements MainInterface
 {
-
     @Override
     public void init()
     {
@@ -58,6 +58,12 @@ public class MainInterfaceBatch implements MainInterface
     public ArrayList<JFrame> getExternalFrames()
     {
         return new ArrayList<JFrame>();
+    }
+
+    @Override
+    public ArrayList<JInternalFrame> getInternalFrames()
+    {
+        return new ArrayList<JInternalFrame>();
     }
 
     @Override
@@ -298,6 +304,11 @@ public class MainInterfaceBatch implements MainInterface
     }
 
     @Override
+    public void internalRemoveCanExitListener(WeakAcceptListener listener)
+    {
+    }
+
+    @Override
     public void beginUpdate()
     {
     }
@@ -365,4 +376,5 @@ public class MainInterfaceBatch implements MainInterface
     {
         return true;
     }
+
 }

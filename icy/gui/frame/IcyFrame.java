@@ -126,6 +126,9 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
      */
     static ArrayList<IcyFrame> frames = new ArrayList<IcyFrame>();
 
+    /**
+     * Return all active (not closed) IcyFrame
+     */
     public static ArrayList<IcyFrame> getAllFrames()
     {
         synchronized (frames)
@@ -176,7 +179,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
      * internals
      */
     final MenuCallback defaultSystemMenuCallback;
-    final SwitchStateAction switchStateAction;
+    SwitchStateAction switchStateAction;
     boolean switchStateItemVisible;
 
     public IcyFrame()
@@ -2014,6 +2017,25 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     }
 
     /**
+     * Implement setContentPane method
+     */
+    public void setContentPane(final Container value)
+    {
+        // AWT safe
+        ThreadUtil.invoke(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                if (isInternalized())
+                    internalFrame.setContentPane(value);
+                else
+                    externalFrame.setContentPane(value);
+            }
+        }, syncProcess);
+    }
+
+    /**
      * @return the syncProcess
      */
     public boolean isSyncProcess()
@@ -2292,12 +2314,13 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             internalFrame.dispose();
         }
 
-        // else we have a cycling reference
-        externalFrame.setSystemMenuCallback(null);
-        internalFrame.setSystemMenuCallback(null);
-
         // easy onClosed handling
         onClosed();
+
+        // release some stuff else we have cycling reference
+        externalFrame.setSystemMenuCallback(null);
+        internalFrame.setSystemMenuCallback(null);
+        switchStateAction = null;
     }
 
     /**
@@ -2310,9 +2333,6 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         {
             frames.remove(this);
         }
-
-        // unregister from global external frames
-        Icy.getMainInterface().unRegisterExternalFrame(externalFrame);
     }
 
     @Override

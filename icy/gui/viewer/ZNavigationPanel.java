@@ -73,8 +73,8 @@ public class ZNavigationPanel extends JPanel
 
         add(GuiUtil.createCenteredLabel(topLabel), BorderLayout.NORTH);
         add(slider, BorderLayout.CENTER);
-        add(GuiUtil.createPageBoxPanel(GuiUtil.createCenteredLabel(bottomLabel), Box.createVerticalStrut(8), GuiUtil
-                .createCenteredLabel(zLabel)), BorderLayout.SOUTH);
+        add(GuiUtil.createPageBoxPanel(GuiUtil.createCenteredLabel(bottomLabel), Box.createVerticalStrut(8),
+                GuiUtil.createCenteredLabel(zLabel)), BorderLayout.SOUTH);
 
         validate();
     }
@@ -109,6 +109,15 @@ public class ZNavigationPanel extends JPanel
     public void removeChangeListener(ChangeListener l)
     {
         slider.removeChangeListener(l);
+    }
+
+    /**
+     * Remove all change listener
+     */
+    public void removeAllChangeListener()
+    {
+        for (ChangeListener l : slider.getListeners(ChangeListener.class))
+            slider.removeChangeListener(l);
     }
 
     /**

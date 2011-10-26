@@ -21,6 +21,7 @@ package icy.gui.main;
 
 import icy.common.AcceptListener;
 import icy.common.EventHierarchicalChecker;
+import icy.common.WeakAcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.ToolRibbonTask;
@@ -47,6 +48,9 @@ import javax.swing.JInternalFrame;
 
 public interface MainInterface
 {
+    /**
+     * Creates the windows in the Icy.getMainInterface()
+     */
     public abstract void init();
 
     /**
@@ -54,24 +58,59 @@ public interface MainInterface
      */
     public abstract boolean canExitExternal();
 
+    /**
+     * Return all internal frames
+     */
+    public abstract ArrayList<JInternalFrame> getInternalFrames();
+
+    /**
+     * Return all external frames
+     */
     public abstract ArrayList<JFrame> getExternalFrames();
 
     public abstract XMLPreferences getPreferences();
 
+    /**
+     * Return the inspector object (right informations panel)
+     */
     public abstract InspectorPanel getInspector();
 
+    /**
+     * Return the currently active plugins
+     */
     public abstract ArrayList<Plugin> getActivePlugins();
 
+    /**
+     * @return the current focused viewer
+     */
     public abstract Viewer getFocusedViewer();
 
+    /**
+     * @return the current focused sequence
+     */
     public abstract Sequence getFocusedSequence();
 
+    /**
+     * @return the current focused image
+     */
     public abstract IcyBufferedImage getFocusedImage();
 
     public abstract ArrayList<Viewer> getViewers();
 
+    /**
+     * Set focus on specified viewer
+     * 
+     * @param viewer
+     *        viewer which received focus
+     */
     public abstract void setFocusedViewer(Viewer viewer);
 
+    /**
+     * Add the frame to the Desktop pane and change its layer value to make it over the other
+     * internal frames.
+     * 
+     * @param internalFrame
+     */
     public abstract void addToDesktopPane(JInternalFrame internalFrame);
 
     public abstract IcyDesktopPane getDesktopPane();
@@ -98,8 +137,14 @@ public interface MainInterface
 
     public abstract MainFrame getFrame();
 
+    /**
+     * Close viewers attached to specified sequence
+     */
     public abstract void closeViewersOfSequence(Sequence sequence);
 
+    /**
+     * Close all viewers
+     */
     public abstract void closeAllViewers();
 
     /**
@@ -112,16 +157,34 @@ public interface MainInterface
      */
     public abstract Viewer getFirstViewerContaining(Painter painter);
 
+    /**
+     * Return first viewer attached to specified sequence
+     */
     public abstract Viewer getFirstViewer(Sequence sequence);
 
+    /**
+     * Return viewers attached to specified sequence
+     */
     public abstract ArrayList<Viewer> getViewers(Sequence sequence);
 
+    /**
+     * Return true if specified viewer is the unique viewer for its attached sequence
+     */
     public abstract boolean isUniqueViewer(Viewer viewer);
 
+    /**
+     * Return the active viewer (should be the same as focused one)
+     */
     public abstract Viewer getActiveViewer();
 
+    /**
+     * Return list of active / opened sequence (displayed in a viewer)
+     */
     public abstract ArrayList<Sequence> getSequences();
 
+    /**
+     * Return true if specified sequence is currently opened (displayed in a viewer)
+     */
     public abstract boolean isOpened(Sequence sequence);
 
     /**
@@ -150,14 +213,29 @@ public interface MainInterface
      */
     public abstract Sequence getFirstSequenceContaining(Painter painter);
 
+    /**
+     * Return all active sequence containing the specified ROI
+     */
     public abstract ArrayList<Sequence> getSequencesContaining(ROI roi);
 
+    /**
+     * Return all active sequence containing the specified Painter
+     */
     public abstract ArrayList<Sequence> getSequencesContaining(Painter painter);
 
+    /**
+     * Return all active ROI
+     */
     public abstract ArrayList<ROI> getROIs();
 
+    /**
+     * Return the ROI containing the specified painter (if any)
+     */
     public abstract ROI getROI(Painter painter);
 
+    /**
+     * Return all active Painter
+     */
     public abstract ArrayList<Painter> getPainters();
 
     public abstract SwimmingPool getSwimmingPool();
@@ -172,13 +250,43 @@ public interface MainInterface
 
     public abstract void setAlwaysOnTop(boolean value);
 
+    /**
+     * Add main listener
+     * 
+     * @param listener
+     */
     public abstract void addListener(MainListener listener);
 
+    /**
+     * Remove main listener
+     * 
+     * @param listener
+     */
     public abstract void removeListener(MainListener listener);
 
+    /**
+     * Add "can exit" listener.<br>
+     * <br>
+     * CAUTION : A weak reference is used to reference the listener for easier release<br>
+     * so you should have a hard reference to your listener to keep it alive
+     * 
+     * @param listener
+     */
     public abstract void addCanExitListener(AcceptListener listener);
 
+    /**
+     * Remove "can exit" listener
+     * 
+     * @param listener
+     */
     public abstract void removeCanExitListener(AcceptListener listener);
+
+    /**
+     * Internal remove "can exit" listener (used internally only)
+     * 
+     * @param listener
+     */
+    public abstract void internalRemoveCanExitListener(WeakAcceptListener listener);
 
     public abstract void beginUpdate();
 

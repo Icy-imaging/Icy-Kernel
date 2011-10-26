@@ -504,6 +504,8 @@ public class HistogramPanel extends BorderedPanel
     {
         super.paintComponent(g);
 
+        g.setColor(color);
+
         // not yet computed
         if (histogramData.length == 0)
         {
@@ -519,8 +521,6 @@ public class HistogramPanel extends BorderedPanel
             final int l = getClientX();
             final int r = l + getClientWidth();
             final double ratio = pixelToHistoRatio;
-
-            g.setColor(color);
 
             for (int i = l; i < r; i++)
             {

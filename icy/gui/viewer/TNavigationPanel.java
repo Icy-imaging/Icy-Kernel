@@ -300,6 +300,15 @@ public class TNavigationPanel extends JPanel
     }
 
     /**
+     * Remove all change listener
+     */
+    public void removeAllChangeListener()
+    {
+        for (ChangeListener l : slider.getListeners(ChangeListener.class))
+            slider.removeChangeListener(l);
+    }
+
+    /**
      * @see javax.swing.JSlider#getValue()
      */
     public int getValue()

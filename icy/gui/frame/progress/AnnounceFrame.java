@@ -153,6 +153,15 @@ public class AnnounceFrame extends TaskFrame implements ActionListener
     }
 
     @Override
+    public void internalClose()
+    {
+        // stop timer
+        timer.stop();
+
+        super.internalClose();
+    }
+
+    @Override
     public void actionPerformed(ActionEvent e)
     {
         if (e.getSource() == button)

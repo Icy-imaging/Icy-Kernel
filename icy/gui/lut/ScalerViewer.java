@@ -188,6 +188,8 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         @Override
         protected void paintComponent(Graphics g)
         {
+            GuiUtil.paintBackGround(this, g);
+
             super.paintComponent(g);
 
             final Graphics2D g2 = (Graphics2D) g.create();
@@ -473,13 +475,6 @@ public class ScalerViewer extends JPanel implements LUTBandListener
 
         // remove listeners
         lutBand.removeListener(this);
-    }
-
-    @Override
-    protected void paintComponent(Graphics g)
-    {
-        // nicy background :)
-        GuiUtil.paintBackGround(this, g);
     }
 
     public void refreshHistoData()

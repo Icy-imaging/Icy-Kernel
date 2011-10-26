@@ -104,14 +104,6 @@ public class MultiSmoothMover implements ActionListener
         this(size, SmoothMoveType.LINEAR);
     }
 
-    @Override
-    protected void finalize() throws Throwable
-    {
-        stopAll();
-
-        super.finalize();
-    }
-
     /**
      * Move the value at specified index to 'value'
      */
@@ -212,6 +204,9 @@ public class MultiSmoothMover implements ActionListener
             moveModified(index, time);
     }
 
+    /**
+     * Stop specified index
+     */
     public void stop(int index)
     {
         // stop and notify
@@ -222,12 +217,25 @@ public class MultiSmoothMover implements ActionListener
         }
     }
 
+    /**
+     * Stop all
+     */
     public void stopAll()
     {
         // stop all
         for (int index = 0; index < moving.length; index++)
             if (moving[index])
                 moveEnded(index);
+    }
+
+    /**
+     * Shutdown the mover object (this actually stop internal timer and remove all listeners)
+     */
+    public void shutDown()
+    {
+        timer.stop();
+        timer.removeActionListener(this);
+        listeners.clear();
     }
 
     /**
@@ -369,11 +377,6 @@ public class MultiSmoothMover implements ActionListener
     public void removeListener(MultiSmoothMoverListener listener)
     {
         listeners.remove(listener);
-    }
-
-    public void removeAllListeners()
-    {
-        listeners.clear();
     }
 
     /**

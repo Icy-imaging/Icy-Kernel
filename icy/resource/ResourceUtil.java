@@ -56,6 +56,8 @@ public class ResourceUtil
     public static final Image ICON_COG = ResourceUtil.getAlphaIconAsImage("cog.png");
     public static final Image ICON_UNCHECKED = ResourceUtil.getAlphaIconAsImage("checkbox_unchecked.png");
     public static final Image ICON_CHECKED = ResourceUtil.getAlphaIconAsImage("checkbox_checked.png");
+    public static final Image ICON_LOCK_OPEN = ResourceUtil.getAlphaIconAsImage("padlock_open.png");
+    public static final Image ICON_LOCK_CLOSE = ResourceUtil.getAlphaIconAsImage("padlock_closed.png");
 
     private static final String ICON_PATH = "res/icon/";
     private static final String IMAGE_PATH = "res/image/";

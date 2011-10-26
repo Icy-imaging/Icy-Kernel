@@ -52,6 +52,10 @@ public class BooleanMask2D
                 result.union(bounds, mask);
         }
 
+        // return an empty BooleanMask2D instead of null
+        if (result == null)
+            return new BooleanMask2D();
+
         return result;
     }
 
@@ -122,6 +126,10 @@ public class BooleanMask2D
                 result.intersect(bounds, mask);
         }
 
+        // return an empty BooleanMask2D instead of null
+        if (result == null)
+            return new BooleanMask2D();
+
         return result;
     }
 
@@ -180,6 +188,10 @@ public class BooleanMask2D
             else
                 result.xor(bounds, mask);
         }
+
+        // return an empty BooleanMask2D instead of null
+        if (result == null)
+            return new BooleanMask2D();
 
         return result;
     }
@@ -415,16 +427,16 @@ public class BooleanMask2D
         // test if empty
         if (minX == sizeX)
             // empty bounds
-            moveBounds(new Rectangle(0, 0, 0, 0));
+            setBounds(new Rectangle(0, 0, 0, 0));
         else
             // new calculated bounds
-            moveBounds(new Rectangle(bounds.x + minX, bounds.y + minY, (maxX - minX) + 1, (maxY - minY) + 1));
+            setBounds(new Rectangle(bounds.x + minX, bounds.y + minY, (maxX - minX) + 1, (maxY - minY) + 1));
     }
 
     /**
      * Modify bounds of BooleanMask, keep the mask data
      */
-    public void moveBounds(Rectangle value)
+    public void setBounds(Rectangle value)
     {
         // dimension changed ?
         if ((bounds.width != value.width) || (bounds.height != value.height))
@@ -471,5 +483,14 @@ public class BooleanMask2D
             // set new bounds
             bounds = value;
         }
+    }
+
+    /**
+     * @deprecated uses {@link #setBounds(Rectangle)} instead
+     */
+    @Deprecated
+    public void moveBounds(Rectangle value)
+    {
+        setBounds(value);
     }
 }

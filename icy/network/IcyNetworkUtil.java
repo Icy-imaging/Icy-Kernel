@@ -48,6 +48,7 @@ public class IcyNetworkUtil
     public static byte[] download(String path, boolean displayError)
     {
         final DownloadFrame frame = new DownloadFrame(path);
+
         try
         {
             return NetworkUtil.download(path, frame, displayError);

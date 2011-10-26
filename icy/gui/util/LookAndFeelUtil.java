@@ -68,7 +68,7 @@ public class LookAndFeelUtil
      * 
      * @author Stephane
      */
-    public class WeakSubstanceSkinChangeListener implements SkinChangeListener
+    public static class WeakSubstanceSkinChangeListener implements SkinChangeListener
     {
         private final WeakReference<SkinChangeListener> listenerRef;
 

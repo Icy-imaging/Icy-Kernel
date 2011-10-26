@@ -137,15 +137,17 @@ public class ColorUtil
      */
     public static String toString(int rgb, boolean hexa, String sep)
     {
-        final Integer a = Integer.valueOf((rgb >> 24) & 0xFF);
-        final Integer r = Integer.valueOf((rgb >> 16) & 0xFF);
-        final Integer g = Integer.valueOf((rgb >> 8) & 0xFF);
-        final Integer b = Integer.valueOf((rgb >> 0) & 0xFF);
+        final int a = (rgb >> 24) & 0xFF;
+        final int r = (rgb >> 16) & 0xFF;
+        final int g = (rgb >> 8) & 0xFF;
+        final int b = (rgb >> 0) & 0xFF;
 
         if (hexa)
-            return String.format("%02X" + sep + "%02X" + sep + "%02X" + sep + "%02X", a, r, g, b);
+            return (StringUtil.toHexaString(a, 2) + sep + StringUtil.toHexaString(r, 2) + sep
+                    + StringUtil.toHexaString(g, 2) + sep + StringUtil.toHexaString(b, 2)).toUpperCase();
 
-        return String.format("%03d" + sep + "%03d" + sep + "%03d" + sep + "%03d", a, r, g, b);
+        return StringUtil.toString(a) + sep + StringUtil.toString(r) + sep + StringUtil.toString(g) + sep
+                + StringUtil.toString(b);
     }
 
     /**

@@ -300,6 +300,21 @@ public class StringUtil
     }
 
     /**
+     * Returns a <code>String</code> object representing the specified integer.<br>
+     * If the returned String is shorter than specified length<br>
+     * then leading '0' are added to the string.
+     */
+    public static String toString(int value, int minSize)
+    {
+        String result = Integer.toString(value);
+
+        while (result.length() < minSize)
+            result = "0" + result;
+
+        return result;
+    }
+
+    /**
      * Returns a <code>String</code> object representing the specified <code>long</code>.
      */
     public static String toString(long value)
@@ -371,4 +386,22 @@ public class StringUtil
         return Integer.toHexString(value);
     }
 
+    /**
+     * Returns a string representation of the integer argument as an
+     * unsigned integer in base 16.<br>
+     * Force the returned string to have the specified size :<br>
+     * If the string is longer then only last past is kept.<br>
+     * If the string is shorter then leading 0 are added to the string.
+     */
+    public static String toHexaString(int value, int size)
+    {
+        String result = Integer.toHexString(value);
+
+        if (result.length() > size)
+            return result.substring(result.length() - size);
+
+        while (result.length() < size)
+            result = "0" + result;
+        return result;
+    }
 }

@@ -117,14 +117,6 @@ public class SmoothMover implements ActionListener
         this(initValue, SmoothMoveType.LINEAR);
     }
 
-    @Override
-    protected void finalize() throws Throwable
-    {
-        stop();
-
-        super.finalize();
-    }
-
     /**
      * Move to specified values v
      */
@@ -197,6 +189,16 @@ public class SmoothMover implements ActionListener
             timer.stop();
             moveEnded();
         }
+    }
+
+    /**
+     * Shutdown the mover object (this actually stop internal timer and remove all listeners)
+     */
+    public void shutDown()
+    {
+        timer.stop();
+        timer.removeActionListener(this);
+        listeners.clear();
     }
 
     /**

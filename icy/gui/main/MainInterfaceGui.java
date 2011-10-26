@@ -47,6 +47,7 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyVetoException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -64,8 +65,8 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     private final UpdateEventHandler updater;
     private final SequenceListener sequenceListener;
 
-    private final ArrayList<Viewer> viewers;
-    private final ArrayList<WeakReference<Plugin>> activePlugins;
+    private final List<Viewer> viewers;
+    private final List<WeakReference<Plugin>> activePlugins;
 
     private final SwimmingPool swimmingPool;
     private final TaskFrameManager taskFrameManager;
@@ -142,9 +143,6 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         focusedSequence = null;
     }
 
-    /**
-     * Creates the windows in the Icy.getMainInterface().
-     */
     @Override
     public void init()
     {
@@ -172,6 +170,17 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
                 result.add((JFrame) w);
 
         return result;
+    }
+
+    @Override
+    public ArrayList<JInternalFrame> getInternalFrames()
+    {
+        final MainFrame f = getFrame();
+
+        if (f != null)
+            return f.getInternalFrames();
+
+        return new ArrayList<JInternalFrame>();
     }
 
     /**
@@ -205,27 +214,18 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         return result;
     }
 
-    /**
-     * @return the current focused viewer
-     */
     @Override
     public Viewer getFocusedViewer()
     {
         return focusedViewer;
     }
 
-    /**
-     * @return the current focused sequence
-     */
     @Override
     public Sequence getFocusedSequence()
     {
         return focusedSequence;
     }
 
-    /**
-     * @return the current focused image
-     */
     @Override
     public IcyBufferedImage getFocusedImage()
     {
@@ -241,10 +241,6 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         return new ArrayList<Viewer>(viewers);
     }
 
-    /**
-     * @param viewer
-     *        viewer which received focus
-     */
     @Override
     public void setFocusedViewer(Viewer viewer)
     {
@@ -270,12 +266,6 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         viewerFocusChanged(viewer);
     }
 
-    /**
-     * Add the frame to the Desktop pane and change its layer value to make it over the other
-     * internal frames.
-     * 
-     * @param internalFrame
-     */
     @Override
     public void addToDesktopPane(JInternalFrame internalFrame)
     {
@@ -377,23 +367,19 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         return mainFrame;
     }
 
-    /**
-     * Close viewers attached to specified sequence
-     */
     @Override
     public void closeViewersOfSequence(Sequence sequence)
     {
+        // use copy as this actually modify viewers list
         for (Viewer v : getViewers())
             if (v.getSequence() == sequence)
                 v.close();
     }
 
-    /**
-     * Close all viewers
-     */
     @Override
     public void closeAllViewers()
     {
+        // use copy as this actually modify viewers list
         for (Viewer viewer : getViewers())
             viewer.close();
     }
@@ -416,15 +402,12 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         return getFirstViewer(getFirstSequenceContaining(painter));
     }
 
-    /**
-     * Return first viewer attached to specified sequence
-     */
     @Override
     public Viewer getFirstViewer(Sequence sequence)
     {
         if (sequence != null)
         {
-            for (Viewer viewer : viewers)
+            for (Viewer viewer : getViewers())
                 if (viewer.getSequence() == sequence)
                     return viewer;
         }
@@ -432,69 +415,54 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         return null;
     }
 
-    /**
-     * Return viewers attached to specified sequence
-     */
     @Override
     public ArrayList<Viewer> getViewers(Sequence sequence)
     {
         final ArrayList<Viewer> result = new ArrayList<Viewer>();
 
-        for (Viewer v : viewers)
+        for (Viewer v : getViewers())
             if (v.getSequence() == sequence)
                 result.add(v);
 
         return result;
     }
 
-    /**
-     * Return true if specified viewer is the unique viewer for its attached sequence
-     */
     @Override
     public boolean isUniqueViewer(Viewer viewer)
     {
-        final ArrayList<Viewer> viewers = getViewers(viewer.getSequence());
+        final List<Viewer> viewers = getViewers(viewer.getSequence());
 
         return (viewers.size() == 1) && (viewers.get(0) == viewer);
     }
 
-    /**
-     * Return the active / focused viewer
-     */
     @Override
     public Viewer getActiveViewer()
     {
-        for (Viewer v : viewers)
+        for (Viewer v : getViewers())
             if (v.isActive())
                 return v;
 
         return null;
     }
 
-    /**
-     * Return list of active / opened sequence (displayed in a viewer)
-     */
     @Override
     public ArrayList<Sequence> getSequences()
     {
-        final ArrayList<Sequence> sequences = new ArrayList<Sequence>();
+        final ArrayList<Sequence> result = new ArrayList<Sequence>();
 
-        for (Viewer viewer : viewers)
+        for (Viewer viewer : getViewers())
         {
             final Sequence seq = viewer.getSequence();
 
-            if (!sequences.contains(seq))
-                sequences.add(seq);
+            if (!result.contains(seq))
+                result.add(seq);
         }
 
         // TODO: add sequences from swimming pool ?
 
-        return sequences;
+        return result;
     }
 
-    /**
-     * Return true if specified sequence is currently opened (displayed in a viewer)
-     */
     @Override
     public boolean isOpened(Sequence sequence)
     {
@@ -511,7 +479,7 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     @Override
     public Sequence getFirstSequenceContaining(ROI roi)
     {
-        final ArrayList<Sequence> sequences = getSequences();
+        final List<Sequence> sequences = getSequences();
 
         for (Sequence seq : sequences)
             if (seq.contains(roi))
@@ -530,7 +498,7 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     @Override
     public Sequence getFirstSequenceContaining(Painter painter)
     {
-        final ArrayList<Sequence> sequences = getSequences();
+        final List<Sequence> sequences = getSequences();
 
         for (Sequence seq : sequences)
             if (seq.contains(painter))
@@ -539,45 +507,34 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         return null;
     }
 
-    /**
-     * Return all active sequence containing the specified ROI
-     */
     @Override
     public ArrayList<Sequence> getSequencesContaining(ROI roi)
     {
-        final ArrayList<Sequence> sequences = getSequences();
-        final ArrayList<Sequence> result = new ArrayList<Sequence>();
+        final ArrayList<Sequence> result = getSequences();
 
-        for (Sequence seq : sequences)
-            if (seq.contains(roi))
-                result.add(seq);
+        for (int i = result.size() - 1; i >= 0; i--)
+            if (!result.get(i).contains(roi))
+                result.remove(i);
 
         return result;
     }
 
-    /**
-     * Return all active sequence containing the specified Painter
-     */
     @Override
     public ArrayList<Sequence> getSequencesContaining(Painter painter)
     {
-        final ArrayList<Sequence> sequences = getSequences();
-        final ArrayList<Sequence> result = new ArrayList<Sequence>();
+        final ArrayList<Sequence> result = getSequences();
 
-        for (Sequence seq : sequences)
-            if (seq.contains(painter))
-                result.add(seq);
+        for (int i = result.size() - 1; i >= 0; i--)
+            if (!result.get(i).contains(painter))
+                result.remove(i);
 
         return result;
     }
 
-    /**
-     * Return all active ROI
-     */
     @Override
     public ArrayList<ROI> getROIs()
     {
-        final ArrayList<Sequence> sequences = getSequences();
+        final List<Sequence> sequences = getSequences();
         final ArrayList<ROI> result = new ArrayList<ROI>();
 
         for (Sequence seq : sequences)
@@ -594,13 +551,10 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         return result;
     }
 
-    /**
-     * Return the ROI containing the specified painter (if any)
-     */
     @Override
     public ROI getROI(Painter painter)
     {
-        final ArrayList<ROI> rois = getROIs();
+        final List<ROI> rois = getROIs();
 
         for (ROI roi : rois)
             if (roi.getPainter() == painter)
@@ -609,13 +563,10 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         return null;
     }
 
-    /**
-     * Return all active Painter
-     */
     @Override
     public ArrayList<Painter> getPainters()
     {
-        final ArrayList<Sequence> sequences = getSequences();
+        final List<Sequence> sequences = getSequences();
         final ArrayList<Painter> result = new ArrayList<Painter>();
 
         for (Sequence seq : sequences)
@@ -668,54 +619,37 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
         mainFrame.setAlwaysOnTop(value);
     }
 
-    /**
-     * Add main listener
-     * 
-     * @param listener
-     */
     @Override
     public void addListener(MainListener listener)
     {
         listeners.add(MainListener.class, listener);
     }
 
-    /**
-     * Remove main listener
-     * 
-     * @param listener
-     */
     @Override
     public void removeListener(MainListener listener)
     {
         listeners.remove(MainListener.class, listener);
     }
 
-    /**
-     * Add "can exit" listener.<br>
-     * <br>
-     * CAUTION : A weak reference is used to reference the listener for easier release<br>
-     * so you should have a hard reference to your listener to keep it alive
-     * 
-     * @param listener
-     */
     @Override
     public void addCanExitListener(AcceptListener listener)
     {
-        listeners.add(AcceptListener.class, new WeakAcceptListener(listener));
+        listeners.add(WeakAcceptListener.class, new WeakAcceptListener(listener));
     }
 
-    /**
-     * Remove "can exit" listener
-     * 
-     * @param listener
-     */
     @Override
     public void removeCanExitListener(AcceptListener listener)
     {
         // we use weak reference so we have to find base listener...
-        for (AcceptListener l : listeners.getListeners(AcceptListener.class))
-            if (listener == ((WeakAcceptListener) l).getListener())
-                listeners.remove(AcceptListener.class, l);
+        for (WeakAcceptListener l : listeners.getListeners(WeakAcceptListener.class))
+            if (listener == l.getListener())
+                internalRemoveCanExitListener(l);
+    }
+
+    @Override
+    public void internalRemoveCanExitListener(WeakAcceptListener listener)
+    {
+        listeners.remove(WeakAcceptListener.class, listener);
     }
 
     /**
@@ -826,13 +760,10 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
             listener.painterRemoved(event);
     }
 
-    /**
-     * check if exit is allowed from registered listeners
-     */
     @Override
     public boolean canExitExternal()
     {
-        for (AcceptListener listener : listeners.getListeners(AcceptListener.class))
+        for (AcceptListener listener : listeners.getListeners(WeakAcceptListener.class))
             if (!listener.accept(getFrame()))
                 return false;
 

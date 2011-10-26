@@ -639,6 +639,22 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         }
 
         /**
+         * Release some stuff
+         */
+        void shutDown()
+        {
+            // stop timer and movers
+            refreshTimer.stop();
+            zoomInfoTimer.stop();
+            rotationInfoTimer.stop();
+            refreshTimer.removeActionListener(this);
+            zoomInfoTimer.removeActionListener(this);
+            rotationInfoTimer.removeActionListener(this);
+            zoomInfoAlphaMover.shutDown();
+            rotationInfoAlphaMover.shutDown();
+        }
+
+        /**
          * Internal canvas process on mouseClicked event.<br>
          * Return true if event should be consumed.
          */
@@ -693,7 +709,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 // assume start drag
                 dragging = true;
                 // repaint
-                canvasView.refresh();
+                refresh();
 
                 // consume event
                 return true;
@@ -714,7 +730,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             rotating = false;
 
             // repaint
-            canvasView.refresh();
+            refresh();
             updateCursor();
 
             // consume event
@@ -1514,9 +1530,14 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     {
         super.shutDown();
 
-        // need to remove listener else internal timer keep a reference to Canvas2D
-        transform.removeAllListeners();
-        transform.stopAll();
+        canvasView.shutDown();
+
+        // shutdown mover object (else internal timer keep a reference to Canvas2D)
+        transform.shutDown();
+
+        // remove navigation panel listener
+        zNav.removeAllChangeListener();
+        tNav.removeAllChangeListener();
 
         final ToolRibbonTask trt = Icy.getMainInterface().getToolRibbon();
         if (trt != null)

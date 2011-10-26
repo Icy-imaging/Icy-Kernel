@@ -16,8 +16,8 @@ public class WorkspacePreferences
     /**
      * id
      */
-    private static final String ID_AUTO_UPDATE = "autoUpdate";
-    private static final String ID_AUTO_CHECK_UPDATE = "autoCheckUpdate";
+    // private static final String ID_AUTO_UPDATE = "autoUpdate";
+    // private static final String ID_AUTO_CHECK_UPDATE = "autoCheckUpdate";
 
     /**
      * preferences
@@ -38,24 +38,24 @@ public class WorkspacePreferences
         return preferences;
     }
 
-    public static boolean getAutomaticUpdate()
-    {
-        return preferences.getBoolean(ID_AUTO_UPDATE, true);
-    }
-
-    public static boolean getAutomaticCheckUpdate()
-    {
-        return preferences.getBoolean(ID_AUTO_CHECK_UPDATE, true);
-    }
-
-    public static void setAutomaticUpdate(boolean value)
-    {
-        preferences.putBoolean(ID_AUTO_UPDATE, value);
-    }
-
-    public static void setAutomaticCheckUpdate(boolean value)
-    {
-        preferences.putBoolean(ID_AUTO_CHECK_UPDATE, value);
-    }
+    // public static boolean getAutomaticUpdate()
+    // {
+    // return preferences.getBoolean(ID_AUTO_UPDATE, true);
+    // }
+    //
+    // public static boolean getAutomaticCheckUpdate()
+    // {
+    // return preferences.getBoolean(ID_AUTO_CHECK_UPDATE, true);
+    // }
+    //
+    // public static void setAutomaticUpdate(boolean value)
+    // {
+    // preferences.putBoolean(ID_AUTO_UPDATE, value);
+    // }
+    //
+    // public static void setAutomaticCheckUpdate(boolean value)
+    // {
+    // preferences.putBoolean(ID_AUTO_CHECK_UPDATE, value);
+    // }
 
 }

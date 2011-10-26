@@ -20,12 +20,15 @@ package icy.gui.system;
 
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.ExternalizablePanel;
+import icy.gui.component.button.IcyButton;
+import icy.gui.component.button.IcyToggleButton;
 import icy.gui.util.GuiUtil;
 import icy.plugin.abstract_.Plugin;
+import icy.resource.ResourceUtil;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.StringSelection;
@@ -35,21 +38,20 @@ import java.awt.event.ActionListener;
 import java.io.PrintStream;
 import java.util.EventListener;
 
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JPanel;
+import javax.swing.Box;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 
 /**
  * @author Stephane
  */
 public class OutputConsolePanel extends ExternalizablePanel implements ClipboardOwner
 {
-    public interface OutputConsoleChangeListener extends EventListener
+    public static interface OutputConsoleChangeListener extends EventListener
     {
         public void outputConsoleChanged(OutputConsolePanel source, boolean isError);
     }
@@ -93,45 +95,55 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
      */
     private static final long serialVersionUID = 7142067146669860938L;
 
+    private static final int MAX_SIZE = 8 * 1024 * 1024; // 32MB
+
     final JTextPane textPane;
-    final Color errorColor;
-    final Color outColor;
-    final Font font;
+    final StyledDocument doc;
+    final SimpleAttributeSet normalAttributes;
+    final SimpleAttributeSet errorAttributes;
+    final IcyToggleButton scrollLockButton;
 
     public OutputConsolePanel()
     {
         super("Output");
 
         textPane = new JTextPane();
-        errorColor = Color.red;
-        outColor = Color.black;
-        font = new Font("arial", Font.PLAIN, 11);
+        doc = textPane.getStyledDocument();
 
-        final JScrollPane scrollPane = new JScrollPane(textPane);
-        scrollPane.setPreferredSize(new Dimension(300, 200));
-        final JButton clearLogButton = new JButton("Clear");
-        final JButton copyLogButton = new JButton("Copy");
-        final JButton reportLogButton = new JButton("Report");
+        errorAttributes = new SimpleAttributeSet();
+        normalAttributes = new SimpleAttributeSet();
+
+        StyleConstants.setFontFamily(errorAttributes, "arial");
+        StyleConstants.setFontSize(errorAttributes, 11);
+        StyleConstants.setForeground(errorAttributes, Color.red);
+
+        StyleConstants.setFontFamily(normalAttributes, "arial");
+        StyleConstants.setFontSize(normalAttributes, 11);
+        StyleConstants.setForeground(normalAttributes, Color.black);
+
+        final IcyButton clearLogButton = new IcyButton(ResourceUtil.ICON_DOC, 20);
+        final IcyButton copyLogButton = new IcyButton(ResourceUtil.ICON_DOCCOPY, 20);
+        final IcyButton reportLogButton = new IcyButton(ResourceUtil.ICON_DOCEXPORT, 20);
+        scrollLockButton = new IcyToggleButton(ResourceUtil.ICON_LOCK_OPEN, 20);
 
         ComponentUtil.setFontSize(textPane, 10);
         textPane.setEditable(false);
-        // FIXME: take a bit of time
-        textPane.setContentType("text/html");
 
-        final JPanel actionPanel = GuiUtil.generatePanel();
-        actionPanel.add(GuiUtil.besidesPanel(clearLogButton, copyLogButton, reportLogButton));
-        actionPanel.setMaximumSize(new Dimension(300, 0));
-
-        clearLogButton.setToolTipText("Clear log info");
-        copyLogButton.setToolTipText("Copy to clipboard log info");
-        reportLogButton.setToolTipText("Send this as an envent report to the dev team");
+        clearLogButton.setFlat(true);
+        copyLogButton.setFlat(true);
+        reportLogButton.setFlat(true);
+        scrollLockButton.setFlat(true);
+        clearLogButton.setToolTipText("Clear all");
+        copyLogButton.setToolTipText("Copy to clipboard");
+        reportLogButton.setToolTipText("Report content to dev team");
+        scrollLockButton.setToolTipText("Scroll Lock");
 
         clearLogButton.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                textPane.setText("<html>");
+                textPane.setText("");
             }
         });
         copyLogButton.addActionListener(new ActionListener()
@@ -143,8 +155,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
 
                 try
                 {
-                    final StringSelection contents = new StringSelection(textPane.getDocument().getText(0,
-                            textPane.getDocument().getLength()));
+                    final StringSelection contents = new StringSelection(doc.getText(0, doc.getLength()));
                     clipboard.setContents(contents, OutputConsolePanel.this);
                 }
                 catch (BadLocationException e1)
@@ -161,7 +172,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
                 try
                 {
                     // send report
-                    Plugin.report(null, textPane.getDocument().getText(0, textPane.getDocument().getLength()));
+                    Plugin.report(null, doc.getText(0, doc.getLength()));
                 }
                 catch (BadLocationException e1)
                 {
@@ -169,11 +180,32 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
                 }
             }
         });
+        scrollLockButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                if (scrollLockButton.isSelected())
+                    scrollLockButton.setIconImage(ResourceUtil.ICON_LOCK_CLOSE);
+                else
+                    scrollLockButton.setIconImage(ResourceUtil.ICON_LOCK_OPEN);
+            }
+        });
 
-        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+        final JScrollPane scrollPane = new JScrollPane(textPane);
+        scrollPane.setPreferredSize(new Dimension(300, 200));
 
-        add(scrollPane);
-        add(actionPanel);
+        setLayout(new BorderLayout());
+
+        clearLogButton.setToolTipText("Clear log info");
+        copyLogButton.setToolTipText("Copy to clipboard log info");
+        reportLogButton.setToolTipText("Send this as an envent report to the dev team");
+        scrollLockButton.setToolTipText("Scroll Lock");
+
+        add(scrollPane, BorderLayout.CENTER);
+        add(GuiUtil.createLineBoxPanel(clearLogButton, Box.createHorizontalStrut(4), copyLogButton,
+                Box.createHorizontalStrut(4), reportLogButton, Box.createHorizontalGlue(),
+                Box.createHorizontalStrut(4), scrollLockButton), BorderLayout.SOUTH);
 
         // redirect standard output
         System.setOut(new WindowsOutPrintStream(System.out, false));
@@ -182,17 +214,20 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
 
     public void addText(String text, boolean isError)
     {
-        final SimpleAttributeSet set = new SimpleAttributeSet();
-
-        if (isError)
-            StyleConstants.setForeground(set, errorColor);
-        else
-            StyleConstants.setForeground(set, outColor);
-
         try
         {
-            textPane.getStyledDocument().insertString(textPane.getStyledDocument().getLength(), text, set);
-            textPane.setCaretPosition(textPane.getStyledDocument().getLength());
+            if (isError)
+                doc.insertString(doc.getLength(), text, errorAttributes);
+            else
+                doc.insertString(doc.getLength(), text, normalAttributes);
+
+            // limit to maximum size
+            if (doc.getLength() > MAX_SIZE)
+                doc.remove(0, doc.getLength() - MAX_SIZE);
+
+            // scroll lock feature
+            if (!scrollLockButton.isSelected())
+                textPane.setCaretPosition(doc.getLength());
         }
         catch (Exception e)
         {

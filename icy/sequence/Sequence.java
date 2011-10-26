@@ -624,7 +624,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Get channel name
+     * Get name for specified channel
      */
     public String getChannelName(int index)
     {
@@ -632,7 +632,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Set channel name
+     * Set name for specified channel
      */
     public void setChannelName(int index, String value)
     {

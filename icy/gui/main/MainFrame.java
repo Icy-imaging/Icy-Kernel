@@ -43,10 +43,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
 import javax.swing.JComponent;
+import javax.swing.JInternalFrame;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 import javax.swing.ToolTipManager;
@@ -333,13 +335,16 @@ public class MainFrame extends JRibbonFrame
         return desktopPane;
     }
 
-    // /**
-    // * @return the bottomPanel
-    // */
-    // public BottomPanel getBottomPanel()
-    // {
-    // return bottomPanel;
-    // }
+    /**
+     * Return all internal frames
+     */
+    public ArrayList<JInternalFrame> getInternalFrames()
+    {
+        if (desktopPane != null)
+            return (ArrayList<JInternalFrame>) Arrays.asList(desktopPane.getAllFrames());
+
+        return new ArrayList<JInternalFrame>();
+    }
 
     /**
      * @return the inspector
