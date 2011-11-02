@@ -763,7 +763,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         final double boundsDst[];
 
         if (rescale)
-            boundsDst = dataType.getBounds();
+            boundsDst = dataType.getDefaultBounds();
         else
             boundsDst = boundsSrc;
 
@@ -1249,7 +1249,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
         // return default bounds ([0..255] / [-128..127]) for BYTE data type
         if ((!adjustByteToo) && (dataType.getJavaType() == DataType.BYTE))
-            return dataType.getBounds();
+            return dataType.getDefaultBounds();
 
         final boolean signed = dataType.isSigned();
         final Object data = getDataXY(component);
@@ -1283,7 +1283,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         {
             case BYTE:
                 // return default bounds ([0..255] / [-128..127])
-                return dataType.getBounds();
+                return dataType.getDefaultBounds();
 
             case SHORT:
             case INT:

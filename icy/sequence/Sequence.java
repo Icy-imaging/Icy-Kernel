@@ -353,7 +353,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         final double boundsDst[];
 
         if (rescale)
-            boundsDst = dataType.getBounds();
+            boundsDst = dataType.getDefaultBounds();
         else
             boundsDst = boundsSrc;
 

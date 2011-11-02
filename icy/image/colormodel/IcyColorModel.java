@@ -102,7 +102,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
         this.dataType = dataType;
 
         // get default min and max for datatype
-        final double[] defaultBounds = dataType.getBounds();
+        final double[] defaultBounds = dataType.getDefaultBounds();
         final double min = defaultBounds[0];
         final double max = defaultBounds[1];
         // float type flag
@@ -667,7 +667,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public double[] getDefaultComponentBounds()
     {
-        return dataType.getBounds();
+        return dataType.getDefaultBounds();
     }
 
     /**

@@ -457,6 +457,9 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         setLayout(new BorderLayout());
         add(histogram, BorderLayout.CENTER);
         validate();
+
+        // force first refresh
+        refreshHistoData();
     }
 
     @Override

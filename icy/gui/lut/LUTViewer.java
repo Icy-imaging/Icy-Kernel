@@ -215,10 +215,14 @@ public class LUTViewer extends IcyLutViewer
     void refreshChannelsName()
     {
         final Sequence seq = getSequence();
-        final int sizeC = seq.getSizeC();
 
-        for (int c = 0; c < sizeC; c++)
-            bottomPane.setTitleAt(c, seq.getChannelName(c));
+        if (seq != null)
+        {
+            final int sizeC = seq.getSizeC();
+
+            for (int c = 0; c < sizeC; c++)
+                bottomPane.setTitleAt(c, seq.getChannelName(c));
+        }
     }
 
 }

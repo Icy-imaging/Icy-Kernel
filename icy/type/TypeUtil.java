@@ -885,63 +885,11 @@ public class TypeUtil
     /**
      * Get the default bounds for the specified dataType
      * 
-     * @deprecated use {@link DataType#getBounds()} instead
+     * @deprecated use {@link DataType#getDefaultBounds()} instead
      */
     @Deprecated
     public static double[] getDefaultBounds(int dataType, boolean signed)
     {
-        final double min;
-        final double max;
-
-        // get default min and max for datatype
-        switch (dataType)
-        {
-            case TypeUtil.TYPE_BYTE:
-                if (signed)
-                {
-                    min = Byte.MIN_VALUE;
-                    max = Byte.MAX_VALUE;
-                }
-                else
-                {
-                    min = 0x00;
-                    max = 0xFF;
-                }
-                break;
-
-            case TypeUtil.TYPE_SHORT:
-                if (signed)
-                {
-                    min = Short.MIN_VALUE;
-                    max = Short.MAX_VALUE;
-                }
-                else
-                {
-                    min = 0x0000;
-                    max = 0xFFFF;
-                }
-                break;
-
-            case DataBuffer.TYPE_INT:
-                if (signed)
-                {
-                    min = Integer.MIN_VALUE;
-                    max = Integer.MAX_VALUE;
-                }
-                else
-                {
-                    min = 0x00000000L;
-                    max = 0xFFFFFFFFL;
-                }
-                break;
-
-            default:
-                min = 0d;
-                max = 1d;
-                break;
-        }
-
-        return new double[] {min, max};
+        return DataType.getDataType(dataType, signed).getDefaultBounds();
     }
-
 }

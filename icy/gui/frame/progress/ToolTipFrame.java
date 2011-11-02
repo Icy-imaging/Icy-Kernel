@@ -188,7 +188,8 @@ public class ToolTipFrame extends TaskFrame
     public void internalClose()
     {
         // stop timer
-        timer.stop();
+        if (timer != null)
+            timer.stop();
 
         super.internalClose();
     }

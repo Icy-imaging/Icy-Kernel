@@ -312,9 +312,21 @@ public enum DataType
     }
 
     /**
-     * Get the default bounds for current DataType
+     * Get the default bounds for current DataType.<br>
+     * This actually returns <code>[0,1]</code> for Float or Double DataType.
      */
-    public double[] getBounds()
+    public double[] getDefaultBounds()
+    {
+        if (isFloat())
+            return new double[] {0d, 1d};
+
+        return new double[] {getMinValue(), getMaxValue()};
+    }
+
+    /**
+     * Get the bounds for current DataType
+     */
+    public double[] getDefautBounds()
     {
         return new double[] {getMinValue(), getMaxValue()};
     }
