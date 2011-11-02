@@ -625,7 +625,7 @@ public class PluginInstaller
             // cancel requested ?
             if ((taskFrame != null) && taskFrame.isCancelRequested())
             {
-                System.err.println(INSTALL_INTERRUPT);
+                System.out.println(INSTALL_INTERRUPT);
                 return false;
             }
 

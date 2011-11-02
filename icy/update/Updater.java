@@ -170,7 +170,7 @@ public class Updater
         return result;
     }
 
-    private static ArrayList<ElementDescriptor> loadElementsFromXML(String path)
+    public static ArrayList<ElementDescriptor> loadElementsFromXML(String path)
     {
         final ArrayList<ElementDescriptor> result = new ArrayList<ElementDescriptor>();
 

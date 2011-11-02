@@ -242,7 +242,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener
 
                 if (icyFrame != null)
                 {
-                    // avoid progressFrame
+                    // avoid ProgressFrame
                     if (!(icyFrame instanceof ProgressFrame))
                         openedFrames.add(f);
                 }

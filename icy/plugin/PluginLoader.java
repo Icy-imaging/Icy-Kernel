@@ -30,10 +30,13 @@ import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventListener;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import javax.swing.event.EventListenerList;
 
@@ -289,7 +292,54 @@ public class PluginLoader
     }
 
     /**
-     * @return the pluginList
+     * Return the loader
+     */
+    public static ClassLoader getLoader()
+    {
+        return loader;
+    }
+
+    /**
+     * Return all loaded resources
+     */
+    public static Map<String, byte[]> getAllResources()
+    {
+        prepare();
+
+        if (loader instanceof JarClassLoader)
+            ((JarClassLoader) loader).getLoadedResources();
+
+        return new HashMap<String, byte[]>();
+    }
+
+    /**
+     * Return all loaded classes
+     */
+    public static Map<String, Class<?>> getAllClasses()
+    {
+        prepare();
+
+        if (loader instanceof JarClassLoader)
+            ((JarClassLoader) loader).getLoadedClasses();
+
+        return new HashMap<String, Class<?>>();
+    }
+
+    /**
+     * Return a resource as data stream from given resource name
+     * 
+     * @param name
+     *        resource name
+     */
+    public static InputStream getResourceAsStream(String name)
+    {
+        prepare();
+
+        return loader.getResourceAsStream(name);
+    }
+
+    /**
+     * Return the list of loaded plugins
      */
     public static ArrayList<PluginDescriptor> getPlugins()
     {
@@ -303,15 +353,7 @@ public class PluginLoader
     }
 
     /**
-     * return the loader
-     */
-    public static ClassLoader getLoader()
-    {
-        return loader;
-    }
-
-    /**
-     * @return the pluginList
+     * Return the list of loaded plugins which derive from the specified class
      */
     public static ArrayList<PluginDescriptor> getPlugins(Class<?> clazz)
     {
@@ -319,7 +361,12 @@ public class PluginLoader
     }
 
     /**
-     * @return the pluginList
+     * Return the list of loaded plugins which derive from the specified class
+     * 
+     * @param wantAbstract
+     *        specified if we also want abstract classes
+     * @param wantInterface
+     *        specified if we also want interfaces
      */
     public static ArrayList<PluginDescriptor> getPlugins(Class<?> clazz, boolean wantAbstract, boolean wantInterface)
     {
@@ -348,7 +395,7 @@ public class PluginLoader
     }
 
     /**
-     * @return actionable plugins
+     * Return the list of "actionable" plugins (mean we can launch them from GUI)
      */
     public static ArrayList<PluginDescriptor> getActionablePlugins()
     {

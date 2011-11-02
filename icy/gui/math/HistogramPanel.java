@@ -86,7 +86,7 @@ public class HistogramPanel extends BorderedPanel
         setMinimumSize(new Dimension(100, 100));
         setMaximumSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
 
-        histogram = null;
+        histogram = new Histogram(0d, 1d, 1, true);
         histogramData = new double[0];
 
         this.minValue = minValue;
@@ -385,6 +385,9 @@ public class HistogramPanel extends BorderedPanel
             // notify listeners so they can fill it
             fireHistogramNeedRefresh();
         }
+        else
+            // only recalculate ratios
+            refreshRatios();
     }
 
     /**
@@ -503,6 +506,9 @@ public class HistogramPanel extends BorderedPanel
     protected void paintComponent(Graphics g)
     {
         super.paintComponent(g);
+
+        // always recalculate ratios as width can change before resize event
+        refreshRatios();
 
         g.setColor(color);
 

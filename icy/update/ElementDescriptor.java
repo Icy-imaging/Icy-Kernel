@@ -167,6 +167,12 @@ public class ElementDescriptor
         {
             this.dateModif = dateModif;
         }
+
+        @Override
+        public String toString()
+        {
+            return FileUtil.getFileName(localPath);
+        }
     }
 
     private String name;
@@ -280,11 +286,27 @@ public class ElementDescriptor
     }
 
     /**
+     * @return the number of files
+     */
+    public int getFilesNumber()
+    {
+        return files.size();
+    }
+
+    /**
      * @return the files
      */
     public ArrayList<ElementFile> getFiles()
     {
         return files;
+    }
+
+    /**
+     * @return the specified file
+     */
+    public ElementFile getFile(int index)
+    {
+        return files.get(index);
     }
 
     /**

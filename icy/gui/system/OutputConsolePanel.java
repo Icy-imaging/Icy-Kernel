@@ -28,7 +28,6 @@ import icy.resource.ResourceUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.StringSelection;
@@ -39,6 +38,7 @@ import java.io.PrintStream;
 import java.util.EventListener;
 
 import javax.swing.Box;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
@@ -121,7 +121,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         StyleConstants.setFontSize(normalAttributes, 11);
         StyleConstants.setForeground(normalAttributes, Color.black);
 
-        final IcyButton clearLogButton = new IcyButton(ResourceUtil.ICON_DOC, 20);
+        final IcyButton clearLogButton = new IcyButton(ResourceUtil.ICON_DELETE, 20);
         final IcyButton copyLogButton = new IcyButton(ResourceUtil.ICON_DOCCOPY, 20);
         final IcyButton reportLogButton = new IcyButton(ResourceUtil.ICON_DOCEXPORT, 20);
         scrollLockButton = new IcyToggleButton(ResourceUtil.ICON_LOCK_OPEN, 20);
@@ -133,6 +133,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         copyLogButton.setFlat(true);
         reportLogButton.setFlat(true);
         scrollLockButton.setFlat(true);
+
         clearLogButton.setToolTipText("Clear all");
         copyLogButton.setToolTipText("Copy to clipboard");
         reportLogButton.setToolTipText("Report content to dev team");
@@ -192,20 +193,20 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
             }
         });
 
-        final JScrollPane scrollPane = new JScrollPane(textPane);
-        scrollPane.setPreferredSize(new Dimension(300, 200));
+        final JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.add(textPane, BorderLayout.CENTER);
+
+        final JScrollPane scrollPane = new JScrollPane(panel);
 
         setLayout(new BorderLayout());
 
-        clearLogButton.setToolTipText("Clear log info");
-        copyLogButton.setToolTipText("Copy to clipboard log info");
-        reportLogButton.setToolTipText("Send this as an envent report to the dev team");
-        scrollLockButton.setToolTipText("Scroll Lock");
-
         add(scrollPane, BorderLayout.CENTER);
-        add(GuiUtil.createLineBoxPanel(clearLogButton, Box.createHorizontalStrut(4), copyLogButton,
-                Box.createHorizontalStrut(4), reportLogButton, Box.createHorizontalGlue(),
-                Box.createHorizontalStrut(4), scrollLockButton), BorderLayout.SOUTH);
+        add(GuiUtil.createPageBoxPanel(
+                Box.createVerticalStrut(4),
+                GuiUtil.createLineBoxPanel(clearLogButton, Box.createHorizontalStrut(4), copyLogButton,
+                        Box.createHorizontalStrut(4), reportLogButton, Box.createHorizontalGlue(),
+                        Box.createHorizontalStrut(4), scrollLockButton)), BorderLayout.SOUTH);
 
         // redirect standard output
         System.setOut(new WindowsOutPrintStream(System.out, false));

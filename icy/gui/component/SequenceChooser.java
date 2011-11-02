@@ -30,6 +30,7 @@ import icy.util.StringUtil;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
@@ -62,12 +63,12 @@ public class SequenceChooser extends JComboBox
         /**
          * items list
          */
-        final ArrayList<Sequence> sequences;
+        final List<Sequence> sequences;
 
         /**
          * @param sequences
          */
-        public SequenceComboModel(ArrayList<Sequence> sequences)
+        public SequenceComboModel(List<Sequence> sequences)
         {
             super();
 
@@ -100,7 +101,7 @@ public class SequenceChooser extends JComboBox
     /**
      * listeners
      */
-    private final ArrayList<SequenceChooserListener> listeners;
+    private final List<SequenceChooserListener> listeners;
     private final MainListener mainListener;
 
     /**

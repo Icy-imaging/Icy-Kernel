@@ -334,12 +334,28 @@ public class ClassUtil
      * @param path
      *        path to scan.
      * @param includeSubDir
-     *        - if <code>true</code> all sub-directory are also scanned.
+     *        if <code>true</code> all sub-directory are also scanned.
      * @return set of found class.
      */
     public static HashSet<String> findClassNamesInPath(String path, boolean includeSubDir)
     {
-        return findClassNamesInPath(path, ClassUtil.getQualifiedNameFromPath(path), includeSubDir);
+        return findClassNamesInPath(path, ClassUtil.getQualifiedNameFromPath(path), includeSubDir, true);
+    }
+
+    /**
+     * This method finds all classes that are located in the specified directory.<br>
+     * 
+     * @param path
+     *        path to scan.
+     * @param includeSubDir
+     *        if <code>true</code> all sub-directory are also scanned.
+     * @param includeJar
+     *        if <code>true</code> all JAR files are also scanned
+     * @return set of found class.
+     */
+    public static HashSet<String> findClassNamesInPath(String path, boolean includeSubDir, boolean includeJar)
+    {
+        return findClassNamesInPath(path, ClassUtil.getQualifiedNameFromPath(path), includeSubDir, includeJar);
     }
 
     /**
@@ -350,14 +366,14 @@ public class ClassUtil
      * @param packageName
      *        package name prefix
      * @param includeSubDir
-     *        - if <code>true</code> all sub-directory are also scanned.
+     *        if <code>true</code> all sub-directory are also scanned.
      * @return set of found class.
      */
     public static HashSet<String> findClassNamesInPath(String path, String packageName, boolean includeSubDir)
     {
         final HashSet<String> classes = new HashSet<String>();
 
-        findClassNamesInPath(path, packageName, includeSubDir, classes);
+        findClassNamesInPath(path, packageName, includeSubDir, true, classes);
 
         return classes;
     }
@@ -370,11 +386,54 @@ public class ClassUtil
      * @param packageName
      *        package name prefix
      * @param includeSubDir
-     *        - if <code>true</code> all sub-directory are also scanned.
+     *        if <code>true</code> all sub-directory are also scanned.
+     * @param includeJar
+     *        if <code>true</code> all JAR files are also scanned
+     * @return set of found class.
+     */
+    public static HashSet<String> findClassNamesInPath(String path, String packageName, boolean includeSubDir,
+            boolean includeJar)
+    {
+        final HashSet<String> classes = new HashSet<String>();
+
+        findClassNamesInPath(path, packageName, includeSubDir, includeJar, classes);
+
+        return classes;
+    }
+
+    /**
+     * This method finds all classes that are located in the specified directory.<br>
+     * 
+     * @param path
+     *        path to scan.
+     * @param packageName
+     *        package name prefix
+     * @param includeSubDir
+     *        if <code>true</code> all sub-directory are also scanned.
      * @param classes
      *        save found classes here
      */
     public static void findClassNamesInPath(String path, String packageName, boolean includeSubDir, Set<String> classes)
+    {
+        findClassNamesInPath(path, packageName, includeSubDir, true, classes);
+    }
+
+    /**
+     * This method finds all classes that are located in the specified directory.<br>
+     * 
+     * @param path
+     *        path to scan.
+     * @param packageName
+     *        package name prefix
+     * @param includeSubDir
+     *        if <code>true</code> all sub-directory are also scanned.
+     * @param includeJar
+     *        if <code>true</code> all JAR files are also scanned
+     * @param classes
+     *        save found classes here
+     */
+    public static void findClassNamesInPath(String path, String packageName, boolean includeSubDir, boolean includeJar,
+            Set<String> classes)
     {
         final File dir = new File(path);
         final String qualifiedName;
@@ -387,16 +446,17 @@ public class ClassUtil
         if (dir.isDirectory())
         {
             if (includeSubDir)
-                findClassNamesRecursive(dir, classes, qualifiedName);
+                findClassNamesRecursive(dir, includeJar, classes, qualifiedName);
             else
                 for (File file : dir.listFiles())
-                    findClassNameInFile(file, classes, qualifiedName);
+                    findClassNameInFile(file, includeJar, classes, qualifiedName);
         }
         else
             findClassNameInFile(dir, classes, qualifiedName);
     }
 
-    private static void findClassNamesRecursive(File directory, Set<String> classSet, String qualifiedName)
+    private static void findClassNamesRecursive(File directory, boolean includeJar, Set<String> classSet,
+            String qualifiedName)
     {
         for (File childFile : directory.listFiles())
         {
@@ -406,28 +466,39 @@ public class ClassUtil
             if (!childFilename.startsWith("."))
             {
                 if (childFile.isDirectory())
-                    findClassNamesRecursive(childFile, classSet, qualifiedName + childFilename + '.');
+                    findClassNamesRecursive(childFile, includeJar, classSet, qualifiedName + childFilename + '.');
                 else
-                    findClassNameInFile(childFile, classSet, qualifiedName);
+                    findClassNameInFile(childFile, includeJar, classSet, qualifiedName);
             }
         }
     }
 
-    public static void findClassNameInFile(File file, Set<String> classSet, String qualifiedNamePrefix)
+    /**
+     * Search for all classes in specified file
+     */
+    public static void findClassNameInFile(File file, boolean includeJar, Set<String> classSet,
+            String qualifiedNamePrefix)
     {
         final String fileName = file.getPath();
-
         if (FileUtil.getFileExtension(fileName, false).toLowerCase().equals("jar"))
-            findClassNamesInJAR(fileName, classSet);
+        {
+            if (includeJar)
+                findClassNamesInJAR(fileName, classSet);
+        }
         else
             addClassFileName(file.getName(), classSet, qualifiedNamePrefix);
     }
 
     /**
+     * Search for all classes in specified file
+     */
+    public static void findClassNameInFile(File file, Set<String> classSet, String qualifiedNamePrefix)
+    {
+        findClassNameInFile(file, true, classSet, qualifiedNamePrefix);
+    }
+
+    /**
      * Search for all classes in JAR file
-     * 
-     * @param fileName
-     * @param classSet
      */
     public static void findClassNamesInJAR(String fileName, Set<String> classSet)
     {
