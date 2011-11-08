@@ -23,6 +23,7 @@ import icy.file.FileUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import org.w3c.dom.Element;
@@ -80,6 +81,21 @@ public class ElementDescriptor
             loadFromNode(node);
         }
 
+        /**
+         * Create a new element file using specified element informations
+         */
+        public ElementFile(ElementFile elementFile)
+        {
+            super();
+
+            localPath = elementFile.localPath;
+            onlinePath = elementFile.onlinePath;
+            dateModif = elementFile.dateModif;
+            link = elementFile.link;
+            executable = elementFile.executable;
+            writable = elementFile.writable;
+        }
+
         public void loadFromNode(Node node)
         {
             localPath = XMLUtil.getElementValue(node, ID_LOCALPATH, "");
@@ -112,9 +128,9 @@ public class ElementDescriptor
             return StringUtil.isEmpty(localPath) && StringUtil.isEmpty(onlinePath);
         }
 
-        public boolean exist()
+        public boolean exists()
         {
-            return FileUtil.exist(localPath);
+            return FileUtil.exists(localPath);
         }
 
         /**
@@ -168,6 +184,66 @@ public class ElementDescriptor
             this.dateModif = dateModif;
         }
 
+        /**
+         * @param link
+         *        the link to set
+         */
+        public void setLink(boolean link)
+        {
+            this.link = link;
+        }
+
+        /**
+         * @param executable
+         *        the executable to set
+         */
+        public void setExecutable(boolean executable)
+        {
+            this.executable = executable;
+        }
+
+        /**
+         * @param writable
+         *        the writable to set
+         */
+        public void setWritable(boolean writable)
+        {
+            this.writable = writable;
+        }
+
+        /**
+         * Return true if the specified ElementFile is the same than current one.<br>
+         * 
+         * @param elementFile
+         *        the element file to compare
+         * @param compareOnlinePath
+         *        specify if we compare online path information
+         * @param compareValidDateOnly
+         *        true if we do compare only valid date (!= 0)
+         */
+        public boolean isSame(ElementFile elementFile, boolean compareOnlinePath, boolean compareValidDateOnly)
+        {
+            if (elementFile == null)
+                return false;
+
+            if (!StringUtil.equals(elementFile.localPath, localPath))
+                return false;
+            if (compareOnlinePath && (!StringUtil.equals(elementFile.onlinePath, onlinePath)))
+                return false;
+
+            if ((elementFile.dateModif == 0) || (dateModif == 0))
+            {
+                // don't compare dates if one is invalid
+                if (compareValidDateOnly)
+                    return true;
+
+                // one of the date is not valid --> can't compare
+                return false;
+            }
+
+            return (elementFile.dateModif == dateModif);
+        }
+
         @Override
         public String toString()
         {
@@ -190,6 +266,23 @@ public class ElementDescriptor
         files = new ArrayList<ElementFile>();
 
         loadFromNode(node);
+    }
+
+    /**
+     * Create a new element descriptor using specified element informations
+     */
+    public ElementDescriptor(ElementDescriptor element)
+    {
+        super();
+
+        name = element.name;
+        version = new Version(element.version.toString());
+        changelog = element.changelog;
+
+        files = new ArrayList<ElementFile>();
+
+        for (ElementFile f : element.files)
+            files.add(new ElementFile(f));
     }
 
     public void loadFromNode(Node node)
@@ -228,10 +321,10 @@ public class ElementDescriptor
     /**
      * return ElementFile containing specified local path
      */
-    public ElementFile getElementFileFromLocalPath(String path)
+    public ElementFile getElementFile(String localPath)
     {
         for (ElementFile file : files)
-            if (file.getLocalPath().compareToIgnoreCase(path) == 0)
+            if (file.getLocalPath().compareToIgnoreCase(localPath) == 0)
                 return file;
 
         return null;
@@ -240,9 +333,9 @@ public class ElementDescriptor
     /**
      * return true if element contains the specified local path
      */
-    public boolean hasLocalPath(String path)
+    public boolean hasLocalPath(String localPath)
     {
-        return getElementFileFromLocalPath(path) != null;
+        return getElementFile(localPath) != null;
     }
 
     public boolean addElementFile(ElementFile file)
@@ -255,15 +348,43 @@ public class ElementDescriptor
         return files.remove(file);
     }
 
-    public void removeElementFileFromLocalPath(String path)
+    public void removeElementFile(String localPath)
     {
-        removeElementFile(getElementFileFromLocalPath(path));
+        removeElementFile(getElementFile(localPath));
+    }
+
+    /**
+     * Validate the current element descriptor.<br>
+     * It actually remove missing files from the element.<br>
+     * Return true if all files are valid.
+     */
+    public boolean validate()
+    {
+        boolean result = true;
+
+        for (int i = files.size() - 1; i >= 0; i--)
+        {
+            final ElementFile elementFile = files.get(i);
+            final File file = new File(elementFile.getLocalPath());
+
+            if (file.exists())
+                // update modification date
+                elementFile.setDateModif(file.lastModified());
+            else
+            {
+                // remove missing file
+                files.remove(i);
+                result = false;
+            }
+        }
+
+        return result;
     }
 
     public boolean isValid()
     {
         for (ElementFile file : files)
-            if (!file.exist())
+            if (!file.exists())
                 return false;
 
         return true;
@@ -326,9 +447,122 @@ public class ElementDescriptor
         this.version = version;
     }
 
+    /**
+     * Return true if the specified ElementDescriptor is the same than current one.<br>
+     * 
+     * @param element
+     *        the element descriptor to compare
+     * @param compareFileOnlinePath
+     *        specify if we compare file online path information
+     */
+    public boolean isSame(ElementDescriptor element, boolean compareFileOnlinePath)
+    {
+        if (element == null)
+            return false;
+
+        // different name
+        if (!name.equals(element.name))
+            return false;
+        // different version
+        if (!version.equals(element.version))
+            return false;
+        // different number of files
+        if (files.size() != element.files.size())
+            return false;
+
+        // compare files
+        for (ElementFile file : files)
+        {
+            final ElementFile elementFile = element.getElementFile(file.getLocalPath());
+
+            // file missing --> different
+            if (elementFile == null)
+                return false;
+
+            // file different (compare date only if they are valid) --> different
+            if (!elementFile.isSame(file, compareFileOnlinePath, true))
+                return false;
+        }
+
+        // same element
+        return true;
+    }
+
+    /**
+     * Process and return the update the element which contain differences<br>
+     * from the specified local and online elements.<br>
+     * If local element refers the same item, only missing or different files will remains.<br>
+     * If local element refers a different element, current element is unchanged.
+     * 
+     * @return the update element (null if local and online elements are the same)
+     */
+    public static ElementDescriptor getUpdateElement(ElementDescriptor localElement, ElementDescriptor onlineElement)
+    {
+        if (onlineElement == null)
+            return null;
+
+        // use a copy
+        final ElementDescriptor result = new ElementDescriptor(onlineElement);
+
+        if (localElement == null)
+            return result;
+        // different name
+        if (!StringUtil.equals(result.name, localElement.name))
+            return result;
+
+        // if same version, compare files on valid date only
+        final boolean compareValidDateOnly = result.version.equals(localElement.version);
+
+        // compare files
+        for (int i = result.files.size() - 1; i >= 0; i--)
+        {
+            final ElementFile onlineFile = result.files.get(i);
+            final ElementFile localFile = localElement.getElementFile(onlineFile.getLocalPath());
+
+            // same file ? --> remove it (no need to be updated)
+            if ((localFile != null) && onlineFile.isSame(localFile, false, compareValidDateOnly))
+                result.files.remove(i);
+        }
+
+        // no files to update ? --> return null
+        if (result.files.isEmpty())
+            return null;
+
+        return result;
+    }
+
+    /**
+     * Update current element with informations from specified element
+     */
+    public void update(ElementDescriptor updateElement)
+    {
+        // update version info
+        version = updateElement.version;
+
+        // add or update files
+        for (ElementFile updateFile : updateElement.files)
+        {
+            // get corresponding file
+            final ElementFile localFile = getElementFile(updateFile.getLocalPath());
+
+            // file missing ? --> add it
+            if (localFile == null)
+                files.add(updateFile);
+            else
+            {
+                // update file (we don't care about online information)
+                localFile.setDateModif(updateFile.getDateModif());
+                localFile.setExecutable(updateFile.isExecutable());
+                localFile.setLink(updateFile.isLink());
+                localFile.setWritable(updateFile.isWritable());
+            }
+        }
+    }
+
     @Override
     public String toString()
     {
         return name + " " + version;
     }
+
 }

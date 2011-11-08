@@ -51,54 +51,29 @@ public class Updater
     private static final String ID_OBSOLETES = "obsoletes";
     private static final String ID_LOCALPATH = "localpath";
 
-    /**
-     * Get the list of elements which need update
-     */
-    public static ArrayList<ElementDescriptor> getUpdateList()
-    {
-        final ArrayList<ElementDescriptor> result = new ArrayList<ElementDescriptor>();
+    // /**
+    // * Get update elements.<br>
+    // * Compare local elements with online element and return a list of element<br>
+    // * which need to be updated.
+    // */
+    // public static ArrayList<ElementDescriptor> getUpdateElements()
+    // {
+    // return getUpdateElements(getLocalElements());
+    // }
 
-        final ArrayList<ElementDescriptor> localElements = getLocalElements();
-        final ArrayList<ElementDescriptor> onlineElements = getOnlineElements();
-
-        // build update list
-        for (ElementDescriptor onlineElement : onlineElements)
-        {
-            final ElementDescriptor localElement = findElement(onlineElement.getName(), localElements);
-
-            // local element absent or outdated ?
-            if ((localElement == null) || (onlineElement.getVersion().isGreater(localElement.getVersion())))
-                // add the element to update list
-                result.add(onlineElement);
-        }
-
-        return result;
-    }
-
-    /**
-     * Validate the element list so it contains only locally present elements
-     */
-    public static ArrayList<ElementDescriptor> validateElements(ArrayList<ElementDescriptor> elements)
-    {
-        final ArrayList<ElementDescriptor> validElements = new ArrayList<ElementDescriptor>();
-
-        // update list
-        for (ElementDescriptor element : elements)
-            // add to valid list
-            if (element.isValid())
-                validElements.add(element);
-
-        return validElements;
-    }
-
-    /**
-     * Validate the local version.xml file so it contains only present elements
-     */
-    public static boolean validateLocalXML()
-    {
-        // validate local elements and save to XML file
-        return saveElementsToXML(validateElements(getLocalElements()), VERSION_NAME, false);
-    }
+    // /**
+    // * Update the local version.xml file so it contains only present elements with correct
+    // * modification date.
+    // */
+    // public static boolean validateLocalElementsXML()
+    // {
+    // // get local elements
+    // final ArrayList<ElementDescriptor> localElements = getLocalElements();
+    // // validate them
+    // validateLocalElements(localElements);
+    // // and save to local XML file
+    // return saveElementsToXML(localElements, VERSION_NAME, false);
+    // }
 
     // public static boolean updateXML()
     // {
@@ -122,11 +97,28 @@ public class Updater
     // }
 
     /**
-     * Get the list of local elements (local version.xml file)
+     * Get the list of local elements.<br>
+     * Elements are fetched from local version.xml file then validated with local files.
      */
     public static ArrayList<ElementDescriptor> getLocalElements()
     {
-        return loadElementsFromXML(VERSION_NAME);
+        // get elements from XML files
+        final ArrayList<ElementDescriptor> result = loadElementsFromXML(VERSION_NAME);
+
+        // validate elements against local files
+        for (int i = result.size() - 1; i >= 0; i--)
+        {
+            final ElementDescriptor element = result.get(i);
+
+            // validate element
+            element.validate();
+
+            // no more valid file ? --> remove element
+            if (element.getFilesNumber() == 0)
+                result.remove(i);
+        }
+
+        return result;
     }
 
     /**
@@ -135,6 +127,31 @@ public class Updater
     public static ArrayList<ElementDescriptor> getOnlineElements()
     {
         return loadElementsFromXML(UPDATE_DIRECTORY + FileUtil.separator + UPDATE_NAME);
+    }
+
+    /**
+     * Get update elements.<br>
+     * Compare specified local elements with online element and return a list of element<br>
+     * which need to be updated.
+     */
+    public static ArrayList<ElementDescriptor> getUpdateElements(ArrayList<ElementDescriptor> localElements)
+    {
+        final ArrayList<ElementDescriptor> result = new ArrayList<ElementDescriptor>();
+        final ArrayList<ElementDescriptor> onlineElements = getOnlineElements();
+
+        // build update list
+        for (ElementDescriptor onlineElement : onlineElements)
+        {
+            final ElementDescriptor localElement = findElement(onlineElement.getName(), localElements);
+            // get update element (differences between online and local element)
+            final ElementDescriptor updateElement = ElementDescriptor.getUpdateElement(localElement, onlineElement);
+
+            if (updateElement != null)
+                // add the element to update list
+                result.add(updateElement);
+        }
+
+        return result;
     }
 
     /**
@@ -257,6 +274,42 @@ public class Updater
     }
 
     /**
+     * Update the specified "update" element (move files from update to application directory)<br>
+     * then modify local elements list according to changes made.
+     * 
+     * @return true if update succeed, false otherwise
+     */
+    public static boolean udpateElement(ElementDescriptor updateElement, ArrayList<ElementDescriptor> localElements)
+    {
+        // update all element files
+        if (Updater.updateFiles(updateElement.getFiles()))
+        {
+            // then modify local elements list
+            updateElementInfos(updateElement, localElements);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Update local elements according to changes presents in updateElement
+     */
+    public static void updateElementInfos(ElementDescriptor updateElement, ArrayList<ElementDescriptor> localElements)
+    {
+        // find corresponding current local element
+        final ElementDescriptor localElement = Updater.findElement(updateElement.getName(), localElements);
+
+        // local element doesn't exist
+        if (localElement == null)
+            // add it
+            localElements.add(updateElement);
+        else
+            // just update local element with update element info
+            localElement.update(updateElement);
+    }
+
+    /**
      * Update the specified files
      */
     public static boolean updateFiles(ArrayList<ElementFile> files)
@@ -301,9 +354,14 @@ public class Updater
     public static boolean backup(String localPath)
     {
         // file exist ? backup it
-        if (FileUtil.exist(localPath))
+        if (FileUtil.exists(localPath))
+        {
             if (!FileUtil.copy(localPath, BACKUP_DIRECTORY + FileUtil.separator + localPath, true, false, true))
                 return false;
+
+            // verify that backup file exist
+            return FileUtil.exists(BACKUP_DIRECTORY + FileUtil.separator + localPath);
+        }
 
         return true;
     }

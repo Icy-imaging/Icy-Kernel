@@ -700,7 +700,21 @@ public class FileUtil
         return getFileList(file, filter, recursive, false, wantHidden);
     }
 
+    /**
+     * Return true if the file described by specified path exists
+     * 
+     * @deprecated use {@link #exists(String)} instead
+     */
+    @Deprecated
     public static boolean exist(String path)
+    {
+        return exists(path);
+    }
+
+    /**
+     * Return true if the file described by specified path exists
+     */
+    public static boolean exists(String path)
     {
         return new File(getGenericPath(path)).exists();
     }

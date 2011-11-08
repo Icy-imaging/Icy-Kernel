@@ -130,7 +130,8 @@ public class NetworkUtil
             else if (SystemUtil.isWindow())
                 Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url);
             else
-            { // assume Unix or Linux
+            {
+                // assume Unix or Linux
                 String[] browsers = {"firefox", "opera", "konqueror", "epiphany", "mozilla", "netscape"};
                 String browser = null;
                 for (int count = 0; count < browsers.length && browser == null; count++)
@@ -146,7 +147,7 @@ public class NetworkUtil
         }
         catch (Exception e)
         {
-            System.out.println("Error while opening system browser :\n" + e.toString());
+            System.err.println("Error while opening system browser :\n" + e.toString());
         }
     }
 
@@ -190,8 +191,6 @@ public class NetworkUtil
             }
         }
 
-        final String updateUrlBase = ApplicationPreferences.getUpdateRepositoryBase();
-
         // disable cache
         final URLConnection uc = openConnection(url, true, displayError);
         // get input stream with coherence verification
@@ -209,13 +208,8 @@ public class NetworkUtil
                     final String urlString = url.toString();
 
                     // obfuscation
-                    if (urlString.startsWith(updateUrlBase))
-                        System.out.println("Can't connect to update site...");
-                    else
-                    {
-                        System.out.println("Error while downloading from '" + urlString + "' :");
-                        IcyExceptionHandler.showErrorMessage(e, false, false);
-                    }
+                    System.out.println("Error while downloading from '" + urlString + "' :");
+                    IcyExceptionHandler.showErrorMessage(e, false, false);
 
                     return null;
                 }
@@ -263,7 +257,7 @@ public class NetworkUtil
             if (displayError)
             {
                 System.out.println("NetworkUtil.download('" + f.getPath() + "',...) error :");
-                IcyExceptionHandler.showErrorMessage(e, false);
+                IcyExceptionHandler.showErrorMessage(e, false, false);
             }
             return null;
         }
@@ -389,14 +383,13 @@ public class NetworkUtil
                         urlString = "'" + urlString + "'";
 
                         if (e instanceof FileNotFoundException)
-                            System.out.println("Address " + urlString + " does not exists !");
+                            System.out.println("Address " + urlString + " does not exists.");
                         else if (e.getMessage().indexOf("HTTP response code: 500 ") != -1)
                             System.out.println("Network error : can't connect to " + urlString);
                         else
-                        {
                             System.out.println("NetworkUtil.getInputStream(" + urlString + ",...) error :");
-                            IcyExceptionHandler.showErrorMessage(e, false, false);
-                        }
+
+                        IcyExceptionHandler.showErrorMessage(e, false, false);
                     }
                 }
             }
@@ -541,8 +534,7 @@ public class NetworkUtil
                 catch (IOException e)
                 {
                     System.out.println("Error while reporting data :");
-                    System.out.println("postData(REPORT_URL) error :");
-                    System.out.println(e.getMessage());
+                    IcyExceptionHandler.showErrorMessage(e, false, false);
                 }
             }
         });

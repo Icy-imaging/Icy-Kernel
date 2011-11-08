@@ -1060,12 +1060,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
                     final ArrayList<Layer> layers = getVisibleOrderedLayersForEvent();
 
-                    // draw them in inverse order to have first painter event at
-                    // top
+                    // draw them in inverse order to have first painter event at top
                     for (int i = layers.size() - 1; i >= 0; i--)
                     {
                         final Layer layer = layers.get(i);
-
                         final float alpha = layer.getAlpha();
 
                         if (alpha != 1f)
@@ -1167,8 +1165,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             else if (imageCache.isProcessing())
                 refreshLater(100);
 
-            // repaint minimap to reflect change (simplest way to refresh
-            // minimap)
+            // repaint minimap to reflect change (simplest way to refresh minimap)
             canvasMap.repaint();
         }
 

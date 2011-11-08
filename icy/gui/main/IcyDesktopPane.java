@@ -20,7 +20,7 @@ package icy.gui.main;
 
 import icy.common.Random;
 import icy.gui.frame.IcyFrame;
-import icy.gui.frame.progress.ProgressFrame;
+import icy.gui.frame.progress.TaskFrame;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
 
@@ -192,7 +192,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener
                 if (icyFrame != null)
                 {
                     // avoid progressFrame
-                    if (!(icyFrame instanceof ProgressFrame))
+                    if (!(icyFrame instanceof TaskFrame))
                         openedFrames.add(f);
                 }
                 else
@@ -243,7 +243,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener
                 if (icyFrame != null)
                 {
                     // avoid ProgressFrame
-                    if (!(icyFrame instanceof ProgressFrame))
+                    if (!(icyFrame instanceof TaskFrame))
                         openedFrames.add(f);
                 }
                 else

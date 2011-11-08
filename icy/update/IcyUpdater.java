@@ -135,9 +135,6 @@ public class IcyUpdater
      */
     static void processCheckUpdate(boolean showProgress, boolean auto)
     {
-        // we validate the local file
-        Updater.validateLocalXML();
-
         // delete update directory to avoid partial update
         FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
 
@@ -162,7 +159,7 @@ public class IcyUpdater
             }
 
             // check if some elements need to be updated from network
-            toUpdate = Updater.getUpdateList();
+            toUpdate = Updater.getUpdateElements(Updater.getLocalElements());
         }
         finally
         {
@@ -188,7 +185,7 @@ public class IcyUpdater
             if (!showProgress && auto)
             {
                 // automatically install updates
-                if (prepareUpdate(toUpdate, false))
+                if (prepareUpdate(toUpdate, true))
                     // we want update when application will exit
                     wantUpdate = true;
             }
@@ -419,11 +416,12 @@ public class IcyUpdater
     private static boolean canDoUpdate()
     {
         // check for updater presence
-        boolean requiredFilesExist = FileUtil.exist(Updater.UPDATER_NAME);
-        // in update directory ?
-        requiredFilesExist |= FileUtil.exist(Updater.UPDATE_DIRECTORY + FileUtil.separator + Updater.UPDATER_NAME);
+        boolean requiredFilesExist = FileUtil.exists(Updater.UPDATER_NAME);
+        // // in update directory ?
+        // requiredFilesExist |= FileUtil.exists(Updater.UPDATE_DIRECTORY + FileUtil.separator +
+        // Updater.UPDATER_NAME);
         // check for update xml file
-        requiredFilesExist &= FileUtil.exist(Updater.UPDATE_DIRECTORY + FileUtil.separator + Updater.UPDATE_NAME);
+        requiredFilesExist &= FileUtil.exists(Updater.UPDATE_DIRECTORY + FileUtil.separator + Updater.UPDATE_NAME);
 
         // required files present so we can do update
         return requiredFilesExist;
@@ -436,8 +434,8 @@ public class IcyUpdater
     {
         if (doUpdate)
         {
-            // updater need update ?
-            if (FileUtil.exist(Updater.UPDATE_DIRECTORY + FileUtil.separator + Updater.UPDATER_NAME))
+            // updater need update ? process it first
+            if (FileUtil.exists(Updater.UPDATE_DIRECTORY + FileUtil.separator + Updater.UPDATER_NAME))
             {
                 // replace updater
                 if (!Updater.updateFile(Updater.UPDATER_NAME, 0L))

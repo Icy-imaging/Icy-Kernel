@@ -179,11 +179,6 @@ public class Version implements Comparable<Version>
         return (major == 0) && (minor == 0) && (revision == 0) && (build == 0);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
     @Override
     public boolean equals(Object obj)
     {
@@ -193,11 +188,6 @@ public class Version implements Comparable<Version>
         return super.equals(obj);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#hashCode()
-     */
     @Override
     public int hashCode()
     {
@@ -211,11 +201,6 @@ public class Version implements Comparable<Version>
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString()
     {
@@ -234,11 +219,6 @@ public class Version implements Comparable<Version>
         return result;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Comparable#compareTo(java.lang.Object)
-     */
     @Override
     public int compareTo(Version o)
     {

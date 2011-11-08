@@ -31,6 +31,7 @@ import icy.math.Scaler;
 import icy.math.ScalerEvent;
 import icy.math.ScalerListener;
 import icy.type.DataType;
+import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
 
 import java.awt.image.BandedSampleModel;
@@ -649,7 +650,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     @Deprecated
     public int getDataType()
     {
-        return transferType;
+        return TypeUtil.dataBufferTypeToDataType(transferType);
     }
 
     /**
