@@ -97,26 +97,36 @@ public class Updater
     // }
 
     /**
-     * Get the list of local elements.<br>
-     * Elements are fetched from local version.xml file then validated with local files.
+     * Validate the specified list of elements against local files.<br>
+     * This actually remove missing files and update the file modification date.
      */
-    public static ArrayList<ElementDescriptor> getLocalElements()
+    public static void validateElements(ArrayList<ElementDescriptor> elements)
     {
-        // get elements from XML files
-        final ArrayList<ElementDescriptor> result = loadElementsFromXML(VERSION_NAME);
-
         // validate elements against local files
-        for (int i = result.size() - 1; i >= 0; i--)
+        for (int i = elements.size() - 1; i >= 0; i--)
         {
-            final ElementDescriptor element = result.get(i);
+            final ElementDescriptor element = elements.get(i);
 
             // validate element
             element.validate();
 
             // no more valid file ? --> remove element
             if (element.getFilesNumber() == 0)
-                result.remove(i);
+                elements.remove(i);
         }
+    }
+
+    /**
+     * Get the list of local elements.<br>
+     * Elements are fetched from local version.xml file then validated with local files.
+     */
+    public static ArrayList<ElementDescriptor> getLocalElements()
+    {
+        // get local elements from XML file
+        final ArrayList<ElementDescriptor> result = loadElementsFromXML(VERSION_NAME);
+
+        // validate elements
+        validateElements(result);
 
         return result;
     }

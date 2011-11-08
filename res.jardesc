@@ -14,6 +14,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;res.xml"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;res.image.background"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;res.image.splash"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;res.sound"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;res.icon.color"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;res.icon.alpha"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;res"/>
