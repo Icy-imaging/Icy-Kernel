@@ -123,7 +123,7 @@ public class IcyUpdater
     }
 
     /**
-     * return true if we are currently processing update! for update
+     * return true if we are currently processing update
      */
     public static boolean isUpdating()
     {
