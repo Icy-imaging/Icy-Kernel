@@ -448,11 +448,11 @@ public class WorkspaceInstaller
                         break;
 
                     case 1:
-                        new SuccessfullAnnounceFrame(resMess + " success !", 10);
+                        new SuccessfullAnnounceFrame(resMess + " succeed !", 10);
                         break;
 
                     case 2:
-                        new SuccessfullAnnounceFrame(resMess + " success but some plugins cannot be installed.", 10);
+                        new SuccessfullAnnounceFrame(resMess + " succeed but some plugins cannot be installed.", 10);
                         break;
                 }
             }
@@ -465,11 +465,11 @@ public class WorkspaceInstaller
                         break;
 
                     case 1:
-                        System.out.println(resMess + " success !");
+                        System.out.println(resMess + " succeed !");
                         break;
 
                     case 2:
-                        System.out.println(resMess + " partially success (some plugins cannot be installed) !");
+                        System.out.println(resMess + " partially succeed (some plugins cannot be installed) !");
                         break;
                 }
             }
@@ -552,14 +552,14 @@ public class WorkspaceInstaller
             if (showConfirm)
             {
                 if (result)
-                    new SuccessfullAnnounceFrame(resMess + " success !", 10);
+                    new SuccessfullAnnounceFrame(resMess + " succeed !", 10);
                 else
                     new FailedAnnounceFrame(resMess + " failed !");
             }
             else
             {
                 if (result)
-                    System.out.println(resMess + " success !");
+                    System.out.println(resMess + " succeed !");
                 else
                     System.err.println(resMess + " failed !");
             }

@@ -82,6 +82,7 @@ public class IcyUpdater
     private final static int ANNOUNCE_SHOWTIME = 15;
 
     static boolean wantUpdate = false;
+    static boolean updating = false;
 
     private static final SingleProcessor processor = new SingleProcessor(false);
 
@@ -127,7 +128,7 @@ public class IcyUpdater
      */
     public static boolean isUpdating()
     {
-        return isCheckingForUpdate() || ((frame != null) && frame.isVisible());
+        return isCheckingForUpdate() || ((frame != null) && frame.isVisible()) || updating;
     }
 
     /**
@@ -317,6 +318,7 @@ public class IcyUpdater
     {
         final DownloadFrame downloadingFrame;
 
+        updating = true;
         if (showProgress)
             downloadingFrame = new DownloadFrame("");
         else
@@ -381,6 +383,7 @@ public class IcyUpdater
         {
             if (downloadingFrame != null)
                 downloadingFrame.close();
+            updating = false;
         }
 
         return true;
@@ -434,11 +437,13 @@ public class IcyUpdater
     {
         if (doUpdate)
         {
+            final String updateName = Updater.UPDATE_DIRECTORY + FileUtil.separator + Updater.UPDATER_NAME;
+
             // updater need update ? process it first
-            if (FileUtil.exists(Updater.UPDATE_DIRECTORY + FileUtil.separator + Updater.UPDATER_NAME))
+            if (FileUtil.exists(updateName))
             {
                 // replace updater
-                if (!Updater.updateFile(Updater.UPDATER_NAME, 0L))
+                if (!FileUtil.move(updateName, Updater.UPDATER_NAME, true, false))
                 {
                     System.err.println("Can't update 'Upater.jar', Update process can't continue.");
                     return false;

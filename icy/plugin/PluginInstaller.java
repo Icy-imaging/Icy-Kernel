@@ -779,14 +779,14 @@ public class PluginInstaller
             if (showConfirm)
             {
                 if (result)
-                    new SuccessfullAnnounceFrame("Plugin " + plugDesc + " installation success !", 10);
+                    new SuccessfullAnnounceFrame("Plugin " + plugDesc + " installation succeed !", 10);
                 else
                     new FailedAnnounceFrame("Plugin " + plugDesc + " installation failed !");
             }
             else
             {
                 if (result)
-                    System.out.println("Plugin " + plugDesc + " installation success !");
+                    System.out.println("Plugin " + plugDesc + " installation succeed !");
                 else
                     System.err.println("Plugin " + plugDesc + " installation failed !");
             }
@@ -871,14 +871,14 @@ public class PluginInstaller
             if (showConfirm)
             {
                 if (result)
-                    new SuccessfullAnnounceFrame(resMess + " success !", 10);
+                    new SuccessfullAnnounceFrame(resMess + " succeed !", 10);
                 else
                     new FailedAnnounceFrame(resMess + " failed !");
             }
             else
             {
                 if (result)
-                    System.out.println(resMess + " success !");
+                    System.out.println(resMess + " succeed !");
                 else
                     System.err.println(resMess + " failed !");
             }

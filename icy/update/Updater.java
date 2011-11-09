@@ -421,7 +421,8 @@ public class Updater
     public static boolean restore()
     {
         final int len = BACKUP_DIRECTORY.length();
-        final ArrayList<String> paths = FileUtil.getFileListAsString(BACKUP_DIRECTORY, false, true, false);
+        // get files only (no directory)
+        final ArrayList<String> paths = FileUtil.getFileListAsString(BACKUP_DIRECTORY, true, false, false);
         boolean result = true;
 
         for (String backupPath : paths)

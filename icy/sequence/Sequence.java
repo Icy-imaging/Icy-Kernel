@@ -730,6 +730,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         return undoManager;
     }
 
+    /**
+     * Return true if the sequence contains the specified painter
+     */
     public boolean contains(Painter painter)
     {
         synchronized (painters)
@@ -738,6 +741,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         }
     }
 
+    /**
+     * Return true if the sequence contains the specified ROI
+     */
     public boolean contains(ROI roi)
     {
         synchronized (ROIs)
@@ -746,6 +752,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         }
     }
 
+    /**
+     * Return all painters attached to this sequence
+     */
     public ArrayList<Painter> getPainters()
     {
         synchronized (painters)
@@ -754,6 +763,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         }
     }
 
+    /**
+     * Return all ROIs attached to this sequence
+     */
     public ArrayList<ROI> getROIs()
     {
         synchronized (ROIs)
@@ -762,6 +774,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         }
     }
 
+    /**
+     * Return all 2D ROIs attached to this sequence
+     */
     public ArrayList<ROI2D> getROI2Ds()
     {
         final ArrayList<ROI2D> result = new ArrayList<ROI2D>();
@@ -773,6 +788,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         return result;
     }
 
+    /**
+     * Return all 3D ROIs attached to this sequence
+     */
     public ArrayList<ROI3D> getROI3Ds()
     {
         final ArrayList<ROI3D> result = new ArrayList<ROI3D>();
@@ -784,6 +802,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         return result;
     }
 
+    /**
+     * Return the number of ROI of specified ROI class attached to the sequence.
+     */
     public int getROICount(Class<? extends ROI> roiClass)
     {
         int result = 0;
@@ -796,11 +817,35 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the first selected ROI (null if no ROI selected)
+     * Return the first selected ROI found (null if no ROI selected)
      */
     public ROI getSelectedROI()
     {
         for (ROI roi : getROIs())
+            if (roi.isSelected())
+                return roi;
+
+        return null;
+    }
+
+    /**
+     * Return the first selected 2D ROI found (null if no 2D ROI selected)
+     */
+    public ROI2D getSelectedROI2D()
+    {
+        for (ROI2D roi : getROI2Ds())
+            if (roi.isSelected())
+                return roi;
+
+        return null;
+    }
+
+    /**
+     * Return the first selected 3D ROI found (null if no 3D ROI selected)
+     */
+    public ROI3D getSelectedROI3D()
+    {
+        for (ROI3D roi : getROI3Ds())
             if (roi.isSelected())
                 return roi;
 
@@ -815,6 +860,34 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         final ArrayList<ROI> result = new ArrayList<ROI>();
 
         for (ROI roi : getROIs())
+            if (roi.isSelected())
+                result.add(roi);
+
+        return result;
+    }
+
+    /**
+     * Return all selected 2D ROI
+     */
+    public ArrayList<ROI2D> getSelectedROI2Ds()
+    {
+        final ArrayList<ROI2D> result = new ArrayList<ROI2D>();
+
+        for (ROI2D roi : getROI2Ds())
+            if (roi.isSelected())
+                result.add(roi);
+
+        return result;
+    }
+
+    /**
+     * Return all selected 3D ROI
+     */
+    public ArrayList<ROI3D> getSelectedROI3Ds()
+    {
+        final ArrayList<ROI3D> result = new ArrayList<ROI3D>();
+
+        for (ROI3D roi : getROI3Ds())
             if (roi.isSelected())
                 result.add(roi);
 
