@@ -18,20 +18,14 @@
  */
 package icy.gui.menu.tools;
 
-import icy.canvas.IcyCanvas;
 import icy.gui.dialog.MessageDialog;
+import icy.gui.viewer.Viewer;
 import icy.main.Icy;
-import icy.painter.AbstractPainter;
-import icy.roi.ROI;
 import icy.roi.ROI2D;
-import icy.roi.ROI2DShape;
 import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
 
-import java.awt.AlphaComposite;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
+import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
@@ -40,21 +34,21 @@ import java.util.ArrayList;
  * 
  * @author Stephane
  */
-public class SequenceCropper extends AbstractPainter
+public class SequenceCropper
 {
-    private Sequence seq;
-
     public SequenceCropper()
     {
         super();
 
-        seq = Icy.getMainInterface().getFocusedSequence();
+        final Viewer v = Icy.getMainInterface().getFocusedViewer();
 
-        if (seq == null)
+        if ((v == null) || (v.getSequence() == null))
             return;
 
-        final ArrayList<ROI2D> rois = seq.getROI2Ds();
-        final int size = rois.size();
+        final Sequence seq = v.getSequence();
+
+        ArrayList<ROI2D> rois = seq.getROI2Ds();
+        int size = rois.size();
 
         if (size == 0)
         {
@@ -62,70 +56,60 @@ public class SequenceCropper extends AbstractPainter
                     MessageDialog.INFORMATION_MESSAGE);
             return;
         }
-
-        if (size == 1)
-            crop(rois.get(0).getBounds2D());
-        else
-            seq.addPainter(this);
-    }
-
-    private ROI2D getSelectedROI()
-    {
-        final ROI roi = seq.getFocusedROI();
-
-        if ((roi != null) && (roi instanceof ROI2D))
-            return (ROI2D) roi;
-
-        return null;
-    }
-
-    @Override
-    public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
-    {
-        final ROI2D selectedROI = getSelectedROI();
-
-        if ((selectedROI != null) && (!selectedROI.getBounds2D().isEmpty()))
-            crop(selectedROI.getBounds2D());
-
-        // so cropper can be released
-        seq.removePainter(this);
-    }
-
-    @Override
-    public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
-    {
-        final Graphics2D g2 = (Graphics2D) g.create();
-
-        g2.setColor(Color.darkGray);
-        g2.drawString("Click on the edge of a ROI to perform the crop", 11, 21);
-        g2.setColor(Color.white);
-        g2.drawString("Click on the edge of a ROI to perform the crop", 10, 20);
-
-        final ROI2D selectedROI = getSelectedROI();
-
-        if (selectedROI != null)
+        else if (size > 1)
         {
-            g2.setColor(Color.yellow);
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
-            if (selectedROI instanceof ROI2DShape)
-                g2.fill((ROI2DShape) selectedROI);
-            else
-                g2.fill(selectedROI.getBounds2D());
+            rois = seq.getSelectedROI2Ds();
+            size = rois.size();
+
+            if (size == 0)
+            {
+                MessageDialog.showDialog("You need to select a ROI to do the crop operation.",
+                        MessageDialog.INFORMATION_MESSAGE);
+                return;
+            }
+            else if (size > 1)
+            {
+                MessageDialog.showDialog(
+                        "There is severals selected ROI.\nSelect only one ROI to do the crop operation.",
+                        MessageDialog.INFORMATION_MESSAGE);
+                return;
+            }
         }
 
-        g2.dispose();
+        crop(v, rois.get(0).getBounds());
     }
 
-    public void crop(Rectangle2D rect)
+    public static void crop(final Viewer vin, final Rectangle rect)
     {
+        if ((vin == null) || (vin.getSequence() == null))
+            return;
+
+        final Sequence in = vin.getSequence();
+
         // get intersect rectangle
-        final Rectangle2D adjustedRect = seq.getBounds().createIntersection(rect);
+        final Rectangle2D adjustedRect = in.getBounds().createIntersection(rect);
 
-        final int x = (int) adjustedRect.getMinX();
-        final int y = (int) adjustedRect.getMinY();
-        final int w = (int) adjustedRect.getWidth();
-        final int h = (int) adjustedRect.getHeight();
+        ThreadUtil.bgRun(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // create output sequence
+                final Sequence out = in.getSubSequence((int) adjustedRect.getMinX(), (int) adjustedRect.getMinY(), 0,
+                        0, (int) adjustedRect.getWidth(), (int) adjustedRect.getHeight(), in.getSizeZ(), in.getSizeT());
 
-        Icy.addSequence(seq.getSubSequence(x, y, 0, 0, w, h, seq.getSizeZ(), seq.getSizeT()));
+                ThreadUtil.invokeLater(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        // get output viewer
+                        final Viewer vout = new Viewer(out);
+                        // copy colormap from input viewer
+                        vout.getLut().copyFrom(vin.getLut());
+                    }
+                });
+            }
+        });
     }
 }
