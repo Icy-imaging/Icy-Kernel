@@ -77,7 +77,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.1.2.0");
+    public static Version version = new Version("1.1.3.0");
 
     /**
      * Main interface
