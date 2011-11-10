@@ -45,7 +45,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
 import javax.swing.Box;
@@ -292,8 +291,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
             @Override
             public void run()
             {
-                // TODO: VTK doesn't accept to run from anywhere except AWT
-                // dispatch
+                // TODO: VTK doesn't accept to run from anywhere except AWT dispatch
                 // we keep the method just if VTK change someday
                 ThreadUtil.invokeLater(new Runnable()
                 {
@@ -302,11 +300,9 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
                     {
                         try
                         {
-                            final Sequence seq = getSequence();
-                            // refresh painters
-                            for (Painter painter : seq.getPainters())
-                                painter.paint(null, seq, Canvas3D.this);
-
+                            // refresh painter
+                            refreshPainters();
+                            // then refresh rendering
                             panel3D.Render();
                         }
                         catch (Exception E)
@@ -322,8 +318,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
             @Override
             public void run()
             {
-                // TODO: VTK doesn't accept to run from anywhere except AWT
-                // dispatch
+                // TODO: VTK doesn't accept to run from anywhere except AWT dispatch
                 // we keep the method just if VTK change someday
                 ThreadUtil.invokeLater(new Runnable()
                 {
@@ -347,8 +342,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
             @Override
             public void run()
             {
-                // TODO: VTK doesn't accept to run from anywhere except AWT
-                // dispatch
+                // TODO: VTK doesn't accept to run from anywhere except AWT dispatch
                 // we keep the method just if VTK change someday
                 ThreadUtil.invokeLater(new Runnable()
                 {
@@ -374,8 +368,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
         // save colormap
         saveColormap(lut);
-        // adjust LUT alpha level for 3D view (this make lutChanged() to be
-        // called)
+        // adjust LUT alpha level for 3D view (this make lutChanged() to be called)
         setDefaultOpacity(lut);
 
         // update T nav bar
@@ -412,6 +405,10 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         resetCamera();
 
         initialized = true;
+
+        // we call this so waiting 3D painters will receive paint()
+        // and would be able to add their actors to renderer.
+        refreshPainters();
     }
 
     void buildComponentPanel(boolean noEvent)
@@ -1189,24 +1186,27 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         }
     }
 
-    @Override
-    public void keyPressed(KeyEvent e)
+    /**
+     * Force painters refresh.<br>
+     * This actually call the paint() method on painters.
+     */
+    public void refreshPainters()
     {
+        if (!initialized)
+            return;
 
+        final Sequence seq = getSequence();
+
+        if (seq != null)
+        {
+            for (Painter painter : seq.getPainters())
+                painter.paint(null, seq, Canvas3D.this);
+        }
     }
 
-    @Override
-    public void keyReleased(KeyEvent e)
-    {
-
-    }
-
-    @Override
-    public void keyTyped(KeyEvent e)
-    {
-
-    }
-
+    /**
+     * Force render refresh
+     */
     @Override
     public void refresh()
     {
@@ -1429,9 +1429,9 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     }
 
     @Override
-    protected void sequencePainterChanged(Painter painter, SequenceEventType type)
+    public void layersChanged(LayersEvent event)
     {
-        super.sequencePainterChanged(painter, type);
+        super.layersChanged(event);
 
         if (!initialized)
             return;

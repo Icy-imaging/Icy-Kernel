@@ -43,6 +43,9 @@ public abstract class AbstractPainter extends PainterAdapter implements IcyChang
      */
     protected final UpdateEventHandler updater;
 
+    /**
+     * Create an AbstractPainter and attach it to the specified sequence.
+     */
     public AbstractPainter(Sequence sequence)
     {
         super();
@@ -56,19 +59,6 @@ public abstract class AbstractPainter extends PainterAdapter implements IcyChang
     public AbstractPainter()
     {
         this(null);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#finalize()
-     */
-    @Override
-    protected void finalize() throws Throwable
-    {
-        delete();
-
-        super.finalize();
     }
 
     public void attachTo(Sequence sequence)

@@ -382,7 +382,7 @@ public class PluginInstaller
             // fatal error
             return false;
         }
-        if (FileUtil.exist(plugin.getXMLFilename()))
+        if (FileUtil.exists(plugin.getXMLFilename()))
             if (!FileUtil.delete(plugin.getXMLFilename(), false))
                 System.err.println("deletePlugin() : Can't delete " + plugin.getXMLFilename());
 

@@ -224,6 +224,15 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
         }
     }
 
+    /**
+     * @deprecated use {@link #setPosition(double)} instead
+     */
+    @Deprecated
+    public void setProgress(int value)
+    {
+        setPosition(value);
+    }
+
     @Override
     public boolean notifyProgress(double position, double length)
     {
