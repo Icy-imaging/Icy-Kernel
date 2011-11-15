@@ -105,6 +105,9 @@ public class ROI2DLine extends ROI2DShape
     protected void updateShape()
     {
         getLine().setLine(pt1.getPosition(), pt2.getPosition());
+
+        // call super method after shape has been updated
+        super.updateShape();
     }
 
     @Override

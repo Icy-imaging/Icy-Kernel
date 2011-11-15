@@ -174,6 +174,9 @@ public class ROI2DPolyLine extends ROI2DShape
                 path.lineTo(pos.getX(), pos.getY());
             }
         }
+
+        // call super method after shape has been updated
+        super.updateShape();
     }
 
     @Override

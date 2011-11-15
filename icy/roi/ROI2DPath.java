@@ -104,6 +104,9 @@ public class ROI2DPath extends ROI2DShape
     protected void updateShape()
     {
         ShapeUtil.buildPathFromAnchors(getPath(), getControlPoints());
+
+        // call super method after shape has been updated
+        super.updateShape();
     }
 
     @Override

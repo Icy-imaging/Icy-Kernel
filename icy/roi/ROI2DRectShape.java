@@ -95,6 +95,9 @@ public abstract class ROI2DRectShape extends ROI2DShape
     protected void updateShape()
     {
         getRectangularShape().setFrameFromDiagonal(topLeft.getPosition(), bottomRight.getPosition());
+
+        // call super method after shape has been updated
+        super.updateShape();
     }
 
     @Override

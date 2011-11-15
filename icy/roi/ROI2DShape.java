@@ -21,12 +21,14 @@ package icy.roi;
 import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
+import icy.canvas.IcyCanvas3D;
 import icy.common.EventHierarchicalChecker;
 import icy.gui.util.GuiUtil;
 import icy.painter.Anchor2D;
 import icy.painter.Anchor2D.Anchor2DListener;
 import icy.painter.PainterEvent;
 import icy.painter.PathAnchor2D;
+import icy.painter.VtkPainter;
 import icy.roi.ROIEvent.ROIPointEventType;
 import icy.sequence.Sequence;
 import icy.util.EventUtil;
@@ -49,21 +51,181 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import vtk.vtkActor;
-import vtk.vtkCellArray;
-import vtk.vtkPoints;
+import vtk.vtkActor2D;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
-import vtk.vtkRenderer;
 
 /**
  * @author Stephane
  */
 public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListener
 {
-    protected class ROI2DShapePainter extends ROI2DPainter
+    protected class ROI2DShapePainter extends ROI2DPainter implements VtkPainter
     {
+        // used for 3D
+        final vtkPolyData polyData;
+        final vtkActor actor;
+        boolean needRebuild;
+        double scaling[];
+
+        public ROI2DShapePainter()
+        {
+            super();
+
+            // init 3D painters stuff
+            polyData = new vtkPolyData();
+
+            final vtkPolyDataMapper polyMapper = new vtkPolyDataMapper();
+            polyMapper.SetInput(polyData);
+
+            actor = new vtkActor();
+            actor.SetMapper(polyMapper);
+
+            scaling = new double[3];
+            Arrays.fill(scaling, 1d);
+
+            needRebuild = true;
+        }
+
+        // give access to the internal vtkActor
+        public vtkActor getVtkActor()
+        {
+            return actor;
+        }
+
+        private double[] get3DScaling(IcyCanvas3D canvas)
+        {
+            final double[] result = new double[3];
+
+            if (canvas instanceof Canvas3D)
+            {
+                final Canvas3D cv3d = (Canvas3D) canvas;
+
+                // use canvas3D scaling info
+                result[0] = cv3d.getXScaling();
+                result[1] = cv3d.getYScaling();
+                result[2] = cv3d.getZScaling();
+            }
+            else
+            {
+                final Sequence seq = canvas.getSequence();
+
+                // use pixel size information
+                result[0] = seq.getPixelSizeX();
+                result[1] = seq.getPixelSizeY();
+                result[2] = seq.getPixelSizeZ();
+            }
+
+            return result;
+        }
+
+        /**
+         * update 3D painter for 3D canvas
+         */
+        protected void rebuild3DPainter(IcyCanvas3D canvas)
+        {
+            final Sequence seq = canvas.getSequence();
+
+            // nothing to update
+            if (seq == null)
+                return;
+
+            final ArrayList<Point3D> point3DList = new ArrayList<Point3D>();
+            final ArrayList<Poly3D> polyList = new ArrayList<Poly3D>();
+            final double[] coords = new double[6];
+
+            final double nbSlice = seq.getSizeZ(canvas.getPositionT());
+            // use flat path
+            final PathIterator path = getPathIterator(null, 0.5d);
+
+            // starting position
+            double xm = 0d;
+            double ym = 0d;
+            double x0 = 0d;
+            double y0 = 0d;
+            double x1 = 0d;
+            double y1 = 0d;
+            int ind;
+
+            // build point data
+            while (!path.isDone())
+            {
+                int segType = path.currentSegment(coords);
+
+                switch (segType)
+                {
+                    case PathIterator.SEG_MOVETO:
+                        x0 = xm = coords[0];
+                        y0 = ym = coords[1];
+                        break;
+
+                    case PathIterator.SEG_LINETO:
+                        x1 = coords[0];
+                        y1 = coords[1];
+
+                        ind = point3DList.size();
+
+                        point3DList.add(new Point3D(x0 * scaling[0], y0 * scaling[1], 0));
+                        point3DList.add(new Point3D(x1 * scaling[0], y1 * scaling[1], 0));
+                        point3DList.add(new Point3D(x0 * scaling[0], y0 * scaling[1], nbSlice * scaling[2]));
+                        point3DList.add(new Point3D(x1 * scaling[0], y1 * scaling[1], nbSlice * scaling[2]));
+                        polyList.add(new Poly3D(1 + ind, 2 + ind, 0 + ind));
+                        polyList.add(new Poly3D(3 + ind, 2 + ind, 1 + ind));
+
+                        x0 = x1;
+                        y0 = y1;
+                        break;
+
+                    case PathIterator.SEG_CLOSE:
+                        x1 = xm;
+                        y1 = ym;
+
+                        ind = point3DList.size();
+
+                        point3DList.add(new Point3D(x0 * scaling[0], y0 * scaling[1], 0));
+                        point3DList.add(new Point3D(x1 * scaling[0], y1 * scaling[1], 0));
+                        point3DList.add(new Point3D(x0 * scaling[0], y0 * scaling[1], nbSlice * scaling[2]));
+                        point3DList.add(new Point3D(x1 * scaling[0], y1 * scaling[1], nbSlice * scaling[2]));
+                        polyList.add(new Poly3D(1 + ind, 2 + ind, 0 + ind));
+                        polyList.add(new Poly3D(3 + ind, 2 + ind, 1 + ind));
+
+                        x0 = x1;
+                        y0 = y1;
+                        break;
+                }
+
+                path.next();
+            }
+
+            // convert to array
+            final double[][] vertices = new double[point3DList.size()][3];
+            final int[][] indexes = new int[polyList.size()][3];
+
+            int pointIndex = 0;
+            for (Point3D p3D : point3DList)
+            {
+                vertices[pointIndex][0] = p3D.x;
+                vertices[pointIndex][1] = p3D.y;
+                vertices[pointIndex][2] = p3D.z;
+                pointIndex++;
+            }
+
+            int polyIndex = 0;
+            for (Poly3D poly : polyList)
+            {
+                indexes[polyIndex][0] = poly.p1;
+                indexes[polyIndex][1] = poly.p2;
+                indexes[polyIndex][2] = poly.p3;
+                polyIndex++;
+            }
+
+            polyData.SetPolys(VtkUtil.getCells(polyList.size(), VtkUtil.prepareCells(indexes)));
+            polyData.SetPoints(VtkUtil.getPoints(vertices));
+        }
+
         @Override
         public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
@@ -195,116 +357,29 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                 // 3D canvas
                 final Canvas3D canvas3d = (Canvas3D) canvas;
 
-                // FIXME : this is a hack, need to add correct 3D display
+                // FIXME : probably need a better implementation
 
-                // sphere.SetRadius( sphere.GetRadius()+1 );
-                if (!initialized)
+                // get 3D scaling
+                final double[] s = get3DScaling(canvas3d);
+
+                // scaling changed ?
+                if (!Arrays.equals(scaling, s))
                 {
-                    System.out
-                            .println("TODO: ne marche pas si plusieurs viewers 3D sont instancié car le painter n'en n'itialise qu'un");
-                    init(canvas3d.getRenderer());
-                    initialized = true;
+                    // update scaling
+                    scaling = s;
+                    // need rebuild
+                    needRebuild = true;
                 }
 
-                PathIterator path = shape.getPathIterator(null);
-                double[] coords = new double[6];
-                double h0 = 0.;
-                double v0 = 0.;
-                double h1 = 0.;
-                double v1 = 0.;
-                ArrayList<Point3D> point3DList = new ArrayList<Point3D>();
-                ArrayList<Poly3D> polyList = new ArrayList<Poly3D>();
-
-                // Canvas3D canvas3d = (Canvas3D) canvas;
-                double zScale = canvas3d.getZScaling();
-                double xScale = canvas3d.getXScaling();
-                double yScale = canvas3d.getYScaling();
-                double nbSlice = canvas3d.getSequence().getSizeZ(canvas3d.getViewer().getT());
-
-                while (!path.isDone())
+                // need to rebuild 3D data structures ?
+                if (needRebuild)
                 {
-                    int segType = path.currentSegment(coords);
-
-                    switch (segType)
-                    {
-                        case PathIterator.SEG_MOVETO:
-                            h0 = coords[0];
-                            v0 = coords[1];
-                            // System.out.println("moveto " + h0 + " " + v0 );
-                            break;
-
-                        case PathIterator.SEG_LINETO:
-                            // System.out.println("lineto");
-                        case PathIterator.SEG_CUBICTO:
-                            // System.out.println("seg cubicto");
-                            h1 = coords[0];
-                            v1 = coords[1];
-                            // drawLine(h0, v0, h1, v1);
-                            // System.out.println("add 3D vert " + h0 + " " + h1 + " " + v0 + " " +
-                            // v1 );
-                            int currentPointIndex = point3DList.size();
-                            // System.out.println("current point index : " + currentPointIndex );
-                            point3DList.add(new Point3D(h0 * xScale, v0 * yScale, 0));
-                            point3DList.add(new Point3D(h1 * xScale, v1 * yScale, 0));
-                            point3DList.add(new Point3D(h0 * xScale, v0 * yScale, nbSlice * zScale));
-                            point3DList.add(new Point3D(h1 * xScale, v1 * yScale, nbSlice * zScale));
-                            polyList.add(new Poly3D(1 + currentPointIndex, 2 + currentPointIndex, 0 + currentPointIndex));
-                            polyList.add(new Poly3D(3 + currentPointIndex, 2 + currentPointIndex, 1 + currentPointIndex));
-
-                            h0 = h1;
-                            v0 = v1;
-                            break;
-
-                        case PathIterator.SEG_CLOSE:
-                            // System.out.println("segclose");
-                            break;
-
-                        default:
-                            // AOutput.logln(" Error unknown segment type");
-                            break;
-                    }
-                    path.next();
-                }
-                double[][] vertex = new double[point3DList.size()][3];
-                int[][] index = new int[polyList.size()][3];
-
-                int pointIndex = 0;
-                for (Point3D p3D : point3DList)
-                {
-                    // System.out.println( p3D.x + " " + p3D.y + " " + p3D.z );
-                    vertex[pointIndex][0] = p3D.x;
-                    vertex[pointIndex][1] = p3D.y;
-                    vertex[pointIndex][2] = p3D.z;
-
-                    pointIndex++;
+                    rebuild3DPainter(canvas3d);
+                    needRebuild = false;
                 }
 
-                int polyIndex = 0;
-                for (Poly3D poly : polyList)
-                {
-                    // System.out.println( poly.p1 + " " + poly.p2 + " " + poly.p3 );
-                    index[polyIndex][0] = poly.p1;
-                    index[polyIndex][1] = poly.p2;
-                    index[polyIndex][2] = poly.p3;
-                    polyIndex++;
-                }
-
-                // double[][] cube_vertex = new double[][] { {-10+getBounds().getCenterX(),
-                // -10+getBounds().getCenterY(), -10 },
-                // {-10, 10, -10}, {10, 10, -10},
-                // {10, -10, -10}, {-10, -10, 10}, {-10, 10, 10}, {10, 10, 10}, {10, -10, 10}};
-                // int[][] cube_poly = new int[][] { {0, 1, 2}, {0, 2, 3}, {4, 5, 1}, {4, 1, 0}, {3,
-                // 2, 6}, {3, 6, 7},
-                // {1, 5, 6}, {1, 6, 2}, {4, 0, 3}, {4, 3, 7}, {7, 6, 5}, {7, 5, 4}};
-
-                final vtkPoints points;
-                // polygon data
-                final vtkCellArray cells;
-                points = VtkUtil.getPoints(vertex);
-                cells = VtkUtil.getCells(12, VtkUtil.prepareCells(index));
-
-                polyData.SetPolys(cells);
-                polyData.SetPoints(points);
+                // add actor to the renderer if not already exist
+                VtkUtil.addActor(canvas3d.getRenderer(), actor);
             }
         }
 
@@ -357,6 +432,19 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             drawROI(g, sequence, canvas);
             drawInfos(g, sequence, canvas);
         }
+
+        @Override
+        public vtkActor[] getActors()
+        {
+            return new vtkActor[] {actor};
+        }
+
+        @Override
+        public vtkActor2D[] getActors2D()
+        {
+            return new vtkActor2D[] {};
+        }
+
     }
 
     class Poly3D
@@ -385,77 +473,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         double x;
         double y;
         double z;
-    }
-
-    boolean initialized = false;
-
-    vtkPolyData polyData = null;
-    private final double[][] cube_vertex = new double[][] { {-10, -10, -10}, {-10, 10, -10}, {10, 10, -10},
-            {10, -10, -10}, {-10, -10, 10}, {-10, 10, 10}, {10, 10, 10}, {10, -10, 10}};
-    private final int[][] cube_poly = new int[][] { {0, 1, 2}, {0, 2, 3}, {4, 5, 1}, {4, 1, 0}, {3, 2, 6}, {3, 6, 7},
-            {1, 5, 6}, {1, 6, 2}, {4, 0, 3}, {4, 3, 7}, {7, 6, 5}, {7, 5, 4}};
-
-    /**
-     * init 3D
-     * 
-     * @param renderer
-     */
-    void init(vtkRenderer renderer)
-    {
-        // vertex data
-        final vtkPoints points;
-        // polygon data
-        final vtkCellArray cells;
-
-        // if (true)
-        {
-            // fast java data conversion for vertexes
-            points = VtkUtil.getPoints(cube_vertex);
-            // fast java data conversion for cells (polygons)
-            cells = VtkUtil.getCells(12, VtkUtil.prepareCells(cube_poly));
-        }
-        // else
-        // {
-        // // define vertexes
-        // points = new vtkPoints();
-        //
-        // for (int i = 0; i < cube_vertex.length; i++)
-        // points.InsertNextPoint(cube_vertex[i]);
-        //
-        // // define cells
-        // cells = new vtkCellArray();
-        //
-        // final vtkIdList idList = new vtkIdList();
-        // for (int i = 0; i < cube_poly.length; i++)
-        // {
-        // final int[] poly = cube_poly[i];
-        //
-        // // set index in idList
-        // idList.Reset();
-        // for (int j = 0; j < poly.length; j++)
-        // idList.InsertNextId(poly[j]);
-        //
-        // // insert cell
-        // cells.InsertNextCell(idList);
-        //
-        // // vtk.CellType.POLYGON.GetId()
-        // }
-        // }
-
-        polyData = new vtkPolyData();
-
-        // set polygon
-        polyData.SetPolys(cells);
-        // set vertex
-        polyData.SetPoints(points);
-
-        final vtkPolyDataMapper polyMapper = new vtkPolyDataMapper();
-        polyMapper.SetInput(polyData);
-
-        final vtkActor actor = new vtkActor();
-        actor.SetMapper(polyMapper);
-
-        renderer.AddActor(actor);
     }
 
     /**
@@ -518,7 +535,16 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         super.setSelected(value, exclusive);
     }
 
-    protected abstract void updateShape();
+    /**
+     * Rebuild shape.<br>
+     * This method should be overridden by derived classes which<br>
+     * have to call the super.update() method at end.
+     */
+    protected void updateShape()
+    {
+        // the shape should have been rebuilt here
+        ((ROI2DShapePainter) painter).needRebuild = true;
+    }
 
     protected Anchor2D getSelectedControlPoint()
     {

@@ -143,9 +143,11 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * synchronization group :<br>
      * 0 = unsynchronized
-     * 1 = complete synchronization
-     * 2 = partial synchronization (T and Z navigation aren't synchronized)
-     * 3 = mouse synchronization (only mouse cursor is synchronized)
+     * 1 = complete synchronization group 1
+     * 2 = complete synchronization group 2
+     * 3 = view synchronization group (T and Z navigation are not synchronized)
+     * 4 = slice synchronization group (only T and Z navigation are synchronized)
+     * 5 = cursor synchronization group (only mouse cursor is synchronized)
      */
     protected int syncId;
     /**
@@ -412,7 +414,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Set the view synchronization group id (0 means unsynchronized)
+     * Set the synchronization group id (0 means unsynchronized)
      * 
      * @param id
      *        the syncId to set
@@ -429,7 +431,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Return true if this canvas support synchronized view
+     * Return true if this canvas support synchronization
      */
     public boolean isSynchronizationSupported()
     {
@@ -438,7 +440,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Return true if this canvas has its view synchronized
+     * Return true if this canvas is synchronized
      */
     public boolean isSynchronized()
     {
@@ -454,7 +456,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Return true if current view is synchronized and it's not the synchronize header
+     * Return true if current canvas is synchronized and it's not the synchronize header
      */
     public boolean isSynchSlave()
     {
@@ -470,6 +472,30 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         }
 
         return false;
+    }
+
+    /**
+     * Return true if this canvas is synchronized on view (offset, zoom and rotation).
+     */
+    public boolean isSynchOnView()
+    {
+        return (syncId == 1) || (syncId == 2) || (syncId == 3);
+    }
+
+    /**
+     * Return true if this canvas is synchronized on slice (T and Z position)
+     */
+    public boolean isSynchOnSlice()
+    {
+        return (syncId == 1) || (syncId == 2) || (syncId == 4);
+    }
+
+    /**
+     * Return true if this canvas is synchronized on cursor (mouse cursor)
+     */
+    public boolean isSynchOnCursor()
+    {
+        return (syncId > 0) && (syncId < 6);
     }
 
     /**
@@ -542,10 +568,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     {
         final IcyCanvasEventType type = event.getType();
         final DimensionId dim = event.getDim();
-        final int syncId = getSyncId();
 
-        // complete synchronization
-        if (syncId < 2)
+        // position synchronization
+        if (isSynchOnSlice())
         {
             if (processAll || (type == IcyCanvasEventType.POSITION_CHANGED))
             {
@@ -584,13 +609,13 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             }
         }
 
-        // partial synchronization
-        if (syncId < 3)
+        // view synchronization
+        if (isSynchOnView())
         {
             if (processAll || (type == IcyCanvasEventType.OFFSET_CHANGED))
             {
                 // no information about dimension --> set all
-                if (dim == DimensionId.NULL)
+                if (processAll || (dim == DimensionId.NULL))
                 {
                     final int offX = getOffsetX();
                     final int offY = getOffsetY();
@@ -617,7 +642,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             if (processAll || (type == IcyCanvasEventType.SCALE_CHANGED))
             {
                 // no information about dimension --> set all
-                if (dim == DimensionId.NULL)
+                if (processAll || (dim == DimensionId.NULL))
                 {
                     final double sX = getScaleX();
                     final double sY = getScaleY();
@@ -644,7 +669,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             if (processAll || (type == IcyCanvasEventType.ROTATION_CHANGED))
             {
                 // no information about dimension --> set all
-                if (dim == DimensionId.NULL)
+                if (processAll || (dim == DimensionId.NULL))
                 {
                     final double rotX = getRotationX();
                     final double rotY = getRotationY();
@@ -669,31 +694,35 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             }
         }
 
-        // mouse synchronization
-        if (processAll || (type == IcyCanvasEventType.MOUSE_IMAGE_POSITION_CHANGED))
+        // cursor synchronization
+        if (isSynchOnCursor())
         {
-            // no information about dimension --> set all
-            if (dim == DimensionId.NULL)
+            // mouse synchronization
+            if (processAll || (type == IcyCanvasEventType.MOUSE_IMAGE_POSITION_CHANGED))
             {
-                final double mipX = getMouseImagePosX();
-                final double mipY = getMouseImagePosY();
-                final double mipZ = getMouseImagePosZ();
-                final double mipT = getMouseImagePosT();
-                final double mipC = getMouseImagePosC();
-
-                for (IcyCanvas cnv : canvasList)
+                // no information about dimension --> set all
+                if (processAll || (dim == DimensionId.NULL))
                 {
-                    cnv.setMouseImagePosX(mipX);
-                    cnv.setMouseImagePosY(mipY);
-                    cnv.setMouseImagePosZ(mipZ);
-                    cnv.setMouseImagePosT(mipT);
-                    cnv.setMouseImagePosC(mipC);
+                    final double mipX = getMouseImagePosX();
+                    final double mipY = getMouseImagePosY();
+                    final double mipZ = getMouseImagePosZ();
+                    final double mipT = getMouseImagePosT();
+                    final double mipC = getMouseImagePosC();
+
+                    for (IcyCanvas cnv : canvasList)
+                    {
+                        cnv.setMouseImagePosX(mipX);
+                        cnv.setMouseImagePosY(mipY);
+                        cnv.setMouseImagePosZ(mipZ);
+                        cnv.setMouseImagePosT(mipT);
+                        cnv.setMouseImagePosC(mipC);
+                    }
                 }
-            }
-            else
-            {
-                for (IcyCanvas cnv : canvasList)
-                    cnv.setMouseImagePos(dim, getMouseImagePos(dim));
+                else
+                {
+                    for (IcyCanvas cnv : canvasList)
+                        cnv.setMouseImagePos(dim, getMouseImagePos(dim));
+                }
             }
         }
     }
@@ -2963,11 +2992,13 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
             // listen layer
             layer.addListener(this);
+
             // add to list
             synchronized (layers)
             {
                 layers.add(layer);
             }
+
             // added
             layerAdded(layer);
         }
@@ -2984,11 +3015,13 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         {
             // stop listening layer
             layer.removeListener(this);
+
             // remove from list
             synchronized (layers)
             {
                 layers.remove(layer);
             }
+
             // removed
             layerRemoved(layer);
         }
@@ -3132,17 +3165,21 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void changed(IcyCanvasEvent event)
     {
-        final List<IcyCanvas> synchCanvasList = getSynchronizedCanvas();
+        final IcyCanvasEventType eventType = event.getType();
 
         // handle synchronized canvas
         if (isSynchronized())
         {
+            final List<IcyCanvas> synchCanvasList = getSynchronizedCanvas();
+
             // this is the synchronizer header so dispatch view changes to others canvas
             if (getSynchHeader(synchCanvasList))
             {
                 try
                 {
-                    synchronizeCanvas(synchCanvasList, event, false);
+                    // synchronize all events when the view has just been synchronized
+                    final boolean synchAll = (eventType == IcyCanvasEventType.SYNC_CHANGED);
+                    synchronizeCanvas(synchCanvasList, event, synchAll);
                 }
                 finally
                 {
@@ -3151,19 +3188,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             }
         }
 
-        switch (event.getType())
-        {
-            case MOUSE_IMAGE_POSITION_CHANGED:
-                // refresh mouse panel informations
-                mouseInfPanel.updateInfos(this);
-                break;
-
-            case SYNC_CHANGED:
-                // synchronization enabled --> synchronize view of all viewers in same group
-                if (isSynchronized())
-                    synchronizeCanvas(getSynchronizedCanvas(), event, true);
-                break;
-        }
+        if (eventType == IcyCanvasEventType.MOUSE_IMAGE_POSITION_CHANGED)
+            // refresh mouse panel informations
+            mouseInfPanel.updateInfos(this);
 
         // notify listeners that canvas have changed
         fireCanvasChangedEvent(event);

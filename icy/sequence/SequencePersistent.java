@@ -21,6 +21,7 @@ package icy.sequence;
 import icy.file.FileUtil;
 import icy.file.xml.XMLPersistent;
 import icy.roi.ROI;
+import icy.system.IcyExceptionHandler;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
@@ -67,18 +68,51 @@ public class SequencePersistent implements XMLPersistent
         return FileUtil.setExtension(seqFilename, ".xml");
     }
 
+    /**
+     * Load XML persistent data.<br>
+     * Return true if XML data has been correctly loaded.
+     */
     public boolean loadXMLData()
     {
         final String xmlFilename = getXMLFileName();
 
-        // load xml file into document
-        if ((xmlFilename != null) && FileUtil.exist(xmlFilename))
-            document = XMLUtil.loadDocument(xmlFilename, true);
+        try
+        {
+            // load xml file into document
+            if ((xmlFilename != null) && FileUtil.exists(xmlFilename))
+            {
+                document = XMLUtil.loadDocument(xmlFilename, true);
 
-        // load data from XML document
-        return loadFromXML(document.getDocumentElement());
+                if (document == null)
+                {
+                    // rename problematic file
+                    FileUtil.copy(xmlFilename, xmlFilename + ".bak", true, false, false);
+
+                    System.err.println("Error while loading Sequence XML persistent data.");
+                    System.err.println("The faulty file '" + xmlFilename + "' has been saved as '" + xmlFilename
+                            + ".bak'");
+
+                    document = XMLUtil.createDocument(true);
+                    return false;
+                }
+
+                // load data from XML document
+                return loadFromXML(document.getDocumentElement());
+            }
+        }
+        catch (Exception e)
+        {
+            IcyExceptionHandler.showErrorMessage(e, true);
+            return false;
+        }
+
+        return true;
     }
 
+    /**
+     * Save XML persistent data.<br>
+     * Return true if XML data has been correctly saved.
+     */
     public boolean saveXMLData()
     {
         final String xmlFilename = getXMLFileName();
@@ -86,11 +120,20 @@ public class SequencePersistent implements XMLPersistent
         if (xmlFilename == null)
             return false;
 
-        // rebuild document
-        refreshXMLData();
+        try
+        {
+            // rebuild document
+            refreshXMLData();
 
-        // save xml file
-        return XMLUtil.saveDocument(document, getXMLFileName());
+            // save xml file
+            return XMLUtil.saveDocument(document, getXMLFileName());
+        }
+        catch (Exception e)
+        {
+            System.err.println("Error while saving Sequence XML persistent data :");
+            IcyExceptionHandler.showErrorMessage(e, true);
+            return false;
+        }
     }
 
     public void refreshXMLData()

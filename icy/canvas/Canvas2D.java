@@ -2252,6 +2252,16 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 setSyncId(3);
                 e.consume();
                 break;
+
+            case KeyEvent.VK_4:
+                setSyncId(4);
+                e.consume();
+                break;
+
+            case KeyEvent.VK_5:
+                setSyncId(5);
+                e.consume();
+                break;
         }
 
         super.keyPressed(e);
@@ -2407,10 +2417,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     {
         final IcyCanvasEventType type = event.getType();
         final DimensionId dim = event.getDim();
-        final int syncId = getSyncId();
 
-        // complete synchronization
-        if (syncId < 2)
+        // position synchronization
+        if (isSynchOnSlice())
         {
             if (processAll || (type == IcyCanvasEventType.POSITION_CHANGED))
             {
@@ -2441,13 +2450,13 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         }
 
-        // partial synchronization
-        if (syncId < 3)
+        // view synchronization
+        if (isSynchOnView())
         {
             if (processAll || (type == IcyCanvasEventType.OFFSET_CHANGED))
             {
                 // no information about dimension --> set all
-                if (dim == DimensionId.NULL)
+                if (processAll || (dim == DimensionId.NULL))
                 {
                     final int offX = getOffsetX();
                     final int offY = getOffsetY();
@@ -2465,7 +2474,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             if (processAll || (type == IcyCanvasEventType.SCALE_CHANGED))
             {
                 // no information about dimension --> set all
-                if (dim == DimensionId.NULL)
+                if (processAll || (dim == DimensionId.NULL))
                 {
                     final double sX = getScaleX();
                     final double sY = getScaleY();
@@ -2483,7 +2492,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             if (processAll || (type == IcyCanvasEventType.ROTATION_CHANGED))
             {
                 // no information about dimension --> set all
-                if (dim == DimensionId.NULL)
+                if (processAll || (dim == DimensionId.NULL))
                 {
                     final double rot = getRotationZ();
 
@@ -2498,22 +2507,25 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         }
 
-        // mouse synchronization
-        if (processAll || (type == IcyCanvasEventType.MOUSE_IMAGE_POSITION_CHANGED))
-        {
-            // no information about dimension --> set all
-            if (dim == DimensionId.NULL)
+        // cursor synchronization
+        if (isSynchOnCursor())
+        { // mouse synchronization
+            if (processAll || (type == IcyCanvasEventType.MOUSE_IMAGE_POSITION_CHANGED))
             {
-                final double mouseImagePosX = getMouseImagePosX();
-                final double mouseImagePosY = getMouseImagePosY();
+                // no information about dimension --> set all
+                if (processAll || (dim == DimensionId.NULL))
+                {
+                    final double mouseImagePosX = getMouseImagePosX();
+                    final double mouseImagePosY = getMouseImagePosY();
 
-                for (IcyCanvas cnv : canvasList)
-                    ((Canvas2D) cnv).setMouseImagePos(mouseImagePosX, mouseImagePosY);
-            }
-            else
-            {
-                for (IcyCanvas cnv : canvasList)
-                    cnv.setMouseImagePos(dim, getMouseImagePos(dim));
+                    for (IcyCanvas cnv : canvasList)
+                        ((Canvas2D) cnv).setMouseImagePos(mouseImagePosX, mouseImagePosY);
+                }
+                else
+                {
+                    for (IcyCanvas cnv : canvasList)
+                        cnv.setMouseImagePos(dim, getMouseImagePos(dim));
+                }
             }
         }
     }

@@ -18,6 +18,8 @@
  */
 package icy.vtk;
 
+import java.awt.event.MouseEvent;
+
 import vtk.vtkPanel;
 
 /**
@@ -30,11 +32,6 @@ public class IcyVtkPanel extends vtkPanel
      */
     private static final long serialVersionUID = -8455671369400627703L;
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.awt.Component#setBounds(int, int, int, int)
-     */
     @Override
     public void setBounds(int x, int y, int width, int height)
     {
@@ -48,17 +45,21 @@ public class IcyVtkPanel extends vtkPanel
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see vtk.vtkPanel#setSize(int, int)
-     */
     @SuppressWarnings("deprecation")
     @Override
     public void setSize(int w, int h)
     {
         // have to use this to by-pass the wrong vtkPanel implementation
         resize(w, h);
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e)
+    {
+        super.mouseReleased(e);
+
+        // so we have a fine rendering when action end
+        repaint();
     }
 
     /**

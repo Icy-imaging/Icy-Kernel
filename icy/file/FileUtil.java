@@ -347,7 +347,8 @@ public class FileUtil
                 {
                     if (!delete(dst, true))
                     {
-                        System.err.println("Can't move '" + src.getName() + "' to '" + dst.getName() + "'");
+                        System.err.println("Can't move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
+                                + "'");
                         System.err.println("Reason : destination cannot be overwritten.");
                         System.err.println("Verify it is not locked by another program (as Eclipse)");
                         System.err.println("also check you've the rights to do this operation.");
@@ -356,7 +357,7 @@ public class FileUtil
                 }
                 else
                 {
-                    System.err.println("Can't move '" + src.getName() + "' to '" + dst.getName() + "'");
+                    System.err.println("Can't move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
                     System.err.println("The destination already exists.");
                     return false;
                 }
@@ -367,7 +368,7 @@ public class FileUtil
 
             if (!src.renameTo(dst))
             {
-                System.err.println("Can't move '" + src.getName() + "' to '" + dst.getName() + "'");
+                System.err.println("Can't move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
                 System.err.println("Reason : unknown");
                 return false;
             }

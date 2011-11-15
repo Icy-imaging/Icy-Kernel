@@ -94,6 +94,9 @@ public class ROI2DPolygon extends ROI2DShape
             final Point2D pos = controlPoints.get(i).getPosition();
             polygon.addPoint((int) Math.round(pos.getX()), (int) Math.round(pos.getY()));
         }
+
+        // call super method after shape has been updated
+        super.updateShape();
     }
 
     @Override

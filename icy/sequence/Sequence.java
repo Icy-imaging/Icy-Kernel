@@ -1765,6 +1765,10 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public int getSizeZ(int t)
     {
+        // t = -1 means global Z size
+        if (t == -1)
+            return getSizeZ();
+
         final VolumetricImage volImg = getVolumetricImage(t);
 
         if (volImg != null)

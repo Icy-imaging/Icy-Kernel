@@ -19,7 +19,9 @@
 package icy.resource;
 
 import icy.image.ImageUtil;
+import icy.util.StringUtil;
 
+import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -58,6 +60,7 @@ public class ResourceUtil
     public static final Image ICON_CHECKED = ResourceUtil.getAlphaIconAsImage("checkbox_checked.png");
     public static final Image ICON_LOCK_OPEN = ResourceUtil.getAlphaIconAsImage("padlock_open.png");
     public static final Image ICON_LOCK_CLOSE = ResourceUtil.getAlphaIconAsImage("padlock_closed.png");
+    public static final Image ICON_LOCKED_BASE = ResourceUtil.getAlphaIconAsImage("locked.png");
 
     private static final String ICON_PATH = "res/icon/";
     private static final String IMAGE_PATH = "res/image/";
@@ -108,6 +111,32 @@ public class ResourceUtil
             result = ImageUtil.loadImage(url, true);
         else
             result = ImageUtil.loadImage(new File(IMAGE_PATH + name), true);
+
+        return result;
+    }
+
+    /**
+     * Return lock image with specified number.
+     */
+    public static BufferedImage getLockedImage(int number)
+    {
+        final BufferedImage result = ImageUtil.getCopy(ICON_LOCKED_BASE);
+
+        // nice for 48 pixels image
+        ImageUtil.drawTextTopRight(result, StringUtil.toString(number), 26, true, Color.black);
+
+        return result;
+    }
+
+    /**
+     * Return lock image with specified letter.
+     */
+    public static BufferedImage getLockedImage(char letter)
+    {
+        final BufferedImage result = ImageUtil.getCopy(ICON_LOCKED_BASE);
+
+        // nice for 48 pixels image
+        ImageUtil.drawTextTopRight(result, String.valueOf(letter), 26, true, Color.black);
 
         return result;
     }

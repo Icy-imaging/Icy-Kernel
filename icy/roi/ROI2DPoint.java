@@ -93,6 +93,9 @@ public class ROI2DPoint extends ROI2DShape
     {
         getRectangle().setFrameFromDiagonal(Math.floor(position.getX()), Math.floor(position.getY()),
                 Math.ceil(position.getX()), Math.ceil(position.getY()));
+
+        // call super method after shape has been updated
+        super.updateShape();
     }
 
     @Override

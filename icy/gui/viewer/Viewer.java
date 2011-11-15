@@ -90,9 +90,10 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     static final Image ICON_PHOTO = ResourceUtil.getAlphaIconAsImage("photo.png");
     static final Image ICON_PHOTO_SMALL = ResourceUtil.getAlphaIconAsImage("photo_small.png");
     static final Image ICON_UNLOCKED = ResourceUtil.getAlphaIconAsImage("padlock_open.png");
-    static final Image ICON_LOCKED_1 = ResourceUtil.getAlphaIconAsImage("locked_1.png");
-    static final Image ICON_LOCKED_2 = ResourceUtil.getAlphaIconAsImage("locked_2.png");
-    static final Image ICON_LOCKED_3 = ResourceUtil.getAlphaIconAsImage("locked_3.png");
+
+    // static final Image ICON_LOCKED_1 = ResourceUtil.getAlphaIconAsImage("locked_1.png");
+    // static final Image ICON_LOCKED_2 = ResourceUtil.getAlphaIconAsImage("locked_2.png");
+    // static final Image ICON_LOCKED_3 = ResourceUtil.getAlphaIconAsImage("locked_3.png");
 
     private class DuplicateAction extends IcyAbstractAction
     {
@@ -506,17 +507,28 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         label = new JLabel(new IcyIcon(ICON_UNLOCKED, ICON_SIZE));
         label.setToolTipText("Synchronization disabled");
         labels.add(label);
+
         // complete synchro
-        label = new JLabel(new IcyIcon(ICON_LOCKED_1, ICON_SIZE));
-        label.setToolTipText("Synchronization group 1 (total synchronization)");
+        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(1), ICON_SIZE));
+        label.setToolTipText("Complete synchronization group 1");
         labels.add(label);
-        // partial synchro
-        label = new JLabel(new IcyIcon(ICON_LOCKED_2, ICON_SIZE));
-        label.setToolTipText("Synchronization group 2 (T and Z navigation aren't synchronized)");
+        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(2), ICON_SIZE));
+        label.setToolTipText("Complete synchronization group 2");
         labels.add(label);
+
+        // view synchro
+        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage('v'), ICON_SIZE));
+        label.setToolTipText("View synchronization group (T and Z position are not synchronized)");
+        labels.add(label);
+
+        // position synchro
+        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage('s'), ICON_SIZE));
+        label.setToolTipText("Slice synchronization group (only T and Z position are synchronized)");
+        labels.add(label);
+
         // mouse cursor synchro
-        label = new JLabel(new IcyIcon(ICON_LOCKED_3, ICON_SIZE));
-        label.setToolTipText("Synchronization group 3 (only mouse cursor position is synchronized)");
+        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage('c'), ICON_SIZE));
+        label.setToolTipText("Cursor synchronization group (only mouse cursor position is synchronized)");
         labels.add(label);
 
         // build comboBox with lock id
@@ -672,28 +684,37 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
     void refreshLockCombo()
     {
-        lockComboBox.setEnabled(isSynchronizedViewSupported());
+        final int syncId = getViewSyncId();
 
-        switch (getViewSyncId())
+        lockComboBox.setEnabled(isSynchronizedViewSupported());
+        lockComboBox.setSelectedIndex(syncId);
+
+        switch (syncId)
         {
             case 0:
-                lockComboBox.setSelectedIndex(0);
                 lockComboBox.setBackground(Color.gray);
+                lockComboBox.setToolTipText("Synchronization disabled");
                 break;
 
             case 1:
-                lockComboBox.setSelectedIndex(1);
-                lockComboBox.setBackground(Color.green);
-                break;
-
             case 2:
-                lockComboBox.setSelectedIndex(2);
-                lockComboBox.setBackground(Color.red);
+                lockComboBox.setBackground(Color.green);
+                lockComboBox.setToolTipText("Complete synchronization");
                 break;
 
             case 3:
-                lockComboBox.setSelectedIndex(3);
+                lockComboBox.setBackground(Color.yellow);
+                lockComboBox.setToolTipText("View synchronization (T and Z position are not synchronized)");
+                break;
+
+            case 4:
                 lockComboBox.setBackground(Color.blue);
+                lockComboBox.setToolTipText("Slice synchronization (only T and Z position are synchronized)");
+                break;
+
+            case 5:
+                lockComboBox.setBackground(Color.red);
+                lockComboBox.setToolTipText("Cursor synchronization (only mouse cursor position is synchronized)");
                 break;
         }
     }

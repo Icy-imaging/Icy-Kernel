@@ -19,6 +19,8 @@
 package icy.roi;
 
 import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.canvas.IcyCanvas3D;
 import icy.common.EventHierarchicalChecker;
 import icy.image.ImageUtil;
 import icy.sequence.Sequence;
@@ -334,34 +336,42 @@ public class ROI2DArea extends ROI2D
             if (!isActiveFor(canvas))
                 return;
 
-            // prepare color and stroke
-            g.setColor(getDisplayColor());
-            if (ROI2DArea.this.selected)
-                g.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, ROI2DArea.this.stroke + 1d)));
-            else
-                g.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, ROI2DArea.this.stroke)));
-
-            // draw bounds
-            g.draw(bounds);
-
-            // set alpha
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaLevel));
-            // draw mask
-            g.drawImage(imageMask, null, bounds.x, bounds.y);
-
-            // ROI selected ? draw cursor
-            if (selected && !focused)
+            if (canvas instanceof IcyCanvas2D)
             {
-                // cursor color
-                g.setColor(cursorColor);
-                // draw cursor
-                g.fill(cursor);
+                // prepare color and stroke
+                g.setColor(getDisplayColor());
+                if (ROI2DArea.this.selected)
+                    g.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, ROI2DArea.this.stroke + 1d)));
+                else
+                    g.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, ROI2DArea.this.stroke)));
+
+                // draw bounds
+                g.draw(bounds);
+
+                // set alpha
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaLevel));
+                // draw mask
+                g.drawImage(imageMask, null, bounds.x, bounds.y);
+
+                // ROI selected ? draw cursor
+                if (selected && !focused)
+                {
+                    // cursor color
+                    g.setColor(cursorColor);
+                    // draw cursor
+                    g.fill(cursor);
+                }
+
+                // set alpha back to normal
+                g.setComposite(AlphaComposite.SrcOver);
             }
 
-            // set alpha back to normal
-            g.setComposite(AlphaComposite.SrcOver);
-        }
+            if (canvas instanceof IcyCanvas3D)
+            {
+                // not yet supported
 
+            }
+        }
     }
 
     public static final String ID_BOUNDS_X = "boundsX";

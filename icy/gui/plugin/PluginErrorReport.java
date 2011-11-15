@@ -57,16 +57,6 @@ public class PluginErrorReport
 {
     public static void report(final PluginDescriptor plugin, final String message)
     {
-        // display report
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                showReport(plugin, message);
-            }
-        });
-
         final CancelableProgressFrame info = new CancelableProgressFrame("Plugin '" + plugin.getName()
                 + "' has crashed, searching for update...");
 
@@ -108,6 +98,18 @@ public class PluginErrorReport
                                                 + "It is highly recommended to install the update as you meet problem with current version.\n"
                                                 + "Do you want to install the update ?"))
                             PluginInstaller.install(loader, onlinePlugin, true);
+                    }
+                    else
+                    {
+                        // display report as no update were found
+                        ThreadUtil.invokeLater(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                showReport(plugin, message);
+                            }
+                        });
                     }
                 }
             }

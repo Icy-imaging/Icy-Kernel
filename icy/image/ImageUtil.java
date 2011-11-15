@@ -18,15 +18,19 @@
  */
 package icy.image;
 
+import icy.gui.component.FontUtil;
+import icy.gui.util.GuiUtil;
 import icy.network.URLUtil;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.awt.image.IndexColorModel;
@@ -330,7 +334,8 @@ public class ImageUtil
     }
 
     /**
-     * convert an image to a type BufferedImage
+     * Convert an image to a BufferedImage.<br>
+     * If <code>out</out> is null, by default a <code>BufferedImage.TYPE_INT_ARGB</code> is created.
      */
     public static BufferedImage convertImage(Image in, BufferedImage out)
     {
@@ -347,13 +352,25 @@ public class ImageUtil
         return result;
     }
 
-    public static Image toGrayImage(Image image)
+    /**
+     * Convert an image to grey image.
+     */
+    public static BufferedImage toGrayImage(Image image)
     {
         if (image != null)
             return convertImage(image, new BufferedImage(image.getWidth(null), image.getHeight(null),
                     BufferedImage.TYPE_BYTE_GRAY));
 
         return null;
+    }
+
+    /**
+     * Create a copy of the input image.<br>
+     * Result is always a <code>BufferedImage.TYPE_INT_ARGB</code> type image.
+     */
+    public static BufferedImage getCopy(Image in)
+    {
+        return convertImage(in, null);
     }
 
     /**
@@ -439,4 +456,46 @@ public class ImageUtil
         return result;
     }
 
+    /**
+     * Draw text in the specified image with specified parameters.<br>
+     */
+    public static void drawText(Image image, String text, float x, float y, int size, Color color)
+    {
+        final Graphics2D g = (Graphics2D) image.getGraphics();
+
+        // prepare setting
+        g.setColor(color);
+        g.setFont(FontUtil.setSize(g.getFont(), size));
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+        // draw icon
+        g.drawString(text, x, y);
+
+        g.dispose();
+
+    }
+
+    /**
+     * Draw text at top right in the specified image with specified parameters.<br>
+     */
+    public static void drawTextTopRight(Image image, String text, int size, boolean bold, Color color)
+    {
+        final float w = image.getWidth(null);
+        final Graphics2D g = (Graphics2D) image.getGraphics();
+
+        // prepare setting
+        g.setColor(color);
+        g.setFont(FontUtil.setSize(g.getFont(), size));
+        if (bold)
+            g.setFont(FontUtil.setStyle(g.getFont(), Font.BOLD));
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+        // get string bounds
+        final Rectangle2D bounds = GuiUtil.getStringBounds(g, text);
+
+        // draw icon
+        g.drawString(text, w - ((float) bounds.getWidth()), 0 - (float) bounds.getY());
+
+        g.dispose();
+    }
 }

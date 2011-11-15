@@ -20,7 +20,6 @@ public class LabelComboBoxRenderer extends CustomComboBoxRenderer
     public LabelComboBoxRenderer(JComboBox combo)
     {
         super(combo);
-        // TODO Auto-generated constructor stub
     }
 
     @Override
