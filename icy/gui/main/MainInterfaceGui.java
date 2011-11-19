@@ -47,7 +47,9 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyVetoException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -550,11 +552,38 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
 
         return result;
     }
+    
+    /**
+     * Returns the ROIs as a set (more efficient than ArrayList for large numbers
+     * and naturally avoids duplicate entries)
+     * 
+     * @author Alexandre Dufour
+     */
+    public HashSet<ROI> getROIset()
+    {
+        final List<Sequence> sequences = getSequences();
+        final HashSet<ROI> result = new HashSet<ROI>();
+        
+        for (Sequence seq : sequences)
+        {
+            final ArrayList<ROI> rois = seq.getROIs();
+
+            for (ROI roi : rois)
+                result.add(roi);
+        }
+
+        // TODO: add ROI from swimming pool ?
+
+        return result;
+    }
 
     @Override
     public ROI getROI(Painter painter)
     {
-        final List<ROI> rois = getROIs();
+        // old implementation
+        //final List<ROI> rois = getROIs();
+        // new implementation (Alexandre Dufour)
+        final Set<ROI> rois = getROIset();
 
         for (ROI roi : rois)
             if (roi.getPainter() == painter)
