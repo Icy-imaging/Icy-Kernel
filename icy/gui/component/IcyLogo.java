@@ -37,7 +37,6 @@ public class IcyLogo extends IcyPanel // implements ComponentListener
     private static final long serialVersionUID = 3914710344010035775L;
 
     final String title;
-    final Font icyFont;
     final Font titleFont;
 
     public IcyLogo(String title)
@@ -54,10 +53,9 @@ public class IcyLogo extends IcyPanel // implements ComponentListener
         if (dim != null)
             setPreferredSize(dim);
         else
-            ComponentUtil.setPreferredHeight(this, 70);
+            ComponentUtil.setPreferredHeight(this, 60);
 
-        icyFont = new Font("Arial", Font.PLAIN, 40);
-        titleFont = new Font("Arial", Font.BOLD, 20);
+        titleFont = new Font("Arial", Font.BOLD, 26);
     }
 
     @Override
@@ -73,10 +71,8 @@ public class IcyLogo extends IcyPanel // implements ComponentListener
         g2.setColor(Color.white);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        g2.setFont(icyFont);
-        GuiUtil.drawHCenteredText(g2, "ICY", w, h / 2);
         g2.setFont(titleFont);
-        GuiUtil.drawHCenteredText(g2, title, w, (h / 2) + 20);
+        GuiUtil.drawHCenteredText(g2, title, w, h / 2 + g2.getFontMetrics().getHeight() / 4 );
 
         g2.dispose();
     }
