@@ -1719,7 +1719,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         subPanel.add(Box.createVerticalStrut(4));
         subPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
                 GuiUtil.createFixedWidthBoldLabel("Rotation", 70), rotationComboBox,
-                GuiUtil.createFixedWidthBoldLabel("°", 20), Box.createHorizontalGlue(), rotateUnclock,
+                GuiUtil.createFixedWidthBoldLabel("ï¿½", 20), Box.createHorizontalGlue(), rotateUnclock,
                 Box.createHorizontalStrut(4), rotateClock, Box.createHorizontalStrut(4)));
         subPanel.add(Box.createVerticalStrut(4));
 
@@ -1892,8 +1892,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         // get new mouse position on canvas pixel
         final Point newMouseCanvasPos = imageToCanvas(mouseImagePos.x, mouseImagePos.y, 0, 0, newScaleX, newScaleY, rot);
         // new image size
-        final int newImgSizeX = (int) Math.ceil(seq.getSizeX() * newScaleX);
-        final int newImgSizeY = (int) Math.ceil(seq.getSizeY() * newScaleY);
+        final int newImgSizeX = (int) Math.ceil(getImageSizeX() * newScaleX);
+        final int newImgSizeY = (int) Math.ceil(getImageSizeY() * newScaleY);
         // canvas center
         final int canvasCenterX = getCanvasSizeX() / 2;
         final int canvasCenterY = getCanvasSizeY() / 2;
@@ -2629,7 +2629,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     });
 
                     // and in canvas
-                    canvasView.setRotationMessage("Rotation : " + rotInfo + " °", 500);
+                    canvasView.setRotationMessage("Rotation : " + rotInfo + " ï¿½", 500);
                 }
 
                 // refresh canvas
