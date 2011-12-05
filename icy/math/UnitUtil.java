@@ -5,7 +5,31 @@ import icy.util.StringUtil;
 public class UnitUtil {
 
 	public static enum UnitPrefix {
-		GIGA, MEGA, KILO, NONE, MILLI, MICRO, NANO, PICO
+		GIGA, MEGA, KILO, NONE, MILLI, MICRO, NANO, PICO;
+		
+		@Override
+		public String toString() {
+			switch (this) {
+			case GIGA:
+				return "G";
+			case KILO:
+				return "k";
+			case MEGA:
+				return "M";
+			case MILLI:
+				return "m";
+			case MICRO:
+				return "µ";
+			case NANO:
+				return "n";
+			case PICO:
+				return "p";
+			case NONE:
+				return "";
+			default:
+				return "x";
+			}
+		}
 	};
 
 	/**
@@ -29,17 +53,6 @@ public class UnitUtil {
 
 		// B
 		return Double.toString(MathUtil.round(value, 1)) + " B";
-	}
-
-	/**
-	 * Get the best unit with the given value and {@link UnitPrefix}.
-	 * 
-	 * @param value
-	 *            : value used to get the best unit.
-	 * @return Return the best unit
-	 */
-	public static UnitPrefix getBestUnit(double value) {
-		return getBestUnit(value, UnitPrefix.NONE);
 	}
 
 	/**
@@ -119,39 +132,6 @@ public class UnitUtil {
 	}
 
 	/**
-	 * Get the prefix as a string.
-	 * 
-	 * @param unit
-	 *            : UnitPrefix wanted
-	 * @return <ul>
-	 *         <li>G for GIGA, k for kilo, etc.</li>
-	 *         <li>x if an error occurred</li>
-	 *         </ul>
-	 */
-	private static String getUnitPrefixAsString(UnitPrefix unit) {
-		switch (unit) {
-		case GIGA:
-			return "G";
-		case KILO:
-			return "k";
-		case MEGA:
-			return "M";
-		case MILLI:
-			return "m";
-		case MICRO:
-			return "µ";
-		case NANO:
-			return "n";
-		case PICO:
-			return "p";
-		case NONE:
-			return "";
-		default:
-			return "x";
-		}
-	}
-
-	/**
 	 * This method returns a string containing the value rounded to a specified number of
 	 * decimals and its best unit prefix. This method is supposed to be used with meters only.
 	 * 
@@ -163,6 +143,6 @@ public class UnitUtil {
 	public static String getBestUnitInMeters(double value,  int decimals, UnitPrefix currentUnit) {
 		UnitPrefix unitPxSize = getBestUnit(value, currentUnit);
 		double distanceMeters = getValueInUnit(value, currentUnit, unitPxSize);
-		return StringUtil.toString(distanceMeters, decimals) + getUnitPrefixAsString(unitPxSize) + "m";
+		return StringUtil.toString(distanceMeters, decimals) + unitPxSize + "m";
 	}
 }
