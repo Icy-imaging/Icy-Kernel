@@ -18,13 +18,14 @@
  */
 package icy.plugin.interface_;
 
-// public abstract class PluginImageAnalysis extends Plugin {
+import icy.plugin.abstract_.PluginActionable;
+
+/**
+ * @deprecated use {@link PluginActionable} instead
+ */
+@Deprecated
 public interface PluginImageAnalysis
 {
-    // TODO : ajouter un support pour etre appelle en static ou encore pour que le plug genere son
-    // code macro ?
-    // TODO : ajouter le support de l'history ?
-
     /**
      * Main compute method for PluginImageAnalysis interface
      */

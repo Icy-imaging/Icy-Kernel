@@ -143,7 +143,7 @@ public class SequenceEvent implements EventHierarchicalChecker
     /**
      * Optimize event
      */
-    private boolean optimizeEventWith(SequenceEvent e)
+    private boolean collapseWith(SequenceEvent e)
     {
         // same source type
         if (e.getSourceType() == sourceType)
@@ -189,7 +189,7 @@ public class SequenceEvent implements EventHierarchicalChecker
         {
             final SequenceEvent e = (SequenceEvent) event;
 
-            return optimizeEventWith(e)
+            return collapseWith(e)
                     || ((sourceType == e.getSourceType()) && (type == e.getType())
                             && ((source == null) || (source == e.getSource())) && ((param == -1) || (param == e
                             .getParam())));

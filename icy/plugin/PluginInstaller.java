@@ -29,6 +29,7 @@ import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.abstract_.Plugin;
 import icy.system.thread.SingleProcessor;
+import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
 import icy.update.Updater;
 import icy.util.StringUtil;
@@ -79,7 +80,6 @@ public class PluginInstaller
      */
     private static final ArrayList<PluginInstallInfo> removeFIFO = new ArrayList<PluginInstallInfo>();
 
-    private static final SingleProcessor processor = new SingleProcessor(true);
     private static final Runnable runner = new Runnable()
     {
         @Override
@@ -123,7 +123,7 @@ public class PluginInstaller
             }
         }
 
-        processor.requestProcess(runner, false);
+        ThreadUtil.bgRunSingle(runner);
     }
 
     /**
@@ -189,7 +189,7 @@ public class PluginInstaller
             }
         }
 
-        processor.requestProcess(runner, false);
+        ThreadUtil.bgRunSingle(runner);
     }
 
     /**

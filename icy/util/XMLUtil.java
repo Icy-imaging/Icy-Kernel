@@ -278,8 +278,18 @@ public class XMLUtil
                         NetworkUtil.setAuthentication(uc, auth.getLogin(), auth.getPassword());
 
                     final InputStream ip = NetworkUtil.getInputStream(uc, showError);
+
                     if (ip != null)
-                        return docBuilder.parse(ip);
+                    {
+                        try
+                        {
+                            return docBuilder.parse(ip);
+                        }
+                        finally
+                        {
+                            ip.close();
+                        }
+                    }
                 }
             }
             catch (Exception e)

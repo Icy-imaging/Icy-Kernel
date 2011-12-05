@@ -32,6 +32,10 @@ import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 
+/**
+ * @author Stephane
+ * @deprecated Shouldn't be in kernel
+ */
 public class TextPainter extends AbstractPainter
 {
     public double t, z, x, y;

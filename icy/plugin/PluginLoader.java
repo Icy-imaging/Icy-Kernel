@@ -25,7 +25,6 @@ import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginDescriptor.PluginNameSorter;
 import icy.plugin.abstract_.Plugin;
 import icy.system.IcyExceptionHandler;
-import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
 
@@ -134,7 +133,6 @@ public class PluginLoader
     /**
      * internal
      */
-    private static final SingleProcessor singleProcessor = new SingleProcessor(true);
     private static final Runnable reloader = new Runnable()
     {
         @Override
@@ -167,7 +165,7 @@ public class PluginLoader
     public static void reloadAsynch()
     {
         loading = true;
-        singleProcessor.requestProcess(reloader, false);
+        ThreadUtil.bgRunSingle(reloader);
     }
 
     /**

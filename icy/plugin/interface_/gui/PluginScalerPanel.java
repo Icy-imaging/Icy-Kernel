@@ -28,5 +28,4 @@ import icy.image.lut.LUTBand;
 public interface PluginScalerPanel
 {
     public IcyScalerPanel createScalerPanel(Viewer viewer, LUTBand lutBand);
-
 }

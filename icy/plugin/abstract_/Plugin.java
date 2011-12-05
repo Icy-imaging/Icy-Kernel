@@ -39,9 +39,11 @@ import java.util.HashMap;
 import javax.swing.ImageIcon;
 
 /**
- * Base Class for Plugin.
+ * Base class for Plugin.<br>
+ * <br>
+ * Provide some helper methods.
  * 
- * @author Fabrice de Chaumont
+ * @author Fabrice de Chaumont & Stephane
  */
 public abstract class Plugin
 {
@@ -89,17 +91,12 @@ public abstract class Plugin
     @Override
     protected void finalize() throws Throwable
     {
-        // unregister plugin
+        // unregister plugin (weak reference so we can do it here)
         Icy.getMainInterface().unRegisterPlugin(this);
 
         super.finalize();
     }
 
-    // public int getId()
-    // {
-    // return id;
-    // }
-    //
     /**
      * @return the descriptor
      */

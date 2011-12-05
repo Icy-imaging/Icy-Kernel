@@ -124,6 +124,19 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
         this(name, IcyColorMapType.RGB);
     }
 
+    public IcyColorMap(String name, Object maps)
+    {
+        this(name, IcyColorMapType.RGB);
+
+        if (maps instanceof byte[][])
+            copyFrom((byte[][]) maps);
+        else if (maps instanceof short[][])
+            copyFrom((short[][]) maps);
+
+        // try to define color map type from data
+        setTypeFromData(false);
+    }
+
     public IcyColorMap()
     {
         this("");
@@ -154,6 +167,56 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
 
             typeChanged();
         }
+    }
+
+    /**
+     * @see IcyColorMap#setTypeFromData()
+     */
+    public void setTypeFromData(boolean notifyChange)
+    {
+        boolean grayColor = true;
+        boolean noColor = true;
+        boolean hasAlpha = false;
+        IcyColorMapType cmType;
+
+        for (int i = 0; i < MAX_INDEX; i++)
+        {
+            final short r = red.map[i];
+            final short g = green.map[i];
+            final short b = blue.map[i];
+            final short a = alpha.map[i];
+
+            grayColor &= (r == g) && (r == b);
+            noColor &= (r == 0) && (g == 0) && (b == 0);
+            hasAlpha |= (a != MAX_LEVEL);
+        }
+
+        if (noColor && hasAlpha)
+            cmType = IcyColorMapType.ALPHA;
+        else if (grayColor && !noColor)
+        {
+            // set gray map
+            gray.copyFrom(red.map, 0);
+            cmType = IcyColorMapType.GRAY;
+        }
+        else
+            cmType = IcyColorMapType.RGB;
+
+        if (notifyChange)
+            setType(cmType);
+        else
+            type = cmType;
+    }
+
+    /**
+     * Define the type of color map depending its RGBA data.<br>
+     * If map contains only alpha information then type = <code>IcyColorMapType.ALPHA</code><br>
+     * If map contains only grey level then type = <code>IcyColorMapType.GRAY</code><br>
+     * else type = <code>IcyColorMapType.RGB</code>
+     */
+    public void setTypeFromData()
+    {
+        setTypeFromData(true);
     }
 
     /**

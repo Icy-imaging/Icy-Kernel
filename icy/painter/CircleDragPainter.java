@@ -37,6 +37,7 @@ import java.util.ArrayList;
  * FIXME : a nettoyer
  * 
  * @author fab
+ * @deprecated Shouldn't be in kernel
  */
 public class CircleDragPainter extends AbstractPainter
 {

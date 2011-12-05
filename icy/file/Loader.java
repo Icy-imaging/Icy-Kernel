@@ -532,36 +532,28 @@ public class Loader
             {
                 final ApplicationMenu mainMenu = Icy.getMainInterface().getApplicationMenu();
 
-                Icy.getMainInterface().beginUpdate();
-                try
+                // loading
+                if (separate)
                 {
-                    // loading
-                    if (separate)
+                    for (File file : files)
                     {
-                        for (File file : files)
-                        {
-                            // add as separate item to recent file list
-                            if (mainMenu != null)
-                                mainMenu.addRecentLoadedFile(file);
-
-                            // create sequence loader
-                            final SequenceLoader loadingThread = new SequenceLoader(file, true);
-                            // load file using background processor
-                            ThreadUtil.bgRunWait(loadingThread);
-                        }
-                    }
-                    else
-                    {
-                        // add as one item to recent file list
+                        // add as separate item to recent file list
                         if (mainMenu != null)
-                            mainMenu.addRecentLoadedFile(files);
-                        // create and run sequence loader
-                        new SequenceLoader(files, true).run();
+                            mainMenu.addRecentLoadedFile(file);
+
+                        // create sequence loader
+                        final SequenceLoader loadingThread = new SequenceLoader(file, true);
+                        // load file using background processor
+                        ThreadUtil.bgRunWait(loadingThread);
                     }
                 }
-                finally
+                else
                 {
-                    Icy.getMainInterface().endUpdate();
+                    // add as one item to recent file list
+                    if (mainMenu != null)
+                        mainMenu.addRecentLoadedFile(files);
+                    // create and run sequence loader
+                    new SequenceLoader(files, true).run();
                 }
             }
         });

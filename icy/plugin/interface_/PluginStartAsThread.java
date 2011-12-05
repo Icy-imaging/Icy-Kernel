@@ -19,14 +19,10 @@
 package icy.plugin.interface_;
 
 /**
- * @author Fabrice de Chaumont
- *         If a Plugin implements this interface, the PluginLauncher will start the plugin as a
- *         thread.
- *         The good point is that the plugin will not lock the interface for his compute.
- *         The bad point is that you have to be cautious, you are not in the awt thread, so you must
- *         consider InvokeLater methods to access all GUI components.
- *         Programming with threads is not as easy as programming in the awt.
+ * @deprecated use {@link PluginOwnThread} instead
  */
-public interface PluginStartAsThread
+@Deprecated
+public interface PluginStartAsThread extends PluginOwnThread
 {
+
 }

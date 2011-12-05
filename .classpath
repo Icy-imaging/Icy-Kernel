@@ -43,5 +43,7 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/trident.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/vecmath.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/vtk.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/scifio.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/jai_imageio.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

@@ -19,28 +19,23 @@
 package icy.gui.inspector;
 
 import icy.gui.component.ExternalizablePanel;
-import icy.gui.main.MainAdapter;
-import icy.gui.main.MainEvent;
-import icy.gui.main.MainListener;
-import icy.gui.main.WeakMainListener;
-import icy.gui.sequence.SequenceInfosPanel;
+import icy.gui.main.FocusedSequenceListener;
+import icy.gui.main.FocusedViewerListener;
 import icy.gui.system.MemoryMonitorPanel;
 import icy.gui.system.OutputConsolePanel;
 import icy.gui.system.OutputConsolePanel.OutputConsoleChangeListener;
 import icy.gui.util.WindowPositionSaver;
 import icy.gui.viewer.Viewer;
-import icy.gui.viewer.ViewerAdapter;
 import icy.gui.viewer.ViewerEvent;
-import icy.gui.viewer.ViewerListener;
-import icy.gui.viewer.WeakViewerListener;
 import icy.main.Icy;
+import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
-import java.lang.ref.WeakReference;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -54,24 +49,25 @@ import javax.swing.event.ChangeListener;
  * 
  * @author Fabrice de Chaumont & Stephane
  */
-public class InspectorPanel extends ExternalizablePanel
+public class InspectorPanel extends ExternalizablePanel implements FocusedViewerListener, FocusedSequenceListener
 {
     private static final long serialVersionUID = 5538230736731006318L;
+
+    public static abstract class InspectorSubPanel extends JPanel implements FocusedViewerListener,
+            FocusedSequenceListener
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -3437652648207592760L;
+    }
 
     /**
      * GUI
      */
     final SequencePanel sequencePanel;
-    // final ViewerPanel viewerPanel;
-    final SequenceInfosPanel sequenceInfosPanel;
-
-    /**
-     * internals
-     */
-    private WeakReference<Viewer> internalViewer;
-    private final MainListener mainListener;
-    private final ViewerListener viewerListener;
-    private final WeakViewerListener weakViewerListener;
+    final RoisPanel roisPanel;
+    final LayersPanel layersPanel;
 
     /**
      * The width of the inner component of the inspector should not exceed 300.
@@ -82,70 +78,12 @@ public class InspectorPanel extends ExternalizablePanel
 
         new WindowPositionSaver(this, "frame/inspector", new Point(600, 140), new Dimension(260, 600));
 
-        internalViewer = new WeakReference<Viewer>(null);
-
-        mainListener = new MainAdapter()
-        {
-            @Override
-            public void viewerFocused(MainEvent event)
-            {
-                final Viewer viewer = (Viewer) event.getSource();
-
-                ThreadUtil.invokeLater(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        // set viewer
-                        setViewer(viewer);
-                    }
-                });
-            }
-        };
-
-        viewerListener = new ViewerAdapter()
-        {
-            @Override
-            public void viewerChanged(ViewerEvent event)
-            {
-                // we receive from current focused viewer only
-                switch (event.getType())
-                {
-                    case CANVAS_CHANGED:
-                        // refresh canvas panel
-                        updateCanvasPanel(event.getSource());
-                        break;
-
-                    case LUT_CHANGED:
-                        // refresh lut panel
-                        updateLutPanel(event.getSource());
-                        break;
-
-                    case POSITION_CHANGED:
-                        // nothing to do
-                        break;
-                }
-            }
-        };
-
-        // weak reference --> released when InspectorPanel is released
-        weakViewerListener = new WeakViewerListener(viewerListener);
-
         // main TAB panels
-        // viewerPanel = new ViewerPanel();
         sequencePanel = new SequencePanel();
         // final JPanel pluginsPanel = new PluginsPanel();
-        final JPanel roisPanel = new RoisPanel(true, true);
+        roisPanel = new RoisPanel(true, true);
+        layersPanel = new LayersPanel(true, true);
         final OutputConsolePanel outputPanel = new OutputConsolePanel();
-        final LayersPanel layersPanel = new LayersPanel();
-
-        sequenceInfosPanel = new SequenceInfosPanel();
-        sequencePanel.setInfosPanel(sequenceInfosPanel);
-
-        updateSequenceInfosPanel(null);
-        updateLutPanel(null);
-        updateCanvasPanel(null);
-        updateSequenceInfosPanel(null);
 
         final JScrollPane scSequence = new JScrollPane(sequencePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -164,7 +102,6 @@ public class InspectorPanel extends ExternalizablePanel
         setMinimumSize(new Dimension(260, 480));
         setLayout(new BorderLayout());
 
-        // add(viewerPanel, BorderLayout.NORTH);
         add(mainPane, BorderLayout.CENTER);
         add(new MemoryMonitorPanel(), BorderLayout.SOUTH);
 
@@ -211,68 +148,51 @@ public class InspectorPanel extends ExternalizablePanel
             }
         });
 
-        // add main listener (weak reference --> released when InspectorPanel is released)
-        Icy.getMainInterface().addListener(new WeakMainListener(mainListener));
+        // add focused sequence & viewer listener
+        Icy.getMainInterface().addFocusedViewerListener(this);
+        Icy.getMainInterface().addFocusedSequenceListener(this);
     }
 
-    void updateAll(Viewer value)
+    @Override
+    public void viewerFocused(Viewer viewer)
     {
-        // viewerPanel.setViewer(viewer);
-        // refresh lut and canvas panel
-        updateLutPanel(value);
-        updateCanvasPanel(value);
-        // refresh sequence description
-        updateSequenceInfosPanel(value);
+        sequencePanel.viewerFocused(viewer);
+        roisPanel.viewerFocused(viewer);
+        layersPanel.viewerFocused(viewer);
 
-        revalidate();
-        repaint();
-    }
-
-    void updateLutPanel(Viewer viewer)
-    {
-        if (viewer != null)
-            sequencePanel.setLutPanel(viewer.getLutPanel());
-        else
-            sequencePanel.setLutPanel(null);
-    }
-
-    void updateCanvasPanel(Viewer viewer)
-    {
-        if (viewer != null)
-            sequencePanel.setCanvasPanel(viewer.getCanvasPanel());
-        else
-            sequencePanel.setCanvasPanel(null);
-    }
-
-    void updateSequenceInfosPanel(Viewer viewer)
-    {
-        if (viewer != null)
-            sequenceInfosPanel.setSequence(viewer.getSequence());
-        else
-            sequenceInfosPanel.setSequence(null);
+        // FIXME : why this is needed ?
+        // revalidate();
+        // repaint();
     }
 
     /**
-     * @param viewer
-     *        the viewer to set
+     * Called when focused viewer has changed
      */
-    void setViewer(Viewer value)
+    @Override
+    public void focusedViewerChanged(ViewerEvent event)
     {
-        if (internalViewer.get() != value)
-        {
-            final Viewer previousViewer = internalViewer.get();
-
-            // unregister previous viewer listener if any
-            if (previousViewer != null)
-                previousViewer.removeListener(weakViewerListener);
-
-            internalViewer = new WeakReference<Viewer>(value);
-
-            updateAll(value);
-
-            // register new listener
-            if (value != null)
-                value.addListener(weakViewerListener);
-        }
+        sequencePanel.focusedViewerChanged(event);
+        roisPanel.focusedViewerChanged(event);
+        layersPanel.focusedViewerChanged(event);
     }
+
+    @Override
+    public void sequenceFocused(Sequence sequence)
+    {
+        sequencePanel.sequenceFocused(sequence);
+        roisPanel.sequenceFocused(sequence);
+        layersPanel.sequenceFocused(sequence);
+    }
+
+    /**
+     * Called by mainInterface when focused sequence has changed
+     */
+    @Override
+    public void focusedSequenceChanged(SequenceEvent event)
+    {
+        sequencePanel.focusedSequenceChanged(event);
+        roisPanel.focusedSequenceChanged(event);
+        layersPanel.focusedSequenceChanged(event);
+    }
+
 }

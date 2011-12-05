@@ -29,7 +29,7 @@ public class ZipUtil
 
         // create an expandable byte array to hold the compressed data.
         final ByteArrayOutputStream bos = new ByteArrayOutputStream(rawData.length);
-        final byte[] buf = new byte[1024];
+        final byte[] buf = new byte[4096];
 
         // pack data
         while (!compressor.finished())
@@ -62,7 +62,7 @@ public class ZipUtil
 
         // create an expandable byte array to hold the uncompressed data
         final ByteArrayOutputStream bos = new ByteArrayOutputStream(packedData.length);
-        final byte[] buf = new byte[1024];
+        final byte[] buf = new byte[4096];
 
         // unpack data
         while (!decompressor.finished())

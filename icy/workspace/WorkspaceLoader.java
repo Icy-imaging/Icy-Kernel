@@ -20,7 +20,6 @@ package icy.workspace;
 
 import icy.common.EventHierarchicalChecker;
 import icy.file.FileUtil;
-import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.workspace.WorkspaceLoader.WorkspaceLoaderEvent.WorkspaceLoaderEventType;
 
@@ -98,7 +97,6 @@ public class WorkspaceLoader
     /**
      * internal
      */
-    private final SingleProcessor singleProcessor;
     private final Runnable reloader;
     private boolean loading;
 
@@ -111,7 +109,6 @@ public class WorkspaceLoader
 
         workspaces = new ArrayList<Workspace>();
         listeners = new EventListenerList();
-        singleProcessor = new SingleProcessor(true);
         reloader = new Runnable()
         {
             @Override
@@ -142,10 +139,7 @@ public class WorkspaceLoader
     {
         loader.loading = true;
 
-        synchronized (loader.singleProcessor)
-        {
-            loader.singleProcessor.requestProcess(loader.reloader, false);
-        }
+        ThreadUtil.bgRunSingle(loader.reloader);
     }
 
     /**

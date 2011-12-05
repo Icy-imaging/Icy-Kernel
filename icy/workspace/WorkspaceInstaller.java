@@ -29,7 +29,6 @@ import icy.plugin.PluginInstaller;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginRepositoryLoader;
 import icy.preferences.WorkspaceLocalPreferences;
-import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 import icy.workspace.Workspace.TaskDefinition.BandDefinition.ItemDefinition;
@@ -106,7 +105,6 @@ public class WorkspaceInstaller
      */
     private static final ArrayList<WorkspaceInstallInfo> removeFIFO = new ArrayList<WorkspaceInstallInfo>();
 
-    private static final SingleProcessor processor = new SingleProcessor(true);
     private static final Runnable runner = new Runnable()
     {
         @Override
@@ -142,7 +140,7 @@ public class WorkspaceInstaller
             }
         }
 
-        processor.requestProcess(runner, false);
+        ThreadUtil.bgRunSingle(runner, false);
     }
 
     /**
@@ -213,7 +211,7 @@ public class WorkspaceInstaller
             }
         }
 
-        processor.requestProcess(runner, false);
+        ThreadUtil.bgRunSingle(runner);
     }
 
     /**

@@ -52,25 +52,36 @@ public class SingleProcessor extends Processor
     /**
      * Request a process
      */
-    public synchronized boolean requestProcess(Runnable task)
-    {
-        return requestProcess(task, false);
-    }
-
-    /**
-     * Request a process
-     */
-    public synchronized boolean requestProcess(Runnable task, boolean onAWTEventThread)
+    @Override
+    public boolean addTask(Runnable task, boolean onEventThread, int id)
     {
         if (queue || (!isProcessing()))
         {
             // remove current task if any
             removeAllWaitingTasks();
             // add task
-            return addTask(task, onAWTEventThread);
+            return super.addTask(task, onEventThread, id);
         }
 
         return false;
+    }
+
+    /**
+     * @deprecated use {@link #addTask(Runnable)} instead
+     */
+    @Deprecated
+    public synchronized boolean requestProcess(Runnable task)
+    {
+        return addTask(task);
+    }
+
+    /**
+     * @deprecated use {@link #addTask(Runnable, boolean)} instead
+     */
+    @Deprecated
+    public synchronized boolean requestProcess(Runnable task, boolean onAWTEventThread)
+    {
+        return addTask(task, onAWTEventThread);
     }
 
 }

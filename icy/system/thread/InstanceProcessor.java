@@ -23,36 +23,38 @@ package icy.system.thread;
  */
 public class InstanceProcessor extends Processor
 {
-    private final int maxProcessPerInstance;
-
     /**
-     * 
+     * Create an SingleInstanceProcessor
      */
-    public InstanceProcessor(int maxProcess, int maxProcessPerInstance)
+    public InstanceProcessor(int priority)
     {
-        // no more than 512 waiting tasks
-        super(512, maxProcess);
-
-        this.maxProcessPerInstance = maxProcessPerInstance;
+        super(Processor.DEFAULT_MAX_WAITING, 1, priority);
     }
 
     /**
-     * Request a process
+     * Create an SingleInstanceProcessor
+     */
+    public InstanceProcessor()
+    {
+        this(Processor.NORM_PRIORITY);
+    }
+
+    /**
+     * Add a task to processor
      */
     @Override
-    public synchronized boolean addTask(Runnable task, boolean onAWTEventThread)
+    public synchronized boolean addTask(Runnable task, boolean onAWTEventThread, int id)
     {
         if (task == null)
             return false;
 
-        // we remove some tasks in queue if needed
-        while (getWaitingTasksCount(task) >= maxProcessPerInstance)
-            removeFirstWaitingTask(task);
+        // we remove pending task if any
+        removeFirstWaitingTask(id);
 
-        if (!super.addTask(task, onAWTEventThread))
+        if (!super.addTask(task, onAWTEventThread, id))
         {
             // error while adding task
-            System.err.println("Queue overhead, ignore execution : " + task);
+            System.err.println("Cannot add task, ignore execution : " + task);
             return false;
         }
 

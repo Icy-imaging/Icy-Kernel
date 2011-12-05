@@ -75,49 +75,35 @@ public class MainEvent implements EventHierarchicalChecker
     /**
      * Optimize event
      */
-    private boolean optimizeEventWith(MainEvent e)
+    private boolean collapseWith(MainEvent e)
     {
         // same source type and same type
         if ((e.getSourceType() == sourceType) && (e.getType() == type))
         {
-            // join events in one global event
-            if (e.getSource() != source)
-                source = null;
+            // just use last source for focused event type
+            if (type == MainEventType.FOCUSED)
+                source = e.getSource();
+            else
+            {
+                // join sources
+                if (e.getSource() != source)
+                    source = null;
+            }
             return true;
         }
 
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.common.IcyCompare#isSame(icy.common.IcyCompare)
-     */
     @Override
     public boolean isEventRedundantWith(EventHierarchicalChecker event)
     {
         if (event instanceof MainEvent)
-        {
-            final MainEvent e = (MainEvent) event;
-
-            // focus event ?
-            if (type == MainEventType.FOCUSED)
-                // only need to have the last one for a specific source
-                return (type == e.getType()) && (sourceType == e.getSourceType());
-
-            // optimize event
-            return optimizeEventWith(e);
-        }
+            return collapseWith((MainEvent) event);
 
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString()
     {

@@ -35,7 +35,7 @@ import icy.painter.Painter;
 import icy.painter.VtkPainter;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent.SequenceEventType;
-import icy.system.thread.SingleInstanceProcessor;
+import icy.system.thread.InstanceProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
@@ -177,7 +177,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     /**
      * internals
      */
-    final SingleInstanceProcessor processor;
+    final InstanceProcessor processor;
     final Runnable displayRefresher;
     private final Runnable imageDataBuilder;
     private final Runnable volumeMapperBuilder;
@@ -309,7 +309,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         add(tNav, BorderLayout.SOUTH);
 
         // initialize internals
-        processor = new SingleInstanceProcessor();
+        processor = new InstanceProcessor();
         displayRefresher = new Runnable()
         {
             @Override

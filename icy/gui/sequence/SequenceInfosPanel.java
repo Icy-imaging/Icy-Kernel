@@ -5,29 +5,28 @@ package icy.gui.sequence;
 
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.button.IcyButton;
+import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
 import icy.gui.util.GuiUtil;
+import icy.gui.viewer.Viewer;
+import icy.gui.viewer.ViewerEvent;
+import icy.main.Icy;
 import icy.math.MathUtil;
 import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
-import icy.sequence.SequenceAdapter;
 import icy.sequence.SequenceEvent;
-import icy.sequence.SequenceListener;
-import icy.sequence.WeakSequenceListener;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.ref.WeakReference;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 /**
  * @author Stephane
  */
-public class SequenceInfosPanel extends JPanel
+public class SequenceInfosPanel extends InspectorSubPanel
 {
     /**
      * 
@@ -45,16 +44,9 @@ public class SequenceInfosPanel extends JPanel
 
     final IcyButton editBtn;
 
-    /**
-     * internals
-     */
-    WeakReference<Sequence> internalSequence;
-    private final SequenceListener sequenceListener;
-    private final WeakSequenceListener weakSequenceListener;
-
     public SequenceInfosPanel()
     {
-        super(true);
+        super();
 
         nameLabel = new JLabel();
         ComponentUtil.setFixedWidth(nameLabel, 160);
@@ -78,7 +70,8 @@ public class SequenceInfosPanel extends JPanel
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final Sequence seq = internalSequence.get();
+                // it should be the current focused sequence
+                final Sequence seq = Icy.getMainInterface().getFocusedSequence();
 
                 if (seq != null)
                     new SequencePropertiesDialog(seq);
@@ -113,59 +106,6 @@ public class SequenceInfosPanel extends JPanel
                 Box.createHorizontalStrut(4)));
 
         updateInfos(null);
-
-        sequenceListener = new SequenceAdapter()
-        {
-            @Override
-            public void sequenceChanged(SequenceEvent event)
-            {
-                final SequenceEvent e = event;
-
-                ThreadUtil.invokeLater(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        final Sequence sequence = e.getSequence();
-
-                        switch (e.getSourceType())
-                        {
-                            case SEQUENCE_NAME:
-                            case SEQUENCE_DATA:
-                            case SEQUENCE_TYPE:
-                            case SEQUENCE_META:
-                                updateInfos(sequence);
-                                break;
-                        }
-                    }
-                });
-            }
-        };
-
-        // weak reference --> released when SequenceInfosPanel is released
-        weakSequenceListener = new WeakSequenceListener(sequenceListener);
-        internalSequence = new WeakReference<Sequence>(null);
-    }
-
-    public void setSequence(Sequence value)
-    {
-        if (internalSequence.get() != value)
-        {
-            final Sequence previousSequence = internalSequence.get();
-
-            // unregister previous sequence listener if any
-            if (previousSequence != null)
-                previousSequence.removeListener(weakSequenceListener);
-
-            // important to set internalSequence before updateInfos
-            internalSequence = new WeakReference<Sequence>(value);
-
-            updateInfos(value);
-
-            // register new listener
-            if (value != null)
-                value.addListener(weakSequenceListener);
-        }
     }
 
     public void updateInfos(Sequence sequence)
@@ -227,5 +167,48 @@ public class SequenceInfosPanel extends JPanel
         }
 
         revalidate();
+    }
+
+    @Override
+    public void viewerFocused(Viewer viewer)
+    {
+
+    }
+
+    @Override
+    public void focusedViewerChanged(ViewerEvent event)
+    {
+
+    }
+
+    @Override
+    public void sequenceFocused(Sequence sequence)
+    {
+        updateInfos(sequence);
+    }
+
+    @Override
+    public void focusedSequenceChanged(SequenceEvent event)
+    {
+        final SequenceEvent e = event;
+
+        ThreadUtil.invokeLater(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                final Sequence sequence = e.getSequence();
+
+                switch (e.getSourceType())
+                {
+                    case SEQUENCE_NAME:
+                    case SEQUENCE_DATA:
+                    case SEQUENCE_TYPE:
+                    case SEQUENCE_META:
+                        updateInfos(sequence);
+                        break;
+                }
+            }
+        });
     }
 }

@@ -19,7 +19,10 @@
 package icy.plugin.interface_;
 
 /**
- * @author Stephane
+ * Plugin Importer interface.<br>
+ * Used to define a specific file importer (appears in the "Import" section).<br>
+ * 
+ * @author Fabrice & Stephane
  */
 public interface PluginImporter
 {

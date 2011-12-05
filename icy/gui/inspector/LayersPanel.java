@@ -20,509 +20,672 @@ package icy.gui.inspector;
 
 import icy.canvas.IcyCanvas;
 import icy.canvas.Layer;
-import icy.canvas.Layer.LayerListener;
 import icy.canvas.LayersEvent;
-import icy.canvas.LayersEvent.LayersEventType;
 import icy.canvas.LayersListener;
-import icy.gui.component.ComponentUtil;
+import icy.gui.component.IcyTextField;
+import icy.gui.component.IcyTextField.IcyTextListener;
+import icy.gui.component.TextFieldFilter;
 import icy.gui.component.button.IcyButton;
-import icy.gui.component.button.IcyToggleButton;
-import icy.gui.main.MainAdapter;
-import icy.gui.main.MainEvent;
-import icy.gui.main.MainListener;
+import icy.gui.component.editor.SliderCellEditor;
+import icy.gui.component.editor.VisibleCellEditor;
+import icy.gui.component.renderer.SliderCellRenderer;
+import icy.gui.component.renderer.VisibleCellRenderer;
+import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.gui.viewer.ViewerEvent.ViewerEventType;
-import icy.gui.viewer.ViewerListener;
-import icy.main.Icy;
 import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.roi.ROI;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
 import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JSlider;
-import javax.swing.JToggleButton;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingConstants;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 /**
  * @author Stephane
  */
-public class LayersPanel extends JPanel implements ViewerListener, LayersListener
+public class LayersPanel extends InspectorSubPanel implements LayersListener, IcyTextListener, ListSelectionListener
 {
-    static Image IMAGE_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png", 18);
-    static Image IMAGE_NOT_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_close.png", 18);
-    static Image IMAGE_DELETE = ResourceUtil.getAlphaIconAsImage("delete.png", 18);
-
-    private class LayerComponent extends JPanel implements LayerListener
-    {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = 8590616637272300324L;
-
-        final Layer layer;
-
-        /**
-         * gui
-         */
-        JLabel label;
-        JSlider alphaSlider;
-        IcyToggleButton visibleButton;
-
-        /**
-         * 
-         */
-        public LayerComponent(Layer l)
-        {
-            super(true);
-
-            this.layer = l;
-
-            label = new JLabel();
-            label.addMouseListener(new MouseAdapter()
-            {
-                @Override
-                public void mouseClicked(MouseEvent e)
-                {
-                    final ROI attachedRoi = layer.getAttachedROI();
-
-                    // select attached ROI
-                    if (attachedRoi != null)
-                        attachedRoi.setSelected(true, true);
-
-                    // bring to front to first found viewer containing this painter
-                    final Viewer viewer = Icy.getMainInterface().getFirstViewerContaining(layer.getPainter());
-                    if (viewer != null)
-                        viewer.toFront();
-                }
-            });
-
-            alphaSlider = new JSlider(0, 100);
-            ComponentUtil.setFixedWidth(alphaSlider, 80);
-            alphaSlider.setToolTipText("Set transparency level");
-            alphaSlider.addChangeListener(new ChangeListener()
-            {
-                @Override
-                public void stateChanged(ChangeEvent e)
-                {
-                    layer.setAlpha(alphaSlider.getValue() / 100f);
-                }
-            });
-
-            final IcyButton deleteButton = new IcyButton(IMAGE_DELETE);
-            deleteButton.setFlat(true);
-            if (layer.isAttachedToRoi())
-                deleteButton.setEnabled(false);
-            deleteButton.setToolTipText("Delete layer");
-            // ComponentUtil.setFixedSize(deleteButton, new Dimension(18, 18));
-            deleteButton.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    final Sequence seq = getSequence();
-
-                    // remove layer (painter)
-                    if (seq != null)
-                        seq.removePainter(layer.getPainter());
-                }
-            });
-
-            visibleButton = new IcyToggleButton(IMAGE_VISIBLE);
-            visibleButton.setFlat(true);
-            visibleButton.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    layer.setVisible(visibleButton.isSelected());
-                    updateVisibleButton(visibleButton);
-                }
-            });
-
-            final JPanel rightPanel = new JPanel();
-            rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.LINE_AXIS));
-            // ComponentUtil.setFixedHeight(topPanel, 20);
-
-            rightPanel.add(alphaSlider);
-            rightPanel.add(deleteButton);
-            rightPanel.add(Box.createHorizontalStrut(2));
-            rightPanel.add(visibleButton);
-            rightPanel.add(Box.createHorizontalStrut(2));
-
-            // setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-            // setBorder(BorderFactory.createEtchedBorder());
-
-            setLayout(new BorderLayout());
-
-            add(label, BorderLayout.CENTER);
-            add(rightPanel, BorderLayout.EAST);
-            add(new JSeparator(SwingConstants.HORIZONTAL), BorderLayout.SOUTH);
-
-            refresh();
-        }
-
-        @Override
-        public void addNotify()
-        {
-            super.addNotify();
-
-            layer.addListener(this);
-        }
-
-        @Override
-        public void removeNotify()
-        {
-            layer.removeListener(this);
-
-            super.removeNotify();
-        }
-
-        void refresh()
-        {
-            label.setText(layer.getName());
-            label.setToolTipText(layer.getName());
-            alphaSlider.setValue((int) (layer.getAlpha() * 100d));
-            visibleButton.setSelected(layer.isVisible());
-            updateVisibleButton(visibleButton);
-
-            validate();
-        }
-
-        // void updateDetailButton(JToggleButton btn)
-        // {
-        // if (btn.isSelected())
-        // {
-        // btn.setIcon(ICON_MINUS);
-        // btn.setToolTipText("hide detail");
-        // }
-        // else
-        // {
-        // btn.setIcon(ICON_PLUS);
-        // btn.setToolTipText("show detail");
-        // }
-        // }
-
-        void updateVisibleButton(JToggleButton btn)
-        {
-            if (btn.isSelected())
-            {
-                btn.setIcon(new IcyIcon(IMAGE_VISIBLE));
-                btn.setToolTipText("Hide layer");
-            }
-            else
-            {
-                btn.setIcon(new IcyIcon(IMAGE_NOT_VISIBLE));
-                btn.setToolTipText("Show layer");
-            }
-        }
-
-        // void setShowDetail(boolean value)
-        // {
-        // if (showDetail != value)
-        // {
-        // showDetail = value;
-        // refresh();
-        // }
-        // }
-
-        /**
-         * @return the layer
-         */
-        public Layer getLayer()
-        {
-            return layer;
-        }
-
-        @Override
-        public void layerChanged(Layer layer)
-        {
-            refresh();
-        }
-    }
-
     /**
      * 
      */
-    private static final long serialVersionUID = 5016943076350616223L;
+    private static final long serialVersionUID = 4550426171735455449L;
 
-    private Viewer viewer;
+    static final String[] columnNames = {"Name", "", ""};
 
-    private final JPanel layersPanel;
-    private final MainListener mainListener;
+    ArrayList<Layer> layers;
+    IcyCanvas canvas;
 
-    /**
-     * 
-     */
-    public LayersPanel()
+    // GUI
+    final AbstractTableModel tableModel;
+    final ListSelectionModel tableSelectionModel;
+    final JTable table;
+
+    final TextFieldFilter nameFilter;
+    private final JPanel filtersPanel;
+
+    final IcyTextField nameField;
+    final IcyButton deleteButton;
+    final JPanel controlPanel;
+
+    // internals
+    boolean isSelectionAdjusting;
+    boolean isLayerEditing;
+    boolean isLayerPropertiesAdjusting;
+
+    final Runnable tableDataRefresher;
+    final Runnable controlPanelRefresher;
+
+    public LayersPanel(boolean showFilters, boolean showControl)
     {
-        super(true);
+        super();
 
-        viewer = null;
+        layers = new ArrayList<Layer>();
+        canvas = null;
+        isSelectionAdjusting = false;
+        isLayerEditing = false;
+        isLayerPropertiesAdjusting = false;
 
-        mainListener = new MainAdapter()
+        tableDataRefresher = new Runnable()
         {
             @Override
-            public void viewerFocused(MainEvent event)
+            public void run()
             {
-                final Viewer viewer = (Viewer) event.getSource();
-
-                ThreadUtil.invokeLater(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        // selected viewer changed
-                        setViewer(viewer);
-                    }
-                });
+                refreshTableData();
+            }
+        };
+        controlPanelRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshControlPanel();
             }
         };
 
-        layersPanel = new JPanel(true);
-        layersPanel.setLayout(new BoxLayout(layersPanel, BoxLayout.PAGE_AXIS));
+        // need filter before load()
+        nameFilter = new TextFieldFilter();
+        nameFilter.setToolTipText("Enter a string sequence to filter Layer on name");
+        nameFilter.addTextListener(this);
 
-        final JPanel bottomPanel = new JPanel(true);
-        bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.PAGE_AXIS));
+        filtersPanel = new JPanel();
+        filtersPanel.setLayout(new BoxLayout(filtersPanel, BoxLayout.LINE_AXIS));
+        filtersPanel.setVisible(showFilters);
 
-        final JPanel localActionPanel = new JPanel(true);
-        localActionPanel.setLayout(new BoxLayout(localActionPanel, BoxLayout.LINE_AXIS));
+        filtersPanel.add(nameFilter);
 
-        // final JButton loadBtn = new JButton("load...");
-        // final JButton saveBtn = new JButton("save...");
-        // final JButton detachBtn = new JButton("detach");
-        //
-        // localActionPanel.add(loadBtn);
-        // localActionPanel.add(saveBtn);
-        // localActionPanel.add(detachBtn);
-        //
-        // final JPanel destActionPanel = new JPanel(true);
-        // destActionPanel.setLayout(new BoxLayout(destActionPanel, BoxLayout.PAGE_AXIS));
-        //
-        // final JPanel destBtnActionPanel = new JPanel(true);
-        // destBtnActionPanel.setLayout(new BoxLayout(destBtnActionPanel, BoxLayout.LINE_AXIS));
-        //
-        // final JButton moveBtn = new JButton("move");
-        // moveBtn.addActionListener(new ActionListener()
-        // {
-        // @Override
-        // public void actionPerformed(ActionEvent e)
-        // {
-        // // TODO Auto-generated method stub
-        //
-        // }
-        // });
-        //
-        // final JButton attachBtn = new JButton("attach");
-        // final JButton copyBtn = new JButton("copy");
-        //
-        // destBtnActionPanel.add(moveBtn);
-        // destBtnActionPanel.add(attachBtn);
-        // destBtnActionPanel.add(copyBtn);
-        //
-        // destActionPanel.add(destBtnActionPanel);
-        //
-        // bottomPanel.add(localActionPanel);
-        // bottomPanel.add(destActionPanel);
+        // build control panel
+        nameField = new IcyTextField();
+        nameField.setToolTipText("Edit name of selected Layer(s)");
+        nameField.addTextListener(new IcyTextListener()
+        {
+            @Override
+            public void textChanged(IcyTextField source)
+            {
+                if (isLayerPropertiesAdjusting)
+                    return;
 
-        final JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BorderLayout());
+                if (nameField.isEnabled())
+                {
+                    final String name = source.getText();
 
-        mainPanel.add(layersPanel, BorderLayout.NORTH);
-        mainPanel.add(Box.createGlue(), BorderLayout.CENTER);
+                    canvas.beginUpdate();
+                    try
+                    {
+                        for (Layer layer : getSelectedLayers())
+                            layer.setName(name);
+                    }
+                    finally
+                    {
+                        canvas.endUpdate();
+                    }
+                }
+            }
+        });
 
-        final JScrollPane sc = new JScrollPane(mainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+        deleteButton = new IcyButton(ResourceUtil.ICON_DELETE, 22);
+        deleteButton.setFlat(true);
+        deleteButton.setToolTipText("Delete selected Layer(s)");
+        deleteButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final Sequence sequence = canvas.getSequence();
+
+                if (sequence != null)
+                {
+                    sequence.beginUpdate();
+                    try
+                    {
+                        // delete selected layers
+                        for (Layer layer : getSelectedLayers())
+                            sequence.removePainter(layer.getPainter());
+                    }
+                    finally
+                    {
+                        sequence.endUpdate();
+                    }
+                }
+            }
+        });
+
+        controlPanel = new JPanel();
+        controlPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
+        controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.LINE_AXIS));
+
+        controlPanel.add(nameField);
+        controlPanel.add(Box.createHorizontalStrut(8));
+        controlPanel.add(deleteButton);
+        controlPanel.add(Box.createHorizontalGlue());
+
+        controlPanel.setVisible(showControl);
+
+        // build table
+        tableModel = new AbstractTableModel()
+        {
+            /**
+             * 
+             */
+            private static final long serialVersionUID = -8573364273165723214L;
+
+            @Override
+            public int getColumnCount()
+            {
+                return columnNames.length;
+            }
+
+            @Override
+            public String getColumnName(int column)
+            {
+                return columnNames[column];
+            }
+
+            @Override
+            public int getRowCount()
+            {
+                return layers.size();
+            }
+
+            @Override
+            public Object getValueAt(int row, int column)
+            {
+                final Layer layer = layers.get(row);
+
+                switch (column)
+                {
+                    case 0:
+                        // layer name
+                        return layer.getName();
+
+                    case 1:
+                        // layer transparency
+                        return Integer.valueOf((int) (layer.getAlpha() * 1000f));
+
+                    case 2:
+                        // layer visibility
+                        return Boolean.valueOf(layer.isVisible());
+
+                    default:
+                        return "";
+                }
+            }
+
+            @Override
+            public void setValueAt(Object aValue, int rowIndex, int columnIndex)
+            {
+                isLayerEditing = true;
+                try
+                {
+                    final Layer layer = layers.get(rowIndex);
+
+                    switch (columnIndex)
+                    {
+                        case 1:
+                            // layer transparency
+                            layer.setAlpha(((Integer) aValue).intValue() / 1000f);
+                            break;
+
+                        case 2:
+                            // layer visibility
+                            layer.setVisible(((Boolean) aValue).booleanValue());
+                            break;
+                    }
+                }
+                finally
+                {
+                    isLayerEditing = false;
+                }
+            }
+
+            @Override
+            public boolean isCellEditable(int row, int column)
+            {
+                return column > 0;
+            }
+
+            @Override
+            public Class<?> getColumnClass(int columnIndex)
+            {
+                switch (columnIndex)
+                {
+                    case 0:
+                        // layer name
+                        return String.class;
+
+                    case 1:
+                        // layer transparency
+                        return Integer.class;
+
+                    case 2:
+                        // layer visibility
+                        return Boolean.class;
+
+                    default:
+                        return String.class;
+                }
+            }
+        };
+
+        table = new JTable(tableModel);
+
+        final TableColumnModel colModel = table.getColumnModel();
+        TableColumn col;
+
+        // columns setting - name
+        col = colModel.getColumn(0);
+        col.setPreferredWidth(140);
+        col.setMinWidth(60);
+
+        // columns setting - transparency
+        col = colModel.getColumn(1);
+        col.setPreferredWidth(100);
+        col.setMinWidth(60);
+        col.setCellEditor(new SliderCellEditor(true));
+        col.setCellRenderer(new SliderCellRenderer());
+
+        // columns setting - visible
+        col = colModel.getColumn(2);
+        col.setPreferredWidth(20);
+        col.setMinWidth(20);
+        col.setCellEditor(new VisibleCellEditor());
+        col.setCellRenderer(new VisibleCellRenderer());
+
+        table.setRowHeight(24);
+        table.setColumnSelectionAllowed(false);
+        table.setRowSelectionAllowed(true);
+        table.setShowVerticalLines(false);
+        table.setAutoCreateRowSorter(true);
+        // table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+
+        tableSelectionModel = table.getSelectionModel();
+        tableSelectionModel.addListSelectionListener(this);
+        tableSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+        final JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.PAGE_AXIS));
+
+        if (showFilters)
+        {
+            topPanel.add(filtersPanel);
+            topPanel.add(Box.createVerticalStrut(4));
+        }
+
+        final JPanel middlePanel = new JPanel();
+        middlePanel.setLayout(new BoxLayout(middlePanel, BoxLayout.PAGE_AXIS));
+
+        middlePanel.add(table.getTableHeader());
+        final JScrollPane sc = new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        middlePanel.add(sc);
 
         setLayout(new BorderLayout());
 
-        add(sc, BorderLayout.CENTER);
-        // add(bottomPanel, BorderLayout.SOUTH);
-
-        rebuildLayersPanel();
+        add(topPanel, BorderLayout.NORTH);
+        add(middlePanel, BorderLayout.CENTER);
+        if (showControl)
+            add(controlPanel, BorderLayout.SOUTH);
 
         validate();
-        setVisible(true);
+
+        refreshLayers();
     }
 
-    @Override
-    public void addNotify()
+    public void setNameFilter(String name)
     {
-        super.addNotify();
+        nameFilter.setText(name);
+    }
 
-        Icy.getMainInterface().addListener(mainListener);
-        if (viewer != null)
+    /**
+     * refresh Layer list (and refresh table data according)
+     */
+    protected void refreshLayers()
+    {
+        if (canvas != null)
+            layers = filterList(canvas.getLayers(), nameFilter.getText());
+        else
+            layers.clear();
+
+        // refresh table data
+        ThreadUtil.bgRunSingle(tableDataRefresher, true);
+    }
+
+    /**
+     * Return index of specified Layer in the Layer list
+     */
+    protected int getLayerIndex(Layer layer)
+    {
+        return layers.indexOf(layer);
+    }
+
+    /**
+     * Return index of specified Layer in the model
+     */
+    protected int getLayerModelIndex(Layer layer)
+    {
+        return getLayerIndex(layer);
+    }
+
+    /**
+     * Return index of specified Layer in the table
+     */
+    protected int getLayerTableIndex(Layer layer)
+    {
+        final int ind = getLayerModelIndex(layer);
+
+        if (ind == -1)
+            return ind;
+
+        try
         {
-            viewer.addListener(this);
-            final IcyCanvas canvas = viewer.getCanvas();
-            // canvas can be null if viewer has just been closed
-            if (canvas != null)
-                canvas.addLayersListener(this);
+            return table.convertRowIndexToView(ind);
+        }
+        catch (IndexOutOfBoundsException e)
+        {
+            return -1;
         }
     }
 
-    @Override
-    public void removeNotify()
+    // public Layer getFirstSelectedRoi()
+    // {
+    // int index = table.getSelectedRow();
+    //
+    // if (index != -1)
+    // {
+    // try
+    // {
+    // index = table.convertRowIndexToModel(index);
+    // }
+    // catch (IndexOutOfBoundsException e)
+    // {
+    // // ignore
+    // }
+    //
+    // if ((index >= 0) || (index < layers.size()))
+    // return layers.get(index);
+    // }
+    //
+    // return null;
+    // }
+
+    public ArrayList<Layer> getSelectedLayers()
     {
-        Icy.getMainInterface().removeListener(mainListener);
-        if (viewer != null)
+        final ArrayList<Layer> result = new ArrayList<Layer>();
+
+        for (int rowIndex : table.getSelectedRows())
         {
-            viewer.removeListener(this);
-            final IcyCanvas canvas = viewer.getCanvas();
-            // canvas can be null if viewer has just been closed
+            int index = -1;
+
+            if (rowIndex != -1)
+            {
+                try
+                {
+                    index = table.convertRowIndexToModel(rowIndex);
+                }
+                catch (IndexOutOfBoundsException e)
+                {
+                    // ignore
+                }
+            }
+
+            if ((index >= 0) && (index < layers.size()))
+                result.add(layers.get(index));
+        }
+
+        return result;
+    }
+
+    void setSelectedLayersInternal(ArrayList<Layer> newSelected)
+    {
+        isSelectionAdjusting = true;
+        try
+        {
+            table.clearSelection();
+
+            if (newSelected != null)
+            {
+                for (Layer layer : newSelected)
+                {
+                    final int index = getLayerTableIndex(layer);
+                    // final int index = getLayerModelIndex(layer);
+
+                    if (index > -1)
+                        tableSelectionModel.addSelectionInterval(index, index);
+                }
+            }
+        }
+        finally
+        {
+            isSelectionAdjusting = false;
+        }
+    }
+
+    ArrayList<Layer> filterList(ArrayList<Layer> list, String nameFilterText)
+    {
+        final ArrayList<Layer> result = new ArrayList<Layer>();
+
+        final boolean nameEmpty = StringUtil.isEmpty(nameFilterText, true);
+        final String nameFilterUp;
+
+        if (!nameEmpty)
+            nameFilterUp = nameFilterText.trim().toLowerCase();
+        else
+            nameFilterUp = "";
+
+        for (Layer layer : list)
+        {
+            // search in name and type
+            if (nameEmpty || (layer.getName().toLowerCase().indexOf(nameFilterUp) != -1))
+                result.add(layer);
+        }
+
+        return result;
+    }
+
+    protected void refreshTableData()
+    {
+        final ArrayList<Layer> save = getSelectedLayers();
+
+        isSelectionAdjusting = true;
+        try
+        {
+            tableModel.fireTableDataChanged();
+        }
+        finally
+        {
+            isSelectionAdjusting = false;
+        }
+
+        setSelectedLayersInternal(save);
+
+        // refresh control panel
+        ThreadUtil.bgRunSingle(controlPanelRefresher, true);
+    }
+
+    // protected void refreshTableRow(final Layer layer)
+    // {
+    // isSelectionAdjusting = true;
+    // try
+    // {
+    // final int rowIndex = getLayerModelIndex(layer);
+    //
+    // tableModel.fireTableRowsUpdated(rowIndex, rowIndex);
+    // }
+    // finally
+    // {
+    // isSelectionAdjusting = false;
+    // }
+    //
+    // // restore selected layer
+    // if (sequence != null)
+    // setSelectedLayersInternal(sequence.getSelectedROIs());
+    // else
+    // setSelectedLayersInternal(null);
+    //
+    // // refresh control panel
+    // refreshControlPanel();
+    // }
+
+    protected void refreshControlPanel()
+    {
+        isLayerPropertiesAdjusting = true;
+        try
+        {
+            if (canvas != null)
+            {
+                final ArrayList<Layer> selectedLayers = getSelectedLayers();
+                // final boolean singleSelect = (selectedRois.size() == 1);
+                final boolean hasSelected = (selectedLayers.size() > 0);
+
+                boolean canEdit = false;
+                for (Layer layer : selectedLayers)
+                {
+                    if (!layer.isAttachedToRoi())
+                    {
+                        canEdit = true;
+                        break;
+                    }
+                }
+
+                nameField.setEnabled(hasSelected && canEdit);
+                deleteButton.setEnabled(hasSelected && canEdit);
+
+                if (hasSelected)
+                {
+                    final Layer layer = selectedLayers.get(0);
+                    final String name = layer.getName();
+
+                    // handle it manually as setText doesn't check for equality
+                    if (!name.equals(nameField.getText()))
+                        nameField.setText(name);
+                }
+                else
+                    nameField.setText("");
+            }
+            else
+            {
+                nameField.setEnabled(false);
+                deleteButton.setEnabled(false);
+                nameField.setText("");
+            }
+        }
+        finally
+        {
+            isLayerPropertiesAdjusting = false;
+        }
+    }
+
+    private void setCanvas(IcyCanvas value)
+    {
+        if (canvas != value)
+        {
             if (canvas != null)
                 canvas.removeLayersListener(this);
-        }
 
-        super.removeNotify();
-    }
+            canvas = value;
 
-    void setViewer(Viewer v)
-    {
-        if (viewer != v)
-        {
-            if (viewer != null)
-            {
-                viewer.removeListener(this);
-
-                final IcyCanvas canvas = viewer.getCanvas();
-                // canvas can be null if viewer has just been closed
-                if (canvas != null)
-                    canvas.removeLayersListener(this);
-            }
-
-            viewer = v;
-
-            if (v != null)
-            {
-                v.addListener(this);
-
-                final IcyCanvas canvas = viewer.getCanvas();
-                // canvas can be null if viewer has just been closed
-                if (canvas != null)
-                    canvas.addLayersListener(this);
-            }
-
-            rebuildLayersPanel();
-        }
-    }
-
-    IcyCanvas getCanvas()
-    {
-        if (viewer != null)
-            return viewer.getCanvas();
-
-        return null;
-    }
-
-    Sequence getSequence()
-    {
-        if (viewer != null)
-            return viewer.getSequence();
-
-        return null;
-    }
-
-    void rebuildLayersPanel()
-    {
-        layersPanel.removeAll();
-
-        final ArrayList<Layer> layers;
-
-        if ((viewer != null) && (viewer.getCanvas() != null))
-            layers = viewer.getCanvas().getLayers();
-        else
-            layers = new ArrayList<Layer>();
-
-        for (Layer layer : layers)
-            layersPanel.add(new LayerComponent(layer));
-
-        layersPanel.validate();
-        // as we use a scroll pane in tab, not nice...
-        // layersPanel.getParent().validate();
-        // layersPanel.getParent().repaint();
-    }
-
-    private LayerComponent getLayerComponent(Layer layer)
-    {
-        for (Component comp : layersPanel.getComponents())
-        {
-            if (comp instanceof LayerComponent)
-            {
-                final LayerComponent layerComponent = (LayerComponent) comp;
-
-                if (layerComponent.getLayer() == layer)
-                    return layerComponent;
-            }
-        }
-
-        return null;
-    }
-
-    @Override
-    public void viewerChanged(ViewerEvent event)
-    {
-        // canvas changed --> rebuild layers panel
-        if (event.getType() == ViewerEventType.CANVAS_CHANGED)
-        {
-            final IcyCanvas canvas = viewer.getCanvas();
-            // canvas can be null if viewer has just been closed
             if (canvas != null)
                 canvas.addLayersListener(this);
-            rebuildLayersPanel();
         }
+
+        refreshLayers();
+    }
+
+    /**
+     * Called when selection has changed
+     */
+    protected void selectionChanged()
+    {
+        // refresh control panel
+        ThreadUtil.bgRunSingle(controlPanelRefresher, true);
     }
 
     @Override
-    public void viewerClosed(Viewer viewer)
+    public void textChanged(IcyTextField source)
     {
-        // handled with mainListener
+        refreshLayers();
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e)
+    {
+        if (isSelectionAdjusting || e.getValueIsAdjusting())
+            return;
+
+        selectionChanged();
+    }
+
+    @Override
+    public void viewerFocused(Viewer viewer)
+    {
+        if (viewer != null)
+            setCanvas(viewer.getCanvas());
+        else
+            setCanvas(null);
+    }
+
+    @Override
+    public void focusedViewerChanged(ViewerEvent event)
+    {
+        if (event.getType() == ViewerEventType.CANVAS_CHANGED)
+            setCanvas(event.getSource().getCanvas());
+    }
+
+    @Override
+    public void sequenceFocused(Sequence value)
+    {
+
+    }
+
+    @Override
+    public void focusedSequenceChanged(SequenceEvent event)
+    {
+
     }
 
     @Override
     public void layersChanged(LayersEvent event)
     {
-        final Layer layer = event.getSource();
-        final LayersEventType type = event.getType();
-
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                switch (type)
-                {
-                    case ADDED:
-                    case REMOVED:
-                        rebuildLayersPanel();
-                        break;
-
-                    case CHANGED:
-                        // multiple changes
-                        if (layer == null)
-                            rebuildLayersPanel();
-                        break;
-                }
-            }
-        });
+        // refresh layer from externals changes
+        if (!isLayerEditing)
+            refreshLayers();
     }
 }

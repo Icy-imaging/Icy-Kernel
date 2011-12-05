@@ -19,37 +19,46 @@
 package icy.system.thread;
 
 /**
+ * Single Id Processor<br>
+ * Provide facilities to process tasks in background.<br>
+ * Only one waiting process per id.
+ * 
  * @author Stephane
  */
 public class IdProcessor extends Processor
 {
-    private final int maxProcessPerId;
-
     /**
-     * 
+     * Create an SingleIdProcessor
      */
-    public IdProcessor(int maxProcess, int maxProcessPerId)
+    public IdProcessor(int priority)
     {
-        // no more than 512 waiting tasks
-        super(512, maxProcess);
-
-        this.maxProcessPerId = maxProcessPerId;
+        super(Processor.DEFAULT_MAX_WAITING, 1, priority);
     }
 
     /**
-     * Request a process
+     * Create an SingleIdProcessor
+     */
+    public IdProcessor()
+    {
+        this(Processor.NORM_PRIORITY);
+    }
+
+    /**
+     * Add a task to processor
      */
     @Override
     public synchronized boolean addTask(Runnable task, boolean onAWTEventThread, int id)
     {
-        // we remove some tasks in queue if needed
-        while (getWaitingTasksCount(id) >= maxProcessPerId)
-            removeFirstWaitingTask(id);
+        if (task == null)
+            return false;
+
+        // we remove pending task if any
+        removeFirstWaitingTask(id);
 
         if (!super.addTask(task, onAWTEventThread, id))
         {
             // error while adding task
-            System.err.println("Queue overhead, ignore execution : " + task);
+            System.err.println("Cannot add task, ignore execution : " + task);
             return false;
         }
 

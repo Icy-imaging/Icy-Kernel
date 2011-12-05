@@ -25,9 +25,9 @@ import icy.gui.component.TextFieldFilter;
 import icy.gui.component.button.ColorChooserButton;
 import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
 import icy.gui.component.button.IcyButton;
-import icy.gui.main.MainAdapter;
-import icy.gui.main.MainEvent;
-import icy.main.Icy;
+import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
+import icy.gui.viewer.Viewer;
+import icy.gui.viewer.ViewerEvent;
 import icy.resource.ResourceUtil;
 import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
@@ -39,7 +39,6 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.sequence.SequenceEvent.SequenceEventType;
-import icy.sequence.SequenceListener;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
@@ -72,7 +71,7 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public class RoisPanel extends JPanel implements SequenceListener, IcyTextListener, ListSelectionListener
+public class RoisPanel extends InspectorSubPanel implements IcyTextListener, ListSelectionListener
 {
     /**
      * 
@@ -105,6 +104,10 @@ public class RoisPanel extends JPanel implements SequenceListener, IcyTextListen
     boolean isRoiTypeAdjusting;
     boolean isRoiPropertiesAdjusting;
 
+    final Runnable tableDataRefresher;
+    final Runnable roiTypeListRefresher;
+    final Runnable controlPanelRefresher;
+
     public RoisPanel(boolean showFilters, boolean showControl)
     {
         super();
@@ -115,15 +118,30 @@ public class RoisPanel extends JPanel implements SequenceListener, IcyTextListen
         isRoiTypeAdjusting = false;
         isRoiPropertiesAdjusting = false;
 
-        // don't care about releasing the listener here
-        Icy.getMainInterface().addListener(new MainAdapter()
+        tableDataRefresher = new Runnable()
         {
             @Override
-            public void sequenceFocused(MainEvent event)
+            public void run()
             {
-                setSequence((Sequence) event.getSource());
+                refreshTableData();
             }
-        });
+        };
+        roiTypeListRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshRoiTypeList();
+            }
+        };
+        controlPanelRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshControlPanel();
+            }
+        };
 
         roiType = new JComboBox(new DefaultComboBoxModel());
         roiType.setToolTipText("Select ROI type to display");
@@ -520,22 +538,6 @@ public class RoisPanel extends JPanel implements SequenceListener, IcyTextListen
         nameFilter.setText(name);
     }
 
-    protected void setSequence(Sequence value)
-    {
-        if (sequence != value)
-        {
-            if (sequence != null)
-                sequence.removeListener(this);
-
-            sequence = value;
-
-            if (sequence != null)
-                sequence.addListener(this);
-
-            refreshRoiTypeList();
-        }
-    }
-
     /**
      * refresh ROI list (and refresh table data according)
      */
@@ -546,7 +548,8 @@ public class RoisPanel extends JPanel implements SequenceListener, IcyTextListen
         else
             rois.clear();
 
-        refreshTableData();
+        // refresh table data
+        ThreadUtil.bgRunSingle(tableDataRefresher, true);
     }
 
     /**
@@ -718,7 +721,6 @@ public class RoisPanel extends JPanel implements SequenceListener, IcyTextListen
         isRoiTypeAdjusting = true;
         try
         {
-
             model.removeAllElements();
             model.addElement("ALL");
 
@@ -777,116 +779,95 @@ public class RoisPanel extends JPanel implements SequenceListener, IcyTextListen
 
     protected void refreshTableData()
     {
-        ThreadUtil.invokeLater(new Runnable()
+        isSelectionAdjusting = true;
+        try
         {
-            @Override
-            public void run()
-            {
-                isSelectionAdjusting = true;
-                try
-                {
-                    tableModel.fireTableDataChanged();
-                }
-                finally
-                {
-                    isSelectionAdjusting = false;
-                }
+            tableModel.fireTableDataChanged();
+        }
+        finally
+        {
+            isSelectionAdjusting = false;
+        }
 
-                // restore selected roi
-                if (sequence != null)
-                    setSelectedRoisInternal(sequence.getSelectedROIs());
-                else
-                    setSelectedRoisInternal(null);
+        // restore selected roi
+        if (sequence != null)
+            setSelectedRoisInternal(sequence.getSelectedROIs());
+        else
+            setSelectedRoisInternal(null);
 
-                // refresh control panel
-                refreshControlPanel();
-            }
-        });
+        // refresh control panel
+        ThreadUtil.bgRunSingle(controlPanelRefresher, true);
     }
 
-    protected void refreshTableRow(final ROI roi)
-    {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                isSelectionAdjusting = true;
-                try
-                {
-                    final int rowIndex = getRoiModelIndex(roi);
-
-                    tableModel.fireTableRowsUpdated(rowIndex, rowIndex);
-                }
-                finally
-                {
-                    isSelectionAdjusting = false;
-                }
-
-                // restore selected roi
-                if (sequence != null)
-                    setSelectedRoisInternal(sequence.getSelectedROIs());
-                else
-                    setSelectedRoisInternal(null);
-
-                // refresh control panel
-                refreshControlPanel();
-            }
-        });
-    }
+    // protected void refreshTableRow(final ROI roi)
+    // {
+    // isSelectionAdjusting = true;
+    // try
+    // {
+    // final int rowIndex = getRoiModelIndex(roi);
+    //
+    // tableModel.fireTableRowsUpdated(rowIndex, rowIndex);
+    // }
+    // finally
+    // {
+    // isSelectionAdjusting = false;
+    // }
+    //
+    // // restore selected roi
+    // if (sequence != null)
+    // setSelectedRoisInternal(sequence.getSelectedROIs());
+    // else
+    // setSelectedRoisInternal(null);
+    //
+    // // refresh control panel
+    // refreshControlPanel();
+    // }
 
     protected void refreshControlPanel()
     {
-        ThreadUtil.invokeLater(new Runnable()
+        isRoiPropertiesAdjusting = true;
+        try
         {
-            @Override
-            public void run()
+            if (sequence != null)
             {
-                isRoiPropertiesAdjusting = true;
-                try
+                final ArrayList<ROI> selectedRois = getSelectedRois();
+                // final boolean singleSelect = (selectedRois.size() == 1);
+                final boolean hasSelected = (selectedRois.size() > 0);
+                final boolean severalsSelected = (selectedRois.size() > 1);
+
+                nameField.setEnabled(hasSelected);
+                colorButton.setEnabled(hasSelected);
+                copyButton.setEnabled(hasSelected);
+                mergeButton.setEnabled(severalsSelected);
+                deleteButton.setEnabled(hasSelected);
+
+                if (hasSelected)
                 {
-                    if (sequence != null)
-                    {
-                        final ArrayList<ROI> selectedRois = getSelectedRois();
-                        // final boolean singleSelect = (selectedRois.size() == 1);
-                        final boolean hasSelected = (selectedRois.size() > 0);
-                        final boolean severalsSelected = (selectedRois.size() > 1);
+                    final ROI roi = selectedRois.get(0);
+                    final String name = roi.getName();
 
-                        nameField.setEnabled(hasSelected);
-                        colorButton.setEnabled(hasSelected);
-                        copyButton.setEnabled(hasSelected);
-                        mergeButton.setEnabled(severalsSelected);
-                        deleteButton.setEnabled(hasSelected);
-
-                        if (hasSelected)
-                        {
-                            final ROI roi = selectedRois.get(0);
-                            final String name = roi.getName();
-
-                            // handle it manually as setText doesn't check for equality
-                            if (!name.equals(nameField.getText()))
-                                nameField.setText(name);
-                            colorButton.setColor(roi.getColor());
-                        }
-                    }
-                    else
-                    {
-                        nameField.setEnabled(false);
-                        colorButton.setEnabled(false);
-                        copyButton.setEnabled(false);
-                        mergeButton.setEnabled(false);
-                        deleteButton.setEnabled(false);
-                    }
-
-                    if (!nameField.isEnabled())
-                        nameField.setText("");
+                    // handle it manually as setText doesn't check for equality
+                    if (!name.equals(nameField.getText()))
+                        nameField.setText(name);
+                    colorButton.setColor(roi.getColor());
                 }
-                finally
-                {
-                    isRoiPropertiesAdjusting = false;
-                }
+                else
+                    nameField.setText("");
             }
-        });
+            else
+            {
+                nameField.setEnabled(false);
+                colorButton.setEnabled(false);
+                copyButton.setEnabled(false);
+                mergeButton.setEnabled(false);
+                deleteButton.setEnabled(false);
+                nameField.setText("");
+            }
+        }
+        finally
+        {
+            isRoiPropertiesAdjusting = false;
+        }
     }
 
     /**
@@ -898,7 +879,7 @@ public class RoisPanel extends JPanel implements SequenceListener, IcyTextListen
             sequence.setSelectedROIs(getSelectedRois());
 
         // refresh control panel
-        refreshControlPanel();
+        ThreadUtil.bgRunSingle(controlPanelRefresher, true);
     }
 
     @Override
@@ -917,24 +898,41 @@ public class RoisPanel extends JPanel implements SequenceListener, IcyTextListen
     }
 
     @Override
-    public void sequenceChanged(SequenceEvent event)
+    public void viewerFocused(Viewer viewer)
     {
-        if (event.getSourceType() == SequenceEventSourceType.SEQUENCE_ROI)
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void focusedViewerChanged(ViewerEvent event)
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void sequenceFocused(Sequence value)
+    {
+        if (sequence != value)
         {
-            if (event.getType() == SequenceEventType.CHANGED)
-            {
-                if (event.getSource() != null)
-                    refreshTableRow((ROI) event.getSource());
-                else
-                    refreshTableData();
-            }
-            else
-                refreshRoiTypeList();
+            sequence = value;
+
+            // refresh ROI type list
+            ThreadUtil.bgRunSingle(roiTypeListRefresher);
         }
     }
 
     @Override
-    public void sequenceClosed(Sequence sequence)
+    public void focusedSequenceChanged(SequenceEvent event)
     {
+        if (event.getSourceType() == SequenceEventSourceType.SEQUENCE_ROI)
+        {
+            if (event.getType() == SequenceEventType.CHANGED)
+                ThreadUtil.bgRunSingle(tableDataRefresher, true);
+            else
+                ThreadUtil.bgRunSingle(roiTypeListRefresher);
+        }
     }
+
 }

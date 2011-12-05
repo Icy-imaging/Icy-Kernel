@@ -38,7 +38,6 @@ import icy.main.Icy;
 import icy.painter.Painter;
 import icy.plugin.interface_.PluginCanvas;
 import icy.roi.ROI;
-import icy.roi.ROI2D;
 import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
@@ -53,6 +52,8 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.JPanel;
@@ -77,6 +78,55 @@ import javax.swing.JToolBar;
 public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerListener, SequenceListener, LUTListener,
         IcyChangedListener, LayerListener
 {
+    public static class EventLayerSorter implements Comparator<Layer>
+    {
+        public static EventLayerSorter instance = new EventLayerSorter();
+
+        @Override
+        public int compare(Layer layer1, Layer layer2)
+        {
+            // // null checking
+            // if (layer1 == null)
+            // {
+            // if (layer2 == null)
+            // return 0;
+            // return -1;
+            // }
+            // if (layer2 == null)
+            // return 1;
+
+            final ROI roi1 = layer1.getAttachedROI();
+            final ROI roi2 = layer2.getAttachedROI();
+
+            // no attached roi ? --> eliminate
+            if (roi1 == null)
+            {
+                if (roi2 == null)
+                    return 0;
+                return -1;
+            }
+            if (roi2 == null)
+                return 1;
+
+            // focus priority
+            if (roi1.isFocused())
+                return 1;
+            if (roi2.isFocused())
+                return -1;
+
+            // selection priority
+            if (roi1.isSelected())
+            {
+                if (roi2.isSelected())
+                    return 0;
+                return 1;
+            }
+            if (roi2.isSelected())
+                return -1;
+
+            return 0;
+        }
+    }
 
     public static IcyCanvas create(PluginCanvas pluginCanvas, Viewer viewer)
     {
@@ -390,6 +440,23 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         {
             return new ArrayList<Layer>(layers);
         }
+    }
+
+    /**
+     * @return the visible layers
+     */
+    public ArrayList<Layer> getVisibleLayers()
+    {
+        final ArrayList<Layer> result = new ArrayList<Layer>();
+
+        synchronized (layers)
+        {
+            for (Layer l : layers)
+                if (l.isVisible())
+                    result.add(l);
+        }
+
+        return result;
     }
 
     /**
@@ -2654,8 +2721,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     {
         // by default we only forward event to painters
         for (Layer layer : getVisibleOrderedLayersForEvent())
-            if (layer.isVisible())
-                layer.getPainter().keyPressed(e, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()), this);
+            layer.getPainter().keyPressed(e, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()), this);
     }
 
     @Override
@@ -2663,8 +2729,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     {
         // by default we only forward event to painters
         for (Layer layer : getVisibleOrderedLayersForEvent())
-            if (layer.isVisible())
-                layer.getPainter().keyReleased(e, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()), this);
+            layer.getPainter().keyReleased(e, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()), this);
     }
 
     /**
@@ -3029,31 +3094,35 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     public ArrayList<Layer> getVisibleOrderedLayersForEvent()
     {
-        final ArrayList<Layer> result = new ArrayList<Layer>();
-        final Sequence seq = getSequence();
+        final ArrayList<Layer> result = getVisibleLayers();
 
-        if (seq != null)
-        {
-            final ArrayList<ROI2D> rois = seq.getROI2Ds();
+        Collections.sort(result, EventLayerSorter.instance);
 
-            // we want the layer of focused ROI in first position
-            for (ROI2D roi : rois)
-                if (roi.isFocused())
-                    addVisibleLayerToList(getLayer(roi), result);
-            // we want the layer of selected ROI in next position
-            for (ROI2D roi : rois)
-                if (roi.isSelected() && !roi.isFocused())
-                    addVisibleLayerToList(getLayer(roi), result);
-            // then we add all others layer
-            for (ROI2D roi : rois)
-                if (!roi.isFocused() && !roi.isSelected())
-                    addVisibleLayerToList(getLayer(roi), result);
-
-            // and finally we add simple (no ROI) layer
-            for (Layer layer : getLayers())
-                if (layer.isVisible() && (!result.contains(layer)))
-                    result.add(layer);
-        }
+        // final ArrayList<Layer> result = new ArrayList<Layer>();
+        // final Sequence seq = getSequence();
+        //
+        // if (seq != null)
+        // {
+        // final ArrayList<ROI2D> rois = seq.getROI2Ds();
+        //
+        // // we want the layer of focused ROI in first position
+        // for (ROI2D roi : rois)
+        // if (roi.isFocused())
+        // addVisibleLayerToList(getLayer(roi), result);
+        // // we want the layer of selected ROI in next position
+        // for (ROI2D roi : rois)
+        // if (roi.isSelected() && !roi.isFocused())
+        // addVisibleLayerToList(getLayer(roi), result);
+        // // then we add all others layer
+        // for (ROI2D roi : rois)
+        // if (!roi.isFocused() && !roi.isSelected())
+        // addVisibleLayerToList(getLayer(roi), result);
+        //
+        // // and finally we add simple (no ROI) layer
+        // for (Layer layer : getLayers())
+        // if (layer.isVisible() && (!result.contains(layer)))
+        // result.add(layer);
+        // }
 
         return result;
     }
@@ -3396,18 +3465,20 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     protected void sequenceROIChanged(ROI roi, SequenceEventType type)
     {
-        if (roi != null)
-        {
-            final Layer layer = getLayer(roi.getPainter());
+        // FIXME : why this is needed ?
 
-            // manually launch changed event on ROI layer
-            if ((layer != null) && (type == SequenceEventType.CHANGED))
-                layer.changed();
-
-            layerChanged(layer);
-        }
-        else
-            layerChanged(null);
+        // if (roi != null)
+        // {
+        // final Layer layer = getLayer(roi.getPainter());
+        //
+        // // manually launch changed event on ROI layer
+        // if ((layer != null) && (type == SequenceEventType.CHANGED))
+        // layer.changed();
+        //
+        // layerChanged(layer);
+        // }
+        // else
+        // layerChanged(null);
     }
 
     @Override

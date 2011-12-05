@@ -18,8 +18,13 @@
  */
 package icy.system.thread;
 
+import icy.system.SystemUtil;
+
+import java.util.ArrayList;
 import java.util.EventListener;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -32,6 +37,9 @@ import javax.swing.event.EventListenerList;
  */
 public class Processor extends ThreadPoolExecutor
 {
+    public static final int DEFAULT_MAX_WAITING = 1024;
+    public static final int DEFAULT_MAX_PROCESSING = SystemUtil.getAvailableProcessors() * 2;
+
     public interface ProcessorEventListener extends EventListener
     {
         public void processDone(Processor source);
@@ -53,15 +61,15 @@ public class Processor extends ThreadPoolExecutor
     protected class Runner implements Runnable
     {
         private final Runnable task;
-        private final boolean onDispatchEvent;
+        private final boolean onEventThread;
         private final int id;
 
-        public Runner(Runnable task, boolean onDispatchEvent, int id)
+        public Runner(Runnable task, boolean onEventThread, int id)
         {
             super();
 
             this.task = task;
-            this.onDispatchEvent = onDispatchEvent;
+            this.onEventThread = onEventThread;
             this.id = id;
         }
 
@@ -70,7 +78,7 @@ public class Processor extends ThreadPoolExecutor
         {
             if (task != null)
             {
-                if (onDispatchEvent)
+                if (onEventThread)
                     ThreadUtil.invokeNow(task);
                 else
                     task.run();
@@ -125,7 +133,13 @@ public class Processor extends ThreadPoolExecutor
     boolean rejected;
 
     /**
+     * Create a new Processor with specified number of maximum waiting and processing tasks.<br>
      * 
+     * @param priority
+     *        Processor priority<br>
+     *        <code>Processor.MIN_PRIORITY</code><br>
+     *        <code>Processor.NORM_PRIORITY</code><br>
+     *        <code>Processor.MAX_PRIORITY</code>
      */
     public Processor(int maxWaiting, int maxProcessing, int priority)
     {
@@ -140,7 +154,7 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * 
+     * Create a new Processor with specified number of maximum waiting and processing tasks.
      */
     public Processor(int maxWaiting, int maxProcessing)
     {
@@ -148,13 +162,42 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Add a task
+     * Create a new Processor with default number of maximum waiting and processing tasks.
      */
-    public boolean addTask(Runnable task, boolean onAWTEventThread, int id)
+    public Processor()
+    {
+        this(DEFAULT_MAX_WAITING, DEFAULT_MAX_PROCESSING);
+    }
+
+    /**
+     * Retrieve Runner from Runnable
+     */
+    private Runner getRunner(Runnable runnable)
+    {
+        for (Runner runner : getWaitingTasks())
+            if (runner.getTask() == runnable)
+                return runner;
+
+        return null;
+    }
+
+    /**
+     * Remove the current task from the waiting queue if possible.<br>
+     * Return true if the operation succeed
+     */
+    public boolean removeTask(Runnable task)
+    {
+        return remove(getRunner(task));
+    }
+
+    /**
+     * Add a task to the processor
+     */
+    public boolean addTask(Runnable task, boolean onEventThread, int id)
     {
         try
         {
-            execute(new Runner(task, onAWTEventThread, id));
+            execute(new Runner(task, onEventThread, id));
         }
         catch (RejectedExecutionException E)
         {
@@ -165,11 +208,19 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Add a task
+     * Add a task to the processor
      */
-    public boolean addTask(Runnable task, boolean onAWTEventThread)
+    public boolean addTask(Runnable task, boolean onEventThread)
     {
-        return addTask(task, onAWTEventThread, -1);
+        return addTask(task, onEventThread, -1);
+    }
+
+    /**
+     * Add a task to the processor
+     */
+    public boolean addTask(Runnable task)
+    {
+        return addTask(task, false, -1);
     }
 
     /**
@@ -233,6 +284,49 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
+     * Return waiting tasks
+     */
+    public Runner[] getWaitingTasks()
+    {
+        final BlockingQueue<Runnable> q = getQueue();
+
+        synchronized (q)
+        {
+            return q.toArray(new Runner[0]);
+        }
+    }
+
+    /**
+     * Return waiting tasks with specified id
+     */
+    public List<Runner> getWaitingTasks(int id)
+    {
+        final ArrayList<Runner> result = new ArrayList<Runner>();
+
+        // scan all tasks
+        for (Runner task : getWaitingTasks())
+            if (task.getId() == id)
+                result.add(task);
+
+        return result;
+    }
+
+    /**
+     * Return waiting tasks from specified instance
+     */
+    public List<Runner> getWaitingTasks(Runnable task)
+    {
+        final ArrayList<Runner> result = new ArrayList<Runner>();
+
+        // scan all tasks
+        for (Runner runner : getWaitingTasks())
+            if (runner.getTask() == task)
+                result.add(runner);
+
+        return result;
+    }
+
+    /**
      * return the number of waiting task
      */
     public int getWaitingTasksCount()
@@ -245,11 +339,9 @@ public class Processor extends ThreadPoolExecutor
      */
     public int getWaitingTasksCount(int id)
     {
-        final Runner[] tasks = getQueue().toArray(new Runner[0]);
-
         int result = 0;
         // scan all tasks
-        for (Runner task : tasks)
+        for (Runner task : getWaitingTasks())
             if (task.getId() == id)
                 result++;
 
@@ -257,30 +349,13 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * return true if we have at least one task with specified id waiting in queue
-     */
-    public boolean hasWaitingTasks(int id)
-    {
-        final Runner[] tasks = getQueue().toArray(new Runner[0]);
-
-        // scan all tasks
-        for (Runner task : tasks)
-            if (task.getId() == id)
-                return true;
-
-        return false;
-    }
-
-    /**
      * return the number of task from specified instance waiting in queue
      */
     public int getWaitingTasksCount(Runnable task)
     {
-        final Runner[] tasks = getQueue().toArray(new Runner[0]);
-
         int result = 0;
         // scan all tasks
-        for (Runner runner : tasks)
+        for (Runner runner : getWaitingTasks())
             if (runner.getTask() == task)
                 result++;
 
@@ -296,31 +371,27 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * return true if we have at least one task from specified instance waiting in queue
+     * return true if we have at least one task with specified id waiting in queue
      */
-    public boolean hasWaitingTasks(Runnable task)
+    public boolean hasWaitingTasks(int id)
     {
-        final Runner[] tasks = getQueue().toArray(new Runner[0]);
-
         // scan all tasks
-        for (Runner runner : tasks)
-            if (runner.getTask() == task)
+        for (Runner task : getWaitingTasks())
+            if (task.getId() == id)
                 return true;
 
         return false;
     }
 
     /**
-     * Remove first waiting task from specified instance
+     * return true if we have at least one task from specified instance waiting in queue
      */
-    public boolean removeFirstWaitingTask(Runnable task)
+    public boolean hasWaitingTasks(Runnable task)
     {
-        final Runner[] tasks = getQueue().toArray(new Runner[0]);
-
-        // remove first task of specified instance
-        for (Runner runner : tasks)
+        // scan all tasks
+        for (Runner runner : getWaitingTasks())
             if (runner.getTask() == task)
-                return remove(runner);
+                return true;
 
         return false;
     }
@@ -330,30 +401,31 @@ public class Processor extends ThreadPoolExecutor
      */
     public boolean removeFirstWaitingTask(int id)
     {
-        final Runner[] tasks = getQueue().toArray(new Runner[0]);
-
-        // remove first task with specified id
-        for (Runner runner : tasks)
-            if (runner.getId() == id)
-                return remove(runner);
+        synchronized (getQueue())
+        {
+            // remove first task with specified id
+            for (Runner runner : getWaitingTasks())
+                if (runner.getId() == id)
+                    return remove(runner);
+        }
 
         return false;
     }
 
     /**
-     * Remove all waiting tasks from specified instance
+     * Remove first waiting task from specified instance
      */
-    public boolean removeWaitingTasks(Runnable task)
+    public boolean removeFirstWaitingTask(Runnable task)
     {
-        final Runner[] tasks = getQueue().toArray(new Runner[0]);
-        boolean result = false;
+        synchronized (getQueue())
+        {
+            // remove first task of specified instance
+            for (Runner runner : getWaitingTasks())
+                if (runner.getTask() == task)
+                    return remove(runner);
+        }
 
-        // remove all tasks of specified instance
-        for (Runner runner : tasks)
-            if (runner.getTask() == task)
-                result |= remove(runner);
-
-        return result;
+        return false;
     }
 
     /**
@@ -361,13 +433,31 @@ public class Processor extends ThreadPoolExecutor
      */
     public boolean removeWaitingTasks(int id)
     {
-        final Runner[] tasks = getQueue().toArray(new Runner[0]);
         boolean result = false;
 
-        // remove all tasks with specified id
-        for (Runner runner : tasks)
-            if (runner.getId() == id)
+        synchronized (getQueue())
+        {
+            // remove all tasks with specified id
+            for (Runner task : getWaitingTasks(id))
+                result |= remove(task);
+        }
+
+        return result;
+    }
+
+    /**
+     * Remove all waiting tasks from specified instance
+     */
+    public boolean removeWaitingTasks(Runnable task)
+    {
+        boolean result = false;
+
+        synchronized (getQueue())
+        {
+            // remove all tasks of specified instance
+            for (Runner runner : getWaitingTasks(task))
                 result |= remove(runner);
+        }
 
         return result;
     }
@@ -379,6 +469,53 @@ public class Processor extends ThreadPoolExecutor
     {
         // remove current task if any
         getQueue().clear();
+    }
+
+    /**
+     * Limit number of waiting task of specified instance to specified value
+     */
+    public void limitWaitingTask(Runnable task, int value)
+    {
+        synchronized (getQueue())
+        {
+            final List<Runner> tasks = getWaitingTasks(task);
+            final int numToRemove = tasks.size() - value;
+
+            for (int i = 0; i < numToRemove; i++)
+                remove(tasks.get(i));
+        }
+    }
+
+    /**
+     * Limit number of waiting task of specified id to specified value
+     */
+    public void limitWaitingTask(int id, int value)
+    {
+        synchronized (getQueue())
+        {
+            final List<Runner> tasks = getWaitingTasks(id);
+            final int numToRemove = tasks.size() - value;
+
+            for (int i = 0; i < numToRemove; i++)
+                remove(tasks.get(i));
+        }
+    }
+
+    /**
+     * Limit number of waiting task to specified value
+     */
+    public boolean limitWaitingTask(int value)
+    {
+        synchronized (getQueue())
+        {
+            final Runner[] tasks = getWaitingTasks();
+            final int numToRemove = tasks.length - value;
+
+            for (int i = 0; i < numToRemove; i++)
+                remove(tasks[i]);
+        }
+
+        return false;
     }
 
     /**

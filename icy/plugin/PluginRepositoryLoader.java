@@ -26,7 +26,6 @@ import icy.preferences.PluginPreferences;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.IcyExceptionHandler;
-import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.XMLUtil;
 
@@ -88,7 +87,6 @@ public class PluginRepositoryLoader
     /**
      * internal
      */
-    private final SingleProcessor singleProcessor;
     private boolean loading;
     private boolean loadingDescriptors;
     private boolean interruptLoadDescriptors;
@@ -107,7 +105,6 @@ public class PluginRepositoryLoader
 
         plugins = new ArrayList<PluginDescriptor>();
         listeners = new EventListenerList();
-        singleProcessor = new SingleProcessor(true);
         loading = false;
         loadingDescriptors = false;
         interruptLoadDescriptors = false;
@@ -186,7 +183,7 @@ public class PluginRepositoryLoader
         {
             // request stop descriptor loading
             interruptLoadDescriptors = true;
-            singleProcessor.requestProcess(runnable);
+            ThreadUtil.bgRunSingle(runnable);
         }
         else
             runnable.run();

@@ -28,5 +28,4 @@ import icy.image.lut.LUT;
 public interface PluginLutViewer
 {
     public IcyLutViewer createLutViewer(Viewer viewer, LUT lut);
-
 }

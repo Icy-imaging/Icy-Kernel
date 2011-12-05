@@ -18,78 +18,63 @@
  */
 package icy.system.thread;
 
-import icy.system.SystemUtil;
-
 /**
  * @author Stephane
+ * @deprecated
  */
+@Deprecated
 public class BackgroundProcessor
 {
-    private static final int DEFAULT_MAX_PROCESSING = SystemUtil.getAvailableProcessors() * 2;
-    private static final int DEFAULT_MAX_WAITING = 1024;
-
-    private static final Processor bgProcessor = new Processor(DEFAULT_MAX_WAITING, DEFAULT_MAX_PROCESSING,
-            Processor.MIN_PRIORITY);
-
     /**
-     * start background processing of specified Runnable
-     * 
-     * @param runnable
-     * @param onAWTEventThread
-     * @return false if queue is full
+     * @deprecated uses {@link ThreadUtil#bgRun(Runnable, boolean)} instead
      */
-    public static boolean bgRun(Runnable runnable, boolean onAWTEventThread)
+    @Deprecated
+    public static boolean bgRun(Runnable runnable, boolean onEventThread)
     {
-        return bgProcessor.addTask(runnable, onAWTEventThread);
+        return ThreadUtil.bgRun(runnable, onEventThread);
     }
 
     /**
-     * start background processing of specified Runnable
-     * 
-     * @param runnable
+     * @deprecated uses {@link ThreadUtil#bgRun(Runnable)} instead
      */
+    @Deprecated
     public static boolean bgRun(Runnable runnable)
     {
-        return bgRun(runnable, false);
+        return ThreadUtil.bgRun(runnable);
     }
 
     /**
-     * same as bgRun except it waits until it accepts the new task
-     * 
-     * @param runnable
+     * @deprecated uses {@link ThreadUtil#bgRunWait(Runnable)} instead
      */
+    @Deprecated
     public static void bgRunWait(Runnable runnable)
     {
-        if (runnable != null)
-        {
-            while (!bgRun(runnable, false))
-                ThreadUtil.sleep(1);
-        }
+        ThreadUtil.bgRunWait(runnable);
     }
 
     /**
-     * 
+     * @deprecated uses {@link ThreadUtil#getActiveBgTaskCount()} instead
      */
+    @Deprecated
     public static int getActiveCount()
     {
-        return bgProcessor.getActiveCount();
+        return ThreadUtil.getActiveBgTaskCount();
     }
 
     /**
-     * 
+     * @deprecated
      */
+    @Deprecated
     public static boolean hasIdleSlots()
     {
-        return getActiveCount() < DEFAULT_MAX_PROCESSING;
+        return true;
     }
 
     /**
-     * 
+     * @deprecated
      */
+    @Deprecated
     public static void waitForIdleSlots()
     {
-        while (!hasIdleSlots())
-            ThreadUtil.sleep(1);
     }
-
 }

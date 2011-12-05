@@ -319,6 +319,8 @@ public class GuiUtil
     /**
      * Allow to enable/Disable all the content of a container ( such as a JPanel
      * for instance )
+     * 
+     * @deprecated what was the goal of this method ???
      */
     public static void setEnableContainer(Container container, boolean enable)
     {

@@ -22,8 +22,11 @@ import icy.canvas.IcyCanvas;
 import icy.gui.viewer.Viewer;
 
 /**
+ * Plugin Canvas interface.<br>
+ * Used to define a plugin representing a specific IcyCanvas.<br>
+ * The plugin will appears in the Canvas list.<br>
+ * 
  * @author Fab & Stephane
- *         Means the plugin is a canvas plugin
  */
 public interface PluginCanvas
 {

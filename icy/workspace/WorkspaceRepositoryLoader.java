@@ -22,7 +22,6 @@ import icy.common.EventHierarchicalChecker;
 import icy.network.URLUtil;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.IcyExceptionHandler;
-import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
@@ -104,7 +103,6 @@ public class WorkspaceRepositoryLoader
     /**
      * internal
      */
-    private final SingleProcessor singleProcessor;
     private boolean loading;
 
     /**
@@ -121,7 +119,6 @@ public class WorkspaceRepositoryLoader
 
         workspaces = new ArrayList<Workspace>();
         listeners = new EventListenerList();
-        singleProcessor = new SingleProcessor(true);
         loading = false;
     }
 
@@ -173,7 +170,7 @@ public class WorkspaceRepositoryLoader
         };
 
         if (asynch)
-            singleProcessor.requestProcess(runnable);
+            ThreadUtil.bgRunSingle(runnable);
         else
             runnable.run();
     }

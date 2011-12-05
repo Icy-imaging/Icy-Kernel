@@ -61,6 +61,8 @@ public class ResourceUtil
     public static final Image ICON_LOCK_OPEN = ResourceUtil.getAlphaIconAsImage("padlock_open.png");
     public static final Image ICON_LOCK_CLOSE = ResourceUtil.getAlphaIconAsImage("padlock_closed.png");
     public static final Image ICON_LOCKED_BASE = ResourceUtil.getAlphaIconAsImage("locked.png");
+    public static final Image ICON_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png");
+    public static final Image ICON_NOT_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_close.png");
 
     private static final String ICON_PATH = "res/icon/";
     private static final String IMAGE_PATH = "res/image/";

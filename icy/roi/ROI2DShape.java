@@ -327,10 +327,14 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                 // ROI selected ?
                 if (selected)
                 {
-                    // show content
-                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-                    g2.fill(shape);
-                    g2.setComposite(AlphaComposite.Src);
+                    final Graphics2D g3 = (Graphics2D) g2.create();
+
+                    final AlphaComposite prevAlpha = (AlphaComposite) g3.getComposite();
+                    // show content with an alpha factor
+                    g3.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * 0.3f));
+                    g3.fill(shape);
+
+                    g3.dispose();
                 }
 
                 if (selected)

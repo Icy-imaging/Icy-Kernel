@@ -35,6 +35,7 @@ import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -43,9 +44,8 @@ import javax.swing.JInternalFrame;
  * MainInterface
  * 
  * @see icy.gui.main.MainInterfaceGui
- * @author Fabrice de Chaumont
+ * @author Fabrice de Chaumont & Stephane
  */
-
 public interface MainInterface
 {
     /**
@@ -95,7 +95,15 @@ public interface MainInterface
      */
     public abstract IcyBufferedImage getFocusedImage();
 
+    /**
+     * Return all active viewers
+     */
     public abstract ArrayList<Viewer> getViewers();
+
+    /**
+     * Return all active viewers(HashSet form)
+     */
+    public abstract HashSet<Viewer> getViewerSet();
 
     /**
      * Set focus on specified viewer
@@ -178,9 +186,14 @@ public interface MainInterface
     public abstract Viewer getActiveViewer();
 
     /**
-     * Return list of active / opened sequence (displayed in a viewer)
+     * Return list of active sequence (displayed in a viewer)
      */
     public abstract ArrayList<Sequence> getSequences();
+
+    /**
+     * Return list of active sequence (displayed in a viewer) in HashSet form
+     */
+    public abstract HashSet<Sequence> getSequenceSet();
 
     /**
      * Return true if specified sequence is currently opened (displayed in a viewer)
@@ -229,6 +242,11 @@ public interface MainInterface
     public abstract ArrayList<ROI> getROIs();
 
     /**
+     * Return all active ROI (HashSet form)
+     */
+    public abstract HashSet<ROI> getROISet();
+
+    /**
      * Return the ROI containing the specified painter (if any)
      */
     public abstract ROI getROI(Painter painter);
@@ -237,6 +255,11 @@ public interface MainInterface
      * Return all active Painter
      */
     public abstract ArrayList<Painter> getPainters();
+
+    /**
+     * Return all active Painter (HashSet form)
+     */
+    public abstract HashSet<Painter> getPainterSet();
 
     public abstract SwimmingPool getSwimmingPool();
 
@@ -252,15 +275,11 @@ public interface MainInterface
 
     /**
      * Add main listener
-     * 
-     * @param listener
      */
     public abstract void addListener(MainListener listener);
 
     /**
      * Remove main listener
-     * 
-     * @param listener
      */
     public abstract void removeListener(MainListener listener);
 
@@ -269,29 +288,56 @@ public interface MainInterface
      * <br>
      * CAUTION : A weak reference is used to reference the listener for easier release<br>
      * so you should have a hard reference to your listener to keep it alive
-     * 
-     * @param listener
      */
     public abstract void addCanExitListener(AcceptListener listener);
 
     /**
      * Remove "can exit" listener
-     * 
-     * @param listener
      */
     public abstract void removeCanExitListener(AcceptListener listener);
 
     /**
      * Internal remove "can exit" listener (used internally only)
-     * 
-     * @param listener
      */
     public abstract void internalRemoveCanExitListener(WeakAcceptListener listener);
 
+    /**
+     * Add focused viewer listener.<br>
+     * This permit to receive events of focused viewer only.<br>
+     * It can also be used to detect viewer focus change.
+     */
+    public abstract void addFocusedViewerListener(FocusedViewerListener listener);
+
+    /**
+     * Remove focused viewer listener.
+     */
+    public abstract void removeFocusedViewerListener(FocusedViewerListener listener);
+
+    /**
+     * Add focused sequence listener.<br>
+     * This permit to receive events of focused sequence only.<br>
+     * It can also be used to detect sequence focus change.
+     */
+    public abstract void addFocusedSequenceListener(FocusedSequenceListener listener);
+
+    /**
+     * Remove focused sequence listener.
+     */
+    public abstract void removeFocusedSequenceListener(FocusedSequenceListener listener);
+
+    /**
+     * Start update.
+     */
     public abstract void beginUpdate();
 
+    /**
+     * End update.
+     */
     public abstract void endUpdate();
 
+    /**
+     * Return true if main interface is currently begin in update state
+     */
     public abstract boolean isUpdating();
 
     public abstract void onChanged(EventHierarchicalChecker object);

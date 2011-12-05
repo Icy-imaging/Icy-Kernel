@@ -19,9 +19,11 @@
 package icy.plugin.interface_;
 
 /**
- * define a plugin as a library: <li>This plugin is not displayed in the menu
+ * Plugin Library interface.<br>
+ * Used to define a plugin which may contains helper methods.<br>
+ * Can be shared between severals plugins.
  * 
- * @author Fabrice
+ * @author Fabrice & Stephane
  */
 public interface PluginLibrary
 {

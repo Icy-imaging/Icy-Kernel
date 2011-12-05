@@ -17,6 +17,8 @@ import java.awt.image.BufferedImage;
 import org.pushingpixels.flamingo.api.common.icon.ResizableIcon;
 
 /**
+ * IcyIcon class.
+ * 
  * @author Stephane
  */
 public class IcyIcon implements ResizableIcon

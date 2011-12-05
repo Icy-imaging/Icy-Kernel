@@ -483,7 +483,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
     public void refreshHistoData()
     {
         // we want background refresh
-        processor.requestProcess(histoUpdater, false);
+        processor.addTask(histoUpdater);
     }
 
     // this method is called by processor, we don't mind about exception here

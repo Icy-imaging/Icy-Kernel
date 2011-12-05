@@ -23,6 +23,7 @@ import icy.painter.Painter;
 import icy.roi.ROI;
 import icy.util.StringUtil;
 
+import java.lang.ref.WeakReference;
 import java.util.EventListener;
 
 import javax.swing.event.EventListenerList;
@@ -40,6 +41,8 @@ public class Layer
     private final static String DEFAULT_NAME = "layer";
 
     private final Painter painter;
+    // cache for ROI
+    private WeakReference<ROI> roi;
 
     private String name;
     private boolean visible;
@@ -65,6 +68,7 @@ public class Layer
 
         visible = true;
         alpha = 1f;
+        roi = null;
 
         listeners = new EventListenerList();
     }
@@ -124,7 +128,11 @@ public class Layer
      */
     public ROI getAttachedROI()
     {
-        return Icy.getMainInterface().getROI(painter);
+        if (roi == null)
+            // search for attached ROI
+            roi = new WeakReference<ROI>(Icy.getMainInterface().getROI(painter));
+
+        return roi.get();
     }
 
     /**

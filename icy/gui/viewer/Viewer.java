@@ -466,8 +466,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     {
         final JMenu result = getDefaultSystemMenu();
 
-        final JMenuItem overlayItem = new JMenuItem("Display Overlay");
-        overlayItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, 0));
+        final JMenuItem overlayItem = new JMenuItem("Display layers");
+        overlayItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, 0));
         overlayItem.setIcon(new IcyIcon(ICON_LAYER, ICON_SIZE));
         if ((canvas != null) && canvas.getDrawLayers())
             overlayItem.setText("Hide layers");
@@ -648,6 +648,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         duplicateButton = new IcyButton(new DuplicateAction());
         duplicateButton.setFocusable(false);
         duplicateButton.setHideActionText(true);
+        duplicateButton.setToolTipText("Duplicate view (no data duplication)");
         switchStateButton = new IcyButton(getSwitchStateAction());
         switchStateButton.setFocusable(false);
         switchStateButton.setHideActionText(true);

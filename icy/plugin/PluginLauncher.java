@@ -21,7 +21,7 @@ package icy.plugin;
 import icy.main.Icy;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginImageAnalysis;
-import icy.plugin.interface_.PluginStartAsThread;
+import icy.plugin.interface_.PluginOwnThread;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 
@@ -33,12 +33,12 @@ import icy.system.thread.ThreadUtil;
  */
 public class PluginLauncher
 {
-    private static class LaunchingThread extends Thread
+    private static class PluginThread extends Thread
     {
         final PluginDescriptor pluginDesc;
         final Plugin plugin;
 
-        public LaunchingThread(PluginDescriptor pluginDesc, Plugin plugin)
+        public PluginThread(PluginDescriptor pluginDesc, Plugin plugin)
         {
             this.pluginDesc = pluginDesc;
             this.plugin = plugin;
@@ -74,26 +74,14 @@ public class PluginLauncher
             // register plugin
             Icy.getMainInterface().registerPlugin(plugin);
 
-            final Thread launchingThread = new LaunchingThread(pluginDesc, plugin);
+            final Thread thread = new PluginThread(pluginDesc, plugin);
 
-            if (plugin instanceof PluginStartAsThread)
-            {
+            if (plugin instanceof PluginOwnThread)
                 // launch as thread
-                launchingThread.start();
-            }
+                thread.start();
             else
-            {
-                // launch in graphic thread now
-                ThreadUtil.invokeNow(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        // direct call to run to avoid thread creation.
-                        launchingThread.run();
-                    }
-                });
-            }
+                // direct launch in EDT now (no thread creation)
+                ThreadUtil.invokeNow(thread);
         }
         catch (Throwable t)
         {

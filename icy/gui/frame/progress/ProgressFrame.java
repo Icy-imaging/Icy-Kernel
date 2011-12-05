@@ -19,7 +19,6 @@
 package icy.gui.frame.progress;
 
 import icy.common.ProgressListener;
-import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
@@ -31,7 +30,7 @@ import javax.swing.JProgressBar;
  * 
  * @author fab & stephane
  */
-public class ProgressFrame extends TaskFrame implements ProgressListener
+public class ProgressFrame extends TaskFrame implements ProgressListener, Runnable
 {
     /**
      * gui
@@ -59,7 +58,7 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
     /**
      * internals
      */
-    private final SingleProcessor processor;
+    // private final SingleProcessor processor;
 
     public ProgressFrame(final String message)
     {
@@ -68,7 +67,7 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
         // default
         length = 100d;
         position = -1d;
-        processor = new SingleProcessor(true);
+        // processor = new SingleProcessor(true);
         this.message = message;
 
         ThreadUtil.invokeLater(new Runnable()
@@ -104,20 +103,24 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
         return "  " + message + "  ";
     }
 
+    @Override
+    public void run()
+    {
+        updateDisplay();
+    }
+
     public void refresh()
     {
-        processor.requestProcess(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                updateDisplay();
-            }
-        }, true);
+        // refresh (need single delayed execution)
+        ThreadUtil.bgRunSingle(this, true);
     }
+
+    int v = 0;
 
     protected void updateDisplay()
     {
+        System.out.println("refreshed ! " + v++);
+
         // position information
         if ((position != -1d) && (length > 0d))
         {
@@ -246,4 +249,5 @@ public class ProgressFrame extends TaskFrame implements ProgressListener
 
         return true;
     }
+
 }

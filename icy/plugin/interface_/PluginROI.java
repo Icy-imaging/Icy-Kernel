@@ -23,7 +23,11 @@ import icy.roi.ROI;
 import java.awt.geom.Point2D;
 
 /**
- * @author Stephane
+ * Plugin ROI interface.<br>
+ * Used to define a plugin representing a specific ROI.<br>
+ * The plugin will appears in the ROI list.<br>
+ * 
+ * @author Fab & Stephane
  */
 public interface PluginROI
 {

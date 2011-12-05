@@ -466,7 +466,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 imageCache = null;
                 needRebuild = true;
                 // build cache
-                processor.requestProcess(this, false);
+                processor.addTask(this, false);
             }
 
             public void invalidCache()
@@ -488,7 +488,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             {
                 if (needRebuild)
                     // rebuild cache
-                    processor.requestProcess(this, false);
+                    processor.addTask(this, false);
 
                 // just repaint
                 CanvasView.this.repaint();

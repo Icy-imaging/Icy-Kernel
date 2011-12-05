@@ -31,6 +31,9 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.util.Vector;
 
+/**
+ * @deprecated Shouldn't be in kernel
+ */
 public class ColorChooserPainter extends AbstractPainter
 {
     private Point position;

@@ -495,11 +495,16 @@ public class NetworkUtil
         // read response from the input stream.
         final BufferedReader in = new BufferedReader(new InputStreamReader(getInputStream(uc, false)));
 
-        String temp;
-        while ((temp = in.readLine()) != null)
-            response += temp + "\n";
-
-        in.close();
+        try
+        {
+            String temp;
+            while ((temp = in.readLine()) != null)
+                response += temp + "\n";
+        }
+        finally
+        {
+            in.close();
+        }
 
         return response;
     }

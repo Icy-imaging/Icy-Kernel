@@ -54,6 +54,7 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -121,11 +122,11 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * painters
      */
-    private final ArrayList<Painter> painters;
+    private final HashSet<Painter> painters;
     /**
      * ROIs
      */
-    private final ArrayList<ROI> ROIs;
+    private final HashSet<ROI> rois;
 
     /**
      * id of sequence (uniq during an ICY session)
@@ -214,8 +215,8 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         timeInterval = 1d;
 
         volumetricImages = new TreeMap<Integer, VolumetricImage>();
-        painters = new ArrayList<Painter>();
-        ROIs = new ArrayList<ROI>();
+        painters = new HashSet<Painter>();
+        rois = new HashSet<ROI>();
         persistent = new SequencePersistent(this);
         undoManager = new IcyUndoManager(this);
 
@@ -259,18 +260,18 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     @Override
     protected void finalize() throws Throwable
     {
-        final boolean hadRoi = !ROIs.isEmpty();
+        final boolean hadRoi = !rois.isEmpty();
         final boolean hadPainter = !painters.isEmpty();
 
-        synchronized (ROIs)
+        synchronized (rois)
         {
             synchronized (painters)
             {
                 // remove all listener on ROI
-                for (ROI roi : ROIs)
+                for (ROI roi : rois)
                     roi.removeListener(this);
 
-                ROIs.clear();
+                rois.clear();
                 painters.clear();
             }
         }
@@ -278,7 +279,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         // notify some painters has been removed
         if (hadRoi || hadPainter)
             painterChanged(null, SequenceEventType.REMOVED);
-        // notify some rois has been removed
+        // notify some ROIs has been removed
         if (hadRoi)
             roiChanged(null, SequenceEventType.REMOVED);
 
@@ -576,7 +577,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Set X pixel size
+     * Set X pixel size (in mm)
      */
     public void setPixelSizeX(double value)
     {
@@ -588,7 +589,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Set Y pixel size
+     * Set Y pixel size (in mm)
      */
     public void setPixelSizeY(double value)
     {
@@ -600,7 +601,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Set Z pixel size
+     * Set Z pixel size (in mm)
      */
     public void setPixelSizeZ(double value)
     {
@@ -612,7 +613,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Set T time resolution
+     * Set T time resolution (in ms)
      */
     public void setTimeInterval(double value)
     {
@@ -746,9 +747,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public boolean contains(ROI roi)
     {
-        synchronized (ROIs)
+        synchronized (rois)
         {
-            return ROIs.contains(roi);
+            return rois.contains(roi);
         }
     }
 
@@ -764,13 +765,35 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
+     * Return all painters attached to this sequence (HashSet form)
+     */
+    public HashSet<Painter> getPainterSet()
+    {
+        synchronized (painters)
+        {
+            return new HashSet<Painter>(painters);
+        }
+    }
+
+    /**
      * Return all ROIs attached to this sequence
      */
     public ArrayList<ROI> getROIs()
     {
-        synchronized (ROIs)
+        synchronized (rois)
         {
-            return new ArrayList<ROI>(ROIs);
+            return new ArrayList<ROI>(rois);
+        }
+    }
+
+    /**
+     * Return all ROIs attached to this sequence (HashSet form)
+     */
+    public HashSet<ROI> getROISet()
+    {
+        synchronized (rois)
+        {
+            return new HashSet<ROI>(rois);
         }
     }
 
@@ -918,7 +941,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
             return true;
         }
 
-        final ArrayList<ROI> listRoi = getROIs();
+        final HashSet<ROI> listRoi = getROISet();
 
         beginUpdate();
         try
@@ -947,26 +970,23 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Set selected ROI (unselected all others)
      */
-    public void setSelectedROIs(ArrayList<ROI> newSelected)
+    public void setSelectedROIs(ArrayList<ROI> selected)
     {
         final ArrayList<ROI> oldSelected = getSelectedROIs();
-        final int newSelectedSize;
-        final int oldSelectedSize;
+        final HashSet<ROI> newSelected;
 
-        if (newSelected == null)
-            newSelectedSize = 0;
+        if (selected != null)
+            newSelected = new HashSet<ROI>(selected);
         else
-            newSelectedSize = newSelected.size();
-        if (oldSelected == null)
-            oldSelectedSize = 0;
-        else
-            oldSelectedSize = oldSelected.size();
+            newSelected = new HashSet<ROI>();
+
+        final int newSelectedSize = newSelected.size();
+        final int oldSelectedSize = oldSelected.size();
 
         // easy optimization
         if ((newSelectedSize == 0) && (oldSelectedSize == 0))
             return;
-
-        // same selection, don't need to udpate it
+        // same selection, don't need to update it (use HashSet for fast .contains())
         if ((newSelectedSize == oldSelectedSize) && newSelected.containsAll(oldSelected))
             return;
 
@@ -996,7 +1016,8 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public boolean setFocusedROI(ROI roi)
     {
-        final ArrayList<ROI> listRoi = getROIs();
+        // faster .contain()
+        final HashSet<ROI> listRoi = getROISet();
 
         beginUpdate();
         try
@@ -1055,9 +1076,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         if (contains(roi))
             return false;
 
-        synchronized (ROIs)
+        synchronized (rois)
         {
-            ROIs.add(roi);
+            rois.add(roi);
         }
         // add listener to ROI
         roi.addListener(this);
@@ -1099,9 +1120,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
             // remove ROI painter first
             removePainter(roi.getPainter());
             // remove ROI
-            synchronized (ROIs)
+            synchronized (rois)
             {
-                ROIs.remove(roi);
+                rois.remove(roi);
             }
             // remove listener
             roi.removeListener(this);
@@ -1133,7 +1154,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public void removeAllROI(boolean canUndo)
     {
-        if (!ROIs.isEmpty())
+        if (!rois.isEmpty())
         {
             final ArrayList<ROI> allROIs = getROIs();
 
@@ -1147,10 +1168,10 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
             // notify painters removed
             painterChanged(null, SequenceEventType.REMOVED);
 
-            synchronized (ROIs)
+            synchronized (rois)
             {
                 // clear list
-                ROIs.clear();
+                rois.clear();
             }
 
             // remove listeners
@@ -1193,20 +1214,18 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public boolean removePainter(Painter painter)
     {
-        if (contains(painter))
+        boolean result;
+
+        synchronized (painters)
         {
-            synchronized (painters)
-            {
-                painters.remove(painter);
-            }
-
-            // notify painter removed
-            painterChanged(painter, SequenceEventType.REMOVED);
-
-            return true;
+            result = painters.remove(painter);
         }
 
-        return false;
+        // notify painter removed
+        if (result)
+            painterChanged(painter, SequenceEventType.REMOVED);
+
+        return result;
     }
 
     /**
@@ -1945,18 +1964,16 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * @deprecated use {@link #getDataType_()} instead
+     * Return true if this is a float data type sequence
      */
-    @Deprecated
     public boolean isFloatDataType()
     {
         return getDataType_().isFloat();
     }
 
     /**
-     * @deprecated use {@link #getDataType_()} instead
+     * Return true if this is a signed data type sequence
      */
-    @Deprecated
     public boolean isSignedDataType()
     {
         return getDataType_().isSigned();

@@ -344,45 +344,21 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             // indexed color ?
             if (indexed)
             {
-                final IcyColorMap colorMap = new IcyColorMap("component " + effC, (effC == 3) ? IcyColorMapType.ALPHA
-                        : IcyColorMapType.RGB);
-
-                boolean ok = false;
-
                 // only 8 bits and 16 bits lookup table supported
                 switch (dataType.getJavaType())
                 {
                     case BYTE:
-                    {
-                        final byte[][] maps = reader.get8BitLookupTable();
-
-                        // can have null here
-                        if (maps != null)
-                        {
-                            colorMap.copyFrom(maps);
-                            ok = true;
-                        }
+                        colormaps[effC] = new IcyColorMap("component " + effC, reader.get8BitLookupTable());
                         break;
-                    }
 
                     case SHORT:
-                    {
-                        final short[][] maps = reader.get16BitLookupTable();
-
-                        // can have null here
-                        if (maps != null)
-                        {
-                            colorMap.copyFrom(maps);
-                            ok = true;
-                        }
+                        colormaps[effC] = new IcyColorMap("component " + effC, reader.get16BitLookupTable());
                         break;
-                    }
-                }
 
-                if (ok)
-                    colormaps[effC] = colorMap;
-                else
-                    colormaps[effC] = null;
+                    default:
+                        colormaps[effC] = new IcyColorMap("component " + effC);
+                        break;
+                }
             }
         }
 
@@ -1573,18 +1549,16 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated use {@link #getDataType_()} instead
+     * Return true if this is a float data type image
      */
-    @Deprecated
     public boolean isFloatDataType()
     {
         return getDataType_().isFloat();
     }
 
     /**
-     * @deprecated use {@link #getDataType_()} instead
+     * Return true if this is a signed data type image
      */
-    @Deprecated
     public boolean isSignedDataType()
     {
         return getDataType_().isSigned();

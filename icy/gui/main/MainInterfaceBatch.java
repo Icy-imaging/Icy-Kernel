@@ -35,6 +35,7 @@ import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -377,4 +378,51 @@ public class MainInterfaceBatch implements MainInterface
         return true;
     }
 
+    @Override
+    public HashSet<Viewer> getViewerSet()
+    {
+        return new HashSet<Viewer>();
+    }
+
+    @Override
+    public HashSet<Sequence> getSequenceSet()
+    {
+        return new HashSet<Sequence>();
+    }
+
+    @Override
+    public HashSet<ROI> getROISet()
+    {
+        return new HashSet<ROI>();
+    }
+
+    @Override
+    public HashSet<Painter> getPainterSet()
+    {
+        return new HashSet<Painter>();
+    }
+
+    @Override
+    public void addFocusedViewerListener(FocusedViewerListener listener)
+    {
+
+    }
+
+    @Override
+    public void removeFocusedViewerListener(FocusedViewerListener listener)
+    {
+
+    }
+
+    @Override
+    public void addFocusedSequenceListener(FocusedSequenceListener listener)
+    {
+
+    }
+
+    @Override
+    public void removeFocusedSequenceListener(FocusedSequenceListener listener)
+    {
+
+    }
 }

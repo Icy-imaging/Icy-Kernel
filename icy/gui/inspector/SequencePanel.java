@@ -19,6 +19,12 @@
 package icy.gui.inspector;
 
 import icy.gui.component.PopupPanel;
+import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
+import icy.gui.sequence.SequenceInfosPanel;
+import icy.gui.viewer.Viewer;
+import icy.gui.viewer.ViewerEvent;
+import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
 
 import java.awt.BorderLayout;
 
@@ -29,7 +35,7 @@ import javax.swing.JPanel;
 /**
  * @author Stephane
  */
-public class SequencePanel extends JPanel
+public class SequencePanel extends InspectorSubPanel
 {
     /**
      * 
@@ -39,9 +45,12 @@ public class SequencePanel extends JPanel
     private final PopupPanel canvasPopupPanel;
     private final PopupPanel lutPopupPanel;
     private final PopupPanel infosPopupPanel;
+
     private final JPanel canvasPanel;
     private final JPanel lutPanel;
     private final JPanel infosPanel;
+
+    private final SequenceInfosPanel sequenceInfosPanel;
 
     /**
      * 
@@ -62,6 +71,9 @@ public class SequencePanel extends JPanel
         infosPanel = infosPopupPanel.getMainPanel();
         infosPanel.setLayout(new BorderLayout());
         infosPopupPanel.expand();
+
+        sequenceInfosPanel = new SequenceInfosPanel();
+        infosPanel.add(sequenceInfosPanel, BorderLayout.CENTER);
 
         final JPanel topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.PAGE_AXIS));
@@ -87,7 +99,6 @@ public class SequencePanel extends JPanel
         if (panel != null)
             canvasPanel.add(panel, BorderLayout.CENTER);
 
-        // FIXME : why we need this ???
         canvasPanel.revalidate();
     }
 
@@ -98,18 +109,59 @@ public class SequencePanel extends JPanel
         if (panel != null)
             lutPanel.add(panel, BorderLayout.CENTER);
 
-        // FIXME : why we need this ???
         lutPanel.revalidate();
     }
 
-    public void setInfosPanel(JPanel panel)
+    @Override
+    public void viewerFocused(Viewer viewer)
     {
-        infosPanel.removeAll();
+        if (viewer != null)
+        {
+            setLutPanel(viewer.getLutPanel());
+            setCanvasPanel(viewer.getLutPanel());
+        }
+        else
+        {
+            setLutPanel(null);
+            setCanvasPanel(null);
+        }
 
-        if (panel != null)
-            infosPanel.add(panel, BorderLayout.CENTER);
+        sequenceInfosPanel.viewerFocused(viewer);
+    }
 
-        // FIXME : why we need this ???
-        infosPanel.revalidate();
+    @Override
+    public void focusedViewerChanged(ViewerEvent event)
+    {
+        // we receive from current focused viewer only
+        switch (event.getType())
+        {
+            case CANVAS_CHANGED:
+                // refresh canvas panel
+                setCanvasPanel(event.getSource().getCanvasPanel());
+                break;
+
+            case LUT_CHANGED:
+                // refresh lut panel
+                setLutPanel(event.getSource().getLutPanel());
+                break;
+
+            case POSITION_CHANGED:
+                // nothing to do
+                break;
+        }
+
+        sequenceInfosPanel.focusedViewerChanged(event);
+    }
+
+    @Override
+    public void sequenceFocused(Sequence sequence)
+    {
+        sequenceInfosPanel.sequenceFocused(sequence);
+    }
+
+    @Override
+    public void focusedSequenceChanged(SequenceEvent event)
+    {
+        sequenceInfosPanel.focusedSequenceChanged(event);
     }
 }

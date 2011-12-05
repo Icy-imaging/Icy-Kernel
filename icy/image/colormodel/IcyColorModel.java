@@ -838,22 +838,16 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-     * Return true if colorModel is float typed
-     * 
-     * @deprecated use {@link #getDataType_()} instead
+     * Return true if colorModel is float data type
      */
-    @Deprecated
     public boolean isFloatDataType()
     {
         return dataType.isFloat();
     }
 
     /**
-     * Return true if colorModel type is signed
-     * 
-     * @deprecated use {@link #getDataType_()} instead
+     * Return true if colorModel data type is signed
      */
-    @Deprecated
     public boolean isSignedDataType()
     {
         return dataType.isSigned();
