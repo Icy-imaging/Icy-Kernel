@@ -27,8 +27,20 @@ package icy.system.thread;
  */
 public class IdProcessor extends Processor
 {
+
     /**
-     * Create an SingleIdProcessor
+     * Create an IdProcessor
+     * 
+     * @deprecated uses default constructor instead
+     */
+    @Deprecated
+    public IdProcessor(int maxProcess, int maxProcessPerId)
+    {
+        super();
+    }
+
+    /**
+     * Create an IdProcessor
      */
     public IdProcessor(int priority)
     {
@@ -36,7 +48,7 @@ public class IdProcessor extends Processor
     }
 
     /**
-     * Create an SingleIdProcessor
+     * Create an IdProcessor
      */
     public IdProcessor()
     {

@@ -20,15 +20,17 @@ package icy.system.thread;
 
 /**
  * @author stephane
+ * @deprecated uses {@link IdProcessor} instead
  */
+@Deprecated
 public class SingleIdProcessor extends IdProcessor
 {
     /**
-     * 
+     * @deprecated uses {@link IdProcessor} instead
      */
+    @Deprecated
     public SingleIdProcessor()
     {
-        // only one process at any time
-        super(1, 1);
+        super();
     }
 }

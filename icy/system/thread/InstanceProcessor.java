@@ -24,7 +24,18 @@ package icy.system.thread;
 public class InstanceProcessor extends Processor
 {
     /**
-     * Create an SingleInstanceProcessor
+     * Create an InstanceProcessor
+     * 
+     * @deprecated uses default constructor instead
+     */
+    @Deprecated
+    public InstanceProcessor(int maxProcess, int maxProcessPerInstance)
+    {
+        this();
+    }
+
+    /**
+     * Create an InstanceProcessor
      */
     public InstanceProcessor(int priority)
     {
@@ -32,7 +43,7 @@ public class InstanceProcessor extends Processor
     }
 
     /**
-     * Create an SingleInstanceProcessor
+     * Create an InstanceProcessor
      */
     public InstanceProcessor()
     {

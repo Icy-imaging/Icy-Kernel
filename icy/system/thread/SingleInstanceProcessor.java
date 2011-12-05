@@ -20,15 +20,17 @@ package icy.system.thread;
 
 /**
  * @author stephane
+ * @deprecated uses {@link InstanceProcessor} instead
  */
+@Deprecated
 public class SingleInstanceProcessor extends InstanceProcessor
 {
     /**
-     * 
+     * @deprecated uses {@link InstanceProcessor} instead
      */
+    @Deprecated
     public SingleInstanceProcessor()
     {
-        // only one process at any time
-        super(1, 1);
+        super();
     }
 }
