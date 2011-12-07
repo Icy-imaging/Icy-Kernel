@@ -141,7 +141,7 @@ public class SequenceInfosPanel extends JPanel {
 			add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, resXLabel, Box.createHorizontalStrut(4), resZLabel,
 					Box.createHorizontalStrut(4), Box.createHorizontalGlue()));
 		}
-		label = GuiUtil.createFixedWidthLabel("Interval", 70);
+		label = GuiUtil.createFixedWidthLabel("Time Interval", 70);
 		label.setToolTipText("Time Interval");
 		add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, resTLabel,Box.createHorizontalStrut(4), Box.createHorizontalGlue()));
 		add(Box.createVerticalStrut(6));
