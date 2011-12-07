@@ -2,11 +2,13 @@ package icy.math;
 
 import icy.util.StringUtil;
 
+import java.util.concurrent.TimeUnit;
+
 public class UnitUtil {
 
 	public static enum UnitPrefix {
 		GIGA, MEGA, KILO, NONE, MILLI, MICRO, NANO, PICO;
-		
+
 		@Override
 		public String toString() {
 			switch (this) {
@@ -56,9 +58,10 @@ public class UnitUtil {
 	}
 
 	/**
-	 * Get the best unit with the given value and {@link UnitPrefix}. <br/>
-	 * <b>Warning:</b> Be careful, this method is supposed to be used with unit
-	 * in base 10. <b>Example:</b><br/>
+	 * Get the best unit with the given value and {@link UnitPrefix}. Be
+	 * careful, this method is supposed to be used with unit in <b>decimal</b>
+	 * system. For sexagesimal system, please use {@link TimeUnit} methods.<br/>
+	 * <b>Example:</b><br/>
 	 * <ul>
 	 * <li>value = 0.01</li>
 	 * <li>currentUnit = {@link UnitPrefix#MILLI}</li>
@@ -82,7 +85,7 @@ public class UnitUtil {
 				} else
 					break;
 			} while ((int) value == 0);
-		} else if ((int) (value / 1000d) != 0) {
+		} else if (Math.abs(value) / 1000 > 1) {
 			do {
 				if (type < UnitPrefix.values().length) {
 					--type;
@@ -95,9 +98,9 @@ public class UnitUtil {
 	}
 
 	/**
-	 * Return the value from a specific unit to another unit.<br/>
-	 * <b>Warning:</b> Be careful, this method is supposed to be used with unit
-	 * in base 10. <br/>
+	 * Return the value from a specific unit to another unit. Be careful, this
+	 * method is supposed to be used with unit in <b>decimal</b> system. For
+	 * sexagesimal system, please use {@link TimeUnit} methods.<br/>
 	 * <b>Example:</b><br/>
 	 * <ul>
 	 * <li>value = 0.01</li>
@@ -132,17 +135,107 @@ public class UnitUtil {
 	}
 
 	/**
-	 * This method returns a string containing the value rounded to a specified number of
-	 * decimals and its best unit prefix. This method is supposed to be used with meters only.
+	 * This method returns a string containing the value rounded to a specified
+	 * number of decimals and its best unit prefix. This method is supposed to
+	 * be used with meters only.
 	 * 
-	 * @param value : value to display
-	 * @param decimals : number of decimals to keep 
-	 * @param currentUnit : current unit prefix (Ex: {@link UnitPrefix#MILLI}
+	 * @param value
+	 *            : value to display
+	 * @param decimals
+	 *            : number of decimals to keep
+	 * @param currentUnit
+	 *            : current unit prefix (Ex: {@link UnitPrefix#MILLI}
 	 * @return
 	 */
-	public static String getBestUnitInMeters(double value,  int decimals, UnitPrefix currentUnit) {
+	public static String getBestUnitInMeters(double value, int decimals, UnitPrefix currentUnit) {
 		UnitPrefix unitPxSize = getBestUnit(value, currentUnit);
 		double distanceMeters = getValueInUnit(value, currentUnit, unitPxSize);
 		return StringUtil.toString(distanceMeters, decimals) + unitPxSize + "m";
+	}
+
+	/**
+	 * Return the best unit to display the value. The best unit is chosen
+	 * according to the precision. <br/>
+	 * <b>Example:</b>
+	 * <ul>
+	 * <li>62001 ms -> {@link TimeUnit#MILLISECONDS}</li>
+	 * <li>62000 ms -> {@link TimeUnit#SECONDS}</li>
+	 * <li>60000 ms -> {@link TimeUnit#MINUTES}</li>
+	 * </ul>
+	 * 
+	 * @param valueInMs
+	 *            : value in milliseconds.
+	 * @return Return a {@link TimeUnit} enumeration value.
+	 */
+	public static TimeUnit getBestUnit(double valueInMs) {
+		if (valueInMs % 1000 != 0)
+			return TimeUnit.MILLISECONDS;
+		if (valueInMs % 60000 != 0)
+			return TimeUnit.SECONDS;
+		if (valueInMs % 3600000 != 0)
+			return TimeUnit.MINUTES;
+		return TimeUnit.HOURS;
+	}
+
+	/**
+	 * Display the time with a comma and a given precision.
+	 * 
+	 * @param valueInMs
+	 *            : value in milliseconds
+	 * @param precision
+	 *            : number of decimals after comma
+	 * @return <b>Example:</b> "2.5 h", "1.543 min", "15 ms".
+	 */
+	public static String displayTimeAsStringWithComma(double valueInMs, int precision) {
+		String toReturn = "";
+		if (valueInMs >= 360000d) {
+			valueInMs /= 360000d;
+			toReturn = StringUtil.toString(valueInMs, precision) + " h";
+		} else if (valueInMs >= 60000d) {
+			valueInMs /= 60000d;
+			toReturn = StringUtil.toString(valueInMs, precision) + " min";
+		} else if (valueInMs >= 1000d) {
+			valueInMs /= 1000d;
+			toReturn = StringUtil.toString(valueInMs, precision) + " sec";
+		} else {
+			toReturn = StringUtil.toString(valueInMs, precision) + " ms";
+		}
+		return toReturn;
+	}
+
+	/**
+	 * Display the time with all the units.
+	 * 
+	 * @param valueInMs
+	 *            : value in milliseconds
+	 * @param displayZero
+	 *            : Even if a unit is not relevant (equals to zero), it will be displayed.
+	 * @return <b>Example:</b> "2h 3min 40sec 350ms".
+	 */
+	public static String displayTimeAsStringWithUnits(double valueInMs, boolean displayZero) {
+		String toReturn = "";
+		if (valueInMs >= 3600000d) {
+			toReturn += (int) (valueInMs / 3600000) + "h ";
+			valueInMs %= 3600000;
+		} else if (displayZero) {
+			toReturn += "00h ";
+		}
+		if (valueInMs >= 60000d) {
+			toReturn += (int) (valueInMs / 60000) + "min ";
+			valueInMs %= 60000;
+		} else if (displayZero) {
+			toReturn += "00min ";
+		}
+		if (valueInMs >= 1000d) {
+			toReturn += (int) (valueInMs / 1000d) + "sec ";
+			valueInMs %= 1000;
+		} else if (displayZero) {
+			toReturn += "00sec ";
+		}
+		if (valueInMs != 0)
+			toReturn += (int) valueInMs + "ms";
+		else if (displayZero)
+			toReturn += "000ms";
+		return toReturn;
 	}
 }

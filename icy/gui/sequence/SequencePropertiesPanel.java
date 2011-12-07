@@ -7,9 +7,14 @@ import icy.sequence.Sequence;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.concurrent.TimeUnit;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -20,12 +25,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.Box;
 
 public class SequencePropertiesPanel extends JPanel {
 	/**
@@ -46,23 +45,25 @@ public class SequencePropertiesPanel extends JPanel {
 	private JLabel lblX;
 	private JLabel lblY;
 	private JLabel lblZ;
-	private JLabel lblT;
 	private JPanel panelPxSizeX;
 	private JPanel panelPxSizeY;
 	private JPanel panelPxSizeZ;
 	private JPanel panelPxSizeT;
 	private JCheckBox checkLinked;
-	private JLabel lblMs;
-	private JPanel panel_1;
+	private JPanel panelPxSizeXLeft;
 	private Component horizontalGlue;
-	private JPanel panel_2;
-	private JPanel panel_3;
-	private JPanel panel_4;
-	private JPanel panel_5;
-	private JPanel panel_6;
-	private JPanel panel_7;
-	private JPanel panel_8;
+	private JPanel panelPxSizeXRight;
+	private JPanel panelPxSizeYLeft;
+	private JPanel panelPxSizeYRight;
+	private JPanel panelPxSizeZLeft;
+	private JPanel panelPxSizeZRight;
+	private JPanel panelPxSizeTLeft;
+	private JPanel panelPxSizeTRight;
 	private Component horizontalGlue_1;
+	private JComboBox cbTimeUnit;
+	private Component horizontalGlue_2;
+	private JPanel panelTimeInterval;
+	private JLabel lblValue;
 
 	/**
 	 * Create the panel.
@@ -93,7 +94,7 @@ public class SequencePropertiesPanel extends JPanel {
 
 		GridLayout gl_panel_2 = new GridLayout();
 		gl_panel_2.setColumns(1);
-		gl_panel_2.setRows(4);
+		gl_panel_2.setRows(3);
 		JPanel panelPxSizeConfig = new JPanel(gl_panel_2);
 		panelPxSizeConfig.setBorder(new TitledBorder(null, "Pixel Size Config", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		panelMain.add(panelPxSizeConfig);
@@ -107,12 +108,12 @@ public class SequencePropertiesPanel extends JPanel {
 		panelPxSizeX = new JPanel(new GridLayout());
 		panelPxSizeConfig.add(panelPxSizeX);
 		
-		panel_1 = new JPanel();
-		panelPxSizeX.add(panel_1);
-		panel_1.setLayout(new BorderLayout(0, 0));
+		panelPxSizeXLeft = new JPanel();
+		panelPxSizeX.add(panelPxSizeXLeft);
+		panelPxSizeXLeft.setLayout(new BorderLayout(0, 0));
 
 		lblX = new JLabel("X: ");
-		panel_1.add(lblX, BorderLayout.WEST);
+		panelPxSizeXLeft.add(lblX, BorderLayout.WEST);
 
 		tfPxSizeX = new JTextField();
 		tfPxSizeX.addCaretListener(new CaretListener() {
@@ -125,39 +126,39 @@ public class SequencePropertiesPanel extends JPanel {
 			}
 		});
 		tfPxSizeX.setToolTipText("X pixel size.");
-		panel_1.add(tfPxSizeX);
+		panelPxSizeXLeft.add(tfPxSizeX);
 		
-		panel_2 = new JPanel(new GridLayout());
-		panelPxSizeX.add(panel_2);
+		panelPxSizeXRight = new JPanel(new GridLayout());
+		panelPxSizeX.add(panelPxSizeXRight);
 		cbPxSizeX = new JComboBox(cbModel);
-		panel_2.add(cbPxSizeX);
+		panelPxSizeXRight.add(cbPxSizeX);
 		
 		horizontalGlue = Box.createHorizontalGlue();
-		panel_2.add(horizontalGlue);
+		panelPxSizeXRight.add(horizontalGlue);
 
 		panelPxSizeY = new JPanel(new GridLayout());
 		panelPxSizeConfig.add(panelPxSizeY);
 		
-		panel_3 = new JPanel();
-		panelPxSizeY.add(panel_3);
-		panel_3.setLayout(new BorderLayout(0, 0));
+		panelPxSizeYLeft = new JPanel();
+		panelPxSizeY.add(panelPxSizeYLeft);
+		panelPxSizeYLeft.setLayout(new BorderLayout(0, 0));
 
 		lblY = new JLabel("Y: ");
-		panel_3.add(lblY, BorderLayout.WEST);
+		panelPxSizeYLeft.add(lblY, BorderLayout.WEST);
 
 		tfPxSizeY = new JTextField();
-		panel_3.add(tfPxSizeY);
+		panelPxSizeYLeft.add(tfPxSizeY);
 		tfPxSizeY.setPreferredSize(new Dimension(60, 20));
 		tfPxSizeY.setToolTipText("Y pixel size.");
 		
-		panel_4 = new JPanel();
-		panelPxSizeY.add(panel_4);
-		panel_4.setLayout(new GridLayout(0, 2, 0, 0));
+		panelPxSizeYRight = new JPanel();
+		panelPxSizeY.add(panelPxSizeYRight);
+		panelPxSizeYRight.setLayout(new GridLayout(0, 2, 0, 0));
 		cbPxSizeY = new JComboBox(cbModel);
-		panel_4.add(cbPxSizeY);
+		panelPxSizeYRight.add(cbPxSizeY);
 
-		checkLinked = new JCheckBox("linked");
-		panel_4.add(checkLinked);
+		checkLinked = new JCheckBox("link X/Y");
+		panelPxSizeYRight.add(checkLinked);
 		checkLinked.addActionListener(new ActionListener() {
 			
 			@Override
@@ -176,49 +177,57 @@ public class SequencePropertiesPanel extends JPanel {
 		panelPxSizeZ = new JPanel(new GridLayout());
 		panelPxSizeConfig.add(panelPxSizeZ);
 		
-		panel_5 = new JPanel();
-		panelPxSizeZ.add(panel_5);
-		panel_5.setLayout(new BorderLayout(0, 0));
+		panelPxSizeZLeft = new JPanel();
+		panelPxSizeZ.add(panelPxSizeZLeft);
+		panelPxSizeZLeft.setLayout(new BorderLayout(0, 0));
 
 		lblZ = new JLabel("Z: ");
-		panel_5.add(lblZ, BorderLayout.WEST);
+		panelPxSizeZLeft.add(lblZ, BorderLayout.WEST);
 
 		tfPxSizeZ = new JTextField();
-		panel_5.add(tfPxSizeZ);
+		panelPxSizeZLeft.add(tfPxSizeZ);
 		tfPxSizeZ.setPreferredSize(new Dimension(40, 20));
 		tfPxSizeZ.setMinimumSize(new Dimension(40, 20));
 		tfPxSizeZ.setToolTipText("Z pixel size.");
-		panel_6 = new JPanel();
-		panelPxSizeZ.add(panel_6);
-		panel_6.setLayout(new GridLayout(0, 2, 0, 0));
+		panelPxSizeZRight = new JPanel();
+		panelPxSizeZ.add(panelPxSizeZRight);
+		panelPxSizeZRight.setLayout(new GridLayout(0, 2, 0, 0));
 		cbPxSizeZ = new JComboBox(cbModel);
-		panel_6.add(cbPxSizeZ);
+		panelPxSizeZRight.add(cbPxSizeZ);
 		
 		horizontalGlue_1 = Box.createHorizontalGlue();
-		panel_6.add(horizontalGlue_1);
-
+		panelPxSizeZRight.add(horizontalGlue_1);
+		
+		panelTimeInterval = new JPanel();
+		panelTimeInterval.setBorder(new TitledBorder(null, "Time Interval", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panelMain.add(panelTimeInterval);
+		panelTimeInterval.setLayout(new BorderLayout(0, 0));
+		
 		panelPxSizeT = new JPanel(new GridLayout());
-		panelPxSizeConfig.add(panelPxSizeT);
+		panelTimeInterval.add(panelPxSizeT);
 		
-		panel_7 = new JPanel();
-		panelPxSizeT.add(panel_7);
-		panel_7.setLayout(new BorderLayout(0, 0));
-
-		lblT = new JLabel("T: ");
-		panel_7.add(lblT, BorderLayout.WEST);
-
-		tfTimeInterval = new JTextField();
-		panel_7.add(tfTimeInterval);
-		tfTimeInterval.setPreferredSize(new Dimension(40, 20));
-		tfTimeInterval.setMinimumSize(new Dimension(40, 20));
-		tfTimeInterval.setToolTipText("T time resolution (in ms).");
+		panelPxSizeTLeft = new JPanel();
+		panelPxSizeT.add(panelPxSizeTLeft);
+		panelPxSizeTLeft.setLayout(new BorderLayout(0, 0));
 		
-		panel_8 = new JPanel();
-		panelPxSizeT.add(panel_8);
-		panel_8.setLayout(new GridLayout(0, 2, 0, 0));
+		lblValue = new JLabel("Value: ");
+		panelPxSizeTLeft.add(lblValue, BorderLayout.WEST);
 		
-		lblMs = new JLabel("ms");
-		panel_8.add(lblMs);
+				tfTimeInterval = new JTextField();
+				panelPxSizeTLeft.add(tfTimeInterval, BorderLayout.CENTER);
+				tfTimeInterval.setPreferredSize(new Dimension(40, 20));
+				tfTimeInterval.setMinimumSize(new Dimension(40, 20));
+				tfTimeInterval.setToolTipText("T time resolution (in ms).");
+		
+		panelPxSizeTRight = new JPanel();
+		panelPxSizeT.add(panelPxSizeTRight);
+		panelPxSizeTRight.setLayout(new GridLayout(0, 2, 0, 0));
+		
+		cbTimeUnit = new JComboBox(new String[] {"h", "min", "s", "ms"});
+		panelPxSizeTRight.add(cbTimeUnit);
+		
+		horizontalGlue_2 = Box.createHorizontalGlue();
+		panelPxSizeTRight.add(horizontalGlue_2);
 
 		panelChannels = new JPanel();
 		panelChannels.setBorder(new TitledBorder(null, "Channels", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -247,8 +256,26 @@ public class SequencePropertiesPanel extends JPanel {
 		if (tfPxSizeX.getText().equals(tfPxSizeY.getText()) && cbPxSizeX.getSelectedIndex() == cbPxSizeY.getSelectedIndex()) {
 			checkLinked.doClick();
 		}
-
-		tfTimeInterval.setText(StringUtil.toString(sequence.getTimeInterval()));
+		double timeInterval = sequence.getTimeInterval();
+		TimeUnit unit = UnitUtil.getBestUnit(timeInterval);
+		switch (unit) {
+		case MILLISECONDS:
+			tfTimeInterval.setText(StringUtil.toString(timeInterval));
+			cbTimeUnit.setSelectedIndex(3);
+			break;
+		case SECONDS:
+			tfTimeInterval.setText(StringUtil.toString(timeInterval/1000));
+			cbTimeUnit.setSelectedIndex(2);
+			break;
+		case MINUTES:
+			tfTimeInterval.setText(StringUtil.toString(timeInterval/60000));
+			cbTimeUnit.setSelectedIndex(1);
+			break;
+		case HOURS:
+			tfTimeInterval.setText(StringUtil.toString(timeInterval/3600000));
+			cbTimeUnit.setSelectedIndex(0);
+			break;
+		}
 
 		final int sizeC = sequence.getSizeC();
 
@@ -312,6 +339,10 @@ public class SequencePropertiesPanel extends JPanel {
 
 	public double getTimeIntervalFieldValue() {
 		return StringUtil.parseDouble(tfTimeInterval.getText(), 1d);
+	}
+	
+	public int getTimeIntervalUnit() {
+		return cbTimeUnit.getSelectedIndex();
 	}
 
 	public String getChannelNameFieldValue(int index) {
