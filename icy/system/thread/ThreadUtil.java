@@ -168,7 +168,7 @@ public class ThreadUtil
     /**
      * Add single background processing of specified Runnable.<br>
      * If this <code>runnable</code> instance is already pending in waiting background process<br>
-     * then nothing is done.
+     * then nothing is done.<br>
      * Return false if queue is full.
      */
     public static boolean bgRunSingle(Runnable runnable, boolean onEventThread)
@@ -184,7 +184,7 @@ public class ThreadUtil
     /**
      * Add single background processing of specified Runnable.<br>
      * If this <code>runnable</code> instance is already pending in waiting background process<br>
-     * then nothing is done.
+     * then nothing is done.<br>
      * Return false if queue is full.
      */
     public static boolean bgRunSingle(Runnable runnable)

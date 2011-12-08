@@ -121,7 +121,7 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
 
         // attach to sequence once ROI is initialized
         if ((seq != null) && (result != null))
-            seq.addROI(result);
+            seq.addROI(result, true);
 
         return result;
     }
@@ -356,12 +356,20 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
     /**
      * Remove this ROI from all attached sequence
      */
-    public void detachFromAll()
+    public void detachFromAll(boolean canUndo)
     {
         final ArrayList<Sequence> sequences = Icy.getMainInterface().getSequencesContaining(this);
 
         for (Sequence sequence : sequences)
-            sequence.removeROI(this);
+            sequence.removeROI(this, canUndo);
+    }
+
+    /**
+     * Remove this ROI from all attached sequence
+     */
+    public void detachFromAll()
+    {
+        detachFromAll(false);
     }
 
     /**
@@ -394,9 +402,17 @@ public abstract class ROI implements IcyChangedListener, XMLPersistent
     /**
      * Delete this ROI (detach from all sequence)
      */
+    public void delete(boolean canUndo)
+    {
+        detachFromAll(canUndo);
+    }
+
+    /**
+     * Delete this ROI (detach from all sequence)
+     */
     public void delete()
     {
-        detachFromAll();
+        delete(true);
     }
 
     public String getClassName()

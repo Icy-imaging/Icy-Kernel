@@ -24,6 +24,7 @@ import icy.gui.component.IcyTextField.IcyTextListener;
 import icy.gui.component.TextFieldFilter;
 import icy.gui.plugin.PluginDetailPanel;
 import icy.plugin.PluginDescriptor;
+import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.resource.ResourceUtil;
 import icy.system.thread.ThreadUtil;
@@ -423,9 +424,13 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected void updateRepositories()
     {
-        final RepositoryPreferencePanel panel = (RepositoryPreferencePanel) getPreferencePanel(RepositoryPreferencePanel.class);
-        // refresh repositories list (use list from GUI)
-        final ArrayList<RepositoryInfo> repositeries = panel.repositories;
+        // final RepositoryPreferencePanel panel = (RepositoryPreferencePanel)
+        // getPreferencePanel(RepositoryPreferencePanel.class);
+        // // refresh repositories list (use list from GUI)
+        // final ArrayList<RepositoryInfo> repositeries = panel.repositories;
+
+        // refresh repositories list
+        final ArrayList<RepositoryInfo> repositeries = RepositoryPreferences.getRepositeries();
 
         final RepositoryInfo savedRepository = (RepositoryInfo) repository.getSelectedItem();
 

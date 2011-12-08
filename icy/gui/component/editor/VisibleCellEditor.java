@@ -31,9 +31,10 @@ public class VisibleCellEditor extends AbstractCellEditor implements TableCellEd
     private static final long serialVersionUID = -3974658249790735980L;
 
     protected JLabel label;
+    int iconSize;
     boolean visible;
 
-    public VisibleCellEditor()
+    public VisibleCellEditor(int iconSize)
     {
         label = new JLabel();
 
@@ -47,6 +48,7 @@ public class VisibleCellEditor extends AbstractCellEditor implements TableCellEd
             }
         });
 
+        this.iconSize = iconSize;
         visible = true;
     }
 
@@ -59,14 +61,12 @@ public class VisibleCellEditor extends AbstractCellEditor implements TableCellEd
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column)
     {
-        final int h = table.getColumnModel().getColumn(column).getWidth() - 2;
-
         visible = ((Boolean) value).booleanValue();
 
         if (visible)
-            label.setIcon(new IcyIcon(ResourceUtil.ICON_VISIBLE, h));
+            label.setIcon(new IcyIcon(ResourceUtil.ICON_VISIBLE, iconSize));
         else
-            label.setIcon(new IcyIcon(ResourceUtil.ICON_NOT_VISIBLE, h));
+            label.setIcon(new IcyIcon(ResourceUtil.ICON_NOT_VISIBLE, iconSize));
 
         if (isSelected)
         {
@@ -94,14 +94,12 @@ public class VisibleCellEditor extends AbstractCellEditor implements TableCellEd
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded,
             boolean leaf, int row)
     {
-        final int h = tree.getRowHeight() - 2;
-
         visible = ((Boolean) value).booleanValue();
 
         if (visible)
-            label.setIcon(new IcyIcon(ResourceUtil.ICON_VISIBLE, h));
+            label.setIcon(new IcyIcon(ResourceUtil.ICON_VISIBLE, iconSize));
         else
-            label.setIcon(new IcyIcon(ResourceUtil.ICON_NOT_VISIBLE, h));
+            label.setIcon(new IcyIcon(ResourceUtil.ICON_NOT_VISIBLE, iconSize));
 
         label.setForeground(tree.getForeground());
         label.setBackground(tree.getBackground());

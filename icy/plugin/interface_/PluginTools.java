@@ -18,7 +18,7 @@
  */
 package icy.plugin.interface_;
 
-// TODO : define this plugin
+@Deprecated
 public interface PluginTools
 {
 

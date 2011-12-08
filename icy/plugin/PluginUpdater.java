@@ -23,6 +23,7 @@ import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.util.GuiUtil;
+import icy.plugin.abstract_.Plugin;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
@@ -81,7 +82,7 @@ public class PluginUpdater extends ActionFrame
     /**
      * @param toInstallPlugins
      */
-    PluginUpdater(final PluginRepositoryLoader loader, final ArrayList<PluginDescriptor> toInstallPlugins)
+    PluginUpdater(final ArrayList<PluginDescriptor> toInstallPlugins)
     {
         super("Plugin Update", true);
 
@@ -136,7 +137,7 @@ public class PluginUpdater extends ActionFrame
                     public void actionPerformed(ActionEvent e)
                     {
                         // launch update
-                        PluginUpdater.this.doUpdate(loader);
+                        PluginUpdater.this.doUpdate();
                     }
                 });
 
@@ -168,7 +169,7 @@ public class PluginUpdater extends ActionFrame
     /**
      * update selected plugins
      */
-    protected void doUpdate(PluginRepositoryLoader loader)
+    protected void doUpdate()
     {
         final ArrayList<PluginDescriptor> plugins = new ArrayList<PluginDescriptor>();
 
@@ -177,7 +178,7 @@ public class PluginUpdater extends ActionFrame
 
         // process plugins update
         if (!plugins.isEmpty())
-            updatePlugins(loader, plugins, true);
+            updatePlugins(plugins, true);
 
         for (PluginDescriptor plugin : plugins)
             listModel.removeElement(plugin);
@@ -187,7 +188,7 @@ public class PluginUpdater extends ActionFrame
             close();
     }
 
-    static void updatePlugins(PluginRepositoryLoader loader, ArrayList<PluginDescriptor> plugins, boolean showProgress)
+    static void updatePlugins(ArrayList<PluginDescriptor> plugins, boolean showProgress)
     {
         final boolean b = PluginLoader.getLogError();
 
@@ -196,7 +197,7 @@ public class PluginUpdater extends ActionFrame
         {
             // update plugins with ordered dependencies
             for (PluginDescriptor plugin : PluginInstaller.getDependenciesOrderedList(plugins))
-                PluginInstaller.install(loader, plugin, showProgress);
+                PluginInstaller.install(plugin, showProgress);
         }
         finally
         {
@@ -210,24 +211,22 @@ public class PluginUpdater extends ActionFrame
      */
     public static void checkUpdate(boolean showProgress, boolean auto)
     {
-        processor.requestProcess(new Checker(showProgress, auto), false);
+        processor.addTask(new Checker(showProgress, auto));
     }
 
     /**
      * Check update for the specified plugin.
      * 
-     * @param loader
-     *        Repository plugins loader (should be already loaded)
      * @param plugin
      *        local plugin we are looking update for
      * @return
      *         plugin descriptor of update if any (null if no update)
      */
-    public static PluginDescriptor checkUpdate(PluginRepositoryLoader loader, PluginDescriptor plugin)
+    public static PluginDescriptor checkUpdate(PluginDescriptor plugin)
     {
         // find equivalent online plugins
-        final ArrayList<PluginDescriptor> onlinePlugins = PluginDescriptor.getPlugins(loader.getPlugins(),
-                plugin.getClassName());
+        final ArrayList<PluginDescriptor> onlinePlugins = PluginDescriptor.getPlugins(
+                PluginRepositoryLoader.getPlugins(), plugin.getClassName());
         final PluginDescriptor onlinePlugin;
 
         // more than one online plugins availables ?
@@ -260,7 +259,6 @@ public class PluginUpdater extends ActionFrame
     {
         final ArrayList<PluginDescriptor> toInstallPlugins = new ArrayList<PluginDescriptor>();
         final ArrayList<PluginDescriptor> localPlugins = PluginLoader.getPlugins();
-        final PluginRepositoryLoader loader = new PluginRepositoryLoader();
         final ProgressFrame checkingFrame;
 
         if (showProgress)
@@ -270,7 +268,7 @@ public class PluginUpdater extends ActionFrame
         try
         {
             // get online plugins from all active repositories
-            loader.loadAll(false, false);
+            PluginRepositoryLoader.reload(waitWhileLoading();
 
             for (PluginDescriptor localPlugin : localPlugins)
             {

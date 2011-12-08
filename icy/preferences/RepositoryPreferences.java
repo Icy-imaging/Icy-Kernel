@@ -4,6 +4,7 @@
 package icy.preferences;
 
 import icy.network.AuthenticationInfo;
+import icy.plugin.PluginRepositoryLoader;
 import icy.util.StringUtil;
 
 import java.util.ArrayList;
@@ -246,9 +247,13 @@ public class RepositoryPreferences
                 result.add(reposInf);
         }
 
-        // add default repository if no entry
-        if (result.isEmpty())
-            result.add(new RepositoryInfo(DEFAULT_REPOSITERY_NAME, DEFAULT_REPOSITERY_LOCATION, true));
+        // remove default repository
+        for (int i = result.size() - 1; i >= 0; i--)
+            if (result.get(i).isDefault())
+                result.remove(i);
+
+        // and add it so we are sure to only have one
+        result.add(new RepositoryInfo(DEFAULT_REPOSITERY_NAME, DEFAULT_REPOSITERY_LOCATION, true));
 
         return result;
     }
@@ -269,5 +274,8 @@ public class RepositoryPreferences
 
         // clean up all non element nodes
         preferences.clean();
+
+        // reload online plugins as repositories changed
+        PluginRepositoryLoader.loadAll(true, true, true);
     }
 }

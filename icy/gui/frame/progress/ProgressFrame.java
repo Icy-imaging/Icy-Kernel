@@ -115,12 +115,8 @@ public class ProgressFrame extends TaskFrame implements ProgressListener, Runnab
         ThreadUtil.bgRunSingle(this, true);
     }
 
-    int v = 0;
-
     protected void updateDisplay()
     {
-        System.out.println("refreshed ! " + v++);
-
         // position information
         if ((position != -1d) && (length > 0d))
         {

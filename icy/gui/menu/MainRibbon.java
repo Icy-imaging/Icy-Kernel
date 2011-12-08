@@ -56,6 +56,7 @@ import icy.workspace.Workspace.TaskDefinition.BandDefinition;
 import icy.workspace.Workspace.TaskDefinition.BandDefinition.ItemDefinition;
 import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceLoader;
+import ij.ImageJ;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -235,6 +236,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     private final JRibbonBand newPluginsBand;
     private final ImageRibbonTask imageTask;
     private final ToolRibbonTask toolRibbonTask;
+    private final ImageJTask ijTask;
     final JMenu othersPluginsMenu;
 
     /**
@@ -268,9 +270,11 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         // load image task first as tools task need all plugins loaded...
         imageTask = new ImageRibbonTask();
         toolRibbonTask = new ToolRibbonTask();
+        ijTask = new ImageJTask();
         // we want tools task to be the first task
         ribbon.addTask(toolRibbonTask);
         ribbon.addTask(imageTask);
+        ribbon.addTask(ijTask);
 
         // WORKSPACES
 
@@ -304,6 +308,11 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     public ToolRibbonTask getToolRibbon()
     {
         return toolRibbonTask;
+    }
+
+    public ImageJ getImageJInstance()
+    {
+        return ijTask.getImageJ();
     }
 
     private void loadWorkspaces()
@@ -827,38 +836,14 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         othersPluginsMenu.validate();
     }
 
-    private boolean save(Workspace workspace)
-    {
-        // for (TaskDefinition taskDef : workspace.getTasks())
-        // {
-        // final RibbonTask task = RibbonUtil.getTask(ribbon, taskDef.getName());
-        //
-        // // corresponding task found
-        // if (task != null)
-        // {
-        // for (BandDefinition bandDef : taskDef.getBands())
-        // {
-        // final JRibbonBand band = RibbonUtil.getBand(task, bandDef.getName());
-        //
-        // // corresponding band found
-        // if (band != null)
-        // bandDef.loadFrom(band);
-        // }
-        // }
-        // }
-
-        // save workspace
-        return workspace.save();
-    }
-
     /**
      * save workspaces from menu
      */
     void saveWorkspaces()
     {
-        // refresh and save all active workspaces
+        // save all active workspaces
         for (Workspace workspace : workspaces)
-            save(workspace);
+            workspace.save();
     }
 
     /**
@@ -1113,8 +1098,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         // get plugins we have to display in menu
         final ArrayList<PluginDescriptor> plugins = PluginLoader.getActionablePlugins();
         final ArrayList<ItemDefinition> items = getAllItems();
-
-        final PluginClassNameSorter pluginsSorter = new PluginClassNameSorter();
+        final PluginClassNameSorter pluginsSorter = PluginClassNameSorter.instance;
 
         // sort plugins on classname
         Collections.sort(plugins, pluginsSorter);

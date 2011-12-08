@@ -834,6 +834,36 @@ public class TypeUtil
 
         return unsign(value);
     }
+    
+    /**
+     * Safe integer evaluation from Integer object.<br>
+     * Return 0 if specified object is null.
+     */
+    public static int getInt(Integer obj) {
+        if (obj == null) return 0;
+        
+        return obj.intValue();
+    }
+
+    /**
+     * Safe float evaluation from Float object.<br>
+     * Return 0 if specified object is null.
+     */
+    public static float getFloat(Float obj) {
+        if (obj == null) return 0f;
+        
+        return obj.floatValue();
+    }
+
+    /**
+     * Safe double evaluation from Double object.<br>
+     * Return 0 if specified object is null.
+     */
+    public static double getDouble(Double obj) {
+        if (obj == null) return 0d;
+        
+        return obj.doubleValue();
+    }
 
     public static Point toPoint(Point2D p)
     {

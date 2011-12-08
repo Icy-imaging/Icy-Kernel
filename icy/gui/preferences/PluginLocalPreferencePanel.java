@@ -20,12 +20,12 @@ package icy.gui.preferences;
 
 import icy.gui.dialog.ConfirmDialog;
 import icy.main.Icy;
+import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginInstaller.PluginInstallerListener;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
 import icy.plugin.PluginLoader.PluginLoaderListener;
-import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginRepositoryLoader;
 import icy.plugin.PluginUpdater;
 import icy.system.thread.ThreadUtil;
@@ -52,13 +52,13 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     public static final String NODE_NAME = "Local Plugin";
 
     // used for plugin udpate process
-    final PluginRepositoryLoader pluginRepositoryLoader;
+    // final PluginRepositoryLoader pluginRepositoryLoader;
 
     PluginLocalPreferencePanel(PreferenceFrame parent)
     {
         super(parent, NODE_NAME);
 
-        pluginRepositoryLoader = new PluginRepositoryLoader();
+        // pluginRepositoryLoader = new PluginRepositoryLoader();
 
         PluginLoader.addListener(this);
         PluginInstaller.addListener(this);
@@ -86,11 +86,11 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     {
         if (plugin != null)
         {
-            if (pluginRepositoryLoader.isLoading())
+            if (PluginRepositoryLoader.isLoading())
                 return PluginLocalState.CHECKING_UPDATE;
 
             // get online version
-            final PluginDescriptor onlinePlugin = PluginUpdater.checkUpdate(pluginRepositoryLoader, plugin);
+            final PluginDescriptor onlinePlugin = PluginUpdater.checkUpdate(plugin);
 
             // udpate available ?
             if (onlinePlugin != null)
@@ -111,20 +111,20 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
         return PluginLocalState.NULL;
     }
 
-    private void searchForUpdate()
-    {
-        ThreadUtil.bgRun(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                // load all online plugins from active repositories
-                pluginRepositoryLoader.loadAll(false, false);
-                // refresh table
-                refreshTableData();
-            }
-        });
-    }
+    // private void searchForUpdate()
+    // {
+    // ThreadUtil.bgRun(new Runnable()
+    // {
+    // @Override
+    // public void run()
+    // {
+    // // load all online plugins from active repositories
+    // PluginRepositoryLoader.loadAll(false, false);
+    // // refresh table
+    // refreshTableData();
+    // }
+    // });
+    // }
 
     @Override
     protected void doAction1(PluginDescriptor plugin)
@@ -142,7 +142,7 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
         switch (getPluginLocalState(plugin))
         {
             case HAS_UPDATE:
-                final PluginDescriptor onlinePlugin = PluginUpdater.checkUpdate(pluginRepositoryLoader, plugin);
+                final PluginDescriptor onlinePlugin = PluginUpdater.checkUpdate(plugin);
 
                 // required kernel version > current kernel version
                 if (onlinePlugin.getKernelVersion().isGreater(Icy.version))
@@ -160,7 +160,7 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
                 else
                 {
                     // install udpate
-                    PluginInstaller.install(pluginRepositoryLoader, onlinePlugin, true);
+                    PluginInstaller.install(onlinePlugin, true);
                     // refresh state
                     refreshTableData();
                     updateButtonsState();
@@ -169,14 +169,14 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
         }
     }
 
-    @Override
-    protected void updateRepositories()
-    {
-        super.updateRepositories();
-
-        // repositories changed, launch checking for update
-        searchForUpdate();
-    }
+    // @Override
+    // protected void updateRepositories()
+    // {
+    // super.updateRepositories();
+    //
+    // // repositories changed, launch checking for update
+    // searchForUpdate();
+    // }
 
     @Override
     protected void repositoryChanged()
@@ -313,14 +313,14 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
             action1Button.setEnabled(plugin.isInstalled());
     }
 
-    @Override
-    protected void pluginsChanged()
-    {
-        super.pluginsChanged();
-
-        // launch the "search for update" process
-        searchForUpdate();
-    }
+    // @Override
+    // protected void pluginsChanged()
+    // {
+    // super.pluginsChanged();
+    //
+    // // launch the "search for update" process
+    // searchForUpdate();
+    // }
 
     @Override
     public void pluginLoaderChanged(PluginLoaderEvent e)

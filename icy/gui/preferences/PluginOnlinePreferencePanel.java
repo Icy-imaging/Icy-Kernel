@@ -223,6 +223,8 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     @Override
     protected ArrayList<PluginDescriptor> getPlugins()
     {
+        // filtrer ici sur le repository selectionné
+        -->
         return loader.getPlugins();
     }
 

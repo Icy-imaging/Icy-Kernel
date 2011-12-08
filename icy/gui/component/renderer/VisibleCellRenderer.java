@@ -25,9 +25,13 @@ public class VisibleCellRenderer extends JLabel implements TableCellRenderer, Tr
      */
     private static final long serialVersionUID = -5511881886845059452L;
 
-    public VisibleCellRenderer()
+    int iconSize;
+
+    public VisibleCellRenderer(int iconSize)
     {
         super();
+
+        this.iconSize = iconSize;
     }
 
     @Override
@@ -35,12 +39,11 @@ public class VisibleCellRenderer extends JLabel implements TableCellRenderer, Tr
             int row, int column)
     {
         final boolean b = ((Boolean) value).booleanValue();
-        final int h = table.getColumnModel().getColumn(column).getWidth() - 2;
 
         if (b)
-            setIcon(new IcyIcon(ResourceUtil.ICON_VISIBLE, h));
+            setIcon(new IcyIcon(ResourceUtil.ICON_VISIBLE, iconSize));
         else
-            setIcon(new IcyIcon(ResourceUtil.ICON_NOT_VISIBLE, h));
+            setIcon(new IcyIcon(ResourceUtil.ICON_NOT_VISIBLE, iconSize));
 
         return this;
     }
@@ -50,12 +53,11 @@ public class VisibleCellRenderer extends JLabel implements TableCellRenderer, Tr
             boolean leaf, int row, boolean hasFocus)
     {
         final boolean b = ((Boolean) value).booleanValue();
-        final int h = tree.getRowHeight() - 2;
 
         if (b)
-            setIcon(new IcyIcon(ResourceUtil.ICON_VISIBLE, h));
+            setIcon(new IcyIcon(ResourceUtil.ICON_VISIBLE, iconSize));
         else
-            setIcon(new IcyIcon(ResourceUtil.ICON_NOT_VISIBLE, h));
+            setIcon(new IcyIcon(ResourceUtil.ICON_NOT_VISIBLE, iconSize));
 
         return this;
     }

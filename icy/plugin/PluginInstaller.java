@@ -57,7 +57,7 @@ public class PluginInstaller
         final PluginDescriptor plugin;
         final boolean showConfirm;
 
-        public PluginInstallInfo(PluginRepositoryLoader loader, PluginDescriptor plugin, boolean showConfirm)
+        public PluginInstallInfo(PluginDescriptor plugin, boolean showConfirm)
         {
             super();
 
@@ -113,7 +113,7 @@ public class PluginInstaller
     /**
      * install a plugin (asynchronous)
      */
-    public static void install(PluginRepositoryLoader loader, PluginDescriptor plugin, boolean showConfirm)
+    public static void install(PluginDescriptor plugin, boolean showConfirm)
     {
         if ((plugin != null) && canInstallOrDesinstall())
         {

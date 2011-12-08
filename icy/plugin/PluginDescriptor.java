@@ -23,10 +23,10 @@ import icy.file.FileUtil;
 import icy.file.xml.XMLPersistent;
 import icy.file.xml.XMLPersistentHelper;
 import icy.image.ImageUtil;
-import icy.network.AuthenticationInfo;
 import icy.network.URLUtil;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginImageAnalysis;
+import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.resource.ResourceUtil;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
@@ -55,6 +55,15 @@ public class PluginDescriptor implements XMLPersistent
 {
     public static class PluginNameSorter implements Comparator<PluginDescriptor>
     {
+        // static class
+        public static PluginNameSorter instance = new PluginNameSorter();
+
+        // static class
+        private PluginNameSorter()
+        {
+            super();
+        }
+
         @Override
         public int compare(PluginDescriptor o1, PluginDescriptor o2)
         {
@@ -64,6 +73,15 @@ public class PluginDescriptor implements XMLPersistent
 
     public static class PluginClassNameSorter implements Comparator<PluginDescriptor>
     {
+        // static class
+        public static PluginClassNameSorter instance = new PluginClassNameSorter();
+
+        // static class
+        private PluginClassNameSorter()
+        {
+            super();
+        }
+
         @Override
         public int compare(PluginDescriptor o1, PluginDescriptor o2)
         {
@@ -379,7 +397,7 @@ public class PluginDescriptor implements XMLPersistent
     // private final List<String> publicClasseNames;
     private final List<PluginIdent> required;
 
-    private AuthenticationInfo authentication;
+    private RepositoryInfo repository;
 
     // private static final DateFormat dateFormatter = DateFormat.getDateInstance();
     // private static final GregorianCalendar calendar = (GregorianCalendar)
@@ -537,7 +555,7 @@ public class PluginDescriptor implements XMLPersistent
         kernelVersion = new Version(1);
 
         required = new ArrayList<PluginIdent>();
-        authentication = null;
+        repository = null;
 
         // default
         enabled = true;
@@ -592,7 +610,7 @@ public class PluginDescriptor implements XMLPersistent
      * 
      * @throws IllegalArgumentException
      */
-    public PluginDescriptor(PluginOnlineIdent ident, AuthenticationInfo auth) throws IllegalArgumentException
+    public PluginDescriptor(PluginOnlineIdent ident, RepositoryInfo repos) throws IllegalArgumentException
     {
         this();
 
@@ -600,7 +618,7 @@ public class PluginDescriptor implements XMLPersistent
         this.ident.setVersion(ident.getVersion());
         this.xmlUrl = ident.getUrl();
         this.name = ident.getName();
-        this.authentication = auth;
+        this.repository = repos;
 
         // mark descriptor as not yet loaded
         loaded = false;
@@ -649,7 +667,7 @@ public class PluginDescriptor implements XMLPersistent
             return true;
 
         // retrieve document
-        final Document document = XMLUtil.loadDocument(xmlUrl, authentication, true);
+        final Document document = XMLUtil.loadDocument(xmlUrl, repository.getAuthenticationInfo(), true);
 
         if (document != null)
         {
@@ -1262,7 +1280,7 @@ public class PluginDescriptor implements XMLPersistent
      */
     public boolean isInstalled()
     {
-        return FileUtil.exist(getJarFilename());
+        return FileUtil.exists(getJarFilename());
     }
 
     // /**

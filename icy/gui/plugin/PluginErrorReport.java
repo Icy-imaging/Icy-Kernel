@@ -67,18 +67,15 @@ public class PluginErrorReport
             public void run()
             {
                 PluginDescriptor onlinePlugin = null;
-                final PluginRepositoryLoader loader = new PluginRepositoryLoader();
 
                 try
                 {
-                    // load online plugins
-                    loader.loadAll(false, false);
+                    // load all online plugins
+                    PluginRepositoryLoader.loadAll(false, false, false);
 
+                    // search for update
                     if (!info.isCancelRequested())
-                    {
-                        // search for update
-                        onlinePlugin = PluginUpdater.checkUpdate(loader, plugin);
-                    }
+                        onlinePlugin = PluginUpdater.checkUpdate(plugin);
                 }
                 finally
                 {
@@ -97,7 +94,7 @@ public class PluginErrorReport
                                         "An update is available for this plugin.\n"
                                                 + "It is highly recommended to install the update as you meet problem with current version.\n"
                                                 + "Do you want to install the update ?"))
-                            PluginInstaller.install(loader, onlinePlugin, true);
+                            PluginInstaller.install(onlinePlugin, true);
                     }
                     else
                     {

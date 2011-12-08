@@ -22,6 +22,7 @@ import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.IcyTextListener;
 import icy.gui.component.TextFieldFilter;
+import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
@@ -334,9 +335,14 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
     protected void updateRepositories()
     {
-        final RepositoryPreferencePanel panel = (RepositoryPreferencePanel) getPreferencePanel(RepositoryPreferencePanel.class);
-        // refresh repositories list (use list from GUI)
-        final ArrayList<RepositoryInfo> repositeries = panel.repositories;
+        // final RepositoryPreferencePanel panel = (RepositoryPreferencePanel)
+        // getPreferencePanel(RepositoryPreferencePanel.class);
+        // // refresh repositories list (use list from GUI)
+        // final ArrayList<RepositoryInfo> repositeries = panel.repositories;
+
+        // refresh repositories list
+        final ArrayList<RepositoryInfo> repositeries = RepositoryPreferences.getRepositeries();
+
         final RepositoryInfo savedRepository = (RepositoryInfo) repository.getSelectedItem();
 
         // needed to disable events during update time

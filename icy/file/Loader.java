@@ -42,8 +42,8 @@ import java.util.List;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
-import loci.formats.meta.MetadataRetrieve;
-import ome.xml.model.primitives.PositiveFloat;
+import loci.formats.meta.IMetadata;
+import loci.formats.ome.OMEXMLMetadataImpl;
 
 /**
  * Sequence / Image loader class.
@@ -276,6 +276,8 @@ public class Loader
             // set current filename
             loaderFrame.setFilename(path);
 
+            // prepare meta data store structure
+            reader.setMetadataStore(new OMEXMLMetadataImpl());
             // load file with LOCI library
             reader.setId(path);
 
@@ -292,7 +294,7 @@ public class Loader
                 seq = new Sequence();
                 seq.setName(FileUtil.getFileName(path, false));
                 seq.setFilename(path);
-                loadMetaData(seq, (MetadataRetrieve) reader.getMetadataStore());
+                seq.setMetaData((IMetadata) reader.getMetadataStore());
                 sequences.add(seq);
             }
 
@@ -358,7 +360,7 @@ public class Loader
                                 seq = new Sequence();
                                 seq.setName(FileUtil.getFileName(file.getName(), false));
                                 seq.setFilename(path);
-                                loadMetaData(seq, (MetadataRetrieve) reader.getMetadataStore());
+                                seq.setMetaData((IMetadata) reader.getMetadataStore());
                                 sequences.add(seq);
                                 seq.beginUpdate();
 
@@ -380,27 +382,27 @@ public class Loader
         }
     }
 
-    /**
-     * Load specified Metadata in the specified sequence.
-     */
-    public static void loadMetaData(Sequence sequence, MetadataRetrieve metaData)
-    {
-        PositiveFloat pf;
-        Double d;
-
-        pf = metaData.getPixelsPhysicalSizeX(0);
-        if (pf != null)
-            sequence.setPixelSizeX(pf.getValue().doubleValue());
-        pf = metaData.getPixelsPhysicalSizeY(0);
-        if (pf != null)
-            sequence.setPixelSizeZ(pf.getValue().doubleValue());
-        pf = metaData.getPixelsPhysicalSizeZ(0);
-        if (pf != null)
-            sequence.setPixelSizeZ(pf.getValue().doubleValue());
-        d = metaData.getPixelsTimeIncrement(0);
-        if (d != null)
-            sequence.setTimeInterval(d.doubleValue());
-    }
+    // /**
+    // * Load specified Metadata in the specified sequence.
+    // */
+    // public static void loadMetaData(Sequence sequence, MetadataRetrieve metaData)
+    // {
+    // PositiveFloat pf;
+    // Double d;
+    //
+    // pf = metaData.getPixelsPhysicalSizeX(0);
+    // if (pf != null)
+    // sequence.setPixelSizeX(pf.getValue().doubleValue());
+    // pf = metaData.getPixelsPhysicalSizeY(0);
+    // if (pf != null)
+    // sequence.setPixelSizeZ(pf.getValue().doubleValue());
+    // pf = metaData.getPixelsPhysicalSizeZ(0);
+    // if (pf != null)
+    // sequence.setPixelSizeZ(pf.getValue().doubleValue());
+    // d = metaData.getPixelsTimeIncrement(0);
+    // if (d != null)
+    // sequence.setTimeInterval(d.doubleValue());
+    // }
 
     /**
      * Load a single image from the specified file

@@ -64,6 +64,36 @@ import javax.swing.table.TableColumnModel;
  */
 public class LayersPanel extends InspectorSubPanel implements LayersListener, IcyTextListener, ListSelectionListener
 {
+    private class CanvasRefresher implements Runnable
+    {
+        IcyCanvas newCanvas;
+
+        public CanvasRefresher()
+        {
+            super();
+        }
+
+        @Override
+        public void run()
+        {
+            final IcyCanvas c = newCanvas;
+
+            // change canvas
+            if (canvas != c)
+            {
+                if (canvas != null)
+                    canvas.removeLayersListener(LayersPanel.this);
+
+                canvas = c;
+
+                if (canvas != null)
+                    canvas.addLayersListener(LayersPanel.this);
+            }
+
+            refreshLayers();
+        }
+    }
+
     /**
      * 
      */
@@ -93,6 +123,7 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Ic
 
     final Runnable tableDataRefresher;
     final Runnable controlPanelRefresher;
+    final CanvasRefresher canvasRefresher;
 
     public LayersPanel(boolean showFilters, boolean showControl)
     {
@@ -120,6 +151,7 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Ic
                 refreshControlPanel();
             }
         };
+        canvasRefresher = new CanvasRefresher();
 
         // need filter before load()
         nameFilter = new TextFieldFilter();
@@ -317,8 +349,10 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Ic
 
         // columns setting - transparency
         col = colModel.getColumn(1);
+        // slider doesn't like to be resized when they are used as CellRenderer
         col.setPreferredWidth(100);
-        col.setMinWidth(60);
+        col.setMinWidth(100);
+        col.setMaxWidth(100);
         col.setCellEditor(new SliderCellEditor(true));
         col.setCellRenderer(new SliderCellRenderer());
 
@@ -326,8 +360,9 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Ic
         col = colModel.getColumn(2);
         col.setPreferredWidth(20);
         col.setMinWidth(20);
-        col.setCellEditor(new VisibleCellEditor());
-        col.setCellRenderer(new VisibleCellRenderer());
+        col.setMaxWidth(20);
+        col.setCellEditor(new VisibleCellEditor(18));
+        col.setCellRenderer(new VisibleCellRenderer(18));
 
         table.setRowHeight(24);
         table.setColumnSelectionAllowed(false);
@@ -613,22 +648,6 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Ic
         }
     }
 
-    private void setCanvas(IcyCanvas value)
-    {
-        if (canvas != value)
-        {
-            if (canvas != null)
-                canvas.removeLayersListener(this);
-
-            canvas = value;
-
-            if (canvas != null)
-                canvas.addLayersListener(this);
-        }
-
-        refreshLayers();
-    }
-
     /**
      * Called when selection has changed
      */
@@ -657,16 +676,21 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Ic
     public void viewerFocused(Viewer viewer)
     {
         if (viewer != null)
-            setCanvas(viewer.getCanvas());
+            canvasRefresher.newCanvas = viewer.getCanvas();
         else
-            setCanvas(null);
+            canvasRefresher.newCanvas = null;
+
+        ThreadUtil.bgRunSingle(canvasRefresher);
     }
 
     @Override
     public void focusedViewerChanged(ViewerEvent event)
     {
         if (event.getType() == ViewerEventType.CANVAS_CHANGED)
-            setCanvas(event.getSource().getCanvas());
+        {
+            canvasRefresher.newCanvas = event.getSource().getCanvas();
+            ThreadUtil.bgRunSingle(canvasRefresher);
+        }
     }
 
     @Override

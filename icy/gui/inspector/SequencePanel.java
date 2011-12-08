@@ -110,6 +110,8 @@ public class SequencePanel extends InspectorSubPanel
             lutPanel.add(panel, BorderLayout.CENTER);
 
         lutPanel.revalidate();
+        // FIXME : why we need this ??
+        lutPanel.repaint();
     }
 
     @Override
@@ -118,7 +120,7 @@ public class SequencePanel extends InspectorSubPanel
         if (viewer != null)
         {
             setLutPanel(viewer.getLutPanel());
-            setCanvasPanel(viewer.getLutPanel());
+            setCanvasPanel(viewer.getCanvasPanel());
         }
         else
         {

@@ -233,8 +233,7 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                if (addRepository())
-                    repositoriesChanged();
+                addRepository();
             }
         });
 
@@ -245,8 +244,7 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                if (editRepository(getSelectedRepository()))
-                    repositoriesChanged();
+                editRepository(getSelectedRepository());
             }
         });
 
@@ -257,8 +255,7 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                if (removeRepository(getSelectedRepository()))
-                    repositoriesChanged();
+                removeRepository(getSelectedRepository());
             }
         });
 
@@ -415,6 +412,13 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
     protected void save()
     {
         RepositoryPreferences.setRepositeries(repositories);
+
+        // update repositories on Workspace and Plugin panel
+        ((PluginLocalPreferencePanel) getPreferencePanel(PluginLocalPreferencePanel.class)).updateRepositories();
+        ((PluginOnlinePreferencePanel) getPreferencePanel(PluginOnlinePreferencePanel.class)).updateRepositories();
+        ((WorkspaceOnlinePreferencePanel) getPreferencePanel(WorkspaceOnlinePreferencePanel.class))
+                .updateRepositories();
+        ((WorkspaceLocalPreferencePanel) getPreferencePanel(WorkspaceLocalPreferencePanel.class)).updateRepositories();
     }
 
     private int getRepositeryIndex(RepositoryInfo reposInf)
@@ -499,16 +503,6 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
         }
 
         return false;
-    }
-
-    void repositoriesChanged()
-    {
-        // update repositories on Workspace and Plugin panel
-        ((PluginLocalPreferencePanel) getPreferencePanel(PluginLocalPreferencePanel.class)).updateRepositories();
-        ((PluginOnlinePreferencePanel) getPreferencePanel(PluginOnlinePreferencePanel.class)).updateRepositories();
-        ((WorkspaceOnlinePreferencePanel) getPreferencePanel(WorkspaceOnlinePreferencePanel.class))
-                .updateRepositories();
-        ((WorkspaceLocalPreferencePanel) getPreferencePanel(WorkspaceLocalPreferencePanel.class)).updateRepositories();
     }
 
     private void udpateButtonsState()

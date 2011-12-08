@@ -184,8 +184,7 @@ public class PluginLoader
     }
 
     /**
-     * Reload the list of installed plugins (plugins present in the "plugins"
-     * directory)
+     * Reload the list of installed plugins (in "plugins" directory)
      */
     static void reloadInternal()
     {
@@ -280,7 +279,7 @@ public class PluginLoader
         }
 
         // sort list
-        Collections.sort(newPlugins, new PluginNameSorter());
+        Collections.sort(newPlugins, PluginNameSorter.instance);
 
         loader = newLoader;
         plugins = newPlugins;
