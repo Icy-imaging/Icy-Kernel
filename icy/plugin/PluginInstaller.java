@@ -28,7 +28,6 @@ import icy.main.Icy;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.abstract_.Plugin;
-import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
 import icy.update.Updater;
@@ -53,7 +52,7 @@ public class PluginInstaller
 
     private static class PluginInstallInfo
     {
-        final PluginRepositoryLoader loader;
+        // final PluginRepositoryLoader loader;
         final PluginDescriptor plugin;
         final boolean showConfirm;
 
@@ -61,7 +60,6 @@ public class PluginInstaller
         {
             super();
 
-            this.loader = loader;
             this.plugin = plugin;
             this.showConfirm = showConfirm;
         }
@@ -119,7 +117,7 @@ public class PluginInstaller
         {
             synchronized (installFIFO)
             {
-                installFIFO.add(new PluginInstallInfo(loader, plugin, showConfirm));
+                installFIFO.add(new PluginInstallInfo(plugin, showConfirm));
             }
         }
 
@@ -185,7 +183,7 @@ public class PluginInstaller
         {
             synchronized (removeFIFO)
             {
-                removeFIFO.add(new PluginInstallInfo(null, plugin, showConfirm));
+                removeFIFO.add(new PluginInstallInfo(plugin, showConfirm));
             }
         }
 
@@ -398,7 +396,7 @@ public class PluginInstaller
     public static void getLocalDependenciesOf(ArrayList<PluginDescriptor> result, PluginDescriptor plugin)
     {
         // load plugin descriptor informations if not yet done
-        plugin.load(false);
+        plugin.loadDescriptor();
 
         for (PluginIdent ident : plugin.getRequired())
         {
@@ -442,7 +440,7 @@ public class PluginInstaller
             PluginDescriptor plugin)
     {
         // load plugin descriptor informations if not yet done
-        plugin.load(false);
+        plugin.loadDescriptor();
 
         for (PluginIdent ident : plugin.getRequired())
         {
@@ -497,11 +495,11 @@ public class PluginInstaller
      * 
      * @param taskFrame
      */
-    private static boolean checkDependencies(PluginRepositoryLoader reposLoader, PluginDescriptor plugin,
-            ArrayList<PluginDescriptor> pluginsToInstall, CancelableProgressFrame taskFrame)
+    private static boolean checkDependencies(PluginDescriptor plugin, ArrayList<PluginDescriptor> pluginsToInstall,
+            CancelableProgressFrame taskFrame)
     {
         // load plugin descriptor informations if not yet done
-        plugin.load(false);
+        plugin.loadDescriptor();
 
         // check dependencies
         for (PluginIdent ident : plugin.getRequired())
@@ -517,7 +515,7 @@ public class PluginInstaller
 
             // get local & online plugin
             final PluginDescriptor localPlugin = PluginLoader.getPlugin(className);
-            final PluginDescriptor onlinePlugin = reposLoader.getPlugin(className);
+            final PluginDescriptor onlinePlugin = PluginRepositoryLoader.getPlugin(className);
 
             // plugin not yet installed or out dated ?
             if ((localPlugin == null) || ident.getVersion().isGreater(localPlugin.getVersion()))
@@ -566,7 +564,7 @@ public class PluginInstaller
                 // add to the install list
                 PluginDescriptor.addToList(pluginsToInstall, onlinePlugin);
                 // and check dependencies for this plugin
-                if (!checkDependencies(reposLoader, onlinePlugin, pluginsToInstall, taskFrame))
+                if (!checkDependencies(onlinePlugin, pluginsToInstall, taskFrame))
                     return false;
             }
             else
@@ -579,7 +577,7 @@ public class PluginInstaller
                     // add to the install list
                     PluginDescriptor.addToList(pluginsToInstall, onlinePlugin);
                     // and check dependencies for this plugin
-                    if (!checkDependencies(reposLoader, onlinePlugin, pluginsToInstall, taskFrame))
+                    if (!checkDependencies(onlinePlugin, pluginsToInstall, taskFrame))
                         return false;
                 }
             }
@@ -613,14 +611,14 @@ public class PluginInstaller
             if (taskFrame != null)
                 taskFrame.setMessage("waiting for plugin loader to find plugins...");
 
-            // wait while online loader is ready
-            installInfo.loader.waitWhileLoading();
+            // wait until online plugins descriptors are loaded
+            PluginRepositoryLoader.waitDescriptorsLoaded();
 
             if (taskFrame != null)
                 taskFrame.setMessage("checking dependencies for '" + plugDesc + "' ...");
 
             // check dependencies
-            result = checkDependencies(installInfo.loader, basePlugin, pluginsToInstall, taskFrame);
+            result = checkDependencies(basePlugin, pluginsToInstall, taskFrame);
 
             // cancel requested ?
             if ((taskFrame != null) && taskFrame.isCancelRequested())

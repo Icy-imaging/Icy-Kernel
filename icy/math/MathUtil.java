@@ -33,27 +33,12 @@ public class MathUtil
     public static final float POW2_64_FLOAT = (float) POW2_64_DOUBLE;
 
     /**
-     * Return the specified value as "bytes" string :<br>
-     * 1024 --> "1 KB"<br>
-     * 1048576 --> "1 MB"<br>
-     * ...<br>
+     * @deprecated please use {@link UnitUtil#getBytesString(double)} instead.
      */
+    @Deprecated
     public static String getBytesString(double value)
     {
-        final double absValue = Math.abs(value);
-
-        // GB
-        if (absValue > 10737418240f)
-            return Double.toString(round(value / 1073741824d, 1)) + " GB";
-        // MB
-        else if (absValue > 10485760f)
-            return Double.toString(round(value / 1048576d, 1)) + " MB";
-        // KB
-        else if (absValue > 10240f)
-            return Double.toString(round(value / 1024d, 1)) + " KB";
-
-        // B
-        return Double.toString(round(value, 1)) + " B";
+        return UnitUtil.getBytesString(value);
     }
 
     public static double frac(double value)

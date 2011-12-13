@@ -15,12 +15,12 @@ public class OMEUtil
      * Safe float evaluation from PositiveFloat object.<br>
      * Return 0 if specified object is null.
      */
-    public static double getValue(PositiveFloat obj)
+    public static double getValue(PositiveFloat obj, double defaultValue)
     {
         if (obj == null)
-            return 0f;
+            return defaultValue;
 
-        return TypeUtil.getDouble(obj.getValue());
+        return TypeUtil.getDouble(obj.getValue(), defaultValue);
     }
 
     /**

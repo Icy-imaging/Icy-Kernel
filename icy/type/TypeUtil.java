@@ -839,8 +839,8 @@ public class TypeUtil
      * Safe integer evaluation from Integer object.<br>
      * Return 0 if specified object is null.
      */
-    public static int getInt(Integer obj) {
-        if (obj == null) return 0;
+    public static int getInt(Integer obj, int defaultValue) {
+        if (obj == null) return defaultValue;
         
         return obj.intValue();
     }
@@ -849,8 +849,8 @@ public class TypeUtil
      * Safe float evaluation from Float object.<br>
      * Return 0 if specified object is null.
      */
-    public static float getFloat(Float obj) {
-        if (obj == null) return 0f;
+    public static float getFloat(Float obj, float defaultValue) {
+        if (obj == null) return defaultValue;
         
         return obj.floatValue();
     }
@@ -859,8 +859,8 @@ public class TypeUtil
      * Safe double evaluation from Double object.<br>
      * Return 0 if specified object is null.
      */
-    public static double getDouble(Double obj) {
-        if (obj == null) return 0d;
+    public static double getDouble(Double obj, double defaultValue) {
+        if (obj == null) return defaultValue;
         
         return obj.doubleValue();
     }

@@ -73,8 +73,7 @@ public class LUTViewer extends IcyLutViewer
     {
         super(viewer, lut);
 
-        bottomPane = new JCheckTabbedPane(SwingConstants.BOTTOM);
-        bottomPane.setCheckVisible(false);
+        bottomPane = new JCheckTabbedPane(SwingConstants.BOTTOM, true);
         lutBandViewers = new ArrayList<LUTBandViewer>();
 
         // GUI

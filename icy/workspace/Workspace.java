@@ -27,6 +27,7 @@ import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginRepositoryLoader;
+import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
@@ -716,6 +717,8 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
     private String name;
     private String description;
     private final ArrayList<TaskDefinition> tasks;
+    // only for online fetched workspace
+    private RepositoryInfo repository;
 
     private boolean installing;
 
@@ -729,6 +732,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
         name = "";
         description = "";
         tasks = new ArrayList<TaskDefinition>();
+        repository = null;
         installing = false;
     }
 
@@ -743,13 +747,14 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
     }
 
     /**
-     * workspace loaded from url
+     * workspace loaded from url (online)
      */
-    public Workspace(URL url) throws IllegalArgumentException
+    public Workspace(URL url, RepositoryInfo repos) throws IllegalArgumentException
     {
         this();
 
         load(url);
+        repository = repos;
     }
 
     /**
@@ -814,6 +819,11 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
     public boolean isInstalling()
     {
         return installing;
+    }
+
+    public RepositoryInfo getRepository()
+    {
+        return repository;
     }
 
     public void clear()
@@ -1012,7 +1022,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
      * Return 1 if workspace correctly installed<br>
      * Return 2 if workspace partially installed<br>
      */
-    public int install(PluginRepositoryLoader loader, final ProgressFrame progressFrame)
+    public int install(final ProgressFrame progressFrame)
     {
         if (installing)
             return 0;
@@ -1033,7 +1043,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
             }
 
             // wait while online loader is ready
-            loader.waitWhileLoading();
+            PluginRepositoryLoader.waitDescriptorsLoaded();
 
             if (progressFrame != null)
             {
@@ -1055,7 +1065,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
                     if (plugin == null)
                     {
                         // then try from repositery plugins
-                        plugin = loader.getPlugin(className);
+                        plugin = PluginRepositoryLoader.getPlugin(className);
 
                         if (plugin == null)
                         {
@@ -1081,7 +1091,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
 
                 // install missing plugins (no confirmation needed)
                 for (PluginDescriptor plugin : pluginsToInstall)
-                    PluginInstaller.install(loader, plugin, false);
+                    PluginInstaller.install(plugin, false);
 
                 // wait installation completion
                 while (PluginInstaller.isInstalling())

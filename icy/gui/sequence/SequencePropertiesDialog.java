@@ -5,8 +5,11 @@ package icy.gui.sequence;
 
 import icy.gui.dialog.ActionDialog;
 import icy.main.Icy;
+import icy.math.UnitUtil;
+import icy.math.UnitUtil.UnitPrefix;
 import icy.sequence.Sequence;
 
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -29,7 +32,8 @@ public class SequencePropertiesDialog extends ActionDialog
         panel = new SequencePropertiesPanel();
         panel.setSequence(sequence);
 
-        mainPanel.add(panel);
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(panel, BorderLayout.CENTER);
         mainPanel.validate();
 
         setOkAction(new ActionListener()
@@ -38,10 +42,24 @@ public class SequencePropertiesDialog extends ActionDialog
             public void actionPerformed(ActionEvent e)
             {
                 sequence.setName(panel.getNameFieldValue());
-                sequence.setPixelSizeX(panel.getPixelSizeXFieldValue());
-                sequence.setPixelSizeY(panel.getPixelSizeYFieldValue());
-                sequence.setPixelSizeZ(panel.getPixelSizeZFieldValue());
-                sequence.setTimeInterval(panel.getTimeIntervalFieldValue());
+                sequence.setPixelSizeX(UnitUtil.getValueInUnit(panel.getPixelSizeXFieldValue(),
+                        panel.getPixelSizeXUnit(), UnitPrefix.MILLI));
+                sequence.setPixelSizeY(UnitUtil.getValueInUnit(panel.getPixelSizeYFieldValue(),
+                        panel.getPixelSizeYUnit(), UnitPrefix.MILLI));
+                sequence.setPixelSizeZ(UnitUtil.getValueInUnit(panel.getPixelSizeZFieldValue(),
+                        panel.getPixelSizeZUnit(), UnitPrefix.MILLI));
+                double valueInMs = panel.getTimeIntervalFieldValue();
+                switch (panel.getTimeIntervalUnit())
+                {
+                    case 0:
+                        valueInMs *= 60d;
+                    case 1:
+                        valueInMs *= 60d;
+                    case 2:
+                        valueInMs *= 1000d;
+                        break;
+                }
+                sequence.setTimeInterval(valueInMs);
                 for (int c = 0; c < sequence.getSizeC(); c++)
                     sequence.setChannelName(c, panel.getChannelNameFieldValue(c));
             }

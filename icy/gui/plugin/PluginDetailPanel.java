@@ -124,8 +124,9 @@ public class PluginDetailPanel extends IcyFrame
                 @Override
                 public void run()
                 {
-                    // load plugin descriptor
-                    PluginDetailPanel.this.plugin.load(true);
+                    // load plugin descriptor & images
+                    PluginDetailPanel.this.plugin.loadDescriptor();
+                    PluginDetailPanel.this.plugin.loadImages();
 
                     // rebuild interface
                     ThreadUtil.invokeLater(new Runnable()

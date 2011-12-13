@@ -27,7 +27,6 @@ import icy.workspace.WorkspaceInstaller.WorkspaceInstallerEvent;
 import icy.workspace.WorkspaceInstaller.WorkspaceInstallerListener;
 import icy.workspace.WorkspaceLoader;
 import icy.workspace.WorkspaceRepositoryLoader;
-import icy.workspace.WorkspaceRepositoryLoader.WorkspaceRepositoryLoaderEvent;
 import icy.workspace.WorkspaceRepositoryLoader.WorkspaceRepositoryLoaderListener;
 
 import java.util.ArrayList;
@@ -50,17 +49,11 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
 
     public static final String NODE_NAME = "Online Workspace";
 
-    private final WorkspaceRepositoryLoader workspaceLoader;
-    // used for workspace installation
-    private final PluginRepositoryLoader pluginLoader;
-
     WorkspaceOnlinePreferencePanel(PreferenceFrame parent)
     {
         super(parent, NODE_NAME);
 
-        workspaceLoader = new WorkspaceRepositoryLoader();
-        workspaceLoader.addListener(this);
-        pluginLoader = new PluginRepositoryLoader();
+        WorkspaceRepositoryLoader.addListener(this);
         WorkspaceInstaller.addListener(this);
 
         repositoryPanel.setVisible(true);
@@ -77,7 +70,7 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
     {
         super.closed();
 
-        workspaceLoader.removeListener(this);
+        WorkspaceRepositoryLoader.removeListener(this);
         WorkspaceInstaller.removeListener(this);
     }
 
@@ -108,7 +101,7 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
         {
             case HAS_INSTALL:
                 // install workspace
-                WorkspaceInstaller.install(workspace, pluginLoader, true);
+                WorkspaceInstaller.install(workspace, true);
                 // refresh state
                 refreshTableData();
                 updateButtonsState();
@@ -133,19 +126,8 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
     @Override
     protected void reloadWorkspaces()
     {
-        // get selected repository
-        final Object selectedItem = repository.getSelectedItem();
-
-        // load workspaces from repository
-        if (selectedItem != null)
-        {
-            RepositoryInfo repinfo = (RepositoryInfo) selectedItem;
-
-            workspaceLoader.clear();
-            workspaceLoader.load(repinfo, true);
-            pluginLoader.clear();
-            pluginLoader.load(repinfo, true, false, false);
-        }
+        WorkspaceRepositoryLoader.reload();
+        PluginRepositoryLoader.reload();
 
         updateButtonsState();
     }
@@ -168,13 +150,20 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
     @Override
     protected ArrayList<Workspace> getWorkspaces()
     {
-        return workspaceLoader.getWorkspaces();
+        // get selected repository
+        final Object selectedItem = repository.getSelectedItem();
+
+        // load plugins from repository
+        if (selectedItem != null)
+            return WorkspaceRepositoryLoader.getWorkspaces((RepositoryInfo) selectedItem);
+
+        return WorkspaceRepositoryLoader.getWorkspaces();
     }
 
     @Override
     protected void updateButtonsState()
     {
-        if (workspaceLoader.isLoading())
+        if (WorkspaceRepositoryLoader.isLoading())
         {
             refreshButton.setText("Reloading...");
             refreshButton.setEnabled(false);
@@ -219,7 +208,7 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
     }
 
     @Override
-    public void workspaceRepositeryLoaderChanged(WorkspaceRepositoryLoaderEvent e)
+    public void workspaceRepositeryLoaderChanged()
     {
         ThreadUtil.invokeLater(new Runnable()
         {

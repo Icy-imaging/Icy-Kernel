@@ -27,7 +27,6 @@ import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginLoader;
-import icy.plugin.PluginRepositoryLoader;
 import icy.preferences.WorkspaceLocalPreferences;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
@@ -82,16 +81,14 @@ public class WorkspaceInstaller
 
     private static class WorkspaceInstallInfo
     {
-        final PluginRepositoryLoader loader;
         final Workspace workspace;
         final boolean showConfirm;
 
-        public WorkspaceInstallInfo(PluginRepositoryLoader loader, Workspace workspace, boolean showConfirm)
+        public WorkspaceInstallInfo(Workspace workspace, boolean showConfirm)
         {
             super();
 
             this.workspace = workspace;
-            this.loader = loader;
             this.showConfirm = showConfirm;
         }
     }
@@ -130,13 +127,13 @@ public class WorkspaceInstaller
     /**
      * install a workspace (asynchronous)
      */
-    public static void install(Workspace workspace, PluginRepositoryLoader loader, boolean showConfirm)
+    public static void install(Workspace workspace, boolean showConfirm)
     {
         if (workspace != null)
         {
             synchronized (installFIFO)
             {
-                installFIFO.add(new WorkspaceInstallInfo(loader, workspace, showConfirm));
+                installFIFO.add(new WorkspaceInstallInfo(workspace, showConfirm));
             }
         }
 
@@ -207,7 +204,7 @@ public class WorkspaceInstaller
         {
             synchronized (removeFIFO)
             {
-                removeFIFO.add(new WorkspaceInstallInfo(null, workspace, showConfirm));
+                removeFIFO.add(new WorkspaceInstallInfo(workspace, showConfirm));
             }
         }
 
@@ -412,7 +409,7 @@ public class WorkspaceInstaller
             try
             {
                 // install workspace (actually install dependent plugins)
-                result = workspace.install(installInfo.loader, taskFrame);
+                result = workspace.install(taskFrame);
 
                 if (result > 0)
                 {

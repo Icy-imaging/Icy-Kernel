@@ -18,14 +18,13 @@
  */
 package icy.workspace;
 
-import icy.common.EventHierarchicalChecker;
 import icy.network.URLUtil;
+import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
-import icy.workspace.WorkspaceRepositoryLoader.WorkspaceRepositoryLoaderEvent.WorkspaceRepositeryLoaderEventType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,57 +42,60 @@ public class WorkspaceRepositoryLoader
 {
     public static interface WorkspaceRepositoryLoaderListener extends EventListener
     {
-        public void workspaceRepositeryLoaderChanged(WorkspaceRepositoryLoaderEvent e);
+        public void workspaceRepositeryLoaderChanged();
     }
 
-    public static class WorkspaceRepositoryLoaderEvent implements EventHierarchicalChecker
+    private class LoadRunner implements Runnable
     {
-        public enum WorkspaceRepositeryLoaderEventType
-        {
-            CHANGED, LOAD_COMPLETED
-        }
-
-        private final WorkspaceRepositeryLoaderEventType type;
-        private final RepositoryInfo repos;
-
-        /**
-         * @param type
-         */
-        public WorkspaceRepositoryLoaderEvent(WorkspaceRepositeryLoaderEventType type, RepositoryInfo repos)
-        {
-            super();
-
-            this.type = type;
-            this.repos = repos;
-        }
-
-        /**
-         * @return the type
-         */
-        public WorkspaceRepositeryLoaderEventType getType()
-        {
-            return type;
-        }
-
-        /**
-         * @return the repos
-         */
-        public RepositoryInfo getRepos()
-        {
-            return repos;
-        }
-
         @Override
-        public boolean isEventRedundantWith(EventHierarchicalChecker event)
+        public void run()
         {
-            return (event instanceof WorkspaceRepositoryLoaderEvent)
-                    && (type == ((WorkspaceRepositoryLoaderEvent) event).getType());
+            // wait loading is interrupted
+            while (isLoading())
+            {
+                // request stop
+                interruptLoading = true;
+                // wait
+                ThreadUtil.sleep(10);
+            }
+
+            interruptLoading = false;
+            loading = true;
+            try
+            {
+                clear();
+
+                final ArrayList<RepositoryInfo> repositories = RepositoryPreferences.getRepositeries();
+
+                // load online workspace from all active repositories
+                for (RepositoryInfo repoInfo : repositories)
+                {
+                    if (interruptLoading)
+                        return;
+                    if (repoInfo.isEnabled())
+                        loadInternal(repoInfo);
+                }
+
+                // sort list
+                Collections.sort(workspaces);
+            }
+            finally
+            {
+                loading = false;
+            }
+
+            changed();
         }
     }
 
     private static final String ID_ROOT = "workspaces";
     private static final String ID_WORKSPACE = "workspace";
     private static final String ID_PATH = "path";
+
+    /**
+     * static class
+     */
+    private static WorkspaceRepositoryLoader instance = new WorkspaceRepositoryLoader();
 
     /**
      * Online workspace list
@@ -104,6 +106,9 @@ public class WorkspaceRepositoryLoader
      * internal
      */
     private boolean loading;
+    private boolean interruptLoading;
+
+    private final LoadRunner loadRunner;
 
     /**
      * listeners
@@ -113,13 +118,16 @@ public class WorkspaceRepositoryLoader
     /**
      * static class
      */
-    public WorkspaceRepositoryLoader()
+    private WorkspaceRepositoryLoader()
     {
         super();
 
         workspaces = new ArrayList<Workspace>();
         listeners = new EventListenerList();
         loading = false;
+        interruptLoading = false;
+
+        loadRunner = new LoadRunner();
     }
 
     /**
@@ -156,122 +164,99 @@ public class WorkspaceRepositoryLoader
     }
 
     /**
-     * Load the list of online workspaces located at specified repository url
-     */
-    public void load(final RepositoryInfo repos, boolean asynch)
-    {
-        final Runnable runnable = new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                load(repos);
-            }
-        };
-
-        if (asynch)
-            ThreadUtil.bgRunSingle(runnable);
-        else
-            runnable.run();
-    }
-
-    /**
      * clear workspace list
      */
-    public void clear()
+    public static void clear()
     {
         // reset list
-        workspaces.clear();
+        instance.workspaces.clear();
+    }
+
+    /**
+     * Reload all online workspaces from all active repositories (old list is cleared)
+     */
+    public static void reload()
+    {
+        ThreadUtil.bgRunSingle(instance.loadRunner);
     }
 
     /**
      * Load the list of online workspaces located at specified repository url
      */
-    void load(RepositoryInfo repos)
+    void loadInternal(RepositoryInfo repos)
     {
-        loading = true;
-        try
+        final ArrayList<String> paths = getWorkspaceFiles(repos);
+
+        for (String path : paths)
         {
-
-            final ArrayList<String> paths = getWorkspaceFiles(repos);
-
-            for (String path : paths)
+            try
             {
-                try
-                {
-                    final Workspace workspace = new Workspace(URLUtil.getURL(path));
+                final Workspace workspace = new Workspace(URLUtil.getURL(path), repos);
 
-                    if (!workspace.isEmpty())
-                    {
-                        workspaces.add(workspace);
-                        // notify change
-                        changed(repos);
-                    }
-
-                }
-                catch (Exception e)
-                {
-                    System.err.println("WorkspaceRepositoryLoader.load('" + repos.getLocation() + "') error :");
-                    IcyExceptionHandler.showErrorMessage(e, false);
-                }
+                if (!workspace.isEmpty())
+                    workspaces.add(workspace);
             }
-
-            // sort list
-            Collections.sort(workspaces);
+            catch (Exception e)
+            {
+                System.err.println("WorkspaceRepositoryLoader.load('" + repos.getLocation() + "') error :");
+                IcyExceptionHandler.showErrorMessage(e, false);
+            }
         }
-        finally
-        {
-            loading = false;
-        }
-
-        // notify load done
-        load_completed(repos);
     }
 
     /**
      * @return the workspaceList
      */
-    public ArrayList<Workspace> getWorkspaces()
+    public static ArrayList<Workspace> getWorkspaces()
     {
-        return new ArrayList<Workspace>(workspaces);
+        return new ArrayList<Workspace>(instance.workspaces);
     }
 
-    public Workspace getWorkspace(String className)
+    public static Workspace getWorkspace(String className)
     {
-        return Workspace.getWorkspace(workspaces, className);
+        return Workspace.getWorkspace(instance.workspaces, className);
+    }
+
+    /**
+     * Return the workspace list from the specified repository
+     */
+    public static ArrayList<Workspace> getWorkspaces(RepositoryInfo repos)
+    {
+        final ArrayList<Workspace> result = new ArrayList<Workspace>();
+
+        synchronized (instance.workspaces)
+        {
+            for (Workspace workspace : instance.workspaces)
+                if (workspace.getRepository().equals(repos))
+                    result.add(workspace);
+        }
+
+        return result;
     }
 
     /**
      * @return the loaded
      */
-    public boolean isLoading()
+    public static boolean isLoading()
     {
-        return loading;
+        return instance.loading;
     }
 
     /**
      * wait until loading completed
      */
-    public void waitWhileLoading()
+    public static void waitWhileLoading()
     {
         while (isLoading())
             ThreadUtil.sleep(10);
     }
 
     /**
-     * workspace list load completed
-     */
-    private void load_completed(RepositoryInfo repos)
-    {
-        fireEvent(new WorkspaceRepositoryLoaderEvent(WorkspaceRepositeryLoaderEventType.LOAD_COMPLETED, repos));
-    }
-
-    /**
      * workspace list has changed
      */
-    private void changed(RepositoryInfo repos)
+    private void changed()
     {
-        fireEvent(new WorkspaceRepositoryLoaderEvent(WorkspaceRepositeryLoaderEventType.CHANGED, repos));
+        fireEvent();
     }
 
     /**
@@ -279,11 +264,11 @@ public class WorkspaceRepositoryLoader
      * 
      * @param listener
      */
-    public void addListener(WorkspaceRepositoryLoaderListener listener)
+    public static void addListener(WorkspaceRepositoryLoaderListener listener)
     {
-        synchronized (listeners)
+        synchronized (instance.listeners)
         {
-            listeners.add(WorkspaceRepositoryLoaderListener.class, listener);
+            instance.listeners.add(WorkspaceRepositoryLoaderListener.class, listener);
         }
     }
 
@@ -292,22 +277,22 @@ public class WorkspaceRepositoryLoader
      * 
      * @param listener
      */
-    public void removeListener(WorkspaceRepositoryLoaderListener listener)
+    public static void removeListener(WorkspaceRepositoryLoaderListener listener)
     {
-        synchronized (listeners)
+        synchronized (instance.listeners)
         {
-            listeners.remove(WorkspaceRepositoryLoaderListener.class, listener);
+            instance.listeners.remove(WorkspaceRepositoryLoaderListener.class, listener);
         }
     }
 
     /**
      * fire event
      */
-    private void fireEvent(WorkspaceRepositoryLoaderEvent e)
+    private void fireEvent()
     {
         for (WorkspaceRepositoryLoaderListener listener : listeners
                 .getListeners(WorkspaceRepositoryLoaderListener.class))
-            listener.workspaceRepositeryLoaderChanged(e);
+            listener.workspaceRepositeryLoaderChanged();
     }
 
 }

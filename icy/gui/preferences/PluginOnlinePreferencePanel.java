@@ -20,12 +20,11 @@ package icy.gui.preferences;
 
 import icy.gui.dialog.ConfirmDialog;
 import icy.main.Icy;
+import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginInstaller.PluginInstallerListener;
-import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginRepositoryLoader;
-import icy.plugin.PluginRepositoryLoader.PluginRepositoryLoaderEvent;
 import icy.plugin.PluginRepositoryLoader.PluginRepositoryLoaderListener;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.thread.ThreadUtil;
@@ -51,17 +50,11 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
 
     public static final String NODE_NAME = "Online Plugin";
 
-    /**
-     * internal
-     */
-    private final PluginRepositoryLoader loader;
-
     PluginOnlinePreferencePanel(PreferenceFrame parent)
     {
         super(parent, NODE_NAME);
 
-        loader = new PluginRepositoryLoader();
-        loader.addListener(this);
+        PluginRepositoryLoader.addListener(this);
         PluginInstaller.addListener(this);
 
         repositoryPanel.setVisible(true);
@@ -79,7 +72,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     {
         super.closed();
 
-        loader.removeListener(this);
+        PluginRepositoryLoader.removeListener(this);
         PluginInstaller.removeListener(this);
     }
 
@@ -150,7 +143,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
                     if (doInstall)
                     {
                         // install plugin
-                        PluginInstaller.install(loader, plugin, true);
+                        PluginInstaller.install(plugin, true);
                         // refresh state
                         refreshTableData();
                         updateButtonsState();
@@ -177,22 +170,15 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     @Override
     protected void repositoryChanged()
     {
-        reloadPlugins();
+        refreshPlugins();
+        refreshTableData();
     }
 
     @Override
     protected void reloadPlugins()
     {
-        // get selected repository
-        final Object selectedItem = repository.getSelectedItem();
-
-        // load plugins from repository
-        if (selectedItem != null)
-        {
-            loader.clear();
-            loader.load((RepositoryInfo) selectedItem, true, true, true);
-        }
-
+        // reload online plugins
+        PluginRepositoryLoader.reload();
         updateButtonsState();
     }
 
@@ -223,9 +209,14 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     @Override
     protected ArrayList<PluginDescriptor> getPlugins()
     {
-        // filtrer ici sur le repository selectionné
-        -->
-        return loader.getPlugins();
+        // get selected repository
+        final Object selectedItem = repository.getSelectedItem();
+
+        // load plugins from repository
+        if (selectedItem != null)
+            return PluginRepositoryLoader.getPlugins((RepositoryInfo) selectedItem);
+
+        return PluginRepositoryLoader.getPlugins();
     }
 
     @Override
@@ -233,7 +224,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     {
         super.updateButtonsState();
 
-        if (loader.isLoading())
+        if (PluginRepositoryLoader.isLoadingBasic())
         {
             refreshButton.setText("Reloading...");
             refreshButton.setEnabled(false);
@@ -302,7 +293,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     }
 
     @Override
-    public void pluginRepositeryLoaderChanged(PluginRepositoryLoaderEvent e)
+    public void pluginRepositeryLoaderChanged()
     {
         ThreadUtil.invokeLater(new Runnable()
         {

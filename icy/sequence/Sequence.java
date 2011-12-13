@@ -581,7 +581,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public double getPixelSizeX()
     {
-        return OMEUtil.getValue(metaData.getPixelsPhysicalSizeX(0));
+        return OMEUtil.getValue(metaData.getPixelsPhysicalSizeX(0), 1d);
     }
 
     /**
@@ -589,7 +589,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public double getPixelSizeY()
     {
-        return OMEUtil.getValue(metaData.getPixelsPhysicalSizeY(0));
+        return OMEUtil.getValue(metaData.getPixelsPhysicalSizeY(0), 1d);
     }
 
     /**
@@ -597,7 +597,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public double getPixelSizeZ()
     {
-        return OMEUtil.getValue(metaData.getPixelsPhysicalSizeZ(0));
+        return OMEUtil.getValue(metaData.getPixelsPhysicalSizeZ(0), 1d);
     }
 
     /**
@@ -605,7 +605,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public double getTimeInterval()
     {
-        return TypeUtil.getDouble(metaData.getPixelsTimeIncrement(0));
+        return TypeUtil.getDouble(metaData.getPixelsTimeIncrement(0), 1d);
     }
 
     /**

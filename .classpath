@@ -8,7 +8,6 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/ejml.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/flamingo.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/flanagan.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/ij4icy.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/j3dcore.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/j3dutils.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jai_codec.jar"/>
@@ -45,5 +44,6 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/vtk.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/scifio.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jai_imageio.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/ij/ij.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

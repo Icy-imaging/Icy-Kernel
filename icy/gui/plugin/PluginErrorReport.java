@@ -25,7 +25,6 @@ import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.gui.util.GuiUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
-import icy.plugin.PluginRepositoryLoader;
 import icy.plugin.PluginUpdater;
 import icy.plugin.abstract_.Plugin;
 import icy.system.IcyExceptionHandler;
@@ -70,9 +69,6 @@ public class PluginErrorReport
 
                 try
                 {
-                    // load all online plugins
-                    PluginRepositoryLoader.loadAll(false, false, false);
-
                     // search for update
                     if (!info.isCancelRequested())
                         onlinePlugin = PluginUpdater.checkUpdate(plugin);

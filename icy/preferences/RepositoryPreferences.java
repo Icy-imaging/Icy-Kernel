@@ -202,6 +202,20 @@ public class RepositoryPreferences
         {
             return name + " - " + location;
         }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (obj instanceof RepositoryInfo)
+            {
+                final RepositoryInfo repoInf = (RepositoryInfo) obj;
+
+                return StringUtil.equals(repoInf.toString(), toString()) && (repoInf.enabled == enabled)
+                        && repoInf.authInf.equals(authInf);
+            }
+
+            return super.equals(obj);
+        }
     }
 
     /**
@@ -276,6 +290,6 @@ public class RepositoryPreferences
         preferences.clean();
 
         // reload online plugins as repositories changed
-        PluginRepositoryLoader.loadAll(true, true, true);
+        PluginRepositoryLoader.reload();
     }
 }

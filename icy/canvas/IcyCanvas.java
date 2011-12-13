@@ -919,7 +919,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (sequence == null)
             return 0;
 
-        final int maxX = sequence.getSizeX() - 1;
+        final int maxX = getImageSizeX() - 1;
 
         if (maxX < 0)
             return 0;
@@ -938,7 +938,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (sequence == null)
             return 0;
 
-        final int maxY = sequence.getSizeY() - 1;
+        final int maxY = getImageSizeY() - 1;
 
         if (maxY < 0)
             return 0;
@@ -957,7 +957,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (sequence == null)
             return 0;
 
-        final int maxZ = sequence.getSizeZ() - 1;
+        final int maxZ = getImageSizeZ() - 1;
 
         if (maxZ < 0)
             return 0;
@@ -976,7 +976,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (sequence == null)
             return 0;
 
-        final int maxT = sequence.getSizeT() - 1;
+        final int maxT = getImageSizeT() - 1;
 
         if (maxT < 0)
             return 0;
@@ -995,7 +995,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (sequence == null)
             return 0;
 
-        final int maxC = sequence.getSizeC() - 1;
+        final int maxC = getImageSizeC() - 1;
 
         if (maxC < 0)
             return 0;
@@ -2870,9 +2870,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             final int posT = getPositionT();
             final int posZ = getPositionZ();
             final int posC = getPositionC();
-            final int sizeT = seqIn.getSizeT();
-            final int sizeZ = seqIn.getSizeZ();
-            final int sizeC = seqIn.getSizeC();
+            final int sizeT = getImageSizeT();
+            final int sizeZ = getImageSizeZ();
+            final int sizeC = getImageSizeC();
 
             int pos = 0;
             int len = 1;
@@ -3003,18 +3003,18 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (sequence == null)
             return 0;
 
-        final int base_len = sequence.getSizeX() * sequence.getSizeY() * sequence.getSizeC();
+        final int base_len = getImageSizeX() * getImageSizeY() * getImageSizeC();
 
         if (getT() == -1)
         {
             if (getZ() == -1)
-                return base_len * sequence.getSizeZ() * sequence.getSizeT();
+                return base_len * getImageSizeZ() * getImageSizeT();
 
-            return base_len * sequence.getSizeT();
+            return base_len * getImageSizeT();
         }
 
         if (getZ() == -1)
-            return base_len * sequence.getSizeZ();
+            return base_len * getImageSizeZ();
 
         return base_len;
     }

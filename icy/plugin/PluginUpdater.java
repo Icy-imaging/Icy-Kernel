@@ -23,7 +23,6 @@ import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.util.GuiUtil;
-import icy.plugin.abstract_.Plugin;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
@@ -225,8 +224,7 @@ public class PluginUpdater extends ActionFrame
     public static PluginDescriptor checkUpdate(PluginDescriptor plugin)
     {
         // find equivalent online plugins
-        final ArrayList<PluginDescriptor> onlinePlugins = PluginDescriptor.getPlugins(
-                PluginRepositoryLoader.getPlugins(), plugin.getClassName());
+        final ArrayList<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins(plugin.getClassName());
         final PluginDescriptor onlinePlugin;
 
         // more than one online plugins availables ?
@@ -267,13 +265,23 @@ public class PluginUpdater extends ActionFrame
             checkingFrame = null;
         try
         {
-            // get online plugins from all active repositories
-            PluginRepositoryLoader.reload(waitWhileLoading();
+            // reload online plugins from all active repositories
+            PluginRepositoryLoader.reload();
+            // wait for basic infos
+            PluginRepositoryLoader.waitBasicLoaded();
+
+            if (PluginRepositoryLoader.failed())
+            {
+                if (showProgress)
+                    new AnnounceFrame("Can't connect to repositories... You should verify your connection.", 10);
+
+                return;
+            }
 
             for (PluginDescriptor localPlugin : localPlugins)
             {
                 // find update
-                final PluginDescriptor onlinePlugin = checkUpdate(loader, localPlugin);
+                final PluginDescriptor onlinePlugin = checkUpdate(localPlugin);
 
                 // update found, add to the list
                 if (onlinePlugin != null)
@@ -292,7 +300,7 @@ public class PluginUpdater extends ActionFrame
             if (auto)
             {
                 // automatically install all updates (orderer depending dependencies)
-                updatePlugins(loader, toInstallPlugins, true);
+                updatePlugins(toInstallPlugins, true);
             }
             else
             {
@@ -303,7 +311,7 @@ public class PluginUpdater extends ActionFrame
                     public void run()
                     {
                         // show pluginInstaller frame
-                        new PluginUpdater(loader, toInstallPlugins);
+                        new PluginUpdater(toInstallPlugins);
                     }
                 }, ANNOUNCE_SHOWTIME);
             }

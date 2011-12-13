@@ -4,6 +4,7 @@
 package icy.network;
 
 import icy.preferences.XMLPreferences;
+import icy.util.StringUtil;
 
 /**
  * @author Stephane
@@ -105,4 +106,16 @@ public class AuthenticationInfo
         }
     }
 
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof AuthenticationInfo)
+        {
+            final AuthenticationInfo auth = (AuthenticationInfo) obj;
+
+            return (StringUtil.equals(auth.login, login) && StringUtil.equals(auth.password, password) && (auth.enabled == enabled));
+        }
+
+        return super.equals(obj);
+    }
 }

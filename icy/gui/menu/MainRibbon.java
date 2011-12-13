@@ -274,7 +274,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         // we want tools task to be the first task
         ribbon.addTask(toolRibbonTask);
         ribbon.addTask(imageTask);
-        ribbon.addTask(ijTask);
+        // ribbon.addTask(ijTask);
 
         // WORKSPACES
 

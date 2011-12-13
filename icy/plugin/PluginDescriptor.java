@@ -389,7 +389,8 @@ public class PluginDescriptor implements XMLPersistent
     // private Date installed;
 
     private boolean enabled;
-    private boolean loaded;
+    private boolean descriptorLoaded;
+    private boolean imagesLoaded;
     // boolean checkingForUpdate;
     // boolean updateChecked;
     // PluginDescriptor onlineDescriptor;
@@ -397,6 +398,7 @@ public class PluginDescriptor implements XMLPersistent
     // private final List<String> publicClasseNames;
     private final List<PluginIdent> required;
 
+    // only for online descriptor
     private RepositoryInfo repository;
 
     // private static final DateFormat dateFormatter = DateFormat.getDateInstance();
@@ -559,7 +561,8 @@ public class PluginDescriptor implements XMLPersistent
 
         // default
         enabled = true;
-        loaded = true;
+        descriptorLoaded = true;
+        imagesLoaded = true;
     }
 
     /**
@@ -601,8 +604,9 @@ public class PluginDescriptor implements XMLPersistent
             desc = name + " plugin";
         }
 
-        // mark descriptor as loaded
-        loaded = true;
+        // mark descriptor and images as loaded
+        descriptorLoaded = true;
+        imagesLoaded = true;
     }
 
     /**
@@ -620,8 +624,9 @@ public class PluginDescriptor implements XMLPersistent
         this.name = ident.getName();
         this.repository = repos;
 
-        // mark descriptor as not yet loaded
-        loaded = false;
+        // mark descriptor and images as not yet loaded
+        descriptorLoaded = false;
+        imagesLoaded = false;
     }
 
     /**
@@ -658,12 +663,21 @@ public class PluginDescriptor implements XMLPersistent
     // }
 
     /**
-     * Load descriptor informations (xmlUrl field should be correctly filled)
+     * @deprecated uses {@link #load()} instead
      */
+    @Deprecated
     public boolean load(boolean loadImages)
     {
+        return loadDescriptor();
+    }
+
+    /**
+     * Load descriptor informations (xmlUrl field should be correctly filled)
+     */
+    public boolean loadDescriptor()
+    {
         // already loaded ?
-        if (loaded)
+        if (descriptorLoaded)
             return true;
 
         // retrieve document
@@ -679,15 +693,7 @@ public class PluginDescriptor implements XMLPersistent
                 return false;
             }
 
-            if (loadImages)
-            {
-                // load icon
-                loadIcon(URLUtil.getURL(iconUrl));
-                // load image
-                loadImage(URLUtil.getURL(imageUrl));
-            }
-
-            loaded = true;
+            descriptorLoaded = true;
 
             return true;
         }
@@ -695,6 +701,28 @@ public class PluginDescriptor implements XMLPersistent
         System.err.println("Can't load XML file from '" + xmlUrl + "' for plugin class '" + ident.getClassName() + "'");
 
         return false;
+    }
+
+    /**
+     * Load descriptor informations (xmlUrl field should be correctly filled)
+     */
+    public boolean loadImages()
+    {
+        // can't load images if descriptor is not yet loaded
+        if (!descriptorLoaded)
+            return false;
+        // already loaded ?
+        if (imagesLoaded)
+            return true;
+
+        // load icon
+        loadIcon(URLUtil.getURL(iconUrl));
+        // load image
+        loadImage(URLUtil.getURL(imageUrl));
+
+        imagesLoaded = true;
+
+        return true;
     }
 
     /**
@@ -1247,7 +1275,7 @@ public class PluginDescriptor implements XMLPersistent
      */
     public boolean isLoaded()
     {
-        return loaded;
+        return descriptorLoaded;
     }
 
     /**
@@ -1256,6 +1284,11 @@ public class PluginDescriptor implements XMLPersistent
     public List<PluginIdent> getRequired()
     {
         return new ArrayList<PluginIdent>(required);
+    }
+
+    public RepositoryInfo getRepository()
+    {
+        return repository;
     }
 
     /**
