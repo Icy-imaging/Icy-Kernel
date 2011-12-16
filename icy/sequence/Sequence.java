@@ -659,7 +659,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Initialize default channel name until specified index if they are missing.
      */
-    private void prepareChannelName(int index)
+    private void prepareMetaChannelName(int index)
     {
         int c = metaData.getChannelCount(0);
 
@@ -677,9 +677,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     public String getChannelName(int index)
     {
         // needed as LOCI does not initialize them on read
-        prepareChannelName(index);
+        prepareMetaChannelName(index);
 
-        return metaData.getChannelName(0, index);
+        return StringUtil.getValue(metaData.getChannelName(0, index), DEFAULT_CHANNEL_NAME + index);
     }
 
     /**
@@ -688,7 +688,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     public void setChannelName(int index, String value)
     {
         // needed as LOCI only add current channel if it's missing
-        prepareChannelName(index - 1);
+        prepareMetaChannelName(index - 1);
 
         if (!StringUtil.equals(getChannelName(index), value))
         {

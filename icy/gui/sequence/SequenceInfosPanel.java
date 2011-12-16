@@ -4,6 +4,7 @@
 package icy.gui.sequence;
 
 import icy.gui.component.ComponentUtil;
+import icy.gui.frame.GenericFrame;
 import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
@@ -43,6 +44,8 @@ public class SequenceInfosPanel extends InspectorSubPanel
     final JLabel channelLabel;
 
     final JButton editBtn;
+    final JButton detailBtn;
+
     boolean pxSizeYdifferent = true;
 
     public SequenceInfosPanel()
@@ -77,6 +80,27 @@ public class SequenceInfosPanel extends InspectorSubPanel
             }
         });
 
+        detailBtn = new JButton("Details");
+        detailBtn.setToolTipText("Show sequence metadata informations");
+        detailBtn.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                // it should be the current focused sequence
+                final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+
+                if (seq != null)
+                {
+                    final GenericFrame g = new GenericFrame("Sequence details", new SequenceMetadataPanel(seq));
+
+                    g.addToMainDesktopPane();
+                    g.center();
+                    g.requestFocus();
+                }
+            }
+        });
+
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 
         rebuild();
@@ -90,23 +114,23 @@ public class SequenceInfosPanel extends InspectorSubPanel
 
         JLabel label;
 
-        label = GuiUtil.createFixedWidthLabel("Name", 70);
+        label = GuiUtil.createFixedWidthLabel("Name", 90);
         label.setToolTipText("Sequence name");
         add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, nameLabel, Box.createHorizontalStrut(4),
                 Box.createHorizontalGlue()));
-        label = GuiUtil.createFixedWidthLabel("Dimension", 70);
+        label = GuiUtil.createFixedWidthLabel("Dimension", 90);
         label.setToolTipText("Size of X, Y, Z and T dimension");
         add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, dimensionLabel,
                 Box.createHorizontalStrut(4), Box.createHorizontalGlue()));
-        label = GuiUtil.createFixedWidthLabel("Channel", 70);
-        label.setToolTipText("Number of channel (and data type)");
+        label = GuiUtil.createFixedWidthLabel("Channel", 90);
+        label.setToolTipText("Number of channel - data type");
         add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, channelLabel, Box.createHorizontalStrut(4),
                 Box.createHorizontalGlue()));
-        label = GuiUtil.createFixedWidthLabel("Size", 70);
+        label = GuiUtil.createFixedWidthLabel("Size", 90);
         label.setToolTipText("Size");
         add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, sizeLabel, Box.createHorizontalStrut(4),
                 Box.createHorizontalGlue()));
-        label = GuiUtil.createFixedWidthLabel("Pixel size", 70);
+        label = GuiUtil.createFixedWidthLabel("Pixel size", 90);
 
         if (pxSizeYdifferent)
         {
@@ -121,12 +145,13 @@ public class SequenceInfosPanel extends InspectorSubPanel
             add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, resXLabel,
                     Box.createHorizontalStrut(4), resZLabel, Box.createHorizontalStrut(4), Box.createHorizontalGlue()));
         }
-        label = GuiUtil.createFixedWidthLabel("Time Interval", 70);
+        label = GuiUtil.createFixedWidthLabel("Time interval", 90);
         label.setToolTipText("Time Interval");
         add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, resTLabel, Box.createHorizontalStrut(4),
                 Box.createHorizontalGlue()));
         add(Box.createVerticalStrut(6));
-        add(GuiUtil.createLineBoxPanel(editBtn));
+        add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), detailBtn, Box.createHorizontalGlue(), editBtn,
+                Box.createHorizontalStrut(4)));
 
         revalidate();
     }
@@ -150,7 +175,7 @@ public class SequenceInfosPanel extends InspectorSubPanel
 
             nameLabel.setText(sequence.getName());
             dimensionLabel.setText(sizeX + " x " + sizeY + " x " + sizeZ + " x " + sizeT);
-            channelLabel.setText(sizeC + " (" + sequence.getDataType_() + ")");
+            channelLabel.setText(sizeC + " - " + sequence.getDataType_());
             sizeLabel.setText(UnitUtil.getBytesString(sizeX * sizeY * sizeZ * sizeT * sizeC
                     * sequence.getDataType_().getSize()));
             resXLabel.setText(UnitUtil.getBestUnitInMeters(pxSizeX, 2, UnitPrefix.MILLI));
@@ -164,9 +189,9 @@ public class SequenceInfosPanel extends InspectorSubPanel
             dimensionLabel.setToolTipText("Size X: " + sizeX + " Size Y: " + sizeY + " Size Z: " + sizeZ + " Size T: "
                     + sizeT);
             if (sizeC > 1)
-                channelLabel.setToolTipText(sizeC + " channels (" + sequence.getDataType_() + ")");
+                channelLabel.setToolTipText(sizeC + " channels - " + sequence.getDataType_());
             else
-                channelLabel.setToolTipText(sizeC + " channel (" + sequence.getDataType_() + ")");
+                channelLabel.setToolTipText(sizeC + " channel - " + sequence.getDataType_());
             sizeLabel.setToolTipText(sizeLabel.getText());
 
             if (pxSizeYdifferent)
@@ -175,9 +200,10 @@ public class SequenceInfosPanel extends InspectorSubPanel
                 resXLabel.setToolTipText("X / Y pixel resolution: " + resXLabel.getText());
             resYLabel.setToolTipText("Y pixel resolution: " + resYLabel.getText());
             resZLabel.setToolTipText("Z pixel resolution: " + resZLabel.getText());
-            resTLabel.setToolTipText("T time resolution: " + resTLabel.getText() + " ms");
+            resTLabel.setToolTipText("T time resolution: " + resTLabel.getText());
 
             editBtn.setEnabled(true);
+            detailBtn.setEnabled(true);
 
             rebuild();
         }
@@ -196,12 +222,13 @@ public class SequenceInfosPanel extends InspectorSubPanel
             dimensionLabel.setToolTipText("");
             channelLabel.setToolTipText("");
             sizeLabel.setToolTipText("");
-            resXLabel.setToolTipText("X pixel resolution (in mm)");
-            resYLabel.setToolTipText("Y pixel resolution (in mm)");
-            resZLabel.setToolTipText("Z pixel resolution (in mm)");
-            resTLabel.setToolTipText("T time resolution (in ms)");
+            resXLabel.setToolTipText("X pixel resolution");
+            resYLabel.setToolTipText("Y pixel resolution");
+            resZLabel.setToolTipText("Z pixel resolution");
+            resTLabel.setToolTipText("T time resolution");
 
             editBtn.setEnabled(false);
+            detailBtn.setEnabled(false);
         }
 
         revalidate();

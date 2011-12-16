@@ -48,7 +48,9 @@ public class SequencePropertiesDialog extends ActionDialog
                         panel.getPixelSizeYUnit(), UnitPrefix.MILLI));
                 sequence.setPixelSizeZ(UnitUtil.getValueInUnit(panel.getPixelSizeZFieldValue(),
                         panel.getPixelSizeZUnit(), UnitPrefix.MILLI));
+
                 double valueInMs = panel.getTimeIntervalFieldValue();
+
                 switch (panel.getTimeIntervalUnit())
                 {
                     case 0:
@@ -59,7 +61,9 @@ public class SequencePropertiesDialog extends ActionDialog
                         valueInMs *= 1000d;
                         break;
                 }
+
                 sequence.setTimeInterval(valueInMs);
+
                 for (int c = 0; c < sequence.getSizeC(); c++)
                     sequence.setChannelName(c, panel.getChannelNameFieldValue(c));
             }
@@ -67,6 +71,7 @@ public class SequencePropertiesDialog extends ActionDialog
 
         setLocationRelativeTo(Icy.getMainInterface().getFrame());
         pack();
+
         setVisible(true);
     }
 }

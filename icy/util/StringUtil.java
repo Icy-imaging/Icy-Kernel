@@ -26,6 +26,17 @@ import icy.math.MathUtil;
 public class StringUtil
 {
     /**
+     * Return defaultValue if value is empty
+     */
+    public static String getValue(String value, String defaultValue)
+    {
+        if (StringUtil.isEmpty(value))
+            return defaultValue;
+
+        return value;
+    }
+
+    /**
      * Return the index of previous digit char from specified index in specified string<br>
      * return -1 if not found
      */

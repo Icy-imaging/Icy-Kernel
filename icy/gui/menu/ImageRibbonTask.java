@@ -38,14 +38,13 @@ import icy.roi.ROI2D;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceUtil;
 import icy.system.thread.ThreadUtil;
-import icy.type.TypeUtil;
-import icy.type.collection.array.ArrayUtil;
+import icy.type.DataType;
+import icy.type.collection.array.Array1DUtil;
 import icy.util.StringUtil;
 
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.DataBuffer;
 
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
@@ -274,14 +273,14 @@ public class ImageRibbonTask extends RibbonTask
                     {
                         final JPopupMenu result = new JPopupMenu();
 
-                        result.add(getConvertItem(sequence, DataBuffer.TYPE_BYTE, false));
-                        result.add(getConvertItem(sequence, DataBuffer.TYPE_BYTE, true));
-                        result.add(getConvertItem(sequence, DataBuffer.TYPE_SHORT, false));
-                        result.add(getConvertItem(sequence, DataBuffer.TYPE_SHORT, true));
-                        result.add(getConvertItem(sequence, DataBuffer.TYPE_INT, false));
-                        result.add(getConvertItem(sequence, DataBuffer.TYPE_INT, true));
-                        result.add(getConvertItem(sequence, DataBuffer.TYPE_FLOAT, true));
-                        result.add(getConvertItem(sequence, DataBuffer.TYPE_DOUBLE, true));
+                        result.add(getConvertItem(sequence, DataType.UBYTE));
+                        result.add(getConvertItem(sequence, DataType.BYTE));
+                        result.add(getConvertItem(sequence, DataType.USHORT));
+                        result.add(getConvertItem(sequence, DataType.SHORT));
+                        result.add(getConvertItem(sequence, DataType.UINT));
+                        result.add(getConvertItem(sequence, DataType.INT));
+                        result.add(getConvertItem(sequence, DataType.FLOAT));
+                        result.add(getConvertItem(sequence, DataType.DOUBLE));
 
                         result.show(typeButton, 0, typeButton.getHeight());
                     }
@@ -299,20 +298,15 @@ public class ImageRibbonTask extends RibbonTask
             udpateButtonsState();
         }
 
-        public JMenuItem getConvertItem(final Sequence sequence, final int dataType, final boolean signed)
+        public JMenuItem getConvertItem(final Sequence sequence, final DataType dataType)
         {
             // build type text
-            String dataTypeString = "";
-
-            if (!TypeUtil.isFloat(dataType))
-                dataTypeString = dataTypeString + TypeUtil.toString(signed) + " ";
-            dataTypeString = dataTypeString + TypeUtil.toLongString(dataType);
-
-            final JMenuItem result = new JMenuItem(dataTypeString);
-            result.setText(dataTypeString);
+            // final String dataTypeString = ;
+            final JMenuItem result = new JMenuItem(dataType.toString(true));
+            // result.setText(dataTypeString);
 
             // sequence has same datatype ?
-            if ((sequence.getDataType() == dataType) && (sequence.isSignedDataType() == signed))
+            if (sequence.getDataType_() == dataType)
             {
                 // select and disable it
                 result.setSelected(true);
@@ -337,12 +331,11 @@ public class ImageRibbonTask extends RibbonTask
                                 final ProgressFrame pf = new ProgressFrame("Converting...");
                                 try
                                 {
-                                    final Sequence seqOut = sequence.convertToType(dataType, signed,
+                                    final Sequence seqOut = sequence.convertToType(dataType,
                                             scaledCheckBox.isSelected());
 
                                     // set sequence name
-                                    seqOut.setName(sequence.getName() + " [" + TypeUtil.toLongString(dataType, signed)
-                                            + "]");
+                                    seqOut.setName(sequence.getName() + " [" + dataType.toString(true) + "]");
 
                                     Icy.addSequence(seqOut);
                                 }
@@ -963,9 +956,8 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(convertToZButton, RibbonElementPriority.MEDIUM);
 
             // convert to T stack
-            convertToTButton = new IcyCommandButton("Convert to sequence", "pin_sq_right");
-            convertToTButton.setActionRichTooltip(new RichTooltip("Convert to sequence",
-                    "Set all images in T dimension"));
+            convertToTButton = new IcyCommandButton("Convert to time", "pin_sq_right");
+            convertToTButton.setActionRichTooltip(new RichTooltip("Convert to time", "Set all images in T dimension"));
             convertToTButton.addActionListener(new ActionListener()
             {
                 @Override
@@ -1104,7 +1096,7 @@ public class ImageRibbonTask extends RibbonTask
 
             if ((sequence != null) && (!sequence.isFloatDataType()))
             {
-                final double bounds[] = TypeUtil.getDefaultBounds(sequence.getDataType(), sequence.isSignedDataType());
+                final double bounds[] = sequence.getDataType_().getDefaultBounds();
 
                 // limit value to data type bounds
                 if (value < bounds[0])
@@ -1166,7 +1158,7 @@ public class ImageRibbonTask extends RibbonTask
                     {
                         for (int x = 0; x < bounds.width; x++)
                             if (mask[offMsk + x])
-                                ArrayUtil.setValue(imgData, offImg + x, value);
+                                Array1DUtil.setValue(imgData, offImg + x, value);
 
                         offMsk += bounds.width;
                         offImg += imageBounds.width;

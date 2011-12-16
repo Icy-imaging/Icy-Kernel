@@ -1,6 +1,8 @@
 package icy.gui.sequence;
 
 import icy.gui.component.ComponentUtil;
+import icy.gui.component.IcyTextField;
+import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.math.UnitUtil;
 import icy.math.UnitUtil.UnitPrefix;
 import icy.sequence.Sequence;
@@ -20,11 +22,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
 
 public class SequencePropertiesPanel extends JPanel
 {
@@ -33,16 +32,16 @@ public class SequencePropertiesPanel extends JPanel
      */
     private static final long serialVersionUID = -1568878218022361239L;
 
-    private JTextField nameField;
-    private JTextField tfPxSizeX;
-    private JTextField tfPxSizeY;
-    private JTextField tfPxSizeZ;
+    private IcyTextField nameField;
+    private IcyTextField tfPxSizeX;
+    private IcyTextField tfPxSizeY;
+    private IcyTextField tfPxSizeZ;
     private JComboBox cbPxSizeX;
     private JComboBox cbPxSizeY;
     private JComboBox cbPxSizeZ;
-    private JTextField tfTimeInterval;
+    private IcyTextField tfTimeInterval;
     private JPanel panelChannels;
-    private JTextField[] tfsChannels;
+    private IcyTextField[] tfsChannels;
     private JLabel lblX;
     private JLabel lblY;
     private JLabel lblZ;
@@ -90,7 +89,7 @@ public class SequencePropertiesPanel extends JPanel
         panelMain.add(panelName);
         panelName.setLayout(new BoxLayout(panelName, BoxLayout.LINE_AXIS));
 
-        nameField = new JTextField();
+        nameField = new IcyTextField();
         nameField.setPreferredSize(new Dimension(200, 20));
         nameField.setMinimumSize(new Dimension(80, 20));
         panelName.add(nameField);
@@ -106,9 +105,7 @@ public class SequencePropertiesPanel extends JPanel
         UnitPrefix[] upValues = UnitPrefix.values();
         String[] cbModel = new String[upValues.length];
         for (int i = 0; i < upValues.length; ++i)
-        {
             cbModel[i] = upValues[i].toString() + "m";
-        }
 
         panelPxSizeX = new JPanel(new GridLayout());
         panelPxSizeConfig.add(panelPxSizeX);
@@ -120,17 +117,14 @@ public class SequencePropertiesPanel extends JPanel
         lblX = new JLabel("X: ");
         panelPxSizeXLeft.add(lblX, BorderLayout.WEST);
 
-        tfPxSizeX = new JTextField();
-        tfPxSizeX.addCaretListener(new CaretListener()
+        tfPxSizeX = new IcyTextField();
+        tfPxSizeX.addTextChangeListener(new TextChangeListener()
         {
-
             @Override
-            public void caretUpdate(CaretEvent arg0)
+            public void textChanged(IcyTextField source)
             {
                 if (checkLinked.isSelected())
-                {
                     tfPxSizeY.setText(tfPxSizeX.getText());
-                }
             }
         });
         tfPxSizeX.setToolTipText("X pixel size.");
@@ -154,7 +148,7 @@ public class SequencePropertiesPanel extends JPanel
         lblY = new JLabel("Y: ");
         panelPxSizeYLeft.add(lblY, BorderLayout.WEST);
 
-        tfPxSizeY = new JTextField();
+        tfPxSizeY = new IcyTextField();
         panelPxSizeYLeft.add(tfPxSizeY);
         tfPxSizeY.setPreferredSize(new Dimension(60, 20));
         tfPxSizeY.setToolTipText("Y pixel size.");
@@ -169,7 +163,6 @@ public class SequencePropertiesPanel extends JPanel
         panelPxSizeYRight.add(checkLinked);
         checkLinked.addActionListener(new ActionListener()
         {
-
             @Override
             public void actionPerformed(ActionEvent arg0)
             {
@@ -197,7 +190,7 @@ public class SequencePropertiesPanel extends JPanel
         lblZ = new JLabel("Z: ");
         panelPxSizeZLeft.add(lblZ, BorderLayout.WEST);
 
-        tfPxSizeZ = new JTextField();
+        tfPxSizeZ = new IcyTextField();
         panelPxSizeZLeft.add(tfPxSizeZ);
         tfPxSizeZ.setPreferredSize(new Dimension(40, 20));
         tfPxSizeZ.setMinimumSize(new Dimension(40, 20));
@@ -227,7 +220,7 @@ public class SequencePropertiesPanel extends JPanel
         lblValue = new JLabel("Value: ");
         panelPxSizeTLeft.add(lblValue, BorderLayout.WEST);
 
-        tfTimeInterval = new JTextField();
+        tfTimeInterval = new IcyTextField();
         panelPxSizeTLeft.add(tfTimeInterval, BorderLayout.CENTER);
         tfTimeInterval.setPreferredSize(new Dimension(40, 20));
         tfTimeInterval.setMinimumSize(new Dimension(40, 20));
@@ -260,7 +253,7 @@ public class SequencePropertiesPanel extends JPanel
         final UnitPrefix pxSizeXUnit = UnitUtil.getBestUnit(pxSizeX, UnitPrefix.MILLI);
         final UnitPrefix pxSizeYUnit = UnitUtil.getBestUnit(pxSizeX, UnitPrefix.MILLI);
         final UnitPrefix pxSizeZUnit = UnitUtil.getBestUnit(pxSizeX, UnitPrefix.MILLI);
-        
+
         cbPxSizeX.setSelectedItem(pxSizeXUnit.toString() + "m");
         cbPxSizeY.setSelectedItem(pxSizeYUnit.toString() + "m");
         cbPxSizeZ.setSelectedItem(pxSizeZUnit.toString() + "m");
@@ -274,7 +267,7 @@ public class SequencePropertiesPanel extends JPanel
         {
             checkLinked.doClick();
         }
-        
+
         double timeInterval = sequence.getTimeInterval();
         TimeUnit unit = UnitUtil.getBestUnit(timeInterval);
 
@@ -284,17 +277,17 @@ public class SequencePropertiesPanel extends JPanel
                 tfTimeInterval.setText(StringUtil.toString(timeInterval));
                 cbTimeUnit.setSelectedIndex(3);
                 break;
-                
+
             case SECONDS:
                 tfTimeInterval.setText(StringUtil.toString(timeInterval / 1000));
                 cbTimeUnit.setSelectedIndex(2);
                 break;
-                
+
             case MINUTES:
                 tfTimeInterval.setText(StringUtil.toString(timeInterval / 60000));
                 cbTimeUnit.setSelectedIndex(1);
                 break;
-                
+
             case HOURS:
                 tfTimeInterval.setText(StringUtil.toString(timeInterval / 3600000));
                 cbTimeUnit.setSelectedIndex(0);
@@ -304,8 +297,8 @@ public class SequencePropertiesPanel extends JPanel
         final int sizeC = sequence.getSizeC();
 
         panelChannels.removeAll();
-        
-        tfsChannels = new JTextField[sizeC];
+
+        tfsChannels = new IcyTextField[sizeC];
 
         for (int c = 0; c < sizeC; c++)
         {
@@ -316,7 +309,7 @@ public class SequencePropertiesPanel extends JPanel
             label.setToolTipText("Channel " + c + " name");
             ComponentUtil.setFixedWidth(label, 100);
 
-            final JTextField field = new JTextField();
+            final IcyTextField field = new IcyTextField();
             field.setText(sequence.getChannelName(c));
 
             panel.add(label);

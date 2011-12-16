@@ -37,9 +37,15 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
      */
     private static final long serialVersionUID = 4294607311366304781L;
 
+    @Deprecated
     public interface IcyTextListener extends EventListener
     {
         public void textChanged(IcyTextField source);
+    }
+
+    public interface TextChangeListener extends IcyTextListener
+    {
+
     }
 
     /**
@@ -110,14 +116,32 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
             listener.textChanged(this);
     }
 
+    /**
+     * @deprecated uses {@link #addTextChangeListener(TextChangeListener)} instead
+     */
+    @Deprecated
     public void addTextListener(IcyTextListener listener)
     {
         listenerList.add(IcyTextListener.class, listener);
     }
 
+    /**
+     * @deprecated uses {@link #removeTextChangeListener(TextChangeListener)} instead
+     */
+    @Deprecated
     public void removeTextListener(IcyTextListener listener)
     {
         listenerList.remove(IcyTextListener.class, listener);
+    }
+
+    public void addTextChangeListener(TextChangeListener listener)
+    {
+        listenerList.add(TextChangeListener.class, listener);
+    }
+
+    public void removeTextChangeListener(TextChangeListener listener)
+    {
+        listenerList.remove(TextChangeListener.class, listener);
     }
 
     @Override

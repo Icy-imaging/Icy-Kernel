@@ -55,6 +55,7 @@ public class MathUtil
     public static void normalize(float[] array)
     {
         final float max = ArrayMath.max(array);
+
         if (max != 0)
             divide(array, max);
         else
@@ -74,6 +75,7 @@ public class MathUtil
     public static void normalize(double[] array)
     {
         final double max = ArrayMath.max(array);
+
         if (max != 0)
             divide(array, max);
         else

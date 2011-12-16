@@ -28,6 +28,7 @@ import icy.type.collection.array.ArrayUtil;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 public class XMLUtil
 {
@@ -84,7 +86,7 @@ public class XMLUtil
 
             result.setOutputProperty(OutputKeys.METHOD, "xml");
             result.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
-            // result.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            result.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
             result.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
             result.setOutputProperty(OutputKeys.INDENT, "yes");
 
@@ -128,6 +130,29 @@ public class XMLUtil
         }
 
         return null;
+    }
+
+    /**
+     * Parse the specified string and convert it to XML Document.
+     */
+    public static Document getDocument(String xmlString)
+    {
+        final DocumentBuilder docBuilder = getDocBuilder();
+
+        if (docBuilder != null)
+        {
+            try
+            {
+                return docBuilder.parse(new InputSource(new StringReader(xmlString)));
+            }
+            catch (Exception e)
+            {
+                IcyExceptionHandler.showErrorMessage(e, true);
+            }
+        }
+
+        // return empty document
+        return createDocument(false);
     }
 
     /**

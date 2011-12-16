@@ -277,7 +277,7 @@ public class UnitUtil
         }
 
         if (valueInMs != 0)
-            toReturn += (int) valueInMs + "ms";
+            toReturn += StringUtil.toString(valueInMs, 2) + "ms";
         else if (displayZero)
             toReturn += "000ms";
 

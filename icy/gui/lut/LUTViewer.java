@@ -83,11 +83,14 @@ public class LUTViewer extends IcyLutViewer
             {
                 final LUTBandViewer lbv = new LUTBandViewer(viewer, lutBand);
                 final int ch = lutBand.getComponent();
+
                 lutBandViewers.add(lbv);
                 bottomPane.addTab("ch " + ch, lbv);
                 bottomPane.setToolTipTextAt(ch, "Channel " + ch);
             }
         }
+
+        refreshChannelsName();
 
         final boolean check;
 
@@ -223,5 +226,4 @@ public class LUTViewer extends IcyLutViewer
                 bottomPane.setTitleAt(c, seq.getChannelName(c));
         }
     }
-
 }

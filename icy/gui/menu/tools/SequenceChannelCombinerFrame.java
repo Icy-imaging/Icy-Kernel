@@ -27,6 +27,7 @@ import icy.image.IcyBufferedImage.FilterType;
 import icy.main.Icy;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
+import icy.type.DataType;
 
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -258,20 +259,13 @@ public class SequenceChannelCombinerFrame extends ActionFrame
                                 sizeT = Math.max(seqIn2.getSizeT(), sizeT);
                             }
 
-                            final int dataType;
-                            final boolean signedDataType;
+                            final DataType dataType;
 
                             // we use sequence1 if possible data type for output data type
                             if (seqIn1 != null)
-                            {
-                                dataType = seqIn1.getDataType();
-                                signedDataType = seqIn1.isSignedDataType();
-                            }
+                                dataType = seqIn1.getDataType_();
                             else
-                            {
-                                dataType = seqIn2.getDataType();
-                                signedDataType = seqIn2.isSignedDataType();
-                            }
+                                dataType = seqIn2.getDataType_();
 
                             final ArrayList<BufferedImage> imgList = new ArrayList<BufferedImage>();
 
@@ -299,12 +293,12 @@ public class SequenceChannelCombinerFrame extends ActionFrame
                                                             fitToMaxSize.isSelected(), SwingConstants.CENTER,
                                                             SwingConstants.CENTER, FilterType.NEAREST);
                                                 // get specified channels of srcImg1
-                                                srcChannelImg1 = srcImg1.extractBands(channels1);
+                                                srcChannelImg1 = srcImg1.extractChannels(channels1);
                                             }
                                             else if ((!fillStackHole.isSelected()) || (srcChannelImg1 == null))
                                                 // get an empty image
                                                 srcChannelImg1 = new IcyBufferedImage(sizeX, sizeY, channels1.size(),
-                                                        dataType, signedDataType);
+                                                        dataType);
 
                                             imgList.add(srcChannelImg1);
                                         }
@@ -316,21 +310,20 @@ public class SequenceChannelCombinerFrame extends ActionFrame
                                             if (srcImg2 != null)
                                             {
                                                 // convert image if needed
-                                                if ((srcImg2.getDataType() != dataType)
-                                                        || (srcImg2.isSignedDataType() != signedDataType))
-                                                    srcImg2 = srcImg2.convertToType(dataType, signedDataType, true);
+                                                if ((srcImg2.getDataType_() == dataType))
+                                                    srcImg2 = srcImg2.convertToType(dataType, true);
                                                 // resize image if needed
                                                 if ((srcImg2.getSizeX() != sizeX) || (srcImg2.getSizeY() != sizeY))
                                                     srcImg2 = srcImg2.getScaledCopy(sizeX, sizeY,
                                                             fitToMaxSize.isSelected(), SwingConstants.CENTER,
                                                             SwingConstants.CENTER, FilterType.NEAREST);
                                                 // get specified channels of srcImg2
-                                                srcChannelImg2 = srcImg2.extractBands(channels2);
+                                                srcChannelImg2 = srcImg2.extractChannels(channels2);
                                             }
                                             else if ((!fillStackHole.isSelected()) || (srcChannelImg2 == null))
                                                 // get an empty image
                                                 srcChannelImg2 = new IcyBufferedImage(sizeX, sizeY, channels2.size(),
-                                                        dataType, signedDataType);
+                                                        dataType);
 
                                             imgList.add(srcChannelImg2);
                                         }

@@ -20,7 +20,7 @@ package icy.gui.preferences;
 
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcyTextField;
-import icy.gui.component.IcyTextField.IcyTextListener;
+import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.TextFieldFilter;
 import icy.gui.plugin.PluginDetailPanel;
 import icy.plugin.PluginDescriptor;
@@ -56,7 +56,7 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public abstract class PluginListPreferencePanel extends PreferencePanel implements IcyTextListener,
+public abstract class PluginListPreferencePanel extends PreferencePanel implements TextChangeListener,
         ListSelectionListener
 {
     /**
@@ -120,7 +120,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
         // need filter before load()
         filter = new TextFieldFilter();
-        filter.addTextListener(this);
+        filter.addTextChangeListener(this);
 
         load();
 

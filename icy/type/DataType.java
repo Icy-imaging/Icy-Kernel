@@ -506,82 +506,70 @@ public enum DataType
      */
     public String toString(boolean longString)
     {
-        final String result;
+        if (longString)
+            return toLongString();
+
+        return toString();
+    }
+
+    /**
+     * Convert DataType to long String (long description with bpp information)
+     */
+    public String toLongString()
+    {
+        String result = toString();
+
+        if (isInteger() && isSigned())
+            result = "signed " + result;
 
         switch (this)
         {
             case UBYTE:
-                result = "unsigned byte";
-                break;
-
             case BYTE:
-                result = "byte";
-                break;
-
+                return result + " (8 bpp)";
             case USHORT:
-                result = "unsigned short";
-                break;
-
             case SHORT:
-                result = "short";
-                break;
-
+                return result + " (16 bpp)";
             case UINT:
-                result = "unsigned int";
-                break;
-
             case INT:
-                result = "int";
-                break;
-
-            case ULONG:
-                result = "unsigned long";
-                break;
-
-            case LONG:
-                result = "long";
-                break;
-
             case FLOAT:
-                result = "float";
-                break;
-
+                return result + " (32 bpp)";
+            case ULONG:
+            case LONG:
             case DOUBLE:
-                result = "double";
-                break;
-
+                return result + " (64 bpp)";
             default:
-                result = "undefined";
-                break;
+                return result;
         }
-
-        if (longString)
-        {
-            switch (this)
-            {
-                case UBYTE:
-                case BYTE:
-                    return result + " (8 bpp)";
-                case USHORT:
-                case SHORT:
-                    return result + " (16 bpp)";
-                case UINT:
-                case INT:
-                case FLOAT:
-                    return result + " (32 bpp)";
-                case ULONG:
-                case LONG:
-                case DOUBLE:
-                    return result + " (64 bpp)";
-            }
-        }
-
-        return result;
     }
 
     @Override
     public String toString()
     {
-        return toString(false);
+        switch (this)
+        {
+            case UBYTE:
+                return "unsigned byte";
+            case BYTE:
+                return "byte";
+            case USHORT:
+                return "unsigned short";
+            case SHORT:
+                return "short";
+            case UINT:
+                return "unsigned int";
+            case INT:
+                return "int";
+            case ULONG:
+                return "unsigned long";
+            case LONG:
+                return "long";
+            case FLOAT:
+                return "float";
+            case DOUBLE:
+                return "double";
+            default:
+                return "undefined";
+        }
     }
 }

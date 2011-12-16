@@ -31,6 +31,7 @@ public class JCheckTabbedPane extends JTabbedPane
         private static final long serialVersionUID = 4841789742300589373L;
 
         final private JCheckBox checkBox;
+        final private JLabel label;
 
         public CustomCheck(String title)
         {
@@ -52,14 +53,21 @@ public class JCheckTabbedPane extends JTabbedPane
                 }
             });
 
+            label = new JLabel(" " + title);
+
             add(checkBox);
-            add(new JLabel(" " + title));
+            add(label);
             validate();
         }
 
         public boolean isSelected()
         {
             return checkBox.isSelected();
+        }
+
+        public void setTitle(String title)
+        {
+            label.setText(" " + title);
         }
     }
 
@@ -103,6 +111,14 @@ public class JCheckTabbedPane extends JTabbedPane
     public boolean isTabChecked(int index)
     {
         return ((CustomCheck) getTabComponentAt(index)).isSelected();
+    }
+
+    @Override
+    public void setTitleAt(int index, String title)
+    {
+        super.setTitleAt(index, title);
+
+        ((CustomCheck) getTabComponentAt(index)).setTitle(title);
     }
 
     @Override
