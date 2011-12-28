@@ -124,7 +124,7 @@ public class TNavigationPanel extends JPanel
             }
         });
 
-        play = new IcyButton(null, "playback_play", 20);
+        play = new IcyButton(null, "playback_play");
         play.setFlat(true);
         play.setFocusable(false);
         play.setToolTipText("play");
@@ -139,7 +139,7 @@ public class TNavigationPanel extends JPanel
             }
         });
 
-        stop = new IcyButton(null, "playback_stop", 20);
+        stop = new IcyButton(null, "playback_stop");
         stop.setFlat(true);
         stop.setFocusable(false);
         stop.setToolTipText("stop");

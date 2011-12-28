@@ -21,13 +21,12 @@ package icy.gui.preferences;
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
-import icy.gui.component.TextFieldFilter;
 import icy.gui.plugin.PluginDetailPanel;
 import icy.plugin.PluginDescriptor;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.resource.ResourceUtil;
-import icy.system.thread.ThreadUtil;
+import icy.system.thread.InstanceProcessor;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -76,11 +75,18 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     final JComboBox repository;
     final JPanel repositoryPanel;
-    final TextFieldFilter filter;
+    final IcyTextField filter;
     final JButton refreshButton;
     final JButton detailButton;
     final JButton action1Button;
     final JButton action2Button;
+
+    final InstanceProcessor processor;
+
+    private final Runnable buttonsStateUpdater;
+    private final Runnable tableDataRefresher;
+    private final Runnable pluginsListRefresher;
+    private final Runnable repositoriesUpdater;
 
     final ActionListener repositoryActionListener;
 
@@ -89,6 +95,41 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         super(parent, nodeName, PluginPreferencePanel.NODE_NAME);
 
         plugins = new ArrayList<PluginDescriptor>();
+
+        processor = new InstanceProcessor();
+
+        buttonsStateUpdater = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                updateButtonsStateInternal();
+            }
+        };
+        tableDataRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshTableDataInternal();
+            }
+        };
+        pluginsListRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshPluginsInternal();
+            }
+        };
+        repositoriesUpdater = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                updateRepositoriesInternal();
+            }
+        };
 
         repositoryActionListener = new ActionListener()
         {
@@ -119,7 +160,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         repositoryPanel.add(Box.createVerticalStrut(8));
 
         // need filter before load()
-        filter = new TextFieldFilter();
+        filter = new IcyTextField();
         filter.addTextChangeListener(this);
 
         load();
@@ -217,21 +258,24 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
             @Override
             public Object getValueAt(int row, int column)
             {
-                final PluginDescriptor plugin = plugins.get(row);
-
-                switch (column)
+                if (row < plugins.size())
                 {
-                    case 0:
-                        return ResourceUtil.scaleIcon(plugin.getIcon(), 32);
+                    final PluginDescriptor plugin = plugins.get(row);
 
-                    case 1:
-                        return plugin.getName();
+                    switch (column)
+                    {
+                        case 0:
+                            return ResourceUtil.scaleIcon(plugin.getIcon(), 32);
 
-                    case 2:
-                        return plugin.getVersion().toString();
+                        case 1:
+                            return plugin.getName();
 
-                    case 3:
-                        return getStateValue(plugin);
+                        case 2:
+                            return plugin.getVersion().toString();
+
+                        case 3:
+                            return getStateValue(plugin);
+                    }
                 }
 
                 return "";
@@ -348,11 +392,6 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected abstract ArrayList<PluginDescriptor> getPlugins();
 
-    protected void refreshPlugins()
-    {
-        plugins = filterList(getPlugins(), filter.getText());
-    }
-
     protected int getPluginIndex(PluginDescriptor plugin)
     {
         return plugins.indexOf(plugin);
@@ -415,14 +454,29 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         }
     }
 
-    protected void updateButtonsState()
+    protected void refreshPluginsInternal()
+    {
+        plugins = filterList(getPlugins(), filter.getText());
+    }
+
+    protected final void refreshPlugins()
+    {
+        processor.addTask(pluginsListRefresher, false);
+    }
+
+    protected void updateButtonsStateInternal()
     {
         final boolean pluginSelected = (getSelectedPlugin() != null);
 
         detailButton.setEnabled(pluginSelected);
     }
 
-    protected void updateRepositories()
+    protected final void updateButtonsState()
+    {
+        processor.addTask(buttonsStateUpdater, true);
+    }
+
+    protected void updateRepositoriesInternal()
     {
         // final RepositoryPreferencePanel panel = (RepositoryPreferencePanel)
         // getPreferencePanel(RepositoryPreferencePanel.class);
@@ -472,6 +526,33 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         repository.setMinimumSize(new Dimension(48, 18));
     }
 
+    protected final void updateRepositories()
+    {
+        processor.addTask(repositoriesUpdater, true);
+    }
+
+    protected void refreshTableDataInternal()
+    {
+        final PluginDescriptor plugin = getSelectedPlugin();
+
+        tableModel.fireTableDataChanged();
+
+        // restore previous selected plugin if possible
+        setSelectedPlugin(plugin);
+    }
+
+    protected final void refreshTableData()
+    {
+        processor.addTask(tableDataRefresher, true);
+    }
+
+    protected void pluginsChanged()
+    {
+        refreshPlugins();
+        refreshTableData();
+        updateButtonsState();
+    }
+
     @Override
     protected void load()
     {
@@ -483,30 +564,6 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
     {
         // reload repositories as some parameter as beta flag can have changed
         updateRepositories();
-    }
-
-    protected void refreshTableData()
-    {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                final PluginDescriptor plugin = getSelectedPlugin();
-
-                tableModel.fireTableDataChanged();
-
-                // restore previous selected plugin if possible
-                setSelectedPlugin(plugin);
-            }
-        });
-    }
-
-    protected void pluginsChanged()
-    {
-        refreshPlugins();
-        refreshTableData();
-        updateButtonsState();
     }
 
     @Override

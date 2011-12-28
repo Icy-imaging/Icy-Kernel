@@ -23,7 +23,7 @@ import org.pushingpixels.flamingo.api.common.icon.ResizableIcon;
  */
 public class IcyIcon implements ResizableIcon
 {
-    public static final int DEFAULT_SIZE = 24;
+    public static final int DEFAULT_SIZE = 20;
 
     protected Image image;
     protected String name;
@@ -39,26 +39,7 @@ public class IcyIcon implements ResizableIcon
         this.image = image;
         this.name = name;
 
-        dim = new Dimension();
-
-        if (size != -1)
-        {
-            dim.width = size;
-            dim.height = size;
-        }
-        else
-        {
-            if (image != null)
-            {
-                dim.width = image.getWidth(null);
-                dim.height = image.getHeight(null);
-            }
-            else
-            {
-                dim.width = DEFAULT_SIZE;
-                dim.height = DEFAULT_SIZE;
-            }
-        }
+        dim = new Dimension(size, size);
 
         updateImage();
     }
@@ -70,7 +51,7 @@ public class IcyIcon implements ResizableIcon
 
     public IcyIcon(String name)
     {
-        this(name, null, -1);
+        this(name, null, DEFAULT_SIZE);
     }
 
     public IcyIcon(Image image, int size)
@@ -80,7 +61,7 @@ public class IcyIcon implements ResizableIcon
 
     public IcyIcon(Image image)
     {
-        this(null, image, -1);
+        this(null, image, DEFAULT_SIZE);
     }
 
     public int getSize()

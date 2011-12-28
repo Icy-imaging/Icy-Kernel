@@ -45,6 +45,7 @@ import javax.swing.plaf.ColorUIResource;
 import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
 import org.pushingpixels.flamingo.api.common.JCommandToggleMenuButton;
 import org.pushingpixels.flamingo.api.common.popup.JCommandPopupMenu;
+import org.pushingpixels.substance.api.ComponentState;
 import org.pushingpixels.substance.api.DecorationAreaType;
 import org.pushingpixels.substance.api.SubstanceColorScheme;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
@@ -55,6 +56,7 @@ import org.pushingpixels.substance.api.fonts.SubstanceFontUtilities;
 import org.pushingpixels.substance.api.skin.SkinChangeListener;
 import org.pushingpixels.substance.api.skin.SkinInfo;
 import org.pushingpixels.substance.internal.ui.SubstanceInternalFrameUI;
+import org.pushingpixels.substance.internal.utils.SubstanceColorSchemeUtilities;
 import org.pushingpixels.substance.internal.utils.SubstanceInternalFrameTitlePane;
 import org.pushingpixels.substance.internal.utils.SubstanceTitlePane;
 
@@ -411,6 +413,11 @@ public class LookAndFeelUtil
             return skin.getActiveColorScheme(decoration);
 
         return null;
+    }
+
+    public static SubstanceColorScheme getActiveColorSheme(Component c, ComponentState state)
+    {
+        return SubstanceColorSchemeUtilities.getActiveColorScheme(c, state);
     }
 
     public static SubstanceColorScheme getBackgroundColorScheme(Component c)

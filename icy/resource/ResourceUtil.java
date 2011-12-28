@@ -19,6 +19,7 @@
 package icy.resource;
 
 import icy.image.ImageUtil;
+import icy.resource.icon.IcyIcon;
 import icy.util.StringUtil;
 
 import java.awt.Color;
@@ -32,6 +33,8 @@ import javax.swing.ImageIcon;
 
 public class ResourceUtil
 {
+    public static final int DEFAULT_ICON_SIZE = IcyIcon.DEFAULT_SIZE;
+
     public static final Image IMAGE_ICY_16 = ResourceUtil.getIconAsImage("icy16.png");
     public static final Image IMAGE_ICY_32 = ResourceUtil.getIconAsImage("icy32.png");
     public static final Image IMAGE_ICY_256 = ResourceUtil.getImage("logo.png");
@@ -50,10 +53,15 @@ public class ResourceUtil
     public static final Image ICON_DOCIMPORT = ResourceUtil.getAlphaIconAsImage("doc_import.png");
     public static final Image ICON_DOCEXPORT = ResourceUtil.getAlphaIconAsImage("doc_export.png");
     public static final Image ICON_DOCEDIT = ResourceUtil.getAlphaIconAsImage("doc_edit.png");
+    public static final Image ICON_DOCTEXT1 = ResourceUtil.getAlphaIconAsImage("doc_lines.png");
+    public static final Image ICON_DOCTEXT2 = ResourceUtil.getAlphaIconAsImage("doc_lines_stright.png");
     public static final Image ICON_OPEN = ResourceUtil.getAlphaIconAsImage("folder_open.png");
     public static final Image ICON_SAVE = ResourceUtil.getAlphaIconAsImage("save.png");
     public static final Image ICON_CLOSE = ResourceUtil.getAlphaIconAsImage("round_delete.png");
-    public static final Image ICON_EXIT = ResourceUtil.getAlphaIconAsImage("arrow_bottom_left.png");
+    // public static final Image ICON_EXIT =
+    // ResourceUtil.getAlphaIconAsImage("arrow_bottom_left.png");
+    public static final Image ICON_ON_OFF = ResourceUtil.getAlphaIconAsImage("on-off.png");
+    public static final Image ICON_TRASH = ResourceUtil.getAlphaIconAsImage("trash.png");
     public static final Image ICON_DELETE = ResourceUtil.getAlphaIconAsImage("delete.png");
     public static final Image ICON_COG = ResourceUtil.getAlphaIconAsImage("cog.png");
     public static final Image ICON_UNCHECKED = ResourceUtil.getAlphaIconAsImage("checkbox_unchecked.png");
@@ -61,6 +69,8 @@ public class ResourceUtil
     public static final Image ICON_LOCK_OPEN = ResourceUtil.getAlphaIconAsImage("padlock_open.png");
     public static final Image ICON_LOCK_CLOSE = ResourceUtil.getAlphaIconAsImage("padlock_closed.png");
     public static final Image ICON_LOCKED_BASE = ResourceUtil.getAlphaIconAsImage("locked.png");
+    public static final Image ICON_PROPERTIES = ICON_DOCTEXT1;
+    public static final Image ICON_TOOLS = ResourceUtil.getAlphaIconAsImage("wrench_plus_2.png");;
     public static final Image ICON_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png");
     public static final Image ICON_NOT_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_close.png");
 

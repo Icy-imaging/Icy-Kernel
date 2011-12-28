@@ -64,19 +64,11 @@ public class IcyToggleButton extends JToggleButton
     }
 
     /**
-     * Create a toggle button with specified icon
+     * Create a toggle button with specified text and icon
      */
-    public IcyToggleButton(Image iconImage)
+    public IcyToggleButton(String text, Image iconImage, int iconSize)
     {
-        this(null, new IcyIcon(iconImage));
-    }
-
-    /**
-     * Create a toggle button with specified icon
-     */
-    public IcyToggleButton(Image iconImage, int size)
-    {
-        this(null, new IcyIcon(iconImage, size));
+        this(text, new IcyIcon(iconImage, iconSize));
     }
 
     /**
@@ -84,24 +76,52 @@ public class IcyToggleButton extends JToggleButton
      */
     public IcyToggleButton(String text, Image iconImage)
     {
-        this(text, new IcyIcon(iconImage));
+        this(text, iconImage, IcyIcon.DEFAULT_SIZE);
     }
 
-    public IcyToggleButton(String text, String iconName, int size)
+    /**
+     * Create a toggle button with specified icon
+     */
+    public IcyToggleButton(Image iconImage, int iconSize)
     {
-        this(text, new IcyIcon(iconName, size));
+        this(null, iconImage, iconSize);
     }
 
+    /**
+     * Create a toggle button with specified icon
+     */
+    public IcyToggleButton(Image iconImage)
+    {
+        this(null, iconImage, IcyIcon.DEFAULT_SIZE);
+    }
+
+    /**
+     * Create a toggle button with specified text and icon
+     */
+    public IcyToggleButton(String text, String iconName, int iconSize)
+    {
+        this(text, new IcyIcon(iconName, iconSize));
+    }
+
+    /**
+     * Create a toggle button with specified text and icon
+     */
     public IcyToggleButton(String text, String iconName)
     {
         this(text, iconName, IcyIcon.DEFAULT_SIZE);
     }
 
-    public IcyToggleButton(String iconName, int size)
+    /**
+     * Create a toggle button with specified icon
+     */
+    public IcyToggleButton(String iconName, int iconSize)
     {
-        this(null, new IcyIcon(iconName, size));
+        this(null, iconName, iconSize);
     }
 
+    /**
+     * Create a toggle button with specified icon
+     */
     public IcyToggleButton(String iconName)
     {
         this(iconName, IcyIcon.DEFAULT_SIZE);

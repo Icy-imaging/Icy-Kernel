@@ -87,6 +87,8 @@ public class SliderCellEditor extends AbstractCellEditor implements TableCellEdi
         if (slider.getValue() != intValue)
             slider.setValue(intValue);
 
+        slider.invalidate();
+
         return slider;
     }
 

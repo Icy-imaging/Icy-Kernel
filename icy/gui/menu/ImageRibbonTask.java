@@ -1029,7 +1029,7 @@ public class ImageRibbonTask extends RibbonTask
                 fillValueField.setToolTipText("Value used for filling");
                 fillValueField.setText("0");
 
-                fillImage = new IcyButton("Image", "pencil", 16);
+                fillImage = new IcyButton("Image", "brush", 16);
                 fillImage.setFlat(true);
                 fillImage.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
                 ComponentUtil.setFixedWidth(fillImage, 90);
@@ -1048,7 +1048,7 @@ public class ImageRibbonTask extends RibbonTask
                     }
                 });
 
-                fillSequence = new IcyButton("Sequence", "pencil", 16);
+                fillSequence = new IcyButton("Sequence", "brush", 16);
                 fillSequence.setFlat(true);
                 fillSequence.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
                 ComponentUtil.setFixedWidth(fillSequence, 90);

@@ -148,6 +148,30 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
     }
 
     /**
+     * Return true if this color map is RGB type
+     */
+    public boolean isRGB()
+    {
+        return type == IcyColorMapType.RGB;
+    }
+
+    /**
+     * Return true if this color map is GRAY type
+     */
+    public boolean isGray()
+    {
+        return type == IcyColorMapType.GRAY;
+    }
+
+    /**
+     * Return true if this color map is ALPHA type
+     */
+    public boolean isAlpha()
+    {
+        return type == IcyColorMapType.ALPHA;
+    }
+
+    /**
      * @return the type
      */
     public IcyColorMapType getType()

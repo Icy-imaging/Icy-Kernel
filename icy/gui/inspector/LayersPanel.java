@@ -23,8 +23,7 @@ import icy.canvas.Layer;
 import icy.canvas.LayersEvent;
 import icy.canvas.LayersListener;
 import icy.gui.component.IcyTextField;
-import icy.gui.component.IcyTextField.IcyTextListener;
-import icy.gui.component.TextFieldFilter;
+import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.editor.SliderCellEditor;
 import icy.gui.component.editor.VisibleCellEditor;
@@ -62,7 +61,7 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public class LayersPanel extends InspectorSubPanel implements LayersListener, IcyTextListener, ListSelectionListener
+public class LayersPanel extends InspectorSubPanel implements LayersListener, TextChangeListener, ListSelectionListener
 {
     private class CanvasRefresher implements Runnable
     {
@@ -109,7 +108,7 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Ic
     final ListSelectionModel tableSelectionModel;
     final JTable table;
 
-    final TextFieldFilter nameFilter;
+    final IcyTextField nameFilter;
     private final JPanel filtersPanel;
 
     final IcyTextField nameField;
@@ -154,9 +153,9 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Ic
         canvasRefresher = new CanvasRefresher();
 
         // need filter before load()
-        nameFilter = new TextFieldFilter();
+        nameFilter = new IcyTextField();
         nameFilter.setToolTipText("Enter a string sequence to filter Layer on name");
-        nameFilter.addTextListener(this);
+        nameFilter.addTextChangeListener(this);
 
         filtersPanel = new JPanel();
         filtersPanel.setLayout(new BoxLayout(filtersPanel, BoxLayout.LINE_AXIS));
@@ -167,33 +166,9 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Ic
         // build control panel
         nameField = new IcyTextField();
         nameField.setToolTipText("Edit name of selected Layer(s)");
-        nameField.addTextListener(new IcyTextListener()
-        {
-            @Override
-            public void textChanged(IcyTextField source)
-            {
-                if (isLayerPropertiesAdjusting)
-                    return;
+        nameField.addTextChangeListener(this);
 
-                if (nameField.isEnabled())
-                {
-                    final String name = source.getText();
-
-                    canvas.beginUpdate();
-                    try
-                    {
-                        for (Layer layer : getSelectedLayers())
-                            layer.setName(name);
-                    }
-                    finally
-                    {
-                        canvas.endUpdate();
-                    }
-                }
-            }
-        });
-
-        deleteButton = new IcyButton(ResourceUtil.ICON_DELETE, 22);
+        deleteButton = new IcyButton(ResourceUtil.ICON_TRASH);
         deleteButton.setFlat(true);
         deleteButton.setToolTipText("Delete selected Layer(s)");
         deleteButton.addActionListener(new ActionListener()
@@ -660,7 +635,30 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Ic
     @Override
     public void textChanged(IcyTextField source)
     {
-        refreshLayers();
+        if (source == nameField)
+        {
+            if (isLayerPropertiesAdjusting)
+                return;
+
+            if (nameField.isEnabled())
+            {
+                final String name = source.getText();
+
+                canvas.beginUpdate();
+                try
+                {
+                    for (Layer layer : getSelectedLayers())
+                        layer.setName(name);
+                }
+                finally
+                {
+                    canvas.endUpdate();
+                }
+            }
+        }
+
+        if (source == nameFilter)
+            refreshLayers();
     }
 
     @Override

@@ -20,8 +20,7 @@ package icy.gui.inspector;
 
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcyTextField;
-import icy.gui.component.IcyTextField.IcyTextListener;
-import icy.gui.component.TextFieldFilter;
+import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.button.ColorChooserButton;
 import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
 import icy.gui.component.button.IcyButton;
@@ -71,7 +70,7 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public class RoisPanel extends InspectorSubPanel implements IcyTextListener, ListSelectionListener
+public class RoisPanel extends InspectorSubPanel implements TextChangeListener, ListSelectionListener
 {
     /**
      * 
@@ -89,7 +88,7 @@ public class RoisPanel extends InspectorSubPanel implements IcyTextListener, Lis
     final JTable table;
 
     final JComboBox roiType;
-    final TextFieldFilter nameFilter;
+    final IcyTextField nameFilter;
     private final JPanel filtersPanel;
 
     final IcyTextField nameField;
@@ -161,9 +160,9 @@ public class RoisPanel extends InspectorSubPanel implements IcyTextListener, Lis
         });
 
         // need filter before load()
-        nameFilter = new TextFieldFilter();
+        nameFilter = new IcyTextField();
         nameFilter.setToolTipText("Enter a string sequence to filter ROI on name");
-        nameFilter.addTextListener(this);
+        nameFilter.addTextChangeListener(this);
 
         filtersPanel = new JPanel();
         filtersPanel.setLayout(new BoxLayout(filtersPanel, BoxLayout.LINE_AXIS));
@@ -176,31 +175,7 @@ public class RoisPanel extends InspectorSubPanel implements IcyTextListener, Lis
         // build control panel
         nameField = new IcyTextField();
         nameField.setToolTipText("Edit name of selected ROI(s)");
-        nameField.addTextListener(new IcyTextListener()
-        {
-            @Override
-            public void textChanged(IcyTextField source)
-            {
-                if (isRoiPropertiesAdjusting)
-                    return;
-
-                if (nameField.isEnabled())
-                {
-                    final String name = source.getText();
-
-                    sequence.beginUpdate();
-                    try
-                    {
-                        for (ROI roi : getSelectedRois())
-                            roi.setName(name);
-                    }
-                    finally
-                    {
-                        sequence.endUpdate();
-                    }
-                }
-            }
-        });
+        nameField.addTextChangeListener(this);
 
         colorButton = new ColorChooserButton();
         ComponentUtil.setFixedHeight(colorButton, 22);
@@ -231,7 +206,7 @@ public class RoisPanel extends InspectorSubPanel implements IcyTextListener, Lis
             }
         });
 
-        copyButton = new IcyButton(ResourceUtil.ICON_DOCCOPY, 22);
+        copyButton = new IcyButton(ResourceUtil.ICON_DOCCOPY);
         copyButton.setFlat(true);
         copyButton.setToolTipText("Duplicate selected ROI(s)");
         copyButton.addActionListener(new ActionListener()
@@ -253,7 +228,7 @@ public class RoisPanel extends InspectorSubPanel implements IcyTextListener, Lis
             }
         });
 
-        mergeButton = new IcyButton(null, "lighting", 22);
+        mergeButton = new IcyButton(null, "lighting");
         mergeButton.setFlat(true);
         mergeButton.setToolTipText("Merge selected ROI(s)...");
         mergeButton.addActionListener(new ActionListener()
@@ -265,7 +240,7 @@ public class RoisPanel extends InspectorSubPanel implements IcyTextListener, Lis
             }
         });
 
-        deleteButton = new IcyButton(ResourceUtil.ICON_DELETE, 22);
+        deleteButton = new IcyButton(ResourceUtil.ICON_TRASH);
         deleteButton.setFlat(true);
         deleteButton.setToolTipText("Delete selected ROI(s)");
         deleteButton.addActionListener(new ActionListener()
@@ -885,7 +860,30 @@ public class RoisPanel extends InspectorSubPanel implements IcyTextListener, Lis
     @Override
     public void textChanged(IcyTextField source)
     {
-        refreshRois();
+        if (source == nameField)
+        {
+            if (isRoiPropertiesAdjusting)
+                return;
+
+            if (nameField.isEnabled())
+            {
+                final String name = source.getText();
+
+                sequence.beginUpdate();
+                try
+                {
+                    for (ROI roi : getSelectedRois())
+                        roi.setName(name);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+            }
+        }
+
+        if (source == nameFilter)
+            refreshRois();
     }
 
     @Override

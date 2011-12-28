@@ -214,14 +214,14 @@ public class PluginUpdater extends ActionFrame
     }
 
     /**
-     * Check update for the specified plugin.
+     * Get update for the specified plugin.
      * 
      * @param plugin
      *        local plugin we are looking update for
      * @return
      *         plugin descriptor of update if any (null if no update)
      */
-    public static PluginDescriptor checkUpdate(PluginDescriptor plugin)
+    public static PluginDescriptor getUpdate(PluginDescriptor plugin)
     {
         // find equivalent online plugins
         final ArrayList<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins(plugin.getClassName());
@@ -281,7 +281,7 @@ public class PluginUpdater extends ActionFrame
             for (PluginDescriptor localPlugin : localPlugins)
             {
                 // find update
-                final PluginDescriptor onlinePlugin = checkUpdate(localPlugin);
+                final PluginDescriptor onlinePlugin = getUpdate(localPlugin);
 
                 // update found, add to the list
                 if (onlinePlugin != null)

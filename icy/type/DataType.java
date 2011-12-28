@@ -366,9 +366,9 @@ public enum DataType
     }
 
     /**
-     * Return the size (in byte) of the specified dataType<br>
-     * Same as {@link #getSize()}
+     * @deprecated uses {@link #getSize()} instead
      */
+    @Deprecated
     public int sizeOf()
     {
         return getSize();

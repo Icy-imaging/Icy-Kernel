@@ -52,6 +52,7 @@ import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -83,8 +84,6 @@ import plugins.kernel.canvas.Canvas3DPlugin;
  */
 public class Viewer extends IcyFrame implements KeyListener, SequenceListener, IcyCanvasListener
 {
-    static final int ICON_SIZE = 20;
-
     static final Image ICON_LAYER = ResourceUtil.getAlphaIconAsImage("layers_2.png");
     static final Image ICON_DUPLICATE = ResourceUtil.getAlphaIconAsImage("duplicate.png");
     static final Image ICON_PHOTO = ResourceUtil.getAlphaIconAsImage("photo.png");
@@ -104,7 +103,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         public DuplicateAction()
         {
-            super("Duplicate view", new IcyIcon(ICON_DUPLICATE, ICON_SIZE), "Duplicate view", KeyEvent.VK_F2);
+            super("Duplicate view", new IcyIcon(ICON_DUPLICATE), "Duplicate view", KeyEvent.VK_F2);
         }
 
         @Override
@@ -132,7 +131,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         public ScreenShotAction()
         {
-            super("", new IcyIcon(ICON_PHOTO, ICON_SIZE), "Take a screenshot of current view");
+            super("", new IcyIcon(ICON_PHOTO), "Take a screenshot of current view");
         }
 
         @Override
@@ -182,7 +181,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         public ScreenShotAlternateAction()
         {
-            super("", new IcyIcon(ICON_PHOTO_SMALL, ICON_SIZE),
+            super("", new IcyIcon(ICON_PHOTO_SMALL),
                     "Take a screenshot of current view with original sequence dimensions");
         }
 
@@ -468,7 +467,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         final JMenuItem overlayItem = new JMenuItem("Display layers");
         overlayItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, 0));
-        overlayItem.setIcon(new IcyIcon(ICON_LAYER, ICON_SIZE));
+        overlayItem.setIcon(new IcyIcon(ICON_LAYER));
         if ((canvas != null) && canvas.getDrawLayers())
             overlayItem.setText("Hide layers");
         else
@@ -504,30 +503,30 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         JLabel label;
 
         // no synchro
-        label = new JLabel(new IcyIcon(ICON_UNLOCKED, ICON_SIZE));
+        label = new JLabel(new IcyIcon(ICON_UNLOCKED));
         label.setToolTipText("Synchronization disabled");
         labels.add(label);
 
         // complete synchro
-        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(1), ICON_SIZE));
+        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(1)));
         label.setToolTipText("Complete synchronization group 1");
         labels.add(label);
-        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(2), ICON_SIZE));
+        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(2)));
         label.setToolTipText("Complete synchronization group 2");
         labels.add(label);
 
         // view synchro
-        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage('v'), ICON_SIZE));
+        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage('v')));
         label.setToolTipText("View synchronization group (T and Z position are not synchronized)");
         labels.add(label);
 
         // position synchro
-        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage('s'), ICON_SIZE));
+        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage('s')));
         label.setToolTipText("Slice synchronization group (only T and Z position are synchronized)");
         labels.add(label);
 
         // mouse cursor synchro
-        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage('c'), ICON_SIZE));
+        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage('c')));
         label.setToolTipText("Cursor synchronization group (only mouse cursor position is synchronized)");
         labels.add(label);
 
@@ -616,7 +615,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         buildCanvasCombo();
 
         // build buttons
-        layersEnabledButton = new IcyToggleButton(ICON_LAYER, ICON_SIZE);
+        layersEnabledButton = new IcyToggleButton(ICON_LAYER);
         layersEnabledButton.setToolTipText("Hide layers");
         layersEnabledButton.setFocusable(false);
         layersEnabledButton.setSelected(true);
@@ -1200,8 +1199,11 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     {
         switch (event.getSourceType())
         {
-            case SEQUENCE_NAME:
-                refreshViewerTitle();
+            case SEQUENCE_META:
+                final String meta = (String) event.getSource();
+                
+                if (StringUtil.isEmpty(meta) || StringUtil.equals(meta, Sequence.ID_NAME))
+                    refreshViewerTitle();
                 break;
 
             case SEQUENCE_DATA:

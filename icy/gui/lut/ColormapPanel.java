@@ -133,7 +133,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         // });
 
         // restore default button
-        final IcyButton restoreDefaultButton = new IcyButton(null, "undo", 20);
+        final IcyButton restoreDefaultButton = new IcyButton(null, "undo");
         restoreDefaultButton.setFlat(true);
         restoreDefaultButton.setToolTipText("Restore default colormap");
 
@@ -150,7 +150,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         });
 
         // load button
-        final IcyButton loadModelButton = new IcyButton(ResourceUtil.ICON_DOC, 20);
+        final IcyButton loadModelButton = new IcyButton(ResourceUtil.ICON_DOC);
         loadModelButton.setFlat(true);
         loadModelButton.setToolTipText("Load colormap model");
 
@@ -165,7 +165,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         });
 
         // load button
-        final IcyButton loadButton = new IcyButton(ResourceUtil.ICON_OPEN, 20);
+        final IcyButton loadButton = new IcyButton(ResourceUtil.ICON_OPEN);
         loadButton.setFlat(true);
         loadButton.setToolTipText("Load colormap from file");
 
@@ -186,7 +186,6 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         // save button
         final IcyButton saveButton = new IcyButton(ResourceUtil.ICON_SAVE);
         saveButton.setFlat(true);
-        saveButton.setIconSize(20);
         saveButton.setToolTipText("Save colormap to file");
 
         // action to save colormap

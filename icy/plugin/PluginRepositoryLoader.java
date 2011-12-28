@@ -18,6 +18,7 @@
  */
 package icy.plugin;
 
+import icy.main.Icy;
 import icy.plugin.PluginDescriptor.PluginNameSorter;
 import icy.plugin.PluginDescriptor.PluginOnlineIdent;
 import icy.preferences.PluginPreferences;
@@ -46,42 +47,57 @@ public class PluginRepositoryLoader
         public void pluginRepositeryLoaderChanged();
     }
 
-    private class LoadRunner implements Runnable
+    private class LoadRunner extends Thread
     {
+        public LoadRunner()
+        {
+            super("Online plugin loader");
+        }
+
         @Override
         public void run()
         {
-            // wait loading is interrupted
-            while (isLoading())
-                ThreadUtil.sleep(10);
+            final ArrayList<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
 
-            interruptLoading = false;
-            loadingFailed = false;
             loadingBasic = true;
             try
             {
-                clear();
-
                 final ArrayList<RepositoryInfo> repositories = RepositoryPreferences.getRepositeries();
 
                 // load online plugins from all active repositories
                 for (RepositoryInfo repoInfo : repositories)
                 {
-                    if (interruptLoading)
+                    // interrupt requested ? stop
+                    if (interrupted())
                         return;
 
                     if (repoInfo.isEnabled())
                     {
-                        if (!loadInternal(repoInfo))
+                        final ArrayList<PluginDescriptor> pluginsRepos = loadInternal(repoInfo);
+
+                        if (pluginsRepos == null)
                         {
-                            loadingFailed = true;
+                            failed = true;
                             return;
                         }
+
+                        newPlugins.addAll(pluginsRepos);
                     }
                 }
 
                 // sort list on plugin class name
-                Collections.sort(plugins, PluginNameSorter.instance);
+                Collections.sort(newPlugins, PluginNameSorter.instance);
+
+                synchronized (plugins)
+                {
+                    plugins = newPlugins;
+                }
+            }
+            catch (Exception e)
+            {
+                IcyExceptionHandler.showErrorMessage(e, true);
+                failed = true;
+                return;
             }
             finally
             {
@@ -98,12 +114,10 @@ public class PluginRepositoryLoader
                 for (PluginDescriptor plugin : plugins)
                 {
                     // interrupt requested ? stop
-                    if (interruptLoading)
+                    if (interrupted())
                         return;
 
                     plugin.loadDescriptor();
-                    // notify change
-                    changed();
                 }
 
                 // sort list on plugin name
@@ -124,7 +138,7 @@ public class PluginRepositoryLoader
                 for (PluginDescriptor plugin : plugins)
                 {
                     // interrupt requested ? stop
-                    if (interruptLoading)
+                    if (interrupted())
                         return;
 
                     plugin.loadImages();
@@ -139,46 +153,6 @@ public class PluginRepositoryLoader
         }
     }
 
-    // private class LoadSingleRunner implements Runnable
-    // {
-    // RepositoryInfo repos;
-    // boolean loadDescriptor;
-    // boolean loadImages;
-    //
-    // public LoadSingleRunner()
-    // {
-    // super();
-    // }
-    //
-    // void setParameters(RepositoryInfo repos, boolean loadDescriptor, boolean loadImages)
-    // {
-    // this.repos = repos;
-    // this.loadDescriptor = loadDescriptor;
-    // this.loadImages = loadImages;
-    // }
-    //
-    // @Override
-    // public void run()
-    // {
-    // // cache
-    // final RepositoryInfo r = repos;
-    // final boolean ld = loadDescriptor;
-    // final boolean li = loadImages;
-    //
-    // startLoading();
-    // try
-    // {
-    // loadInternal(r);
-    // if (ld)
-    // loadDescriptorsInternal(li);
-    // }
-    // finally
-    // {
-    // endLoading();
-    // }
-    // }
-    // }
-
     private static final String ID_ROOT = "plugins";
     private static final String ID_PLUGIN = "plugin";
     // private static final String ID_PATH = "path";
@@ -186,12 +160,12 @@ public class PluginRepositoryLoader
     /**
      * static class
      */
-    private static PluginRepositoryLoader instance = new PluginRepositoryLoader();
+    private static final PluginRepositoryLoader instance = new PluginRepositoryLoader();
 
     /**
      * Online plugin list
      */
-    private ArrayList<PluginDescriptor> plugins;
+    ArrayList<PluginDescriptor> plugins;
 
     /**
      * listeners
@@ -201,13 +175,12 @@ public class PluginRepositoryLoader
     /**
      * internals
      */
-    private boolean loadingBasic;
-    private boolean loadingDescriptors;
-    private boolean loadingImages;
-    private boolean interruptLoading;
-    private boolean loadingFailed;
+    boolean loadingBasic;
+    boolean loadingDescriptors;
+    boolean loadingImages;
+    boolean failed;
 
-    private final LoadRunner loadRunner;
+    private LoadRunner loadRunner;
 
     /**
      * static class
@@ -222,10 +195,10 @@ public class PluginRepositoryLoader
         loadingBasic = false;
         loadingDescriptors = false;
         loadingImages = false;
-        interruptLoading = false;
-        loadingFailed = false;
+        failed = false;
 
-        loadRunner = new LoadRunner();
+        // initial loading
+        startLoad();
     }
 
     /**
@@ -252,6 +225,7 @@ public class PluginRepositoryLoader
 
                     ident.loadFromXML(node);
 
+                    // accept only if not empty
                     if (!ident.isEmpty())
                         result.add(ident);
                 }
@@ -264,12 +238,12 @@ public class PluginRepositoryLoader
     }
 
     /**
-     * clear plugin list
+     * Start loading process
      */
-    public static void clear()
+    private void startLoad()
     {
-        // reset list
-        instance.plugins.clear();
+        loadRunner = new LoadRunner();
+        loadRunner.start();
     }
 
     /**
@@ -277,13 +251,21 @@ public class PluginRepositoryLoader
      */
     public static void reload()
     {
-        ThreadUtil.bgRunSingle(instance.loadRunner);
+        // request interrupt
+        instance.loadRunner.interrupt();
 
-        // request stop
-        instance.interruptLoading = true;
-        // so we are sure the loading process started
-        while (instance.interruptLoading == true)
-            ThreadUtil.sleep(10);
+        // wait for end processing
+        try
+        {
+            instance.loadRunner.join();
+        }
+        catch (InterruptedException e)
+        {
+            // ignore
+        }
+
+        // start it again
+        instance.startLoad();
     }
 
     /**
@@ -302,9 +284,9 @@ public class PluginRepositoryLoader
     // }
 
     /**
-     * Load the list of online plugins located at specified repository
+     * Load and return the list of online plugins located at specified repository
      */
-    boolean loadInternal(RepositoryInfo repos)
+    ArrayList<PluginDescriptor> loadInternal(RepositoryInfo repos)
     {
         // we start by loading only identifier part
         final ArrayList<PluginOnlineIdent> idents = getPluginIdents(repos);
@@ -313,15 +295,18 @@ public class PluginRepositoryLoader
         if (idents == null)
         {
             System.out.println("Can't connect to repository : " + repos.getName() + " - " + repos.getLocation());
-            return false;
+            return null;
         }
 
+        final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
         // flag for beta version allowed
         final boolean betaAllowed = PluginPreferences.getAllowBeta();
 
         for (PluginOnlineIdent ident : idents)
         {
-            if (betaAllowed || (!ident.getVersion().isBeta()))
+            // accept only if required kernel version is ok and beta accepted
+            if (ident.getRequiredKernelVersion().isLowerOrEqual(Icy.version)
+                    && (betaAllowed || (!ident.getVersion().isBeta())))
             {
                 try
                 {
@@ -329,7 +314,7 @@ public class PluginRepositoryLoader
                     // also set the name
                     plugin.setName(ident.getName());
 
-                    plugins.add(plugin);
+                    result.add(plugin);
                 }
                 catch (Exception e)
                 {
@@ -339,7 +324,7 @@ public class PluginRepositoryLoader
             }
         }
 
-        return true;
+        return result;
     }
 
     /**
@@ -347,17 +332,26 @@ public class PluginRepositoryLoader
      */
     public static ArrayList<PluginDescriptor> getPlugins()
     {
-        return new ArrayList<PluginDescriptor>(instance.plugins);
+        synchronized (instance.plugins)
+        {
+            return new ArrayList<PluginDescriptor>(instance.plugins);
+        }
     }
 
     public static PluginDescriptor getPlugin(String className)
     {
-        return PluginDescriptor.getPlugin(instance.plugins, className);
+        synchronized (instance.plugins)
+        {
+            return PluginDescriptor.getPlugin(instance.plugins, className);
+        }
     }
 
     public static ArrayList<PluginDescriptor> getPlugins(String className)
     {
-        return PluginDescriptor.getPlugins(instance.plugins, className);
+        synchronized (instance.plugins)
+        {
+            return PluginDescriptor.getPlugins(instance.plugins, className);
+        }
     }
 
     /**
@@ -382,7 +376,7 @@ public class PluginRepositoryLoader
      */
     public static boolean isLoading()
     {
-        return instance.loadingBasic | instance.loadingDescriptors | instance.loadingImages;
+        return instance.loadRunner.isAlive();
     }
 
     /**
@@ -432,13 +426,13 @@ public class PluginRepositoryLoader
      */
     public static boolean failed()
     {
-        return instance.loadingFailed;
+        return instance.failed;
     }
 
     /**
      * plugin list has changed
      */
-    private void changed()
+    void changed()
     {
         fireEvent();
     }

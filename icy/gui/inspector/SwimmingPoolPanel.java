@@ -19,8 +19,7 @@
 package icy.gui.inspector;
 
 import icy.gui.component.IcyTextField;
-import icy.gui.component.IcyTextField.IcyTextListener;
-import icy.gui.component.TextFieldFilter;
+import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.swimmingPool.SwimmingObject;
@@ -55,7 +54,8 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public class SwimmingPoolPanel extends JPanel implements IcyTextListener, ListSelectionListener, SwimmingPoolListener
+public class SwimmingPoolPanel extends JPanel implements TextChangeListener, ListSelectionListener,
+        SwimmingPoolListener
 {
     /**
      * 
@@ -72,7 +72,7 @@ public class SwimmingPoolPanel extends JPanel implements IcyTextListener, ListSe
 
     final JComboBox objectType;
     final JPanel objectTypePanel;
-    final TextFieldFilter nameFilter;
+    final IcyTextField nameFilter;
     final JButton refreshButton;
     final JButton deleteAllButton;
     final JButton deleteButton;
@@ -120,8 +120,8 @@ public class SwimmingPoolPanel extends JPanel implements IcyTextListener, ListSe
         objectTypePanel.add(Box.createVerticalStrut(8));
 
         // need filter before load()
-        nameFilter = new TextFieldFilter();
-        nameFilter.addTextListener(this);
+        nameFilter = new IcyTextField();
+        nameFilter.addTextChangeListener(this);
         nameFilter.setVisible(showNameFilter);
 
         // build buttons panel

@@ -59,54 +59,41 @@ public class XMLUtil
     private static final String ATTR_NAME_NAME = "name";
     private static final String ATTR_VALUE_NAME = "value";
 
-    private static DocumentBuilderFactory documentBuilderFactory = null;
-    private static TransformerFactory transformerFactory = null;
-
-    private static synchronized DocumentBuilder getDocBuilder()
-    {
-        init();
-
-        try
-        {
-            return documentBuilderFactory.newDocumentBuilder();
-        }
-        catch (ParserConfigurationException e)
-        {
-            return null;
-        }
-    }
-
-    private static synchronized Transformer getTransformer()
-    {
-        init();
-
-        try
-        {
-            final Transformer result = transformerFactory.newTransformer();
-
-            result.setOutputProperty(OutputKeys.METHOD, "xml");
-            result.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
-            result.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            result.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-            result.setOutputProperty(OutputKeys.INDENT, "yes");
-
-            return result;
-        }
-        catch (TransformerConfigurationException e)
-        {
-            return null;
-        }
-    }
+    private static DocumentBuilder docBuilder = null;
+    private static Transformer transformer = null;
 
     private static synchronized void init()
     {
-        if (documentBuilderFactory == null)
-            documentBuilderFactory = DocumentBuilderFactory.newInstance();
-
-        if (transformerFactory == null)
+        // initialize document builder
+        if (docBuilder == null)
         {
-            transformerFactory = TransformerFactory.newInstance();
-            transformerFactory.setAttribute("indent-number", new Integer(4));
+            try
+            {
+                docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            }
+            catch (ParserConfigurationException e)
+            {
+                docBuilder = null;
+            }
+        }
+
+        // initialize transformer
+        if (transformer == null)
+        {
+            try
+            {
+                transformer = TransformerFactory.newInstance().newTransformer();
+
+                transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+                transformer.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
+                transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            }
+            catch (TransformerConfigurationException e)
+            {
+                transformer = null;
+            }
         }
     }
 
@@ -115,12 +102,17 @@ public class XMLUtil
      */
     public static Document createDocument(boolean createRoot)
     {
-        final DocumentBuilder docBuilder = getDocBuilder();
+        init();
 
         if (docBuilder != null)
         {
-            // create document
-            final Document result = docBuilder.newDocument();
+            final Document result;
+
+            synchronized (docBuilder)
+            {
+                // create document
+                result = docBuilder.newDocument();
+            }
 
             // add default "root" element if wanted
             if (createRoot)
@@ -137,13 +129,16 @@ public class XMLUtil
      */
     public static Document getDocument(String xmlString)
     {
-        final DocumentBuilder docBuilder = getDocBuilder();
+        init();
 
         if (docBuilder != null)
         {
             try
             {
-                return docBuilder.parse(new InputSource(new StringReader(xmlString)));
+                synchronized (docBuilder)
+                {
+                    return docBuilder.parse(new InputSource(new StringReader(xmlString)));
+                }
             }
             catch (Exception e)
             {
@@ -234,13 +229,16 @@ public class XMLUtil
             return null;
         }
 
-        final DocumentBuilder docBuilder = getDocBuilder();
+        init();
 
         if (docBuilder != null)
         {
             try
             {
-                return docBuilder.parse(f);
+                synchronized (docBuilder)
+                {
+                    return docBuilder.parse(f);
+                }
             }
             catch (Exception e)
             {
@@ -287,7 +285,7 @@ public class XMLUtil
             return null;
         }
 
-        final DocumentBuilder docBuilder = getDocBuilder();
+        init();
 
         if (docBuilder != null)
         {
@@ -308,7 +306,10 @@ public class XMLUtil
                     {
                         try
                         {
-                            return docBuilder.parse(ip);
+                            synchronized (docBuilder)
+                            {
+                                return docBuilder.parse(ip);
+                            }
                         }
                         finally
                         {
@@ -345,23 +346,28 @@ public class XMLUtil
      */
     public static boolean saveDocument(Document doc, File f)
     {
-        final Transformer transformer = getTransformer();
+        init();
 
         if (transformer != null)
         {
-            final DocumentType doctype = doc.getDoctype();
-
-            if (doctype != null)
-            {
-                transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, doctype.getPublicId());
-                transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, doctype.getSystemId());
-            }
-
             doc.normalizeDocument();
+
+            final DocumentType doctype = doc.getDoctype();
+            final DOMSource domSource = new DOMSource(doc);
+            final StreamResult streamResult = new StreamResult(f);
 
             try
             {
-                transformer.transform(new DOMSource(doc), new StreamResult(f));
+                synchronized (transformer)
+                {
+                    if (doctype != null)
+                    {
+                        transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, doctype.getPublicId());
+                        transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, doctype.getSystemId());
+                    }
+
+                    transformer.transform(domSource, streamResult);
+                }
             }
             catch (Exception e)
             {
@@ -1578,18 +1584,36 @@ public class XMLUtil
     }
 
     /**
-     * Remove all child from the specified node
+     * @deprecated uses {@link #removeAllChildren(Node)} instead
      */
+    @Deprecated
     public static void removeAllChilds(Node node)
+    {
+        removeAllChildren(node);
+    }
+
+    /**
+     * Remove all children from the specified node
+     */
+    public static void removeAllChildren(Node node)
     {
         while (node.hasChildNodes())
             node.removeChild(node.getLastChild());
     }
 
     /**
-     * Remove all child with specified name from the specified node
+     * @deprecated uses {@link #removeChildren(Node, String)} instead
      */
+    @Deprecated
     public static void removeChilds(Node node, String name)
+    {
+        removeChildren(node, name);
+    }
+
+    /**
+     * Remove all children with specified name from the specified node
+     */
+    public static void removeChildren(Node node, String name)
     {
         Node currentChild = node.getFirstChild();
 

@@ -90,7 +90,8 @@ public class ScalerViewer extends JPanel implements LUTBandListener
             // we want to display our own background
             setOpaque(false);
             // dimension (don't change it or you will regret !)
-            setPreferredSize(new Dimension(210, 100));
+            setMinimumSize(new Dimension(100, 100));
+            setPreferredSize(new Dimension(240, 100));
 
             // add listeners
             addMouseListener(this);

@@ -6,6 +6,7 @@ package icy.preferences;
 import icy.network.AuthenticationInfo;
 import icy.plugin.PluginRepositoryLoader;
 import icy.util.StringUtil;
+import icy.workspace.WorkspaceRepositoryLoader;
 
 import java.util.ArrayList;
 
@@ -289,7 +290,8 @@ public class RepositoryPreferences
         // clean up all non element nodes
         preferences.clean();
 
-        // reload online plugins as repositories changed
+        // reload online plugins and workspace as repositories changed
         PluginRepositoryLoader.reload();
+        WorkspaceRepositoryLoader.reload();
     }
 }

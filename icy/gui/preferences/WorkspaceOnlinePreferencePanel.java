@@ -18,9 +18,7 @@
  */
 package icy.gui.preferences;
 
-import icy.plugin.PluginRepositoryLoader;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
-import icy.system.thread.ThreadUtil;
 import icy.workspace.Workspace;
 import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceInstaller.WorkspaceInstallerEvent;
@@ -60,7 +58,6 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
         action1Button.setText("Install");
         action1Button.setVisible(true);
 
-        reloadWorkspaces();
         updateButtonsState();
         updateRepositories();
     }
@@ -120,15 +117,14 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
     @Override
     protected void repositoryChanged()
     {
-        reloadWorkspaces();
+        refreshWorkspaces();
+        refreshTableData();
     }
 
     @Override
     protected void reloadWorkspaces()
     {
         WorkspaceRepositoryLoader.reload();
-        PluginRepositoryLoader.reload();
-
         updateButtonsState();
     }
 
@@ -153,7 +149,7 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
         // get selected repository
         final Object selectedItem = repository.getSelectedItem();
 
-        // load plugins from repository
+        // load workspaces from selected repository
         if (selectedItem != null)
             return WorkspaceRepositoryLoader.getWorkspaces((RepositoryInfo) selectedItem);
 
@@ -161,7 +157,7 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
     }
 
     @Override
-    protected void updateButtonsState()
+    protected void updateButtonsStateInternal()
     {
         if (WorkspaceRepositoryLoader.isLoading())
         {
@@ -210,42 +206,21 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
     @Override
     public void workspaceRepositeryLoaderChanged()
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                workspacesChanged();
-            }
-        });
+        workspacesChanged();
     }
 
     @Override
     public void workspaceInstalled(WorkspaceInstallerEvent e)
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                refreshTableData();
-                updateButtonsState();
-            }
-        });
+        refreshTableData();
+        updateButtonsState();
     }
 
     @Override
     public void workspaceRemoved(WorkspaceInstallerEvent e)
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                refreshTableData();
-                updateButtonsState();
-            }
-        });
+        refreshTableData();
+        updateButtonsState();
     }
 
 }

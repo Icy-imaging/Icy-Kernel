@@ -1065,7 +1065,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                     Float.valueOf(0f), interpolation, null);
 
             // JAI keep dataType and others stuff in their BufferedImage
-            result = IcyBufferedImage.convert(renderedOp.getAsBufferedImage());
+            result = IcyBufferedImage.createFrom(renderedOp.getAsBufferedImage());
         }
 
         return result;

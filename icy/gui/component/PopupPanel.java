@@ -40,10 +40,8 @@ import javax.swing.SwingConstants;
  */
 public class PopupPanel extends JPanel
 {
-    static final Image EXPAND_ICON = ResourceUtil.getAlphaIconAsImage("br_next.png", 14);
-    static final Image COLLAPSE_ICON = ResourceUtil.getAlphaIconAsImage("br_down.png", 14);
-    static final Image EXPAND_SM_ICON = ResourceUtil.getAlphaIconAsImage("br_next.png", 10);
-    static final Image COLLAPSE_SM_ICON = ResourceUtil.getAlphaIconAsImage("br_down.png", 10);
+    static final Image ICON_EXPAND = ResourceUtil.getAlphaIconAsImage("br_next.png");
+    static final Image ICON_COLLAPSE = ResourceUtil.getAlphaIconAsImage("br_down.png");
 
     private class PopupTitlePanel extends IcyToggleButton
     {
@@ -54,7 +52,7 @@ public class PopupPanel extends JPanel
 
         public PopupTitlePanel(String text, Image image)
         {
-            super(text, image);
+            super(text, image, 14);
 
             setHorizontalAlignment(SwingConstants.LEADING);
 
@@ -143,7 +141,7 @@ public class PopupPanel extends JPanel
 
         this.subPopupPanel = subPopupPanel;
 
-        topPanel = new PopupTitlePanel(title, COLLAPSE_ICON);
+        topPanel = new PopupTitlePanel(title, ICON_COLLAPSE);
 
         mainPanel = new JPanel();
         if (panelHeight != -1)
@@ -243,16 +241,16 @@ public class PopupPanel extends JPanel
         if (subPopupPanel)
         {
             if (topPanel.isSelected())
-                topPanel.setIcon(new IcyIcon(COLLAPSE_SM_ICON));
+                topPanel.setIcon(new IcyIcon(ICON_COLLAPSE, 10));
             else
-                topPanel.setIcon(new IcyIcon(EXPAND_SM_ICON));
+                topPanel.setIcon(new IcyIcon(ICON_EXPAND, 10));
         }
         else
         {
             if (topPanel.isSelected())
-                topPanel.setIcon(new IcyIcon(COLLAPSE_ICON));
+                topPanel.setIcon(new IcyIcon(ICON_COLLAPSE, 14));
             else
-                topPanel.setIcon(new IcyIcon(EXPAND_ICON));
+                topPanel.setIcon(new IcyIcon(ICON_EXPAND, 14));
         }
 
         mainPanel.setVisible(topPanel.isSelected());

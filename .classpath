@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/bio-formats.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/bsh.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/customizer.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/ejml.jar"/>
@@ -21,15 +20,11 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/jmf.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jtransforms.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jxl.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/loci-common.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/log4j.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/mediaplayer.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/MMAutofocus_.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/MMAutofocusTB_.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/MMCoreJ.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/MMJ_.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/multiplayer.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/ome-xml.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/phys2d.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/poi-loci.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/simpleItk.jar"/>
@@ -42,8 +37,11 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/trident.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/vecmath.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/vtk.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/scifio.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jai_imageio.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/ij/ij.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/bio-formats.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/loci-common.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/ome-xml.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/scifio.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

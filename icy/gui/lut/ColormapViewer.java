@@ -123,7 +123,7 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
 
         // dimension (don't change or you will regret !)
         setMinimumSize(new Dimension(100, 100));
-        setPreferredSize(new Dimension(210, 100));
+        setPreferredSize(new Dimension(240, 100));
         setMaximumSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
         // faster draw
         setOpaque(true);

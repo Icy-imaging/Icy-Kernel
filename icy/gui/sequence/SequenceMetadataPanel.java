@@ -8,6 +8,7 @@ import icy.sequence.Sequence;
 import icy.util.OMEUtil;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -31,9 +32,16 @@ public class SequenceMetadataPanel extends JPanel
         super();
 
         setLayout(new BorderLayout());
+        setPreferredSize(new Dimension(320, 360));
 
         final JTree tree = new JTree(new XMLTreeModel(OMEUtil.getXMLDocument(sequence.getMetadata())));
-        tree.expandRow(0);
+
+        int row = 0;
+        while (row < tree.getRowCount())
+        {
+            tree.expandRow(row);
+            row++;
+        }
 
         add(new JScrollPane(tree), BorderLayout.CENTER);
 

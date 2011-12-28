@@ -852,7 +852,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     private void buidlTaskBar()
     {
         // PREFERENCES
-        final IcyCommandButton preferencesButton = new IcyCommandButton(new IcyIcon("wrench_plus_2"));
+        final IcyCommandButton preferencesButton = new IcyCommandButton(new IcyIcon(ResourceUtil.ICON_TOOLS));
 
         preferencesButton.setActionRichTooltip(new RichTooltip("Preferences window", "Setup ICY general preferences."));
         preferencesButton.addActionListener(new ActionListener()

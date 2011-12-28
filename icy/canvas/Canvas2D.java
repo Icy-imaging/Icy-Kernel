@@ -1627,7 +1627,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         });
 
-        final IcyButton rotateUnclock = new IcyButton(ICON_ROTATE_UNCLOCK, 20);
+        final IcyButton rotateUnclock = new IcyButton(ICON_ROTATE_UNCLOCK);
         rotateUnclock.setFlat(true);
         rotateUnclock.setToolTipText("Rotate counter clockwise");
         rotateUnclock.addActionListener(new ActionListener()
@@ -1639,7 +1639,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         });
 
-        final IcyButton rotateClock = new IcyButton(ICON_ROTATE_CLOCK, 20);
+        final IcyButton rotateClock = new IcyButton(ICON_ROTATE_CLOCK);
         rotateClock.setFlat(true);
         rotateClock.setToolTipText("Rotate clockwise");
         rotateClock.addActionListener(new ActionListener()
@@ -2239,27 +2239,47 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 break;
 
             case KeyEvent.VK_1:
-                setSyncId(1);
+                // already set, switch it off
+                if (getSyncId() == 1)
+                    setSyncId(0);
+                else
+                    setSyncId(1);
                 e.consume();
                 break;
 
             case KeyEvent.VK_2:
-                setSyncId(2);
+                // already set, switch it off
+                if (getSyncId() == 2)
+                    setSyncId(0);
+                else
+                    setSyncId(2);
                 e.consume();
                 break;
 
             case KeyEvent.VK_3:
-                setSyncId(3);
+                // already set, switch it off
+                if (getSyncId() == 3)
+                    setSyncId(0);
+                else
+                    setSyncId(3);
                 e.consume();
                 break;
 
             case KeyEvent.VK_4:
-                setSyncId(4);
+                // already set, switch it off
+                if (getSyncId() == 4)
+                    setSyncId(0);
+                else
+                    setSyncId(4);
                 e.consume();
                 break;
 
             case KeyEvent.VK_5:
-                setSyncId(5);
+                // already set, switch it off
+                if (getSyncId() == 5)
+                    setSyncId(0);
+                else
+                    setSyncId(5);
                 e.consume();
                 break;
         }
@@ -2453,24 +2473,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         // view synchronization
         if (isSynchOnView())
         {
-            if (processAll || (type == IcyCanvasEventType.OFFSET_CHANGED))
-            {
-                // no information about dimension --> set all
-                if (processAll || (dim == DimensionId.NULL))
-                {
-                    final int offX = getOffsetX();
-                    final int offY = getOffsetY();
-
-                    for (IcyCanvas cnv : canvasList)
-                        ((Canvas2D) cnv).setOffset(offX, offY, false);
-                }
-                else
-                {
-                    for (IcyCanvas cnv : canvasList)
-                        cnv.setOffset(dim, getOffset(dim));
-                }
-            }
-
             if (processAll || (type == IcyCanvasEventType.SCALE_CHANGED))
             {
                 // no information about dimension --> set all
@@ -2505,6 +2507,26 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                         cnv.setRotation(dim, getRotation(dim));
                 }
             }
+
+            // process offset in last as it can be limited depending destination scale value
+            if (processAll || (type == IcyCanvasEventType.OFFSET_CHANGED))
+            {
+                // no information about dimension --> set all
+                if (processAll || (dim == DimensionId.NULL))
+                {
+                    final int offX = getOffsetX();
+                    final int offY = getOffsetY();
+
+                    for (IcyCanvas cnv : canvasList)
+                        ((Canvas2D) cnv).setOffset(offX, offY, false);
+                }
+                else
+                {
+                    for (IcyCanvas cnv : canvasList)
+                        cnv.setOffset(dim, getOffset(dim));
+                }
+            }
+
         }
 
         // cursor synchronization

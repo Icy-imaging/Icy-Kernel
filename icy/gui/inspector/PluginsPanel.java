@@ -191,11 +191,7 @@ public class PluginsPanel extends JPanel
         setVisible(true);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see javax.swing.JComponent#addNotify()
-     */
+   
     @Override
     public void addNotify()
     {
@@ -204,11 +200,7 @@ public class PluginsPanel extends JPanel
         Icy.getMainInterface().addListener(mainListener);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see javax.swing.JComponent#removeNotify()
-     */
+   
     @Override
     public void removeNotify()
     {

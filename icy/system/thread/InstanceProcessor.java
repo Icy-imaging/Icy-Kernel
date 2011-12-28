@@ -60,7 +60,7 @@ public class InstanceProcessor extends Processor
             return false;
 
         // we remove pending task if any
-        removeFirstWaitingTask(id);
+        removeFirstWaitingTask(task);
 
         if (!super.addTask(task, onAWTEventThread, id))
         {

@@ -19,7 +19,6 @@
 package icy.gui.preferences;
 
 import icy.gui.dialog.ConfirmDialog;
-import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginInstaller.PluginInstallerListener;
@@ -27,8 +26,6 @@ import icy.plugin.PluginLoader;
 import icy.plugin.PluginRepositoryLoader;
 import icy.plugin.PluginRepositoryLoader.PluginRepositoryLoaderListener;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
-import icy.system.thread.ThreadUtil;
-import icy.update.IcyUpdater;
 
 import java.util.ArrayList;
 
@@ -40,7 +37,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
 {
     private enum PluginOnlineState
     {
-        NULL, INSTALLING, HAS_INSTALL, INSTALLED, CHECKING_KERNEL, OLDER, NEWER
+        NULL, INSTALLING, HAS_INSTALL, INSTALLED, OLDER, NEWER
     }
 
     /**
@@ -62,7 +59,6 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
         action1Button.setVisible(true);
         action2Button.setVisible(false);
 
-        reloadPlugins();
         updateButtonsState();
         updateRepositories();
     }
@@ -86,10 +82,6 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
 
         // if (PluginLoader.isLoaded(plugin, false))
         // return PluginOnlineState.INSTALLED;
-
-        // required kernel version > current kernel version
-        if (plugin.getKernelVersion().isGreater(Icy.version) && IcyUpdater.isCheckingForUpdate())
-            return PluginOnlineState.CHECKING_KERNEL;
 
         // get local version
         final PluginDescriptor localPlugin = PluginLoader.getPlugin(plugin.getClassName());
@@ -118,36 +110,20 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
             case HAS_INSTALL:
             case NEWER:
             case OLDER:
-                // required kernel version is > current kernel version
-                if (plugin.getKernelVersion().isGreater(Icy.version))
-                {
-                    if (ConfirmDialog
-                            .confirm("Plugin installation",
-                                    "This plugin requires a newer version of the application.\nDo you want to check for application update now ?"))
-                    {
-                        IcyUpdater.checkUpdate(true, false);
-                        // refresh state
-                        refreshTableData();
-                        updateButtonsState();
-                    }
-                }
+                final boolean doInstall;
+                if (state == PluginOnlineState.OLDER)
+                    doInstall = ConfirmDialog
+                            .confirm("You'll replace your plugin by an older version !\nAre you sure you want to continue ?");
                 else
-                {
-                    final boolean doInstall;
-                    if (state == PluginOnlineState.OLDER)
-                        doInstall = ConfirmDialog
-                                .confirm("You'll replace your plugin by an older version !\nAre you sure you want to continue ?");
-                    else
-                        doInstall = true;
+                    doInstall = true;
 
-                    if (doInstall)
-                    {
-                        // install plugin
-                        PluginInstaller.install(plugin, true);
-                        // refresh state
-                        refreshTableData();
-                        updateButtonsState();
-                    }
+                if (doInstall)
+                {
+                    // install plugin
+                    PluginInstaller.install(plugin, true);
+                    // refresh state
+                    refreshTableData();
+                    updateButtonsState();
                 }
                 break;
 
@@ -198,9 +174,6 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
 
             case INSTALLED:
                 return "installed";
-
-            case CHECKING_KERNEL:
-                return "checking kernel...";
         }
 
         return "";
@@ -220,9 +193,9 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     }
 
     @Override
-    protected void updateButtonsState()
+    protected void updateButtonsStateInternal()
     {
-        super.updateButtonsState();
+        super.updateButtonsStateInternal();
 
         if (PluginRepositoryLoader.isLoadingBasic())
         {
@@ -249,11 +222,6 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
         {
             case INSTALLING:
                 action1Button.setText("Installing...");
-                action1Button.setEnabled(false);
-                break;
-
-            case CHECKING_KERNEL:
-                action1Button.setText("Checking...");
                 action1Button.setEnabled(false);
                 break;
 
@@ -295,42 +263,21 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     @Override
     public void pluginRepositeryLoaderChanged()
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                pluginsChanged();
-            }
-        });
+        pluginsChanged();
     }
 
     @Override
     public void pluginInstalled(boolean success)
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                refreshTableData();
-                updateButtonsState();
-            }
-        });
+        refreshTableData();
+        updateButtonsState();
     }
 
     @Override
     public void pluginRemoved(boolean success)
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                refreshTableData();
-                updateButtonsState();
-            }
-        });
+        refreshTableData();
+        updateButtonsState();
     }
 
 }

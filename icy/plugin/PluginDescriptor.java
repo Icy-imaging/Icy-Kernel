@@ -102,6 +102,7 @@ public class PluginDescriptor implements XMLPersistent
     static final String ID_CLASSNAME = "classname";
     static final String ID_URL = "url";
     static final String ID_NAME = "name";
+    static final String ID_REQUIRED_KERNEL_VERSION = "required_kernel_version";
 
     public static class PluginIdent implements XMLPersistent
     {
@@ -109,6 +110,7 @@ public class PluginDescriptor implements XMLPersistent
 
         private String className;
         private Version version;
+        private Version requiredKernelVersion;
 
         /**
          * 
@@ -120,6 +122,7 @@ public class PluginDescriptor implements XMLPersistent
             // default
             className = "";
             version = new Version();
+            requiredKernelVersion = new Version();
         }
 
         /**
@@ -132,8 +135,8 @@ public class PluginDescriptor implements XMLPersistent
                 return false;
 
             className = XMLUtil.getElementValue(node, ID_CLASSNAME, "");
-            // url = XMLUtil.getElementValue(node, ID_URL, "");
             version = new Version(XMLUtil.getElementValue(node, ID_VERSION, ""));
+            requiredKernelVersion = new Version(XMLUtil.getElementValue(node, ID_REQUIRED_KERNEL_VERSION, ""));
 
             return true;
         }
@@ -148,16 +151,15 @@ public class PluginDescriptor implements XMLPersistent
                 return false;
 
             XMLUtil.setElementValue(node, ID_CLASSNAME, className);
-            // XMLUtil.setElementValue(node, ID_URL, url);
             XMLUtil.setElementValue(node, ID_VERSION, version.toString());
+            XMLUtil.setElementValue(node, ID_REQUIRED_KERNEL_VERSION, requiredKernelVersion.toString());
 
             return true;
         }
 
         public boolean isEmpty()
         {
-            return StringUtil.isEmpty(className) && version.isEmpty();
-            // return StringUtil.isEmpty(className) && StringUtil.isEmpty(url) && version.isEmpty();
+            return StringUtil.isEmpty(className) && version.isEmpty() && requiredKernelVersion.isEmpty();
         }
 
         /**
@@ -239,13 +241,22 @@ public class PluginDescriptor implements XMLPersistent
             return version;
         }
 
-        // /**
-        // * @return the url
-        // */
-        // public String getUrl()
-        // {
-        // return url;
-        // }
+        /**
+         * @return the requiredKernelVersion
+         */
+        public Version getRequiredKernelVersion()
+        {
+            return requiredKernelVersion;
+        }
+
+        /**
+         * @param requiredKernelVersion
+         *        the requiredKernelVersion to set
+         */
+        public void setRequiredKernelVersion(Version requiredKernelVersion)
+        {
+            this.requiredKernelVersion = requiredKernelVersion;
+        }
 
         public boolean isOlderOrEqual(PluginIdent ident)
         {
@@ -356,7 +367,6 @@ public class PluginDescriptor implements XMLPersistent
     // private static final String ID_PUBLIC_CLASSES = "public_classes";
     private static final String ID_DEPENDENCIES = "dependencies";
     private static final String ID_DEPENDENCY = "dependency";
-    private static final String ID_KERNEL_VERSION = "kernel_ver";
 
     // public static final int TYPE_IMAGE_ANALYSIS = 0;
     // public static final int TYPE_FILE = 1;
@@ -383,7 +393,6 @@ public class PluginDescriptor implements XMLPersistent
     private String email;
     private String desc;
     private String changesLog;
-    private Version kernelVersion;
     // private int types;
     // private Date lastUse;
     // private Date installed;
@@ -554,7 +563,6 @@ public class PluginDescriptor implements XMLPersistent
         email = "";
         desc = "";
         changesLog = "";
-        kernelVersion = new Version(1);
 
         required = new ArrayList<PluginIdent>();
         repository = null;
@@ -620,6 +628,7 @@ public class PluginDescriptor implements XMLPersistent
 
         this.ident.setClassName(ident.getClassName());
         this.ident.setVersion(ident.getVersion());
+        this.ident.setRequiredKernelVersion(ident.getRequiredKernelVersion());
         this.xmlUrl = ident.getUrl();
         this.name = ident.getName();
         this.repository = repos;
@@ -630,40 +639,7 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * Create from XML file, used for online plugin only
-     * 
-     * @throws IllegalArgumentException
-     */
-    // public PluginDescriptor(String path, boolean loadImages) throws IllegalArgumentException
-    // {
-    // this();
-    //
-    // if (StringUtil.isEmpty(path))
-    // throw new IllegalArgumentException("Empty path for XML file");
-    //
-    // // load xml
-    // if (!loadFromXML(path))
-    // throw new IllegalArgumentException("Can't find valid XML file from " + path);
-    //
-    // if (loadImages)
-    // {
-    // // load image in background
-    // ThreadUtil.bgRun(new Runnable()
-    // {
-    // @Override
-    // public void run()
-    // {
-    // // load icon
-    // loadIcon(URLUtil.getURL(iconUrl));
-    // // load image
-    // loadImage(URLUtil.getURL(imageUrl));
-    // }
-    // });
-    // }
-    // }
-
-    /**
-     * @deprecated uses {@link #load()} instead
+     * @deprecated uses {@link #loadDescriptor()} or {@link #loadAll()} instead
      */
     @Deprecated
     public boolean load(boolean loadImages)
@@ -704,7 +680,7 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * Load descriptor informations (xmlUrl field should be correctly filled)
+     * Load icon and image (both icon and image url fields should be correctly filled)
      */
     public boolean loadImages()
     {
@@ -723,6 +699,17 @@ public class PluginDescriptor implements XMLPersistent
         imagesLoaded = true;
 
         return true;
+    }
+
+    /**
+     * Load descriptor and images if not already done
+     */
+    public boolean loadAll()
+    {
+        if (loadDescriptor())
+            return loadImages();
+
+        return false;
     }
 
     /**
@@ -828,7 +815,6 @@ public class PluginDescriptor implements XMLPersistent
         email = XMLUtil.getElementValue(node, ID_EMAIL, "");
         desc = XMLUtil.getElementValue(node, ID_DESCRIPTION, "");
         changesLog = XMLUtil.getElementValue(node, ID_CHANGELOG, "");
-        kernelVersion = new Version(XMLUtil.getElementValue(node, ID_KERNEL_VERSION, "1"));
         // synchronized (dateFormatter)
         // {
         // try
@@ -901,7 +887,6 @@ public class PluginDescriptor implements XMLPersistent
         XMLUtil.setElementValue(node, ID_EMAIL, email);
         XMLUtil.setElementValue(node, ID_DESCRIPTION, desc);
         XMLUtil.setElementValue(node, ID_CHANGELOG, changesLog);
-        XMLUtil.setElementValue(node, ID_KERNEL_VERSION, kernelVersion.toString());
 
         // synchronized (dateFormatter)
         // {
@@ -920,7 +905,7 @@ public class PluginDescriptor implements XMLPersistent
         final Element dependances = XMLUtil.setElement(node, ID_DEPENDENCIES);
         if (dependances != null)
         {
-            XMLUtil.removeAllChilds(dependances);
+            XMLUtil.removeAllChildren(dependances);
             for (PluginIdent dep : required)
                 dep.saveToXML(XMLUtil.addElement(dependances, ID_DEPENDENCY));
         }
@@ -1263,11 +1248,11 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * @return the kernelVersion
+     * @return the requiredKernelVersion
      */
-    public Version getKernelVersion()
+    public Version getRequiredKernelVersion()
     {
-        return kernelVersion;
+        return ident.getRequiredKernelVersion();
     }
 
     /**

@@ -18,6 +18,7 @@
  */
 package icy.gui.dialog;
 
+import icy.file.FileFormat;
 import icy.file.Loader;
 import icy.gui.util.GuiUtil;
 import icy.main.Icy;
@@ -40,7 +41,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
 
-import loci.formats.gui.ExtensionFileFilter;
 import loci.formats.gui.PreviewPane;
 
 /**
@@ -74,11 +74,11 @@ public class ImageLoaderDialog extends JFileChooser
         setPreferredSize(new Dimension(preferences.getInt("width", 600), preferences.getInt("height", 400)));
 
         removeChoosableFileFilter(getAcceptAllFileFilter());
-        addChoosableFileFilter(new ExtensionFileFilter(new String[] {"tif", "tiff"}, "TIFF images"));
-        addChoosableFileFilter(new ExtensionFileFilter("jpg", "JPG images"));
-        addChoosableFileFilter(new ExtensionFileFilter("png", "PNG images"));
-        addChoosableFileFilter(new ExtensionFileFilter("lsm", "LSM images"));
-        addChoosableFileFilter(new ExtensionFileFilter("avi", "AVI sequences"));
+        addChoosableFileFilter(FileFormat.TIFF.getExtensionFileFilter());
+        addChoosableFileFilter(FileFormat.JPG.getExtensionFileFilter());
+        addChoosableFileFilter(FileFormat.PNG.getExtensionFileFilter());
+        addChoosableFileFilter(FileFormat.LSM.getExtensionFileFilter());
+        addChoosableFileFilter(FileFormat.AVI.getExtensionFileFilter());
         // so we have AllFileFilter selected and in last position
         addChoosableFileFilter(getAcceptAllFileFilter());
 

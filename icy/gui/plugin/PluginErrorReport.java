@@ -71,7 +71,7 @@ public class PluginErrorReport
                 {
                     // search for update
                     if (!info.isCancelRequested())
-                        onlinePlugin = PluginUpdater.checkUpdate(plugin);
+                        onlinePlugin = PluginUpdater.getUpdate(plugin);
                 }
                 finally
                 {

@@ -22,7 +22,6 @@ import icy.network.URLUtil;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.IcyExceptionHandler;
-import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
@@ -45,43 +44,56 @@ public class WorkspaceRepositoryLoader
         public void workspaceRepositeryLoaderChanged();
     }
 
-    private class LoadRunner implements Runnable
+    private class LoadRunner extends Thread
     {
+        public LoadRunner()
+        {
+            super("Online workspace loader");
+        }
+
         @Override
         public void run()
         {
-            // wait loading is interrupted
-            while (isLoading())
-            {
-                // request stop
-                interruptLoading = true;
-                // wait
-                ThreadUtil.sleep(10);
-            }
+            final ArrayList<Workspace> newWorkspaces = new ArrayList<Workspace>();
 
-            interruptLoading = false;
-            loading = true;
+            failed = false;
             try
             {
-                clear();
-
                 final ArrayList<RepositoryInfo> repositories = RepositoryPreferences.getRepositeries();
 
                 // load online workspace from all active repositories
                 for (RepositoryInfo repoInfo : repositories)
                 {
-                    if (interruptLoading)
+                    if (interrupted())
                         return;
+
                     if (repoInfo.isEnabled())
-                        loadInternal(repoInfo);
+                    {
+                        final ArrayList<Workspace> workspacesRepos = loadInternal(repoInfo);
+
+                        if (workspacesRepos == null)
+                        {
+                            failed = true;
+                            return;
+                        }
+
+                        newWorkspaces.addAll(workspacesRepos);
+                    }
                 }
 
                 // sort list
-                Collections.sort(workspaces);
+                Collections.sort(newWorkspaces);
+
+                synchronized (workspaces)
+                {
+                    workspaces = newWorkspaces;
+                }
             }
-            finally
+            catch (Exception e)
             {
-                loading = false;
+                IcyExceptionHandler.showErrorMessage(e, true);
+                failed = true;
+                return;
             }
 
             changed();
@@ -95,20 +107,19 @@ public class WorkspaceRepositoryLoader
     /**
      * static class
      */
-    private static WorkspaceRepositoryLoader instance = new WorkspaceRepositoryLoader();
+    private static final WorkspaceRepositoryLoader instance = new WorkspaceRepositoryLoader();
 
     /**
      * Online workspace list
      */
-    private final ArrayList<Workspace> workspaces;
+    ArrayList<Workspace> workspaces;
 
     /**
      * internal
      */
-    private boolean loading;
-    private boolean interruptLoading;
+    boolean failed;
 
-    private final LoadRunner loadRunner;
+    private LoadRunner loadRunner;
 
     /**
      * listeners
@@ -124,10 +135,10 @@ public class WorkspaceRepositoryLoader
 
         workspaces = new ArrayList<Workspace>();
         listeners = new EventListenerList();
-        loading = false;
-        interruptLoading = false;
+        failed = false;
 
-        loadRunner = new LoadRunner();
+        // initial loading
+        startLoad();
     }
 
     /**
@@ -164,12 +175,12 @@ public class WorkspaceRepositoryLoader
     }
 
     /**
-     * clear workspace list
+     * Start loading process
      */
-    public static void clear()
+    private void startLoad()
     {
-        // reset list
-        instance.workspaces.clear();
+        loadRunner = new LoadRunner();
+        loadRunner.start();
     }
 
     /**
@@ -177,15 +188,38 @@ public class WorkspaceRepositoryLoader
      */
     public static void reload()
     {
-        ThreadUtil.bgRunSingle(instance.loadRunner);
+        // request interrupt
+        instance.loadRunner.interrupt();
+
+        // wait for end processing
+        try
+        {
+            instance.loadRunner.join();
+        }
+        catch (InterruptedException e)
+        {
+            // ignore
+        }
+
+        // start it again
+        instance.startLoad();
     }
 
     /**
-     * Load the list of online workspaces located at specified repository url
+     * Load and return the list of online workspaces located at specified repository url
      */
-    void loadInternal(RepositoryInfo repos)
+    ArrayList<Workspace> loadInternal(RepositoryInfo repos)
     {
         final ArrayList<String> paths = getWorkspaceFiles(repos);
+
+        // error while retrieving paths ?
+        if (paths == null)
+        {
+            System.out.println("Can't connect to repository : " + repos.getName() + " - " + repos.getLocation());
+            return null;
+        }
+
+        final ArrayList<Workspace> result = new ArrayList<Workspace>();
 
         for (String path : paths)
         {
@@ -194,7 +228,7 @@ public class WorkspaceRepositoryLoader
                 final Workspace workspace = new Workspace(URLUtil.getURL(path), repos);
 
                 if (!workspace.isEmpty())
-                    workspaces.add(workspace);
+                    result.add(workspace);
             }
             catch (Exception e)
             {
@@ -202,6 +236,8 @@ public class WorkspaceRepositoryLoader
                 IcyExceptionHandler.showErrorMessage(e, false);
             }
         }
+
+        return result;
     }
 
     /**
@@ -209,12 +245,18 @@ public class WorkspaceRepositoryLoader
      */
     public static ArrayList<Workspace> getWorkspaces()
     {
-        return new ArrayList<Workspace>(instance.workspaces);
+        synchronized (instance.workspaces)
+        {
+            return new ArrayList<Workspace>(instance.workspaces);
+        }
     }
 
     public static Workspace getWorkspace(String className)
     {
-        return Workspace.getWorkspace(instance.workspaces, className);
+        synchronized (instance.workspaces)
+        {
+            return Workspace.getWorkspace(instance.workspaces, className);
+        }
     }
 
     /**
@@ -239,7 +281,7 @@ public class WorkspaceRepositoryLoader
      */
     public static boolean isLoading()
     {
-        return instance.loading;
+        return instance.loadRunner.isAlive();
     }
 
     /**
@@ -247,14 +289,28 @@ public class WorkspaceRepositoryLoader
      */
     public static void waitWhileLoading()
     {
-        while (isLoading())
-            ThreadUtil.sleep(10);
+        try
+        {
+            instance.loadRunner.join();
+        }
+        catch (InterruptedException e)
+        {
+            // ignore
+        }
+    }
+
+    /**
+     * return true if an error occurred during the workspace loading process
+     */
+    public static boolean failed()
+    {
+        return instance.failed;
     }
 
     /**
      * workspace list has changed
      */
-    private void changed()
+    void changed()
     {
         fireEvent();
     }

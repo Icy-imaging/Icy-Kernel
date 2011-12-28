@@ -18,8 +18,6 @@
  */
 package icy.gui.preferences;
 
-import icy.gui.dialog.ConfirmDialog;
-import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginInstaller.PluginInstallerListener;
@@ -27,9 +25,8 @@ import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
 import icy.plugin.PluginLoader.PluginLoaderListener;
 import icy.plugin.PluginRepositoryLoader;
+import icy.plugin.PluginRepositoryLoader.PluginRepositoryLoaderListener;
 import icy.plugin.PluginUpdater;
-import icy.system.thread.ThreadUtil;
-import icy.update.IcyUpdater;
 
 import java.util.ArrayList;
 
@@ -37,11 +34,11 @@ import java.util.ArrayList;
  * @author Stephane
  */
 public class PluginLocalPreferencePanel extends PluginListPreferencePanel implements PluginLoaderListener,
-        PluginInstallerListener
+        PluginInstallerListener, PluginRepositoryLoaderListener
 {
     private enum PluginLocalState
     {
-        NULL, UPDATING, HAS_UPDATE, NO_UPDATE, CHECKING_KERNEL, CHECKING_UPDATE
+        NULL, UPDATING, HAS_UPDATE, NO_UPDATE, CHECKING_UPDATE
     }
 
     /**
@@ -60,6 +57,7 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
 
         // pluginRepositoryLoader = new PluginRepositoryLoader();
 
+        PluginRepositoryLoader.addListener(this);
         PluginLoader.addListener(this);
         PluginInstaller.addListener(this);
 
@@ -78,6 +76,7 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     {
         super.closed();
 
+        PluginRepositoryLoader.removeListener(this);
         PluginInstaller.removeListener(this);
         PluginLoader.removeListener(this);
     }
@@ -86,19 +85,15 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     {
         if (plugin != null)
         {
-            if (PluginRepositoryLoader.isLoading())
+            if (PluginRepositoryLoader.isLoadingBasic())
                 return PluginLocalState.CHECKING_UPDATE;
 
             // get online version
-            final PluginDescriptor onlinePlugin = PluginUpdater.checkUpdate(plugin);
+            final PluginDescriptor onlinePlugin = PluginUpdater.getUpdate(plugin);
 
             // udpate available ?
             if (onlinePlugin != null)
             {
-                // required kernel version > current kernel version
-                if (onlinePlugin.getKernelVersion().isGreater(Icy.version) && IcyUpdater.isCheckingForUpdate())
-                    return PluginLocalState.CHECKING_KERNEL;
-
                 if (PluginInstaller.isInstallingPlugin(onlinePlugin))
                     return PluginLocalState.UPDATING;
 
@@ -142,29 +137,13 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
         switch (getPluginLocalState(plugin))
         {
             case HAS_UPDATE:
-                final PluginDescriptor onlinePlugin = PluginUpdater.checkUpdate(plugin);
+                final PluginDescriptor onlinePlugin = PluginUpdater.getUpdate(plugin);
 
-                // required kernel version > current kernel version
-                if (onlinePlugin.getKernelVersion().isGreater(Icy.version))
-                {
-                    if (ConfirmDialog
-                            .confirm("Plugin installation",
-                                    "This plugin requires a newer version of the application.\nDo you want to check for application update now ?"))
-                    {
-                        IcyUpdater.checkUpdate(true, false);
-                        // refresh state
-                        refreshTableData();
-                        updateButtonsState();
-                    }
-                }
-                else
-                {
-                    // install udpate
-                    PluginInstaller.install(onlinePlugin, true);
-                    // refresh state
-                    refreshTableData();
-                    updateButtonsState();
-                }
+                // install udpate
+                PluginInstaller.install(onlinePlugin, true);
+                // refresh state
+                refreshTableData();
+                updateButtonsState();
                 break;
         }
     }
@@ -206,9 +185,6 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
             case CHECKING_UPDATE:
                 return "checking...";
 
-            case CHECKING_KERNEL:
-                return "checking kernel...";
-
             case UPDATING:
                 return "updating...";
 
@@ -236,9 +212,9 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     }
 
     @Override
-    protected void updateButtonsState()
+    protected void updateButtonsStateInternal()
     {
-        super.updateButtonsState();
+        super.updateButtonsStateInternal();
 
         if (PluginLoader.isLoading())
         {
@@ -275,12 +251,6 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
         switch (getPluginLocalState(plugin))
         {
             case CHECKING_UPDATE:
-                action1Button.setEnabled(false);
-                action2Button.setText("Checking...");
-                action2Button.setEnabled(false);
-                break;
-
-            case CHECKING_KERNEL:
                 action1Button.setEnabled(false);
                 action2Button.setText("Checking...");
                 action2Button.setEnabled(false);
@@ -325,40 +295,24 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     @Override
     public void pluginLoaderChanged(PluginLoaderEvent e)
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                pluginsChanged();
-            }
-        });
+        pluginsChanged();
     }
 
     @Override
     public void pluginInstalled(boolean success)
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                updateButtonsState();
-            }
-        });
+        updateButtonsState();
     }
 
     @Override
     public void pluginRemoved(boolean success)
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                updateButtonsState();
-            }
-        });
+        updateButtonsState();
     }
 
+    @Override
+    public void pluginRepositeryLoaderChanged()
+    {
+        refreshTableData();
+    }
 }

@@ -19,7 +19,6 @@
 package icy.gui.preferences;
 
 import icy.preferences.WorkspaceLocalPreferences;
-import icy.system.thread.ThreadUtil;
 import icy.workspace.Workspace;
 import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceInstaller.WorkspaceInstallerEvent;
@@ -182,7 +181,7 @@ public class WorkspaceLocalPreferencePanel extends WorkspaceListPreferencePanel 
     }
 
     @Override
-    protected void updateButtonsState()
+    protected void updateButtonsStateInternal()
     {
         if (WorkspaceLoader.isLoading())
         {
@@ -220,14 +219,7 @@ public class WorkspaceLocalPreferencePanel extends WorkspaceListPreferencePanel 
     @Override
     public void workspaceLoaderChanged(WorkspaceLoaderEvent e)
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                workspacesChanged();
-            }
-        });
+        workspacesChanged();
     }
 
     @Override
@@ -235,32 +227,18 @@ public class WorkspaceLocalPreferencePanel extends WorkspaceListPreferencePanel 
     {
         final Workspace workspace = e.getWorkspace();
 
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                // enable the installed workspace by default
-                setWorkspaceEnable(workspace, Boolean.TRUE);
-                updateButtonsState();
-                // workspace setting changed, restart needed
-                getPreferenceFrame().setNeedRestart();
-            }
-        });
+        // enable the installed workspace by default
+        setWorkspaceEnable(workspace, Boolean.TRUE);
+        // workspace setting changed, restart needed
+        getPreferenceFrame().setNeedRestart();
+        updateButtonsState();
     }
 
     @Override
     public void workspaceRemoved(WorkspaceInstallerEvent e)
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                updateButtonsState();
-                // workspace setting changed, restart needed
-                getPreferenceFrame().setNeedRestart();
-            }
-        });
+        // workspace setting changed, restart needed
+        getPreferenceFrame().setNeedRestart();
+        updateButtonsState();
     }
 }

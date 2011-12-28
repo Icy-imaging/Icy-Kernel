@@ -20,11 +20,10 @@ package icy.gui.preferences;
 
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcyTextField;
-import icy.gui.component.IcyTextField.IcyTextListener;
-import icy.gui.component.TextFieldFilter;
+import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
-import icy.system.thread.ThreadUtil;
+import icy.system.thread.InstanceProcessor;
 import icy.util.StringUtil;
 import icy.workspace.Workspace;
 
@@ -53,7 +52,7 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public abstract class WorkspaceListPreferencePanel extends PreferencePanel implements IcyTextListener,
+public abstract class WorkspaceListPreferencePanel extends PreferencePanel implements TextChangeListener,
         ListSelectionListener
 {
     /**
@@ -73,9 +72,16 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
     final JComboBox repository;
     final JPanel repositoryPanel;
-    final TextFieldFilter filter;
+    final IcyTextField filter;
     final JButton refreshButton;
     final JButton action1Button;
+
+    final InstanceProcessor processor;
+
+    private final Runnable buttonsStateUpdater;
+    private final Runnable tableDataRefresher;
+    private final Runnable workspaceListRefresher;
+    private final Runnable repositoriesUpdater;
 
     final ActionListener repositoryActionListener;
 
@@ -85,6 +91,41 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
         // preferences = Preferences.userRoot().node(preferencesId);
         workspaces = new ArrayList<Workspace>();
+
+        processor = new InstanceProcessor();
+
+        buttonsStateUpdater = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                updateButtonsStateInternal();
+            }
+        };
+        tableDataRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshTableDataInternal();
+            }
+        };
+        workspaceListRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshWorkspacesInternal();
+            }
+        };
+        repositoriesUpdater = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                updateRepositoriesInternal();
+            }
+        };
 
         repositoryActionListener = new ActionListener()
         {
@@ -116,8 +157,8 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
         repositoryPanel.add(Box.createVerticalStrut(8));
 
         // need filter before load()
-        filter = new TextFieldFilter();
-        filter.addTextListener(this);
+        filter = new IcyTextField();
+        filter.addTextChangeListener(this);
 
         load();
 
@@ -331,9 +372,14 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
     protected abstract ArrayList<Workspace> getWorkspaces();
 
-    protected abstract void updateButtonsState();
+    protected abstract void updateButtonsStateInternal();
 
-    protected void updateRepositories()
+    protected final void updateButtonsState()
+    {
+        processor.addTask(buttonsStateUpdater, true);
+    }
+
+    protected void updateRepositoriesInternal()
     {
         // final RepositoryPreferencePanel panel = (RepositoryPreferencePanel)
         // getPreferencePanel(RepositoryPreferencePanel.class);
@@ -384,6 +430,11 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
         repository.setMinimumSize(new Dimension(48, 18));
     }
 
+    protected final void updateRepositories()
+    {
+        processor.addTask(repositoriesUpdater, true);
+    }
+
     protected Boolean isWorkspaceEnable(Workspace workspace)
     {
         return Boolean.FALSE;
@@ -394,9 +445,14 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
         // ignore
     }
 
-    protected void refreshWorkspaces()
+    protected void refreshWorkspacesInternal()
     {
         workspaces = filterList(getWorkspaces(), filter.getText());
+    }
+
+    protected final void refreshWorkspaces()
+    {
+        processor.addTask(workspaceListRefresher, false);
     }
 
     protected int getWorkspaceIndex(Workspace workspace)
@@ -474,21 +530,19 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
         updateRepositories();
     }
 
-    protected void refreshTableData()
+    protected void refreshTableDataInternal()
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                final Workspace workspace = getSelectedWorkspace();
+        final Workspace workspace = getSelectedWorkspace();
 
-                tableModel.fireTableDataChanged();
+        tableModel.fireTableDataChanged();
 
-                // restore previous selected workspace if possible
-                setSelectedWorkspace(workspace);
-            }
-        });
+        // restore previous selected workspace if possible
+        setSelectedWorkspace(workspace);
+    }
+
+    protected final void refreshTableData()
+    {
+        processor.addTask(tableDataRefresher, true);
     }
 
     protected void workspacesChanged()

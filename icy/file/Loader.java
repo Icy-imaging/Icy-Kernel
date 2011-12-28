@@ -83,9 +83,10 @@ public class Loader
         final List<Sequence> sequences;
         final ImageReader mainReader;
         final boolean display;
+        final boolean directory;
         IFormatReader lastUsedReader;
 
-        public SequenceLoader(List<File> files, boolean display)
+        public SequenceLoader(List<File> files, boolean display, boolean directory)
         {
             super();
 
@@ -96,11 +97,7 @@ public class Loader
             mainReader = new ImageReader();
             lastUsedReader = null;
             this.display = display;
-        }
-
-        public SequenceLoader(File file, boolean display)
-        {
-            this(CollectionUtil.createArrayList(file), display);
+            this.directory = directory;
         }
 
         @Override
@@ -200,6 +197,7 @@ public class Loader
                         seq.setFilename(FileUtil.setExtension(
                                 FileUtil.setExtension(filename, "") + "_C" + newPos.getC(),
                                 FileUtil.getFileExtension(filename, true)));
+                        seq.setMetaData((IMetadata) lastUsedReader.getMetadataStore());
                         sequences.add(seq);
                     }
                     else if (prevPos.getT() != position.getT())
@@ -236,6 +234,18 @@ public class Loader
 
                 if (loaderFrame.isCancelRequested())
                     return;
+
+                // directory loading resulted in a single sequence
+                if ((sequences.size() == 1) && directory)
+                {
+                    final Sequence seq = sequences.get(0);
+                    // get directory without last separator
+                    final String fileDir = FileUtil.getGenericPath(files.get(0).getParentFile().getAbsolutePath());
+
+                    // set name and filename to use directory instead
+                    seq.setName(FileUtil.getFileName(fileDir, false));
+                    seq.setFilename(fileDir);
+                }
 
                 for (Sequence seq : sequences)
                 {
@@ -382,28 +392,6 @@ public class Loader
         }
     }
 
-    // /**
-    // * Load specified Metadata in the specified sequence.
-    // */
-    // public static void loadMetaData(Sequence sequence, MetadataRetrieve metaData)
-    // {
-    // PositiveFloat pf;
-    // Double d;
-    //
-    // pf = metaData.getPixelsPhysicalSizeX(0);
-    // if (pf != null)
-    // sequence.setPixelSizeX(pf.getValue().doubleValue());
-    // pf = metaData.getPixelsPhysicalSizeY(0);
-    // if (pf != null)
-    // sequence.setPixelSizeZ(pf.getValue().doubleValue());
-    // pf = metaData.getPixelsPhysicalSizeZ(0);
-    // if (pf != null)
-    // sequence.setPixelSizeZ(pf.getValue().doubleValue());
-    // d = metaData.getPixelsTimeIncrement(0);
-    // if (d != null)
-    // sequence.setTimeInterval(d.doubleValue());
-    // }
-
     /**
      * Load a single image from the specified file
      * 
@@ -446,7 +434,8 @@ public class Loader
             mainMenu.addRecentLoadedFile(file);
 
         // create sequence loader
-        final SequenceLoader seqLoader = new SequenceLoader(file, false);
+        final SequenceLoader seqLoader = new SequenceLoader(CollectionUtil.createArrayList(file), false,
+                file.isDirectory());
 
         // run sequence loader
         seqLoader.run();
@@ -468,7 +457,7 @@ public class Loader
      */
     public static void load(File file)
     {
-        internalLoad(CollectionUtil.createArrayList(file), false);
+        load(CollectionUtil.createArrayList(file), false);
     }
 
     /**
@@ -500,7 +489,7 @@ public class Loader
     public static void load(List<File> files, boolean separate)
     {
         // explode file list
-        internalLoad(explodeAndClean(files), separate);
+        internalLoad(explodeAndClean(files), separate, (files.size() == 1) && files.get(0).isDirectory());
     }
 
     private static List<File> explodeAndClean(List<File> files)
@@ -524,7 +513,7 @@ public class Loader
         return result;
     }
 
-    private static void internalLoad(final List<File> files, final boolean separate)
+    private static void internalLoad(final List<File> files, final boolean separate, final boolean directory)
     {
         // to avoid blocking call
         ThreadUtil.bgRunWait(new Runnable()
@@ -544,7 +533,8 @@ public class Loader
                             mainMenu.addRecentLoadedFile(file);
 
                         // create sequence loader
-                        final SequenceLoader loadingThread = new SequenceLoader(file, true);
+                        final SequenceLoader loadingThread = new SequenceLoader(CollectionUtil.createArrayList(file),
+                                true, directory);
                         // load file using background processor
                         ThreadUtil.bgRunWait(loadingThread);
                     }
@@ -553,9 +543,15 @@ public class Loader
                 {
                     // add as one item to recent file list
                     if (mainMenu != null)
-                        mainMenu.addRecentLoadedFile(files);
+                    {
+                        // set only the directory entry
+                        if (directory)
+                            mainMenu.addRecentLoadedFile(files.get(0).getParentFile());
+                        else
+                            mainMenu.addRecentLoadedFile(files);
+                    }
                     // create and run sequence loader
-                    new SequenceLoader(files, true).run();
+                    new SequenceLoader(files, true, directory).run();
                 }
             }
         });

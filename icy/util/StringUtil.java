@@ -415,4 +415,20 @@ public class StringUtil
             result = "0" + result;
         return result;
     }
+
+    /**
+     * Remove <code>count</code> characters from the end of specified string.
+     */
+    public static String removeLast(String value, int count)
+    {
+        if (value == null)
+            return null;
+
+        final int l = value.length();
+
+        if (l < 2)
+            return "";
+
+        return value.substring(0, l - count);
+    }
 }

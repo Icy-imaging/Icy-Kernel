@@ -25,6 +25,7 @@ import icy.system.IcyExceptionHandler;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import org.w3c.dom.Document;
@@ -64,6 +65,12 @@ public class SequencePersistent implements XMLPersistent
 
         if (StringUtil.isEmpty(seqFilename))
             return null;
+        
+        final File file = new File(seqFilename);
+        
+        // filename reference a directory --> use "<directory>/meta.xml"
+        if (file.isDirectory())
+            return seqFilename + "/meta.xml";
 
         return FileUtil.setExtension(seqFilename, ".xml");
     }

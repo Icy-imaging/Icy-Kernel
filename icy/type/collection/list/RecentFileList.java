@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class RecentFileList extends RecentList
 {
-    protected final static int NB_MAX_ENTRY = 7;
+    protected final static int NB_MAX_ENTRY = 10;
     protected final static int NB_MAX_FILE = 1000;
 
     protected final static String ID_NB_FILE = "nbFile";
@@ -170,7 +170,7 @@ public class RecentFileList extends RecentList
             // save size
             pref.putInt(ID_NB_FILE, 0);
         }
-        
+
         // then clean
         pref.clean();
     }

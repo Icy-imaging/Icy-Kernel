@@ -565,8 +565,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public boolean isCompatible(IcyColorModel cm)
     {
-        return (getNumComponents() == cm.getNumComponents()) && (getDataType() == cm.getDataType())
-                && (isSignedDataType() == cm.isSignedDataType());
+        return (getNumComponents() == cm.getNumComponents()) && (getDataType_() == cm.getDataType_());
     }
 
     /**

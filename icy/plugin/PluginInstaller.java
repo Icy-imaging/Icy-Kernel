@@ -24,12 +24,10 @@ import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.frame.progress.SuccessfullAnnounceFrame;
-import icy.main.Icy;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.abstract_.Plugin;
 import icy.system.thread.ThreadUtil;
-import icy.update.IcyUpdater;
 import icy.update.Updater;
 import icy.util.StringUtil;
 
@@ -333,6 +331,9 @@ public class PluginInstaller
         if (taskFrame != null)
             taskFrame.setMessage("Downloading " + plugin);
 
+        // ensure descriptor is loaded
+        plugin.loadDescriptor();
+
         // download and save JAR file
         result = downloadAndSave(plugin.getJarUrl(), plugin.getJarFilename(), true, taskFrame);
         if (!StringUtil.isEmpty(result))
@@ -546,20 +547,6 @@ public class PluginInstaller
                     System.err.println("but version " + ident.getVersion() + " or greater needed.");
                     return false;
                 }
-                // online plugin require a newer kernel
-                else if (onlinePlugin.getKernelVersion().isGreater(Icy.version))
-                {
-                    // error
-                    System.err.println("Can't resolve dependencies for plugin '" + plugin.getName() + "' :");
-                    System.err.println(onlinePlugin.getName() + " " + onlinePlugin.getVersion()
-                            + " requires a newer version of the application.");
-                    System.err
-                            .println("Current = " + Icy.version + "    Required = " + onlinePlugin.getKernelVersion());
-                    System.err.println("You need to update your application to install this plugin.");
-                    // check for update
-                    IcyUpdater.checkUpdate(true, false);
-                    return false;
-                }
 
                 // add to the install list
                 PluginDescriptor.addToList(pluginsToInstall, onlinePlugin);
@@ -612,7 +599,8 @@ public class PluginInstaller
                 taskFrame.setMessage("waiting for plugin loader to find plugins...");
 
             // wait until online plugins descriptors are loaded
-            PluginRepositoryLoader.waitDescriptorsLoaded();
+            // not needed as we do plugin.loadDescriptor when needed
+            // PluginRepositoryLoader.waitDescriptorsLoaded();
 
             if (taskFrame != null)
                 taskFrame.setMessage("checking dependencies for '" + plugDesc + "' ...");

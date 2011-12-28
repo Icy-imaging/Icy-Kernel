@@ -26,7 +26,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 /**
- * IcyTextField extends JFormattedTextField and provide easier change handling
+ * IcyTextField extends JFormattedTextField and provide easier text change handling.
  * 
  * @author Stephane
  */
@@ -113,6 +113,8 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
     private void textChanged()
     {
         for (IcyTextListener listener : listenerList.getListeners(IcyTextListener.class))
+            listener.textChanged(this);
+        for (TextChangeListener listener : listenerList.getListeners(TextChangeListener.class))
             listener.textChanged(this);
     }
 

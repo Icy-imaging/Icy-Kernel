@@ -4,6 +4,7 @@
 package icy.gui.sequence;
 
 import icy.gui.component.ComponentUtil;
+import icy.gui.component.button.IcyButton;
 import icy.gui.frame.GenericFrame;
 import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
 import icy.gui.util.GuiUtil;
@@ -12,6 +13,7 @@ import icy.gui.viewer.ViewerEvent;
 import icy.main.Icy;
 import icy.math.UnitUtil;
 import icy.math.UnitUtil.UnitPrefix;
+import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.system.thread.ThreadUtil;
@@ -21,7 +23,6 @@ import java.awt.event.ActionListener;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 
 /**
@@ -43,8 +44,8 @@ public class SequenceInfosPanel extends InspectorSubPanel
     final JLabel sizeLabel;
     final JLabel channelLabel;
 
-    final JButton editBtn;
-    final JButton detailBtn;
+    final IcyButton editBtn;
+    final IcyButton detailBtn;
 
     boolean pxSizeYdifferent = true;
 
@@ -65,7 +66,7 @@ public class SequenceInfosPanel extends InspectorSubPanel
         sizeLabel = new JLabel();
         channelLabel = new JLabel();
 
-        editBtn = new JButton("Edit Properties");
+        editBtn = new IcyButton("Edit properties", ResourceUtil.ICON_DOCEDIT);
         editBtn.setToolTipText("Edit sequence properties");
         editBtn.addActionListener(new ActionListener()
         {
@@ -80,8 +81,8 @@ public class SequenceInfosPanel extends InspectorSubPanel
             }
         });
 
-        detailBtn = new JButton("Details");
-        detailBtn.setToolTipText("Show sequence metadata informations");
+        detailBtn = new IcyButton("Show details", ResourceUtil.ICON_PROPERTIES);
+        detailBtn.setToolTipText("Show all associated metadata informations");
         detailBtn.addActionListener(new ActionListener()
         {
             @Override
@@ -92,7 +93,8 @@ public class SequenceInfosPanel extends InspectorSubPanel
 
                 if (seq != null)
                 {
-                    final GenericFrame g = new GenericFrame("Sequence details", new SequenceMetadataPanel(seq));
+                    final GenericFrame g = new GenericFrame(seq.getName() + " - Metadata", new SequenceMetadataPanel(
+                            seq));
 
                     g.addToMainDesktopPane();
                     g.center();
@@ -149,9 +151,10 @@ public class SequenceInfosPanel extends InspectorSubPanel
         label.setToolTipText("Time Interval");
         add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, resTLabel, Box.createHorizontalStrut(4),
                 Box.createHorizontalGlue()));
-        add(Box.createVerticalStrut(6));
+        add(Box.createVerticalStrut(4));
         add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), detailBtn, Box.createHorizontalGlue(), editBtn,
                 Box.createHorizontalStrut(4)));
+        add(Box.createVerticalStrut(4));
 
         revalidate();
     }
@@ -266,7 +269,6 @@ public class SequenceInfosPanel extends InspectorSubPanel
 
                 switch (e.getSourceType())
                 {
-                    case SEQUENCE_NAME:
                     case SEQUENCE_DATA:
                     case SEQUENCE_TYPE:
                     case SEQUENCE_META:

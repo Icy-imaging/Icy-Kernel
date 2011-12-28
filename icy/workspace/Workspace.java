@@ -486,7 +486,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
 
                 XMLUtil.setAttributeValue((Element) node, ID_NAME, name);
 
-                XMLUtil.removeAllChilds(node);
+                XMLUtil.removeAllChildren(node);
                 for (ItemDefinition item : items)
                 {
                     if (item.isSeparator())
@@ -658,7 +658,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
 
             XMLUtil.setAttributeValue((Element) node, ID_NAME, name);
 
-            XMLUtil.removeAllChilds(node);
+            XMLUtil.removeAllChildren(node);
             for (BandDefinition band : bands)
                 band.saveToXML(XMLUtil.addElement(node, ID_BAND));
 
@@ -1009,7 +1009,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
         XMLUtil.setAttributeValue((Element) node, ID_DESCRIPTION, description);
         // don't save the "enabled" property here
 
-        XMLUtil.removeAllChilds(node);
+        XMLUtil.removeAllChildren(node);
         for (TaskDefinition task : tasks)
             task.saveToXML(XMLUtil.addElement(node, ID_TASK));
 
@@ -1043,7 +1043,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
             }
 
             // wait while online loader is ready
-            PluginRepositoryLoader.waitDescriptorsLoaded();
+            PluginRepositoryLoader.waitBasicLoaded();
 
             if (progressFrame != null)
             {
@@ -1064,7 +1064,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
                     // not found ?
                     if (plugin == null)
                     {
-                        // then try from repositery plugins
+                        // then try from repository plugins
                         plugin = PluginRepositoryLoader.getPlugin(className);
 
                         if (plugin == null)

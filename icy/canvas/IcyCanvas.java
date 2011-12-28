@@ -679,33 +679,6 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         // view synchronization
         if (isSynchOnView())
         {
-            if (processAll || (type == IcyCanvasEventType.OFFSET_CHANGED))
-            {
-                // no information about dimension --> set all
-                if (processAll || (dim == DimensionId.NULL))
-                {
-                    final int offX = getOffsetX();
-                    final int offY = getOffsetY();
-                    final int offZ = getOffsetZ();
-                    final int offT = getOffsetT();
-                    final int offC = getOffsetC();
-
-                    for (IcyCanvas cnv : canvasList)
-                    {
-                        cnv.setOffsetX(offX);
-                        cnv.setOffsetY(offY);
-                        cnv.setOffsetZ(offZ);
-                        cnv.setOffsetT(offT);
-                        cnv.setOffsetC(offC);
-                    }
-                }
-                else
-                {
-                    for (IcyCanvas cnv : canvasList)
-                        cnv.setOffset(dim, getOffset(dim));
-                }
-            }
-
             if (processAll || (type == IcyCanvasEventType.SCALE_CHANGED))
             {
                 // no information about dimension --> set all
@@ -757,6 +730,34 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                 {
                     for (IcyCanvas cnv : canvasList)
                         cnv.setRotation(dim, getRotation(dim));
+                }
+            }
+            
+            // process offset in last as it can be limited depending destination scale value
+            if (processAll || (type == IcyCanvasEventType.OFFSET_CHANGED))
+            {
+                // no information about dimension --> set all
+                if (processAll || (dim == DimensionId.NULL))
+                {
+                    final int offX = getOffsetX();
+                    final int offY = getOffsetY();
+                    final int offZ = getOffsetZ();
+                    final int offT = getOffsetT();
+                    final int offC = getOffsetC();
+
+                    for (IcyCanvas cnv : canvasList)
+                    {
+                        cnv.setOffsetX(offX);
+                        cnv.setOffsetY(offY);
+                        cnv.setOffsetZ(offZ);
+                        cnv.setOffsetT(offT);
+                        cnv.setOffsetC(offC);
+                    }
+                }
+                else
+                {
+                    for (IcyCanvas cnv : canvasList)
+                        cnv.setOffset(dim, getOffset(dim));
                 }
             }
         }

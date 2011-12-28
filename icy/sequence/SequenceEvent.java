@@ -10,12 +10,13 @@
 package icy.sequence;
 
 import icy.common.EventHierarchicalChecker;
+import icy.util.StringUtil;
 
 public class SequenceEvent implements EventHierarchicalChecker
 {
     public enum SequenceEventSourceType
     {
-        SEQUENCE_TYPE, SEQUENCE_META, SEQUENCE_NAME, SEQUENCE_COLORMAP, SEQUENCE_COMPONENTBOUNDS, SEQUENCE_DATA, SEQUENCE_ROI, SEQUENCE_PAINTER
+        SEQUENCE_TYPE, SEQUENCE_META, SEQUENCE_COLORMAP, SEQUENCE_COMPONENTBOUNDS, SEQUENCE_DATA, SEQUENCE_ROI, SEQUENCE_PAINTER
     }
 
     public enum SequenceEventType
@@ -79,7 +80,7 @@ public class SequenceEvent implements EventHierarchicalChecker
      * <br>
      * The following source types are available :<br>
      * <code>SEQUENCE_TYPE</code> --> source object is null<br>
-     * <code>SEQUENCE_NAME</code> --> source object is null<br>
+     * <code>SEQUENCE_META</code> --> source object define the meta data id (String)<br>
      * <code>SEQUENCE_COLORMAP</code> --> source object is an instance of IcyColorModel<br>
      * <code>SEQUENCE_COMPONENTBOUNDS</code> --> source object is an instance of IcyColorModel<br>
      * <code>SEQUENCE_DATA</code> --> source object is an instance of IcyBufferedImage<br>
@@ -108,7 +109,7 @@ public class SequenceEvent implements EventHierarchicalChecker
      * Type define the type of event.<br>
      * <br>
      * When <code>sourceType</code> is one of the following :<br>
-     * <code>SEQUENCE_TYPE, SEQUENCE_NAME, SEQUENCE_COLORMAP, SEQUENCE_COMPONENTBOUNDS</code><br>
+     * <code>SEQUENCE_TYPE, SEQUENCE_META, SEQUENCE_COLORMAP, SEQUENCE_COMPONENTBOUNDS</code><br>
      * the type can only be <code>SequenceEventType.CHANGED</code><br>
      * <br>
      * When <code>sourceType</code> is one of the following :<br>
@@ -141,7 +142,7 @@ public class SequenceEvent implements EventHierarchicalChecker
     }
 
     /**
-     * Optimize event
+     * Collapse event
      */
     private boolean collapseWith(SequenceEvent e)
     {
@@ -150,6 +151,10 @@ public class SequenceEvent implements EventHierarchicalChecker
         {
             switch (sourceType)
             {
+                case SEQUENCE_META:
+                    if (StringUtil.equals((String) e.getSource(), (String) source))
+                        return true;
+
                 case SEQUENCE_COLORMAP:
                 case SEQUENCE_COMPONENTBOUNDS:
                     // join events in one global event
@@ -176,6 +181,9 @@ public class SequenceEvent implements EventHierarchicalChecker
                         return true;
                     }
                     break;
+
+                case SEQUENCE_TYPE:
+                    return true;
             }
         }
 
@@ -186,14 +194,7 @@ public class SequenceEvent implements EventHierarchicalChecker
     public boolean isEventRedundantWith(EventHierarchicalChecker event)
     {
         if (event instanceof SequenceEvent)
-        {
-            final SequenceEvent e = (SequenceEvent) event;
-
-            return collapseWith(e)
-                    || ((sourceType == e.getSourceType()) && (type == e.getType())
-                            && ((source == null) || (source == e.getSource())) && ((param == -1) || (param == e
-                            .getParam())));
-        }
+            return collapseWith((SequenceEvent) event);
 
         return false;
     }

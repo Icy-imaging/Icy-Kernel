@@ -76,7 +76,7 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
     {
         super("Inspector");
 
-        new WindowPositionSaver(this, "frame/inspector", new Point(600, 140), new Dimension(260, 600));
+        new WindowPositionSaver(this, "frame/inspector", new Point(600, 140), new Dimension(280, 600));
 
         // main TAB panels
         sequencePanel = new SequencePanel();
@@ -99,7 +99,8 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
         mainPane.addTab("Undo", null, new UndoManagerPanel(), "");
         mainPane.addTab("Output", null, outputPanel);
 
-        setMinimumSize(new Dimension(260, 480));
+        // minimum required size for sequence infos panel
+        setMinimumSize(new Dimension(280, 480));
         setLayout(new BorderLayout());
 
         add(mainPane, BorderLayout.CENTER);

@@ -50,6 +50,11 @@ public class IcyButton extends JButton
 
     }
 
+    public IcyButton(IcyIcon icon)
+    {
+        this(null, icon);
+    }
+
     /**
      * Create a button with specified action
      */
@@ -61,24 +66,34 @@ public class IcyButton extends JButton
         init();
     }
 
-    public IcyButton(String text, Image iconImage)
+    /**
+     * Create a button with specified text and icon<br>
+     * 
+     * @param text
+     *        button text
+     * @param iconImage
+     *        icon image
+     * @param iconSize
+     *        icon size
+     */
+    public IcyButton(String text, Image iconImage, int iconSize)
     {
-        this(text, new IcyIcon(iconImage));
+        this(text, new IcyIcon(iconImage, iconSize));
     }
 
-    public IcyButton(IcyIcon icon)
+    public IcyButton(String text, Image iconImage)
     {
-        this(null, icon);
+        this(text, iconImage, IcyIcon.DEFAULT_SIZE);
+    }
+
+    public IcyButton(Image iconImage, int iconSize)
+    {
+        this(null, iconImage, iconSize);
     }
 
     public IcyButton(Image iconImage)
     {
-        this(null, new IcyIcon(iconImage));
-    }
-
-    public IcyButton(Image iconImage, int size)
-    {
-        this(null, new IcyIcon(iconImage, size));
+        this(null, iconImage);
     }
 
     /**

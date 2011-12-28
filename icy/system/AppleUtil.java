@@ -73,6 +73,9 @@ public class AppleUtil
             m.invoke(app, ResourceUtil.IMAGE_ICY_256);
             m = appClass.getMethod("addPreferencesMenuItem");
             m.invoke(app);
+            
+            // set menu bar name
+            System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Icy");
         }
         catch (Exception e)
         {

@@ -169,7 +169,7 @@ public class GeneralPreferences
         if (os.equals(SystemUtil.SYSTEM_WINDOWS))
             return prefGeneral.get(ID_OS_EXTRA_VMPARAMS + SystemUtil.SYSTEM_WINDOWS, "-Dsun.java2d.d3d=false");
         if (os.equals(SystemUtil.SYSTEM_MAC_OS))
-            return prefGeneral.get(ID_OS_EXTRA_VMPARAMS + SystemUtil.SYSTEM_MAC_OS, "");
+            return prefGeneral.get(ID_OS_EXTRA_VMPARAMS + SystemUtil.SYSTEM_MAC_OS, "-Xdock:name=\"Icy\"");
         if (os.equals(SystemUtil.SYSTEM_UNIX))
             return prefGeneral.get(ID_OS_EXTRA_VMPARAMS + SystemUtil.SYSTEM_UNIX, "");
 

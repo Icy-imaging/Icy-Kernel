@@ -20,10 +20,14 @@ package icy.file;
 
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.FileFrame;
+import icy.gui.menu.ApplicationMenu;
 import icy.image.IcyBufferedImage;
+import icy.image.colormodel.IcyColorModel;
+import icy.main.Icy;
 import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
+import icy.util.OMEUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,139 +36,241 @@ import java.text.DecimalFormat;
 import loci.common.services.ServiceException;
 import loci.formats.FormatException;
 import loci.formats.IFormatWriter;
-import loci.formats.ImageWriter;
-import loci.formats.MetadataTools;
 import loci.formats.ome.OMEXMLMetadata;
+import loci.formats.out.APNGWriter;
+import loci.formats.out.AVIWriter;
+import loci.formats.out.JPEGWriter;
 import loci.formats.out.OMETiffWriter;
-import loci.formats.services.OMEXMLService;
-import loci.formats.services.OMEXMLServiceImpl;
-import ome.xml.model.enums.DimensionOrder;
-import ome.xml.model.primitives.PositiveInteger;
 
 /**
- * The file format is the following : filename-tttt-zzzz
+ * Sequence / Image saver class.<br>
+ * <br>
+ * Supported save format are the following : TIFF (preferred), PNG, JPG and AVI.
+ * When sequence is saved as multiple file the following naming convention is used :<br>
+ * <code>filename-tttt-zzzz</code>
  * 
- * @author Fab
+ * @author Stephane & Fab
  */
 public class Saver
 {
     /**
-     * Generates Meta Data for the given arguments
-     * 
-     * @return OMEXMLMetadata
-     * @throws ServiceException
+     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)}
+     *             instead
      */
+    @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT,
             DataType dataType) throws ServiceException
     {
-        final OMEXMLService omeService = new OMEXMLServiceImpl();
-        final OMEXMLMetadata meta = omeService.createOMEXMLMetadata();
-
-        meta.createRoot();
-        meta.setImageID(MetadataTools.createLSID("Image", 0), 0);
-        meta.setImageName("Sample", 0);
-        meta.setPixelsID(MetadataTools.createLSID("Pixels", 0), 0);
-        meta.setPixelsBinDataBigEndian(Boolean.TRUE, 0, 0);
-        meta.setPixelsDimensionOrder(DimensionOrder.XYCZT, 0);
-        meta.setPixelsType(dataType.toPixelType(), 0);
-        meta.setPixelsSizeX(new PositiveInteger(Integer.valueOf(sizeX)), 0);
-        meta.setPixelsSizeY(new PositiveInteger(Integer.valueOf(sizeY)), 0);
-        meta.setPixelsSizeC(new PositiveInteger(Integer.valueOf(sizeC)), 0);
-        meta.setPixelsSizeZ(new PositiveInteger(Integer.valueOf(sizeZ)), 0);
-        meta.setPixelsSizeT(new PositiveInteger(Integer.valueOf(sizeT)), 0);
-        meta.setChannelID(MetadataTools.createLSID("Channel", 0, 0), 0, 0);
-        meta.setChannelSamplesPerPixel(new PositiveInteger(Integer.valueOf(sizeC)), 0, 0);
-
-        return meta;
+        return OMEUtil.generateMetaData(sizeX, sizeY, sizeC, sizeZ, sizeT, dataType, false);
     }
 
     /**
-     * @deprecated use {@link #generateMetaData(int, int, int, int, int, DataType)} instead
+     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, int, int, DataType, boolean)}
+     *             instead
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT, int dataType,
             boolean signedDataType) throws ServiceException
     {
-        return generateMetaData(sizeX, sizeY, sizeC, sizeZ, sizeT, DataType.getDataType(dataType, signedDataType));
+        return OMEUtil.generateMetaData(sizeX, sizeY, sizeC, sizeZ, sizeT,
+                DataType.getDataType(dataType, signedDataType), false);
     }
 
     /**
-     * Generates Meta Data for the given arguments
-     * 
-     * @return OMEXMLMetadata
-     * @throws ServiceException
+     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, DataType, boolean)} instead
      */
+    @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, DataType dataType)
             throws ServiceException
     {
-        return generateMetaData(sizeX, sizeY, sizeC, 1, 1, dataType);
+        return OMEUtil.generateMetaData(sizeX, sizeY, sizeC, 1, 1, dataType, false);
     }
 
     /**
-     * @deprecated use {@link #generateMetaData(int, int, int, DataType)} instead
+     * @deprecated use {@link OMEUtil#generateMetaData(int, int, int, DataType, boolean)} instead
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, int dataType, boolean signedDataType)
             throws ServiceException
     {
-        return generateMetaData(sizeX, sizeY, sizeC, DataType.getDataType(dataType, signedDataType));
+        return OMEUtil.generateMetaData(sizeX, sizeY, sizeC, DataType.getDataType(dataType, signedDataType), false);
     }
 
     /**
-     * Generates Meta Data for the given BufferedImage
+     * Return the writer to use for the specified FileFormat.<br>
+     * <br>
+     * The following writer are currently supported :<br>
+     * <code>OMETiffWriter</code> : TIFF image file (default)<br>
+     * <code>APNGWriter</code> : PNG image file<br>
+     * <code>JPEGWriter</code> : JPG image file<br>
+     * <code>AVIWriter</code> : AVI video file<br>
+     */
+    public static IFormatWriter getWriter(FileFormat fileFormat)
+    {
+        switch (fileFormat)
+        {
+            case PNG:
+                return new APNGWriter();
+
+            case JPG:
+                return new JPEGWriter();
+
+            case AVI:
+                return new AVIWriter();
+
+            default:
+                return new OMETiffWriter();
+        }
+    }
+
+    /**
+     * Return the writer to use for the specified filename extension.<br>
+     * <br>
+     * The following writer are currently supported :<br>
+     * <code>OMETiffWriter</code> : TIFF image file (default)<br>
+     * <code>APNGWriter</code> : PNG image file<br>
+     * <code>JPEGWriter</code> : JPG image file<br>
+     * <code>AVIWriter</code> : AVI video file<br>
+     */
+    public static IFormatWriter getWriter(String ext)
+    {
+        return getWriter(FileFormat.getFileFormat(ext));
+    }
+
+    /**
+     * Return the writer to use for the specified file.<br>
+     * <br>
+     * The following writer are currently supported :<br>
+     * <code>OMETiffWriter</code> : TIFF image file (default)<br>
+     * <code>APNGWriter</code> : PNG image file<br>
+     * <code>JPEGWriter</code> : JPG image file<br>
+     * <code>AVIWriter</code> : AVI video file<br>
+     */
+    public static IFormatWriter getWriter(File file)
+    {
+        return getWriter(FileUtil.getFileExtension(file.getName(), false));
+    }
+
+    /**
+     * Return the closest compatible {@link IcyColorModel} supported by writer
+     * from the specified image description.<br>
+     * That means the writer is able to save the data described by the returned
+     * {@link IcyColorModel} without any loss or conversion.<br>
      * 
-     * @return OMEXMLMetadata
-     * @throws ServiceException
+     * @param writer
+     *        IFormatWriter we want to test compatibility
+     * @param numChannel
+     *        number of channel of the image
+     * @param dataType
+     *        image data type
      */
-    static OMEXMLMetadata generateMetaData(IcyBufferedImage image) throws ServiceException
+    public static IcyColorModel getCompatibleColorModel(IFormatWriter writer, int numChannel, DataType dataType)
     {
-        return generateMetaData(image.getSizeX(), image.getSizeY(), image.getSizeC(), image.getDataType_());
+        final DataType outDataType;
+        final int outNumChannel;
+
+        if (writer instanceof OMETiffWriter)
+        {
+            // TIFF supports all formats
+            outDataType = dataType;
+            outNumChannel = numChannel;
+        }
+        else if (writer instanceof APNGWriter)
+        {
+            // PNG only supports byte and short data type
+            if (dataType.getSize() > 2)
+                outDataType = DataType.USHORT;
+            else
+                outDataType = dataType;
+
+            // PNG supports a maximum of 4 channels
+            outNumChannel = Math.min(numChannel, 4);
+        }
+        else
+        {
+            // JPG, AVI, default only supports byte data type
+            if (dataType.getSize() > 1)
+                outDataType = DataType.UBYTE;
+            else
+                outDataType = dataType;
+
+            // 3 channels at max
+            if (numChannel > 3)
+                outNumChannel = 3;
+            else
+            {
+                // special case of 2 channels
+                if (numChannel == 2)
+                    // convert to RGB
+                    outNumChannel = 3;
+                else
+                    outNumChannel = numChannel;
+            }
+        }
+
+        return IcyColorModel.createInstance(outNumChannel, outDataType);
     }
 
     /**
-     * Generates Meta Data for the given Sequence
+     * Return the closest compatible {@link IcyColorModel} supported by writer
+     * from the specified {@link IcyColorModel}.<br>
+     * That means the writer is able to save the data described by the returned
+     * {@link IcyColorModel} without any loss or conversion.<br>
      * 
-     * @return OMEXMLMetadata
-     * @throws ServiceException
+     * @param writer
+     *        IFormatWriter we want to test compatibility
+     * @param colorModel
+     *        the colorModel describing data / image format
      */
-    static OMEXMLMetadata generateMetaData(Sequence sequence, boolean useZ, boolean useT) throws ServiceException
+    public static IcyColorModel getCompatibleColorModel(IFormatWriter writer, IcyColorModel colorModel)
     {
-        return generateMetaData(sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(),
-                useZ ? sequence.getSizeZ() : 1, useT ? sequence.getSizeT() : 1, sequence.getDataType_());
+        return getCompatibleColorModel(writer, colorModel.getNumComponents(), colorModel.getDataType_());
     }
 
     /**
-     * Generates Meta Data for the given Sequence
+     * Return true if the specified writer is compatible with the image description.<br>
+     * That means the writer is able to save the data without any loss or conversion.<br>
      * 
-     * @return OMEXMLMetadata
-     * @throws ServiceException
+     * @param numChannel
+     *        number of channel of the image
+     * @param alpha
+     *        true if the image has an alpha channel
+     * @param dataType
+     *        image data type
      */
-    static OMEXMLMetadata generateMetaData(Sequence sequence, int sizeZ, int sizeT) throws ServiceException
+    public static boolean isCompatible(IFormatWriter writer, int numChannel, boolean alpha, DataType dataType)
     {
-        return generateMetaData(sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(), sizeZ, sizeT,
-                sequence.getDataType_());
+        return isCompatible(writer, IcyColorModel.createInstance(numChannel, dataType));
     }
 
     /**
-     * Generates Meta Data for the given Sequence
-     * 
-     * @return OMEXMLMetadata
-     * @throws ServiceException
+     * Return true if the specified writer is compatible with the specified {@link IcyColorModel}.<br>
+     * That means the writer is able to save the data described by the colorModel without any loss
+     * or conversion.<br>
+     * The color map data are never preserved, they are always restored to their default.<br>
      */
-    static OMEXMLMetadata generateMetaData(Sequence sequence) throws ServiceException
+    public static boolean isCompatible(IFormatWriter writer, IcyColorModel colorModel)
     {
-        return generateMetaData(sequence, true, true);
+        return colorModel.isCompatible(getCompatibleColorModel(writer, colorModel));
     }
 
     /**
-     * Return the OMETiffWrite for any TIFF file else uses the LOCI preferred writer.
+     * Return the separate channel flag from specified writer and color space
      */
-    private static IFormatWriter getWriter(File file)
+    private static boolean getSeparateChannelFlag(IFormatWriter writer, int numChannel, DataType dataType)
     {
-        if (file.getName().toLowerCase().endsWith(".tif"))
-            return new OMETiffWriter();
+        if (writer instanceof OMETiffWriter)
+            return (numChannel == 2) || (numChannel > 4) || (dataType.getSize() > 1);
 
-        return new ImageWriter();
+        return false;
+    }
+
+    /**
+     * Return the separate channel flag from specified writer and color space
+     */
+    private static boolean getSeparateChannelFlag(IFormatWriter writer, IcyColorModel colorModel)
+    {
+        return getSeparateChannelFlag(writer, colorModel.getNumComponents(), colorModel.getDataType_());
     }
 
     /**
@@ -193,6 +299,10 @@ public class Saver
      * if images are saved as separate files (file then specify a directory) or not.<br>
      * zMin - zMax and tMin - tMax define the Z and T images range to save.<br>
      * 
+     * @param sequence
+     *        sequence to save
+     * @param file
+     *        file where we want to save sequence
      * @param zMin
      *        start Z position to save
      * @param zMax
@@ -206,14 +316,15 @@ public class Saver
      * @param multipleFile
      *        flag to indicate if images are saved in separate file
      */
-    public static void save(final Sequence sequence, final File file, final int zMin, final int zMax, final int tMin,
-            final int tMax, final int fps, final boolean multipleFile)
+    public static void save(Sequence sequence, File file, int zMin, int zMax, int tMin, int tMax, int fps,
+            boolean multipleFile)
     {
         final String filePath = file.getAbsolutePath();
         final int sizeT = (tMax - tMin) + 1;
         final int sizeZ = (zMax - zMin) + 1;
 
         final FileFrame saveFrame = new FileFrame("Saving", file.getAbsolutePath());
+        final ApplicationMenu mainMenu = Icy.getMainInterface().getApplicationMenu();
 
         try
         {
@@ -246,16 +357,29 @@ public class Saver
                         save(writer, sequence, filename, z, z, t, t, fps, saveFrame);
                     }
                 }
+
+                // change sequence name
+                sequence.setName(fileName);
+                sequence.setFilename(fileBaseDirectory);
+
+                // add as one item to recent file list
+                if (mainMenu != null)
+                    mainMenu.addRecentLoadedFile(new File(fileBaseDirectory));
             }
             else
             {
                 // save as multi images file
                 save(null, sequence, filePath, zMin, zMax, tMin, tMax, fps, saveFrame);
+                
+                // change sequence name
+                sequence.setName(FileUtil.getFileName(filePath, false));
+                sequence.setFilename(filePath);
+
+                // add as one item to recent file list
+                if (mainMenu != null)
+                    mainMenu.addRecentLoadedFile(file);
             }
 
-            // change sequence name
-            sequence.setName(FileUtil.getFileName(filePath, false));
-            sequence.setFilename(filePath);
         }
         catch (Exception e)
         {
@@ -270,10 +394,10 @@ public class Saver
     }
 
     /**
-     * Save a single image from bytes buffer to the specified file
+     * Save a single image from bytes buffer to the specified file.
      */
-    public static void saveImage(byte[] data, int width, int height, int numComponent, int dataType,
-            boolean signedDataType, File file, boolean force) throws FormatException, IOException
+    public static void saveImage(byte[] data, int width, int height, int numChannel, DataType dataType, File file,
+            boolean force) throws FormatException, IOException
     {
         final IFormatWriter writer = getWriter(file);
 
@@ -288,7 +412,8 @@ public class Saver
 
         try
         {
-            writer.setMetadataRetrieve(generateMetaData(width, height, numComponent, dataType, signedDataType));
+            writer.setMetadataRetrieve(OMEUtil.generateMetaData(width, height, numChannel, dataType,
+                    getSeparateChannelFlag(writer, numChannel, dataType)));
         }
         catch (ServiceException e)
         {
@@ -313,6 +438,16 @@ public class Saver
     }
 
     /**
+     * @deprecated uses {@link #saveImage(byte[], int, int, int, DataType, File, boolean)} instead
+     */
+    @Deprecated
+    public static void saveImage(byte[] data, int width, int height, int numChannel, int dataType,
+            boolean signedDataType, File file, boolean force) throws FormatException, IOException
+    {
+        saveImage(data, width, height, numChannel, DataType.getDataType(dataType, signedDataType), file, force);
+    }
+
+    /**
      * Save a single image to the specified file
      * 
      * @param image
@@ -334,7 +469,8 @@ public class Saver
 
         try
         {
-            writer.setMetadataRetrieve(generateMetaData(image));
+            writer.setMetadataRetrieve(OMEUtil.generateMetaData(image,
+                    getSeparateChannelFlag(writer, image.getIcyColorModel())));
         }
         catch (ServiceException e)
         {
@@ -362,6 +498,31 @@ public class Saver
         writer.close();
     }
 
+    /**
+     * Save the specified sequence in the specified file.<br>
+     * When the sequence contains severals image the multipleFile flag is used to indicate<br>
+     * if images are saved as separate files (file then specify a directory) or not.<br>
+     * zMin - zMax and tMin - tMax define the Z and T images range to save.<br>
+     * 
+     * @param formatWriter
+     *        writer used to save sequence
+     * @param sequence
+     *        sequence to save
+     * @param filename
+     *        file name where we want to save sequence
+     * @param zMin
+     *        start Z position to save
+     * @param zMax
+     *        end Z position to save
+     * @param tMin
+     *        start T position to save
+     * @param tMax
+     *        end T position to save
+     * @param fps
+     *        frame rate for AVI sequence save
+     * @param multipleFile
+     *        flag to indicate if images are saved in separate file
+     */
     private static void save(IFormatWriter formatWriter, Sequence sequence, String filename, int zMin, int zMax,
             int tMin, int tMax, int fps, FileFrame saveFrame)
     {
@@ -380,13 +541,19 @@ public class Saver
             if (file.exists())
                 file.delete();
 
+            final int sizeC = sequence.getSizeC();
+
+            // Some image viewer needs interleaved channel data to correctly read image.
+            // win XP system viewer for instance
             final boolean interleaved = true;
+            final boolean separateChannel = getSeparateChannelFlag(writer, sequence.getColorModel());
 
             // set settings
             writer.setFramesPerSecond(fps);
             // generate metadata
-            writer.setMetadataRetrieve(generateMetaData(sequence, (zMax - zMin) + 1, (tMax - tMin) + 1));
-            // needed so some image viewer can correctly read image (win XP system viewer need it)
+            writer.setMetadataRetrieve(OMEUtil.generateMetaData(sequence, (zMax - zMin) + 1, (tMax - tMin) + 1,
+                    separateChannel));
+            // interleaved flag
             writer.setInterleaved(interleaved);
             // set id
             writer.setId(filename);
@@ -401,7 +568,7 @@ public class Saver
             try
             {
                 int imageIndex = 0;
-                // ZT order is important here (see metadata)
+                // XYCZT order is important here (see metadata)
                 for (int t = tMin; t <= tMax; t++)
                 {
                     for (int z = zMin; z <= zMax; z++)
@@ -411,11 +578,25 @@ public class Saver
 
                         final IcyBufferedImage image = sequence.getImage(t, z);
 
-                        if (image != null)
-                            writer.saveBytes(imageIndex, image.getRawData(littleEndian, interleaved));
-                        // ((BufferedImageWriter) writer).saveImage(imageIndex, image);
+                        // separated channel data
+                        if (separateChannel)
+                        {
+                            for (int c = 0; c < sizeC; c++)
+                            {
+                                if (image != null)
+                                    writer.saveBytes(imageIndex, image.getRawData(c, littleEndian));
 
-                        imageIndex++;
+                                imageIndex++;
+                            }
+                        }
+                        else
+                        {
+                            if (image != null)
+                                writer.saveBytes(imageIndex, image.getRawData(littleEndian, interleaved));
+                            // ((BufferedImageWriter) writer).saveImage(imageIndex, image);
+
+                            imageIndex++;
+                        }
 
                         if (saveFrame != null)
                             saveFrame.incPosition();

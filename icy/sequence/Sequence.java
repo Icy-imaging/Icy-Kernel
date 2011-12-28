@@ -106,6 +106,8 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     @Deprecated
     public static final int TYPE_UNDEFINED = TypeUtil.TYPE_UNDEFINED;
 
+    public static final String ID_NAME = "name";
+
     public static final String ID_PIXEL_SIZE_X = "pixelSizeX";
     public static final String ID_PIXEL_SIZE_Y = "pixelSizeY";
     public static final String ID_PIXEL_SIZE_Z = "pixelSizeZ";
@@ -234,9 +236,6 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         undoManager = new IcyUndoManager(this);
 
         updater = new UpdateEventHandler(this, false);
-        // safety to dispatch on AWT for sequence
-        // afaik this is not safe at all as dead lock can occurs very quickly
-        // updater = new UpdateEventHandler(this, true);
         listeners = new EventListenerList();
 
         // no colorModel yet
@@ -526,7 +525,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         if (this.name != name)
         {
             this.name = name;
-            nameChanged();
+            metaChanged(ID_NAME);
         }
     }
 
@@ -4608,14 +4607,6 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     public boolean isUpdating()
     {
         return updater.isUpdating();
-    }
-
-    /**
-     * sequence name has changed
-     */
-    private void nameChanged()
-    {
-        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_NAME));
     }
 
     /**
