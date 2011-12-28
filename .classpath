@@ -22,6 +22,7 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/jxl.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/log4j.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/mediaplayer.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/MMAcqEngine.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/MMCoreJ.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/MMJ_.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/multiplayer.jar"/>
