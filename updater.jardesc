@@ -13,16 +13,20 @@
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread{ThreadUtil.java"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system{IcyExceptionHandler.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.util{StringUtil.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system{IcyExceptionHandler.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.update{Updater.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.network{NetworkUtil.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.array{DynamicArray.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system{SystemUtil.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.common{Version.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file.xml{XMLPersistent.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.math{MathUtil.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.network{URLUtil.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread{Processor.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.update{ElementDescriptor.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread{InstanceProcessor.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.util{ZipUtil.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.util{XMLUtil.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file{FileUtil.java"/>
     </selectedElements>

@@ -64,7 +64,7 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
     /**
      * use alpha
      */
-    private boolean alphaEnabled;
+    // private boolean alphaEnabled;
 
     /**
      * listeners
@@ -107,8 +107,8 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
         listeners = new EventListenerList();
         updater = new UpdateEventHandler(this, false);
 
-        // alpha is enabled by default
-        alphaEnabled = true;
+        // // alpha is enabled by default
+        // alphaEnabled = true;
 
         beginUpdate();
         try
@@ -153,21 +153,8 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
 
         // generate fromRGB maps
         generateFromRGBColorMaps();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#finalize()
-     */
-    @Override
-    protected void finalize() throws Throwable
-    {
-        // remove listeners
-        for (int i = 0; i < toRGBmaps.length; i++)
-            toRGBmaps[i].removeListener(this);
-
-        super.finalize();
+        // generate ARGB color map
+        generateARGBMap();
     }
 
     /**
@@ -183,27 +170,27 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
         return false;
     }
 
-    /**
-     * @return the alphaEnabled
-     */
-    public boolean isAlphaEnabled()
-    {
-        return alphaEnabled;
-    }
-
-    /**
-     * @param alphaEnabled
-     *        the alphaEnabled to set
-     */
-    public void setAlphaEnabled(boolean alphaEnabled)
-    {
-        this.alphaEnabled = alphaEnabled;
-    }
+    // /**
+    // * @return the alphaEnabled
+    // */
+    // public boolean isAlphaEnabled()
+    // {
+    // return alphaEnabled;
+    // }
+    //
+    // /**
+    // * @param alphaEnabled
+    // * the alphaEnabled to set
+    // */
+    // public void setAlphaEnabled(boolean alphaEnabled)
+    // {
+    // this.alphaEnabled = alphaEnabled;
+    // }
 
     /**
      * Generate FromRGB colormaps from ToRGB ones
      */
-    public void generateFromRGBColorMaps()
+    private void generateFromRGBColorMaps()
     {
         for (int comp = 0; comp < toRGBmaps.length; comp++)
         {
@@ -222,6 +209,15 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
                 fromRGBmaps[3].setFromRGBColor(comp, intensity, toRGBmap.getNormalizedAlpha(intensity));
             }
         }
+    }
+
+    /**
+     * Generate ARGB final color map
+     */
+    private void generateARGBMap()
+    {
+        // TODO Auto-generated method stub
+
     }
 
     /**
@@ -321,169 +317,88 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
      * @param colorvalue
      * @return ARGB as int
      */
-    public int toRGBUnnorm(int[] colorvalue)
+    public int toRGBUnnorm(final int[] colorvalue)
     {
         final int numComponents = getNumComponents();
-        final float invMaxAlpha;
-        int finalAlpha;
 
-        // get max alpha
-        if (alphaEnabled)
-        {
-            finalAlpha = -1;
-            // get max alpha
-            float maxAlpha = 0f;
-            for (int comp = 0; comp < numComponents; comp++)
-            {
-                final IcyColorMap cm = toRGBmaps[comp];
-                final float alphaValue = cm.alpha.mapf[colorvalue[comp]];
-
-                // alpha channel ?
-                if (cm.getType() == IcyColorMapType.ALPHA)
-                    finalAlpha = (int) (alphaValue * IcyColorMap.MAX_LEVEL);
-                else if (alphaValue > maxAlpha)
-                    maxAlpha = alphaValue;
-            }
-
-            // no alpha component ? use the maximum alpha value
-            if (finalAlpha == -1)
-                finalAlpha = (int) (maxAlpha * IcyColorMap.MAX_LEVEL);
-
-            if (maxAlpha > 0f)
-                invMaxAlpha = IcyColorMap.MAX_LEVEL / maxAlpha;
-            else
-                invMaxAlpha = 0f;
-        }
-        else
-        {
-            finalAlpha = IcyColorMap.MAX_LEVEL;
-            invMaxAlpha = IcyColorMap.MAX_LEVEL;
-        }
-
-        float rf, gf, bf;
-
-        // default
-        rf = 0f;
-        gf = 0f;
-        bf = 0f;
+        // default alpha
+        float alpha = 1f;
+        // default max local alpha
+        float maxLocalAlpha = 0f;
+        // default RGB
+        int r = 0, g = 0, b = 0;
 
         for (int comp = 0; comp < numComponents; comp++)
         {
             final IcyColorMap cm = toRGBmaps[comp];
-            final int value = colorvalue[comp];
 
-            switch (cm.getType())
+            if (cm.isEnabled())
             {
-                case GRAY:
-                    final float grayValue = cm.gray.mapf[value] * cm.alpha.mapf[value] * invMaxAlpha;
-                    bf += grayValue;
-                    gf += grayValue;
-                    rf += grayValue;
-                    break;
+                final int value = colorvalue[comp];
+                final float alphaValue = cm.alpha.mapf[value];
 
-                case RGB:
-                    final float alpha = cm.alpha.mapf[value] * invMaxAlpha;
-                    bf += cm.blue.mapf[value] * alpha;
-                    gf += cm.green.mapf[value] * alpha;
-                    rf += cm.red.mapf[value] * alpha;
-                    break;
+                // alpha channel ?
+                if (cm.getType() == IcyColorMapType.ALPHA)
+                    alpha = alphaValue;
+                else if (alphaValue > maxLocalAlpha)
+                    maxLocalAlpha = alphaValue;
+
+                final int premulRGB[] = cm.getPremulRGB()[value];
+
+                b += premulRGB[0];
+                g += premulRGB[1];
+                r += premulRGB[2];
             }
         }
 
-        final int b = Math.min(IcyColorMap.MAX_LEVEL, (int) bf);
-        final int g = Math.min(IcyColorMap.MAX_LEVEL, (int) gf);
-        final int r = Math.min(IcyColorMap.MAX_LEVEL, (int) rf);
+        // final alpha = alpha component value * maximum local alpha value
+        final int a = (int) (alpha * maxLocalAlpha * IcyColorMap.MAX_LEVEL);
 
-        return b | (g << 8) | (r << 16) | (finalAlpha << 24);
+        return ((b > IcyColorMap.MAX_LEVEL) ? IcyColorMap.MAX_LEVEL : b)
+                | (((g > IcyColorMap.MAX_LEVEL) ? IcyColorMap.MAX_LEVEL : g) << 8)
+                | (((r > IcyColorMap.MAX_LEVEL) ? IcyColorMap.MAX_LEVEL : r) << 16) | (a << 24);
     }
 
-    /**
-     * @see java.awt.color.ColorSpace#toRGB(float[])
-     */
     @Override
     public float[] toRGB(float[] colorvalue)
     {
-        final int numComponents = getNumComponents();
         final float[] result = new float[4];
-        final int[] intvalues = new int[numComponents];
-        final float invMaxAlpha;
-        int finalAlpha;
+        final int numComponents = getNumComponents();
 
-        // unnorm color values
-        for (int comp = 0; comp < numComponents; comp++)
-            intvalues[comp] = (int) (colorvalue[comp] * IcyColorMap.MAX_INDEX);
-
-        // default
-        result[0] = 0f;
-        result[1] = 0f;
-        result[2] = 0f;
-
-        // get max alpha
-        if (alphaEnabled)
-        {
-            finalAlpha = -1;
-            // get max alpha
-            float maxAlpha = 0f;
-            for (int comp = 0; comp < numComponents; comp++)
-            {
-                final IcyColorMap cm = toRGBmaps[comp];
-                final float alphaValue = cm.alpha.mapf[intvalues[comp]];
-
-                // alpha channel ?
-                if (cm.getType() == IcyColorMapType.ALPHA)
-                    finalAlpha = (int) (alphaValue * IcyColorMap.MAX_LEVEL);
-                else if (alphaValue > maxAlpha)
-                    maxAlpha = alphaValue;
-            }
-
-            // no alpha component ? use the maximum alpha value
-            if (finalAlpha == -1)
-                finalAlpha = (int) (maxAlpha * IcyColorMap.MAX_LEVEL);
-
-            if (maxAlpha > 0f)
-                invMaxAlpha = IcyColorMap.MAX_LEVEL / maxAlpha;
-            else
-                invMaxAlpha = 0f;
-        }
-        else
-        {
-            finalAlpha = IcyColorMap.MAX_LEVEL;
-            invMaxAlpha = IcyColorMap.MAX_LEVEL;
-        }
+        // default alpha
+        float alpha = 1f;
+        // default max local alpha
+        float maxLocalAlpha = 0f;
+        // default RGB
+        float rf = 0f, gf = 0f, bf = 0f;
 
         for (int comp = 0; comp < numComponents; comp++)
         {
             final IcyColorMap cm = toRGBmaps[comp];
-            final int value = intvalues[comp];
 
-            switch (cm.getType())
+            if (cm.isEnabled())
             {
-                case GRAY:
-                    final float grayValue = cm.gray.mapf[value] * cm.alpha.mapf[value] * invMaxAlpha;
-                    result[0] += grayValue;
-                    result[1] += grayValue;
-                    result[2] += grayValue;
-                    break;
+                final int value = (int) (colorvalue[comp] * IcyColorMap.MAX_INDEX);
+                final float alphaValue = cm.alpha.mapf[value];
 
-                case RGB:
-                    final float alpha = cm.alpha.mapf[value] * invMaxAlpha;
-                    result[0] += cm.blue.mapf[value] * alpha;
-                    result[1] += cm.green.mapf[value] * alpha;
-                    result[2] += cm.red.mapf[value] * alpha;
-                    break;
+                // alpha channel ?
+                if (cm.getType() == IcyColorMapType.ALPHA)
+                    alpha = alphaValue;
+                else if (alphaValue > maxLocalAlpha)
+                    maxLocalAlpha = alphaValue;
+
+                final float premulRGBNorm[] = cm.getPremulRGBNorm()[value];
+
+                bf += premulRGBNorm[0];
+                gf += premulRGBNorm[1];
+                rf += premulRGBNorm[2];
             }
         }
 
-        // limit
-        if (result[0] > 1.0f)
-            result[0] = 1.0f;
-        if (result[1] > 1.0f)
-            result[1] = 1.0f;
-        if (result[2] > 1.0f)
-            result[2] = 1.0f;
-
-        // alpha
-        result[3] = finalAlpha;
+        result[0] = (bf > 1f) ? 1f : bf;
+        result[1] = (gf > 1f) ? 1f : gf;
+        result[2] = (rf > 1f) ? 1f : rf;
+        result[3] = alpha * maxLocalAlpha;
 
         return result;
     }
@@ -802,8 +717,6 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
             // copy colormap
             for (int comp = 0; comp < numComponents; comp++)
                 copyColormap(comp, source.getColormap(comp));
-            // copy alpha indicator
-            setAlphaEnabled(source.isAlphaEnabled());
         }
         finally
         {
@@ -903,6 +816,9 @@ public class IcyColorSpace extends ColorSpace implements IcyChangedListener, Icy
 
         // recalculate fromRGB colormaps
         generateFromRGBColorMaps();
+        // recalculate final ARGB color map
+        generateARGBMap();
+
         // notify listener we have changed
         fireEvent(event);
     }

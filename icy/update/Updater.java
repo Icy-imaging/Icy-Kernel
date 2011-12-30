@@ -22,6 +22,7 @@ import icy.file.FileUtil;
 import icy.update.ElementDescriptor.ElementFile;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
+import icy.util.ZipUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -339,6 +340,10 @@ public class Updater
     {
         final String localPath = file.getLocalPath();
 
+        // directory type file --> extract it
+        if (file.isDirectory())
+            ZipUtil.extract(UPDATE_DIRECTORY + FileUtil.separator + localPath + ".zip");
+
         if (updateFile(localPath, file.getDateModif()))
         {
             final File dest = new File(localPath);
@@ -350,9 +355,9 @@ public class Updater
                     dest.setExecutable(true, false);
                 if (file.isWritable())
                     dest.setWritable(true, false);
-            }
 
-            return true;
+                return true;
+            }
         }
 
         return false;
@@ -390,15 +395,17 @@ public class Updater
         {
             // backup failed
             System.err.println("Updater.udpateFile(" + localPath + ") failed :");
-            System.err.println("Can't backup file in '" + BACKUP_DIRECTORY + FileUtil.separator + localPath);
+            System.err.println("Can't backup file to '" + BACKUP_DIRECTORY + FileUtil.separator + localPath);
             return false;
         }
 
         // move file
         if (!FileUtil.move(UPDATE_DIRECTORY + FileUtil.separator + localPath, localPath, true, false))
         {
-            // move failed (FileUtil.move is already displaying error messages if needed)
+            // move failed
             System.err.println("Updater.udpateFile('" + localPath + "') failed !");
+            System.err.println("Can't move file from '" + UPDATE_DIRECTORY + FileUtil.separator + localPath + "' to '"
+                    + localPath + "'");
             return false;
         }
 

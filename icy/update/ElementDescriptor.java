@@ -20,6 +20,7 @@ package icy.update;
 
 import icy.common.Version;
 import icy.file.FileUtil;
+import icy.file.xml.XMLPersistent;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
@@ -32,7 +33,7 @@ import org.w3c.dom.Node;
 /**
  * @author stephane
  */
-public class ElementDescriptor
+public class ElementDescriptor implements XMLPersistent
 {
     private static final String ID_NAME = "name";
     private static final String ID_VERSION = "version";
@@ -41,12 +42,14 @@ public class ElementDescriptor
     private static final String ID_LINK = "link";
     private static final String ID_EXECUTE = "execute";
     private static final String ID_WRITE = "write";
+    private static final String ID_DIRECTORY = "directory";
+    private static final String ID_FILENUMBER = "fileNumber";
     private static final String ID_DATEMODIF = "datemodif";
     private static final String ID_LOCALPATH = "localpath";
     private static final String ID_ONLINEPATH = "onlinepath";
     private static final String ID_CHANGESLOG = "changeslog";
 
-    public class ElementFile
+    public class ElementFile implements XMLPersistent
     {
         private String localPath;
         private String onlinePath;
@@ -67,9 +70,19 @@ public class ElementDescriptor
         private boolean writable;
 
         /**
+         * directory file.
+         */
+        private boolean directory;
+
+        /**
          * date of modification
          */
         private long dateModif;
+
+        /**
+         * number of file (for directory only)
+         */
+        private int fileNumber;
 
         /**
          * 
@@ -78,7 +91,7 @@ public class ElementDescriptor
         {
             super();
 
-            loadFromNode(node);
+            loadFromXML(node);
         }
 
         /**
@@ -94,20 +107,39 @@ public class ElementDescriptor
             link = elementFile.link;
             executable = elementFile.executable;
             writable = elementFile.writable;
+            directory = elementFile.directory;
+            fileNumber = elementFile.fileNumber;
         }
 
-        public void loadFromNode(Node node)
+        @Override
+        public boolean loadFromXML(Node node)
         {
+            if (node == null)
+                return false;
+
             localPath = XMLUtil.getElementValue(node, ID_LOCALPATH, "");
             onlinePath = XMLUtil.getElementValue(node, ID_ONLINEPATH, "");
             dateModif = XMLUtil.getElementLongValue(node, ID_DATEMODIF, 0L);
             link = XMLUtil.getElementBooleanValue(node, ID_LINK, false);
             executable = XMLUtil.getElementBooleanValue(node, ID_EXECUTE, false);
             writable = XMLUtil.getElementBooleanValue(node, ID_WRITE, false);
+            directory = XMLUtil.getElementBooleanValue(node, ID_DIRECTORY, false);
+            fileNumber = XMLUtil.getElementIntValue(node, ID_FILENUMBER, 1);
+
+            return true;
         }
 
-        public void saveToNode(Node node, boolean onlineSave)
+        @Override
+        public boolean saveToXML(Node node)
         {
+            return saveToNode(node, true);
+        }
+
+        boolean saveToNode(Node node, boolean onlineSave)
+        {
+            if (node == null)
+                return false;
+
             XMLUtil.addElement(node, ID_LOCALPATH, localPath);
 
             if (onlineSave)
@@ -120,7 +152,14 @@ public class ElementDescriptor
                     XMLUtil.addElement(node, ID_EXECUTE, Boolean.toString(executable));
                 if (writable)
                     XMLUtil.addElement(node, ID_WRITE, Boolean.toString(writable));
+                if (directory)
+                {
+                    XMLUtil.addElement(node, ID_DIRECTORY, Boolean.toString(directory));
+                    XMLUtil.addElement(node, ID_FILENUMBER, Integer.toString(fileNumber));
+                }
             }
+
+            return true;
         }
 
         public boolean isEmpty()
@@ -165,14 +204,36 @@ public class ElementDescriptor
             return link;
         }
 
+        /**
+         * @return the executable
+         */
         public boolean isExecutable()
         {
             return executable;
         }
 
+        /**
+         * @return the writable
+         */
         public boolean isWritable()
         {
             return writable;
+        }
+
+        /**
+         * @return the directory
+         */
+        public boolean isDirectory()
+        {
+            return directory;
+        }
+
+        /**
+         * @return the fileNumber
+         */
+        public int getFileNumber()
+        {
+            return fileNumber;
         }
 
         /**
@@ -212,6 +273,24 @@ public class ElementDescriptor
         }
 
         /**
+         * @param directory
+         *        the directory to set
+         */
+        public void setDirectory(boolean directory)
+        {
+            this.directory = directory;
+        }
+
+        /**
+         * @param fileNumber
+         *        the fileNumber to set
+         */
+        public void setFileNumber(int fileNumber)
+        {
+            this.fileNumber = fileNumber;
+        }
+
+        /**
          * Return true if the specified ElementFile is the same than current one.<br>
          * 
          * @param elementFile
@@ -229,6 +308,8 @@ public class ElementDescriptor
             if (!StringUtil.equals(elementFile.localPath, localPath))
                 return false;
             if (compareOnlinePath && (!StringUtil.equals(elementFile.onlinePath, onlinePath)))
+                return false;
+            if (elementFile.fileNumber != fileNumber)
                 return false;
 
             if ((elementFile.dateModif == 0) || (dateModif == 0))
@@ -249,6 +330,7 @@ public class ElementDescriptor
         {
             return FileUtil.getFileName(localPath);
         }
+
     }
 
     private String name;
@@ -265,7 +347,7 @@ public class ElementDescriptor
 
         files = new ArrayList<ElementFile>();
 
-        loadFromNode(node);
+        loadFromXML(node);
     }
 
     /**
@@ -285,8 +367,12 @@ public class ElementDescriptor
             files.add(new ElementFile(f));
     }
 
-    public void loadFromNode(Node node)
+    @Override
+    public boolean loadFromXML(Node node)
     {
+        if (node == null)
+            return false;
+
         name = XMLUtil.getElementValue(node, ID_NAME, "");
         version = new Version(XMLUtil.getElementValue(node, ID_VERSION, ""));
         changelog = XMLUtil.getElementValue(node, ID_CHANGESLOG, "");
@@ -302,10 +388,21 @@ public class ElementDescriptor
                     files.add(elementFile);
             }
         }
+
+        return true;
     }
 
-    public void saveToNode(Node node, boolean onlineSave)
+    @Override
+    public boolean saveToXML(Node node)
     {
+        return saveToNode(node, true);
+    }
+
+    public boolean saveToNode(Node node, boolean onlineSave)
+    {
+        if (node == null)
+            return false;
+
         XMLUtil.addElement(node, ID_NAME, name);
         XMLUtil.addElement(node, ID_VERSION, version.toString());
 
@@ -316,6 +413,8 @@ public class ElementDescriptor
         final Element filesNode = XMLUtil.addElement(node, ID_FILES);
         for (ElementFile elementFile : files)
             elementFile.saveToNode(XMLUtil.addElement(filesNode, ID_FILE), onlineSave);
+
+        return true;
     }
 
     /**
@@ -368,8 +467,17 @@ public class ElementDescriptor
             final File file = new File(elementFile.getLocalPath());
 
             if (file.exists())
+            {
                 // update modification date
                 elementFile.setDateModif(file.lastModified());
+                // directory file ?
+                if (file.isDirectory())
+                {
+                    // update directory informations
+                    elementFile.setDirectory(true);
+                    elementFile.setFileNumber(FileUtil.getFileList(file, true, false, false).size());
+                }
+            }
             else
             {
                 // remove missing file
@@ -492,7 +600,7 @@ public class ElementDescriptor
      * Process and return the update the element which contain differences<br>
      * from the specified local and online elements.<br>
      * If local element refers the same item, only missing or different files will remains.<br>
-     * If local element refers a different element, current element is unchanged.
+     * If local element refers a different element, online element is returned unchanged.
      * 
      * @return the update element (null if local and online elements are the same)
      */
@@ -555,6 +663,7 @@ public class ElementDescriptor
                 localFile.setExecutable(updateFile.isExecutable());
                 localFile.setLink(updateFile.isLink());
                 localFile.setWritable(updateFile.isWritable());
+                localFile.setDirectory(updateFile.isDirectory());
             }
         }
     }

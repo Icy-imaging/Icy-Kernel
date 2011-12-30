@@ -171,6 +171,14 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
     }
 
     /**
+     * @return the colormap
+     */
+    public IcyColorMap getColormap()
+    {
+        return colormap;
+    }
+
+    /**
      * Translate index to pixel
      * 
      * @param index

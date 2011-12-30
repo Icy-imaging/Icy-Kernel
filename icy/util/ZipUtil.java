@@ -3,13 +3,18 @@
  */
 package icy.util;
 
+import icy.file.FileUtil;
+import icy.network.NetworkUtil;
 import icy.system.IcyExceptionHandler;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * @author Stephane
@@ -88,5 +93,71 @@ public class ZipUtil
 
         // return unpacked data
         return bos.toByteArray();
+    }
+
+    /**
+     * Extract the specified zip file to the specified destination directory.
+     * 
+     * @param zipFile
+     *        input zip file name
+     * @param outputDirectory
+     *        output directory name
+     * @return true if file was correctly extracted, false otherwise
+     */
+    public static boolean extract(String zipFile, String outputDirectory)
+    {
+        boolean ok = true;
+
+        try
+        {
+            final ZipFile file = new ZipFile(zipFile);
+            final Enumeration<? extends ZipEntry> entries = file.entries();
+
+            while (entries.hasMoreElements())
+            {
+                ZipEntry entry = entries.nextElement();
+
+                if (entry.isDirectory())
+                {
+                    if (!FileUtil.createDir(outputDirectory + FileUtil.separator + entry.getName()))
+                    {
+                        System.err.println("ZipUtil.unpack(" + zipFile + "," + outputDirectory + ") error :");
+                        System.err.println("Can't create directory : '" + outputDirectory + FileUtil.separator
+                                + entry.getName() + "'");
+                        ok = false;
+                        break;
+                    }
+                }
+                else if (!FileUtil.save(outputDirectory + FileUtil.separator + entry.getName(),
+                        NetworkUtil.download(file.getInputStream(entry)), true))
+                {
+                    System.err.println("ZipUtil.unpack(" + zipFile + "," + outputDirectory + ") failed.");
+                    ok = false;
+                    break;
+                }
+            }
+
+            file.close();
+        }
+        catch (IOException ioe)
+        {
+            System.err.println("ZipUtil.unpack(" + zipFile + "," + outputDirectory + ") error :");
+            IcyExceptionHandler.showErrorMessage(ioe, false);
+            ok = false;
+        }
+
+        return ok;
+    }
+
+    /**
+     * Extract the specified zip file in to default location.
+     * 
+     * @param zipFile
+     *        input zip file name
+     * @return true if file was correctly extracted, false otherwise
+     */
+    public static boolean extract(String zipFile)
+    {
+        return extract(zipFile, FileUtil.getDirectory(zipFile) + FileUtil.getFileName(zipFile, false));
     }
 }

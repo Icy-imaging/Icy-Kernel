@@ -3,6 +3,7 @@
  */
 package icy.gui.component;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -40,7 +41,7 @@ public class JCheckTabbedPane extends JTabbedPane
             setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
             setBorder(BorderFactory.createEmptyBorder());
 
-            checkBox = new JCheckBox();
+            checkBox = new JCheckBox(null, null, defaultSelected);
             checkBox.setBorder(BorderFactory.createEmptyBorder());
             checkBox.setFocusable(false);
 
@@ -49,7 +50,7 @@ public class JCheckTabbedPane extends JTabbedPane
                 @Override
                 public void actionPerformed(ActionEvent actionevent)
                 {
-                    fireStateChanged();
+                    JCheckTabbedPane.this.fireStateChanged();
                 }
             });
 
@@ -57,6 +58,7 @@ public class JCheckTabbedPane extends JTabbedPane
 
             add(checkBox);
             add(label);
+
             validate();
         }
 
@@ -65,13 +67,43 @@ public class JCheckTabbedPane extends JTabbedPane
             return checkBox.isSelected();
         }
 
+        public void setSelected(boolean value)
+        {
+            checkBox.setSelected(value);
+        }
+
         public void setTitle(String title)
         {
             label.setText(" " + title);
         }
+
+        public void setIcon(Icon icon)
+        {
+            label.setIcon(icon);
+        }
+
+        public void setDisabledIcon(Icon disabledIcon)
+        {
+            label.setDisabledIcon(disabledIcon);
+        }
+
+        public void setBackgroundAll(Color background)
+        {
+            checkBox.setBackground(background);
+            label.setBackground(background);
+        }
+
+        public void setForegroundAll(Color foreground)
+        {
+            checkBox.setBackground(foreground);
+            label.setBackground(foreground);
+        }
     }
 
-    private boolean defaultSelected;
+    /**
+     * default checkbox selected state
+     */
+    boolean defaultSelected;
 
     /**
      * Constructor.
@@ -106,11 +138,66 @@ public class JCheckTabbedPane extends JTabbedPane
      *         otherwise
      * @exception IndexOutOfBoundsException
      *            if index is out of range (index < 0 || index >= tab count)
-     * @see #setCheckedTab
+     * @see #setTabChecked(int, boolean)
      */
     public boolean isTabChecked(int index)
     {
-        return ((CustomCheck) getTabComponentAt(index)).isSelected();
+        final CustomCheck tabComponent = (CustomCheck) getTabComponentAt(index);
+
+        // can be null here
+        if (tabComponent != null)
+            return tabComponent.isSelected();
+
+        // default is true
+        return true;
+    }
+
+    /**
+     * Set the check state of tab component at <code>index</code>.
+     * 
+     * @param index
+     *        the tab index we want to set the check state
+     * @param value
+     *        the check state
+     * @exception IndexOutOfBoundsException
+     *            if index is out of range (index < 0 || index >= tab count)
+     * @see #isTabChecked(int)
+     */
+    public void setTabChecked(int index, boolean value)
+    {
+        ((CustomCheck) getTabComponentAt(index)).setSelected(value);
+    }
+
+    @Override
+    public void setIconAt(int index, Icon icon)
+    {
+        super.setIconAt(index, icon);
+
+        ((CustomCheck) getTabComponentAt(index)).setIcon(icon);
+    }
+
+    @Override
+    public void setDisabledIconAt(int index, Icon disabledIcon)
+    {
+        super.setDisabledIconAt(index, disabledIcon);
+
+        ((CustomCheck) getTabComponentAt(index)).setDisabledIcon(disabledIcon);
+    }
+
+    @Override
+    public void setBackgroundAt(int index, Color background)
+    {
+        super.setBackgroundAt(index, background);
+
+        ((CustomCheck) getTabComponentAt(index)).setBackgroundAll(background);
+    }
+
+    @Override
+    public void setForegroundAt(int index, Color foreground)
+    {
+        super.setForegroundAt(index, foreground);
+
+        ((CustomCheck) getTabComponentAt(index)).setForegroundAll(foreground);
     }
 
     @Override

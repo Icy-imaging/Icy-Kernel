@@ -27,7 +27,7 @@ public class IcyColorMapEvent implements EventHierarchicalChecker
 {
     public enum IcyColorMapEventType
     {
-        MAP_CHANGED, TYPE_CHANGED
+        MAP_CHANGED, TYPE_CHANGED, ENABLED_CHANGED
     }
 
     private final IcyColorMap colormap;
@@ -57,11 +57,6 @@ public class IcyColorMapEvent implements EventHierarchicalChecker
         return type;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.common.IcyCompare#isSame(icy.common.IcyCompare)
-     */
     @Override
     public boolean isEventRedundantWith(EventHierarchicalChecker event)
     {

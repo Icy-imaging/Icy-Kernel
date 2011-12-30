@@ -313,6 +313,14 @@ public class NetworkUtil
         return buffer.toByteArray();
     }
 
+    /**
+     * Download data from specified InputStream and return it as an array of byte
+     */
+    public static byte[] download(InputStream in) throws IOException
+    {
+        return download(in, -1, null);
+    }
+
     public static URLConnection openConnection(String path, boolean disableCache, boolean displayError)
     {
         return openConnection(URLUtil.getURL(path), disableCache, displayError);

@@ -770,7 +770,7 @@ public class IcyColorMapBand implements XMLPersistent
             return false;
 
         XMLUtil.setAttributeBooleanValue((Element) node, ID_RAWDATA, rawData);
-        XMLUtil.removeChilds(node, ID_POINT);
+        XMLUtil.removeChildren(node, ID_POINT);
 
         boolean result = true;
 

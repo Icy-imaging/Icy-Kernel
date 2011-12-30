@@ -358,7 +358,23 @@ public class IcyUpdater
                         if (!FileUtil.createLink(
                                 Updater.UPDATE_DIRECTORY + FileUtil.separator + elementFile.getLocalPath(),
                                 elementFile.getOnlinePath()))
+                        {
+                            // remove partially downloaded files
+                            FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
                             return false;
+                        }
+                    }
+                    else if (elementFile.isDirectory())
+                    {
+                        // error (or cancel) while downloading ?
+                        if (!downloadAndSaveForUpdate(URLUtil.getNetworkURLString(
+                                ApplicationPreferences.getUpdateRepositoryBase(), elementFile.getOnlinePath()),
+                                elementFile.getLocalPath() + ".zip", downloadingFrame, showProgress))
+                        {
+                            // remove partially downloaded files
+                            FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
+                            return false;
+                        }
                     }
                     else
                     {

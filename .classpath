@@ -39,10 +39,10 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/vecmath.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/vtk.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jai_imageio.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/ij/ij.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/bio-formats.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/loci-common.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/ome-xml.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/scifio.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/ij.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

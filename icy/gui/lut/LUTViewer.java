@@ -42,6 +42,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import javax.swing.SwingConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 public class LUTViewer extends IcyLutViewer
 {
@@ -61,7 +63,7 @@ public class LUTViewer extends IcyLutViewer
     /**
      * data
      */
-    private final ArrayList<LUTBandViewer> lutBandViewers;
+    final ArrayList<LUTBandViewer> lutBandViewers;
 
     /**
      * internals
@@ -73,8 +75,19 @@ public class LUTViewer extends IcyLutViewer
     {
         super(viewer, lut);
 
-        bottomPane = new JCheckTabbedPane(SwingConstants.BOTTOM, true);
         lutBandViewers = new ArrayList<LUTBandViewer>();
+
+        bottomPane = new JCheckTabbedPane(SwingConstants.BOTTOM, true);
+        bottomPane.addChangeListener(new ChangeListener()
+        {
+            @Override
+            public void stateChanged(ChangeEvent e)
+            {
+                for (int i = 0; i < lutBandViewers.size(); i++)
+                    lutBandViewers.get(i).getColormapPanel().getColormapViewer().getColormap()
+                            .setEnabled(bottomPane.isTabChecked(i));
+            }
+        });
 
         // GUI
         if (lut != null)

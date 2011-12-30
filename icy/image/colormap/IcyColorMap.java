@@ -44,6 +44,7 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
 
     private static final String ID_TYPE = "type";
     private static final String ID_NAME = "name";
+    private static final String ID_ENABLED = "enabled";
     private static final String ID_RED = "red";
     private static final String ID_GREEN = "green";
     private static final String ID_BLUE = "blue";
@@ -51,20 +52,26 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
     private static final String ID_ALPHA = "alpha";
 
     /**
-     * define the wanted max level (never change it)
+     * define the wanted colormap bits resolution (never change it)
      */
-    public static final int MAX_LEVEL = 255;
+    public static final int COLORMAP_BITS = 8;
+    public static final int MAX_LEVEL = (1 << COLORMAP_BITS) - 1;
 
     /**
      * define colormap size
      */
-    public static final int SIZE = 0x100;
+    public static final int SIZE = 256;
     public static final int MAX_INDEX = SIZE - 1;
 
     /**
      * colormap name
      */
     private String name;
+
+    /**
+     * enabled flag
+     */
+    private boolean enabled;
 
     /**
      * RED band
@@ -93,6 +100,12 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
     private IcyColorMapType type;
 
     /**
+     * pre-multiplied RGB caches
+     */
+    private final int premulRGB[][];
+    private final float premulRGBNorm[][];
+
+    /**
      * listeners
      */
     private final EventListenerList listeners;
@@ -105,6 +118,7 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
     public IcyColorMap(String name, IcyColorMapType type)
     {
         this.name = name;
+        enabled = true;
 
         listeners = new EventListenerList();
         updater = new UpdateEventHandler(this, false);
@@ -117,6 +131,10 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
         alpha = createColorMapBand((short) 255);
 
         this.type = type;
+
+        // allocating and init RGB cache
+        premulRGB = new int[IcyColorMap.SIZE][3];
+        premulRGBNorm = new float[IcyColorMap.SIZE][3];
     }
 
     public IcyColorMap(String name)
@@ -189,7 +207,7 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
         {
             type = value;
 
-            typeChanged();
+            changed(IcyColorMapEventType.TYPE_CHANGED);
         }
     }
 
@@ -651,6 +669,31 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
     }
 
     /**
+     * @return the enabled
+     */
+    public boolean isEnabled()
+    {
+        return enabled;
+    }
+
+    /**
+     * Set enabled flag.<br>
+     * This flag is used to test if the color map is enabled or not.<br>
+     * It is up to the developer to implement it or not.
+     * 
+     * @param enabled
+     *        the enabled to set
+     */
+    public void setEnabled(boolean enabled)
+    {
+        if (this.enabled != enabled)
+        {
+            this.enabled = enabled;
+            changed(IcyColorMapEventType.ENABLED_CHANGED);
+        }
+    }
+
+    /**
      * Gets a Color object representing the color at the specified index
      * 
      * @param index
@@ -670,6 +713,22 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
         }
 
         return Color.black;
+    }
+
+    /**
+     * Return the pre-multiplied RGB cache
+     */
+    public int[][] getPremulRGB()
+    {
+        return premulRGB;
+    }
+
+    /**
+     * Return the pre-multiplied RGB cache (normalized)
+     */
+    public float[][] getPremulRGBNorm()
+    {
+        return premulRGBNorm;
     }
 
     /**
@@ -702,15 +761,23 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
     {
         final int len = maps.length;
 
-        // red component
-        if (len > 0)
-            red.copyFrom(maps[0]);
-        if (len > 1)
-            green.copyFrom(maps[1]);
-        if (len > 2)
-            blue.copyFrom(maps[2]);
-        if (len > 3)
-            alpha.copyFrom(maps[3]);
+        beginUpdate();
+        try
+        {
+            // red component
+            if (len > 0)
+                red.copyFrom(maps[0]);
+            if (len > 1)
+                green.copyFrom(maps[1]);
+            if (len > 2)
+                blue.copyFrom(maps[2]);
+            if (len > 3)
+                alpha.copyFrom(maps[3]);
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     /**
@@ -720,15 +787,63 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
     {
         final int len = maps.length;
 
-        // red component
-        if (len > 0)
-            red.copyFrom(maps[0], 8);
-        if (len > 1)
-            green.copyFrom(maps[1], 8);
-        if (len > 2)
-            blue.copyFrom(maps[2], 8);
-        if (len > 3)
-            alpha.copyFrom(maps[3], 8);
+        beginUpdate();
+        try
+        {
+            // red component
+            if (len > 0)
+                red.copyFrom(maps[0], 8);
+            if (len > 1)
+                green.copyFrom(maps[1], 8);
+            if (len > 2)
+                blue.copyFrom(maps[2], 8);
+            if (len > 3)
+                alpha.copyFrom(maps[3], 8);
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Update internal RGB cache
+     */
+    private void updateRGBCache()
+    {
+        for (int i = 0; i < SIZE; i++)
+        {
+            final float af = alpha.mapf[i];
+            final float rgbn[] = premulRGBNorm[i];
+
+            switch (type)
+            {
+                case GRAY:
+                    final float grayValue = gray.mapf[i] * af;
+                    rgbn[0] = grayValue;
+                    rgbn[1] = grayValue;
+                    rgbn[2] = grayValue;
+                    break;
+
+                case RGB:
+                    rgbn[0] = blue.mapf[i] * af;
+                    rgbn[1] = green.mapf[i] * af;
+                    rgbn[2] = red.mapf[i] * af;
+                    break;
+
+                default:
+                    rgbn[0] = 0f;
+                    rgbn[1] = 0f;
+                    rgbn[2] = 0f;
+                    break;
+            }
+
+            final int rgb[] = premulRGB[i];
+
+            rgb[0] = (int) (rgbn[0] * MAX_LEVEL);
+            rgb[1] = (int) (rgbn[1] * MAX_LEVEL);
+            rgb[2] = (int) (rgbn[2] * MAX_LEVEL);
+        }
     }
 
     /**
@@ -761,27 +876,35 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
     }
 
     /**
-     * called when colormap type changed
-     */
-    private void typeChanged()
-    {
-        // handle changed via updater object
-        updater.changed(new IcyColorMapEvent(this, IcyColorMapEventType.TYPE_CHANGED));
-    }
-
-    /**
      * called when colormap data changed
      */
     public void changed()
     {
+        changed(IcyColorMapEventType.MAP_CHANGED);
+    }
+
+    /**
+     * called when colormap changed
+     */
+    private void changed(IcyColorMapEventType type)
+    {
         // handle changed via updater object
-        updater.changed(new IcyColorMapEvent(this, IcyColorMapEventType.MAP_CHANGED));
+        updater.changed(new IcyColorMapEvent(this, type));
     }
 
     @Override
-    public void onChanged(EventHierarchicalChecker compare)
+    public void onChanged(EventHierarchicalChecker e)
     {
-        final IcyColorMapEvent event = (IcyColorMapEvent) compare;
+        final IcyColorMapEvent event = (IcyColorMapEvent) e;
+
+        switch (event.getType())
+        {
+        // refresh RGB cache
+            case MAP_CHANGED:
+            case TYPE_CHANGED:
+                updateRGBCache();
+                break;
+        }
 
         // notify listener we have changed
         fireEvent(event);
@@ -839,6 +962,7 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
         try
         {
             setName(XMLUtil.getElementValue(node, ID_NAME, ""));
+            setEnabled(XMLUtil.getElementBooleanValue(node, ID_ENABLED, true));
             setType(IcyColorMapType.valueOf(XMLUtil.getElementValue(node, ID_TYPE, "")));
 
             boolean result = true;
@@ -864,6 +988,7 @@ public class IcyColorMap implements IcyChangedListener, XMLPersistent
             return false;
 
         XMLUtil.setElementValue(node, ID_NAME, getName());
+        XMLUtil.setElementBooleanValue(node, ID_ENABLED, isEnabled());
         XMLUtil.setElementValue(node, ID_TYPE, getType().toString());
 
         boolean result = true;

@@ -230,6 +230,23 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         validate();
     }
 
+    @Override
+    public void addNotify()
+    {
+        super.addNotify();
+
+        // listen colormap changes
+        colormap.addListener(this);
+    }
+
+    @Override
+    public void removeNotify()
+    {
+        colormap.removeListener(this);
+
+        super.removeNotify();
+    }
+
     /**
      * @return the colormapViewer
      */
@@ -371,23 +388,6 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
 
         // display menu
         menu.show(comp, 0, comp.getHeight());
-    }
-
-    @Override
-    public void addNotify()
-    {
-        super.addNotify();
-
-        // listen colormap changes
-        colormap.addListener(this);
-    }
-
-    @Override
-    public void removeNotify()
-    {
-        colormap.removeListener(this);
-
-        super.removeNotify();
     }
 
     @Override
