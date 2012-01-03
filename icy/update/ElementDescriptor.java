@@ -470,6 +470,7 @@ public class ElementDescriptor implements XMLPersistent
             {
                 // update modification date
                 elementFile.setDateModif(file.lastModified());
+
                 // directory file ?
                 if (file.isDirectory())
                 {

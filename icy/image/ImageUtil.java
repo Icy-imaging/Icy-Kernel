@@ -36,6 +36,7 @@ import java.awt.image.DataBufferByte;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
+import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -47,10 +48,8 @@ import javax.imageio.ImageIO;
 import sun.awt.image.SunWritableRaster;
 
 /**
+ * Image utilities class.
  * 
- */
-
-/**
  * @author stephane
  */
 public class ImageUtil
@@ -113,9 +112,22 @@ public class ImageUtil
      */
     public static BufferedImage createIndexedImage(int w, int h, IndexColorModel cm, byte[] data)
     {
-        final SunWritableRaster raster = (SunWritableRaster) Raster.createInterleavedRaster(new DataBufferByte(data, w
-                * h, 0), w, h, w, 1, new int[] {0}, null);
-        raster.setStolen(false);
+        final WritableRaster raster = Raster.createInterleavedRaster(new DataBufferByte(data, w * h, 0), w, h, w, 1,
+                new int[] {0}, null);
+
+        // enable acceleration
+        if (raster instanceof SunWritableRaster)
+        {
+            try
+            {
+                ((SunWritableRaster) raster).setStolen(false);
+            }
+            catch (Throwable t)
+            {
+                // ignore, some early 6.0 JVM doesn't have this method
+            }
+        }
+
         return new BufferedImage(cm, raster, false, null);
     }
 
