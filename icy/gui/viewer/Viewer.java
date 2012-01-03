@@ -509,25 +509,20 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         // complete synchro
         label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(1)));
-        label.setToolTipText("Complete synchronization group 1");
+        label.setToolTipText("Full synchronization group 1 (view and Z/T position)");
         labels.add(label);
         label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(2)));
-        label.setToolTipText("Complete synchronization group 2");
+        label.setToolTipText("Full synchronization group 2 (view and Z/T position)");
         labels.add(label);
 
         // view synchro
-        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage('v')));
-        label.setToolTipText("View synchronization group (T and Z position are not synchronized)");
+        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(3)));
+        label.setToolTipText("View synchronization group (view synched but not Z/T position)");
         labels.add(label);
 
         // position synchro
-        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage('s')));
-        label.setToolTipText("Slice synchronization group (only T and Z position are synchronized)");
-        labels.add(label);
-
-        // mouse cursor synchro
-        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage('c')));
-        label.setToolTipText("Cursor synchronization group (only mouse cursor position is synchronized)");
+        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(4)));
+        label.setToolTipText("Slice synchronization group (Z/T position synched but not view)");
         labels.add(label);
 
         // build comboBox with lock id
@@ -697,24 +692,23 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 break;
 
             case 1:
-            case 2:
                 lockComboBox.setBackground(Color.green);
-                lockComboBox.setToolTipText("Complete synchronization");
+                lockComboBox.setToolTipText("Full synchronization group 1 (view and Z/T position)");
+                break;
+
+            case 2:
+                lockComboBox.setBackground(Color.yellow);
+                lockComboBox.setToolTipText("Full synchronization group 2 (view and Z/T position)");
                 break;
 
             case 3:
-                lockComboBox.setBackground(Color.yellow);
-                lockComboBox.setToolTipText("View synchronization (T and Z position are not synchronized)");
+                lockComboBox.setBackground(Color.blue);
+                lockComboBox.setToolTipText("View synchronization group (view synched but not Z/T position)");
                 break;
 
             case 4:
-                lockComboBox.setBackground(Color.blue);
-                lockComboBox.setToolTipText("Slice synchronization (only T and Z position are synchronized)");
-                break;
-
-            case 5:
                 lockComboBox.setBackground(Color.red);
-                lockComboBox.setToolTipText("Cursor synchronization (only mouse cursor position is synchronized)");
+                lockComboBox.setToolTipText("Slice synchronization group (Z/T position synched but not view)");
                 break;
         }
     }
@@ -1201,7 +1195,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         {
             case SEQUENCE_META:
                 final String meta = (String) event.getSource();
-                
+
                 if (StringUtil.isEmpty(meta) || StringUtil.equals(meta, Sequence.ID_NAME))
                     refreshViewerTitle();
                 break;

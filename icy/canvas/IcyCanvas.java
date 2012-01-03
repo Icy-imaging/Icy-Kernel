@@ -193,11 +193,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * synchronization group :<br>
      * 0 = unsynchronized
-     * 1 = complete synchronization group 1
-     * 2 = complete synchronization group 2
+     * 1 = full synchronization group 1
+     * 2 = full synchronization group 2
      * 3 = view synchronization group (T and Z navigation are not synchronized)
      * 4 = slice synchronization group (only T and Z navigation are synchronized)
-     * 5 = cursor synchronization group (only mouse cursor is synchronized)
      */
     protected int syncId;
     /**
@@ -562,7 +561,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public boolean isSynchOnCursor()
     {
-        return (syncId > 0) && (syncId < 6);
+        return (syncId > 0);
     }
 
     /**

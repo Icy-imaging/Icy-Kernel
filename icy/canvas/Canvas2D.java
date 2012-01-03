@@ -2273,15 +2273,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     setSyncId(4);
                 e.consume();
                 break;
-
-            case KeyEvent.VK_5:
-                // already set, switch it off
-                if (getSyncId() == 5)
-                    setSyncId(0);
-                else
-                    setSyncId(5);
-                e.consume();
-                break;
         }
 
         super.keyPressed(e);
