@@ -3,12 +3,16 @@
  */
 package icy.gui.util;
 
+import java.awt.CheckboxMenuItem;
 import java.awt.Menu;
 import java.awt.MenuBar;
 import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -20,6 +24,71 @@ import javax.swing.JMenuItem;
  */
 public class SwingUtil
 {
+    /**
+     * Class used to wrap a MenuItem in a JMenuItem (used for ImageJ integration).
+     * 
+     * @author Stephane
+     */
+    private static class JCheckBoxMenuItemWrapper extends JCheckBoxMenuItem implements ActionListener, ItemListener
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -3283063959812167447L;
+
+        CheckboxMenuItem checkboxMenuItem;
+
+        public JCheckBoxMenuItemWrapper(CheckboxMenuItem checkboxMenuItem)
+        {
+            super(checkboxMenuItem.getLabel(), checkboxMenuItem.getState());
+
+            // keep reference on source MenuItem
+            this.checkboxMenuItem = checkboxMenuItem;
+
+            setActionCommand(checkboxMenuItem.getActionCommand());
+
+            checkboxMenuItem.addItemListener(this);
+
+            addActionListener(this);
+            addItemListener(this);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            // change source with original one
+            e.setSource(checkboxMenuItem);
+
+            // dispatch to original listeners
+            for (ActionListener al : checkboxMenuItem.getActionListeners())
+                al.actionPerformed(e);
+        }
+
+        @Override
+        public void itemStateChanged(ItemEvent e)
+        {
+            if (e.getSource() == checkboxMenuItem)
+                setSelected(checkboxMenuItem.getState());
+            else
+            {
+                final boolean state = isSelected();
+
+                if (checkboxMenuItem.getState() != state)
+                {
+                    checkboxMenuItem.setState(isSelected());
+
+                    // build event
+                    final ItemEvent iv = new ItemEvent(checkboxMenuItem, ItemEvent.ITEM_STATE_CHANGED, getText(),
+                            state ? ItemEvent.SELECTED : ItemEvent.DESELECTED);
+
+                    // dispatch to original listeners
+                    for (ItemListener il : checkboxMenuItem.getItemListeners())
+                        il.itemStateChanged(iv);
+                }
+            }
+        }
+    }
+
     /**
      * Class used to wrap a MenuItem in a JMenuItem.
      * 
@@ -42,6 +111,7 @@ public class SwingUtil
             this.menuItem = menuItem;
 
             setActionCommand(menuItem.getActionCommand());
+
             addActionListener(this);
         }
 
@@ -93,6 +163,8 @@ public class SwingUtil
     {
         if (menuItem instanceof Menu)
             return getJMenu((Menu) menuItem, heavy);
+        if (menuItem instanceof CheckboxMenuItem)
+            return new JCheckBoxMenuItemWrapper((CheckboxMenuItem) menuItem);
 
         return new JMenuItemWrapper(menuItem);
     }
