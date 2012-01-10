@@ -37,7 +37,7 @@ public class FailedAnnounceFrame extends AnnounceFrame
     {
         super(message, liveTime);
 
-        ThreadUtil.invokeAndWait(new Runnable()
+        ThreadUtil.invokeLater(new Runnable()
         {
             @Override
             public void run()
