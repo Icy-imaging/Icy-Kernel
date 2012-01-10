@@ -364,18 +364,6 @@ public class IcyUpdater
                             return false;
                         }
                     }
-                    else if (elementFile.isDirectory())
-                    {
-                        // error (or cancel) while downloading ?
-                        if (!downloadAndSaveForUpdate(URLUtil.getNetworkURLString(
-                                ApplicationPreferences.getUpdateRepositoryBase(), elementFile.getOnlinePath()),
-                                elementFile.getLocalPath() + ".zip", downloadingFrame, showProgress))
-                        {
-                            // remove partially downloaded files
-                            FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
-                            return false;
-                        }
-                    }
                     else
                     {
                         // local file need to be updated --> download new file

@@ -19,6 +19,8 @@
 package icy.math;
 
 /**
+ * Uses this class to maintain and calculate a rate.
+ * 
  * @author stephane
  */
 public class RateMeter

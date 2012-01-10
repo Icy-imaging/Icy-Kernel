@@ -19,6 +19,8 @@
 package icy.math;
 
 /**
+ * "Frame Per Second" calculator class.
+ * 
  * @author stephane
  */
 public class FPSMeter extends RateMeter

@@ -18,7 +18,6 @@
  */
 package icy.gui.system;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
@@ -126,7 +125,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         final IcyButton reportLogButton = new IcyButton(ResourceUtil.ICON_DOCEXPORT);
         scrollLockButton = new IcyToggleButton(ResourceUtil.ICON_LOCK_OPEN);
 
-        ComponentUtil.setFontSize(textPane, 10);
+//        ComponentUtil.setFontSize(textPane, 10);
         textPane.setEditable(false);
 
         clearLogButton.setFlat(true);

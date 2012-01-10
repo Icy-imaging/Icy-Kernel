@@ -44,6 +44,7 @@ import icy.sequence.SequenceAdapter;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
 import icy.swimmingPool.SwimmingPool;
+import ij.ImageJ;
 
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
@@ -350,7 +351,14 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     }
 
     @Override
+    @Deprecated
     public MainFrame getFrame()
+    {
+        return getMainFrame();
+    }
+
+    @Override
+    public MainFrame getMainFrame()
     {
         return mainFrame;
     }
@@ -584,6 +592,12 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     public SwimmingPool getSwimmingPool()
     {
         return swimmingPool;
+    }
+
+    @Override
+    public ImageJ getImageJ()
+    {
+        return mainFrame.getMainRibbon().getImageJ();
     }
 
     @Override

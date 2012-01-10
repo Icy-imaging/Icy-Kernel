@@ -1,9 +1,10 @@
 Manifest-Version: 1.0
-Class-Path: resources.jar ij.jar lib/bio-formats.jar lib/bsh.jar lib/customizer.jar
+Class-Path: resources.jar ij/ij.jar lib/bio-formats.jar lib/bsh.jar lib/customizer.jar
   lib/ejml.jar lib/flamingo.jar lib/flanagan.jar lib/j3dcore.jar lib/j3dutils.jar
   lib/jai_codec.jar lib/jai_core.jar lib/jai_imageio.jar lib/Jama.jar lib/javacl.jar
   lib/jcl-core.jar lib/jcommon.jar lib/jeval.jar lib/jfreechart.jar lib/jmf.jar
-  lib/jtransforms.jar lib/jxl.jar lib/loci-common.jar lib/log4j.jar lib/mediaplayer.jar
+  lib/jtransforms.jar lib/jxl.jar lib/laf-plugin.jar lib/laf-widget.jar
+  lib/loci-common.jar lib/log4j.jar lib/mediaplayer.jar
   lib/MMAcqEngine.jar lib/MMCoreJ.jar lib/MMJ_.jar
   lib/multiplayer.jar lib/ome-xml.jar lib/phys2d.jar lib/scifio.jar lib/simpleItk.jar
   lib/slf4j-api.jar lib/slf4j-log4j.jar lib/sound.jar lib/substance.jar

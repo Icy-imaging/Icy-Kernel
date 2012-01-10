@@ -23,6 +23,7 @@ import icy.preferences.GeneralPreferences;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
+import ij.util.Java2;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -107,7 +108,14 @@ public class LookAndFeelUtil
 
     public static void init()
     {
-        // funny things of substance
+        // so ImageJ won't change look and feel later
+        Java2.setSystemLookAndFeel();
+        
+        // enable or not EDT checking in substance
+        System.setProperty("insubstantial.checkEDT", "false");
+        System.setProperty("insubstantial.logEDT", "true");
+        
+        // funny features of substance
 
         // AnimationConfigurationManager.getInstance().allowAnimations(AnimationFacet.FOCUS_LOOP_ANIMATION);
         // AnimationConfigurationManager.getInstance().allowAnimations(AnimationFacet.GHOSTING_BUTTON_PRESS);

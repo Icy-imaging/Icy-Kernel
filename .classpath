@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path=""/>
+	<classpathentry including="icy/**|plugins/**|res/**" kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/bsh.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/customizer.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/ejml.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/flamingo.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/flanagan.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/j3dcore.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/j3dutils.jar"/>
@@ -32,10 +31,7 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/slf4j-api.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/slf4j-log4j.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/sound.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/substance-flamingo.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/substance.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/Tracking.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/trident.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/vecmath.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/vtk.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jai_imageio.jar"/>
@@ -43,6 +39,12 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/loci-common.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/ome-xml.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/scifio.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/ij.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/flamingo.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/laf-plugin.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/laf-widget.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/substance-flamingo.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/substance.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/trident.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/ij/ij.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

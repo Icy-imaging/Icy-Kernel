@@ -31,7 +31,7 @@ import icy.gui.main.MainInterfaceBatch;
 import icy.gui.main.MainInterfaceGui;
 import icy.gui.util.LookAndFeelUtil;
 import icy.gui.viewer.Viewer;
-import icy.math.MathUtil;
+import icy.math.UnitUtil;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginLoader;
@@ -50,6 +50,7 @@ import icy.update.IcyUpdater;
 import icy.util.StringUtil;
 import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceLoader;
+import ij.ImageJ;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -77,7 +78,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.1.4.0");
+    public static Version version = new Version("1.2.0.0");
 
     /**
      * Main interface
@@ -208,9 +209,9 @@ public class Icy
         System.out.println("Running on " + SystemUtil.getOSName() + " " + SystemUtil.getOSVersion() + " ("
                 + SystemUtil.getOSArch() + ")");
         System.out.println("Number of processors : " + SystemUtil.getAvailableProcessors());
-        System.out.println("System total memory : " + MathUtil.getBytesString(SystemUtil.getSystemTotalMemory()));
-        System.out.println("System available memory : " + MathUtil.getBytesString(SystemUtil.getSystemFreeMemory()));
-        System.out.println("Max java memory : " + MathUtil.getBytesString(SystemUtil.getJavaMaxMemory()));
+        System.out.println("System total memory : " + UnitUtil.getBytesString(SystemUtil.getSystemTotalMemory()));
+        System.out.println("System available memory : " + UnitUtil.getBytesString(SystemUtil.getSystemFreeMemory()));
+        System.out.println("Max java memory : " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()));
 
         // initialize OSX specific stuff
         if (SystemUtil.isMac())
@@ -376,6 +377,12 @@ public class Icy
             @Override
             public void run()
             {
+                final ImageJ ij = Icy.getMainInterface().getImageJ();
+
+                // clean ImageJ exit
+                if (ij != null)
+                    ij.quit();
+
                 // close all external frames
                 for (JFrame frame : Icy.getMainInterface().getExternalFrames())
                     frame.dispose();
@@ -391,7 +398,7 @@ public class Icy
                 }
 
                 // close main frame
-                final JFrame mainFrame = Icy.getMainInterface().getFrame();
+                final JFrame mainFrame = Icy.getMainInterface().getMainFrame();
                 if (mainFrame != null)
                     mainFrame.dispose();
 

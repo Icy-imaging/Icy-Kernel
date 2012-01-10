@@ -33,6 +33,7 @@ import icy.preferences.XMLPreferences;
 import icy.roi.ROI;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
+import ij.ImageJ;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -143,7 +144,16 @@ public interface MainInterface
 
     // public abstract void registerStreamPlugin(PluginStreamGenerator pluginStreamGenerator);
 
+    /**
+     * @deprecated uses {@link #getMainFrame()} instead
+     */
+    @Deprecated
     public abstract MainFrame getFrame();
+
+    /**
+     * Get Icy main frame
+     */
+    public abstract MainFrame getMainFrame();
 
     /**
      * Close viewers attached to specified sequence
@@ -261,7 +271,15 @@ public interface MainInterface
      */
     public abstract HashSet<Painter> getPainterSet();
 
+    /**
+     * Return the SwimmingPool object
+     */
     public abstract SwimmingPool getSwimmingPool();
+
+    /**
+     * Return the ImageJ object instance
+     */
+    public abstract ImageJ getImageJ();
 
     public abstract String getSelectedTool();
 

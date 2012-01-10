@@ -310,7 +310,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         return toolRibbonTask;
     }
 
-    public ImageJ getImageJInstance()
+    public ImageJ getImageJ()
     {
         return ijTask.getImageJ();
     }

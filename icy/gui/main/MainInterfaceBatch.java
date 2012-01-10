@@ -33,6 +33,7 @@ import icy.preferences.XMLPreferences;
 import icy.roi.ROI;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
+import ij.ImageJ;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -163,7 +164,14 @@ public class MainInterfaceBatch implements MainInterface
     // }
 
     @Override
+    @Deprecated
     public MainFrame getFrame()
+    {
+        return getMainFrame();
+    }
+
+    @Override
+    public MainFrame getMainFrame()
     {
         return null;
     }
@@ -400,6 +408,12 @@ public class MainInterfaceBatch implements MainInterface
     public HashSet<Painter> getPainterSet()
     {
         return new HashSet<Painter>();
+    }
+
+    @Override
+    public ImageJ getImageJ()
+    {
+        return null;
     }
 
     @Override

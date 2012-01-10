@@ -342,7 +342,14 @@ public class Updater
 
         // directory type file --> extract it
         if (file.isDirectory())
-            ZipUtil.extract(UPDATE_DIRECTORY + FileUtil.separator + localPath + ".zip");
+        {
+            final String dirName = UPDATE_DIRECTORY + FileUtil.separator + localPath;
+            final String zipName = dirName + ".zip";
+
+            // rename directory type file (no extension) to zip file
+            FileUtil.rename(dirName, zipName, true, true);
+            ZipUtil.extract(zipName);
+        }
 
         if (updateFile(localPath, file.getDateModif()))
         {
