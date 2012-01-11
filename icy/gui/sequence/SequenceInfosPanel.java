@@ -16,6 +16,7 @@ import icy.math.UnitUtil.UnitPrefix;
 import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
+import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.event.ActionEvent;
@@ -47,11 +48,15 @@ public class SequenceInfosPanel extends InspectorSubPanel
     final IcyButton editBtn;
     final IcyButton detailBtn;
 
+    final SingleProcessor processor;
+
     boolean pxSizeYdifferent = true;
 
     public SequenceInfosPanel()
     {
         super();
+
+        processor = new SingleProcessor(true);
 
         nameLabel = new JLabel();
         ComponentUtil.setFixedWidth(nameLabel, 160);
@@ -106,7 +111,6 @@ public class SequenceInfosPanel extends InspectorSubPanel
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 
         rebuild();
-
         updateInfos(null);
     }
 
@@ -159,7 +163,19 @@ public class SequenceInfosPanel extends InspectorSubPanel
         revalidate();
     }
 
-    public void updateInfos(Sequence sequence)
+    public void updateInfos(final Sequence sequence)
+    {
+        processor.addTask(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                updateInfosInternal(sequence);
+            }
+        }, true);
+    }
+
+    public void updateInfosInternal(Sequence sequence)
     {
         if (sequence != null)
         {
