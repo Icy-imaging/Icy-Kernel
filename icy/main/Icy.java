@@ -199,7 +199,8 @@ public class Icy
                 // we can now hide splash as we have interface
                 splashScreen.dispose();
                 // show tool tip
-                new GeneralToolTipFrame();
+                if (GeneralPreferences.getStatupTooltip())
+                    new GeneralToolTipFrame();
             }
         });
 
@@ -406,7 +407,7 @@ public class Icy
                 IcyPreferences.save();
 
                 // clean up native library files
-                unPrepareNativeLibraries();
+                //unPrepareNativeLibraries();
 
                 if (checkUnique != null)
                     checkUnique.releaseUnique();

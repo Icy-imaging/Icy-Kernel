@@ -158,10 +158,8 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     @Override
     public ArrayList<JInternalFrame> getInternalFrames()
     {
-        final MainFrame f = getFrame();
-
-        if (f != null)
-            return f.getInternalFrames();
+        if (mainFrame != null)
+            return mainFrame.getInternalFrames();
 
         return new ArrayList<JInternalFrame>();
     }
@@ -628,6 +626,18 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     public void setAlwaysOnTop(boolean value)
     {
         mainFrame.setAlwaysOnTop(value);
+    }
+
+    @Override
+    public boolean isMultiWindowMode()
+    {
+        return mainFrame.isMultiWindowMode();
+    }
+
+    @Override
+    public void setMultiWindowMode(boolean value)
+    {
+        mainFrame.setMultiWindowMode(value);
     }
 
     @Override

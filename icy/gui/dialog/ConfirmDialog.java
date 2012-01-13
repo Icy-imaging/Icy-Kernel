@@ -54,7 +54,7 @@ public class ConfirmDialog
         @Override
         public void run()
         {
-            final JFrame parent = Icy.getMainInterface().getFrame();
+            final JFrame parent = Icy.getMainInterface().getMainFrame();
 
             result = getBooleanReturnValue(JOptionPane.showConfirmDialog(parent, message, title, optionType,
                     JOptionPane.QUESTION_MESSAGE));

@@ -125,16 +125,7 @@ public class IcyIcon implements ResizableIcon
     private void updateImage()
     {
         if (!StringUtil.isEmpty(name))
-        {
-            final String finalName;
-
-            if (name.toLowerCase().endsWith(".png"))
-                finalName = name;
-            else
-                finalName = name + ".png";
-
-            image = ResourceUtil.getAlphaIconAsImage(finalName);
-        }
+            image = ResourceUtil.getAlphaIconAsImage(name);
 
         update();
     }

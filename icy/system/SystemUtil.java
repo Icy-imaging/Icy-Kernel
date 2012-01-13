@@ -158,24 +158,26 @@ public class SystemUtil
         return getSystemGraphicsConfiguration().getColorModel(transparency);
     }
 
+    /**
+     * Return the entire desktop bounds (take multi screens in account)
+     */
     public static Rectangle getDesktopBounds()
     {
-        // return getLocalGraphicsEnvironment().getMaximumWindowBounds();
-
         Rectangle result = new Rectangle();
         final GraphicsDevice[] gs = getLocalGraphicsEnvironment().getScreenDevices();
 
         for (int j = 0; j < gs.length; j++)
             result = result.union(gs[j].getDefaultConfiguration().getBounds());
-        // {
-        // final GraphicsDevice gd = gs[j];
-        // final GraphicsConfiguration[] gc = gd.getConfigurations();
-        //
-        // for (int i = 0; i < gc.length; i++)
-        // result = result.union(gc[i].getBounds());
-        // }
 
         return result;
+    }
+
+    /**
+     * {@link GraphicsEnvironment#getMaximumWindowBounds()}
+     */
+    public static Rectangle getMaximumWindowBounds()
+    {
+        return getLocalGraphicsEnvironment().getMaximumWindowBounds();
     }
 
     public static DisplayMode getSystemDisplayMode()

@@ -44,9 +44,6 @@ public class GeneralToolTipFrame extends TitledFrame implements ActionListener
     {
         super("Startup tips", new Dimension(200, 100), false, true, false, false);
 
-        if (!GeneralPreferences.getStatupTooltip())
-            return;
-
         final JPanel panel = getMainPanel();
 
         panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));

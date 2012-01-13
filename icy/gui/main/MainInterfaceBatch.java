@@ -288,7 +288,18 @@ public class MainInterfaceBatch implements MainInterface
     }
 
     @Override
+    public boolean isMultiWindowMode()
+    {
+        return false;
+    }
+
+    @Override
     public void setAlwaysOnTop(boolean value)
+    {
+    }
+
+    @Override
+    public void setMultiWindowMode(boolean value)
     {
     }
 

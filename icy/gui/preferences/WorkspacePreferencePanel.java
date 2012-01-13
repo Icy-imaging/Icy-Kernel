@@ -75,7 +75,7 @@ public class WorkspacePreferencePanel extends PreferencePanel
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final MainFrame frame = Icy.getMainInterface().getFrame();
+                final MainFrame frame = Icy.getMainInterface().getMainFrame();
 
                 // clean workspaces
                 if (frame != null)

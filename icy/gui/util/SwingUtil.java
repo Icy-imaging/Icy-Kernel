@@ -134,8 +134,11 @@ public class SwingUtil
     {
         final JMenuBar result = new JMenuBar();
 
-        for (int i = 0; i < menuBar.getMenuCount(); i++)
-            result.add(getJMenu(menuBar.getMenu(i), heavy));
+        if (menuBar != null)
+        {
+            for (int i = 0; i < menuBar.getMenuCount(); i++)
+                result.add(getJMenu(menuBar.getMenu(i), heavy));
+        }
 
         return result;
     }
@@ -145,13 +148,17 @@ public class SwingUtil
      */
     public static JMenu getJMenu(Menu menu, boolean heavy)
     {
-        final JMenu result = new JMenu(menu.getLabel());
+        final JMenu result = new JMenu();
 
-        if (heavy)
-            result.getPopupMenu().setLightWeightPopupEnabled(false);
+        if (menu != null)
+        {
+            result.setText(menu.getLabel());
+            if (heavy)
+                result.getPopupMenu().setLightWeightPopupEnabled(false);
 
-        for (int i = 0; i < menu.getItemCount(); i++)
-            result.add(getJMenuItem(menu.getItem(i), heavy));
+            for (int i = 0; i < menu.getItemCount(); i++)
+                result.add(getJMenuItem(menu.getItem(i), heavy));
+        }
 
         return result;
     }
@@ -161,11 +168,16 @@ public class SwingUtil
      */
     public static JMenuItem getJMenuItem(MenuItem menuItem, boolean heavy)
     {
-        if (menuItem instanceof Menu)
-            return getJMenu((Menu) menuItem, heavy);
-        if (menuItem instanceof CheckboxMenuItem)
-            return new JCheckBoxMenuItemWrapper((CheckboxMenuItem) menuItem);
+        if (menuItem != null)
+        {
+            if (menuItem instanceof Menu)
+                return getJMenu((Menu) menuItem, heavy);
+            if (menuItem instanceof CheckboxMenuItem)
+                return new JCheckBoxMenuItemWrapper((CheckboxMenuItem) menuItem);
 
-        return new JMenuItemWrapper(menuItem);
+            return new JMenuItemWrapper(menuItem);
+        }
+        
+        return new JMenuItem();
     }
 }

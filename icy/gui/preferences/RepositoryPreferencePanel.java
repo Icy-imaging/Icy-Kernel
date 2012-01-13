@@ -80,7 +80,7 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
 
         public RepositoryDialog(String title, final RepositoryInfo reposInf)
         {
-            super(Icy.getMainInterface().getFrame(), title);
+            super(Icy.getMainInterface().getMainFrame(), title);
 
             setMinimumSize(new Dimension(400, 200));
             // setPreferredSize(new Dimension(600, 200));

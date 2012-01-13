@@ -190,7 +190,7 @@ public class ImageSaverDialog extends JFileChooser
         });
 
         // display loader
-        final int value = showSaveDialog(Icy.getMainInterface().getFrame());
+        final int value = showSaveDialog(Icy.getMainInterface().getMainFrame());
 
         // action confirmed ?
         if (value == JFileChooser.APPROVE_OPTION)

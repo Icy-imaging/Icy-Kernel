@@ -52,6 +52,7 @@ public class ExternalizablePanel extends JPanel
         {
             super(title);
 
+            setCloseItemVisible(false);
             setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
             addWindowListener(new WindowAdapter()
@@ -62,7 +63,7 @@ public class ExternalizablePanel extends JPanel
                     super.windowClosing(e);
 
                     if (isExternalized())
-                        switchState();
+                        internalizeInternal();
                 }
             });
 
@@ -77,6 +78,8 @@ public class ExternalizablePanel extends JPanel
 
     private final ExternalFrame frame;
     private Container parent;
+    private boolean internalizationAutorized;
+    private boolean externalizationAutorized;
 
     public ExternalizablePanel(String title)
     {
@@ -85,6 +88,8 @@ public class ExternalizablePanel extends JPanel
         frame = new ExternalFrame(title);
         frame.setVisible(false);
         parent = null;
+        internalizationAutorized = true;
+        externalizationAutorized = true;
     }
 
     public ExternalizablePanel()
@@ -118,12 +123,46 @@ public class ExternalizablePanel extends JPanel
     }
 
     /**
+     * @return the internalizationAutorized
+     */
+    public boolean isInternalizationAutorized()
+    {
+        return internalizationAutorized;
+    }
+
+    /**
+     * @param internalizationAutorized
+     *        the internalizationAutorized to set
+     */
+    public void setInternalizationAutorized(boolean internalizationAutorized)
+    {
+        this.internalizationAutorized = internalizationAutorized;
+    }
+
+    /**
+     * @return the externalizationAutorized
+     */
+    public boolean isExternalizationAutorized()
+    {
+        return externalizationAutorized;
+    }
+
+    /**
+     * @param externalizationAutorized
+     *        the externalizationAutorized to set
+     */
+    public void setExternalizationAutorized(boolean externalizationAutorized)
+    {
+        this.externalizationAutorized = externalizationAutorized;
+    }
+
+    /**
      * Externalize panel in an independent frame
      */
     public void externalize()
     {
         if (isInternalized())
-            externalize_internal();
+            externalizeInternal();
     }
 
     /**
@@ -132,14 +171,17 @@ public class ExternalizablePanel extends JPanel
     public void internalize()
     {
         if (isExternalized())
-            internalize_internal();
+            internalizeInternal();
     }
 
     /**
      * Externalize panel (internal method)
      */
-    private void externalize_internal()
+    void externalizeInternal()
     {
+        if (!externalizationAutorized)
+            return;
+
         // externalize
         if (parent != null)
         {
@@ -158,8 +200,11 @@ public class ExternalizablePanel extends JPanel
     /**
      * Internalize panel (internal method)
      */
-    private void internalize_internal()
+    void internalizeInternal()
     {
+        if (!internalizationAutorized)
+            return;
+
         // internalize
         frame.setVisible(false);
         frame.remove(this);
@@ -181,9 +226,9 @@ public class ExternalizablePanel extends JPanel
     public void switchState()
     {
         if (isExternalized())
-            internalize_internal();
+            internalizeInternal();
         else
-            externalize_internal();
+            externalizeInternal();
     }
 
     public boolean isInternalized()

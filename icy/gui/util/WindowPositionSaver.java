@@ -23,6 +23,7 @@ import icy.gui.component.ExternalizablePanel;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.IcyFrameAdapter;
 import icy.gui.frame.IcyFrameEvent;
+import icy.gui.main.MainFrame;
 import icy.preferences.IcyPreferences;
 import icy.preferences.XMLPreferences;
 import icy.system.SystemUtil;
@@ -54,16 +55,15 @@ public class WindowPositionSaver
     final private static String ID_YI = "YI";
     final private static String ID_WI = "WidthI";
     final private static String ID_HI = "HeightI";
-    final private static String ID_MINIMIZEDI = "MinimizedI";
     final private static String ID_MAXIMIZEDI = "MaximizedI";
 
     final private static String ID_XE = "XE";
     final private static String ID_YE = "YE";
     final private static String ID_WE = "WidthE";
     final private static String ID_HE = "HeightE";
-    final private static String ID_MINIMIZEDE = "MinimizedE";
     final private static String ID_MAXIMIZEDE = "MaximizedE";
 
+    final private MainFrame mainFrame;
     final private IcyFrame icyFrame;
     final private ExternalizablePanel extPanel;
     final private JFrame jFrame;
@@ -73,11 +73,13 @@ public class WindowPositionSaver
     final IcyFrameAdapter icyFrameAdapter;
     final ComponentAdapter componentAdapter;
 
-    private WindowPositionSaver(final IcyFrame icyFrame, final ExternalizablePanel extPanel, final JFrame jFrame,
-            final JComponent component, final String key, final Point defLoc, final Dimension defDim)
+    private WindowPositionSaver(final MainFrame mainFrame, final IcyFrame icyFrame, final ExternalizablePanel extPanel,
+            final JFrame jFrame, final JComponent component, final String key, final Point defLoc,
+            final Dimension defDim)
     {
         final XMLPreferences preferences = IcyPreferences.root().node(key);
 
+        this.mainFrame = mainFrame;
         this.icyFrame = icyFrame;
         this.extPanel = extPanel;
         this.jFrame = jFrame;
@@ -187,7 +189,12 @@ public class WindowPositionSaver
             }
         };
 
-        if (icyFrame != null)
+        if (mainFrame != null)
+        {
+            mainFrame.addWindowListener(windowAdapter);
+            mainFrame.addComponentListener(componentAdapter);
+        }
+        else if (icyFrame != null)
         {
             icyFrame.addFrameListener(icyFrameAdapter);
             icyFrame.addComponentListener(componentAdapter);
@@ -208,71 +215,88 @@ public class WindowPositionSaver
         }
     }
 
+    public WindowPositionSaver(MainFrame frame, String key, Point defLoc, Dimension defDim)
+    {
+        this(frame, null, null, null, null, key, defLoc, defDim);
+    }
+
+    public WindowPositionSaver(MainFrame frame, String key, Point defLoc)
+    {
+        this(frame, null, null, null, null, key, defLoc, null);
+    }
+
+    public WindowPositionSaver(MainFrame frame, String key, Dimension defDim)
+    {
+        this(frame, null, null, null, null, key, null, defDim);
+    }
+
     public WindowPositionSaver(IcyFrame frame, String key, Point defLoc, Dimension defDim)
     {
-        this(frame, null, null, null, key, defLoc, defDim);
+        this(null, frame, null, null, null, key, defLoc, defDim);
     }
 
     public WindowPositionSaver(IcyFrame frame, String key, Point defLoc)
     {
-        this(frame, null, null, null, key, defLoc, null);
+        this(null, frame, null, null, null, key, defLoc, null);
     }
 
     public WindowPositionSaver(IcyFrame frame, String key, Dimension defDim)
     {
-        this(frame, null, null, null, key, null, defDim);
+        this(null, frame, null, null, null, key, null, defDim);
     }
 
     public WindowPositionSaver(ExternalizablePanel extPanel, String key, Point defLoc, Dimension defDim)
     {
-        this(null, extPanel, null, null, key, defLoc, defDim);
+        this(null, null, extPanel, null, null, key, defLoc, defDim);
     }
 
     public WindowPositionSaver(ExternalizablePanel extPanel, String key, Point defLoc)
     {
-        this(null, extPanel, null, null, key, defLoc, null);
+        this(null, null, extPanel, null, null, key, defLoc, null);
     }
 
     public WindowPositionSaver(ExternalizablePanel extPanel, String key, Dimension defDim)
     {
-        this(null, extPanel, null, null, key, null, defDim);
+        this(null, null, extPanel, null, null, key, null, defDim);
     }
 
     public WindowPositionSaver(JFrame frame, String key, Point defLoc, Dimension defDim)
     {
-        this(null, null, frame, null, key, defLoc, defDim);
+        this(null, null, null, frame, null, key, defLoc, defDim);
     }
 
     public WindowPositionSaver(JFrame frame, String key, Point defLoc)
     {
-        this(null, null, frame, null, key, defLoc, null);
+        this(null, null, null, frame, null, key, defLoc, null);
     }
 
     public WindowPositionSaver(JFrame frame, String key, Dimension defDim)
     {
-        this(null, null, frame, null, key, null, defDim);
+        this(null, null, null, frame, null, key, null, defDim);
     }
 
     public WindowPositionSaver(JComponent component, String key, Point defLoc, Dimension defDim)
     {
-        this(null, null, null, component, key, defLoc, defDim);
+        this(null, null, null, null, component, key, defLoc, defDim);
     }
 
     public WindowPositionSaver(JComponent component, String key, Point defLoc)
     {
-        this(null, null, null, component, key, defLoc, null);
+        this(null, null, null, null, component, key, defLoc, null);
     }
 
     public WindowPositionSaver(JComponent component, String key, Dimension defDim)
     {
-        this(null, null, null, component, key, null, defDim);
+        this(null, null, null, null, component, key, null, defDim);
     }
 
     void checkPosition()
     {
         final Rectangle rect;
 
-        if (icyFrame != null)
+        if (mainFrame != null)
+            rect = mainFrame.getBounds();
+        else if (icyFrame != null)
             rect = icyFrame.getBounds();
         // check position only for frame
         else if ((extPanel != null) && extPanel.isExternalized())
@@ -286,7 +310,9 @@ public class WindowPositionSaver
 
         if (fixPosition(rect))
         {
-            if (icyFrame != null)
+            if (mainFrame != null)
+                mainFrame.setBounds(rect);
+            else if (icyFrame != null)
                 icyFrame.setBounds(rect);
             // check position only for frame
             else if ((extPanel != null) && extPanel.isExternalized())
@@ -356,7 +382,11 @@ public class WindowPositionSaver
         final Point positionI = new Point(preferences.getInt(ID_XI, defX), preferences.getInt(ID_YI, defY));
         final Point positionE = new Point(preferences.getInt(ID_XE, defX), preferences.getInt(ID_YE, defY));
 
-        if (icyFrame != null)
+        if (mainFrame != null)
+        {
+            mainFrame.setLocation(positionE);
+        }
+        else if (icyFrame != null)
         {
             icyFrame.setLocationInternal(positionI);
             icyFrame.setLocationExternal(positionE);
@@ -400,7 +430,12 @@ public class WindowPositionSaver
         final Dimension dimI = new Dimension(widthI, heightI);
         final Dimension dimE = new Dimension(widthE, heightE);
 
-        if (icyFrame != null)
+        if (mainFrame != null)
+        {
+            mainFrame.setPreferredSize(dimE);
+            mainFrame.setSize(dimE);
+        }
+        else if (icyFrame != null)
         {
             icyFrame.setPreferredSizeExternal(dimE);
             icyFrame.setSizeExternal(dimE);
@@ -429,20 +464,21 @@ public class WindowPositionSaver
     public void loadState(XMLPreferences preferences)
     {
         final boolean externalized = preferences.getBoolean(ID_EXTERN, false);
-        final boolean minimizedE = preferences.getBoolean(ID_MINIMIZEDE, false);
-        final boolean minimizedI = preferences.getBoolean(ID_MINIMIZEDI, false);
         final boolean maximizedE = preferences.getBoolean(ID_MAXIMIZEDE, false);
         final boolean maximizedI = preferences.getBoolean(ID_MAXIMIZEDI, false);
 
-        if (icyFrame != null)
+        if (mainFrame != null)
+        {
+            if (maximizedE)
+                jFrame.setExtendedState(Frame.MAXIMIZED_BOTH);
+        }
+        else if (icyFrame != null)
         {
             if (externalized)
                 icyFrame.externalize();
             else
                 icyFrame.internalize();
-            icyFrame.setMinimizedExternal(minimizedE);
             icyFrame.setMaximizedExternal(maximizedE);
-            icyFrame.setMinimizedInternal(minimizedI);
             icyFrame.setMaximizedInternal(maximizedI);
         }
         else if (extPanel != null)
@@ -453,23 +489,27 @@ public class WindowPositionSaver
                 extPanel.internalize();
 
             // only for frame
-            if (minimizedE)
-                extPanel.getFrame().setExtendedState(Frame.ICONIFIED);
-            else if (maximizedE)
+            if (maximizedE)
                 extPanel.getFrame().setExtendedState(Frame.MAXIMIZED_BOTH);
         }
         else if (jFrame != null)
         {
-            if (minimizedE)
-                jFrame.setExtendedState(Frame.ICONIFIED);
-            else if (maximizedE)
+            if (maximizedE)
                 jFrame.setExtendedState(Frame.MAXIMIZED_BOTH);
         }
     }
 
     public void saveLocation(XMLPreferences preferences)
     {
-        if (icyFrame != null)
+        if (mainFrame != null)
+        {
+            if (!(ComponentUtil.isMaximized(mainFrame) || ComponentUtil.isMinimized(mainFrame)))
+            {
+                preferences.putInt(ID_XE, mainFrame.getX());
+                preferences.putInt(ID_YE, mainFrame.getY());
+            }
+        }
+        else if (icyFrame != null)
         {
             if (!(icyFrame.isMaximizedExternal() || icyFrame.isMinimizedExternal()))
             {
@@ -510,7 +550,22 @@ public class WindowPositionSaver
 
     public void saveDimension(XMLPreferences preferences)
     {
-        if (icyFrame != null)
+        if (mainFrame != null)
+        {
+            if (!(ComponentUtil.isMaximized(mainFrame) || ComponentUtil.isMinimized(mainFrame)))
+            {
+                final Dimension dim;
+
+                if (mainFrame.isMultiWindowMode())
+                    dim = new Dimension(mainFrame.getWidth(), mainFrame.getPreviousHeight());
+                else
+                    dim = mainFrame.getSize();
+
+                preferences.putInt(ID_WE, dim.width);
+                preferences.putInt(ID_HE, dim.height);
+            }
+        }
+        else if (icyFrame != null)
         {
             if (!(icyFrame.isMaximizedExternal() || icyFrame.isMinimizedExternal()))
             {
@@ -551,23 +606,30 @@ public class WindowPositionSaver
 
     public void saveState(XMLPreferences preferences)
     {
+        if (mainFrame != null)
+        {
+            final boolean b;
+
+            if (mainFrame.isMultiWindowMode())
+                b = mainFrame.getPreviousMaximized();
+            else
+                b = ComponentUtil.isMaximized(mainFrame);
+
+            preferences.putBoolean(ID_MAXIMIZEDE, b);
+        }
         if (icyFrame != null)
         {
             preferences.putBoolean(ID_EXTERN, icyFrame.isExternalized());
-            preferences.putBoolean(ID_MINIMIZEDI, icyFrame.isMinimizedInternal());
             preferences.putBoolean(ID_MAXIMIZEDI, icyFrame.isMaximizedInternal());
-            preferences.putBoolean(ID_MINIMIZEDE, icyFrame.isMinimizedExternal());
             preferences.putBoolean(ID_MAXIMIZEDE, icyFrame.isMaximizedExternal());
         }
         else if (extPanel != null)
         {
             preferences.putBoolean(ID_EXTERN, extPanel.isExternalized());
-            preferences.putBoolean(ID_MINIMIZEDE, extPanel.getFrame().isMinimized());
             preferences.putBoolean(ID_MAXIMIZEDE, extPanel.getFrame().isMaximized());
         }
         else if (jFrame != null)
         {
-            preferences.putBoolean(ID_MINIMIZEDE, ComponentUtil.isMinimized(jFrame));
             preferences.putBoolean(ID_MAXIMIZEDE, ComponentUtil.isMaximized(jFrame));
         }
     }

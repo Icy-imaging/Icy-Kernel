@@ -24,6 +24,7 @@ public class GeneralPreferences
     private static final String ID_SEQUENCE_PERSISTENCE = "sequencePersistence";
     private static final String ID_AUTO_UPDATE = "autoUpdate";
     private static final String ID_AUTO_CHECK_UPDATE = "autoCheckUpdate";
+    private static final String ID_MULTI_WINDOW_MODE = "multiWindow";
     private static final String ID_ALWAYS_ON_TOP = "alwaysOnTop";
     // private static final String ID_GUI_LAF = "guiLAF";
     private static final String ID_GUI_SKIN = "guiSkin";
@@ -204,6 +205,11 @@ public class GeneralPreferences
         return prefGeneral.getBoolean(ID_AUTO_CHECK_UPDATE, true);
     }
 
+    public static boolean getMultiWindowMode()
+    {
+        return prefGeneral.getBoolean(ID_MULTI_WINDOW_MODE, false);
+    }
+
     public static boolean getAlwaysOnTop()
     {
         return prefGeneral.getBoolean(ID_ALWAYS_ON_TOP, false);
@@ -292,6 +298,14 @@ public class GeneralPreferences
     public static void setAutomaticCheckUpdate(boolean value)
     {
         prefGeneral.putBoolean(ID_AUTO_CHECK_UPDATE, value);
+    }
+
+    public static void setMultiWindowMode(boolean value)
+    {
+        prefGeneral.putBoolean(ID_MULTI_WINDOW_MODE, value);
+
+        // set "multi window" mode
+        Icy.getMainInterface().setMultiWindowMode(value);
     }
 
     public static void setAlwaysOnTop(boolean value)

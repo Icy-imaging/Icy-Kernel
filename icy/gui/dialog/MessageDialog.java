@@ -86,7 +86,7 @@ public class MessageDialog
             @Override
             public void run()
             {
-                final JFrame parent = Icy.getMainInterface().getFrame();
+                final JFrame parent = Icy.getMainInterface().getMainFrame();
 
                 JOptionPane.showMessageDialog(parent, message, title, messageType);
             }

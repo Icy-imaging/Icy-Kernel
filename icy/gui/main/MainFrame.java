@@ -19,8 +19,10 @@
 package icy.gui.main;
 
 import icy.file.Loader;
+import icy.gui.component.ComponentUtil;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.ExternalizablePanel.StateListener;
+import icy.gui.frame.IcyFrame;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.MainRibbon;
@@ -28,6 +30,7 @@ import icy.gui.util.WindowPositionSaver;
 import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyApplicationIcon;
+import icy.system.SystemUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -36,6 +39,8 @@ import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -57,7 +62,7 @@ import javax.swing.TransferHandler;
 import org.pushingpixels.flamingo.api.ribbon.JRibbonFrame;
 
 /**
- * @author fab
+ * @author fab & Stephane
  */
 public class MainFrame extends JRibbonFrame
 {
@@ -188,7 +193,7 @@ public class MainFrame extends JRibbonFrame
             return false;
         }
 
-        /** Your helpfull function */
+        /** Your helpful function */
         private static ArrayList<File> textURIListToFileList(String data)
         {
             final ArrayList<File> list = new ArrayList<File>(1);
@@ -229,11 +234,17 @@ public class MainFrame extends JRibbonFrame
     public static final String TITLE = "Icy";
 
     private final MainRibbon mainRibbon;
+    final JSplitPane mainPane;
     private final IcyDesktopPane desktopPane;
-    // private final BottomPanel bottomPanel;
     final InspectorPanel inspector;
     private final FileAndTextTransferHandler fileAndTextTransferHandler;
+    private boolean multiWindowMode;
     int lastInspectorWidth;
+
+    // state save for multi window mode
+    private int previousHeight;
+    private boolean previousMaximized;
+    private boolean previousInspectorInternalized;
 
     /**
      * @throws HeadlessException
@@ -249,12 +260,25 @@ public class MainFrame extends JRibbonFrame
         ToolTipManager.sharedInstance().setLightWeightPopupEnabled(true);
 
         new WindowPositionSaver(this, "frame/main", new Point(50, 50), new Dimension(800, 600));
+
+        // transfert handler
         fileAndTextTransferHandler = new FileAndTextTransferHandler();
 
         // set "always on top" state
         setAlwaysOnTop(GeneralPreferences.getAlwaysOnTop());
         // default close operation
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+
+        addComponentListener(new ComponentAdapter()
+        {
+            @Override
+            public void componentResized(ComponentEvent e)
+            {
+                // keep height to minimum height when we are in multi window mode
+                if (isMultiWindowMode())
+                    setSize(getWidth(), getMinimumSize().height);
+            }
+        });
 
         // build ribbon
         mainRibbon = new MainRibbon(getRibbon());
@@ -270,33 +294,33 @@ public class MainFrame extends JRibbonFrame
         // inspector
         inspector = new InspectorPanel();
 
-        final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, desktopPane, null);
-        // take in account the divider size
-        lastInspectorWidth = getContentPane().getWidth() - (inspector.getPreferredSize().width + 6);
-        if (inspector.isInternalized())
+        mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, desktopPane, null);
+        // take in account the divider and border size
+        lastInspectorWidth = getWidth() - (inspector.getPreferredSize().width + 6 + 8);
+        previousInspectorInternalized = inspector.isInternalized();
+        if (previousInspectorInternalized)
         {
-            splitPane.setRightComponent(inspector);
-            splitPane.setDividerSize(6);
-            splitPane.setDividerLocation(lastInspectorWidth);
+            mainPane.setRightComponent(inspector);
+            mainPane.setDividerSize(6);
+            mainPane.setDividerLocation(lastInspectorWidth);
         }
         else
         {
-            splitPane.setDividerSize(0);
-            inspector.setParent(splitPane);
+            mainPane.setDividerSize(0);
+            inspector.setParent(mainPane);
         }
-        splitPane.setResizeWeight(1);
-        splitPane.addMouseListener(new MouseAdapter()
+        mainPane.setResizeWeight(1);
+        mainPane.addMouseListener(new MouseAdapter()
         {
             @Override
             public void mouseClicked(MouseEvent e)
             {
                 if (e.getClickCount() > 1)
                 {
-                    // save diviser location
-                    if (inspector.isInternalized())
-                        lastInspectorWidth = getWidth() - splitPane.getDividerLocation();
-
-                    inspector.switchState();
+                    if (isInpectorInternalized())
+                        externalizeInspector();
+                    else
+                        internalizeInspector();
                 }
             }
         });
@@ -307,17 +331,32 @@ public class MainFrame extends JRibbonFrame
             public void stateChanged(ExternalizablePanel source, boolean externalized)
             {
                 if (externalized)
-                    splitPane.setDividerSize(0);
+                    mainPane.setDividerSize(0);
                 else
                 {
-                    splitPane.setDividerSize(6);
+                    mainPane.setDividerSize(6);
                     // restore previous location
-                    splitPane.setDividerLocation(getWidth() - lastInspectorWidth);
+                    mainPane.setDividerLocation(getWidth() - lastInspectorWidth);
                 }
             }
         });
 
-        add(splitPane, BorderLayout.CENTER);
+        previousHeight = getHeight();
+        previousMaximized = ComponentUtil.isMaximized(this);
+        multiWindowMode = GeneralPreferences.getMultiWindowMode();
+
+        // multi window mode
+        if (multiWindowMode)
+        {
+            // resize window to ribbon dimension
+            if (previousMaximized)
+                ComponentUtil.setMaximized(this, false);
+            setSize(getWidth(), getMinimumSize().height);
+        }
+        else
+            add(mainPane, BorderLayout.CENTER);
+
+        validate();
 
         setVisible(true);
     }
@@ -363,26 +402,137 @@ public class MainFrame extends JRibbonFrame
     }
 
     /**
-     * Return content pane dimension (available area in main frame)
+     * Return true if the main frame is in "multi window" mode
      */
-    public Dimension getContentSize()
+    public boolean isMultiWindowMode()
     {
+        return multiWindowMode;
+    }
+
+    /**
+     * Return content pane dimension (available area in main frame).<br>
+     * If the main frame is in "multi window" mode this actually return the desktop dimension.
+     */
+    public Dimension getDesktopSize()
+    {
+        if (multiWindowMode)
+            return SystemUtil.getMaximumWindowBounds().getSize();
+
         return desktopPane.getSize();
     }
 
     /**
      * Return content pane width
      */
-    public int getContentWidth()
+    public int getDesktopWidth()
     {
-        return desktopPane.getWidth();
+        return getDesktopSize().width;
     }
 
     /**
      * Return content pane height
      */
-    public int getContentHeight()
+    public int getDesktopHeight()
     {
-        return desktopPane.getHeight();
+        return getDesktopSize().height;
+    }
+
+    public int getPreviousHeight()
+    {
+        return previousHeight;
+    }
+
+    public boolean getPreviousMaximized()
+    {
+        return previousMaximized;
+    }
+
+    /**
+     * Returns true if the inspector is internalized in main container.<br>
+     * Always returns false in multi window mode.
+     */
+    public boolean isInpectorInternalized()
+    {
+        return inspector.isInternalized();
+    }
+
+    /**
+     * Internalize the inspector in main container.<br>
+     * The method fails and returns false in multi window mode.
+     */
+    public boolean internalizeInspector()
+    {
+        if (inspector.isExternalized() && inspector.isInternalizationAutorized())
+        {
+            inspector.internalize();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Externalize the inspector in main container.<br>
+     * Returns false if the methods failed.
+     */
+    public boolean externalizeInspector()
+    {
+        if (inspector.isInternalized() && inspector.isExternalizationAutorized())
+        {
+            // save diviser location
+            lastInspectorWidth = getWidth() - mainPane.getDividerLocation();
+            inspector.externalize();
+            return true;
+        }
+
+        return false;
+    }
+
+    public void setMultiWindowMode(boolean value)
+    {
+        if (multiWindowMode != value)
+        {
+            // multi window mode
+            if (value)
+            {
+                // save inspector state
+                previousInspectorInternalized = inspector.isInternalized();
+
+                // externalize inspector
+                externalizeInspector();
+                // no more internalization possible
+                inspector.setInternalizationAutorized(false);
+
+                // externalize all IcyFrame
+                for (IcyFrame frame : IcyFrame.getAllFrames())
+                    frame.externalize();
+
+                // save the current height & state
+                previousHeight = getHeight();
+                previousMaximized = ComponentUtil.isMaximized(this);
+
+                // hide main pane & resize window to ribbon dimension
+                remove(mainPane);
+                ComponentUtil.setMaximized(this, false);
+                setSize(getWidth(), getMinimumSize().height);
+            }
+            // single window mode
+            else
+            {
+                // show main pane & resize window back to original dimension
+                add(mainPane, BorderLayout.CENTER);
+                setSize(getWidth(), previousHeight);
+                if (previousMaximized)
+                    ComponentUtil.setMaximized(this, true);
+
+                // internalization possible
+                inspector.setInternalizationAutorized(true);
+                // restore inspector internalization
+                if (previousInspectorInternalized)
+                    internalizeInspector();
+            }
+
+            multiWindowMode = value;
+        }
     }
 }

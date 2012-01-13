@@ -13,7 +13,6 @@ import icy.resource.icon.IcyIcon;
 import icy.system.SystemUtil;
 import icy.util.ClassUtil;
 
-import java.awt.Frame;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -198,14 +197,7 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
      */
     public void setMinimized(final boolean value)
     {
-        // only relevant if state changed
-        if (isMinimized() ^ value)
-        {
-            if (value)
-                setExtendedState(Frame.ICONIFIED);
-            else
-                setExtendedState(Frame.NORMAL);
-        }
+        ComponentUtil.setMinimized(this, value);
     }
 
     /**
@@ -213,14 +205,7 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
      */
     public void setMaximized(final boolean value)
     {
-        // only relevant if state changed
-        if (isMaximized() ^ value)
-        {
-            if (value)
-                setExtendedState(Frame.MAXIMIZED_BOTH);
-            else
-                setExtendedState(Frame.NORMAL);
-        }
+        ComponentUtil.setMaximized(this, value);
     }
 
     /**

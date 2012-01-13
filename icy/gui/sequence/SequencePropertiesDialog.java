@@ -69,7 +69,7 @@ public class SequencePropertiesDialog extends ActionDialog
             }
         });
 
-        setLocationRelativeTo(Icy.getMainInterface().getFrame());
+        setLocationRelativeTo(Icy.getMainInterface().getMainFrame());
         pack();
 
         setVisible(true);

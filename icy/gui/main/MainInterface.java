@@ -287,9 +287,25 @@ public interface MainInterface
 
     public abstract ToolRibbonTask getToolRibbon();
 
+    /**
+     * Return true if the main frame is set as "always on top"
+     */
     public abstract boolean isAlwaysOnTop();
 
+    /**
+     * Set the main frame as "always on top"
+     */
     public abstract void setAlwaysOnTop(boolean value);
+
+    /**
+     * Return true if the application is in "multi window" mode
+     */
+    public abstract boolean isMultiWindowMode();
+
+    /**
+     * Set the the application is in "multi window" mode
+     */
+    public abstract void setMultiWindowMode(boolean value);
 
     /**
      * Add main listener

@@ -26,7 +26,6 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
-import java.awt.Menu;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
@@ -350,8 +349,33 @@ public class ComponentUtil
         return (f.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH;
     }
 
+    public static void setMaximized(JFrame f, boolean b)
+    {
+        // only relevant if state changed
+        if (isMaximized(f) ^ b)
+        {
+            if (b)
+                f.setExtendedState(Frame.MAXIMIZED_BOTH);
+            else
+                f.setExtendedState(Frame.NORMAL);
+        }
+    }
+
     public static boolean isMinimized(JFrame f)
     {
         return (f.getExtendedState() & Frame.ICONIFIED) == Frame.ICONIFIED;
     }
+
+    public static void setMinimized(JFrame f, boolean b)
+    {
+        // only relevant if state changed
+        if (isMinimized(f) ^ b)
+        {
+            if (b)
+                f.setExtendedState(Frame.ICONIFIED);
+            else
+                f.setExtendedState(Frame.NORMAL);
+        }
+    }
+
 }

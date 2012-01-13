@@ -118,7 +118,7 @@ public class ImageLoaderDialog extends JFileChooser
         setDialogTitle("ICY - Load image file");
 
         // display loader
-        final int value = showOpenDialog(Icy.getMainInterface().getFrame());
+        final int value = showOpenDialog(Icy.getMainInterface().getMainFrame());
 
         // action confirmed ?
         if (value == JFileChooser.APPROVE_OPTION)

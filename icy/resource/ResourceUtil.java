@@ -232,7 +232,14 @@ public class ResourceUtil
      */
     public static Image getAlphaIconAsImage(String resourceName, int size)
     {
-        return getIconAsImage(ALPHA_ICON_PATH + resourceName, size);
+        final String finalName;
+
+        if (resourceName.toLowerCase().endsWith(".png"))
+            finalName = resourceName;
+        else
+            finalName = resourceName + ".png";
+
+        return getIconAsImage(ALPHA_ICON_PATH + finalName, size);
     }
 
     /**
@@ -248,7 +255,14 @@ public class ResourceUtil
      */
     public static ImageIcon getAlphaIcon(String resourceName, int size)
     {
-        return getImageIcon(getIconAsImage(ALPHA_ICON_PATH + resourceName, size));
+        final String finalName;
+
+        if (resourceName.toLowerCase().endsWith(".png"))
+            finalName = resourceName;
+        else
+            finalName = resourceName + ".png";
+
+        return getImageIcon(getIconAsImage(ALPHA_ICON_PATH + finalName, size));
     }
 
     /**

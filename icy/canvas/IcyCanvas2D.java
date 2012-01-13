@@ -427,12 +427,12 @@ public abstract class IcyCanvas2D extends IcyCanvas
      */
     public void fitCanvasToImage()
     {
-        final MainFrame mainFrame = Icy.getMainInterface().getFrame();
+        final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
         final Dimension imageCanvasSize = getImageCanvasSize();
 
         if ((imageCanvasSize.width > 0) && (imageCanvasSize.height > 0) && (mainFrame != null))
         {
-            final Dimension maxDim = mainFrame.getContentSize();
+            final Dimension maxDim = mainFrame.getDesktopSize();
             final Dimension adjImgCnvSize = canvasToViewer(imageCanvasSize);
 
             // fit in available space --> resize viewer

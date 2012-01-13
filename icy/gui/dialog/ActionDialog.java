@@ -56,7 +56,7 @@ public class ActionDialog extends JDialog implements ActionListener
 
     public ActionDialog(String title)
     {
-        this(Icy.getMainInterface().getFrame(), title);
+        this(Icy.getMainInterface().getMainFrame(), title);
     }
 
     public ActionDialog(Frame owner, String title)

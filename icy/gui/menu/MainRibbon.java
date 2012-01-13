@@ -865,6 +865,28 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         });
         ribbon.addTaskbarComponent(preferencesButton);
 
+        // SEPARATOR
+        ribbon.addTaskbarComponent(new JSeparator(SwingConstants.VERTICAL));
+
+        // MULTI FRAME MODE
+        final CommandToggleButtonGroup multiWindowGroup = new CommandToggleButtonGroup();
+        final IcyCommandToggleButton multiWindowButton = new IcyCommandToggleButton("", "app_detached");
+
+        multiWindowButton.setActionRichTooltip(new RichTooltip("Multi window mode ON/OFF",
+                "Switch to multi window mode / single window mode"));
+        multiWindowButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                GeneralPreferences.setMultiWindowMode(multiWindowGroup.getSelected() != null);
+            }
+        });
+        ribbon.addTaskbarComponent(multiWindowButton);
+
+        multiWindowGroup.add(multiWindowButton);
+        multiWindowGroup.setSelected(multiWindowButton, GeneralPreferences.getMultiWindowMode());
+
         // LOOK AND FEEL
         final IcyCommandButton lafButton = new IcyCommandButton(new IcyIcon("emotion_smile"));
 
