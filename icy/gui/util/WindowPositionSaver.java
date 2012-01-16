@@ -470,7 +470,7 @@ public class WindowPositionSaver
         if (mainFrame != null)
         {
             if (maximizedE)
-                jFrame.setExtendedState(Frame.MAXIMIZED_BOTH);
+                mainFrame.setExtendedState(Frame.MAXIMIZED_BOTH);
         }
         else if (icyFrame != null)
         {
