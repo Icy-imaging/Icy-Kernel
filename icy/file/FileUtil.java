@@ -23,10 +23,12 @@ import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.util.StringUtil;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -243,7 +245,6 @@ public class FileUtil
         return "";
     }
 
-    
     /**
      * Return filename information from specified path.<br>
      * <br>
@@ -333,22 +334,26 @@ public class FileUtil
     }
 
     /**
-     * Rename the specified 'src' file to 'dst' file
+     * Rename the specified 'src' file to 'dst' file.
      */
-    public static boolean rename(String src, String dst, boolean force, boolean wantHidden)
+    public static boolean rename(String src, String dst, boolean force)
     {
-        return rename(new File(getGenericPath(src)), new File(getGenericPath(dst)), force, wantHidden);
+        return rename(new File(getGenericPath(src)), new File(getGenericPath(dst)), force);
     }
 
     /**
-     * Rename the specified 'src' file to 'dst' file
+     * @deprecated uses {@link #rename(String, String, boolean)} instead
      */
-    public static boolean rename(File src, File dst, boolean force, boolean wantHidden)
+    public static boolean rename(String src, String dst, boolean force, boolean wantHidden)
     {
-        // hidden file or directory and hidden flag == false
-        if (src.isHidden() && !wantHidden)
-            return false;
+        return rename(src, dst, force);
+    }
 
+    /**
+     * Rename the specified 'src' file to 'dst' file.
+     */
+    public static boolean rename(File src, File dst, boolean force)
+    {
         if (src.exists())
         {
             if (dst.exists())
@@ -357,7 +362,7 @@ public class FileUtil
                 {
                     if (!delete(dst, true))
                     {
-                        System.err.println("Can't move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
+                        System.err.println("Cannot move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
                                 + "'");
                         System.err.println("Reason : destination cannot be overwritten.");
                         System.err.println("Verify it is not locked by another program (as Eclipse)");
@@ -367,8 +372,10 @@ public class FileUtil
                 }
                 else
                 {
-                    System.err.println("Can't move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
+                    System.err
+                            .println("Cannot move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
                     System.err.println("The destination already exists.");
+                    System.err.println("Uses 'force' flag to force file move.");
                     return false;
                 }
             }
@@ -378,7 +385,7 @@ public class FileUtil
 
             if (!src.renameTo(dst))
             {
-                System.err.println("Can't move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
+                System.err.println("Cannot move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
                 System.err.println("Reason : unknown");
                 return false;
             }
@@ -386,28 +393,59 @@ public class FileUtil
             return true;
         }
 
+        // missing input file
+        System.err.println("Cannot move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
+        System.err.println("Input file '" + src.getAbsolutePath() + "' not found !");
+
         return false;
     }
 
     /**
+     * @deprecated uses {@link #rename(File, File, boolean)} instead
+     */
+    @Deprecated
+    public static boolean rename(File src, File dst, boolean force, boolean wantHidden)
+    {
+        return rename(src, dst, force);
+    }
+
+    /**
      * Move (same as rename) the specified 'src' file to 'dst' file
      */
+    public static boolean move(String src, String dst, boolean force)
+    {
+        return rename(src, dst, force);
+    }
+
+    /**
+     * @deprecated uses {@link #move(String, String, boolean)} instead
+     */
+    @Deprecated
     public static boolean move(String src, String dst, boolean force, boolean wantHidden)
     {
-        return rename(src, dst, force, wantHidden);
+        return move(src, dst, force);
     }
 
     /**
-     * Move (same as rename) the specified 'src' file to 'dst' file
+     * Move (same as rename) the specified 'src' file to 'dst' file.
      */
+    public static boolean move(File src, File dst, boolean force)
+    {
+        return rename(src, dst, force);
+    }
+
+    /**
+     * @deprecated uses {@link #move(File, File, boolean)} instead
+     */
+    @Deprecated
     public static boolean move(File src, File dst, boolean force, boolean wantHidden)
     {
-        return rename(src, dst, force, wantHidden);
+        return move(src, dst, force);
     }
 
     /**
-     * Copy src to dst<br>
-     * Return true if file(s) successfully copied, false otherwise
+     * Copy src to dst.<br>
+     * Return true if file(s) successfully copied, false otherwise.
      * 
      * @param src
      *        source file or directory
@@ -415,20 +453,29 @@ public class FileUtil
      *        destination file or directory
      * @param force
      *        force copy to previous existing file
-     * @param wantHidden
-     *        also copy hidden file
      * @param recursive
      *        also copy sub directory
      * @return boolean
+     */
+    public static boolean copy(String src, String dst, boolean force, boolean recursive)
+    {
+        return copy(new File(getGenericPath(src)), new File(getGenericPath(dst)), force, recursive);
+    }
+
+    /**
+     * @deprecated uses {@link #copy(String, String, boolean, boolean)} instead
      */
     public static boolean copy(String src, String dst, boolean force, boolean wantHidden, boolean recursive)
     {
-        return copy(new File(getGenericPath(src)), new File(getGenericPath(dst)), force, wantHidden, recursive);
+        return copy(src, dst, force, recursive);
     }
 
     /**
-     * Copy src to dst<br>
-     * Return true if file(s) successfully copied, false otherwise
+     * Copy src to dst with the specified parameters.<br>
+     * Return true if the operation succeed considering the specified parameters.<br>
+     * That means if you try to copy a hidden file with wantHidden set to false then true is
+     * returned<br>
+     * even if the file is not copied.
      * 
      * @param src
      *        source file or directory
@@ -436,30 +483,35 @@ public class FileUtil
      *        destination file or directory
      * @param force
      *        force copy to previous existing file
-     * @param wantHidden
-     *        also copy hidden file
      * @param recursive
      *        also copy sub directory
      * @return boolean
      */
-    public static boolean copy(File src, File dst, boolean force, boolean wantHidden, boolean recursive)
+    public static boolean copy(File src, File dst, boolean force, boolean recursive)
     {
-        return copy(src, dst, force, wantHidden, recursive, false);
+        return copy_(src, dst, force, recursive, false);
     }
 
-    public static boolean copy(File src, File dst, boolean force, boolean wantHidden, boolean recursive,
-            boolean inRecurse)
+    /**
+     * @deprecated uses {@link #copy(File, File, boolean, boolean)} instead
+     */
+    @Deprecated
+    public static boolean copy(File src, File dst, boolean force, boolean wantHidden, boolean recursive)
     {
-        // hidden file or directory and hidden flag == false
-        if (src.isHidden() && !wantHidden)
-            return false;
+        return copy(src, dst, force, recursive);
+    }
 
+    /**
+     * internal copy
+     */
+    private static boolean copy_(File src, File dst, boolean force, boolean recursive, boolean inRecurse)
+    {
         // directory copy ?
         if (src.isDirectory())
         {
-            // no recursive copy
+            // no recursive copy --> end
             if (inRecurse && !recursive)
-                return false;
+                return true;
 
             // so dst specify a directory too
             createDir(dst);
@@ -469,8 +521,7 @@ public class FileUtil
             final String files[] = src.list();
             // recursive copy
             for (int i = 0; i < files.length; i++)
-                result = result
-                        & copy(new File(src, files[i]), new File(dst, files[i]), force, wantHidden, recursive, true);
+                result = result & copy_(new File(src, files[i]), new File(dst, files[i]), force, recursive, true);
 
             return result;
         }
@@ -484,11 +535,24 @@ public class FileUtil
                 // copy only if force flag == true
                 if (force)
                 {
-                    if (!dst.delete())
+                    if (!delete(dst, true))
+                    {
+                        System.err.println("Cannot copy '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
+                                + "'");
+                        System.err.println("Reason : destination cannot be overwritten.");
+                        System.err.println("Verify it is not locked by another program (as Eclipse)");
+                        System.err.println("also check you've the rights to do this operation.");
                         return false;
+                    }
                 }
                 else
+                {
+                    System.err
+                            .println("Cannot copy '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
+                    System.err.println("The destination already exists.");
+                    System.err.println("Uses 'force' flag to force file copy.");
                     return false;
+                }
             }
 
             boolean lnk;
@@ -507,19 +571,46 @@ public class FileUtil
             {
                 // use OS dependent command (FIXME : replace by java 7 API when available)
                 final Process process = SystemUtil.exec("cp -pRP " + src.getPath() + " " + dst.getPath());
+                int res = 1;
+
+                if (process != null)
+                {
+                    try
+                    {
+                        res = process.waitFor();
+                    }
+                    catch (InterruptedException e1)
+                    {
+                        // ignore;
+                    }
+                }
 
                 // error while executing command
-                if (process == null)
-                    return false;
+                if ((res != 0))
+                {
+                    System.err.println("FileUtil.copy(...) error while creating link '" + src.getPath() + "' to '"
+                            + dst.getPath() + "'");
 
-                try
-                {
-                    return (process.waitFor() == 0);
-                }
-                catch (InterruptedException e)
-                {
-                    System.err.println("FileUtil.copy(...) on link file error :");
-                    IcyExceptionHandler.showErrorMessage(e, false);
+                    if (process != null)
+                    {
+                        // get error output and redirect it
+                        final BufferedReader stderr = new BufferedReader(
+                                new InputStreamReader(process.getErrorStream()));
+
+                        try
+                        {
+                            System.err.println(stderr.readLine());
+                            if (stderr.ready())
+                                System.err.println(stderr.readLine());
+                        }
+                        catch (IOException e)
+                        {
+                            // ignore
+                        }
+                    }
+                    else if (res == 1)
+                        System.err.println("Process interrupted.");
+
                     return false;
                 }
             }
@@ -531,7 +622,10 @@ public class FileUtil
                 return save(dst, data, true);
         }
 
-        // source file does not exist
+        // missing input file
+        System.err.println("Cannot copy '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
+        System.err.println("Input file '" + src.getAbsolutePath() + "' not found !");
+        
         return false;
     }
 

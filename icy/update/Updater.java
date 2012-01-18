@@ -347,7 +347,7 @@ public class Updater
             final String zipName = dirName + ".zip";
 
             // rename directory type file (no extension) to zip file
-            FileUtil.rename(dirName, zipName, true, true);
+            FileUtil.rename(dirName, zipName, true);
             ZipUtil.extract(zipName);
         }
 
@@ -378,7 +378,7 @@ public class Updater
         // file exist ? backup it
         if (FileUtil.exists(localPath))
         {
-            if (!FileUtil.copy(localPath, BACKUP_DIRECTORY + FileUtil.separator + localPath, true, false, true))
+            if (!FileUtil.copy(localPath, BACKUP_DIRECTORY + FileUtil.separator + localPath, true, true))
                 return false;
 
             // verify that backup file exist
@@ -407,7 +407,7 @@ public class Updater
         }
 
         // move file
-        if (!FileUtil.move(UPDATE_DIRECTORY + FileUtil.separator + localPath, localPath, true, false))
+        if (!FileUtil.move(UPDATE_DIRECTORY + FileUtil.separator + localPath, localPath, true))
         {
             // temporary hack to bypass the javacl version problem
             if (!localPath.equals("lib/javacl.jar"))
@@ -451,7 +451,7 @@ public class Updater
             if (finalPath.equals(UPDATER_NAME))
                 continue;
 
-            if (!FileUtil.move(backupPath, finalPath, true, false))
+            if (!FileUtil.move(backupPath, finalPath, true))
             {
                 // move failed (FileUtil.move is already displaying error messages if needed)
                 System.err.println("Updater.restore() cannot restore '" + finalPath + "', you should do it manually.");
