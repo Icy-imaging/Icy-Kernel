@@ -47,7 +47,7 @@ import javax.swing.SwingConstants;
 /**
  * @author Stephane
  */
-public class SequenceChannelCombinerFrame extends ActionFrame
+public class SequenceChannelMergeFrame extends ActionFrame
 {
     private class ChannelChooserPanel extends JPanel implements ActionListener
     {
@@ -212,9 +212,9 @@ public class SequenceChannelCombinerFrame extends ActionFrame
     final JCheckBox fitToMaxSize;
     final JCheckBox fillStackHole;
 
-    public SequenceChannelCombinerFrame()
+    public SequenceChannelMergeFrame()
     {
-        super("Channel combiner", true);
+        super("Channel merge", true);
 
         // channel extraction on validation
         setOkAction(new ActionListener()
@@ -334,7 +334,7 @@ public class SequenceChannelCombinerFrame extends ActionFrame
                                 }
 
                                 // set sequence name
-                                seqOut.setName("Channels combination");
+                                seqOut.setName("Channels merge");
                             }
                             finally
                             {

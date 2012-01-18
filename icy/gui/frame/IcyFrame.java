@@ -21,6 +21,7 @@ package icy.gui.frame;
 import icy.common.IcyAbstractAction;
 import icy.common.MenuCallback;
 import icy.gui.component.ComponentUtil;
+import icy.gui.main.MainFrame;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
@@ -43,6 +44,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.ImageObserver;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 
@@ -66,7 +69,7 @@ import javax.swing.event.InternalFrameListener;
  * 
  * @author Fabrice de Chaumont & Stephane Dallongeville
  */
-public class IcyFrame implements InternalFrameListener, WindowListener, ImageObserver
+public class IcyFrame implements InternalFrameListener, WindowListener, ImageObserver, PropertyChangeListener
 {
     private class SwitchStateAction extends IcyAbstractAction
     {
@@ -86,27 +89,18 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             attachIcon = new IcyIcon(ResourceUtil.ICON_COLLAPSE, 20);
             setAccelerator(KeyEvent.VK_F3);
 
-            refreshState(isInternalized());
+            refreshState();
         }
 
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            if (isInternalized())
-            {
-                detach();
-                refreshState(false);
-            }
-            else
-            {
-                attach();
-                refreshState(true);
-            }
+            switchState();
         }
 
-        private void refreshState(boolean internalized)
+        void refreshState()
         {
-            if (internalized)
+            if (isInternalized())
             {
                 setName("Detach");
                 setIcon(detachIcon);
@@ -181,6 +175,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     final MenuCallback defaultSystemMenuCallback;
     SwitchStateAction switchStateAction;
     boolean switchStateItemVisible;
+    IcyFrameState previousState;
 
     public IcyFrame()
     {
@@ -218,6 +213,11 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     {
         super();
 
+        final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+        // listen main frame mode change
+        if (mainFrame != null)
+            mainFrame.addPropertyChangeListener(MainFrame.PROPERTY_MULTIWINDOWMODE, this);
+
         frameEventListeners = new EventListenerList();
         defaultSystemMenuCallback = new MenuCallback()
         {
@@ -228,7 +228,12 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             }
         };
         switchStateItemVisible = true;
-        state = IcyFrameState.INTERNALIZED;
+        // set default state
+        if (canBeInternalized())
+            state = IcyFrameState.INTERNALIZED;
+        else
+            state = IcyFrameState.EXTERNALIZED;
+        previousState = state;
         syncProcess = false;
         switchStateAction = new SwitchStateAction();
 
@@ -280,6 +285,20 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             boolean maximizable, boolean iconifiable)
     {
         return new IcyInternalFrame(title, resizable, closable, maximizable, iconifiable);
+    }
+
+    /**
+     * Return true if the frame can be internalized
+     */
+    protected boolean canBeInternalized()
+    {
+        final MainFrame frame = Icy.getMainInterface().getMainFrame();
+
+        // internalization possible only in single window mode
+        if (frame != null)
+            return !frame.isMultiWindowMode();
+
+        return false;
     }
 
     /**
@@ -344,12 +363,16 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     /** Set the frame to be an inner frame on the desktop pane */
     public void attach()
     {
+        if (isInternalized())
+            return;
+
         // AWT safe
         ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
+                // hide external frame
                 externalFrame.setVisible(false);
 
                 final JMenuBar menuBar = externalFrame.getJMenuBar();
@@ -364,8 +387,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 internalFrame.setContentPane(content);
                 internalFrame.validate();
 
-                // internalFrame.setSize(externalFrame.getSize());
-                // internalFrame.bringBackToScreen();
+                // show internal frame
                 internalFrame.setVisible(true);
                 try
                 {
@@ -378,10 +400,8 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
 
                 state = IcyFrameState.INTERNALIZED;
 
-                // build system menu
-                updateSystemMenu();
-
-                fireFrameInternalized(new IcyFrameEvent(IcyFrame.this, null, null));
+                // notify state change
+                stateChanged();
             }
         }, syncProcess);
     }
@@ -389,14 +409,16 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     /** Set the frame to be detached in an independent frame */
     public void detach()
     {
+        if (isExternalized())
+            return;
+
         // AWT safe
         ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
-                // so we keep the internal frame visible but offscreen
-                // internalFrame.putOffScreen();
+                // hide internal frame
                 internalFrame.setVisible(false);
 
                 final JMenuBar menuBar = internalFrame.getJMenuBar();
@@ -411,7 +433,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 externalFrame.setContentPane(content);
                 externalFrame.validate();
 
-                // externalFrame.setSize(internalFrame.getSize());
+                // show external frame
                 externalFrame.setVisible(true);
                 externalFrame.requestFocus();
 
@@ -422,12 +444,28 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
 
                 state = IcyFrameState.EXTERNALIZED;
 
-                // build system menu
-                updateSystemMenu();
-
-                fireFrameExternalized(new IcyFrameEvent(IcyFrame.this, null, null));
+                // notify state change
+                stateChanged();
             }
         }, syncProcess);
+    }
+
+    /**
+     * Called on state (internalized / externalized) change
+     */
+    public void stateChanged()
+    {
+        // refresh switch action state
+        switchStateAction.refreshState();
+
+        // refresh system menu
+        updateSystemMenu();
+
+        // fire event
+        if (isInternalized())
+            fireFrameInternalized(new IcyFrameEvent(IcyFrame.this, null, null));
+        else
+            fireFrameExternalized(new IcyFrameEvent(IcyFrame.this, null, null));
     }
 
     /** Center frame on the desktop */
@@ -1975,8 +2013,8 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             @Override
             public void run()
             {
-                // internal frame only
                 internalFrame.setTitleBarVisible(value);
+                externalFrame.setTitleBarVisible(value);
             }
         }, syncProcess);
     }
@@ -2297,7 +2335,11 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
      */
     public void frameClosed(AWTEvent e)
     {
-        // remove listeners
+        final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+        // remove listener on main frame mode change
+        if (mainFrame != null)
+            mainFrame.removePropertyChangeListener(MainFrame.PROPERTY_MULTIWINDOWMODE, this);
+        // remove others listeners
         externalFrame.removeWindowListener(IcyFrame.this);
         internalFrame.removeInternalFrameListener(IcyFrame.this);
 
@@ -2428,4 +2470,24 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         return externalFrame.imageUpdate(img, infoflags, x, y, width, height);
     }
 
+    @Override
+    public void propertyChange(PropertyChangeEvent evt)
+    {
+        // window mode has been changed
+        final boolean multiWindowMode = ((Boolean) evt.getNewValue()).booleanValue();
+
+        // multi window mode set --> externalize
+        if (multiWindowMode)
+        {
+            // save previous state
+            previousState = state;
+            externalize();
+        }
+        else
+        {
+            // restore previous state
+            if (previousState == IcyFrameState.INTERNALIZED)
+                internalize();
+        }
+    }
 }

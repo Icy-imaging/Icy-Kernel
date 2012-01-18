@@ -81,6 +81,9 @@ public class IcyUpdater
 
     private final static int ANNOUNCE_SHOWTIME = 15;
 
+    private final static String PARAM_ARCH = "arch";
+    private final static String PARAM_VERSION = "version";
+
     static boolean wantUpdate = false;
     static boolean updating = false;
 
@@ -147,12 +150,15 @@ public class IcyUpdater
         else
             checkingFrame = null;
 
+        final String params = PARAM_ARCH + "=" + SystemUtil.getOSArchIdString() + "&" + PARAM_VERSION + "="
+                + Icy.version;
+
         try
         {
             // error (or cancel) while downloading XML ?
             if (!downloadAndSaveForUpdate(
                     ApplicationPreferences.getUpdateRepositoryBase() + ApplicationPreferences.getUpdateRepositoryFile()
-                            + SystemUtil.getOSArchIdString(), Updater.UPDATE_NAME, checkingFrame, showProgress))
+                            + "?" + params, Updater.UPDATE_NAME, checkingFrame, showProgress))
             {
                 // remove partially downloaded files
                 FileUtil.delete(Updater.UPDATE_DIRECTORY, true);

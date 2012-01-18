@@ -22,6 +22,7 @@ import icy.common.ProgressListener;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JProgressBar;
 
@@ -79,23 +80,18 @@ public class ProgressFrame extends TaskFrame implements ProgressListener, Runnab
                 progressBar.setString(buildMessage(message));
                 progressBar.setStringPainted(true);
                 progressBar.setIndeterminate(true);
+                progressBar.setBorder(BorderFactory.createEmptyBorder());
                 progressBar.setMinimum(0);
                 // this is enough for a smooth progress
                 progressBar.setMaximum(1000);
 
-                setFocusable(false);
-                // no title bar
-                setTitleBarVisible(false);
+                mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.LINE_AXIS));
 
-                setLayout(new BoxLayout(getContentPane(), BoxLayout.LINE_AXIS));
-                add(progressBar);
+                mainPanel.add(progressBar);
+
                 pack();
-
-                // already done with taskManager
-                // setVisible(true);
             }
         });
-
     }
 
     protected String buildMessage(String message)

@@ -109,12 +109,11 @@ public class ToolTipFrame extends TaskFrame
                 doNotDisplayCheckbox = new JCheckBox("Do not display in future", false);
                 doNotDisplayCheckbox.setToolTipText("Do not display this tooltip the next time");
 
-                // no title bar
-                setTitleBarVisible(false);
+                mainPanel.setLayout(new BorderLayout());
 
-                add(editorPane, BorderLayout.CENTER);
+                mainPanel.add(editorPane, BorderLayout.CENTER);
                 if (pref != null)
-                    add(GuiUtil.createLineBoxPanel(doNotDisplayCheckbox, Box.createHorizontalGlue()),
+                    mainPanel.add(GuiUtil.createLineBoxPanel(doNotDisplayCheckbox, Box.createHorizontalGlue()),
                             BorderLayout.SOUTH);
                 pack();
 

@@ -18,7 +18,7 @@ public class ApplicationPreferences
     private static final String ID_UPDATE_REPOSITORY_FILE = "updateRepositoryFile";
 
     private final static String DEFAULT_UPDATE_REPOSITORY_BASE = "http://www.bioimageanalysis.org/icy/update/";
-    private final static String DEFAULT_UPDATE_REPOSITORY_FILE = "update.php?arch=";
+    private final static String DEFAULT_UPDATE_REPOSITORY_FILE = "update.php";
 
     /**
      * preferences

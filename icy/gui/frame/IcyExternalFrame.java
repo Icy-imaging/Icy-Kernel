@@ -7,28 +7,29 @@ import icy.common.IcyAbstractAction;
 import icy.common.MenuCallback;
 import icy.gui.component.ComponentUtil;
 import icy.gui.util.LookAndFeelUtil;
-import icy.gui.util.LookAndFeelUtil.WeakSubstanceSkinChangeListener;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.system.SystemUtil;
-import icy.util.ClassUtil;
+import icy.system.thread.ThreadUtil;
 
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JRootPane;
 
-import org.pushingpixels.substance.api.skin.SkinChangeListener;
 import org.pushingpixels.substance.internal.utils.SubstanceTitlePane;
 
 /**
  * @author Stephane
  */
-public class IcyExternalFrame extends JFrame implements SkinChangeListener
+public class IcyExternalFrame extends JFrame
 {
     /**
       * 
@@ -61,7 +62,9 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
     private SubstanceTitlePane titlePane;
     private JMenuBar systemMenuBar;
     private MenuCallback systemMenuCallback;
+    private boolean titleBarVisible;
     private boolean closeItemVisible;
+    private boolean initialized = false;
 
     /**
      * @param title
@@ -71,15 +74,33 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
     {
         super(title);
 
+        getRootPane().addPropertyChangeListener("titlePane", new PropertyChangeListener()
+        {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt)
+            {
+                // invoke later so the titlePane variable is up to date
+                ThreadUtil.invokeLater(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        updateTitlePane();
+                    }
+                });
+            }
+        });
+
         setIconImages(ResourceUtil.getIcyIconImages());
         setVisible(false);
 
         systemMenuCallback = null;
         closeItemVisible = true;
-        updateTitlePane();
+        updateTitlePane(LookAndFeelUtil.getTitlePane(this));
 
-        // JFrame doesn't have updateUI() method so we have to listen LAF skin change
-        LookAndFeelUtil.addSkinChangeListener(new WeakSubstanceSkinChangeListener(this));
+        titleBarVisible = true;
+        initialized = true;
+
     }
 
     /**
@@ -89,26 +110,11 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
     {
         // update pane save
         if (pane != null)
-        {
-            // title pane changed ?
-            if (titlePane != pane)
-            {
-                // update
-                titlePane = pane;
-
-                // retrieve system menu bar
-                try
-                {
-                    systemMenuBar = (JMenuBar) ClassUtil.getFieldObject(titlePane, "menuBar", true);
-                }
-                catch (Exception e)
-                {
-                    systemMenuBar = null;
-                }
-            }
-        }
-
-        // refresh system menu
+            titlePane = pane;
+        // update menu
+        if (titlePane != null)
+            systemMenuBar = titlePane.getMenuBar();
+        // refresh system menu whatever
         updateSystemMenu();
     }
 
@@ -117,7 +123,14 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
      */
     protected void updateTitlePane()
     {
-        updateTitlePane(LookAndFeelUtil.getTitlePane(this));
+        if (initialized)
+        {
+            // title pane can have changed
+            updateTitlePane(LookAndFeelUtil.getTitlePane(this));
+
+            if (!titleBarVisible)
+                setTitleBarVisible(false);
+        }
     }
 
     /**
@@ -167,6 +180,16 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
     //
     // return rect.contains(p);
     // }
+
+    public void setTitleBarVisible(boolean value)
+    {
+        if (value)
+            // setUndecorated(false);
+            getRootPane().setWindowDecorationStyle(JRootPane.FRAME);
+        else
+            // setUndecorated(true);
+            getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+    }
 
     /**
      * close frame
@@ -272,10 +295,4 @@ public class IcyExternalFrame extends JFrame implements SkinChangeListener
         }
     }
 
-    @Override
-    public void skinChanged()
-    {
-        // title pane can have changed
-        updateTitlePane();
-    }
 }

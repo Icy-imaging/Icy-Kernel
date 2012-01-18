@@ -20,6 +20,12 @@ package icy.gui.frame.progress;
 
 import icy.gui.frame.IcyFrame;
 import icy.gui.main.TaskFrameManager;
+import icy.system.thread.ThreadUtil;
+
+import java.awt.BorderLayout;
+
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
 
 /**
  * Use it to create a Task Window on the border like the loader (Thread Safe)<br>
@@ -28,7 +34,8 @@ import icy.gui.main.TaskFrameManager;
  */
 public abstract class TaskFrame extends IcyFrame
 {
-    private boolean canBeRemoved = false;
+    protected JPanel mainPanel;
+    private boolean remove = false;
 
     /**
      * 
@@ -87,6 +94,27 @@ public abstract class TaskFrame extends IcyFrame
     {
         super(title, resizable, closable, maximizable, iconifiable);
 
+        ThreadUtil.invokeLater(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                mainPanel = new JPanel();
+                mainPanel.setBorder(BorderFactory.createTitledBorder(""));
+                
+                // no border on frame
+                setBorder(BorderFactory.createEmptyBorder());
+                // no focusable
+                setFocusable(false);
+                // no title bar
+                setTitleBarVisible(false);
+
+                setLayout(new BorderLayout());
+                
+                add(mainPanel, BorderLayout.CENTER);
+            }
+        });
+
         // add to the task manager if a GUI is present
         final TaskFrameManager tfm = icy.main.Icy.getMainInterface().getTaskWindowManager();
 
@@ -95,22 +123,45 @@ public abstract class TaskFrame extends IcyFrame
     }
 
     @Override
+    public void stateChanged()
+    {
+        super.stateChanged();
+
+        // re pack the frame
+        pack();
+    }
+
+    @Override
     public void close()
     {
         // prevent direct close here
-        canBeRemoved = true;
+        remove = true;
     }
 
     /**
-     * used by the TaskWindowManager to close the taskframe
+     * Used by the TaskWindowManager to close the TaskFrame.<br>
+     * (internal use only)
      */
     public void internalClose()
     {
         super.close();
     }
 
+    /**
+     * Used by the TaskWindowManager to close the TaskFrame.<br>
+     * (internal use only)
+     */
+    public boolean canRemove()
+    {
+        return remove;
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public boolean isCanBeRemoved()
     {
-        return canBeRemoved;
+        return canRemove();
     }
 }

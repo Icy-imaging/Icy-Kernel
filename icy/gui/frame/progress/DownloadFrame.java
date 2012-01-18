@@ -18,8 +18,8 @@
  */
 package icy.gui.frame.progress;
 
-import icy.math.MathUtil;
 import icy.math.RateMeter;
+import icy.math.UnitUtil;
 import icy.util.StringUtil;
 
 /**
@@ -67,19 +67,19 @@ public class DownloadFrame extends CancelableProgressFrame
 
         // information on position
         if (position != -1d)
-            mess += MathUtil.getBytesString(position);
+            mess += UnitUtil.getBytesString(position);
         else
             mess += "???";
 
         mess += " / ";
 
         if (length > 0d)
-            mess += MathUtil.getBytesString(length);
+            mess += UnitUtil.getBytesString(length);
         else
             mess += "???";
 
         if (rate > 0)
-            mess += " - " + MathUtil.getBytesString(rate) + "/s";
+            mess += " - " + UnitUtil.getBytesString(rate) + "/s";
 
         mess += "]";
 

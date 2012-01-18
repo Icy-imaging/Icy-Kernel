@@ -83,7 +83,7 @@ public class PluginErrorReport
                     // update found
                     if (onlinePlugin != null)
                     {
-                        // confim and install
+                        // confirm and install
                         if (ConfirmDialog
                                 .confirm(
                                         "Plugin update",

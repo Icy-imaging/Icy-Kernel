@@ -22,7 +22,6 @@ import icy.file.Loader;
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.ExternalizablePanel.StateListener;
-import icy.gui.frame.IcyFrame;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.MainRibbon;
@@ -232,6 +231,8 @@ public class MainFrame extends JRibbonFrame
     private static final long serialVersionUID = 1113003570969611614L;
 
     public static final String TITLE = "Icy";
+
+    public static final String PROPERTY_MULTIWINDOWMODE = "multiWindowMode";
 
     private final MainRibbon mainRibbon;
     final JSplitPane mainPane;
@@ -503,10 +504,6 @@ public class MainFrame extends JRibbonFrame
                 // no more internalization possible
                 inspector.setInternalizationAutorized(false);
 
-                // externalize all IcyFrame
-                for (IcyFrame frame : IcyFrame.getAllFrames())
-                    frame.externalize();
-
                 // save the current height & state
                 previousHeight = getHeight();
                 previousMaximized = ComponentUtil.isMaximized(this);
@@ -515,6 +512,8 @@ public class MainFrame extends JRibbonFrame
                 remove(mainPane);
                 ComponentUtil.setMaximized(this, false);
                 setSize(getWidth(), getMinimumSize().height);
+                // recompute layout
+                validate();
             }
             // single window mode
             else
@@ -524,15 +523,23 @@ public class MainFrame extends JRibbonFrame
                 setSize(getWidth(), previousHeight);
                 if (previousMaximized)
                     ComponentUtil.setMaximized(this, true);
+                // recompute layout
+                validate();
 
                 // internalization possible
                 inspector.setInternalizationAutorized(true);
                 // restore inspector internalization
                 if (previousInspectorInternalized)
                     internalizeInspector();
+
+                // notify mode change
+                firePropertyChange(PROPERTY_MULTIWINDOWMODE, true, false);
             }
 
             multiWindowMode = value;
+
+            // notify mode change
+            firePropertyChange(PROPERTY_MULTIWINDOWMODE, !value, value);
         }
     }
 }

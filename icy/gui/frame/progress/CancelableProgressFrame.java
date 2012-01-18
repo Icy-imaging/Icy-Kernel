@@ -53,7 +53,7 @@ public class CancelableProgressFrame extends ProgressFrame implements ActionList
 
                 cancelBtn.addActionListener(CancelableProgressFrame.this);
 
-                add(cancelBtn);
+                mainPanel.add(cancelBtn);
                 pack();
             }
         });

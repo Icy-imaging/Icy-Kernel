@@ -108,6 +108,17 @@ public class TaskFrameManager implements ActionListener
         lastAnimationMillisecondTime = System.currentTimeMillis();
     }
 
+    Dimension getDesktopSize()
+    {
+        final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+
+        if (mainFrame != null)
+            // get bottom right border location
+            return mainFrame.getDesktopSize();
+
+        return null;
+    }
+
     public void addTaskWindow(final TaskFrame tFrame, final long msBeforeDisplay, final long msAfterCloseRequest)
     {
         ThreadUtil.invokeLater(new Runnable()
@@ -117,19 +128,22 @@ public class TaskFrameManager implements ActionListener
             {
                 synchronized (taskFrames)
                 {
-                    // get bottom right border location
-                    final Dimension desktopSize = Icy.getMainInterface().getDesktopPane().getSize();
+                    final Dimension desktopSize = getDesktopSize();
 
-                    FrameInformation frameInformation = new FrameInformation(msBeforeDisplay, msAfterCloseRequest);
-                    frameInfo.put(tFrame, frameInformation);
+                    if (desktopSize != null)
+                    {
+                        // get bottom right border location
+                        FrameInformation frameInformation = new FrameInformation(msBeforeDisplay, msAfterCloseRequest);
+                        frameInfo.put(tFrame, frameInformation);
 
-                    taskFrames.add(tFrame);
-                    tFrame.addToMainDesktopPane();
-                    // tFrame.setVisible(true);
-                    tFrame.setLocation(desktopSize.width + 10, 0);
-                    tFrame.toFront();
-                    lastAnimationMillisecondTime = System.currentTimeMillis();
-                    timer.start();
+                        taskFrames.add(tFrame);
+                        tFrame.addToMainDesktopPane();
+                        // tFrame.setVisible(true);
+                        tFrame.setLocation(desktopSize.width + 10, 0);
+                        tFrame.toFront();
+                        lastAnimationMillisecondTime = System.currentTimeMillis();
+                        timer.start();
+                    }
                 }
             }
         });
@@ -156,6 +170,7 @@ public class TaskFrameManager implements ActionListener
             long currentMillisecondTime = System.currentTimeMillis();
             long delayBetween2Animation = currentMillisecondTime - lastAnimationMillisecondTime;
             lastAnimationMillisecondTime = System.currentTimeMillis();
+
             for (TaskFrame frame : frameInfo.keySet())
             {
                 FrameInformation frameInformation = frameInfo.get(frame);
@@ -174,7 +189,7 @@ public class TaskFrameManager implements ActionListener
             // build target position.
             framePosition.clear();
             // get bottom right border location
-            final Dimension desktopSize = Icy.getMainInterface().getDesktopPane().getSize();
+            final Dimension desktopSize = getDesktopSize();
 
             final ArrayList<TaskFrame> frames = new ArrayList<TaskFrame>(taskFrames);
 
@@ -270,7 +285,11 @@ public class TaskFrameManager implements ActionListener
                 final Point location = framePosition.get(frame);
 
                 if (location != null)
-                    frame.setLocation(location);
+                {
+                    // move internal & external frame at same time
+                    frame.setLocationInternal(location);
+                    frame.setLocationExternal(location);
+                }
             }
         }
 

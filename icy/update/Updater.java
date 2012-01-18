@@ -409,11 +409,15 @@ public class Updater
         // move file
         if (!FileUtil.move(UPDATE_DIRECTORY + FileUtil.separator + localPath, localPath, true, false))
         {
-            // move failed
-            System.err.println("Updater.udpateFile('" + localPath + "') failed !");
-            System.err.println("Can't move file from '" + UPDATE_DIRECTORY + FileUtil.separator + localPath + "' to '"
-                    + localPath + "'");
-            return false;
+            // temporary hack to bypass the javacl version problem
+            if (!localPath.equals("lib/javacl.jar"))
+            {
+                // move failed
+                System.err.println("Updater.udpateFile('" + localPath + "') failed !");
+                System.err.println("Can't move file from '" + UPDATE_DIRECTORY + FileUtil.separator + localPath
+                        + "' to '" + localPath + "'");
+                return false;
+            }
         }
 
         return true;
@@ -442,6 +446,10 @@ public class Updater
         for (String backupPath : paths)
         {
             final String finalPath = backupPath.substring(len + 1);
+
+            // don't restore updater
+            if (finalPath.equals(UPDATER_NAME))
+                continue;
 
             if (!FileUtil.move(backupPath, finalPath, true, false))
             {

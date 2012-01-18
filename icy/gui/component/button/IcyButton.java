@@ -55,6 +55,11 @@ public class IcyButton extends JButton
         this(null, icon);
     }
 
+    public IcyButton(String text)
+    {
+        this(text, (IcyIcon) null);
+    }
+
     /**
      * Create a button with specified action
      */

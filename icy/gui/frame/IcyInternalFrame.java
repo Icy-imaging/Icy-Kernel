@@ -10,22 +10,21 @@ import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
-import icy.util.ClassUtil;
-import icy.util.EventUtil;
+import icy.system.thread.ThreadUtil;
 
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 
 import javax.swing.Icon;
 import javax.swing.JInternalFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JPopupMenu;
 
 import org.pushingpixels.substance.internal.utils.SubstanceInternalFrameTitlePane;
 
@@ -65,7 +64,6 @@ public class IcyInternalFrame extends JInternalFrame
     SubstanceInternalFrameTitlePane titlePane = null;
     JMenuBar systemMenuBar;
     private MenuCallback systemMenuCallback;
-    final private MouseAdapter titlePaneMouseAdapter;
     private boolean titleBarVisible;
     private boolean closeItemVisible;
     private boolean initialized = false;
@@ -81,33 +79,29 @@ public class IcyInternalFrame extends JInternalFrame
     {
         super(title, resizable, closable, maximizable, iconifiable);
 
+        addPropertyChangeListener("titlePane", new PropertyChangeListener()
+        {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt)
+            {
+                // invoke later so the titlePane variable is up to date
+                ThreadUtil.invokeLater(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        updateTitlePane();
+                    }
+                });
+            }
+        });
+
         setFrameIcon(ResourceUtil.ICON_ICY_16);
         setVisible(false);
 
         systemMenuCallback = null;
-        titlePaneMouseAdapter = new MouseAdapter()
-        {
-            @Override
-            public void mouseClicked(MouseEvent e)
-            {
-                if (EventUtil.isLeftMouseButton(e))
-                {
-                    if (isOnSystemIcon(e.getPoint()))
-                    {
-                        if ((systemMenuBar != null) && (systemMenuBar.getMenuCount() > 0))
-                        {
-                            final JPopupMenu menu = systemMenuBar.getMenu(0).getPopupMenu();
-
-                            if (menu != null)
-                                menu.show(titlePane, 2, titlePane.getHeight());
-                        }
-                    }
-                }
-            }
-        };
-
         closeItemVisible = true;
-        updateTitlePane();
+        updateTitlePane(LookAndFeelUtil.getTitlePane(this));
 
         titleBarVisible = true;
         initialized = true;
@@ -120,42 +114,27 @@ public class IcyInternalFrame extends JInternalFrame
     {
         // update pane save
         if (pane != null)
-        {
-            // title pane changed ?
-            if (titlePane != pane)
-            {
-                // remove mouse listener
-                if (titlePane != null)
-                    titlePane.removeMouseListener(titlePaneMouseAdapter);
-
-                // update
-                titlePane = pane;
-
-                // add mouse listener
-                titlePane.addMouseListener(titlePaneMouseAdapter);
-
-                // retrieve system menu bar
-                try
-                {
-                    systemMenuBar = (JMenuBar) ClassUtil.getFieldObject(titlePane, "menuBar", true);
-                }
-                catch (Exception e)
-                {
-                    systemMenuBar = null;
-                }
-            }
-        }
-
+            titlePane = pane;
+        // update menu
+        if (titlePane != null)
+            systemMenuBar = titlePane.getMenuBar();
         // refresh system menu whatever
         updateSystemMenu();
     }
 
     /**
-     * update internals informations linked to title pane
+     * update internals informations linked to title pane and title pane state
      */
     protected void updateTitlePane()
     {
-        updateTitlePane(LookAndFeelUtil.getTitlePane(this));
+        if (initialized)
+        {
+            // title pane can have changed
+            updateTitlePane(LookAndFeelUtil.getTitlePane(this));
+
+            if (!titleBarVisible)
+                setTitleBarVisible(false);
+        }
     }
 
     /**
@@ -168,18 +147,23 @@ public class IcyInternalFrame extends JInternalFrame
 
         final int w = titlePane.getWidth();
         final int h = titlePane.getHeight();
-        final Icon icon = getFrameIcon();
-        final int iw = icon.getIconWidth();
-        final int ih = icon.getIconHeight();
+        final Dimension iconSize = getSystemIconSize();
 
         final Rectangle rect;
 
         if (getComponentOrientation().isLeftToRight())
-            rect = new Rectangle(5, (h / 2) - (ih / 2), iw, ih);
+            rect = new Rectangle(5, (h / 2) - (iconSize.height / 2), iconSize.width, iconSize.height);
         else
-            rect = new Rectangle(w - (5 + iw), (h / 2) - (ih / 2), iw, ih);
+            rect = new Rectangle(w - (5 + iconSize.width), (h / 2) - (iconSize.height / 2), iconSize.width,
+                    iconSize.height);
 
         return rect.contains(p);
+    }
+
+    protected Dimension getSystemIconSize()
+    {
+        final Icon icon = getFrameIcon();
+        return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     }
 
     /**
@@ -348,21 +332,6 @@ public class IcyInternalFrame extends JInternalFrame
         {
             systemMenuCallback = value;
             updateSystemMenu();
-        }
-    }
-
-    @Override
-    public void updateUI()
-    {
-        super.updateUI();
-
-        if (initialized)
-        {
-            // title pane can have changed
-            updateTitlePane();
-
-            if (!titleBarVisible)
-                setTitleBarVisible(false);
         }
     }
 }

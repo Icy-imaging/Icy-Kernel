@@ -23,7 +23,7 @@ import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandMenuButton;
 import icy.gui.frame.progress.ProgressFrame;
-import icy.gui.menu.tools.SequenceChannelCombinerFrame;
+import icy.gui.menu.tools.SequenceChannelMergeFrame;
 import icy.gui.menu.tools.SequenceCropper;
 import icy.gui.menu.tools.Time2Volume;
 import icy.gui.util.GuiUtil;
@@ -76,18 +76,18 @@ public class ImageRibbonTask extends RibbonTask
         public static final String NAME = "Channel operation";
 
         final IcyCommandButton extractSingleChannelButton;
-        final IcyCommandButton extractAllChannelButton;
-        final IcyCommandButton advancedButton;
+        final IcyCommandButton splitChannelButton;
+        final IcyCommandButton mergeChannelButton;
 
         public ChannelOperationRibbonBand()
         {
             super(NAME, new IcyIcon("wrench_plus"));
 
             // single channel extraction
-            extractSingleChannelButton = new IcyCommandButton("Single extract", "layers_2");
+            extractSingleChannelButton = new IcyCommandButton("Extract channel");
             extractSingleChannelButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
             extractSingleChannelButton.setPopupRichTooltip(new RichTooltip("Single channel extraction",
-                    "Create a new single channel sequence from the selected band of current sequence"));
+                    "Create a new single channel sequence from the selected channel of current sequence"));
             extractSingleChannelButton.setPopupCallback(new PopupPanelCallback()
             {
                 @Override
@@ -115,12 +115,6 @@ public class ImageRibbonTask extends RibbonTask
                             result.addMenuButton(button);
                         }
                     }
-                    else
-                    {
-                        final IcyCommandMenuButton button = new IcyCommandMenuButton("No sequence", "round_delete");
-                        button.setEnabled(false);
-                        result.addMenuButton(button);
-                    }
 
                     return result;
                 }
@@ -128,11 +122,11 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(extractSingleChannelButton, RibbonElementPriority.MEDIUM);
 
             // all channel extraction
-            extractAllChannelButton = new IcyCommandButton("Extract all", "layers_1");
-            extractAllChannelButton.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
-            extractAllChannelButton.setActionRichTooltip(new RichTooltip("Extract all channels",
-                    "Create severals single channel sequence from all channels of current sequence"));
-            extractAllChannelButton.addActionListener(new ActionListener()
+            splitChannelButton = new IcyCommandButton("Split channels");
+            splitChannelButton.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
+            splitChannelButton.setActionRichTooltip(new RichTooltip("Split channels",
+                    "Create several single channel sequence from all channels of current sequence"));
+            splitChannelButton.addActionListener(new ActionListener()
             {
                 @Override
                 public void actionPerformed(ActionEvent e)
@@ -140,28 +134,28 @@ public class ImageRibbonTask extends RibbonTask
                     extractBand(Icy.getMainInterface().getFocusedSequence(), -1);
                 }
             });
-            addCommandButton(extractAllChannelButton, RibbonElementPriority.MEDIUM);
+            addCommandButton(splitChannelButton, RibbonElementPriority.MEDIUM);
 
             // advances band extraction
-            advancedButton = new IcyCommandButton("Advanced...", new IcyIcon(ResourceUtil.ICON_COG));
-            advancedButton.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
-            advancedButton.setActionRichTooltip(new RichTooltip("Advanced band operation (extraction / merge)",
-                    "Combine bands of 2 sequences to build a new sequence"));
-            advancedButton.addActionListener(new ActionListener()
+            mergeChannelButton = new IcyCommandButton("Merge channels...");
+            mergeChannelButton.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
+            mergeChannelButton.setActionRichTooltip(new RichTooltip("Merge channels",
+                    "Merge channels from 2 input sequences to build a new sequence"));
+            mergeChannelButton.addActionListener(new ActionListener()
             {
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    new SequenceChannelCombinerFrame();
+                    new SequenceChannelMergeFrame();
                 }
             });
-            addCommandButton(advancedButton, RibbonElementPriority.MEDIUM);
+            addCommandButton(mergeChannelButton, RibbonElementPriority.MEDIUM);
 
             RibbonUtil.setRestrictiveResizePolicies(this);
             udpateButtonsState();
         }
 
-        void extractBand(final Sequence seqIn, final int bandNumber)
+        void extractBand(final Sequence seqIn, final int chNum)
         {
             // nothing to do
             if (seqIn == null)
@@ -176,23 +170,23 @@ public class ImageRibbonTask extends RibbonTask
                     final ProgressFrame pf = new ProgressFrame("Extracting channel(s)...");
                     try
                     {
-                        // process all band ?
-                        if (bandNumber == -1)
+                        // process all channels ?
+                        if (chNum == -1)
                         {
-                            for (int nbBand = 0; nbBand < seqIn.getSizeC(); nbBand++)
+                            for (int ch = 0; ch < seqIn.getSizeC(); ch++)
                             {
-                                final Sequence seqOut = seqIn.extractChannel(nbBand);
+                                final Sequence seqOut = seqIn.extractChannel(ch);
 
-                                seqOut.setName("Channel " + nbBand + " of " + seqIn.getName());
+                                seqOut.setName(seqIn.getName() + " - (" + seqIn.getChannelName(ch) + ")");
 
                                 Icy.addSequence(seqOut);
                             }
                         }
                         else
                         {
-                            final Sequence seqOut = seqIn.extractChannel(bandNumber);
+                            final Sequence seqOut = seqIn.extractChannel(chNum);
 
-                            seqOut.setName("Channel " + bandNumber + " of " + seqIn.getName());
+                            seqOut.setName(seqIn.getName() + " - (" + seqIn.getChannelName(chNum) + ")");
 
                             Icy.addSequence(seqOut);
                         }
@@ -210,8 +204,8 @@ public class ImageRibbonTask extends RibbonTask
             final boolean enabled = Icy.getMainInterface().getFocusedSequence() != null;
 
             extractSingleChannelButton.setEnabled(enabled);
-            extractAllChannelButton.setEnabled(enabled);
-            advancedButton.setEnabled(enabled);
+            splitChannelButton.setEnabled(enabled);
+            mergeChannelButton.setEnabled(enabled);
         }
     }
 
@@ -235,11 +229,11 @@ public class ImageRibbonTask extends RibbonTask
             JRibbonComponent comp;
 
             // clone sequence
-            cloneButton = new IcyButton("Duplicate", "sq_plus", 16);
+            cloneButton = new IcyButton("Duplicate");
             cloneButton.setFlat(true);
             cloneButton.setToolTipText("Create a fresh copy of the sequence");
-            cloneButton.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
-            ComponentUtil.setFixedWidth(cloneButton, 110);
+//            cloneButton.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
+//            ComponentUtil.setFixedWidth(cloneButton, 110);
             cloneButton.setHorizontalAlignment(SwingConstants.LEADING);
             cloneButton.addActionListener(new ActionListener()
             {
@@ -256,11 +250,11 @@ public class ImageRibbonTask extends RibbonTask
             addRibbonComponent(comp);
 
             // data type conversion
-            typeButton = new IcyButton("Convert to...", "layers_2", 16);
+            typeButton = new IcyButton("Convert to...");
             typeButton.setFlat(true);
             typeButton.setToolTipText("Convert the sequence to the selected data type");
-            typeButton.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
-            ComponentUtil.setFixedWidth(typeButton, 110);
+//            typeButton.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
+//            ComponentUtil.setFixedWidth(typeButton, 110);
             typeButton.setHorizontalAlignment(SwingConstants.LEADING);
             typeButton.addActionListener(new ActionListener()
             {
