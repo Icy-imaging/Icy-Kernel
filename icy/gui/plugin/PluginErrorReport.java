@@ -18,7 +18,6 @@
  */
 package icy.gui.plugin;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.dialog.ConfirmDialog;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.progress.CancelableProgressFrame;
@@ -31,10 +30,18 @@ import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -45,6 +52,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 
 /**
  * This class create a report from a plugin crash and ask the
@@ -83,7 +91,7 @@ public class PluginErrorReport
                     // update found
                     if (onlinePlugin != null)
                     {
-                        // confirm and install
+                        // confim and install
                         if (ConfirmDialog
                                 .confirm(
                                         "Plugin update",
@@ -130,39 +138,112 @@ public class PluginErrorReport
 
         final JScrollPane scrollPane = new JScrollPane(textPane);
         scrollPane.setBorder(new TitledBorder("Detail of the message"));
-        ComponentUtil.setFixedSize(scrollPane, new Dimension(600, 300));
 
+        // COMMENT PANE
         final JTextPane commentPane = new JTextPane();
         commentPane.setEditable(true);
+        final Document doc = commentPane.getDocument();
+        try {
+            SimpleAttributeSet attributes = new SimpleAttributeSet();
+            StyleConstants.setItalic(attributes, true);
+            StyleConstants.setForeground(attributes, Color.GRAY);
+			doc.insertString(0, "Please type here your comment", attributes);
+		} catch (BadLocationException e1) {
+		}
+        commentPane.setMinimumSize(new Dimension(0,200));
+        commentPane.addMouseListener(new MouseAdapter() {
+        	// Displays a message at the beginning that
+        	// disappears when first clicked
+        	boolean firstClickDone = false;
+        	
+        	@Override
+        	public void mouseClicked(MouseEvent e) {
+        		if (!firstClickDone) {
+        			commentPane.setText("");
+        			SimpleAttributeSet attributes = new SimpleAttributeSet();
+        			StyleConstants.setItalic(attributes, false);
+        	        StyleConstants.setForeground(attributes, Color.BLACK);
+        	        try {
+						doc.insertString(0, " ", attributes);
+					} catch (BadLocationException e1) {
+					}
+        			firstClickDone = true;
+        		}
+        	}
+		});
 
         final JScrollPane scComment = new JScrollPane(commentPane);
         scComment.setBorder(new TitledBorder("Comment"));
-        ComponentUtil.setFixedSize(scrollPane, new Dimension(600, 150));
 
-        final JLabel label = new JLabel("<html><center><br>The plugin named <b>" + plugin.getName()
+        // Description
+        final JLabel label = new JLabel("<html><br>The plugin named <b>" + plugin.getName()
                 + "</b> has encountered a problem.<br><br>"
                 + "Reporting this problem is anonymous and will help improving this plugin" + "<br><br></html>",
                 SwingConstants.CENTER);
         final JButton reportButton = new JButton("Report");
         final JButton closeButton = new JButton("Close");
+        final JButton btnShowDetails = new JButton("Show details");
+        
+        // North message + icon
+        JPanel panelPluginAndMessage = new JPanel();
+        panelPluginAndMessage.setLayout(new BoxLayout(panelPluginAndMessage, BoxLayout.X_AXIS));
+        panelPluginAndMessage.add(new JLabel(plugin.getIcon()));
+        panelPluginAndMessage.add(Box.createHorizontalStrut(10));
+        panelPluginAndMessage.add(GuiUtil.besidesPanel(label));
+        
+        // north part
+        JPanel panelNorth = new JPanel();
+        panelNorth.setLayout(new BoxLayout(panelNorth, BoxLayout.Y_AXIS));
+        panelNorth.setBorder(BorderFactory.createEmptyBorder(4,10,4,4));
+        panelNorth.add(panelPluginAndMessage);
+        panelNorth.add(GuiUtil.besidesPanel(new JLabel(" "),btnShowDetails,new JLabel(" ")));
 
-        final JPanel panel = GuiUtil.generatePanel();
-        panel.add(GuiUtil.besidesPanel(label));
-        panel.add(GuiUtil.besidesPanel(new JLabel(" "), closeButton, new JLabel(" "), reportButton, new JLabel(" ")));
-        panel.add(GuiUtil.besidesPanel(new JLabel(" ")));
-        panel.add(GuiUtil.besidesPanel(scrollPane));
-        panel.add(GuiUtil.besidesPanel(scComment));
+        // middle part
+        final JPanel detailsPanel = GuiUtil.generatePanel();
+        detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.PAGE_AXIS));
+        detailsPanel.add(scComment);
+        
+        // generating the GUI
+        final JPanel mainPanel = GuiUtil.generatePanel();
+        mainPanel.setLayout(new BorderLayout());        
+        mainPanel.add(panelNorth,BorderLayout.NORTH);
+        mainPanel.add(detailsPanel, BorderLayout.CENTER);
+        mainPanel.add(GuiUtil.besidesPanel(new JLabel(" "), closeButton, new JLabel(" "), reportButton, new JLabel(" ")),BorderLayout.SOUTH);
 
-        final IcyFrame icyFrame = GuiUtil.generateTitleFrame("Bug report", panel, new Dimension(200, 100), true, true,
+        final IcyFrame icyFrame = GuiUtil.generateTitleFrame("Bug report", mainPanel, new Dimension(200, 100), true, true,
                 true, true);
-        icyFrame.setPreferredSize(new Dimension(600, 600));
 
-        icyFrame.pack();
-        icyFrame.addToMainDesktopPane();
-        icyFrame.center();
         icyFrame.setVisible(true);
+        icyFrame.setSize(450,380);
+        icyFrame.addToMainDesktopPane();
         icyFrame.requestFocus();
+        icyFrame.center();
+        Point centeredLocationOnScreen = icyFrame.getLocation();
+        icyFrame.setLocation(centeredLocationOnScreen.x, centeredLocationOnScreen.y - 100);
 
+        btnShowDetails.addActionListener(new ActionListener() {			
+        	boolean active = false;
+        	
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int w = icyFrame.getWidth();
+		        int h = icyFrame.getHeight();
+		        
+		        // add / remove panel
+				if (active) {
+		        	detailsPanel.remove(scrollPane);
+		        	btnShowDetails.setText("Show Details");
+		        	icyFrame.setSize(w,h - (scrollPane.getHeight() + 10));
+		        } else {
+		        	detailsPanel.add(scrollPane,0);
+		        	btnShowDetails.setText("Hide Details");
+		        	icyFrame.setSize(w,h + 200);
+		        }
+		        active=!active;
+		        detailsPanel.revalidate();
+			}
+		});
+        
         reportButton.addActionListener(new ActionListener()
         {
             @Override
