@@ -11,7 +11,7 @@ import icy.gui.main.MainFrame;
 import icy.gui.util.GuiUtil;
 import icy.main.Icy;
 import icy.network.IRCClient;
-import icy.network.IRCClientListenerImpl;
+import icy.network.IRCEventListenerImpl;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.GeneralPreferences;
 import icy.preferences.XMLPreferences;
@@ -38,6 +38,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.LineBreakMeasurer;
 import java.awt.font.TextLayout;
 import java.io.IOException;
+import java.net.Socket;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.ArrayList;
@@ -191,7 +192,7 @@ public class ChatPanel extends ExternalizablePanel
         }
     }
 
-    private class CustomIRCClientListener extends IRCClientListenerImpl
+    private class CustomIRCClientListener extends IRCEventListenerImpl
     {
         public CustomIRCClientListener()
         {
@@ -509,7 +510,7 @@ public class ChatPanel extends ExternalizablePanel
     /**
      * Do IRC connection
      */
-    boolean connect()
+    void connect()
     {
         // connecting
         connectButton.setEnabled(false);
@@ -531,20 +532,35 @@ public class ChatPanel extends ExternalizablePanel
                 getIrcPassword(), nickName, userName, realName);
         client.addListener(ircListener);
 
-        try
+        // process connection in a separate thread as it can take sometime
+        new Thread(new Runnable()
         {
-            client.connect();
-            return true;
-        }
-        catch (IOException e)
-        {
-            // error while connecting
-            IcyExceptionHandler.showErrorMessage(e, false);
-            System.err.println("Cannot connect to chat.");
-            connectButton.setEnabled(true);
-            connectButton.setToolTipText("Not connected - Click to connect");
-            return false;
-        }
+            @Override
+            public void run()
+            {
+                try
+                {
+                    client.connect();
+                }
+                catch (IOException e)
+                {
+                    // error while connecting
+                    IcyExceptionHandler.showErrorMessage(e, false);
+                    System.err.println("Cannot connect to chat.");
+
+                    // update GUI
+                    ThreadUtil.invokeLater(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            connectButton.setEnabled(true);
+                            connectButton.setToolTipText("Not connected - Click to connect");
+                        }
+                    });
+                }
+            }
+        }).start();
     }
 
     void disconnect()
@@ -601,7 +617,7 @@ public class ChatPanel extends ExternalizablePanel
 
     public boolean getShowUsersPanel()
     {
-        return pref.getBoolean(ID_SHOW_USERS_PANEL, true);
+        return pref.getBoolean(ID_SHOW_USERS_PANEL, false);
     }
 
     public boolean getDesktopOverlay()
@@ -722,6 +738,7 @@ public class ChatPanel extends ExternalizablePanel
         JPanel topPanel = new JPanel();
         topPanel.setBorder(new EmptyBorder(0, 0, 2, 0));
         add(topPanel, BorderLayout.NORTH);
+
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
 
         autoConnectCheckBox = new JCheckBox("Auto connect");

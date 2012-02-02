@@ -6,8 +6,6 @@ package icy.network;
 import java.util.ArrayList;
 
 import org.schwering.irc.lib.IRCConnection;
-import org.schwering.irc.lib.IRCEventListener;
-import org.schwering.irc.lib.IRCUser;
 
 /**
  * Simple IRCClient class.
@@ -16,23 +14,11 @@ import org.schwering.irc.lib.IRCUser;
  */
 public class IRCClient extends IRCConnection
 {
-    /**
-     * Interface for IRC client event
-     */
-    public interface IRCClientListener extends IRCEventListener
-    {
-        public void onConnected();
-
-        public void onReceive(String text);
-
-        public void onLeave(String chan, IRCUser u, String msg);
-    }
-
     /** The current default target of PRIVMSGs (a channel or nickname). */
     protected String target;
 
     /** Listeners */
-    protected final ArrayList<IRCClientListener> listeners;
+    protected final ArrayList<IRCEventListenerImpl> listeners;
 
     /**
      * Creates a new IRCConnection instance and starts the thread.
@@ -47,15 +33,15 @@ public class IRCClient extends IRCConnection
     {
         super(host, new int[] {port}, pass, nickName, userName, realName);
 
-        listeners = new ArrayList<IRCClient.IRCClientListener>();
+        listeners = new ArrayList<IRCEventListenerImpl>();
 
         // default parameters
         setEncoding("UTF-8");
         setPong(true);
         setDaemon(false);
         setColors(true);
-        // 24 hours for timeout
-        setTimeout(24 * 60 * 60 * 1000);
+        // 1 hour for timeout
+        setTimeout(1 * 60 * 60 * 1000);
     }
 
     /**
@@ -128,18 +114,18 @@ public class IRCClient extends IRCConnection
      */
     protected void fireReceiveEvent(String text)
     {
-        for (IRCClientListener l : listeners)
+        for (IRCEventListenerImpl l : listeners)
             l.onReceive(text);
     }
 
-    public void addListener(IRCClientListener listener)
+    public void addListener(IRCEventListenerImpl listener)
     {
         if (!listeners.contains(listener))
             listeners.add(listener);
         addIRCEventListener(listener);
     }
 
-    public boolean removeListener(IRCClientListener listener)
+    public boolean removeListener(IRCEventListenerImpl listener)
     {
         listeners.remove(listener);
         return removeIRCEventListener(listener);

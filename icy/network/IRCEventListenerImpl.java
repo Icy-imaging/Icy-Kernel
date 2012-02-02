@@ -3,17 +3,17 @@
  */
 package icy.network;
 
-import icy.network.IRCClient.IRCClientListener;
-
+import org.schwering.irc.lib.IRCEventListener;
 import org.schwering.irc.lib.IRCModeParser;
 import org.schwering.irc.lib.IRCUser;
 
 /**
  * @author Stephane
  */
-public abstract class IRCClientListenerImpl implements IRCClientListener
+public abstract class IRCEventListenerImpl implements IRCEventListener
 {
-    @Override
+    public abstract void onReceive(String text);
+
     public void onConnected()
     {
         onReceive("Connected");
@@ -62,7 +62,6 @@ public abstract class IRCClientListenerImpl implements IRCClientListener
         onReceive(chan + "> " + u.getNick() + " kicks " + nickPass);
     }
 
-    @Override
     public void onLeave(String chan, IRCUser u, String msg)
     {
         onReceive(chan + "> " + u.getNick() + " leaves " + chan);

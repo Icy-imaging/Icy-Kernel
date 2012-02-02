@@ -215,8 +215,8 @@ public class Icy
         System.out.println("Running on " + SystemUtil.getOSName() + " " + SystemUtil.getOSVersion() + " ("
                 + SystemUtil.getOSArch() + ")");
         System.out.println("Number of processors : " + SystemUtil.getAvailableProcessors());
-        System.out.println("System total memory : " + UnitUtil.getBytesString(SystemUtil.getSystemTotalMemory()));
-        System.out.println("System available memory : " + UnitUtil.getBytesString(SystemUtil.getSystemFreeMemory()));
+        System.out.println("System total memory : " + UnitUtil.getBytesString(SystemUtil.getTotalMemory()));
+        System.out.println("System available memory : " + UnitUtil.getBytesString(SystemUtil.getFreeMemory()));
         System.out.println("Max java memory : " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()));
 
         // initialize OSX specific stuff
@@ -499,7 +499,7 @@ public class Icy
 
             // check if we need to copy the file
             if (osChanged || !dstFile.exists() || (dstFile.lastModified() != libraryFile.lastModified()))
-                FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false, false);
+                FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false);
         }
 
         // save os change
