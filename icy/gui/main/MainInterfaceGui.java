@@ -18,11 +18,11 @@
  */
 package icy.gui.main;
 
-import icy.common.AcceptListener;
 import icy.common.EventHierarchicalChecker;
-import icy.common.IcyChangedListener;
 import icy.common.UpdateEventHandler;
-import icy.common.WeakAcceptListener;
+import icy.common.listener.AcceptListener;
+import icy.common.listener.ChangeListener;
+import icy.common.listener.weak.WeakListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.main.MainEvent.MainEventSourceType;
 import icy.gui.main.MainEvent.MainEventType;
@@ -65,8 +65,33 @@ import javax.swing.event.EventListenerList;
  * 
  * @author Fabrice de Chaumont & Stephane
  */
-public class MainInterfaceGui implements IcyChangedListener, MainInterface
+public class MainInterfaceGui implements ChangeListener, MainInterface
 {
+    private class WeakAcceptListener extends WeakListener<AcceptListener> implements AcceptListener
+    {
+        public WeakAcceptListener(AcceptListener listener)
+        {
+            super(listener);
+        }
+
+        @Override
+        public void removeListener(Object source)
+        {
+            internalRemoveCanExitListener(this);
+        }
+
+        @Override
+        public boolean accept(Object source)
+        {
+            final AcceptListener listener = getListener();
+
+            if (listener != null)
+                return listener.accept(source);
+
+            return true;
+        }
+    }
+
     private final EventListenerList listeners;
     private final UpdateEventHandler updater;
 
@@ -131,6 +156,7 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     {
         // build main frame
         mainFrame = new MainFrame();
+        mainFrame.init();
         mainFrame.addWindowListener(new WindowAdapter()
         {
             @Override
@@ -629,15 +655,15 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
     }
 
     @Override
-    public boolean isMultiWindowMode()
+    public boolean isDetachedMode()
     {
-        return mainFrame.isMultiWindowMode();
+        return mainFrame.isDetachedMode();
     }
 
     @Override
-    public void setMultiWindowMode(boolean value)
+    public void setDetachedMode(boolean value)
     {
-        mainFrame.setMultiWindowMode(value);
+        mainFrame.setDetachedMode(value);
     }
 
     @Override
@@ -667,7 +693,6 @@ public class MainInterfaceGui implements IcyChangedListener, MainInterface
                 internalRemoveCanExitListener(l);
     }
 
-    @Override
     public void internalRemoveCanExitListener(WeakAcceptListener listener)
     {
         listeners.remove(WeakAcceptListener.class, listener);

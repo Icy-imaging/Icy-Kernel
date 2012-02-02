@@ -25,7 +25,6 @@ import icy.canvas.IcyCanvasEvent;
 import icy.canvas.IcyCanvasListener;
 import icy.common.IcyAbstractAction;
 import icy.common.MenuCallback;
-import icy.common.Random;
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
@@ -52,6 +51,7 @@ import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
+import icy.util.Random;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -62,6 +62,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
@@ -89,10 +90,6 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     static final Image ICON_PHOTO = ResourceUtil.getAlphaIconAsImage("photo.png");
     static final Image ICON_PHOTO_SMALL = ResourceUtil.getAlphaIconAsImage("photo_small.png");
     static final Image ICON_UNLOCKED = ResourceUtil.getAlphaIconAsImage("padlock_open.png");
-
-    // static final Image ICON_LOCKED_1 = ResourceUtil.getAlphaIconAsImage("locked_1.png");
-    // static final Image ICON_LOCKED_2 = ResourceUtil.getAlphaIconAsImage("locked_2.png");
-    // static final Image ICON_LOCKED_3 = ResourceUtil.getAlphaIconAsImage("locked_3.png");
 
     private class DuplicateAction extends IcyAbstractAction
     {
@@ -284,6 +281,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 return Viewer.this.getMenu();
             }
         });
+
         // build tool bar
         buildToolBar();
         refreshToolBar();
@@ -292,7 +290,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         // set lut (this modify lutPanel)
         setLut(sequence.createCompatibleLUT());
-        // set default canvas to Canvas2Dx (this modify mainPanel)
+        // set default canvas to Canvas2D (this modify mainPanel)
         setCanvas(new Canvas2D(this));
 
         setLayout(new BorderLayout());
@@ -303,7 +301,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         // setting frame
         refreshViewerTitle();
         setFocusable(true);
-        setLocation(20 + Random.nextInt(100), 20 + Random.nextInt(60));
+        // set position depending window mode
+        setLocationInternal(20 + Random.nextInt(100), 20 + Random.nextInt(60));
+        setLocationExternal(100 + Random.nextInt(200), 100 + Random.nextInt(150));
         setSize(640, 480);
 
         // initial position in sequence
@@ -316,27 +316,24 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             {
                 if (!sizeAjusted)
                 {
-                    if (canvas != null)
+                    if (canvas instanceof IcyCanvas2D)
                     {
-                        if (canvas instanceof IcyCanvas2D)
+                        final IcyCanvas2D cnv = (IcyCanvas2D) canvas;
+
+                        final int ix = cnv.getImageSizeX();
+                        final int iy = cnv.getImageSizeY();
+
+                        if ((ix > 0) && (iy > 0))
                         {
-                            final IcyCanvas2D cnv = (IcyCanvas2D) canvas;
+                            // find scale factor to fit image in a 640x540 sized window
+                            // and limit zoom to 100%
+                            final double scale = Math.min(Math.min(640d / ix, 540d / iy), 1d);
 
-                            final int ix = cnv.getImageSizeX();
-                            final int iy = cnv.getImageSizeY();
+                            cnv.setScaleX(scale);
+                            cnv.setScaleY(scale);
 
-                            if ((ix > 0) && (iy > 0))
-                            {
-                                // find scale factor to fit image in a 640x540 sized window
-                                // and limit zoom to 100%
-                                final double scale = Math.min(Math.min(640d / ix, 540d / iy), 1d);
-
-                                cnv.setScaleX(scale);
-                                cnv.setScaleY(scale);
-
-                                // this actually resize viewer as canvas size depend from it
-                                cnv.fitCanvasToImage();
-                            }
+                            // this actually resize viewer as canvas size depend from it
+                            cnv.fitCanvasToImage();
                         }
                     }
 
@@ -757,6 +754,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         // refresh combos
         refreshLockCombo();
         refreshCanvasCombo();
+
+        // switchStateButtonif (!canBeInternalized())
     }
 
     /**
@@ -767,23 +766,21 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         return sequence;
     }
 
+    /**
+     * Set the specified LUT for the viewer.
+     */
     public void setLut(LUT value)
     {
-        if (lut == value)
-            return;
-
-        if ((lut != null) && (value != null))
-            // restore the colormap of previous lut
-            value.getColorSpace().copyColormaps(lut.getColorSpace());
-
-        // set the new lut
-        lut = value;
-
-        lutChanged();
+        if (lut != value)
+        {
+            // set new lut & notify change
+            lut = value;
+            lutChanged();
+        }
     }
 
     /**
-     * @return the lut
+     * Returns the viewer LUT
      */
     public LUT getLut()
     {
@@ -794,12 +791,24 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         // we first test our LUT is correctly synchronized with sequence LUT
         // we do it here as sequence can be asynchronously modified
         if (!sequence.isLutCompatible(lut))
-            // need to update lut
-            setLut(sequence.createCompatibleLUT());
+        {
+            // create a new compatible LUT
+            final LUT newLut = sequence.createCompatibleLUT();
+
+            // restore the color map of previous LUT
+            if (lut != null)
+                newLut.getColorSpace().copyColormaps(lut.getColorSpace());
+
+            // set the new lut
+            setLut(newLut);
+        }
 
         return lut;
     }
 
+    /**
+     * Set the specified canvas for the viewer.
+     */
     public void setCanvas(IcyCanvas value)
     {
         if (canvas == value)
@@ -861,16 +870,17 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         fireViewerChanged(ViewerEventType.CANVAS_CHANGED);
     }
 
-    public JToolBar getToolBar()
-    {
-        return toolBar;
-    }
-
+    /**
+     * Return the viewer Canvas object
+     */
     public IcyCanvas getCanvas()
     {
         return canvas;
     }
 
+    /**
+     * Return the viewer Canvas panel
+     */
     public JPanel getCanvasPanel()
     {
         if (canvas != null)
@@ -879,6 +889,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         return null;
     }
 
+    /**
+     * Return the viewer Lut panel
+     */
     public IcyLutViewer getLutPanel()
     {
         return lutPanel;
@@ -890,6 +903,14 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     public void setLutPanel(IcyLutViewer lutViewer)
     {
         lutPanel = lutViewer;
+    }
+
+    /**
+     * Return the viewer ToolBar object
+     */
+    public JToolBar getToolBar()
+    {
+        return toolBar;
     }
 
     /**
@@ -1201,17 +1222,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 break;
 
             case SEQUENCE_DATA:
-                // adjust T position if needed
-                final int maxT = getMaxT();
-                final int curT = getT();
-                if ((curT != -1) && (curT > maxT))
-                    setT(maxT);
 
-                // adjust Z position if needed
-                final int maxZ = getMaxZ();
-                final int curZ = getZ();
-                if ((curZ != -1) && (curZ > maxZ))
-                    setZ(maxZ);
                 break;
 
             case SEQUENCE_TYPE:
@@ -1271,4 +1282,14 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         }
     }
 
+    /**
+     * called when "detached" mode changed
+     */
+    @Override
+    public void propertyChange(PropertyChangeEvent evt)
+    {
+        super.propertyChange(evt);
+
+        refreshToolBar();
+    }
 }

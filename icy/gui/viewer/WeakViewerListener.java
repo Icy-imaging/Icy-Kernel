@@ -3,32 +3,25 @@
  */
 package icy.gui.viewer;
 
-import java.lang.ref.WeakReference;
+import icy.common.listener.weak.WeakListener;
 
 /**
- * Weak listener wrapper for ViewerListener interface
+ * Weak listener wrapper for ViewerListener.
  * 
  * @author Stephane
  */
-public class WeakViewerListener implements ViewerListener
+public class WeakViewerListener extends WeakListener<ViewerListener> implements ViewerListener
 {
-    private final WeakReference<ViewerListener> listenerRef;
-
     public WeakViewerListener(ViewerListener listener)
     {
-        super();
-
-        listenerRef = new WeakReference<ViewerListener>(listener);
+        super(listener);
     }
 
-    private ViewerListener getListener(Viewer viewer)
+    @Override
+    public void removeListener(Object source)
     {
-        final ViewerListener listener = listenerRef.get();
-
-        if ((listener == null) && (viewer != null))
-            viewer.removeListener(this);
-
-        return listener;
+        if (source != null)
+            ((Viewer) source).removeListener(this);
     }
 
     @Override

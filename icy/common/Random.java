@@ -19,40 +19,55 @@
 package icy.common;
 
 /**
- * @author stephane
+ * @deprecated uses {@link icy.util.Random} instead
  */
 public class Random
 {
-    private static java.util.Random generator = new java.util.Random();
-
+    /**
+     * @deprecated uses {@link icy.util.Random#nextInt()} instead
+     */
     public static int nextInt()
     {
-        return generator.nextInt();
+        return icy.util.Random.nextInt();
     }
 
+    /**
+     * @deprecated uses {@link icy.util.Random#nextInt(int)} instead
+     */
     public static int nextInt(int n)
     {
-        return generator.nextInt(n);
+        return icy.util.Random.nextInt(n);
     }
 
+    /**
+     * @deprecated uses {@link icy.util.Random#nextBoolean()} instead
+     */
     public static boolean nextBoolean()
     {
-        return generator.nextBoolean();
+        return icy.util.Random.nextBoolean();
     }
 
+    /**
+     * @deprecated uses {@link icy.util.Random#nextDouble()} instead
+     */
     public static double nextDouble()
     {
-        return generator.nextDouble();
+        return icy.util.Random.nextDouble();
     }
 
+    /**
+     * @deprecated uses {@link icy.util.Random#nextFloat()} instead
+     */
     public static float nextFloat()
     {
-        return generator.nextFloat();
+        return icy.util.Random.nextFloat();
     }
 
+    /**
+     * @deprecated uses {@link icy.util.Random#nextLong()} instead
+     */
     public static long nextLong()
     {
-        return generator.nextLong();
+        return icy.util.Random.nextLong();
     }
-
 }

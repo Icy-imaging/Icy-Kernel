@@ -18,12 +18,13 @@
  */
 package icy.common;
 
+import icy.common.listener.AcceptListener;
+
 /**
- * Common interface for filter
- * 
- * @author Stephane
+ * @deprecated use {@link AcceptListener} instead
  */
-public interface Filter
+@Deprecated
+public interface Filter extends AcceptListener
 {
-    public boolean accept(Object object);
+
 }

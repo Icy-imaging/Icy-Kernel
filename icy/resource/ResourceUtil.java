@@ -74,6 +74,18 @@ public class ResourceUtil
     public static final Image ICON_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png");
     public static final Image ICON_NOT_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_close.png");
 
+    public static final Image ICON_PLUS = ResourceUtil.getAlphaIconAsImage("plus.png");
+    public static final Image ICON_MINUS = ResourceUtil.getAlphaIconAsImage("minus.png");
+    public static final Image ICON_ROTATE_UNCLOCK = ResourceUtil.getAlphaIconAsImage("rot_unclock.png");
+    public static final Image ICON_ROTATE_CLOCK = ResourceUtil.getAlphaIconAsImage("playback_reload.png");
+
+    public static final Image ICON_ARROW_TOP_RIGHT = ResourceUtil.getAlphaIconAsImage("arrow_top_right.png");
+
+    public static final Image ICON_SQUARE_DOWN = ResourceUtil.getAlphaIconAsImage("sq_down.png");
+    public static final Image ICON_SQUARE_UP = ResourceUtil.getAlphaIconAsImage("sq_up.png");
+    public static final Image ICON_SQUARE_PREV = ResourceUtil.getAlphaIconAsImage("sq_prev.png");
+    public static final Image ICON_SQUARE_NEXT = ResourceUtil.getAlphaIconAsImage("sq_next.png");
+
     private static final String ICON_PATH = "res/icon/";
     private static final String IMAGE_PATH = "res/image/";
 

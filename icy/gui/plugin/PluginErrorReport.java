@@ -210,7 +210,7 @@ public class PluginErrorReport
         mainPanel.add(detailsPanel, BorderLayout.CENTER);
         mainPanel.add(GuiUtil.besidesPanel(new JLabel(" "), closeButton, new JLabel(" "), reportButton, new JLabel(" ")),BorderLayout.SOUTH);
 
-        final IcyFrame icyFrame = GuiUtil.generateTitleFrame("Bug report", mainPanel, new Dimension(200, 100), true, true,
+        final IcyFrame icyFrame = GuiUtil.generateTitleFrame("Bug report", mainPanel, new Dimension(200, 70), true, true,
                 true, true);
 
         icyFrame.setVisible(true);

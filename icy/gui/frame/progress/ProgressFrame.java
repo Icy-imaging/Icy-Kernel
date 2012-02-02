@@ -18,7 +18,7 @@
  */
 package icy.gui.frame.progress;
 
-import icy.common.ProgressListener;
+import icy.common.listener.ProgressListener;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 

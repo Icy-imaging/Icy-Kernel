@@ -18,7 +18,7 @@
  */
 package icy.gui.lut;
 
-import icy.gui.component.JCheckTabbedPane;
+import icy.gui.component.CheckTabbedPane;
 import icy.gui.lut.abstract_.IcyLutViewer;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
@@ -52,7 +52,7 @@ public class LUTViewer extends IcyLutViewer
     /**
      * gui
      */
-    final JCheckTabbedPane bottomPane;
+    final CheckTabbedPane bottomPane;
 
     final JCheckBox autoCheckBox;
     private final ButtonGroup scaleGroup;
@@ -77,7 +77,7 @@ public class LUTViewer extends IcyLutViewer
 
         lutBandViewers = new ArrayList<LUTBandViewer>();
 
-        bottomPane = new JCheckTabbedPane(SwingConstants.BOTTOM, true);
+        bottomPane = new CheckTabbedPane(SwingConstants.BOTTOM, true);
         bottomPane.addChangeListener(new ChangeListener()
         {
             @Override

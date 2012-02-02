@@ -18,9 +18,8 @@
  */
 package icy.gui.system;
 
-import icy.gui.component.ExternalizablePanel;
 import icy.gui.util.GuiUtil;
-import icy.math.MathUtil;
+import icy.math.UnitUtil;
 import icy.system.SystemUtil;
 import icy.util.ColorUtil;
 
@@ -36,6 +35,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
+import javax.swing.JPanel;
 import javax.swing.Timer;
 
 /**
@@ -43,7 +43,7 @@ import javax.swing.Timer;
  * 
  * @author Fab
  */
-public class MemoryMonitorPanel extends ExternalizablePanel implements MouseListener, ActionListener
+public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionListener
 {
     private static final long serialVersionUID = 5629509450385435829L;
 
@@ -62,7 +62,7 @@ public class MemoryMonitorPanel extends ExternalizablePanel implements MouseList
 
     public MemoryMonitorPanel()
     {
-        super("Memory Monitor");
+        super();
 
         updateTimer = new Timer(100, this);
         maxMemory = SystemUtil.getJavaMaxMemory();
@@ -196,7 +196,7 @@ public class MemoryMonitorPanel extends ExternalizablePanel implements MouseList
         // save CPU load
         newValue(1, cpuLoad);
 
-        setInfo(0, "Used: " + MathUtil.getBytesString(usedMemory) + "  (Max: " + MathUtil.getBytesString(maxMemory)
+        setInfo(0, "Used: " + UnitUtil.getBytesString(usedMemory) + "  (Max: " + UnitUtil.getBytesString(maxMemory)
                 + ")");
         setInfo(1, "CPU Load: " + cpuLoad + "%");
 
@@ -233,7 +233,7 @@ public class MemoryMonitorPanel extends ExternalizablePanel implements MouseList
         final double released = freeAfter - freeBefore;
 
         System.out.println("Memory free by Garbage Collector : "
-                + MathUtil.getBytesString((released > 0) ? released : 0));
+                + UnitUtil.getBytesString((released > 0) ? released : 0));
     }
 
     @Override

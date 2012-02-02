@@ -53,8 +53,6 @@ import javax.swing.tree.TreeSelectionModel;
  */
 public class PreferenceFrame extends IcyFrame implements TreeSelectionListener
 {
-    private static final long serialVersionUID = 4785426218599980781L;
-
     public static final String NODE_NAME = "Preferences";
 
     /** true if the preference window is open. */
@@ -70,6 +68,9 @@ public class PreferenceFrame extends IcyFrame implements TreeSelectionListener
     boolean needRestart;
     boolean doRestart;
 
+    // we need to keep reference on it as the object only use weak reference
+    WindowPositionSaver positionSaver;
+
     public PreferenceFrame(String section)
     {
         super(NODE_NAME, true, true, false, false);
@@ -78,7 +79,7 @@ public class PreferenceFrame extends IcyFrame implements TreeSelectionListener
             return;
         singleton = true;
 
-        new WindowPositionSaver(this, "frame/preference", new Point(100, 100), new Dimension(640, 480));
+        positionSaver = new WindowPositionSaver(this, "frame/preference", new Point(100, 100), new Dimension(640, 480));
 
         needRestart = false;
         doRestart = false;

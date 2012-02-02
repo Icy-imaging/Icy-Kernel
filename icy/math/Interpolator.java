@@ -115,7 +115,8 @@ public class Interpolator
     }
 
     /**
-     * Return Y spline interpolated coordinates from specified points and given X increment
+     * Return Y spline interpolated coordinates from specified points and given X increment.<br>
+     * Not yet implemented !
      */
     public static double[] doYSplineInterpolation(double[] x, double[] y, double xstep)
     {

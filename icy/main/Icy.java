@@ -78,7 +78,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.2.0.0");
+    public static Version version = new Version("1.2.1.0");
 
     /**
      * Main interface
@@ -99,6 +99,11 @@ public class Icy
      * VTK loaded flag
      */
     public static boolean vktLibraryLoaded = false;
+
+    /**
+     * internals
+     */
+    static boolean exiting = false;
 
     /**
      * @param args
@@ -378,18 +383,21 @@ public class Icy
             @Override
             public void run()
             {
+                // mark the application as exiting
+                exiting = true;
+
                 final ImageJ ij = Icy.getMainInterface().getImageJ();
 
                 // clean ImageJ exit
                 if (ij != null)
                     ij.quit();
 
-                // close all external frames
-                for (JFrame frame : Icy.getMainInterface().getExternalFrames())
-                    frame.dispose();
                 // close all icyFrames
                 for (IcyFrame frame : IcyFrame.getAllFrames())
                     frame.close();
+                // close all external frames
+                for (JFrame frame : Icy.getMainInterface().getExternalFrames())
+                    frame.dispose();
                 // then close all JInternalFrames
                 final JDesktopPane desktopPane = Icy.getMainInterface().getDesktopPane();
                 if (desktopPane != null)
@@ -407,7 +415,7 @@ public class Icy
                 IcyPreferences.save();
 
                 // clean up native library files
-                //unPrepareNativeLibraries();
+                // unPrepareNativeLibraries();
 
                 if (checkUnique != null)
                     checkUnique.releaseUnique();
@@ -434,6 +442,14 @@ public class Icy
     public static boolean exit(final boolean restart, boolean force)
     {
         return exit(restart);
+    }
+
+    /**
+     * Return true is the application is currently exiting.
+     */
+    public static boolean isExiting()
+    {
+        return exiting;
     }
 
     public static MainInterface getMainInterface()

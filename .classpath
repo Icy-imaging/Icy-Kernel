@@ -46,5 +46,6 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/substance.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/trident.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/ij/ij.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/irclib.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

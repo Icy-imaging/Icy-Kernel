@@ -114,12 +114,10 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                 }
                 else
                 {
-                    final StackTraceElement[] stackTrace = throwable.getStackTrace();
-
                     // search plugin class (start from the end of stack trace)
-                    for (int i = stackTrace.length - 1; i >= 0; i--)
+                    for (StackTraceElement trace : throwable.getStackTrace())
                     {
-                        final String className = stackTrace[i].getClassName();
+                        final String className = trace.getClassName();
 
                         // plugin class ?
                         if (className.startsWith(PluginLoader.PLUGIN_PACKAGE + "."))

@@ -69,23 +69,17 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         @Override
         public void write(byte[] buf, int off, int len)
         {
-            super.write(buf, off, len);
+            try
+            {
+                super.write(buf, off, len);
 
-            if (buf == null)
-            {
-                throw new NullPointerException();
+                final String text = new String(buf, off, len);
+                addText(text, isStdErr);
             }
-            else if ((off < 0) || (off > buf.length) || (len < 0) || ((off + len) > buf.length) || ((off + len) < 0))
+            catch (Throwable t)
             {
-                throw new IndexOutOfBoundsException();
+                addText(t.getMessage(), isStdErr);
             }
-            else if (len == 0)
-            {
-                return;
-            }
-
-            final String text = new String(buf, off, len);
-            addText(text, isStdErr);
         }
     }
 
@@ -94,17 +88,22 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
      */
     private static final long serialVersionUID = 7142067146669860938L;
 
-    private static final int MAX_SIZE = 8 * 1024 * 1024; // 32MB
+    private static final int MAX_SIZE = 4 * 1024 * 1024; // 4 MB
 
     final JTextPane textPane;
     final StyledDocument doc;
     final SimpleAttributeSet normalAttributes;
     final SimpleAttributeSet errorAttributes;
-    final IcyToggleButton scrollLockButton;
+
+    final public IcyButton clearLogButton;
+    final public IcyButton copyLogButton;
+    final public IcyButton reportLogButton;
+    final public IcyToggleButton scrollLockButton;
+    final public JPanel bottomPanel;
 
     public OutputConsolePanel()
     {
-        super("Output");
+        super("Output", "outputConsole");
 
         textPane = new JTextPane();
         doc = textPane.getStyledDocument();
@@ -120,12 +119,12 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         StyleConstants.setFontSize(normalAttributes, 11);
         StyleConstants.setForeground(normalAttributes, Color.black);
 
-        final IcyButton clearLogButton = new IcyButton(ResourceUtil.ICON_DELETE);
-        final IcyButton copyLogButton = new IcyButton(ResourceUtil.ICON_DOCCOPY);
-        final IcyButton reportLogButton = new IcyButton(ResourceUtil.ICON_DOCEXPORT);
+        clearLogButton = new IcyButton(ResourceUtil.ICON_DELETE);
+        copyLogButton = new IcyButton(ResourceUtil.ICON_DOCCOPY);
+        reportLogButton = new IcyButton(ResourceUtil.ICON_DOCEXPORT);
         scrollLockButton = new IcyToggleButton(ResourceUtil.ICON_LOCK_OPEN);
 
-//        ComponentUtil.setFontSize(textPane, 10);
+        // ComponentUtil.setFontSize(textPane, 10);
         textPane.setEditable(false);
 
         clearLogButton.setFlat(true);
@@ -192,6 +191,12 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
             }
         });
 
+        bottomPanel = GuiUtil.createPageBoxPanel(
+                Box.createVerticalStrut(4),
+                GuiUtil.createLineBoxPanel(clearLogButton, Box.createHorizontalStrut(4), copyLogButton,
+                        Box.createHorizontalStrut(4), reportLogButton, Box.createHorizontalGlue(),
+                        Box.createHorizontalStrut(4), scrollLockButton));
+
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.add(textPane, BorderLayout.CENTER);
@@ -201,11 +206,9 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         setLayout(new BorderLayout());
 
         add(scrollPane, BorderLayout.CENTER);
-        add(GuiUtil.createPageBoxPanel(
-                Box.createVerticalStrut(4),
-                GuiUtil.createLineBoxPanel(clearLogButton, Box.createHorizontalStrut(4), copyLogButton,
-                        Box.createHorizontalStrut(4), reportLogButton, Box.createHorizontalGlue(),
-                        Box.createHorizontalStrut(4), scrollLockButton)), BorderLayout.SOUTH);
+        add(bottomPanel, BorderLayout.SOUTH);
+
+        validate();
 
         // redirect standard output
         System.setOut(new WindowsOutPrintStream(System.out, false));

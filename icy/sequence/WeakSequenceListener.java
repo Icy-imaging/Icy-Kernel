@@ -3,32 +3,25 @@
  */
 package icy.sequence;
 
-import java.lang.ref.WeakReference;
+import icy.common.listener.weak.WeakListener;
 
 /**
  * Weak listener wrapper for SequenceListener interface
  * 
  * @author Stephane
  */
-public class WeakSequenceListener implements SequenceListener
+public class WeakSequenceListener extends WeakListener<SequenceListener> implements SequenceListener
 {
-    private final WeakReference<SequenceListener> listenerRef;
-
     public WeakSequenceListener(SequenceListener listener)
     {
-        super();
-
-        listenerRef = new WeakReference<SequenceListener>(listener);
+        super(listener);
     }
 
-    private SequenceListener getListener(Sequence sequence)
+    @Override
+    public void removeListener(Object source)
     {
-        final SequenceListener listener = listenerRef.get();
-
-        if ((listener == null) && (sequence != null))
-            sequence.removeListener(this);
-
-        return listener;
+        if (source != null)
+            ((Sequence) source).removeListener(this);
     }
 
     @Override

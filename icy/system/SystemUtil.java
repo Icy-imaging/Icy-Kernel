@@ -24,6 +24,7 @@ import java.awt.DisplayMode;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
 import java.awt.ImageCapabilities;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -108,9 +109,21 @@ public class SystemUtil
         return null;
     }
 
-    public static int getSystemCtrlMask()
+    /**
+     * Return the CTRL key mask.
+     */
+    public static int getCtrlMask()
     {
         return Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+    }
+
+    /**
+     * @deprecated uses {@link #getCtrlMask()} instead
+     */
+    @Deprecated
+    public static int getSystemCtrlMask()
+    {
+        return getCtrlMask();
     }
 
     public static GraphicsEnvironment getLocalGraphicsEnvironment()
@@ -118,9 +131,49 @@ public class SystemUtil
         return GraphicsEnvironment.getLocalGraphicsEnvironment();
     }
 
+    /**
+     * Return the default screen device.
+     */
     public static GraphicsDevice getDefaultScreenDevice()
     {
-        return getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        try
+        {
+            return getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        }
+        catch (HeadlessException e)
+        {
+            return null;
+        }
+    }
+
+    /**
+     * Return the number of screen device.
+     */
+    public static int getScreenDeviceNumber()
+    {
+        try
+        {
+            return getLocalGraphicsEnvironment().getScreenDevices().length;
+        }
+        catch (HeadlessException e)
+        {
+            return 0;
+        }
+    }
+
+    /**
+     * Return the screen device corresponding to specified index.
+     */
+    public static GraphicsDevice getScreenDevice(int index)
+    {
+        try
+        {
+            return getLocalGraphicsEnvironment().getScreenDevices()[index];
+        }
+        catch (HeadlessException e)
+        {
+            return null;
+        }
     }
 
     public static GraphicsConfiguration getSystemGraphicsConfiguration()
@@ -247,7 +300,7 @@ public class SystemUtil
     /**
      * Return total physic memory of system
      */
-    public static long getSystemTotalMemory()
+    public static long getTotalMemory()
     {
         final OperatingSystemMXBean bean = getOSMXBean();
 
@@ -258,9 +311,18 @@ public class SystemUtil
     }
 
     /**
+     * @deprecated uses {@link #getTotalMemory()} instead
+     */
+    @Deprecated
+    public static long getSystemTotalMemory()
+    {
+        return getTotalMemory();
+    }
+
+    /**
      * Return free physic memory of system
      */
-    public static long getSystemFreeMemory()
+    public static long getFreeMemory()
     {
         final OperatingSystemMXBean bean = getOSMXBean();
 
@@ -271,9 +333,18 @@ public class SystemUtil
     }
 
     /**
+     * @deprecated uses {@link #getFreeMemory()} instead
+     */
+    @Deprecated
+    public static long getSystemFreeMemory()
+    {
+        return getFreeMemory();
+    }
+
+    /**
      * Return system process CPU time
      */
-    public static long getSystemProcessCpuTime()
+    public static long getProcessCpuTime()
     {
         final OperatingSystemMXBean bean = getOSMXBean();
 
@@ -284,10 +355,19 @@ public class SystemUtil
     }
 
     /**
+     * @deprecated uses {@link #getProcessCpuTime()} instead
+     */
+    @Deprecated
+    public static long getSystemProcessCpuTime()
+    {
+        return getProcessCpuTime();
+    }
+
+    /**
      * Return average CPU load of the application processes from the last call<br>
      * (-1 if no available)
      */
-    public static int getSystemCpuLoad()
+    public static int getCpuLoad()
     {
         final OperatingSystemMXBean bean = getOSMXBean();
 
@@ -322,31 +402,66 @@ public class SystemUtil
         return -1;
     }
 
+    /**
+     * @deprecated uses {@link #getCpuLoad()} instead
+     */
+    @Deprecated
+    public static int getSystemCpuLoad()
+    {
+        return getCpuLoad();
+    }
+
+    /**
+     * Returns the user name.
+     */
+    public static String getUserName()
+    {
+        return System.getProperty("user.name");
+    }
+
+    /**
+     * Returns the JVM name.
+     */
     public static String getJavaName()
     {
         return System.getProperty("java.runtime.name");
     }
 
+    /**
+     * Returns the JVM version.
+     */
     public static String getJavaVersion()
     {
         return System.getProperty("java.runtime.version");
     }
 
+    /**
+     * Returns the JVM data architecture model.
+     */
     public static int getJavaArchDataModel()
     {
         return Integer.parseInt(System.getProperty("sun.arch.data.model"));
     }
 
+    /**
+     * Returns the Operating System name.
+     */
     public static String getOSName()
     {
         return System.getProperty("os.name");
     }
 
+    /**
+     * Returns the Operating System architecture name.
+     */
     public static String getOSArch()
     {
         return System.getProperty("os.arch");
     }
 
+    /**
+     * Returns the Operating System version.
+     */
     public static String getOSVersion()
     {
         return System.getProperty("os.version");

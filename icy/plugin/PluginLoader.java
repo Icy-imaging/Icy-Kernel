@@ -19,8 +19,8 @@
 package icy.plugin;
 
 import icy.common.EventHierarchicalChecker;
-import icy.common.IcyChangedListener;
 import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginDescriptor.PluginNameSorter;
 import icy.plugin.abstract_.Plugin;
@@ -113,7 +113,7 @@ public class PluginLoader
     /**
      * internal updater (no need to dispatch event on the AWT thread)
      */
-    private static final UpdateEventHandler updater = new UpdateEventHandler(new IcyChangedListener()
+    private static final UpdateEventHandler updater = new UpdateEventHandler(new ChangeListener()
     {
         @Override
         public void onChanged(EventHierarchicalChecker e)
@@ -491,19 +491,25 @@ public class PluginLoader
                 }
                 catch (Error e)
                 {
-                    return "Fatal error while loading " + plugin.getClassName() + " from " + plugin.getJarFilename()
-                            + " :\n" + e.toString();
+                    return "Fatal error while loading '" + plugin.getClassName() + "' class from "
+                            + plugin.getJarFilename() + " :\n" + e.toString();
                 }
                 catch (ClassCastException e)
                 {
-                    return "Fatal error while loading " + plugin.getClassName() + " from " + plugin.getJarFilename()
-                            + " :\n" + e.toString() + "\n"
+                    return "Fatal error while loading '" + plugin.getClassName() + "' class from "
+                            + plugin.getJarFilename() + " :\n" + e.toString() + "\n"
                             + "Your plugin class should extends 'icy.plugin.abstract_.Plugin' class !";
+                }
+                catch (ClassNotFoundException e)
+                {
+                    return "Fatal error while loading '" + plugin.getClassName() + "' class from "
+                            + plugin.getJarFilename() + " :\n" + e.toString() + "\n"
+                            + "Verify you correctly set the class name in your plugin description.";
                 }
                 catch (Exception e)
                 {
-                    return "Fatal error while loading " + plugin.getClassName() + " from " + plugin.getJarFilename()
-                            + " :\n" + e.toString() + "\n";
+                    return "Fatal error while loading '" + plugin.getClassName() + "' class from "
+                            + plugin.getJarFilename() + " :\n" + e.toString();
                 }
             }
         }

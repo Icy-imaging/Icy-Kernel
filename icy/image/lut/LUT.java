@@ -19,8 +19,8 @@
 package icy.image.lut;
 
 import icy.common.EventHierarchicalChecker;
-import icy.common.IcyChangedListener;
 import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colorspace.IcyColorSpace;
 import icy.math.Scaler;
@@ -29,7 +29,7 @@ import java.util.ArrayList;
 
 import javax.swing.event.EventListenerList;
 
-public class LUT implements LUTBandListener, IcyChangedListener
+public class LUT implements LUTBandListener, ChangeListener
 {
     private ArrayList<LUTBand> lutBands = new ArrayList<LUTBand>();
 

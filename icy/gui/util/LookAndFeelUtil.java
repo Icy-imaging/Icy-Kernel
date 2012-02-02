@@ -18,6 +18,7 @@
  */
 package icy.gui.util;
 
+import icy.common.listener.weak.WeakListener;
 import icy.image.ImageUtil;
 import icy.preferences.GeneralPreferences;
 import icy.system.IcyExceptionHandler;
@@ -31,7 +32,6 @@ import java.awt.Image;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -42,6 +42,7 @@ import javax.swing.PopupFactory;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.InternalFrameUI;
 
 import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
 import org.pushingpixels.flamingo.api.common.JCommandToggleMenuButton;
@@ -67,29 +68,21 @@ import org.pushingpixels.substance.internal.utils.SubstanceTitlePane;
 public class LookAndFeelUtil
 {
     /**
-     * Weak listener wrapper for MainListener interface
+     * Weak listener wrapper for SkinChangeListener.
      * 
      * @author Stephane
      */
-    public static class WeakSubstanceSkinChangeListener implements SkinChangeListener
+    public static class WeakSkinChangeListener extends WeakListener<SkinChangeListener> implements SkinChangeListener
     {
-        private final WeakReference<SkinChangeListener> listenerRef;
-
-        public WeakSubstanceSkinChangeListener(SkinChangeListener listener)
+        public WeakSkinChangeListener(SkinChangeListener listener)
         {
-            super();
-
-            listenerRef = new WeakReference<SkinChangeListener>(listener);
+            super(listener);
         }
 
-        private SkinChangeListener getListener()
+        @Override
+        public void removeListener(Object source)
         {
-            final SkinChangeListener listener = listenerRef.get();
-
-            if (listener == null)
-                removeSkinChangeListener(this);
-
-            return listener;
+            removeSkinChangeListener(this);
         }
 
         @Override
@@ -110,11 +103,11 @@ public class LookAndFeelUtil
     {
         // so ImageJ won't change look and feel later
         Java2.setSystemLookAndFeel();
-        
+
         // enable or not EDT checking in substance
         System.setProperty("insubstantial.checkEDT", "false");
         System.setProperty("insubstantial.logEDT", "true");
-        
+
         // funny features of substance
 
         // AnimationConfigurationManager.getInstance().allowAnimations(AnimationFacet.FOCUS_LOOP_ANIMATION);
@@ -466,10 +459,17 @@ public class LookAndFeelUtil
      */
     public static Color getForeground(Component c)
     {
-        if (c.isEnabled())
-            return new ColorUIResource(getEnabledColorScheme(c).getForegroundColor());
+        final SubstanceColorScheme colorScheme;
 
-        return new ColorUIResource(getDisabledColorScheme(c).getForegroundColor());
+        if (c.isEnabled())
+            colorScheme = getEnabledColorScheme(c);
+        else
+            colorScheme = getDisabledColorScheme(c);
+
+        if (colorScheme != null)
+            return new ColorUIResource(colorScheme.getForegroundColor());
+
+        return c.getForeground();
     }
 
     /**
@@ -477,10 +477,17 @@ public class LookAndFeelUtil
      */
     public static Color getBackground(Component c)
     {
-        if (c.isEnabled())
-            return new ColorUIResource(getEnabledColorScheme(c).getBackgroundFillColor());
+        final SubstanceColorScheme colorScheme;
 
-        return new ColorUIResource(getDisabledColorScheme(c).getBackgroundFillColor());
+        if (c.isEnabled())
+            colorScheme = getEnabledColorScheme(c);
+        else
+            colorScheme = getDisabledColorScheme(c);
+
+        if (colorScheme != null)
+            return new ColorUIResource(colorScheme.getBackgroundFillColor());
+
+        return c.getBackground();
     }
 
     public static SubstanceTitlePane getTitlePane(Window window)
@@ -490,19 +497,19 @@ public class LookAndFeelUtil
 
     public static SubstanceInternalFrameTitlePane getTitlePane(JInternalFrame frame)
     {
-        final SubstanceInternalFrameUI ui = (SubstanceInternalFrameUI) frame.getUI();
+        final InternalFrameUI ui = frame.getUI();
 
-        if (ui != null)
-            return ui.getTitlePane();
+        if (ui instanceof SubstanceInternalFrameUI)
+            return ((SubstanceInternalFrameUI) ui).getTitlePane();
 
         return null;
     }
 
     public static void setTitlePane(JInternalFrame frame, SubstanceInternalFrameTitlePane titlePane)
     {
-        final SubstanceInternalFrameUI ui = (SubstanceInternalFrameUI) frame.getUI();
+        final InternalFrameUI ui = frame.getUI();
 
-        if (ui != null)
-            ui.setNorthPane(titlePane);
+        if (ui instanceof SubstanceInternalFrameUI)
+            ((SubstanceInternalFrameUI) ui).setNorthPane(titlePane);
     }
 }

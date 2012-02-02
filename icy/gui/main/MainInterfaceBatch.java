@@ -19,9 +19,8 @@
 
 package icy.gui.main;
 
-import icy.common.AcceptListener;
 import icy.common.EventHierarchicalChecker;
-import icy.common.WeakAcceptListener;
+import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.ToolRibbonTask;
@@ -288,7 +287,7 @@ public class MainInterfaceBatch implements MainInterface
     }
 
     @Override
-    public boolean isMultiWindowMode()
+    public boolean isDetachedMode()
     {
         return false;
     }
@@ -299,7 +298,7 @@ public class MainInterfaceBatch implements MainInterface
     }
 
     @Override
-    public void setMultiWindowMode(boolean value)
+    public void setDetachedMode(boolean value)
     {
     }
 
@@ -320,11 +319,6 @@ public class MainInterfaceBatch implements MainInterface
 
     @Override
     public void removeCanExitListener(AcceptListener listener)
-    {
-    }
-
-    @Override
-    public void internalRemoveCanExitListener(WeakAcceptListener listener)
     {
     }
 

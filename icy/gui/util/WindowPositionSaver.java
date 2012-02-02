@@ -18,8 +18,13 @@
  */
 package icy.gui.util;
 
+import icy.common.listener.weak.WeakComponentListener;
+import icy.common.listener.weak.WeakIcyFrameListener;
+import icy.common.listener.weak.WeakWindowListener;
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.ExternalizablePanel;
+import icy.gui.component.ExternalizablePanel.StateListener;
+import icy.gui.component.ExternalizablePanel.WeakStateListener;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.IcyFrameAdapter;
 import icy.gui.frame.IcyFrameEvent;
@@ -29,7 +34,6 @@ import icy.preferences.XMLPreferences;
 import icy.system.SystemUtil;
 
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
@@ -49,7 +53,13 @@ public class WindowPositionSaver
 {
     final private static int DESKTOP_MARGIN = 100;
 
-    final private static String ID_EXTERN = "Extern";
+    final private static String ID_EXTERNALIZED = "Externalized";
+    final private static String ID_PANELIZED = "Panelized";
+
+    final private static String ID_XC = "XC";
+    final private static String ID_YC = "YC";
+    final private static String ID_WC = "WidthC";
+    final private static String ID_HC = "HeightC";
 
     final private static String ID_XI = "XI";
     final private static String ID_YI = "YI";
@@ -72,6 +82,7 @@ public class WindowPositionSaver
     final WindowAdapter windowAdapter;
     final IcyFrameAdapter icyFrameAdapter;
     final ComponentAdapter componentAdapter;
+    final StateListener stateListener;
 
     private WindowPositionSaver(final MainFrame mainFrame, final IcyFrame icyFrame, final ExternalizablePanel extPanel,
             final JFrame jFrame, final JComponent component, final String key, final Point defLoc,
@@ -110,6 +121,7 @@ public class WindowPositionSaver
             }
         };
 
+        // keep hard reference on it
         componentAdapter = new ComponentAdapter()
         {
             @Override
@@ -165,53 +177,61 @@ public class WindowPositionSaver
             }
         };
 
+        // keep hard reference on it
         windowAdapter = new WindowAdapter()
         {
             @Override
             public void windowClosing(WindowEvent e)
             {
                 saver.run();
-
-                e.getWindow().removeWindowListener(windowAdapter);
-                e.getWindow().removeComponentListener(componentAdapter);
             }
         };
 
+        // keep hard reference on it
         icyFrameAdapter = new IcyFrameAdapter()
         {
             @Override
             public void icyFrameClosing(IcyFrameEvent e)
             {
                 saver.run();
+            }
+        };
 
-                e.getFrame().removeFrameListener(icyFrameAdapter);
-                e.getFrame().removeComponentListener(componentAdapter);
+        // keep hard reference on it
+        stateListener = new StateListener()
+        {
+            @Override
+            public void stateChanged(ExternalizablePanel source, boolean externalized)
+            {
+                saver.run();
             }
         };
 
         if (mainFrame != null)
         {
-            mainFrame.addWindowListener(windowAdapter);
-            mainFrame.addComponentListener(componentAdapter);
+            mainFrame.addWindowListener(new WeakWindowListener(windowAdapter));
+            mainFrame.addComponentListener(new WeakComponentListener(componentAdapter));
         }
         else if (icyFrame != null)
         {
-            icyFrame.addFrameListener(icyFrameAdapter);
-            icyFrame.addComponentListener(componentAdapter);
+            icyFrame.addFrameListener(new WeakIcyFrameListener(icyFrameAdapter));
+            icyFrame.addComponentListener(new WeakComponentListener(componentAdapter));
         }
         else if (extPanel != null)
         {
-            extPanel.getFrame().addComponentListener(componentAdapter);
-            extPanel.addComponentListener(componentAdapter);
+            extPanel.addComponentListener(new WeakComponentListener(componentAdapter));
+            extPanel.addStateListener(new WeakStateListener(stateListener));
+            extPanel.getFrame().addFrameListener(new WeakIcyFrameListener(icyFrameAdapter));
+            extPanel.getFrame().addComponentListener(new WeakComponentListener(componentAdapter));
         }
         else if (jFrame != null)
         {
-            jFrame.addWindowListener(windowAdapter);
-            jFrame.addComponentListener(componentAdapter);
+            jFrame.addWindowListener(new WeakWindowListener(windowAdapter));
+            jFrame.addComponentListener(new WeakComponentListener(componentAdapter));
         }
         else if (component != null)
         {
-            component.addComponentListener(componentAdapter);
+            component.addComponentListener(new WeakComponentListener(componentAdapter));
         }
     }
 
@@ -294,6 +314,7 @@ public class WindowPositionSaver
     {
         final Rectangle rect;
 
+        // only for frame
         if (mainFrame != null)
             rect = mainFrame.getBounds();
         else if (icyFrame != null)
@@ -303,8 +324,6 @@ public class WindowPositionSaver
             rect = extPanel.getFrame().getBounds();
         else if (jFrame != null)
             rect = jFrame.getBounds();
-        // else if (component != null)
-        // rect = component.getBounds();
         else
             return;
 
@@ -319,8 +338,6 @@ public class WindowPositionSaver
                 extPanel.getFrame().setBounds(rect);
             else if (jFrame != null)
                 jFrame.setBounds(rect);
-            // else if (component != null)
-            // component.setBounds(rect);
         }
     }
 
@@ -379,6 +396,7 @@ public class WindowPositionSaver
             defY = defLoc.y;
         }
 
+        final Point positionC = new Point(preferences.getInt(ID_XC, defX), preferences.getInt(ID_YC, defY));
         final Point positionI = new Point(preferences.getInt(ID_XI, defX), preferences.getInt(ID_YI, defY));
         final Point positionE = new Point(preferences.getInt(ID_XE, defX), preferences.getInt(ID_YE, defY));
 
@@ -393,8 +411,13 @@ public class WindowPositionSaver
         }
         else if (extPanel != null)
         {
-            extPanel.setLocation(positionI);
-            extPanel.setLocationExternal(positionE);
+            extPanel.setLocation(positionC);
+
+            // get the panel frame
+            final IcyFrame f = extPanel.getFrame();
+
+            f.setLocationInternal(positionI);
+            f.setLocationExternal(positionE);
         }
         else if (jFrame != null)
         {
@@ -402,7 +425,7 @@ public class WindowPositionSaver
         }
         else if (component != null)
         {
-            component.setLocation(positionI);
+            component.setLocation(positionC);
         }
     }
 
@@ -422,11 +445,14 @@ public class WindowPositionSaver
         }
 
         // minimum size is 10 pixels
+        int widthC = Math.max(preferences.getInt(ID_WC, defW), 10);
+        int heightC = Math.max(preferences.getInt(ID_HC, defH), 10);
         int widthI = Math.max(preferences.getInt(ID_WI, defW), 10);
         int heightI = Math.max(preferences.getInt(ID_HI, defH), 10);
         int widthE = Math.max(preferences.getInt(ID_WE, defW), 10);
         int heightE = Math.max(preferences.getInt(ID_HE, defH), 10);
 
+        final Dimension dimC = new Dimension(widthC, heightC);
         final Dimension dimI = new Dimension(widthI, heightI);
         final Dimension dimE = new Dimension(widthE, heightE);
 
@@ -444,10 +470,15 @@ public class WindowPositionSaver
         }
         else if (extPanel != null)
         {
-            extPanel.setPreferredSizeExternal(dimE);
-            extPanel.setSizeExternal(dimE);
-            extPanel.setPreferredSize(dimI);
-            // extPanel.setSize(dimI);
+            extPanel.setPreferredSize(dimC);
+
+            // get the panel frame
+            final IcyFrame f = extPanel.getFrame();
+
+            f.setPreferredSizeExternal(dimE);
+            f.setSizeExternal(dimE);
+            f.setPreferredSizeInternal(dimI);
+            f.setSizeInternal(dimI);
         }
         else if (jFrame != null)
         {
@@ -456,21 +487,21 @@ public class WindowPositionSaver
         }
         else if (component != null)
         {
-            component.setPreferredSize(dimI);
-            component.setSize(dimI);
+            component.setPreferredSize(dimC);
         }
     }
 
     public void loadState(XMLPreferences preferences)
     {
-        final boolean externalized = preferences.getBoolean(ID_EXTERN, false);
+        // default is internalized and panelized
+        final boolean externalized = preferences.getBoolean(ID_EXTERNALIZED, false);
+        final boolean panelized = preferences.getBoolean(ID_PANELIZED, true);
         final boolean maximizedE = preferences.getBoolean(ID_MAXIMIZEDE, false);
         final boolean maximizedI = preferences.getBoolean(ID_MAXIMIZEDI, false);
 
         if (mainFrame != null)
         {
-            if (maximizedE)
-                mainFrame.setExtendedState(Frame.MAXIMIZED_BOTH);
+            ComponentUtil.setMaximized(mainFrame, maximizedE);
         }
         else if (icyFrame != null)
         {
@@ -483,19 +514,24 @@ public class WindowPositionSaver
         }
         else if (extPanel != null)
         {
-            if (externalized)
-                extPanel.externalize();
-            else
-                extPanel.internalize();
+            // get the panel frame
+            final IcyFrame f = extPanel.getFrame();
 
-            // only for frame
-            if (maximizedE)
-                extPanel.getFrame().setExtendedState(Frame.MAXIMIZED_BOTH);
+            if (externalized)
+                f.externalize();
+            else
+                f.internalize();
+            f.setMaximizedExternal(maximizedE);
+            f.setMaximizedInternal(maximizedI);
+
+            if (panelized)
+                extPanel.internalize();
+            else
+                extPanel.externalize();
         }
         else if (jFrame != null)
         {
-            if (maximizedE)
-                jFrame.setExtendedState(Frame.MAXIMIZED_BOTH);
+            ComponentUtil.setMaximized(jFrame, maximizedE);
         }
     }
 
@@ -524,14 +560,22 @@ public class WindowPositionSaver
         }
         else if (extPanel != null)
         {
-            // frame
-            if (!(extPanel.getFrame().isMaximized() || extPanel.getFrame().isMinimized()))
+            preferences.putInt(ID_XC, extPanel.getX());
+            preferences.putInt(ID_YC, extPanel.getY());
+
+            // get the panel frame
+            final IcyFrame f = extPanel.getFrame();
+
+            if (!(f.isMaximizedExternal() || f.isMinimizedExternal()))
             {
-                preferences.putInt(ID_XE, extPanel.getFrame().getX());
-                preferences.putInt(ID_YE, extPanel.getFrame().getY());
+                preferences.putInt(ID_XE, f.getXExternal());
+                preferences.putInt(ID_YE, f.getYExternal());
             }
-            preferences.putInt(ID_XI, extPanel.getX());
-            preferences.putInt(ID_YI, extPanel.getY());
+            if (!(f.isMaximizedInternal() || f.isMinimizedInternal()))
+            {
+                preferences.putInt(ID_XI, f.getXInternal());
+                preferences.putInt(ID_YI, f.getYInternal());
+            }
         }
         else if (jFrame != null)
         {
@@ -543,8 +587,8 @@ public class WindowPositionSaver
         }
         else if (component != null)
         {
-            preferences.putInt(ID_XI, component.getX());
-            preferences.putInt(ID_YI, component.getY());
+            preferences.putInt(ID_XC, component.getX());
+            preferences.putInt(ID_YC, component.getY());
         }
     }
 
@@ -556,7 +600,7 @@ public class WindowPositionSaver
             {
                 final Dimension dim;
 
-                if (mainFrame.isMultiWindowMode())
+                if (mainFrame.isDetachedMode())
                     dim = new Dimension(mainFrame.getWidth(), mainFrame.getPreviousHeight());
                 else
                     dim = mainFrame.getSize();
@@ -580,14 +624,22 @@ public class WindowPositionSaver
         }
         else if (extPanel != null)
         {
-            // frame
-            if (!(extPanel.getFrame().isMaximized() || extPanel.getFrame().isMinimized()))
+            preferences.putInt(ID_WC, extPanel.getWidth());
+            preferences.putInt(ID_HC, extPanel.getHeight());
+
+            // get the panel frame
+            final IcyFrame f = extPanel.getFrame();
+
+            if (!(f.isMaximizedExternal() || f.isMinimizedExternal()))
             {
-                preferences.putInt(ID_WE, extPanel.getFrame().getWidth());
-                preferences.putInt(ID_HE, extPanel.getFrame().getHeight());
+                preferences.putInt(ID_WE, f.getWidthExternal());
+                preferences.putInt(ID_HE, f.getHeightExternal());
             }
-            preferences.putInt(ID_WI, extPanel.getWidth());
-            preferences.putInt(ID_HI, extPanel.getHeight());
+            if (!(f.isMaximizedInternal() || f.isMinimizedInternal()))
+            {
+                preferences.putInt(ID_WI, f.getWidthInternal());
+                preferences.putInt(ID_HI, f.getHeightInternal());
+            }
         }
         else if (jFrame != null)
         {
@@ -599,8 +651,8 @@ public class WindowPositionSaver
         }
         else if (component != null)
         {
-            preferences.putInt(ID_WI, component.getWidth());
-            preferences.putInt(ID_HI, component.getHeight());
+            preferences.putInt(ID_WC, component.getWidth());
+            preferences.putInt(ID_HC, component.getHeight());
         }
     }
 
@@ -610,7 +662,7 @@ public class WindowPositionSaver
         {
             final boolean b;
 
-            if (mainFrame.isMultiWindowMode())
+            if (mainFrame.isDetachedMode())
                 b = mainFrame.getPreviousMaximized();
             else
                 b = ComponentUtil.isMaximized(mainFrame);
@@ -619,14 +671,20 @@ public class WindowPositionSaver
         }
         if (icyFrame != null)
         {
-            preferences.putBoolean(ID_EXTERN, icyFrame.isExternalized());
+            preferences.putBoolean(ID_EXTERNALIZED, icyFrame.isExternalized());
             preferences.putBoolean(ID_MAXIMIZEDI, icyFrame.isMaximizedInternal());
             preferences.putBoolean(ID_MAXIMIZEDE, icyFrame.isMaximizedExternal());
         }
         else if (extPanel != null)
         {
-            preferences.putBoolean(ID_EXTERN, extPanel.isExternalized());
-            preferences.putBoolean(ID_MAXIMIZEDE, extPanel.getFrame().isMaximized());
+            preferences.putBoolean(ID_PANELIZED, extPanel.isInternalized());
+
+            // get the panel frame
+            final IcyFrame f = extPanel.getFrame();
+
+            preferences.putBoolean(ID_EXTERNALIZED, f.isExternalized());
+            preferences.putBoolean(ID_MAXIMIZEDI, f.isMaximizedInternal());
+            preferences.putBoolean(ID_MAXIMIZEDE, f.isMaximizedExternal());
         }
         else if (jFrame != null)
         {

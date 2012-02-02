@@ -46,8 +46,6 @@ import javax.swing.JTextArea;
 public class ScriptEditor extends IcyFrame implements ActionListener
 {
 
-    private static final long serialVersionUID = -1784101743390912359L;
-
     private JTextArea codeArea = new JTextArea("print('Hello, world!')", 15, 20);
     private JTextArea messageArea = new JTextArea("message text", 5, 20);
     private JPanel mainPanel = new JPanel();
@@ -61,11 +59,15 @@ public class ScriptEditor extends IcyFrame implements ActionListener
     JMenuItem loadFileMenuItem = new JMenuItem("Load...");
     JMenuItem saveFileMenuItem = new JMenuItem("Save...");
 
+    // we need to keep reference on it as the object only use weak reference
+    final WindowPositionSaver positionSaver;
+
     public ScriptEditor()
     {
         super("Script Editor", true, true, true, true);
 
-        new WindowPositionSaver(this, "frame/scriptEditor", new Point(300, 300), new Dimension(400, 300));
+        positionSaver = new WindowPositionSaver(this, "frame/scriptEditor", new Point(300, 300),
+                new Dimension(400, 300));
 
         JMenuBar menuBar = new JMenuBar();
         this.setJMenuBar(menuBar);

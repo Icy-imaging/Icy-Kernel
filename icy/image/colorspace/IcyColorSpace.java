@@ -19,8 +19,8 @@
 package icy.image.colorspace;
 
 import icy.common.EventHierarchicalChecker;
-import icy.common.IcyChangedListener;
 import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
 import icy.image.colormap.FromRGBColorMap;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.IcyColorMap.IcyColorMapType;
@@ -40,7 +40,7 @@ import javax.swing.event.EventListenerList;
 /**
  * @author stephane
  */
-public class IcyColorSpace extends ColorSpace implements IcyChangedListener, IcyColorMapListener
+public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColorMapListener
 {
     /**
 	 * 

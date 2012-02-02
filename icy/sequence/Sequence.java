@@ -19,8 +19,8 @@
 package icy.sequence;
 
 import icy.common.EventHierarchicalChecker;
-import icy.common.IcyChangedListener;
 import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageEvent;
@@ -71,7 +71,7 @@ import org.w3c.dom.Node;
 /**
  * @author Fabrice de Chaumont
  */
-public class Sequence implements IcyColorModelListener, IcyBufferedImageListener, IcyChangedListener, ROIListener
+public class Sequence implements IcyColorModelListener, IcyBufferedImageListener, ChangeListener, ROIListener
 {
     private static final String DEFAULT_NAME = "no name";
 

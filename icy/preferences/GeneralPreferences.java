@@ -15,7 +15,6 @@ public class GeneralPreferences
      */
     private static final String PREF_GENERAL_ID = "general";
     private static final String TOOLTIPS_ID = "toolTips";
-    // private static final String PREF_LOADER_ID = "loader";
 
     /**
      * id
@@ -24,9 +23,8 @@ public class GeneralPreferences
     private static final String ID_SEQUENCE_PERSISTENCE = "sequencePersistence";
     private static final String ID_AUTO_UPDATE = "autoUpdate";
     private static final String ID_AUTO_CHECK_UPDATE = "autoCheckUpdate";
-    private static final String ID_MULTI_WINDOW_MODE = "multiWindow";
+    private static final String ID_DETACHED_MODE = "detached";
     private static final String ID_ALWAYS_ON_TOP = "alwaysOnTop";
-    // private static final String ID_GUI_LAF = "guiLAF";
     private static final String ID_GUI_SKIN = "guiSkin";
     private static final String ID_GUI_FONT_SIZE = "guiFontSize";
     private static final String ID_STARTUP_TOOLTIP = "startupTooltip";
@@ -47,7 +45,7 @@ public class GeneralPreferences
     public static void load()
     {
         // load preferences
-        prefGeneral = ApplicationPreferences.getPreferences().node(GeneralPreferences.PREF_GENERAL_ID);
+        prefGeneral = ApplicationPreferences.getPreferences().node(PREF_GENERAL_ID);
         prefToolTips = prefGeneral.node(TOOLTIPS_ID);
         // prefCanvas2D =
         // ApplicationPreferences.getPreferences().node(GeneralPreferences.PREF_CANVAS2D_ID);
@@ -57,7 +55,6 @@ public class GeneralPreferences
     }
 
     /**
-     * @return the prefGeneral
      * @deprecated uses {@link #getPreferences()} instead
      */
     @Deprecated
@@ -207,7 +204,7 @@ public class GeneralPreferences
 
     public static boolean getMultiWindowMode()
     {
-        return prefGeneral.getBoolean(ID_MULTI_WINDOW_MODE, false);
+        return prefGeneral.getBoolean(ID_DETACHED_MODE, false);
     }
 
     public static boolean getAlwaysOnTop()
@@ -229,11 +226,6 @@ public class GeneralPreferences
     {
         return prefGeneral.getInt(ID_GUI_FONT_SIZE, LookAndFeelUtil.getDefaultFontSize());
     }
-
-    // public static String getGuiLookAndFeel()
-    // {
-    // return prefGeneral.get(ID_GUI_LAF, LookAndFeelUtil.getDefaultLookAndFeel());
-    // }
 
     public static String getGuiSkin()
     {
@@ -302,10 +294,10 @@ public class GeneralPreferences
 
     public static void setMultiWindowMode(boolean value)
     {
-        prefGeneral.putBoolean(ID_MULTI_WINDOW_MODE, value);
+        prefGeneral.putBoolean(ID_DETACHED_MODE, value);
 
-        // set "multi window" mode
-        Icy.getMainInterface().setMultiWindowMode(value);
+        // set detached mode
+        Icy.getMainInterface().setDetachedMode(value);
     }
 
     public static void setAlwaysOnTop(boolean value)
@@ -336,16 +328,6 @@ public class GeneralPreferences
         }
     }
 
-    // public static void setGuiLookAndFeel(String value)
-    // {
-    // // set new look and feel
-    // if (value != getGuiLookAndFeel())
-    // {
-    // prefGeneral.put(ID_GUI_LAF, value);
-    // LookAndFeelUtil.setLookAndFeel(value);
-    // }
-    // }
-
     public static void setGuiSkin(String value)
     {
         // set new look and feel
@@ -355,4 +337,5 @@ public class GeneralPreferences
             LookAndFeelUtil.setSkin(value);
         }
     }
+
 }

@@ -19,8 +19,8 @@
 package icy.image.colormap;
 
 import icy.common.EventHierarchicalChecker;
-import icy.common.IcyChangedListener;
 import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;
 import icy.image.colormap.IcyColorMapEvent.IcyColorMapEventType;
 import icy.util.ColorUtil;
@@ -35,7 +35,7 @@ import org.w3c.dom.Node;
 /**
  * @author stephane
  */
-public class IcyColorMap implements IcyChangedListener, XMLPersistent
+public class IcyColorMap implements ChangeListener, XMLPersistent
 {
     public enum IcyColorMapType
     {

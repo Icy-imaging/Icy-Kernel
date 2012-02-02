@@ -19,9 +19,8 @@
 
 package icy.gui.main;
 
-import icy.common.AcceptListener;
 import icy.common.EventHierarchicalChecker;
-import icy.common.WeakAcceptListener;
+import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.ToolRibbonTask;
@@ -298,14 +297,14 @@ public interface MainInterface
     public abstract void setAlwaysOnTop(boolean value);
 
     /**
-     * Return true if the application is in "multi window" mode
+     * Return true if the application is in "detached" mode
      */
-    public abstract boolean isMultiWindowMode();
+    public abstract boolean isDetachedMode();
 
     /**
-     * Set the the application is in "multi window" mode
+     * Set the the application is in "detached" mode
      */
-    public abstract void setMultiWindowMode(boolean value);
+    public abstract void setDetachedMode(boolean value);
 
     /**
      * Add main listener
@@ -321,19 +320,14 @@ public interface MainInterface
      * Add "can exit" listener.<br>
      * <br>
      * CAUTION : A weak reference is used to reference the listener for easier release<br>
-     * so you should have a hard reference to your listener to keep it alive
+     * so you should have a hard reference to your listener to keep it alive.
      */
-    public abstract void addCanExitListener(AcceptListener listener);
+    public abstract void addCanExitListener(icy.common.listener.AcceptListener listener);
 
     /**
      * Remove "can exit" listener
      */
     public abstract void removeCanExitListener(AcceptListener listener);
-
-    /**
-     * Internal remove "can exit" listener (used internally only)
-     */
-    public abstract void internalRemoveCanExitListener(WeakAcceptListener listener);
 
     /**
      * Add focused viewer listener.<br>

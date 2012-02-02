@@ -19,8 +19,8 @@
 package icy.math;
 
 import icy.common.EventHierarchicalChecker;
-import icy.common.IcyChangedListener;
 import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;
 import icy.math.ScalerEvent.ScalerEventType;
 import icy.type.TypeUtil;
@@ -34,7 +34,7 @@ import org.w3c.dom.Node;
 /**
  * @author stephane
  */
-public class Scaler implements IcyChangedListener, XMLPersistent
+public class Scaler implements ChangeListener, XMLPersistent
 {
     private enum ScalerRange
     {

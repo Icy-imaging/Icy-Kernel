@@ -20,8 +20,8 @@ package icy.roi;
 
 import icy.canvas.IcyCanvas;
 import icy.common.EventHierarchicalChecker;
-import icy.common.IcyChangedListener;
 import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;
 import icy.main.Icy;
 import icy.painter.AbstractPainter;
@@ -42,7 +42,7 @@ import javax.swing.event.EventListenerList;
 
 import org.w3c.dom.Node;
 
-public abstract class ROI implements IcyChangedListener, XMLPersistent
+public abstract class ROI implements ChangeListener, XMLPersistent
 {
     public static final String ID_CLASSNAME = "classname";
     public static final String ID_ID = "id";

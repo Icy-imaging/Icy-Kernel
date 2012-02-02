@@ -22,13 +22,16 @@ import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.canvas.Layer.LayerListener;
 import icy.canvas.LayersEvent.LayersEventType;
 import icy.common.EventHierarchicalChecker;
-import icy.common.IcyChangedListener;
-import icy.common.ProgressListener;
 import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
+import icy.common.listener.ProgressListener;
+import icy.gui.util.GuiUtil;
 import icy.gui.viewer.MouseImageInfosPanel;
+import icy.gui.viewer.TNavigationPanel;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.gui.viewer.ViewerListener;
+import icy.gui.viewer.ZNavigationPanel;
 import icy.image.IcyBufferedImage;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.lut.LUT;
@@ -46,6 +49,7 @@ import icy.sequence.SequenceListener;
 import icy.system.IcyExceptionHandler;
 import icy.util.ClassUtil;
 
+import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
@@ -58,6 +62,7 @@ import java.util.List;
 
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
+import javax.swing.event.ChangeEvent;
 
 /**
  * @author Fabrice de Chaumont & Stephane Dallongeville<br>
@@ -76,7 +81,7 @@ import javax.swing.JToolBar;
  *         (Canvas2D and Canvas3D derives from IcyCanvas)<br>
  */
 public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerListener, SequenceListener, LUTListener,
-        IcyChangedListener, LayerListener
+        ChangeListener, LayerListener
 {
     public static class EventLayerSorter implements Comparator<Layer>
     {
@@ -183,6 +188,12 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     private static final long serialVersionUID = -8461229450296203011L;
 
     /**
+     * gui
+     */
+    final protected ZNavigationPanel zNav;
+    final protected TNavigationPanel tNav;
+
+    /**
      * attached viewer
      */
     protected final Viewer viewer;
@@ -269,11 +280,43 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         layerIdGen = 1;
         syncId = 0;
         synchHeader = false;
+        updater = new UpdateEventHandler(this, false);
 
+        // GUI stuff
         panel = new JPanel();
+
+        // Z navigation
+        zNav = new ZNavigationPanel();
+        zNav.addChangeListener(new javax.swing.event.ChangeListener()
+        {
+            @Override
+            public void stateChanged(ChangeEvent e)
+            {
+                // set the new Z position
+                setPositionZ(zNav.getValue());
+            }
+        });
+
+        // T navigation
+        tNav = new TNavigationPanel();
+        tNav.addChangeListener(new javax.swing.event.ChangeListener()
+        {
+            @Override
+            public void stateChanged(ChangeEvent e)
+            {
+                // set the new T position
+                setPositionT(tNav.getValue());
+            }
+        });
+
+        // mouse info panel
         mouseInfPanel = new MouseImageInfosPanel();
 
-        updater = new UpdateEventHandler(this, false);
+        // default canvas layout
+        setLayout(new BorderLayout());
+
+        add(zNav, BorderLayout.WEST);
+        add(GuiUtil.createPageBoxPanel(tNav, mouseInfPanel), BorderLayout.SOUTH);
 
         final Sequence sequence = getSequence();
 
@@ -308,6 +351,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void shutDown()
     {
+        // remove navigation panel listener
+        zNav.removeAllChangeListener();
+        tNav.removeAllChangeListener();
+
         // remove listeners
         if (lut != null)
             lut.removeListener(this);
@@ -376,6 +423,30 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     public Sequence getSequence()
     {
         return viewer.getSequence();
+    }
+
+    /**
+     * @return the Z navigation bar panel
+     */
+    public ZNavigationPanel getZNavigationPanel()
+    {
+        return zNav;
+    }
+
+    /**
+     * @return the T navigation bar panel
+     */
+    public TNavigationPanel getTNavigationPanel()
+    {
+        return tNav;
+    }
+
+    /**
+     * @return the mouse image informations panel
+     */
+    public MouseImageInfosPanel getMouseImageInfosPanel()
+    {
+        return mouseInfPanel;
     }
 
     /**
@@ -731,7 +802,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                         cnv.setRotation(dim, getRotation(dim));
                 }
             }
-            
+
             // process offset in last as it can be limited depending destination scale value
             if (processAll || (type == IcyCanvasEventType.OFFSET_CHANGED))
             {
@@ -3005,18 +3076,54 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
         final int base_len = getImageSizeX() * getImageSizeY() * getImageSizeC();
 
-        if (getT() == -1)
+        if (getPositionT() == -1)
         {
-            if (getZ() == -1)
+            if (getPositionZ() == -1)
                 return base_len * getImageSizeZ() * getImageSizeT();
 
             return base_len * getImageSizeT();
         }
 
-        if (getZ() == -1)
+        if (getPositionZ() == -1)
             return base_len * getImageSizeZ();
 
         return base_len;
+    }
+
+    /**
+     * update Z slider state
+     */
+    protected void updateZNav()
+    {
+        final int maxZ = getMaxZ();
+        final int z = getPositionZ();
+
+        zNav.setMaximum(maxZ);
+        if (z != -1)
+        {
+            zNav.setValue(z);
+            zNav.setVisible(maxZ > 0);
+        }
+        else
+            zNav.setVisible(false);
+    }
+
+    /**
+     * update T slider state
+     */
+    protected void updateTNav()
+    {
+        final int maxT = getMaxT();
+        final int t = getPositionT();
+
+        tNav.setMaximum(maxT);
+        if (t != -1)
+        {
+            tNav.setValue(t);
+            tNav.setVisible(maxT > 0);
+        }
+        else
+            tNav.setVisible(false);
     }
 
     public Layer getLayer(Painter painter)
@@ -3257,9 +3364,42 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             }
         }
 
-        if (eventType == IcyCanvasEventType.MOUSE_IMAGE_POSITION_CHANGED)
-            // refresh mouse panel informations
-            mouseInfPanel.updateInfos(this);
+        switch (eventType)
+        {
+            case POSITION_CHANGED:
+                final int curZ = getPositionZ();
+                final int curT = getPositionT();
+
+                switch (event.getDim())
+                {
+                    case Z:
+                        // ensure Z slider position
+                        if (curZ != -1)
+                            zNav.setValue(curZ);
+                        break;
+
+                    case T:
+                        // ensure T slider position
+                        if (curT != -1)
+                            tNav.setValue(curT);
+                        break;
+
+                    case NULL:
+                        // ensure Z slider position
+                        if (curZ != -1)
+                            zNav.setValue(curZ);
+                        // ensure T slider position
+                        if (curT != -1)
+                            tNav.setValue(curT);
+                        break;
+                }
+                break;
+
+            case MOUSE_IMAGE_POSITION_CHANGED:
+                // refresh mouse panel informations
+                mouseInfPanel.updateInfos(this);
+                break;
+        }
 
         // notify listeners that canvas have changed
         fireCanvasChangedEvent(event);
@@ -3341,7 +3481,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * sequence has changed
+     * sequence data has changed
      * 
      * @param image
      *        image which has changed (null if global data changed)
@@ -3350,6 +3490,36 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     protected void sequenceDataChanged(IcyBufferedImage image, SequenceEventType type)
     {
+        // adjust X position if needed
+        final int maxX = getMaxX();
+        final int curX = getPositionX();
+        if ((curX != -1) && (curX > maxX))
+            setPositionX(maxX);
+
+        // adjust Y position if needed
+        final int maxY = getMaxY();
+        final int curY = getPositionY();
+        if ((curY != -1) && (curY > maxY))
+            setPositionY(maxY);
+
+        // adjust C position if needed
+        final int maxC = getMaxC();
+        final int curC = getPositionC();
+        if ((curC != -1) && (curC > maxC))
+            setPositionC(maxC);
+
+        // adjust Z position if needed
+        final int maxZ = getMaxZ();
+        final int curZ = getPositionZ();
+        if ((curZ != -1) && (curZ > maxZ))
+            setPositionZ(maxZ);
+
+        // adjust T position if needed
+        final int maxT = getMaxT();
+        final int curT = getPositionT();
+        if ((curT != -1) && (curT > maxT))
+            setPositionT(maxT);
+
         // refresh mouse panel informations (data values can have changed)
         mouseInfPanel.updateInfos(this);
     }

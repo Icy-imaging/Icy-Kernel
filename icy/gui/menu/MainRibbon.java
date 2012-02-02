@@ -23,9 +23,9 @@ import icy.gui.component.button.IcyCommandMenuButton;
 import icy.gui.component.button.IcyCommandToggleButton;
 import icy.gui.component.button.IcyCommandToggleMenuButton;
 import icy.gui.frame.AboutFrame;
-import icy.gui.main.IcyDesktopPane;
 import icy.gui.main.MainAdapter;
 import icy.gui.main.MainEvent;
+import icy.gui.main.MainFrame;
 import icy.gui.preferences.GeneralPreferencePanel;
 import icy.gui.preferences.PluginLocalPreferencePanel;
 import icy.gui.preferences.PluginOnlinePreferencePanel;
@@ -872,8 +872,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         final CommandToggleButtonGroup multiWindowGroup = new CommandToggleButtonGroup();
         final IcyCommandToggleButton multiWindowButton = new IcyCommandToggleButton("", "app_detached");
 
-        multiWindowButton.setActionRichTooltip(new RichTooltip("Multi window mode ON/OFF",
-                "Switch to multi window mode / single window mode"));
+        multiWindowButton.setActionRichTooltip(new RichTooltip("Detached mode ON/OFF",
+                "Switch to detached / attached mode"));
         multiWindowButton.addActionListener(new ActionListener()
         {
             @Override
@@ -971,16 +971,65 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
 
                 // REORGANIZE TILE
                 final IcyCommandMenuButton tileButton = new IcyCommandMenuButton("Tile", "2x2_grid");
-                tileButton.setPopupRichTooltip(new RichTooltip("Tile arrangement",
-                        "Reorganise all opened windows in tile"));
-                tileButton.addActionListener(new ActionListener()
+                tileButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
+                tileButton.setPopupCallback(new PopupPanelCallback()
                 {
                     @Override
-                    public void actionPerformed(ActionEvent e)
+                    public JPopupPanel getPopupPanel(JCommandButton commandButton)
                     {
-                        final IcyDesktopPane desktopPane = Icy.getMainInterface().getDesktopPane();
-                        if (desktopPane != null)
-                            desktopPane.organizeTile();
+                        final JCommandPopupMenu result = new JCommandPopupMenu();
+
+                        // Tile horizontal
+                        final IcyCommandMenuButton horizontalTileButton = new IcyCommandMenuButton("Horizontal",
+                                "tile_horizontal");
+                        horizontalTileButton.setPopupRichTooltip(new RichTooltip("Horizontal tile arrangement",
+                                "Reorganise all opened windows in horizontal tile."));
+                        horizontalTileButton.addActionListener(new ActionListener()
+                        {
+                            @Override
+                            public void actionPerformed(ActionEvent e)
+                            {
+                                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+                                if (mainFrame != null)
+                                    mainFrame.organizeTile(MainFrame.TILE_HORIZONTAL);
+                            }
+                        });
+                        result.addMenuButton(horizontalTileButton);
+
+                        // Tile vertical
+                        final IcyCommandMenuButton verticalTileButton = new IcyCommandMenuButton("Vertical",
+                                "tile_vertical");
+                        verticalTileButton.setPopupRichTooltip(new RichTooltip("Vertical tile arrangement",
+                                "Reorganise all opened windows in vertical tile."));
+                        verticalTileButton.addActionListener(new ActionListener()
+                        {
+                            @Override
+                            public void actionPerformed(ActionEvent e)
+                            {
+                                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+                                if (mainFrame != null)
+                                    mainFrame.organizeTile(MainFrame.TILE_VERTICAL);
+                            }
+                        });
+                        result.addMenuButton(verticalTileButton);
+
+                        // Tile grid
+                        final IcyCommandMenuButton gridTileButton = new IcyCommandMenuButton("Grid", "2x2_grid");
+                        gridTileButton.setPopupRichTooltip(new RichTooltip("Grid tile arrangement",
+                                "Reorganise all opened windows in grid tile."));
+                        gridTileButton.addActionListener(new ActionListener()
+                        {
+                            @Override
+                            public void actionPerformed(ActionEvent e)
+                            {
+                                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+                                if (mainFrame != null)
+                                    mainFrame.organizeTile(MainFrame.TILE_GRID);
+                            }
+                        });
+                        result.addMenuButton(gridTileButton);
+
+                        return result;
                     }
                 });
                 result.addMenuButton(tileButton);
@@ -994,9 +1043,9 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                     @Override
                     public void actionPerformed(ActionEvent e)
                     {
-                        final IcyDesktopPane desktopPane = Icy.getMainInterface().getDesktopPane();
-                        if (desktopPane != null)
-                            desktopPane.organizeCascade();
+                        final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+                        if (mainFrame != null)
+                            mainFrame.organizeCascade();
                     }
                 });
                 result.addMenuButton(cascadeButton);

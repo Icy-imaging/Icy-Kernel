@@ -3,37 +3,28 @@
  */
 package icy.swimmingPool;
 
+import icy.common.listener.weak.WeakListener;
 import icy.main.Icy;
 
-import java.lang.ref.WeakReference;
-
 /**
+ * Weak listener wrapper for SwimmingPoolListener.
+ * 
  * @author Stephane
  */
-public class WeakSwimmingPoolListener implements SwimmingPoolListener
+public class WeakSwimmingPoolListener extends WeakListener<SwimmingPoolListener> implements SwimmingPoolListener
 {
-    private final WeakReference<SwimmingPoolListener> listenerRef;
-
     public WeakSwimmingPoolListener(SwimmingPoolListener listener)
     {
-        super();
-
-        listenerRef = new WeakReference<SwimmingPoolListener>(listener);
+        super(listener);
     }
 
-    private SwimmingPoolListener getListener()
+    @Override
+    public void removeListener(Object source)
     {
-        final SwimmingPoolListener listener = listenerRef.get();
+        final SwimmingPool swimmingPool = Icy.getMainInterface().getSwimmingPool();
 
-        if (listener == null)
-        {
-            final SwimmingPool swimmingPool = Icy.getMainInterface().getSwimmingPool();
-
-            if (swimmingPool != null)
-                swimmingPool.removeListener(listener);
-        }
-
-        return listener;
+        if (swimmingPool != null)
+            swimmingPool.removeListener(this);
     }
 
     @Override
@@ -44,5 +35,4 @@ public class WeakSwimmingPoolListener implements SwimmingPoolListener
         if (listener != null)
             listener.swimmingPoolChangeEvent(event);
     }
-
 }

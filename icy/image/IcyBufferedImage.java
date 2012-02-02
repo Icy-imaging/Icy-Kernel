@@ -19,8 +19,8 @@
 package icy.image;
 
 import icy.common.EventHierarchicalChecker;
-import icy.common.IcyChangedListener;
 import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
 import icy.image.IcyBufferedImageEvent.IcyBufferedImageEventType;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.IcyColorMap.IcyColorMapType;
@@ -72,7 +72,7 @@ import loci.formats.gui.UnsignedIntBuffer;
 /**
  * @author stephane
  */
-public class IcyBufferedImage extends BufferedImage implements IcyColorModelListener, IcyChangedListener
+public class IcyBufferedImage extends BufferedImage implements IcyColorModelListener, ChangeListener
 {
     public enum FilterType
     {

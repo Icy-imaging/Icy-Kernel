@@ -18,7 +18,6 @@
  */
 package icy.gui.plugin;
 
-import icy.common.Random;
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.ImageComponent;
 import icy.gui.frame.IcyFrame;
@@ -26,6 +25,7 @@ import icy.gui.util.GuiUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLauncher;
 import icy.system.thread.ThreadUtil;
+import icy.util.Random;
 
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;

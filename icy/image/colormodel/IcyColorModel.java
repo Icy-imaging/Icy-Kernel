@@ -19,8 +19,8 @@
 package icy.image.colormodel;
 
 import icy.common.EventHierarchicalChecker;
-import icy.common.IcyChangedListener;
 import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormodel.IcyColorModelEvent.IcyColorModelEventType;
 import icy.image.colorspace.IcyColorSpace;
@@ -52,8 +52,7 @@ import javax.swing.event.EventListenerList;
 /**
  * @author stephane
  */
-public abstract class IcyColorModel extends ColorModel implements ScalerListener, IcyColorSpaceListener,
-        IcyChangedListener
+public abstract class IcyColorModel extends ColorModel implements ScalerListener, IcyColorSpaceListener, ChangeListener
 {
     /**
      * scalers for normalization

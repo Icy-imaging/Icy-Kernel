@@ -232,8 +232,8 @@ public class ImageRibbonTask extends RibbonTask
             cloneButton = new IcyButton("Duplicate");
             cloneButton.setFlat(true);
             cloneButton.setToolTipText("Create a fresh copy of the sequence");
-//            cloneButton.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
-//            ComponentUtil.setFixedWidth(cloneButton, 110);
+            // cloneButton.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
+            // ComponentUtil.setFixedWidth(cloneButton, 110);
             cloneButton.setHorizontalAlignment(SwingConstants.LEADING);
             cloneButton.addActionListener(new ActionListener()
             {
@@ -253,8 +253,8 @@ public class ImageRibbonTask extends RibbonTask
             typeButton = new IcyButton("Convert to...");
             typeButton.setFlat(true);
             typeButton.setToolTipText("Convert the sequence to the selected data type");
-//            typeButton.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
-//            ComponentUtil.setFixedWidth(typeButton, 110);
+            // typeButton.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
+            // ComponentUtil.setFixedWidth(typeButton, 110);
             typeButton.setHorizontalAlignment(SwingConstants.LEADING);
             typeButton.addActionListener(new ActionListener()
             {
@@ -383,7 +383,7 @@ public class ImageRibbonTask extends RibbonTask
             startGroup();
 
             // Remove first slice
-            removeFirstButton = new IcyCommandButton("Remove first", "sq_up");
+            removeFirstButton = new IcyCommandButton("Remove first", ResourceUtil.ICON_SQUARE_UP);
             removeFirstButton.setActionRichTooltip(new RichTooltip("Remove first Z slice",
                     "Remove the first Z slice from the sequence"));
             removeFirstButton.addActionListener(new ActionListener()
@@ -404,7 +404,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(removeFirstButton, RibbonElementPriority.MEDIUM);
 
             // Remove last slice
-            removeLastButton = new IcyCommandButton("Remove last", "sq_down");
+            removeLastButton = new IcyCommandButton("Remove last", ResourceUtil.ICON_SQUARE_DOWN);
             removeLastButton.setActionRichTooltip(new RichTooltip("Remove last Z slice",
                     "Remove the last Z slice the sequence"));
             removeLastButton.addActionListener(new ActionListener()
@@ -427,7 +427,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(removeLastButton, RibbonElementPriority.MEDIUM);
 
             // current slice
-            removeCurrentButton = new IcyCommandButton("Remove current", "sq_next");
+            removeCurrentButton = new IcyCommandButton("Remove current", ResourceUtil.ICON_SQUARE_NEXT);
             removeCurrentButton.setActionRichTooltip(new RichTooltip("Remove current Z slice",
                     "Remove the current displayed Z slice from the sequence"));
             removeCurrentButton.addActionListener(new ActionListener()
@@ -637,7 +637,7 @@ public class ImageRibbonTask extends RibbonTask
             startGroup();
 
             // Remove first slice
-            removeFirstButton = new IcyCommandButton("Remove first", "sq_up");
+            removeFirstButton = new IcyCommandButton("Remove first", ResourceUtil.ICON_SQUARE_UP);
             removeFirstButton.setActionRichTooltip(new RichTooltip("Remove first T slice",
                     "Remove the first T slice from the sequence"));
             removeFirstButton.addActionListener(new ActionListener()
@@ -658,7 +658,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(removeFirstButton, RibbonElementPriority.MEDIUM);
 
             // Remove last slice
-            removeLastButton = new IcyCommandButton("Remove last", "sq_down");
+            removeLastButton = new IcyCommandButton("Remove last", ResourceUtil.ICON_SQUARE_DOWN);
             removeLastButton.setActionRichTooltip(new RichTooltip("Remove last T slice",
                     "Remove the last T slice the sequence"));
             removeLastButton.addActionListener(new ActionListener()
@@ -681,7 +681,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(removeLastButton, RibbonElementPriority.MEDIUM);
 
             // current slice
-            removeCurrentButton = new IcyCommandButton("Remove current", "sq_next");
+            removeCurrentButton = new IcyCommandButton("Remove current", ResourceUtil.ICON_SQUARE_NEXT);
             removeCurrentButton.setActionRichTooltip(new RichTooltip("Remove current T slice",
                     "Remove the current displayed T slice from the sequence"));
             removeCurrentButton.addActionListener(new ActionListener()

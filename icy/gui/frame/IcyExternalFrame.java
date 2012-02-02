@@ -46,7 +46,7 @@ public class IcyExternalFrame extends JFrame
         public CloseAction()
         {
             super("Close", new IcyIcon(ResourceUtil.ICON_CLOSE, 20), "Close window", KeyEvent.VK_F4, SystemUtil
-                    .getSystemCtrlMask());
+                    .getCtrlMask());
         }
 
         @Override
@@ -189,6 +189,7 @@ public class IcyExternalFrame extends JFrame
         else
             // setUndecorated(true);
             getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+        validate();
     }
 
     /**

@@ -48,7 +48,7 @@ public class IcyInternalFrame extends JInternalFrame
         public CloseAction()
         {
             super("Close", new IcyIcon(ResourceUtil.ICON_CLOSE, 20), "Close window", KeyEvent.VK_F4, SystemUtil
-                    .getSystemCtrlMask());
+                    .getCtrlMask());
         }
 
         @Override
@@ -297,6 +297,7 @@ public class IcyInternalFrame extends JInternalFrame
             LookAndFeelUtil.setTitlePane(this, titlePane);
         else
             LookAndFeelUtil.setTitlePane(this, null);
+        revalidate();
 
         titleBarVisible = value;
     }

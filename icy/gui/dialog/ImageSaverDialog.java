@@ -35,6 +35,7 @@ import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.Arrays;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -67,6 +68,7 @@ public class ImageSaverDialog extends JFileChooser
     private static final String ID_HEIGHT = "height";
     private static final String ID_PATH = "path";
     private static final String ID_MULTIPLEFILE = "multipleFile";
+    private static final String ID_FILETYPE = "fileType";
 
     // GUI
     final JCheckBox multipleFileCheck;
@@ -117,7 +119,7 @@ public class ImageSaverDialog extends JFileChooser
         addChoosableFileFilter(FileFormat.PNG.getExtensionFileFilter());
         addChoosableFileFilter(FileFormat.JPG.getExtensionFileFilter());
         addChoosableFileFilter(FileFormat.AVI.getExtensionFileFilter());
-        setFileFilter(getChoosableFileFilters()[0]);
+        setFileFilter(getChoosableFileFilters()[preferences.getInt(ID_FILETYPE, 0)]);
 
         setMultiSelectionEnabled(false);
         setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -195,7 +197,7 @@ public class ImageSaverDialog extends JFileChooser
         // action confirmed ?
         if (value == JFileChooser.APPROVE_OPTION)
         {
-            // Chooser writer should be compatible
+            // Choose writer should be compatible
             if (Saver.isCompatible(Saver.getWriter(getSelectedFileFormat()), sequence.getColorModel()))
             {
                 // test and add extension if needed
@@ -270,6 +272,7 @@ public class ImageSaverDialog extends JFileChooser
             preferences.putInt(ID_WIDTH, getWidth());
             preferences.putInt(ID_HEIGHT, getHeight());
             preferences.putBoolean(ID_MULTIPLEFILE, multipleFileCheck.isSelected());
+            preferences.putInt(ID_FILETYPE, Arrays.asList(getChoosableFileFilters()).indexOf(getFileFilter()));
         }
     }
 

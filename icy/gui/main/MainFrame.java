@@ -33,8 +33,14 @@ import icy.system.SystemUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
 import java.awt.HeadlessException;
+import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -53,6 +59,7 @@ import java.util.StringTokenizer;
 
 import javax.swing.JComponent;
 import javax.swing.JInternalFrame;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 import javax.swing.ToolTipManager;
@@ -232,20 +239,28 @@ public class MainFrame extends JRibbonFrame
 
     public static final String TITLE = "Icy";
 
-    public static final String PROPERTY_MULTIWINDOWMODE = "multiWindowMode";
+    public static final String PROPERTY_DETACHEDMODE = "detachedMode";
+
+    public static final int TILE_HORIZONTAL = 0;
+    public static final int TILE_VERTICAL = 1;
+    public static final int TILE_GRID = 2;
 
     private final MainRibbon mainRibbon;
-    final JSplitPane mainPane;
+    JSplitPane mainPane;
+    private final JPanel centerPanel;
     private final IcyDesktopPane desktopPane;
-    final InspectorPanel inspector;
+    InspectorPanel inspector;
     private final FileAndTextTransferHandler fileAndTextTransferHandler;
-    private boolean multiWindowMode;
+    private boolean detachedMode;
     int lastInspectorWidth;
 
-    // state save for multi window mode
+    // state save for detached mode
     private int previousHeight;
     private boolean previousMaximized;
     private boolean previousInspectorInternalized;
+
+    // we need to keep reference on it as the object only use weak reference
+    final WindowPositionSaver positionSaver;
 
     /**
      * @throws HeadlessException
@@ -260,7 +275,7 @@ public class MainFrame extends JRibbonFrame
         JPopupMenu.setDefaultLightWeightPopupEnabled(true);
         ToolTipManager.sharedInstance().setLightWeightPopupEnabled(true);
 
-        new WindowPositionSaver(this, "frame/main", new Point(50, 50), new Dimension(800, 600));
+        positionSaver = new WindowPositionSaver(this, "frame/main", new Point(50, 50), new Dimension(800, 600));
 
         // transfert handler
         fileAndTextTransferHandler = new FileAndTextTransferHandler();
@@ -275,8 +290,8 @@ public class MainFrame extends JRibbonFrame
             @Override
             public void componentResized(ComponentEvent e)
             {
-                // keep height to minimum height when we are in multi window mode
-                if (isMultiWindowMode())
+                // keep height to minimum height when we are in detached mode
+                if (isDetachedMode())
                     setSize(getWidth(), getMinimumSize().height);
             }
         });
@@ -288,30 +303,14 @@ public class MainFrame extends JRibbonFrame
         setIconImages(ResourceUtil.getIcyIconImages());
         setApplicationIcon(new IcyApplicationIcon());
 
+        // main center pane (contains desktop pane)
+        centerPanel = new JPanel();
+        centerPanel.setLayout(new BorderLayout());
+
         // desktop pane
         desktopPane = new IcyDesktopPane();
         desktopPane.setTransferHandler(fileAndTextTransferHandler);
-
-        // inspector
-        inspector = new InspectorPanel();
-
-        mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, desktopPane, null);
-        // take in account the divider and border size
-        lastInspectorWidth = getWidth() - (inspector.getPreferredSize().width + 6 + 8);
-        previousInspectorInternalized = inspector.isInternalized();
-        if (previousInspectorInternalized)
-        {
-            mainPane.setRightComponent(inspector);
-            mainPane.setDividerSize(6);
-            mainPane.setDividerLocation(lastInspectorWidth);
-        }
-        else
-        {
-            mainPane.setDividerSize(0);
-            inspector.setParent(mainPane);
-        }
-        mainPane.setResizeWeight(1);
-        mainPane.addMouseListener(new MouseAdapter()
+        desktopPane.addMouseListener(new MouseAdapter()
         {
             @Override
             public void mouseClicked(MouseEvent e)
@@ -325,6 +324,39 @@ public class MainFrame extends JRibbonFrame
                 }
             }
         });
+
+        // set the desktop pane in center pane
+        centerPanel.add(desktopPane, BorderLayout.CENTER);
+    }
+
+    /**
+     * Process init.<br>
+     * Inspector is an ExternalizablePanel and requires MainFrame to be created.
+     */
+    public void init()
+    {
+        // inspector
+        inspector = new InspectorPanel();
+
+        // main pane
+        mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, centerPanel, null);
+        mainPane.setContinuousLayout(true);
+
+        // take in account the divider and border size
+        previousInspectorInternalized = inspector.isInternalized();
+        lastInspectorWidth = inspector.getPreferredSize().width + 6 + 8;
+        if (previousInspectorInternalized)
+        {
+            mainPane.setRightComponent(inspector);
+            mainPane.setDividerSize(6);
+            mainPane.setDividerLocation(getWidth() - lastInspectorWidth);
+        }
+        else
+        {
+            mainPane.setDividerSize(0);
+            inspector.setParent(mainPane);
+        }
+        mainPane.setResizeWeight(1);
 
         inspector.addStateListener(new StateListener()
         {
@@ -344,10 +376,10 @@ public class MainFrame extends JRibbonFrame
 
         previousHeight = getHeight();
         previousMaximized = ComponentUtil.isMaximized(this);
-        multiWindowMode = GeneralPreferences.getMultiWindowMode();
+        detachedMode = GeneralPreferences.getMultiWindowMode();
 
-        // multi window mode
-        if (multiWindowMode)
+        // detached mode
+        if (detachedMode)
         {
             // resize window to ribbon dimension
             if (previousMaximized)
@@ -368,7 +400,16 @@ public class MainFrame extends JRibbonFrame
     }
 
     /**
-     * @return the desktopPane
+     * Return the center pane, this pane contains the desktop pane.<br>
+     * Feel free to add temporary top/left/right or bottom pane to it.
+     */
+    public JPanel getCenterPanel()
+    {
+        return centerPanel;
+    }
+
+    /**
+     * Returns the desktopPane which contains InternalFrame.
      */
     public IcyDesktopPane getDesktopPane()
     {
@@ -403,20 +444,20 @@ public class MainFrame extends JRibbonFrame
     }
 
     /**
-     * Return true if the main frame is in "multi window" mode
+     * Return true if the main frame is in "detached" mode
      */
-    public boolean isMultiWindowMode()
+    public boolean isDetachedMode()
     {
-        return multiWindowMode;
+        return detachedMode;
     }
 
     /**
      * Return content pane dimension (available area in main frame).<br>
-     * If the main frame is in "multi window" mode this actually return the desktop dimension.
+     * If the main frame is in "detached" mode this actually return the desktop dimension.
      */
     public Dimension getDesktopSize()
     {
-        if (multiWindowMode)
+        if (detachedMode)
             return SystemUtil.getMaximumWindowBounds().getSize();
 
         return desktopPane.getSize();
@@ -450,7 +491,7 @@ public class MainFrame extends JRibbonFrame
 
     /**
      * Returns true if the inspector is internalized in main container.<br>
-     * Always returns false in multi window mode.
+     * Always returns false in detached mode.
      */
     public boolean isInpectorInternalized()
     {
@@ -459,7 +500,7 @@ public class MainFrame extends JRibbonFrame
 
     /**
      * Internalize the inspector in main container.<br>
-     * The method fails and returns false in multi window mode.
+     * The method fails and returns false in detached mode.
      */
     public boolean internalizeInspector()
     {
@@ -489,11 +530,251 @@ public class MainFrame extends JRibbonFrame
         return false;
     }
 
-    public void setMultiWindowMode(boolean value)
+    /**
+     * Organize all frames in cascade
+     */
+    public void organizeCascade()
     {
-        if (multiWindowMode != value)
+        // all screen devices
+        final GraphicsDevice screenDevices[] = SystemUtil.getLocalGraphicsEnvironment().getScreenDevices();
+        // screen devices to process
+        final ArrayList<GraphicsDevice> devices = new ArrayList<GraphicsDevice>();
+
+        // detached mode ?
+        if (isDetachedMode())
         {
-            // multi window mode
+            // process all available screen for cascade organization
+            for (GraphicsDevice dev : screenDevices)
+                if (dev.getType() == GraphicsDevice.TYPE_RASTER_SCREEN)
+                    devices.add(dev);
+        }
+        else
+        {
+            // process desktop pane cascade organization
+            desktopPane.organizeCascade();
+
+            // we process screen where the mainFrame is not visible
+            for (GraphicsDevice dev : screenDevices)
+                if (dev.getType() == GraphicsDevice.TYPE_RASTER_SCREEN)
+                    if (!dev.getDefaultConfiguration().getBounds().contains(getLocation()))
+                        devices.add(dev);
+        }
+
+        // organize frames on different screen
+        for (GraphicsDevice dev : devices)
+            organizeCascade(dev);
+    }
+
+    /**
+     * Organize frames in cascade on the specified graphics device.
+     */
+    protected void organizeCascade(GraphicsDevice graphicsDevice)
+    {
+        final GraphicsConfiguration graphicsConfiguration = graphicsDevice.getDefaultConfiguration();
+        final Rectangle bounds = graphicsConfiguration.getBounds();
+        final Insets inset = Toolkit.getDefaultToolkit().getScreenInsets(graphicsConfiguration);
+
+        // adjust bounds of current screen
+        bounds.x += inset.left;
+        bounds.y += inset.top;
+        bounds.width -= inset.left + inset.right;
+        bounds.height -= inset.top + inset.bottom;
+
+        // prepare frames to process
+        final ArrayList<Frame> frames = new ArrayList<Frame>();
+
+        for (Frame f : Frame.getFrames())
+            // add visible and resizable frame contained in this screen
+            if ((f != this) && !ComponentUtil.isMinimized(f) && f.isResizable() && f.isVisible()
+                    && bounds.contains(f.getLocation()))
+                frames.add(f);
+
+        // this screen contains the main frame ?
+        if (bounds.contains(getLocation()))
+        {
+            // move main frame at top
+            setLocation(bounds.x, bounds.y);
+
+            final int mainFrameW = getWidth();
+            final int mainFrameH = getHeight();
+
+            // adjust available bounds of current screen
+            if (mainFrameW > mainFrameH)
+            {
+                bounds.y += mainFrameH;
+                bounds.height -= mainFrameH;
+            }
+            else
+            {
+                bounds.x += mainFrameW;
+                bounds.width -= mainFrameW;
+            }
+        }
+
+        // available space
+        final int w = bounds.width;
+        final int h = bounds.height;
+
+        final int xMax = bounds.x + w;
+        final int yMax = bounds.y + h;
+
+        final int fw = (int) (w * 0.6f);
+        final int fh = (int) (h * 0.6f);
+
+        int x = bounds.x + 32;
+        int y = bounds.y + 32;
+
+        for (Frame f : frames)
+        {
+            f.setBounds(x, y, fw, fh);
+            x += 30;
+            y += 20;
+            if ((x + fw) > xMax)
+                x = bounds.x + 32;
+            if ((y + fh) > yMax)
+                y = bounds.y + 32;
+        }
+    }
+
+    /**
+     * Organize all frames in tile.<br>
+     * 
+     * @param type
+     *        tile type.<br>
+     *        TILE_HORIZONTAL, TILE_VERTICAL or TILE_GRID.
+     */
+    public void organizeTile(int type)
+    {
+        // all screen devices
+        final GraphicsDevice screenDevices[] = SystemUtil.getLocalGraphicsEnvironment().getScreenDevices();
+        // screen devices to process
+        final ArrayList<GraphicsDevice> devices = new ArrayList<GraphicsDevice>();
+
+        // detached mode ?
+        if (isDetachedMode())
+        {
+            // process all available screen for cascade organization
+            for (GraphicsDevice dev : screenDevices)
+                if (dev.getType() == GraphicsDevice.TYPE_RASTER_SCREEN)
+                    devices.add(dev);
+        }
+        else
+        {
+            // process desktop pane cascade organization
+            desktopPane.organizeTile(type);
+
+            // we process screen where the mainFrame is not visible
+            for (GraphicsDevice dev : screenDevices)
+                if (dev.getType() == GraphicsDevice.TYPE_RASTER_SCREEN)
+                    if (!dev.getDefaultConfiguration().getBounds().contains(getLocation()))
+                        devices.add(dev);
+        }
+
+        // organize frames on different screen
+        for (GraphicsDevice dev : devices)
+            organizeTile(dev, type);
+    }
+
+    /**
+     * Organize frames in tile on the specified graphics device.
+     */
+    protected void organizeTile(GraphicsDevice graphicsDevice, int type)
+    {
+        final GraphicsConfiguration graphicsConfiguration = graphicsDevice.getDefaultConfiguration();
+        final Rectangle bounds = graphicsConfiguration.getBounds();
+        final Insets inset = Toolkit.getDefaultToolkit().getScreenInsets(graphicsConfiguration);
+
+        // adjust bounds of current screen
+        bounds.x += inset.left;
+        bounds.y += inset.top;
+        bounds.width -= inset.left + inset.right;
+        bounds.height -= inset.top + inset.bottom;
+
+        // prepare frames to process
+        final ArrayList<Frame> frames = new ArrayList<Frame>();
+
+        for (Frame f : Frame.getFrames())
+            // add visible and resizable frame contained in this screen
+            if ((f != this) && !ComponentUtil.isMinimized(f) && f.isResizable() && f.isVisible()
+                    && bounds.contains(f.getLocation()))
+                frames.add(f);
+
+        // this screen contains the main frame ?
+        if (bounds.contains(getLocation()))
+        {
+            // move main frame at top
+            setLocation(bounds.x, bounds.y);
+
+            final int mainFrameW = getWidth();
+            final int mainFrameH = getHeight();
+
+            // adjust available bounds of current screen
+            if (mainFrameW > mainFrameH)
+            {
+                bounds.y += mainFrameH;
+                bounds.height -= mainFrameH;
+            }
+            else
+            {
+                bounds.x += mainFrameW;
+                bounds.width -= mainFrameW;
+            }
+        }
+
+        final int numFrames = frames.size();
+
+        // nothing to do
+        if (numFrames == 0)
+            return;
+
+        // available space
+        final int w = bounds.width;
+        final int h = bounds.height;
+        final int x = bounds.x;
+        final int y = bounds.y;
+
+        int numCol;
+        int numLine;
+
+        switch (type)
+        {
+            case MainFrame.TILE_HORIZONTAL:
+                numCol = 1;
+                numLine = numFrames;
+                break;
+
+            case MainFrame.TILE_VERTICAL:
+                numCol = numFrames;
+                numLine = 1;
+                break;
+
+            default:
+                numCol = (int) Math.sqrt(numFrames);
+                if (numFrames != (numCol * numCol))
+                    numCol++;
+                numLine = numFrames / numCol;
+                if (numFrames > (numCol * numLine))
+                    numLine++;
+                break;
+        }
+
+        final int dx = w / numCol;
+        final int dy = h / numLine;
+
+        int k = 0;
+        for (int i = 0; i < numLine; ++i)
+            for (int j = 0; j < numCol && k < numFrames; ++j, ++k)
+                frames.get(i * numCol + j).setBounds(x + (j * dx), y + (i * dy), dx, dy);
+    }
+
+    /**
+     * Set detached window mode.<br>
+     */
+    public void setDetachedMode(boolean value)
+    {
+        if (detachedMode != value)
+        {
+            // detached mode
             if (value)
             {
                 // save inspector state
@@ -533,13 +814,13 @@ public class MainFrame extends JRibbonFrame
                     internalizeInspector();
 
                 // notify mode change
-                firePropertyChange(PROPERTY_MULTIWINDOWMODE, true, false);
+                firePropertyChange(PROPERTY_DETACHEDMODE, true, false);
             }
 
-            multiWindowMode = value;
+            detachedMode = value;
 
             // notify mode change
-            firePropertyChange(PROPERTY_MULTIWINDOWMODE, !value, value);
+            firePropertyChange(PROPERTY_DETACHEDMODE, !value, value);
         }
     }
 }

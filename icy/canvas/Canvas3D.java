@@ -23,7 +23,6 @@ import icy.gui.component.ComponentUtil;
 import icy.gui.component.button.ColorChooserButton;
 import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
 import icy.gui.util.GuiUtil;
-import icy.gui.viewer.TNavigationPanel;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.colormap.IcyColorMap;
@@ -55,8 +54,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
@@ -148,7 +145,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     /**
      * gui
      */
-    final TNavigationPanel tNav;
+    // final TNavigationPanel tNav;
 
     // background color
     private ColorChooserButton backGroundColor = new ColorChooserButton();
@@ -291,22 +288,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         // activeCam.Azimuth(20.0);
         // activeCam.Dolly(1.60);
 
-        tNav = new TNavigationPanel();
-        tNav.addChangeListener(new ChangeListener()
-        {
-            @Override
-            public void stateChanged(ChangeEvent e)
-            {
-                // set the new T position
-                setPositionT(tNav.getValue());
-            }
-        });
-
-        // main
-        setLayout(new BorderLayout());
-
+        // set 3D view in center
         add(panel3D, BorderLayout.CENTER);
-        add(tNav, BorderLayout.SOUTH);
 
         // initialize internals
         processor = new InstanceProcessor();
@@ -394,8 +377,10 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         // adjust LUT alpha level for 3D view (this make lutChanged() to be called)
         setDefaultOpacity(lut);
 
-        // update T nav bar
-        updateTNav();
+        // update nav bar & mouse infos
+        mouseInfPanel.setVisible(false);
+        updateZNav();
+        updateTNav();        
 
         // initialize volume data
         volume = new vtkVolume();
@@ -990,20 +975,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
             setPositionC(newPosC);
     }
 
-    /**
-     * update T slider state
-     */
-    void updateTNav()
-    {
-        final int maxT = getMaxT();
-        final int t = getPositionT();
-
-        tNav.setMaximum(maxT);
-        if (t != -1)
-            tNav.setValue(t);
-        tNav.setVisible(maxT > 0);
-    }
-
     public vtkPanel getPanel3D()
     {
         return panel3D;
@@ -1305,11 +1276,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
                     break;
 
                 case T:
-                    final int curT = getPositionT();
-
-                    // ensure T slider position is correct
-                    if (curT != -1)
-                        tNav.setValue(curT);
                     // rebuild image data and refresh
                     buildImageData();
                     // refresh

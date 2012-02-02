@@ -453,7 +453,7 @@ public class IcyUpdater
             if (FileUtil.exists(updateName))
             {
                 // replace updater
-                if (!FileUtil.move(updateName, Updater.UPDATER_NAME, true, false))
+                if (!FileUtil.move(updateName, Updater.UPDATER_NAME, true))
                 {
                     System.err.println("Can't update 'Upater.jar', Update process can't continue.");
                     return false;

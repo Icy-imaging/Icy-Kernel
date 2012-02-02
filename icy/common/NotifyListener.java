@@ -18,12 +18,11 @@
  */
 package icy.common;
 
-import java.util.EventListener;
-
 /**
- * @author stephane
+ * @deprecated uses {@link icy.common.listener.NotifyListener} instead
  */
-public interface NotifyListener extends EventListener
+@Deprecated
+public interface NotifyListener extends icy.common.listener.NotifyListener
 {
-    public void notify(Object obj);
+
 }

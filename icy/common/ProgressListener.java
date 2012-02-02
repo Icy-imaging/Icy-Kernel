@@ -19,9 +19,10 @@
 package icy.common;
 
 /**
- * @author stephane
+ * @deprecated uses {@link icy.common.listener.ProgressListener} instead
  */
-public interface ProgressListener
+@Deprecated
+public interface ProgressListener extends icy.common.listener.ProgressListener
 {
-    public boolean notifyProgress(double position, double length);
+
 }

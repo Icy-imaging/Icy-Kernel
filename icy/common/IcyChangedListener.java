@@ -18,15 +18,13 @@
  */
 package icy.common;
 
+import icy.common.listener.ChangeListener;
+
 /**
- * Common interface for change notification
- * 
- * @author stephane
+ * @deprecated uses {@link ChangeListener} instead
  */
-public interface IcyChangedListener
+@Deprecated
+public interface IcyChangedListener extends ChangeListener
 {
-    /**
-     * fire changed event
-     */
-    public void onChanged(EventHierarchicalChecker object);
+
 }

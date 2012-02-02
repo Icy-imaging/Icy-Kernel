@@ -15,16 +15,19 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingConstants;
 
 /**
+ * Basically a JTabbedPane with checkbox in tab.
+ * 
  * @author Stephane
  */
-public class JCheckTabbedPane extends JTabbedPane
+public class CheckTabbedPane extends JTabbedPane
 {
     /***/
     private static final long serialVersionUID = 1274171822668858593L;
 
-    private class CustomCheck extends JPanel
+    private class CheckTabComponent extends JPanel
     {
         /**
          * 
@@ -34,27 +37,31 @@ public class JCheckTabbedPane extends JTabbedPane
         final private JCheckBox checkBox;
         final private JLabel label;
 
-        public CustomCheck(String title)
+        public CheckTabComponent(String title, Icon icon, String tip)
         {
             super();
 
             setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
             setBorder(BorderFactory.createEmptyBorder());
+            setOpaque(false);
 
             checkBox = new JCheckBox(null, null, defaultSelected);
             checkBox.setBorder(BorderFactory.createEmptyBorder());
             checkBox.setFocusable(false);
+            checkBox.setToolTipText("enable / disable");
+            checkBox.setOpaque(false);
 
             checkBox.addActionListener(new ActionListener()
             {
                 @Override
                 public void actionPerformed(ActionEvent actionevent)
                 {
-                    JCheckTabbedPane.this.fireStateChanged();
+                    CheckTabbedPane.this.fireStateChanged();
                 }
             });
 
-            label = new JLabel(" " + title);
+            label = new JLabel(" " + title, icon, SwingConstants.CENTER);
+            label.setOpaque(false);
 
             add(checkBox);
             add(label);
@@ -95,8 +102,8 @@ public class JCheckTabbedPane extends JTabbedPane
 
         public void setForegroundAll(Color foreground)
         {
-            checkBox.setBackground(foreground);
-            label.setBackground(foreground);
+            checkBox.setForeground(foreground);
+            label.setForeground(foreground);
         }
     }
 
@@ -112,7 +119,7 @@ public class JCheckTabbedPane extends JTabbedPane
      *        by default checkbox is selected
      * @see JTabbedPane
      */
-    public JCheckTabbedPane(int tabPlacement, boolean defaultSelected)
+    public CheckTabbedPane(int tabPlacement, boolean defaultSelected)
     {
         super(tabPlacement);
 
@@ -142,7 +149,7 @@ public class JCheckTabbedPane extends JTabbedPane
      */
     public boolean isTabChecked(int index)
     {
-        final CustomCheck tabComponent = (CustomCheck) getTabComponentAt(index);
+        final CheckTabComponent tabComponent = (CheckTabComponent) getTabComponentAt(index);
 
         // can be null here
         if (tabComponent != null)
@@ -165,7 +172,7 @@ public class JCheckTabbedPane extends JTabbedPane
      */
     public void setTabChecked(int index, boolean value)
     {
-        ((CustomCheck) getTabComponentAt(index)).setSelected(value);
+        ((CheckTabComponent) getTabComponentAt(index)).setSelected(value);
     }
 
     @Override
@@ -173,7 +180,7 @@ public class JCheckTabbedPane extends JTabbedPane
     {
         super.setIconAt(index, icon);
 
-        ((CustomCheck) getTabComponentAt(index)).setIcon(icon);
+        ((CheckTabComponent) getTabComponentAt(index)).setIcon(icon);
     }
 
     @Override
@@ -181,7 +188,7 @@ public class JCheckTabbedPane extends JTabbedPane
     {
         super.setDisabledIconAt(index, disabledIcon);
 
-        ((CustomCheck) getTabComponentAt(index)).setDisabledIcon(disabledIcon);
+        ((CheckTabComponent) getTabComponentAt(index)).setDisabledIcon(disabledIcon);
     }
 
     @Override
@@ -189,7 +196,7 @@ public class JCheckTabbedPane extends JTabbedPane
     {
         super.setBackgroundAt(index, background);
 
-        ((CustomCheck) getTabComponentAt(index)).setBackgroundAll(background);
+        ((CheckTabComponent) getTabComponentAt(index)).setBackgroundAll(background);
     }
 
     @Override
@@ -197,7 +204,7 @@ public class JCheckTabbedPane extends JTabbedPane
     {
         super.setForegroundAt(index, foreground);
 
-        ((CustomCheck) getTabComponentAt(index)).setForegroundAll(foreground);
+        ((CheckTabComponent) getTabComponentAt(index)).setForegroundAll(foreground);
     }
 
     @Override
@@ -205,7 +212,7 @@ public class JCheckTabbedPane extends JTabbedPane
     {
         super.setTitleAt(index, title);
 
-        ((CustomCheck) getTabComponentAt(index)).setTitle(title);
+        ((CheckTabComponent) getTabComponentAt(index)).setTitle(title);
     }
 
     @Override
@@ -213,6 +220,6 @@ public class JCheckTabbedPane extends JTabbedPane
     {
         super.insertTab(title, icon, component, tip, index);
 
-        setTabComponentAt(index, new CustomCheck(title));
+        setTabComponentAt(index, new CheckTabComponent(title, icon, tip));
     }
 }

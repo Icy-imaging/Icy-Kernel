@@ -3,34 +3,25 @@
  */
 package icy.gui.main;
 
+import icy.common.listener.weak.WeakListener;
 import icy.main.Icy;
 
-import java.lang.ref.WeakReference;
-
 /**
- * Weak listener wrapper for MainListener interface
+ * Weak listener wrapper for MainListener.
  * 
  * @author Stephane
  */
-public class WeakMainListener implements MainListener
+public class WeakMainListener extends WeakListener<MainListener> implements MainListener
 {
-    private final WeakReference<MainListener> listenerRef;
-
     public WeakMainListener(MainListener listener)
     {
-        super();
-
-        listenerRef = new WeakReference<MainListener>(listener);
+        super(listener);
     }
 
-    private MainListener getListener()
+    @Override
+    public void removeListener(Object source)
     {
-        final MainListener listener = listenerRef.get();
-
-        if (listener == null)
-            Icy.getMainInterface().removeListener(this);
-
-        return listener;
+        Icy.getMainInterface().removeListener(this);
     }
 
     @Override

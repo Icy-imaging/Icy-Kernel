@@ -18,13 +18,13 @@
  */
 package icy.gui.inspector;
 
+import icy.gui.component.ExtTabbedPanel;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.main.FocusedSequenceListener;
 import icy.gui.main.FocusedViewerListener;
 import icy.gui.system.MemoryMonitorPanel;
 import icy.gui.system.OutputConsolePanel;
 import icy.gui.system.OutputConsolePanel.OutputConsoleChangeListener;
-import icy.gui.util.WindowPositionSaver;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.main.Icy;
@@ -34,12 +34,12 @@ import icy.system.thread.ThreadUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Point;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -65,39 +65,44 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
     /**
      * GUI
      */
+    final ExtTabbedPanel mainPane;
+
     final SequencePanel sequencePanel;
     final RoisPanel roisPanel;
     final LayersPanel layersPanel;
+    final UndoManagerPanel historyPanel;
+    final OutputConsolePanel outputConsolePanel;
+    final ChatPanel chatPanel;
 
     /**
      * The width of the inner component of the inspector should not exceed 300.
      */
     public InspectorPanel()
     {
-        super("Inspector");
+        super("Inspector", "inspector", new Point(600, 140), new Dimension(280, 600));
 
-        new WindowPositionSaver(this, "frame/inspector", new Point(600, 140), new Dimension(280, 600));
+        // tab panel
+        mainPane = new ExtTabbedPanel();
 
-        // main TAB panels
+        // main panels
         sequencePanel = new SequencePanel();
         // final JPanel pluginsPanel = new PluginsPanel();
         roisPanel = new RoisPanel(true, true);
         layersPanel = new LayersPanel(true, true);
-        final OutputConsolePanel outputPanel = new OutputConsolePanel();
-
-        final JScrollPane scSequence = new JScrollPane(sequencePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-        // TAB panel
-        final JTabbedPane mainPane = new JTabbedPane();
+        historyPanel = new UndoManagerPanel();
+        outputConsolePanel = new OutputConsolePanel();
+        chatPanel = new ChatPanel();
 
         // add main tab panels
-        mainPane.addTab("Sequence", null, scSequence, "Sequence informations");
+        mainPane.addTab("Sequence", null, new JScrollPane(sequencePanel,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
+                "Sequence informations");
         // mainPane.add("Active Plugin", pluginsPanel);
         mainPane.addTab("Layer", null, layersPanel, "Show all layers details");
         mainPane.addTab("ROI", null, roisPanel, "Manage / edit your ROI");
-        mainPane.addTab("Undo", null, new UndoManagerPanel(), "");
-        mainPane.addTab("Output", null, outputPanel);
+//        mainPane.addTab("History", null, historyPanel, "Actions history");
+        mainPane.addTab("Output", null, outputConsolePanel, "Console output");
+        mainPane.addTab("Chat", null, chatPanel, "Chat room");
 
         // minimum required size for sequence infos panel
         setMinimumSize(new Dimension(280, 480));
@@ -109,8 +114,7 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
         validate();
         setVisible(true);
 
-        // get index of output console
-        final int outputConsoleTabIndex = mainPane.indexOfComponent(outputPanel);
+        // get default color of tab background
         final Color defaultBgColor = mainPane.getBackgroundAt(0);
 
         mainPane.addChangeListener(new ChangeListener()
@@ -118,18 +122,22 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
             @Override
             public void stateChanged(ChangeEvent e)
             {
+                final int index = getIndexOfTab(outputConsolePanel);
+
                 // set back default tab color
-                if (mainPane.getSelectedIndex() == outputConsoleTabIndex)
-                    mainPane.setBackgroundAt(outputConsoleTabIndex, defaultBgColor);
+                if ((index != -1) && (mainPane.getSelectedIndex() == index))
+                    mainPane.setBackgroundAt(index, defaultBgColor);
             }
         });
 
-        outputPanel.addOutputConsoleChangeListener(new OutputConsoleChangeListener()
+        outputConsolePanel.addOutputConsoleChangeListener(new OutputConsoleChangeListener()
         {
             @Override
             public void outputConsoleChanged(OutputConsolePanel source, boolean isError)
             {
-                if (mainPane.getSelectedIndex() != outputConsoleTabIndex)
+                final int index = getIndexOfTab(outputConsolePanel);
+
+                if ((index != -1) && (mainPane.getSelectedIndex() != index))
                 {
                     final boolean fIsError = isError;
 
@@ -140,9 +148,9 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
                         {
                             // change output console tab color when new data
                             if (fIsError)
-                                mainPane.setBackgroundAt(outputConsoleTabIndex, Color.red);
-                            else if (!mainPane.getBackgroundAt(outputConsoleTabIndex).equals(Color.red))
-                                mainPane.setBackgroundAt(outputConsoleTabIndex, Color.blue);
+                                mainPane.setBackgroundAt(index, Color.red);
+                            else if (!mainPane.getBackgroundAt(index).equals(Color.red))
+                                mainPane.setBackgroundAt(index, Color.blue);
                         }
                     });
                 }
@@ -152,6 +160,14 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
         // add focused sequence & viewer listener
         Icy.getMainInterface().addFocusedViewerListener(this);
         Icy.getMainInterface().addFocusedSequenceListener(this);
+    }
+
+    /**
+     * Return the index of specified tab component
+     */
+    protected int getIndexOfTab(Component component)
+    {
+        return mainPane.indexOfComponent(component);
     }
 
     @Override

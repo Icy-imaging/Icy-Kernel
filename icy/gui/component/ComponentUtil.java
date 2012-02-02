@@ -32,7 +32,6 @@ import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JSlider;
 import javax.swing.JTree;
@@ -344,12 +343,12 @@ public class ComponentUtil
         };
     }
 
-    public static boolean isMaximized(JFrame f)
+    public static boolean isMaximized(Frame f)
     {
         return (f.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH;
     }
 
-    public static void setMaximized(JFrame f, boolean b)
+    public static void setMaximized(Frame f, boolean b)
     {
         // only relevant if state changed
         if (isMaximized(f) ^ b)
@@ -361,12 +360,12 @@ public class ComponentUtil
         }
     }
 
-    public static boolean isMinimized(JFrame f)
+    public static boolean isMinimized(Frame f)
     {
         return (f.getExtendedState() & Frame.ICONIFIED) == Frame.ICONIFIED;
     }
 
-    public static void setMinimized(JFrame f, boolean b)
+    public static void setMinimized(Frame f, boolean b)
     {
         // only relevant if state changed
         if (isMinimized(f) ^ b)

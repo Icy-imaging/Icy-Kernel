@@ -27,6 +27,7 @@ import icy.gui.frame.progress.SuccessfullAnnounceFrame;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.abstract_.Plugin;
+import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.thread.ThreadUtil;
 import icy.update.Updater;
 import icy.util.StringUtil;
@@ -334,19 +335,35 @@ public class PluginInstaller
         // ensure descriptor is loaded
         plugin.loadDescriptor();
 
+        final RepositoryInfo repos = plugin.getRepository();
+        final String login;
+        final String pass;
+
+        // use authentication
+        if ((repos != null) && repos.isAuthenticationEnabled())
+        {
+            login = repos.getLogin();
+            pass = repos.getPassword();
+        }
+        else
+        {
+            login = null;
+            pass = null;
+        }
+
         // download and save JAR file
-        result = downloadAndSave(plugin.getJarUrl(), plugin.getJarFilename(), true, taskFrame);
+        result = downloadAndSave(plugin.getJarUrl(), plugin.getJarFilename(), login, pass, true, taskFrame);
         if (!StringUtil.isEmpty(result))
             return result;
 
         // download and save XML file
-        result = downloadAndSave(plugin.getUrl(), plugin.getXMLFilename(), true, taskFrame);
+        result = downloadAndSave(plugin.getUrl(), plugin.getXMLFilename(), login, pass, true, taskFrame);
         if (!StringUtil.isEmpty(result))
             return result;
 
         // download and save icon & image files
-        downloadAndSave(plugin.getIconUrl(), plugin.getIconFilename(), false, taskFrame);
-        downloadAndSave(plugin.getImageUrl(), plugin.getImageFilename(), false, taskFrame);
+        downloadAndSave(plugin.getIconUrl(), plugin.getIconFilename(), login, pass, false, taskFrame);
+        downloadAndSave(plugin.getImageUrl(), plugin.getImageFilename(), login, pass, false, taskFrame);
 
         return "";
     }
@@ -354,11 +371,11 @@ public class PluginInstaller
     /**
      * Return an empty string if no error else return error message
      */
-    private static String downloadAndSave(String downloadPath, String savePath, boolean displayError,
-            ProgressFrame taskFrame)
+    private static String downloadAndSave(String downloadPath, String savePath, String login, String pass,
+            boolean displayError, ProgressFrame taskFrame)
     {
         // load data
-        final byte[] data = NetworkUtil.download(downloadPath, taskFrame, displayError);
+        final byte[] data = NetworkUtil.download(downloadPath, login, pass, taskFrame, displayError);
         if (data == null)
             return ERROR_DOWNLOAD + downloadPath;
 

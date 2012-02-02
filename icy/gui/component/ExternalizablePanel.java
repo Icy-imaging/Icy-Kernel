@@ -18,56 +18,88 @@
  */
 package icy.gui.component;
 
-import icy.gui.frame.IcyExternalFrame;
+import icy.common.listener.weak.WeakListener;
+import icy.gui.frame.IcyFrame;
+import icy.gui.frame.IcyFrameAdapter;
+import icy.gui.frame.IcyFrameEvent;
+import icy.gui.util.WindowPositionSaver;
+import icy.main.Icy;
+import icy.util.StringUtil;
 
+import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.HeadlessException;
 import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.EventListener;
 
 import javax.swing.JPanel;
+import javax.swing.WindowConstants;
 
 /**
+ * Externalizable panel component.<br>
+ * Basically this is a JPanel you can externalize and display in an IcyFrame.<br>
+ * 
  * @author Stephane
  */
 public class ExternalizablePanel extends JPanel
 {
-    public interface StateListener extends EventListener
+    public static class WeakStateListener extends WeakListener<StateListener> implements StateListener
+    {
+        public WeakStateListener(StateListener listener)
+        {
+            super(listener);
+        }
+
+        @Override
+        public void removeListener(Object source)
+        {
+            if (source != null)
+                ((ExternalizablePanel) source).removeStateListener(this);
+        }
+
+        @Override
+        public void stateChanged(ExternalizablePanel source, boolean externalized)
+        {
+            final StateListener listener = getListener(source);
+
+            if (listener != null)
+                listener.stateChanged(source, externalized);
+        }
+    }
+
+    public static interface StateListener extends EventListener
     {
         public void stateChanged(ExternalizablePanel source, boolean externalized);
     }
 
-    private class ExternalFrame extends IcyExternalFrame
+    public class Frame extends IcyFrame
     {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = -7219003649181966956L;
-
-        public ExternalFrame(String title) throws HeadlessException
+        public Frame(String title) throws HeadlessException
         {
-            super(title);
+            super(title, true, true, true, true);
 
-            setCloseItemVisible(false);
-            setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+            setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-            addWindowListener(new WindowAdapter()
+            addFrameListener(new IcyFrameAdapter()
             {
                 @Override
-                public void windowClosing(WindowEvent e)
+                public void icyFrameClosing(IcyFrameEvent e)
                 {
-                    super.windowClosing(e);
+                    super.icyFrameClosing(e);
 
-                    if (isExternalized())
-                        internalizeInternal();
+                    // ignore the event when frame is manually closed or application is exiting
+                    if (!(closed || Icy.isExiting()))
+                    {
+                        if (ExternalizablePanel.this.isExternalized())
+                            ExternalizablePanel.this.internalizeInternal();
+                    }
                 }
             });
 
+            setLayout(new BorderLayout());
             setSize(400, 400);
+            addToMainDesktopPane();
         }
     }
 
@@ -76,25 +108,78 @@ public class ExternalizablePanel extends JPanel
      */
     private static final long serialVersionUID = -7690543443681714719L;
 
-    private final ExternalFrame frame;
+    /**
+     * extern frame
+     */
+    protected final Frame frame;
+    /**
+     * parent component
+     */
     private Container parent;
+
+    /**
+     * internals
+     */
     private boolean internalizationAutorized;
     private boolean externalizationAutorized;
+    boolean closed;
+    
+    // we need to keep reference on it as the object only use weak reference
+    final WindowPositionSaver positionSaver;
 
-    public ExternalizablePanel(String title)
+    /**
+     * Create a new externalizable panel.
+     * 
+     * @param title
+     *        title for the associated frame.
+     * @param key
+     *        save key, used for WindowPositionSaver.<br>
+     *        Set to null or empty string disable parameter saving.
+     * @param defLoc
+     *        the default location for the frame (externalized state)
+     * @param defDim
+     *        the default dimension for the frame (externalized state)
+     */
+    public ExternalizablePanel(String title, String key, Point defLoc, Dimension defDim)
     {
         super();
 
-        frame = new ExternalFrame(title);
-        frame.setVisible(false);
+        frame = new Frame(title);
         parent = null;
         internalizationAutorized = true;
         externalizationAutorized = true;
+        closed = false;
+
+        // use window position saver with default parameters
+        if (!StringUtil.isEmpty(key))
+            positionSaver = new WindowPositionSaver(this, "frame/" + key, new Point(200, 200), new Dimension(400, 300));
+        else
+            positionSaver = null;
+    }
+
+    /**
+     * Create a new externalizable panel.
+     * 
+     * @param title
+     *        title for the associated frame.
+     * @param key
+     *        save key, used for WindowPositionSaver.<br>
+     *        Set to null or empty string disable parameter saving.
+     */
+    public ExternalizablePanel(String title, String key)
+    {
+        // default location and dimension for extern frame
+        this(title, key, new Point(200, 200), new Dimension(400, 300));
+    }
+
+    public ExternalizablePanel(String title)
+    {
+        this(title, null);
     }
 
     public ExternalizablePanel()
     {
-        this("");
+        this("", null);
     }
 
     @Override
@@ -102,21 +187,29 @@ public class ExternalizablePanel extends JPanel
     {
         super.addNotify();
 
+        // set parent on first attachment
         if (parent == null)
         {
             final Container p = getParent();
 
-            if (p != frame.getContentPane())
+            if ((p != frame.getInternalFrame().getContentPane()) && (p != frame.getExternalFrame().getContentPane()))
                 parent = p;
         }
     }
 
-    @Override
-    public void removeNotify()
+    /**
+     * Close the panel (close and release associated frames and resources).
+     */
+    public void close()
     {
-        super.removeNotify();
+        closed = true;
+        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        frame.close();
     }
 
+    /**
+     * Manual parent set
+     */
     public void setParent(Container value)
     {
         parent = value;
@@ -189,7 +282,7 @@ public class ExternalizablePanel extends JPanel
             parent.validate();
         }
 
-        frame.add(this);
+        frame.add(this, BorderLayout.CENTER);
         frame.validate();
         frame.setVisible(true);
 
@@ -244,130 +337,130 @@ public class ExternalizablePanel extends JPanel
     /**
      * @return the frame
      */
-    public IcyExternalFrame getFrame()
+    public IcyFrame getFrame()
     {
         return frame;
     }
 
-    /**
-     * Implement getMinimumSize method for external frame only
-     */
-    public Dimension getMinimumSizeExternal()
-    {
-        return frame.getMinimumSize();
-    }
-
-    /**
-     * Implement getMaximumSize method for external frame only
-     */
-    public Dimension getMaximumSizeExternal()
-    {
-        return frame.getMaximumSize();
-    }
-
-    /**
-     * Implement getPreferredSize method for external frame only
-     */
-    public Dimension getPreferredSizeExternal()
-    {
-        return frame.getPreferredSize();
-    }
-
-    /**
-     * Implement getSize method for external frame only
-     */
-    public Dimension getSizeExternal()
-    {
-        return frame.getSize();
-    }
-
-    /**
-     * Implement getHeight method for external frame only
-     */
-    public int getHeightExternal()
-    {
-        return frame.getHeight();
-    }
-
-    /**
-     * Implement getWidth method for external frame only
-     */
-    public int getWidthExternal()
-    {
-        return frame.getWidth();
-    }
-
-    /**
-     * Implement getLocation method for external frame only
-     */
-    public Point getLocationExternal()
-    {
-        return frame.getLocation();
-    }
-
-    /**
-     * Implement getBounds method for external frame only
-     */
-    public Rectangle getBoundsExternal()
-    {
-        return frame.getBounds();
-    }
-
-    /**
-     * Implement setLocation method for external frame only
-     */
-    public void setLocationExternal(final Point p)
-    {
-        frame.setLocation(p);
-    }
-
-    /**
-     * Implement setLocation method for external frame only
-     */
-    public void setLocationExternal(final int x, final int y)
-    {
-        frame.setLocation(x, y);
-    }
-
-    /**
-     * Implement setSize method for external frame only
-     */
-    public void setSizeExternal(final Dimension d)
-    {
-        frame.setSize(d);
-    }
-
-    /**
-     * Implement setSize method for external frame only
-     */
-    public void setSizeExternal(final int width, final int height)
-    {
-        frame.setSize(width, height);
-    }
-
-    /**
-     * Implement setPreferredSize method for external frame only
-     */
-    public void setPreferredSizeExternal(final Dimension d)
-    {
-        frame.setPreferredSize(d);
-    }
-
-    /**
-     * Implement setMinimumSize method for external frame only
-     */
-    public void setMinimumSizeExternal(final Dimension d)
-    {
-        frame.setMinimumSize(d);
-    }
-
-    /**
-     * Implement setMaximumSize method for external frame only
-     */
-    public void setMaximumSizeExternal(final Dimension d)
-    {
-        frame.setMaximumSize(d);
-    }
+    // /**
+    // * Implement getMinimumSize method for external frame only
+    // */
+    // public Dimension getMinimumSizeExternal()
+    // {
+    // return frame.getMinimumSize();
+    // }
+    //
+    // /**
+    // * Implement getMaximumSize method for external frame only
+    // */
+    // public Dimension getMaximumSizeExternal()
+    // {
+    // return frame.getMaximumSize();
+    // }
+    //
+    // /**
+    // * Implement getPreferredSize method for external frame only
+    // */
+    // public Dimension getPreferredSizeExternal()
+    // {
+    // return frame.getPreferredSize();
+    // }
+    //
+    // /**
+    // * Implement getSize method for external frame only
+    // */
+    // public Dimension getSizeExternal()
+    // {
+    // return frame.getSize();
+    // }
+    //
+    // /**
+    // * Implement getHeight method for external frame only
+    // */
+    // public int getHeightExternal()
+    // {
+    // return frame.getHeight();
+    // }
+    //
+    // /**
+    // * Implement getWidth method for external frame only
+    // */
+    // public int getWidthExternal()
+    // {
+    // return frame.getWidth();
+    // }
+    //
+    // /**
+    // * Implement getLocation method for external frame only
+    // */
+    // public Point getLocationExternal()
+    // {
+    // return frame.getLocation();
+    // }
+    //
+    // /**
+    // * Implement getBounds method for external frame only
+    // */
+    // public Rectangle getBoundsExternal()
+    // {
+    // return frame.getBounds();
+    // }
+    //
+    // /**
+    // * Implement setLocation method for external frame only
+    // */
+    // public void setLocationExternal(final Point p)
+    // {
+    // frame.setLocation(p);
+    // }
+    //
+    // /**
+    // * Implement setLocation method for external frame only
+    // */
+    // public void setLocationExternal(final int x, final int y)
+    // {
+    // frame.setLocation(x, y);
+    // }
+    //
+    // /**
+    // * Implement setSize method for external frame only
+    // */
+    // public void setSizeExternal(final Dimension d)
+    // {
+    // frame.setSize(d);
+    // }
+    //
+    // /**
+    // * Implement setSize method for external frame only
+    // */
+    // public void setSizeExternal(final int width, final int height)
+    // {
+    // frame.setSize(width, height);
+    // }
+    //
+    // /**
+    // * Implement setPreferredSize method for external frame only
+    // */
+    // public void setPreferredSizeExternal(final Dimension d)
+    // {
+    // frame.setPreferredSize(d);
+    // }
+    //
+    // /**
+    // * Implement setMinimumSize method for external frame only
+    // */
+    // public void setMinimumSizeExternal(final Dimension d)
+    // {
+    // frame.setMinimumSize(d);
+    // }
+    //
+    // /**
+    // * Implement setMaximumSize method for external frame only
+    // */
+    // public void setMaximumSizeExternal(final Dimension d)
+    // {
+    // frame.setMaximumSize(d);
+    // }
 
     /**
      * Fire state change event

@@ -18,6 +18,7 @@
  */
 package icy.common;
 
+import icy.common.listener.ChangeListener;
 import icy.system.thread.ThreadUtil;
 
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ import java.util.List;
  */
 public class UpdateEventHandler
 {
-    IcyChangedListener parent;
+    ChangeListener parent;
 
     /**
      * dispatch in AWT dispatch thread
@@ -46,7 +47,7 @@ public class UpdateEventHandler
     /**
      * 
      */
-    public UpdateEventHandler(IcyChangedListener parent, boolean awtDispatch)
+    public UpdateEventHandler(ChangeListener parent, boolean awtDispatch)
     {
         super();
 

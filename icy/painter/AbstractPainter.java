@@ -19,8 +19,8 @@
 package icy.painter;
 
 import icy.common.EventHierarchicalChecker;
-import icy.common.IcyChangedListener;
 import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
 import icy.main.Icy;
 import icy.painter.PainterEvent.PainterEventType;
 import icy.sequence.Sequence;
@@ -32,7 +32,7 @@ import javax.swing.event.EventListenerList;
 /**
  * @author Stephane
  */
-public abstract class AbstractPainter extends PainterAdapter implements IcyChangedListener
+public abstract class AbstractPainter extends PainterAdapter implements ChangeListener
 {
     /**
      * listeners

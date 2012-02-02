@@ -52,8 +52,7 @@ public class EventUtil
     public static boolean isControlDown(InputEvent e)
     {
         // take care of OSX CMD key here
-        final int ctrlMask = SystemUtil.getSystemCtrlMask();
-        return (e.getModifiers() & ctrlMask) != 0;
+        return (e.getModifiers() & SystemUtil.getCtrlMask()) != 0;
     }
 
     /**

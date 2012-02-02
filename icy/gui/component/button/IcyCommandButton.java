@@ -5,6 +5,8 @@ package icy.gui.component.button;
 
 import icy.resource.icon.IcyIcon;
 
+import java.awt.Image;
+
 import javax.swing.Icon;
 
 import org.pushingpixels.flamingo.api.common.JCommandButton;
@@ -22,6 +24,11 @@ public class IcyCommandButton extends JCommandButton
     public IcyCommandButton(String title, IcyIcon icon)
     {
         super(title, icon);
+    }
+
+    public IcyCommandButton(String title, Image icon)
+    {
+        this(title, new IcyIcon(icon));
     }
 
     public IcyCommandButton(String title, String iconName)

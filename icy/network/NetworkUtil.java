@@ -18,11 +18,12 @@
  */
 package icy.network;
 
-import icy.common.ProgressListener;
+import icy.common.listener.ProgressListener;
 import icy.preferences.ApplicationPreferences;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 
 import java.awt.Desktop;
 import java.awt.Desktop.Action;
@@ -156,13 +157,24 @@ public class NetworkUtil
      */
     public static byte[] download(String path, ProgressListener listener, boolean displayError)
     {
+        return download(path, null, null, listener, displayError);
+    }
+
+    /**
+     * Download data from specified URL string and return it as an array of byte
+     * Process authentication process if login / pass are not null.
+     */
+    public static byte[] download(String path, String login, String pass, ProgressListener listener,
+            boolean displayError)
+    {
         final File file = new File(path);
         if (file.exists())
+            // authentication not supported on file download
             return download(file, listener, displayError);
 
         final URL url = URLUtil.getURL(path);
         if (url != null)
-            return download(url, listener, displayError);
+            return download(url, login, pass, listener, displayError);
 
         if (displayError)
             System.out.println("Can't download '" + path + "', incorrect path !");
@@ -174,6 +186,15 @@ public class NetworkUtil
      * Download data from specified URL and return it as an array of byte
      */
     public static byte[] download(URL url, ProgressListener listener, boolean displayError)
+    {
+        return download(url, null, null, listener, displayError);
+    }
+
+    /**
+     * Download data from specified URL and return it as an array of byte.
+     * Process authentication process if login / pass are not null.
+     */
+    public static byte[] download(URL url, String login, String pass, ProgressListener listener, boolean displayError)
     {
         // check if this is a file
         if ((url != null) && URLUtil.isFileURL(url))
@@ -193,6 +214,9 @@ public class NetworkUtil
 
         // disable cache
         final URLConnection uc = openConnection(url, true, displayError);
+        // process authentication if needed
+        if (!(StringUtil.isEmpty(login) || StringUtil.isEmpty(pass)))
+            setAuthentication(uc, login, pass);
         // get input stream with coherence verification
         final InputStream ip = getInputStream(uc, displayError);
         if (ip != null)
@@ -215,24 +239,6 @@ public class NetworkUtil
                 }
             }
         }
-
-        // if (displayError)
-        // {
-        // if (URLUtil.isFileURL(url))
-        // System.err.println("Error while loading " + url);
-        // else
-        // {
-        // String urlString = url.toString();
-        //
-        // // obfuscation
-        // if (urlString.startsWith(updateUrlBase))
-        // urlString = "update site";
-        // else
-        // urlString = "'" + urlString + "'";
-        //
-        // System.err.println("Error while downloading from " + urlString);
-        // }
-        // }
 
         return null;
     }
@@ -439,6 +445,9 @@ public class NetworkUtil
         uc.setRequestProperty("Pragma", "no-cache");
     }
 
+    /**
+     * Process authentication on specified {@link URLConnection} with specified login and pass.
+     */
     public static void setAuthentication(URLConnection uc, String login, String pass)
     {
         final String req = login + ":" + pass;
