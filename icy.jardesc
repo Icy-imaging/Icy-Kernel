@@ -28,7 +28,9 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.abstract_"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.colormap"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.common.listener.weak"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.plugin"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.common.listener"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.main"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.value"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.editor"/>
@@ -40,8 +42,8 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.frame.progress"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.profile"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.main"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.system"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.help"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.system"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.interface_.gui"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.interface_"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.viewer"/>
@@ -53,29 +55,29 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file.xls"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.workspace"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.canvas"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.dialog"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.dialog"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.renderer"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.update"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.node"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.model"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.frame"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.button"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.util"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.swimmingPool"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.list"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.undo"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.math"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.undo"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.preferences"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.menu.tools"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.array"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.itk"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.performance"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.script"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.lut.abstract_"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.script"/>
     </selectedElements>
 </jardesc>

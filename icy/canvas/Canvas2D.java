@@ -21,6 +21,7 @@ import icy.math.SmoothMover;
 import icy.math.SmoothMover.SmoothMoveType;
 import icy.math.SmoothMover.SmoothMoverAdapter;
 import icy.preferences.ApplicationPreferences;
+import icy.preferences.GeneralPreferences;
 import icy.preferences.XMLPreferences;
 import icy.resource.ResourceUtil;
 import icy.roi.ROI;
@@ -67,7 +68,6 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
@@ -869,7 +869,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
                     double sx, sy;
 
-                    if ((wheelRotation > 0) ^ invertZoomAxisCheckBox.isSelected())
+                    if ((wheelRotation > 0) ^ GeneralPreferences.getInvertMouseWheelAxis())
                     {
                         sx = 20d / 19d;
                         sy = 20d / 19d;
@@ -1342,7 +1342,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     private static final String PREF_CANVAS2D_ID = "Canvas2D";
 
     private static final String ID_FIT_CANVAS = "fitCanvas";
-    private static final String ID_INVERT_MOUSEWHEEL_AXIS = "invertMouseWheelAxis";
 
     private final static int TRANS_X = 0;
     private final static int TRANS_Y = 1;
@@ -1366,7 +1365,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     JComboBox zoomComboBox;
     JComboBox rotationComboBox;
 
-    JCheckBox invertZoomAxisCheckBox;
     IcyToggleButton zoomFitCanvasButton;
     IcyButton zoomFitImageButton;
     IcyButton centerImageButton;
@@ -1626,19 +1624,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         });
 
-        invertZoomAxisCheckBox = new JCheckBox("Invert mouse wheel axis");
-        invertZoomAxisCheckBox.setSelected(preferences.getBoolean(ID_FIT_CANVAS, false));
-        invertZoomAxisCheckBox.setFocusPainted(false);
-        invertZoomAxisCheckBox.setToolTipText("Invert the mouse wheel axis for zoom operation");
-        invertZoomAxisCheckBox.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                preferences.putBoolean(ID_INVERT_MOUSEWHEEL_AXIS, invertZoomAxisCheckBox.isSelected());
-            }
-        });
-
         zoomFitImageButton = new IcyButton(ICON_FIT_IMAGE);
         zoomFitImageButton.setFocusable(false);
         zoomFitImageButton.setToolTipText("Fit canvas to image size");
@@ -1710,8 +1695,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 GuiUtil.createFixedWidthBoldLabel("Rotation", 70), rotationComboBox,
                 GuiUtil.createFixedWidthBoldLabel("°", 20), Box.createHorizontalGlue(), rotateUnclock,
                 Box.createHorizontalStrut(4), rotateClock, Box.createHorizontalStrut(4)));
-        subPanel.add(GuiUtil.createLineBoxPanel(invertZoomAxisCheckBox, Box.createHorizontalGlue(),
-                Box.createHorizontalStrut(4)));
 
         panel.setLayout(new BorderLayout());
 

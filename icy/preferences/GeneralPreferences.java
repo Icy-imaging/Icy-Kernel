@@ -25,6 +25,7 @@ public class GeneralPreferences
     private static final String ID_AUTO_CHECK_UPDATE = "autoCheckUpdate";
     private static final String ID_DETACHED_MODE = "detached";
     private static final String ID_ALWAYS_ON_TOP = "alwaysOnTop";
+    private static final String ID_INVERT_MOUSEWHEEL_AXIS = "invertMouseWheelAxis";
     private static final String ID_GUI_SKIN = "guiSkin";
     private static final String ID_GUI_FONT_SIZE = "guiFontSize";
     private static final String ID_STARTUP_TOOLTIP = "startupTooltip";
@@ -80,22 +81,6 @@ public class GeneralPreferences
     }
 
     /**
-     * @return the prefCanvas2D
-     */
-    // public static XMLPreferences getPreferencesCanvas2D()
-    // {
-    // return prefCanvas2D;
-    // }
-
-    // /**
-    // * @return the launchSettings
-    // */
-    // public static LauncherSettings getLaunchSettings()
-    // {
-    // return launchSettings;
-    // }
-
-    /**
      * Get max memory (in MB)
      */
     public static int getMaxMemoryMB()
@@ -105,10 +90,10 @@ public class GeneralPreferences
         // no value ?
         if (result == -1)
         {
-            final long freeMemory = SystemUtil.getSystemFreeMemory();
+            final long freeMemory = SystemUtil.getFreeMemory();
 
             // take system total memory / 2
-            long calculatedMaxMem = SystemUtil.getSystemTotalMemory() / 2;
+            long calculatedMaxMem = SystemUtil.getTotalMemory() / 2;
             // current available memory is low ?
             if (calculatedMaxMem > freeMemory)
                 // adjust max memory
@@ -124,7 +109,7 @@ public class GeneralPreferences
 
     public static int getMaxMemoryMBLimit()
     {
-        final int result = (int) (SystemUtil.getSystemTotalMemory() / (1024 * 1024));
+        final int result = (int) (SystemUtil.getTotalMemory() / (1024 * 1024));
 
         // limit maximum value for 32 bits system
         if (SystemUtil.is32bits() && (result > 1400))
@@ -212,10 +197,10 @@ public class GeneralPreferences
         return prefGeneral.getBoolean(ID_ALWAYS_ON_TOP, false);
     }
 
-    // public static boolean getSmoothZoom()
-    // {
-    // return prefCanvas2D.getBoolean(ID_SMOOTH_ZOOM, true);
-    // }
+    public static boolean getInvertMouseWheelAxis()
+    {
+        return prefGeneral.getBoolean(ID_INVERT_MOUSEWHEEL_AXIS, false);
+    }
 
     public static boolean getStatupTooltip()
     {
@@ -308,10 +293,10 @@ public class GeneralPreferences
         Icy.getMainInterface().setAlwaysOnTop(value);
     }
 
-    // public static void setSmoothZoom(boolean value)
-    // {
-    // prefCanvas2D.putBoolean(ID_SMOOTH_ZOOM, value);
-    // }
+    public static void setInvertMouseWheelAxis(boolean value)
+    {
+        prefGeneral.putBoolean(ID_INVERT_MOUSEWHEEL_AXIS, value);
+    }
 
     public static void setStatupTooltip(boolean value)
     {

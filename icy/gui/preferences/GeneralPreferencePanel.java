@@ -55,7 +55,7 @@ public class GeneralPreferencePanel extends PreferencePanel
     final JCheckBox autoUpdateCheckBox;
     final JCheckBox autoCheckUpdateCheckBox;
     private final JCheckBox alwaysOnTopCheckBox;
-    // private final JCheckBox zoomSmooth;
+    private final JCheckBox invertWheelAxisCheckBox;
     private final JSpinner maxMemoryMBSpinner;
     private final JSpinner uiFontSizeSpinner;
     private final JButton reenableAllToolTipButton;
@@ -86,8 +86,8 @@ public class GeneralPreferencePanel extends PreferencePanel
         autoCheckUpdateCheckBox = new JCheckBox("Check for application update at startup");
         autoCheckUpdateCheckBox.setToolTipText("Check if a new application version is available at startup");
         alwaysOnTopCheckBox = new JCheckBox("Application window always on top");
-
-        // zoomSmooth = new JCheckBox("Smooth Zoom");
+        invertWheelAxisCheckBox = new JCheckBox("Invert mouse wheel axis");
+        invertWheelAxisCheckBox.setToolTipText("Invert the mouse wheel axis for canvas operation");
 
         final int maxMemLimit = (int) MathUtil.prevMultiple(GeneralPreferences.getMaxMemoryMBLimit(), 32);
         maxMemoryMBSpinner = new JSpinner(new SpinnerNumberModel(128, 64, maxMemLimit, 32));
@@ -125,14 +125,13 @@ public class GeneralPreferencePanel extends PreferencePanel
         mainPanel.add(Box.createVerticalStrut(6));
         mainPanel.add(GuiUtil.createLineBoxPanel(sequencePersistence, Box.createHorizontalGlue()));
         mainPanel.add(Box.createVerticalStrut(6));
-        // mainPanel.add(GuiUtil.createLineBoxPanel(zoomSmooth, Box.createHorizontalGlue()));
-        // mainPanel.add(Box.createVerticalStrut(6));
+        mainPanel.add(GuiUtil.createLineBoxPanel(invertWheelAxisCheckBox, Box.createHorizontalGlue()));
+        mainPanel.add(Box.createVerticalStrut(18));
         mainPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" GUI font size  "), uiFontSizeSpinner,
                 Box.createHorizontalGlue()));
-        mainPanel.add(Box.createVerticalStrut(6));
-        mainPanel.add(Box.createVerticalStrut(6));
+        mainPanel.add(Box.createVerticalStrut(12));
         mainPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Max memory  "), maxMemoryMBSpinner, new JLabel(
-                " MB (max = " + maxMemLimit + " MB)"), Box.createHorizontalGlue()));
+                " MB  (<= " + maxMemLimit + " MB)"), Box.createHorizontalGlue()));
         mainPanel.add(Box.createVerticalStrut(6));
         mainPanel.add(Box.createVerticalGlue());
         mainPanel.add(GuiUtil.createLineBoxPanel(reenableAllToolTipButton, Box.createHorizontalGlue()));
@@ -147,7 +146,7 @@ public class GeneralPreferencePanel extends PreferencePanel
         maxMemoryMBSpinner.setValue(Integer.valueOf(GeneralPreferences.getMaxMemoryMB()));
         uiFontSizeSpinner.setValue(Integer.valueOf(GeneralPreferences.getGuiFontSize()));
         exitConfirm.setSelected(GeneralPreferences.getExitConfirm());
-        // zoomSmooth.setSelected(GeneralPreferences.getSmoothZoom());
+        invertWheelAxisCheckBox.setSelected(GeneralPreferences.getInvertMouseWheelAxis());
         sequencePersistence.setSelected(GeneralPreferences.getSequencePersistence());
         autoUpdateCheckBox.setSelected(GeneralPreferences.getAutomaticUpdate());
         autoCheckUpdateCheckBox.setSelected(GeneralPreferences.getAutomaticCheckUpdate()
@@ -168,7 +167,7 @@ public class GeneralPreferencePanel extends PreferencePanel
         GeneralPreferences.setMaxMemoryMB(maxMemory);
         GeneralPreferences.setGuiFontSize(((Integer) uiFontSizeSpinner.getValue()).intValue());
         GeneralPreferences.setExitConfirm(exitConfirm.isSelected());
-        // GeneralPreferences.setSmoothZoom(zoomSmooth.isSelected());
+        GeneralPreferences.setInvertMouseWheelAxis(invertWheelAxisCheckBox.isSelected());
         GeneralPreferences.setSequencePersistence(sequencePersistence.isSelected());
         GeneralPreferences.setAutomaticUpdate(autoUpdateCheckBox.isSelected());
         GeneralPreferences.setAutomaticCheckUpdate(autoCheckUpdateCheckBox.isSelected());

@@ -65,7 +65,7 @@ public class AboutFrame extends IcyFrame
 
         // String license = "<html><center>" + "<br><font size=3><u>LICENSE:</u></font>" + "<br>" +
         // "<br>todo" + "</html>";
-        String license = "<html><pre>" + new String(FileUtil.load("COPYING", false)) + "</pre></html>";
+        String license = "<html><pre>" + new String(FileUtil.load("COPYING.txt", false)) + "</pre></html>";
 
         JEditorPane aboutEditorPane = new JEditorPane("text/html", about);
         aboutEditorPane.setEditable(false);

@@ -40,6 +40,7 @@ import java.awt.Point;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -83,6 +84,7 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
 
         // tab panel
         mainPane = new ExtTabbedPanel();
+        mainPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
         // main panels
         sequencePanel = new SequencePanel();
@@ -100,7 +102,7 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
         // mainPane.add("Active Plugin", pluginsPanel);
         mainPane.addTab("Layer", null, layersPanel, "Show all layers details");
         mainPane.addTab("ROI", null, roisPanel, "Manage / edit your ROI");
-//        mainPane.addTab("History", null, historyPanel, "Actions history");
+        // mainPane.addTab("History", null, historyPanel, "Actions history");
         mainPane.addTab("Output", null, outputConsolePanel, "Console output");
         mainPane.addTab("Chat", null, chatPanel, "Chat room");
 

@@ -370,7 +370,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     /** Set the frame to be an inner frame on the desktop pane */
     public void attach()
     {
-        if (isInternalized())
+        if (isInternalized() || !canBeInternalized())
             return;
 
         // AWT safe
