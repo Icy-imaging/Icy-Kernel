@@ -80,7 +80,7 @@ public class ElementDescriptor implements XMLPersistent
         private long dateModif;
 
         /**
-         * number of file (for directory only)
+         * number of file (for directory only, -1 = don't check file number)
          */
         private int fileNumber;
 
@@ -309,8 +309,12 @@ public class ElementDescriptor implements XMLPersistent
                 return false;
             if (compareOnlinePath && (!StringUtil.equals(elementFile.onlinePath, onlinePath)))
                 return false;
-            if (elementFile.fileNumber != fileNumber)
-                return false;
+            // -1 means we don't check file number 
+            if ((elementFile.fileNumber != -1) && (fileNumber != -1))
+            {
+                if (elementFile.fileNumber != fileNumber)
+                    return false;
+            }
 
             if ((elementFile.dateModif == 0) || (dateModif == 0))
             {
