@@ -21,6 +21,7 @@ package icy.file;
 import icy.network.NetworkUtil;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
+import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
 import java.io.BufferedReader;
@@ -335,6 +336,9 @@ public class FileUtil
 
     /**
      * Rename the specified 'src' file to 'dst' file.
+     * Return false if the method failed.
+     * 
+     * @see File#renameTo(File)
      */
     public static boolean rename(String src, String dst, boolean force)
     {
@@ -344,6 +348,7 @@ public class FileUtil
     /**
      * @deprecated uses {@link #rename(String, String, boolean)} instead
      */
+    @Deprecated
     public static boolean rename(String src, String dst, boolean force, boolean wantHidden)
     {
         return rename(src, dst, force);
@@ -351,6 +356,9 @@ public class FileUtil
 
     /**
      * Rename the specified 'src' file to 'dst' file.
+     * Return false if the method failed.
+     * 
+     * @see File#renameTo(File)
      */
     public static boolean rename(File src, File dst, boolean force)
     {
@@ -362,7 +370,7 @@ public class FileUtil
                 {
                     if (!delete(dst, true))
                     {
-                        System.err.println("Cannot move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
+                        System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
                                 + "'");
                         System.err.println("Reason : destination cannot be overwritten.");
                         System.err.println("Verify it is not locked by another program (as Eclipse)");
@@ -372,8 +380,8 @@ public class FileUtil
                 }
                 else
                 {
-                    System.err
-                            .println("Cannot move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
+                    System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
+                            + "'");
                     System.err.println("The destination already exists.");
                     System.err.println("Uses 'force' flag to force file move.");
                     return false;
@@ -383,10 +391,24 @@ public class FileUtil
             // create parent directory if not exist
             ensureParentDirExist(dst);
 
-            if (!src.renameTo(dst))
+            // renameTo is not very reliable, better to do several try
+            boolean done = src.renameTo(dst);
+
+            int retry = 0;
+            while (!done && (retry < 10))
             {
-                System.err.println("Cannot move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
-                System.err.println("Reason : unknown");
+                // try to release objects which maintain lock
+                System.gc();
+                ThreadUtil.sleep(50);
+                // retry
+                done = src.renameTo(dst);
+                retry++;
+            }
+
+            if (!done)
+            {
+                System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
+                System.err.println("Check the source file is not locked.");
                 return false;
             }
 
@@ -394,7 +416,7 @@ public class FileUtil
         }
 
         // missing input file
-        System.err.println("Cannot move '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
+        System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
         System.err.println("Input file '" + src.getAbsolutePath() + "' not found !");
 
         return false;
@@ -410,8 +432,9 @@ public class FileUtil
     }
 
     /**
-     * Move (same as rename) the specified 'src' file to 'dst' file
+     * @deprecated uses {@link #rename(String, String, boolean)} instead
      */
+    @Deprecated
     public static boolean move(String src, String dst, boolean force)
     {
         return rename(src, dst, force);
@@ -427,8 +450,9 @@ public class FileUtil
     }
 
     /**
-     * Move (same as rename) the specified 'src' file to 'dst' file.
+     * @deprecated uses {@link #rename(File, File, boolean)} instead
      */
+    @Deprecated
     public static boolean move(File src, File dst, boolean force)
     {
         return rename(src, dst, force);
@@ -465,6 +489,7 @@ public class FileUtil
     /**
      * @deprecated uses {@link #copy(String, String, boolean, boolean)} instead
      */
+    @Deprecated
     public static boolean copy(String src, String dst, boolean force, boolean wantHidden, boolean recursive)
     {
         return copy(src, dst, force, recursive);
@@ -625,7 +650,7 @@ public class FileUtil
         // missing input file
         System.err.println("Cannot copy '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
         System.err.println("Input file '" + src.getAbsolutePath() + "' not found !");
-        
+
         return false;
     }
 
