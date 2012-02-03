@@ -139,6 +139,8 @@ public class IcyUpdater
      */
     static void processCheckUpdate(boolean showProgress, boolean auto)
     {
+        wantUpdate = false;
+
         // delete update directory to avoid partial update
         FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
 

@@ -38,7 +38,6 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.LineBreakMeasurer;
 import java.awt.font.TextLayout;
 import java.io.IOException;
-import java.net.Socket;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.ArrayList;
@@ -307,7 +306,9 @@ public class ChatPanel extends ExternalizablePanel
         public void onNick(IRCUser u, String nickNew)
         {
             onReceive(u.getNick() + " is now known as " + nickNew + ".");
-            setIrcNickname(nickNew);
+            // update nickname
+            if (u.getNick().equals(getIrcNickname()))
+                setIrcNickname(nickNew);
             refreshGUI();
             refreshUsers();
         }
