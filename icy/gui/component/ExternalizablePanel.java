@@ -123,7 +123,7 @@ public class ExternalizablePanel extends JPanel
     private boolean internalizationAutorized;
     private boolean externalizationAutorized;
     boolean closed;
-    
+
     // we need to keep reference on it as the object only use weak reference
     final WindowPositionSaver positionSaver;
 

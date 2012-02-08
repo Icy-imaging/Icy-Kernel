@@ -1039,7 +1039,6 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         }
         else
         {
-
             final Float xScale = Float.valueOf((float) width / getWidth());
             final Float yScale = Float.valueOf((float) height / getHeight());
             final Interpolation interpolation;

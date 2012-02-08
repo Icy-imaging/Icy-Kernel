@@ -322,5 +322,4 @@ public class GeneralPreferences
             LookAndFeelUtil.setSkin(value);
         }
     }
-
 }

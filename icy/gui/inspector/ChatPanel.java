@@ -8,18 +8,17 @@ import icy.gui.frame.progress.ToolTipFrame;
 import icy.gui.main.IcyDesktopPane;
 import icy.gui.main.IcyDesktopPane.AbstractDesktopOverlay;
 import icy.gui.main.MainFrame;
+import icy.gui.preferences.ChatPreferencePanel;
+import icy.gui.preferences.PreferenceFrame;
 import icy.gui.util.GuiUtil;
 import icy.main.Icy;
 import icy.network.IRCClient;
 import icy.network.IRCEventListenerImpl;
-import icy.preferences.ApplicationPreferences;
-import icy.preferences.GeneralPreferences;
-import icy.preferences.XMLPreferences;
+import icy.preferences.ChatPreferences;
 import icy.resource.ResourceUtil;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.DateUtil;
-import icy.util.Random;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -34,9 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.font.FontRenderContext;
-import java.awt.font.LineBreakMeasurer;
-import java.awt.font.TextLayout;
+import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
@@ -46,7 +43,6 @@ import java.util.Arrays;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -82,7 +78,7 @@ public class ChatPanel extends ExternalizablePanel
         public void writeMsg(String nick, String target, String msg)
         {
             // we want also to see send text
-            if (StringUtil.equals(target.substring(1), ApplicationPreferences.getIrcChannel()))
+            if (StringUtil.equals(target.substring(1), ChatPreferences.getChannels()))
                 receive(DateUtil.now("[HH:mm]") + " <" + nick + "> " + msg);
             else
                 receive(DateUtil.now("[HH:mm]") + " <" + nick + "> " + target + "> " + msg);
@@ -91,7 +87,7 @@ public class ChatPanel extends ExternalizablePanel
 
     private class DesktopOverlay extends AbstractDesktopOverlay
     {
-        final ArrayList<TextLayout> layouts;
+        final ArrayList<Integer> layoutLimits;
         final Color bgColor;
         final Color fgColor;
         int position;
@@ -100,16 +96,16 @@ public class ChatPanel extends ExternalizablePanel
         {
             super();
 
-            layouts = new ArrayList<TextLayout>();
+            layoutLimits = new ArrayList<Integer>();
             // default text colors
             fgColor = new Color(0f, 0f, 0f, 0.6f);
             bgColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
         }
 
         /**
-         * Return the next paragraph
+         * Return the prev paragraph
          */
-        private AttributedCharacterIterator getNextParagraph()
+        private AttributedCharacterIterator getPrevParagraph()
         {
             try
             {
@@ -135,31 +131,48 @@ public class ChatPanel extends ExternalizablePanel
         public void Paint(Graphics g, int width, int height)
         {
             final Graphics2D g2 = (Graphics2D) g.create();
-            final FontRenderContext frc = g2.getFontRenderContext();
 
             // start at last character
             position = doc.getLength() - 1;
 
-            float x;
-            float y = height;
+            // get last paragraph
+            AttributedCharacterIterator charIterator = getPrevParagraph();
+            // nothing to do
+            if (charIterator == null)
+                return;
 
-            // get first paragraph
-            AttributedCharacterIterator charIterator = getNextParagraph();
+            // modify to Monospaced font for easy space calculation
+            g2.setFont(new Font("Monospaced", Font.PLAIN, 12));
+
+            // fixed size font, every character has the same bounds
+            final Rectangle2D charRect = GuiUtil.getStringBounds(g2, "M");
+            final float charHeight = (float) charRect.getHeight();
+            final int charByLine = (int) ((width - 20) / charRect.getWidth());
+
+            // start y position
+            float y = height;
 
             while ((charIterator != null) && (y > 0))
             {
-                final LineBreakMeasurer lbm = new LineBreakMeasurer(charIterator, frc);
                 final int end = charIterator.getEndIndex();
                 float sy = y;
-                layouts.clear();
 
-                while ((lbm.getPosition() < end) && (sy > 0))
+                layoutLimits.clear();
+
+                while ((charIterator.getIndex() < end) && (sy > 0))
                 {
-                    final TextLayout textLayout = lbm.nextLayout(width - 10);
+                    int i = charByLine;
+                    boolean br = false;
 
-                    sy -= textLayout.getAscent() + textLayout.getDescent() + textLayout.getLeading();
+                    while ((charIterator.getIndex() < end) && (i > 0) && !br)
+                    {
+                        br = (charIterator.current() == '\n');
+                        charIterator.next();
+                        i--;
+                    }
 
-                    layouts.add(textLayout);
+                    layoutLimits.add(Integer.valueOf(charIterator.getIndex()));
+                    sy -= charHeight;
                 }
 
                 // get paragraph height
@@ -167,24 +180,35 @@ public class ChatPanel extends ExternalizablePanel
                 // position to end of paragraph
                 y -= paragraphHeight;
 
-                for (TextLayout textLayout : layouts)
+                try
                 {
-                    x = textLayout.isLeftToRight() ? 10 : width - (textLayout.getAdvance() + 10);
+                    int offset = 0;
+                    for (Integer limit : layoutLimits)
+                    {
+                        final int lim = limit.intValue();
+                        final String text = doc.getText(position + 1 + offset, lim - offset);
 
-                    g2.setColor(bgColor);
-                    textLayout.draw(g2, x - 1, y + 1);
-                    g2.setColor(fgColor);
-                    textLayout.draw(g2, x, y);
+                        offset = limit.intValue();
 
-                    // write paragraph in usual top/bottom order
-                    y += textLayout.getAscent() + textLayout.getDescent() + textLayout.getLeading();
+                        g2.setColor(bgColor);
+                        g2.drawString(text, 10 - 1, y + 1);
+                        g2.setColor(fgColor);
+                        g2.drawString(text, 10, y);
+
+                        // write paragraph in usual top/bottom order
+                        y += charHeight;
+                    }
+                }
+                catch (BadLocationException e)
+                {
+                    // ignore
+
                 }
 
                 // set position back to end of paragraph
                 y -= paragraphHeight;
-
-                // get next paragraph
-                charIterator = getNextParagraph();
+                // get previous paragraph
+                charIterator = getPrevParagraph();
             }
 
             g2.dispose();
@@ -204,7 +228,7 @@ public class ChatPanel extends ExternalizablePanel
             super.onConnected();
 
             // join channel
-            client.doJoin("#" + ApplicationPreferences.getIrcChannel());
+            client.doJoin("#" + ChatPreferences.getChannels());
 
             connectButton.setEnabled(true);
             refreshGUI();
@@ -227,12 +251,14 @@ public class ChatPanel extends ExternalizablePanel
             switch (num)
             {
                 case 432:
+                case 433:
                     // Erroneous Nickname
                     if (!connectButton.isEnabled())
                     {
                         // if we were connecting, we disconnect
-                        disconnect();
-                        onReceive("Your nickname contains invalid caracters.");
+                        disconnect("Incorrect nickname");
+                        if (num == 432)
+                            onReceive("Your nickname contains invalid caracters.");
                     }
                     refreshGUI();
                     break;
@@ -307,8 +333,8 @@ public class ChatPanel extends ExternalizablePanel
         {
             onReceive(u.getNick() + " is now known as " + nickNew + ".");
             // update nickname
-            if (u.getNick().equals(getIrcNickname()))
-                setIrcNickname(nickNew);
+            if (u.getNick().equals(ChatPreferences.getNickname()))
+                ChatPreferences.setNickname(nickNew);
             refreshGUI();
             refreshUsers();
         }
@@ -332,6 +358,8 @@ public class ChatPanel extends ExternalizablePanel
                 onReceive(u.getNick() + " quits chat.");
             else
                 onReceive(u.getNick() + " quits chat (" + msg + ").");
+
+            refreshUsers();
         }
 
         @Override
@@ -382,23 +410,6 @@ public class ChatPanel extends ExternalizablePanel
     private static final int MAX_SIZE = 4 * 1024 * 1024; // 4 MB
 
     /**
-     * pref id
-     */
-    private static final String CHAT_ID = "chat";
-
-    /**
-     * id
-     */
-    private static final String ID_IRC_NICKNAME = "ircNickname";
-    private static final String ID_IRC_USERNAME = "ircUsername";
-    private static final String ID_IRC_REALNAME = "ircRealname";
-    private static final String ID_IRC_PASSWORD = "ircPassword";
-    private static final String ID_AUTO_CONNECT = "autoConnect";
-    private static final String ID_SHOW_USERS_PANEL = "showUsersPanel";
-    private static final String ID_DESKTOP_OVERLAY = "desktopOverlay";
-    private static final String ID_USERS_PANEL_WIDTH = "usersPanelWidth";
-
-    /**
      * GUI
      */
     JSplitPane mainSplitPane;
@@ -411,7 +422,8 @@ public class ChatPanel extends ExternalizablePanel
     IcyToggleButton connectButton;
     IcyToggleButton showUserPaneButton;
     IcyToggleButton desktopOverlayButton;
-    JCheckBox autoConnectCheckBox;
+    IcyButton advancedButton;
+    // JCheckBox autoConnectCheckBox;
 
     /**
      * Desktop GUI
@@ -420,11 +432,6 @@ public class ChatPanel extends ExternalizablePanel
     final JTextField sendEditorDesktop;
     final IcyButton hideDesktopChatButton;
     final DesktopOverlay desktopOverlay;
-
-    /**
-     * preferences
-     */
-    private final XMLPreferences pref;
 
     /**
      * IRC client
@@ -445,7 +452,6 @@ public class ChatPanel extends ExternalizablePanel
         super("Chat room", "chatPanel");
         // super();
 
-        pref = GeneralPreferences.getPreferences().node(CHAT_ID);
         tmpUserList = new ArrayList<String>();
         cleared = false;
         attributes = new SimpleAttributeSet();
@@ -473,11 +479,12 @@ public class ChatPanel extends ExternalizablePanel
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                setDesktopOverlay(false);
+                ChatPreferences.setDesktopOverlay(false);
                 refreshDesktopOverlayState();
                 new ToolTipFrame("<b>Desktop chat overlay</b><br><br>"
                         + "You just disabled the desktop chat overlay<br>"
-                        + "but you can always access and enable it<br>" + "from the inspector \"Chat\" tab.", CHAT_ID);
+                        + "but you can always access and enable it<br>" + "from the inspector \"Chat\" tab.",
+                        "chat.overlay");
             }
         });
 
@@ -499,7 +506,7 @@ public class ChatPanel extends ExternalizablePanel
         refreshGUI();
         refreshDesktopOverlayState();
 
-        if (getAutoConnect())
+        if (ChatPreferences.getAutoConnect())
             connect();
     }
 
@@ -511,67 +518,70 @@ public class ChatPanel extends ExternalizablePanel
     /**
      * Do IRC connection
      */
-    void connect()
+    public void connect()
     {
-        // connecting
-        connectButton.setEnabled(false);
-        connectButton.setToolTipText("connecting...");
-
-        final String nickName = txtNickName.getText();
-        // apply nickname
-        setIrcNickname(nickName);
-        String userName = getIrcUsername();
-        String realName = getIrcRealname();
-
-        if (StringUtil.isEmpty(userName))
-            userName = nickName;
-        if (StringUtil.isEmpty(realName))
-            realName = nickName;
-
-        // we need to recreate the client
-        client = new CustomIRCClient(ApplicationPreferences.getIrcServer(), ApplicationPreferences.getIrcPort(),
-                getIrcPassword(), nickName, userName, realName);
-        client.addListener(ircListener);
-
-        // process connection in a separate thread as it can take sometime
-        new Thread(new Runnable()
+        if (!isConnected())
         {
-            @Override
-            public void run()
-            {
-                try
-                {
-                    client.connect();
-                }
-                catch (IOException e)
-                {
-                    // error while connecting
-                    IcyExceptionHandler.showErrorMessage(e, false);
-                    System.err.println("Cannot connect to chat.");
+            // connecting
+            connectButton.setEnabled(false);
+            connectButton.setToolTipText("connecting...");
 
-                    // update GUI
-                    ThreadUtil.invokeLater(new Runnable()
+            final String nickName = txtNickName.getText();
+            // apply nickname
+            ChatPreferences.setNickname(nickName);
+            String userName = ChatPreferences.getUsername();
+            String realName = ChatPreferences.getRealname();
+
+            if (StringUtil.isEmpty(userName))
+                userName = nickName;
+            if (StringUtil.isEmpty(realName))
+                realName = nickName;
+
+            // we need to recreate the client
+            client = new CustomIRCClient(ChatPreferences.getServer(), ChatPreferences.getPort(),
+                    ChatPreferences.getServerPassword(), nickName, userName, realName);
+            client.addListener(ircListener);
+
+            // process connection in a separate thread as it can take sometime
+            new Thread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    try
                     {
-                        @Override
-                        public void run()
+                        client.connect();
+                    }
+                    catch (IOException e)
+                    {
+                        // error while connecting
+                        IcyExceptionHandler.showErrorMessage(e, false);
+                        System.err.println("Cannot connect to chat.");
+
+                        // update GUI
+                        ThreadUtil.invokeLater(new Runnable()
                         {
-                            connectButton.setEnabled(true);
-                            connectButton.setToolTipText("Not connected - Click to connect");
-                        }
-                    });
+                            @Override
+                            public void run()
+                            {
+                                connectButton.setEnabled(true);
+                                connectButton.setToolTipText("Not connected - Click to connect");
+                            }
+                        });
+                    }
                 }
-            }
-        }).start();
+            }).start();
+        }
     }
 
-    void disconnect()
+    public void disconnect(String message)
     {
         if (isConnected())
         {
             // closing connection
             connectButton.setEnabled(false);
             connectButton.setToolTipText("closing connexion...");
-            client.doQuit();
+            client.doQuit(message);
             cleared = false;
         }
     }
@@ -584,91 +594,6 @@ public class ChatPanel extends ExternalizablePanel
             client.sendText(text);
 
         txtField.setText("");
-    }
-
-    public String getRandomNickname()
-    {
-        return "guest" + Random.nextInt(10000);
-    }
-
-    public String getIrcNickname()
-    {
-        return pref.get(ID_IRC_NICKNAME, getRandomNickname());
-    }
-
-    public String getIrcUsername()
-    {
-        return pref.get(ID_IRC_USERNAME, "");
-    }
-
-    public String getIrcRealname()
-    {
-        return pref.get(ID_IRC_REALNAME, "");
-    }
-
-    public String getIrcPassword()
-    {
-        return pref.get(ID_IRC_PASSWORD, "");
-    }
-
-    public boolean getAutoConnect()
-    {
-        return pref.getBoolean(ID_AUTO_CONNECT, true);
-    }
-
-    public boolean getShowUsersPanel()
-    {
-        return pref.getBoolean(ID_SHOW_USERS_PANEL, false);
-    }
-
-    public boolean getDesktopOverlay()
-    {
-        return pref.getBoolean(ID_DESKTOP_OVERLAY, true);
-    }
-
-    public int getUsersPanelWidth()
-    {
-        return pref.getInt(ID_USERS_PANEL_WIDTH, 120);
-    }
-
-    public void setIrcNickname(String value)
-    {
-        pref.put(ID_IRC_NICKNAME, value);
-    }
-
-    public void setIrcUsername(String value)
-    {
-        pref.put(ID_IRC_USERNAME, value);
-    }
-
-    public void setIrcRealname(String value)
-    {
-        pref.put(ID_IRC_REALNAME, value);
-    }
-
-    public void setIrcPassword(String value)
-    {
-        pref.put(ID_IRC_PASSWORD, value);
-    }
-
-    public void setAutoConnect(boolean value)
-    {
-        pref.putBoolean(ID_AUTO_CONNECT, value);
-    }
-
-    public void setShowUsersPanel(boolean value)
-    {
-        pref.putBoolean(ID_SHOW_USERS_PANEL, value);
-    }
-
-    public void setDesktopOverlay(boolean value)
-    {
-        pref.putBoolean(ID_DESKTOP_OVERLAY, value);
-    }
-
-    public void setUsersPanelWidth(int value)
-    {
-        pref.putInt(ID_USERS_PANEL_WIDTH, value);
     }
 
     /**
@@ -705,7 +630,7 @@ public class ChatPanel extends ExternalizablePanel
             @Override
             public void componentResized(ComponentEvent e)
             {
-                setUsersPanelWidth(getUsersScrollPaneWidth());
+                ChatPreferences.setUsersPanelWidth(getUsersScrollPaneWidth());
             }
         });
         mainSplitPane.setRightComponent(usersScrollPane);
@@ -742,26 +667,26 @@ public class ChatPanel extends ExternalizablePanel
 
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
 
-        autoConnectCheckBox = new JCheckBox("Auto connect");
-        autoConnectCheckBox.setFocusPainted(false);
-        autoConnectCheckBox.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                setAutoConnect(autoConnectCheckBox.isSelected());
-            }
-        });
-        autoConnectCheckBox.setSelected(getAutoConnect());
-        autoConnectCheckBox.setToolTipText("Auto connect at start up");
-        topPanel.add(autoConnectCheckBox);
+        // autoConnectCheckBox = new JCheckBox("Auto connect");
+        // autoConnectCheckBox.setFocusPainted(false);
+        // autoConnectCheckBox.addActionListener(new ActionListener()
+        // {
+        // @Override
+        // public void actionPerformed(ActionEvent e)
+        // {
+        // ChatPreferences.setAutoConnect(autoConnectCheckBox.isSelected());
+        // }
+        // });
+        // autoConnectCheckBox.setSelected(ChatPreferences.getAutoConnect());
+        // autoConnectCheckBox.setToolTipText("Auto connect at start up");
+        // topPanel.add(autoConnectCheckBox);
 
-        Component horizontalStrut = Box.createHorizontalStrut(10);
-        topPanel.add(horizontalStrut);
+        // Component horizontalStrut = Box.createHorizontalStrut(10);
+        // topPanel.add(horizontalStrut);
 
         txtNickName = new JTextField();
         txtNickName.setMaximumSize(new Dimension(2147483647, 24));
-        txtNickName.setText(getIrcNickname());
+        txtNickName.setText(ChatPreferences.getNickname());
         txtNickName.setToolTipText("Nick name");
         txtNickName.setColumns(10);
         topPanel.add(txtNickName);
@@ -785,7 +710,7 @@ public class ChatPanel extends ExternalizablePanel
                 if (isConnected())
                     client.doNick(nickName);
                 else
-                    setIrcNickname(nickName);
+                    ChatPreferences.setNickname(nickName);
             }
         });
         btnSetNickName.setToolTipText("Set nick name");
@@ -811,7 +736,7 @@ public class ChatPanel extends ExternalizablePanel
                 if (connectButton.isSelected())
                     connect();
                 else
-                    disconnect();
+                    disconnect("Manual disconnect");
             }
         });
         topPanel.add(connectButton);
@@ -822,7 +747,7 @@ public class ChatPanel extends ExternalizablePanel
         showUserPaneButton = new IcyToggleButton("user", 20);
         showUserPaneButton.setFocusPainted(false);
         showUserPaneButton.setMaximumSize(new Dimension(32, 32));
-        showUserPaneButton.setSelected(getShowUsersPanel());
+        showUserPaneButton.setSelected(ChatPreferences.getShowUsersPanel());
         showUserPaneButton.setMinimumSize(new Dimension(24, 24));
         showUserPaneButton.setPreferredSize(new Dimension(24, 24));
         showUserPaneButton.setToolTipText("Show connected users");
@@ -833,7 +758,7 @@ public class ChatPanel extends ExternalizablePanel
             {
                 final boolean visible = showUserPaneButton.isSelected();
 
-                setShowUsersPanel(visible);
+                ChatPreferences.setShowUsersPanel(visible);
                 refreshGUI();
             }
         });
@@ -845,10 +770,10 @@ public class ChatPanel extends ExternalizablePanel
         desktopOverlayButton = new IcyToggleButton("spechbubble_sq_line", 20);
         desktopOverlayButton.setFocusPainted(false);
         desktopOverlayButton.setMaximumSize(new Dimension(32, 32));
-        desktopOverlayButton.setSelected(getDesktopOverlay());
+        desktopOverlayButton.setSelected(ChatPreferences.getDesktopOverlay());
         desktopOverlayButton.setMinimumSize(new Dimension(24, 24));
         desktopOverlayButton.setPreferredSize(new Dimension(24, 24));
-        desktopOverlayButton.setToolTipText("Enabled desktop overlay");
+        desktopOverlayButton.setToolTipText("Enabled desktop overlay (display chat on desktop)");
         desktopOverlayButton.addActionListener(new ActionListener()
         {
             @Override
@@ -856,11 +781,30 @@ public class ChatPanel extends ExternalizablePanel
             {
                 final boolean visible = desktopOverlayButton.isSelected();
 
-                setDesktopOverlay(visible);
+                ChatPreferences.setDesktopOverlay(visible);
                 refreshDesktopOverlayState();
             }
         });
         topPanel.add(desktopOverlayButton);
+
+        Component horizontalStrut_6 = Box.createHorizontalStrut(2);
+        topPanel.add(horizontalStrut_6);
+
+        advancedButton = new IcyButton(ResourceUtil.ICON_COG, 20);
+        advancedButton.setFocusPainted(false);
+        advancedButton.setMaximumSize(new Dimension(32, 32));
+        advancedButton.setMinimumSize(new Dimension(24, 24));
+        advancedButton.setPreferredSize(new Dimension(24, 24));
+        advancedButton.setToolTipText("Advanced settings");
+        advancedButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                new PreferenceFrame(ChatPreferencePanel.NODE_NAME);
+            }
+        });
+        topPanel.add(advancedButton);
     }
 
     int getUsersScrollPaneWidth()
@@ -940,12 +884,12 @@ public class ChatPanel extends ExternalizablePanel
                 }
 
                 // user panel visible
-                if (getShowUsersPanel())
+                if (ChatPreferences.getShowUsersPanel())
                 {
                     usersScrollPane.setVisible(true);
                     mainSplitPane.setDividerSize(6);
                     mainSplitPane.setDividerLocation(getCurrentWidth()
-                            - (getUsersPanelWidth() + mainSplitPane.getDividerSize()));
+                            - (ChatPreferences.getUsersPanelWidth() + mainSplitPane.getDividerSize()));
                 }
                 else
                 {
@@ -964,7 +908,7 @@ public class ChatPanel extends ExternalizablePanel
     void refreshUsers()
     {
         if (isConnected())
-            client.doNames("#" + ApplicationPreferences.getIrcChannel());
+            client.doNames("#" + ChatPreferences.getChannels());
         else
             userList.setListData(new String[0]);
     }
@@ -972,7 +916,7 @@ public class ChatPanel extends ExternalizablePanel
     /**
      * Refresh desktop overlay state
      */
-    void refreshDesktopOverlayState()
+    public void refreshDesktopOverlayState()
     {
         final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
         final IcyDesktopPane desktopPane = Icy.getMainInterface().getDesktopPane();
@@ -982,7 +926,7 @@ public class ChatPanel extends ExternalizablePanel
             final JPanel centerPanel = mainFrame.getCenterPanel();
 
             // desktop overlay enable ?
-            if (getDesktopOverlay())
+            if (ChatPreferences.getDesktopOverlay())
             {
                 // add desktop overlay
                 desktopPane.addOverlay(desktopOverlay);
@@ -1001,7 +945,7 @@ public class ChatPanel extends ExternalizablePanel
             desktopPane.repaint();
         }
 
-        desktopOverlayButton.setSelected(getDesktopOverlay());
+        desktopOverlayButton.setSelected(ChatPreferences.getDesktopOverlay());
     }
 
     /**
@@ -1012,7 +956,7 @@ public class ChatPanel extends ExternalizablePanel
         final IcyDesktopPane desktopPane = Icy.getMainInterface().getDesktopPane();
 
         // refresh desktop overlay
-        if ((desktopPane != null) && getDesktopOverlay())
+        if ((desktopPane != null) && ChatPreferences.getDesktopOverlay())
             desktopPane.repaint();
     }
 }

@@ -22,6 +22,7 @@ import icy.file.Loader;
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.ExternalizablePanel.StateListener;
+import icy.gui.inspector.ChatPanel;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.MainRibbon;
@@ -245,6 +246,8 @@ public class MainFrame extends JRibbonFrame
     public static final int TILE_VERTICAL = 1;
     public static final int TILE_GRID = 2;
 
+    public static final String ID_PREVIOUS_STATE = "previousState";
+
     private final MainRibbon mainRibbon;
     JSplitPane mainPane;
     private final JPanel centerPanel;
@@ -276,6 +279,7 @@ public class MainFrame extends JRibbonFrame
         ToolTipManager.sharedInstance().setLightWeightPopupEnabled(true);
 
         positionSaver = new WindowPositionSaver(this, "frame/main", new Point(50, 50), new Dimension(800, 600));
+        previousInspectorInternalized = positionSaver.getPreferences().getBoolean(ID_PREVIOUS_STATE, true);
 
         // transfert handler
         fileAndTextTransferHandler = new FileAndTextTransferHandler();
@@ -343,9 +347,8 @@ public class MainFrame extends JRibbonFrame
         mainPane.setContinuousLayout(true);
 
         // take in account the divider and border size
-        previousInspectorInternalized = inspector.isInternalized();
         lastInspectorWidth = inspector.getPreferredSize().width + 6 + 8;
-        if (previousInspectorInternalized)
+        if (inspector.isInternalized())
         {
             mainPane.setRightComponent(inspector);
             mainPane.setDividerSize(6);
@@ -441,6 +444,14 @@ public class MainFrame extends JRibbonFrame
     public MainRibbon getMainRibbon()
     {
         return mainRibbon;
+    }
+
+    /**
+     * @return the chat component
+     */
+    public ChatPanel getChat()
+    {
+        return inspector.getChatPanel();
     }
 
     /**
@@ -779,7 +790,9 @@ public class MainFrame extends JRibbonFrame
             {
                 // save inspector state
                 previousInspectorInternalized = inspector.isInternalized();
-
+                // save it in preferences... 
+                positionSaver.getPreferences().putBoolean(ID_PREVIOUS_STATE, previousInspectorInternalized);
+                
                 // externalize inspector
                 externalizeInspector();
                 // no more internalization possible

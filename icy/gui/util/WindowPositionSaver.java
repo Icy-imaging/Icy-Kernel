@@ -73,6 +73,8 @@ public class WindowPositionSaver
     final private static String ID_HE = "HeightE";
     final private static String ID_MAXIMIZEDE = "MaximizedE";
 
+    final XMLPreferences preferences;
+
     final private MainFrame mainFrame;
     final private IcyFrame icyFrame;
     final private ExternalizablePanel extPanel;
@@ -88,7 +90,7 @@ public class WindowPositionSaver
             final JFrame jFrame, final JComponent component, final String key, final Point defLoc,
             final Dimension defDim)
     {
-        final XMLPreferences preferences = IcyPreferences.root().node(key);
+        preferences = IcyPreferences.root().node(key);
 
         this.mainFrame = mainFrame;
         this.icyFrame = icyFrame;
@@ -98,10 +100,10 @@ public class WindowPositionSaver
 
         // directly load location and dimension
         if (defLoc != null)
-            loadLocation(preferences, defLoc);
+            loadLocation(defLoc);
         if (defDim != null)
-            loadDimension(preferences, defDim);
-        loadState(preferences);
+            loadDimension(defDim);
+        loadState();
 
         checkPosition();
 
@@ -111,13 +113,11 @@ public class WindowPositionSaver
             @Override
             public void run()
             {
-                final XMLPreferences preferences = IcyPreferences.root().node(key);
-
                 if (defLoc != null)
-                    saveLocation(preferences);
+                    saveLocation();
                 if (defDim != null)
-                    saveDimension(preferences);
-                saveState(preferences);
+                    saveDimension();
+                saveState();
             }
         };
 
@@ -381,7 +381,7 @@ public class WindowPositionSaver
         return result;
     }
 
-    public void loadLocation(XMLPreferences preferences, Point defLoc)
+    public void loadLocation(Point defLoc)
     {
         final int defX, defY;
 
@@ -429,7 +429,12 @@ public class WindowPositionSaver
         }
     }
 
-    public void loadDimension(XMLPreferences preferences, Dimension defDim)
+    public XMLPreferences getPreferences()
+    {
+        return preferences;
+    }
+
+    public void loadDimension(Dimension defDim)
     {
         final int defW, defH;
 
@@ -491,7 +496,7 @@ public class WindowPositionSaver
         }
     }
 
-    public void loadState(XMLPreferences preferences)
+    public void loadState()
     {
         // default is internalized and panelized
         final boolean externalized = preferences.getBoolean(ID_EXTERNALIZED, false);
@@ -535,7 +540,7 @@ public class WindowPositionSaver
         }
     }
 
-    public void saveLocation(XMLPreferences preferences)
+    public void saveLocation()
     {
         if (mainFrame != null)
         {
@@ -592,7 +597,7 @@ public class WindowPositionSaver
         }
     }
 
-    public void saveDimension(XMLPreferences preferences)
+    public void saveDimension()
     {
         if (mainFrame != null)
         {
@@ -656,7 +661,7 @@ public class WindowPositionSaver
         }
     }
 
-    public void saveState(XMLPreferences preferences)
+    public void saveState()
     {
         if (mainFrame != null)
         {

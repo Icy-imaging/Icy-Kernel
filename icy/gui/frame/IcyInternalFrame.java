@@ -12,16 +12,12 @@ import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 
-import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 
-import javax.swing.Icon;
 import javax.swing.JInternalFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -137,34 +133,34 @@ public class IcyInternalFrame extends JInternalFrame
         }
     }
 
-    /**
-     * Return true if specified point is located on title bar icon (system icon)
-     */
-    protected boolean isOnSystemIcon(Point p)
-    {
-        if (titlePane == null)
-            return false;
-
-        final int w = titlePane.getWidth();
-        final int h = titlePane.getHeight();
-        final Dimension iconSize = getSystemIconSize();
-
-        final Rectangle rect;
-
-        if (getComponentOrientation().isLeftToRight())
-            rect = new Rectangle(5, (h / 2) - (iconSize.height / 2), iconSize.width, iconSize.height);
-        else
-            rect = new Rectangle(w - (5 + iconSize.width), (h / 2) - (iconSize.height / 2), iconSize.width,
-                    iconSize.height);
-
-        return rect.contains(p);
-    }
-
-    protected Dimension getSystemIconSize()
-    {
-        final Icon icon = getFrameIcon();
-        return new Dimension(icon.getIconWidth(), icon.getIconHeight());
-    }
+//    /**
+//     * Return true if specified point is located on title bar icon (system icon)
+//     */
+//    protected boolean isOnSystemIcon(Point p)
+//    {
+//        if (titlePane == null)
+//            return false;
+//
+//        final int w = titlePane.getWidth();
+//        final int h = titlePane.getHeight();
+//        final Dimension iconSize = getSystemIconSize();
+//
+//        final Rectangle rect;
+//
+//        if (getComponentOrientation().isLeftToRight())
+//            rect = new Rectangle(5, (h / 2) - (iconSize.height / 2), iconSize.width, iconSize.height);
+//        else
+//            rect = new Rectangle(w - (5 + iconSize.width), (h / 2) - (iconSize.height / 2), iconSize.width,
+//                    iconSize.height);
+//
+//        return rect.contains(p);
+//    }
+//
+//    protected Dimension getSystemIconSize()
+//    {
+//        final Icon icon = getFrameIcon();
+//        return new Dimension(icon.getIconWidth(), icon.getIconHeight());
+//    }
 
     /**
      * Refresh system menu

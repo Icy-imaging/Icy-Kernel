@@ -107,7 +107,8 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
         mainPane.addTab("Chat", null, chatPanel, "Chat room");
 
         // minimum required size for sequence infos panel
-        setMinimumSize(new Dimension(280, 480));
+        getFrame().setMinimumSizeExternal(new Dimension(280, 480));
+        getFrame().setMinimumSizeInternal(new Dimension(280, 480));
         setLayout(new BorderLayout());
 
         add(mainPane, BorderLayout.CENTER);
@@ -162,6 +163,62 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
         // add focused sequence & viewer listener
         Icy.getMainInterface().addFocusedViewerListener(this);
         Icy.getMainInterface().addFocusedSequenceListener(this);
+    }
+
+    /**
+     * @return the mainPane
+     */
+    public ExtTabbedPanel getMainPane()
+    {
+        return mainPane;
+    }
+
+    /**
+     * @return the sequencePanel
+     */
+    public SequencePanel getSequencePanel()
+    {
+        return sequencePanel;
+    }
+
+    /**
+     * @return the roisPanel
+     */
+    public RoisPanel getRoisPanel()
+    {
+        return roisPanel;
+    }
+
+    /**
+     * @return the layersPanel
+     */
+    public LayersPanel getLayersPanel()
+    {
+        return layersPanel;
+    }
+
+    /**
+     * @return the historyPanel
+     */
+    public UndoManagerPanel getHistoryPanel()
+    {
+        return historyPanel;
+    }
+
+    /**
+     * @return the outputConsolePanel
+     */
+    public OutputConsolePanel getOutputConsolePanel()
+    {
+        return outputConsolePanel;
+    }
+
+    /**
+     * @return the chatPanel
+     */
+    public ChatPanel getChatPanel()
+    {
+        return chatPanel;
     }
 
     /**

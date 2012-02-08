@@ -14,14 +14,12 @@ import java.util.Date;
  */
 public class DateUtil
 {
-    final static private Calendar calendar = Calendar.getInstance();
-
     /**
      * Return current date.
      */
     public static Date now()
     {
-        return calendar.getTime();
+        return Calendar.getInstance().getTime();
     }
 
     /**

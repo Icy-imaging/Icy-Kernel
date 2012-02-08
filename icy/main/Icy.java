@@ -26,6 +26,7 @@ import icy.gui.frame.GeneralToolTipFrame;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.SplashScreenFrame;
 import icy.gui.frame.progress.AnnounceFrame;
+import icy.gui.main.MainFrame;
 import icy.gui.main.MainInterface;
 import icy.gui.main.MainInterfaceBatch;
 import icy.gui.main.MainInterfaceGui;
@@ -392,6 +393,13 @@ public class Icy
                 if (ij != null)
                     ij.quit();
 
+                // get main frame
+                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+
+                // disconnect from chat (not needed but preferred)
+                if (mainFrame != null)
+                    mainFrame.getChat().disconnect("Icy closed");
+
                 // close all icyFrames
                 for (IcyFrame frame : IcyFrame.getAllFrames())
                     frame.close();
@@ -407,7 +415,6 @@ public class Icy
                 }
 
                 // close main frame
-                final JFrame mainFrame = Icy.getMainInterface().getMainFrame();
                 if (mainFrame != null)
                     mainFrame.dispose();
 
