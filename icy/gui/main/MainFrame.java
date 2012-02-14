@@ -256,6 +256,7 @@ public class MainFrame extends JRibbonFrame
     private final FileAndTextTransferHandler fileAndTextTransferHandler;
     private boolean detachedMode;
     int lastInspectorWidth;
+    boolean inspectorWidthSet;
 
     // state save for detached mode
     private int previousHeight;
@@ -344,16 +345,23 @@ public class MainFrame extends JRibbonFrame
             @Override
             public void componentResized(ComponentEvent e)
             {
-                // main frame resized --> adjust divider location so inspector keep its size
-                // we need to use this method as getWidth() do not return immediate correct value on OSX
-                // when initial state is maximized.
-                if (inspector.isInternalized())
-                    mainPane.setDividerLocation(getWidth() - lastInspectorWidth);
+                // only need to do it at first display
+                if (!inspectorWidthSet)
+                {
+                    // main frame resized --> adjust divider location so inspector keep its size.
+                    // we need to use this method as getWidth() do not return immediate correct
+                    // value on OSX when initial state is maximized.
+                    if (inspector.isInternalized())
+                        mainPane.setDividerLocation(getWidth() - lastInspectorWidth);
+                    
+                    inspectorWidthSet = true;
+                }
             }
         });
-        
+
         // inspector
         inspector = new InspectorPanel();
+        inspectorWidthSet = false;
 
         // main pane
         mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, centerPanel, null);
@@ -802,9 +810,9 @@ public class MainFrame extends JRibbonFrame
             {
                 // save inspector state
                 previousInspectorInternalized = inspector.isInternalized();
-                // save it in preferences... 
+                // save it in preferences...
                 positionSaver.getPreferences().putBoolean(ID_PREVIOUS_STATE, previousInspectorInternalized);
-                
+
                 // externalize inspector
                 externalizeInspector();
                 // no more internalization possible
