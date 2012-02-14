@@ -319,7 +319,7 @@ public class MainFrame extends JRibbonFrame
             @Override
             public void mouseClicked(MouseEvent e)
             {
-                if (e.getClickCount() > 1)
+                if (e.getClickCount() == 2)
                 {
                     if (isInpectorInternalized())
                         externalizeInspector();
@@ -339,6 +339,19 @@ public class MainFrame extends JRibbonFrame
      */
     public void init()
     {
+        addComponentListener(new ComponentAdapter()
+        {
+            @Override
+            public void componentResized(ComponentEvent e)
+            {
+                // main frame resized --> adjust divider location so inspector keep its size
+                // we need to use this method as getWidth() do not return immediate correct value on OSX
+                // when initial state is maximized.
+                if (inspector.isInternalized())
+                    mainPane.setDividerLocation(getWidth() - lastInspectorWidth);
+            }
+        });
+        
         // inspector
         inspector = new InspectorPanel();
 
@@ -352,7 +365,6 @@ public class MainFrame extends JRibbonFrame
         {
             mainPane.setRightComponent(inspector);
             mainPane.setDividerSize(6);
-            mainPane.setDividerLocation(getWidth() - lastInspectorWidth);
         }
         else
         {
