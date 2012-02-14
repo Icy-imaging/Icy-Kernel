@@ -18,15 +18,16 @@ public class ChatPreferences
     /**
      * id
      */
-    private static final String ID_SERVER = "ircServer";
-    private static final String ID_SERVER_PASSWORD = "ircServerPassword";
-    private static final String ID_PORT = "ircPort";
-    private static final String ID_CHANNELS = "ircChannels";
+    private static final String ID_SERVER = "server";
+    private static final String ID_SERVER_PASSWORD = "serverPassword";
+    private static final String ID_PORT = "port";
+    private static final String ID_EXTRA_CHANNELS = "extraChannels";
+    private static final String ID_DESKTOP_CHANNELS = "desktopChannels";
 
-    private static final String ID_NICKNAME = "ircNickname";
-    private static final String ID_USERNAME = "ircUsername";
-    private static final String ID_REALNAME = "ircRealname";
-    private static final String ID_USER_PASSWORD = "ircUserPassword";
+    private static final String ID_NICKNAME = "nickname";
+    private static final String ID_USERNAME = "username";
+    private static final String ID_REALNAME = "realname";
+    private static final String ID_USER_PASSWORD = "userPassword";
 
     private static final String ID_AUTO_CONNECT = "autoConnect";
     private static final String ID_SHOW_USERS_PANEL = "showUsersPanel";
@@ -39,7 +40,10 @@ public class ChatPreferences
     private final static String DEFAULT_SERVER = "irc.freenode.net";
     private final static String DEFAULT_SERVER_PASSWORD = "";
     private final static int DEFAULT_PORT = 6666;
-    private final static String DEFAULT_CHANNELS = "icy";
+
+//    private final static String DEFAULT_EXTRA_CHANNELS = "#icy-support";
+    private final static String DEFAULT_EXTRA_CHANNELS = "";
+    private final static String DEFAULT_DESKTOP_CHANNELS = "#icy";
 
     /**
      * preferences
@@ -90,19 +94,34 @@ public class ChatPreferences
         preferences.putInt(ID_PORT, value);
     }
 
-    public static String getDefaultChannels()
+    public static String getDefaultExtraChannels()
     {
-        return DEFAULT_CHANNELS;
+        return DEFAULT_EXTRA_CHANNELS;
     }
 
-    public static String getChannels()
+    public static String getExtraChannels()
     {
-        return preferences.get(ID_CHANNELS, getDefaultChannels());
+        return preferences.get(ID_EXTRA_CHANNELS, getDefaultExtraChannels());
     }
 
-    public static void setChannels(String value)
+    public static void setExtraChannels(String value)
     {
-        preferences.put(ID_CHANNELS, value);
+        preferences.put(ID_EXTRA_CHANNELS, value);
+    }
+
+    public static String getDefaultDesktopChannels()
+    {
+        return DEFAULT_DESKTOP_CHANNELS;
+    }
+
+    public static String getDesktopChannels()
+    {
+        return preferences.get(ID_DESKTOP_CHANNELS, getDefaultDesktopChannels());
+    }
+
+    public static void setDesktopChannels(String value)
+    {
+        preferences.put(ID_DESKTOP_CHANNELS, value);
     }
 
     public static String getRandomNickname()

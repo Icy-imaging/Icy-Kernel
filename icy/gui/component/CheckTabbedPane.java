@@ -37,7 +37,7 @@ public class CheckTabbedPane extends JTabbedPane
         final private JCheckBox checkBox;
         final private JLabel label;
 
-        public CheckTabComponent(String title, Icon icon, String tip)
+        public CheckTabComponent(String title, Icon icon)
         {
             super();
 
@@ -149,14 +149,7 @@ public class CheckTabbedPane extends JTabbedPane
      */
     public boolean isTabChecked(int index)
     {
-        final CheckTabComponent tabComponent = (CheckTabComponent) getTabComponentAt(index);
-
-        // can be null here
-        if (tabComponent != null)
-            return tabComponent.isSelected();
-
-        // default is true
-        return true;
+        return ((CheckTabComponent) getTabComponentAt(index)).isSelected();
     }
 
     /**
@@ -220,6 +213,6 @@ public class CheckTabbedPane extends JTabbedPane
     {
         super.insertTab(title, icon, component, tip, index);
 
-        setTabComponentAt(index, new CheckTabComponent(title, icon, tip));
+        setTabComponentAt(index, new CheckTabComponent(title, icon));
     }
 }

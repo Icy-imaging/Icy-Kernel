@@ -134,12 +134,17 @@ public class PixelPosition extends BandPosition
         return super.get(ident);
     }
 
-    @Override
-    public boolean isValidIdent(char ident)
+    public static boolean isValidIdentStatic(char ident)
     {
         final char id = Character.toUpperCase(ident);
 
-        return super.isValidIdent(ident) || (id == X_ID) || (id == Y_ID);
+        return BandPosition.isValidIdentStatic(ident) || (id == X_ID) || (id == Y_ID);
+    }
+
+    @Override
+    public boolean isValidIdent(char ident)
+    {
+        return super.isValidIdentStatic(ident);
     }
 
     public boolean isXUndefined()
@@ -215,13 +220,13 @@ public class PixelPosition extends BandPosition
     }
 
     @Override
-    public int compareTo(ImagePosition ip)
+    public int compareTo(Object o)
     {
-        final int result = super.compareTo(ip);
+        final int result = super.compareTo(o);
 
-        if ((result == 0) && (ip instanceof PixelPosition))
+        if ((result == 0) && (o instanceof PixelPosition))
         {
-            final PixelPosition pp = (PixelPosition) ip;
+            final PixelPosition pp = (PixelPosition) o;
 
             final int ox = pp.x;
             final int oy = pp.y;

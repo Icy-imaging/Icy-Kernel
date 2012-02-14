@@ -27,9 +27,10 @@ public class ChatPreferencePanel extends PreferencePanel
     private JTextField userNameField;
     private JTextField realNameField;
     private JPasswordField passwordField;
-    JTextField channelsField;
+    JTextField extraChannelsField;
     private JCheckBox connectAtStartCheckBox;
     private JCheckBox enableDesktopOverlayCheckBox;
+    JTextField desktopChannelsField;
 
     /**
      * Create the panel.
@@ -48,9 +49,9 @@ public class ChatPreferencePanel extends PreferencePanel
     void initialize()
     {
         GridBagLayout gridBagLayout = new GridBagLayout();
-        gridBagLayout.columnWidths = new int[] {46, 200, 60, 0, 0};
+        gridBagLayout.columnWidths = new int[] {46, 97, 0, 0, 18, 60, 0, 0};
         gridBagLayout.rowHeights = new int[] {20, 0, 0, 0, 0, 0, 0};
-        gridBagLayout.columnWeights = new double[] {0.0, 1.0, 0.0, 0.0, Double.MIN_VALUE};
+        gridBagLayout.columnWeights = new double[] {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
         gridBagLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
         mainPanel.setLayout(gridBagLayout);
 
@@ -67,6 +68,7 @@ public class ChatPreferencePanel extends PreferencePanel
         userNameField.setToolTipText("User name (different from nick name)");
         GridBagConstraints gbc_userNameField = new GridBagConstraints();
         gbc_userNameField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_userNameField.gridwidth = 3;
         gbc_userNameField.insets = new Insets(0, 0, 5, 5);
         gbc_userNameField.gridx = 1;
         gbc_userNameField.gridy = 0;
@@ -85,8 +87,9 @@ public class ChatPreferencePanel extends PreferencePanel
         realNameField = new JTextField();
         realNameField.setToolTipText("Real name (give more information about user)");
         GridBagConstraints gbc_realNameField = new GridBagConstraints();
-        gbc_realNameField.insets = new Insets(0, 0, 5, 5);
         gbc_realNameField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_realNameField.gridwidth = 3;
+        gbc_realNameField.insets = new Insets(0, 0, 5, 5);
         gbc_realNameField.gridx = 1;
         gbc_realNameField.gridy = 1;
         mainPanel.add(realNameField, gbc_realNameField);
@@ -102,18 +105,20 @@ public class ChatPreferencePanel extends PreferencePanel
         mainPanel.add(lblPassword, gbc_lblPassword);
 
         passwordField = new JPasswordField();
-        passwordField.setToolTipText("Password for registered nickname only");
         passwordField.setColumns(12);
+        passwordField.setToolTipText("Password for registered nickname only");
         GridBagConstraints gbc_passwordField = new GridBagConstraints();
-        gbc_passwordField.anchor = GridBagConstraints.WEST;
+        gbc_passwordField.gridwidth = 3;
+        gbc_passwordField.fill = GridBagConstraints.HORIZONTAL;
         gbc_passwordField.insets = new Insets(0, 0, 5, 5);
         gbc_passwordField.gridx = 1;
         gbc_passwordField.gridy = 2;
         mainPanel.add(passwordField, gbc_passwordField);
 
-        JLabel lblChannels = new JLabel("Channels");
+        JLabel lblChannels = new JLabel("Extra channels");
+        lblChannels.setVisible(false);
         lblChannels
-                .setToolTipText("Default channels to join. You can enter severals channels (ex : \"icy;icy-support;others\")");
+                .setToolTipText("Extra channels to join at start up. You can enter severals channels (ex : \"icy-news;icy-support;others\")");
         GridBagConstraints gbc_lblChannels = new GridBagConstraints();
         gbc_lblChannels.anchor = GridBagConstraints.EAST;
         gbc_lblChannels.insets = new Insets(0, 0, 5, 5);
@@ -121,29 +126,32 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_lblChannels.gridy = 3;
         mainPanel.add(lblChannels, gbc_lblChannels);
 
-        channelsField = new JTextField();
-        channelsField
-                .setToolTipText("Default channels to join. You can enter severals channels (ex : \"icy;icy-support;others\")");
+        extraChannelsField = new JTextField();
+        extraChannelsField.setVisible(false);
+        extraChannelsField
+                .setToolTipText("Extra channel(s) to join at start up. You can enter severals channels (ex : \"icy-news;icy-support;...\")");
         GridBagConstraints gbc_channelsField = new GridBagConstraints();
+        gbc_channelsField.gridwidth = 3;
         gbc_channelsField.insets = new Insets(0, 0, 5, 5);
         gbc_channelsField.fill = GridBagConstraints.HORIZONTAL;
         gbc_channelsField.gridx = 1;
         gbc_channelsField.gridy = 3;
-        mainPanel.add(channelsField, gbc_channelsField);
-        channelsField.setColumns(10);
+        mainPanel.add(extraChannelsField, gbc_channelsField);
+        extraChannelsField.setColumns(10);
 
         JButton btnDefault = new JButton("Default");
+        btnDefault.setVisible(false);
         btnDefault.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                channelsField.setText(ChatPreferences.getDefaultChannels());
+                extraChannelsField.setText(ChatPreferences.getDefaultExtraChannels());
             }
         });
         GridBagConstraints gbc_btnDefault = new GridBagConstraints();
         gbc_btnDefault.insets = new Insets(0, 0, 5, 5);
-        gbc_btnDefault.gridx = 2;
+        gbc_btnDefault.gridx = 5;
         gbc_btnDefault.gridy = 3;
         mainPanel.add(btnDefault, gbc_btnDefault);
 
@@ -166,6 +174,36 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_enableDesktopOverlayCheckBox.gridx = 0;
         gbc_enableDesktopOverlayCheckBox.gridy = 5;
         mainPanel.add(enableDesktopOverlayCheckBox, gbc_enableDesktopOverlayCheckBox);
+
+        desktopChannelsField = new JTextField();
+        desktopChannelsField.setVisible(false);
+        desktopChannelsField
+                .setToolTipText("Channel(s) to display on dekstop overlay. You can enter severals channels (ex : \"icy;icy-support\")");
+        desktopChannelsField.setText("icy");
+        GridBagConstraints gbc_desktopChannelsField = new GridBagConstraints();
+        gbc_desktopChannelsField.gridwidth = 2;
+        gbc_desktopChannelsField.insets = new Insets(0, 0, 0, 5);
+        gbc_desktopChannelsField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_desktopChannelsField.gridx = 2;
+        gbc_desktopChannelsField.gridy = 5;
+        mainPanel.add(desktopChannelsField, gbc_desktopChannelsField);
+        desktopChannelsField.setColumns(10);
+
+        JButton btnDefault_1 = new JButton("Default");
+        btnDefault_1.setVisible(false);
+        btnDefault_1.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                desktopChannelsField.setText(ChatPreferences.getDefaultDesktopChannels());
+            }
+        });
+        GridBagConstraints gbc_btnDefault_1 = new GridBagConstraints();
+        gbc_btnDefault_1.insets = new Insets(0, 0, 0, 5);
+        gbc_btnDefault_1.gridx = 5;
+        gbc_btnDefault_1.gridy = 5;
+        mainPanel.add(btnDefault_1, gbc_btnDefault_1);
     }
 
     @Override
@@ -174,9 +212,10 @@ public class ChatPreferencePanel extends PreferencePanel
         userNameField.setText(ChatPreferences.getUsername());
         realNameField.setText(ChatPreferences.getRealname());
         passwordField.setText(ChatPreferences.getUserPassword());
-        channelsField.setText(ChatPreferences.getChannels());
+        extraChannelsField.setText(ChatPreferences.getExtraChannels());
         connectAtStartCheckBox.setSelected(ChatPreferences.getAutoConnect());
         enableDesktopOverlayCheckBox.setSelected(ChatPreferences.getDesktopOverlay());
+        desktopChannelsField.setText(ChatPreferences.getDesktopChannels());
     }
 
     @Override
@@ -185,9 +224,10 @@ public class ChatPreferencePanel extends PreferencePanel
         ChatPreferences.setUsername(userNameField.getText());
         ChatPreferences.setRealname(realNameField.getText());
         ChatPreferences.setUserPassword(new String(passwordField.getPassword()));
-        ChatPreferences.setChannels(channelsField.getText());
+//        ChatPreferences.setExtraChannels(extraChannelsField.getText());
         ChatPreferences.setAutoConnect(connectAtStartCheckBox.isSelected());
         ChatPreferences.setDesktopOverlay(enableDesktopOverlayCheckBox.isSelected());
+//        ChatPreferences.setDesktopChannels(desktopChannelsField.getText());
 
         final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
 

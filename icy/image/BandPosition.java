@@ -105,12 +105,17 @@ public class BandPosition extends ImagePosition
         return super.get(ident);
     }
 
-    @Override
-    public boolean isValidIdent(char ident)
+    public static boolean isValidIdentStatic(char ident)
     {
         final char id = Character.toUpperCase(ident);
 
-        return super.isValidIdent(ident) || (id == C_ID) || (id == C_ID_ALTERNATE);
+        return ImagePosition.isValidIdentStatic(ident) || (id == C_ID) || (id == C_ID_ALTERNATE);
+    }
+
+    @Override
+    public boolean isValidIdent(char ident)
+    {
+        return isValidIdentStatic(ident);
     }
 
     public boolean isCUndefined()
@@ -207,17 +212,17 @@ public class BandPosition extends ImagePosition
      * Compare to another ImagePosition with following priority T -> Z -> C
      */
     @Override
-    public int compareTo(ImagePosition ip)
+    public int compareTo(Object o)
     {
-        final int result = super.compareTo(ip);
+        final int result = super.compareTo(o);
 
-        if ((result == 0) && (ip instanceof BandPosition))
+        if ((result == 0) && (o instanceof BandPosition))
         {
-            final int oc = ((BandPosition) ip).c;
+            final int bp = ((BandPosition) o).c;
 
-            if (c > oc)
+            if (c > bp)
                 return 1;
-            if (c < oc)
+            if (c < bp)
                 return -1;
         }
 

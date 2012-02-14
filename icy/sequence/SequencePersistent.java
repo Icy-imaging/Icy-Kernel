@@ -65,9 +65,9 @@ public class SequencePersistent implements XMLPersistent
 
         if (StringUtil.isEmpty(seqFilename))
             return null;
-        
+
         final File file = new File(seqFilename);
-        
+
         // filename reference a directory --> use "<directory>/meta.xml"
         if (file.isDirectory())
             return seqFilename + "/meta.xml";
@@ -93,7 +93,7 @@ public class SequencePersistent implements XMLPersistent
                 if (document == null)
                 {
                     // rename problematic file
-                    FileUtil.copy(xmlFilename, xmlFilename + ".bak", true, false, false);
+                    FileUtil.copy(xmlFilename, xmlFilename + ".bak", true, false);
 
                     System.err.println("Error while loading Sequence XML persistent data.");
                     System.err.println("The faulty file '" + xmlFilename + "' has been saved as '" + xmlFilename
@@ -241,7 +241,7 @@ public class SequencePersistent implements XMLPersistent
 
         if (nodeROIs != null)
         {
-            XMLUtil.removeAllChilds(nodeROIs);
+            XMLUtil.removeAllChildren(nodeROIs);
 
             for (ROI roi : sequence.getROIs())
             {

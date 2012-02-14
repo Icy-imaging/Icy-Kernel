@@ -1,7 +1,10 @@
 package icy.gui.inspector;
 
+import icy.gui.component.CloseTabbedPane;
+import icy.gui.component.CloseTabbedPane.CloseTabbedPaneListener;
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.ExternalizablePanel;
+import icy.gui.component.FontUtil;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.frame.progress.ToolTipFrame;
@@ -19,6 +22,7 @@ import icy.resource.ResourceUtil;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.DateUtil;
+import icy.util.IRCUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -31,12 +35,12 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
-import java.text.AttributedCharacterIterator;
-import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -47,84 +51,207 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.ListSelectionModel;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Element;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-import org.schwering.irc.lib.IRCModeParser;
 import org.schwering.irc.lib.IRCUser;
 
 public class ChatPanel extends ExternalizablePanel
-// public class ChatPanel extends JPanel
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -3449422097073285247L;
+
+    private static final int MAX_SIZE = 1 * 1024 * 1024; // 1 MB
+
+    private static final String DEFAULT_CHANNEL = "#icy";
+
     private class CustomIRCClient extends IRCClient
     {
         public CustomIRCClient(String host, int port, String pass, String nickName, String userName, String realName)
         {
             super(host, port, pass, nickName, userName, realName);
         }
-
-        @Override
-        public void writeMsg(String nick, String target, String msg)
-        {
-            // we want also to see send text
-            if (StringUtil.equals(target.substring(1), ChatPreferences.getChannels()))
-                receive(DateUtil.now("[HH:mm]") + " <" + nick + "> " + msg);
-            else
-                receive(DateUtil.now("[HH:mm]") + " <" + nick + "> " + target + "> " + msg);
-        }
     }
 
     private class DesktopOverlay extends AbstractDesktopOverlay
     {
-        final ArrayList<Integer> layoutLimits;
-        final Color bgColor;
-        final Color fgColor;
-        int position;
+        final static int FG_ALPHA = 0xC0;
+        final static int BG_ALPHA = 0xA0;
+
+        final Color defaultBgColor;
+        final Color defaultFgColor;
+        Color bgColor;
+        Color fgColor;
 
         public DesktopOverlay()
         {
             super();
 
-            layoutLimits = new ArrayList<Integer>();
             // default text colors
-            fgColor = new Color(0f, 0f, 0f, 0.6f);
-            bgColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
+            defaultFgColor = getFgColor(Color.black);
+            defaultBgColor = getBgColor(Color.lightGray);
+            fgColor = defaultFgColor;
+            bgColor = defaultBgColor;
         }
 
-        /**
-         * Return the prev paragraph
-         */
-        private AttributedCharacterIterator getPrevParagraph()
+        private Color getFgColor(Color c)
         {
-            try
+            return new Color(c.getRed(), c.getGreen(), c.getBlue(), FG_ALPHA);
+        }
+
+        private Color getBgColor(Color c)
+        {
+            return new Color(c.getRed(), c.getGreen(), c.getBlue(), BG_ALPHA);
+        }
+
+        private int setAttribute(Graphics2D g2, CharSequence text, int index)
+        {
+            final int len = text.length();
+
+            // no more text
+            if (index >= len)
+                return len;
+
+            int result = index + 1;
+            int end;
+            Font f;
+
+            switch (text.charAt(index))
             {
-                if (position >= 0)
-                {
-                    final Element elem = doc.getParagraphElement(position);
-                    final int start = elem.getStartOffset();
-                    // update position
-                    position = start - 1;
-                    return new AttributedString(doc.getText(start, elem.getEndOffset() - start)).getIterator();
-                }
-            }
-            catch (BadLocationException e)
-            {
-                // should not happen
-                IcyExceptionHandler.showErrorMessage(e, true);
+                case 0x0F:
+                    // reset to normal
+                    g2.setFont(FontUtil.setStyle(g2.getFont(), Font.PLAIN));
+                    fgColor = defaultFgColor;
+                    bgColor = defaultBgColor;
+                    break;
+
+                case 0x02:
+                    // switch bold
+                    f = g2.getFont();
+                    g2.setFont(FontUtil.setStyle(f, f.getStyle() ^ Font.BOLD));
+                    break;
+
+                case 0x1F:
+                    // switch italic
+                    f = g2.getFont();
+                    g2.setFont(FontUtil.setStyle(f, f.getStyle() ^ Font.ITALIC));
+                    break;
+
+                case 0x03:
+                    end = StringUtil.getNextNonDigitCharIndex(text, result);
+                    // no more than 2 digits to encode color
+                    if ((end == -1) || (end > (result + 2)))
+                        end = Math.min(text.length(), result + 2);
+
+                    // no color info --> restore default
+                    if (end == result)
+                    {
+                        fgColor = defaultFgColor;
+                        bgColor = defaultBgColor;
+                    }
+                    else
+                    {
+                        // get foreground color
+                        fgColor = getFgColor(IRCUtil.getIRCColor(Integer.parseInt(text.subSequence(result, end)
+                                .toString())));
+
+                        // update position
+                        result = end;
+
+                        // search if we have background color
+                        if ((result < len) && (text.charAt(result) == ','))
+                        {
+                            result++;
+
+                            end = StringUtil.getNextNonDigitCharIndex(text, result);
+                            // no more than 2 digits to encode color
+                            if ((end == -1) || (end > (result + 2)))
+                                end = Math.min(text.length(), result + 2);
+
+                            // get background color
+                            if (end != result)
+                            {
+                                // we don't want to support background color...
+                                // bgColor =
+                                // getBgColor(IRCUtil.getIRCColor(Integer.parseInt(text.subSequence(result,
+                                // end)
+                                // .toString())));
+
+                                // update position
+                                result = end;
+                            }
+                        }
+                    }
+                    break;
+
+                default:
+                    System.out.println("code " + Integer.toString(text.charAt(index)));
+                    break;
             }
 
-            return null;
+            return result;
+        }
+
+        private int firstPreviousIndexOf(char c, int from)
+        {
+            int ind = from;
+            if (ind >= content.length())
+                return -1;
+
+            while (ind >= 0)
+            {
+                if (content.charAt(ind) == c)
+                    return ind;
+
+                ind--;
+            }
+
+            return ind;
+        }
+
+        private int firstNextIndexOf(char c, int from)
+        {
+            final int len = content.length();
+            int ind = from;
+
+            while (ind < len)
+            {
+                if (content.charAt(ind) == c)
+                    return ind;
+
+                ind++;
+            }
+
+            return -1;
+        }
+
+        private boolean isChannelVisible(String channel)
+        {
+            // no channel name --> assume visible
+            if (StringUtil.isEmpty(channel))
+                return true;
+            // private message --> assume visible
+            if (channel.charAt(0) != '#')
+                return true;
+
+            for (String chan : ChatPreferences.getDesktopChannels().split(";"))
+                if (channel.equalsIgnoreCase(fixChannelName(chan)))
+                    return true;
+
+            return false;
         }
 
         @Override
@@ -132,83 +259,100 @@ public class ChatPanel extends ExternalizablePanel
         {
             final Graphics2D g2 = (Graphics2D) g.create();
 
-            // start at last character
-            position = doc.getLength() - 1;
-
-            // get last paragraph
-            AttributedCharacterIterator charIterator = getPrevParagraph();
-            // nothing to do
-            if (charIterator == null)
-                return;
-
             // modify to Monospaced font for easy space calculation
-            g2.setFont(new Font("Monospaced", Font.PLAIN, 12));
+            g2.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 
             // fixed size font, every character has the same bounds
             final Rectangle2D charRect = GuiUtil.getStringBounds(g2, "M");
             final float charHeight = (float) charRect.getHeight();
+            final float charWidth = (float) charRect.getWidth();
+            // keep 20 pixels margins
             final int charByLine = (int) ((width - 20) / charRect.getWidth());
+
+            // no enough space to draw text
+            if (charByLine <= 0)
+                return;
 
             // start y position
             float y = height;
+            // start at last character
+            int position = content.length() - 1;
 
-            while ((charIterator != null) && (y > 0))
+            while ((position > 0) && (y > 0))
             {
-                final int end = charIterator.getEndIndex();
-                float sy = y;
+                // get paragraph offsets
+                final int start = firstPreviousIndexOf('\n', position - 1) + 1;
+                final int end = position;
+                final int len = end - start;
 
-                layoutLimits.clear();
+                // update position
+                position = start - 1;
 
-                while ((charIterator.getIndex() < end) && (sy > 0))
+                // get channel name end position
+                final int chanEnd = firstNextIndexOf(':', start);
+                // display only if this channel is visible on desktop
+                if ((chanEnd != -1) && isChannelVisible(content.substring(start, chanEnd)))
                 {
-                    int i = charByLine;
-                    boolean br = false;
 
-                    while ((charIterator.getIndex() < end) && (i > 0) && !br)
+                    // calculate number of lines taken by the paragraph
+                    int numLineParagraph = len / charByLine;
+                    if ((len % charByLine) != 0)
+                        numLineParagraph++;
+                    // get paragraph height
+                    final float paragraphHeight = numLineParagraph * charHeight;
+
+                    // position to end of paragraph
+                    y -= paragraphHeight;
+
+                    // set default attributes
+                    g2.setFont(FontUtil.setStyle(g2.getFont(), Font.PLAIN));
+                    fgColor = defaultFgColor;
+                    bgColor = defaultBgColor;
+
+                    // process paragraph
+                    int index = start;
+                    while (index < end)
                     {
-                        br = (charIterator.current() == '\n');
-                        charIterator.next();
-                        i--;
-                    }
+                        final int lineEnd = Math.min(index + charByLine, end);
+                        float x = 10;
 
-                    layoutLimits.add(Integer.valueOf(charIterator.getIndex()));
-                    sy -= charHeight;
-                }
+                        // process line
+                        while (index < lineEnd)
+                        {
+                            int ctrlIndex = StringUtil.getNextCtrlCharIndex(content, index);
+                            // end of line
+                            if ((ctrlIndex == -1) || (ctrlIndex > lineEnd))
+                                ctrlIndex = lineEnd;
 
-                // get paragraph height
-                final float paragraphHeight = y - sy;
-                // position to end of paragraph
-                y -= paragraphHeight;
+                            // something to draw ?
+                            if (index != ctrlIndex)
+                            {
+                                // get String to draw
+                                final String str = content.substring(index, ctrlIndex);
 
-                try
-                {
-                    int offset = 0;
-                    for (Integer limit : layoutLimits)
-                    {
-                        final int lim = limit.intValue();
-                        final String text = doc.getText(position + 1 + offset, lim - offset);
+                                // draw string
+                                g2.setColor(bgColor);
+                                g2.drawString(str, x - 1, y + 1);
+                                g2.setColor(fgColor);
+                                g2.drawString(str, x, y);
 
-                        offset = limit.intValue();
+                                // set new X position
+                                x += charWidth * str.length();
+                            }
 
-                        g2.setColor(bgColor);
-                        g2.drawString(text, 10 - 1, y + 1);
-                        g2.setColor(fgColor);
-                        g2.drawString(text, 10, y);
+                            if (ctrlIndex < lineEnd)
+                                index = setAttribute(g2, content, ctrlIndex);
+                            else
+                                index = lineEnd;
+                        }
 
-                        // write paragraph in usual top/bottom order
+                        // pass to next line
                         y += charHeight;
                     }
-                }
-                catch (BadLocationException e)
-                {
-                    // ignore
 
+                    // set position back to end of paragraph
+                    y -= paragraphHeight;
                 }
-
-                // set position back to end of paragraph
-                y -= paragraphHeight;
-                // get previous paragraph
-                charIterator = getPrevParagraph();
             }
 
             g2.dispose();
@@ -227,8 +371,16 @@ public class ChatPanel extends ExternalizablePanel
         {
             super.onConnected();
 
-            // join channel
-            client.doJoin("#" + ChatPreferences.getChannels());
+            // join default channel
+            client.doJoin(DEFAULT_CHANNEL);
+            // join extras channels
+            for (String extraChannel : ChatPreferences.getExtraChannels().split(";"))
+                if (!StringUtil.isEmpty(extraChannel))
+                    client.doJoin(fixChannelName(extraChannel));
+            // authentication for registered user
+            final String pass = ChatPreferences.getUserPassword();
+            if (!StringUtil.isEmpty(pass))
+                client.doPrivmsg("NickServ", "identify " + ChatPreferences.getNickname() + " " + pass);
 
             connectButton.setEnabled(true);
             refreshGUI();
@@ -258,7 +410,7 @@ public class ChatPanel extends ExternalizablePanel
                         // if we were connecting, we disconnect
                         disconnect("Incorrect nickname");
                         if (num == 432)
-                            onReceive("Your nickname contains invalid caracters.");
+                            onReceive(null, null, "Your nickname contains invalid caracters.");
                     }
                     refreshGUI();
                     break;
@@ -270,29 +422,13 @@ public class ChatPanel extends ExternalizablePanel
         }
 
         @Override
-        public void onInvite(String chan, IRCUser u, String nickPass)
-        {
-            onReceive(u.getNick() + " invites " + nickPass + ".");
-        }
-
-        @Override
         public void onJoin(String chan, IRCUser u)
         {
-            onReceive(u.getNick() + " joins chat.");
+            super.onJoin(chan, u);
 
-            if (u.getNick().equals(client.getNick()))
-            {
-                // clear text on channel join
-                if (!cleared)
-                {
-                    synchronized (receiveEditor)
-                    {
-                        receiveEditor.setText("");
-                    }
-                    cleared = true;
-                    onReceive(client.getNick() + " connected.");
-                }
-            }
+            // add the channel pane if needed
+            if (isCurrentUser(u))
+                addChannelPane(chan);
 
             // refresh user list
             refreshUsers();
@@ -301,7 +437,7 @@ public class ChatPanel extends ExternalizablePanel
         @Override
         public void onKick(String chan, IRCUser u, String nickPass, String msg)
         {
-            onReceive(u.getNick() + " kicks " + nickPass + ".");
+            super.onKick(chan, u, nickPass, msg);
 
             // refresh user list
             refreshUsers();
@@ -310,30 +446,23 @@ public class ChatPanel extends ExternalizablePanel
         @Override
         public void onLeave(String chan, IRCUser u, String msg)
         {
-            onReceive(u.getNick() + " leaves chat.");
+            super.onLeave(chan, u, msg);
+
+            // remove the channel pane if needed
+            if (isCurrentUser(u))
+                removeChannelPane(chan);
 
             // refresh user list
             refreshUsers();
         }
 
         @Override
-        public void onMode(IRCUser u, String nickPass, String mode)
-        {
-            onReceive(u.getNick() + " sets modes " + mode + " " + nickPass + ".");
-        }
-
-        @Override
-        public void onMode(String chan, IRCUser u, IRCModeParser mp)
-        {
-            onReceive(u.getNick() + " sets mode: " + mp.getLine() + ".");
-        }
-
-        @Override
         public void onNick(IRCUser u, String nickNew)
         {
-            onReceive(u.getNick() + " is now known as " + nickNew + ".");
+            super.onNick(u, nickNew);
+
             // update nickname
-            if (u.getNick().equals(ChatPreferences.getNickname()))
+            if (isCurrentUser(u))
                 ChatPreferences.setNickname(nickNew);
             refreshGUI();
             refreshUsers();
@@ -342,36 +471,36 @@ public class ChatPanel extends ExternalizablePanel
         @Override
         public void onNotice(String target, IRCUser u, String msg)
         {
-            onReceive(u.getNick() + " (notice): " + msg);
-        }
+            if (msg != null)
+            {
+                if (msg.indexOf("Looking up your hostname") != -1)
+                    onReceive(null, null, "Connecting...");
+                else
+                {
+                    if (msg.indexOf("Checking Ident") != -1)
+                        return;
+                    if (msg.indexOf("your hostname") != -1)
+                        return;
+                    if (msg.indexOf("No Ident response") != -1)
+                        return;
 
-        @Override
-        public void onPrivmsg(String chan, IRCUser u, String msg)
-        {
-            client.writeMsg(u.getNick(), chan, msg);
+                    super.onNotice(target, u, msg);
+                }
+            }
         }
 
         @Override
         public void onQuit(IRCUser u, String msg)
         {
-            if (StringUtil.isEmpty(msg))
-                onReceive(u.getNick() + " quits chat.");
-            else
-                onReceive(u.getNick() + " quits chat (" + msg + ").");
+            super.onQuit(u, msg);
 
             refreshUsers();
         }
 
         @Override
-        public void onTopic(String chan, IRCUser u, String topic)
-        {
-            onReceive(u.getNick() + " changes topic into: " + topic);
-        }
-
-        @Override
         public void unknown(String a, String b, String c, String d)
         {
-            onReceive(d);
+            onReceive(null, null, d);
         }
 
         @Override
@@ -390,31 +519,92 @@ public class ChatPanel extends ExternalizablePanel
                     tmpUserList.clear();
                     break;
 
+                case 4:
+                case 5:
+                case 250:
+                case 251:
+                case 252:
+                case 253:
+                case 254:
+                case 255:
+                case 256:
+                case 257:
+                case 258:
+                case 259:
+                case 261:
+                case 262:
+                case 263:
+                case 265:
+                case 266:
+                case 372:
+                case 375:
+                case 376:
+                    // ignore
+                    break;
+
                 default:
-                    onReceive(msg);
+                    onReceive(null, null, msg);
             }
         }
 
         @Override
-        public void onReceive(String text)
+        public void onReceive(String nick, String target, String msg)
         {
-            addText(text);
+            final String n;
+            final String t;
+
+            // target is current user --> incoming private message
+            if (isCurrentUser(target))
+            {
+                // get the source name of private message
+                if (StringUtil.isEmpty(nick))
+                    n = "serv";
+                else
+                    n = nick;
+
+                // incoming private message --> use source as target name
+                t = n;
+
+                // add private channel
+                addChannelPane(n);
+            }
+            else
+            {
+                n = nick;
+                t = target;
+            }
+
+            // show message
+            addMessage(n, t, msg);
+        }
+    }
+
+    private class ChannelPanel
+    {
+        final String name;
+
+        final JScrollPane scrollPane;
+        final JTextPane editor;
+        final StyledDocument doc;
+
+        public ChannelPanel(String name)
+        {
+            super();
+
+            this.name = name;
+
+            editor = new JTextPane();
+            editor.setEditable(false);
+            doc = editor.getStyledDocument();
+
+            scrollPane = new JScrollPane(editor);
         }
     }
 
     /**
-     * 
-     */
-    private static final long serialVersionUID = -3449422097073285247L;
-
-    private static final int MAX_SIZE = 4 * 1024 * 1024; // 4 MB
-
-    /**
      * GUI
      */
-    JSplitPane mainSplitPane;
-    JScrollPane receiveScrollPane;
-    JTextPane receiveEditor;
+    CloseTabbedPane tabPane;
     JScrollPane usersScrollPane;
     JList userList;
     JTextField sendEditor;
@@ -423,7 +613,6 @@ public class ChatPanel extends ExternalizablePanel
     IcyToggleButton showUserPaneButton;
     IcyToggleButton desktopOverlayButton;
     IcyButton advancedButton;
-    // JCheckBox autoConnectCheckBox;
 
     /**
      * Desktop GUI
@@ -441,23 +630,28 @@ public class ChatPanel extends ExternalizablePanel
     /**
      * internals
      */
-    final StyledDocument doc;
+    final ArrayList<ChannelPanel> channelPanes;
     final ArrayList<String> tmpUserList;
     final SimpleAttributeSet attributes;
     final CustomIRCClientListener ircListener;
-    boolean cleared;
+    final StringBuilder content;
+    String lastCmd;
 
     public ChatPanel()
     {
         super("Chat room", "chatPanel");
-        // super();
 
+        channelPanes = new ArrayList<ChannelPanel>();
         tmpUserList = new ArrayList<String>();
-        cleared = false;
         attributes = new SimpleAttributeSet();
+        content = new StringBuilder();
+        lastCmd = "";
 
         // build GUI
         initialize();
+
+        // add default channel panel (need to be done when base GUI is done)
+        addChannelPane(DEFAULT_CHANNEL);
 
         // build desktop GUI
         sendEditorDesktop = new JTextField();
@@ -467,6 +661,15 @@ public class ChatPanel extends ExternalizablePanel
             public void actionPerformed(ActionEvent e)
             {
                 sendEditContent((JTextField) e.getSource());
+            }
+        });
+        sendEditorDesktop.addKeyListener(new KeyAdapter()
+        {
+            @Override
+            public void keyPressed(KeyEvent e)
+            {
+                if (e.getKeyCode() == KeyEvent.VK_UP)
+                    sendEditorDesktop.setText(lastCmd);
             }
         });
 
@@ -499,8 +702,16 @@ public class ChatPanel extends ExternalizablePanel
         StyleConstants.setForeground(attributes, Color.black);
 
         sendEditor.setFont(new Font("arial", 0, 11));
+        sendEditor.addKeyListener(new KeyAdapter()
+        {
+            @Override
+            public void keyPressed(KeyEvent e)
+            {
+                if (e.getKeyCode() == KeyEvent.VK_UP)
+                    sendEditor.setText(lastCmd);
+            }
+        });
 
-        doc = receiveEditor.getStyledDocument();
         ircListener = new CustomIRCClientListener();
 
         refreshGUI();
@@ -582,7 +793,6 @@ public class ChatPanel extends ExternalizablePanel
             connectButton.setEnabled(false);
             connectButton.setToolTipText("closing connexion...");
             client.doQuit(message);
-            cleared = false;
         }
     }
 
@@ -591,9 +801,18 @@ public class ChatPanel extends ExternalizablePanel
         final String text = txtField.getText();
 
         if (isConnected() && !StringUtil.isEmpty(text))
-            client.sendText(text);
+        {
+            // send from desktop editor ?
+            if (txtField == sendEditorDesktop)
+                // send text to main default channel
+                client.send(DEFAULT_CHANNEL, text);
+            else
+                // send text to current target
+                client.send(getCurrentChannel(), text);
+        }
 
         txtField.setText("");
+        lastCmd = text;
     }
 
     /**
@@ -603,37 +822,43 @@ public class ChatPanel extends ExternalizablePanel
     {
         setLayout(new BorderLayout(0, 0));
 
-        JPanel panel = new JPanel();
-        add(panel, BorderLayout.CENTER);
-        panel.setLayout(new BorderLayout(0, 0));
-
-        mainSplitPane = new JSplitPane();
-        panel.add(mainSplitPane);
-        mainSplitPane.setDividerSize(6);
-        mainSplitPane.setContinuousLayout(true);
-        mainSplitPane.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
-
-        receiveScrollPane = new JScrollPane();
-        receiveScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        receiveScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        mainSplitPane.setLeftComponent(receiveScrollPane);
-
-        receiveEditor = new JTextPane();
-        receiveEditor.setEditable(false);
-        receiveScrollPane.setViewportView(receiveEditor);
-
-        usersScrollPane = new JScrollPane();
-        usersScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        usersScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        usersScrollPane.addComponentListener(new ComponentAdapter()
+        tabPane = new CloseTabbedPane(SwingConstants.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
+        tabPane.addCloseTabbedPaneListener(new CloseTabbedPaneListener()
         {
             @Override
-            public void componentResized(ComponentEvent e)
+            public void tabClosed(int index, String title)
             {
-                ChatPreferences.setUsersPanelWidth(getUsersScrollPaneWidth());
+                // it was a channel tab, leave channel
+                if (isConnected() && title.startsWith("#"))
+                    client.doPart(title);
+                else
+                    // directly remove the channel pane
+                    removeChannelPane(title);
             }
         });
-        mainSplitPane.setRightComponent(usersScrollPane);
+        tabPane.addChangeListener(new ChangeListener()
+        {
+            @Override
+            public void stateChanged(ChangeEvent e)
+            {
+                // set back default tab color
+                tabPane.setBackgroundAt(tabPane.getSelectedIndex(), tabPane.getBackground());
+                refreshUsers();
+            }
+        });
+        add(tabPane, BorderLayout.CENTER);
+
+        usersScrollPane = new JScrollPane();
+        // usersScrollPane.addComponentListener(new ComponentAdapter()
+        // {
+        // @Override
+        // public void componentResized(ComponentEvent e)
+        // {
+        // // ChatPreferences.setUsersPanelWidth(getUsersScrollPaneWidth());
+        // }
+        // });
+        usersScrollPane.setPreferredSize(new Dimension(130, 200));
+        add(usersScrollPane, BorderLayout.EAST);
 
         JLabel lblUtilisateur = new JLabel("Users");
         lblUtilisateur.setFont(new Font("Tahoma", Font.BOLD, 11));
@@ -643,6 +868,31 @@ public class ChatPanel extends ExternalizablePanel
 
         userList = new JList();
         userList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        userList.addMouseListener(new MouseAdapter()
+        {
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                if (!isConnected())
+                    return;
+
+                // double click
+                if (e.getClickCount() == 2)
+                {
+                    final int index = userList.locationToIndex(e.getPoint());
+
+                    if (index != -1)
+                    {
+                        final String nick = (String) userList.getSelectedValue();
+
+                        // add private chat nick pane
+                        if (!isCurrentUser(nick) && !StringUtil.isEmpty(nick))
+                            addChannelPane(nick);
+                    }
+                }
+            }
+        });
+
         usersScrollPane.setViewportView(userList);
 
         JPanel panelBottom = new JPanel();
@@ -666,23 +916,6 @@ public class ChatPanel extends ExternalizablePanel
         add(topPanel, BorderLayout.NORTH);
 
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
-
-        // autoConnectCheckBox = new JCheckBox("Auto connect");
-        // autoConnectCheckBox.setFocusPainted(false);
-        // autoConnectCheckBox.addActionListener(new ActionListener()
-        // {
-        // @Override
-        // public void actionPerformed(ActionEvent e)
-        // {
-        // ChatPreferences.setAutoConnect(autoConnectCheckBox.isSelected());
-        // }
-        // });
-        // autoConnectCheckBox.setSelected(ChatPreferences.getAutoConnect());
-        // autoConnectCheckBox.setToolTipText("Auto connect at start up");
-        // topPanel.add(autoConnectCheckBox);
-
-        // Component horizontalStrut = Box.createHorizontalStrut(10);
-        // topPanel.add(horizontalStrut);
 
         txtNickName = new JTextField();
         txtNickName.setMaximumSize(new Dimension(2147483647, 24));
@@ -807,48 +1040,244 @@ public class ChatPanel extends ExternalizablePanel
         topPanel.add(advancedButton);
     }
 
-    int getUsersScrollPaneWidth()
+    protected String fixChannelName(String channel)
     {
-        int result = usersScrollPane.getSize().width;
-        if (result == 0)
-            return usersScrollPane.getPreferredSize().width;
-        return result;
+        if (!StringUtil.isEmpty(channel) && (channel.charAt(0) != '#'))
+            return "#" + channel;
+
+        return channel;
     }
 
-    int getCurrentWidth()
+    public void addChannelPane(final String channel)
     {
-        int result = getSize().width;
-        if (result == 0)
-            return getPreferredSize().width;
-        return result;
+        // already exists...
+        if (getChannelPaneIndex(channel) != -1)
+            return;
+
+        ThreadUtil.invokeLater(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                final ChannelPanel channelPane = new ChannelPanel(channel);
+
+                // add to list
+                channelPanes.add(channelPane);
+
+                // and add to gui
+                int index = tabPane.indexOfTab(channel);
+                // add only if not already present (should alway be the case)
+                if (index == -1)
+                {
+                    tabPane.addTab(channel, channelPane.scrollPane);
+                    // get index
+                    index = tabPane.indexOfTab(channel);
+                    // default channel cannot be closed
+                    if (channel.equals(DEFAULT_CHANNEL))
+                        tabPane.setTabClosable(index, false);
+                    tabPane.setSelectedIndex(index);
+                }
+            }
+        });
     }
 
-    void addText(final String text)
+    public void removeChannelPane(final String channel)
+    {
+        final int ind = getChannelPaneIndex(channel);
+
+        // channel exists --> remove it
+        if (ind != -1)
+        {
+            ThreadUtil.invokeLater(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    channelPanes.remove(ind);
+
+                    // remove from tabbed pane if needed
+                    final int indTab = tabPane.indexOfTab(channel);
+                    if (indTab != -1)
+                        tabPane.removeTabAt(indTab);
+                }
+            });
+        }
+    }
+
+    public int getChannelPaneIndex(String channel)
+    {
+        final String c;
+
+        // empty channel means default channel
+        if (StringUtil.isEmpty(channel))
+            c = DEFAULT_CHANNEL;
+        else
+            c = channel;
+
+        for (int i = 0; i < channelPanes.size(); i++)
+        {
+            final ChannelPanel cp = channelPanes.get(i);
+
+            if (cp.name.equalsIgnoreCase(c))
+                return i;
+        }
+
+        return -1;
+    }
+
+    public ChannelPanel getChannelPane(String channel)
+    {
+        final int ind = getChannelPaneIndex(channel);
+
+        if (ind != -1)
+            return channelPanes.get(ind);
+
+        return null;
+    }
+
+    /**
+     * Returns the current visible channel (tab channel visible).
+     */
+    public String getCurrentChannel()
+    {
+        final int ind = tabPane.getSelectedIndex();
+
+        if (ind != -1)
+            return tabPane.getTitleAt(ind);
+
+        return null;
+    }
+
+    /**
+     * Mark channel pane with blue color.
+     */
+    protected void markChannelPane(String channel)
+    {
+        final int index = getChannelPaneIndex(channel);
+
+        if ((index != -1) && (tabPane.getSelectedIndex() != index))
+        {
+            ThreadUtil.invokeLater(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    // change output console tab color when new data
+                    if (index < tabPane.getTabCount())
+                        tabPane.setBackgroundAt(index, Color.blue);
+                }
+            });
+        }
+    }
+
+    public JTextPane getChannelEditor(String channel)
+    {
+        final ChannelPanel cp = getChannelPane(channel);
+
+        if (cp != null)
+            return cp.editor;
+
+        return null;
+    }
+
+    public StyledDocument getChannelDocument(String channel)
+    {
+        final ChannelPanel cp = getChannelPane(channel);
+
+        if (cp != null)
+            return cp.doc;
+
+        return null;
+    }
+
+    protected boolean isCurrentUser(String nick)
+    {
+        return StringUtil.equals(nick, ChatPreferences.getNickname());
+    }
+
+    protected boolean isCurrentUser(IRCUser u)
+    {
+        if (u != null)
+            return isCurrentUser(u.getNick());
+
+        return false;
+    }
+
+    // int getUsersScrollPaneWidth()
+    // {
+    // int result = usersScrollPane.getSize().width;
+    // if (result == 0)
+    // return usersScrollPane.getPreferredSize().width;
+    // return result;
+    // }
+    //
+    // int getCurrentWidth()
+    // {
+    // int result = getSize().width;
+    // if (result == 0)
+    // return getPreferredSize().width;
+    // return result;
+    // }
+
+    void addMessage(final String nick, final String target, final String msg)
     {
         ThreadUtil.invokeLater(new Runnable()
         {
             @Override
             public void run()
             {
-                try
+                final String channel;
+                final String nickStr;
+
+                if (StringUtil.isEmpty(target))
+                    channel = DEFAULT_CHANNEL;
+                else
+                    channel = target;
+
+                if (StringUtil.isEmpty(nick))
+                    nickStr = "";
+                else
+                    nickStr = "<" + nick + "> ";
+
+                final String timeStr = DateUtil.now("[HH:mm] ");
+
+                synchronized (content)
                 {
-                    synchronized (receiveEditor)
-                    {
-                        doc.insertString(doc.getLength(), text + "\n", attributes);
+                    content.append(channel + ": " + timeStr + nickStr + msg + "\n");
 
-                        // limit to maximum size
-                        if (doc.getLength() > MAX_SIZE)
-                            doc.remove(0, doc.getLength() - MAX_SIZE);
-
-                        receiveEditor.setCaretPosition(doc.getLength());
-                    }
+                    // limit to maximum size
+                    if (content.length() > MAX_SIZE)
+                        content.delete(0, content.length() - MAX_SIZE);
 
                     refreshDesktopOverlay();
+                }
+
+                try
+                {
+                    final JTextPane editor = getChannelEditor(channel);
+                    final StyledDocument doc = getChannelDocument(channel);
+
+                    if ((editor != null) && (doc != null))
+                    {
+                        synchronized (editor)
+                        {
+                            IRCUtil.insertString(timeStr + nickStr + msg + "\n", doc, attributes);
+
+                            // limit to maximum size
+                            if (doc.getLength() > MAX_SIZE)
+                                doc.remove(0, doc.getLength() - MAX_SIZE);
+
+                            editor.setCaretPosition(doc.getLength());
+                        }
+                    }
                 }
                 catch (BadLocationException e)
                 {
                     e.printStackTrace();
                 }
+
+                // mark channel pane color
+                markChannelPane(channel);
             }
         });
     }
@@ -884,18 +1313,7 @@ public class ChatPanel extends ExternalizablePanel
                 }
 
                 // user panel visible
-                if (ChatPreferences.getShowUsersPanel())
-                {
-                    usersScrollPane.setVisible(true);
-                    mainSplitPane.setDividerSize(6);
-                    mainSplitPane.setDividerLocation(getCurrentWidth()
-                            - (ChatPreferences.getUsersPanelWidth() + mainSplitPane.getDividerSize()));
-                }
-                else
-                {
-                    usersScrollPane.setVisible(false);
-                    mainSplitPane.setDividerSize(0);
-                }
+                usersScrollPane.setVisible(ChatPreferences.getShowUsersPanel());
 
                 validate();
             }
@@ -908,7 +1326,12 @@ public class ChatPanel extends ExternalizablePanel
     void refreshUsers()
     {
         if (isConnected())
-            client.doNames("#" + ChatPreferences.getChannels());
+        {
+            final String channel = getCurrentChannel();
+
+            if (!StringUtil.isEmpty(channel))
+                client.doNames(channel);
+        }
         else
             userList.setListData(new String[0]);
     }

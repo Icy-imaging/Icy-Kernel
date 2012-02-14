@@ -21,7 +21,7 @@ package icy.image;
 /**
  * @author Stephane
  */
-public class ImagePosition implements Comparable<ImagePosition>
+public class ImagePosition implements Comparable<Object>
 {
     public static final char T_ID = 'T';
     public static final char Z_ID = 'Z';
@@ -120,11 +120,16 @@ public class ImagePosition implements Comparable<ImagePosition>
         return -1;
     }
 
-    public boolean isValidIdent(char ident)
+    public static boolean isValidIdentStatic(char ident)
     {
         final char id = Character.toUpperCase(ident);
 
         return (id == T_ID) || (id == Z_ID);
+    }
+
+    public boolean isValidIdent(char ident)
+    {
+        return isValidIdentStatic(ident);
     }
 
     public boolean isTUndefined()
@@ -185,21 +190,26 @@ public class ImagePosition implements Comparable<ImagePosition>
     }
 
     @Override
-    public int compareTo(ImagePosition ip)
+    public int compareTo(Object o)
     {
-        final int ot = ip.t;
-        final int oz = ip.z;
+        if (o instanceof ImagePosition)
+        {
+            final ImagePosition ip = (ImagePosition) o;
 
-        if (t > ot)
-            return 1;
-        if (t < ot)
-            return -1;
-        if (z > oz)
-            return 1;
-        if (z < oz)
-            return -1;
+            final int ot = ip.t;
+            final int oz = ip.z;
+
+            if (t > ot)
+                return 1;
+            if (t < ot)
+                return -1;
+            if (z > oz)
+                return 1;
+            if (z < oz)
+                return -1;
+        }
 
         return 0;
-    }
 
+    }
 }

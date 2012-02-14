@@ -3,6 +3,8 @@
  */
 package icy.network;
 
+import icy.util.StringUtil;
+
 import java.util.ArrayList;
 
 import org.schwering.irc.lib.IRCConnection;
@@ -14,9 +16,6 @@ import org.schwering.irc.lib.IRCConnection;
  */
 public class IRCClient extends IRCConnection
 {
-    /** The current default target of PRIVMSGs (a channel or nickname). */
-    protected String target;
-
     /** Listeners */
     protected final ArrayList<IRCEventListenerImpl> listeners;
 
@@ -47,58 +46,37 @@ public class IRCClient extends IRCConnection
     /**
      * Called on receive text event.
      */
-    protected void receive(String text)
+    protected void receive(String nick, String target, String text)
     {
         // notify listeners about receive
-        fireReceiveEvent(text);
+        fireReceiveEvent(nick, target, text);
     }
 
     /**
      * Send unparsed text to IRC server.
      */
-    public void sendText(String text)
+    public void send(String target, String text)
     {
-        if (text == null || text.length() == 0)
+        if (StringUtil.isEmpty(text))
             return;
 
         if (text.charAt(0) == '/')
         {
             // we want to see command we are sending
-            receive(text);
+            receive(null, target, text);
 
             // prevent some commands
-            if (startsWith(text, "/TARGET") || startsWith(text, "/JOIN") || startsWith(text, "/LIST")
-                    || startsWith(text, "/PART"))
-                receive("Command not autorized.");
+            if (startsWith(text, "/TARGET") || startsWith(text, "/LIST"))
+                receive(null, target, "Command not autorized.");
             else
                 send(text.substring(1));
         }
         else
         {
             doPrivmsg(target, text);
-            writeMsg(getNick(), target, text);
+            // just to see what we send
+            receive(getNick(), target, text);
         }
-    }
-
-    /**
-     * Write message.
-     */
-    public void writeMsg(String nick, String target, String msg)
-    {
-        // we want also to see send text
-        receive(target + "> " + msg);
-    }
-
-    @Override
-    public void doJoin(String chan)
-    {
-        super.doJoin(chan);
-        target = chan;
-    }
-
-    public String getTarget()
-    {
-        return target;
     }
 
     /**
@@ -112,10 +90,10 @@ public class IRCClient extends IRCConnection
     /**
      * Fire receive event
      */
-    protected void fireReceiveEvent(String text)
+    protected void fireReceiveEvent(String nick, String target, String text)
     {
         for (IRCEventListenerImpl l : listeners)
-            l.onReceive(text);
+            l.onReceive(nick, target, text);
     }
 
     public void addListener(IRCEventListenerImpl listener)

@@ -40,7 +40,7 @@ public class StringUtil
      * Return the index of previous digit char from specified index in specified string<br>
      * return -1 if not found
      */
-    public static int getPreviousDigitCharIndex(String value, int from)
+    public static int getPreviousDigitCharIndex(CharSequence value, int from)
     {
         final int len = value.length();
 
@@ -63,7 +63,7 @@ public class StringUtil
      * Return the index of previous non digit char from specified index in specified string<br>
      * return -1 if not found
      */
-    public static int getPreviousNonDigitCharIndex(String value, int from)
+    public static int getPreviousNonDigitCharIndex(CharSequence value, int from)
     {
         final int len = value.length();
 
@@ -85,7 +85,7 @@ public class StringUtil
      * Return the index of next digit char from specified index in specified string<br>
      * return -1 if not found
      */
-    public static int getNextDigitCharIndex(String value, int from)
+    public static int getNextDigitCharIndex(CharSequence value, int from)
     {
         final int len = value.length();
 
@@ -107,7 +107,7 @@ public class StringUtil
      * Return the index of next non digit char from specified index in specified string<br>
      * return -1 if not found
      */
-    public static int getNextNonDigitCharIndex(String value, int from)
+    public static int getNextNonDigitCharIndex(CharSequence value, int from)
     {
         final int len = value.length();
 
@@ -118,6 +118,29 @@ public class StringUtil
         while (index < len)
         {
             if (!Character.isDigit(value.charAt(index)))
+                return index;
+            index++;
+        }
+
+        return -1;
+    }
+
+    /**
+     * Return the index of next control char from specified <code>startIndex</code> in specified
+     * string.<br>
+     * return -1 if no control character found.
+     */
+    public static int getNextCtrlCharIndex(CharSequence value, int startIndex)
+    {
+        final int len = value.length();
+
+        if (startIndex < 0)
+            return -1;
+
+        int index = startIndex;
+        while (index < len)
+        {
+            if (Character.isISOControl(value.charAt(index)))
                 return index;
             index++;
         }

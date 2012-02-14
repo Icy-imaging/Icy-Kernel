@@ -107,8 +107,10 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
         mainPane.addTab("Chat", null, chatPanel, "Chat room");
 
         // minimum required size for sequence infos panel
-        getFrame().setMinimumSizeExternal(new Dimension(280, 480));
-        getFrame().setMinimumSizeInternal(new Dimension(280, 480));
+        final Dimension minDim = new Dimension(280, 480);
+        getFrame().setMinimumSizeInternal(minDim);
+        getFrame().setMinimumSizeExternal(minDim);
+        setMinimumSize(minDim);
         setLayout(new BorderLayout());
 
         add(mainPane, BorderLayout.CENTER);

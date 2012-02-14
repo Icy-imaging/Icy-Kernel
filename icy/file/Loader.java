@@ -52,27 +52,30 @@ import loci.formats.ome.OMEXMLMetadataImpl;
  */
 public class Loader
 {
-    private static class FilePosition implements Comparable<FilePosition>
+    private static class FilePosition extends BandPosition
     {
         public final File file;
-        public final BandPosition position;
+        public boolean tFixed;
+        public boolean zFixed;
+        public boolean cFixed;
 
-        /**
-         * @param file
-         * @param position
-         */
-        public FilePosition(File file, BandPosition position)
+        public FilePosition(File file)
         {
             super();
 
             this.file = file;
-            this.position = position;
+            tFixed = false;
+            zFixed = false;
+            cFixed = false;
         }
 
         @Override
-        public int compareTo(FilePosition o)
+        public int compareTo(Object o)
         {
-            return position.alternateCompareTo(o.position);
+            if (o instanceof FilePosition)
+                return alternateCompareTo((FilePosition) o);
+
+            return super.compareTo(o);
         }
     }
 
@@ -117,38 +120,69 @@ public class Loader
             {
                 // build position list
                 for (File file : files)
-                    filePositions.add(new FilePosition(file, getPositionFromFilename(file.getAbsolutePath())));
+                    filePositions.add(getPositionFromFilename(file));
 
-                BandPosition pos = filePositions.get(0).position;
+                FilePosition pos = filePositions.get(0);
                 int t = pos.getT();
                 int z = pos.getZ();
                 int c = pos.getC();
                 boolean sameT = true;
                 boolean sameZ = true;
                 boolean sameC = true;
+                boolean tNotFixed = true;
+                boolean zNotFixed = true;
+                boolean cNotFixed = true;
 
                 // remove "empty" dimension
-                for (FilePosition filePos : filePositions)
+                for (FilePosition fp : filePositions)
                 {
-                    pos = filePos.position;
-
-                    sameT &= t == pos.getT();
-                    sameZ &= z == pos.getZ();
-                    sameC &= c == pos.getC();
+                    sameT &= (t == fp.getT());
+                    sameZ &= (z == fp.getZ());
+                    sameC &= (c == fp.getC());
+                    tNotFixed &= !fp.tFixed;
+                    zNotFixed &= !fp.zFixed;
+                    cNotFixed &= !fp.cFixed;
                 }
 
-                // remove T dimension
-                if (sameT)
-                    for (FilePosition filePos : filePositions)
-                        filePos.position.switchLeft();
-                // remove Z dimension
-                if (sameZ)
-                    for (FilePosition filePos : filePositions)
-                        filePos.position.switchLeft();
-                // remove C dimension
-                if (sameC)
-                    for (FilePosition filePos : filePositions)
-                        filePos.position.switchLeft();
+                // same T and not fixed
+                if (sameT && tNotFixed)
+                {
+                    // different C and not fixed
+                    if (!sameC && cNotFixed)
+                    {
+                        // move C to T (C becomes 0)
+                        for (FilePosition fp : filePositions)
+                            fp.set(fp.getC(), fp.getT(), 0);
+
+                        sameT = false;
+                        sameC = true;
+                    }
+                    // different Z and not fixed
+                    else if (!sameZ && zNotFixed)
+                    {
+                        // move Z to T (Z becomes 0)
+                        for (FilePosition fp : filePositions)
+                            fp.set(fp.getZ(), 0, fp.getC());
+
+                        sameT = false;
+                        sameZ = true;
+                    }
+                }
+
+                // same Z and not fixed
+                if (sameZ && zNotFixed)
+                {
+                    // different C and not fixed
+                    if (!sameC && cNotFixed)
+                    {
+                        // move C to Z (C becomes 0)
+                        for (FilePosition fp : filePositions)
+                            fp.set(fp.getT(), fp.getC(), 0);
+
+                        sameZ = false;
+                        sameC = true;
+                    }
+                }
 
                 // sort on position
                 Collections.sort(filePositions);
@@ -156,7 +190,7 @@ public class Loader
                 // then we compact the position
                 final int len = filePositions.size();
 
-                final BandPosition firstPos = filePositions.get(0).position;
+                final BandPosition firstPos = filePositions.get(0);
                 final BandPosition prevPos = new BandPosition();
                 final BandPosition newPos = new BandPosition(0, 0, 0);
 
@@ -180,16 +214,15 @@ public class Loader
 
                     final FilePosition filePosition = filePositions.get(index);
                     final File file = filePosition.file;
-                    final BandPosition position = filePosition.position;
                     filename = file.getAbsolutePath();
 
                     // ordering as follow : C -> T -> Z
-                    if (prevPos.getC() != position.getC())
+                    if (prevPos.getC() != filePosition.getC())
                     {
                         newPos.setC(newPos.getC() + 1);
                         newPos.setT(0);
                         newPos.setZ(0);
-                        prevPos.setC(position.getC());
+                        prevPos.setC(filePosition.getC());
 
                         // create a new sequence for this component
                         final Sequence seq = new Sequence();
@@ -200,17 +233,17 @@ public class Loader
                         seq.setMetaData((IMetadata) lastUsedReader.getMetadataStore());
                         sequences.add(seq);
                     }
-                    else if (prevPos.getT() != position.getT())
+                    else if (prevPos.getT() != filePosition.getT())
                     {
                         newPos.setT(newPos.getT() + 1);
                         newPos.setZ(0);
-                        prevPos.setT(position.getT());
+                        prevPos.setT(filePosition.getT());
                         prevPos.setZ(0);
                     }
-                    else if (prevPos.getZ() != position.getZ())
+                    else if (prevPos.getZ() != filePosition.getZ())
                     {
                         newPos.setZ(newPos.getZ() + 1);
-                        prevPos.setZ(position.getZ());
+                        prevPos.setZ(filePosition.getZ());
                     }
                     else
                     {
@@ -557,27 +590,31 @@ public class Loader
         });
     }
 
-    private static void setPositionFromNumberString(BandPosition position, String number)
+    private static void setPositionFromNumberString(FilePosition position, String number)
     {
         final int value;
 
         // try to get position letter from number string
         char pos = Character.toUpperCase(number.charAt(0));
-        final char lastEmptyPos = position.getFirstEmptyPos();
+        boolean fixed = false;
+        final char firstEmptyPos = position.getFirstEmptyPos();
 
         // first char is not digit ?
         if (!Character.isDigit(pos))
         {
             // if pos is not a valid position, we use the first available one
             if (!position.isValidIdent(pos))
-                pos = lastEmptyPos;
+                pos = firstEmptyPos;
+            // else we define the position as fixed
+            else
+                fixed = true;
             // get number from the rest of the string
             value = StringUtil.parseInt(number.substring(1), -1);
         }
         else
         {
             // use the first available position
-            pos = lastEmptyPos;
+            pos = firstEmptyPos;
             // obtain number from full string
             value = StringUtil.parseInt(number, -1);
         }
@@ -587,28 +624,81 @@ public class Loader
             case ImagePosition.T_ID:
                 // doesn't support value >= 100000 for T dimension
                 if (value < 100000)
+                {
                     position.setT(value);
+                    position.tFixed = fixed;
+                }
                 break;
 
             case ImagePosition.Z_ID:
                 // doesn't support value >= 10000 for Z dimension
                 if (value < 10000)
+                {
                     position.setZ(value);
+                    position.zFixed = fixed;
+                }
                 break;
 
             case BandPosition.C_ID:
             case BandPosition.C_ID_ALTERNATE:
                 // loaded as separate sequence, no limit
                 position.setC(value);
+                position.cFixed = fixed;
                 break;
         }
     }
 
-    /**
-     * Return a BandPosition from the specified filename.
-     */
-    public static BandPosition getPositionFromFilename(String filename)
+    private static int getLastIndexOf(char id, ArrayList<String> numbers)
     {
+        int index = numbers.size() - 1;
+        while (index >= 0)
+        {
+            if (Character.toUpperCase(numbers.get(index).charAt(0)) == id)
+                return index;
+
+            index--;
+        }
+
+        return index;
+    }
+
+    private static void removePreviousIdent(char id, ArrayList<String> numbers, int from)
+    {
+        int index = from;
+        while (index >= 0)
+        {
+            if (Character.toUpperCase(numbers.get(index).charAt(0)) == id)
+                numbers.remove(index);
+
+            index--;
+        }
+    }
+
+    private static boolean removeFirstInvalidIdent(ArrayList<String> numbers)
+    {
+        final int len = numbers.size();
+        int index = 0;
+
+        while (index < len)
+        {
+            if (!BandPosition.isValidIdentStatic(Character.toUpperCase(numbers.get(index).charAt(0))))
+            {
+                numbers.remove(index);
+                return true;
+            }
+
+            index++;
+        }
+
+        return false;
+    }
+
+    /**
+     * Return a FilePosition from the specified filename.
+     */
+    public static FilePosition getPositionFromFilename(File file)
+    {
+        final String filename = file.getAbsolutePath();
         final ArrayList<String> numbers = new ArrayList<String>();
         // get filename without extension
         final String value = FileUtil.getFileName(filename, false);
@@ -633,7 +723,7 @@ public class Loader
 
                 // we want to get number + preceding letter
                 number = value.substring(Math.max(0, startInd - 1), endInd);
-                // add number only if < X10000
+                // add number only if < X10000 (else it can be a date)
                 if (number.length() < 6)
                     // add the found number to the list
                     numbers.add(number);
@@ -645,11 +735,45 @@ public class Loader
                 index = len;
         }
 
-        final BandPosition result = new BandPosition();
+        // clean up numbers
+        if (numbers.size() > 3)
+        {
+            // find T number
+            index = getLastIndexOf(ImagePosition.T_ID, numbers);
+            // remove duplicate
+            if (index != -1)
+                removePreviousIdent(ImagePosition.T_ID, numbers, index - 1);
+            // find Z number
+            index = getLastIndexOf(ImagePosition.Z_ID, numbers);
+            // remove duplicate
+            if (index != -1)
+                removePreviousIdent(ImagePosition.Z_ID, numbers, index - 1);
+            // find C number
+            index = getLastIndexOf(BandPosition.C_ID, numbers);
+            // remove duplicate
+            if (index != -1)
+            {
+                // remove duplicate C number
+                removePreviousIdent(BandPosition.C_ID, numbers, index - 1);
+                // remove all C alternate number
+                removePreviousIdent(BandPosition.C_ID, numbers, numbers.size() - 1);
+            }
+            else
+            {
+                // find C alternate number
+                index = getLastIndexOf(BandPosition.C_ID_ALTERNATE, numbers);
+                // remove duplicate
+                if (index != -1)
+                    removePreviousIdent(BandPosition.C_ID_ALTERNATE, numbers, index - 1);
+            }
+        }
 
-        // keep only the last 3 numbers
-        while (numbers.size() > 3)
-            numbers.remove(0);
+        // keep only the last 3 preferred number
+        boolean b = true;
+        while ((numbers.size() > 3) && b)
+            b = removeFirstInvalidIdent(numbers);
+
+        final FilePosition result = new FilePosition(file);
 
         // set numbers to to position
         for (String number : numbers)

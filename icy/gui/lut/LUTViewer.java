@@ -84,8 +84,21 @@ public class LUTViewer extends IcyLutViewer
             public void stateChanged(ChangeEvent e)
             {
                 for (int i = 0; i < lutBandViewers.size(); i++)
-                    lutBandViewers.get(i).getColormapPanel().getColormapViewer().getColormap()
-                            .setEnabled(bottomPane.isTabChecked(i));
+                {
+                    boolean b;
+
+                    try
+                    {
+                        // null pointer exception can sometime happen here, normal
+                        b = bottomPane.isTabChecked(i);
+                    }
+                    catch (Exception exc)
+                    {
+                        b = true;
+                    }
+
+                    lutBandViewers.get(i).getColormapPanel().getColormapViewer().getColormap().setEnabled(b);
+                }
             }
         });
 
