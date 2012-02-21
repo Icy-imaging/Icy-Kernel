@@ -69,7 +69,7 @@ public class ConfirmDialog
     /** Type used for <code>showConfirmDialog</code>. */
     public static final int OK_CANCEL_OPTION = JOptionPane.OK_CANCEL_OPTION;
 
-    static boolean getBooleanReturnValue(final int returnValue)
+    public static boolean getBooleanReturnValue(final int returnValue)
     {
         return (returnValue == JOptionPane.YES_OPTION) || (returnValue == JOptionPane.OK_OPTION);
     }

@@ -654,37 +654,37 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             if (!consumed)
             {
-                // double click = zoom action
-                if (clickCount == 2)
-                {
-                    // previous scale destination values
-                    final double scaleX = transform.getDestValue(SCALE_X);
-                    final double scaleY = transform.getDestValue(SCALE_Y);
-
-                    double sx, sy;
-
-                    if (left)
-                    {
-                        sx = 2d;
-                        sy = 2d;
-                    }
-                    else
-                    {
-                        sx = 0.5d;
-                        sy = 0.5d;
-                    }
-
-                    // control button down --> fast zoom
-                    if (control)
-                    {
-                        sx *= sx;
-                        sy *= sy;
-                    }
-
-                    setScale(scaleX * sx, scaleY * sy, true, true);
-                }
-
-                return true;
+                // // double click = zoom action
+                // if (clickCount == 2)
+                // {
+                // // previous scale destination values
+                // final double scaleX = transform.getDestValue(SCALE_X);
+                // final double scaleY = transform.getDestValue(SCALE_Y);
+                //
+                // double sx, sy;
+                //
+                // if (left)
+                // {
+                // sx = 2d;
+                // sy = 2d;
+                // }
+                // else
+                // {
+                // sx = 0.5d;
+                // sy = 0.5d;
+                // }
+                //
+                // // control button down --> fast zoom
+                // if (control)
+                // {
+                // sx *= sx;
+                // sy *= sy;
+                // }
+                //
+                // setScale(scaleX * sx, scaleY * sy, true, true);
+                //
+                // return true;
+                // }
             }
 
             return false;
@@ -861,7 +861,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 if (!dragging)
                 {
                     // as soon we manipulate the image with mouse, we want to be focused
-                    viewer.requestFocus();
+                    if (!viewer.hasFocus())
+                        viewer.requestFocus();
 
                     // previous scale destination values
                     final double scaleX = transform.getDestValue(SCALE_X);
@@ -923,7 +924,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 final ROI roi = ROI.create(tool, getSequence(), getMouseImagePos(), true);
                 // roi created ? --> it becomes the selected ROI
                 if (roi != null)
+                {
                     roi.setSelected(true, true);
+                    roi.setFocused(true);
+                }
                 // consume event
                 e.consume();
             }
@@ -1626,7 +1630,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         zoomFitImageButton = new IcyButton(ICON_FIT_IMAGE);
         zoomFitImageButton.setFocusable(false);
-        zoomFitImageButton.setToolTipText("Fit canvas to image size");
+        zoomFitImageButton.setToolTipText("Fit window to image size");
         zoomFitImageButton.addActionListener(new ActionListener()
         {
             @Override
@@ -1638,7 +1642,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         centerImageButton = new IcyButton(ICON_CENTER_IMAGE);
         centerImageButton.setFocusable(false);
-        centerImageButton.setToolTipText("Center image in canvas");
+        centerImageButton.setToolTipText("Center image in window");
         centerImageButton.addActionListener(new ActionListener()
         {
             @Override
@@ -1651,7 +1655,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         zoomFitCanvasButton = new IcyToggleButton(ICON_FIT_CANVAS);
         zoomFitCanvasButton.setSelected(preferences.getBoolean(ID_FIT_CANVAS, false));
         zoomFitCanvasButton.setFocusable(false);
-        zoomFitCanvasButton.setToolTipText("Keep image fitting to canvas size");
+        zoomFitCanvasButton.setToolTipText("Keep image fitting to window size");
         zoomFitCanvasButton.addActionListener(new ActionListener()
         {
             @Override
@@ -2238,6 +2242,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 break;
         }
 
+        // then send to painters
         super.keyPressed(e);
     }
 

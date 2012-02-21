@@ -19,9 +19,12 @@
 package icy.roi;
 
 import icy.painter.Anchor2D;
+import icy.painter.LineAnchor2D;
 import icy.util.XMLUtil;
 
+import java.awt.Color;
 import java.awt.Polygon;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
@@ -29,10 +32,39 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
+ * ROI 2D polygon class.
+ * 
  * @author Stephane
  */
 public class ROI2DPolygon extends ROI2DShape
 {
+    protected class ROI2DPolygonAnchor2D extends LineAnchor2D
+    {
+        public ROI2DPolygonAnchor2D(Point2D position, Color color, Color selectedColor)
+        {
+            super(position, color, selectedColor);
+        }
+
+        @Override
+        protected Anchor2D getPreviousPoint()
+        {
+            final int ind = controlPoints.indexOf(this);
+
+            if (ind == 0)
+            {
+                if (controlPoints.size() > 1)
+                    return controlPoints.get(1);
+
+                return null;
+            }
+
+            if (ind != -1)
+                return controlPoints.get(ind - 1);
+
+            return null;
+        }
+    }
+
     public static final String ID_POINTS = "points";
     public static final String ID_POINT = "point";
 
@@ -41,10 +73,11 @@ public class ROI2DPolygon extends ROI2DShape
      */
     public ROI2DPolygon(Point2D pt)
     {
-        super(new Polygon());
+        // use Path2D shape which allow double coordinates
+        super(new Path2D.Double());
 
-        // add point to list
-        addPointAt(pt, true);
+        // add points to list
+        addPointAt(pt, false);
 
         setMousePos(pt);
 
@@ -61,9 +94,25 @@ public class ROI2DPolygon extends ROI2DShape
         this(new Point2D.Double());
     }
 
+    @Override
+    protected Anchor2D createAnchor(Point2D pos)
+    {
+        return new ROI2DPolygonAnchor2D(pos, DEFAULT_SELECTED_COLOR, OVER_COLOR);
+    }
+
+    protected Path2D getPath()
+    {
+        return (Path2D) shape;
+    }
+
     public Polygon getPolygon()
     {
-        return (Polygon) shape;
+        final Polygon result = new Polygon();
+
+        for (Anchor2D point : controlPoints)
+            result.addPoint((int) point.getX(), (int) point.getY());
+
+        return result;
     }
 
     public void setPolygon(Polygon polygon)
@@ -85,14 +134,33 @@ public class ROI2DPolygon extends ROI2DShape
     @Override
     protected void updateShape()
     {
-        final Polygon polygon = getPolygon();
+        final Path2D path = getPath();
 
-        polygon.reset();
-        // add points
-        for (int i = 0; i < controlPoints.size(); i++)
+        path.reset();
+
+        // initial move
+        if (controlPoints.size() > 0)
         {
-            final Point2D pos = controlPoints.get(i).getPosition();
-            polygon.addPoint((int) Math.round(pos.getX()), (int) Math.round(pos.getY()));
+            final Point2D pos = controlPoints.get(0).getPosition();
+            path.moveTo(pos.getX(), pos.getY());
+        }
+
+        // special case we have only one point
+        if (controlPoints.size() == 1)
+        {
+            final Point2D pos = controlPoints.get(0).getPosition();
+            path.lineTo(pos.getX(), pos.getY());
+        }
+        else
+        {
+            // lines
+            for (int i = 1; i < controlPoints.size(); i++)
+            {
+                final Point2D pos = controlPoints.get(i).getPosition();
+                path.lineTo(pos.getX(), pos.getY());
+            }
+
+            path.closePath();
         }
 
         // call super method after shape has been updated
@@ -141,5 +209,4 @@ public class ROI2DPolygon extends ROI2DShape
 
         return true;
     }
-
 }

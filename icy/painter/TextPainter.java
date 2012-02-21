@@ -36,6 +36,7 @@ import java.awt.geom.Point2D;
  * @author Stephane
  * @deprecated Shouldn't be in kernel
  */
+@Deprecated
 public class TextPainter extends AbstractPainter
 {
     public double t, z, x, y;

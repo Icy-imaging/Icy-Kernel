@@ -90,16 +90,6 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         @Override
         public int compare(Layer layer1, Layer layer2)
         {
-            // // null checking
-            // if (layer1 == null)
-            // {
-            // if (layer2 == null)
-            // return 0;
-            // return -1;
-            // }
-            // if (layer2 == null)
-            // return 1;
-
             final ROI roi1 = layer1.getAttachedROI();
             final ROI roi2 = layer2.getAttachedROI();
 
@@ -108,26 +98,26 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             {
                 if (roi2 == null)
                     return 0;
-                return -1;
+                return 1;
             }
             if (roi2 == null)
-                return 1;
+                return -1;
 
             // focus priority
             if (roi1.isFocused())
-                return 1;
-            if (roi2.isFocused())
                 return -1;
+            if (roi2.isFocused())
+                return 1;
 
             // selection priority
             if (roi1.isSelected())
             {
                 if (roi2.isSelected())
                     return 0;
-                return 1;
+                return -1;
             }
             if (roi2.isSelected())
-                return -1;
+                return 1;
 
             return 0;
         }
@@ -2870,7 +2860,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Return a rendered image for image at position (t, z, c)<br>
+     * Return a RGBA renderer image for image at position (t, z, c)<br>
      * Free feel to the canvas to handle or not a specific dimension.
      * 
      * @param t
@@ -2885,7 +2875,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     public abstract BufferedImage getRenderedImage(int t, int z, int c, boolean canvasView);
 
     /**
-     * Return a rendered image for image at position (t, z).
+     * Return a RGBA renderer image representing the canvas view for image at position (t, z) .
      * 
      * @param t
      *        T position of wanted image (-1 for complete sequence)
@@ -3204,32 +3194,6 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         final ArrayList<Layer> result = getVisibleLayers();
 
         Collections.sort(result, EventLayerSorter.instance);
-
-        // final ArrayList<Layer> result = new ArrayList<Layer>();
-        // final Sequence seq = getSequence();
-        //
-        // if (seq != null)
-        // {
-        // final ArrayList<ROI2D> rois = seq.getROI2Ds();
-        //
-        // // we want the layer of focused ROI in first position
-        // for (ROI2D roi : rois)
-        // if (roi.isFocused())
-        // addVisibleLayerToList(getLayer(roi), result);
-        // // we want the layer of selected ROI in next position
-        // for (ROI2D roi : rois)
-        // if (roi.isSelected() && !roi.isFocused())
-        // addVisibleLayerToList(getLayer(roi), result);
-        // // then we add all others layer
-        // for (ROI2D roi : rois)
-        // if (!roi.isFocused() && !roi.isSelected())
-        // addVisibleLayerToList(getLayer(roi), result);
-        //
-        // // and finally we add simple (no ROI) layer
-        // for (Layer layer : getLayers())
-        // if (layer.isVisible() && (!result.contains(layer)))
-        // result.add(layer);
-        // }
 
         return result;
     }

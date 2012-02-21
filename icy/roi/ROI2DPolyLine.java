@@ -21,6 +21,7 @@ package icy.roi;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.painter.Anchor2D;
+import icy.painter.LineAnchor2D;
 import icy.sequence.Sequence;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
@@ -44,6 +45,33 @@ import org.w3c.dom.Node;
  */
 public class ROI2DPolyLine extends ROI2DShape
 {
+    protected class ROI2DPolyLineAnchor2D extends LineAnchor2D
+    {
+        public ROI2DPolyLineAnchor2D(Point2D position, Color color, Color selectedColor)
+        {
+            super(position, color, selectedColor);
+        }
+
+        @Override
+        protected Anchor2D getPreviousPoint()
+        {
+            final int ind = controlPoints.indexOf(this);
+
+            if (ind == 0)
+            {
+                if (controlPoints.size() > 1)
+                    return controlPoints.get(1);
+
+                return null;
+            }
+
+            if (ind != -1)
+                return controlPoints.get(ind - 1);
+
+            return null;
+        }
+    }
+
     public static final String ID_POINTS = "points";
     public static final String ID_POINT = "point";
 
@@ -86,7 +114,7 @@ public class ROI2DPolyLine extends ROI2DShape
         super(new Path2D.Double());
 
         // add points to list
-        addPointAt(pt, true);
+        addPointAt(pt, false);
 
         setMousePos(pt);
 
@@ -101,6 +129,12 @@ public class ROI2DPolyLine extends ROI2DShape
     public ROI2DPolyLine()
     {
         this(new Point2D.Double());
+    }
+
+    @Override
+    protected Anchor2D createAnchor(Point2D pos)
+    {
+        return new ROI2DPolyLineAnchor2D(pos, DEFAULT_SELECTED_COLOR, OVER_COLOR);
     }
 
     @Override

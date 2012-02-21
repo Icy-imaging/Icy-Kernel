@@ -474,6 +474,9 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         addItem(PluginLoader.getPlugin(className));
     }
 
+    /**
+     * Add an item for the specified plugin.
+     */
     void addItem(PluginDescriptor plugin)
     {
         // check that plugin can be displayed in menu
@@ -538,7 +541,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                     item.getClassName());
             // remove item and save workspace
             item.remove();
-            item.getWorkspace().save();
+            // save system workspace only, we want to preserve plugins organization
+            systemWorkspace.save();
         }
     }
 
@@ -576,26 +580,26 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         RibbonUtil.setPermissiveResizePolicies(setupPluginsBand);
     }
 
-    /**
-     * Add a new installed plugin
-     */
-    public void addNewPlugin(String className)
-    {
-        // get the corresponding plugin
-        final PluginDescriptor plugin = PluginLoader.getPlugin(className);
-
-        // check that menu can be displayed in menu
-        if ((plugin == null) || !plugin.isActionable())
-            return;
-
-        final IcyCommandButton pluginButton = buildPluginCommandButton(plugin);
-
-        // add it to the new installed plugins workspace and save it
-        newPluginsBandDef.addItem(plugin.getClassName(), RibbonElementPriority.TOP);
-        systemWorkspace.save();
-        // add it to the new installed plugins band
-        newPluginsBand.addCommandButton(pluginButton, RibbonElementPriority.TOP);
-    }
+    // /**
+    // * Add a new installed plugin
+    // */
+    // public void addNewPlugin(String className)
+    // {
+    // // get the corresponding plugin
+    // final PluginDescriptor plugin = PluginLoader.getPlugin(className);
+    //
+    // // check that menu can be displayed in menu
+    // if ((plugin == null) || !plugin.isActionable())
+    // return;
+    //
+    // final IcyCommandButton pluginButton = buildPluginCommandButton(plugin);
+    //
+    // // add it to the new installed plugins workspace and save it
+    // newPluginsBandDef.addItem(plugin.getClassName(), RibbonElementPriority.TOP);
+    // systemWorkspace.save();
+    // // add it to the new installed plugins band
+    // newPluginsBand.addCommandButton(pluginButton, RibbonElementPriority.TOP);
+    // }
 
     private JRibbonBand[] createRibbonBands(TaskDefinition task)
     {
@@ -748,20 +752,16 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         // build others plugin list
         final ArrayList<PluginDescriptor> othersPlugins = new ArrayList<PluginDescriptor>();
 
-        // scan all plugins to find unassigned ones
-        for (PluginDescriptor plugin : PluginLoader.getPlugins())
+        // scan all actionable plugins to find unassigned ones
+        for (PluginDescriptor plugin : PluginLoader.getActionablePlugins())
         {
-            // check that menu can be displayed in menu
-            if (plugin.isActionable())
-            {
-                final String className = plugin.getClassName();
-                // search item in actives workspace
-                final ItemDefinition item = findItem(className);
+            final String className = plugin.getClassName();
+            // search item in actives workspace
+            final ItemDefinition item = findItem(className);
 
-                // plugin not defined in active workspaces --> add it to the list
-                if ((item == null) || (item.getBandDefinition() == othersPluginsBandDef))
-                    othersPlugins.add(plugin);
-            }
+            // plugin not defined in active workspaces --> add it to the list
+            if ((item == null) || (item.getBandDefinition() == othersPluginsBandDef))
+                othersPlugins.add(plugin);
         }
 
         // refresh unassigned plugins menu

@@ -22,6 +22,7 @@ import icy.common.Version;
 import icy.file.FileUtil;
 import icy.gui.dialog.ConfirmDialog;
 import icy.gui.dialog.MessageDialog;
+import icy.gui.frame.ExitFrame;
 import icy.gui.frame.GeneralToolTipFrame;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.SplashScreenFrame;
@@ -75,6 +76,7 @@ import javax.swing.JOptionPane;
 public class Icy
 {
     public static final String LIB_PATH = "lib";
+    public static final int EXIT_FORCE_DELAY = 3000;
 
     /**
      * ICY Version
@@ -105,6 +107,8 @@ public class Icy
      * internals
      */
     static boolean exiting = false;
+    static ExitFrame exitFrame = null;
+    private static Thread terminer = null;
 
     /**
      * @param args
@@ -379,13 +383,28 @@ public class Icy
         if (!canExit(!restart))
             return false;
 
-        ThreadUtil.invokeLater(new Runnable()
+        // already existing
+        if (exiting)
+        {
+            // set focus on exit frame
+            if (exitFrame != null)
+                exitFrame.requestFocus();
+            // return true;
+            return true;
+        }
+
+        // we don't want to be in EDT here and avoid BG runner
+        // as we test for BG runner completion
+        terminer = new Thread(new Runnable()
         {
             @Override
             public void run()
             {
                 // mark the application as exiting
                 exiting = true;
+
+                // shutdown background processor
+                ThreadUtil.shutdown();
 
                 final ImageJ ij = Icy.getMainInterface().getImageJ();
 
@@ -400,21 +419,45 @@ public class Icy
                 if (mainFrame != null)
                     mainFrame.getChat().disconnect("Icy closed");
 
-                // close all icyFrames
-                for (IcyFrame frame : IcyFrame.getAllFrames())
-                    frame.close();
-                // close all external frames
-                for (JFrame frame : Icy.getMainInterface().getExternalFrames())
-                    frame.dispose();
-                // then close all JInternalFrames
+                // close all icyFrames (force wait completion)
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        for (IcyFrame frame : IcyFrame.getAllFrames())
+                            frame.close();
+                    }
+                });
+                // close all JInternalFrames
                 final JDesktopPane desktopPane = Icy.getMainInterface().getDesktopPane();
                 if (desktopPane != null)
-                {
                     for (JInternalFrame frame : desktopPane.getAllFrames())
                         frame.dispose();
-                }
+                // then close all external frames except main frame
+                for (JFrame frame : Icy.getMainInterface().getExternalFrames())
+                    if (frame != mainFrame)
+                        frame.dispose();
 
-                // close main frame
+                // need to create the exit frame in EDT
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        // create and display the exit frame
+                        exitFrame = new ExitFrame(EXIT_FORCE_DELAY);
+                    }
+                });
+
+                // wait that background processors completed theirs tasks
+                while (!ThreadUtil.isShutdownAndTerminated() && !exitFrame.isForced())
+                    ThreadUtil.sleep(10);
+
+                // can close the exit frame now
+                exitFrame.dispose();
+
+                // finally close the main frame
                 if (mainFrame != null)
                     mainFrame.dispose();
 
@@ -437,6 +480,10 @@ public class Icy
                 System.exit(0);
             }
         });
+
+        terminer.setName("ICY Terminer");
+
+        terminer.start();
 
         return true;
     }

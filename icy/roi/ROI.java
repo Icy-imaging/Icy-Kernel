@@ -627,13 +627,13 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         boolean done = false;
 
         // always perform the process to perform exclusive select after no exclusive one
-        if (value && exclusive)
+        if (exclusive)
         {
             // use the sequence for ROI selection with exclusive parameter
             final ArrayList<Sequence> attachedSeqs = Icy.getMainInterface().getSequencesContaining(this);
 
             for (Sequence seq : attachedSeqs)
-                done |= seq.setSelectedROI(this, exclusive);
+                done |= seq.setSelectedROI(value ? this : null, exclusive);
         }
 
         if (!done)

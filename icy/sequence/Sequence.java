@@ -305,7 +305,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * called when sequence has been closed (= all viewers displaying it closed)
+     * called when sequence has been closed (all viewers displaying it closed)
      */
     public void closed()
     {

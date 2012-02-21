@@ -7,7 +7,9 @@ import vtk.vtkActor;
 import vtk.vtkActor2D;
 
 /**
- * Basic VTK painter
+ * Basic VTK painter.<br>
+ * Painter implementing this interface are automatically
+ * added / removed from Canvas3D.
  * 
  * @author Stephane
  */

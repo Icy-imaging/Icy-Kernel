@@ -26,6 +26,7 @@ import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 
 import java.awt.AWTEvent;
 import java.awt.Color;
@@ -1337,6 +1338,17 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     }
 
     /**
+     * Implement hasFocus method
+     */
+    public boolean hasFocus()
+    {
+        if (isInternalized())
+            return internalFrame.hasFocus();
+
+        return externalFrame.hasFocus();
+    }
+
+    /**
      * Implement setTitle method
      */
     public void setTitle(final String title)
@@ -2518,27 +2530,30 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     @Override
     public void propertyChange(PropertyChangeEvent evt)
     {
-        // window mode has been changed
-        final boolean detachedMode = ((Boolean) evt.getNewValue()).booleanValue();
+        if (StringUtil.equals(evt.getPropertyName(), MainFrame.PROPERTY_DETACHEDMODE))
+        {
+            // window mode has been changed
+            final boolean detachedMode = ((Boolean) evt.getNewValue()).booleanValue();
 
-        // detached mode set --> externalize
-        if (detachedMode)
-        {
-            // save previous state
-            previousState = state;
-            externalize();
-            // disable switch state item
-            if (switchStateAction != null)
-                switchStateAction.setEnabled(false);
-        }
-        else
-        {
-            // restore previous state
-            if (previousState == IcyFrameState.INTERNALIZED)
-                internalize();
-            // enable switch state item
-            if (switchStateAction != null)
-                switchStateAction.setEnabled(true);
+            // detached mode set --> externalize
+            if (detachedMode)
+            {
+                // save previous state
+                previousState = state;
+                externalize();
+                // disable switch state item
+                if (switchStateAction != null)
+                    switchStateAction.setEnabled(false);
+            }
+            else
+            {
+                // restore previous state
+                if (previousState == IcyFrameState.INTERNALIZED)
+                    internalize();
+                // enable switch state item
+                if (switchStateAction != null)
+                    switchStateAction.setEnabled(true);
+            }
         }
     }
 }

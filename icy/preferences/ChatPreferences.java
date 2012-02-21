@@ -25,7 +25,6 @@ public class ChatPreferences
     private static final String ID_DESKTOP_CHANNELS = "desktopChannels";
 
     private static final String ID_NICKNAME = "nickname";
-    private static final String ID_USERNAME = "username";
     private static final String ID_REALNAME = "realname";
     private static final String ID_USER_PASSWORD = "userPassword";
 
@@ -41,8 +40,7 @@ public class ChatPreferences
     private final static String DEFAULT_SERVER_PASSWORD = "";
     private final static int DEFAULT_PORT = 6666;
 
-//    private final static String DEFAULT_EXTRA_CHANNELS = "#icy-support";
-    private final static String DEFAULT_EXTRA_CHANNELS = "";
+    private final static String DEFAULT_EXTRA_CHANNELS = "#icy-support";
     private final static String DEFAULT_DESKTOP_CHANNELS = "#icy";
 
     /**
@@ -134,11 +132,6 @@ public class ChatPreferences
         return preferences.get(ID_NICKNAME, getRandomNickname());
     }
 
-    public static String getUsername()
-    {
-        return preferences.get(ID_USERNAME, getNickname());
-    }
-
     public static String getRealname()
     {
         return preferences.get(ID_REALNAME, getNickname());
@@ -172,11 +165,6 @@ public class ChatPreferences
     public static void setNickname(String value)
     {
         preferences.put(ID_NICKNAME, value);
-    }
-
-    public static void setUsername(String value)
-    {
-        preferences.put(ID_USERNAME, value);
     }
 
     public static void setRealname(String value)

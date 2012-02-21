@@ -17,6 +17,12 @@ import javax.swing.text.StyleConstants;
  */
 public class IRCUtil
 {
+    public static final char CHAR_BOLD = 2;
+    public static final char CHAR_ITALIC = 22;
+    public static final char CHAR_UNDERLINE = 31;
+    public static final char CHAR_COLOR = 3;
+    public static final char CHAR_RESET = 15;
+
     public static class IRCAttribute
     {
         final static int UNKNOWN = -1;
@@ -131,27 +137,27 @@ public class IRCUtil
 
         switch (ircString.charAt(index))
         {
-            case 15:
+            case CHAR_RESET:
                 // reset default
                 result.type = IRCAttribute.NORMAL;
                 break;
 
-            case 2:
+            case CHAR_BOLD:
                 // switch bold
                 result.type = IRCAttribute.BOLD;
                 break;
 
-            case 22:
+            case CHAR_ITALIC:
                 // switch italic
                 result.type = IRCAttribute.ITALIC;
                 break;
 
-            case 31:
+            case CHAR_UNDERLINE:
                 // switch underline
                 result.type = IRCAttribute.UNDERLINE;
                 break;
 
-            case 3:
+            case CHAR_COLOR:
                 // color
                 end = StringUtil.getNextNonDigitCharIndex(ircString, offset);
                 // no more than 2 digits to encode color
@@ -189,7 +195,7 @@ public class IRCUtil
             default:
                 // unknown
                 result.type = IRCAttribute.UNKNOWN;
-//                System.out.println("code " + Integer.toString(ircString.charAt(index)));
+                // System.out.println("code " + Integer.toString(ircString.charAt(index)));
                 break;
         }
 
@@ -321,6 +327,30 @@ public class IRCUtil
                 // transparent
                 return new Color(0, true);
         }
+    }
+
+    /**
+     * Returns IRC bold version of specified string.
+     */
+    public static String getBoldString(String value)
+    {
+        return CHAR_BOLD + value + CHAR_BOLD;
+    }
+
+    /**
+     * Returns IRC italic version of specified string.
+     */
+    public static String getItalicString(String value)
+    {
+        return CHAR_ITALIC + value + CHAR_ITALIC;
+    }
+
+    /**
+     * Returns IRC underline version of specified string.
+     */
+    public static String getUnderlineString(String value)
+    {
+        return CHAR_UNDERLINE + value + CHAR_UNDERLINE;
     }
 
 }

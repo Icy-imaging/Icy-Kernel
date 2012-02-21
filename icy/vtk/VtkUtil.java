@@ -83,7 +83,7 @@ public class VtkUtil
 
         // actor not yet present in renderer ? --> add it
         if (!VtkUtil.findActor2D(renderer, actor))
-            renderer.AddActor(actor);
+            renderer.AddActor2D(actor);
     }
 
     /**

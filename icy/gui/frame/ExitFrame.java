@@ -1,0 +1,138 @@
+package icy.gui.frame;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.SwingConstants;
+import javax.swing.Timer;
+import javax.swing.border.BevelBorder;
+
+public class ExitFrame extends JFrame
+{
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 5980838429118602985L;
+
+    private JPanel buttonPanel;
+
+    boolean forced;
+    Timer timer;
+    private JPanel forceQuitPanel;
+
+    /**
+     * Create the frame.
+     */
+    public ExitFrame(int forceDelay)
+    {
+        super();
+
+        forced = false;
+        timer = new Timer(forceDelay, new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                displayForcePanel();
+            }
+        });
+
+        initialize();
+
+        // default
+        forceQuitPanel.setVisible(false);
+        buttonPanel.setVisible(false);
+
+        if (forceDelay > 0)
+            timer.start();
+        else if (forceDelay == 0)
+            displayForcePanel();
+
+        getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+
+        // pack, center and display
+        pack();
+        setLocationRelativeTo(null);
+        setAlwaysOnTop(true);
+        setVisible(true);
+    }
+
+    public ExitFrame()
+    {
+        this(-1);
+    }
+
+    public void displayForcePanel()
+    {
+        forceQuitPanel.setVisible(true);
+        buttonPanel.setVisible(true);
+
+        // pack and center
+        pack();
+        setLocationRelativeTo(null);
+    }
+
+    public boolean isForced()
+    {
+        return forced;
+    }
+
+    void initialize()
+    {
+        setTitle("Exit");
+        setSize(new Dimension(400, 140));
+
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        JPanel panel_1 = new JPanel();
+        panel_1.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
+        getContentPane().add(panel_1, BorderLayout.CENTER);
+        panel_1.setLayout(new BorderLayout(0, 0));
+
+        buttonPanel = new JPanel();
+        panel_1.add(buttonPanel, BorderLayout.SOUTH);
+
+        JButton button = new JButton("Force Quit");
+        button.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                forced = true;
+                // close frame
+                dispose();
+            }
+        });
+        button.setFont(new Font("Tahoma", Font.BOLD, 14));
+        buttonPanel.add(button);
+
+        JPanel panel = new JPanel();
+        panel_1.add(panel, BorderLayout.CENTER);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+
+        JPanel panel_2 = new JPanel();
+        panel.add(panel_2);
+
+        JLabel label = new JLabel("Please wait while exiting...");
+        panel_2.add(label);
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        label.setFont(new Font("Tahoma", Font.BOLD, 16));
+
+        forceQuitPanel = new JPanel();
+        panel.add(forceQuitPanel);
+
+        JLabel forceQuitLabel = new JLabel("Click on 'Force Quit' to kill remaining tasks and exit.");
+        forceQuitPanel.add(forceQuitLabel);
+        forceQuitLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
+        forceQuitLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    }
+}

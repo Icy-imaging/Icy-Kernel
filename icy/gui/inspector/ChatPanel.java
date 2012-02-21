@@ -65,6 +65,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
+import org.schwering.irc.lib.IRCModeParser;
 import org.schwering.irc.lib.IRCUser;
 
 public class ChatPanel extends ExternalizablePanel
@@ -131,26 +132,26 @@ public class ChatPanel extends ExternalizablePanel
 
             switch (text.charAt(index))
             {
-                case 0x0F:
+                case IRCUtil.CHAR_RESET:
                     // reset to normal
                     g2.setFont(FontUtil.setStyle(g2.getFont(), Font.PLAIN));
                     fgColor = defaultFgColor;
                     bgColor = defaultBgColor;
                     break;
 
-                case 0x02:
+                case IRCUtil.CHAR_BOLD:
                     // switch bold
                     f = g2.getFont();
                     g2.setFont(FontUtil.setStyle(f, f.getStyle() ^ Font.BOLD));
                     break;
 
-                case 0x1F:
+                case IRCUtil.CHAR_ITALIC:
                     // switch italic
                     f = g2.getFont();
                     g2.setFont(FontUtil.setStyle(f, f.getStyle() ^ Font.ITALIC));
                     break;
 
-                case 0x03:
+                case IRCUtil.CHAR_COLOR:
                     end = StringUtil.getNextNonDigitCharIndex(text, result);
                     // no more than 2 digits to encode color
                     if ((end == -1) || (end > (result + 2)))
@@ -424,11 +425,14 @@ public class ChatPanel extends ExternalizablePanel
         @Override
         public void onJoin(String chan, IRCUser u)
         {
-            super.onJoin(chan, u);
-
-            // add the channel pane if needed
             if (isCurrentUser(u))
+            {
+                // add the channel pane if needed
                 addChannelPane(chan);
+                onReceive(null, chan, "Welcome on " + IRCUtil.getBoldString(chan.substring(1)) + ".");
+            }
+            else
+                onReceive(null, chan, u.getNick() + " joins.");
 
             // refresh user list
             refreshUsers();
@@ -446,7 +450,10 @@ public class ChatPanel extends ExternalizablePanel
         @Override
         public void onLeave(String chan, IRCUser u, String msg)
         {
-            super.onLeave(chan, u, msg);
+            if (StringUtil.isEmpty(msg))
+                onReceive(null, chan, u.getNick() + " leaves.");
+            else
+                onReceive(null, chan, u.getNick() + " leaves (" + msg + ").");
 
             // remove the channel pane if needed
             if (isCurrentUser(u))
@@ -454,6 +461,20 @@ public class ChatPanel extends ExternalizablePanel
 
             // refresh user list
             refreshUsers();
+        }
+
+        @Override
+        public void onMode(IRCUser u, String nickPass, String mode)
+        {
+            // ignore mode set message
+            // super.onMode(u, nickPass, mode);
+        }
+
+        @Override
+        public void onMode(String chan, IRCUser u, IRCModeParser mp)
+        {
+            // ignore mode set message
+            // super.onMode(chan, u, mp);
         }
 
         @Override
@@ -475,17 +496,20 @@ public class ChatPanel extends ExternalizablePanel
             {
                 if (msg.indexOf("Looking up your hostname") != -1)
                     onReceive(null, null, "Connecting...");
-                else
-                {
-                    if (msg.indexOf("Checking Ident") != -1)
-                        return;
-                    if (msg.indexOf("your hostname") != -1)
-                        return;
-                    if (msg.indexOf("No Ident response") != -1)
-                        return;
 
-                    super.onNotice(target, u, msg);
-                }
+                // ignore all others notices...
+
+                // else
+                // {
+                // if (msg.indexOf("Checking Ident") != -1)
+                // return;
+                // if (msg.indexOf("your hostname") != -1)
+                // return;
+                // if (msg.indexOf("No Ident response") != -1)
+                // return;
+                //
+                // super.onNotice(target, u, msg);
+                // }
             }
         }
 
@@ -519,6 +543,9 @@ public class ChatPanel extends ExternalizablePanel
                     tmpUserList.clear();
                     break;
 
+                case 1:
+                case 2:
+                case 3:
                 case 4:
                 case 5:
                 case 250:
@@ -740,7 +767,7 @@ public class ChatPanel extends ExternalizablePanel
             final String nickName = txtNickName.getText();
             // apply nickname
             ChatPreferences.setNickname(nickName);
-            String userName = ChatPreferences.getUsername();
+            String userName = nickName;
             String realName = ChatPreferences.getRealname();
 
             if (StringUtil.isEmpty(userName))

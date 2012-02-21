@@ -47,13 +47,13 @@ public abstract class IRCEventListenerImpl implements IRCEventListener
     @Override
     public void onError(String msg)
     {
-        onReceive(null, null, "Error: " + msg + ".");
+        onReceive(null, null, "Error: " + msg);
     }
 
     @Override
     public void onError(int num, String msg)
     {
-        onReceive(null, null, "Error #" + num + ": " + msg + ".");
+        onReceive(null, null, "Error #" + num + ": " + msg);
     }
 
     @Override
@@ -103,7 +103,7 @@ public abstract class IRCEventListenerImpl implements IRCEventListener
     @Override
     public void onNotice(String target, IRCUser u, String msg)
     {
-        onReceive(u.getNick(), target, "notice: " + msg + ".");
+        onReceive(u.getNick(), target, "notice: " + msg);
     }
 
     @Override
@@ -131,7 +131,7 @@ public abstract class IRCEventListenerImpl implements IRCEventListener
     @Override
     public void onReply(int num, String value, String msg)
     {
-        onReceive(null, null, "Reply #" + num + ": " + value + " " + msg + ".");
+        onReceive(null, null, "Reply #" + num + ": " + value + " " + msg);
     }
 
     @Override

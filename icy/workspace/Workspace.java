@@ -136,11 +136,8 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
 
                 ItemDefinition(JRibbonBand band, AbstractCommandButton button)
                 {
-                    this();
-
-                    // class name is saved here
-                    className = button.getName();
-                    priority = RibbonUtil.getButtonPriority(band, button);
+                    // class name is saved in button.name
+                    this(button.getName(), RibbonUtil.getButtonPriority(band, button));
                 }
 
                 ItemDefinition(String className, RibbonElementPriority prio)
@@ -353,28 +350,79 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
              */
             public ItemDefinition addItem(JRibbonBand band, AbstractCommandButton button)
             {
-                final ItemDefinition result = new ItemDefinition(band, button);
-                items.add(result);
-                return result;
+                return addItem(button.getName(), RibbonUtil.getButtonPriority(band, button));
             }
 
             public ItemDefinition addItem(String className, RibbonElementPriority prio)
             {
-                final ItemDefinition result = new ItemDefinition(className, prio);
-                items.add(result);
+                // don't want to have same item in a band
+                ItemDefinition result = findItem(className);
+
+                if (result == null)
+                {
+                    result = new ItemDefinition(className, prio);
+                    items.add(result);
+                }
+                else
+                    result.priority = prio;
+
                 return result;
             }
 
             public ItemDefinition addItem(String className)
             {
-                final ItemDefinition result = new ItemDefinition(className);
-                items.add(result);
-                return result;
+                return addItem(className, RibbonElementPriority.LOW);
             }
 
             public void addSeparator()
             {
                 addItem(ID_SEPARATOR);
+            }
+
+            /**
+             * Add all items contained in the specified JRibbonBand.
+             */
+            public boolean addItems(JRibbonBand ribbonBand)
+            {
+                if (ribbonBand == null)
+                    return false;
+
+                for (ControlPanelGroup panelGroup : ribbonBand.getControlPanel().getControlPanelGroups())
+                {
+                    addSeparator();
+
+                    for (AbstractCommandButton button : panelGroup.getRibbonButtons(RibbonElementPriority.LOW))
+                        addItem(ribbonBand, button);
+
+                    for (AbstractCommandButton button : panelGroup.getRibbonButtons(RibbonElementPriority.MEDIUM))
+                        addItem(ribbonBand, button);
+
+                    for (AbstractCommandButton button : panelGroup.getRibbonButtons(RibbonElementPriority.TOP))
+                        addItem(ribbonBand, button);
+                }
+
+                return true;
+            }
+
+            /**
+             * Add all items from the specified Node.
+             */
+            public boolean addItems(Node node)
+            {
+                if (node == null)
+                    return false;
+
+                final ArrayList<Node> nodesItem = XMLUtil.getSubNodes(node);
+                for (Node n : nodesItem)
+                {
+                    final ItemDefinition item = new ItemDefinition(n);
+
+                    // only add if not empty
+                    if (!item.isEmpty())
+                        items.add(item);
+                }
+
+                return true;
             }
 
             /**
@@ -386,6 +434,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
             {
                 if (item != null)
                     return items.remove(item);
+
                 return false;
             }
 
@@ -434,24 +483,10 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
 
                 name = ribbonBand.getTitle();
 
-                // clear before loading
+                // clear before loading items
                 items.clear();
 
-                for (ControlPanelGroup panelGroup : ribbonBand.getControlPanel().getControlPanelGroups())
-                {
-                    addSeparator();
-
-                    for (AbstractCommandButton button : panelGroup.getRibbonButtons(RibbonElementPriority.LOW))
-                        addItem(ribbonBand, button);
-
-                    for (AbstractCommandButton button : panelGroup.getRibbonButtons(RibbonElementPriority.MEDIUM))
-                        addItem(ribbonBand, button);
-
-                    for (AbstractCommandButton button : panelGroup.getRibbonButtons(RibbonElementPriority.TOP))
-                        addItem(ribbonBand, button);
-                }
-
-                return true;
+                return addItems(ribbonBand);
             }
 
             @Override
@@ -462,20 +497,10 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
 
                 name = XMLUtil.getAttributeValue((Element) node, ID_NAME, "");
 
-                // clear before loading
+                // clear before loading items
                 items.clear();
 
-                final ArrayList<Node> nodesItem = XMLUtil.getSubNodes(node);
-                for (Node n : nodesItem)
-                {
-                    final ItemDefinition item = new ItemDefinition(n);
-
-                    // only add if not empty
-                    if (!item.isEmpty())
-                        items.add(item);
-                }
-
-                return true;
+                return addItems(node);
             }
 
             @Override
@@ -548,14 +573,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
         {
             this();
 
-            if (ribbonTask != null)
-            {
-                name = ribbonTask.getTitle();
-
-                for (AbstractRibbonBand<?> ribbonBand : ribbonTask.getBands())
-                    if (ribbonBand instanceof JRibbonBand)
-                        addBand((JRibbonBand) ribbonBand);
-            }
+            loadFrom(ribbonTask);
         }
 
         public Workspace getWorkspace()
@@ -569,21 +587,29 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
         }
 
         /**
-         * add a BandDefinition from JRibbonBand component
+         * Add a BandDefinition from JRibbonBand component
          */
         public BandDefinition addBand(JRibbonBand ribbonBand)
         {
-            final BandDefinition result = new BandDefinition(ribbonBand);
-            bands.add(result);
+            if (ribbonBand == null)
+                return null;
+
+            final BandDefinition result = addBand(ribbonBand.getTitle());
+
+            // add items from ribbonBand
+            result.clear();
+            result.addItems(ribbonBand);
+
             return result;
         }
 
         /**
-         * add a BandDefinition
+         * Add a BandDefinition
          */
         public BandDefinition addBand(String bandName)
         {
             BandDefinition band = findBand(bandName);
+
             if (band == null)
             {
                 band = new BandDefinition();
@@ -595,6 +621,21 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
         }
 
         /**
+         * Add bands from specified RibbonTask.
+         */
+        public boolean addBands(RibbonTask ribbonTask)
+        {
+            if (ribbonTask == null)
+                return false;
+
+            for (AbstractRibbonBand<?> ribbonBand : ribbonTask.getBands())
+                if (ribbonBand instanceof JRibbonBand)
+                    addBand((JRibbonBand) ribbonBand);
+
+            return true;
+        }
+
+        /**
          * Remove a BandDefinition by name
          * 
          * @param bandName
@@ -603,33 +644,53 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
         public boolean removeBand(String bandName)
         {
             BandDefinition band = findBand(bandName);
+
             if (band == null)
                 return false;
+
             return removeBand(band);
         }
 
         /**
          * Remove a band definition
          */
-        public boolean removeBand(BandDefinition ribbonBand)
+        public boolean removeBand(BandDefinition band)
         {
-            for (ItemDefinition itd : ribbonBand.getItems())
-                ribbonBand.removeItem(itd);
-            bands.remove(ribbonBand);
+            for (ItemDefinition itd : band.getItems())
+                band.removeItem(itd);
+
+            bands.remove(band);
+
             return true;
         }
 
         public ItemDefinition addItem(String bandName, String className)
         {
-            BandDefinition band = findBand(bandName);
-            if (band == null)
-            {
-                band = new BandDefinition();
-                band.name = bandName;
-                bands.add(band);
-            }
+            return addBand(bandName).addItem(className);
+        }
 
-            return band.addItem(className);
+        /**
+         * remove all bands from the task
+         */
+        public void clear()
+        {
+            bands.clear();
+        }
+
+        /**
+         * Load from the specified RibbonTask.
+         */
+        public boolean loadFrom(RibbonTask ribbonTask)
+        {
+            if (ribbonTask == null)
+                return false;
+
+            name = ribbonTask.getTitle();
+
+            // clear before loading bands
+            bands.clear();
+
+            return addBands(ribbonTask);
         }
 
         @Override
@@ -826,6 +887,9 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
         return repository;
     }
 
+    /**
+     * Clear all tasks.
+     */
     public void clear()
     {
         tasks.clear();
@@ -843,6 +907,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
     public BandDefinition findBand(String taskName, String bandName)
     {
         final TaskDefinition task = findTask(taskName);
+
         if (task != null)
             return task.findBand(bandName);
 
@@ -889,8 +954,15 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
      */
     public TaskDefinition addTask(RibbonTask ribbonTask)
     {
-        final TaskDefinition result = new TaskDefinition(ribbonTask);
-        tasks.add(result);
+        if (ribbonTask == null)
+            return null;
+
+        final TaskDefinition result = addTask(ribbonTask.getTitle());
+
+        // add bands from ribbonTask
+        result.clear();
+        result.addBands(ribbonTask);
+
         return result;
     }
 
@@ -900,6 +972,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
     public TaskDefinition addTask(String taskName)
     {
         TaskDefinition task = findTask(taskName);
+
         if (task == null)
         {
             task = new TaskDefinition();
@@ -915,15 +988,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
      */
     public BandDefinition addBand(String taskName, String bandName)
     {
-        TaskDefinition task = findTask(taskName);
-        if (task == null)
-        {
-            task = new TaskDefinition();
-            task.name = taskName;
-            tasks.add(task);
-        }
-
-        return task.addBand(bandName);
+        return addTask(taskName).addBand(bandName);
     }
 
     /**
@@ -931,15 +996,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
      */
     public ItemDefinition addItem(String taskName, String bandName, String className)
     {
-        TaskDefinition task = findTask(taskName);
-        if (task == null)
-        {
-            task = new TaskDefinition();
-            task.name = taskName;
-            tasks.add(task);
-        }
-
-        return task.addItem(bandName, className);
+        return addTask(taskName).addItem(bandName, className);
     }
 
     public boolean removeTask(String taskName)

@@ -19,8 +19,10 @@
 package icy.roi;
 
 import icy.painter.Anchor2D;
+import icy.painter.LineAnchor2D;
 import icy.util.XMLUtil;
 
+import java.awt.Color;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
@@ -31,11 +33,27 @@ import org.w3c.dom.Node;
  */
 public class ROI2DLine extends ROI2DShape
 {
+    protected class ROI2DLineAnchor2D extends LineAnchor2D
+    {
+        public ROI2DLineAnchor2D(Point2D position, Color color, Color selectedColor)
+        {
+            super(position, color, selectedColor);
+        }
+
+        @Override
+        protected Anchor2D getPreviousPoint()
+        {
+            if (this == pt1)
+                return pt2;
+            return pt1;
+        }
+    }
+
     public static final String ID_PT1 = "pt1";
     public static final String ID_PT2 = "pt2";
 
-    private final Anchor2D pt1;
-    private final Anchor2D pt2;
+    protected final Anchor2D pt1;
+    protected final Anchor2D pt2;
 
     /**
      * 
@@ -94,6 +112,12 @@ public class ROI2DLine extends ROI2DShape
     public ROI2DLine()
     {
         this(new Point2D.Double());
+    }
+
+    @Override
+    protected Anchor2D createAnchor(Point2D pos)
+    {
+        return new ROI2DLineAnchor2D(pos, DEFAULT_SELECTED_COLOR, OVER_COLOR);
     }
 
     public Line2D getLine()

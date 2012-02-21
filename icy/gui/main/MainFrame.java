@@ -353,7 +353,7 @@ public class MainFrame extends JRibbonFrame
                     // value on OSX when initial state is maximized.
                     if (inspector.isInternalized())
                         mainPane.setDividerLocation(getWidth() - lastInspectorWidth);
-                    
+
                     inspectorWidthSet = true;
                 }
             }

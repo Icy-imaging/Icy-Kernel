@@ -139,6 +139,28 @@ public class ThreadUtil
     }
 
     /**
+     * Shutdown all background runner.
+     */
+    public static void shutdown()
+    {
+        bgProcessor.shutdown();
+        for (InstanceProcessor ip : instanceProcessors)
+            ip.shutdown();
+    }
+
+    /**
+     * Return true if all background runner are shutdown and terminated.
+     */
+    public static boolean isShutdownAndTerminated()
+    {
+        for (InstanceProcessor ip : instanceProcessors)
+            if (!ip.isTerminated())
+                return false;
+
+        return bgProcessor.isTerminated();
+    }
+
+    /**
      * Add background processing of specified Runnable.<br>
      * Return false if queue is full.
      */

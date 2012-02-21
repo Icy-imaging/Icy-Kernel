@@ -258,7 +258,15 @@ public class IcyExternalFrame extends JFrame
         if (closeItemVisible != value)
         {
             closeItemVisible = value;
-            updateSystemMenu();
+
+            ThreadUtil.invokeLater(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    updateSystemMenu();
+                }
+            });
         }
     }
 
@@ -292,7 +300,15 @@ public class IcyExternalFrame extends JFrame
         if (systemMenuCallback != value)
         {
             systemMenuCallback = value;
-            updateSystemMenu();
+
+            ThreadUtil.invokeLater(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    updateSystemMenu();
+                }
+            });
         }
     }
 

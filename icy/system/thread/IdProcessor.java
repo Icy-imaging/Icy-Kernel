@@ -18,6 +18,8 @@
  */
 package icy.system.thread;
 
+import icy.main.Icy;
+
 /**
  * Single Id Processor<br>
  * Provide facilities to process tasks in background.<br>
@@ -69,9 +71,12 @@ public class IdProcessor extends Processor
 
         if (!super.addTask(task, onAWTEventThread, id))
         {
-            // error while adding task
-            System.err.println("Cannot add task, ignore execution : " + task);
-            return false;
+            if (!Icy.isExiting())
+            {
+                // error while adding task
+                System.err.println("Cannot add task, ignore execution : " + task);
+                return false;
+            }
         }
 
         return true;

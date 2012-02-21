@@ -598,7 +598,7 @@ public class PluginInstaller
         final CancelableProgressFrame taskFrame;
 
         if (showConfirm)
-            taskFrame = new CancelableProgressFrame("initialising...");
+            taskFrame = new CancelableProgressFrame("initializing...");
         else
             taskFrame = null;
 

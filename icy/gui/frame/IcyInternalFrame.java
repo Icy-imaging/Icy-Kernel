@@ -279,7 +279,15 @@ public class IcyInternalFrame extends JInternalFrame
         if (closeItemVisible != value)
         {
             closeItemVisible = value;
-            updateSystemMenu();
+            
+            ThreadUtil.invokeLater(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    updateSystemMenu();
+                }
+            });
         }
     }
 
@@ -328,7 +336,15 @@ public class IcyInternalFrame extends JInternalFrame
         if (systemMenuCallback != value)
         {
             systemMenuCallback = value;
-            updateSystemMenu();
+            
+            ThreadUtil.invokeLater(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    updateSystemMenu();
+                }
+            });
         }
     }
 }

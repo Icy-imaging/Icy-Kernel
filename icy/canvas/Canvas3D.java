@@ -20,6 +20,8 @@ package icy.canvas;
 
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.gui.component.ComponentUtil;
+import icy.gui.component.IcyTextField;
+import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.button.ColorChooserButton;
 import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
 import icy.gui.util.GuiUtil;
@@ -40,6 +42,7 @@ import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
+import icy.vtk.VtkUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -47,16 +50,13 @@ import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 
 import javax.swing.Box;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.Document;
 
 import vtk.vtkActor;
 import vtk.vtkActor2D;
@@ -91,7 +91,7 @@ import vtk.vtkVolumeProperty;
  * 
  * @author Fabrice de Chaumont & Stephane
  */
-public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentListener, ColorChangeListener
+public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChangeListener, TextChangeListener
 {
     private static final long serialVersionUID = -2677870897470280726L;
 
@@ -145,13 +145,12 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     /**
      * gui
      */
-    // final TNavigationPanel tNav;
 
     // background color
     private ColorChooserButton backGroundColor = new ColorChooserButton();
     // specular
-    final private JTextField specularTextField = new JTextField("0.3");
-    final private JTextField specularPowerTextField = new JTextField("30");
+    final private IcyTextField specularTextField = new IcyTextField("0.3");
+    final private IcyTextField specularPowerTextField = new IcyTextField("30");
 
     // volume mapper choice
     final private String[] volumeMapperString = {"Raycast", "OpenGL"};
@@ -166,8 +165,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     final private String[] volumeImageSampleDistanceString = {"Auto", "1 (slow)", "2", "3", "4", "5", "6", "7", "8",
             "9", "10 (fast)"};
     final private JComboBox volumeImageSampleDistanceCombo = new JComboBox(volumeImageSampleDistanceString);
-    // volume spacing
-    final private JTextField volumeZSpacing = new JTextField("1");
     // volume shade
     final private JCheckBox volumeShadeCheckBox = new JCheckBox("Use Shading", false);
 
@@ -180,7 +177,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     private final Runnable volumeMapperBuilder;
     private final LUT lutSave;
     private boolean initialized;
-    private final double[] scaling;
+    private final double[] volumeScaling;
 
     public Canvas3D(Viewer viewer)
     {
@@ -196,12 +193,12 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
         final Sequence seq = getSequence();
 
-        // X, Y, Z scaling
-        scaling = new double[3];
+        // default X, Y, Z scaling for volume
+        volumeScaling = new double[3];
 
-        scaling[0] = seq.getPixelSizeX();
-        scaling[1] = seq.getPixelSizeY();
-        scaling[2] = seq.getPixelSizeZ();
+        volumeScaling[0] = seq.getPixelSizeX();
+        volumeScaling[1] = seq.getPixelSizeY();
+        volumeScaling[2] = seq.getPixelSizeZ();
 
         panel = GuiUtil.generatePanelWithoutBorder();
 
@@ -223,8 +220,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
                 GuiUtil.createFixedWidthLabel("Specular power", 100), Box.createHorizontalStrut(8),
                 specularPowerTextField, Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
 
-        specularTextField.getDocument().addDocumentListener(this);
-        specularPowerTextField.getDocument().addDocumentListener(this);
+        specularTextField.addTextChangeListener(this);
+        specularPowerTextField.addTextChangeListener(this);
 
         panel.add(generalSettingsPanel);
 
@@ -248,9 +245,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         volumeSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), maxVolumeSampleLabel,
                 Box.createHorizontalStrut(8), volumeImageSampleDistanceCombo, Box.createHorizontalGlue(),
                 Box.createHorizontalStrut(4)));
-        volumeSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
-                GuiUtil.createFixedWidthLabel("Z Scaling", 100), Box.createHorizontalStrut(8), volumeZSpacing,
-                Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
         volumeSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), volumeShadeCheckBox,
                 Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
 
@@ -258,9 +252,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         volumeComponentCombo.addActionListener(this);
         volumeInterpolationCombo.addActionListener(this);
         volumeImageSampleDistanceCombo.addActionListener(this);
-        volumeZSpacing.setText(StringUtil.toString(getZScaling()));
-        volumeZSpacing.setColumns(2);
-        volumeZSpacing.getDocument().addDocumentListener(this);
         volumeShadeCheckBox.addActionListener(this);
 
         panel.add(volumeSettingsPanel);
@@ -380,7 +371,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         // update nav bar & mouse infos
         mouseInfPanel.setVisible(false);
         updateZNav();
-        updateTNav();        
+        updateTNav();
 
         // initialize volume data
         volume = new vtkVolume();
@@ -407,7 +398,11 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         // TODO : add option to remove volume rendering
         renderer.AddVolume(volume);
         // setup initial scaling after volume has been added to the renderer
-        setupVolumeScaling();
+        setupVolumeScale();
+
+        // add vtkPainter actors to the renderer
+        for (Layer l : layers)
+            addLayerActors(l);
 
         // reset camera
         resetCamera();
@@ -915,25 +910,10 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         }
     }
 
-    private double[] getScaling()
-    {
-        final double[] result = new double[3];
-        final Sequence seq = getSequence();
-
-        if (seq != null)
-        {
-            result[0] = seq.getPixelSizeX();
-            result[1] = seq.getPixelSizeY();
-            result[2] = seq.getPixelSizeZ();
-        }
-
-        return result;
-    }
-
-    private void setupVolumeScaling()
+    private void setupVolumeScale()
     {
         // update volume scale
-        volume.SetScale(scaling);
+        volume.SetScale(volumeScaling);
     }
 
     private void setupVolumeInterpolationType()
@@ -975,6 +955,44 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
             setPositionC(newPosC);
     }
 
+    protected void addLayerActors(Layer layer)
+    {
+        if (layer != null)
+        {
+            // add painter actor from the vtk render
+            final Painter painter = layer.getPainter();
+
+            if (painter instanceof VtkPainter)
+            {
+                final VtkPainter vp = (VtkPainter) painter;
+
+                for (vtkActor actor : vp.getActors())
+                    VtkUtil.addActor(renderer, actor);
+                for (vtkActor2D actor : vp.getActors2D())
+                    VtkUtil.addActor2D(renderer, actor);
+            }
+        }
+    }
+
+    protected void removeLayerActors(Layer layer)
+    {
+        if (layer != null)
+        {
+            // remove painter actor from the vtk render
+            final Painter painter = layer.getPainter();
+
+            if (painter instanceof VtkPainter)
+            {
+                final VtkPainter vp = (VtkPainter) painter;
+
+                for (vtkActor actor : vp.getActors())
+                    renderer.RemoveActor(actor);
+                for (vtkActor2D actor : vp.getActors2D())
+                    renderer.RemoveActor2D(actor);
+            }
+        }
+    }
+
     public vtkPanel getPanel3D()
     {
         return panel3D;
@@ -986,40 +1004,93 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     }
 
     /**
+     * Get scaling for image volume rendering
+     */
+    public double[] getVolumeScale()
+    {
+        return Arrays.copyOf(volumeScaling, volumeScaling.length);
+    }
+
+    /**
      * Get X scaling for image volume rendering
      */
-    public double getXScaling()
+    public double getVolumeScaleX()
     {
-        return scaling[0];
+        return volumeScaling[0];
     }
 
     /**
      * Get Y scaling for image volume rendering
      */
-    public double getYScaling()
+    public double getVolumeScaleY()
     {
-        return scaling[1];
+        return volumeScaling[1];
     }
 
     /**
      * Get Z scaling for image volume rendering
      */
+    public double getVolumeScaleZ()
+    {
+        return volumeScaling[2];
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public double getXScaling()
+    {
+        return getVolumeScaleX();
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public double getYScaling()
+    {
+        return getVolumeScaleY();
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public double getZScaling()
     {
-        return scaling[2];
+        return getVolumeScaleZ();
+    }
+
+    /**
+     * Set scaling for image volume rendering
+     */
+    public void setVolumeScale(double x, double y, double z)
+    {
+        if ((volumeScaling[0] != x) || (volumeScaling[1] != y) || (volumeScaling[2] != z))
+        {
+            volumeScaling[0] = x;
+            volumeScaling[1] = y;
+            volumeScaling[2] = z;
+
+            // update scaling
+            setupVolumeScale();
+            // refresh rendering
+            refresh();
+        }
     }
 
     /**
      * Set X scaling for image volume rendering
      */
-    public void setXScaling(double value)
+    public void setVolumeScaleX(double value)
     {
-        if (scaling[0] != value)
+        if (volumeScaling[0] != value)
         {
-            scaling[0] = value;
+            volumeScaling[0] = value;
 
             // update scaling
-            setupVolumeScaling();
+            setupVolumeScale();
             // refresh rendering
             refresh();
         }
@@ -1028,14 +1099,14 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     /**
      * Set Y scaling for image volume rendering
      */
-    public void setYScaling(double value)
+    public void setVolumeScaleY(double value)
     {
-        if (scaling[1] != value)
+        if (volumeScaling[1] != value)
         {
-            scaling[1] = value;
+            volumeScaling[1] = value;
 
             // update scaling
-            setupVolumeScaling();
+            setupVolumeScale();
             // refresh rendering
             refresh();
         }
@@ -1044,17 +1115,44 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     /**
      * Set Z scaling for image volume rendering
      */
-    public void setZScaling(double value)
+    public void setVolumeScaleZ(double value)
     {
-        if (scaling[2] != value)
+        if (volumeScaling[2] != value)
         {
-            scaling[2] = value;
+            volumeScaling[2] = value;
 
             // update scaling
-            setupVolumeScaling();
+            setupVolumeScale();
             // refresh rendering
             refresh();
         }
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public void setXScaling(double value)
+    {
+        setVolumeScaleX(value);
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public void setYScaling(double value)
+    {
+        setVolumeScaleY(value);
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public void setZScaling(double value)
+    {
+        setVolumeScaleZ(value);
     }
 
     @Override
@@ -1133,23 +1231,13 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         return getRenderedImage(t, c);
     }
 
-    private void documentChanged(Document doc)
+    @Override
+    public void textChanged(IcyTextField source)
     {
-        if ((doc == specularTextField.getDocument()) || (doc == specularPowerTextField.getDocument()))
+        if ((source == specularTextField) || (source == specularPowerTextField))
         {
             setupSpecular();
             refresh();
-        }
-        else if (doc == volumeZSpacing.getDocument())
-        {
-            try
-            {
-                setZScaling(Double.parseDouble(volumeZSpacing.getText()));
-            }
-            catch (Exception ex)
-            {
-                // ignore
-            }
         }
     }
 
@@ -1195,24 +1283,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
 
         if (e.getSource() == volumeComponentCombo)
             setupVolumeComponent();
-    }
-
-    @Override
-    public void changedUpdate(DocumentEvent e)
-    {
-        documentChanged(e.getDocument());
-    }
-
-    @Override
-    public void insertUpdate(DocumentEvent e)
-    {
-        documentChanged(e.getDocument());
-    }
-
-    @Override
-    public void removeUpdate(DocumentEvent e)
-    {
-        documentChanged(e.getDocument());
     }
 
     @Override
@@ -1321,13 +1391,26 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
         if (!initialized)
             return;
 
-        // check if X,Y or Z resolution changed
-        if (StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_X))
-            setXScaling(getSequence().getPixelSizeX());
-        if (StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_Y))
-            setYScaling(getSequence().getPixelSizeY());
-        if (StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_Z))
-            volumeZSpacing.setText(StringUtil.toString(getSequence().getPixelSizeZ()));
+        final Sequence seq = getSequence();
+
+        if (seq == null)
+            return;
+
+        if (StringUtil.isEmpty(metadataName))
+        {
+            // apply all changes related to metadata
+            setVolumeScale(seq.getPixelSizeX(), seq.getPixelSizeY(), seq.getPixelSizeZ());
+        }
+        else
+        {
+            // check if X,Y or Z resolution changed
+            if (StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_X))
+                setVolumeScaleX(seq.getPixelSizeX());
+            if (StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_Y))
+                setVolumeScaleY(seq.getPixelSizeY());
+            if (StringUtil.equals(metadataName, Sequence.ID_PIXEL_SIZE_Z))
+                setVolumeScaleZ(seq.getPixelSizeZ());
+        }
     }
 
     @Override
@@ -1385,25 +1468,19 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, DocumentLis
     }
 
     @Override
+    protected void layerAdded(Layer layer)
+    {
+        super.layerAdded(layer);
+
+        addLayerActors(layer);
+    }
+
+    @Override
     protected void layerRemoved(Layer layer)
     {
         super.layerRemoved(layer);
 
-        if (layer != null)
-        {
-            // remove painter actor from the vtk render
-            final Painter painter = layer.getPainter();
-
-            if (painter instanceof VtkPainter)
-            {
-                final VtkPainter vp = (VtkPainter) painter;
-
-                for (vtkActor actor : vp.getActors())
-                    renderer.RemoveActor(actor);
-                for (vtkActor2D actor : vp.getActors2D())
-                    renderer.RemoveActor2D(actor);
-            }
-        }
+        removeLayerActors(layer);
     }
 
     @Override

@@ -24,7 +24,6 @@ import icy.canvas.IcyCanvas3D;
 import icy.common.EventHierarchicalChecker;
 import icy.image.ImageUtil;
 import icy.sequence.Sequence;
-import icy.util.EventUtil;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
 
@@ -62,7 +61,7 @@ public class ROI2DArea extends ROI2D
     protected class ROI2DAreaPainter extends ROI2DPainter
     {
         private static final float DEFAULT_ALPHA = 0.3f;
-        private static final float MIN_CURSOR_SIZE = 1f;
+        private static final float MIN_CURSOR_SIZE = 0.6f;
         private static final float MAX_CURSOR_SIZE = 500f;
 
         private final Ellipse2D cursor;
@@ -257,28 +256,22 @@ public class ROI2DArea extends ROI2D
             {
                 super.mousePressed(e, imagePoint, canvas);
 
-                if (!e.isConsumed())
-                {
-                    // right button action
-                    if (EventUtil.isRightMouseButton(e))
-                    {
-                        // roi selected ?
-                        if (ROI2DArea.this.selected)
-                        {
-                            // inside bounds ?
-                            if (getBounds2D().intersects(cursor.getBounds2D()))
-                            {
-                                // roi not focused ? --> remove point from mask
-                                if (!focused)
-                                    if (removePointAt(canvas, imagePoint))
-                                        e.consume();
-                            }
-                            else
-                                // else just unselect the roi
-                                setSelected(false, false);
-                        }
-                    }
-                }
+                // if (!e.isConsumed())
+                // {
+                // // right button action
+                // if (EventUtil.isRightMouseButton(e))
+                // {
+                // // roi selected ?
+                // if (ROI2DArea.this.selected)
+                // {
+                // // roi not focused ? --> remove point from mask
+                // // if (!focused)
+                // removePointAt(canvas, imagePoint);
+                //
+                // e.consume();
+                // }
+                // }
+                // }
             }
             finally
             {
@@ -289,6 +282,8 @@ public class ROI2DArea extends ROI2D
         @Override
         public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
+            super.mouseReleased(e, imagePoint, canvas);
+
             // update only on release as it can be long
             if (boundsNeedUpdate)
                 optimizeBounds(true);
@@ -305,24 +300,22 @@ public class ROI2DArea extends ROI2D
             {
                 super.mouseDrag(e, imagePoint, canvas);
 
-                if (!e.isConsumed())
-                {
-                    // right button action
-                    if (EventUtil.isRightMouseButton(e))
-                    {
-                        // roi selected ?
-                        if (ROI2DArea.this.selected)
-                        {
-                            // inside bounds ? --> remove point from mask
-                            if (getBounds2D().intersects(cursor.getBounds2D()))
-                            {
-                                // roi not focused ? --> remove point from mask
-                                if (!focused)
-                                    removePointAt(canvas, imagePoint);
-                            }
-                        }
-                    }
-                }
+                // if (!e.isConsumed())
+                // {
+                // // right button action
+                // if (EventUtil.isRightMouseButton(e))
+                // {
+                // // roi selected ?
+                // if (ROI2DArea.this.selected)
+                // {
+                // // roi not focused ? --> remove point from mask
+                // if (!focused)
+                // removePointAt(canvas, imagePoint);
+                //
+                // e.consume();
+                // }
+                // }
+                // }
             }
             finally
             {
@@ -634,8 +627,15 @@ public class ROI2DArea extends ROI2D
     public void updateMask(Shape shape, boolean remove)
     {
         if (remove)
+        {
+            // outside bounds ? --> nothing to remove...
+            // nothing to do
+            if (!bounds.intersects(shape.getBounds2D()))
+                return;
+
             // mark that bounds need to be updated
             boundsNeedUpdate = true;
+        }
         else
             // update bounds (this update the image dimension if needed)
             addToBounds(shape.getBounds());
@@ -649,8 +649,8 @@ public class ROI2DArea extends ROI2D
             g.setColor(new Color(colorModel.getRGB(0), true));
         else
             g.setColor(new Color(colorModel.getRGB(1), true));
-        // translate to origin of image
-        g.translate(-bounds.x, -bounds.y);
+        // translate to origin of image and pixel center
+        g.translate(-(bounds.x + 0.5d), -(bounds.y + 0.5d));
         // draw cursor in the mask
         g.fill(shape);
 
@@ -1003,6 +1003,14 @@ public class ROI2DArea extends ROI2D
         translateY -= dyi;
 
         bounds.translate(dxi, dyi);
+
+        roiChanged();
+    }
+
+    @Override
+    public void setPosition(Point2D newPosition)
+    {
+        bounds.setLocation((int) newPosition.getX(), (int) newPosition.getY());
 
         roiChanged();
     }

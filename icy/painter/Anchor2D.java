@@ -27,6 +27,8 @@ import icy.util.XMLUtil;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
@@ -43,13 +45,13 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         public void positionChanged(Anchor2D source);
     }
 
-    private static final String ID_COLOR = "color";
-    private static final String ID_SELECTEDCOLOR = "selected_color";
+    protected static final String ID_COLOR = "color";
+    protected static final String ID_SELECTEDCOLOR = "selected_color";
     // private static final String ID_SELECTED = "selected";
-    private static final String ID_POS_X = "pos_x";
-    private static final String ID_POS_Y = "pos_y";
-    private static final String ID_RAY = "ray";
-    private static final String ID_VISIBLE = "visible";
+    protected static final String ID_POS_X = "pos_x";
+    protected static final String ID_POS_Y = "pos_y";
+    protected static final String ID_RAY = "ray";
+    protected static final String ID_VISIBLE = "visible";
 
     protected static final int DEFAULT_RAY = 6;
     protected static final Color DEFAULT_NORMAL_COLOR = Color.YELLOW;
@@ -88,7 +90,9 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
     /**
      * internals
      */
-    private final Ellipse2D ellipse;
+    protected final Ellipse2D ellipse;
+    protected Point2D startDragMousePosition;
+    protected Point2D startDragROIPosition;
 
     /**
      * @param sequence
@@ -110,6 +114,8 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         visible = true;
 
         ellipse = new Ellipse2D.Double();
+        startDragMousePosition = null;
+        startDragROIPosition = null;
     }
 
     /**
@@ -536,6 +542,32 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         ellipse.setFrame(position.x - adjRayX, position.y - adjRayY, adjRayX * 2, adjRayY * 2);
     }
 
+    protected boolean updateDrag(InputEvent e, Point2D imagePoint)
+    {
+        // not dragging --> exit
+        if (startDragMousePosition == null)
+            return false;
+
+        double dx = imagePoint.getX() - startDragMousePosition.getX();
+        double dy = imagePoint.getY() - startDragMousePosition.getY();
+
+        // shift action --> limit to one direction
+        if (EventUtil.isShiftDown(e))
+        {
+            // X drag
+            if (Math.abs(dx) > Math.abs(dy))
+                dy = 0;
+            // Y drag
+            else
+                dx = 0;
+        }
+
+        // set new position
+        setPosition(new Point2D.Double(startDragROIPosition.getX() + dx, startDragROIPosition.getY() + dy));
+
+        return true;
+    }
+
     /**
      * called when anchor position has changed
      */
@@ -586,6 +618,26 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
     }
 
     @Override
+    public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        if (!visible)
+            return;
+
+        // just for the shift key state change
+        updateDrag(e, imagePoint);
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        if (!visible)
+            return;
+
+        // just for the shift key state change
+        updateDrag(e, imagePoint);
+    }
+
+    @Override
     public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
         if (!visible)
@@ -596,19 +648,17 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
 
         if (EventUtil.isLeftMouseButton(e))
         {
-            // shift action
-            if (EventUtil.isShiftDown(e))
-            {
-
-            }
-            // normal action
-            else
-            {
-                // consume event if we're clicking on selected point
-                if (isSelected())
-                    e.consume();
-            }
+            // consume event if we are clicking on a selected point
+            // this permit to enable drag operation on this painter
+            if (isSelected())
+                e.consume();
         }
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        startDragMousePosition = null;
     }
 
     @Override
@@ -622,24 +672,25 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
 
         if (EventUtil.isLeftMouseButton(e))
         {
-            // shift action
-            if (EventUtil.isShiftDown(e))
+            // if selected then move according to mouse position
+            if (isSelected())
             {
-
-            }
-            // normal action
-            else
-            {
-                // if selected then move according to mouse position
-                if (isSelected())
+                // start drag position
+                if (startDragMousePosition == null)
                 {
-                    final double dx = imagePoint.getX() - position.x;
-                    final double dy = imagePoint.getY() - position.y;
-
-                    translate(dx, dy);
-                    // setPosition(imagePoint);
-                    e.consume();
+                    startDragMousePosition = imagePoint;
+                    startDragROIPosition = getPosition();
                 }
+
+                updateDrag(e, imagePoint);
+
+                // final double dx = imagePoint.getX() - position.x;
+                // final double dy = imagePoint.getY() - position.y;
+                //
+                // translate(dx, dy);
+
+                // setPosition(imagePoint);
+                e.consume();
             }
         }
     }

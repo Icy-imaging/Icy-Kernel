@@ -357,12 +357,25 @@ public class Loader
                     if (progressLen > 10)
                         loaderFrame.setLength(progressLen);
 
-                    // no single image ?
+                    // no single image -> create new sequence 
                     if (s > 0)
                     {
-                        // increment T position
-                        position.setT(position.getT() + 1);
-                        position.setZ(0);
+                        // remove empty element on current sequence
+                        seq.packImageList();
+                        seq.endUpdate();
+
+                        // and add a new sequence
+                        seq = new Sequence();
+                        seq.setName(FileUtil.getFileName(file.getName(), false));
+                        seq.setFilename(path);
+                        seq.setMetaData((IMetadata) reader.getMetadataStore());
+                        sequences.add(seq);
+                        seq.beginUpdate();
+
+                        // re init position
+                        position.set(0, 0, 0);                        
+//                        position.setT(position.getT() + 1);
+//                        position.setZ(0);
                     }
 
                     for (int t = 0; t < frames; t++)

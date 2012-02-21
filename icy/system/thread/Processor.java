@@ -147,7 +147,7 @@ public class Processor extends ThreadPoolExecutor
 
         setThreadFactory(new ProcessorThreadFactory());
         allowCoreThreadTimeOut(true);
-        setKeepAliveTime(5, TimeUnit.SECONDS);
+        setKeepAliveTime(2, TimeUnit.SECONDS);
 
         this.priority = priority;
         listeners = new EventListenerList();

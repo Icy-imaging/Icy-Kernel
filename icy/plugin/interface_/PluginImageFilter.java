@@ -23,16 +23,17 @@ import icy.image.IcyBufferedImage;
 import javax.swing.JPanel;
 
 /**
+ * The ImageFilter plugin is designed to be called at any time to process a given image.
+ * The idea is to create a chain of ImageFilter to process an image.
+ * It would be much appreciated in a streaming-heavy-size-set of file context.
+ * 
  * @author Fabrice de Chaumont
- *         The ImageFilter plugin is designed to be called at any time to process a given image.
- *         The idea is to create a chain of ImageFilter to process an image.
- *         It would be much appreciated in a streaming-heavy-size-set of file context.
+ * @deprecated
  */
+@Deprecated
 public interface PluginImageFilter
 {
-
     public IcyBufferedImage processImage(IcyBufferedImage icyBufferedImage);
 
     public JPanel getInterface();
-
 }

@@ -18,6 +18,8 @@
  */
 package icy.system.thread;
 
+import icy.main.Icy;
+
 /**
  * @author Stephane
  */
@@ -64,9 +66,12 @@ public class InstanceProcessor extends Processor
 
         if (!super.addTask(task, onAWTEventThread, id))
         {
-            // error while adding task
-            System.err.println("Cannot add task, ignore execution : " + task);
-            return false;
+            if (!Icy.isExiting())
+            {
+                // error while adding task
+                System.err.println("Cannot add task, ignore execution : " + task);
+                return false;
+            }
         }
 
         return true;

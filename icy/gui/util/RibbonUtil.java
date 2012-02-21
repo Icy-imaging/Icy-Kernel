@@ -401,7 +401,7 @@ public class RibbonUtil
             buttons.remove(button);
             // remove from container
             bandControlPanel.remove(button);
-            bandControlPanel.validate();
+            bandControlPanel.revalidate();
 
             // rebuild resize policies (used only for plugins so we use the restrictive one)
             if (bandControlPanel.getRibbonBand() instanceof JRibbonBand)

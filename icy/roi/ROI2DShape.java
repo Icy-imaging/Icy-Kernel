@@ -21,9 +21,9 @@ package icy.roi;
 import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
-import icy.canvas.IcyCanvas3D;
 import icy.common.EventHierarchicalChecker;
 import icy.gui.util.GuiUtil;
+import icy.main.Icy;
 import icy.painter.Anchor2D;
 import icy.painter.Anchor2D.Anchor2DListener;
 import icy.painter.PainterEvent;
@@ -43,6 +43,7 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
@@ -67,6 +68,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     {
         // used for 3D
         final vtkPolyData polyData;
+        final vtkPolyDataMapper polyMapper;
         final vtkActor actor;
         boolean needRebuild;
         double scaling[];
@@ -75,14 +77,24 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         {
             super();
 
-            // init 3D painters stuff
-            polyData = new vtkPolyData();
+            // avoid to use vtk objects when vtk library is missing.
+            if (Icy.vktLibraryLoaded)
+            {
+                // init 3D painters stuff
+                polyData = new vtkPolyData();
 
-            final vtkPolyDataMapper polyMapper = new vtkPolyDataMapper();
-            polyMapper.SetInput(polyData);
+                polyMapper = new vtkPolyDataMapper();
+                polyMapper.SetInput(polyData);
 
-            actor = new vtkActor();
-            actor.SetMapper(polyMapper);
+                actor = new vtkActor();
+                actor.SetMapper(polyMapper);
+            }
+            else
+            {
+                polyData = null;
+                polyMapper = null;
+                actor = null;
+            }
 
             scaling = new double[3];
             Arrays.fill(scaling, 1d);
@@ -90,42 +102,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             needRebuild = true;
         }
 
-        // give access to the internal vtkActor
-        public vtkActor getVtkActor()
-        {
-            return actor;
-        }
-
-        private double[] get3DScaling(IcyCanvas3D canvas)
-        {
-            final double[] result = new double[3];
-
-            if (canvas instanceof Canvas3D)
-            {
-                final Canvas3D cv3d = (Canvas3D) canvas;
-
-                // use canvas3D scaling info
-                result[0] = cv3d.getXScaling();
-                result[1] = cv3d.getYScaling();
-                result[2] = cv3d.getZScaling();
-            }
-            else
-            {
-                final Sequence seq = canvas.getSequence();
-
-                // use pixel size information
-                result[0] = seq.getPixelSizeX();
-                result[1] = seq.getPixelSizeY();
-                result[2] = seq.getPixelSizeZ();
-            }
-
-            return result;
-        }
-
         /**
-         * update 3D painter for 3D canvas
+         * update 3D painter for 3D canvas (called only when vtk is loaded).
          */
-        protected void rebuild3DPainter(IcyCanvas3D canvas)
+        protected void rebuild3DPainter(Canvas3D canvas)
         {
             final Sequence seq = canvas.getSequence();
 
@@ -224,6 +204,60 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
             polyData.SetPolys(VtkUtil.getCells(polyList.size(), VtkUtil.prepareCells(indexes)));
             polyData.SetPoints(VtkUtil.getPoints(vertices));
+
+            polyMapper.Update();
+        }
+
+        @Override
+        public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+        {
+            if (!isActiveFor(canvas))
+                return;
+
+            ROI2DShape.this.beginUpdate();
+            try
+            {
+                // send first to controls points
+                if (ROI2DShape.this.selected)
+                {
+                    // default anchor action on key pressed
+                    for (Anchor2D pt : controlPoints)
+                        pt.keyPressed(e, imagePoint, canvas);
+                }
+
+                // then to ROI
+                super.keyPressed(e, imagePoint, canvas);
+            }
+            finally
+            {
+                ROI2DShape.this.endUpdate();
+            }
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+        {
+            if (!isActiveFor(canvas))
+                return;
+
+            ROI2DShape.this.beginUpdate();
+            try
+            {
+                // send first to controls points
+                if (ROI2DShape.this.selected)
+                {
+                    // default anchor action on key release
+                    for (Anchor2D pt : controlPoints)
+                        pt.keyReleased(e, imagePoint, canvas);
+                }
+
+                // then to ROI
+                super.keyReleased(e, imagePoint, canvas);
+            }
+            finally
+            {
+                ROI2DShape.this.endUpdate();
+            }
         }
 
         @Override
@@ -235,7 +269,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             ROI2DShape.this.beginUpdate();
             try
             {
-                // give first to controls points
+                // send first to controls points
                 if (ROI2DShape.this.selected)
                 {
                     // default anchor action on mouse pressed
@@ -262,6 +296,58 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         }
 
         @Override
+        public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        {
+            if (!isActiveFor(canvas))
+                return;
+
+            ROI2DShape.this.beginUpdate();
+            try
+            {
+                // send first to controls points
+                if (ROI2DShape.this.selected)
+                {
+                    // default anchor action on mouse release
+                    for (Anchor2D pt : controlPoints)
+                        pt.mouseReleased(e, imagePoint, canvas);
+                }
+
+                // then to ROI
+                super.mouseReleased(e, imagePoint, canvas);
+            }
+            finally
+            {
+                ROI2DShape.this.endUpdate();
+            }
+        }
+
+        @Override
+        public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        {
+            if (!isActiveFor(canvas))
+                return;
+
+            ROI2DShape.this.beginUpdate();
+            try
+            {
+                // send first to controls points
+                if (ROI2DShape.this.selected)
+                {
+                    // default anchor action on mouse click
+                    for (Anchor2D pt : controlPoints)
+                        pt.mouseClick(e, imagePoint, canvas);
+                }
+
+                // then to ROI
+                super.mouseClick(e, imagePoint, canvas);
+            }
+            finally
+            {
+                ROI2DShape.this.endUpdate();
+            }
+        }
+
+        @Override
         public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
@@ -270,7 +356,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             ROI2DShape.this.beginUpdate();
             try
             {
-                // give first to controls points
+                // send first to controls points
                 if (ROI2DShape.this.selected)
                 {
                     // default anchor action on mouse drag
@@ -296,7 +382,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             ROI2DShape.this.beginUpdate();
             try
             {
-                // give first to control points
+                // send first to control points
                 if (ROI2DShape.this.selected)
                 {
                     // refresh control point state
@@ -363,8 +449,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
                 // FIXME : probably need a better implementation
 
-                // get 3D scaling
-                final double[] s = get3DScaling(canvas3d);
+                final double[] s = canvas3d.getVolumeScale();
 
                 // scaling changed ?
                 if (!Arrays.equals(scaling, s))
@@ -381,9 +466,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                     rebuild3DPainter(canvas3d);
                     needRebuild = false;
                 }
-
-                // add actor to the renderer if not already exist
-                VtkUtil.addActor(canvas3d.getRenderer(), actor);
             }
         }
 
@@ -603,6 +685,19 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         if (!canAddPoint())
             return false;
 
+        // insertion mode
+        if (ctrl)
+        {
+            final Anchor2D pt = createAnchor(pos);
+
+            // place the new point with closest points
+            addPoint(pt, getInsertPointPosition(pos));
+            // always select
+            pt.setSelected(true);
+
+            return true;
+        }
+
         // creation mode
         if (creating)
         {
@@ -610,19 +705,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
             // just add the new point at last position
             addPoint(pt);
-            // and select point is control is not pressed
-            pt.setSelected(!ctrl);
-
-            return true;
-        }
-
-        // modification mode, add point only if control is pressed
-        if (ctrl)
-        {
-            final Anchor2D pt = createAnchor(pos);
-
-            // place the new point with closest points
-            addPoint(pt, getInsertPointPosition(pos));
             // always select
             pt.setSelected(true);
 

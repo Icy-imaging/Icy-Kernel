@@ -19,8 +19,10 @@
 package icy.roi;
 
 import icy.painter.Anchor2D;
+import icy.painter.RectAnchor2D;
 import icy.util.XMLUtil;
 
+import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
@@ -28,10 +30,33 @@ import java.awt.geom.RectangularShape;
 import org.w3c.dom.Node;
 
 /**
+ * Base class for rectangular shape ROI.
+ * 
  * @author Stephane
  */
 public abstract class ROI2DRectShape extends ROI2DShape
 {
+    protected class ROI2DRectAnchor2D extends RectAnchor2D
+    {
+        public ROI2DRectAnchor2D(Point2D position, Color color, Color selectedColor)
+        {
+            super(position, color, selectedColor);
+        }
+
+        @Override
+        protected Anchor2D getOppositePoint()
+        {
+            if (this == topLeft)
+                return bottomRight;
+            if (this == topRight)
+                return bottomLeft;
+            if (this == bottomLeft)
+                return topRight;
+
+            return topLeft;
+        };
+    }
+
     public static final String ID_TOPLEFT = "top_left";
     public static final String ID_BOTTOMRIGHT = "bottom_right";
 
@@ -69,6 +94,12 @@ public abstract class ROI2DRectShape extends ROI2DShape
         setMousePos(bottomRight);
 
         updateShape();
+    }
+
+    @Override
+    protected Anchor2D createAnchor(Point2D pos)
+    {
+        return new ROI2DRectAnchor2D(pos, DEFAULT_SELECTED_COLOR, OVER_COLOR);
     }
 
     protected RectangularShape getRectangularShape()
