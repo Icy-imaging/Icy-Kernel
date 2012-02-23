@@ -284,6 +284,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
         // initialize internals
         processor = new InstanceProcessor();
+        processor.setDefaultThreadName("Canvas3D renderer");
         displayRefresher = new Runnable()
         {
             @Override

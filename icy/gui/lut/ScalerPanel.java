@@ -51,7 +51,6 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
     /**
      * cached
      */
-    final Sequence sequence;
     private int component;
 
     /**
@@ -79,7 +78,6 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
     {
         super(viewer, lutBand);
 
-        sequence = viewer.getSequence();
         component = lutBand.getComponent();
 
         resetSamplePos();
@@ -99,7 +97,10 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
         super.addNotify();
 
         // add listeners
-        sequence.addListener(this);
+        final Sequence sequence = viewer.getSequence();
+
+        if (sequence != null)
+            sequence.addListener(this);
         viewer.addListener(this);
         lutBand.addListener(this);
     }
@@ -109,10 +110,13 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
     {
         super.removeNotify();
 
+        final Sequence sequence = viewer.getSequence();
+
         // remove listeners
         lutBand.removeListener(this);
         viewer.removeListener(this);
-        sequence.removeListener(this);
+        if (sequence != null)
+            sequence.removeListener(this);
     }
 
     /**
@@ -125,7 +129,9 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
 
     private void resetSamplePos()
     {
-        if ((sequence == null) || (viewer == null))
+        final Sequence sequence = viewer.getSequence();
+
+        if (sequence == null)
         {
             noMoreSample = true;
             return;
@@ -177,8 +183,12 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
                     noMoreSample = true;
             }
 
-            // udpate sample data
-            sampleData = sequence.getDataXY(samplePosT, samplePosZ, component);
+            final Sequence sequence = viewer.getSequence();
+
+            if (sequence != null)
+                sampleData = sequence.getDataXY(samplePosT, samplePosZ, component);
+            else
+                sampleData = 0;
         }
     }
 
@@ -212,7 +222,7 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
     private void onPositionChanged()
     {
         // update histogram
-        scalerViewer.refreshHistoData();
+        refreshHistoData();
     }
 
     /**

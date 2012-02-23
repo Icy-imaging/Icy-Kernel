@@ -173,7 +173,6 @@ public class PluginLoader
      */
     public static void reload(boolean forceReloadNow)
     {
-
         if ((!forceReloadNow) && isUpdating())
             needReload = true;
         else
@@ -242,19 +241,25 @@ public class PluginLoader
             }
             catch (NoClassDefFoundError e)
             {
-                // fatal error
                 if (logError)
                 {
+                    // fatal error
                     System.err.println("Class '" + className + "' cannot be loaded :");
                     System.err.println("Required class '" + ClassUtil.getQualifiedNameFromPath(e.getMessage())
                             + "' not found.");
                 }
             }
-            catch (Error e)
+            catch (OutOfMemoryError e)
             {
                 // fatal error
+                IcyExceptionHandler.showErrorMessage(e, false);
+                System.err.println("Class '" + className + "' is discarded");
+            }
+            catch (Error e)
+            {
                 if (logError)
                 {
+                    // fatal error
                     IcyExceptionHandler.showErrorMessage(e, false);
                     System.err.println("Class '" + className + "' is discarded");
                 }

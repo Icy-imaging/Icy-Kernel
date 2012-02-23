@@ -37,7 +37,7 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
 {
     private enum WorkspaceOnlineState
     {
-        NULL, INSTALLING, HAS_INSTALL, INSTALLED
+        NULL, INSTALLING, DELETING, HAS_INSTALL, INSTALLED
     }
 
     /**
@@ -76,11 +76,14 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
         if (workspace == null)
             return WorkspaceOnlineState.NULL;
 
-        if (WorkspaceLoader.isLoaded(workspace))
-            return WorkspaceOnlineState.INSTALLED;
-
         if ((WorkspaceInstaller.isInstallingWorkspace(workspace)))
             return WorkspaceOnlineState.INSTALLING;
+
+        if ((WorkspaceInstaller.isDesinstallingWorkspace(workspace)))
+            return WorkspaceOnlineState.DELETING;
+
+        if (WorkspaceLoader.isLoaded(workspace))
+            return WorkspaceOnlineState.INSTALLED;
 
         return WorkspaceOnlineState.HAS_INSTALL;
     }
@@ -136,6 +139,9 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
             case INSTALLING:
                 return "installing...";
 
+            case DELETING:
+                return "deleting...";
+
             case INSTALLED:
                 return "installed";
         }
@@ -184,6 +190,11 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
         {
             case INSTALLING:
                 action1Button.setText("Installing...");
+                action1Button.setEnabled(false);
+                break;
+
+            case DELETING:
+                action1Button.setText("Deleting...");
                 action1Button.setEnabled(false);
                 break;
 

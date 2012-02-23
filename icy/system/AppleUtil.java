@@ -9,7 +9,10 @@ import icy.gui.preferences.GeneralPreferencePanel;
 import icy.gui.preferences.PreferenceFrame;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
+import icy.system.thread.ThreadUtil;
 
+import java.awt.Toolkit;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -21,6 +24,15 @@ import java.lang.reflect.Proxy;
  */
 public class AppleUtil
 {
+    static final Thread fixThread = new Thread(new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            appleFixLiveRun();
+        }
+    }, "AppleFix");
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static void init()
     {
@@ -73,13 +85,38 @@ public class AppleUtil
             m.invoke(app, ResourceUtil.IMAGE_ICY_256);
             m = appClass.getMethod("addPreferencesMenuItem");
             m.invoke(app);
-            
+
             // set menu bar name
             System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Icy");
+
+            // start the fix thread
+            fixThread.start();
         }
         catch (Exception e)
         {
             System.err.println("Can't install OSX application wrapper...");
+        }
+    }
+
+    /**
+     * Apple fix live run (fixes specific OS X JVM stuff)
+     */
+    private static void appleFixLiveRun()
+    {
+        while (true)
+        {
+            final Toolkit toolkit = Toolkit.getDefaultToolkit();
+
+            // fix memory leak introduced in java 1.6.0_29 in Mac OS X JVM
+            // TODO : remove this when issue will be resolved in JVM
+            final PropertyChangeListener[] leak = toolkit.getPropertyChangeListeners("apple.awt.contentScaleFactor");
+
+            // remove listener
+            for (int i = 0; i < leak.length; i++)
+                toolkit.removePropertyChangeListener("apple.awt.contentScaleFactor", leak[i]);
+
+            // no need more...
+            ThreadUtil.sleep(500);
         }
     }
 }

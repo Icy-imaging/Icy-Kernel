@@ -1,7 +1,7 @@
 package icy.gui.inspector;
 
-import icy.gui.component.CloseTabbedPane;
-import icy.gui.component.CloseTabbedPane.CloseTabbedPaneListener;
+import icy.gui.component.CloseableTabbedPane;
+import icy.gui.component.CloseableTabbedPane.CloseableTabbedPaneListener;
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.FontUtil;
@@ -631,7 +631,7 @@ public class ChatPanel extends ExternalizablePanel
     /**
      * GUI
      */
-    CloseTabbedPane tabPane;
+    CloseableTabbedPane tabPane;
     JScrollPane usersScrollPane;
     JList userList;
     JTextField sendEditor;
@@ -849,8 +849,8 @@ public class ChatPanel extends ExternalizablePanel
     {
         setLayout(new BorderLayout(0, 0));
 
-        tabPane = new CloseTabbedPane(SwingConstants.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
-        tabPane.addCloseTabbedPaneListener(new CloseTabbedPaneListener()
+        tabPane = new CloseableTabbedPane(SwingConstants.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
+        tabPane.addCloseableTabbedPaneListener(new CloseableTabbedPaneListener()
         {
             @Override
             public void tabClosed(int index, String title)
@@ -861,6 +861,12 @@ public class ChatPanel extends ExternalizablePanel
                 else
                     // directly remove the channel pane
                     removeChannelPane(title);
+            }
+
+            @Override
+            public boolean tabClosing(int index, String title)
+            {
+                return true;
             }
         });
         tabPane.addChangeListener(new ChangeListener()

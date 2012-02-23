@@ -57,6 +57,7 @@ public class SequenceInfosPanel extends InspectorSubPanel
         super();
 
         processor = new SingleProcessor(true);
+        processor.setDefaultThreadName("Sequence infos GUI");
 
         nameLabel = new JLabel();
         ComponentUtil.setFixedWidth(nameLabel, 160);

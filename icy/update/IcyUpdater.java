@@ -89,6 +89,11 @@ public class IcyUpdater
 
     private static final SingleProcessor processor = new SingleProcessor(false);
 
+    static
+    {
+        processor.setDefaultThreadName("General updater");
+    }
+
     private static ActionFrame frame = null;
 
     static final Runnable doRestart = new Runnable()

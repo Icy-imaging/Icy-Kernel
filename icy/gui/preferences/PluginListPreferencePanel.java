@@ -97,6 +97,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         plugins = new ArrayList<PluginDescriptor>();
 
         processor = new InstanceProcessor();
+        processor.setDefaultThreadName("Plugin preferences GUI");
 
         buttonsStateUpdater = new Runnable()
         {

@@ -50,12 +50,13 @@ public class Processor extends ThreadPoolExecutor
         @Override
         public Thread newThread(Runnable r)
         {
-            final Thread result = new Thread(r);
+            final Thread result = new Thread(r, defaultThreadName);
 
             result.setPriority(priority);
 
             return result;
         }
+
     }
 
     protected class Runner implements Runnable
@@ -121,6 +122,7 @@ public class Processor extends ThreadPoolExecutor
      * parameters
      */
     int priority;
+    String defaultThreadName;
 
     /**
      * listeners
@@ -150,6 +152,7 @@ public class Processor extends ThreadPoolExecutor
         setKeepAliveTime(2, TimeUnit.SECONDS);
 
         this.priority = priority;
+        defaultThreadName = "Processor";
         listeners = new EventListenerList();
     }
 
@@ -265,6 +268,16 @@ public class Processor extends ThreadPoolExecutor
     public void setPriority(int priority)
     {
         this.priority = priority;
+    }
+
+    public String getDefaultThreadName()
+    {
+        return defaultThreadName;
+    }
+
+    public void setDefaultThreadName(String defaultThreadName)
+    {
+        this.defaultThreadName = defaultThreadName;
     }
 
     /**

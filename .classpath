@@ -12,7 +12,7 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/jai_core.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/Jama.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/javacl.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/jcl-core.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/jcl-core.jar" sourcepath="/Users/stephane/git/JCL"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jcommon.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jeval.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jfreechart.jar"/>

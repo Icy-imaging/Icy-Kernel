@@ -426,6 +426,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         scalerMapPositionListeners = new EventListenerList();
         processor = new SingleProcessor(true);
         processor.setPriority(Thread.MIN_PRIORITY);
+        processor.setDefaultThreadName("histogram updater");
         histoUpdater = new Runnable()
         {
             @Override

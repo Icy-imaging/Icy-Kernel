@@ -102,7 +102,7 @@ public class PluginInstaller
     /**
      * Return true if install or desinstall is possible
      */
-    private static boolean canInstallOrDesinstall()
+    private static boolean isEnabled()
     {
         return !PluginLoader.JCLDisabled;
     }
@@ -112,7 +112,7 @@ public class PluginInstaller
      */
     public static void install(PluginDescriptor plugin, boolean showConfirm)
     {
-        if ((plugin != null) && canInstallOrDesinstall())
+        if ((plugin != null) && isEnabled())
         {
             synchronized (installFIFO)
             {
@@ -178,7 +178,7 @@ public class PluginInstaller
      */
     public static void desinstall(PluginDescriptor plugin, boolean showConfirm)
     {
-        if ((plugin != null) && canInstallOrDesinstall())
+        if ((plugin != null) && isEnabled())
         {
             synchronized (removeFIFO)
             {

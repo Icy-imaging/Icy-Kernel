@@ -455,6 +455,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 super();
 
                 processor = new SingleProcessor(true);
+                processor.setDefaultThreadName("Canvas2D renderer");
                 imageCache = null;
                 needRebuild = true;
                 // build cache

@@ -284,12 +284,12 @@ public class CloseableTabbedPane extends JTabbedPane
         return true;
     }
 
-    public void addCloseTabbedPaneListener(CloseableTabbedPaneListener l)
+    public void addCloseableTabbedPaneListener(CloseableTabbedPaneListener l)
     {
         listenerList.add(CloseableTabbedPaneListener.class, l);
     }
 
-    public void removeCloseTabbedPaneListener(CloseableTabbedPaneListener l)
+    public void removeCloseableTabbedPaneListener(CloseableTabbedPaneListener l)
     {
         listenerList.remove(CloseableTabbedPaneListener.class, l);
     }

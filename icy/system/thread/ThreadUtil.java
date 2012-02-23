@@ -35,9 +35,14 @@ public class ThreadUtil
 
     static
     {
+        bgProcessor.setDefaultThreadName("Background processor");
+
         // instance processors initialization
         for (int i = 0; i < instanceProcessors.length; i++)
+        {
             instanceProcessors[i] = new InstanceProcessor();
+            instanceProcessors[i].setDefaultThreadName("Background single processor " + (i + 1));
+        }
     }
 
     /**

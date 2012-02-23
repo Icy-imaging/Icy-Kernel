@@ -93,6 +93,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
         workspaces = new ArrayList<Workspace>();
 
         processor = new InstanceProcessor();
+        processor.setDefaultThreadName("Workspace preferences GUI");
 
         buttonsStateUpdater = new Runnable()
         {

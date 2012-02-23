@@ -75,6 +75,11 @@ public class PluginUpdater extends ActionFrame
 
     private static final SingleProcessor processor = new SingleProcessor(false);
 
+    static
+    {
+        processor.setDefaultThreadName("Plugin updater");
+    }
+
     JList pluginList;
     DefaultListModel listModel;
 

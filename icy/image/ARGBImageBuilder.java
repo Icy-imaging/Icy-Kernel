@@ -71,6 +71,7 @@ class ARGBImageBuilder
 
             // no queue
             processor = new Processor(1, 1);
+            processor.setDefaultThreadName("ARGB Image builder");
             // don't change priority else our image won't never be build if
             // normal priority thread take all available time
             // processor.setPriority(Processor.MIN_PRIORITY + 1);

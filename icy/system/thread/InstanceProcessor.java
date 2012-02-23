@@ -42,6 +42,7 @@ public class InstanceProcessor extends Processor
     public InstanceProcessor(int priority)
     {
         super(Processor.DEFAULT_MAX_WAITING, 1, priority);
+        setDefaultThreadName("InstanceProcessor");
     }
 
     /**

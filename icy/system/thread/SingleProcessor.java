@@ -47,6 +47,7 @@ public class SingleProcessor extends Processor
 
         queue = enableQueue;
         setRejectedExecutionHandler(new SingleProcessorRejectedExecutionHandler());
+        setDefaultThreadName("SingleProcessor");
     }
 
     /**
