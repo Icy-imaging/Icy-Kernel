@@ -771,7 +771,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      */
     public void setLut(LUT value)
     {
-        if (lut != value)
+        if ((lut != value) && sequence.isLutCompatible(lut))
         {
             // set new lut & notify change
             lut = value;
@@ -788,11 +788,10 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         if (sequence == null)
             return lut;
 
-        // we first test our LUT is correctly synchronized with sequence LUT
-        // we do it here as sequence can be asynchronously modified
+        // sequence can be asynchronously modified so we have to test change on Getter
         if (!sequence.isLutCompatible(lut))
         {
-            // create a new compatible LUT
+            // sequence type has changed, we need to recreate a compatible LUT
             final LUT newLut = sequence.createCompatibleLUT();
 
             // restore the color map of previous LUT

@@ -18,6 +18,7 @@
  */
 package icy.gui.lut;
 
+import icy.gui.lut.ScalerViewer.SamplesProducer;
 import icy.gui.lut.abstract_.IcyScalerPanel;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
@@ -188,7 +189,7 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
             if (sequence != null)
                 sampleData = sequence.getDataXY(samplePosT, samplePosZ, component);
             else
-                sampleData = 0;
+                sampleData = null;
         }
     }
 

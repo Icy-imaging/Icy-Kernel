@@ -42,7 +42,6 @@ import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizePolicies.Non
 import org.pushingpixels.flamingo.api.ribbon.resize.IconRibbonBandResizePolicy;
 import org.pushingpixels.flamingo.api.ribbon.resize.RibbonBandResizePolicy;
 import org.pushingpixels.flamingo.internal.ui.ribbon.JBandControlPanel;
-import org.pushingpixels.flamingo.internal.ui.ribbon.JBandControlPanel.ControlPanelGroup;
 import org.pushingpixels.flamingo.internal.ui.ribbon.JFlowBandControlPanel;
 
 /**
@@ -270,109 +269,54 @@ public class RibbonUtil
 
     public static RibbonElementPriority getButtonPriority(JRibbonBand band, AbstractCommandButton button)
     {
-        final JBandControlPanel controlPanel = band.getControlPanel();
+        final RibbonElementPriority result = band.getControlPanel().getPriority(button);
 
-        if (controlPanel != null)
-        {
-            for (ControlPanelGroup panelGroup : controlPanel.getControlPanelGroups())
-            {
-                for (AbstractCommandButton b : panelGroup.getRibbonButtons(RibbonElementPriority.LOW))
-                    if (b == button)
-                        return RibbonElementPriority.LOW;
-
-                for (AbstractCommandButton b : panelGroup.getRibbonButtons(RibbonElementPriority.MEDIUM))
-                    if (b == button)
-                        return RibbonElementPriority.MEDIUM;
-
-                for (AbstractCommandButton b : panelGroup.getRibbonButtons(RibbonElementPriority.TOP))
-                    if (b == button)
-                        return RibbonElementPriority.TOP;
-            }
-        }
-
-        // return LOW if not found
-        return RibbonElementPriority.LOW;
-    }
-
-    public static int getButtonPosition(JRibbonBand band, AbstractCommandButton button)
-    {
-        int result = 0;
-
-        final JBandControlPanel controlPanel = band.getControlPanel();
-
-        if (controlPanel != null)
-        {
-            for (ControlPanelGroup panelGroup : controlPanel.getControlPanelGroups())
-            {
-                for (AbstractCommandButton b : panelGroup.getRibbonButtons(RibbonElementPriority.LOW))
-                {
-                    if (b == button)
-                        return result;
-                    result++;
-                }
-
-                for (AbstractCommandButton b : panelGroup.getRibbonButtons(RibbonElementPriority.MEDIUM))
-                {
-                    if (b == button)
-                        return result;
-                    result++;
-                }
-
-                for (AbstractCommandButton b : panelGroup.getRibbonButtons(RibbonElementPriority.TOP))
-                {
-                    if (b == button)
-                        return result;
-                    result++;
-                }
-            }
-        }
-
-        // return -1 if not found
-        return -1;
-    }
-
-    public static ArrayList<AbstractCommandButton> getButtons(JRibbonBand band)
-    {
-        final ArrayList<AbstractCommandButton> result = new ArrayList<AbstractCommandButton>();
-
-        final JBandControlPanel controlPanel = band.getControlPanel();
-
-        if (controlPanel != null)
-        {
-            for (ControlPanelGroup panelGroup : controlPanel.getControlPanelGroups())
-            {
-                result.addAll(panelGroup.getRibbonButtons(RibbonElementPriority.LOW));
-                result.addAll(panelGroup.getRibbonButtons(RibbonElementPriority.MEDIUM));
-                result.addAll(panelGroup.getRibbonButtons(RibbonElementPriority.TOP));
-            }
-        }
+        if (result == null)
+            return RibbonElementPriority.LOW;
 
         return result;
     }
 
-    private static List<AbstractCommandButton> findButtonList(JRibbonBand band, String name)
+    // public static int getButtonPosition(JRibbonBand band, AbstractCommandButton button)
+    // {
+    // int result = 0;
+    //
+    // final JBandControlPanel controlPanel = band.getControlPanel();
+    //
+    // if (controlPanel != null)
+    // {
+    // for (ControlPanelGroup panelGroup : controlPanel.getControlPanelGroups())
+    // {
+    // for (AbstractCommandButton b : panelGroup.getRibbonButtons(RibbonElementPriority.LOW))
+    // {
+    // if (b == button)
+    // return result;
+    // result++;
+    // }
+    //
+    // for (AbstractCommandButton b : panelGroup.getRibbonButtons(RibbonElementPriority.MEDIUM))
+    // {
+    // if (b == button)
+    // return result;
+    // result++;
+    // }
+    //
+    // for (AbstractCommandButton b : panelGroup.getRibbonButtons(RibbonElementPriority.TOP))
+    // {
+    // if (b == button)
+    // return result;
+    // result++;
+    // }
+    // }
+    // }
+    //
+    // // return -1 if not found
+    // return -1;
+    // }
+
+    public static List<AbstractCommandButton> getButtons(JRibbonBand band)
     {
-        List<AbstractCommandButton> result;
-
-        final JBandControlPanel controlPanel = band.getControlPanel();
-
-        if (controlPanel != null)
-        {
-            for (ControlPanelGroup panelGroup : controlPanel.getControlPanelGroups())
-            {
-                result = panelGroup.getRibbonButtons(RibbonElementPriority.LOW);
-                if (findButton(result, name) != null)
-                    return result;
-                result = panelGroup.getRibbonButtons(RibbonElementPriority.MEDIUM);
-                if (findButton(result, name) != null)
-                    return result;
-                result = panelGroup.getRibbonButtons(RibbonElementPriority.TOP);
-                if (findButton(result, name) != null)
-                    return result;
-            }
-        }
-
-        return null;
+        return band.getControlPanel().getAllCommandButtons();
     }
 
     public static AbstractCommandButton findButton(List<AbstractCommandButton> buttons, String name)
@@ -386,27 +330,7 @@ public class RibbonUtil
 
     public static AbstractCommandButton findButton(JRibbonBand band, String name)
     {
-        return findButton(getButtons(band), name);
-    }
-
-    /**
-     * ! Ribbon doesn't support button removing so use it at your own risk !
-     */
-    private static void removeButton(JBandControlPanel bandControlPanel, List<AbstractCommandButton> buttons,
-            AbstractCommandButton button)
-    {
-        if ((bandControlPanel != null) && (buttons != null) && (button != null))
-        {
-            // directly remove from the internal list
-            buttons.remove(button);
-            // remove from container
-            bandControlPanel.remove(button);
-            bandControlPanel.revalidate();
-
-            // rebuild resize policies (used only for plugins so we use the restrictive one)
-            if (bandControlPanel.getRibbonBand() instanceof JRibbonBand)
-                setRestrictiveResizePolicies((JRibbonBand) bandControlPanel.getRibbonBand());
-        }
+        return findButton(band.getControlPanel().getAllCommandButtons(), name);
     }
 
     /**
@@ -414,10 +338,7 @@ public class RibbonUtil
      */
     public static void removeButton(JRibbonBand band, String name)
     {
-        // we get the internal list reference
-        final List<AbstractCommandButton> buttons = findButtonList(band, name);
-
-        if (buttons != null)
-            removeButton(band.getControlPanel(), buttons, findButton(buttons, name));
+        // find the button in the band
+        band.removeCommandButton(findButton(band, name));
     }
 }

@@ -56,12 +56,21 @@ import javax.swing.event.EventListenerList;
  */
 public class ScalerViewer extends JPanel implements LUTBandListener
 {
-    private enum actionType
+    public static interface SamplesProducer
+    {
+        public void requestSamples();
+
+        public boolean hasNextSample();
+
+        public double nextSample();
+    }
+
+    private static enum actionType
     {
         NULL, MODIFY_LOWBOUND, MODIFY_HIGHBOUND
     }
 
-    public interface ScalerPositionListener extends EventListener
+    public static interface ScalerPositionListener extends EventListener
     {
         public void positionChanged(double index, double value);
     }

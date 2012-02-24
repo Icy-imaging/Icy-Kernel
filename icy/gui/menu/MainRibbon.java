@@ -91,16 +91,6 @@ import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPo
  */
 public class MainRibbon extends MainAdapter implements PluginLoaderListener
 {
-    static class PluginCommandToggleButton extends IcyCommandToggleButton
-    {
-
-    }
-
-    static class PluginCommandButton extends IcyCommandButton
-    {
-
-    }
-
     /**
      * Set a plugin button with specified action
      */
@@ -161,9 +151,9 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
 
         // build command button
         if (toggle)
-            result = new PluginCommandToggleButton();
+            result = new IcyCommandToggleButton();
         else
-            result = new PluginCommandButton();
+            result = new IcyCommandButton();
 
         setPluginButton(result, plugin, action);
 
