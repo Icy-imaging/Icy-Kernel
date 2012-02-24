@@ -22,11 +22,13 @@ import icy.gui.component.FontUtil;
 import icy.gui.math.HistogramPanel;
 import icy.gui.math.HistogramPanel.HistogramPanelListener;
 import icy.gui.util.GuiUtil;
+import icy.gui.viewer.Viewer;
 import icy.image.lut.LUTBand;
 import icy.image.lut.LUTBandEvent;
 import icy.image.lut.LUTBandEvent.LUTBandEventType;
 import icy.image.lut.LUTBandListener;
 import icy.math.Scaler;
+import icy.sequence.Sequence;
 import icy.system.thread.SingleProcessor;
 import icy.util.ColorUtil;
 import icy.util.EventUtil;
@@ -56,15 +58,6 @@ import javax.swing.event.EventListenerList;
  */
 public class ScalerViewer extends JPanel implements LUTBandListener
 {
-    public static interface SamplesProducer
-    {
-        public void requestSamples();
-
-        public boolean hasNextSample();
-
-        public double nextSample();
-    }
-
     private static enum actionType
     {
         NULL, MODIFY_LOWBOUND, MODIFY_HIGHBOUND
@@ -396,18 +389,14 @@ public class ScalerViewer extends JPanel implements LUTBandListener
     private static final int ISOVER_DEFAULT_MARGIN = 3;
 
     /**
-     * associated lutBand
+     * associated viewer & lutBand
      */
+    Viewer viewer;
     LUTBand lutBand;
     /**
      * histogram
      */
     private ScalerHistogramPanel histogram;
-
-    /**
-     * samples producer for histogram
-     */
-    private SamplesProducer samplesProducer;
 
     /**
      * listeners
@@ -424,11 +413,11 @@ public class ScalerViewer extends JPanel implements LUTBandListener
     /**
      * 
      */
-    public ScalerViewer(SamplesProducer samplesProducer, LUTBand lutBand)
+    public ScalerViewer(Viewer viewer, LUTBand lutBand)
     {
         super();
 
-        this.samplesProducer = samplesProducer;
+        this.viewer = viewer;
         this.lutBand = lutBand;
 
         message = "";
@@ -503,17 +492,29 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         // init histoGram
         histogram.reset();
 
-        if (samplesProducer != null)
+        final Sequence seq = viewer.getSequence();
+        if (seq != null)
         {
-            // we can have *many* samples --> no duplication wanted
-            samplesProducer.requestSamples();
-            while (samplesProducer.hasNextSample())
-            {
-                // need to be recalculated so don't waste time here...
-                if (processor.hasWaitingTasks())
-                    return;
+            final int sizeX = seq.getSizeX();
+            final int sizeY = seq.getSizeY();
+            final int sizeZ = seq.getSizeZ();
+            final int sizeT = seq.getSizeT();
+            final int c = lutBand.getComponent();
 
-                histogram.addValue(samplesProducer.nextSample());
+            for (int t = 0; t < sizeT; t++)
+            {
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    for (int y = 0; y < sizeY; y++)
+                    {
+                        // need to be recalculated so don't waste time here...
+                        if (processor.hasWaitingTasks())
+                            return;
+
+                        for (int x = 0; x < sizeX; x++)
+                            histogram.addValue(seq.getData(t, z, c, y, x));
+                    }
+                }
             }
         }
 
@@ -567,23 +568,6 @@ public class ScalerViewer extends JPanel implements LUTBandListener
 
         // repaint component now as bounds may be changed
         repaint();
-    }
-
-    /**
-     * @return the samplesProducer
-     */
-    public SamplesProducer getSamplesProducer()
-    {
-        return samplesProducer;
-    }
-
-    /**
-     * @param samplesProducer
-     *        the samplesProducer to set
-     */
-    public void setSamplesProducer(SamplesProducer samplesProducer)
-    {
-        this.samplesProducer = samplesProducer;
     }
 
     /**

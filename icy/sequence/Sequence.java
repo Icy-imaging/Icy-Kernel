@@ -206,7 +206,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     private boolean componentBoundsInvalid;
 
     /**
-     * Create a new empty sequence
+     * Creates a new empty sequence
      */
     public Sequence()
     {
@@ -247,7 +247,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Create a sequence containing the specified image
+     * Creates a sequence containing the specified image
      */
     public Sequence(IcyBufferedImage image)
     {
@@ -257,7 +257,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Create a sequence with specified name and containing the specified image
+     * Creates a sequence with specified name and containing the specified image
      */
     public Sequence(String name, IcyBufferedImage image)
     {
@@ -348,7 +348,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a new sequence with specified dataType from current sequence
+     * Returns a new sequence with specified dataType from current sequence
      * 
      * @param dataType
      *        data type wanted
@@ -472,7 +472,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all VolumetricImage as TreeMap (contains t position)
+     * Returns all VolumetricImage as TreeMap (contains t position)
      */
     public TreeMap<Integer, VolumetricImage> getVolumetricImages()
     {
@@ -483,7 +483,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all VolumetricImage
+     * Returns all VolumetricImage
      */
     public ArrayList<VolumetricImage> getAllVolumetricImage()
     {
@@ -494,7 +494,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return first viewer attached to this sequence
+     * Returns first viewer attached to this sequence
      */
     public Viewer getFirstViewer()
     {
@@ -502,7 +502,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return viewers attached to this sequence
+     * Returns viewers attached to this sequence
      */
     public ArrayList<Viewer> getViewers()
     {
@@ -555,7 +555,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return meta data object
+     * Returns meta data object
      */
     public IMetadata getMetadata()
     {
@@ -576,7 +576,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return X pixel size (in mm)
+     * Returns X pixel size (in mm)
      */
     public double getPixelSizeX()
     {
@@ -584,7 +584,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return Y pixel size (in mm)
+     * Returns Y pixel size (in mm)
      */
     public double getPixelSizeY()
     {
@@ -592,7 +592,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return Z pixel size (in mm)
+     * Returns Z pixel size (in mm)
      */
     public double getPixelSizeZ()
     {
@@ -600,7 +600,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return T time size (in ms)
+     * Returns T time size (in ms)
      */
     public double getTimeInterval()
     {
@@ -784,7 +784,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return true if the sequence contains the specified painter
+     * Returns true if the sequence contains the specified painter
      */
     public boolean contains(Painter painter)
     {
@@ -795,7 +795,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return true if the sequence contains the specified ROI
+     * Returns true if the sequence contains the specified ROI
      */
     public boolean contains(ROI roi)
     {
@@ -806,7 +806,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all painters attached to this sequence
+     * Returns all painters attached to this sequence
      */
     public ArrayList<Painter> getPainters()
     {
@@ -817,7 +817,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all painters attached to this sequence (HashSet form)
+     * Returns all painters attached to this sequence (HashSet form)
      */
     public HashSet<Painter> getPainterSet()
     {
@@ -828,7 +828,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all ROIs attached to this sequence
+     * Returns all ROIs attached to this sequence
      */
     public ArrayList<ROI> getROIs()
     {
@@ -839,7 +839,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all ROIs attached to this sequence (HashSet form)
+     * Returns all ROIs attached to this sequence (HashSet form)
      */
     public HashSet<ROI> getROISet()
     {
@@ -850,7 +850,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all 2D ROIs attached to this sequence
+     * Returns all 2D ROIs attached to this sequence
      */
     public ArrayList<ROI2D> getROI2Ds()
     {
@@ -864,7 +864,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all 3D ROIs attached to this sequence
+     * Returns all 3D ROIs attached to this sequence
      */
     public ArrayList<ROI3D> getROI3Ds()
     {
@@ -878,7 +878,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the number of ROI of specified ROI class attached to the sequence.
+     * Returns the number of ROI of specified ROI class attached to the sequence.
      */
     public int getROICount(Class<? extends ROI> roiClass)
     {
@@ -892,7 +892,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the first selected ROI found (null if no ROI selected)
+     * Returns the first selected ROI found (null if no ROI selected)
      */
     public ROI getSelectedROI()
     {
@@ -904,7 +904,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the first selected 2D ROI found (null if no 2D ROI selected)
+     * Returns the first selected 2D ROI found (null if no 2D ROI selected)
      */
     public ROI2D getSelectedROI2D()
     {
@@ -916,7 +916,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the first selected 3D ROI found (null if no 3D ROI selected)
+     * Returns the first selected 3D ROI found (null if no 3D ROI selected)
      */
     public ROI3D getSelectedROI3D()
     {
@@ -928,7 +928,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all selected ROI
+     * Returns all selected ROI
      */
     public ArrayList<ROI> getSelectedROIs()
     {
@@ -942,7 +942,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all selected 2D ROI
+     * Returns all selected 2D ROI
      */
     public ArrayList<ROI2D> getSelectedROI2Ds()
     {
@@ -956,7 +956,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all selected 3D ROI
+     * Returns all selected 3D ROI
      */
     public ArrayList<ROI3D> getSelectedROI3Ds()
     {
@@ -970,7 +970,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the current focused ROI (null if no ROI focused)
+     * Returns the current focused ROI (null if no ROI focused)
      */
     public ROI getFocusedROI()
     {
@@ -1093,7 +1093,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return true if the sequence contains ROI of specified ROI class.
+     * Returns true if the sequence contains ROI of specified ROI class.
      */
     public boolean hasROI(Class<? extends ROI> roiClass)
     {
@@ -1281,7 +1281,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the VolumetricImage at position t
+     * Returns the VolumetricImage at position t
      */
     public VolumetricImage getVolumetricImage(int t)
     {
@@ -1292,7 +1292,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the first VolumetricImage
+     * Returns the first VolumetricImage
      */
     private VolumetricImage getFirstVolumetricImage()
     {
@@ -1310,7 +1310,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the last VolumetricImage
+     * Returns the last VolumetricImage
      */
     private VolumetricImage getLastVolumetricImage()
     {
@@ -1429,7 +1429,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the last image of VolumetricImage[t]
+     * Returns the last image of VolumetricImage[t]
      */
     public IcyBufferedImage getLastImage(int t)
     {
@@ -1442,7 +1442,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the first image of first VolumetricImage
+     * Returns the first image of first VolumetricImage
      */
     public IcyBufferedImage getFirstImage()
     {
@@ -1455,7 +1455,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the first non null image if exist
+     * Returns the first non null image if exist
      */
     public IcyBufferedImage getFirstNonNullImage()
     {
@@ -1476,7 +1476,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the last image of last VolumetricImage
+     * Returns the last image of last VolumetricImage
      */
     public IcyBufferedImage getLastImage()
     {
@@ -1489,7 +1489,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a single component image corresponding to the component c of the image
+     * Returns a single component image corresponding to the component c of the image
      * at time t and depth z.<br>
      * This actually create a new image which share its data with internal image
      * so any modifications to one affect the other.<br>
@@ -1512,7 +1512,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return image at time t and depth z
+     * Returns image at time t and depth z
      */
     public IcyBufferedImage getImage(int t, int z)
     {
@@ -1525,7 +1525,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all images at specified t position
+     * Returns all images at specified t position
      */
     public ArrayList<IcyBufferedImage> getImages(int t)
     {
@@ -1538,7 +1538,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return all images of sequence
+     * Returns all images of sequence
      */
     public ArrayList<IcyBufferedImage> getAllImage()
     {
@@ -1778,7 +1778,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return true if the sequence uses default attributed name
+     * Returns true if the sequence uses default attributed name
      */
     public boolean isDefaultName()
     {
@@ -1786,7 +1786,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the number of volumetricImage in the sequence<br>
+     * Returns the number of volumetricImage in the sequence<br>
      * Use getSizeT instead
      * 
      * @see #getSizeT
@@ -1813,7 +1813,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the global number of z stack in the sequence.
+     * Returns the global number of z stack in the sequence.
      * Use getSizeZ instead
      * 
      * @see #getSizeZ
@@ -1826,7 +1826,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the global number of z stack in the sequence.
+     * Returns the global number of z stack in the sequence.
      */
     public int getSizeZ()
     {
@@ -1840,7 +1840,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the number of z stack of the volumetricImage[t].
+     * Returns the number of z stack of the volumetricImage[t].
      */
     public int getSizeZ(int t)
     {
@@ -1857,7 +1857,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the number of component/channel/band per image.<br>
+     * Returns the number of component/channel/band per image.<br>
      * Use getSizeC instead
      * 
      * @see #getSizeC
@@ -1870,7 +1870,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the number of component/channel/band per image
+     * Returns the number of component/channel/band per image
      */
     public int getSizeC()
     {
@@ -1889,7 +1889,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the height of the sequence (0 if the sequence contains no image).
+     * Returns the height of the sequence (0 if the sequence contains no image).
      */
     public int getSizeY()
     {
@@ -1910,7 +1910,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the width of the sequence (0 if the sequence contains no image).
+     * Returns the width of the sequence (0 if the sequence contains no image).
      */
     public int getSizeX()
     {
@@ -1923,7 +1923,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return 2D dimension of sequence {sizeX, sizeY}
+     * Returns 2D dimension of sequence {sizeX, sizeY}
      */
     public Dimension getDimension()
     {
@@ -1931,7 +1931,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return 2D bounds of sequence {0, 0, sizeX, sizeY}
+     * Returns 2D bounds of sequence {0, 0, sizeX, sizeY}
      */
     public Rectangle getBounds()
     {
@@ -1963,7 +1963,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Create a compatible LUT for this sequence
+     * Creates a compatible LUT for this sequence
      */
     public LUT createCompatibleLUT()
     {
@@ -1978,7 +1978,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return true if specified LUT is compatible with sequence LUT
+     * Returns true if specified LUT is compatible with sequence LUT
      */
     public boolean isLutCompatible(LUT lut)
     {
@@ -1991,7 +1991,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the colorModel
+     * Returns the colorModel
      */
     public IcyColorModel getColorModel()
     {
@@ -1999,7 +1999,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the data type of sequence
+     * Returns the data type of sequence
      */
     public DataType getDataType_()
     {
@@ -2010,7 +2010,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return the data type of sequence
+     * Returns the data type of sequence
      * 
      * @deprecated use {@link #getDataType_()} instead
      */
@@ -2024,7 +2024,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return true if this is a float data type sequence
+     * Returns true if this is a float data type sequence
      */
     public boolean isFloatDataType()
     {
@@ -2032,7 +2032,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return true if this is a signed data type sequence
+     * Returns true if this is a signed data type sequence
      */
     public boolean isSignedDataType()
     {
@@ -2274,7 +2274,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 4D byte array data [T][Z][C][XY]
+     * Returns a direct reference to 4D byte array data [T][Z][C][XY]
      */
     public Object getDataXYCZT()
     {
@@ -2296,7 +2296,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 3D byte array data [Z][C][XY] for specified t
+     * Returns a direct reference to 3D byte array data [Z][C][XY] for specified t
      */
     public Object getDataXYCZ(int t)
     {
@@ -2318,7 +2318,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 2D byte array data [C][XY] for specified t, z
+     * Returns a direct reference to 2D byte array data [C][XY] for specified t, z
      */
     public Object getDataXYC(int t, int z)
     {
@@ -2331,7 +2331,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 1D byte array data [XY] for specified t, z, c
+     * Returns a direct reference to 1D byte array data [XY] for specified t, z, c
      */
     public Object getDataXY(int t, int z, int c)
     {
@@ -2344,7 +2344,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 3D byte array data [T][Z][XY] for specified c
+     * Returns the data value located at position (t, z, c, y, x) as double.<br>
+     * It returns 0 if value is not found.
+     */
+    public double getData(int t, int z, int c, int y, int x)
+    {
+        final IcyBufferedImage img = getImage(t, z);
+
+        if (img != null)
+            return img.getData(x, y, c);
+
+        return 0d;
+    }
+
+    /**
+     * Returns a direct reference to 3D byte array data [T][Z][XY] for specified c
      */
     public Object getDataXYZT(int c)
     {
@@ -2366,7 +2380,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 2D byte array data [Z][XY] for specified t, c
+     * Returns a direct reference to 2D byte array data [Z][XY] for specified t, c
      */
     public Object getDataXYZ(int t, int c)
     {
@@ -2388,7 +2402,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]
+     * Returns a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]
      */
     public Object getDataCopyXYCZT()
     {
@@ -2396,7 +2410,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]<br>
+     * Returns a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public Object getDataCopyXYCZT(Object out, int off)
@@ -2419,7 +2433,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t
+     * Returns a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t
      */
     public Object getDataCopyXYCZ(int t)
     {
@@ -2427,7 +2441,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t<br>
+     * Returns a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public Object getDataCopyXYCZ(int t, Object out, int off)
@@ -2450,7 +2464,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z
+     * Returns a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z
      */
     public Object getDataCopyXYC(int t, int z)
     {
@@ -2458,7 +2472,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z<br>
+     * Returns a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public Object getDataCopyXYC(int t, int z, Object out, int off)
@@ -2472,7 +2486,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c
+     * Returns a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c
      */
     public Object getDataCopyXY(int t, int z, int c)
     {
@@ -2480,7 +2494,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c<br>
+     * Returns a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public Object getDataCopyXY(int t, int z, int c, Object out, int off)
@@ -2494,7 +2508,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]
+     * Returns a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]
      */
     public Object getDataCopyCXYZT()
     {
@@ -2502,7 +2516,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]<br>
+     * Returns a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public Object getDataCopyCXYZT(Object out, int off)
@@ -2525,7 +2539,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t
+     * Returns a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t
      */
     public Object getDataCopyCXYZ(int t)
     {
@@ -2533,7 +2547,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t<br>
+     * Returns a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public Object getDataCopyCXYZ(int t, Object out, int off)
@@ -2556,7 +2570,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z
+     * Returns a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z
      */
     public Object getDataCopyCXY(int t, int z)
     {
@@ -2564,7 +2578,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z<br>
+     * Returns a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public Object getDataCopyCXY(int t, int z, Object out, int off)
@@ -2578,7 +2592,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [C] of specified t, z, x, y
+     * Returns a 1D array data copy [C] of specified t, z, x, y
      */
     public Object getDataCopyC(int t, int z, int x, int y)
     {
@@ -2586,7 +2600,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [C] of specified t, z, x, y<br>
+     * Returns a 1D array data copy [C] of specified t, z, x, y<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public Object getDataCopyC(int t, int z, int x, int y, Object out, int off)
@@ -2600,7 +2614,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c
+     * Returns a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c
      */
     public Object getDataCopyXYZT(int c)
     {
@@ -2608,7 +2622,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c<br>
+     * Returns a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public Object getDataCopyXYZT(int c, Object out, int off)
@@ -2631,7 +2645,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c
+     * Returns a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c
      */
     public Object getDataCopyXYZ(int t, int c)
     {
@@ -2639,7 +2653,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c<br>
+     * Returns a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public Object getDataCopyXYZ(int t, int c, Object out, int off)
@@ -2662,7 +2676,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 4D byte array data [T][Z][C][XY]
+     * Returns a direct reference to 4D byte array data [T][Z][C][XY]
      */
     public byte[][][][] getDataXYCZTAsByte()
     {
@@ -2677,7 +2691,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 4D byte array data [T][Z][C][XY]
+     * Returns a direct reference to 4D byte array data [T][Z][C][XY]
      */
     public short[][][][] getDataXYCZTAsShort()
     {
@@ -2691,7 +2705,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 4D byte array data [T][Z][C][XY]
+     * Returns a direct reference to 4D byte array data [T][Z][C][XY]
      */
     public int[][][][] getDataXYCZTAsInt()
     {
@@ -2705,7 +2719,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 4D byte array data [T][Z][C][XY]
+     * Returns a direct reference to 4D byte array data [T][Z][C][XY]
      */
     public float[][][][] getDataXYCZTAsFloat()
     {
@@ -2719,7 +2733,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 4D byte array data [T][Z][C][XY]
+     * Returns a direct reference to 4D byte array data [T][Z][C][XY]
      */
     public double[][][][] getDataXYCZTAsDouble()
     {
@@ -2733,7 +2747,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 3D byte array data [Z][C][XY] for specified t
+     * Returns a direct reference to 3D byte array data [Z][C][XY] for specified t
      */
     public byte[][][] getDataXYCZAsByte(int t)
     {
@@ -2747,7 +2761,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 3D byte array data [Z][C][XY] for specified t
+     * Returns a direct reference to 3D byte array data [Z][C][XY] for specified t
      */
     public short[][][] getDataXYCZAsShort(int t)
     {
@@ -2761,7 +2775,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 3D byte array data [Z][C][XY] for specified t
+     * Returns a direct reference to 3D byte array data [Z][C][XY] for specified t
      */
     public int[][][] getDataXYCZAsInt(int t)
     {
@@ -2775,7 +2789,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 3D byte array data [Z][C][XY] for specified t
+     * Returns a direct reference to 3D byte array data [Z][C][XY] for specified t
      */
     public float[][][] getDataXYCZAsFloat(int t)
     {
@@ -2789,7 +2803,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 3D byte array data [Z][C][XY] for specified t
+     * Returns a direct reference to 3D byte array data [Z][C][XY] for specified t
      */
     public double[][][] getDataXYCZAsDouble(int t)
     {
@@ -2803,7 +2817,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 2D byte array data [C][XY] for specified t, z
+     * Returns a direct reference to 2D byte array data [C][XY] for specified t, z
      */
     public byte[][] getDataXYCAsByte(int t, int z)
     {
@@ -2816,7 +2830,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 2D byte array data [C][XY] for specified t, z
+     * Returns a direct reference to 2D byte array data [C][XY] for specified t, z
      */
     public short[][] getDataXYCAsShort(int t, int z)
     {
@@ -2829,7 +2843,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 2D byte array data [C][XY] for specified t, z
+     * Returns a direct reference to 2D byte array data [C][XY] for specified t, z
      */
     public int[][] getDataXYCAsInt(int t, int z)
     {
@@ -2842,7 +2856,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 2D byte array data [C][XY] for specified t, z
+     * Returns a direct reference to 2D byte array data [C][XY] for specified t, z
      */
     public float[][] getDataXYCAsFloat(int t, int z)
     {
@@ -2855,7 +2869,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 2D byte array data [C][XY] for specified t, z
+     * Returns a direct reference to 2D byte array data [C][XY] for specified t, z
      */
     public double[][] getDataXYCAsDouble(int t, int z)
     {
@@ -2868,7 +2882,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 1D byte array data [XY] for specified t, z, c
+     * Returns a direct reference to 1D byte array data [XY] for specified t, z, c
      */
     public byte[] getDataXYAsByte(int t, int z, int c)
     {
@@ -2881,7 +2895,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 1D byte array data [XY] for specified t, z, c
+     * Returns a direct reference to 1D byte array data [XY] for specified t, z, c
      */
     public short[] getDataXYAsShort(int t, int z, int c)
     {
@@ -2894,7 +2908,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 1D byte array data [XY] for specified t, z, c
+     * Returns a direct reference to 1D byte array data [XY] for specified t, z, c
      */
     public int[] getDataXYAsInt(int t, int z, int c)
     {
@@ -2907,7 +2921,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 1D byte array data [XY] for specified t, z, c
+     * Returns a direct reference to 1D byte array data [XY] for specified t, z, c
      */
     public float[] getDataXYAsFloat(int t, int z, int c)
     {
@@ -2920,7 +2934,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 1D byte array data [XY] for specified t, z, c
+     * Returns a direct reference to 1D byte array data [XY] for specified t, z, c
      */
     public double[] getDataXYAsDouble(int t, int z, int c)
     {
@@ -2933,7 +2947,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 3D byte array data [T][Z][XY] for specified c
+     * Returns a direct reference to 3D byte array data [T][Z][XY] for specified c
      */
     public byte[][][] getDataXYZTAsByte(int c)
     {
@@ -2947,7 +2961,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 3D byte array data [T][Z][XY] for specified c
+     * Returns a direct reference to 3D byte array data [T][Z][XY] for specified c
      */
     public short[][][] getDataXYZTAsShort(int c)
     {
@@ -2961,7 +2975,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 3D byte array data [T][Z][XY] for specified c
+     * Returns a direct reference to 3D byte array data [T][Z][XY] for specified c
      */
     public int[][][] getDataXYZTAsInt(int c)
     {
@@ -2975,7 +2989,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 3D byte array data [T][Z][XY] for specified c
+     * Returns a direct reference to 3D byte array data [T][Z][XY] for specified c
      */
     public float[][][] getDataXYZTAsFloat(int c)
     {
@@ -2989,7 +3003,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 3D byte array data [T][Z][XY] for specified c
+     * Returns a direct reference to 3D byte array data [T][Z][XY] for specified c
      */
     public double[][][] getDataXYZTAsDouble(int c)
     {
@@ -3003,7 +3017,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 2D byte array data [Z][XY] for specified t, c
+     * Returns a direct reference to 2D byte array data [Z][XY] for specified t, c
      */
     public byte[][] getDataXYZAsByte(int t, int c)
     {
@@ -3017,7 +3031,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 2D byte array data [Z][XY] for specified t, c
+     * Returns a direct reference to 2D byte array data [Z][XY] for specified t, c
      */
     public short[][] getDataXYZAsShort(int t, int c)
     {
@@ -3031,7 +3045,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 2D byte array data [Z][XY] for specified t, c
+     * Returns a direct reference to 2D byte array data [Z][XY] for specified t, c
      */
     public int[][] getDataXYZAsInt(int t, int c)
     {
@@ -3045,7 +3059,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 2D byte array data [Z][XY] for specified t, c
+     * Returns a direct reference to 2D byte array data [Z][XY] for specified t, c
      */
     public float[][] getDataXYZAsFloat(int t, int c)
     {
@@ -3059,7 +3073,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a direct reference to 2D byte array data [Z][XY] for specified t, c
+     * Returns a direct reference to 2D byte array data [Z][XY] for specified t, c
      */
     public double[][] getDataXYZAsDouble(int t, int c)
     {
@@ -3073,7 +3087,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]
+     * Returns a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]
      */
     public byte[] getDataCopyXYCZTAsByte()
     {
@@ -3081,7 +3095,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]<br>
+     * Returns a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public byte[] getDataCopyXYCZTAsByte(byte[] out, int off)
@@ -3101,7 +3115,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]
+     * Returns a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]
      */
     public short[] getDataCopyXYCZTAsShort()
     {
@@ -3109,7 +3123,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]<br>
+     * Returns a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public short[] getDataCopyXYCZTAsShort(short[] out, int off)
@@ -3129,7 +3143,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]
+     * Returns a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]
      */
     public int[] getDataCopyXYCZTAsInt()
     {
@@ -3137,7 +3151,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]<br>
+     * Returns a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public int[] getDataCopyXYCZTAsInt(int[] out, int off)
@@ -3157,7 +3171,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]
+     * Returns a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]
      */
     public float[] getDataCopyXYCZTAsFloat()
     {
@@ -3165,7 +3179,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]<br>
+     * Returns a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public float[] getDataCopyXYCZTAsFloat(float[] out, int off)
@@ -3185,7 +3199,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]
+     * Returns a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]
      */
     public double[] getDataCopyXYCZTAsDouble()
     {
@@ -3193,7 +3207,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]<br>
+     * Returns a 1D array data copy [XYCZT] of internal 4D array data [T][Z][C][XY]<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public double[] getDataCopyXYCZTAsDouble(double[] out, int off)
@@ -3213,7 +3227,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t
+     * Returns a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t
      */
     public byte[] getDataCopyXYCZAsByte(int t)
     {
@@ -3221,7 +3235,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t<br>
+     * Returns a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public byte[] getDataCopyXYCZAsByte(int t, byte[] out, int off)
@@ -3241,7 +3255,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t
+     * Returns a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t
      */
     public short[] getDataCopyXYCZAsShort(int t)
     {
@@ -3249,7 +3263,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t<br>
+     * Returns a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public short[] getDataCopyXYCZAsShort(int t, short[] out, int off)
@@ -3269,7 +3283,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t
+     * Returns a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t
      */
     public int[] getDataCopyXYCZAsInt(int t)
     {
@@ -3277,7 +3291,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t<br>
+     * Returns a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public int[] getDataCopyXYCZAsInt(int t, int[] out, int off)
@@ -3297,7 +3311,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t
+     * Returns a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t
      */
     public float[] getDataCopyXYCZAsFloat(int t)
     {
@@ -3305,7 +3319,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t<br>
+     * Returns a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public float[] getDataCopyXYCZAsFloat(int t, float[] out, int off)
@@ -3325,7 +3339,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t
+     * Returns a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t
      */
     public double[] getDataCopyXYCZAsDouble(int t)
     {
@@ -3333,7 +3347,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t<br>
+     * Returns a 1D array data copy [XYCZ] of internal 3D array data [Z][C][XY] for specified t<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public double[] getDataCopyXYCZAsDouble(int t, double[] out, int off)
@@ -3353,7 +3367,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z
+     * Returns a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z
      */
     public byte[] getDataCopyXYCAsByte(int t, int z)
     {
@@ -3361,7 +3375,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z<br>
+     * Returns a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public byte[] getDataCopyXYCAsByte(int t, int z, byte[] out, int off)
@@ -3375,7 +3389,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z
+     * Returns a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z
      */
     public short[] getDataCopyXYCAsShort(int t, int z)
     {
@@ -3383,7 +3397,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z<br>
+     * Returns a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public short[] getDataCopyXYCAsShort(int t, int z, short[] out, int off)
@@ -3397,7 +3411,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z
+     * Returns a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z
      */
     public int[] getDataCopyXYCAsInt(int t, int z)
     {
@@ -3405,7 +3419,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z<br>
+     * Returns a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public int[] getDataCopyXYCAsInt(int t, int z, int[] out, int off)
@@ -3419,7 +3433,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z
+     * Returns a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z
      */
     public float[] getDataCopyXYCAsFloat(int t, int z)
     {
@@ -3427,7 +3441,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z<br>
+     * Returns a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public float[] getDataCopyXYCAsFloat(int t, int z, float[] out, int off)
@@ -3441,7 +3455,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z
+     * Returns a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z
      */
     public double[] getDataCopyXYCAsDouble(int t, int z)
     {
@@ -3449,7 +3463,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z<br>
+     * Returns a 1D array data copy [XYC] of internal 2D array data [C][XY] for specified t, z<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public double[] getDataCopyXYCAsDouble(int t, int z, double[] out, int off)
@@ -3463,7 +3477,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c
+     * Returns a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c
      */
     public byte[] getDataCopyXYAsByte(int t, int z, int c)
     {
@@ -3471,7 +3485,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c<br>
+     * Returns a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public byte[] getDataCopyXYAsByte(int t, int z, int c, byte[] out, int off)
@@ -3485,7 +3499,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c
+     * Returns a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c
      */
     public short[] getDataCopyXYAsShort(int t, int z, int c)
     {
@@ -3493,7 +3507,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c<br>
+     * Returns a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public short[] getDataCopyXYAsShort(int t, int z, int c, short[] out, int off)
@@ -3507,7 +3521,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c
+     * Returns a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c
      */
     public int[] getDataCopyXYAsInt(int t, int z, int c)
     {
@@ -3515,7 +3529,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c<br>
+     * Returns a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public int[] getDataCopyXYAsInt(int t, int z, int c, int[] out, int off)
@@ -3529,7 +3543,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c
+     * Returns a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c
      */
     public float[] getDataCopyXYAsFloat(int t, int z, int c)
     {
@@ -3537,7 +3551,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c<br>
+     * Returns a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public float[] getDataCopyXYAsFloat(int t, int z, int c, float[] out, int off)
@@ -3551,7 +3565,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c
+     * Returns a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c
      */
     public double[] getDataCopyXYAsDouble(int t, int z, int c)
     {
@@ -3559,7 +3573,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c<br>
+     * Returns a 1D array data copy [XY] of internal 1D array data [XY] for specified t, z, c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public double[] getDataCopyXYAsDouble(int t, int z, int c, double[] out, int off)
@@ -3573,7 +3587,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]
+     * Returns a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]
      */
     public byte[] getDataCopyCXYZTAsByte()
     {
@@ -3581,7 +3595,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]<br>
+     * Returns a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public byte[] getDataCopyCXYZTAsByte(byte[] out, int off)
@@ -3601,7 +3615,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]
+     * Returns a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]
      */
     public short[] getDataCopyCXYZTAsShort()
     {
@@ -3609,7 +3623,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]<br>
+     * Returns a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public short[] getDataCopyCXYZTAsShort(short[] out, int off)
@@ -3629,7 +3643,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]
+     * Returns a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]
      */
     public int[] getDataCopyCXYZTAsInt()
     {
@@ -3637,7 +3651,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]<br>
+     * Returns a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public int[] getDataCopyCXYZTAsInt(int[] out, int off)
@@ -3657,7 +3671,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]
+     * Returns a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]
      */
     public float[] getDataCopyCXYZTAsFloat()
     {
@@ -3665,7 +3679,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]<br>
+     * Returns a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public float[] getDataCopyCXYZTAsFloat(float[] out, int off)
@@ -3685,7 +3699,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]
+     * Returns a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]
      */
     public double[] getDataCopyCXYZTAsDouble()
     {
@@ -3693,7 +3707,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]<br>
+     * Returns a 1D array data copy [CXYZT] of internal 4D array data [T][Z][C][XY]<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public double[] getDataCopyCXYZTAsDouble(double[] out, int off)
@@ -3713,7 +3727,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t
+     * Returns a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t
      */
     public byte[] getDataCopyCXYZAsByte(int t)
     {
@@ -3721,7 +3735,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t<br>
+     * Returns a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public byte[] getDataCopyCXYZAsByte(int t, byte[] out, int off)
@@ -3741,7 +3755,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t
+     * Returns a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t
      */
     public short[] getDataCopyCXYZAsShort(int t)
     {
@@ -3749,7 +3763,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t<br>
+     * Returns a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public short[] getDataCopyCXYZAsShort(int t, short[] out, int off)
@@ -3769,7 +3783,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t
+     * Returns a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t
      */
     public int[] getDataCopyCXYZAsInt(int t)
     {
@@ -3777,7 +3791,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t<br>
+     * Returns a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public int[] getDataCopyCXYZAsInt(int t, int[] out, int off)
@@ -3797,7 +3811,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t
+     * Returns a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t
      */
     public float[] getDataCopyCXYZAsFloat(int t)
     {
@@ -3805,7 +3819,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t<br>
+     * Returns a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public float[] getDataCopyCXYZAsFloat(int t, float[] out, int off)
@@ -3825,7 +3839,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t
+     * Returns a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t
      */
     public double[] getDataCopyCXYZAsDouble(int t)
     {
@@ -3833,7 +3847,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t<br>
+     * Returns a 1D array data copy [CXYZ] of internal 3D array data [Z][C][XY] for specified t<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public double[] getDataCopyCXYZAsDouble(int t, double[] out, int off)
@@ -3853,7 +3867,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z
+     * Returns a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z
      */
     public byte[] getDataCopyCXYAsByte(int t, int z)
     {
@@ -3861,7 +3875,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z<br>
+     * Returns a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public byte[] getDataCopyCXYAsByte(int t, int z, byte[] out, int off)
@@ -3875,7 +3889,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z
+     * Returns a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z
      */
     public short[] getDataCopyCXYAsShort(int t, int z)
     {
@@ -3883,7 +3897,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z<br>
+     * Returns a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public short[] getDataCopyCXYAsShort(int t, int z, short[] out, int off)
@@ -3897,7 +3911,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z
+     * Returns a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z
      */
     public int[] getDataCopyCXYAsInt(int t, int z)
     {
@@ -3905,7 +3919,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z<br>
+     * Returns a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public int[] getDataCopyCXYAsInt(int t, int z, int[] out, int off)
@@ -3919,7 +3933,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z
+     * Returns a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z
      */
     public float[] getDataCopyCXYAsFloat(int t, int z)
     {
@@ -3927,7 +3941,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z<br>
+     * Returns a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public float[] getDataCopyCXYAsFloat(int t, int z, float[] out, int off)
@@ -3941,7 +3955,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z
+     * Returns a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z
      */
     public double[] getDataCopyCXYAsDouble(int t, int z)
     {
@@ -3949,7 +3963,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z<br>
+     * Returns a 1D array data copy [CXY] of internal 2D array data [C][XY] for specified t, z<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public double[] getDataCopyCXYAsDouble(int t, int z, double[] out, int off)
@@ -3963,7 +3977,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [C] of specified t, z, x, y
+     * Returns a 1D array data copy [C] of specified t, z, x, y
      */
     public byte[] getDataCopyCAsByte(int t, int z, int x, int y)
     {
@@ -3971,7 +3985,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [C] of specified t, z, x, y<br>
+     * Returns a 1D array data copy [C] of specified t, z, x, y<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public byte[] getDataCopyCAsByte(int t, int z, int x, int y, byte[] out, int off)
@@ -3985,7 +3999,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [C] of specified t, z, x, y
+     * Returns a 1D array data copy [C] of specified t, z, x, y
      */
     public short[] getDataCopyCAsShort(int t, int z, int x, int y)
     {
@@ -3993,7 +4007,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [C] of specified t, z, x, y<br>
+     * Returns a 1D array data copy [C] of specified t, z, x, y<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public short[] getDataCopyCAsShort(int t, int z, int x, int y, short[] out, int off)
@@ -4007,7 +4021,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [C] of specified t, z, x, y
+     * Returns a 1D array data copy [C] of specified t, z, x, y
      */
     public int[] getDataCopyCAsInt(int t, int z, int x, int y)
     {
@@ -4015,7 +4029,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [C] of specified t, z, x, y<br>
+     * Returns a 1D array data copy [C] of specified t, z, x, y<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public int[] getDataCopyCAsInt(int t, int z, int x, int y, int[] out, int off)
@@ -4029,7 +4043,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [C] of specified t, z, x, y
+     * Returns a 1D array data copy [C] of specified t, z, x, y
      */
     public float[] getDataCopyCAsFloat(int t, int z, int x, int y)
     {
@@ -4037,7 +4051,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [C] of specified t, z, x, y<br>
+     * Returns a 1D array data copy [C] of specified t, z, x, y<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public float[] getDataCopyCAsFloat(int t, int z, int x, int y, float[] out, int off)
@@ -4051,7 +4065,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [C] of specified t, z, x, y
+     * Returns a 1D array data copy [C] of specified t, z, x, y
      */
     public double[] getDataCopyCAsDouble(int t, int z, int x, int y)
     {
@@ -4059,7 +4073,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [C] of specified t, z, x, y<br>
+     * Returns a 1D array data copy [C] of specified t, z, x, y<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public double[] getDataCopyCAsDouble(int t, int z, int x, int y, double[] out, int off)
@@ -4073,7 +4087,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c
+     * Returns a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c
      */
     public byte[] getDataCopyXYZTAsByte(int c)
     {
@@ -4081,7 +4095,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c<br>
+     * Returns a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public byte[] getDataCopyXYZTAsByte(int c, byte[] out, int off)
@@ -4101,7 +4115,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c
+     * Returns a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c
      */
     public short[] getDataCopyXYZTAsShort(int c)
     {
@@ -4109,7 +4123,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c<br>
+     * Returns a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public short[] getDataCopyXYZTAsShort(int c, short[] out, int off)
@@ -4129,7 +4143,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c
+     * Returns a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c
      */
     public int[] getDataCopyXYZTAsInt(int c)
     {
@@ -4137,7 +4151,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c<br>
+     * Returns a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public int[] getDataCopyXYZTAsInt(int c, int[] out, int off)
@@ -4157,7 +4171,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c
+     * Returns a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c
      */
     public float[] getDataCopyXYZTAsFloat(int c)
     {
@@ -4165,7 +4179,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c<br>
+     * Returns a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public float[] getDataCopyXYZTAsFloat(int c, float[] out, int off)
@@ -4185,7 +4199,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c
+     * Returns a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c
      */
     public double[] getDataCopyXYZTAsDouble(int c)
     {
@@ -4193,7 +4207,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c<br>
+     * Returns a 1D array data copy [XYZT] of internal 3D array data [T][Z][XY] for specified c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public double[] getDataCopyXYZTAsDouble(int c, double[] out, int off)
@@ -4213,7 +4227,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c
+     * Returns a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c
      */
     public byte[] getDataCopyXYZAsByte(int t, int c)
     {
@@ -4221,7 +4235,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c<br>
+     * Returns a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public byte[] getDataCopyXYZAsByte(int t, int c, byte[] out, int off)
@@ -4241,7 +4255,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c
+     * Returns a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c
      */
     public short[] getDataCopyXYZAsShort(int t, int c)
     {
@@ -4249,7 +4263,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c<br>
+     * Returns a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public short[] getDataCopyXYZAsShort(int t, int c, short[] out, int off)
@@ -4269,7 +4283,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c
+     * Returns a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c
      */
     public int[] getDataCopyXYZAsInt(int t, int c)
     {
@@ -4277,7 +4291,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c<br>
+     * Returns a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public int[] getDataCopyXYZAsInt(int t, int c, int[] out, int off)
@@ -4297,7 +4311,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c
+     * Returns a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c
      */
     public float[] getDataCopyXYZAsFloat(int t, int c)
     {
@@ -4305,7 +4319,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c<br>
+     * Returns a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public float[] getDataCopyXYZAsFloat(int t, int c, float[] out, int off)
@@ -4325,7 +4339,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c
+     * Returns a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c
      */
     public double[] getDataCopyXYZAsDouble(int t, int c)
     {
@@ -4333,7 +4347,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Return a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c<br>
+     * Returns a 1D array data copy [XYZ] of internal 2D array data [Z][XY] for specified t, c<br>
      * If (out != null) then it's used to store result at the specified offset
      */
     public double[] getDataCopyXYZAsDouble(int t, int c, double[] out, int off)
@@ -4353,7 +4367,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Create a sub sequence with from specified coordinates and with specified dimensions
+     * Creates a sub sequence with from specified coordinates and with specified dimensions
      */
     public Sequence getSubSequence(int startX, int startY, int startZ, int startT, int sizeX, int sizeY, int sizeZ,
             int sizeT)
@@ -4387,7 +4401,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Create and return a copy of the sequence
+     * Creates and return a copy of the sequence
      */
     public Sequence getCopy()
     {
@@ -4466,7 +4480,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Create a node with specified name and return it<br>
+     * Creates a node with specified name and return it<br>
      * If the node already exists the existing node is returned
      * 
      * @param name

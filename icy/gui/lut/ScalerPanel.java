@@ -18,7 +18,6 @@
  */
 package icy.gui.lut;
 
-import icy.gui.lut.ScalerViewer.SamplesProducer;
 import icy.gui.lut.abstract_.IcyScalerPanel;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
@@ -33,16 +32,13 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.sequence.SequenceListener;
-import icy.type.DataType;
-import icy.type.collection.array.Array1DUtil;
 
 import java.awt.BorderLayout;
 
 /**
  * @author stephane
  */
-public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUTBandListener, SamplesProducer,
-        ViewerListener
+public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUTBandListener, ViewerListener
 {
     /**
      * 
@@ -50,27 +46,9 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
     private static final long serialVersionUID = 7681106081280637308L;
 
     /**
-     * cached
-     */
-    private int component;
-
-    /**
      * gui
      */
     final ScalerViewer scalerViewer;
-
-    /**
-     * internals
-     */
-    private Object sampleData;
-    private int samplePosT;
-    private int samplePosZ;
-    private int samplePosXY;
-    private int maxSamplePosT;
-    private int maxSamplePosZ;
-    private int maxSamplePosXY;
-    private DataType sampleDataType;
-    private boolean noMoreSample;
 
     /**
      * 
@@ -79,13 +57,9 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
     {
         super(viewer, lutBand);
 
-        component = lutBand.getComponent();
-
-        resetSamplePos();
-
         setLayout(new BorderLayout());
 
-        scalerViewer = new ScalerViewer(this, lutBand);
+        scalerViewer = new ScalerViewer(viewer, lutBand);
 
         add(scalerViewer, BorderLayout.CENTER);
 
@@ -126,71 +100,6 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
     public ScalerViewer getScalerViewer()
     {
         return scalerViewer;
-    }
-
-    private void resetSamplePos()
-    {
-        final Sequence sequence = viewer.getSequence();
-
-        if (sequence == null)
-        {
-            noMoreSample = true;
-            return;
-        }
-
-        final int posT = viewer.getT();
-        final int posZ = viewer.getZ();
-
-        if (posT != -1)
-        {
-            samplePosT = posT;
-            maxSamplePosT = posT;
-        }
-        else
-        {
-            samplePosT = 0;
-            maxSamplePosT = sequence.getSizeT() - 1;
-        }
-
-        if (posZ != -1)
-        {
-            samplePosZ = posZ;
-            maxSamplePosZ = posZ;
-        }
-        else
-        {
-            samplePosZ = 0;
-            maxSamplePosZ = sequence.getSizeZ() - 1;
-        }
-
-        samplePosXY = 0;
-        maxSamplePosXY = (sequence.getSizeX() * sequence.getSizeY()) - 1;
-
-        sampleDataType = sequence.getDataType_();
-        sampleData = sequence.getDataXY(samplePosT, samplePosZ, component);
-
-        noMoreSample = (samplePosXY > maxSamplePosXY) || (samplePosZ > maxSamplePosZ) || (samplePosT > maxSamplePosT);
-    }
-
-    private void incSamplePos()
-    {
-        if (++samplePosXY > maxSamplePosXY)
-        {
-            samplePosXY = 0;
-            if (++samplePosZ > maxSamplePosZ)
-            {
-                samplePosZ = 0;
-                if (++samplePosT > maxSamplePosT)
-                    noMoreSample = true;
-            }
-
-            final Sequence sequence = viewer.getSequence();
-
-            if (sequence != null)
-                sampleData = sequence.getDataXY(samplePosT, samplePosZ, component);
-            else
-                sampleData = null;
-        }
     }
 
     public void refreshHistoData()
@@ -239,33 +148,6 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
     {
         if (sequenceEvent.getSourceType() == SequenceEventSourceType.SEQUENCE_DATA)
             onSequenceDataChanged();
-    }
-
-    @Override
-    public void requestSamples()
-    {
-        resetSamplePos();
-    }
-
-    @Override
-    public double nextSample()
-    {
-        final double result;
-
-        if (sampleData != null)
-            result = Array1DUtil.getValue(sampleData, samplePosXY, sampleDataType);
-        else
-            result = 0d;
-
-        incSamplePos();
-
-        return result;
-    }
-
-    @Override
-    public boolean hasNextSample()
-    {
-        return !noMoreSample;
     }
 
     @Override

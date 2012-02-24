@@ -771,7 +771,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      */
     public void setLut(LUT value)
     {
-        if ((lut != value) && sequence.isLutCompatible(lut))
+        if ((lut != value) && sequence.isLutCompatible(value))
         {
             // set new lut & notify change
             lut = value;

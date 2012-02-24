@@ -65,8 +65,9 @@ public class ToolRibbonTask extends RibbonTask
     private static final String TOOLTIP_ROI2D_LINE = "<b>ROI Line : single line type ROI</b><br><br>"
             + "Drag from start point to destination point.";
     private static final String TOOLTIP_ROI2D_POLYLINE = "<b>ROI Polyline : multi line type ROI</b><br><br>"
-            + "Add a new point with left click then end draw with right click, double click or ESC key.<br>"
-            + "You can add new point (after end draw) by pressing control key while clicking.";
+            + "- Add a new point with left click.<br>" + "- Remove a point with right click.<br>"
+            + "- Unselect / end modification with ESC key or double click.<br>"
+            + "- Add a new point between the two closest points with left click + Control key.";
     private static final String TOOLTIP_ROI2D_RECTANGLE = "<b>ROI Rectangle : rectangle type ROI</b><br><br>"
             + "Drag from start point to destination point.";
     private static final String TOOLTIP_ROI2D_ELLIPSE = "<b>ROI Ellipse : ellipse type ROI</b><br><br>"
