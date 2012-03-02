@@ -18,7 +18,7 @@
  */
 package icy.gui.component;
 
-import icy.gui.util.GuiUtil;
+import icy.util.GraphicsUtil;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -72,7 +72,7 @@ public class IcyLogo extends IcyPanel // implements ComponentListener
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
         g2.setFont(titleFont);
-        GuiUtil.drawHCenteredText(g2, title, w, h / 2 + g2.getFontMetrics().getHeight() / 4);
+        GraphicsUtil.drawCenteredText(g2, title, w / 2, h / 2, false);
 
         g2.dispose();
     }

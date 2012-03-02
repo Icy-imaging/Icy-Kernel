@@ -216,6 +216,17 @@ public class ClassUtil
     }
 
     /**
+     * Return true if class is private
+     */
+    public static boolean isPrivate(Class<?> c)
+    {
+        if (c == null)
+            return false;
+
+        return Modifier.isPrivate(c.getModifiers());
+    }
+
+    /**
      * Return true if clazz extends baseClass
      */
     public static boolean isSubClass(Class<?> c, Class<?> baseClass)

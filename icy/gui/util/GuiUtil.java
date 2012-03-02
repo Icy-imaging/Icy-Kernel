@@ -20,25 +20,18 @@ package icy.gui.util;
 
 import icy.gui.component.ComponentUtil;
 import icy.gui.frame.TitledFrame;
+import icy.util.GraphicsUtil;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GradientPaint;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Image;
-import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
-import java.awt.image.BufferedImage;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -322,6 +315,7 @@ public class GuiUtil
      * 
      * @deprecated what was the goal of this method ???
      */
+    @Deprecated
     public static void setEnableContainer(Container container, boolean enable)
     {
         for (Component c : container.getComponents())
@@ -330,121 +324,6 @@ public class GuiUtil
                 setEnableContainer((Container) c, enable);
             c.setEnabled(enable);
         }
-    }
-
-    public static void paintBackGround(int width, int height, Graphics g)
-    {
-        final Graphics2D g2 = (Graphics2D) g.create();
-
-        final float ray = Math.max(width, height) * 0.05f;
-        final RoundRectangle2D roundRect = new RoundRectangle2D.Double(0, 0, width, height, Math.min(ray * 2, 20),
-                Math.min(ray * 2, 20));
-
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        g2.setPaint(new GradientPaint(0, 0, Color.white.darker(), 0, height / 1.5f, Color.black));
-        g2.fill(roundRect);
-
-        g2.setPaint(Color.black);
-        g2.setColor(Color.black);
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-        g2.fillOval(-width + (width / 2), height / 2, width * 2, height);
-
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-        g2.setStroke(new BasicStroke(Math.max(1f, Math.min(5f, ray))));
-        g2.draw(roundRect);
-
-        g2.dispose();
-    }
-
-    public static void paintBackGround(Component component, Graphics g)
-    {
-        paintBackGround(component.getWidth(), component.getHeight(), g);
-    }
-
-    public static void paintBackGround(Image image)
-    {
-        final Graphics g = image.getGraphics();
-        // draw background in image
-        paintBackGround(image.getWidth(null), image.getHeight(null), g);
-        g.dispose();
-    }
-
-    public static Image addBackGround(Image source, int sourceSize, int outSize)
-    {
-        final BufferedImage result = new BufferedImage(outSize, outSize, BufferedImage.TYPE_INT_ARGB);
-
-        final Graphics2D g = result.createGraphics();
-        // paint background
-        paintBackGround(outSize, outSize, g);
-        // add origin image
-        final int delta = ((outSize - sourceSize) + 1) / 2;
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.drawImage(source, delta, delta, sourceSize, sourceSize, null);
-        g.dispose();
-
-        return result;
-    }
-
-    public static Image addBackGround(Image source, int outSize)
-    {
-        return addBackGround(source, Math.round(outSize * 0.8f), outSize);
-    }
-
-    public static Image addBackGround(Image source)
-    {
-        return addBackGround(source, Math.round(source.getWidth(null) * (1f / 0.8f)));
-    }
-
-    /**
-     * Return bounds to draw specified string in the specified Graphics context
-     * with specified font
-     */
-    public static Rectangle2D getStringBounds(Graphics g, Font f, String s)
-    {
-        if (f == null)
-            return getStringBounds(g, s);
-
-        return g.getFontMetrics(f).getStringBounds(s, g);
-    }
-
-    /**
-     * Return bounds to draw specified string in the specified component
-     */
-    public static Rectangle2D getStringBounds(Component c, String s)
-    {
-        return c.getFontMetrics(c.getFont()).getStringBounds(s, c.getGraphics());
-    }
-
-    /**
-     * Return bounds to draw specified string in the specified Graphics context
-     * with current font
-     */
-    public static Rectangle2D getStringBounds(Graphics g, String s)
-    {
-        return g.getFontMetrics().getStringBounds(s, g);
-    }
-
-    /**
-     * Draw a text centered on x on a given y.
-     * 
-     * @param g
-     * @param string
-     * @param y
-     */
-    public static void drawHCenteredText(Graphics g, String string, int w, int y)
-    {
-        final int wt = (int) getStringBounds(g, string).getWidth();
-        g.drawString(string, (w - wt) / 2, y);
-    }
-
-    public static void drawCenteredText(Graphics g, String string, int w, int h)
-    {
-        final Rectangle2D rect = getStringBounds(g, string);
-        final int wt = (int) rect.getWidth();
-        final int ht = (int) rect.getHeight();
-
-        g.drawString(string, (w - wt) / 2, (h - ht) / 2);
     }
 
     public static TitledFrame generateTitleFrame(String title, JPanel panel, Dimension titleDimension,
@@ -473,4 +352,77 @@ public class GuiUtil
         if (c.getCursor().getType() != cursor)
             c.setCursor(new Cursor(cursor));
     }
+
+    /**
+     * @deprecated uses {@link GraphicsUtil#paintIcyBackGround(int, int, Graphics)} instead
+     */
+    @Deprecated
+    public static void paintBackGround(int width, int height, Graphics g)
+    {
+        GraphicsUtil.paintIcyBackGround(width, height, g);
+    }
+
+    /**
+     * @deprecated uses {@link GraphicsUtil#paintIcyBackGround(Component, Graphics)} instead
+     */
+    @Deprecated
+    public static void paintBackGround(Component component, Graphics g)
+    {
+        GraphicsUtil.paintIcyBackGround(component, g);
+    }
+
+    /**
+     * @deprecated uses {@link GraphicsUtil#paintIcyBackGround(Component, Graphics)} instead
+     */
+    @Deprecated
+    public static void paintBackGround(Image image)
+    {
+        GraphicsUtil.paintIcyBackGround(image);
+    }
+
+    /**
+     * @deprecated uses {@link GraphicsUtil#getStringBounds(Graphics, Font, String)} instead
+     */
+    @Deprecated
+    public static Rectangle2D getStringBounds(Graphics g, Font f, String s)
+    {
+        return GraphicsUtil.getStringBounds(g, f, s);
+    }
+
+    /**
+     * @deprecated uses {@link GraphicsUtil#getStringBounds(Component, String)} instead
+     */
+    @Deprecated
+    public static Rectangle2D getStringBounds(Component c, String s)
+    {
+        return GraphicsUtil.getStringBounds(c, s);
+    }
+
+    /**
+     * @deprecated uses {@link GraphicsUtil#getStringBounds(Graphics, String)} instead
+     */
+    @Deprecated
+    public static Rectangle2D getStringBounds(Graphics g, String s)
+    {
+        return GraphicsUtil.getStringBounds(g, s);
+    }
+
+    /**
+     * @deprecated uses {@link GraphicsUtil#drawHCenteredText(Graphics, String, int, int)} instead
+     */
+    @Deprecated
+    public static void drawHCenteredText(Graphics g, String string, int w, int y)
+    {
+        GraphicsUtil.drawHCenteredText(g, string, w / 2, y, false);
+    }
+
+    /**
+     * @deprecated uses {@link GraphicsUtil#drawCenteredText(Graphics, String, int, int)} instead
+     */
+    @Deprecated
+    public static void drawCenteredText(Graphics g, String string, int w, int h)
+    {
+        GraphicsUtil.drawCenteredText(g, string, w / 2, h / 2, false);
+    }
+
 }

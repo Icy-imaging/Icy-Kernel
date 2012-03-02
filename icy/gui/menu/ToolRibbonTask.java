@@ -61,26 +61,40 @@ public class ToolRibbonTask extends RibbonTask
     public static final String MOVE = "Move";
 
     private static final String TOOLTIP_ROI2D_POINT = "<b>ROI Point : single point type ROI</b><br><br>"
-            + "Click on the image where you want to set your point.";
+            + "Click on the image where you want to set your point.<br>"
+            + "Unselect the ROI with ESC key, left click or double click.<br>"
+            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
     private static final String TOOLTIP_ROI2D_LINE = "<b>ROI Line : single line type ROI</b><br><br>"
-            + "Drag from start point to destination point.";
+            + "Drag from start point to destination point.<br>"
+            + "Unselect the ROI with ESC key, left click or double click.<br>"
+            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
     private static final String TOOLTIP_ROI2D_POLYLINE = "<b>ROI Polyline : multi line type ROI</b><br><br>"
-            + "- Add a new point with left click.<br>" + "- Remove a point with right click.<br>"
-            + "- Unselect / end modification with ESC key or double click.<br>"
-            + "- Add a new point between the two closest points with left click + Control key.";
+            + "Add a new point with left click.<br>"
+            + "Add a new point between two points with left click + CONTROL key.<br>"
+            + "Remove a point with DELETE key ot right click when the point is focused.<br>"
+            + "Unselect / end modification with ESC key or double click.<br>"
+            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
     private static final String TOOLTIP_ROI2D_RECTANGLE = "<b>ROI Rectangle : rectangle type ROI</b><br><br>"
-            + "Drag from start point to destination point.";
+            + "Drag from start point to destination point.<br>"
+            + "Unselect the ROI with ESC key, left click or double click.<br>"
+            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
     private static final String TOOLTIP_ROI2D_ELLIPSE = "<b>ROI Ellipse : ellipse type ROI</b><br><br>"
-            + "Drag from start point to destination point.";
+            + "Drag from start point to destination point.<br>"
+            + "Unselect the ROI with ESC key, left click or double click.<br>"
+            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
     private static final String TOOLTIP_ROI2D_POLYGON = "<b>ROI Polygon : polygon type ROI</b><br><br>"
-            + "Add a new point with left click then end draw with right click, double click or ESC key.<br>"
-            + "You can add new point (after end draw) by pressing control key while clicking.";
+            + "Add a new point with left click.<br>"
+            + "Add a new point between two points with left click + CONTROL key.<br>"
+            + "Remove a point with DELETE key ot right click when the point is focused.<br>"
+            + "Unselect / end modification with ESC key or double click.<br>"
+            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
     private static final String TOOLTIP_ROI2D_AREA = "<b>ROI Area : bitmap mask area type ROI</b><br><br>"
             + "Draw in with left mouse button and erase with right button.<br>"
-            + "Double click, press ESC or right click outside ROI bounds to end draw.<br>"
-            + "Increase or decrease the pencil size with '+' / '-' keys";
+            + "Unselect / end modification with ESC key or double click.<br>"
+            + "Increase or decrease the pencil size with '+' / '-' keys<br>"
+            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
 
-    private static final int TOOLTIP_LIVETIME = 10; // 10 seconds
+    private static final int TOOLTIP_LIVETIME = 60; // 60 seconds
 
     public static boolean isROITool(String command)
     {

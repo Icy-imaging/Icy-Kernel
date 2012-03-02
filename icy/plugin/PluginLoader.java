@@ -375,20 +375,22 @@ public class PluginLoader
         prepare();
 
         final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
-        final ArrayList<PluginDescriptor> plugins = getPlugins();
 
         if (clazz != null)
         {
-            for (PluginDescriptor pluginDescriptor : plugins)
+            synchronized (plugins)
             {
-                final Class<? extends Plugin> classPlug = pluginDescriptor.getPluginClass();
-
-                if ((classPlug != null) && clazz.isAssignableFrom(classPlug))
+                for (PluginDescriptor pluginDescriptor : plugins)
                 {
-                    // accept class ?
-                    if ((wantAbstract || !ClassUtil.isAbstract(classPlug))
-                            && (wantInterface || !classPlug.isInterface()))
-                        result.add(pluginDescriptor);
+                    final Class<? extends Plugin> classPlug = pluginDescriptor.getPluginClass();
+
+                    if ((classPlug != null) && clazz.isAssignableFrom(classPlug))
+                    {
+                        // accept class ?
+                        if ((wantAbstract || !ClassUtil.isAbstract(classPlug))
+                                && (wantInterface || !classPlug.isInterface()))
+                            result.add(pluginDescriptor);
+                    }
                 }
             }
         }
@@ -404,12 +406,14 @@ public class PluginLoader
         prepare();
 
         final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
-        final ArrayList<PluginDescriptor> plugins = getPlugins();
 
-        for (PluginDescriptor pluginDescriptor : plugins)
-            if (pluginDescriptor.isActionable())
-                result.add(pluginDescriptor);
-
+        synchronized (plugins)
+        {
+            for (PluginDescriptor pluginDescriptor : plugins)
+                if (pluginDescriptor.isActionable())
+                    result.add(pluginDescriptor);
+        }
+        
         return result;
     }
 

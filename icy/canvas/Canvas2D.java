@@ -32,6 +32,7 @@ import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
 import icy.util.StringUtil;
 
 import java.awt.AlphaComposite;
@@ -225,8 +226,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             final Point2D.Double canvasCenter = canvasToImage(getCanvasSizeX() / 2,
                                     getCanvasSizeY() / 2);
 
-                            // get last and current mouse position delta with
-                            // center
+                            // get last and current mouse position delta with center
                             final Point2D.Double lastMouseDeltaPos = canvasToImage(lastMouseCanvasPosX,
                                     lastMouseCanvasPosY);
                             lastMouseDeltaPos.x -= canvasCenter.x;
@@ -236,8 +236,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             newMouseDeltaPos.y -= canvasCenter.y;
 
                             // get reverse angle in radian between last and
-                            // current mouse position
-                            // relative to canvas center
+                            // current mouse position relative to canvas center
                             double angle = Math.atan2(lastMouseDeltaPos.y, lastMouseDeltaPos.x)
                                     - Math.atan2(newMouseDeltaPos.y, newMouseDeltaPos.x);
 
@@ -1039,16 +1038,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             if (img != null)
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
-                final AffineTransform trans = new AffineTransform();
 
-                trans.translate(canvasCenterX, canvasCenterY);
-                trans.rotate(getRotationZ());
-                trans.translate(-canvasCenterX, -canvasCenterY);
-
-                trans.translate(getOffsetX(), getOffsetY());
-                trans.scale(getScaleX(), getScaleY());
-
-                g2.transform(trans);
+                g2.transform(getTransform());
                 g2.drawImage(img, null, 0, 0);
 
                 if (getDrawLayers())
@@ -1170,7 +1161,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         private void drawTextBottomRight(Graphics2D g, String text, float alpha)
         {
-            final Rectangle2D rect = GuiUtil.getStringBounds(g, text);
+            final Rectangle2D rect = GraphicsUtil.getStringBounds(g, text);
             final int w = (int) rect.getWidth();
             final int h = (int) rect.getHeight();
             final int x = getWidth() - (w + 8 + 2);
@@ -1186,7 +1177,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         private void drawTextTopRight(Graphics2D g, String text, float alpha)
         {
-            final Rectangle2D rect = GuiUtil.getStringBounds(g, text);
+            final Rectangle2D rect = GraphicsUtil.getStringBounds(g, text);
             final int w = (int) rect.getWidth();
             final int h = (int) rect.getHeight();
             final int x = getWidth() - (w + 8 + 2);
@@ -1202,7 +1193,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         private void drawTextCenter(Graphics2D g, String text, float alpha)
         {
-            final Rectangle2D rect = GuiUtil.getStringBounds(g, text);
+            final Rectangle2D rect = GraphicsUtil.getStringBounds(g, text);
             final int w = (int) rect.getWidth();
             final int h = (int) rect.getHeight();
             final int x = (getWidth() - (w + 8 + 2)) / 2;
@@ -2648,17 +2639,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     protected void sequenceDataChanged(IcyBufferedImage image, SequenceEventType type)
     {
         super.sequenceDataChanged(image, type);
-
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                // update sliders bounds if needed
-                updateZNav();
-                updateTNav();
-            }
-        });
 
         // refresh image
         if (canvasView != null)

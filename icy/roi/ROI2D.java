@@ -76,30 +76,49 @@ public abstract class ROI2D extends ROI
 
         protected boolean updateSelect(InputEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
-            final boolean selected = focused;
             final boolean selectedPoint = hasSelectedPoint();
 
             // union selection
             if (EventUtil.isShiftDown(e))
             {
-                if (selected)
-                    setSelected(true, false);
+                if (focused)
+                {
+                    // only if not already selected
+                    if (!selected)
+                    {
+                        setSelected(true, false);
+                        return true;
+                    }
+                }
             }
             else if (EventUtil.isControlDown(e))
             // switch selection
             {
                 // inverse state
-                if (selected)
-                    setSelected(!ROI2D.this.selected, false);
+                if (focused)
+                {
+                    setSelected(!selected, false);
+                    return true;
+                }
             }
             else
             // exclusive selection
             {
                 // we stay selected when we click on control points
-                setSelected(selected || selectedPoint, true);
+                final boolean newSelected = focused || selectedPoint;
+
+                if (newSelected)
+                {
+                    // only if not already selected
+                    if (!selected)
+                    {
+                        setSelected(newSelected, true);
+                        return true;
+                    }
+                }
             }
 
-            return selected;
+            return false;
         }
 
         protected boolean updateDrag(InputEvent e, Point2D imagePoint, IcyCanvas canvas)
@@ -143,24 +162,23 @@ public abstract class ROI2D extends ROI
                     // left button action
                     if (EventUtil.isLeftMouseButton(e))
                     {
-                        // roi focused (mouse over ROI bounds) ? --> update select
+                        // roi focused (mouse over ROI bounds) ?
                         if (focused)
                         {
-                            if (updateSelect(e, imagePoint, canvas))
-                                e.consume();
+                            // update selection
+                            updateSelect(e, imagePoint, canvas);
+                            // always consume (to enable dragging) 
+                            e.consume();
                         }
                         // roi selected and no point selected ?
                         else if (selected && !hasSelectedPoint())
                         {
-                            // try to add point
+                            // try to add point first
                             if (addPointAt(imagePoint, EventUtil.isControlDown(e)))
                                 e.consume();
-                            else
-                            {
-                                // else we update selection
-                                if (updateSelect(e, imagePoint, canvas))
-                                    e.consume();
-                            }
+                            // else we update selection
+                            else if (updateSelect(e, imagePoint, canvas))
+                                e.consume();
                         }
                         else
                         {

@@ -26,7 +26,7 @@ public abstract class LineAnchor2D extends Anchor2D
     protected boolean updateDrag(InputEvent e, Point2D imagePoint)
     {
         // not dragging --> exit
-        if (startDragMousePosition == null)
+        if (startDragPosition == null)
             return false;
 
         final Anchor2D anchor = getPreviousPoint();
@@ -84,11 +84,11 @@ public abstract class LineAnchor2D extends Anchor2D
         }
         else
         {
-            final double dx = imagePoint.getX() - startDragMousePosition.getX();
-            final double dy = imagePoint.getY() - startDragMousePosition.getY();
+            final double dx = imagePoint.getX() - startDragPosition.getX();
+            final double dy = imagePoint.getY() - startDragPosition.getY();
 
             // set new position
-            setPosition(new Point2D.Double(startDragROIPosition.getX() + dx, startDragROIPosition.getY() + dy));
+            setPosition(new Point2D.Double(startDragPosition.getX() + dx, startDragPosition.getY() + dy));
         }
 
         return true;

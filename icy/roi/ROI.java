@@ -37,6 +37,7 @@ import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 import javax.swing.event.EventListenerList;
 
@@ -44,6 +45,28 @@ import org.w3c.dom.Node;
 
 public abstract class ROI implements ChangeListener, XMLPersistent
 {
+    public static class ROIIdComparator implements Comparator<ROI>
+    {
+        @Override
+        public int compare(ROI roi1, ROI roi2)
+        {
+            if (roi1 == roi2)
+                return 0;
+
+            if (roi1 == null)
+                return -1;
+            if (roi2 == null)
+                return 1;
+
+            if (roi1.id < roi2.id)
+                return -1;
+            if (roi1.id > roi2.id)
+                return 1;
+
+            return 0;
+        }
+    }
+
     public static final String ID_CLASSNAME = "classname";
     public static final String ID_ID = "id";
     public static final String ID_NAME = "name";
@@ -51,6 +74,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final String ID_SELECTED_COLOR = "selected_color";
     public static final String ID_STROKE = "stroke";
     public static final String ID_SELECTED = "selected";
+
+    public static final ROIIdComparator idComparator = new ROIIdComparator();
 
     protected static final int DEFAULT_STROKE = 2;
     protected static final Color DEFAULT_NORMAL_COLOR = Color.GREEN;
@@ -143,7 +168,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         final ROI roi = create(className, null, new Point2D.Double(0, 0), false);
         // load properties from XML
         if (roi != null)
+        {
             roi.loadFromXML(node);
+            roi.selected = false;
+        }
 
         return roi;
     }
@@ -163,97 +191,93 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Convert a canvas X coefficient into image X coefficient.<br>
-     * We don't take about rotation here as we just want scale ratio here.
+     * @deprecated uses {@link IcyCanvas} methods instead
      */
+    @Deprecated
     public static double canvasToImageDeltaX(IcyCanvas canvas, int value)
     {
-        return value / canvas.getScaleX();
+        return canvas.canvasToImageDeltaX(value);
     }
 
     /**
-     * Convert a canvas X coefficient into image X log coefficient <br>
-     * The conversion is still affected by zoom ratio but in a logarithm form
+     * @deprecated uses {@link IcyCanvas} methods instead
      */
+    @Deprecated
     public static double canvasToImageLogDeltaX(IcyCanvas canvas, double value, double logFactor)
     {
-        final double scaleFactor = canvas.getScaleX();
-        // keep the zoom ratio but in a log perspective
-        return value / (scaleFactor / Math.pow(10, Math.log10(scaleFactor) / logFactor));
+        return canvas.canvasToImageLogDeltaX((int) value, logFactor);
     }
 
     /**
-     * Convert a canvas X coefficient into image X log coefficient <br>
-     * The conversion is still affected by zoom ratio but in a logarithm form
+     * @deprecated uses {@link IcyCanvas} methods instead
      */
+    @Deprecated
     public static double canvasToImageLogDeltaX(IcyCanvas canvas, double value)
     {
-        return canvasToImageLogDeltaX(canvas, value, 5d);
+        return canvas.canvasToImageLogDeltaX((int) value);
     }
 
     /**
-     * Convert a canvas X coefficient into image X log coefficient <br>
-     * The conversion is still affected by zoom ratio but in a logarithm form
+     * @deprecated uses {@link IcyCanvas} methods instead
      */
+    @Deprecated
     public static double canvasToImageLogDeltaX(IcyCanvas canvas, int value, double logFactor)
     {
-        return canvasToImageLogDeltaX(canvas, (double) value, logFactor);
+        return canvas.canvasToImageLogDeltaX(value, logFactor);
     }
 
     /**
-     * Convert a canvas X coefficient into image X log coefficient <br>
-     * The conversion is still affected by zoom ratio but in a logarithm form
+     * @deprecated uses {@link IcyCanvas} methods instead
      */
+    @Deprecated
     public static double canvasToImageLogDeltaX(IcyCanvas canvas, int value)
     {
-        return canvasToImageLogDeltaX(canvas, (double) value);
+        return canvas.canvasToImageLogDeltaX(value);
     }
 
     /**
-     * Convert a canvas Y coefficient into image Y coefficient
-     * We don't take about rotation here as we just want scale ratio here.
+     * @deprecated uses {@link IcyCanvas} methods instead
      */
+    @Deprecated
     public static double canvasToImageDeltaY(IcyCanvas canvas, int value)
     {
-        return value / canvas.getScaleY();
+        return canvas.canvasToImageDeltaY(value);
     }
 
     /**
-     * Convert a canvas Y coefficient into image Y log coefficient <br>
-     * The conversion is still affected by zoom ratio but in a logarithm form
+     * @deprecated uses {@link IcyCanvas} methods instead
      */
+    @Deprecated
     public static double canvasToImageLogDeltaY(IcyCanvas canvas, double value, double logFactor)
     {
-        final double scaleFactor = canvas.getScaleY();
-        // keep the zoom ratio but in a log perspective
-        return value / (scaleFactor / Math.pow(10, Math.log10(scaleFactor) / logFactor));
+        return canvas.canvasToImageLogDeltaY((int) value, logFactor);
     }
 
     /**
-     * Convert a canvas Y coefficient into image Y log coefficient <br>
-     * The conversion is still affected by zoom ratio but in a logarithm form
+     * @deprecated uses {@link IcyCanvas} methods instead
      */
+    @Deprecated
     public static double canvasToImageLogDeltaY(IcyCanvas canvas, double value)
     {
-        return canvasToImageLogDeltaY(canvas, value, 5d);
+        return canvas.canvasToImageLogDeltaY((int) value);
     }
 
     /**
-     * Convert a canvas Y coefficient into image Y log coefficient <br>
-     * The conversion is still affected by zoom ratio but in a logarithm form
+     * @deprecated uses {@link IcyCanvas} methods instead
      */
+    @Deprecated
     public static double canvasToImageLogDeltaY(IcyCanvas canvas, int value, double logFactor)
     {
-        return canvasToImageLogDeltaY(canvas, (double) value, logFactor);
+        return canvas.canvasToImageLogDeltaY(value, logFactor);
     }
 
     /**
-     * Convert a canvas Y coefficient into image Y log coefficient <br>
-     * The conversion is still affected by zoom ratio but in a logarithm form
+     * @deprecated uses {@link IcyCanvas} methods instead
      */
+    @Deprecated
     public static double canvasToImageLogDeltaY(IcyCanvas canvas, int value)
     {
-        return canvasToImageLogDeltaY(canvas, (double) value);
+        return canvas.canvasToImageLogDeltaY(value);
     }
 
     /**
@@ -289,7 +313,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * last mouse position (image coordinates)
      */
-    protected final Point2D mousePos;
+    protected final Point2D.Double mousePos;
 
     /**
      * listeners
@@ -437,7 +461,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     public double getAdjustedStroke(IcyCanvas canvas, double strk)
     {
-        return Math.max(canvasToImageLogDeltaX(canvas, strk), canvasToImageLogDeltaY(canvas, strk));
+        final double adjStrkX = canvas.canvasToImageLogDeltaX((int) strk);
+        final double adjStrkY = canvas.canvasToImageLogDeltaY((int) strk);
+
+        return Math.max(adjStrkX, adjStrkY);
     }
 
     /**
@@ -707,6 +734,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         beginUpdate();
         try
         {
+            // FIXME : this can make duplicate id but it is also important to preserve id
             id = XMLUtil.getElementIntValue(node, ID_ID, 0);
             setName(XMLUtil.getElementValue(node, ID_NAME, ""));
             setColor(new Color(XMLUtil.getElementIntValue(node, ID_COLOR, DEFAULT_NORMAL_COLOR.getRGB())));

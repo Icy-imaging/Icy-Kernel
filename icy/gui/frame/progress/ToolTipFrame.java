@@ -3,6 +3,7 @@
  */
 package icy.gui.frame.progress;
 
+import icy.gui.frame.IcyFrame;
 import icy.gui.util.GuiUtil;
 import icy.preferences.GeneralPreferences;
 import icy.preferences.XMLPreferences;
@@ -16,6 +17,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.JCheckBox;
@@ -63,7 +65,7 @@ public class ToolTipFrame extends TaskFrame
             pref = GeneralPreferences.getPreferencesToolTips().node(id);
 
             // tool tip should not be displayed ?
-            if (!pref.getBoolean(ID_DISPLAY, true))
+            if (alreadyExist(id) || !pref.getBoolean(ID_DISPLAY, true))
             {
                 // close and exit
                 close();
@@ -161,6 +163,20 @@ public class ToolTipFrame extends TaskFrame
         this(message, 0, "");
     }
 
+    /**
+     * Return true if a tooltip with the same is is already active
+     */
+    private boolean alreadyExist(String id)
+    {
+        final List<IcyFrame> frames = IcyFrame.getAllFrames(ToolTipFrame.class);
+
+        for (IcyFrame f : frames)
+            if ((f != this) && ((ToolTipFrame) f).id.equals(id))
+                return true;
+
+        return false;
+    }
+
     void processClose()
     {
         close();
@@ -192,4 +208,5 @@ public class ToolTipFrame extends TaskFrame
 
         super.internalClose();
     }
+
 }

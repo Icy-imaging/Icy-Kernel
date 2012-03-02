@@ -10,6 +10,8 @@ import icy.main.Icy;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
@@ -23,6 +25,11 @@ public abstract class IcyCanvas2D extends IcyCanvas
      */
     private static final long serialVersionUID = 743937493919099495L;
 
+    // image coordinate to canvas coordinate transform
+    private final AffineTransform transform;
+    // canvas coordinate to image coordinate transform
+    private final AffineTransform inverseTransform;
+
     public IcyCanvas2D(Viewer viewer)
     {
         super(viewer);
@@ -30,6 +37,9 @@ public abstract class IcyCanvas2D extends IcyCanvas
         // default for 2D canvas
         posX = -1;
         posY = -1;
+
+        transform = new AffineTransform();
+        inverseTransform = new AffineTransform();
     }
 
     /**
@@ -79,7 +89,7 @@ public abstract class IcyCanvas2D extends IcyCanvas
      */
     public Point2D.Double canvasToImageDelta(int x, int y)
     {
-        return canvasToImageDelta(x, y, getScaleX(), getScaleX(), getRotationZ());
+        return canvasToImageDelta(x, y, getScaleX(), getScaleY(), getRotationZ());
     }
 
     /**
@@ -91,8 +101,29 @@ public abstract class IcyCanvas2D extends IcyCanvas
     }
 
     /**
+     * Convert specified canvas delta point to image delta point.
+     * The conversion is affected by zoom ratio but with the specified logarithm factor.
+     */
+    public Point2D.Double canvasToImageLogDelta(int x, int y, double logFactor)
+    {
+        final double sx = getScaleX() / Math.pow(10, Math.log10(getScaleX()) / logFactor);
+        final double sy = getScaleY() / Math.pow(10, Math.log10(getScaleY()) / logFactor);
+
+        return canvasToImageDelta(x, y, sx, sy, getRotationZ());
+    }
+
+    /**
+     * Convert specified canvas delta point to image delta point.
+     * The conversion is affected by zoom ratio but with the specified logarithm factor.
+     */
+    public Point2D.Double canvasToImageLogDelta(int x, int y)
+    {
+        return canvasToImageLogDelta(x, y, 5d);
+    }
+
+    /**
      * Convert specified canvas point to image point.<br>
-     * By default we consider the rotation applied relatively to image center.<br>
+     * By default we consider the rotation applied relatively to canvas center.<br>
      * Override this method if you want different transformation type.
      */
     protected Point2D.Double canvasToImage(int x, int y, int offsetX, int offsetY, double scaleX, double scaleY,
@@ -130,7 +161,15 @@ public abstract class IcyCanvas2D extends IcyCanvas
      */
     public Point2D.Double canvasToImage(int x, int y)
     {
-        return canvasToImage(x, y, getOffsetX(), getOffsetY(), getScaleX(), getScaleY(), getRotationZ());
+        final Point2D.Double result = new Point2D.Double(0d, 0d);
+
+        // we can directly use the transform object here
+        inverseTransform.transform(new Point2D.Double(x, y), result);
+
+        return result;
+
+        // return canvasToImage(x, y, getOffsetX(), getOffsetY(), getScaleX(), getScaleY(),
+        // getRotationZ());
     }
 
     /**
@@ -241,7 +280,15 @@ public abstract class IcyCanvas2D extends IcyCanvas
      */
     public Point imageToCanvas(double x, double y)
     {
-        return imageToCanvas(x, y, getOffsetX(), getOffsetY(), getScaleX(), getScaleY(), getRotationZ());
+        final Point result = new Point();
+
+        // we can directly use the transform object here
+        transform.transform(new Point2D.Double(x, y), result);
+
+        return result;
+
+        // return imageToCanvas(x, y, getOffsetX(), getOffsetY(), getScaleX(), getScaleY(),
+        // getRotationZ());
     }
 
     /**
@@ -472,5 +519,66 @@ public abstract class IcyCanvas2D extends IcyCanvas
         result.height += canvasViewSize.height;
 
         return result;
+    }
+
+    /**
+     * Update internal {@link AffineTransform} object.
+     */
+    protected void updateTransform()
+    {
+        final int canvasCenterX = getCanvasSizeX() / 2;
+        final int canvasCenterY = getCanvasSizeY() / 2;
+
+        // rotation is centered to canvas
+        transform.setToTranslation(canvasCenterX, canvasCenterY);
+        transform.rotate(getRotationZ());
+        transform.translate(-canvasCenterX, -canvasCenterY);
+
+        transform.translate(getOffsetX(), getOffsetY());
+        transform.scale(getScaleX(), getScaleY());
+
+        inverseTransform.setTransform(transform);
+
+        try
+        {
+            inverseTransform.invert();
+        }
+        catch (NoninvertibleTransformException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Return the 2D {@link AffineTransform} object which convert from<br>
+     * image coordinate to canvas coordinate.
+     */
+    public AffineTransform getTransform()
+    {
+        return transform;
+    }
+
+    /**
+     * Return the 2D {@link AffineTransform} object which convert from<br>
+     * canvas coordinate to image coordinate.
+     */
+    public AffineTransform getInverseTransform()
+    {
+        return inverseTransform;
+    }
+
+    @Override
+    public void changed(IcyCanvasEvent event)
+    {
+        super.changed(event);
+
+        switch (event.getType())
+        {
+            case OFFSET_CHANGED:
+            case ROTATION_CHANGED:
+            case SCALE_CHANGED:
+                updateTransform();
+                break;
+        }
     }
 }

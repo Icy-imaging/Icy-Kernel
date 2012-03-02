@@ -21,7 +21,6 @@ package icy.gui.lut;
 import icy.gui.component.FontUtil;
 import icy.gui.math.HistogramPanel;
 import icy.gui.math.HistogramPanel.HistogramPanelListener;
-import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.lut.LUTBand;
 import icy.image.lut.LUTBandEvent;
@@ -30,8 +29,11 @@ import icy.image.lut.LUTBandListener;
 import icy.math.Scaler;
 import icy.sequence.Sequence;
 import icy.system.thread.SingleProcessor;
+import icy.type.DataType;
+import icy.type.collection.array.Array1DUtil;
 import icy.util.ColorUtil;
 import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -48,6 +50,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
+import java.lang.reflect.Array;
 import java.util.EventListener;
 
 import javax.swing.JPanel;
@@ -191,7 +194,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         @Override
         protected void paintComponent(Graphics g)
         {
-            GuiUtil.paintBackGround(this, g);
+            GraphicsUtil.paintIcyBackGround(this, g);
 
             super.paintComponent(g);
 
@@ -495,8 +498,6 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         final Sequence seq = viewer.getSequence();
         if (seq != null)
         {
-            final int sizeX = seq.getSizeX();
-            final int sizeY = seq.getSizeY();
             final int sizeZ = seq.getSizeZ();
             final int sizeT = seq.getSizeT();
             final int c = lutBand.getComponent();
@@ -505,14 +506,23 @@ public class ScalerViewer extends JPanel implements LUTBandListener
             {
                 for (int z = 0; z < sizeZ; z++)
                 {
-                    for (int y = 0; y < sizeY; y++)
-                    {
-                        // need to be recalculated so don't waste time here...
-                        if (processor.hasWaitingTasks())
-                            return;
+                    final Object data = seq.getDataXY(t, z, c);
+                    final DataType dataType = seq.getDataType_();
+                    final int len = Array.getLength(data);
 
-                        for (int x = 0; x < sizeX; x++)
-                            histogram.addValue(seq.getData(t, z, c, y, x));
+                    for (int i = 0; i < len; i++)
+                    {
+                        if ((i & 0xFFF) == 0)
+                        {
+                            // need to be recalculated so don't waste time here...
+                            if (processor.hasWaitingTasks())
+                            {
+                                histogram.done();
+                                return;
+                            }
+                        }
+
+                        histogram.addValue(Array1DUtil.getValue(data, i, dataType));
                     }
                 }
             }

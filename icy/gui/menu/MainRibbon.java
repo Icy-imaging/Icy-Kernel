@@ -50,6 +50,7 @@ import icy.resource.icon.IcyIcon;
 import icy.swimmingPool.SwimmingPoolViewer;
 import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
+import icy.util.StringUtil;
 import icy.workspace.Workspace;
 import icy.workspace.Workspace.TaskDefinition;
 import icy.workspace.Workspace.TaskDefinition.BandDefinition;
@@ -98,6 +99,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     {
         final String name = plugin.getName();
         final String className = plugin.getClassName();
+        final String website = plugin.getWeb();
+        final String author = plugin.getAuthor();
 
         // udpate text & icon
         button.setText(name);
@@ -106,14 +109,13 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         button.setName(className);
 
         // build richToolTip for command button
-        final RichTooltip richToolTip = new RichTooltip(name, "Description: " + plugin.getDescription());
+        final RichTooltip richToolTip = new RichTooltip(name, plugin.getDescription());
         richToolTip.setMainImage(plugin.getIconAsImage());
-        richToolTip.addDescriptionSection("Name: " + plugin.getName());
-        // TODO : uncomment when field is ready
-        // richToolTip.addDescriptionSection("Website: " + plugin.getWeb());
-        richToolTip.addDescriptionSection("Author: " + plugin.getAuthor());
         richToolTip.setFooterImage(plugin.getImage());
-        // richToolTip.addFooterSection("Workspace: basic");
+        if (!StringUtil.isEmpty(website))
+            richToolTip.addDescriptionSection(website);
+        if (!StringUtil.isEmpty(author))
+            richToolTip.addDescriptionSection(author);
 
         button.setActionRichTooltip(richToolTip);
 

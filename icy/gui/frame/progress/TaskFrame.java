@@ -157,7 +157,7 @@ public abstract class TaskFrame extends IcyFrame
     }
 
     /**
-     * @deprecated
+     * @deprecated uses {@link #canRemove()} instead
      */
     @Deprecated
     public boolean isCanBeRemoved()

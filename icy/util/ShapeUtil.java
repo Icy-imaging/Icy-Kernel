@@ -42,6 +42,64 @@ public class ShapeUtil
     }
 
     /**
+     * Scale the specified {@link RectangularShape} by specified factor.
+     * 
+     * @param shape
+     *        the {@link RectangularShape} to scale
+     * @param factor
+     *        the scale factor
+     * @param centered
+     *        if true then scaling is centered (shape location is modified)
+     */
+    public static void scale(RectangularShape shape, double factor, boolean centered)
+    {
+        final double w = shape.getWidth();
+        final double h = shape.getHeight();
+        final double newW = w * factor;
+        final double newH = h * factor;
+
+        if (centered)
+        {
+            final double deltaW = (newW - w) / 2;
+            final double deltaH = (newH - h) / 2;
+            
+            shape.setFrame(shape.getX() - deltaW, shape.getY() - deltaH, newW, newH);
+        }
+        else
+            shape.setFrame(shape.getX(), shape.getY(), newW, newH);
+    }
+
+    /**
+     * Enlarge the specified {@link RectangularShape} by specified width and height.
+     * 
+     * @param shape
+     *        the {@link RectangularShape} to scale
+     * @param width
+     *        the width to add
+     * @param height
+     *        the height to add
+     * @param centered
+     *        if true then enlargement is centered (shape location is modified)
+     */
+    public static void enlarge(RectangularShape shape, double width, double height, boolean centered)
+    {
+        final double w = shape.getWidth();
+        final double h = shape.getHeight();
+        final double newW = w + width;
+        final double newH = h + height;
+
+        if (centered)
+        {
+            final double deltaW = (newW - w) / 2;
+            final double deltaH = (newH - h) / 2;
+
+            shape.setFrame(shape.getX() - deltaW, shape.getY() - deltaH, newW, newH);
+        }
+        else
+            shape.setFrame(shape.getX(), shape.getY(), newW, newH);
+    }
+
+    /**
      * Translate a rectangular shape by the specified dx and dy value
      */
     public static void translate(RectangularShape shape, int dx, int dy)
@@ -228,20 +286,12 @@ public class ShapeUtil
     }
 
     /**
-     * Draw the specified PathIterator in the specified Graphics2D context
+     * @deprecated uses {@link GraphicsUtil#drawPathIterator(PathIterator, Graphics2D)} instead
      */
+    @Deprecated
     public static void drawFromPath(PathIterator path, final Graphics2D g)
     {
-        consumeShapeFromPath(path, new ShapeConsumer()
-        {
-            @Override
-            public boolean consume(Shape shape)
-            {
-                // draw shape
-                g.draw(shape);
-                return true;
-            }
-        });
+        GraphicsUtil.drawPathIterator(path, g);
     }
 
     /**

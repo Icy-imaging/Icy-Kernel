@@ -133,6 +133,27 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     }
 
     /**
+     * Return all active IcyFrame which derive from the specified class
+     */
+    public static ArrayList<IcyFrame> getAllFrames(Class<?> frameClass)
+    {
+        final ArrayList<IcyFrame> result = new ArrayList<IcyFrame>();
+
+        if (frameClass != null)
+        {
+            synchronized (frames)
+            {
+                for (IcyFrame frame : frames)
+                    if (frameClass.isAssignableFrom(frame.getClass()))
+                        result.add(frame);
+
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * Find IcyFrame corresponding to the specified JInternalFrame
      */
     public static IcyFrame findIcyFrame(JInternalFrame frame)

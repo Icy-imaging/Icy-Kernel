@@ -27,6 +27,7 @@ import icy.util.XMLUtil;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -242,8 +243,13 @@ public class SequencePersistent implements XMLPersistent
         if (nodeROIs != null)
         {
             XMLUtil.removeAllChildren(nodeROIs);
+            
+            final ArrayList<ROI> rois = sequence.getROIs();
+            
+            // sort on id
+            Collections.sort(rois, ROI.idComparator);
 
-            for (ROI roi : sequence.getROIs())
+            for (ROI roi : rois)
             {
                 final Node nodeROI = XMLUtil.addElement(nodeROIs, ID_ROI);
 

@@ -41,8 +41,8 @@ public class TaskFrameManager implements ActionListener
 {
     final Timer timer;
     final ArrayList<TaskFrame> taskFrames;
-    final HashMap<TaskFrame, Point> framePosition;
-    final HashMap<TaskFrame, FrameInformation> frameInfo;
+    final HashMap<TaskFrame, Point> framesPosition;
+    final HashMap<TaskFrame, FrameInformation> framesInfo;
     long lastAnimationMillisecondTime;
 
     class FrameInformation
@@ -103,8 +103,8 @@ public class TaskFrameManager implements ActionListener
 
         timer = new Timer(20, this);
         taskFrames = new ArrayList<TaskFrame>();
-        framePosition = new HashMap<TaskFrame, Point>();
-        frameInfo = new HashMap<TaskFrame, FrameInformation>();
+        framesPosition = new HashMap<TaskFrame, Point>();
+        framesInfo = new HashMap<TaskFrame, FrameInformation>();
         lastAnimationMillisecondTime = System.currentTimeMillis();
     }
 
@@ -134,7 +134,7 @@ public class TaskFrameManager implements ActionListener
                     {
                         // get bottom right border location
                         FrameInformation frameInformation = new FrameInformation(msBeforeDisplay, msAfterCloseRequest);
-                        frameInfo.put(tFrame, frameInformation);
+                        framesInfo.put(tFrame, frameInformation);
 
                         taskFrames.add(tFrame);
                         tFrame.addToMainDesktopPane();
@@ -156,7 +156,7 @@ public class TaskFrameManager implements ActionListener
 
     public void addTaskWindow(final TaskFrame tFrame)
     {
-        // we sue a different default value for progress frame
+        // we use a different default value for progress frame
         if (tFrame instanceof ProgressFrame)
             addTaskWindow(tFrame, 0, 1000);
         else
@@ -169,25 +169,22 @@ public class TaskFrameManager implements ActionListener
         {
             long currentMillisecondTime = System.currentTimeMillis();
             long delayBetween2Animation = currentMillisecondTime - lastAnimationMillisecondTime;
-            lastAnimationMillisecondTime = System.currentTimeMillis();
+            lastAnimationMillisecondTime = currentMillisecondTime;
 
-            for (TaskFrame frame : frameInfo.keySet())
+            for (TaskFrame frame : framesInfo.keySet())
             {
-                FrameInformation frameInformation = frameInfo.get(frame);
+                FrameInformation frameInformation = framesInfo.get(frame);
                 frameInformation.msBeforeDisplay -= delayBetween2Animation;
-                // System.out.println( delayBetween2Animation );
+
                 if (frameInformation.msBeforeDisplay <= 0)
                     frame.setVisible(true);
 
-                if (frame.isCanBeRemoved())
-                {
+                if (frame.canRemove())
                     frameInformation.setMsBeforeClose(frameInformation.getMsBeforeClose() - delayBetween2Animation);
-                    // frameInformation.msBeforeClose -= delayBetween2Animation;
-                }
             }
 
             // build target position.
-            framePosition.clear();
+            framesPosition.clear();
             // get bottom right border location
             final Dimension desktopSize = getDesktopSize();
 
@@ -195,7 +192,7 @@ public class TaskFrameManager implements ActionListener
 
             for (TaskFrame frame : frames)
             {
-                FrameInformation frameInformation = frameInfo.get(frame);
+                FrameInformation frameInformation = framesInfo.get(frame);
 
                 // get frame position
                 final Point location = frame.getLocation();
@@ -207,7 +204,7 @@ public class TaskFrameManager implements ActionListener
                     {
                         // remove it from list
                         taskFrames.remove(frame);
-                        frameInfo.remove(frame);
+                        framesInfo.remove(frame);
                         // and close it definitely
                         frame.internalClose();
                     }
@@ -218,23 +215,22 @@ public class TaskFrameManager implements ActionListener
             float currentY = desktopSize.height;
             for (TaskFrame frame : taskFrames)
             {
-                FrameInformation frameInformation = frameInfo.get(frame);
+                FrameInformation frameInformation = framesInfo.get(frame);
+
                 if (frameInformation != null && frameInformation.displayOn())
                     currentY -= frame.getHeight();
             }
 
             for (TaskFrame frame : taskFrames)
             {
-                FrameInformation frameInformation = frameInfo.get(frame);
+                FrameInformation frameInformation = framesInfo.get(frame);
+
                 if (frameInformation != null && frameInformation.displayOn())
                 {
-                    // System.out.println("enter");
                     int xTarget = desktopSize.width - frame.getWidth();
-                    // if (frame.isCanBeRemoved())
+
                     if (frameInformation.canBeRemoved)
-                    {
                         xTarget = desktopSize.width + 20;
-                    }
 
                     final Point positionTarget = new Point(xTarget, (int) currentY);
                     final Point positionCurrent = frame.getLocation();
@@ -270,7 +266,7 @@ public class TaskFrameManager implements ActionListener
                     if (positionCurrent.x > desktopSize.width)
                         positionNew.y = positionTarget.y;
 
-                    framePosition.put(frame, positionNew);
+                    framesPosition.put(frame, positionNew);
 
                     // no enough space to display frame, close it
                     if (positionNew.y < 0)
@@ -282,13 +278,15 @@ public class TaskFrameManager implements ActionListener
 
             for (TaskFrame frame : taskFrames)
             {
-                final Point location = framePosition.get(frame);
+                final Point location = framesPosition.get(frame);
 
                 if (location != null)
                 {
-                    // move internal & external frame at same time
-                    frame.setLocationInternal(location);
-                    frame.setLocationExternal(location);
+                    // avoid repaint on JDesktopPane if position did not changed
+                    if (!frame.getLocationInternal().equals(location))
+                        frame.setLocationInternal(location);
+                    if (!frame.getLocationExternal().equals(location))
+                        frame.setLocationExternal(location);
                 }
             }
         }

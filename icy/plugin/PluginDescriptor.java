@@ -731,6 +731,14 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
+     * Return true if the plugin class is private
+     */
+    public boolean isPrivate()
+    {
+        return ClassUtil.isPrivate(pluginClass);
+    }
+
+    /**
      * Return true if the plugin class is an interface
      */
     public boolean isInterface()
@@ -743,7 +751,8 @@ public class PluginDescriptor implements XMLPersistent
      */
     public boolean isActionable()
     {
-        return isClassLoaded() && !isAbstract() && !isInterface() && isInstanceOf(PluginImageAnalysis.class);
+        return isClassLoaded() && !isPrivate() && !isAbstract() && !isInterface()
+                && isInstanceOf(PluginImageAnalysis.class);
     }
 
     /**

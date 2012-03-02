@@ -18,7 +18,7 @@
  */
 package icy.gui.component;
 
-import icy.gui.util.GuiUtil;
+import icy.util.GraphicsUtil;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -83,13 +83,13 @@ public class IcyPanel extends JPanel
             {
                 bgImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
                 final Graphics2D cachedGraphics = bgImage.createGraphics();
-                GuiUtil.paintBackGround(this, cachedGraphics);
+                GraphicsUtil.paintIcyBackGround(this, cachedGraphics);
                 cachedGraphics.dispose();
             }
 
             ((Graphics2D) g).drawImage(bgImage, null, 0, 0);
         }
         else
-            GuiUtil.paintBackGround(this, g);
+            GraphicsUtil.paintIcyBackGround(this, g);
     }
 }

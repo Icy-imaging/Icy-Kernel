@@ -288,9 +288,15 @@ public class MouseImageInfosPanel extends JPanel
 
     public void updateInfos(IcyCanvas canvas)
     {
+        final Sequence seq;
+
         if (canvas != null)
+            seq = canvas.getSequence();
+        else
+            seq = null;
+
+        if (seq != null)
         {
-            final Sequence seq = canvas.getSequence();
             final LUT lut = canvas.getLut();
 
             final double x = canvas.getMouseImagePosX();

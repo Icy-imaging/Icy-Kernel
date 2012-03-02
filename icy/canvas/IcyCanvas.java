@@ -2468,6 +2468,62 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
+     * Convert specified canvas delta X to log image delta X.<br>
+     * The conversion is still affected by zoom ratio but with specified logarithm form.
+     * 
+     * @deprecated Cannot give correct result if rotation is applied so use
+     *             IcyCanvasXD.canvasToImageLogDelta(...) instead
+     */
+    @Deprecated
+    public double canvasToImageLogDeltaX(int value, double logFactor)
+    {
+        final double scaleFactor = getScaleX();
+        // keep the zoom ratio but in a log perspective
+        return value / (scaleFactor / Math.pow(10, Math.log10(scaleFactor) / logFactor));
+    }
+
+    /**
+     * Convert specified canvas delta X to log image delta X.<br>
+     * The conversion is still affected by zoom ratio but with logarithm form.
+     * 
+     * @deprecated Cannot give correct result if rotation is applied so use
+     *             IcyCanvasXD.canvasToImageLogDelta(...) instead
+     */
+    @Deprecated
+    public double canvasToImageLogDeltaX(int value)
+    {
+        return canvasToImageLogDeltaX(value, 5d);
+    }
+
+    /**
+     * Convert specified canvas delta Y to log image delta Y.<br>
+     * The conversion is still affected by zoom ratio but with specified logarithm form.
+     * 
+     * @deprecated Cannot give correct result if rotation is applied so use
+     *             IcyCanvasXD.canvasToImageLogDelta(...) instead
+     */
+    @Deprecated
+    public double canvasToImageLogDeltaY(int value, double logFactor)
+    {
+        final double scaleFactor = getScaleY();
+        // keep the zoom ratio but in a log perspective
+        return value / (scaleFactor / Math.pow(10, Math.log10(scaleFactor) / logFactor));
+    }
+
+    /**
+     * Convert specified canvas delta Y to log image delta Y.<br>
+     * The conversion is still affected by zoom ratio but with logarithm form.
+     * 
+     * @deprecated Cannot give correct result if rotation is applied so use
+     *             IcyCanvasXD.canvasToImageLogDelta(...) instead
+     */
+    @Deprecated
+    public double canvasToImageLogDeltaY(int value)
+    {
+        return canvasToImageLogDeltaY(value, 5d);
+    }
+
+    /**
      * Convert specified canvas X coordinate to image X coordinate
      * 
      * @deprecated Cannot give correct result if rotation is applied so use
@@ -3454,6 +3510,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     protected void sequenceDataChanged(IcyBufferedImage image, SequenceEventType type)
     {
+        // update sliders bounds if needed
+        updateZNav();
+        updateTNav();
+
         // adjust X position if needed
         final int maxX = getMaxX();
         final int curX = getPositionX();
@@ -3691,5 +3751,4 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (event instanceof IcyCanvasEvent)
             changed((IcyCanvasEvent) event);
     }
-
 }

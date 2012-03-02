@@ -18,9 +18,9 @@
  */
 package icy.gui.main;
 
-import icy.gui.util.GuiUtil;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
+import icy.util.GraphicsUtil;
 import icy.util.Random;
 
 import java.awt.AlphaComposite;
@@ -162,7 +162,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
             }
 
             final String text = "Version " + Icy.version;
-            final int textWidth = (int) GuiUtil.getStringBounds(g2, text).getWidth();
+            final int textWidth = (int) GraphicsUtil.getStringBounds(g2, text).getWidth();
 
             g2.setColor(bgTextColor);
             g2.drawString(text, width - (textWidth + 31), height - 8);
@@ -228,6 +228,8 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
         overlays.add(new BackgroundDesktopOverlay());
     }
 
+    // int i = 0;
+
     @Override
     public void paintComponent(Graphics g)
     {
@@ -239,6 +241,8 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
         // paint overlays
         for (DesktopOverlay overlay : overlays)
             overlay.Paint(g, w, h);
+
+        // System.out.println("paint background " + i++);
     }
 
     private void registerFrame(JInternalFrame frame)

@@ -22,6 +22,7 @@ import icy.resource.ResourceUtil;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.DateUtil;
+import icy.util.GraphicsUtil;
 import icy.util.IRCUtil;
 import icy.util.StringUtil;
 
@@ -264,7 +265,7 @@ public class ChatPanel extends ExternalizablePanel
             g2.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 
             // fixed size font, every character has the same bounds
-            final Rectangle2D charRect = GuiUtil.getStringBounds(g2, "M");
+            final Rectangle2D charRect = GraphicsUtil.getStringBounds(g2, "M");
             final float charHeight = (float) charRect.getHeight();
             final float charWidth = (float) charRect.getWidth();
             // keep 20 pixels margins

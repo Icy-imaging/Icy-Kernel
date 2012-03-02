@@ -70,6 +70,11 @@ public class HistogramPanel extends BorderedPanel
     double pixelToHistoRatio;
 
     /**
+     * internals
+     */
+    boolean updating;
+
+    /**
      * Create a new histogram panel for the specified value range.<br>
      * By default it uses a Logarithm representation (modifiable via {@link #setLogScaling(boolean)}
      * 
@@ -112,14 +117,20 @@ public class HistogramPanel extends BorderedPanel
                 buildHistogram();
             }
         });
+
+        updating = false;
     }
 
     /**
-     * @see icy.math.Histogram#reset()
+     * Reset histogram.<br>
+     * Call {@link #done()} when histogram calculation is completed<br>
+     * so the panel can refresh its display.
      */
     public void reset()
     {
         histogram.reset();
+        // start histogram calculation
+        updating = true;
     }
 
     /**
@@ -234,10 +245,22 @@ public class HistogramPanel extends BorderedPanel
     }
 
     /**
+     * Return true when {@link #reset()} method has been call without ending {@link #done()}.<br>
+     * That mean the histogram is being recomputed.
+     */
+    public boolean isUpdating()
+    {
+        return updating;
+    }
+
+    /**
      * Invoking this method mean we completed the histogram calculation.
      */
     public void done()
     {
+        // end histogram calculation
+        updating = false;
+
         refreshDataCache();
     }
 
@@ -513,32 +536,40 @@ public class HistogramPanel extends BorderedPanel
         g.setColor(color);
 
         // not yet computed
-        if (histogramData.length == 0)
+        if (histogramData.length != 0)
         {
-            g.drawString("computing...", (getWidth() / 2) - 60, (getHeight() / 2) - 20);
-            return;
+            synchronized (histogramData)
+            {
+                final int histoRange = histogramData.length - 1;
+                final int hRange = getClientHeight() - 1;
+                final int bottom = getClientY() + hRange;
+                final int l = getClientX();
+                final int r = l + getClientWidth();
+                final double ratio = pixelToHistoRatio;
+
+                for (int i = l; i < r; i++)
+                {
+                    int index = (int) Math.round((i - l) * ratio);
+
+                    if (index < 0)
+                        index = 0;
+                    else if (index > histoRange)
+                        index = histoRange;
+
+                    g.drawLine(i, bottom, i, bottom - (int) Math.round(histogramData[index] * hRange));
+                }
+            }
         }
 
-        synchronized (histogramData)
+        if ((histogramData.length == 0) || updating)
         {
-            final int histoRange = histogramData.length - 1;
-            final int hRange = getClientHeight() - 1;
-            final int bottom = getClientY() + hRange;
-            final int l = getClientX();
-            final int r = l + getClientWidth();
-            final double ratio = pixelToHistoRatio;
+            final int x = (getWidth() / 2) - 60;
+            final int y = (getHeight() / 2) - 20;
 
-            for (int i = l; i < r; i++)
-            {
-                int index = (int) Math.round((i - l) * ratio);
-
-                if (index < 0)
-                    index = 0;
-                else if (index > histoRange)
-                    index = histoRange;
-
-                g.drawLine(i, bottom, i, bottom - (int) Math.round(histogramData[index] * hRange));
-            }
+            g.setColor(Color.GRAY);
+            g.drawString("computing...", x + 1, y);
+            g.setColor(color);
+            g.drawString("computing...", x, y);
         }
     }
 }

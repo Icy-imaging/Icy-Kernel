@@ -19,8 +19,8 @@
 package icy.image;
 
 import icy.gui.component.FontUtil;
-import icy.gui.util.GuiUtil;
 import icy.network.URLUtil;
+import icy.util.GraphicsUtil;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -503,9 +503,9 @@ public class ImageUtil
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
         // get string bounds
-        final Rectangle2D bounds = GuiUtil.getStringBounds(g, text);
+        final Rectangle2D bounds = GraphicsUtil.getStringBounds(g, text);
 
-        // draw icon
+        // draw text
         g.drawString(text, w - ((float) bounds.getWidth()), 0 - (float) bounds.getY());
 
         g.dispose();

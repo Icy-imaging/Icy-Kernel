@@ -19,9 +19,9 @@
 package icy.gui.component;
 
 import icy.gui.component.button.IcyToggleButton;
-import icy.gui.util.GuiUtil;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
+import icy.util.GraphicsUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -101,7 +101,7 @@ public class PopupPanel extends JPanel
 
             if (text != null)
             {
-                final Rectangle2D r = GuiUtil.getStringBounds(this, text);
+                final Rectangle2D r = GraphicsUtil.getStringBounds(this, text);
 
                 return new Dimension((int) r.getWidth(), (int) r.getHeight());
             }

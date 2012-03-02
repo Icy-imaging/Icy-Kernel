@@ -279,6 +279,9 @@ public class MainFrame extends JRibbonFrame
         JPopupMenu.setDefaultLightWeightPopupEnabled(true);
         ToolTipManager.sharedInstance().setLightWeightPopupEnabled(true);
 
+        // FIXME : remove this when Ribbon with have fixed KeyTipLayer component
+        getRootPane().getLayeredPane().getComponent(0).setVisible(false);
+
         positionSaver = new WindowPositionSaver(this, "frame/main", new Point(50, 50), new Dimension(800, 600));
         previousInspectorInternalized = positionSaver.getPreferences().getBoolean(ID_PREVIOUS_STATE, true);
 

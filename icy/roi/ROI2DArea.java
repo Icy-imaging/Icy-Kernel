@@ -24,15 +24,19 @@ import icy.canvas.IcyCanvas3D;
 import icy.common.EventHierarchicalChecker;
 import icy.image.ImageUtil;
 import icy.sequence.Sequence;
+import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
+import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -329,34 +333,54 @@ public class ROI2DArea extends ROI2D
             if (!isActiveFor(canvas))
                 return;
 
+            drawROI(g, sequence, canvas);
+            drawInfos(g, sequence, canvas);
+        }
+
+        /**
+         * Draw the ROI itself
+         */
+        protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
             if (canvas instanceof IcyCanvas2D)
             {
-                // prepare color and stroke
-                g.setColor(getDisplayColor());
-                if (ROI2DArea.this.selected)
-                    g.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, ROI2DArea.this.stroke + 1d)));
-                else
-                    g.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, ROI2DArea.this.stroke)));
+                final Graphics2D g2 = (Graphics2D) g.create();
 
-                // draw bounds
-                g.draw(bounds);
+                // draw border black line
+                if (selected)
+                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 2d)));
+                else
+                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 1d)));
+                g2.setColor(Color.black);
+                g2.draw(bounds);
+                // draw internal border
+                g2.setColor(getDisplayColor());
+                if (selected)
+                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 1d)));
+                else
+                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke)));
+                g2.draw(bounds);
 
                 // set alpha
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaLevel));
+                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaLevel));
                 // draw mask
-                g.drawImage(imageMask, null, bounds.x, bounds.y);
+                g2.drawImage(imageMask, null, bounds.x, bounds.y);
 
                 // ROI selected ? draw cursor
                 if (selected && !focused)
                 {
+                    // draw cursor border
+                    g2.setColor(Color.black);
+                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke)));
+                    g2.draw(cursor);
+
                     // cursor color
-                    g.setColor(cursorColor);
+                    g2.setColor(cursorColor);
                     // draw cursor
-                    g.fill(cursor);
+                    g2.fill(cursor);
                 }
 
-                // set alpha back to normal
-                g.setComposite(AlphaComposite.SrcOver);
+                g2.dispose();
             }
 
             if (canvas instanceof IcyCanvas3D)
@@ -365,6 +389,69 @@ public class ROI2DArea extends ROI2D
 
             }
         }
+
+        /**
+         * Draw extras informations as name, size and position
+         */
+        protected void drawInfos(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            if (canvas instanceof IcyCanvas2D)
+            {
+                final IcyCanvas2D cnv2d = (IcyCanvas2D) canvas;
+                final Rectangle2D bounds = getBounds2D();
+
+                if (selected)
+                {
+                    // draw position and size inside ROI
+                    final String roiPositionString = "X=" + StringUtil.toString(bounds.getX(), 1) + "  Y="
+                            + StringUtil.toString(bounds.getY(), 1);
+                    final String roiBoundingSizeString = "W=" + StringUtil.toString(bounds.getWidth(), 1) + "  H="
+                            + StringUtil.toString(bounds.getHeight(), 1);
+                    final String text = roiPositionString + "\n" + roiBoundingSizeString;
+
+                    // position = just above ROI bounds
+                    final Point pos = cnv2d.imageToCanvas(bounds.getX() + (bounds.getWidth() / 2), bounds.getY());
+                    final Font font = new Font("Arial", Font.BOLD, 12);
+
+                    final Graphics2D g2 = (Graphics2D) g.create();
+
+                    g2.transform(cnv2d.getInverseTransform());
+                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g2.setFont(font);
+                    g2.setColor(getDisplayColor());
+
+                    GraphicsUtil.drawCenteredText(g2, text, pos.x,
+                            pos.y - (int) (GraphicsUtil.getStringBounds(g2, text).getHeight()), true);
+
+                    g2.dispose();
+                }
+                // display tooltip
+                else if (focused)
+                {
+                    // draw position and size in the tooltip
+                    final String roiPositionString = "Position       X=" + StringUtil.toString(bounds.getX(), 1)
+                            + "  Y=" + StringUtil.toString(bounds.getY(), 1);
+                    final String roiBoundingSizeString = "Dimension  W=" + StringUtil.toString(bounds.getWidth(), 1)
+                            + "  H=" + StringUtil.toString(bounds.getHeight(), 1);
+                    final String text = roiPositionString + "\n" + roiBoundingSizeString;
+
+                    final Point pos = cnv2d.imageToCanvas(mousePos);
+                    pos.translate(8, 8);
+                    final Font font = new Font("Arial", Font.PLAIN, 12);
+
+                    final Graphics2D g2 = (Graphics2D) g.create();
+
+                    g2.transform(cnv2d.getInverseTransform());
+                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g2.setFont(font);
+
+                    GraphicsUtil.drawHint(g2, text, pos.x, pos.y, Color.gray, getDisplayColor());
+
+                    g2.dispose();
+                }
+            }
+        }
+
     }
 
     public static final String ID_BOUNDS_X = "boundsX";

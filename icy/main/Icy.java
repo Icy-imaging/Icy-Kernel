@@ -403,9 +403,6 @@ public class Icy
                 // mark the application as exiting
                 exiting = true;
 
-                // shutdown background processor
-                ThreadUtil.shutdown();
-
                 final ImageJ ij = Icy.getMainInterface().getImageJ();
 
                 // clean ImageJ exit
@@ -438,6 +435,9 @@ public class Icy
                 for (JFrame frame : Icy.getMainInterface().getExternalFrames())
                     if (frame != mainFrame)
                         frame.dispose();
+                
+                // shutdown background processor after frame close
+                ThreadUtil.shutdown();
 
                 // need to create the exit frame in EDT
                 ThreadUtil.invokeNow(new Runnable()

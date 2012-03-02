@@ -141,9 +141,8 @@ public abstract class ROI2DRectShape extends ROI2DShape
     @Override
     protected boolean removePoint(Anchor2D pt)
     {
-        // remove point on this ROI remove the ROI
-        delete();
-        return true;
+        // this ROI doesn't support point remove
+        return false;
     }
 
     @Override

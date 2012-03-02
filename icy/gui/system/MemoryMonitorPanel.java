@@ -18,10 +18,10 @@
  */
 package icy.gui.system;
 
-import icy.gui.util.GuiUtil;
 import icy.math.UnitUtil;
 import icy.system.SystemUtil;
 import icy.util.ColorUtil;
+import icy.util.GraphicsUtil;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -107,7 +107,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
         final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
         final Color memColor = Color.green;
 
-        GuiUtil.paintBackGround(w, h, g);
+        GraphicsUtil.paintIcyBackGround(w, h, g);
 
         final Graphics2D g2 = (Graphics2D) g.create();
 
@@ -167,19 +167,19 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
 
         // display Used & Max Memory
         g2.setColor(Color.black);
-        GuiUtil.drawHCenteredText(g2, infos[0], w + 1, 17 + 1);
+        GraphicsUtil.drawHCenteredText(g2, infos[0], (w + 1) / 2, 6 + 1, false);
         g2.setColor(ColorUtil.mix(memColor, Color.white));
-        GuiUtil.drawHCenteredText(g2, infos[0], w, 17);
+        GraphicsUtil.drawHCenteredText(g2, infos[0], w / 2, 6, false);
         // display CPU Load
         g2.setColor(Color.black);
-        GuiUtil.drawHCenteredText(g2, infos[1], w + 1, 29 + 1);
+        GraphicsUtil.drawHCenteredText(g2, infos[1], (w + 1) / 2, 18 + 1, false);
         g2.setColor(ColorUtil.mix(cpuColor, Color.white));
-        GuiUtil.drawHCenteredText(g2, infos[1], w, 29);
+        GraphicsUtil.drawHCenteredText(g2, infos[1], w / 2, 18, false);
 
         if (displayHelpMessage)
         {
             g2.setColor(Color.white);
-            GuiUtil.drawHCenteredText(g2, "click to force a garbage collector event", w, 44);
+            GraphicsUtil.drawHCenteredText(g2, "click to force a garbage collector event", w / 2, 44, false);
         }
 
         g2.dispose();
@@ -189,7 +189,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
     {
         final double totalMemory = SystemUtil.getJavaTotalMemory();
         final double usedMemory = totalMemory - SystemUtil.getJavaFreeMemory();
-        final int cpuLoad = SystemUtil.getSystemCpuLoad();
+        final int cpuLoad = SystemUtil.getCpuLoad();
 
         // save used memory
         newValue(0, usedMemory);

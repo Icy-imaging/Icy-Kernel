@@ -22,7 +22,6 @@ import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.EventHierarchicalChecker;
-import icy.gui.util.GuiUtil;
 import icy.main.Icy;
 import icy.painter.Anchor2D;
 import icy.painter.Anchor2D.Anchor2DListener;
@@ -32,6 +31,7 @@ import icy.painter.VtkPainter;
 import icy.roi.ROIEvent.ROIPointEventType;
 import icy.sequence.Sequence;
 import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
 import icy.util.StringUtil;
 import icy.vtk.VtkUtil;
@@ -41,7 +41,9 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -408,27 +410,36 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
 
-                g2.setColor(getDisplayColor());
-
                 // ROI selected ?
                 if (selected)
                 {
                     final Graphics2D g3 = (Graphics2D) g2.create();
 
                     final AlphaComposite prevAlpha = (AlphaComposite) g3.getComposite();
+
                     // show content with an alpha factor
                     g3.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * 0.3f));
+                    g3.setColor(getDisplayColor());
                     g3.fill(shape);
 
                     g3.dispose();
                 }
 
+                // draw border black line
+                if (selected)
+                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 2d)));
+                else
+                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 1d)));
+                g2.setColor(Color.black);
+                g2.draw(shape);
+                // draw internal border
                 if (selected)
                     g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 1d)));
                 else
                     g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke)));
-
+                g2.setColor(getDisplayColor());
                 g2.draw(shape);
+
                 // draw from flatten shape as we use it for collision detection
                 // ShapeUtil.drawFromPath(getPathIterator(null, 0.1), g);
 
@@ -448,7 +459,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                 final Canvas3D canvas3d = (Canvas3D) canvas;
 
                 // FIXME : probably need a better implementation
-
                 final double[] s = canvas3d.getVolumeScale();
 
                 // scaling changed ?
@@ -476,33 +486,55 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         {
             if (canvas instanceof IcyCanvas2D)
             {
+                final IcyCanvas2D cnv2d = (IcyCanvas2D) canvas;
+                final Rectangle2D bounds = getBounds2D();
+
                 if (selected)
                 {
+                    // draw position and size inside ROI
+                    final String roiPositionString = "X=" + StringUtil.toString(bounds.getX(), 1) + "  Y="
+                            + StringUtil.toString(bounds.getY(), 1);
+                    final String roiBoundingSizeString = "W=" + StringUtil.toString(bounds.getWidth(), 1) + "  H="
+                            + StringUtil.toString(bounds.getHeight(), 1);
+                    final String text = roiPositionString + "\n" + roiBoundingSizeString;
+
+                    // position = just above ROI bounds
+                    final Point pos = cnv2d.imageToCanvas(bounds.getX() + (bounds.getWidth() / 2), bounds.getY());
+                    final Font font = new Font("Arial", Font.BOLD, 12);
+
                     final Graphics2D g2 = (Graphics2D) g.create();
 
-                    g2.setColor(getDisplayColor());
-
-                    // draw position and size
-                    final Rectangle2D bounds = getBounds2D();
-
-                    String roiPositionString = "(" + StringUtil.toString(bounds.getX(), 1) + ";"
-                            + StringUtil.toString(bounds.getY(), 1) + ")";
-                    String roiBoundingSizeString = "[" + StringUtil.toString(bounds.getWidth(), 1) + ";"
-                            + StringUtil.toString(bounds.getHeight(), 1) + "]";
-                    String roiInfoString = roiPositionString + " " + roiBoundingSizeString;
-
-                    Font font;
-                    Rectangle2D stringBounds;
-                    int xPos, yPos;
-
-                    font = new Font("Arial", Font.BOLD, (int) ROI.canvasToImageLogDeltaX(canvas, 15));
-                    stringBounds = GuiUtil.getStringBounds(g, font, roiInfoString);
-                    xPos = (int) (bounds.getX() + bounds.getWidth() / 2 - stringBounds.getWidth() / 2);
-                    yPos = (int) (bounds.getY() - stringBounds.getHeight() / 2);
-
-                    g2.setColor(getDisplayColor());
+                    g2.transform(cnv2d.getInverseTransform());
+                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                     g2.setFont(font);
-                    g2.drawString(roiInfoString, xPos, yPos);
+                    g2.setColor(getDisplayColor());
+
+                    GraphicsUtil.drawCenteredText(g2, text, pos.x,
+                            pos.y - (int) (GraphicsUtil.getStringBounds(g2, text).getHeight()), true);
+
+                    g2.dispose();
+                }
+                // display tooltip
+                else if (focused)
+                {
+                    // draw position and size in the tooltip
+                    final String roiPositionString = "Position       X=" + StringUtil.toString(bounds.getX(), 1)
+                            + "  Y=" + StringUtil.toString(bounds.getY(), 1);
+                    final String roiBoundingSizeString = "Dimension  W=" + StringUtil.toString(bounds.getWidth(), 1)
+                            + "  H=" + StringUtil.toString(bounds.getHeight(), 1);
+                    final String text = roiPositionString + "\n" + roiBoundingSizeString;
+
+                    final Point pos = cnv2d.imageToCanvas(mousePos);
+                    pos.translate(8, 8);
+                    final Font font = new Font("Arial", Font.PLAIN, 12);
+
+                    final Graphics2D g2 = (Graphics2D) g.create();
+
+                    g2.transform(cnv2d.getInverseTransform());
+                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g2.setFont(font);
+
+                    GraphicsUtil.drawHint(g2, text, pos.x, pos.y, Color.gray, getDisplayColor());
 
                     g2.dispose();
                 }

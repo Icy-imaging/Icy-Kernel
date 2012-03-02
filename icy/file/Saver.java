@@ -370,7 +370,7 @@ public class Saver
             {
                 // save as multi images file
                 save(null, sequence, filePath, zMin, zMax, tMin, tMax, fps, saveFrame);
-                
+
                 // change sequence name
                 sequence.setName(FileUtil.getFileName(filePath, false));
                 sequence.setFilename(filePath);
@@ -564,6 +564,7 @@ public class Saver
 
             // get endianess
             final boolean littleEndian = !writer.getMetadataRetrieve().getPixelsBinDataBigEndian(0, 0).booleanValue();
+            byte[] data = null;
 
             try
             {
@@ -584,7 +585,11 @@ public class Saver
                             for (int c = 0; c < sizeC; c++)
                             {
                                 if (image != null)
-                                    writer.saveBytes(imageIndex, image.getRawData(c, littleEndian));
+                                {
+                                    // avoid multiple allocation
+                                    data = image.getRawData(c, data, 0, littleEndian);
+                                    writer.saveBytes(imageIndex, data);
+                                }
 
                                 imageIndex++;
                             }
@@ -592,7 +597,11 @@ public class Saver
                         else
                         {
                             if (image != null)
-                                writer.saveBytes(imageIndex, image.getRawData(littleEndian, interleaved));
+                            {
+                                // avoid multiple allocation
+                                data = image.getRawData(data, 0, littleEndian, interleaved);
+                                writer.saveBytes(imageIndex, data);
+                            }
                             // ((BufferedImageWriter) writer).saveImage(imageIndex, image);
 
                             imageIndex++;

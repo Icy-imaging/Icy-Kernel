@@ -20,11 +20,11 @@ package icy.painter;
 
 import icy.canvas.IcyCanvas;
 import icy.file.xml.XMLPersistent;
-import icy.roi.ROI;
 import icy.sequence.Sequence;
 import icy.util.EventUtil;
 import icy.util.XMLUtil;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.InputEvent;
@@ -91,8 +91,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
      * internals
      */
     protected final Ellipse2D ellipse;
-    protected Point2D startDragMousePosition;
-    protected Point2D startDragROIPosition;
+    protected Point2D startDragPosition;
 
     /**
      * @param sequence
@@ -114,8 +113,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         visible = true;
 
         ellipse = new Ellipse2D.Double();
-        startDragMousePosition = null;
-        startDragROIPosition = null;
+        startDragPosition = null;
     }
 
     /**
@@ -482,6 +480,16 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         if (selected != value)
         {
             selected = value;
+
+            if (value)
+            {
+                // start drag position
+                if (startDragPosition == null)
+                    startDragPosition = getPosition();
+            }
+            else
+                startDragPosition = null;
+
             changed();
         }
     }
@@ -535,21 +543,27 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         return ellipse.contains(x, y);
     }
 
+    protected double getAdjRay(IcyCanvas canvas)
+    {
+        return Math.max(canvas.canvasToImageLogDeltaX(ray), canvas.canvasToImageLogDeltaY(ray));
+    }
+
     private void updateEllipse(IcyCanvas canvas)
     {
-        final double adjRayX = ROI.canvasToImageLogDeltaX(canvas, ray);
-        final double adjRayY = ROI.canvasToImageLogDeltaY(canvas, ray);
+        final double adjRayX = canvas.canvasToImageLogDeltaX(ray);
+        final double adjRayY = canvas.canvasToImageLogDeltaY(ray);
+
         ellipse.setFrame(position.x - adjRayX, position.y - adjRayY, adjRayX * 2, adjRayY * 2);
     }
 
     protected boolean updateDrag(InputEvent e, Point2D imagePoint)
     {
         // not dragging --> exit
-        if (startDragMousePosition == null)
+        if (startDragPosition == null)
             return false;
 
-        double dx = imagePoint.getX() - startDragMousePosition.getX();
-        double dy = imagePoint.getY() - startDragMousePosition.getY();
+        double dx = imagePoint.getX() - startDragPosition.getX();
+        double dy = imagePoint.getY() - startDragPosition.getY();
 
         // shift action --> limit to one direction
         if (EventUtil.isShiftDown(e))
@@ -563,7 +577,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         }
 
         // set new position
-        setPosition(new Point2D.Double(startDragROIPosition.getX() + dx, startDragROIPosition.getY() + dy));
+        setPosition(new Point2D.Double(startDragPosition.getX() + dx, startDragPosition.getY() + dy));
 
         return true;
     }
@@ -609,12 +623,21 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
 
         updateEllipse(canvas);
 
-        if (selected)
-            g.setColor(selectedColor);
-        else
-            g.setColor(color);
+        final Graphics2D g2 = (Graphics2D) g.create();
 
-        g.fill(ellipse);
+        // draw content
+        if (selected)
+            g2.setColor(selectedColor);
+        else
+            g2.setColor(color);
+        g2.fill(ellipse);
+
+        // draw black border
+        g2.setStroke(new BasicStroke((float) (getAdjRay(canvas) / 8f)));
+        g2.setColor(Color.black);
+        g2.draw(ellipse);
+
+        g2.dispose();
     }
 
     @Override
@@ -658,7 +681,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
     @Override
     public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
-        startDragMousePosition = null;
+        startDragPosition = null;
     }
 
     @Override
@@ -675,13 +698,6 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
             // if selected then move according to mouse position
             if (isSelected())
             {
-                // start drag position
-                if (startDragMousePosition == null)
-                {
-                    startDragMousePosition = imagePoint;
-                    startDragROIPosition = getPosition();
-                }
-
                 updateDrag(e, imagePoint);
 
                 // final double dx = imagePoint.getX() - position.x;

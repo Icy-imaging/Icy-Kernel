@@ -1441,16 +1441,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         if (!initialized)
             return;
 
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                // update slider bounds if needed
-                updateTNav();
-            }
-        });
-
         // rebuild image data and refresh
         buildImageData();
         refresh();
