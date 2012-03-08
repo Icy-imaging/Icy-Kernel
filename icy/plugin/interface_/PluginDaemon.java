@@ -25,5 +25,5 @@ public interface PluginDaemon extends PluginThreaded, Runnable
      * Called by Icy to stop the daemon plugin.<br>
      * After this method has been called, the <code>run()</code> should end execution.
      */
-    public boolean stop();
+    public void stop();
 }
