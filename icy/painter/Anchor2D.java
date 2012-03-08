@@ -91,7 +91,8 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
      * internals
      */
     protected final Ellipse2D ellipse;
-    protected Point2D startDragPosition;
+    protected Point2D startDragMousePosition;
+    protected Point2D startDragPainterPosition;
 
     /**
      * @param sequence
@@ -113,7 +114,8 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         visible = true;
 
         ellipse = new Ellipse2D.Double();
-        startDragPosition = null;
+        startDragMousePosition = null;
+        startDragPainterPosition = null;
     }
 
     /**
@@ -481,14 +483,9 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         {
             selected = value;
 
-            if (value)
-            {
-                // start drag position
-                if (startDragPosition == null)
-                    startDragPosition = getPosition();
-            }
-            else
-                startDragPosition = null;
+            // end drag
+            if (!value)
+                startDragMousePosition = null;
 
             changed();
         }
@@ -559,11 +556,11 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
     protected boolean updateDrag(InputEvent e, Point2D imagePoint)
     {
         // not dragging --> exit
-        if (startDragPosition == null)
+        if (startDragMousePosition == null)
             return false;
 
-        double dx = imagePoint.getX() - startDragPosition.getX();
-        double dy = imagePoint.getY() - startDragPosition.getY();
+        double dx = imagePoint.getX() - startDragMousePosition.getX();
+        double dy = imagePoint.getY() - startDragMousePosition.getY();
 
         // shift action --> limit to one direction
         if (EventUtil.isShiftDown(e))
@@ -577,7 +574,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         }
 
         // set new position
-        setPosition(new Point2D.Double(startDragPosition.getX() + dx, startDragPosition.getY() + dy));
+        setPosition(new Point2D.Double(startDragPainterPosition.getX() + dx, startDragPainterPosition.getY() + dy));
 
         return true;
     }
@@ -671,17 +668,20 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
 
         if (EventUtil.isLeftMouseButton(e))
         {
-            // consume event if we are clicking on a selected point
-            // this permit to enable drag operation on this painter
+            // consume event to activate drag
             if (isSelected())
+            {
+                startDragMousePosition = imagePoint;
+                startDragPainterPosition = getPosition();
                 e.consume();
+            }
         }
     }
 
     @Override
     public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
-        startDragPosition = null;
+        startDragMousePosition = null;
     }
 
     @Override
@@ -698,14 +698,15 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
             // if selected then move according to mouse position
             if (isSelected())
             {
+                // force start drag if not already the case
+                if (startDragMousePosition == null)
+                {
+                    startDragMousePosition = getPosition();
+                    startDragPainterPosition = getPosition();
+                }
+
                 updateDrag(e, imagePoint);
 
-                // final double dx = imagePoint.getX() - position.x;
-                // final double dy = imagePoint.getY() - position.y;
-                //
-                // translate(dx, dy);
-
-                // setPosition(imagePoint);
                 e.consume();
             }
         }
@@ -723,7 +724,9 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         else
         {
             final boolean overlapped = isOver(canvas, imagePoint);
+
             setSelected(overlapped);
+
             // so we can only have one selected at once
             if (overlapped)
                 e.consume();

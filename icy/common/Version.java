@@ -176,7 +176,7 @@ public class Version implements Comparable<Version>
      */
     public boolean isEmpty()
     {
-        return (major == 0) && (minor == 0) && (revision == 0) && (build == 0);
+        return (major == 0) && (minor == 0) && (revision == 0) && (build == 0) && !beta;
     }
 
     @Override
@@ -204,7 +204,7 @@ public class Version implements Comparable<Version>
     @Override
     public String toString()
     {
-        if ((major == 0) && (minor == 0) && (revision == 0) && (build == 0) && !beta)
+        if (isEmpty())
             return "";
 
         String result;

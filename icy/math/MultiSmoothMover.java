@@ -53,26 +53,26 @@ public class MultiSmoothMover implements ActionListener
     /**
      * current value
      */
-    private double[] currentValues;
+    protected double[] currentValues;
     /**
      * smooth movement type
      */
-    private SmoothMoveType type;
+    protected SmoothMoveType type;
     /**
      * time to do move (in ms)
      */
-    private int moveTime;
+    protected int moveTime;
 
     /**
      * internals
      */
-    private final Timer timer;
-    private boolean[] moving;
-    private double[] destValues;
-    private double[][] stepValues;
+    protected final Timer timer;
+    protected boolean[] moving;
+    protected double[] destValues;
+    protected double[][] stepValues;
     // private int stepIndex;
-    private long[] startTime;
-    private final ArrayList<MultiSmoothMoverListener> listeners;
+    protected long[] startTime;
+    protected final ArrayList<MultiSmoothMoverListener> listeners;
 
     public MultiSmoothMover(int size, SmoothMoveType type)
     {
@@ -164,7 +164,7 @@ public class MultiSmoothMover implements ActionListener
         return false;
     }
 
-    private void start(int index, long time)
+    protected void start(int index, long time)
     {
         final double current = currentValues[index];
         final double dest = destValues[index];
@@ -339,7 +339,7 @@ public class MultiSmoothMover implements ActionListener
     /**
      * update current value from elapsed time
      */
-    private void updateCurrentValue(int index, long time)
+    protected void updateCurrentValue(int index, long time)
     {
         final int elapsedMsTime = (int) (time - startTime[index]);
 
@@ -359,7 +359,7 @@ public class MultiSmoothMover implements ActionListener
         }
     }
 
-    private void setCurrentValue(int index, double value, int pourcent)
+    protected void setCurrentValue(int index, double value, int pourcent)
     {
         if (currentValues[index] != value)
         {
@@ -382,7 +382,7 @@ public class MultiSmoothMover implements ActionListener
     /**
      * Move started event
      */
-    private void moveStarted(int index, long time)
+    protected void moveStarted(int index, long time)
     {
         startTime[index] = time;
 
@@ -393,7 +393,7 @@ public class MultiSmoothMover implements ActionListener
     /**
      * Move modified event
      */
-    private void moveModified(int index, long time)
+    protected void moveModified(int index, long time)
     {
         startTime[index] = time;
 
@@ -404,7 +404,7 @@ public class MultiSmoothMover implements ActionListener
     /**
      * Move ended event
      */
-    private void moveEnded(int index)
+    protected void moveEnded(int index)
     {
         for (MultiSmoothMoverListener listener : listeners)
             listener.moveEnded(this, index, currentValues[index]);
@@ -417,7 +417,7 @@ public class MultiSmoothMover implements ActionListener
      * @param newValue
      * @param i
      */
-    private void changed(int index, double newValue, int pourcent)
+    protected void changed(int index, double newValue, int pourcent)
     {
         for (MultiSmoothMoverListener listener : listeners)
             listener.valueChanged(this, index, newValue, pourcent);

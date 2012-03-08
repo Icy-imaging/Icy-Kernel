@@ -883,14 +883,6 @@ public class ChatPanel extends ExternalizablePanel
         add(tabPane, BorderLayout.CENTER);
 
         usersScrollPane = new JScrollPane();
-        // usersScrollPane.addComponentListener(new ComponentAdapter()
-        // {
-        // @Override
-        // public void componentResized(ComponentEvent e)
-        // {
-        // // ChatPreferences.setUsersPanelWidth(getUsersScrollPaneWidth());
-        // }
-        // });
         usersScrollPane.setPreferredSize(new Dimension(130, 200));
         add(usersScrollPane, BorderLayout.EAST);
 

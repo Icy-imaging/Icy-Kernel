@@ -71,25 +71,25 @@ public class SmoothMover implements ActionListener
     /**
      * current value
      */
-    private double currentValue;
+    protected double currentValue;
     /**
      * smooth movement type
      */
-    private SmoothMoveType type;
+    protected SmoothMoveType type;
     /**
      * time to do move (in ms)
      */
-    private int moveTime;
+    protected int moveTime;
 
     /**
      * internals
      */
-    private final Timer timer;
-    private double destValue;
-    private double[] stepValues;
+    protected final Timer timer;
+    protected double destValue;
+    protected double[] stepValues;
     // private int stepIndex;
-    private long startTime;
-    private final ArrayList<SmoothMoverListener> listeners;
+    protected long startTime;
+    protected final ArrayList<SmoothMoverListener> listeners;
 
     public SmoothMover(double initValue, SmoothMoveType type)
     {
@@ -135,7 +135,7 @@ public class SmoothMover implements ActionListener
         return timer.isRunning();
     }
 
-    private void start()
+    protected void start()
     {
         // number of step to reach final value
         final int size = Math.max(moveTime / timer.getDelay(), 1);
@@ -294,7 +294,7 @@ public class SmoothMover implements ActionListener
     /**
      * Move started event
      */
-    private void moveStarted()
+    protected void moveStarted()
     {
         startTime = System.currentTimeMillis();
 
@@ -305,7 +305,7 @@ public class SmoothMover implements ActionListener
     /**
      * Move modified event
      */
-    private void moveModified()
+    protected void moveModified()
     {
         startTime = System.currentTimeMillis();
 
@@ -316,7 +316,7 @@ public class SmoothMover implements ActionListener
     /**
      * Move ended event
      */
-    private void moveEnded()
+    protected void moveEnded()
     {
         for (SmoothMoverListener listener : listeners)
             listener.moveEnded(this, currentValue);
@@ -325,7 +325,7 @@ public class SmoothMover implements ActionListener
     /**
      * update current value from elapsed time
      */
-    private void updateCurrentValue()
+    protected void updateCurrentValue()
     {
         final int elapsedMsTime = (int) (System.currentTimeMillis() - startTime);
 
@@ -345,7 +345,7 @@ public class SmoothMover implements ActionListener
         }
     }
 
-    private void setCurrentValue(double value, int pourcent)
+    protected void setCurrentValue(double value, int pourcent)
     {
         if (currentValue != value)
         {
@@ -362,7 +362,7 @@ public class SmoothMover implements ActionListener
      * @param newValue
      * @param i
      */
-    private void changed(double newValue, int pourcent)
+    protected void changed(double newValue, int pourcent)
     {
         for (SmoothMoverListener listener : listeners)
             listener.valueChanged(this, newValue, pourcent);

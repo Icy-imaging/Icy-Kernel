@@ -21,7 +21,7 @@ package icy.plugin;
 import icy.main.Icy;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginImageAnalysis;
-import icy.plugin.interface_.PluginOwnThread;
+import icy.plugin.interface_.PluginThreaded;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 
@@ -38,8 +38,10 @@ public class PluginLauncher
         final PluginDescriptor pluginDesc;
         final Plugin plugin;
 
-        public PluginThread(PluginDescriptor pluginDesc, Plugin plugin)
+        public PluginThread(PluginDescriptor pluginDesc, Plugin plugin, PluginThreaded runnable)
         {
+            super(runnable, pluginDesc.getName());
+
             this.pluginDesc = pluginDesc;
             this.plugin = plugin;
         }
@@ -74,9 +76,14 @@ public class PluginLauncher
             // register plugin
             Icy.getMainInterface().registerPlugin(plugin);
 
-            final Thread thread = new PluginThread(pluginDesc, plugin);
+            final Thread thread;
 
-            if (plugin instanceof PluginOwnThread)
+            if (plugin instanceof PluginThreaded)
+                thread = new PluginThread(pluginDesc, plugin, (PluginThreaded) plugin);
+            else
+                thread = new PluginThread(pluginDesc, plugin, null);
+
+            if (plugin instanceof PluginThreaded)
                 // launch as thread
                 thread.start();
             else

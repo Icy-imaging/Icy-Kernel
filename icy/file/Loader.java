@@ -31,6 +31,7 @@ import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.type.collection.CollectionUtil;
+import icy.util.OMEUtil;
 import icy.util.StringUtil;
 
 import java.io.File;
@@ -230,7 +231,7 @@ public class Loader
                         seq.setFilename(FileUtil.setExtension(
                                 FileUtil.setExtension(filename, "") + "_C" + newPos.getC(),
                                 FileUtil.getFileExtension(filename, true)));
-                        seq.setMetaData((IMetadata) lastUsedReader.getMetadataStore());
+                        seq.setMetaData(OMEUtil.getOMEMetadata((IMetadata) lastUsedReader.getMetadataStore()));
                         sequences.add(seq);
                     }
                     else if (prevPos.getT() != filePosition.getT())
@@ -337,7 +338,7 @@ public class Loader
                 seq = new Sequence();
                 seq.setName(FileUtil.getFileName(path, false));
                 seq.setFilename(path);
-                seq.setMetaData((IMetadata) reader.getMetadataStore());
+                seq.setMetaData(OMEUtil.getOMEMetadata((IMetadata) reader.getMetadataStore()));
                 sequences.add(seq);
             }
 
@@ -357,7 +358,7 @@ public class Loader
                     if (progressLen > 10)
                         loaderFrame.setLength(progressLen);
 
-                    // no single image -> create new sequence 
+                    // no single image -> create new sequence
                     if (s > 0)
                     {
                         // remove empty element on current sequence
@@ -368,14 +369,14 @@ public class Loader
                         seq = new Sequence();
                         seq.setName(FileUtil.getFileName(file.getName(), false));
                         seq.setFilename(path);
-                        seq.setMetaData((IMetadata) reader.getMetadataStore());
+                        seq.setMetaData(OMEUtil.getOMEMetadata((IMetadata) reader.getMetadataStore()));
                         sequences.add(seq);
                         seq.beginUpdate();
 
                         // re init position
-                        position.set(0, 0, 0);                        
-//                        position.setT(position.getT() + 1);
-//                        position.setZ(0);
+                        position.set(0, 0, 0);
+                        // position.setT(position.getT() + 1);
+                        // position.setZ(0);
                     }
 
                     for (int t = 0; t < frames; t++)
@@ -416,7 +417,7 @@ public class Loader
                                 seq = new Sequence();
                                 seq.setName(FileUtil.getFileName(file.getName(), false));
                                 seq.setFilename(path);
-                                seq.setMetaData((IMetadata) reader.getMetadataStore());
+                                seq.setMetaData(OMEUtil.getOMEMetadata((IMetadata) reader.getMetadataStore()));
                                 sequences.add(seq);
                                 seq.beginUpdate();
 

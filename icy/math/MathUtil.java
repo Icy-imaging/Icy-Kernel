@@ -603,4 +603,29 @@ public class MathUtil
         return res;
     }
 
+    /**
+     * Return the value in <code>source</code> which is the closest to <code>value</code> Returns
+     * <code>0</code> if source is null or empty.
+     */
+    public static double closest(double value, double[] source)
+    {
+        if ((source == null) || (source.length == 0))
+            return 0d;
+
+        double result = source[0];
+        double minDelta = Math.abs(value - result);
+
+        for (double d : source)
+        {
+            final double delta = Math.abs(value - d);
+
+            if (delta < minDelta)
+            {
+                result = d;
+                minDelta = delta;
+            }
+        }
+
+        return result;
+    }
 }

@@ -14,6 +14,7 @@ import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.ImageUtil;
 import icy.main.Icy;
+import icy.math.Interpolator;
 import icy.math.MathUtil;
 import icy.math.MultiSmoothMover;
 import icy.math.MultiSmoothMover.MultiSmoothMoverAdapter;
@@ -53,6 +54,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -99,6 +101,15 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     static final Image ICON_TARGET_BLACK = ImageUtil.getColorImageFromAlphaImage(ICON_TARGET, Color.black);
     static final Image ICON_TARGET_LIGHT = ImageUtil.getColorImageFromAlphaImage(ICON_TARGET, Color.lightGray);
 
+    /**
+     * Possible rounded zoom factor : 0.01 --> 100
+     */
+    final static double[] zoomRoundedFactors = new double[] {
+            0.01d, 0.02d, 0.0333d, 0.05d, 0.075d,
+            0.1d, 0.15d, 0.2d, 0.25d, 0.333d, 0.5d, 0.66d, 0.75d,
+            1d, 1.25d, 1.5d, 1.75d, 2d, 2.5d, 3d, 4d, 5d, 6.6d, 7.5d,
+            10d, 15d, 20d, 30d, 50d, 66d, 75d, 100d};
+
     private class CanvasMap extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener
     {
         /**
@@ -106,13 +117,29 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
          */
         private static final long serialVersionUID = -7305605644605013768L;
 
-        private boolean rotating;
+        private Point mouseMapPos;
+        private Point mapStartDragPos;
+        private int mapStartOffsetX;
+        private int mapStartOffsetY;
+        private double mapStartScaleX;
+        private double mapStartScaleY;
+        private double mapStartRotationZ;
+        private boolean mapMoving;
+        private boolean mapRotating;
 
         public CanvasMap()
         {
             super();
 
-            rotating = false;
+            mouseMapPos = new Point(0, 0);
+            mapStartDragPos = null;
+            mapStartOffsetX = 0;
+            mapStartOffsetY = 0;
+            mapStartScaleX = 0;
+            mapStartScaleY = 0;
+            mapStartRotationZ = 0;
+            mapMoving = false;
+            mapRotating = false;
 
             setBorder(BorderFactory.createRaisedBevelBorder());
             // height will then be fixed to 160
@@ -172,19 +199,110 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
          */
         private Point getCanvasPosition(Point p)
         {
+            // transform to canvas view coordinate
+            return imageToCanvas(getImagePosition(p));
+        }
+
+        /**
+         * Transform a Image point in CanvasView point
+         */
+        private Point getCanvasPosition(Point2D.Double p)
+        {
+            // transform to canvas view coordinate
+            return imageToCanvas(p);
+        }
+
+        /**
+         * Transform a CanvasMap point in Image point
+         */
+        private Point2D.Double getImagePosition(Point p)
+        {
             final AffineTransform trans = getImageTransform();
 
             try
             {
                 // get image coordinates
-                final Point2D imagePoint = trans.inverseTransform(p, null);
-                // transform to canvas view coordinate
-                return imageToCanvas(imagePoint.getX(), imagePoint.getY());
+                return (Point2D.Double) trans.inverseTransform(p, new Point2D.Double());
             }
             catch (Exception ecx)
             {
-                return new Point(0, 0);
+                return new Point2D.Double(0, 0);
             }
+        }
+
+        public boolean isDragging()
+        {
+            return mapStartDragPos != null;
+        }
+
+        protected void updateDrag(InputEvent e)
+        {
+            // not moving --> exit
+            if (!mapMoving)
+                return;
+
+            final Point2D.Double startDragImagePoint = getImagePosition(mapStartDragPos);
+            final Point2D.Double imagePoint = getImagePosition(mouseMapPos);
+
+            // shift action --> limit to one direction
+            if (EventUtil.isShiftDown(e))
+            {
+                // X drag
+                if (Math.abs(mouseMapPos.x - mapStartDragPos.x) > Math.abs(mouseMapPos.y - mapStartDragPos.y))
+                    imagePoint.y = startDragImagePoint.y;
+                // Y drag
+                else
+                    imagePoint.x = startDragImagePoint.x;
+            }
+
+            // center view on this point (this update mouse canvas position)
+            centerOnImage(imagePoint);
+            // no need to update mouse canvas position here as it stays at center
+        }
+
+        protected void updateRot(InputEvent e)
+        {
+            // not rotating --> exit
+            if (!mapRotating)
+                return;
+
+            final Point2D.Double imagePoint = getImagePosition(mouseMapPos);
+
+            // update mouse canvas position from image position
+            setMouseCanvasPos(imageToCanvas(imagePoint));
+
+            // get map center
+            final int mapCenterX = getWidth() / 2;
+            final int mapCenterY = getHeight() / 2;
+
+            // get last and current mouse position delta with center
+            final int lastMouseDeltaPosX = mapStartDragPos.x - mapCenterX;
+            final int lastMouseDeltaPosY = mapStartDragPos.y - mapCenterY;
+            final int newMouseDeltaPosX = mouseMapPos.x - mapCenterX;
+            final int newMouseDeltaPosY = mouseMapPos.y - mapCenterY;
+
+            // get angle in radian between last and current mouse position
+            // relative to image center
+            double newAngle = Math.atan2(newMouseDeltaPosY, newMouseDeltaPosX);
+            double lastAngle = Math.atan2(lastMouseDeltaPosY, lastMouseDeltaPosX);
+
+            // inverse rotation
+            double angle = lastAngle - newAngle;
+
+            // control button down --> rotation is enforced
+            if (EventUtil.isControlDown(e))
+                angle *= 3;
+
+            final double destAngle;
+
+            // shift action --> limit to 45° rotation
+            if (EventUtil.isShiftDown(e))
+                destAngle = Math.rint((mapStartRotationZ + angle) * (8d / (2 * Math.PI))) * ((2 * Math.PI) / 8d);
+            else
+                destAngle = mapStartRotationZ + angle;
+
+            // modify rotation with smooth mover
+            setRotation(destAngle, true);
         }
 
         @Override
@@ -193,70 +311,107 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             canvasView.handlingMouseMoveEvent = true;
             try
             {
-                final AffineTransform trans = getImageTransform();
+                mouseMapPos = new Point(e.getPoint());
 
-                if (trans != null)
+                // get the drag event ?
+                if (isDragging())
                 {
-                    try
+                    // left button action --> center view on mouse point
+                    if (EventUtil.isLeftMouseButton(e))
                     {
-                        // save last mouse position
-                        final int lastMouseCanvasPosX = mouseCanvasPos.x;
-                        final int lastMouseCanvasPosY = mouseCanvasPos.y;
 
-                        // image position
-                        final Point2D imagePoint = trans.inverseTransform(e.getPoint(), null);
-
-                        // left button action --> center view on mouse point
-                        if (EventUtil.isLeftMouseButton(e))
+                        mapMoving = true;
+                        if (mapRotating)
                         {
-                            // center view on this point (this update mouse canvas position)
-                            centerOnImage(imagePoint.getX(), imagePoint.getY());
-                            // no need to update mouse canvas position here as it stays at center
-
-                            // consume event
-                            e.consume();
+                            mapRotating = false;
+                            // force repaint so the cross is no more visible
+                            canvasView.repaint();
                         }
-                        else if (EventUtil.isRightMouseButton(e))
-                        {
-                            rotating = true;
 
-                            // update mouse canvas position from image position
-                            setMouseCanvasPos(imageToCanvas(imagePoint.getX(), imagePoint.getY()));
-                            // get canvas center image position
-                            final Point2D.Double canvasCenter = canvasToImage(getCanvasSizeX() / 2,
-                                    getCanvasSizeY() / 2);
-
-                            // get last and current mouse position delta with center
-                            final Point2D.Double lastMouseDeltaPos = canvasToImage(lastMouseCanvasPosX,
-                                    lastMouseCanvasPosY);
-                            lastMouseDeltaPos.x -= canvasCenter.x;
-                            lastMouseDeltaPos.y -= canvasCenter.y;
-                            final Point2D.Double newMouseDeltaPos = getMouseImagePos();
-                            newMouseDeltaPos.x -= canvasCenter.x;
-                            newMouseDeltaPos.y -= canvasCenter.y;
-
-                            // get reverse angle in radian between last and
-                            // current mouse position relative to canvas center
-                            double angle = Math.atan2(lastMouseDeltaPos.y, lastMouseDeltaPos.x)
-                                    - Math.atan2(newMouseDeltaPos.y, newMouseDeltaPos.x);
-
-                            // control button down --> rotation is enforced
-                            if (EventUtil.isControlDown(e))
-                                angle *= 3;
-
-                            angle = MathUtil.formatRadianAngle2(angle);
-
-                            // modify rotation with smooth mover
-                            setRotation(transform.getDestValue(ROT) + angle, true);
-
-                            e.consume();
-                        }
+                        updateDrag(e);
                     }
-                    catch (Exception ecx)
+                    else if (EventUtil.isRightMouseButton(e))
                     {
-                        // ignore
+                        mapMoving = false;
+                        if (!mapRotating)
+                        {
+                            mapRotating = true;
+                            // force repaint so the cross is visible
+                            canvasView.repaint();
+                        }
+
+                        updateRot(e);
                     }
+
+                    // consume event
+                    e.consume();
                 }
+
+                // final AffineTransform trans = getImageTransform();
+                //
+                // if (trans != null)
+                // {
+                // try
+                // {
+                //
+                // // save last mouse position
+                // final int lastMouseCanvasPosX = mouseCanvasPos.x;
+                // final int lastMouseCanvasPosY = mouseCanvasPos.y;
+                //
+                // // image position
+                // final Point2D imagePoint = trans.inverseTransform(e.getPoint(), null);
+                //
+                // // left button action --> center view on mouse point
+                // if (EventUtil.isLeftMouseButton(e))
+                // {
+                // // center view on this point (this update mouse canvas position)
+                // centerOnImage(imagePoint.getX(), imagePoint.getY());
+                // // no need to update mouse canvas position here as it stays at center
+                //
+                // // consume event
+                // e.consume();
+                // }
+                // else if (EventUtil.isRightMouseButton(e))
+                // {
+                // mapRotating = true;
+                //
+                // // update mouse canvas position from image position
+                // setMouseCanvasPos(imageToCanvas(imagePoint.getX(), imagePoint.getY()));
+                // // get canvas center image position
+                // final Point2D.Double canvasCenter = canvasToImage(getCanvasSizeX() / 2,
+                // getCanvasSizeY() / 2);
+                //
+                // // get last and current mouse position delta with center
+                // final Point2D.Double lastMouseDeltaPos = canvasToImage(lastMouseCanvasPosX,
+                // lastMouseCanvasPosY);
+                // lastMouseDeltaPos.x -= canvasCenter.x;
+                // lastMouseDeltaPos.y -= canvasCenter.y;
+                // final Point2D.Double newMouseDeltaPos = getMouseImagePos();
+                // newMouseDeltaPos.x -= canvasCenter.x;
+                // newMouseDeltaPos.y -= canvasCenter.y;
+                //
+                // // get reverse angle in radian between last and
+                // // current mouse position relative to canvas center
+                // double angle = Math.atan2(lastMouseDeltaPos.y, lastMouseDeltaPos.x)
+                // - Math.atan2(newMouseDeltaPos.y, newMouseDeltaPos.x);
+                //
+                // // control button down --> rotation is enforced
+                // if (EventUtil.isControlDown(e))
+                // angle *= 3;
+                //
+                // angle = MathUtil.formatRadianAngle2(angle);
+                //
+                // // modify rotation with smooth mover
+                // setRotation(transform.getDestValue(ROT) + angle, true);
+                //
+                // e.consume();
+                // }
+                // }
+                // catch (Exception ecx)
+                // {
+                // // ignore
+                // }
+                // }
             }
             finally
             {
@@ -267,6 +422,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mouseMoved(MouseEvent e)
         {
+            mouseMapPos = new Point(e.getPoint());
+
             // send to canvas view with converted canvas position
             if (canvasView.onMouseMove(e.isConsumed(), getCanvasPosition(e.getPoint())))
                 e.consume();
@@ -281,7 +438,14 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mousePressed(MouseEvent e)
         {
-            // left button action --> center view on mouse point
+            // start drag mouse position
+            mapStartDragPos = (Point) e.getPoint().clone();
+            // store canvas parameters
+            mapStartOffsetX = getOffsetX();
+            mapStartOffsetY = getOffsetY();
+            mapStartRotationZ = getRotationZ();
+
+            // left click action --> center view on mouse point
             if (EventUtil.isLeftMouseButton(e))
             {
                 final AffineTransform trans = getImageTransform();
@@ -310,8 +474,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mouseReleased(MouseEvent e)
         {
-            // assume end rotating
-            rotating = false;
+            // assume end dragging
+            mapStartDragPos = null;
+            mapRotating = false;
+            mapMoving = false;
             // repaint
             repaint();
         }
@@ -353,8 +519,22 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
             // send to canvas view
             if (canvasView.onMouseWheelMoved(e.isConsumed(), e.getWheelRotation(), EventUtil.isLeftMouseButton(e),
-                    EventUtil.isRightMouseButton(e), EventUtil.isControlDown(e)))
+                    EventUtil.isRightMouseButton(e), EventUtil.isControlDown(e), EventUtil.isShiftDown(e)))
                 e.consume();
+        }
+
+        public void keyPressed(KeyEvent e)
+        {
+            // just for the shift key state change
+            updateDrag(e);
+            updateRot(e);
+        }
+
+        public void keyReleased(KeyEvent e)
+        {
+            // just for the shift key state change
+            updateDrag(e);
+            updateRot(e);
         }
 
         @Override
@@ -400,7 +580,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 g2.draw(shape);
 
                 // rotation helper
-                if (rotating)
+                if (mapRotating)
                 {
                     final Point2D center = trans.transform(new Point(canvasCenterX, canvasCenterY), null);
                     final int centerX = (int) Math.round(center.getX());
@@ -521,6 +701,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         private final Timer refreshTimer;
         private final Timer zoomInfoTimer;
         private final Timer rotationInfoTimer;
+        private final Timer zoomLatchTimer;
         private final SmoothMover zoomInfoAlphaMover;
         private final SmoothMover rotationInfoAlphaMover;
         private String zoomMessage;
@@ -528,10 +709,15 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         Dimension lastSize;
         boolean actived;
         boolean handlingMouseMoveEvent;
-        boolean dragging;
-        boolean moving;
-        boolean rotating;
-        boolean hasMouseFocus;
+        private Point startDragPosition;
+        private int startOffsetX;
+        private int startOffsetY;
+        private double curScaleX;
+        private double curScaleY;
+        private double startRotationZ;
+        private boolean moving;
+        private boolean rotating;
+        private boolean hasMouseFocus;
 
         public CanvasView()
         {
@@ -540,7 +726,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             imageCache = new ImageCache();
             actived = false;
             handlingMouseMoveEvent = false;
-            dragging = false;
+            startDragPosition = null;
+            curScaleX = -1;
+            curScaleY = -1;
             moving = false;
             rotating = false;
             hasMouseFocus = false;
@@ -578,6 +766,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             zoomInfoTimer = new Timer(1000, this);
             zoomInfoTimer.setRepeats(false);
             rotationInfoTimer = new Timer(1000, this);
+            rotationInfoTimer.setRepeats(false);
+            zoomLatchTimer = new Timer(1000, this);
             rotationInfoTimer.setRepeats(false);
 
             addComponentListener(new ComponentAdapter()
@@ -639,11 +829,83 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             refreshTimer.stop();
             zoomInfoTimer.stop();
             rotationInfoTimer.stop();
+            zoomLatchTimer.stop();
             refreshTimer.removeActionListener(this);
             zoomInfoTimer.removeActionListener(this);
             rotationInfoTimer.removeActionListener(this);
+            zoomLatchTimer.removeActionListener(this);
             zoomInfoAlphaMover.shutDown();
             rotationInfoAlphaMover.shutDown();
+        }
+
+        protected void updateDrag(boolean control, boolean shift)
+        {
+            if (!moving)
+                return;
+
+            Point delta = new Point(mouseCanvasPos.x - startDragPosition.x, mouseCanvasPos.y - startDragPosition.y);
+
+            // shift action --> limit to one direction
+            if (shift)
+            {
+                // X drag
+                if (Math.abs(delta.x) > Math.abs(delta.y))
+                    delta.y = 0;
+                // Y drag
+                else
+                    delta.x = 0;
+            }
+
+            final Point2D.Double deltaD;
+
+            // control button down
+            if (control)
+                // drag is scaled by current scales factor
+                deltaD = canvasToImageDelta(delta.x, delta.y, 1d / getScaleX(), 1d / getScaleY(), getRotationZ());
+            else
+                // just get rid of rotation factor
+                deltaD = canvasToImageDelta(delta.x, delta.y, 1d, 1d, getRotationZ());
+
+            // modify offset with smooth mover
+            setOffset((int) Math.round(startOffsetX + deltaD.x), (int) Math.round(startOffsetY + deltaD.y), true);
+        }
+
+        protected void updateRot(boolean control, boolean shift)
+        {
+            if (!rotating)
+                return;
+
+            // get canvas center
+            final int canvasCenterX = getCanvasSizeX() / 2;
+            final int canvasCenterY = getCanvasSizeY() / 2;
+
+            // get last and current mouse position delta with center
+            final int lastMouseDeltaPosX = startDragPosition.x - canvasCenterX;
+            final int lastMouseDeltaPosY = startDragPosition.y - canvasCenterY;
+            final int newMouseDeltaPosX = mouseCanvasPos.x - canvasCenterX;
+            final int newMouseDeltaPosY = mouseCanvasPos.y - canvasCenterY;
+
+            // get angle in radian between last and current mouse position
+            // relative to image center
+            double newAngle = Math.atan2(newMouseDeltaPosY, newMouseDeltaPosX);
+            double lastAngle = Math.atan2(lastMouseDeltaPosY, lastMouseDeltaPosX);
+
+            double angle = newAngle - lastAngle;
+
+            // control button down --> rotation is enforced
+            if (control)
+                angle *= 3;
+
+            final double destAngle;
+
+            // shift action --> limit to 45° rotation
+            if (shift)
+                destAngle = Math.rint((startRotationZ + angle) * (8d / (2 * Math.PI))) * ((2 * Math.PI) / 8d);
+            else
+                destAngle = startRotationZ + angle;
+
+            // modify rotation with smooth mover
+            setRotation(destAngle, true);
         }
 
         /**
@@ -698,14 +960,18 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             if (!consumed)
             {
-                // assume start drag
-                dragging = true;
+                // start drag mouse position
+                startDragPosition = (Point) mouseCanvasPos.clone();
+                // store canvas parameters
+                startOffsetX = getOffsetX();
+                startOffsetY = getOffsetY();
+                startRotationZ = getRotationZ();
 
                 // repaint
                 refresh();
                 updateCursor();
 
-                // consume event
+                // consume event to activate drag
                 return true;
             }
 
@@ -719,7 +985,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         boolean onMouseReleased(boolean consumed, boolean left, boolean right, boolean control)
         {
             // assume end dragging
-            dragging = false;
+            startDragPosition = null;
             moving = false;
             rotating = false;
 
@@ -759,79 +1025,44 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
          * Internal canvas process on mouseDragged event.<br>
          * Return true if event should be consumed.
          */
-        boolean onMouseDragged(boolean consumed, Point pos, boolean left, boolean right, boolean control)
+        boolean onMouseDragged(boolean consumed, Point pos, boolean left, boolean right, boolean control, boolean shift)
         {
             if (!consumed)
             {
                 handlingMouseMoveEvent = true;
                 try
                 {
-                    // save last mouse position
-                    final int lastMouseCanvasPosX = mouseCanvasPos.x;
-                    final int lastMouseCanvasPosY = mouseCanvasPos.y;
-
                     // update mouse position
                     setMouseCanvasPos(pos);
 
                     // canvas get the drag event ?
-                    if (dragging)
+                    if (isDragging())
                     {
-                        // left mouse button action : simple translation
+                        // left mouse button action : translation
                         if (left)
                         {
                             moving = true;
-                            rotating = false;
+                            if (rotating)
+                            {
+                                rotating = false;
+                                // force repaint so the cross is no more visible
+                                canvasView.repaint();
+                            }
 
-                            final Point2D.Double delta;
-
-                            // control button down
-                            if (control)
-                                // drag is scaled by current scales factor
-                                delta = canvasToImageDelta(pos.x - lastMouseCanvasPosX, pos.y - lastMouseCanvasPosY,
-                                        1d / getScaleX(), 1d / getScaleY(), getRotationZ());
-                            else
-                                // just get rid of rotation factor
-                                delta = canvasToImageDelta(pos.x - lastMouseCanvasPosX, pos.y - lastMouseCanvasPosY,
-                                        1d, 1d, getRotationZ());
-
-                            // modify offset with smooth mover
-                            setOffset((int) Math.round(transform.getDestValue(TRANS_X) + delta.x),
-                                    (int) Math.round(transform.getDestValue(TRANS_Y) + delta.y), true);
+                            updateDrag(control, shift);
                         }
                         // right mouse button action : rotation
                         else if (right)
                         {
                             moving = false;
-                            rotating = true;
+                            if (!rotating)
+                            {
+                                rotating = true;
+                                // force repaint so the cross is visible
+                                canvasView.repaint();
+                            }
 
-                            // get canvas center image position
-                            final Point2D.Double canvasCenter = canvasToImage(getCanvasSizeX() / 2,
-                                    getCanvasSizeY() / 2);
-
-                            // get last and current mouse position delta with
-                            // center
-                            final Point2D.Double lastMouseDeltaPos = canvasToImage(lastMouseCanvasPosX,
-                                    lastMouseCanvasPosY);
-                            lastMouseDeltaPos.x -= canvasCenter.x;
-                            lastMouseDeltaPos.y -= canvasCenter.y;
-                            final Point2D.Double newMouseDeltaPos = getMouseImagePos();
-                            newMouseDeltaPos.x -= canvasCenter.x;
-                            newMouseDeltaPos.y -= canvasCenter.y;
-
-                            // get angle in radian between last and current
-                            // mouse position
-                            // relative to image center
-                            double angle = Math.atan2(newMouseDeltaPos.y, newMouseDeltaPos.x)
-                                    - Math.atan2(lastMouseDeltaPos.y, lastMouseDeltaPos.x);
-
-                            // control button down --> rotation is enforced
-                            if (control)
-                                angle *= 3;
-
-                            angle = MathUtil.formatRadianAngle2(angle);
-
-                            // modify rotation with smooth mover
-                            setRotation(transform.getDestValue(ROT) + angle, true);
+                            updateRot(control, shift);
                         }
 
                         // dragging --> consume event
@@ -854,19 +1085,16 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
          * Internal canvas process on mouseWheelMoved event.<br>
          * Return true if event should be consumed.
          */
-        boolean onMouseWheelMoved(boolean consumed, int wheelRotation, boolean left, boolean right, boolean control)
+        boolean onMouseWheelMoved(boolean consumed, int wheelRotation, boolean left, boolean right, boolean control,
+                boolean shift)
         {
             if (!consumed)
             {
-                if (!dragging)
+                if (!isDragging())
                 {
                     // as soon we manipulate the image with mouse, we want to be focused
                     if (!viewer.hasFocus())
                         viewer.requestFocus();
-
-                    // previous scale destination values
-                    final double scaleX = transform.getDestValue(SCALE_X);
-                    final double scaleY = transform.getDestValue(SCALE_Y);
 
                     double sx, sy;
 
@@ -888,7 +1116,26 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                         sy *= sy;
                     }
 
-                    setScale(scaleX * sx, scaleY * sy, false, true);
+                    // reload current value
+                    if (curScaleX == -1)
+                        curScaleX = transform.getDestValue(SCALE_X);
+                    if (curScaleY == -1)
+                        curScaleY = transform.getDestValue(SCALE_Y);
+
+                    curScaleX = curScaleX * sx;
+                    curScaleY = curScaleY * sy;
+
+                    double newScaleX = curScaleX;
+                    double newScaleY = curScaleY;
+
+                    // shift key down --> adjust to closest "round" number
+                    if (shift)
+                    {
+                        newScaleX = MathUtil.closest(newScaleX, zoomRoundedFactors);
+                        newScaleY = MathUtil.closest(newScaleY, zoomRoundedFactors);
+                    }
+
+                    setScale(newScaleX, newScaleY, false, true);
 
                     // consume event
                     return true;
@@ -1008,7 +1255,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             // process
             if (onMouseDragged(e.isConsumed(), e.getPoint(), EventUtil.isLeftMouseButton(e),
-                    EventUtil.isRightMouseButton(e), EventUtil.isControlDown(e)))
+                    EventUtil.isRightMouseButton(e), EventUtil.isControlDown(e), EventUtil.isShiftDown(e)))
                 e.consume();
 
             // send mouse event to painters after
@@ -1021,8 +1268,28 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             // process
             if (onMouseWheelMoved(e.isConsumed(), e.getWheelRotation(), EventUtil.isLeftMouseButton(e),
-                    EventUtil.isRightMouseButton(e), EventUtil.isControlDown(e)))
+                    EventUtil.isRightMouseButton(e), EventUtil.isControlDown(e), EventUtil.isShiftDown(e)))
                 e.consume();
+        }
+
+        public void keyPressed(KeyEvent e)
+        {
+            final boolean control = EventUtil.isControlDown(e);
+            final boolean shift = EventUtil.isShiftDown(e);
+
+            // just for modifiers key state change
+            updateDrag(control, shift);
+            updateRot(control, shift);
+        }
+
+        public void keyReleased(KeyEvent e)
+        {
+            final boolean control = EventUtil.isControlDown(e);
+            final boolean shift = EventUtil.isShiftDown(e);
+
+            // just for modifiers key state change
+            updateDrag(control, shift);
+            updateRot(control, shift);
         }
 
         @Override
@@ -1209,7 +1476,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         void updateCursor()
         {
-            if (dragging | moving | rotating)
+            if (isDragging())
             {
                 GuiUtil.setCursor(this, Cursor.HAND_CURSOR);
                 return;
@@ -1315,6 +1582,11 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         }
 
+        public boolean isDragging()
+        {
+            return startDragPosition != null;
+        }
+
         public boolean isCacheValid()
         {
             return imageCache.isValid();
@@ -1323,12 +1595,224 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            if (e.getSource() == refreshTimer)
+            final Object source = e.getSource();
+
+            if (source == refreshTimer)
                 refresh();
-            else if (e.getSource() == zoomInfoTimer)
+            else if (source == zoomInfoTimer)
                 zoomInfoAlphaMover.moveTo(0);
-            else if (e.getSource() == rotationInfoTimer)
+            else if (source == rotationInfoTimer)
                 rotationInfoAlphaMover.moveTo(0);
+            else if (source == zoomLatchTimer)
+            {
+                curScaleX = -1;
+                curScaleY = -1;
+            }
+        }
+    }
+
+    /**
+     * * index 0 : translation X (int) index 1 : translation Y (int) index 2 :
+     * scale X (double) index 3 : scale Y (double) index 4 : rotation angle
+     * (double)
+     * 
+     * @author Stephane
+     */
+    private static class Canvas2DSmoothMover extends MultiSmoothMover
+    {
+        public Canvas2DSmoothMover(int size, SmoothMoveType type)
+        {
+            super(size, type);
+        }
+
+        public Canvas2DSmoothMover(int size)
+        {
+            super(size);
+        }
+
+        @Override
+        public void moveTo(int index, double value)
+        {
+            final double v;
+
+            // format value for radian 0..2PI range
+            if (index == ROT)
+                v = MathUtil.formatRadianAngle(value);
+            else
+                v = value;
+
+            if (destValues[index] != v)
+            {
+                destValues[index] = v;
+                // start movement
+                start(index, System.currentTimeMillis());
+            }
+        }
+
+        @Override
+        public void moveTo(double[] values)
+        {
+            final int maxInd = Math.min(values.length, destValues.length);
+
+            // first we check we have at least one value which had changed
+            boolean changed = false;
+            for (int index = 0; index < maxInd; index++)
+            {
+                final double value;
+
+                // format value for radian 0..2PI range
+                if (index == ROT)
+                    value = MathUtil.formatRadianAngle(values[index]);
+                else
+                    value = values[index];
+
+                if (destValues[index] != value)
+                {
+                    changed = true;
+                    break;
+                }
+            }
+
+            // value changed ?
+            if (changed)
+            {
+                // better synchronization for multiple changes
+                final long time = System.currentTimeMillis();
+
+                for (int index = 0; index < maxInd; index++)
+                {
+                    final double value;
+
+                    // format value for radian 0..2PI range
+                    if (index == ROT)
+                        value = MathUtil.formatRadianAngle(values[index]);
+                    else
+                        value = values[index];
+
+                    destValues[index] = value;
+                    // start movement
+                    start(index, time);
+                }
+            }
+        }
+
+        @Override
+        public void setValue(int index, double value)
+        {
+            final double v;
+
+            // format value for radian 0..2PI range
+            if (index == ROT)
+                v = MathUtil.formatRadianAngle(value);
+            else
+                v = value;
+
+            // stop current movement
+            stop(index);
+            // directly set value
+            destValues[index] = v;
+            setCurrentValue(index, v, 100);
+        }
+
+        @Override
+        public void setValues(double[] values)
+        {
+            final int maxInd = Math.min(values.length, destValues.length);
+
+            for (int index = 0; index < maxInd; index++)
+            {
+                final double value;
+
+                // format value for radian 0..2PI range
+                if (index == ROT)
+                    value = MathUtil.formatRadianAngle(values[index]);
+                else
+                    value = values[index];
+
+                // stop current movement
+                stop(index);
+                // directly set value
+                destValues[index] = value;
+                setCurrentValue(index, value, 100);
+            }
+        }
+
+        @Override
+        protected void setCurrentValue(int index, double value, int pourcent)
+        {
+            final double v;
+
+            // format value for radian 0..2PI range
+            if (index == ROT)
+                v = MathUtil.formatRadianAngle(value);
+            else
+                v = value;
+
+            if (currentValues[index] != v)
+            {
+                currentValues[index] = v;
+                // notify value changed
+                changed(index, v, pourcent);
+            }
+        }
+
+        @Override
+        protected void start(int index, long time)
+        {
+            final double current = currentValues[index];
+            final double dest;
+
+            if (index == ROT)
+            {
+                double d = destValues[index];
+
+                // choose shorter path
+                if (Math.abs(d - current) > Math.PI)
+                {
+                    if (d > Math.PI)
+                        dest = d - (Math.PI * 2);
+                    else
+                        dest = d + (Math.PI * 2);
+                }
+                else
+                    dest = d;
+            }
+            else
+                dest = destValues[index];
+
+            // number of step to reach final value
+            final int size = Math.max(moveTime / timer.getDelay(), 1);
+
+            // calculate interpolation
+            switch (type)
+            {
+                case NONE:
+                    stepValues[index] = new double[2];
+                    stepValues[index][0] = current;
+                    stepValues[index][1] = dest;
+                    break;
+
+                case LINEAR:
+                    stepValues[index] = Interpolator.doLinearInterpolation(current, dest, size);
+                    break;
+
+                case LOG:
+                    stepValues[index] = Interpolator.doLogInterpolation(current, dest, size);
+                    break;
+
+                case EXP:
+                    stepValues[index] = Interpolator.doExpInterpolation(current, dest, size);
+                    break;
+            }
+
+            // notify and start
+            if (!isMoving(index))
+            {
+                moveStarted(index, time);
+                moving[index] = true;
+            }
+            else
+                moveModified(index, time);
         }
     }
 
@@ -1371,12 +1855,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     final XMLPreferences preferences;
 
     /**
-     * The transform object contains all transform informations :<br>
-     * index 0 : translation X (int) index 1 : translation Y (int) index 2 :
-     * scale X (double) index 3 : scale Y (double) index 4 : rotation angle
-     * (double)
+     * The transform object contains all transform informations<br>
      */
-    final MultiSmoothMover transform;
+    final Canvas2DSmoothMover transform;
 
     /**
      * internals
@@ -1407,7 +1888,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         preferences = ApplicationPreferences.getPreferences().node(PREF_CANVAS2D_ID);
 
         // init transform (5 values, log transition type)
-        transform = new MultiSmoothMover(5, SmoothMoveType.LOG);
+        transform = new Canvas2DSmoothMover(5, SmoothMoveType.LOG);
         // initials transform values
         transform.setValues(new double[] {0d, 0d, 1d, 1d, 0d});
         // initial mouse position
@@ -1776,7 +2257,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     /**
      * Set transform
      */
-    private void setTransform(int tx, int ty, double sx, double sy, double rot, boolean smooth)
+    protected void setTransform(int tx, int ty, double sx, double sy, double rot, boolean smooth)
     {
         final double[] values = new double[] {tx, ty, sx, sy, rot};
 
@@ -2032,12 +2513,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
      */
     public double getRotation()
     {
-        final double res = getRotationZ() % (2 * Math.PI);
-
-        if (res < 0)
-            return (2 * Math.PI) + res;
-
-        return res;
+        return MathUtil.formatRadianAngle(getRotationZ());
     }
 
     /**
@@ -2234,8 +2710,23 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 break;
         }
 
+        // forward to view
+        canvasView.keyPressed(e);
+        // forward to map
+        canvasMap.keyPressed(e);
         // then send to painters
         super.keyPressed(e);
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e)
+    {
+        // forward to view
+        canvasView.keyReleased(e);
+        // forward to map
+        canvasMap.keyReleased(e);
+        // then send to painters
+        super.keyReleased(e);
     }
 
     @Override
@@ -2580,7 +3071,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
             case MOUSE_IMAGE_POSITION_CHANGED:
                 // mouse position changed outside mouse move event ?
-                if (!canvasView.handlingMouseMoveEvent && !canvasView.dragging && (!isSynchSlave()))
+                if (!canvasView.handlingMouseMoveEvent && !canvasView.isDragging() && (!isSynchSlave()))
                 {
                     // mouse position in canvas
                     final Point mouseAbsolutePos = new Point(mouseCanvasPos);

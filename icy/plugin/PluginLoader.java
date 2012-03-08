@@ -21,9 +21,11 @@ package icy.plugin;
 import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
+import icy.main.Icy;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginDescriptor.PluginNameSorter;
 import icy.plugin.abstract_.Plugin;
+import icy.plugin.interface_.PluginDaemon;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
@@ -190,6 +192,9 @@ public class PluginLoader
         loading = true;
         needReload = false;
 
+        // stop daemon plugins
+        stopDaemons();
+
         // reset plugins and loader
         final ArrayList<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
         final ClassLoader newLoader;
@@ -289,8 +294,88 @@ public class PluginLoader
         loader = newLoader;
         plugins = newPlugins;
 
+        // start daemon plugins
+        startDaemons();
+
         // notify change
         changed();
+    }
+
+    /**
+     * internal use only
+     */
+    private static ArrayList<PluginDescriptor> getDaemonPlugins()
+    {
+        final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
+
+        synchronized (plugins)
+        {
+            for (PluginDescriptor pluginDescriptor : plugins)
+            {
+                final Class<? extends Plugin> classPlug = pluginDescriptor.getPluginClass();
+
+                if ((classPlug != null) && PluginDaemon.class.isAssignableFrom(classPlug))
+                {
+                    // accept class ?
+                    if (!ClassUtil.isAbstract(classPlug) && !classPlug.isInterface())
+                        result.add(pluginDescriptor);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Start daemons plugins.
+     */
+    private static void startDaemons()
+    {
+        for (PluginDescriptor pluginDesc : getDaemonPlugins())
+        {
+            try
+            {
+                final Plugin plugin = pluginDesc.getPluginClass().newInstance();
+                final Thread thread = new Thread((PluginDaemon) plugin, pluginDesc.getName());
+
+                // so icy can exit even with running daemon plugin
+                thread.setDaemon(true);
+
+                // start the daemon
+                thread.start();
+                // register daemon plugin ???
+                Icy.getMainInterface().registerPlugin(plugin);
+            }
+            catch (Throwable t)
+            {
+                IcyExceptionHandler.handlePluginException(pluginDesc, t, true);
+            }
+        }
+    }
+
+    /**
+     * Stop daemons plugins.
+     */
+    private static void stopDaemons()
+    {
+        final ArrayList<Plugin> activePlugins = Icy.getMainInterface().getActivePlugins();
+
+        for (PluginDescriptor pluginDesc : getDaemonPlugins())
+        {
+            try
+            {
+                // search the specified daemon plugin in current active plugins
+                final Plugin plugin = Plugin.getPlugin(activePlugins, pluginDesc.getClassName());
+
+                // stop the daemon
+                if (plugin != null)
+                    ((PluginDaemon) plugin).stop();
+            }
+            catch (Throwable t)
+            {
+                IcyExceptionHandler.handlePluginException(pluginDesc, t, true);
+            }
+        }
     }
 
     /**
@@ -413,7 +498,7 @@ public class PluginLoader
                 if (pluginDescriptor.isActionable())
                     result.add(pluginDescriptor);
         }
-        
+
         return result;
     }
 

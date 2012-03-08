@@ -74,6 +74,15 @@ public abstract class Plugin
         IcyNetworkUtil.report(values);
     }
 
+    public static Plugin getPlugin(ArrayList<Plugin> list, String className)
+    {
+        for (Plugin plugin : list)
+            if (plugin.getClass().getName().equals(className))
+                return plugin;
+
+        return null;
+    }
+
     private final PluginDescriptor descriptor;
 
     public Plugin()

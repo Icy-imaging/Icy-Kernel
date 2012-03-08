@@ -62,7 +62,7 @@ import java.util.TreeMap;
 
 import javax.swing.event.EventListenerList;
 
-import loci.formats.meta.IMetadata;
+import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.model.primitives.PositiveFloat;
 
@@ -158,7 +158,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Metadata
      */
-    private IMetadata metaData;
+    private OMEXMLMetadata metaData;
     // /**
     // * X, Y, Z resolution (in mm)
     // */
@@ -557,7 +557,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Returns meta data object
      */
-    public IMetadata getMetadata()
+    public OMEXMLMetadata getMetadata()
     {
         return metaData;
     }
@@ -565,7 +565,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Set the meta data object
      */
-    public void setMetaData(IMetadata metaData)
+    public void setMetaData(OMEXMLMetadata metaData)
     {
         if (this.metaData != metaData)
         {
