@@ -19,6 +19,7 @@
 package icy.plugin;
 
 import icy.main.Icy;
+import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginDescriptor.PluginNameSorter;
 import icy.plugin.PluginDescriptor.PluginOnlineIdent;
 import icy.preferences.PluginPreferences;
@@ -202,6 +203,9 @@ public class PluginRepositoryLoader
             // plugins node found
             if (pluginsNode != null)
             {
+                // flag for beta version allowed
+                final boolean betaAllowed = PluginPreferences.getAllowBeta();
+                // ident nodes
                 final ArrayList<Node> nodes = XMLUtil.getSubNodes(pluginsNode, ID_PLUGIN);
 
                 for (Node node : nodes)
@@ -212,7 +216,25 @@ public class PluginRepositoryLoader
 
                     // accept only if not empty
                     if (!ident.isEmpty())
-                        result.add(ident);
+                    {
+                        // accept only if required kernel version is ok and beta accepted
+                        if (ident.getRequiredKernelVersion().isLowerOrEqual(Icy.version)
+                                && (betaAllowed || (!ident.getVersion().isBeta())))
+                        {
+
+                            // check if we have several version of the same plugin
+                            final int ind = PluginIdent.getIndex(result, ident.getClassName());
+                            // other version found ?
+                            if (ind != -1)
+                            {
+                                // replace old version if needed
+                                if (result.get(ind).isOlderOrEqual(ident))
+                                    result.set(ind, ident);
+                            }
+                            else
+                                result.add(ident);
+                        }
+                    }
                 }
             }
 
@@ -274,28 +296,21 @@ public class PluginRepositoryLoader
         }
 
         final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
-        // flag for beta version allowed
-        final boolean betaAllowed = PluginPreferences.getAllowBeta();
 
         for (PluginOnlineIdent ident : idents)
         {
-            // accept only if required kernel version is ok and beta accepted
-            if (ident.getRequiredKernelVersion().isLowerOrEqual(Icy.version)
-                    && (betaAllowed || (!ident.getVersion().isBeta())))
+            try
             {
-                try
-                {
-                    final PluginDescriptor plugin = new PluginDescriptor(ident, repos);
-                    // also set the name
-                    plugin.setName(ident.getName());
+                final PluginDescriptor plugin = new PluginDescriptor(ident, repos);
+                // also set the name
+                plugin.setName(ident.getName());
 
-                    result.add(plugin);
-                }
-                catch (Exception e)
-                {
-                    System.out.println("PluginRepositoryLoader.load('" + repos.getLocation() + "') error :");
-                    IcyExceptionHandler.showErrorMessage(e, false);
-                }
+                result.add(plugin);
+            }
+            catch (Exception e)
+            {
+                System.out.println("PluginRepositoryLoader.load('" + repos.getLocation() + "') error :");
+                IcyExceptionHandler.showErrorMessage(e, false);
             }
         }
 

@@ -222,6 +222,10 @@ public class ROI2DArea extends ROI2D
             if (!isActiveFor(canvas))
                 return;
 
+            // no editable --> no action here
+            if (!editable)
+                return;
+
             ROI2DArea.this.beginUpdate();
             try
             {
@@ -255,6 +259,10 @@ public class ROI2DArea extends ROI2D
             if (!isActiveFor(canvas))
                 return;
 
+            // no editable --> no action here
+            if (!editable)
+                return;
+ 
             ROI2DArea.this.beginUpdate();
             try
             {
@@ -288,6 +296,10 @@ public class ROI2DArea extends ROI2D
         {
             super.mouseReleased(e, imagePoint, canvas);
 
+            // no editable --> no action here
+            if (!editable)
+                return;
+
             // update only on release as it can be long
             if (boundsNeedUpdate)
                 optimizeBounds(true);
@@ -297,6 +309,10 @@ public class ROI2DArea extends ROI2D
         public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // no editable --> no action here
+            if (!editable)
                 return;
 
             ROI2DArea.this.beginUpdate();

@@ -52,7 +52,7 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.PAGE_AXIS));
 
         topPanel.add(Box.createVerticalStrut(4));
-        topPanel.add(new JLabel("Set plugin you want to be loaded at startup (only daemon plugin supported)."));
+        topPanel.add(new JLabel("Setup plugin which should be loaded at startup (daemon plugin only)."));
         topPanel.add(Box.createVerticalStrut(4));
 
         mainPanel.add(topPanel, BorderLayout.NORTH);

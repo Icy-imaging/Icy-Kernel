@@ -196,7 +196,8 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
                     try
                     {
                         for (ROI roi : getSelectedRois())
-                            roi.setColor(color);
+                            if (roi.isEditable())
+                                roi.setColor(color);
                     }
                     finally
                     {
@@ -253,7 +254,8 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
                 {
                     // delete selected rois
                     for (ROI roi : getSelectedRois())
-                        sequence.removeROI(roi);
+                        if (roi.isEditable())
+                            sequence.removeROI(roi);
                 }
                 finally
                 {
@@ -806,15 +808,20 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
             if (sequence != null)
             {
                 final ArrayList<ROI> selectedRois = getSelectedRois();
+
+                boolean editable = false;
+                for (ROI roi : selectedRois)
+                    editable |= roi.isEditable();
+
                 // final boolean singleSelect = (selectedRois.size() == 1);
                 final boolean hasSelected = (selectedRois.size() > 0);
                 final boolean severalsSelected = (selectedRois.size() > 1);
 
-                nameField.setEnabled(hasSelected);
-                colorButton.setEnabled(hasSelected);
+                nameField.setEnabled(hasSelected && editable);
+                colorButton.setEnabled(hasSelected && editable);
                 copyButton.setEnabled(hasSelected);
                 mergeButton.setEnabled(severalsSelected);
-                deleteButton.setEnabled(hasSelected);
+                deleteButton.setEnabled(hasSelected && editable);
 
                 if (hasSelected)
                 {
@@ -873,7 +880,8 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
                 try
                 {
                     for (ROI roi : getSelectedRois())
-                        roi.setName(name);
+                        if (roi.isEditable())
+                            roi.setName(name);
                 }
                 finally
                 {

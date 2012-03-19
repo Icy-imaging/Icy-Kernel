@@ -275,6 +275,12 @@ public class RepositoryPreferences
 
     public static void setRepositeries(ArrayList<RepositoryInfo> values)
     {
+        final ArrayList<RepositoryInfo> repositories = getRepositeries();
+
+        // no modification --> nothing to do
+        if ((repositories.size() == values.size()) && repositories.containsAll(values))
+            return;
+
         // remove all child nodes
         preferences.removeChildren();
 

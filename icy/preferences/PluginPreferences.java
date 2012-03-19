@@ -3,6 +3,8 @@
  */
 package icy.preferences;
 
+import icy.plugin.PluginLoader;
+
 import java.util.ArrayList;
 
 /**
@@ -90,6 +92,12 @@ public class PluginPreferences
 
     public static void setActiveDaemons(ArrayList<String> names)
     {
+        final ArrayList<String> actives = getActiveDaemons();
+
+        // no modification --> nothing to do
+        if ((actives.size() == names.size()) && actives.containsAll(names))
+            return;
+
         final XMLPreferences node = preferences.node(ID_ACTIVES_DAEMON);
 
         node.clear();
@@ -98,6 +106,9 @@ public class PluginPreferences
 
         // clean up all non element nodes
         node.clean();
+        
+        // restart daemon plugin
+        PluginLoader.resetDaemons();
     }
 
 }

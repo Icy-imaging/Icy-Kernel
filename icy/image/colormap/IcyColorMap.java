@@ -781,7 +781,7 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Copy data from specified 2D short array
+     * Copy data from specified 2D short array.
      */
     public void copyFrom(short[][] maps)
     {

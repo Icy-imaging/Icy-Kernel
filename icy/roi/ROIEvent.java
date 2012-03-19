@@ -33,7 +33,8 @@ public class ROIEvent implements EventHierarchicalChecker
 
     public enum ROIEventType
     {
-        FOCUS_CHANGED, SELECTION_CHANGED, ROI_CHANGED, PROPERTY_CHANGED, PAINTER_CHANGED, @Deprecated
+        FOCUS_CHANGED, SELECTION_CHANGED, ROI_CHANGED, PROPERTY_CHANGED, @Deprecated
+        PAINTER_CHANGED, @Deprecated
         NAME_CHANGED;
     }
 

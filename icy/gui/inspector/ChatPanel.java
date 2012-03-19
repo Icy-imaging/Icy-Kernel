@@ -796,6 +796,7 @@ public class ChatPanel extends ExternalizablePanel
                         // error while connecting
                         IcyExceptionHandler.showErrorMessage(e, false);
                         System.err.println("Cannot connect to chat.");
+                        System.err.println("If you use a proxy, verify you have valid SOCKS settings.");
 
                         // update GUI
                         ThreadUtil.invokeLater(new Runnable()

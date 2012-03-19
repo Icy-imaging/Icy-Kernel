@@ -72,7 +72,7 @@ public class DataIteratorMath
      */
     public static double max(DataIterator it)
     {
-        double result = Double.MIN_VALUE;
+        double result = -Double.MAX_VALUE;
 
         it.reset();
 

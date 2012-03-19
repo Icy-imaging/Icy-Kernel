@@ -312,6 +312,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected boolean creating;
     protected boolean focused;
     protected boolean selected;
+    protected boolean editable;
 
     /**
      * last mouse position (image coordinates)
@@ -338,6 +339,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         color = DEFAULT_NORMAL_COLOR;
         selectedColor = DEFAULT_SELECTED_COLOR;
         name = "";
+        editable = true;
         creating = true;
         focused = false;
         selected = false;
@@ -695,6 +697,28 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
     }
 
+    /**
+     * Return true if ROI is editable.
+     */
+    public boolean isEditable()
+    {
+        return editable;
+    }
+
+    /**
+     * Set the editable state of ROI.
+     */
+    public void setEditable(boolean value)
+    {
+        if (editable != value)
+        {
+            editable = value;
+
+            if (!value)
+                setSelected(false, false);
+        }
+    }
+
     public void setMousePos(Point2D pos)
     {
         if ((pos != null) && !mousePos.equals(pos))
@@ -809,8 +833,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * called when ROI painter changed.
+     * Called when ROI painter changed.
+     * 
+     * @deprecated
      */
+    @Deprecated
     public void painterChanged()
     {
         // handle with updater
@@ -818,8 +845,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Called when ROI name has changed
+     * Called when ROI name has changed.
+     * 
+     * @deprecated Uses {@link #propertyChanged(String)} instead.
      */
+    @Deprecated
     public void nameChanged()
     {
         // handle with updater

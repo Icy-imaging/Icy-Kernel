@@ -269,9 +269,9 @@ public enum DataType
                 // double type loss information here...
                 return Long.MIN_VALUE;
             case FLOAT:
-                return Float.MIN_VALUE;
+                return -Float.MAX_VALUE;
             case DOUBLE:
-                return Double.MIN_VALUE;
+                return -Double.MAX_VALUE;
             default:
                 return 0d;
         }
@@ -379,25 +379,7 @@ public enum DataType
      */
     public int getSize()
     {
-        switch (this)
-        {
-            case UBYTE:
-            case BYTE:
-                return 1;
-            case USHORT:
-            case SHORT:
-                return 2;
-            case UINT:
-            case INT:
-            case FLOAT:
-                return 4;
-            case ULONG:
-            case LONG:
-            case DOUBLE:
-                return 8;
-            default:
-                return 0;
-        }
+        return getBitSize() / 8;
     }
 
     /**
@@ -405,7 +387,27 @@ public enum DataType
      */
     public int getBitSize()
     {
-        return getSize() * 8;
+        switch (this)
+        {
+            case UBYTE:
+            case BYTE:
+                return Byte.SIZE;
+            case USHORT:
+            case SHORT:
+                return Short.SIZE;
+            case UINT:
+            case INT:
+                return Integer.SIZE;
+            case FLOAT:
+                return Float.SIZE;
+            case ULONG:
+            case LONG:
+                return Long.SIZE;
+            case DOUBLE:
+                return Double.SIZE;
+            default:
+                return 0;
+        }
     }
 
     /**

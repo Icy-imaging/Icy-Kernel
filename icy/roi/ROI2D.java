@@ -153,6 +153,10 @@ public abstract class ROI2D extends ROI
             if (!isActiveFor(canvas))
                 return;
 
+            // no editable --> no action here
+            if (!editable)
+                return;
+
             ROI2D.this.beginUpdate();
             try
             {
@@ -218,6 +222,10 @@ public abstract class ROI2D extends ROI
         public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // no editable --> no action here
+            if (!editable)
                 return;
 
             ROI2D.this.beginUpdate();
@@ -297,6 +305,10 @@ public abstract class ROI2D extends ROI
             if (!isActiveFor(canvas))
                 return;
 
+            // no editable --> no action here
+            if (!editable)
+                return;
+            
             if (!e.isConsumed())
             {
                 // unselect ROI on double click
@@ -315,6 +327,10 @@ public abstract class ROI2D extends ROI
         public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // no editable --> no action here
+            if (!editable)
                 return;
 
             // just for the shift key state change
@@ -363,6 +379,10 @@ public abstract class ROI2D extends ROI
         public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // no editable --> no action here
+            if (!editable)
                 return;
 
             // just for the shift key state change

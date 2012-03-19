@@ -165,7 +165,7 @@ public class PluginLoader
     }
 
     /**
-     * Reload the list of installed plugins<br>
+     * Reload the list of installed plugins.<br>
      * Asynchronous version
      */
     public static void reloadAsynch()
@@ -175,7 +175,7 @@ public class PluginLoader
     }
 
     /**
-     * Reload the list of installed plugins
+     * Reload the list of installed plugins.
      */
     public static void reload(boolean forceReloadNow)
     {
@@ -186,6 +186,19 @@ public class PluginLoader
             waitWhileLoading();
             reloadInternal();
         }
+    }
+
+    /**
+     * Stop and restart all daemons plugins.
+     */
+    public static void resetDaemons()
+    {
+        // reset will be done later
+        if (isLoading())
+            return;
+
+        stopDaemons();
+        startDaemons();
     }
 
     /**
@@ -336,7 +349,7 @@ public class PluginLoader
 
         for (PluginDescriptor pluginDesc : getDaemonPlugins())
         {
-            if (actives.indexOf(pluginDesc.getName()) != -1)
+            if (actives.indexOf(pluginDesc.getClassName()) != -1)
             {
                 try
                 {

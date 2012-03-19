@@ -215,6 +215,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             if (!isActiveFor(canvas))
                 return;
 
+            // no editable --> no action here
+            if (!editable)
+                return;
+
             ROI2DShape.this.beginUpdate();
             try
             {
@@ -241,6 +245,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             if (!isActiveFor(canvas))
                 return;
 
+            // no editable --> no action here
+            if (!editable)
+                return;
+
             ROI2DShape.this.beginUpdate();
             try
             {
@@ -265,6 +273,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // no editable --> no action here
+            if (!editable)
                 return;
 
             ROI2DShape.this.beginUpdate();
@@ -302,6 +314,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             if (!isActiveFor(canvas))
                 return;
 
+            // no editable --> no action here
+            if (!editable)
+                return;
+
             ROI2DShape.this.beginUpdate();
             try
             {
@@ -328,6 +344,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             if (!isActiveFor(canvas))
                 return;
 
+            // no editable --> no action here
+            if (!editable)
+                return;
+
             ROI2DShape.this.beginUpdate();
             try
             {
@@ -352,6 +372,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // no editable --> no action here
+            if (!editable)
                 return;
 
             ROI2DShape.this.beginUpdate();
@@ -1106,7 +1130,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             setFocused(false);
 
         // anchor changed --> ROI painter changed
-        painterChanged();
+        getPainter().changed();
+        // painterChanged();
     }
 
     /**

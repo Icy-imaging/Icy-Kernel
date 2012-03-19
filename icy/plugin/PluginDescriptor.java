@@ -107,6 +107,36 @@ public class PluginDescriptor implements XMLPersistent
 
     public static class PluginIdent implements XMLPersistent
     {
+        /**
+         * Returns the index for the specified plugin ident in the specified list.<br>
+         * Returns -1 if not found.
+         */
+        public static int getIndex(List<PluginIdent> list, PluginIdent ident)
+        {
+            final int size = list.size();
+
+            for (int i = 0; i < size; i++)
+                if (list.get(i).equals(ident))
+                    return i;
+
+            return -1;
+        }
+
+        /**
+         * Returns the index for the specified plugin in the specified list.<br>
+         * Returns -1 if not found.
+         */
+        public static int getIndex(List<? extends PluginIdent> list, String className)
+        {
+            final int size = list.size();
+
+            for (int i = 0; i < size; i++)
+                if (list.get(i).getClassName().equals(className))
+                    return i;
+
+            return -1;
+        }
+
         static final String ID_VERSION = "version";
 
         private String className;
@@ -453,36 +483,76 @@ public class PluginDescriptor implements XMLPersistent
     // return stableDescriptor;
     // }
 
-    public static boolean existInList(ArrayList<PluginDescriptor> list, PluginDescriptor plugin)
+    /**
+     * Returns the index for the specified plugin in the specified list.<br>
+     * Returns -1 if not found.
+     */
+    public static int getIndex(List<PluginDescriptor> list, PluginDescriptor plugin)
+    {
+        return getIndex(list, plugin.getIdent());
+    }
+
+    /**
+     * Returns the index for the specified plugin in the specified list.<br>
+     * Returns -1 if not found.
+     */
+    public static int getIndex(List<PluginDescriptor> list, PluginIdent ident)
+    {
+        final int size = list.size();
+
+        for (int i = 0; i < size; i++)
+            if (list.get(i).getIdent().equals(ident))
+                return i;
+
+        return -1;
+    }
+
+    /**
+     * Returns the index for the specified plugin in the specified list.<br>
+     * Returns -1 if not found.
+     */
+    public static int getIndex(List<PluginDescriptor> list, String className)
+    {
+        final int size = list.size();
+
+        for (int i = 0; i < size; i++)
+            if (list.get(i).getClassName().equals(className))
+                return i;
+
+        return -1;
+    }
+
+    /**
+     * Returns true if the specified plugin is present in the specified list.
+     */
+    public static boolean existInList(List<PluginDescriptor> list, PluginDescriptor plugin)
     {
         return existInList(list, plugin.getIdent());
     }
 
-    public static boolean existInList(ArrayList<PluginDescriptor> list, PluginIdent ident)
+    /**
+     * Returns true if the specified plugin is present in the specified list.
+     */
+    public static boolean existInList(List<PluginDescriptor> list, PluginIdent ident)
     {
-        for (PluginDescriptor p : list)
-            if (p.getIdent().equals(ident))
-                return true;
-
-        return false;
+        return getIndex(list, ident) != -1;
     }
 
-    public static boolean existInList(ArrayList<PluginDescriptor> list, String className)
+    /**
+     * Returns true if the specified plugin is present in the specified list.
+     */
+    public static boolean existInList(List<PluginDescriptor> list, String className)
     {
-        for (PluginDescriptor p : list)
-            if (p.getClassName().equals(className))
-                return true;
-
-        return false;
+        return getIndex(list, className) != -1;
     }
 
-    public static void addToList(ArrayList<PluginDescriptor> list, PluginDescriptor plugin)
+    public static void addToList(List<PluginDescriptor> list, PluginDescriptor plugin)
     {
         if ((plugin != null) && !existInList(list, plugin))
             list.add(plugin);
     }
 
-    public static boolean removeFromList(ArrayList<PluginDescriptor> list, String className)
+    public static boolean removeFromList(List<PluginDescriptor> list, String className)
     {
         for (int i = list.size() - 1; i >= 0; i--)
         {
