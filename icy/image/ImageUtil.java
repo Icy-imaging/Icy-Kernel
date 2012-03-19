@@ -216,7 +216,7 @@ public class ImageUtil
             {
                 return ImageIO.read(input);
             }
-            catch (IOException e)
+            catch (Exception e)
             {
                 if (displayError)
                     System.err.println("Can't load image from stream " + input);

@@ -420,38 +420,13 @@ public class ROI2DArea extends ROI2D
                     g2.setFont(font);
                     g2.setColor(getDisplayColor());
 
-                    GraphicsUtil.drawCenteredText(g2, text, pos.x,
+                    GraphicsUtil.drawCenteredString(g2, text, pos.x,
                             pos.y - (int) (GraphicsUtil.getStringBounds(g2, text).getHeight()), true);
-
-                    g2.dispose();
-                }
-                // display tooltip
-                else if (focused)
-                {
-                    // draw position and size in the tooltip
-                    final String roiPositionString = "Position       X=" + StringUtil.toString(bounds.getX(), 1)
-                            + "  Y=" + StringUtil.toString(bounds.getY(), 1);
-                    final String roiBoundingSizeString = "Dimension  W=" + StringUtil.toString(bounds.getWidth(), 1)
-                            + "  H=" + StringUtil.toString(bounds.getHeight(), 1);
-                    final String text = roiPositionString + "\n" + roiBoundingSizeString;
-
-                    final Point pos = cnv2d.imageToCanvas(mousePos);
-                    pos.translate(8, 8);
-                    final Font font = new Font("Arial", Font.PLAIN, 12);
-
-                    final Graphics2D g2 = (Graphics2D) g.create();
-
-                    g2.transform(cnv2d.getInverseTransform());
-                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                    g2.setFont(font);
-
-                    GraphicsUtil.drawHint(g2, text, pos.x, pos.y, Color.gray, getDisplayColor());
 
                     g2.dispose();
                 }
             }
         }
-
     }
 
     public static final String ID_BOUNDS_X = "boundsX";
@@ -530,23 +505,24 @@ public class ROI2DArea extends ROI2D
 
     void addToBounds(Rectangle bnd)
     {
-        // save previous bounds
-        final Rectangle oldBounds = new Rectangle(bounds);
+        final Rectangle newBounds;
 
         if (bounds.isEmpty())
-            bounds.setBounds(bnd);
+            newBounds = new Rectangle(bnd);
         else
-            bounds.add(bnd);
+        {
+            newBounds = new Rectangle(bounds);
+            newBounds.add(bnd);
+        }
 
         try
         {
             // update image to the new bounds
-            updateImage(oldBounds, bounds);
+            updateImage(newBounds);
         }
         catch (Error E)
         {
             // maybe a "out of memory" error, restore back old bounds
-            bounds.setBounds(oldBounds);
             System.err.println("can't enlarge ROI, no enough memory !");
         }
     }
@@ -559,9 +535,6 @@ public class ROI2DArea extends ROI2D
     {
         // bounds are being updated
         boundsNeedUpdate = false;
-
-        // save previous bounds
-        final Rectangle oldBounds = new Rectangle(bounds);
 
         // recompute bound from the mask data
         final int sizeX = imageMask.getWidth();
@@ -600,9 +573,8 @@ public class ROI2DArea extends ROI2D
 
         if (!empty)
         {
-            bounds.setBounds(bounds.x + minX, bounds.y + minY, (maxX - minX) + 1, (maxY - minY) + 1);
             // update image to the new bounds
-            updateImage(oldBounds, bounds);
+            updateImage(new Rectangle(bounds.x + minX, bounds.y + minY, (maxX - minX) + 1, (maxY - minY) + 1));
             // notify changed
             roiChanged();
         }
@@ -635,15 +607,15 @@ public class ROI2DArea extends ROI2D
         imageMask = ImageUtil.createIndexedImage(w, h, colorModel, maskData);
     }
 
-    void updateImage(Rectangle oldBnd, Rectangle newBnd)
+    void updateImage(Rectangle newBnd)
     {
         // copy rectangle
-        final Rectangle oldBounds = new Rectangle(oldBnd);
+        final Rectangle oldBounds = new Rectangle(bounds);
         final Rectangle newBounds = new Rectangle(newBnd);
 
         // replace to oldBounds origin
-        oldBounds.translate(-oldBnd.x, -oldBnd.y);
-        newBounds.translate(-oldBnd.x, -oldBnd.y);
+        oldBounds.translate(-bounds.x, -bounds.y);
+        newBounds.translate(-bounds.x, -bounds.y);
 
         // dimension changed ?
         if ((oldBounds.width != newBounds.width) || (oldBounds.height != newBounds.height))
@@ -683,6 +655,7 @@ public class ROI2DArea extends ROI2D
             // set new image and maskData
             imageMask = newImageMask;
             maskData = newMaskData;
+            bounds.setBounds(newBnd);
         }
     }
 
@@ -911,13 +884,8 @@ public class ROI2DArea extends ROI2D
      */
     public void clear()
     {
-        // save previous bounds
-        final Rectangle oldBounds = new Rectangle(bounds);
-        final Rectangle emptyBounds = new Rectangle();
-
         // reset image with new rectangle
-        bounds.setBounds(emptyBounds);
-        updateImage(oldBounds, emptyBounds);
+        updateImage(new Rectangle());
     }
 
     @Override
@@ -1120,12 +1088,8 @@ public class ROI2DArea extends ROI2D
      */
     private void setAsByteMask(Rectangle r, byte[] mask)
     {
-        // save previous bounds
-        final Rectangle oldBounds = new Rectangle(bounds);
-
         // reset image with new rectangle
-        bounds.setBounds(r);
-        updateImage(oldBounds, r);
+        updateImage(r);
 
         final int len = r.width * r.height;
 
@@ -1144,12 +1108,8 @@ public class ROI2DArea extends ROI2D
      */
     public void setAsBooleanMask(Rectangle r, boolean[] booleanMask)
     {
-        // save previous bounds
-        final Rectangle oldBounds = new Rectangle(bounds);
-
         // reset image with new rectangle
-        bounds.setBounds(r);
-        updateImage(oldBounds, r);
+        updateImage(r);
 
         final int len = r.width * r.height;
 

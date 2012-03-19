@@ -31,6 +31,7 @@ import icy.roi.ROIEvent.ROIPointEventType;
 import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
 import icy.util.ClassUtil;
+import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
@@ -81,6 +82,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected static final Color DEFAULT_NORMAL_COLOR = Color.GREEN;
     protected static final Color DEFAULT_SELECTED_COLOR = Color.ORANGE;
     protected static final Color OVER_COLOR = Color.WHITE;
+
+    public static final String PROPERTY_NAME = "name";
 
     /**
      * Create a ROI from its tool command name
@@ -571,7 +574,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         if (name != value)
         {
             name = value;
-            nameChanged();
+            propertyChanged(PROPERTY_NAME);
         }
     }
 
@@ -622,7 +625,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         if (focused != true)
         {
             focused = true;
-            painterChanged();
+            focusChanged();
         }
     }
 
@@ -631,7 +634,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         if (focused != false)
         {
             focused = false;
-            painterChanged();
+            focusChanged();
         }
     }
 
@@ -679,7 +682,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             selected = false;
             // as soon ROI has been unselected, we're not in create mode anymore
             creating = false;
-            painterChanged();
+            selectionChanged();
         }
     }
 
@@ -688,7 +691,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         if (selected != true)
         {
             selected = true;
-            painterChanged();
+            selectionChanged();
         }
     }
 
@@ -769,8 +772,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * called when ROI has changed its bounds
+     * @deprecated Uses {@link #roiChanged()} instead
      */
+    @Deprecated
     public void roiChanged(ROIPointEventType pointEventType, Object point)
     {
         // handle with updater
@@ -778,16 +782,34 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * called when ROI has changed its bounds
+     * Called when ROI has changed its bounds.
      */
     public void roiChanged()
     {
         // handle with updater
-        roiChanged(ROIPointEventType.NULL, null);
+        updater.changed(new ROIEvent(this, ROIEventType.ROI_CHANGED));
     }
 
     /**
-     * called when ROI need to be repainted
+     * Called when ROI selected state changed.
+     */
+    public void selectionChanged()
+    {
+        // handle with updater
+        updater.changed(new ROIEvent(this, ROIEventType.SELECTION_CHANGED));
+    }
+
+    /**
+     * Called when ROI focus state changed.
+     */
+    public void focusChanged()
+    {
+        // handle with updater
+        updater.changed(new ROIEvent(this, ROIEventType.FOCUS_CHANGED));
+    }
+
+    /**
+     * called when ROI painter changed.
      */
     public void painterChanged()
     {
@@ -796,12 +818,25 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * called when ROI name has changed
+     * Called when ROI name has changed
      */
     public void nameChanged()
     {
         // handle with updater
         updater.changed(new ROIEvent(this, ROIEventType.NAME_CHANGED));
+    }
+
+    /**
+     * Called when ROI property has changed
+     */
+    public void propertyChanged(String propertyName)
+    {
+        // handle with updater
+        updater.changed(new ROIEvent(this, propertyName));
+
+        // backward compatibility
+        if (StringUtil.equals(propertyName, PROPERTY_NAME))
+            updater.changed(new ROIEvent(this, ROIEventType.NAME_CHANGED));
     }
 
     /**
@@ -856,7 +891,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         {
         // do here global process on ROI change
             case ROI_CHANGED:
-            case PAINTER_CHANGED:
+            case SELECTION_CHANGED:
+            case FOCUS_CHANGED:
+                // case PAINTER_CHANGED:
                 // painter of ROI changed
                 painter.changed();
                 break;

@@ -25,6 +25,7 @@ import icy.common.EventHierarchicalChecker;
  */
 public class ROIEvent implements EventHierarchicalChecker
 {
+    @Deprecated
     public enum ROIPointEventType
     {
         NULL, POINT_ADDED, POINT_REMOVED, POINT_CHANGED;
@@ -32,25 +33,51 @@ public class ROIEvent implements EventHierarchicalChecker
 
     public enum ROIEventType
     {
-        ROI_CHANGED, PAINTER_CHANGED, NAME_CHANGED;
+        FOCUS_CHANGED, SELECTION_CHANGED, ROI_CHANGED, PROPERTY_CHANGED, PAINTER_CHANGED, @Deprecated
+        NAME_CHANGED;
     }
 
     private final ROI source;
     private final ROIEventType type;
+    private String propertyName;
+
+    @Deprecated
     private Object point;
+    @Deprecated
     private ROIPointEventType pointEventType;
 
+    /**
+     * @deprecated Uses {@link #ROIEvent(ROI, ROIEventType)} constructor instead
+     */
+    @Deprecated
     public ROIEvent(ROI source, ROIEventType type, ROIPointEventType pointEventType, Object point)
     {
+        super();
+
         this.source = source;
         this.type = type;
+        propertyName = null;
+
         this.point = point;
         this.pointEventType = pointEventType;
     }
 
+    public ROIEvent(ROI source, String propertyName)
+    {
+        super();
+
+        this.source = source;
+        type = ROIEventType.PROPERTY_CHANGED;
+        this.propertyName = propertyName;
+    }
+
     public ROIEvent(ROI source, ROIEventType type)
     {
-        this(source, type, ROIPointEventType.NULL, null);
+        super();
+
+        this.source = source;
+        this.type = type;
+        propertyName = null;
     }
 
     /**
@@ -70,16 +97,20 @@ public class ROIEvent implements EventHierarchicalChecker
     }
 
     /**
-     * @return the point
+     * @return the propertyName
      */
+    public String getPropertyName()
+    {
+        return propertyName;
+    }
+
+    @Deprecated
     public Object getPoint()
     {
         return point;
     }
 
-    /**
-     * @return the pointEventType
-     */
+    @Deprecated
     public ROIPointEventType getPointEventType()
     {
         return pointEventType;
@@ -96,25 +127,17 @@ public class ROIEvent implements EventHierarchicalChecker
             switch (type)
             {
                 case ROI_CHANGED:
-                    // same point event type ?
-                    if (e.getPointEventType() == pointEventType)
-                    {
-                        // join events in one global event
-                        if (e.getPoint() != point)
-                            point = null;
-                        return true;
-                    }
-                    if (e.getPointEventType() == ROIPointEventType.NULL)
-                    {
-                        pointEventType = ROIPointEventType.NULL;
-                        point = null;
-                        return true;
-                    }
-                    break;
-
+                case FOCUS_CHANGED:
+                case SELECTION_CHANGED:
                 case NAME_CHANGED:
                 case PAINTER_CHANGED:
                     return true;
+
+                case PROPERTY_CHANGED:
+                    if (e.getPropertyName() == null)
+                        propertyName = null;
+                    if ((propertyName == null) || propertyName.equals(e.getPropertyName()))
+                        return true;
             }
         }
 
@@ -125,12 +148,7 @@ public class ROIEvent implements EventHierarchicalChecker
     public boolean isEventRedundantWith(EventHierarchicalChecker event)
     {
         if (event instanceof ROIEvent)
-        {
-            final ROIEvent e = (ROIEvent) event;
-
-            return optimizeEventWith(e)
-                    || ((type == e.getType()) && (source == e.getSource()) && (pointEventType == ROIPointEventType.NULL));
-        }
+            return optimizeEventWith((ROIEvent) event);
 
         return false;
     }

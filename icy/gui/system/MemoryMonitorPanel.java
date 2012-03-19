@@ -167,19 +167,19 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
 
         // display Used & Max Memory
         g2.setColor(Color.black);
-        GraphicsUtil.drawHCenteredText(g2, infos[0], (w + 1) / 2, 6 + 1, false);
+        GraphicsUtil.drawHCenteredString(g2, infos[0], (w + 1) / 2, 6 + 1, false);
         g2.setColor(ColorUtil.mix(memColor, Color.white));
-        GraphicsUtil.drawHCenteredText(g2, infos[0], w / 2, 6, false);
+        GraphicsUtil.drawHCenteredString(g2, infos[0], w / 2, 6, false);
         // display CPU Load
         g2.setColor(Color.black);
-        GraphicsUtil.drawHCenteredText(g2, infos[1], (w + 1) / 2, 18 + 1, false);
+        GraphicsUtil.drawHCenteredString(g2, infos[1], (w + 1) / 2, 18 + 1, false);
         g2.setColor(ColorUtil.mix(cpuColor, Color.white));
-        GraphicsUtil.drawHCenteredText(g2, infos[1], w / 2, 18, false);
+        GraphicsUtil.drawHCenteredString(g2, infos[1], w / 2, 18, false);
 
         if (displayHelpMessage)
         {
             g2.setColor(Color.white);
-            GraphicsUtil.drawHCenteredText(g2, "click to force a garbage collector event", w / 2, 44, false);
+            GraphicsUtil.drawHCenteredString(g2, "click to force a garbage collector event", w / 2, 44, false);
         }
 
         g2.dispose();

@@ -117,16 +117,14 @@ public class PluginDetailPanel extends IcyFrame
         setVisible(true);
         requestFocus();
 
-        if (!plugin.isLoaded())
+        if (!plugin.isAllLoaded())
         {
             ThreadUtil.bgRun(new Runnable()
             {
                 @Override
                 public void run()
                 {
-                    // load plugin descriptor & images
-                    PluginDetailPanel.this.plugin.loadDescriptor();
-                    PluginDetailPanel.this.plugin.loadImages();
+                    PluginDetailPanel.this.plugin.loadAll();
 
                     // rebuild interface
                     ThreadUtil.invokeLater(new Runnable()

@@ -888,7 +888,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * if <code>((c == 0) || (sizeC == 1))</code> then current image is directly returned<br>
      * if <code>((c < 0) || (c >= sizeC))</code> then it returns <code>null</code>
      * 
-     * @see #extractBand(int)
+     * @see #extractChannel(int)
      * @since version 1.0.3.3b
      */
     public IcyBufferedImage getImage(int c)
@@ -907,7 +907,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Build a new 1 channel image (grey) from the specified image channel
+     * Build a new single channel image (greyscale) from the specified image channel
      * 
      * @param channelNumber
      * @return IcyBufferedImage
@@ -922,7 +922,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Build a new image from the specified image channels
+     * Build a new image from the specified image channels.
      * 
      * @param channelNumbers
      * @return IcyBufferedImage
@@ -931,7 +931,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     {
         // create output
         final IcyBufferedImage output = new IcyBufferedImage(getWidth(), getHeight(), channelNumbers.size(),
-                getDataType(), isSignedDataType());
+                getDataType_());
         final int sizeC = getSizeC();
 
         // set data from specified band

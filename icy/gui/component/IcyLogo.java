@@ -72,7 +72,7 @@ public class IcyLogo extends IcyPanel // implements ComponentListener
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
         g2.setFont(titleFont);
-        GraphicsUtil.drawCenteredText(g2, title, w / 2, h / 2, false);
+        GraphicsUtil.drawCenteredString(g2, title, w / 2, h / 2, false);
 
         g2.dispose();
     }

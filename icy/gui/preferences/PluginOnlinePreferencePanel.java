@@ -49,10 +49,13 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
 
     PluginOnlinePreferencePanel(PreferenceFrame parent)
     {
-        super(parent, NODE_NAME);
+        super(parent, NODE_NAME, PluginPreferencePanel.NODE_NAME);
 
         PluginRepositoryLoader.addListener(this);
         PluginInstaller.addListener(this);
+
+        // remove last column not used here
+        table.removeColumn(table.getColumn(columnIds[4]));
 
         repositoryPanel.setVisible(true);
         action1Button.setText("Install");
@@ -197,17 +200,17 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     {
         super.updateButtonsStateInternal();
 
-        if (PluginRepositoryLoader.isLoadingBasic())
-        {
-            refreshButton.setText("Reloading...");
-            refreshButton.setEnabled(false);
-            repository.setEnabled(false);
-        }
-        else
+        if (PluginRepositoryLoader.isBasicLoaded())
         {
             refreshButton.setText("Reload list");
             refreshButton.setEnabled(true);
             repository.setEnabled(true);
+        }
+        else
+        {
+            refreshButton.setText("Reloading...");
+            refreshButton.setEnabled(false);
+            repository.setEnabled(false);
         }
 
         final PluginDescriptor plugin = getSelectedPlugin();

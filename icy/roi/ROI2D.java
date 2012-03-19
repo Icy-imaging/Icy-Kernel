@@ -167,7 +167,7 @@ public abstract class ROI2D extends ROI
                         {
                             // update selection
                             updateSelect(e, imagePoint, canvas);
-                            // always consume (to enable dragging) 
+                            // always consume (to enable dragging)
                             e.consume();
                         }
                         // roi selected and no point selected ?

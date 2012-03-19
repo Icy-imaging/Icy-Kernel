@@ -232,23 +232,19 @@ public class PluginUpdater extends ActionFrame
         final ArrayList<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins(plugin.getClassName());
         final PluginDescriptor onlinePlugin;
 
-        // more than one online plugins availables ?
+        // get the last version found
         if (onlinePlugins.size() > 0)
         {
             PluginDescriptor lastVersion = null;
 
-            // find last version
             for (PluginDescriptor currentVersion : onlinePlugins)
                 if ((lastVersion == null) || currentVersion.isNewer(lastVersion))
                     lastVersion = currentVersion;
 
             onlinePlugin = lastVersion;
         }
-        // only one found
-        else if (onlinePlugins.size() == 1)
-            onlinePlugin = onlinePlugins.get(0);
-        // not found in repositories
         else
+            // not found in repositories
             onlinePlugin = null;
 
         // we have an update available ?

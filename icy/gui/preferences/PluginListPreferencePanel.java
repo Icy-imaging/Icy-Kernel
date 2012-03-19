@@ -63,7 +63,8 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
      */
     private static final long serialVersionUID = -2718763355377652489L;
 
-    static final String[] columnNames = {"", "Name", "Version", ""};
+    static final String[] columnNames = {"", "Name", "Version", "State", "Enabled"};
+    static final String[] columnIds = {"Icon", "Name", "Version", "State", "Enabled"};
 
     ArrayList<PluginDescriptor> plugins;
 
@@ -90,9 +91,9 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     final ActionListener repositoryActionListener;
 
-    PluginListPreferencePanel(PreferenceFrame parent, String nodeName)
+    PluginListPreferencePanel(PreferenceFrame parent, String nodeName, String parentName)
     {
-        super(parent, nodeName, PluginPreferencePanel.NODE_NAME);
+        super(parent, nodeName, parentName);
 
         plugins = new ArrayList<PluginDescriptor>();
 
@@ -164,7 +165,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         filter = new IcyTextField();
         filter.addTextChangeListener(this);
 
-        load();
+        // load();
 
         // build buttons panel
         final Dimension buttonsDim = new Dimension(100, 24);
@@ -276,6 +277,9 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
                         case 3:
                             return getStateValue(plugin);
+
+                        case 4:
+                            return Boolean.valueOf(isActive(plugin));
                     }
                 }
 
@@ -283,18 +287,38 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
             }
 
             @Override
+            public void setValueAt(Object aValue, int rowIndex, int columnIndex)
+            {
+                if (rowIndex < plugins.size())
+                {
+                    final PluginDescriptor plugin = plugins.get(rowIndex);
+
+                    if (columnIndex == 4)
+                    {
+                        if (aValue instanceof Boolean)
+                            setActive(plugin, ((Boolean) aValue).booleanValue());
+                    }
+                }
+            }
+
+            @Override
             public boolean isCellEditable(int row, int column)
             {
-                return false;
+                return (column == 4);
             }
 
             @Override
             public Class<?> getColumnClass(int columnIndex)
             {
-                if (columnIndex == 0)
-                    return ImageIcon.class;
-
-                return String.class;
+                switch (columnIndex)
+                {
+                    case 0:
+                        return ImageIcon.class;
+                    case 4:
+                        return Boolean.class;
+                    default:
+                        return String.class;
+                }
             }
         };
 
@@ -305,21 +329,30 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
         // columns setting
         col = colModel.getColumn(0);
+        col.setIdentifier(columnIds[0]);
         col.setPreferredWidth(32);
         col.setMinWidth(32);
         col.setResizable(false);
 
         col = colModel.getColumn(1);
+        col.setIdentifier(columnIds[1]);
         col.setPreferredWidth(200);
         col.setMinWidth(120);
 
         col = colModel.getColumn(2);
+        col.setIdentifier(columnIds[2]);
         col.setPreferredWidth(70);
         col.setMinWidth(60);
 
         col = colModel.getColumn(3);
+        col.setIdentifier(columnIds[3]);
         col.setPreferredWidth(90);
         col.setMinWidth(70);
+
+        col = colModel.getColumn(4);
+        col.setIdentifier(columnIds[4]);
+        col.setPreferredWidth(70);
+        col.setMinWidth(30);
 
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getSelectionModel().addListSelectionListener(this);
@@ -379,6 +412,15 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         }
 
         return result;
+    }
+
+    protected boolean isActive(PluginDescriptor plugin)
+    {
+        return false;
+    }
+
+    protected void setActive(PluginDescriptor plugin, boolean value)
+    {
     }
 
     protected abstract void doAction1(PluginDescriptor plugin);

@@ -324,11 +324,6 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
                 return (column == 2);
             }
 
-            /*
-             * (non-Javadoc)
-             * 
-             * @see javax.swing.table.AbstractTableModel#setValueAt(java.lang.Object, int, int)
-             */
             @Override
             public void setValueAt(Object aValue, int rowIndex, int columnIndex)
             {

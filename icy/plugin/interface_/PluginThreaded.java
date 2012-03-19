@@ -16,7 +16,7 @@ package icy.plugin.interface_;
  * 
  * @author Stephane
  */
-public interface PluginThreaded extends Runnable
+public interface PluginThreaded extends Runnable, PluginStartAsThread
 {
 
 }

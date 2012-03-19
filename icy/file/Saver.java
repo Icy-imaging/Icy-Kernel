@@ -322,16 +322,17 @@ public class Saver
         final String filePath = file.getAbsolutePath();
         final int sizeT = (tMax - tMin) + 1;
         final int sizeZ = (zMax - zMin) + 1;
+        final int numImages = sizeT * sizeZ;
 
         final FileFrame saveFrame = new FileFrame("Saving", file.getAbsolutePath());
         final ApplicationMenu mainMenu = Icy.getMainInterface().getApplicationMenu();
 
         try
         {
-            saveFrame.setLength(sizeT * sizeZ);
+            saveFrame.setLength(numImages);
             saveFrame.setPosition(0);
 
-            if (multipleFile)
+            if ((numImages > 0) && multipleFile)
             {
                 // so we won't create it for each image
                 final IFormatWriter writer = getWriter(file);

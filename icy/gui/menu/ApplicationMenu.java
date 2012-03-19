@@ -301,7 +301,11 @@ public class ApplicationMenu extends RibbonApplicationMenu
                             if (StringUtil.isEmpty(filename))
                                 new ImageSaverDialog(seq, viewer.getZ(), viewer.getT());
                             else
-                                Saver.save(seq, new File(filename));
+                            {
+                                final File file = new File(filename);
+
+                                Saver.save(seq, file, !file.exists() || file.isDirectory());
+                            }
                         }
                     }
                 }, CommandButtonKind.ACTION_ONLY);

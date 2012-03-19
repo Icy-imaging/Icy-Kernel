@@ -62,14 +62,24 @@ import java.util.TreeMap;
 
 import javax.swing.event.EventListenerList;
 
-import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.model.primitives.PositiveFloat;
 
 import org.w3c.dom.Node;
 
 /**
- * @author Fabrice de Chaumont
+ * Image sequence object.<br>
+ * A <code>Sequence</code> is basically a 5 dimension (XYCZT) image where :<br>
+ * XY dimension = planar image<br>
+ * C dimension = channel<br>
+ * Z dimension = depth<br>
+ * T dimension = time<br>
+ * <br>
+ * The XYC dimensions are bounded into the {@link IcyBufferedImage} object so <code>Sequence</code>
+ * define a list of {@link IcyBufferedImage} where each image is associated to a Z and T
+ * information.
+ * 
+ * @author Fabrice de Chaumont & Stephane
  */
 public class Sequence implements IcyColorModelListener, IcyBufferedImageListener, ChangeListener, ROIListener
 {
@@ -158,7 +168,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Metadata
      */
-    private OMEXMLMetadata metaData;
+    private OMEXMLMetadataImpl metaData;
     // /**
     // * X, Y, Z resolution (in mm)
     // */
@@ -557,7 +567,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Returns meta data object
      */
-    public OMEXMLMetadata getMetadata()
+    public OMEXMLMetadataImpl getMetadata()
     {
         return metaData;
     }
@@ -565,7 +575,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Set the meta data object
      */
-    public void setMetaData(OMEXMLMetadata metaData)
+    public void setMetaData(OMEXMLMetadataImpl metaData)
     {
         if (this.metaData != metaData)
         {

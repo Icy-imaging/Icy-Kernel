@@ -638,13 +638,23 @@ public class FileUtil
 
                     return false;
                 }
+
+                return true;
             }
 
-            // copy file
+            // get data to copy from src
             final byte[] data = load(src, true);
-            // and save in dst if correctly loaded
+            // source data correctly loaded
             if (data != null)
-                return save(dst, data, true);
+            {
+                // save in dst
+                if (save(dst, data, true))
+                {
+                    // and set the last modified info.
+                    dst.setLastModified(src.lastModified());
+                    return true;
+                }
+            }
         }
 
         // missing input file

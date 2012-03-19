@@ -408,21 +408,24 @@ public class GuiUtil
     }
 
     /**
-     * @deprecated uses {@link GraphicsUtil#drawHCenteredText(Graphics, String, int, int)} instead
+     * @deprecated uses
+     *             {@link GraphicsUtil#drawHCenteredString(Graphics, String, int, int, boolean)}
+     *             instead
      */
     @Deprecated
     public static void drawHCenteredText(Graphics g, String string, int w, int y)
     {
-        GraphicsUtil.drawHCenteredText(g, string, w / 2, y, false);
+        GraphicsUtil.drawHCenteredString(g, string, w / 2, y, false);
     }
 
     /**
-     * @deprecated uses {@link GraphicsUtil#drawCenteredText(Graphics, String, int, int)} instead
+     * @deprecated uses {@link GraphicsUtil#drawCenteredString(Graphics, String, int, int, boolean)}
+     *             instead
      */
     @Deprecated
     public static void drawCenteredText(Graphics g, String string, int w, int h)
     {
-        GraphicsUtil.drawCenteredText(g, string, w / 2, h / 2, false);
+        GraphicsUtil.drawCenteredString(g, string, w / 2, h / 2, false);
     }
 
 }

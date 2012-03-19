@@ -9,12 +9,15 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.PathIterator;
@@ -159,7 +162,7 @@ public class GraphicsUtil
      * Draw a horizontal centered text on specified position.
      * This function handle multi lines string ('\n' character used a line separator).
      */
-    public static void drawHCenteredText(Graphics g, String text, int x, int y, boolean shadow)
+    public static void drawHCenteredString(Graphics g, String text, int x, int y, boolean shadow)
     {
         if (StringUtil.isEmpty(text))
             return;
@@ -191,7 +194,7 @@ public class GraphicsUtil
      * Draw a horizontal and vertical centered text on specified position.
      * This function handle multi lines string ('\n' character used a line separator).
      */
-    public static void drawCenteredText(Graphics g, String text, int x, int y, boolean shadow)
+    public static void drawCenteredString(Graphics g, String text, int x, int y, boolean shadow)
     {
         if (StringUtil.isEmpty(text))
             return;
@@ -220,8 +223,27 @@ public class GraphicsUtil
     }
 
     /**
+     * Returns the size to draw a Hint type text in the specified Graphics context.
+     */
+    public static Dimension getHintSize(Graphics2D g, String text)
+    {
+        final Rectangle2D stringRect = getStringBounds(g, text);
+        return new Dimension((int) Math.ceil(stringRect.getWidth() + 10d), (int) Math.ceil(stringRect.getHeight() + 8d));
+    }
+
+    /**
+     * Returns the bounds to draw a Hint type text in the specified Graphics context<br>
+     * at the specified location.
+     */
+    public static Rectangle getHintBounds(Graphics2D g, String text, int x, int y)
+    {
+        final Dimension dim = getHintSize(g, text);
+        return new Rectangle(x, y, dim.width, dim.height);
+    }
+
+    /**
      * Draw multi line Hint type text in the specified Graphics context<br>
-     * and at the specified location.
+     * at the specified location.
      */
     public static void drawHint(Graphics2D g, String text, int x, int y, Color bgColor, Color textColor)
     {
@@ -246,6 +268,155 @@ public class GraphicsUtil
         drawString(g2, text, x + 5, y + 4, false);
 
         g2.dispose();
+    }
+
+    /**
+     * Returns the bounds to draw specified box dimension at specified position.<br>
+     * By default the draw process is done from specified position to right/bottom.
+     * 
+     * @param origin
+     *        the initial desired position we want to draw the box.
+     * @param dim
+     *        box dimension
+     * @param xSpace
+     *        horizontal space between the position and box
+     * @param ySpace
+     *        vertical space between the position and box
+     * @param top
+     *        box is at top of position
+     * @param left
+     *        box is at left of position
+     */
+    public static Rectangle getBounds(Point origin, Dimension dim, int xSpace, int ySpace, boolean top, boolean left)
+    {
+        int x = origin.x;
+        int y = origin.y;
+
+        if (left)
+            x -= dim.width + xSpace;
+        else
+            x += xSpace;
+        if (top)
+            y -= dim.height + ySpace;
+        else
+            y += ySpace;
+
+        return new Rectangle(x, y, dim.width, dim.height);
+    }
+
+    /**
+     * Returns the bounds to draw specified box dimension at specified position.
+     * By default the draw process is done from specified position to right/bottom.
+     * 
+     * @param origin
+     *        the initial desired position we want to draw the box.
+     * @param dim
+     *        box dimension
+     * @param top
+     *        box is at top of position
+     * @param left
+     *        box is at left of position
+     */
+    public static Rectangle getBounds(Point origin, Dimension dim, boolean top, boolean left)
+    {
+        return getBounds(origin, dim, 0, 0, top, left);
+    }
+
+    /**
+     * Returns the best position to draw specified box in specified region with initial desired
+     * position.
+     * 
+     * @param origin
+     *        the initial desired position we want to draw the box.
+     * @param dim
+     *        box dimension
+     * @param region
+     *        the rectangle defining the region where we want to draw
+     * @param xSpace
+     *        horizontal space between the position and box
+     * @param ySpace
+     *        vertical space between the position and box
+     * @param top
+     *        by default box is at top of position
+     * @param left
+     *        by default box is at left of position
+     */
+    public static Point getBestPosition(Point origin, Dimension dim, Rectangle region, int xSpace, int ySpace,
+            boolean top, boolean left)
+    {
+        final Rectangle bounds1 = getBounds(origin, dim, xSpace, ySpace, top, left);
+        if (region.contains(bounds1))
+            return new Point(bounds1.x, bounds1.y);
+
+        final Rectangle bounds2 = getBounds(origin, dim, xSpace, ySpace, top, !left);
+        if (region.contains(bounds2))
+            return new Point(bounds2.x, bounds2.y);
+
+        final Rectangle bounds3 = getBounds(origin, dim, xSpace, ySpace, !top, left);
+        if (region.contains(bounds3))
+            return new Point(bounds3.x, bounds3.y);
+
+        final Rectangle bounds4 = getBounds(origin, dim, xSpace, ySpace, !top, !left);
+        if (region.contains(bounds4))
+            return new Point(bounds4.x, bounds4.y);
+
+        Rectangle r;
+
+        r = region.intersection(bounds1);
+        final long size1 = r.width * r.height;
+        r = region.intersection(bounds2);
+        final long size2 = r.width * r.height;
+        r = region.intersection(bounds3);
+        final long size3 = r.width * r.height;
+        r = region.intersection(bounds4);
+        final long size4 = r.width * r.height;
+
+        long maxSize = Math.max(size1, Math.max(size2, Math.max(size3, size4)));
+
+        if (maxSize == size1)
+            return new Point(bounds1.x, bounds1.y);
+        if (maxSize == size2)
+            return new Point(bounds2.x, bounds2.y);
+        if (maxSize == size3)
+            return new Point(bounds3.x, bounds3.y);
+
+        return new Point(bounds4.x, bounds4.y);
+    }
+
+    /**
+     * Returns the best position to draw specified box in specified region with initial desired
+     * position.
+     * 
+     * @param origin
+     *        the initial desired position we want to draw the box.
+     * @param dim
+     *        box dimension
+     * @param region
+     *        the rectangle defining the region where we want to draw
+     * @param xSpace
+     *        horizontal space between the position and box
+     * @param ySpace
+     *        vertical space between the position and box
+     */
+    public static Point getBestPosition(Point origin, Dimension dim, Rectangle region, int xSpace, int ySpace)
+    {
+        return getBestPosition(origin, dim, region, xSpace, ySpace, false, false);
+    }
+
+    /**
+     * Returns the best position to draw specified box in specified region with initial desired
+     * position.
+     * 
+     * @param origin
+     *        the initial desired position we want to draw the box.
+     * @param dim
+     *        box dimension
+     * @param region
+     *        the rectangle defining the region where we want to draw
+     */
+    public static Point getBestPosition(Point origin, Dimension dim, Rectangle region)
+    {
+        return getBestPosition(origin, dim, region, 0, 0, false, false);
     }
 
     /**

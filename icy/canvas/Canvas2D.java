@@ -104,13 +104,11 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     /**
      * Possible rounded zoom factor : 0.01 --> 100
      */
-    final static double[] zoomRoundedFactors = new double[] {
-            0.01d, 0.02d, 0.0333d, 0.05d, 0.075d,
-            0.1d, 0.15d, 0.2d, 0.25d, 0.333d, 0.5d, 0.66d, 0.75d,
-            1d, 1.25d, 1.5d, 1.75d, 2d, 2.5d, 3d, 4d, 5d, 6.6d, 7.5d,
-            10d, 15d, 20d, 30d, 50d, 66d, 75d, 100d};
+    final static double[] zoomRoundedFactors = new double[] {0.01d, 0.02d, 0.0333d, 0.05d, 0.075d, 0.1d, 0.15d, 0.2d,
+            0.25d, 0.333d, 0.5d, 0.66d, 0.75d, 1d, 1.25d, 1.5d, 1.75d, 2d, 2.5d, 3d, 4d, 5d, 6.6d, 7.5d, 10d, 15d, 20d,
+            30d, 50d, 66d, 75d, 100d};
 
-    private class CanvasMap extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener
+    public class CanvasMap extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener
     {
         /**
          * 
@@ -119,10 +117,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         private Point mouseMapPos;
         private Point mapStartDragPos;
-        private int mapStartOffsetX;
-        private int mapStartOffsetY;
-        private double mapStartScaleX;
-        private double mapStartScaleY;
         private double mapStartRotationZ;
         private boolean mapMoving;
         private boolean mapRotating;
@@ -133,10 +127,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
             mouseMapPos = new Point(0, 0);
             mapStartDragPos = null;
-            mapStartOffsetX = 0;
-            mapStartOffsetY = 0;
-            mapStartScaleX = 0;
-            mapStartScaleY = 0;
             mapStartRotationZ = 0;
             mapMoving = false;
             mapRotating = false;
@@ -150,7 +140,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             addMouseWheelListener(this);
         }
 
-        AffineTransform getImageTransform()
+        /**
+         * Return AffineTransform object which transform an image coordinate to map coordinate.
+         */
+        public AffineTransform getImageTransform()
         {
             final int w = getWidth();
             final int h = getHeight();
@@ -197,25 +190,25 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         /**
          * Transform a CanvasMap point in CanvasView point
          */
-        private Point getCanvasPosition(Point p)
+        public Point getCanvasPosition(Point p)
         {
-            // transform to canvas view coordinate
+            // transform map coordinate to canvas coordinate
             return imageToCanvas(getImagePosition(p));
         }
 
         /**
-         * Transform a Image point in CanvasView point
+         * Transforms a Image point in CanvasView point.
          */
-        private Point getCanvasPosition(Point2D.Double p)
+        public Point getCanvasPosition(Point2D.Double p)
         {
-            // transform to canvas view coordinate
+            // transform image coordinate to canvas coordinate
             return imageToCanvas(p);
         }
 
         /**
-         * Transform a CanvasMap point in Image point
+         * Transforms a CanvasMap point in Image point.
          */
-        private Point2D.Double getImagePosition(Point p)
+        public Point2D.Double getImagePosition(Point p)
         {
             final AffineTransform trans = getImageTransform();
 
@@ -441,8 +434,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             // start drag mouse position
             mapStartDragPos = (Point) e.getPoint().clone();
             // store canvas parameters
-            mapStartOffsetX = getOffsetX();
-            mapStartOffsetY = getOffsetY();
             mapStartRotationZ = getRotationZ();
 
             // left click action --> center view on mouse point
@@ -605,7 +596,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         }
     }
 
-    private class CanvasView extends JPanel implements ActionListener, MouseWheelListener, MouseListener,
+    public class CanvasView extends JPanel implements ActionListener, MouseWheelListener, MouseListener,
             MouseMotionListener
     {
         /**
@@ -613,7 +604,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
          */
         private static final long serialVersionUID = 4041355608444378172L;
 
-        private class ImageCache implements Runnable
+        public class ImageCache implements Runnable
         {
             /**
              * image cache
@@ -836,6 +827,14 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             zoomLatchTimer.removeActionListener(this);
             zoomInfoAlphaMover.shutDown();
             rotationInfoAlphaMover.shutDown();
+        }
+
+        /**
+         * Returns the internal {@link ImageCache} object.
+         */
+        public ImageCache getImageCache()
+        {
+            return imageCache;
         }
 
         protected void updateDrag(boolean control, boolean shift)
@@ -1426,7 +1425,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             canvasMap.repaint();
         }
 
-        private void drawTextBottomRight(Graphics2D g, String text, float alpha)
+        public void drawTextBottomRight(Graphics2D g, String text, float alpha)
         {
             final Rectangle2D rect = GraphicsUtil.getStringBounds(g, text);
             final int w = (int) rect.getWidth();
@@ -1442,7 +1441,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             g.drawString(text, x + 4, y + 2 + h);
         }
 
-        private void drawTextTopRight(Graphics2D g, String text, float alpha)
+        public void drawTextTopRight(Graphics2D g, String text, float alpha)
         {
             final Rectangle2D rect = GraphicsUtil.getStringBounds(g, text);
             final int w = (int) rect.getWidth();
@@ -1458,7 +1457,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             g.drawString(text, x + 4, y + 2 + h);
         }
 
-        private void drawTextCenter(Graphics2D g, String text, float alpha)
+        public void drawTextCenter(Graphics2D g, String text, float alpha)
         {
             final Rectangle2D rect = GraphicsUtil.getStringBounds(g, text);
             final int w = (int) rect.getWidth();
@@ -2177,6 +2176,22 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         panel.add(canvasMap, BorderLayout.CENTER);
         panel.add(subPanel, BorderLayout.SOUTH);
+    }
+
+    /**
+     * Return the {@link CanvasView} component of Canvas2D.
+     */
+    public CanvasView getCanvasView()
+    {
+        return canvasView;
+    }
+
+    /**
+     * Return the {@link CanvasMap} component of Canvas2D.
+     */
+    public CanvasMap getCanvasMap()
+    {
+        return canvasMap;
     }
 
     @Override

@@ -21,6 +21,7 @@ package icy.plugin;
 import icy.main.Icy;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginImageAnalysis;
+import icy.plugin.interface_.PluginStartAsThread;
 import icy.plugin.interface_.PluginThreaded;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
@@ -83,7 +84,8 @@ public class PluginLauncher
             else
                 thread = new PluginThread(pluginDesc, plugin, null);
 
-            if (plugin instanceof PluginThreaded)
+            // keep backward compatibility
+            if ((plugin instanceof PluginThreaded) || (plugin instanceof PluginStartAsThread))
                 // launch as thread
                 thread.start();
             else

@@ -23,6 +23,7 @@ import icy.file.FileUtil;
 import icy.file.xml.XMLPersistent;
 import icy.file.xml.XMLPersistentHelper;
 import icy.image.ImageUtil;
+import icy.network.NetworkUtil;
 import icy.network.URLUtil;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginImageAnalysis;
@@ -767,7 +768,10 @@ public class PluginDescriptor implements XMLPersistent
     {
         // load icon
         if (url != null)
-            icon = ResourceUtil.getImageIcon(ImageUtil.loadImage(url, false), ICON_SIZE);
+            icon = ResourceUtil.getImageIcon(
+                    ImageUtil.loadImage(NetworkUtil.getInputStream(url,
+                            (repository != null) ? repository.getAuthenticationInfo() : null, true, false), false),
+                    ICON_SIZE);
         // get default icon
         if (icon == null)
             icon = DEFAULT_ICON;
@@ -777,7 +781,10 @@ public class PluginDescriptor implements XMLPersistent
     {
         // load image
         if (url != null)
-            image = ImageUtil.scaleImage(ImageUtil.loadImage(url, false), IMAGE_SIZE, IMAGE_SIZE);
+            image = ImageUtil.scaleImage(
+                    ImageUtil.loadImage(NetworkUtil.getInputStream(url,
+                            (repository != null) ? repository.getAuthenticationInfo() : null, true, false), false),
+                    IMAGE_SIZE, IMAGE_SIZE);
         // get default image
         if (image == null)
             image = DEFAULT_IMAGE;
@@ -1265,11 +1272,36 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * @return the loaded
+     * Returns true if descriptor is loaded.
      */
+    public boolean isDescriptorLoaded()
+    {
+        return descriptorLoaded;
+    }
+
+    /**
+     * @deprecated Uses {@link #isDescriptorLoaded()} instead
+     */
+    @Deprecated
     public boolean isLoaded()
     {
         return descriptorLoaded;
+    }
+
+    /**
+     * Returns true if image and icon are loaded.
+     */
+    public boolean isImagesLoaded()
+    {
+        return descriptorLoaded;
+    }
+
+    /**
+     * Returns true if both descriptor and images are loaded.
+     */
+    public boolean isAllLoaded()
+    {
+        return descriptorLoaded && imagesLoaded;
     }
 
     /**

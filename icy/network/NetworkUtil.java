@@ -327,12 +327,24 @@ public class NetworkUtil
         return download(in, -1, null);
     }
 
-    public static URLConnection openConnection(String path, boolean disableCache, boolean displayError)
-    {
-        return openConnection(URLUtil.getURL(path), disableCache, displayError);
-    }
-
-    public static URLConnection openConnection(URL url, boolean disableCache, boolean displayError)
+    /**
+     * Returns a new {@link URLConnection} from specified URL (null if an error occurred).
+     * 
+     * @param url
+     *        url to connect.
+     * @param login
+     *        login if the connection requires authentication.<br>
+     *        Set it to null if no authentication needed.
+     * @param pass
+     *        login if the connection requires authentication.
+     *        Set it to null if no authentication needed.
+     * @param disableCache
+     *        Disable proxy cache if any.
+     * @param displayError
+     *        Display error message in console if something wrong happen.
+     */
+    public static URLConnection openConnection(URL url, String login, String pass, boolean disableCache,
+            boolean displayError)
     {
         try
         {
@@ -340,6 +352,10 @@ public class NetworkUtil
 
             if (disableCache)
                 disableCache(uc);
+
+            // authentication
+            if (!StringUtil.isEmpty(login) && !StringUtil.isEmpty(pass))
+                NetworkUtil.setAuthentication(uc, login, pass);
 
             return uc;
         }
@@ -355,6 +371,67 @@ public class NetworkUtil
         return null;
     }
 
+    /**
+     * Returns a new {@link URLConnection} from specified URL (null if an error occurred).
+     * 
+     * @param url
+     *        url to connect.
+     * @param auth
+     *        Authentication informations.
+     * @param disableCache
+     *        Disable proxy cache if any.
+     * @param displayError
+     *        Display error message in console if something wrong happen.
+     */
+    public static URLConnection openConnection(URL url, AuthenticationInfo auth, boolean disableCache,
+            boolean displayError)
+    {
+        if ((auth != null) && (auth.isEnabled()))
+            return openConnection(url, auth.getLogin(), auth.getPassword(), disableCache, displayError);
+
+        return openConnection(url, null, null, disableCache, displayError);
+    }
+
+    /**
+     * Returns a new {@link URLConnection} from specified URL (null if an error occurred).
+     * 
+     * @param url
+     *        url to connect.
+     * @param disableCache
+     *        Disable proxy cache if any.
+     * @param displayError
+     *        Display error message in console if something wrong happen.
+     */
+    public static URLConnection openConnection(URL url, boolean disableCache, boolean displayError)
+    {
+        return openConnection(url, null, null, disableCache, displayError);
+    }
+
+    /**
+     * Returns a new {@link URLConnection} from specified path.<br>
+     * Returns null if an error occurred.
+     * 
+     * @param path
+     *        path to connect.
+     * @param disableCache
+     *        Disable proxy cache if any.
+     * @param displayError
+     *        Display error message in console if something wrong happen.
+     */
+    public static URLConnection openConnection(String path, boolean disableCache, boolean displayError)
+    {
+        return openConnection(URLUtil.getURL(path), disableCache, displayError);
+    }
+
+    /**
+     * Returns a new {@link InputStream} from specified {@link URLConnection} (null if an error
+     * occurred).
+     * 
+     * @param uc
+     *        URLConnection object.
+     * @param displayError
+     *        Display error message in console if something wrong happen.
+     */
     public static InputStream getInputStream(URLConnection uc, boolean displayError)
     {
         if (uc != null)
@@ -412,17 +489,30 @@ public class NetworkUtil
         return null;
     }
 
-    public static InputStream getInputStream(URL url, boolean disableCache, boolean displayError)
+    /**
+     * Returns a new {@link InputStream} from specified URL (null if an error occurred).
+     * 
+     * @param url
+     *        url we want to connect and retrieve the InputStream.
+     * @param login
+     *        login if the connection requires authentication.<br>
+     *        Set it to null if no authentication needed.
+     * @param pass
+     *        login if the connection requires authentication.
+     *        Set it to null if no authentication needed.
+     * @param disableCache
+     *        Disable proxy cache if any.
+     * @param displayError
+     *        Display error message in console if something wrong happen.
+     */
+    public static InputStream getInputStream(URL url, String login, String pass, boolean disableCache,
+            boolean displayError)
     {
-        // check if this is a file
         if (url != null)
         {
             try
             {
-                if (URLUtil.isFileURL(url))
-                    return new FileInputStream(new File(url.toURI()));
-
-                return getInputStream(openConnection(url, disableCache, displayError), displayError);
+                return getInputStream(openConnection(url, login, pass, disableCache, displayError), displayError);
             }
             catch (Exception e)
             {
@@ -435,6 +525,27 @@ public class NetworkUtil
         }
 
         return null;
+    }
+
+    /**
+     * Returns a new {@link InputStream} from specified URL (null if an error occurred).
+     * 
+     * @param url
+     *        url we want to connect and retrieve the InputStream.
+     * @param auth
+     *        Authentication informations.
+     * @param disableCache
+     *        Disable proxy cache if any.
+     * @param displayError
+     *        Display error message in console if something wrong happen.
+     */
+    public static InputStream getInputStream(URL url, AuthenticationInfo auth, boolean disableCache,
+            boolean displayError)
+    {
+        if ((auth != null) && (auth.isEnabled()))
+            return getInputStream(url, auth.getLogin(), auth.getPassword(), disableCache, displayError);
+
+        return getInputStream(url, null, null, disableCache, displayError);
     }
 
     public static void disableCache(URLConnection uc)

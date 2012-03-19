@@ -8,6 +8,7 @@ import icy.image.ImageUtil;
 import icy.resource.ResourceUtil;
 import icy.util.StringUtil;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -17,7 +18,10 @@ import java.awt.image.BufferedImage;
 import org.pushingpixels.flamingo.api.common.icon.ResizableIcon;
 
 /**
- * IcyIcon class.
+ * Icy Icon class.<br>
+ * This class is used to display alpha mask type icon.<br>
+ * By default the fill color is taken from the current look and feel scheme but
+ * it can also be defined manually.
  * 
  * @author Stephane
  */
@@ -27,6 +31,7 @@ public class IcyIcon implements ResizableIcon
 
     protected Image image;
     protected String name;
+    protected Color color;
     protected final Dimension dim;
 
     private BufferedImage cache;
@@ -38,6 +43,7 @@ public class IcyIcon implements ResizableIcon
 
         this.image = image;
         this.name = name;
+        color = null;
 
         dim = new Dimension(size, size);
 
@@ -122,6 +128,27 @@ public class IcyIcon implements ResizableIcon
         }
     }
 
+    /**
+     * @return the fill color (null if we use the default LAF color).
+     */
+    public Color getColor()
+    {
+        return color;
+    }
+
+    /**
+     * @param color
+     *        the fill color to set (null = default LAF color)
+     */
+    public void setColor(Color color)
+    {
+        if (this.color != color)
+        {
+            this.color = color;
+            update();
+        }
+    }
+
     private void updateImage()
     {
         if (!StringUtil.isEmpty(name))
@@ -170,7 +197,12 @@ public class IcyIcon implements ResizableIcon
     private void paintImage(Component c)
     {
         if (tmp != null)
-            LookAndFeelUtil.paintForegroundImageFromAlphaImage(c, cache, tmp);
+        {
+            if (color == null)
+                LookAndFeelUtil.paintForegroundImageFromAlphaImage(c, cache, tmp);
+            else
+                ImageUtil.paintColorImageFromAlphaImage(cache, tmp, color);
+        }
     }
 
     @Override

@@ -33,6 +33,9 @@ public class PluginPreferencePanel extends PreferencePanel
 
     public static final String NODE_NAME = "Plugin";
 
+    /**
+     * gui
+     */
     final JCheckBox autoUpdateCheckBox;
     final JCheckBox autoCheckUpdateCheckBox;
     private final JCheckBox allowBetaCheckBox;
@@ -64,11 +67,11 @@ public class PluginPreferencePanel extends PreferencePanel
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
 
         mainPanel.add(autoUpdateCheckBox);
-        mainPanel.add(Box.createVerticalStrut(10));
+        mainPanel.add(Box.createVerticalStrut(6));
         mainPanel.add(autoCheckUpdateCheckBox);
-        mainPanel.add(Box.createVerticalStrut(10));
+        mainPanel.add(Box.createVerticalStrut(6));
         mainPanel.add(allowBetaCheckBox);
-        mainPanel.add(Box.createVerticalStrut(10));
+        mainPanel.add(Box.createVerticalStrut(6));
         mainPanel.add(Box.createVerticalGlue());
     }
 

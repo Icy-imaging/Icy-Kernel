@@ -48,18 +48,16 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
 
     public static final String NODE_NAME = "Local Plugin";
 
-    // used for plugin udpate process
-    // final PluginRepositoryLoader pluginRepositoryLoader;
-
     PluginLocalPreferencePanel(PreferenceFrame parent)
     {
-        super(parent, NODE_NAME);
-
-        // pluginRepositoryLoader = new PluginRepositoryLoader();
+        super(parent, NODE_NAME, PluginPreferencePanel.NODE_NAME);
 
         PluginRepositoryLoader.addListener(this);
         PluginLoader.addListener(this);
         PluginInstaller.addListener(this);
+
+        // remove last column not used here
+        table.removeColumn(table.getColumn(columnIds[4]));
 
         action1Button.setText("Delete");
         action1Button.setVisible(true);
@@ -67,8 +65,6 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
         action2Button.setVisible(true);
 
         pluginsChanged();
-        // refreshPlugins();
-        // updateButtonsState();
     }
 
     @Override
@@ -85,7 +81,7 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     {
         if (plugin != null)
         {
-            if (PluginRepositoryLoader.isLoadingBasic())
+            if (!PluginRepositoryLoader.isBasicLoaded())
                 return PluginLocalState.CHECKING_UPDATE;
 
             // get online version
@@ -105,21 +101,6 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
 
         return PluginLocalState.NULL;
     }
-
-    // private void searchForUpdate()
-    // {
-    // ThreadUtil.bgRun(new Runnable()
-    // {
-    // @Override
-    // public void run()
-    // {
-    // // load all online plugins from active repositories
-    // PluginRepositoryLoader.loadAll(false, false);
-    // // refresh table
-    // refreshTableData();
-    // }
-    // });
-    // }
 
     @Override
     protected void doAction1(PluginDescriptor plugin)
@@ -147,15 +128,6 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
                 break;
         }
     }
-
-    // @Override
-    // protected void updateRepositories()
-    // {
-    // super.updateRepositories();
-    //
-    // // repositories changed, launch checking for update
-    // searchForUpdate();
-    // }
 
     @Override
     protected void repositoryChanged()
@@ -282,15 +254,6 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
         if (action1Button.isEnabled())
             action1Button.setEnabled(plugin.isInstalled());
     }
-
-    // @Override
-    // protected void pluginsChanged()
-    // {
-    // super.pluginsChanged();
-    //
-    // // launch the "search for update" process
-    // searchForUpdate();
-    // }
 
     @Override
     public void pluginLoaderChanged(PluginLoaderEvent e)

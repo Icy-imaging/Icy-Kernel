@@ -19,6 +19,8 @@
 package icy.math;
 
 /**
+ * Math utilities class.
+ * 
  * @author stephane
  */
 public class MathUtil

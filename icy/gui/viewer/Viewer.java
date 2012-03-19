@@ -254,7 +254,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     /**
      * internals
      */
-    boolean sizeAjusted;
+    boolean initialized;
 
     public Viewer(Sequence sequence, boolean visible)
     {
@@ -268,7 +268,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         // default
         canvas = null;
         lut = null;
-        sizeAjusted = false;
+        initialized = false;
 
         mainPanel = new JPanel();
 
@@ -314,7 +314,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             @Override
             public void icyFrameOpened(IcyFrameEvent e)
             {
-                if (!sizeAjusted)
+                if (!initialized)
                 {
                     if (canvas instanceof IcyCanvas2D)
                     {
@@ -348,7 +348,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                     setMinimumSizeInternal(minSize);
                     setMinimumSizeExternal(minSize);
 
-                    sizeAjusted = true;
+                    initialized = true;
                 }
             }
 
@@ -867,6 +867,14 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         // notify canvas changed to listener
         fireViewerChanged(ViewerEventType.CANVAS_CHANGED);
+    }
+
+    /**
+     * Returns true if the viewer initialization (correct image resizing) is completed.
+     */
+    public boolean isInitialized()
+    {
+        return initialized;
     }
 
     /**

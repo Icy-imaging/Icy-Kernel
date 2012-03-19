@@ -25,7 +25,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
- * This is a pool of tools to manipulate the organisation of the image within a sequence
+ * This is a pool of tools to manipulate the organization of the image within a sequence
  * 
  * @author fab & stephane
  */

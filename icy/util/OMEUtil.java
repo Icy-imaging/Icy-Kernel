@@ -12,7 +12,10 @@ import loci.common.services.ServiceException;
 import loci.formats.MetadataTools;
 import loci.formats.meta.MetadataRetrieve;
 import loci.formats.ome.OMEXMLMetadata;
+import loci.formats.ome.OMEXMLMetadataImpl;
 import loci.formats.services.OMEXMLServiceImpl;
+import ome.xml.model.OME;
+import ome.xml.model.Pixels;
 import ome.xml.model.enums.DimensionOrder;
 import ome.xml.model.primitives.PositiveFloat;
 import ome.xml.model.primitives.PositiveInteger;
@@ -47,17 +50,13 @@ public class OMEUtil
     }
 
     /**
-     * Create a new OME Metadata object from the specified Metadata object.<br>
+     * Create a new empty OME Metadata object.
      */
-    public static OMEXMLMetadata createOMEMetadata(MetadataRetrieve metadata)
+    public static OMEXMLMetadataImpl createOMEMetadata()
     {
         try
         {
-            final OMEXMLMetadata result = OMEService.createOMEXMLMetadata();
-
-            OMEService.convertMetadata(metadata, result);
-
-            return result;
+            return (OMEXMLMetadataImpl) OMEService.createOMEXMLMetadata();
         }
         catch (Exception e)
         {
@@ -67,20 +66,27 @@ public class OMEUtil
     }
 
     /**
+     * Create a new OME Metadata object from the specified Metadata object.<br>
+     */
+    public static OMEXMLMetadataImpl createOMEMetadata(MetadataRetrieve metadata)
+    {
+        final OMEXMLMetadataImpl result = createOMEMetadata();
+
+        OMEService.convertMetadata(metadata, result);
+
+        return result;
+    }
+
+    /**
      * Convert the specified Metadata object to OME Metadata.<br>
      * If the specified Metadata is already OME no conversion is done.
      */
-    public static OMEXMLMetadata getOMEMetadata(MetadataRetrieve metadata)
+    public static OMEXMLMetadataImpl getOMEMetadata(MetadataRetrieve metadata)
     {
-        try
-        {
-            return OMEService.getOMEMetadata(metadata);
-        }
-        catch (Exception e)
-        {
-            IcyExceptionHandler.showErrorMessage(e, true);
-            return null;
-        }
+        if (metadata instanceof OMEXMLMetadataImpl)
+            return (OMEXMLMetadataImpl) metadata;
+
+        return createOMEMetadata(metadata);
     }
 
     /**
@@ -123,21 +129,28 @@ public class OMEUtil
      * @return IMetadata
      * @throws ServiceException
      */
-    public static OMEXMLMetadata generateMetaData(OMEXMLMetadata metadata, String name, int sizeX, int sizeY,
+    public static OMEXMLMetadataImpl generateMetaData(OMEXMLMetadataImpl metadata, String name, int sizeX, int sizeY,
             int sizeC, int sizeZ, int sizeT, DataType dataType, boolean separateChannel) throws ServiceException
     {
-        final OMEXMLMetadata meta;
+        final OMEXMLMetadataImpl meta;
 
         if (metadata == null)
         {
-            meta = OMEService.createOMEXMLMetadata();
+            meta = createOMEMetadata();
             meta.createRoot();
+
+            meta.setImageID(MetadataTools.createLSID("Image", 0), 0);
+            meta.setImageName(name, 0);
         }
         else
+        {
             meta = metadata;
+            final OME ome = (OME) meta.getRoot();
 
-        meta.setImageID(MetadataTools.createLSID("Image", 0), 0);
-        meta.setImageName(name, 0);
+            // init pixels object as we set specific size here
+            ome.getImage(0).setPixels(new Pixels());
+        }
+
         meta.setPixelsID(MetadataTools.createLSID("Pixels", 0), 0);
         // prefer big endian as JVM is actually big endian
         meta.setPixelsBinDataBigEndian(Boolean.TRUE, 0, 0);
@@ -166,8 +179,8 @@ public class OMEUtil
         return meta;
     }
 
-    public static OMEXMLMetadata generateMetaData(OMEXMLMetadata metadata, int sizeX, int sizeY, int sizeC, int sizeZ,
-            int sizeT, DataType dataType, boolean separateChannel) throws ServiceException
+    public static OMEXMLMetadata generateMetaData(OMEXMLMetadataImpl metadata, int sizeX, int sizeY, int sizeC,
+            int sizeZ, int sizeT, DataType dataType, boolean separateChannel) throws ServiceException
     {
         return generateMetaData(metadata, "Sample", sizeX, sizeY, sizeC, sizeZ, sizeT, dataType, separateChannel);
     }
@@ -201,7 +214,7 @@ public class OMEUtil
     /**
      * Generates Meta Data for the given arguments.
      * 
-     * @see #generateMetaData(OMEXMLMetadata, int, int, int, int, int, DataType, boolean)
+     * @see #generateMetaData(OMEXMLMetadataImpl, int, int, int, int, int, DataType, boolean)
      */
     public static OMEXMLMetadata generateMetaData(int sizeX, int sizeY, int sizeC, DataType dataType,
             boolean separateChannel) throws ServiceException
@@ -212,7 +225,7 @@ public class OMEUtil
     /**
      * Generates Meta Data for the given BufferedImage
      * 
-     * @see #generateMetaData(OMEXMLMetadata, int, int, int, int, int, DataType, boolean)
+     * @see #generateMetaData(OMEXMLMetadataImpl, int, int, int, int, int, DataType, boolean)
      */
     public static OMEXMLMetadata generateMetaData(IcyBufferedImage image, boolean separateChannel)
             throws ServiceException
@@ -224,7 +237,7 @@ public class OMEUtil
     /**
      * Generates Meta Data for the given Sequence.
      * 
-     * @see #generateMetaData(OMEXMLMetadata, int, int, int, int, int, DataType, boolean)
+     * @see #generateMetaData(OMEXMLMetadataImpl, int, int, int, int, int, DataType, boolean)
      */
     public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean useZ, boolean useT, boolean separateChannel)
             throws ServiceException
@@ -237,7 +250,7 @@ public class OMEUtil
     /**
      * Generates Meta Data for the given Sequence.
      * 
-     * @see #generateMetaData(OMEXMLMetadata, int, int, int, int, int, DataType, boolean)
+     * @see #generateMetaData(OMEXMLMetadataImpl, int, int, int, int, int, DataType, boolean)
      */
     public static OMEXMLMetadata generateMetaData(Sequence sequence, int sizeZ, int sizeT, boolean separateChannel)
             throws ServiceException
@@ -249,7 +262,7 @@ public class OMEUtil
     /**
      * Generates Meta Data for the given Sequence
      * 
-     * @see #generateMetaData(OMEXMLMetadata, int, int, int, int, int, DataType, boolean)
+     * @see #generateMetaData(OMEXMLMetadataImpl, int, int, int, int, int, DataType, boolean)
      */
     public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean separateChannel) throws ServiceException
     {

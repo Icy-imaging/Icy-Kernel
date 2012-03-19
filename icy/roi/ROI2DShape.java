@@ -28,7 +28,6 @@ import icy.painter.Anchor2D.Anchor2DListener;
 import icy.painter.PainterEvent;
 import icy.painter.PathAnchor2D;
 import icy.painter.VtkPainter;
-import icy.roi.ROIEvent.ROIPointEventType;
 import icy.sequence.Sequence;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
@@ -509,32 +508,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                     g2.setFont(font);
                     g2.setColor(getDisplayColor());
 
-                    GraphicsUtil.drawCenteredText(g2, text, pos.x,
+                    GraphicsUtil.drawCenteredString(g2, text, pos.x,
                             pos.y - (int) (GraphicsUtil.getStringBounds(g2, text).getHeight()), true);
-
-                    g2.dispose();
-                }
-                // display tooltip
-                else if (focused)
-                {
-                    // draw position and size in the tooltip
-                    final String roiPositionString = "Position       X=" + StringUtil.toString(bounds.getX(), 1)
-                            + "  Y=" + StringUtil.toString(bounds.getY(), 1);
-                    final String roiBoundingSizeString = "Dimension  W=" + StringUtil.toString(bounds.getWidth(), 1)
-                            + "  H=" + StringUtil.toString(bounds.getHeight(), 1);
-                    final String text = roiPositionString + "\n" + roiBoundingSizeString;
-
-                    final Point pos = cnv2d.imageToCanvas(mousePos);
-                    pos.translate(8, 8);
-                    final Font font = new Font("Arial", Font.PLAIN, 12);
-
-                    final Graphics2D g2 = (Graphics2D) g.create();
-
-                    g2.transform(cnv2d.getInverseTransform());
-                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                    g2.setFont(font);
-
-                    GraphicsUtil.drawHint(g2, text, pos.x, pos.y, Color.gray, getDisplayColor());
 
                     g2.dispose();
                 }
@@ -698,7 +673,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     {
         pt.addListener(this);
         controlPoints.add(pt);
-        roiChanged(ROIPointEventType.POINT_ADDED, pt);
+        roiChanged();
     }
 
     /**
@@ -708,7 +683,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     {
         pt.addListener(this);
         controlPoints.add(index, pt);
-        roiChanged(ROIPointEventType.POINT_ADDED, pt);
+        roiChanged();
     }
 
     @Override
@@ -753,7 +728,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     {
         controlPoints.remove(pt);
         pt.removeListener(this);
-        roiChanged(ROIPointEventType.POINT_REMOVED, pt);
+        roiChanged();
         return true;
     }
 
@@ -1110,15 +1085,19 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         }
     }
 
-    // called when an anchor position changed
+    /**
+     * anchor position changed
+     */
     @Override
     public void positionChanged(Anchor2D source)
     {
         // anchor(s) position changed --> ROI changed
-        roiChanged(ROIPointEventType.POINT_CHANGED, source);
+        roiChanged();
     }
 
-    // called when anchor changed
+    /**
+     * anchor painter changed
+     */
     @Override
     public void painterChanged(PainterEvent event)
     {
@@ -1127,10 +1106,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             setFocused(false);
 
         // anchor changed --> ROI painter changed
-        painter.changed();
+        painterChanged();
     }
 
-    // called when roi changed
+    /**
+     * roi changed
+     */
     @Override
     public void onChanged(EventHierarchicalChecker object)
     {
