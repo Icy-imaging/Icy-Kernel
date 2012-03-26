@@ -496,15 +496,36 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         histogram.reset();
 
         final Sequence seq = viewer.getSequence();
+
         if (seq != null)
         {
-            final int sizeZ = seq.getSizeZ();
-            final int sizeT = seq.getSizeT();
+
+            final int maxZ;
+            final int maxT;
+            int t = viewer.getT();
+            int z = viewer.getZ();
+
+            if (t != -1)
+                maxT = t;
+            else
+            {
+                t = 0;
+                maxT = seq.getSizeT() - 1;
+            }
+
+            if (z != -1)
+                maxZ = z;
+            else
+            {
+                z = 0;
+                maxZ = seq.getSizeZ() - 1;
+            }
+
             final int c = lutBand.getComponent();
 
-            for (int t = 0; t < sizeT; t++)
+            for (; t <= maxT; t++)
             {
-                for (int z = 0; z < sizeZ; z++)
+                for (; z <= maxZ; z++)
                 {
                     final Object data = seq.getDataXY(t, z, c);
                     final DataType dataType = seq.getDataType_();

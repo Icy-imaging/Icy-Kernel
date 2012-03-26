@@ -148,7 +148,10 @@ public class Icy
             // initialize network (better to do it at first as a lot of things need networking)
             NetworkUtil.init();
 
-            // preload them here so further process won't wait them too much...
+            // initialize preferences (need network init)
+            IcyPreferences.init();
+
+            // load plugins classes (need preferences init)
             PluginLoader.reloadAsynch();
             WorkspaceLoader.reload_asynch();
 
@@ -166,9 +169,6 @@ public class Icy
             // WorkspaceLoader.reload_asynch();
             // }
             // });
-
-            // initialize preferences (need network init)
-            IcyPreferences.init();
 
             // build main interface
             mainInterface = new MainInterfaceGui();
@@ -435,7 +435,7 @@ public class Icy
                 for (JFrame frame : Icy.getMainInterface().getExternalFrames())
                     if (frame != mainFrame)
                         frame.dispose();
-                
+
                 // shutdown background processor after frame close
                 ThreadUtil.shutdown();
 

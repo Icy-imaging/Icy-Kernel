@@ -293,17 +293,6 @@ public class MainFrame extends JRibbonFrame
         // default close operation
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
-        addComponentListener(new ComponentAdapter()
-        {
-            @Override
-            public void componentResized(ComponentEvent e)
-            {
-                // keep height to minimum height when we are in detached mode
-                if (isDetachedMode())
-                    setSize(getWidth(), getMinimumSize().height);
-            }
-        });
-
         // build ribbon
         mainRibbon = new MainRibbon(getRibbon());
 
@@ -343,6 +332,10 @@ public class MainFrame extends JRibbonFrame
      */
     public void init()
     {
+        // inspector
+        inspector = new InspectorPanel();
+        inspectorWidthSet = false;
+
         addComponentListener(new ComponentAdapter()
         {
             @Override
@@ -359,12 +352,12 @@ public class MainFrame extends JRibbonFrame
 
                     inspectorWidthSet = true;
                 }
+
+                // keep height to minimum height when we are in detached mode
+                if (isDetachedMode())
+                    setSize(getWidth(), getMinimumSize().height);
             }
         });
-
-        // inspector
-        inspector = new InspectorPanel();
-        inspectorWidthSet = false;
 
         // main pane
         mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, centerPanel, null);
@@ -828,9 +821,10 @@ public class MainFrame extends JRibbonFrame
                 // hide main pane & resize window to ribbon dimension
                 remove(mainPane);
                 ComponentUtil.setMaximized(this, false);
-                setSize(getWidth(), getMinimumSize().height);
                 // recompute layout
                 validate();
+                // force resize to ribbon size
+                setSize(getWidth(), getMinimumSize().height);
             }
             // single window mode
             else
@@ -848,9 +842,6 @@ public class MainFrame extends JRibbonFrame
                 // restore inspector internalization
                 if (previousInspectorInternalized)
                     internalizeInspector();
-
-                // notify mode change
-                firePropertyChange(PROPERTY_DETACHEDMODE, true, false);
             }
 
             detachedMode = value;

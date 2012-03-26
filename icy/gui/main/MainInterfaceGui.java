@@ -870,7 +870,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     public boolean canExitExternal()
     {
         for (AcceptListener listener : listeners.getListeners(WeakAcceptListener.class))
-            if (!listener.accept(getFrame()))
+            if (!listener.accept(mainFrame))
                 return false;
 
         return true;

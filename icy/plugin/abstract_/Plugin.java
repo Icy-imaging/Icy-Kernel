@@ -31,7 +31,7 @@ import icy.preferences.XMLPreferences;
 import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
 
-import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -166,7 +166,7 @@ public abstract class Plugin
      * @param resourceName
      *        resource name
      */
-    public Image getImageResource(String resourceName)
+    public BufferedImage getImageResource(String resourceName)
     {
         return ImageUtil.loadImage(getResourceAsStream(resourceName));
     }
