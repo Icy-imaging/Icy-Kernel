@@ -433,7 +433,7 @@ public class ChatPanel extends ExternalizablePanel
                 onReceive(null, chan, "Welcome to " + IRCUtil.getBoldString(chan.substring(1)) + ".");
             }
             else
-                onReceive(null, chan, u.getNick() + " joins " + IRCUtil.getBoldString(chan.substring(1)) + ".");
+                onReceive(null, chan, u.getNick() + " joined.");
 
             // refresh user list
             refreshUsers();
@@ -452,9 +452,9 @@ public class ChatPanel extends ExternalizablePanel
         public void onLeave(String chan, IRCUser u, String msg)
         {
             if (StringUtil.isEmpty(msg))
-                onReceive(null, chan, u.getNick() + " left " + IRCUtil.getBoldString(chan.substring(1)) + ".");
+                onReceive(null, chan, u.getNick() + " left.");
             else
-                onReceive(null, chan, u.getNick() + " left " + IRCUtil.getBoldString(chan.substring(1)) + " (" + msg + ").");
+                onReceive(null, chan, u.getNick() + " left" + " (" + msg + ").");
 
             // remove the channel pane if needed
             if (isCurrentUser(u))
@@ -919,6 +919,7 @@ public class ChatPanel extends ExternalizablePanel
                 }
             }
         });
+        userList.setToolTipText("Double click on an username to send private message");
 
         usersScrollPane.setViewportView(userList);
 
@@ -1033,7 +1034,7 @@ public class ChatPanel extends ExternalizablePanel
         desktopOverlayButton.setSelected(ChatPreferences.getDesktopOverlay());
         desktopOverlayButton.setMinimumSize(new Dimension(24, 24));
         desktopOverlayButton.setPreferredSize(new Dimension(24, 24));
-        desktopOverlayButton.setToolTipText("Enabled desktop overlay (display chat on desktop)");
+        desktopOverlayButton.setToolTipText("Enabled desktop chat");
         desktopOverlayButton.addActionListener(new ActionListener()
         {
             @Override

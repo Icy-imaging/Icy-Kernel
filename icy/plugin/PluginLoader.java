@@ -345,11 +345,12 @@ public class PluginLoader
      */
     static void startDaemons()
     {
-        final ArrayList<String> actives = PluginPreferences.getActiveDaemons();
+        final ArrayList<String> inactives = PluginPreferences.getInactiveDaemons();
 
         for (PluginDescriptor pluginDesc : getDaemonPlugins())
         {
-            if (actives.indexOf(pluginDesc.getClassName()) != -1)
+            // not found in inactives ?
+            if (inactives.indexOf(pluginDesc.getClassName()) == -1)
             {
                 try
                 {

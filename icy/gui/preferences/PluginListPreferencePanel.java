@@ -165,8 +165,6 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         filter = new IcyTextField();
         filter.addTextChangeListener(this);
 
-        // load();
-
         // build buttons panel
         final Dimension buttonsDim = new Dimension(100, 24);
 

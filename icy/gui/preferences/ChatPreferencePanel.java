@@ -141,7 +141,7 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_connectAtStartCheckBox.gridy = 3;
         mainPanel.add(connectAtStartCheckBox, gbc_connectAtStartCheckBox);
 
-        enableDesktopOverlayCheckBox = new JCheckBox("Enable desktop overlay");
+        enableDesktopOverlayCheckBox = new JCheckBox("Enable desktop chat");
         enableDesktopOverlayCheckBox.setToolTipText("Display chat in the application desktop");
         GridBagConstraints gbc_enableDesktopOverlayCheckBox = new GridBagConstraints();
         gbc_enableDesktopOverlayCheckBox.anchor = GridBagConstraints.WEST;
@@ -153,7 +153,7 @@ public class ChatPreferencePanel extends PreferencePanel
 
         desktopChannelsField = new JTextField();
         desktopChannelsField
-                .setToolTipText("Channel(s) to display on dekstop overlay. You can enter severals channels (ex : \"icy;icy-support\")");
+                .setToolTipText("Channel(s) to display on dekstop chat. You can enter severals channels (ex : \"icy;icy-support\")");
         desktopChannelsField.setText("icy");
         GridBagConstraints gbc_desktopChannelsField = new GridBagConstraints();
         gbc_desktopChannelsField.gridwidth = 2;

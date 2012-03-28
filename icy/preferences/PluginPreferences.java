@@ -23,7 +23,7 @@ public class PluginPreferences
     private static final String ID_ALLOW_BETA = "allowBeta";
     private static final String ID_AUTO_UPDATE = "autoUpdate";
     private static final String ID_AUTO_CHECK_UPDATE = "autoCheckUpdate";
-    private static final String ID_ACTIVES_DAEMON = "activesdaemon";
+    private static final String ID_INACTIVES_DAEMON = "inactivesdaemon";
 
     /**
      * preferences
@@ -59,13 +59,13 @@ public class PluginPreferences
         return preferences.getBoolean(ID_ALLOW_BETA, false);
     }
 
-    public static ArrayList<String> getActiveDaemons()
+    public static ArrayList<String> getInactiveDaemons()
     {
         final ArrayList<String> result = new ArrayList<String>();
 
-        if (preferences.nodeExists(ID_ACTIVES_DAEMON))
+        if (preferences.nodeExists(ID_INACTIVES_DAEMON))
         {
-            final XMLPreferences node = preferences.node(ID_ACTIVES_DAEMON);
+            final XMLPreferences node = preferences.node(ID_INACTIVES_DAEMON);
 
             for (String name : node.keys())
                 if (node.getBoolean(name, false))
@@ -90,15 +90,15 @@ public class PluginPreferences
         preferences.putBoolean(ID_ALLOW_BETA, value);
     }
 
-    public static void setActiveDaemons(ArrayList<String> names)
+    public static void setInactiveDaemons(ArrayList<String> names)
     {
-        final ArrayList<String> actives = getActiveDaemons();
+        final ArrayList<String> inactives = getInactiveDaemons();
 
         // no modification --> nothing to do
-        if ((actives.size() == names.size()) && actives.containsAll(names))
+        if ((inactives.size() == names.size()) && inactives.containsAll(names))
             return;
 
-        final XMLPreferences node = preferences.node(ID_ACTIVES_DAEMON);
+        final XMLPreferences node = preferences.node(ID_INACTIVES_DAEMON);
 
         node.clear();
         for (String name : names)
@@ -106,7 +106,7 @@ public class PluginPreferences
 
         // clean up all non element nodes
         node.clean();
-        
+
         // restart daemon plugin
         PluginLoader.resetDaemons();
     }

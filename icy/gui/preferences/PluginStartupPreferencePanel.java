@@ -30,13 +30,13 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
 
     public static final String NODE_NAME = "Startup Plugin";
 
-    final HashSet<String> actives;
+    final HashSet<String> inactives;
 
     public PluginStartupPreferencePanel(PreferenceFrame parent)
     {
         super(parent, NODE_NAME, PluginPreferencePanel.NODE_NAME);
 
-        actives = new HashSet<String>();
+        inactives = new HashSet<String>();
 
         PluginLoader.addListener(this);
 
@@ -57,6 +57,7 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
 
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
+        load();
         pluginsChanged();
     }
 
@@ -71,7 +72,7 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
     @Override
     protected boolean isActive(PluginDescriptor plugin)
     {
-        return actives.contains(plugin.getClassName());
+        return !inactives.contains(plugin.getClassName());
     }
 
     @Override
@@ -80,26 +81,25 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
         final String className = plugin.getClassName();
 
         if (value)
-        {
-            if (!actives.contains(className))
-                actives.add(className);
-        }
+            inactives.remove(className);
         else
-            actives.remove(className);
+        {
+            if (!inactives.contains(className))
+                inactives.add(className);
+        }
     }
 
     @Override
     protected void load()
     {
-        actives.clear();
-        for (String className : PluginPreferences.getActiveDaemons())
-            actives.add(className);
+        inactives.clear();
+        inactives.addAll(PluginPreferences.getInactiveDaemons());
     }
 
     @Override
     protected void save()
     {
-        PluginPreferences.setActiveDaemons(new ArrayList<String>(actives));
+        PluginPreferences.setInactiveDaemons(new ArrayList<String>(inactives));
     }
 
     @Override
@@ -121,8 +121,7 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
     @Override
     protected void reloadPlugins()
     {
-        PluginLoader.reloadAsynch();
-        updateButtonsState();
+        // do nothing here
     }
 
     @Override

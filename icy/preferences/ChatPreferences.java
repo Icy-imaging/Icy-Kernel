@@ -40,8 +40,9 @@ public class ChatPreferences
     private final static String DEFAULT_SERVER_PASSWORD = "";
     private final static int DEFAULT_PORT = 6666;
 
-    private final static String DEFAULT_EXTRA_CHANNELS = "#icy-support";
-    private final static String DEFAULT_DESKTOP_CHANNELS = "#icy";
+    // private final static String DEFAULT_EXTRA_CHANNELS = "icy-support";
+    private final static String DEFAULT_EXTRA_CHANNELS = "";
+    private final static String DEFAULT_DESKTOP_CHANNELS = "icy";
 
     /**
      * preferences
