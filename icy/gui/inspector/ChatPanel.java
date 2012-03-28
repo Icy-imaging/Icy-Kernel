@@ -430,10 +430,10 @@ public class ChatPanel extends ExternalizablePanel
             {
                 // add the channel pane if needed
                 addChannelPane(chan);
-                onReceive(null, chan, "Welcome on " + IRCUtil.getBoldString(chan.substring(1)) + ".");
+                onReceive(null, chan, "Welcome to " + IRCUtil.getBoldString(chan.substring(1)) + ".");
             }
             else
-                onReceive(null, chan, u.getNick() + " joins.");
+                onReceive(null, chan, u.getNick() + " joins " + IRCUtil.getBoldString(chan.substring(1)) + ".");
 
             // refresh user list
             refreshUsers();
@@ -452,9 +452,9 @@ public class ChatPanel extends ExternalizablePanel
         public void onLeave(String chan, IRCUser u, String msg)
         {
             if (StringUtil.isEmpty(msg))
-                onReceive(null, chan, u.getNick() + " leaves.");
+                onReceive(null, chan, u.getNick() + " left " + IRCUtil.getBoldString(chan.substring(1)) + ".");
             else
-                onReceive(null, chan, u.getNick() + " leaves (" + msg + ").");
+                onReceive(null, chan, u.getNick() + " left " + IRCUtil.getBoldString(chan.substring(1)) + " (" + msg + ").");
 
             // remove the channel pane if needed
             if (isCurrentUser(u))
