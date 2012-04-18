@@ -1305,6 +1305,20 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
 
+                if (getTransform().getScaleX() < 4. && getTransform().getScaleX() < 4.) {
+	                if (!transform.isMoving()) {
+	                	// Draw the image with bicubic resampling,
+	                	// except when zoom is larger than 400 %, where nearest-neighbour is desirable
+	                	// (so that the user can see that he is operating on pixels),
+	                	// and except during the zooming animation, when speed must be high.
+	                	// TODO: when the zoom factor is smaller than 1, a low-pass filter should be applied
+	                	// before the sampling, otherwise severe aliasing is introduced.
+	                	g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);	
+	                } else {
+	                	g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+	                }
+                }
+                
                 g2.transform(getTransform());
                 g2.drawImage(img, null, 0, 0);
 
