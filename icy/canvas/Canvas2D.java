@@ -2429,6 +2429,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     @Override
     public int getCanvasSizeX()
     {
+        // can be called before constructor ended
+        if (canvasView == null)
+            return 0;
+
         // by default we use panel width
         int res = canvasView.getWidth();
         // preferred width if size not yet set
@@ -2441,6 +2445,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     @Override
     public int getCanvasSizeY()
     {
+        // can be called before constructor ended
+        if (canvasView == null)
+            return 0;
+
         // by default we use panel height
         int res = canvasView.getHeight();
         // preferred height if size not yet set
@@ -2453,12 +2461,21 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     @Override
     public double getMouseImagePosX()
     {
+        // can be called before constructor ended
+        if (mouseImagePos == null)
+            return 0d;
+
         return mouseImagePos.x;
+
     }
 
     @Override
     public double getMouseImagePosY()
     {
+        // can be called before constructor ended
+        if (mouseImagePos == null)
+            return 0d;
+
         return mouseImagePos.y;
     }
 
@@ -2485,30 +2502,50 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     @Override
     public int getOffsetX()
     {
+        // can be called before constructor ended
+        if (transform == null)
+            return 0;
+
         return (int) transform.getValue(TRANS_X);
     }
 
     @Override
     public int getOffsetY()
     {
+        // can be called before constructor ended
+        if (transform == null)
+            return 0;
+
         return (int) transform.getValue(TRANS_Y);
     }
 
     @Override
     public double getScaleX()
     {
+        // can be called before constructor ended
+        if (transform == null)
+            return 0d;
+
         return transform.getValue(SCALE_X);
     }
 
     @Override
     public double getScaleY()
     {
+        // can be called before constructor ended
+        if (transform == null)
+            return 0d;
+
         return transform.getValue(SCALE_Y);
     }
 
     @Override
     public double getRotationZ()
     {
+        // can be called before constructor ended
+        if (transform == null)
+            return 0d;
+
         return transform.getValue(ROT);
     }
 
