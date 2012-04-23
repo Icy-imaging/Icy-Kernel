@@ -362,7 +362,7 @@ public class PluginLoader
 
                     // start the daemon
                     thread.start();
-                    // register daemon plugin ???
+                    // register daemon plugin (so we can stop it later)
                     Icy.getMainInterface().registerPlugin(plugin);
                 }
                 catch (Throwable t)
@@ -611,19 +611,19 @@ public class PluginLoader
                 catch (ClassCastException e)
                 {
                     return "Fatal error while loading '" + plugin.getClassName() + "' class from "
-                            + plugin.getJarFilename() + " :\n" + e.toString() + "\n"
+                            + plugin.getJarFilename() + " :\n" + IcyExceptionHandler.getErrorMessage(e, false)
                             + "Your plugin class should extends 'icy.plugin.abstract_.Plugin' class !";
                 }
                 catch (ClassNotFoundException e)
                 {
                     return "Fatal error while loading '" + plugin.getClassName() + "' class from "
-                            + plugin.getJarFilename() + " :\n" + e.toString() + "\n"
+                            + plugin.getJarFilename() + " :\n" + IcyExceptionHandler.getErrorMessage(e, false)
                             + "Verify you correctly set the class name in your plugin description.";
                 }
                 catch (Exception e)
                 {
                     return "Fatal error while loading '" + plugin.getClassName() + "' class from "
-                            + plugin.getJarFilename() + " :\n" + e.toString();
+                            + plugin.getJarFilename() + " :\n" + IcyExceptionHandler.getErrorMessage(e, false);
                 }
             }
         }

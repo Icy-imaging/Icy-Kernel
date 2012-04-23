@@ -59,42 +59,77 @@ public class XMLUtil
     private static final String ATTR_NAME_NAME = "name";
     private static final String ATTR_VALUE_NAME = "value";
 
+    // static document builder factory
+    private static DocumentBuilderFactory docBuilderFactory = null;
+    // static document builder
     private static DocumentBuilder docBuilder = null;
+
+    // static transformer factory
+    private static TransformerFactory transformerFactory = null;
+    // static transformer
     private static Transformer transformer = null;
+
+    private static synchronized void initFactories()
+    {
+        // initialize static factories
+        if (docBuilderFactory == null)
+            docBuilderFactory = DocumentBuilderFactory.newInstance();
+        if (transformerFactory == null)
+            transformerFactory = TransformerFactory.newInstance();
+    }
 
     private static synchronized void init()
     {
-        // initialize document builder
+        // initialize static builder
         if (docBuilder == null)
-        {
-            try
-            {
-                docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-            }
-            catch (ParserConfigurationException e)
-            {
-                docBuilder = null;
-            }
-        }
-
-        // initialize transformer
+            docBuilder = createDocumentBuilder();
+        // initialize static transformer
         if (transformer == null)
-        {
-            try
-            {
-                transformer = TransformerFactory.newInstance().newTransformer();
+            transformer = createTransformer();
+    }
 
-                transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-                transformer.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
-                transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            }
-            catch (TransformerConfigurationException e)
-            {
-                transformer = null;
-            }
+    /**
+     * Create and returns a new DocumentBuilder.
+     */
+    public static DocumentBuilder createDocumentBuilder()
+    {
+        initFactories();
+
+        try
+        {
+            return docBuilderFactory.newDocumentBuilder();
         }
+        catch (ParserConfigurationException e)
+        {
+            return null;
+        }
+    }
+
+    /**
+     * Create and returns a new Transformer.
+     */
+    public static Transformer createTransformer()
+    {
+        initFactories();
+
+        final Transformer result;
+
+        try
+        {
+            result = transformerFactory.newTransformer();
+        }
+        catch (TransformerConfigurationException e)
+        {
+            return null;
+        }
+
+        result.setOutputProperty(OutputKeys.METHOD, "xml");
+        result.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
+        result.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        result.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+        result.setOutputProperty(OutputKeys.INDENT, "yes");
+
+        return result;
     }
 
     /**
@@ -229,16 +264,13 @@ public class XMLUtil
             return null;
         }
 
-        init();
+        final DocumentBuilder builder = createDocumentBuilder();
 
-        if (docBuilder != null)
+        if (builder != null)
         {
             try
             {
-                synchronized (docBuilder)
-                {
-                    return docBuilder.parse(f);
-                }
+                return builder.parse(f);
             }
             catch (Exception e)
             {
@@ -285,9 +317,9 @@ public class XMLUtil
             return null;
         }
 
-        init();
+        final DocumentBuilder builder = createDocumentBuilder();
 
-        if (docBuilder != null)
+        if (builder != null)
         {
             try
             {
@@ -306,10 +338,7 @@ public class XMLUtil
                     {
                         try
                         {
-                            synchronized (docBuilder)
-                            {
-                                return docBuilder.parse(ip);
-                            }
+                            return builder.parse(ip);
                         }
                         finally
                         {

@@ -619,89 +619,45 @@ public class ClassUtil
         return result;
     }
 
+    /**
+     * @deprecated uses {@link ReflectionUtil#getMethod(Object, String, boolean, Class...)} instead
+     */
+    @Deprecated
     public static Method getMethod(Object object, String methodName, boolean forceAccess, Class<?>... parameterTypes)
             throws SecurityException, NoSuchMethodException
     {
-        Class<?> clazz = object.getClass();
-        Method result = null;
-
-        while ((clazz != null) && (result == null))
-        {
-            try
-            {
-                result = clazz.getDeclaredMethod(methodName, parameterTypes);
-            }
-            catch (NoSuchMethodException e)
-            {
-                // ignore
-            }
-
-            clazz = clazz.getSuperclass();
-        }
-
-        if (result == null)
-            throw new NoSuchMethodException("Method " + methodName + "(..) not found in class "
-                    + object.getClass().getName());
-
-        if (forceAccess)
-            result.setAccessible(true);
-
-        return result;
+        return ReflectionUtil.getMethod(object, methodName, forceAccess, parameterTypes);
     }
 
+    /**
+     * @deprecated uses {@link ReflectionUtil#invokeMethod(Object, String, boolean, Object...)}
+     *             instead
+     */
+    @Deprecated
     public static Object invokeMethod(Object object, String methodName, boolean forceAccess, Object... args)
             throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException,
             InvocationTargetException
     {
-        final Class<?>[] parameterTypes = new Class<?>[args.length];
-
-        // build parameter types
-        for (int i = 0; i < args.length; i++)
-            parameterTypes[i] = args[i].getClass();
-
-        // get method
-        final Method method = getMethod(object, methodName, forceAccess, parameterTypes);
-        // invoke method
-        return method.invoke(object, args);
+        return ReflectionUtil.invokeMethod(object, methodName, forceAccess, args);
     }
 
+    /**
+     * @deprecated uses {@link ReflectionUtil#getField(Object, String, boolean)} instead
+     */
+    @Deprecated
     public static Field getField(Object object, String fieldName, boolean forceAccess) throws SecurityException,
             NoSuchFieldException
     {
-        Class<?> clazz = object.getClass();
-        Field result = null;
-
-        while ((clazz != null) && (result == null))
-        {
-            try
-            {
-                result = clazz.getDeclaredField(fieldName);
-            }
-            catch (NoSuchFieldException e)
-            {
-                // ignore
-            }
-
-            clazz = clazz.getSuperclass();
-        }
-
-        if (result == null)
-            throw new NoSuchFieldException(" Field " + fieldName + " not found in class " + object.getClass().getName());
-
-        if (forceAccess)
-            result.setAccessible(true);
-
-        return result;
+        return ReflectionUtil.getField(object, fieldName, forceAccess);
     }
 
+    /**
+     * @deprecated uses {@link ReflectionUtil#getFieldObject(Object, String, boolean)} instead
+     */
+    @Deprecated
     public static Object getFieldObject(Object object, String fieldName, boolean forceAccess)
             throws IllegalArgumentException, IllegalAccessException, SecurityException, NoSuchFieldException
     {
-        final Field field = getField(object, fieldName, forceAccess);
-
-        if (field != null)
-            return field.get(object);
-
-        return null;
+        return ReflectionUtil.getFieldObject(object, fieldName, forceAccess);
     }
 }

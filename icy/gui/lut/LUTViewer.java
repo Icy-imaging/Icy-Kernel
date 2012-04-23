@@ -24,6 +24,7 @@ import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.lut.LUT;
 import icy.image.lut.LUTBand;
+import icy.math.Scaler;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceAdapter;
 import icy.sequence.SequenceEvent;
@@ -39,7 +40,6 @@ import java.util.ArrayList;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
-import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
@@ -54,11 +54,11 @@ public class LUTViewer extends IcyLutViewer
      */
     final CheckTabbedPane bottomPane;
 
-    final JCheckBox autoCheckBox;
+    final JCheckBox autoRefreshHistoCheckBox;
+    final JCheckBox autoBoundsCheckBox;
     private final ButtonGroup scaleGroup;
     private final JRadioButton logButton;
     private final JRadioButton linearButton;
-    // private final JButton updateBoundsButton;
 
     /**
      * data
@@ -74,6 +74,8 @@ public class LUTViewer extends IcyLutViewer
     public LUTViewer(final Viewer viewer, final LUT lut)
     {
         super(viewer, lut);
+
+        final Sequence sequence = getSequence();
 
         lutBandViewers = new ArrayList<LUTBandViewer>();
 
@@ -103,47 +105,39 @@ public class LUTViewer extends IcyLutViewer
         });
 
         // GUI
-        if (lut != null)
+        for (LUTBand lutBand : lut.getLutBands())
         {
-            for (LUTBand lutBand : lut.getLutBands())
-            {
-                final LUTBandViewer lbv = new LUTBandViewer(viewer, lutBand);
-                final int ch = lutBand.getComponent();
+            final LUTBandViewer lbv = new LUTBandViewer(viewer, lutBand);
+            final int ch = lutBand.getComponent();
 
-                lutBandViewers.add(lbv);
-                bottomPane.addTab("ch " + ch, lbv);
-                bottomPane.setToolTipTextAt(ch, "Channel " + ch);
-            }
+            lutBandViewers.add(lbv);
+            bottomPane.addTab("ch " + ch, lbv);
+            bottomPane.setToolTipTextAt(ch, "Channel " + ch);
         }
 
-        refreshChannelsName();
+        refreshChannelsName(sequence);
 
-        final boolean check;
-
-        if (getSequence() != null)
-            check = getSequence().isComponentUserBoundsAutoUpdate();
-        else
-            check = false;
-
-        autoCheckBox = new JCheckBox("auto adjust", check);
-        autoCheckBox.setToolTipText("Automatically ajdust bounds when data is modified");
-        autoCheckBox.addActionListener(new ActionListener()
+        autoRefreshHistoCheckBox = new JCheckBox("Refresh", true);
+        autoRefreshHistoCheckBox.setToolTipText("Automatically refresh histogram when data is modified");
+        autoRefreshHistoCheckBox.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final Sequence sequence = getSequence();
-
-                if (sequence != null)
-                {
-                    sequence.setComponentUserBoundsAutoUpdate(autoCheckBox.isSelected());
-                    sequence.setComponentAbsBoundsAutoUpdate(autoCheckBox.isSelected());
-                }
+                setHistoEnabled(autoRefreshHistoCheckBox.isSelected());
             }
         });
 
-        final JLabel viewLabel = new JLabel("View");
-        viewLabel.setToolTipText("Selection histogram display type");
+        autoBoundsCheckBox = new JCheckBox("Bounds", false);
+        autoBoundsCheckBox.setToolTipText("Automatically ajdust bounds when data is modified");
+        autoBoundsCheckBox.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                refreshBounds(getSequence());
+            }
+        });
 
         scaleGroup = new ButtonGroup();
         logButton = new JRadioButton("log");
@@ -174,28 +168,10 @@ public class LUTViewer extends IcyLutViewer
         setLogScale(true);
         logButton.setSelected(true);
 
-        // updateBoundsButton = new JButton("Refresh");
-        // updateBoundsButton.setToolTipText("Force histogram and bounds recalculation");
-        // updateBoundsButton.addActionListener(new ActionListener()
-        // {
-        // @Override
-        // public void actionPerformed(ActionEvent e)
-        // {
-        // final Sequence sequence = getSequence();
-        //
-        // if ((sequence != null) && (lut != null))
-        // {
-        // sequence.updateComponentsBounds(true, true);
-        // lut.copyScalers(sequence.createCompatibleLUT());
-        // refreshHistogram();
-        // }
-        // }
-        // });
-
         setLayout(new BorderLayout());
 
-        add(GuiUtil.createLineBoxPanel(autoCheckBox, Box.createHorizontalGlue(), // viewLabel,
-                Box.createHorizontalStrut(8), logButton, linearButton), BorderLayout.NORTH);
+        add(GuiUtil.createLineBoxPanel(autoRefreshHistoCheckBox, Box.createHorizontalStrut(2), autoBoundsCheckBox,
+                Box.createHorizontalGlue(), Box.createHorizontalStrut(8), logButton, linearButton), BorderLayout.NORTH);
         add(bottomPane, BorderLayout.CENTER);
 
         validate();
@@ -215,7 +191,12 @@ public class LUTViewer extends IcyLutViewer
                         switch (e.getSourceType())
                         {
                             case SEQUENCE_META:
-                                refreshChannelsName();
+                                refreshChannelsName(e.getSequence());
+                                break;
+
+                            case SEQUENCE_COMPONENTBOUNDS:
+                                if (autoBoundsCheckBox.isSelected())
+                                    refreshBounds(e.getSequence());
                                 break;
                         }
                     }
@@ -228,28 +209,46 @@ public class LUTViewer extends IcyLutViewer
         getSequence().addListener(weakSequenceListener);
     }
 
+    void setHistoEnabled(boolean value)
+    {
+        for (int i = 0; i < lutBandViewers.size(); i++)
+            lutBandViewers.get(i).getScalerPanel().getScalerViewer().setHistoEnabled(value);
+    }
+
     void setLogScale(boolean value)
     {
         for (int i = 0; i < lutBandViewers.size(); i++)
             lutBandViewers.get(i).getScalerPanel().getScalerViewer().setLogScale(value);
     }
 
-    void refreshHistogram()
+    void refreshBounds(Sequence sequence)
     {
-        for (int i = 0; i < lutBandViewers.size(); i++)
-            lutBandViewers.get(i).getScalerPanel().refreshHistoData();
+        if (sequence != null)
+        {
+            double[][] typeBounds = sequence.getChannelsTypeBounds();
+            double[][] bounds = sequence.getChannelsBounds();
+
+            for (int i = 0; i < lutBandViewers.size(); i++)
+            {
+                double[] tb = typeBounds[i];
+                double[] b = bounds[i];
+
+                final Scaler scaler = lutBandViewers.get(i).getScalerPanel().getScaler();
+
+                scaler.setAbsLeftRightIn(tb[0], tb[1]);
+                scaler.setLeftRightIn(b[0], b[1]);
+            }
+        }
     }
 
-    void refreshChannelsName()
+    void refreshChannelsName(Sequence sequence)
     {
-        final Sequence seq = getSequence();
-
-        if (seq != null)
+        if (sequence != null)
         {
-            final int sizeC = seq.getSizeC();
+            final int sizeC = sequence.getSizeC();
 
             for (int c = 0; c < sizeC; c++)
-                bottomPane.setTitleAt(c, seq.getChannelName(c));
+                bottomPane.setTitleAt(c, sequence.getChannelName(c));
         }
     }
 }

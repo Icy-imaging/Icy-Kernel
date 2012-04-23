@@ -30,11 +30,14 @@ import icy.gui.util.WindowPositionSaver;
 import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyApplicationIcon;
+import icy.system.FileDrop;
 import icy.system.SystemUtil;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.HeadlessException;
@@ -42,30 +45,24 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
 
-import javax.swing.JComponent;
+import javax.swing.BorderFactory;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 import javax.swing.ToolTipManager;
-import javax.swing.TransferHandler;
 
+import org.pushingpixels.flamingo.api.ribbon.JRibbon;
 import org.pushingpixels.flamingo.api.ribbon.JRibbonFrame;
 
 /**
@@ -73,166 +70,6 @@ import org.pushingpixels.flamingo.api.ribbon.JRibbonFrame;
  */
 public class MainFrame extends JRibbonFrame
 {
-    /**
-     * Used to perform the drag and drop of file.<br>
-     * Support Linux KDE/Gnome specs.
-     * 
-     * @author fab
-     */
-    private static class FileAndTextTransferHandler extends TransferHandler
-    {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = 3575134952432441705L;
-
-        private static final String URI_LIST_MIME_TYPE = "text/uri-list;class=java.lang.String";
-
-        private final DataFlavor fileFlavor;
-        private final DataFlavor stringFlavor;
-        private DataFlavor uriListFlavor;
-
-        public FileAndTextTransferHandler()
-        {
-            fileFlavor = DataFlavor.javaFileListFlavor;
-            stringFlavor = DataFlavor.stringFlavor;
-
-            try
-            {
-                uriListFlavor = new DataFlavor(URI_LIST_MIME_TYPE);
-            }
-            catch (ClassNotFoundException e)
-            {
-                uriListFlavor = null;
-            }
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public boolean importData(JComponent c, Transferable t)
-        {
-            if (!canImport(c, t.getTransferDataFlavors()))
-                return false;
-
-            try
-            {
-                if (hasFileFlavor(t.getTransferDataFlavors()))
-                {
-                    // Windows
-                    Loader.load((List<File>) t.getTransferData(fileFlavor));
-                    return true;
-                }
-                else if (hasURIListFlavor(t.getTransferDataFlavors()))
-                {
-                    // Linux
-                    final ArrayList<File> files = textURIListToFileList((String) t.getTransferData(uriListFlavor));
-
-                    if (files.size() > 0)
-                        Loader.load((List<File>) t.getTransferData(fileFlavor));
-
-                    return true;
-                }
-                else if (hasStringFlavor(t.getTransferDataFlavors()))
-                {
-                    String str = ((String) t.getTransferData(stringFlavor));
-
-                    System.out.println(str);
-
-                    return true;
-                }
-            }
-            catch (UnsupportedFlavorException ufe)
-            {
-                System.err.println("importData: unsupported data flavor");
-            }
-            catch (IOException ieo)
-            {
-                System.err.println("importData: I/O exception");
-            }
-
-            return false;
-        }
-
-        @Override
-        public int getSourceActions(JComponent c)
-        {
-            return COPY;
-        }
-
-        @Override
-        public boolean canImport(JComponent c, DataFlavor[] flavors)
-        {
-            if (hasFileFlavor(flavors))
-                return true;
-            if (hasStringFlavor(flavors))
-                return true;
-
-            return false;
-        }
-
-        private boolean hasFileFlavor(DataFlavor[] flavors)
-        {
-            for (DataFlavor flavor : flavors)
-                if (fileFlavor.equals(flavor))
-                    return true;
-
-            return false;
-        }
-
-        private boolean hasStringFlavor(DataFlavor[] flavors)
-        {
-            for (DataFlavor flavor : flavors)
-                if (stringFlavor.equals(flavor))
-                    return true;
-
-            return false;
-        }
-
-        private boolean hasURIListFlavor(DataFlavor[] flavors)
-        {
-            if (uriListFlavor != null)
-            {
-                for (DataFlavor flavor : flavors)
-                    if (uriListFlavor.equals(flavor))
-                        return true;
-            }
-
-            return false;
-        }
-
-        /** Your helpful function */
-        private static ArrayList<File> textURIListToFileList(String data)
-        {
-            final ArrayList<File> list = new ArrayList<File>(1);
-
-            for (StringTokenizer st = new StringTokenizer(data, "\r\n"); st.hasMoreTokens();)
-            {
-                final String s = st.nextToken();
-
-                // the line is a comment (as per the RFC 2483)
-                if (s.startsWith("#"))
-                    continue;
-
-                try
-                {
-                    final URI uri = new URI(s);
-                    final File file = new File(uri);
-                    list.add(file);
-                }
-                catch (URISyntaxException e)
-                {
-                    e.printStackTrace();
-                }
-                catch (IllegalArgumentException e)
-                {
-                    e.printStackTrace();
-                }
-            }
-
-            return list;
-        }
-    }
-
     /**
 	 * 
 	 */
@@ -253,8 +90,7 @@ public class MainFrame extends JRibbonFrame
     private final JPanel centerPanel;
     private final IcyDesktopPane desktopPane;
     InspectorPanel inspector;
-    private final FileAndTextTransferHandler fileAndTextTransferHandler;
-    private boolean detachedMode;
+    boolean detachedMode;
     int lastInspectorWidth;
     boolean inspectorWidthSet;
 
@@ -285,9 +121,6 @@ public class MainFrame extends JRibbonFrame
         positionSaver = new WindowPositionSaver(this, "frame/main", new Point(50, 50), new Dimension(800, 600));
         previousInspectorInternalized = positionSaver.getPreferences().getBoolean(ID_PREVIOUS_STATE, true);
 
-        // transfert handler
-        fileAndTextTransferHandler = new FileAndTextTransferHandler();
-
         // set "always on top" state
         setAlwaysOnTop(GeneralPreferences.getAlwaysOnTop());
         // default close operation
@@ -306,7 +139,6 @@ public class MainFrame extends JRibbonFrame
 
         // desktop pane
         desktopPane = new IcyDesktopPane();
-        desktopPane.setTransferHandler(fileAndTextTransferHandler);
         desktopPane.addMouseListener(new MouseAdapter()
         {
             @Override
@@ -324,6 +156,32 @@ public class MainFrame extends JRibbonFrame
 
         // set the desktop pane in center pane
         centerPanel.add(desktopPane, BorderLayout.CENTER);
+
+        // action on file drop
+        final FileDrop.Listener fileDropListener = new FileDrop.Listener()
+        {
+            @Override
+            public void filesDropped(File[] files)
+            {
+                Loader.load(Arrays.asList(files));
+            }
+        };
+
+        // handle file drop in desktop pane and in ribbon pane
+        new FileDrop(desktopPane, BorderFactory.createLineBorder(Color.blue.brighter(), 2), false, fileDropListener);
+        new FileDrop(getRibbon(), BorderFactory.createLineBorder(Color.blue.brighter(), 1), false, fileDropListener);
+
+        // listen ribbon minimization event
+        getRibbon().addPropertyChangeListener(JRibbon.PROPERTY_MINIMIZED, new PropertyChangeListener()
+        {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt)
+            {
+                // pack the frame in detached mode
+                if (detachedMode)
+                    pack();
+            }
+        });
     }
 
     /**
@@ -353,9 +211,14 @@ public class MainFrame extends JRibbonFrame
                     inspectorWidthSet = true;
                 }
 
-                // keep height to minimum height when we are in detached mode
-                if (isDetachedMode())
-                    setSize(getWidth(), getMinimumSize().height);
+                if (detachedMode)
+                {
+                    // fix height
+                    final int prefH = getPreferredSize().height;
+
+                    if (getHeight() > prefH)
+                        setSize(getWidth(), prefH);
+                }
             }
         });
 
@@ -821,10 +684,13 @@ public class MainFrame extends JRibbonFrame
                 // hide main pane & resize window to ribbon dimension
                 remove(mainPane);
                 ComponentUtil.setMaximized(this, false);
+                // and pack the frame
+                pack();
+
                 // recompute layout
-                validate();
+                // validate();
                 // force resize to ribbon size
-                setSize(getWidth(), getMinimumSize().height);
+                // setSize(getWidth(), getMinimumSize().height);
             }
             // single window mode
             else
@@ -849,5 +715,25 @@ public class MainFrame extends JRibbonFrame
             // notify mode change
             firePropertyChange(PROPERTY_DETACHEDMODE, !value, value);
         }
+    }
+
+    @Override
+    public void paint(Graphics g)
+    {
+        // new size arrives sometime in paint before resize event
+        if (detachedMode)
+        {
+            // fix height
+            final int prefH = getPreferredSize().height;
+
+            if (getHeight() > prefH)
+            {
+                setSize(getWidth(), prefH);
+                return;
+            }
+        }
+
+        super.paint(g);
+
     }
 }

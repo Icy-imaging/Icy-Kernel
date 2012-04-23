@@ -106,6 +106,13 @@ public class LUTBand implements ScalerListener, IcyColorSpaceListener
         getColorSpace().copyColormap(component, colorMap);
     }
 
+    // private void adJustBounds()
+    // {
+    // // return default bounds ([0..255] / [-128..127]) for BYTE data type
+    // if ((!adjustByteToo) && (dataType.getJavaType() == DataType.BYTE))
+    // return dataType.getDefaultBounds();
+    // }
+
     public Scaler getScaler()
     {
         return scaler;
@@ -144,6 +151,16 @@ public class LUTBand implements ScalerListener, IcyColorSpaceListener
     public double getMaxBound()
     {
         return scaler.getAbsRightIn();
+    }
+
+    public void setMinBound(double value)
+    {
+        scaler.setAbsLeftIn(value);
+    }
+
+    public void setMaxBound(double value)
+    {
+        scaler.setAbsRightIn(value);
     }
 
     public boolean isEnabled()

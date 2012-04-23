@@ -33,6 +33,7 @@ import icy.gui.main.MainInterfaceBatch;
 import icy.gui.main.MainInterfaceGui;
 import icy.gui.util.LookAndFeelUtil;
 import icy.gui.viewer.Viewer;
+import icy.imagej.ImageJPatcher;
 import icy.math.UnitUtil;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginInstaller;
@@ -154,6 +155,9 @@ public class Icy
             // load plugins classes (need preferences init)
             PluginLoader.reloadAsynch();
             WorkspaceLoader.reload_asynch();
+            
+            // patches ImageJ classes
+            ImageJPatcher.applyPatches();
 
             // FIXME : We use InvokeNow(...) to avoid the JVM deadlock bug (id: 5104239) when the
             // AWT

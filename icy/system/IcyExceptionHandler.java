@@ -39,12 +39,18 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         Thread.setDefaultUncaughtExceptionHandler(exceptionHandler);
     }
 
-    private static void showSimpleErrorMessage(Throwable t)
+    private static void showSimpleErrorMessage(Throwable t, boolean error)
     {
         if (t != null)
         {
-            System.err.println("Caused by : " + t.toString());
-            showSimpleErrorMessage(t.getCause());
+            final String mess = "Caused by : " + t.toString();
+
+            if (error)
+                System.err.println(mess);
+            else
+                System.out.println(mess);
+
+            showSimpleErrorMessage(t.getCause(), error);
         }
     }
 
@@ -57,12 +63,15 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     {
         if (t != null)
         {
-            showSimpleErrorMessage(t.getCause());
+            showSimpleErrorMessage(t.getCause(), error);
 
             if (printStackTrace)
                 t.printStackTrace();
-            else
+
+            if (error)
                 System.err.println(t.toString());
+            else
+                System.out.println(t.toString());
         }
     }
 

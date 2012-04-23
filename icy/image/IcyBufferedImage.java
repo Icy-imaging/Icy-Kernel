@@ -126,8 +126,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         if (icyImageList.size() == 1)
             return firstImage;
 
-        final int dataType = firstImage.getDataType();
-        final boolean signed = firstImage.isSignedDataType();
+        final DataType dataType = firstImage.getDataType_();
         final int width = firstImage.getWidth();
         final int height = firstImage.getHeight();
 
@@ -135,7 +134,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         // count total number of component
         for (IcyBufferedImage image : icyImageList)
         {
-            if ((dataType != image.getDataType()) || (signed != image.isSignedDataType()))
+            if (dataType != image.getDataType_())
                 throw new IllegalArgumentException("All images contained in imageList should have the same dataType");
             if ((width != image.getWidth()) || (height != image.getHeight()))
                 throw new IllegalArgumentException("All images contained in imageList should have the same dimension");
@@ -143,7 +142,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             numComponents += image.getNumComponents();
         }
 
-        final IcyBufferedImage result = new IcyBufferedImage(width, height, numComponents, dataType, signed);
+        final IcyBufferedImage result = new IcyBufferedImage(width, height, numComponents, dataType);
         // final IcyColorModel dstColorModel = result.getIcyColorModel();
 
         // copy data to result image
@@ -156,7 +155,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             for (int srcComp = 0; srcComp < srcNumComponents; srcComp++, destComp++)
             {
                 // copy data
-                ArrayUtil.arrayToArray(image.getDataXY(srcComp), result.getDataXY(destComp), signed);
+                ArrayUtil.arrayToArray(image.getDataXY(srcComp), result.getDataXY(destComp), dataType.isSigned());
                 // copy colormap (not always wanted...)
                 // dstColorModel.setColormap(destComp, srcColorModel.getColormap(srcComp));
             }
@@ -463,6 +462,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public static int TYPE_UNDEFINED = TypeUtil.TYPE_UNDEFINED;
 
     /**
+     * automatic update of channel bounds
+     */
+    private boolean autoUpdateChannelBounds;
+    /**
      * internal image LUT
      */
     private final LUT internalLut;
@@ -483,8 +486,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        {@link IcyColorModel}
      * @param wr
      *        {@link WritableRaster}
+     * @param autoUpdateChannelBounds
+     *        If true then channel bounds are automatically calculated.<br>
      */
-    private IcyBufferedImage(IcyColorModel cm, WritableRaster wr)
+    private IcyBufferedImage(IcyColorModel cm, WritableRaster wr, boolean autoUpdateChannelBounds)
     {
         super(cm, wr, false, null);
 
@@ -494,8 +499,24 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         updater = new UpdateEventHandler(this, false);
         listeners = new EventListenerList();
 
+        // automatic update of channel bounds
+        this.autoUpdateChannelBounds = autoUpdateChannelBounds;
+
         // add listener to colorModel
         cm.addListener(this);
+    }
+
+    /**
+     * Build an Icy formatted BufferedImage, takes an IcyColorModel and a WritableRaster as input
+     * 
+     * @param cm
+     *        {@link IcyColorModel}
+     * @param wr
+     *        {@link WritableRaster}
+     */
+    private IcyBufferedImage(IcyColorModel cm, WritableRaster wr)
+    {
+        this(cm, wr, true);
     }
 
     /**
@@ -503,18 +524,45 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     private IcyBufferedImage(IcyColorModel cm, int width, int height)
     {
-        this(cm, cm.createCompatibleWritableRaster(width, height));
+        this(cm, cm.createCompatibleWritableRaster(width, height), true);
     }
 
     /**
      * Build an Icy formatted BufferedImage with specified IcyColorModel, data, width and height.
      */
-    private IcyBufferedImage(IcyColorModel cm, Object[] data, int width, int height)
+    private IcyBufferedImage(IcyColorModel cm, Object[] data, int width, int height, boolean autoUpdateChannelBounds)
     {
-        this(cm, cm.createWritableRaster(data, width, height));
+        this(cm, cm.createWritableRaster(data, width, height), autoUpdateChannelBounds);
 
         // data has been modified
         dataChanged();
+    }
+
+    /**
+     * Build an Icy formatted BufferedImage with specified width, height and input data.<br>
+     * ex : <code>img = new IcyBufferedImage(640, 480, new byte[3][640 * 480], true);</code><br>
+     * <br>
+     * This constructor provides the best performance for massive image creation and computation as
+     * it allow you to directly send the data array and disable the channel bounds calculation.
+     * 
+     * @param width
+     * @param height
+     * @param data
+     *        image data<br>
+     *        Should be a 2D array with first dimension giving the number of component<br>
+     *        and second dimension equals to <code>width * height</code><br>
+     *        The array data type specify the internal data type.
+     * @param signed
+     *        use signed data for data type
+     * @param autoUpdateChannelBounds
+     *        If true then channel bounds are automatically calculated.<br>
+     *        When set to false, you have to set bounds manually by calling
+     *        {@link #updateChannelsBounds()} or #setC
+     */
+    public IcyBufferedImage(int width, int height, Object[] data, boolean signed, boolean autoUpdateChannelBounds)
+    {
+        this(IcyColorModel.createInstance(data.length, ArrayUtil.getDataType(data[0], signed)), data, width, height,
+                autoUpdateChannelBounds);
     }
 
     /**
@@ -533,7 +581,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public IcyBufferedImage(int width, int height, Object[] data, boolean signed)
     {
-        this(IcyColorModel.createInstance(data.length, ArrayUtil.getDataType(data[0], signed)), data, width, height);
+        this(IcyColorModel.createInstance(data.length, ArrayUtil.getDataType(data[0], signed)), data, width, height,
+                true);
     }
 
     /**
@@ -584,6 +633,33 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public IcyBufferedImage(int width, int height, int numComponents, int dataType)
     {
         this(IcyColorModel.createInstance(numComponents, dataType, false), width, height);
+    }
+
+    /**
+     * @return true is channel bounds are automatically updated when image data is modified.
+     * @see #setAutoUpdateChannelBounds(boolean)
+     */
+    public boolean getAutoUpdateChannelBounds()
+    {
+        return autoUpdateChannelBounds;
+    }
+
+    /**
+     * If set to <code>true</code> (default) then channel bounds will be automatically recalculated
+     * when image data is modified.<br>
+     * This can consume some time if you make many updates on a large image.<br>
+     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()}
+     * block to avoid severals recalculation.
+     */
+    public void setAutoUpdateChannelBounds(boolean value)
+    {
+        if (autoUpdateChannelBounds != value)
+        {
+            if (value)
+                updateChannelsBounds();
+
+            autoUpdateChannelBounds = value;
+        }
     }
 
     /**
@@ -735,7 +811,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public IcyBufferedImage convertToType(DataType dataType, boolean rescale)
     {
-        final double boundsSrc[] = getGlobalComponentAbsBounds();
+        final double boundsSrc[] = getGlobalChannelTypeBounds();
         final double boundsDst[];
 
         if (rescale)
@@ -903,7 +979,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         if (sizeC == 1)
             return this;
 
-        return new IcyBufferedImage(getWidth(), getHeight(), new Object[] {getDataXY(c)}, isSignedDataType());
+        return new IcyBufferedImage(getWidth(), getHeight(), (Object[]) ArrayUtil.encapsulate(getDataXY(c)),
+                isSignedDataType());
     }
 
     /**
@@ -1216,18 +1293,14 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Get calculated image component bounds (min and max values)
+     * Get calculated image channel bounds (min and max values)
      */
-    private double[] getCalculatedComponentBounds(int component, boolean adjustByteToo)
+    private double[] getCalculatedChannelBounds(int channel)
     {
         final DataType dataType = getDataType_();
 
-        // return default bounds ([0..255] / [-128..127]) for BYTE data type
-        if ((!adjustByteToo) && (dataType.getJavaType() == DataType.BYTE))
-            return dataType.getDefaultBounds();
-
         final boolean signed = dataType.isSigned();
-        final Object data = getDataXY(component);
+        final Object data = getDataXY(channel);
 
         final double min = ArrayMath.min(data, signed);
         final double max = ArrayMath.max(data, signed);
@@ -1238,7 +1311,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     /**
      * Adjust specified bounds depending internal data type
      */
-    private double[] adjustComponentBounds(double[] bounds)
+    private double[] adjustBoundsForDataType(double[] bounds)
     {
         double min, max;
 
@@ -1282,16 +1355,78 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Get global components absolute bounds (min and max values for all components)
+     * Get the data type minimum value.
      */
-    public double[] getGlobalComponentAbsBounds()
+    public double getDataTypeMin()
     {
-        final int numComponents = getNumComponents();
-        final double[] result = getComponentAbsBounds(0);
+        return getDataType_().getMinValue();
+    }
 
-        for (int component = 1; component < numComponents; component++)
+    /**
+     * Get the data type maximum value.
+     */
+    public double getDataTypeMax()
+    {
+        return getDataType_().getMaxValue();
+    }
+
+    /**
+     * Get data type bounds (min and max values)
+     */
+    public double[] getDataTypeBounds()
+    {
+        return new double[] {getDataTypeMin(), getDataTypeMax()};
+    }
+
+    /**
+     * Get the minimum type value for the specified channel.
+     */
+    public double getChannelTypeMin(int channel)
+    {
+        return getIcyColorModel().getComponentAbsMinValue(channel);
+    }
+
+    /**
+     * Get the maximum type value for the specified channel.
+     */
+    public double getChannelTypeMax(int channel)
+    {
+        return getIcyColorModel().getComponentAbsMaxValue(channel);
+    }
+
+    /**
+     * Get type bounds (min and max values) for the specified channel.
+     */
+    public double[] getChannelTypeBounds(int channel)
+    {
+        return getIcyColorModel().getComponentAbsBounds(channel);
+    }
+
+    /**
+     * Get type bounds (min and max values) for all channels.
+     */
+    public double[][] getChannelsTypeBounds()
+    {
+        final int sizeC = getSizeC();
+        final double[][] result = new double[sizeC][];
+
+        for (int c = 0; c < sizeC; c++)
+            result[c] = getChannelTypeBounds(c);
+
+        return result;
+    }
+
+    /**
+     * Get global type bounds (min and max values) for all channels.
+     */
+    public double[] getGlobalChannelTypeBounds()
+    {
+        final int sizeC = getSizeC();
+        final double[] result = getChannelTypeBounds(0);
+
+        for (int c = 1; c < sizeC; c++)
         {
-            final double[] bounds = getComponentAbsBounds(component);
+            final double[] bounds = getChannelTypeBounds(c);
             result[0] = Math.min(bounds[0], result[0]);
             result[1] = Math.max(bounds[1], result[1]);
         }
@@ -1300,197 +1435,343 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Get components absolute bounds (min and max values)
+     * @deprecated Uses {@link #getChannelTypeMin(int)} instead.
      */
-    public double[][] getComponentsAbsBounds()
-    {
-        final int numComponents = getNumComponents();
-        final double[][] result = new double[numComponents][];
-
-        for (int component = 0; component < numComponents; component++)
-            result[component] = getComponentAbsBounds(component);
-
-        return result;
-    }
-
-    /**
-     * Get component absolute minimum value
-     */
+    @Deprecated
     public double getComponentAbsMinValue(int component)
     {
-        return getIcyColorModel().getComponentAbsMinValue(component);
+        return getChannelTypeMin(component);
     }
 
     /**
-     * Get component absolute maximum value
+     * @deprecated Uses {@link #getChannelTypeMax(int)} instead.
      */
+    @Deprecated
     public double getComponentAbsMaxValue(int component)
     {
-        return getIcyColorModel().getComponentAbsMaxValue(component);
+        return getChannelTypeMax(component);
     }
 
     /**
-     * Get component absolute bounds (min and max values)
+     * @deprecated Uses {@link #getChannelTypeBounds(int)} instead.
      */
+    @Deprecated
     public double[] getComponentAbsBounds(int component)
     {
-        return getIcyColorModel().getComponentAbsBounds(component);
+        return getChannelTypeBounds(component);
     }
 
     /**
-     * Get components user bounds (min and max values)
+     * @deprecated Uses {@link #getChannelsTypeBounds()} instead.
      */
-    public double[][] getComponentsUserBounds()
+    @Deprecated
+    public double[][] getComponentsAbsBounds()
     {
-        final int numComponents = getNumComponents();
-        final double[][] result = new double[numComponents][];
+        return getChannelsTypeBounds();
+    }
 
-        for (int component = 0; component < numComponents; component++)
-            result[component] = getComponentUserBounds(component);
+    /**
+     * @deprecated Uses {@link #getGlobalChannelTypeBounds()} instead.
+     */
+    @Deprecated
+    public double[] getGlobalComponentAbsBounds()
+    {
+        return getGlobalChannelTypeBounds();
+    }
+
+    /**
+     * Get the minimum value in the whole sequence for the specified channel.
+     */
+    public double getChannelMin(int channel)
+    {
+        return getIcyColorModel().getComponentUserMinValue(channel);
+    }
+
+    /**
+     * Get maximum value in the whole sequence for the specified channel.
+     */
+    public double getChannelMax(int channel)
+    {
+        return getIcyColorModel().getComponentUserMaxValue(channel);
+    }
+
+    /**
+     * Get bounds (min and max values) in the whole sequence for the specified channel.
+     */
+    public double[] getChannelBounds(int channel)
+    {
+        return getIcyColorModel().getComponentUserBounds(channel);
+    }
+
+    /**
+     * Get bounds (min and max values) in the whole sequence for all channels.
+     */
+    public double[][] getChannelsBounds()
+    {
+        final int sizeC = getSizeC();
+        final double[][] result = new double[sizeC][];
+
+        for (int c = 0; c < sizeC; c++)
+            result[c] = getChannelBounds(c);
 
         return result;
     }
 
     /**
-     * Get component user minimum value
+     * @deprecated Uses {@link #getChannelMin(int)} instead.
      */
+    @Deprecated
     public double getComponentUserMinValue(int component)
     {
-        return getIcyColorModel().getComponentUserMinValue(component);
+        return getChannelMin(component);
     }
 
     /**
-     * Get component user maximum value
+     * @deprecated Uses {@link #getChannelMax(int)} instead.
      */
+    @Deprecated
     public double getComponentUserMaxValue(int component)
     {
-        return getIcyColorModel().getComponentUserMaxValue(component);
+        return getChannelMax(component);
     }
 
     /**
-     * Get component user bounds (min and max values)
+     * @deprecated Uses {@link #getChannelBounds(int)} instead.
      */
+    @Deprecated
     public double[] getComponentUserBounds(int component)
     {
-        return getIcyColorModel().getComponentUserBounds(component);
+        return getChannelBounds(component);
     }
 
     /**
-     * Set component absolute minimum value
+     * @deprecated Uses {@link #getChannelsBounds()} instead.
      */
-    public void setComponentAbsMinValue(int component, double min)
+    @Deprecated
+    public double[][] getComponentsUserBounds()
     {
-        getIcyColorModel().setComponentAbsMinValue(component, min);
+        return getChannelsBounds();
     }
 
     /**
-     * Set component absolute maximum value
+     * Set the preferred data type minimum value for the specified channel.
      */
-    public void setComponentAbsMaxValue(int component, double max)
+    public void setChannelTypeMin(int channel, double min)
     {
-        getIcyColorModel().setComponentAbsMaxValue(component, max);
+        getIcyColorModel().setComponentAbsMinValue(channel, min);
     }
 
     /**
-     * Set component absolute bounds (min and max values)
+     * Set the preferred data type maximum value for the specified channel.
      */
-    public void setComponentAbsBounds(int component, double[] bounds)
+    public void setChannelTypeMax(int channel, double max)
     {
-        getIcyColorModel().setComponentAbsBounds(component, bounds);
+        getIcyColorModel().setComponentAbsMaxValue(channel, max);
     }
 
     /**
-     * Set component absolute bounds (min and max values)
+     * /**
+     * Set the preferred data type min and max values for the specified channel.
      */
-    public void setComponentAbsBounds(int component, double min, double max)
+    public void setChannelTypeBounds(int channel, double min, double max)
     {
-        getIcyColorModel().setComponentAbsBounds(component, min, max);
+        getIcyColorModel().setComponentAbsBounds(channel, min, max);
     }
 
     /**
-     * Set components absolute bounds (min and max values)
+     * Set the preferred data type bounds (min and max values) for all channels.
      */
-    public void setComponentsAbsBounds(double[][] bounds)
+    public void setChannelsTypeBounds(double[][] bounds)
     {
         getIcyColorModel().setComponentsAbsBounds(bounds);
     }
 
     /**
-     * Set component user minimum value
+     * @deprecated Uses {@link #setChannelTypeMin(int, double)} instead.
      */
-    public void setComponentUserMinValue(int component, double min)
+    @Deprecated
+    public void setComponentAbsMinValue(int component, double min)
     {
-        getIcyColorModel().setComponentUserMinValue(component, min);
+        setChannelTypeMin(component, min);
     }
 
     /**
-     * Set component user maximum value
+     * @deprecated Uses {@link #setChannelTypeMax(int, double)} instead.
      */
-    public void setComponentUserMaxValue(int component, double max)
+    @Deprecated
+    public void setComponentAbsMaxValue(int component, double max)
     {
-        getIcyColorModel().setComponentUserMaxValue(component, max);
+        setChannelTypeMax(component, max);
     }
 
     /**
-     * Set component user bounds (min and max values)
+     * @deprecated Uses {@link #setChannelTypeBounds(int, double, double)} instead.
      */
-    public void setComponentUserBounds(int component, double[] bounds)
+    @Deprecated
+    public void setComponentAbsBounds(int component, double[] bounds)
     {
-        getIcyColorModel().setComponentUserBounds(component, bounds);
+        setChannelTypeBounds(component, bounds[0], bounds[1]);
     }
 
     /**
-     * Set component user bounds (min and max values)
+     * @deprecated Uses {@link #setChannelTypeBounds(int, double, double)} instead.
      */
-    public void setComponentUserBounds(int component, double min, double max)
+    @Deprecated
+    public void setComponentAbsBounds(int component, double min, double max)
     {
-        getIcyColorModel().setComponentUserBounds(component, min, max);
+        setChannelTypeBounds(component, min, max);
     }
 
     /**
-     * Set components user bounds (min and max values)
+     * @deprecated Uses {@link #setChannelsTypeBounds(double[][])} instead.
      */
-    public void setComponentsUserBounds(double[][] bounds)
+    @Deprecated
+    public void setComponentsAbsBounds(double[][] bounds)
     {
-        getIcyColorModel().setComponentsUserBounds(bounds);
+        setChannelsTypeBounds(bounds);
     }
 
     /**
-     * Update components bounds (min and max values)
+     * Set channel minimum value.
      */
-    public void updateComponentsBounds(boolean updateUserBounds, boolean adjustByteToo)
+    public void setChannelMin(int channel, double min)
     {
-        final int numComponents = getNumComponents();
         final IcyColorModel cm = getIcyColorModel();
 
-        for (int component = 0; component < numComponents; component++)
+        if ((min < cm.getComponentAbsMinValue(channel)))
+            cm.setComponentAbsMinValue(channel, min);
+        cm.setComponentUserMinValue(channel, min);
+    }
+
+    /**
+     * Set channel maximum value.
+     */
+    public void setChannelMax(int channel, double max)
+    {
+        final IcyColorModel cm = getIcyColorModel();
+
+        if ((max > cm.getComponentAbsMaxValue(channel)))
+            cm.setComponentAbsMinValue(channel, max);
+        cm.setComponentUserMaxValue(channel, max);
+    }
+
+    /**
+     * Set channel bounds (min and max values)
+     */
+    public void setChannelBounds(int channel, double min, double max)
+    {
+        final IcyColorModel cm = getIcyColorModel();
+        final double[] typeBounds = cm.getComponentAbsBounds(channel);
+
+        if ((min < typeBounds[0]) || (max > typeBounds[1]))
+            cm.setComponentAbsBounds(channel, min, max);
+        cm.setComponentUserBounds(channel, min, max);
+    }
+
+    /**
+     * Set all channel bounds (min and max values)
+     */
+    public void setChannelsBounds(double[][] bounds)
+    {
+        // we use the setChannelBounds(..) method so we do range check
+        for (int c = 0; c < bounds.length; c++)
         {
-            final double[] bounds = getCalculatedComponentBounds(component, adjustByteToo);
+            final double[] b = bounds[c];
+            setChannelBounds(c, b[0], b[1]);
+        }
+    }
 
-            cm.setComponentAbsBounds(component, adjustComponentBounds(bounds));
+    /**
+     * @deprecated Uses {@link #setChannelMin(int, double)} instead.
+     */
+    @Deprecated
+    public void setComponentUserMinValue(int component, double min)
+    {
+        setChannelMin(component, min);
+    }
 
-            if (updateUserBounds)
+    /**
+     * @deprecated Uses {@link #setChannelMax(int, double)} instead.
+     */
+    @Deprecated
+    public void setComponentUserMaxValue(int component, double max)
+    {
+        setChannelMax(component, max);
+    }
+
+    /**
+     * @deprecated Uses {@link #setChannelBounds(int, double, double)} instead.
+     */
+    @Deprecated
+    public void setComponentUserBounds(int component, double[] bounds)
+    {
+        setChannelBounds(component, bounds[0], bounds[1]);
+    }
+
+    /**
+     * @deprecated Uses {@link #setChannelBounds(int, double, double)} instead
+     */
+    @Deprecated
+    public void setComponentUserBounds(int component, double min, double max)
+    {
+        setChannelBounds(component, min, max);
+    }
+
+    /**
+     * @deprecated Uses {@link #setChannelsBounds(double[][])} instead.
+     */
+    @Deprecated
+    public void setComponentsUserBounds(double[][] bounds)
+    {
+        setChannelsBounds(bounds);
+    }
+
+    /**
+     * Update channels bounds (min and max values).
+     */
+    public void updateChannelsBounds()
+    {
+        final int sizeC = getSizeC();
+        final IcyColorModel cm = getIcyColorModel();
+
+        for (int c = 0; c < sizeC; c++)
+        {
+            // get data type bounds
+            final double[] bounds = getCalculatedChannelBounds(c);
+
+            cm.setComponentAbsBounds(c, adjustBoundsForDataType(bounds));
+
+            final IcyColorModel colorModel = getIcyColorModel();
+
+            if (colorModel != null)
             {
-                final IcyColorModel colorModel = getIcyColorModel();
+                final IcyColorMap colorMap = colorModel.getColormap(c);
 
-                if (colorModel != null)
-                {
-                    final IcyColorMap colorMap = colorModel.getColormap(component);
-
-                    // we do user bounds adjustment on "non ALPHA" component only
-                    if (colorMap.getType() != IcyColorMapType.ALPHA)
-                        cm.setComponentUserBounds(component, bounds);
-                }
+                // we do user bounds adjustment on "non ALPHA" component only
+                if (colorMap.getType() != IcyColorMapType.ALPHA)
+                    cm.setComponentUserBounds(c, bounds);
             }
         }
     }
 
     /**
-     * Update components bounds (min and max values)
+     * @deprecated Uses {@link #updateChannelsBounds()} instead.
      */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public void updateComponentsBounds(boolean updateChannelBounds, boolean adjustByteToo)
+    {
+        updateChannelsBounds();
+    }
+
+    /**
+     * @deprecated Uses {@link #updateChannelsBounds()} instead.
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
     public void updateComponentsBounds(boolean updateUserBounds)
     {
-        updateComponentsBounds(updateUserBounds, true);
+        updateChannelsBounds();
     }
 
     /**
@@ -3396,11 +3677,20 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * notify image component bounds has changed
+     * notify image channels bounds has changed
      */
+    public void channelBoundsChanged(int channel)
+    {
+        updater.changed(new IcyBufferedImageEvent(this, IcyBufferedImageEventType.BOUNDS_CHANGED, channel));
+    }
+
+    /**
+     * @deprecated USes {@link #channelBoundsChanged(int)} instead.
+     */
+    @Deprecated
     public void componentBoundsChanged(int component)
     {
-        updater.changed(new IcyBufferedImageEvent(this, IcyBufferedImageEventType.BOUNDS_CHANGED, component));
+        channelBoundsChanged(component);
     }
 
     /**
@@ -3447,7 +3737,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         // do here global process on image data change
             case DATA_CHANGED:
                 // update image components bounds
-                updateComponentsBounds(true, false);
+                if (autoUpdateChannelBounds)
+                    updateChannelsBounds();
                 break;
 
             // do here global process on image bounds change
@@ -3473,7 +3764,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 break;
 
             case SCALER_CHANGED:
-                componentBoundsChanged(e.getComponent());
+                channelBoundsChanged(e.getComponent());
                 break;
         }
     }

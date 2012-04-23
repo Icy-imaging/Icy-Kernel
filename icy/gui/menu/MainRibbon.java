@@ -34,6 +34,7 @@ import icy.gui.util.LookAndFeelUtil;
 import icy.gui.util.RibbonUtil;
 import icy.gui.viewer.Viewer;
 import icy.help.Help;
+import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginDescriptor.PluginClassNameSorter;
@@ -57,7 +58,6 @@ import icy.workspace.Workspace.TaskDefinition.BandDefinition;
 import icy.workspace.Workspace.TaskDefinition.BandDefinition.ItemDefinition;
 import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceLoader;
-import ij.ImageJ;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -312,7 +312,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         return toolRibbonTask;
     }
 
-    public ImageJ getImageJ()
+    public ImageJWrapper getImageJ()
     {
         return ijTask.getImageJ();
     }

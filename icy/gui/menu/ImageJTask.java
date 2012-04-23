@@ -3,21 +3,13 @@
  */
 package icy.gui.menu;
 
+import icy.gui.util.LookAndFeelUtil;
 import icy.gui.util.RibbonUtil;
-import icy.gui.util.SwingUtil;
 import icy.image.ImageUtil;
+import icy.imagej.ImageJWrapper;
 import icy.resource.icon.BasicResizableIcon;
-import icy.system.thread.ThreadUtil;
 import ij.Executer;
 import ij.ImageJ;
-
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.JMenuBar;
-import javax.swing.JPanel;
 
 import org.pushingpixels.flamingo.api.ribbon.JRibbonBand;
 import org.pushingpixels.flamingo.api.ribbon.JRibbonComponent;
@@ -28,8 +20,6 @@ import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
  */
 public class ImageJTask extends RibbonTask
 {
-    private final ImageJ imageJ;
-
     private static class ImageJRibbonBand extends JRibbonBand
     {
         /**
@@ -40,66 +30,26 @@ public class ImageJTask extends RibbonTask
         public static final String NAME = "ImageJ";
 
         // ImageJ instance
-        final ImageJ imageJ;
-        final JPanel topPanel;
-        JMenuBar menuBar;
+        final ImageJWrapper imageJ;
 
         public ImageJRibbonBand()
         {
             super(NAME, new BasicResizableIcon(ImageUtil.loadImage(ImageJ.class.getResource("/microscope.gif"))));
 
-            // set ImageJ home directory
+            // initialize some static ImageJ stuff
+            
+            // home directory
             System.setProperty("plugins.dir", "ij");
+            // background color
+            ImageJ.backgroundColor = LookAndFeelUtil.getBackground(this);
 
-            // silent ImageJ instance creation
-            imageJ = new ImageJ(ImageJ.NO_SHOW);
-            imageJ.addPropertyChangeListener("menu", new PropertyChangeListener()
-            {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt)
-                {
-                    ThreadUtil.invokeLater(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            updateMenu();
-                        }
-                    });
-                }
-            });
+            // create ImageJ wrapper
+            imageJ = new ImageJWrapper();
 
-            final JPanel panel = new JPanel(new BorderLayout());
-            topPanel = new JPanel(new BorderLayout());
-
-            Component ijToolBar = imageJ.getComponent(0);
-            Component ijMainPanel = imageJ.getComponent(1);
-
-            // menubar
-            menuBar = null;
-            updateMenu();
-            // toolbar
-            topPanel.add(ijToolBar, BorderLayout.CENTER);
-            // top
-            panel.add(topPanel, BorderLayout.NORTH);
-            // main panel
-            panel.add(ijMainPanel, BorderLayout.CENTER);
-
-            addRibbonComponent(new JRibbonComponent(panel), 3);
+            // add ImageJ GUI wrapper to ribbon
+            addRibbonComponent(new JRibbonComponent(imageJ.getSwingPanel()), 3);
 
             RibbonUtil.setRestrictiveResizePolicies(this);
-        }
-
-        void updateMenu()
-        {
-            if (menuBar != null)
-                topPanel.remove(menuBar);
-
-            // update menu
-            menuBar = SwingUtil.getJMenuBar(imageJ.getMenuBar(), true);
-
-            topPanel.add(menuBar, BorderLayout.NORTH);
-            topPanel.validate();
         }
     }
 
@@ -108,17 +58,14 @@ public class ImageJTask extends RibbonTask
     public ImageJTask()
     {
         super(NAME, new ImageJRibbonBand());
-
-        // save ImageJ reference
-        imageJ = ((ImageJRibbonBand) getBand(0)).imageJ;
     }
 
     /**
      * @return the imageJ
      */
-    public ImageJ getImageJ()
+    public ImageJWrapper getImageJ()
     {
-        return imageJ;
+        return ((ImageJRibbonBand) getBand(0)).imageJ;
     }
 
     /**

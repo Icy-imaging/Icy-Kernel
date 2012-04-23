@@ -794,9 +794,9 @@ public class ChatPanel extends ExternalizablePanel
                     catch (IOException e)
                     {
                         // error while connecting
-                        IcyExceptionHandler.showErrorMessage(e, false);
-                        System.err.println("Cannot connect to chat.");
-                        System.err.println("If you use a proxy, verify you have valid SOCKS settings.");
+                        IcyExceptionHandler.showErrorMessage(e, false, false);
+                        System.out.println("Cannot connect to chat.");
+                        System.out.println("If you use a proxy, verify you have valid SOCKS settings.");
 
                         // update GUI
                         ThreadUtil.invokeLater(new Runnable()

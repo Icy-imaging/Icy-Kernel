@@ -45,6 +45,7 @@ public class IcyPreferences
         ApplicationPreferences.load();
         // then load others
         GeneralPreferences.load();
+        CanvasPreferences.load();
         ChatPreferences.load();
         RepositoryPreferences.load();
         // load plugin before pluginLocal and pluginOnline

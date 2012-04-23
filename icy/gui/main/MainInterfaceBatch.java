@@ -26,16 +26,15 @@ import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.ToolRibbonTask;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
+import icy.imagej.ImageJWrapper;
 import icy.painter.Painter;
 import icy.plugin.abstract_.Plugin;
 import icy.preferences.XMLPreferences;
 import icy.roi.ROI;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
-import ij.ImageJ;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -392,31 +391,7 @@ public class MainInterfaceBatch implements MainInterface
     }
 
     @Override
-    public HashSet<Viewer> getViewerSet()
-    {
-        return new HashSet<Viewer>();
-    }
-
-    @Override
-    public HashSet<Sequence> getSequenceSet()
-    {
-        return new HashSet<Sequence>();
-    }
-
-    @Override
-    public HashSet<ROI> getROISet()
-    {
-        return new HashSet<ROI>();
-    }
-
-    @Override
-    public HashSet<Painter> getPainterSet()
-    {
-        return new HashSet<Painter>();
-    }
-
-    @Override
-    public ImageJ getImageJ()
+    public ImageJWrapper getImageJ()
     {
         return null;
     }

@@ -400,6 +400,8 @@ public class ScalerViewer extends JPanel implements LUTBandListener
      * histogram
      */
     private ScalerHistogramPanel histogram;
+    private boolean histoEnabled;
+    private boolean autoBounds;
 
     /**
      * listeners
@@ -456,6 +458,8 @@ public class ScalerViewer extends JPanel implements LUTBandListener
                 refreshHistoData();
             }
         });
+        histoEnabled = true;
+        autoBounds = false;
 
         setLayout(new BorderLayout());
         add(histogram, BorderLayout.CENTER);
@@ -492,6 +496,9 @@ public class ScalerViewer extends JPanel implements LUTBandListener
     // this method is called by processor, we don't mind about exception here
     void refreshHistoDataInternal()
     {
+        if (!histoEnabled)
+            return;
+
         // init histoGram
         histogram.reset();
 
@@ -597,7 +604,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
 
         histogram.setMinMaxIntValues(s.getAbsLeftIn(), s.getAbsRightIn(), s.isIntegerData());
 
-        // repaint component now as bounds may be changed
+        // repaint component now as bounds may have changed
         repaint();
     }
 
@@ -619,6 +626,48 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         {
             message = value;
             repaint();
+        }
+    }
+    
+    /**
+     * @return the autoBounds
+     */
+    public boolean getAutoBounds()
+    {
+        return autoBounds;
+    }
+
+    /**
+     * Set the autoBounds
+     */
+    public void setAutoBounds(boolean value)
+    {
+        if (autoBounds != value)
+        {
+            autoBounds = value;
+            histogram.repaint();
+        }
+    }
+
+
+    /**
+     * @return the histoEnabled
+     */
+    public boolean isHistoEnabled()
+    {
+        return histoEnabled;
+    }
+
+    /**
+     * Set the histoEnabled
+     */
+    public void setHistoEnabled(boolean value)
+    {
+        if (histoEnabled != value)
+        {
+            if (value)
+                refreshHistoData();
+            histoEnabled = value;
         }
     }
 

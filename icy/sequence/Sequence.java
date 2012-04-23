@@ -184,14 +184,14 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     // */
     // private String channelsName[];
 
+    // /**
+    // * automatic update of component absolute bounds
+    // */
+    // private boolean componentAbsBoundsAutoUpdate;
     /**
-     * automatic update of component absolute bounds
+     * automatic update of channel bounds
      */
-    private boolean componentAbsBoundsAutoUpdate;
-    /**
-     * automatic update of component user bounds
-     */
-    private boolean componentUserBoundsAutoUpdate;
+    private boolean autoUpdateChannelBounds;
     /**
      * persistent object to load/save data (XML format)
      */
@@ -213,7 +213,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * internals
      */
-    private boolean componentBoundsInvalid;
+    private boolean channelBoundsInvalid;
 
     /**
      * Creates a new empty sequence
@@ -250,10 +250,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
 
         // no colorModel yet
         colorModel = null;
-        componentBoundsInvalid = false;
-        // automatic update of component bounds
-        componentAbsBoundsAutoUpdate = true;
-        componentUserBoundsAutoUpdate = true;
+        channelBoundsInvalid = false;
+        // automatic update of channel bounds
+        autoUpdateChannelBounds = true;
     }
 
     /**
@@ -264,6 +263,16 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         this();
 
         addImage(image);
+    }
+
+    /**
+     * Creates an empty sequence with specified name
+     */
+    public Sequence(String name)
+    {
+        this();
+
+        setName(name);
     }
 
     /**
@@ -370,7 +379,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     {
         final Sequence output = new Sequence();
 
-        final double boundsSrc[] = getGlobalComponentAbsBounds();
+        final double boundsSrc[] = getGlobalChannelTypeBounds();
         final double boundsDst[];
 
         if (rescale)
@@ -707,37 +716,67 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * @return the componentAbsBoundsAutoUpdate
+     * @deprecated Uses {@link #getAutoUpdateChannelBounds()} instead.
      */
+    @Deprecated
     public boolean isComponentAbsBoundsAutoUpdate()
     {
-        return componentAbsBoundsAutoUpdate;
+        return getAutoUpdateChannelBounds();
     }
 
     /**
-     * @param componentAbsBoundsAutoUpdate
-     *        the componentAbsBoundsAutoUpdate to set
+     * @deprecated Uses {@link #setAutoUpdateChannelBounds(boolean)} instead.
      */
-    public void setComponentAbsBoundsAutoUpdate(boolean componentAbsBoundsAutoUpdate)
+    @SuppressWarnings("unused")
+    @Deprecated
+    public void setComponentAbsBoundsAutoUpdate(boolean value)
     {
-        this.componentAbsBoundsAutoUpdate = componentAbsBoundsAutoUpdate;
+        // nothing here
     }
 
     /**
-     * @return the componentUserBoundsAutoUpdate
+     * @return true is channel bounds are automatically updated when sequence data is modified.
+     * @see #setAutoUpdateChannelBounds(boolean)
      */
+    public boolean getAutoUpdateChannelBounds()
+    {
+        return autoUpdateChannelBounds;
+    }
+
+    /**
+     * If set to <code>true</code> (default) then channel bounds will be automatically recalculated
+     * when sequence data is modified.<br>
+     * This can consume a lot of time if you make many updates on large sequence.<br>
+     * In this case you should do your updates in a {@link #beginUpdate()} ... {@link #endUpdate()}
+     * block to avoid severals recalculation.
+     */
+    public void setAutoUpdateChannelBounds(boolean value)
+    {
+        if (autoUpdateChannelBounds != value)
+        {
+            if (value)
+                updateChannelsBounds(false);
+
+            autoUpdateChannelBounds = value;
+        }
+    }
+
+    /**
+     * @deprecated USes {@link #getAutoUpdateChannelBounds()} instead.
+     */
+    @Deprecated
     public boolean isComponentUserBoundsAutoUpdate()
     {
-        return componentUserBoundsAutoUpdate;
+        return getAutoUpdateChannelBounds();
     }
 
     /**
-     * @param componentUserBoundsAutoUpdate
-     *        the componentUserBoundsAutoUpdate to set
+     * @deprecated Uses {@link #setAutoUpdateChannelBounds(boolean)} instead.
      */
-    public void setComponentUserBoundsAutoUpdate(boolean componentUserBoundsAutoUpdate)
+    @Deprecated
+    public void setComponentUserBoundsAutoUpdate(boolean value)
     {
-        this.componentUserBoundsAutoUpdate = componentUserBoundsAutoUpdate;
+        setAutoUpdateChannelBounds(value);
     }
 
     /**
@@ -2049,6 +2088,9 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         return getDataType_().isSigned();
     }
 
+    /**
+     * Internal use only.
+     */
     private double[][] adjustBounds(double[][] curBounds, double[][] bounds)
     {
         if (bounds == null)
@@ -2069,9 +2111,10 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Recalculate all image components bounds (min and max values)
+     * Recalculate all image channels bounds (min and max values).<br>
+     * Internal use only.
      */
-    private void recalculateAllImageComponentsBounds(boolean adjustByteToo)
+    private void recalculateAllImageChannelsBounds()
     {
         // nothing to do...
         if ((colorModel == null) || isEmpty())
@@ -2085,7 +2128,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
             // recalculate images bounds (automatically update sequence bounds with event)
             for (VolumetricImage volImg : volumes)
                 for (IcyBufferedImage img : volImg.getAllImage())
-                    img.updateComponentsBounds(componentUserBoundsAutoUpdate, adjustByteToo);
+                    img.updateChannelsBounds();
         }
         finally
         {
@@ -2094,10 +2137,11 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Update components bounds (min and max values)<br>
-     * At this point we assume images has correct components bounds information
+     * Update channels bounds (min and max values)<br>
+     * At this point we assume images has correct channels bounds information.<br>
+     * Internal use only.
      */
-    private void internalUpdateComponentsBounds()
+    private void internalUpdateChannelsBounds()
     {
         // nothing to do...
         if ((colorModel == null) || isEmpty())
@@ -2114,7 +2158,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
                 synchronized (volImg.images)
                 {
                     for (IcyBufferedImage img : volImg.images.values())
-                        bounds = adjustBounds(img.getComponentsAbsBounds(), bounds);
+                        bounds = adjustBounds(img.getChannelsTypeBounds(), bounds);
                 }
             }
         }
@@ -2122,122 +2166,155 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         // set new computed bounds
         colorModel.setComponentsAbsBounds(bounds);
 
-        if (componentUserBoundsAutoUpdate)
+        bounds = null;
+        // recalculate user bounds from all images
+        synchronized (volumetricImages)
         {
-            bounds = null;
-            // recalculate user bounds from all images
-            synchronized (volumetricImages)
+            for (VolumetricImage volImg : volumetricImages.values())
             {
-                for (VolumetricImage volImg : volumetricImages.values())
+                synchronized (volImg.images)
                 {
-                    synchronized (volImg.images)
-                    {
-                        for (IcyBufferedImage img : volImg.images.values())
-                            bounds = adjustBounds(img.getComponentsUserBounds(), bounds);
-                    }
+                    for (IcyBufferedImage img : volImg.images.values())
+                        bounds = adjustBounds(img.getChannelsBounds(), bounds);
                 }
             }
-
-            // set new computed bounds
-            colorModel.setComponentsUserBounds(bounds);
         }
+
+        // set new computed bounds
+        colorModel.setComponentsUserBounds(bounds);
     }
 
     /**
-     * Update components bounds (min and max values)<br>
+     * Update channels bounds (min and max values).<br>
      * 
      * @param forceRecalculation
-     *        If true all images components bounds will be recalculated<br>
-     *        else we assume they are already updated<br>
-     *        and only sequence components bounds are updated.
-     * @param adjustByteToo
-     *        If true bounds are adjusted even for byte sequence data type<br>
-     *        else we force byte sequence data type to have their bounds fixed to [0..255] range
+     *        If true we force all images channels bounds recalculation (this can take sometime).<br>
+     *        You can left this flag to false if sequence images have their bounds updated (which
+     *        should be the case by default).
      */
-    public void updateComponentsBounds(boolean forceRecalculation, boolean adjustByteToo)
+    public void updateChannelsBounds(boolean forceRecalculation)
     {
         // force calculation of all images bounds
         if (forceRecalculation)
-            recalculateAllImageComponentsBounds(adjustByteToo);
+            recalculateAllImageChannelsBounds();
         // then update sequence bounds
-        internalUpdateComponentsBounds();
+        internalUpdateChannelsBounds();
     }
 
     /**
-     * Update components bounds (min and max values)<br>
-     * 
-     * @param forceRecalculation
-     *        if true, all images components bounds will be recalculated<br>
-     *        else we assume they are already updated<br>
-     *        and only sequence components bounds are updated.
+     * Update channels bounds (min and max values).<br>
+     * All images channels bounds are recalculated (this can take sometime).
      */
+    public void updateChannelsBounds()
+    {
+        // force recalculation
+        updateChannelsBounds(true);
+    }
+
+    /**
+     * @deprecated Uses {@link #updateChannelsBounds(boolean)} instead.
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public void updateComponentsBounds(boolean forceRecalculation, boolean adjustByteToo)
+    {
+        updateChannelsBounds(forceRecalculation);
+    }
+
+    /**
+     * @deprecated Uses {@link #updateChannelsBounds(boolean)} instead.
+     */
+    @Deprecated
     public void updateComponentsBounds(boolean forceRecalculation)
     {
-        updateComponentsBounds(forceRecalculation, true);
+        updateChannelsBounds(forceRecalculation);
     }
 
     /**
-     * Update components bounds (min and max values)<br>
-     * All images components bounds are recalculated.
-     * 
-     * @deprecated Use {@link #updateComponentsBounds(boolean, boolean)} instead
+     * @deprecated Uses {@link #updateChannelsBounds(boolean)} instead.
      */
     @Deprecated
     public void updateComponentsBounds()
     {
         // force recalculation
-        updateComponentsBounds(true, true);
+        updateChannelsBounds(true);
     }
 
     /**
-     * Get component absolute minimum value
+     * Get the data type minimum value.
      */
-    public double getComponentAbsMinValue(int component)
+    public double getDataTypeMin()
     {
-        return colorModel.getComponentAbsMinValue(component);
+        return getDataType_().getMinValue();
     }
 
     /**
-     * Get component absolute maximum value
+     * Get the data type maximum value.
      */
-    public double getComponentAbsMaxValue(int component)
+    public double getDataTypeMax()
     {
-        return colorModel.getComponentAbsMaxValue(component);
+        return getDataType_().getMaxValue();
     }
 
     /**
-     * Get component absolute bounds (min and max values)
+     * Get data type bounds (min and max values).
      */
-    public double[] getComponentAbsBounds(int component)
+    public double[] getDataTypeBounds()
     {
-        return colorModel.getComponentAbsBounds(component);
+        return new double[] {getDataTypeMin(), getDataTypeMax()};
     }
 
     /**
-     * Get components absolute bounds (min and max values)
+     * Get the preferred data type minimum value in the whole sequence for the specified channel.
      */
-    public double[][] getComponentsAbsBounds()
+    public double getChannelTypeMin(int channel)
+    {
+        return colorModel.getComponentAbsMinValue(channel);
+    }
+
+    /**
+     * Get the preferred data type maximum value in the whole sequence for the specified channel.
+     */
+    public double getChannelTypeMax(int channel)
+    {
+        return colorModel.getComponentAbsMaxValue(channel);
+    }
+
+    /**
+     * Get the preferred data type bounds (min and max values) in the whole sequence for the
+     * specified channel.
+     */
+    public double[] getChannelTypeBounds(int channel)
+    {
+        return colorModel.getComponentAbsBounds(channel);
+    }
+
+    /**
+     * Get the preferred data type bounds (min and max values) in the whole sequence for all
+     * channels.
+     */
+    public double[][] getChannelsTypeBounds()
     {
         final int sizeC = getSizeC();
         final double[][] result = new double[sizeC][];
 
         for (int c = 0; c < sizeC; c++)
-            result[c] = getComponentAbsBounds(c);
+            result[c] = getChannelTypeBounds(c);
 
         return result;
     }
 
     /**
-     * Get global absolute bounds (min and max values for all components)
+     * Get the global preferred data type bounds (min and max values) for all channels.
      */
-    public double[] getGlobalComponentAbsBounds()
+    public double[] getGlobalChannelTypeBounds()
     {
         final int sizeC = getSizeC();
-        final double[] result = getComponentAbsBounds(0);
+        final double[] result = getChannelTypeBounds(0);
 
         for (int c = 1; c < sizeC; c++)
         {
-            final double[] bounds = getComponentAbsBounds(c);
+            final double[] bounds = getChannelTypeBounds(c);
             result[0] = Math.min(bounds[0], result[0]);
             result[1] = Math.max(bounds[1], result[1]);
         }
@@ -2246,41 +2323,122 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Get component user minimum value
+     * @deprecated Uses {@link #getChannelTypeMin(int)} instead.
      */
-    public double getComponentUserMinValue(int component)
+    @Deprecated
+    public double getComponentAbsMinValue(int component)
     {
-        return colorModel.getComponentUserMinValue(component);
+        return getChannelTypeMin(component);
     }
 
     /**
-     * Get component user maximum value
+     * @deprecated Uses {@link #getChannelTypeMax(int)} instead.
      */
-    public double getComponentUserMaxValue(int component)
+    @Deprecated
+    public double getComponentAbsMaxValue(int component)
     {
-        return colorModel.getComponentUserMaxValue(component);
+        return getChannelTypeMax(component);
     }
 
     /**
-     * Get component user bounds (min and max values)
+     * @deprecated Uses {@link #getChannelTypeBounds(int)} instead.
      */
-    public double[] getComponentUserBounds(int component)
+    @Deprecated
+    public double[] getComponentAbsBounds(int component)
     {
-        return colorModel.getComponentUserBounds(component);
+        return getChannelTypeBounds(component);
     }
 
     /**
-     * Get components user bounds (min and max values)
+     * @deprecated Uses {@link #getChannelsTypeBounds()} instead.
      */
-    public double[][] getComponentsUserBounds()
+    @Deprecated
+    public double[][] getComponentsAbsBounds()
     {
-        final int c = getSizeC();
-        final double[][] result = new double[c][];
+        return getChannelsTypeBounds();
+    }
 
-        for (int component = 0; component < c; component++)
-            result[component] = getComponentUserBounds(component);
+    /**
+     * @deprecated Uses {@link #getGlobalChannelTypeBounds()} instead.
+     */
+    @Deprecated
+    public double[] getGlobalComponentAbsBounds()
+    {
+        return getGlobalChannelTypeBounds();
+    }
+
+    /**
+     * Get the minimum value in the whole sequence for the specified channel.
+     */
+    public double getChannelMin(int channel)
+    {
+        return colorModel.getComponentUserMinValue(channel);
+    }
+
+    /**
+     * Get maximum value in the whole sequence for the specified channel.
+     */
+    public double getChannelMax(int channel)
+    {
+        return colorModel.getComponentUserMaxValue(channel);
+    }
+
+    /**
+     * Get bounds (min and max values) in the whole sequence for the specified channel.
+     */
+    public double[] getChannelBounds(int channel)
+    {
+        return colorModel.getComponentUserBounds(channel);
+    }
+
+    /**
+     * Get bounds (min and max values) in the whole sequence for all channels.
+     */
+    public double[][] getChannelsBounds()
+    {
+        final int sizeC = getSizeC();
+        final double[][] result = new double[sizeC][];
+
+        for (int c = 0; c < sizeC; c++)
+            result[c] = getChannelBounds(c);
 
         return result;
+    }
+
+    /**
+     * @deprecated Uses {@link #getChannelMin(int)} instead.
+     */
+    @Deprecated
+    public double getComponentUserMinValue(int component)
+    {
+        return getChannelMin(component);
+    }
+
+    /**
+     * @deprecated Uses {@link #getChannelMax(int)} instead.
+     */
+    @Deprecated
+    public double getComponentUserMaxValue(int component)
+    {
+        return getChannelMax(component);
+    }
+
+    /**
+     * @deprecated Uses {@link #getChannelBounds(int)} instead.
+     */
+    @Deprecated
+    public double[] getComponentUserBounds(int component)
+    {
+        return getChannelBounds(component);
+    }
+
+    /**
+     * @deprecated Uses {@link #getChannelsBounds()} instead.
+     */
+    @Deprecated
+    public double[][] getComponentsUserBounds()
+    {
+        return getChannelsBounds();
     }
 
     /**
@@ -4619,11 +4777,11 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         if (!updater.isUpdating())
         {
             // do pending tasks
-            if (componentBoundsInvalid)
+            if (channelBoundsInvalid)
             {
-                componentBoundsInvalid = false;
-                // images components bounds are correct at this point
-                internalUpdateComponentsBounds();
+                channelBoundsInvalid = false;
+                // images channels bounds are valid at this point
+                internalUpdateChannelsBounds();
             }
         }
     }
@@ -4745,20 +4903,20 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         switch (e.getType())
         {
             case BOUNDS_CHANGED:
-                // update sequence components bounds if automatic mode enabled
-                if (componentAbsBoundsAutoUpdate)
+                // update sequence channel bounds
+                if (autoUpdateChannelBounds)
                 {
                     // updating sequence ? delay update
                     if (isUpdating())
-                        componentBoundsInvalid = true;
+                        channelBoundsInvalid = true;
                     else
-                        // refresh sequence component bounds from images ones
-                        internalUpdateComponentsBounds();
+                        // refresh sequence channel bounds from images bounds
+                        internalUpdateChannelsBounds();
                 }
                 break;
 
             case COLORMAP_CHANGED:
-                // ignore that, we don't care about image's colormap
+                // ignore that, we don't care about image colormap
                 break;
 
             case DATA_CHANGED:
@@ -4787,16 +4945,16 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         {
         // do here global process on sequence data change
             case SEQUENCE_DATA:
-                // automatic components bounds update enabled
-                if (componentAbsBoundsAutoUpdate)
+                // automatic channel bounds update enabled
+                if (autoUpdateChannelBounds)
                 {
                     // generic CHANGED event
                     if (event.getSource() == null)
                         // recalculate all images bounds and update sequence bounds
-                        updateComponentsBounds(true, false);
+                        updateChannelsBounds(true);
                     else
-                        // refresh sequence component bounds from images ones
-                        internalUpdateComponentsBounds();
+                        // refresh sequence channel bounds from images bounds
+                        internalUpdateChannelsBounds();
                 }
                 break;
 

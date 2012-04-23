@@ -463,7 +463,7 @@ public class WindowPositionSaver
 
         if (mainFrame != null)
         {
-            mainFrame.setPreferredSize(dimE);
+            // set size only else we cannot pack anymore the frame for detached mode
             mainFrame.setSize(dimE);
         }
         else if (icyFrame != null)

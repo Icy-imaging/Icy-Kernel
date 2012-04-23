@@ -8,6 +8,7 @@ import icy.math.ArrayMath;
 import icy.math.Histogram;
 import icy.math.MathUtil;
 import icy.type.collection.array.Array1DUtil;
+import icy.util.ColorUtil;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -434,20 +435,20 @@ public class HistogramPanel extends BorderedPanel
             return;
 
         // get histogram data
-        final double[] newhistogramData = Array1DUtil.intArrayToDoubleArray(histogram.getBins(), false);
+        final double[] newHistogramData = Array1DUtil.intArrayToDoubleArray(histogram.getBins(), false);
 
         // we want all values to >= 1
-        final double min = ArrayMath.min(newhistogramData);
-        MathUtil.add(newhistogramData, min + 1f);
+        final double min = ArrayMath.min(newHistogramData);
+        MathUtil.add(newHistogramData, min + 1f);
         // log
         if (logScaling)
-            MathUtil.log(newhistogramData);
+            MathUtil.log(newHistogramData);
         // normalize data
-        MathUtil.normalize(newhistogramData);
+        MathUtil.normalize(newHistogramData);
 
         synchronized (histogramData)
         {
-            histogramData = newhistogramData;
+            histogramData = newHistogramData;
         }
 
         // request repaint
@@ -533,7 +534,10 @@ public class HistogramPanel extends BorderedPanel
         // always recalculate ratios as width can change before resize event
         refreshRatios();
 
-        g.setColor(color);
+        final Color frontColor = color;
+        final Color backColor = ColorUtil.mix(frontColor, Color.black);
+
+        g.setColor(frontColor);
 
         // not yet computed
         if (histogramData.length != 0)
@@ -566,9 +570,9 @@ public class HistogramPanel extends BorderedPanel
             final int x = (getWidth() / 2) - 60;
             final int y = (getHeight() / 2) - 20;
 
-            g.setColor(Color.GRAY);
+            g.setColor(backColor);
             g.drawString("computing...", x + 1, y);
-            g.setColor(color);
+            g.setColor(frontColor);
             g.drawString("computing...", x, y);
         }
     }

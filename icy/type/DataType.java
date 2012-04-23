@@ -324,9 +324,9 @@ public enum DataType
     }
 
     /**
-     * Get the bounds for current DataType
+     * Get the bounds for current DataType.
      */
-    public double[] getDefautBounds()
+    public double[] getBounds()
     {
         return new double[] {getMinValue(), getMaxValue()};
     }

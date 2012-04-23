@@ -57,6 +57,8 @@ import java.util.Arrays;
 
 import vtk.vtkActor;
 import vtk.vtkActor2D;
+import vtk.vtkDataObject;
+import vtk.vtkPointSet;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
 
@@ -67,10 +69,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 {
     protected class ROI2DShapePainter extends ROI2DPainter implements VtkPainter
     {
-        // used for 3D
-        final vtkPolyData polyData;
-        final vtkPolyDataMapper polyMapper;
-        final vtkActor actor;
+        // VTK 3D objects, we use Object to prevent UnsatisfiedLinkError
+        final Object polyData;
+        final Object polyMapper;
+        final Object actor;
+        // 3D internal
         boolean needRebuild;
         double scaling[];
 
@@ -85,10 +88,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                 polyData = new vtkPolyData();
 
                 polyMapper = new vtkPolyDataMapper();
-                polyMapper.SetInput(polyData);
+                ((vtkPolyDataMapper) polyMapper).SetInput((vtkPolyData) polyData);
 
                 actor = new vtkActor();
-                actor.SetMapper(polyMapper);
+                ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
             }
             else
             {
@@ -203,10 +206,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                 polyIndex++;
             }
 
-            polyData.SetPolys(VtkUtil.getCells(polyList.size(), VtkUtil.prepareCells(indexes)));
-            polyData.SetPoints(VtkUtil.getPoints(vertices));
+            ((vtkPolyData) polyData).SetPolys(VtkUtil.getCells(polyList.size(), VtkUtil.prepareCells(indexes)));
+            ((vtkPointSet) polyData).SetPoints(VtkUtil.getPoints(vertices));
 
-            polyMapper.Update();
+            ((vtkDataObject) polyMapper).Update();
         }
 
         @Override
@@ -553,7 +556,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         @Override
         public vtkActor[] getActors()
         {
-            return new vtkActor[] {actor};
+            return new vtkActor[] {(vtkActor) actor};
         }
 
         @Override

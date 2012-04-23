@@ -269,7 +269,7 @@ public class Loader
                 if (loaderFrame.isCancelRequested())
                     return;
 
-                // directory loading resulted in a single sequence
+                // directory load fit in a single sequence ?
                 if ((sequences.size() == 1) && directory)
                 {
                     final Sequence seq = sequences.get(0);
@@ -535,8 +535,10 @@ public class Loader
      */
     public static void load(List<File> files, boolean separate)
     {
+        final boolean directory = (files.size() == 1) && files.get(0).isDirectory();
+
         // explode file list
-        internalLoad(explodeAndClean(files), separate, (files.size() == 1) && files.get(0).isDirectory());
+        internalLoad(explodeAndClean(files), separate, directory);
     }
 
     private static List<File> explodeAndClean(List<File> files)
@@ -588,17 +590,21 @@ public class Loader
                 }
                 else
                 {
-                    // add as one item to recent file list
-                    if (mainMenu != null)
+                    if (files.size() > 0)
                     {
-                        // set only the directory entry
-                        if (directory)
-                            mainMenu.addRecentLoadedFile(files.get(0).getParentFile());
-                        else
-                            mainMenu.addRecentLoadedFile(files);
+                        // add as one item to recent file list
+                        if (mainMenu != null)
+                        {
+                            // set only the directory entry
+                            if (directory)
+                                mainMenu.addRecentLoadedFile(files.get(0).getParentFile());
+                            else
+                                mainMenu.addRecentLoadedFile(files);
+                        }
+
+                        // create and run sequence loader
+                        new SequenceLoader(files, true, directory).run();
                     }
-                    // create and run sequence loader
-                    new SequenceLoader(files, true, directory).run();
                 }
             }
         });

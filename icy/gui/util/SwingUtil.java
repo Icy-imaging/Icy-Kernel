@@ -25,7 +25,7 @@ import javax.swing.JMenuItem;
 public class SwingUtil
 {
     /**
-     * Class used to wrap a MenuItem in a JMenuItem (used for ImageJ integration).
+     * Class used to wrap a AWT CheckboxMenuItem in a Swing JCheckBoxMenuItem.
      * 
      * @author Stephane
      */
@@ -36,7 +36,7 @@ public class SwingUtil
          */
         private static final long serialVersionUID = -3283063959812167447L;
 
-        CheckboxMenuItem checkboxMenuItem;
+        final CheckboxMenuItem checkboxMenuItem;
 
         public JCheckBoxMenuItemWrapper(CheckboxMenuItem checkboxMenuItem)
         {
@@ -90,7 +90,7 @@ public class SwingUtil
     }
 
     /**
-     * Class used to wrap a MenuItem in a JMenuItem.
+     * Class used to wrap a AWT MenuItem in a Swing JMenuItem.
      * 
      * @author Stephane
      */
@@ -101,7 +101,7 @@ public class SwingUtil
          */
         private static final long serialVersionUID = -3283063959812167447L;
 
-        MenuItem menuItem;
+        final MenuItem menuItem;
 
         public JMenuItemWrapper(MenuItem menuItem)
         {
@@ -128,7 +128,7 @@ public class SwingUtil
     }
 
     /**
-     * Convert a MenuBar to a JMenuBar.
+     * Convert a AWT MenuBar to a Swing JMenuBar.
      */
     public static JMenuBar getJMenuBar(MenuBar menuBar, boolean heavy)
     {
@@ -144,7 +144,7 @@ public class SwingUtil
     }
 
     /**
-     * Convert a Menu to a JMenu.
+     * Convert a AWT Menu to a Swing JMenu.
      */
     public static JMenu getJMenu(Menu menu, boolean heavy)
     {
@@ -164,7 +164,7 @@ public class SwingUtil
     }
 
     /**
-     * Convert a MenuItem to a JMenuItem.
+     * Convert a AWT MenuItem to a Swing JMenuItem.
      */
     public static JMenuItem getJMenuItem(MenuItem menuItem, boolean heavy)
     {
@@ -177,7 +177,7 @@ public class SwingUtil
 
             return new JMenuItemWrapper(menuItem);
         }
-        
+
         return new JMenuItem();
     }
 }

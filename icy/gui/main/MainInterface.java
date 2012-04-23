@@ -26,16 +26,15 @@ import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.ToolRibbonTask;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
+import icy.imagej.ImageJWrapper;
 import icy.painter.Painter;
 import icy.plugin.abstract_.Plugin;
 import icy.preferences.XMLPreferences;
 import icy.roi.ROI;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
-import ij.ImageJ;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -99,11 +98,6 @@ public interface MainInterface
      * Return all active viewers
      */
     public abstract ArrayList<Viewer> getViewers();
-
-    /**
-     * Return all active viewers(HashSet form)
-     */
-    public abstract HashSet<Viewer> getViewerSet();
 
     /**
      * Set focus on specified viewer
@@ -200,11 +194,6 @@ public interface MainInterface
     public abstract ArrayList<Sequence> getSequences();
 
     /**
-     * Return list of active sequence (displayed in a viewer) in HashSet form
-     */
-    public abstract HashSet<Sequence> getSequenceSet();
-
-    /**
      * Return true if specified sequence is currently opened (displayed in a viewer)
      */
     public abstract boolean isOpened(Sequence sequence);
@@ -251,11 +240,6 @@ public interface MainInterface
     public abstract ArrayList<ROI> getROIs();
 
     /**
-     * Return all active ROI (HashSet form)
-     */
-    public abstract HashSet<ROI> getROISet();
-
-    /**
      * Return the ROI containing the specified painter (if any)
      */
     public abstract ROI getROI(Painter painter);
@@ -266,11 +250,6 @@ public interface MainInterface
     public abstract ArrayList<Painter> getPainters();
 
     /**
-     * Return all active Painter (HashSet form)
-     */
-    public abstract HashSet<Painter> getPainterSet();
-
-    /**
      * Return the SwimmingPool object
      */
     public abstract SwimmingPool getSwimmingPool();
@@ -278,7 +257,7 @@ public interface MainInterface
     /**
      * Return the ImageJ object instance
      */
-    public abstract ImageJ getImageJ();
+    public abstract ImageJWrapper getImageJ();
 
     public abstract String getSelectedTool();
 

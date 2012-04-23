@@ -794,7 +794,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             // sequence type has changed, we need to recreate a compatible LUT
             final LUT newLut = sequence.createCompatibleLUT();
 
-            // restore the color map of previous LUT
+            // keep the color map of previous LUT
             if (lut != null)
                 newLut.getColorSpace().copyColormaps(lut.getColorSpace());
 

@@ -33,6 +33,7 @@ import icy.gui.viewer.ViewerAdapter;
 import icy.gui.viewer.ViewerEvent;
 import icy.gui.viewer.ViewerListener;
 import icy.image.IcyBufferedImage;
+import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
 import icy.painter.Painter;
 import icy.plugin.abstract_.Plugin;
@@ -44,7 +45,6 @@ import icy.sequence.SequenceAdapter;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
 import icy.swimmingPool.SwimmingPool;
-import ij.ImageJ;
 
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
@@ -245,13 +245,10 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     @Override
     public ArrayList<Viewer> getViewers()
     {
-        return new ArrayList<Viewer>(viewers);
-    }
-
-    @Override
-    public HashSet<Viewer> getViewerSet()
-    {
-        return new HashSet<Viewer>(viewers);
+        synchronized (viewers)
+        {
+            return new ArrayList<Viewer>(viewers);
+        }
     }
 
     @Override
@@ -468,19 +465,19 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     @Override
     public ArrayList<Sequence> getSequences()
     {
-        // HashSet is better suited for add without duplication
-        return new ArrayList<Sequence>(getSequenceSet());
-    }
+        final ArrayList<Sequence> result = new ArrayList<Sequence>();
 
-    @Override
-    public HashSet<Sequence> getSequenceSet()
-    {
-        final HashSet<Sequence> result = new HashSet<Sequence>();
+        synchronized (viewers)
+        {
+            for (Viewer viewer : viewers)
+            {
+                final Sequence sequence = viewer.getSequence();
 
-        for (Viewer viewer : getViewers())
-            result.add(viewer.getSequence());
-
-        // TODO: add sequences from swimming pool ?
+                // no duplicate
+                if (!result.contains(sequence))
+                    result.add(sequence);
+            }
+        }
 
         return result;
     }
@@ -488,8 +485,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     @Override
     public boolean isOpened(Sequence sequence)
     {
-        // HashSet faster for contains() operation
-        return getSequenceSet().contains(sequence);
+        return getSequences().contains(sequence);
     }
 
     @Deprecated
@@ -502,10 +498,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     @Override
     public Sequence getFirstSequenceContaining(ROI roi)
     {
-        // HashSet faster for contains() operation
-        final HashSet<Sequence> sequences = getSequenceSet();
-
-        for (Sequence seq : sequences)
+        for (Sequence seq : getSequences())
             if (seq.contains(roi))
                 return seq;
 
@@ -522,10 +515,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     @Override
     public Sequence getFirstSequenceContaining(Painter painter)
     {
-        // HashSet faster for contains() operation
-        final HashSet<Sequence> sequences = getSequenceSet();
-
-        for (Sequence seq : sequences)
+        for (Sequence seq : getSequences())
             if (seq.contains(painter))
                 return seq;
 
@@ -560,22 +550,15 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     public ArrayList<ROI> getROIs()
     {
         // HashSet is better suited for add elements
-        return new ArrayList<ROI>(getROISet());
-    }
-
-    @Override
-    public HashSet<ROI> getROISet()
-    {
-        final List<Sequence> sequences = getSequences();
         final HashSet<ROI> result = new HashSet<ROI>();
 
-        for (Sequence seq : sequences)
-            for (ROI roi : seq.getROIs())
+        for (Sequence seq : getSequences())
+            for (ROI roi : seq.getROISet())
                 result.add(roi);
 
         // TODO: add ROI from swimming pool ?
 
-        return result;
+        return new ArrayList<ROI>(result);
     }
 
     @Override
@@ -594,22 +577,15 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     public ArrayList<Painter> getPainters()
     {
         // HashSet better suited for add element
-        return new ArrayList<Painter>(getPainterSet());
-    }
-
-    @Override
-    public HashSet<Painter> getPainterSet()
-    {
-        final List<Sequence> sequences = getSequences();
         final HashSet<Painter> result = new HashSet<Painter>();
 
-        for (Sequence seq : sequences)
-            for (Painter painter : seq.getPainters())
+        for (Sequence seq : getSequences())
+            for (Painter painter : seq.getPainterSet())
                 result.add(painter);
 
         // TODO: add Painter from swimming pool ?
 
-        return result;
+        return new ArrayList<Painter>(result);
     }
 
     @Override
@@ -619,9 +595,12 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     @Override
-    public ImageJ getImageJ()
+    public ImageJWrapper getImageJ()
     {
-        return mainFrame.getMainRibbon().getImageJ();
+        if (mainFrame != null)
+            return mainFrame.getMainRibbon().getImageJ();
+
+        return null;
     }
 
     @Override

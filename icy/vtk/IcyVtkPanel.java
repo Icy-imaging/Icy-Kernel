@@ -52,6 +52,13 @@ public class IcyVtkPanel extends vtkPanel
         // have to use this to by-pass the wrong vtkPanel implementation
         resize(w, h);
     }
+    
+    @Override
+    public void mouseEntered(MouseEvent e)
+    {
+        // we don't want the mouse enter to request focus !
+        // super.mouseEntered(e);
+    }
 
     @Override
     public void mouseReleased(MouseEvent e)

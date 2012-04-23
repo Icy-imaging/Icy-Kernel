@@ -36,10 +36,9 @@ import java.lang.reflect.Array;
 public class ArrayUtil
 {
     /**
-     * Return the ArrayDataType of the specified array.
-     * 
-     * @see DataType
+     * @deprecated uses {@link #getArrayType(Object)} instead
      */
+    @Deprecated
     public static ArrayDataType getArrayDataType(Object array)
     {
         int dim = 0;
@@ -52,6 +51,23 @@ public class ArrayUtil
         }
 
         return new ArrayDataType(DataType.getDataType(arrayClass), dim);
+    }
+
+    /**
+     * Returns the {@link ArrayType} of the specified array.
+     */
+    public static ArrayType getArrayType(Object array)
+    {
+        int dim = 0;
+
+        Class<? extends Object> arrayClass = array.getClass();
+        while (arrayClass.isArray())
+        {
+            dim++;
+            arrayClass = arrayClass.getComponentType();
+        }
+
+        return new ArrayType(DataType.getDataType(arrayClass), dim);
     }
 
     /**
@@ -219,20 +235,37 @@ public class ArrayUtil
     /**
      * Allocate the specified array data type with specified len for the first dimension
      */
-    public static Object createArray(ArrayDataType arrayDataType, int len)
+    public static Object createArray(ArrayType arrayType, int len)
     {
-        return createArray(arrayDataType.getDataType(), arrayDataType.getDim(), len);
+        return createArray(arrayType.getDataType(), arrayType.getDim(), len);
     }
 
     /**
      * Allocate the specified array if it's defined to null with the specified len
      */
-    public static Object allocIfNull(Object array, ArrayDataType arrayDataType, int len)
+    public static Object allocIfNull(Object array, ArrayType arrayType, int len)
     {
         if (array == null)
-            return createArray(arrayDataType, len);
+            return createArray(arrayType, len);
 
         return array;
+    }
+
+    /**
+     * Encapsulate the specified array with a single cell array of the same type.
+     */
+    public static Object encapsulate(Object array)
+    {
+        final ArrayType type = getArrayType(array);
+        
+        // increase dim
+        type.setDim(type.getDim() + 1);
+
+        final Object result = createArray(type, 1);
+        // encapsulate
+        ((Object[]) result)[0] = array;
+
+        return result;
     }
 
     /**
@@ -335,7 +368,7 @@ public class ArrayUtil
      */
     public static boolean arrayTypeCompare(Object array1, Object array2)
     {
-        return getArrayDataType(array1).equals(getArrayDataType(array2));
+        return getArrayType(array1).equals(getArrayType(array2));
     }
 
     /**
@@ -349,9 +382,9 @@ public class ArrayUtil
         if (array1 == null || array2 == null)
             return false;
 
-        final ArrayDataType type = getArrayDataType(array1);
+        final ArrayType type = getArrayType(array1);
 
-        if (!type.equals(getArrayDataType(array2)))
+        if (!type.equals(getArrayType(array2)))
             return false;
 
         final int dim = type.getDim();
@@ -563,8 +596,7 @@ public class ArrayUtil
      */
     public static Object toArray1D(Object in, Object out, int offset)
     {
-        final ArrayDataType type = getArrayDataType(in);
-
+        final ArrayType type = getArrayType(in);
         final DataType dataType = type.getDataType();
         final int dim = type.getDim();
 
@@ -721,8 +753,7 @@ public class ArrayUtil
      */
     public static Object arrayToArray(Object in, int inOffset, Object out, int outOffset, int length, boolean signed)
     {
-        final ArrayDataType type = getArrayDataType(in);
-
+        final ArrayType type = getArrayType(in);
         final int dim = type.getDim();
 
         // more than 2 dimensions --> use generic code
@@ -2009,8 +2040,7 @@ public class ArrayUtil
      */
     public static Object arrayToSafeArray(Object in, int inOffset, Object out, int outOffset, int length, boolean signed)
     {
-        final ArrayDataType type = getArrayDataType(in);
-
+        final ArrayType type = getArrayType(in);
         final int dim = type.getDim();
 
         // more than 2 dimensions --> use generic code

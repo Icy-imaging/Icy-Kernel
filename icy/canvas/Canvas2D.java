@@ -22,7 +22,7 @@ import icy.math.SmoothMover;
 import icy.math.SmoothMover.SmoothMoveType;
 import icy.math.SmoothMover.SmoothMoverAdapter;
 import icy.preferences.ApplicationPreferences;
-import icy.preferences.GeneralPreferences;
+import icy.preferences.CanvasPreferences;
 import icy.preferences.XMLPreferences;
 import icy.resource.ResourceUtil;
 import icy.roi.ROI;
@@ -692,7 +692,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         private final Timer refreshTimer;
         private final Timer zoomInfoTimer;
         private final Timer rotationInfoTimer;
-        private final Timer zoomLatchTimer;
         private final SmoothMover zoomInfoAlphaMover;
         private final SmoothMover rotationInfoAlphaMover;
         private String zoomMessage;
@@ -703,8 +702,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         private Point startDragPosition;
         private int startOffsetX;
         private int startOffsetY;
-        private double curScaleX;
-        private double curScaleY;
+        double curScaleX;
+        double curScaleY;
         private double startRotationZ;
         private boolean moving;
         private boolean rotating;
@@ -757,8 +756,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             zoomInfoTimer = new Timer(1000, this);
             zoomInfoTimer.setRepeats(false);
             rotationInfoTimer = new Timer(1000, this);
-            rotationInfoTimer.setRepeats(false);
-            zoomLatchTimer = new Timer(1000, this);
             rotationInfoTimer.setRepeats(false);
 
             addComponentListener(new ComponentAdapter()
@@ -820,11 +817,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             refreshTimer.stop();
             zoomInfoTimer.stop();
             rotationInfoTimer.stop();
-            zoomLatchTimer.stop();
             refreshTimer.removeActionListener(this);
             zoomInfoTimer.removeActionListener(this);
             rotationInfoTimer.removeActionListener(this);
-            zoomLatchTimer.removeActionListener(this);
             zoomInfoAlphaMover.shutDown();
             rotationInfoAlphaMover.shutDown();
         }
@@ -1097,16 +1092,24 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
                     double sx, sy;
 
-                    if ((wheelRotation > 0) ^ GeneralPreferences.getInvertMouseWheelAxis())
-                    {
-                        sx = 20d / 19d;
-                        sy = 20d / 19d;
-                    }
-                    else
-                    {
-                        sx = 19d / 20d;
-                        sy = 19d / 20d;
-                    }
+                    // adjust mouse wheel depending preference
+                    double wr = wheelRotation * CanvasPreferences.getMouseWheelSensitivity();
+                    if (CanvasPreferences.getInvertMouseWheelAxis())
+                        wr = -wr;
+
+                    sx = 1d + (wr / 100d);
+                    sy = 1d + (wr / 100d);
+
+                    // if (wr > 0d)
+                    // {
+                    // sx = 20d / 19d;
+                    // sy = 20d / 19d;
+                    // }
+                    // else
+                    // {
+                    // sx = 19d / 20d;
+                    // sy = 19d / 20d;
+                    // }
 
                     // control button down --> fast zoom
                     if (control)
@@ -1305,20 +1308,20 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
 
-                if (getTransform().getScaleX() < 4. && getTransform().getScaleX() < 4.) {
-	                if (!transform.isMoving()) {
-	                	// Draw the image with bicubic resampling,
-	                	// except when zoom is larger than 400 %, where nearest-neighbour is desirable
-	                	// (so that the user can see that he is operating on pixels),
-	                	// and except during the zooming animation, when speed must be high.
-	                	// TODO: when the zoom factor is smaller than 1, a low-pass filter should be applied
-	                	// before the sampling, otherwise severe aliasing is introduced.
-	                	g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);	
-	                } else {
-	                	g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-	                }
+                if (CanvasPreferences.getFiltering())
+                {
+                    if (getScaleX() < 4d && getScaleY() < 4d)
+                    {
+                        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                    }
+                    else
+                    {
+                        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                    }
                 }
-                
+
                 g2.transform(getTransform());
                 g2.drawImage(img, null, 0, 0);
 
@@ -1616,11 +1619,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 zoomInfoAlphaMover.moveTo(0);
             else if (source == rotationInfoTimer)
                 rotationInfoAlphaMover.moveTo(0);
-            else if (source == zoomLatchTimer)
-            {
-                curScaleX = -1;
-                curScaleY = -1;
-            }
         }
     }
 
@@ -1938,6 +1936,21 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     case ROT:
                         rotationChanged(DimensionId.Z);
                         break;
+                }
+            }
+
+            @Override
+            public void moveEnded(MultiSmoothMover source, int index, double value)
+            {
+                // scale move ended, we can fix notify canvas transformation has changed
+                switch (index)
+                {
+                    case SCALE_X:
+                        canvasView.curScaleX = -1;
+                        break;
+
+                    case SCALE_Y:
+                        canvasView.curScaleY = -1;
                 }
             }
         });
@@ -2669,6 +2682,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     {
         // this will automatically call the scaledChanged() event
         transform.setValue(SCALE_X, value);
+        canvasView.curScaleX = value;
     }
 
     @Override
@@ -2676,6 +2690,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     {
         // this will automatically call the scaledChanged() event
         transform.setValue(SCALE_Y, value);
+        canvasView.curScaleY = value;
     }
 
     @Override

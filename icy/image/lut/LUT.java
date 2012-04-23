@@ -24,6 +24,7 @@ import icy.common.listener.ChangeListener;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colorspace.IcyColorSpace;
 import icy.math.Scaler;
+import icy.type.DataType;
 
 import java.util.ArrayList;
 
@@ -51,7 +52,7 @@ public class LUT implements LUTBandListener, ChangeListener
 
     public LUT(IcyColorModel cm)
     {
-        colorSpace = (IcyColorSpace) cm.getColorSpace();
+        colorSpace = cm.getIcyColorSpace();
         scalers = cm.getColormapScalers();
         numComponents = colorSpace.getNumComponents();
 
@@ -61,8 +62,14 @@ public class LUT implements LUTBandListener, ChangeListener
                     + numComponents);
         }
 
+        final DataType dataType = cm.getDataType_();
+
         for (int component = 0; component < numComponents; component++)
         {
+            // BYTE data type --> fix bounds to data type bounds
+            if (dataType == DataType.UBYTE)
+                scalers[component].setLeftRightIn(dataType.getMinValue(), dataType.getMaxValue());
+
             final LUTBand band = new LUTBand(this, component);
 
             band.addListener(this);

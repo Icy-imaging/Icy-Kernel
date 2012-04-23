@@ -25,7 +25,6 @@ public class GeneralPreferences
     private static final String ID_AUTO_CHECK_UPDATE = "autoCheckUpdate";
     private static final String ID_DETACHED_MODE = "detached";
     private static final String ID_ALWAYS_ON_TOP = "alwaysOnTop";
-    private static final String ID_INVERT_MOUSEWHEEL_AXIS = "invertMouseWheelAxis";
     private static final String ID_GUI_SKIN = "guiSkin";
     private static final String ID_GUI_FONT_SIZE = "guiFontSize";
     private static final String ID_STARTUP_TOOLTIP = "startupTooltip";
@@ -41,15 +40,11 @@ public class GeneralPreferences
     private static XMLPreferences prefGeneral;
     private static XMLPreferences prefToolTips;
 
-    // private static XMLPreferences prefCanvas2D;
-
     public static void load()
     {
         // load preferences
         prefGeneral = ApplicationPreferences.getPreferences().node(PREF_GENERAL_ID);
         prefToolTips = prefGeneral.node(TOOLTIPS_ID);
-        // prefCanvas2D =
-        // ApplicationPreferences.getPreferences().node(GeneralPreferences.PREF_CANVAS2D_ID);
 
         // set here settings which need to be initialized
         setMaxMemoryMB(GeneralPreferences.getMaxMemoryMB());
@@ -123,14 +118,7 @@ public class GeneralPreferences
      */
     public static int getStackSizeKB()
     {
-        int result = prefGeneral.getInt(ID_STACK_SIZE, -1);
-
-        // no value ?
-        if (result == -1)
-            // default wanted stack size
-            result = 4096;
-
-        return result;
+        return prefGeneral.getInt(ID_STACK_SIZE, 4096);
     }
 
     /**
@@ -195,11 +183,6 @@ public class GeneralPreferences
     public static boolean getAlwaysOnTop()
     {
         return prefGeneral.getBoolean(ID_ALWAYS_ON_TOP, false);
-    }
-
-    public static boolean getInvertMouseWheelAxis()
-    {
-        return prefGeneral.getBoolean(ID_INVERT_MOUSEWHEEL_AXIS, false);
     }
 
     public static boolean getStatupTooltip()
@@ -291,11 +274,6 @@ public class GeneralPreferences
 
         // set "always on top" state
         Icy.getMainInterface().setAlwaysOnTop(value);
-    }
-
-    public static void setInvertMouseWheelAxis(boolean value)
-    {
-        prefGeneral.putBoolean(ID_INVERT_MOUSEWHEEL_AXIS, value);
     }
 
     public static void setStatupTooltip(boolean value)

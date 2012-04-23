@@ -12,7 +12,7 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/jai_core.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/Jama.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/javacl.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/jcl-core.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/jcl-core.jar" sourcepath="/Users/stephane/git/JCL"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jcommon.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jeval.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jfreechart.jar"/>
@@ -38,15 +38,15 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/bio-formats.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/loci-common.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/ome-xml.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/scifio.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/flamingo.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/scifio.jar" sourcepath="D:/Stephane/Documents/dev/GIT/bio-formats"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/flamingo.jar" sourcepath="D:/Stephane/Documents/dev/GIT/Icy-Insubstantial"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/laf-plugin.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/laf-widget.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/substance-flamingo.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/substance.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/substance.jar" sourcepath="/Icy-Insubstantial"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/trident.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/ij/ij.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/irclib.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/ij/ij.jar" sourcepath="D:/Stephane/Documents/dev/GIT/imagej"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/irclib.jar" sourcepath="D:/Stephane/workspace/Libraries/irclib-1.10"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/arpack-combo.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/csparsej.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jplasma.jar"/>
@@ -54,5 +54,7 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/netlib-java.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/optimization.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/parallelcolt.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/javassist.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/xuggler.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>
