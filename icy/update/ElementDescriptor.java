@@ -309,7 +309,7 @@ public class ElementDescriptor implements XMLPersistent
                 return false;
             if (compareOnlinePath && (!StringUtil.equals(elementFile.onlinePath, onlinePath)))
                 return false;
-            // -1 means we don't check file number 
+            // -1 means we don't check file number
             if ((elementFile.fileNumber != -1) && (fileNumber != -1))
             {
                 if (elementFile.fileNumber != fileNumber)
@@ -652,25 +652,29 @@ public class ElementDescriptor implements XMLPersistent
         // update version info
         version = updateElement.version;
 
-        // add or update files
+        files.clear();
         for (ElementFile updateFile : updateElement.files)
-        {
-            // get corresponding file
-            final ElementFile localFile = getElementFile(updateFile.getLocalPath());
+            files.add(updateFile);
 
-            // file missing ? --> add it
-            if (localFile == null)
-                files.add(updateFile);
-            else
-            {
-                // update file (we don't care about online information)
-                localFile.setDateModif(updateFile.getDateModif());
-                localFile.setExecutable(updateFile.isExecutable());
-                localFile.setLink(updateFile.isLink());
-                localFile.setWritable(updateFile.isWritable());
-                localFile.setDirectory(updateFile.isDirectory());
-            }
-        }
+        // // add or update files
+        // for (ElementFile updateFile : updateElement.files)
+        // {
+        // // get corresponding file
+        // final ElementFile localFile = getElementFile(updateFile.getLocalPath());
+        //
+        // // file missing ? --> add it
+        // if (localFile == null)
+        // files.add(updateFile);
+        // else
+        // {
+        // // update file (we don't care about online information)
+        // localFile.setDateModif(updateFile.getDateModif());
+        // localFile.setExecutable(updateFile.isExecutable());
+        // localFile.setLink(updateFile.isLink());
+        // localFile.setWritable(updateFile.isWritable());
+        // localFile.setDirectory(updateFile.isDirectory());
+        // }
+        // }
     }
 
     @Override

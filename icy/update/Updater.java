@@ -41,7 +41,6 @@ public class Updater
     public static final String UPDATE_EXT_NAME = ".xml";
     public static final String UPDATE_NAME = UPDATE_BASE_NAME + UPDATE_EXT_NAME;
     public static final String VERSION_NAME = "version.xml";
-    // public static final String OBSOLETE_NAME = "obsolete.xml";
     public static final String UPDATER_NAME = "updater.jar";
 
     public static final String ARG_NOSTART = "-nostart";
@@ -306,6 +305,18 @@ public class Updater
     /**
      * Update local elements according to changes presents in updateElement
      */
+    public static void clearElementInfos(ElementDescriptor updateElement, ArrayList<ElementDescriptor> localElements)
+    {
+        // find corresponding current local element
+        final ElementDescriptor localElement = Updater.findElement(updateElement.getName(), localElements);
+
+        // remove it
+        localElements.remove(localElement);
+    }
+
+    /**
+     * Update local elements according to changes presents in updateElement
+     */
     public static void updateElementInfos(ElementDescriptor updateElement, ArrayList<ElementDescriptor> localElements)
     {
         // find corresponding current local element
@@ -412,15 +423,11 @@ public class Updater
         // move file
         if (!FileUtil.rename(UPDATE_DIRECTORY + FileUtil.separator + localPath, localPath, true))
         {
-            // temporary hack to bypass the javacl version problem
-            if (!localPath.equals("lib/javacl.jar"))
-            {
-                // move failed
-                System.err.println("Updater.udpateFile('" + localPath + "') failed !");
-                System.err.println("Can't move file from '" + UPDATE_DIRECTORY + FileUtil.separator + localPath
-                        + "' to '" + localPath + "'");
-                return false;
-            }
+            // move failed
+            System.err.println("Updater.udpateFile('" + localPath + "') failed !");
+            System.err.println("Can't move file from '" + UPDATE_DIRECTORY + FileUtil.separator + localPath + "' to '"
+                    + localPath + "'");
+            return false;
         }
 
         return true;
