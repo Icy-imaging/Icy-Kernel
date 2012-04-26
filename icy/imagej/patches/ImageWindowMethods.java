@@ -34,7 +34,11 @@
 
 package icy.imagej.patches;
 
+import icy.imagej.ImageJWrapper;
+import icy.main.Icy;
 import ij.gui.ImageWindow;
+
+import java.awt.event.WindowEvent;
 
 /**
  * Overrides {@link ImageWindow} methods.
@@ -65,5 +69,14 @@ public final class ImageWindowMethods
     public static void close(final ImageWindow obj)
     {
 
+    }
+
+    /** Appends {@link ImageWindow#windowActivated(WindowEvent)}. */
+    public static void windowActivated(final ImageWindow obj, WindowEvent e)
+    {
+        final ImageJWrapper ij = Icy.getMainInterface().getImageJ();
+
+        if (ij != null)
+            ij.setActiveImage(obj);
     }
 }

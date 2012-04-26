@@ -125,7 +125,7 @@ public class ToolRibbonTask extends RibbonTask
             {
                 IcyCommandButton button;
 
-                button = new IcyCommandButton("Open", "folder_open");
+                button = new IcyCommandButton("Open", new IcyIcon("folder_open"));
                 button.setActionRichTooltip(new RichTooltip("Open", "Open a sequence"));
                 button.addActionListener(new ActionListener()
                 {
@@ -160,12 +160,12 @@ public class ToolRibbonTask extends RibbonTask
 
                 startGroup();
 
-                button = new IcyCommandToggleButton("Select", "cursor_arrow");
+                button = new IcyCommandToggleButton("Select", new IcyIcon("cursor_arrow"));
                 button.setName(SELECT);
                 button.setActionRichTooltip(new RichTooltip("Select mode", "Select and move objects (as ROI)"));
                 addCommandButton(button, RibbonElementPriority.TOP);
 
-                button = new IcyCommandToggleButton("Move", "cursor_hand");
+                button = new IcyCommandToggleButton("Move", new IcyIcon("cursor_hand"));
                 button.setName(MOVE);
                 button.setActionRichTooltip(new RichTooltip("Move mode",
                         "Drag image while pressing the left mouse button"));
@@ -194,42 +194,42 @@ public class ToolRibbonTask extends RibbonTask
             startGroup();
 
             // basics ROI
-            button = new IcyCommandToggleButton("Point", "roi_point");
+            button = new IcyCommandToggleButton("Point", new IcyIcon("roi_point"));
             button.setName(ROI2DPoint.class.getName());
             button.setActionRichTooltip(new RichTooltip("ROI Point", "Create a point type (single pixel) ROI"));
             addCommandButton(button, RibbonElementPriority.TOP);
 
-            button = new IcyCommandToggleButton("Line", "roi_line");
+            button = new IcyCommandToggleButton("Line", new IcyIcon("roi_line"));
             button.setName(ROI2DLine.class.getName());
             button.setActionRichTooltip(new RichTooltip("ROI Line",
                     "Create a single line type ROI. Drag from start point to destination point."));
             addCommandButton(button, RibbonElementPriority.TOP);
 
-            button = new IcyCommandToggleButton("Polyline", "roi_polyline");
+            button = new IcyCommandToggleButton("Polyline", new IcyIcon("roi_polyline"));
             button.setName(ROI2DPolyLine.class.getName());
             button.setActionRichTooltip(new RichTooltip("ROI Polyline",
                     "Create a multi line type ROI. Add a new point with left click, end draw with right click or ESC key."));
             addCommandButton(button, RibbonElementPriority.TOP);
 
-            button = new IcyCommandToggleButton("Rectangle", "roi_rectangle");
+            button = new IcyCommandToggleButton("Rectangle", new IcyIcon("roi_rectangle"));
             button.setName(ROI2DRectangle.class.getName());
             button.setActionRichTooltip(new RichTooltip("ROI Rectangle",
                     "Create a rectangle type ROI.  Drag from start point to destination point."));
             addCommandButton(button, RibbonElementPriority.TOP);
 
-            button = new IcyCommandToggleButton("Ellipse", "roi_oval");
+            button = new IcyCommandToggleButton("Ellipse", new IcyIcon("roi_oval"));
             button.setName(ROI2DEllipse.class.getName());
             button.setActionRichTooltip(new RichTooltip("ROI Ellipse",
                     "Create a ellipse type ROI. Drag from start point to destination point."));
             addCommandButton(button, RibbonElementPriority.TOP);
 
-            button = new IcyCommandToggleButton("Polygon", "roi_polygon");
+            button = new IcyCommandToggleButton("Polygon", new IcyIcon("roi_polygon"));
             button.setName(ROI2DPolygon.class.getName());
             button.setActionRichTooltip(new RichTooltip("ROI Polygon",
                     "Create a polygon type ROI. Add a new point with left click, end draw with right click or ESC key."));
             addCommandButton(button, RibbonElementPriority.TOP);
 
-            button = new IcyCommandToggleButton("Area", "roi_area");
+            button = new IcyCommandToggleButton("Area", new IcyIcon("roi_area"));
             button.setName(ROI2DArea.class.getName());
             button.setActionRichTooltip(new RichTooltip(
                     "ROI Area",

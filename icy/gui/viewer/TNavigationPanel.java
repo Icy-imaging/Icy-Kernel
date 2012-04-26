@@ -23,6 +23,7 @@ import icy.gui.component.IcySlider;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.util.GuiUtil;
+import icy.resource.icon.IcyIcon;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.BorderLayout;
@@ -124,7 +125,7 @@ public class TNavigationPanel extends JPanel
             }
         });
 
-        play = new IcyButton(null, "playback_play");
+        play = new IcyButton(new IcyIcon("playback_play"));
         play.setFlat(true);
         play.setFocusable(false);
         play.setToolTipText("play");
@@ -139,7 +140,7 @@ public class TNavigationPanel extends JPanel
             }
         });
 
-        stop = new IcyButton(null, "playback_stop");
+        stop = new IcyButton(new IcyIcon("playback_stop"));
         stop.setFlat(true);
         stop.setFocusable(false);
         stop.setToolTipText("stop");
@@ -155,7 +156,7 @@ public class TNavigationPanel extends JPanel
             }
         });
 
-        loop = new IcyToggleButton("playback_reload", 14);
+        loop = new IcyToggleButton(new IcyIcon("playback_reload", 14));
         loop.setFlat(true);
         loop.setFocusable(false);
         loop.setToolTipText("Enable loop playback");

@@ -24,6 +24,7 @@ import icy.gui.component.button.IcyToggleButton;
 import icy.gui.util.GuiUtil;
 import icy.plugin.abstract_.Plugin;
 import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -119,10 +120,10 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         StyleConstants.setFontSize(normalAttributes, 11);
         StyleConstants.setForeground(normalAttributes, Color.black);
 
-        clearLogButton = new IcyButton(ResourceUtil.ICON_DELETE);
-        copyLogButton = new IcyButton(ResourceUtil.ICON_DOCCOPY);
-        reportLogButton = new IcyButton(ResourceUtil.ICON_DOCEXPORT);
-        scrollLockButton = new IcyToggleButton(ResourceUtil.ICON_LOCK_OPEN);
+        clearLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE));
+        copyLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOCCOPY));
+        reportLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOCEXPORT));
+        scrollLockButton = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_LOCK_OPEN));
 
         // ComponentUtil.setFontSize(textPane, 10);
         textPane.setEditable(false);

@@ -148,6 +148,22 @@ public class ROI2DPolyLine extends ROI2DShape
         return (Path2D) shape;
     }
 
+    public void setPoints(ArrayList<Point2D> pts)
+    {
+        beginUpdate();
+        try
+        {
+            removeAllPoint();
+
+            for (Point2D pt : pts)
+                addPoint(new Anchor2D(pt));
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
     public Polygon getPolygon()
     {
         final Polygon result = new Polygon();

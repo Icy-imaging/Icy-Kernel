@@ -34,6 +34,7 @@ import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.gui.viewer.ViewerEvent.ViewerEventType;
 import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.system.thread.ThreadUtil;
@@ -168,7 +169,7 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Te
         nameField.setToolTipText("Edit name of selected Layer(s)");
         nameField.addTextChangeListener(this);
 
-        deleteButton = new IcyButton(ResourceUtil.ICON_TRASH);
+        deleteButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_TRASH));
         deleteButton.setFlat(true);
         deleteButton.setToolTipText("Delete selected Layer(s)");
         deleteButton.addActionListener(new ActionListener()

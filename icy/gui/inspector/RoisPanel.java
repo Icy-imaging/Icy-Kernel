@@ -28,6 +28,7 @@ import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
 import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
@@ -207,7 +208,7 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
             }
         });
 
-        copyButton = new IcyButton(ResourceUtil.ICON_DOCCOPY);
+        copyButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOCCOPY));
         copyButton.setFlat(true);
         copyButton.setToolTipText("Duplicate selected ROI(s)");
         copyButton.addActionListener(new ActionListener()
@@ -229,7 +230,7 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
             }
         });
 
-        mergeButton = new IcyButton(null, "lighting");
+        mergeButton = new IcyButton(new IcyIcon("lighting"));
         mergeButton.setFlat(true);
         mergeButton.setToolTipText("Merge selected ROI(s)...");
         mergeButton.addActionListener(new ActionListener()
@@ -241,7 +242,7 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
             }
         });
 
-        deleteButton = new IcyButton(ResourceUtil.ICON_TRASH);
+        deleteButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_TRASH));
         deleteButton.setFlat(true);
         deleteButton.setToolTipText("Delete selected ROI(s)");
         deleteButton.addActionListener(new ActionListener()

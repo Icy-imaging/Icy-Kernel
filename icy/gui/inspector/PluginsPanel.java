@@ -28,6 +28,7 @@ import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.abstract_.Plugin;
 import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.BorderLayout;
@@ -96,7 +97,7 @@ public class PluginsPanel extends JPanel
             final JLabel label = new JLabel(descriptor.getName());
             label.setToolTipText(descriptor.getName() + " " + descriptor.getVersion());
 
-            final IcyButton killButton = new IcyButton(ResourceUtil.ICON_CLOSE, 16);
+            final IcyButton killButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_CLOSE, 16));
             killButton.setFlat(true);
             killButton.setEnabled(false);
             killButton.setToolTipText("kill plugin");
@@ -191,7 +192,6 @@ public class PluginsPanel extends JPanel
         setVisible(true);
     }
 
-   
     @Override
     public void addNotify()
     {
@@ -200,7 +200,6 @@ public class PluginsPanel extends JPanel
         Icy.getMainInterface().addListener(mainListener);
     }
 
-   
     @Override
     public void removeNotify()
     {

@@ -40,14 +40,15 @@ import ij.ImageJ;
 
 /**
  * Overrides {@link ImageJ} methods.
+ * Used here despite the ImageJWrapper to override private methods.
  * 
  * @author Curtis Rueden
  * @author Stephane Dallongeville
- * @SuppressWarnings("unused")
  */
 public class ImageJMethods
 {
     /** Replaces {@link ImageJ#showStatus(String)}. */
+    @SuppressWarnings({"javadoc", "unused"})
     public static void showStatus(final ImageJ obj, final String s)
     {
         final ImageJWrapper ijw = Icy.getMainInterface().getImageJ();

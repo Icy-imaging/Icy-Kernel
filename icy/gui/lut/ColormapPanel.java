@@ -21,6 +21,7 @@ package icy.gui.lut;
 import icy.file.xml.XMLPersistentHelper;
 import icy.gui.component.ComponentUtil;
 import icy.gui.component.button.IcyButton;
+import icy.gui.component.button.IcyToggleButton;
 import icy.gui.dialog.LoadDialog;
 import icy.gui.dialog.SaveDialog;
 import icy.gui.lut.abstract_.IcyColormapPanel;
@@ -36,16 +37,17 @@ import icy.image.colormap.JETColorMap;
 import icy.image.colormap.LinearColorMap;
 import icy.image.lut.LUTBand;
 import icy.resource.ResourceUtil;
-import icy.util.StringUtil;
+import icy.resource.icon.IcyIcon;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
+import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -64,21 +66,14 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
     private static final String DEFAULT_COLORMAP_DIR = "colormap";
     private static final String DEFAULT_COLORMAP_NAME = "colormap.map";
 
-    private static final String STRING_RGB = "RGB";
-    private static final String STRING_GRAY = "Gray";
-    private static final String STRING_ALPHA = "Alpha";
-
     /**
      * gui
      */
     private final ColormapViewer colormapViewer;
-    final JComboBox colorMapTypeCombo;
-
-    // private final JRadioButton rgbButton;
-    // private final JRadioButton redButton;
-    // private final JRadioButton greenButton;
-    // private final JRadioButton blueButton;
-    // private final JRadioButton grayButton;
+    final IcyToggleButton rgbBtn;
+    final IcyToggleButton grayBtn;
+    final IcyToggleButton alphaBtn;
+    final ButtonGroup colormapTypeBtnGrp;
 
     /**
      * cached
@@ -90,34 +85,59 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         super(viewer, lutBand);
 
         colormap = lutBand.getColorMap();
-
         colormapViewer = new ColormapViewer(lutBand);
 
         // set up GUI
         final JPanel bottomPanel = new JPanel();
-        bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.PAGE_AXIS));
-
-        final JPanel colormapSettingPanel = new JPanel();
-        colormapSettingPanel.setLayout(new BoxLayout(colormapSettingPanel, BoxLayout.LINE_AXIS));
+        bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.LINE_AXIS));
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
 
         // colormap type
-        final String[] values = {STRING_RGB, STRING_GRAY, STRING_ALPHA};
-        colorMapTypeCombo = new JComboBox(values);
-        colorMapTypeCombo.setToolTipText("Colormap type");
-        ComponentUtil.setFixedWidth(colorMapTypeCombo, 70);
-
-        // action to change colormap type
-        colorMapTypeCombo.addActionListener(new ActionListener()
+        rgbBtn = new IcyToggleButton(new IcyIcon("rgb", false));
+        rgbBtn.setToolTipText("Color");
+        rgbBtn.setFocusPainted(false);
+        ComponentUtil.setFixedWidth(rgbBtn, 26);
+        rgbBtn.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                colormap.setType(itemToType(colorMapTypeCombo.getSelectedItem()));
+                colormap.setType(IcyColorMapType.RGB);
+            }
+        });
+        grayBtn = new IcyToggleButton(new IcyIcon("gray", false));
+        grayBtn.setToolTipText("Gray");
+        grayBtn.setFocusPainted(false);
+        ComponentUtil.setFixedWidth(grayBtn, 26);
+        grayBtn.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                colormap.setType(IcyColorMapType.GRAY);
+            }
+        });
+        alphaBtn = new IcyToggleButton(new IcyIcon("alpha", false));
+        alphaBtn.setToolTipText("Alpha (transparency)");
+        alphaBtn.setFocusPainted(false);
+        ComponentUtil.setFixedWidth(alphaBtn, 26);
+        alphaBtn.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                colormap.setType(IcyColorMapType.ALPHA);
             }
         });
 
+        colormapTypeBtnGrp = new ButtonGroup();
+
+        colormapTypeBtnGrp.add(rgbBtn);
+        colormapTypeBtnGrp.add(grayBtn);
+        colormapTypeBtnGrp.add(alphaBtn);
+
         // select item according to current colormap type
-        colorMapTypeCombo.setSelectedItem(typeToItem(colormap.getType()));
+        updateColormapType(colormap.getType());
 
         // alpha checkbox
         // final JCheckBox alphaEnabled = new JCheckBox("alpha", null, true);
@@ -133,7 +153,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         // });
 
         // restore default button
-        final IcyButton restoreDefaultButton = new IcyButton(null, "undo");
+        final IcyButton restoreDefaultButton = new IcyButton(new IcyIcon("undo"));
         restoreDefaultButton.setFlat(true);
         restoreDefaultButton.setToolTipText("Restore default colormap");
 
@@ -150,7 +170,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         });
 
         // load button
-        final IcyButton loadModelButton = new IcyButton(ResourceUtil.ICON_DOC);
+        final IcyButton loadModelButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOC));
         loadModelButton.setFlat(true);
         loadModelButton.setToolTipText("Load colormap model");
 
@@ -165,7 +185,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         });
 
         // load button
-        final IcyButton loadButton = new IcyButton(ResourceUtil.ICON_OPEN);
+        final IcyButton loadButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_OPEN));
         loadButton.setFlat(true);
         loadButton.setToolTipText("Load colormap from file");
 
@@ -184,7 +204,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         });
 
         // save button
-        final IcyButton saveButton = new IcyButton(ResourceUtil.ICON_SAVE);
+        final IcyButton saveButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_SAVE));
         saveButton.setFlat(true);
         saveButton.setToolTipText("Save colormap to file");
 
@@ -202,24 +222,21 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
             }
         });
 
-        colormapSettingPanel.add(colorMapTypeCombo);
-        colormapSettingPanel.add(Box.createHorizontalStrut(6));
-        colormapSettingPanel.add(Box.createHorizontalGlue());
-        colormapSettingPanel.add(restoreDefaultButton);
-        colormapSettingPanel.add(Box.createHorizontalStrut(2));
-        colormapSettingPanel.add(loadModelButton);
-        colormapSettingPanel.add(Box.createHorizontalStrut(2));
-        colormapSettingPanel.add(loadButton);
-        colormapSettingPanel.add(Box.createHorizontalStrut(2));
-        colormapSettingPanel.add(saveButton);
-        // colormapSettingPanel.add(Box.createHorizontalStrut(6));
-        // colormapSettingPanel.add(alphaEnabled);
+        bottomPanel.add(rgbBtn);
+        bottomPanel.add(grayBtn);
+        bottomPanel.add(alphaBtn);
+        bottomPanel.add(Box.createHorizontalStrut(6));
+        bottomPanel.add(Box.createHorizontalGlue());
+        bottomPanel.add(restoreDefaultButton);
+        bottomPanel.add(Box.createHorizontalStrut(2));
+        bottomPanel.add(loadModelButton);
+        bottomPanel.add(Box.createHorizontalStrut(2));
+        bottomPanel.add(loadButton);
+        bottomPanel.add(Box.createHorizontalStrut(2));
+        bottomPanel.add(saveButton);
+        // bottomPanel.add(Box.createHorizontalStrut(6));
+        // bottomPanel.add(alphaEnabled);
 
-        colormapSettingPanel.add(Box.createHorizontalStrut(2));
-        colormapSettingPanel.validate();
-
-        bottomPanel.add(Box.createVerticalStrut(4));
-        bottomPanel.add(colormapSettingPanel);
         bottomPanel.validate();
 
         setLayout(new BorderLayout());
@@ -255,36 +272,20 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         return colormapViewer;
     }
 
-    IcyColorMapType itemToType(Object item)
-    {
-        if (item instanceof String)
-        {
-            final String value = (String) item;
-
-            if (StringUtil.equals(value, STRING_RGB))
-                return IcyColorMapType.RGB;
-            if (StringUtil.equals(value, STRING_GRAY))
-                return IcyColorMapType.GRAY;
-            if (StringUtil.equals(value, STRING_ALPHA))
-                return IcyColorMapType.ALPHA;
-        }
-
-        return null;
-    }
-
-    private Object typeToItem(IcyColorMapType type)
+    private void updateColormapType(IcyColorMapType type)
     {
         switch (type)
         {
             case RGB:
-                return STRING_RGB;
+                colormapTypeBtnGrp.setSelected(rgbBtn.getModel(), true);
+                break;
             case GRAY:
-                return STRING_GRAY;
+                colormapTypeBtnGrp.setSelected(grayBtn.getModel(), true);
+                break;
             case ALPHA:
-                return STRING_ALPHA;
+                colormapTypeBtnGrp.setSelected(alphaBtn.getModel(), true);
+                break;
         }
-
-        return null;
     }
 
     /**
@@ -397,7 +398,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         {
             case TYPE_CHANGED:
                 // colormap type has changed ? --> update combo state
-                colorMapTypeCombo.setSelectedItem(typeToItem(e.getColormap().getType()));
+                updateColormapType(e.getColormap().getType());
                 break;
 
             case MAP_CHANGED:
@@ -406,5 +407,4 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
                 break;
         }
     }
-
 }

@@ -66,62 +66,78 @@ public class IcyToggleButton extends JToggleButton
     /**
      * Create a toggle button with specified text and icon
      */
+    public IcyToggleButton(IcyIcon icon)
+    {
+        this(null, icon);
+    }
+
+    /**
+     * @deprecated Uses {@link #IcyToggleButton(String, IcyIcon)} instead.
+     */
+    @Deprecated
     public IcyToggleButton(String text, Image iconImage, int iconSize)
     {
         this(text, new IcyIcon(iconImage, iconSize));
     }
 
     /**
-     * Create a toggle button with specified text and icon
+     * @deprecated Uses {@link #IcyToggleButton(String, IcyIcon)} instead.
      */
+    @Deprecated
     public IcyToggleButton(String text, Image iconImage)
     {
         this(text, iconImage, IcyIcon.DEFAULT_SIZE);
     }
 
     /**
-     * Create a toggle button with specified icon
+     * @deprecated Uses {@link #IcyToggleButton(IcyIcon)} instead.
      */
+    @Deprecated
     public IcyToggleButton(Image iconImage, int iconSize)
     {
         this(null, iconImage, iconSize);
     }
 
     /**
-     * Create a toggle button with specified icon
+     * @deprecated Uses {@link #IcyToggleButton(IcyIcon)} instead.
      */
+    @Deprecated
     public IcyToggleButton(Image iconImage)
     {
         this(null, iconImage, IcyIcon.DEFAULT_SIZE);
     }
 
     /**
-     * Create a toggle button with specified text and icon
+     * @deprecated Uses {@link #IcyToggleButton(String, IcyIcon)} instead.
      */
+    @Deprecated
     public IcyToggleButton(String text, String iconName, int iconSize)
     {
         this(text, new IcyIcon(iconName, iconSize));
     }
 
     /**
-     * Create a toggle button with specified text and icon
+     * @deprecated Uses {@link #IcyToggleButton(String, IcyIcon)} instead.
      */
+    @Deprecated
     public IcyToggleButton(String text, String iconName)
     {
         this(text, iconName, IcyIcon.DEFAULT_SIZE);
     }
 
     /**
-     * Create a toggle button with specified icon
+     * @deprecated Uses {@link #IcyToggleButton(IcyIcon)} instead.
      */
+    @Deprecated
     public IcyToggleButton(String iconName, int iconSize)
     {
         this(null, iconName, iconSize);
     }
 
     /**
-     * Create a toggle button with specified icon
+     * @deprecated Uses {@link #IcyToggleButton(IcyIcon)} instead.
      */
+    @Deprecated
     public IcyToggleButton(String iconName)
     {
         this(iconName, IcyIcon.DEFAULT_SIZE);

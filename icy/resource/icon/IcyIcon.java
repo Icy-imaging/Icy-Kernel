@@ -19,9 +19,9 @@ import org.pushingpixels.flamingo.api.common.icon.ResizableIcon;
 
 /**
  * Icy Icon class.<br>
- * This class is used to display alpha mask type icon.<br>
- * By default the fill color is taken from the current look and feel scheme but
- * it can also be defined manually.
+ * This class is used to display alpha mask or classic image icon.<br>
+ * When the image is alpha type (default) default fill color is taken from the current
+ * look and feel scheme but it can also be defined manually.
  * 
  * @author Stephane
  */
@@ -32,42 +32,64 @@ public class IcyIcon implements ResizableIcon
     protected Image image;
     protected String name;
     protected Color color;
+    protected boolean alpha;
     protected final Dimension dim;
 
     private BufferedImage cache;
-    private BufferedImage tmp;
+    private BufferedImage alphaImage;
 
-    private IcyIcon(String name, Image image, int size)
+    private IcyIcon(String name, Image image, int size, boolean alpha)
     {
         super();
 
         this.image = image;
         this.name = name;
         color = null;
+        this.alpha = alpha;
 
         dim = new Dimension(size, size);
 
         updateImage();
     }
 
+    public IcyIcon(String name, int size, boolean alpha)
+    {
+        this(name, null, size, alpha);
+    }
+
     public IcyIcon(String name, int size)
     {
-        this(name, null, size);
+        this(name, null, size, true);
+    }
+
+    public IcyIcon(String name, boolean alpha)
+    {
+        this(name, null, DEFAULT_SIZE, alpha);
     }
 
     public IcyIcon(String name)
     {
-        this(name, null, DEFAULT_SIZE);
+        this(name, null, DEFAULT_SIZE, true);
+    }
+
+    public IcyIcon(Image image, int size, boolean alpha)
+    {
+        this(null, image, size, alpha);
     }
 
     public IcyIcon(Image image, int size)
     {
-        this(null, image, size);
+        this(null, image, size, true);
+    }
+
+    public IcyIcon(Image image, boolean alpha)
+    {
+        this(null, image, DEFAULT_SIZE, alpha);
     }
 
     public IcyIcon(Image image)
     {
-        this(null, image, DEFAULT_SIZE);
+        this(null, image, DEFAULT_SIZE, true);
     }
 
     public int getSize()
@@ -149,10 +171,36 @@ public class IcyIcon implements ResizableIcon
         }
     }
 
+    /**
+     * @return the alpha
+     */
+    public boolean isAlpha()
+    {
+        return alpha;
+    }
+
+    /**
+     * @param alpha
+     *        use alpha or color image depending
+     */
+    public void setAlpha(boolean alpha)
+    {
+        if (this.alpha != alpha)
+        {
+            this.alpha = alpha;
+            updateImage();
+        }
+    }
+
     private void updateImage()
     {
         if (!StringUtil.isEmpty(name))
-            image = ResourceUtil.getAlphaIconAsImage(name);
+        {
+            if (alpha)
+                image = ResourceUtil.getAlphaIconAsImage(name);
+            else
+                image = ResourceUtil.getColorIconAsImage(name);
+        }
 
         update();
     }
@@ -162,12 +210,12 @@ public class IcyIcon implements ResizableIcon
         if (image != null)
         {
             cache = ImageUtil.scaleImageQuality(image, dim.width, dim.height);
-            tmp = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
+            alphaImage = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
         }
         else
         {
             cache = null;
-            tmp = null;
+            alphaImage = null;
         }
     }
 
@@ -190,19 +238,21 @@ public class IcyIcon implements ResizableIcon
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y)
     {
-        paintImage(c);
-        g.drawImage(tmp, x, y, null);
-    }
-
-    private void paintImage(Component c)
-    {
-        if (tmp != null)
+        if (alpha)
         {
-            if (color == null)
-                LookAndFeelUtil.paintForegroundImageFromAlphaImage(c, cache, tmp);
-            else
-                ImageUtil.paintColorImageFromAlphaImage(cache, tmp, color);
+            // alpha image cache defined ?
+            if (alphaImage != null)
+            {
+                if (color == null)
+                    LookAndFeelUtil.paintForegroundImageFromAlphaImage(c, cache, alphaImage);
+                else
+                    ImageUtil.paintColorImageFromAlphaImage(cache, alphaImage, color);
+            }
+
+            g.drawImage(alphaImage, x, y, null);
         }
+        else
+            g.drawImage(cache, x, y, null);
     }
 
     @Override

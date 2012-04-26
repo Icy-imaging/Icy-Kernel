@@ -14,6 +14,7 @@ import icy.main.Icy;
 import icy.math.UnitUtil;
 import icy.math.UnitUtil.UnitPrefix;
 import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.system.thread.SingleProcessor;
@@ -72,7 +73,7 @@ public class SequenceInfosPanel extends InspectorSubPanel
         sizeLabel = new JLabel();
         channelLabel = new JLabel();
 
-        editBtn = new IcyButton("Edit properties", ResourceUtil.ICON_DOCEDIT);
+        editBtn = new IcyButton("Edit properties", new IcyIcon(ResourceUtil.ICON_DOCEDIT));
         editBtn.setToolTipText("Edit sequence properties");
         editBtn.addActionListener(new ActionListener()
         {
@@ -87,7 +88,7 @@ public class SequenceInfosPanel extends InspectorSubPanel
             }
         });
 
-        detailBtn = new IcyButton("Show details", ResourceUtil.ICON_PROPERTIES);
+        detailBtn = new IcyButton("Show details", new IcyIcon(ResourceUtil.ICON_PROPERTIES));
         detailBtn.setToolTipText("Show all associated metadata informations");
         detailBtn.addActionListener(new ActionListener()
         {

@@ -62,6 +62,8 @@ import icy.workspace.WorkspaceLoader;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -241,6 +243,9 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     private final ImageJTask ijTask;
     final JMenu othersPluginsMenu;
 
+    CommandToggleButtonGroup multiWindowGroup;
+    IcyCommandToggleButton multiWindowButton;
+
     /**
      * @param ribbon
      */
@@ -305,6 +310,22 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
 
         PluginLoader.addListener(this);
         Icy.getMainInterface().addListener(this);
+    }
+
+    // some stuff which need to be initialized after ribbon creation
+    public void init()
+    {
+        ijTask.init();
+
+        final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+        mainFrame.addPropertyChangeListener(MainFrame.PROPERTY_DETACHEDMODE, new PropertyChangeListener()
+        {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt)
+            {
+                multiWindowGroup.setSelected(multiWindowButton, Icy.getMainInterface().isDetachedMode());
+            }
+        });
     }
 
     public ToolRibbonTask getToolRibbon()
@@ -871,8 +892,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         ribbon.addTaskbarComponent(new JSeparator(SwingConstants.VERTICAL));
 
         // MULTI FRAME MODE
-        final CommandToggleButtonGroup multiWindowGroup = new CommandToggleButtonGroup();
-        final IcyCommandToggleButton multiWindowButton = new IcyCommandToggleButton("", "app_detached");
+        multiWindowGroup = new CommandToggleButtonGroup();
+        multiWindowButton = new IcyCommandToggleButton(new IcyIcon(ResourceUtil.ICON_DETACHED_WINDOW));
 
         multiWindowButton.setActionRichTooltip(new RichTooltip("Detached mode ON/OFF",
                 "Switch to detached / attached mode"));
@@ -921,7 +942,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
 
                 // ALWAYS ON TOP
                 final CommandToggleButtonGroup aotGroup = new CommandToggleButtonGroup();
-                final IcyCommandToggleMenuButton aotButton = new IcyCommandToggleMenuButton("Always on top", "pin");
+                final IcyCommandToggleMenuButton aotButton = new IcyCommandToggleMenuButton("Always on top",
+                        new IcyIcon("pin"));
                 aotButton.addActionListener(new ActionListener()
                 {
                     @Override
@@ -941,7 +963,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 result.addMenuSeparator();
 
                 // SWIMMING POOL
-                final IcyCommandMenuButton spButton = new IcyCommandMenuButton("Swimming Pool Viewer", "inbox");
+                final IcyCommandMenuButton spButton = new IcyCommandMenuButton("Swimming Pool Viewer", new IcyIcon(
+                        "inbox"));
                 spButton.addActionListener(new ActionListener()
                 {
                     @Override
@@ -972,7 +995,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 result.addMenuSeparator();
 
                 // REORGANIZE TILE
-                final IcyCommandMenuButton tileButton = new IcyCommandMenuButton("Tile", "2x2_grid");
+                final IcyCommandMenuButton tileButton = new IcyCommandMenuButton("Tile", new IcyIcon("2x2_grid"));
                 tileButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
                 tileButton.setPopupCallback(new PopupPanelCallback()
                 {
@@ -983,7 +1006,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
 
                         // Tile horizontal
                         final IcyCommandMenuButton horizontalTileButton = new IcyCommandMenuButton("Horizontal",
-                                "tile_horizontal");
+                                new IcyIcon("tile_horizontal"));
                         horizontalTileButton.setPopupRichTooltip(new RichTooltip("Horizontal tile arrangement",
                                 "Reorganise all opened windows in horizontal tile."));
                         horizontalTileButton.addActionListener(new ActionListener()
@@ -1000,7 +1023,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
 
                         // Tile vertical
                         final IcyCommandMenuButton verticalTileButton = new IcyCommandMenuButton("Vertical",
-                                "tile_vertical");
+                                new IcyIcon("tile_vertical"));
                         verticalTileButton.setPopupRichTooltip(new RichTooltip("Vertical tile arrangement",
                                 "Reorganise all opened windows in vertical tile."));
                         verticalTileButton.addActionListener(new ActionListener()
@@ -1016,7 +1039,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                         result.addMenuButton(verticalTileButton);
 
                         // Tile grid
-                        final IcyCommandMenuButton gridTileButton = new IcyCommandMenuButton("Grid", "2x2_grid");
+                        final IcyCommandMenuButton gridTileButton = new IcyCommandMenuButton("Grid", new IcyIcon(
+                                "2x2_grid"));
                         gridTileButton.setPopupRichTooltip(new RichTooltip("Grid tile arrangement",
                                 "Reorganise all opened windows in grid tile."));
                         gridTileButton.addActionListener(new ActionListener()
@@ -1037,7 +1061,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 result.addMenuButton(tileButton);
 
                 // REORGANIZE CASCADE
-                final IcyCommandMenuButton cascadeButton = new IcyCommandMenuButton("Cascade", "cascade");
+                final IcyCommandMenuButton cascadeButton = new IcyCommandMenuButton("Cascade", new IcyIcon("cascade"));
                 cascadeButton.setPopupRichTooltip(new RichTooltip("Cascade arrangement",
                         "Reorganise all opened windows in cascade"));
                 cascadeButton.addActionListener(new ActionListener()
@@ -1056,8 +1080,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 result.addMenuSeparator();
 
                 // OPENED SEQUENCES
-                final IcyCommandMenuButton sequencesButton = new IcyCommandMenuButton("Opened sequences",
-                        "folder_arrow");
+                final IcyCommandMenuButton sequencesButton = new IcyCommandMenuButton("Opened sequences", new IcyIcon(
+                        "folder_arrow"));
                 sequencesButton.setPopupRichTooltip(new RichTooltip("Opened Sequences", "Show the selected sequence"));
                 sequencesButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
                 sequencesButton.setPopupCallback(new PopupPanelCallback()
@@ -1130,7 +1154,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 result.addMenuButton(helpButton);
 
                 // CHECK FOR UPDATE
-                final IcyCommandMenuButton checkUpdateButton = new IcyCommandMenuButton("Check for update", "download");
+                final IcyCommandMenuButton checkUpdateButton = new IcyCommandMenuButton("Check for update",
+                        new IcyIcon("download"));
                 checkUpdateButton.setActionRichTooltip(new RichTooltip("Check for updates",
                         "Search updates for application and plugins in all referenced repositories."));
                 checkUpdateButton.addActionListener(new ActionListener()
@@ -1147,7 +1172,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 result.addMenuButton(checkUpdateButton);
 
                 // ABOUT
-                final IcyCommandMenuButton aboutButton = new IcyCommandMenuButton("About", "info");
+                final IcyCommandMenuButton aboutButton = new IcyCommandMenuButton("About", new IcyIcon("info"));
                 aboutButton.setActionRichTooltip(new RichTooltip("About",
                         "Information about ICY's authors, license and copyrights."));
                 aboutButton.addActionListener(new ActionListener()

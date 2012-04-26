@@ -20,6 +20,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.vtk"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.inspector"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.resource"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.imagej.patches"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file.xml"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.util"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.lut"/>
@@ -65,6 +66,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.frame"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.imagej"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.button"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.util"/>

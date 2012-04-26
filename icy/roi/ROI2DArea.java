@@ -59,10 +59,10 @@ public class ROI2DArea extends ROI2D
 {
     protected static final float DEFAULT_CURSOR_SIZE = 15f;
 
-    // we want the cursor size static
-    static float cursorSize = DEFAULT_CURSOR_SIZE;
+    // we want to keep a static cursor size
+    static float globalCursorSize = DEFAULT_CURSOR_SIZE;
 
-    protected class ROI2DAreaPainter extends ROI2DPainter
+    public class ROI2DAreaPainter extends ROI2DPainter
     {
         private static final float DEFAULT_ALPHA = 0.3f;
         private static final float MIN_CURSOR_SIZE = 0.6f;
@@ -71,6 +71,7 @@ public class ROI2DArea extends ROI2D
         private final Ellipse2D cursor;
         private Point2D.Double cursorPosition;
         private Color cursorColor;
+        private float cursorSize;
         private float alphaLevel;
 
         /**
@@ -83,6 +84,7 @@ public class ROI2DArea extends ROI2D
             cursor = new Ellipse2D.Double();
             cursorPosition = new Point2D.Double();
             cursorColor = Color.red;
+            cursorSize = globalCursorSize;
             alphaLevel = DEFAULT_ALPHA;
 
         }
@@ -138,6 +140,7 @@ public class ROI2DArea extends ROI2D
 
             if (cursorSize != adjValue)
             {
+                globalCursorSize = adjValue;
                 cursorSize = adjValue;
                 updateCursor();
             }
@@ -262,7 +265,7 @@ public class ROI2DArea extends ROI2D
             // no editable --> no action here
             if (!editable)
                 return;
- 
+
             ROI2DArea.this.beginUpdate();
             try
             {
@@ -621,6 +624,14 @@ public class ROI2DArea extends ROI2D
         colorModel = new IndexColorModel(8, 256, red, green, blue, 0);
         // recreate image from array data
         imageMask = ImageUtil.createIndexedImage(w, h, colorModel, maskData);
+    }
+
+    /**
+     * Returns the internal image mask.
+     */
+    public BufferedImage getImageMask()
+    {
+        return imageMask;
     }
 
     void updateImage(Rectangle newBnd)

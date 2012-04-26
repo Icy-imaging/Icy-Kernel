@@ -383,7 +383,7 @@ public class ImageRibbonTask extends RibbonTask
             startGroup();
 
             // Remove first slice
-            removeFirstButton = new IcyCommandButton("Remove first", ResourceUtil.ICON_SQUARE_UP);
+            removeFirstButton = new IcyCommandButton("Remove first", new IcyIcon(ResourceUtil.ICON_SQUARE_UP));
             removeFirstButton.setActionRichTooltip(new RichTooltip("Remove first Z slice",
                     "Remove the first Z slice from the sequence"));
             removeFirstButton.addActionListener(new ActionListener()
@@ -404,7 +404,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(removeFirstButton, RibbonElementPriority.MEDIUM);
 
             // Remove last slice
-            removeLastButton = new IcyCommandButton("Remove last", ResourceUtil.ICON_SQUARE_DOWN);
+            removeLastButton = new IcyCommandButton("Remove last", new IcyIcon(ResourceUtil.ICON_SQUARE_DOWN));
             removeLastButton.setActionRichTooltip(new RichTooltip("Remove last Z slice",
                     "Remove the last Z slice the sequence"));
             removeLastButton.addActionListener(new ActionListener()
@@ -427,7 +427,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(removeLastButton, RibbonElementPriority.MEDIUM);
 
             // current slice
-            removeCurrentButton = new IcyCommandButton("Remove current", ResourceUtil.ICON_SQUARE_NEXT);
+            removeCurrentButton = new IcyCommandButton("Remove current", new IcyIcon(ResourceUtil.ICON_SQUARE_NEXT));
             removeCurrentButton.setActionRichTooltip(new RichTooltip("Remove current Z slice",
                     "Remove the current displayed Z slice from the sequence"));
             removeCurrentButton.addActionListener(new ActionListener()
@@ -452,7 +452,7 @@ public class ImageRibbonTask extends RibbonTask
             startGroup();
 
             // slice closer
-            moveCloserButton = new IcyCommandButton("Closer", "arrow_top");
+            moveCloserButton = new IcyCommandButton("Closer", new IcyIcon("arrow_top"));
             moveCloserButton.setActionRichTooltip(new RichTooltip("Move to front",
                     "Move the current displayed Z slice to position Z - 1"));
             moveCloserButton.addActionListener(new ActionListener()
@@ -480,7 +480,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(moveCloserButton, RibbonElementPriority.MEDIUM);
 
             // slice farther
-            moveFartherButton = new IcyCommandButton("Farther", "arrow_bottom");
+            moveFartherButton = new IcyCommandButton("Farther", new IcyIcon("arrow_bottom"));
             moveFartherButton.setActionRichTooltip(new RichTooltip("Move to back",
                     "Move the current displayed Z slice to position Z + 1"));
             moveFartherButton.addActionListener(new ActionListener()
@@ -508,7 +508,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(moveFartherButton, RibbonElementPriority.MEDIUM);
 
             // Reverse slices
-            reverseButton = new IcyCommandButton("Reverse order", "arrow_two_head_2");
+            reverseButton = new IcyCommandButton("Reverse order", new IcyIcon("arrow_two_head_2"));
             reverseButton.setActionRichTooltip(new RichTooltip("Reverse Z slices order",
                     "Reverse Z slices order of sequence"));
             reverseButton.addActionListener(new ActionListener()
@@ -533,7 +533,7 @@ public class ImageRibbonTask extends RibbonTask
             // startGroup();
 
             // Remove each ...
-            removeEachButton = new IcyCommandButton("Remove each...", "align_right");
+            removeEachButton = new IcyCommandButton("Remove each...", new IcyIcon("align_right"));
             removeEachButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
             removeEachButton.setPopupRichTooltip(new RichTooltip("Advanced Z slice remove",
                     "Remove each other, each third slice..."));
@@ -550,7 +550,7 @@ public class ImageRibbonTask extends RibbonTask
             // addCommandButton(removeEachButton, RibbonElementPriority.MEDIUM);
 
             // Reverse each ...
-            reverseEachButton = new IcyCommandButton("Reverse each...", "arrow_two_head_2");
+            reverseEachButton = new IcyCommandButton("Reverse each...", new IcyIcon("arrow_two_head_2"));
             reverseEachButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
             reverseEachButton.setPopupRichTooltip(new RichTooltip("Advanced Z slice reverse",
                     "Reverse each other, each third slice..."));
@@ -637,7 +637,7 @@ public class ImageRibbonTask extends RibbonTask
             startGroup();
 
             // Remove first slice
-            removeFirstButton = new IcyCommandButton("Remove first", ResourceUtil.ICON_SQUARE_UP);
+            removeFirstButton = new IcyCommandButton("Remove first", new IcyIcon(ResourceUtil.ICON_SQUARE_UP));
             removeFirstButton.setActionRichTooltip(new RichTooltip("Remove first T slice",
                     "Remove the first T slice from the sequence"));
             removeFirstButton.addActionListener(new ActionListener()
@@ -658,7 +658,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(removeFirstButton, RibbonElementPriority.MEDIUM);
 
             // Remove last slice
-            removeLastButton = new IcyCommandButton("Remove last", ResourceUtil.ICON_SQUARE_DOWN);
+            removeLastButton = new IcyCommandButton("Remove last", new IcyIcon(ResourceUtil.ICON_SQUARE_DOWN));
             removeLastButton.setActionRichTooltip(new RichTooltip("Remove last T slice",
                     "Remove the last T slice the sequence"));
             removeLastButton.addActionListener(new ActionListener()
@@ -681,7 +681,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(removeLastButton, RibbonElementPriority.MEDIUM);
 
             // current slice
-            removeCurrentButton = new IcyCommandButton("Remove current", ResourceUtil.ICON_SQUARE_NEXT);
+            removeCurrentButton = new IcyCommandButton("Remove current", new IcyIcon(ResourceUtil.ICON_SQUARE_NEXT));
             removeCurrentButton.setActionRichTooltip(new RichTooltip("Remove current T slice",
                     "Remove the current displayed T slice from the sequence"));
             removeCurrentButton.addActionListener(new ActionListener()
@@ -706,7 +706,7 @@ public class ImageRibbonTask extends RibbonTask
             startGroup();
 
             // slice closer
-            moveCloserButton = new IcyCommandButton("Closer", "arrow_top");
+            moveCloserButton = new IcyCommandButton("Closer", new IcyIcon("arrow_top"));
             moveCloserButton.setActionRichTooltip(new RichTooltip("Move to front",
                     "Move the current displayed T slice to position T - 1"));
             moveCloserButton.addActionListener(new ActionListener()
@@ -734,7 +734,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(moveCloserButton, RibbonElementPriority.MEDIUM);
 
             // slice farther
-            moveFartherButton = new IcyCommandButton("Farther", "arrow_bottom");
+            moveFartherButton = new IcyCommandButton("Farther", new IcyIcon("arrow_bottom"));
             moveFartherButton.setActionRichTooltip(new RichTooltip("Move to back",
                     "Move the current displayed T slice to position T + 1"));
             moveFartherButton.addActionListener(new ActionListener()
@@ -762,7 +762,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(moveFartherButton, RibbonElementPriority.MEDIUM);
 
             // Reverse slices
-            reverseButton = new IcyCommandButton("Reverse order", "arrow_two_head_2");
+            reverseButton = new IcyCommandButton("Reverse order", new IcyIcon("arrow_two_head_2"));
             reverseButton.setActionRichTooltip(new RichTooltip("Reverse T slices order",
                     "Reverse T slices order of sequence"));
             reverseButton.addActionListener(new ActionListener()
@@ -787,7 +787,7 @@ public class ImageRibbonTask extends RibbonTask
             // startGroup();
 
             // Remove each ...
-            removeEachButton = new IcyCommandButton("Remove each...", "align_right");
+            removeEachButton = new IcyCommandButton("Remove each...", new IcyIcon("align_right"));
             removeEachButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
             removeEachButton.setPopupRichTooltip(new RichTooltip("Advanced T slice remove",
                     "Remove each other, each third slice..."));
@@ -805,7 +805,7 @@ public class ImageRibbonTask extends RibbonTask
             // addCommandButton(removeEachButton, RibbonElementPriority.MEDIUM);
 
             // Reverse each ...
-            reverseEachButton = new IcyCommandButton("Reverse each...", "arrow_two_head_2");
+            reverseEachButton = new IcyCommandButton("Reverse each...", new IcyIcon("arrow_two_head_2"));
             reverseEachButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
             reverseEachButton.setPopupRichTooltip(new RichTooltip("Advanced T slice reverse",
                     "Reverse each other, each third slice..."));
@@ -885,7 +885,7 @@ public class ImageRibbonTask extends RibbonTask
             startGroup();
 
             // crop operation
-            cropButton = new IcyCommandButton("Crop image", "clipboard_cut");
+            cropButton = new IcyCommandButton("Crop image", new IcyIcon("clipboard_cut"));
             cropButton.setActionRichTooltip(new RichTooltip("Crop image", "Crop an image from ROI."));
             cropButton.addActionListener(new ActionListener()
             {
@@ -930,7 +930,7 @@ public class ImageRibbonTask extends RibbonTask
             startGroup();
 
             // convert to Z stack
-            convertToZButton = new IcyCommandButton("Convert to stack", "pin_sq_top");
+            convertToZButton = new IcyCommandButton("Convert to stack", new IcyIcon("pin_sq_top"));
             convertToZButton.setActionRichTooltip(new RichTooltip("Convert to stack", "Set all images in Z dimension"));
             convertToZButton.addActionListener(new ActionListener()
             {
@@ -950,7 +950,7 @@ public class ImageRibbonTask extends RibbonTask
             addCommandButton(convertToZButton, RibbonElementPriority.MEDIUM);
 
             // convert to T stack
-            convertToTButton = new IcyCommandButton("Convert to time", "pin_sq_right");
+            convertToTButton = new IcyCommandButton("Convert to time", new IcyIcon("pin_sq_right"));
             convertToTButton.setActionRichTooltip(new RichTooltip("Convert to time", "Set all images in T dimension"));
             convertToTButton.addActionListener(new ActionListener()
             {
@@ -1023,7 +1023,7 @@ public class ImageRibbonTask extends RibbonTask
                 fillValueField.setToolTipText("Value used for filling");
                 fillValueField.setText("0");
 
-                fillImage = new IcyButton("Image", "brush", 16);
+                fillImage = new IcyButton("Image", new IcyIcon("brush", 16));
                 fillImage.setFlat(true);
                 fillImage.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
                 ComponentUtil.setFixedWidth(fillImage, 90);
@@ -1042,7 +1042,7 @@ public class ImageRibbonTask extends RibbonTask
                     }
                 });
 
-                fillSequence = new IcyButton("Sequence", "brush", 16);
+                fillSequence = new IcyButton("Sequence", new IcyIcon("brush", 16));
                 fillSequence.setFlat(true);
                 fillSequence.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
                 ComponentUtil.setFixedWidth(fillSequence, 90);

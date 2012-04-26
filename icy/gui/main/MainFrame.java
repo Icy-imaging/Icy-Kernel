@@ -272,6 +272,9 @@ public class MainFrame extends JRibbonFrame
             add(mainPane, BorderLayout.CENTER);
 
         validate();
+        
+        // initialize now some stuff that need main frame to be initialized
+        mainRibbon.init();
 
         setVisible(true);
     }

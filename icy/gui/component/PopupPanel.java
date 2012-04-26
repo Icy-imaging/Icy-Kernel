@@ -52,7 +52,7 @@ public class PopupPanel extends JPanel
 
         public PopupTitlePanel(String text, Image image)
         {
-            super(text, image, 14);
+            super(text, new IcyIcon(image, 14));
 
             setHorizontalAlignment(SwingConstants.LEADING);
 

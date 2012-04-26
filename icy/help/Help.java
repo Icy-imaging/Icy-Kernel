@@ -20,6 +20,7 @@ package icy.help;
 
 import icy.gui.component.button.IcyCommandMenuButton;
 import icy.network.NetworkUtil;
+import icy.resource.icon.IcyIcon;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -98,7 +99,7 @@ public class Help implements KeyListener, ActionListener
 
     public IcyCommandMenuButton getIcyCommandMenuButton(String s)
     {
-        IcyCommandMenuButton Helpbutton = new IcyCommandMenuButton(s, "browser");
+        IcyCommandMenuButton Helpbutton = new IcyCommandMenuButton(s, new IcyIcon("browser"));
         Helpbutton.addActionListener(this);
         return Helpbutton;
     }

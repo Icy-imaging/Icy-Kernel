@@ -47,21 +47,26 @@ public class IcyButton extends JButton
 
         flat = false;
         init();
-
     }
 
+    /**
+     * Create a button with specified icon.
+     */
     public IcyButton(IcyIcon icon)
     {
         this(null, icon);
     }
 
+    /**
+     * Create a button with specified text.
+     */
     public IcyButton(String text)
     {
         this(text, (IcyIcon) null);
     }
 
     /**
-     * Create a button with specified action
+     * Create a button with specified action.
      */
     public IcyButton(IcyAbstractAction action)
     {
@@ -72,50 +77,54 @@ public class IcyButton extends JButton
     }
 
     /**
-     * Create a button with specified text and icon<br>
-     * 
-     * @param text
-     *        button text
-     * @param iconImage
-     *        icon image
-     * @param iconSize
-     *        icon size
+     * @deprecated Uses {@link #IcyButton(String, IcyIcon)} instead.
      */
+    @Deprecated
     public IcyButton(String text, Image iconImage, int iconSize)
     {
         this(text, new IcyIcon(iconImage, iconSize));
     }
 
+    /**
+     * @deprecated Uses {@link #IcyButton(String, IcyIcon)} instead.
+     */
+    @Deprecated
     public IcyButton(String text, Image iconImage)
     {
         this(text, iconImage, IcyIcon.DEFAULT_SIZE);
     }
 
+    /**
+     * @deprecated Uses {@link #IcyButton(IcyIcon)} instead.
+     */
+    @Deprecated
     public IcyButton(Image iconImage, int iconSize)
     {
         this(null, iconImage, iconSize);
     }
 
+    /**
+     * @deprecated Uses {@link #IcyButton(IcyIcon)} instead.
+     */
+    @Deprecated
     public IcyButton(Image iconImage)
     {
         this(null, iconImage);
     }
 
     /**
-     * Create a button with specified text and icon (from resource name)<br>
-     * 
-     * @param text
-     *        button text
-     * @param iconName
-     *        icon name
-     * @param iconSize
-     *        icon size
+     * @deprecated Uses {@link #IcyButton(String, IcyIcon)} instead.
      */
+    @Deprecated
     public IcyButton(String text, String iconName, int iconSize)
     {
         this(text, new IcyIcon(iconName, iconSize));
     }
 
+    /**
+     * @deprecated Uses {@link #IcyButton(String, IcyIcon)} instead.
+     */
+    @Deprecated
     public IcyButton(String text, String iconName)
     {
         this(text, iconName, IcyIcon.DEFAULT_SIZE);

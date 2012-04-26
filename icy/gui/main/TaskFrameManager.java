@@ -177,7 +177,8 @@ public class TaskFrameManager implements ActionListener
                 frameInformation.msBeforeDisplay -= delayBetween2Animation;
 
                 if (frameInformation.msBeforeDisplay <= 0)
-                    frame.setVisible(true);
+                    if (!frame.isVisible())
+                        frame.setVisible(true);
 
                 if (frame.canRemove())
                     frameInformation.setMsBeforeClose(frameInformation.getMsBeforeClose() - delayBetween2Animation);

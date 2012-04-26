@@ -19,6 +19,7 @@ import icy.network.IRCClient;
 import icy.network.IRCEventListenerImpl;
 import icy.preferences.ChatPreferences;
 import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.DateUtil;
@@ -701,7 +702,7 @@ public class ChatPanel extends ExternalizablePanel
             }
         });
 
-        hideDesktopChatButton = new IcyButton(ResourceUtil.ICON_SQUARE_DOWN, 20);
+        hideDesktopChatButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_SQUARE_DOWN, 20));
         hideDesktopChatButton.setFlat(true);
         ComponentUtil.setFixedWidth(hideDesktopChatButton, 20);
         hideDesktopChatButton.setToolTipText("Disable desktop chat overlay");
@@ -983,7 +984,7 @@ public class ChatPanel extends ExternalizablePanel
         Component horizontalStrut_2 = Box.createHorizontalStrut(10);
         topPanel.add(horizontalStrut_2);
 
-        connectButton = new IcyToggleButton(ResourceUtil.ICON_ON_OFF, 20);
+        connectButton = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_ON_OFF, 20));
         connectButton.setFocusPainted(false);
         connectButton.setMaximumSize(new Dimension(32, 32));
         connectButton.setMinimumSize(new Dimension(24, 24));
@@ -1005,7 +1006,7 @@ public class ChatPanel extends ExternalizablePanel
         Component horizontalStrut_1 = Box.createHorizontalStrut(2);
         topPanel.add(horizontalStrut_1);
 
-        showUserPaneButton = new IcyToggleButton("user", 20);
+        showUserPaneButton = new IcyToggleButton(new IcyIcon("user", 20));
         showUserPaneButton.setFocusPainted(false);
         showUserPaneButton.setMaximumSize(new Dimension(32, 32));
         showUserPaneButton.setSelected(ChatPreferences.getShowUsersPanel());
@@ -1028,7 +1029,7 @@ public class ChatPanel extends ExternalizablePanel
         Component horizontalStrut_5 = Box.createHorizontalStrut(2);
         topPanel.add(horizontalStrut_5);
 
-        desktopOverlayButton = new IcyToggleButton("spechbubble_sq_line", 20);
+        desktopOverlayButton = new IcyToggleButton(new IcyIcon("spechbubble_sq_line", 20));
         desktopOverlayButton.setFocusPainted(false);
         desktopOverlayButton.setMaximumSize(new Dimension(32, 32));
         desktopOverlayButton.setSelected(ChatPreferences.getDesktopOverlay());
@@ -1051,7 +1052,7 @@ public class ChatPanel extends ExternalizablePanel
         Component horizontalStrut_6 = Box.createHorizontalStrut(2);
         topPanel.add(horizontalStrut_6);
 
-        advancedButton = new IcyButton(ResourceUtil.ICON_COG, 20);
+        advancedButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_COG, 20));
         advancedButton.setFocusPainted(false);
         advancedButton.setMaximumSize(new Dimension(32, 32));
         advancedButton.setMinimumSize(new Dimension(24, 24));

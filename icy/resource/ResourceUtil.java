@@ -47,6 +47,7 @@ public class ResourceUtil
     public static final Image ICON_COLLAPSE = ResourceUtil.getAlphaIconAsImage("top_right_collapse.png");
     public static final Image ICON_PICTURE = ResourceUtil.getAlphaIconAsImage("picture.png");
     public static final Image ICON_WINDOW = ResourceUtil.getAlphaIconAsImage("app_window.png");
+    public static final Image ICON_DETACHED_WINDOW = ResourceUtil.getAlphaIconAsImage("app_detached.png");
     public static final Image ICON_NEWDOC = ResourceUtil.getAlphaIconAsImage("doc_new.png");
     public static final Image ICON_DOC = ResourceUtil.getAlphaIconAsImage("document.png");
     public static final Image ICON_DOCCOPY = ResourceUtil.getAlphaIconAsImage("doc_copy.png");
@@ -90,11 +91,7 @@ public class ResourceUtil
     private static final String IMAGE_PATH = "res/image/";
 
     private static final String ALPHA_ICON_PATH = "alpha/";
-
-    // private static final String BLACK_ICON_PATH = "black/";
-    // private static final String WHITE_ICON_PATH = "white/";
-
-    // private static final String COLOR_ICON_PATH = "color/";
+    private static final String COLOR_ICON_PATH = "color/";
 
     public static ArrayList<Image> getIcyIconImages()
     {
@@ -283,6 +280,52 @@ public class ResourceUtil
     public static ImageIcon getAlphaIcon(String resourceName)
     {
         return getAlphaIcon(resourceName, -1);
+    }
+
+    /**
+     * Return an image located in res/icon/color with specified square size from its name<br>
+     */
+    public static Image getColorIconAsImage(String resourceName, int size)
+    {
+        final String finalName;
+
+        if (resourceName.toLowerCase().endsWith(".png"))
+            finalName = resourceName;
+        else
+            finalName = resourceName + ".png";
+
+        return getIconAsImage(COLOR_ICON_PATH + finalName, size);
+    }
+
+    /**
+     * Return an image located in res/icon/color from its name<br>
+     */
+    public static Image getColorIconAsImage(String resourceName)
+    {
+        return getColorIconAsImage(resourceName, -1);
+    }
+
+    /**
+     * Return an ImageIcon located in res/icon/color with specified square size<br>
+     */
+    public static ImageIcon getColorIcon(String resourceName, int size)
+    {
+        final String finalName;
+
+        if (resourceName.toLowerCase().endsWith(".png"))
+            finalName = resourceName;
+        else
+            finalName = resourceName + ".png";
+
+        return getImageIcon(getIconAsImage(COLOR_ICON_PATH + finalName, size));
+    }
+
+    /**
+     * Return an ImageIcon located in res/icon/color<br>
+     */
+    public static ImageIcon getColorIcon(String resourceName)
+    {
+        return getColorIcon(resourceName, -1);
     }
 
     /**

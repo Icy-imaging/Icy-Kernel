@@ -5,6 +5,7 @@ package icy.gui.component;
 
 import icy.gui.component.button.IcyButton;
 import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -74,7 +75,7 @@ public class CloseableTabbedPane extends JTabbedPane
 
             sep = Box.createHorizontalStrut(6);
 
-            closeButton = new IcyButton(ResourceUtil.ICON_DELETE, 12);
+            closeButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE, 12));
             closeButton.setFlat(true);
             // closeButton.setContentAreaFilled(false);
             closeButton.setToolTipText("close");

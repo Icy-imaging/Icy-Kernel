@@ -10,11 +10,14 @@ import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.ReflectionUtil;
 import ij.ImageJ;
+import ij.gui.ImageWindow;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Image;
 import java.awt.MenuBar;
 import java.awt.Point;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoundedRangeModel;
@@ -35,6 +38,12 @@ public class ImageJWrapper extends ImageJ
      */
     private static final long serialVersionUID = -4361946959228494782L;
 
+    public interface ImageJActiveImageListener
+    {
+        public void imageActived(ImageWindow iw);
+
+    }
+
     public final static String PROPERTY_MENU = "menu";
 
     /**
@@ -46,6 +55,11 @@ public class ImageJWrapper extends ImageJ
     final JLabel swingStatusLabel;
     final JProgressBar swingProgressBar;
     ToolbarWrapper swingToolBar;
+
+    /**
+     * internal
+     */
+    final ArrayList<ImageJActiveImageListener> listeners;
 
     public ImageJWrapper()
     {
@@ -79,8 +93,8 @@ public class ImageJWrapper extends ImageJ
         swingStatusPanel.setLayout(new BorderLayout());
 
         swingStatusLabel = new JLabel();
-        swingStatusLabel.setPreferredSize(new Dimension(420, 16));
-        swingStatusLabel.setMaximumSize(new Dimension(420, 16));
+        swingStatusLabel.setPreferredSize(new Dimension(420, 24));
+        swingStatusLabel.setMaximumSize(new Dimension(420, 24));
         swingStatusLabel.setFocusable(true);
         swingStatusLabel.addKeyListener(this);
         swingStatusLabel.addMouseListener(this);
@@ -88,8 +102,8 @@ public class ImageJWrapper extends ImageJ
         swingProgressBar = new JProgressBar(0, 1000);
         swingProgressBar.setBorder(BorderFactory.createEmptyBorder());
         swingProgressBar.setFocusable(true);
-        swingProgressBar.setPreferredSize(new Dimension(120, 16));
-        swingProgressBar.setMaximumSize(new Dimension(120, 16));
+        swingProgressBar.setPreferredSize(new Dimension(120, 20));
+        swingProgressBar.setMaximumSize(new Dimension(120, 20));
         swingProgressBar.setValue(1000);
         swingProgressBar.addKeyListener(this);
         swingProgressBar.addMouseListener(this);
@@ -98,6 +112,8 @@ public class ImageJWrapper extends ImageJ
         swingPanel.add(swingStatusPanel, BorderLayout.SOUTH);
 
         swingPanel.validate();
+
+        listeners = new ArrayList<ImageJWrapper.ImageJActiveImageListener>();
     }
 
     void updateMenu()
@@ -120,6 +136,12 @@ public class ImageJWrapper extends ImageJ
                 }
             }
         });
+    }
+    
+    public void setActiveImage(ImageWindow iw)
+    {
+        // notify active image changed
+        fireActiveImageChanged(iw);
     }
 
     public void showSwingProgress(final int currentIndex, final int finalIndex)
@@ -210,5 +232,27 @@ public class ImageJWrapper extends ImageJ
     {
         super.setMenuBar(mb);
         menuChanged();
+    }
+
+    @Override
+    public Image createImage(int width, int height)
+    {
+        return swingPanel.createImage(width, height);
+    }
+    
+    public void addActiveImageListener(ImageJActiveImageListener listener)
+    {
+        listeners.add(listener);
+    }
+
+    public void removeActiveImageListener(ImageJActiveImageListener listener)
+    {
+        listeners.remove(listener);
+    }
+
+    public void fireActiveImageChanged(ImageWindow iw)
+    {
+        for (ImageJActiveImageListener listener : listeners)
+            listener.imageActived(iw);
     }
 }

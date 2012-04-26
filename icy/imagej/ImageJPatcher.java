@@ -75,7 +75,7 @@ public class ImageJPatcher
                 "public static int installPlugin(java.lang.String plugin, char menuCode, java.lang.String command, java.lang.String shortcut, ij.ImageJ ij, int result)");
         hacker.loadClass("ij.Menus");
 
-        // // override behavior of ij.ImagePlus
+        // override behavior of ij.ImagePlus
         // hacker.insertAfterMethod("ij.ImagePlus", "public void updateAndDraw()");
         // hacker.insertAfterMethod("ij.ImagePlus", "public void repaintWindow()");
         // hacker.insertAfterMethod("ij.ImagePlus",
@@ -83,11 +83,12 @@ public class ImageJPatcher
         // hacker.insertAfterMethod("ij.ImagePlus", "public void hide()");
         // hacker.insertAfterMethod("ij.ImagePlus", "public void close()");
         // hacker.loadClass("ij.ImagePlus");
-        //
-        // // override behavior of ij.gui.ImageWindow
+        
+        // override behavior of ij.gui.ImageWindow
         // hacker.insertMethod("ij.gui.ImageWindow", "public void setVisible(boolean vis)");
         // hacker.insertMethod("ij.gui.ImageWindow", "public void show()");
         // hacker.insertBeforeMethod("ij.gui.ImageWindow", "public void close()");
-        // hacker.loadClass("ij.gui.ImageWindow");
+        hacker.insertAfterMethod("ij.gui.ImageWindow", "public void windowActivated(java.awt.event.WindowEvent e)");
+        hacker.loadClass("ij.gui.ImageWindow");
     }
 }

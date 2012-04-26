@@ -25,6 +25,7 @@ import icy.preferences.ApplicationPreferences;
 import icy.preferences.CanvasPreferences;
 import icy.preferences.XMLPreferences;
 import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.sequence.DimensionId;
@@ -707,7 +708,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         private double startRotationZ;
         private boolean moving;
         private boolean rotating;
-        private boolean hasMouseFocus;
+        boolean hasMouseFocus;
 
         public CanvasView()
         {
@@ -2069,7 +2070,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         });
 
-        final IcyButton zoomPlus = new IcyButton(ResourceUtil.ICON_PLUS, ICON_SIZE);
+        final IcyButton zoomPlus = new IcyButton(new IcyIcon(ResourceUtil.ICON_PLUS, ICON_SIZE));
         zoomPlus.setFlat(true);
         zoomPlus.setToolTipText("Increase zoom factor");
         zoomPlus.addActionListener(new ActionListener()
@@ -2086,7 +2087,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         });
 
-        final IcyButton zoomMinus = new IcyButton(ResourceUtil.ICON_MINUS, ICON_SIZE);
+        final IcyButton zoomMinus = new IcyButton(new IcyIcon(ResourceUtil.ICON_MINUS, ICON_SIZE));
         zoomMinus.setFlat(true);
         zoomMinus.setToolTipText("Reduce zoom factor");
         zoomMinus.addActionListener(new ActionListener()
@@ -2103,7 +2104,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         });
 
-        final IcyButton rotateUnclock = new IcyButton(ResourceUtil.ICON_ROTATE_UNCLOCK, ICON_SIZE);
+        final IcyButton rotateUnclock = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROTATE_UNCLOCK, ICON_SIZE));
         rotateUnclock.setFlat(true);
         rotateUnclock.setToolTipText("Rotate counter clockwise");
         rotateUnclock.addActionListener(new ActionListener()
@@ -2115,7 +2116,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         });
 
-        final IcyButton rotateClock = new IcyButton(ResourceUtil.ICON_ROTATE_CLOCK, ICON_SIZE);
+        final IcyButton rotateClock = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROTATE_CLOCK, ICON_SIZE));
         rotateClock.setFlat(true);
         rotateClock.setToolTipText("Rotate clockwise");
         rotateClock.addActionListener(new ActionListener()
@@ -2127,7 +2128,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         });
 
-        zoomFitImageButton = new IcyButton(ICON_FIT_IMAGE);
+        zoomFitImageButton = new IcyButton(new IcyIcon(ICON_FIT_IMAGE));
         zoomFitImageButton.setFocusable(false);
         zoomFitImageButton.setToolTipText("Fit window to image size");
         zoomFitImageButton.addActionListener(new ActionListener()
@@ -2139,7 +2140,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         });
 
-        centerImageButton = new IcyButton(ICON_CENTER_IMAGE);
+        centerImageButton = new IcyButton(new IcyIcon(ICON_CENTER_IMAGE));
         centerImageButton.setFocusable(false);
         centerImageButton.setToolTipText("Center image in window");
         centerImageButton.addActionListener(new ActionListener()
@@ -2151,7 +2152,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
         });
 
-        zoomFitCanvasButton = new IcyToggleButton(ICON_FIT_CANVAS);
+        zoomFitCanvasButton = new IcyToggleButton(new IcyIcon(ICON_FIT_CANVAS));
         zoomFitCanvasButton.setSelected(preferences.getBoolean(ID_FIT_CANVAS, false));
         zoomFitCanvasButton.setFocusable(false);
         zoomFitCanvasButton.setToolTipText("Keep image fitting to window size");

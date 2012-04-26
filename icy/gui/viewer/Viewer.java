@@ -39,6 +39,7 @@ import icy.gui.plugin.PluginComboBoxRenderer;
 import icy.gui.viewer.ViewerEvent.ViewerEventType;
 import icy.image.IcyBufferedImage;
 import icy.image.lut.LUT;
+import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
@@ -356,6 +357,11 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             public void icyFrameActivated(IcyFrameEvent e)
             {
                 Icy.getMainInterface().setFocusedViewer(Viewer.this);
+
+                // lost focus on ImageJ image
+                final ImageJWrapper ij = Icy.getMainInterface().getImageJ();
+                if (ij != null)
+                    ij.setActiveImage(null);
             }
 
             @Override
@@ -607,7 +613,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         buildCanvasCombo();
 
         // build buttons
-        layersEnabledButton = new IcyToggleButton(ICON_LAYER);
+        layersEnabledButton = new IcyToggleButton(new IcyIcon(ICON_LAYER));
         layersEnabledButton.setToolTipText("Hide layers");
         layersEnabledButton.setFocusable(false);
         layersEnabledButton.setSelected(true);

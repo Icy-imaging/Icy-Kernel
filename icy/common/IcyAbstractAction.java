@@ -22,24 +22,6 @@ public abstract class IcyAbstractAction extends AbstractAction
 
     private static final int DEFAULT_ICON_SIZE = 20;
 
-    /**
-     * 
-     */
-    public IcyAbstractAction(String name, String iconName, String description, int keyCode, int modifiers)
-    {
-        this(name, new IcyIcon(iconName, DEFAULT_ICON_SIZE), description, keyCode, modifiers);
-    }
-
-    public IcyAbstractAction(String name, String iconName, String description, int keyCode)
-    {
-        this(name, new IcyIcon(iconName, DEFAULT_ICON_SIZE), description, keyCode, 0);
-    }
-
-    public IcyAbstractAction(String name, String iconName, String description)
-    {
-        this(name, new IcyIcon(iconName, DEFAULT_ICON_SIZE), description, 0, 0);
-    }
-
     public IcyAbstractAction(String name, IcyIcon icon, String description, int keyCode, int modifiers)
     {
         super(name, icon);
@@ -60,28 +42,50 @@ public abstract class IcyAbstractAction extends AbstractAction
         this(name, icon, description, 0, 0);
     }
 
-    /**
-     * 
-     */
-    public IcyAbstractAction(String name, String iconName)
-    {
-        this(name, new IcyIcon(iconName, DEFAULT_ICON_SIZE), null, 0, 0);
-    }
-
-    /**
-     * @param name
-     */
     public IcyAbstractAction(String name, IcyIcon icon)
     {
         super(name, icon);
     }
 
-    /**
-     * @param name
-     */
     public IcyAbstractAction(String name)
     {
         super(name);
+    }
+
+    /**
+     * @deprecated Uses {@link #IcyAbstractAction(String, IcyIcon, String, int, int)} instead.
+     */
+    @Deprecated
+    public IcyAbstractAction(String name, String iconName, String description, int keyCode, int modifiers)
+    {
+        this(name, new IcyIcon(iconName, DEFAULT_ICON_SIZE), description, keyCode, modifiers);
+    }
+
+    /**
+     * @deprecated Uses {@link #IcyAbstractAction(String, IcyIcon, String, int)} instead.
+     */
+    @Deprecated
+    public IcyAbstractAction(String name, String iconName, String description, int keyCode)
+    {
+        this(name, new IcyIcon(iconName, DEFAULT_ICON_SIZE), description, keyCode, 0);
+    }
+
+    /**
+     * @deprecated Uses {@link #IcyAbstractAction(String, IcyIcon, String)} instead.
+     */
+    @Deprecated
+    public IcyAbstractAction(String name, String iconName, String description)
+    {
+        this(name, new IcyIcon(iconName, DEFAULT_ICON_SIZE), description, 0, 0);
+    }
+
+    /**
+     * @deprecated Uses {@link #IcyAbstractAction(String, IcyIcon)} instead.
+     */
+    @Deprecated
+    public IcyAbstractAction(String name, String iconName)
+    {
+        this(name, new IcyIcon(iconName, DEFAULT_ICON_SIZE), null, 0, 0);
     }
 
     public void setName(String value)

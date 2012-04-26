@@ -12,6 +12,7 @@
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <javaElement handleIdentifier="=Icy-Kernel/&lt;res.xml"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;res.image.help"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;res.image.background"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;res.image.splash"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;res.sound"/>

@@ -26,11 +26,19 @@ public class IcyCommandButton extends JCommandButton
         super(title, icon);
     }
 
+    /**
+     * @deprecated Uses {@link #IcyCommandButton(String, IcyIcon)} instead.
+     */
+    @Deprecated
     public IcyCommandButton(String title, Image icon)
     {
         this(title, new IcyIcon(icon));
     }
 
+    /**
+     * @deprecated Uses {@link #IcyCommandButton(String, IcyIcon)} instead.
+     */
+    @Deprecated
     public IcyCommandButton(String title, String iconName)
     {
         this(title, new IcyIcon(iconName));

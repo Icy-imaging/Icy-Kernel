@@ -5,6 +5,7 @@ package icy.gui.component;
 
 import icy.gui.component.button.IcyButton;
 import icy.resource.ResourceUtil;
+import icy.resource.icon.IcyIcon;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -64,7 +65,7 @@ public class ExtTabbedPanel extends JTabbedPane
             label = new JLabel(title + " ", icon, SwingConstants.CENTER);
             label.setOpaque(false);
 
-            externButton = new IcyButton(ResourceUtil.ICON_EXPAND, 16);
+            externButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_EXPAND, 16));
             externButton.setFlat(true);
             externButton.setOpaque(false);
             externButton.setContentAreaFilled(false);
@@ -166,7 +167,8 @@ public class ExtTabbedPanel extends JTabbedPane
             if (tabComp != null)
             {
                 // use its parameter
-                insertTab(tabComp.getTitle(), tabComp.getIcon(), component, tabComp.tip, Math.min(tabComp.index, getTabCount()));
+                insertTab(tabComp.getTitle(), tabComp.getIcon(), component, tabComp.tip,
+                        Math.min(tabComp.index, getTabCount()));
                 return component;
             }
         }

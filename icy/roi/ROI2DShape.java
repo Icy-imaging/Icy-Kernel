@@ -666,7 +666,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         ((ROI2DShapePainter) painter).needRebuild = true;
     }
 
-    protected Anchor2D getSelectedControlPoint()
+    protected Anchor2D getSelectedPoint()
     {
         for (Anchor2D pt : controlPoints)
             if (pt.isSelected())
@@ -675,10 +675,19 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         return null;
     }
 
+    /**
+     * @deprecated Uses {@link #getSelectedPoint()} instead.
+     */
+    @Deprecated
+    protected Anchor2D getSelectedControlPoint()
+    {
+        return getSelectedPoint();
+    }
+
     @Override
     public boolean hasSelectedPoint()
     {
-        return (getSelectedControlPoint() != null);
+        return (getSelectedPoint() != null);
     }
 
     @Override
@@ -801,7 +810,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         if (!canRemovePoint())
             return false;
 
-        final Anchor2D selectedPoint = getSelectedControlPoint();
+        final Anchor2D selectedPoint = getSelectedPoint();
 
         if (selectedPoint != null)
         {
@@ -1000,7 +1009,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         return false;
     }
 
-    ArrayList<Point2D> getPositions()
+    /**
+     * Return the list of (control) points for this ROI.
+     */
+    public ArrayList<Point2D> getPoints()
     {
         final ArrayList<Point2D> result = new ArrayList<Point2D>();
 
