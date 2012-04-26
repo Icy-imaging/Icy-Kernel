@@ -138,6 +138,8 @@ public class OMEUtil
         {
             meta = createOMEMetadata();
             meta.createRoot();
+            meta.setImageID(MetadataTools.createLSID("Image", 0), 0);
+            meta.setImageName(name, 0);
         }
         else
         {
@@ -152,12 +154,12 @@ public class OMEUtil
 
             // init pixels object as we set specific size here
             ome.getImage(0).setPixels(new Pixels());
-        }
 
-        if (StringUtil.isEmpty(meta.getImageID(0)))
-            meta.setImageID(MetadataTools.createLSID("Image", 0), 0);
-        if (StringUtil.isEmpty(meta.getImageName(0)))
-            meta.setImageName(name, 0);
+            if (StringUtil.isEmpty(meta.getImageID(0)))
+                meta.setImageID(MetadataTools.createLSID("Image", 0), 0);
+            if (StringUtil.isEmpty(meta.getImageName(0)))
+                meta.setImageName(name, 0);
+        }
 
         meta.setPixelsID(MetadataTools.createLSID("Pixels", 0), 0);
         // prefer big endian as JVM is actually big endian
