@@ -60,7 +60,8 @@ public class ImageJWrapper extends ImageJ
      * internal
      */
     final ArrayList<ImageJActiveImageListener> listeners;
-
+    MenuBar menuBarSave;
+    
     public ImageJWrapper()
     {
         // silent creation
@@ -129,7 +130,7 @@ public class ImageJWrapper extends ImageJ
                         swingPanel.remove(swingMenuBar);
 
                     // update menu
-                    swingMenuBar = SwingUtil.getJMenuBar(getMenuBar(), true);
+                    swingMenuBar = SwingUtil.getJMenuBar(menuBarSave, true);
 
                     swingPanel.add(swingMenuBar, BorderLayout.NORTH);
                     swingPanel.validate();
@@ -230,7 +231,7 @@ public class ImageJWrapper extends ImageJ
     @Override
     public void setMenuBar(MenuBar mb)
     {
-        super.setMenuBar(mb);
+    	menuBarSave = mb;
         menuChanged();
     }
 
