@@ -153,6 +153,7 @@ public class ComponentUtil
      * 
      * @deprecated
      */
+    @Deprecated
     public static void center(IcyFrame f)
     {
         f.center();
@@ -180,6 +181,20 @@ public class ComponentUtil
     {
         dst.setLocation(src.getX() + ((src.getWidth() - dst.getWidth()) / 2),
                 src.getY() + ((src.getHeight() - dst.getHeight()) / 2));
+    }
+
+    /**
+     * Returns the center position of the specified component.
+     */
+    public static Point getCenter(Component c)
+    {
+        if (c != null)
+        {
+            final Rectangle r = c.getBounds();
+            return new Point((r.x + r.width) / 2, (r.y + r.height) / 2);
+        }
+
+        return new Point(0, 0);
     }
 
     public static int getComponentIndex(Component c)

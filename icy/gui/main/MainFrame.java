@@ -49,6 +49,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -272,7 +273,7 @@ public class MainFrame extends JRibbonFrame
             add(mainPane, BorderLayout.CENTER);
 
         validate();
-        
+
         // initialize now some stuff that need main frame to be initialized
         mainRibbon.init();
 
@@ -479,7 +480,7 @@ public class MainFrame extends JRibbonFrame
         for (Frame f : Frame.getFrames())
             // add visible and resizable frame contained in this screen
             if ((f != this) && !ComponentUtil.isMinimized(f) && f.isResizable() && f.isVisible()
-                    && bounds.contains(f.getLocation()))
+                    && bounds.contains(ComponentUtil.getCenter(f)))
                 frames.add(f);
 
         // this screen contains the main frame ?
@@ -589,7 +590,7 @@ public class MainFrame extends JRibbonFrame
         for (Frame f : Frame.getFrames())
             // add visible and resizable frame contained in this screen
             if ((f != this) && !ComponentUtil.isMinimized(f) && f.isResizable() && f.isVisible()
-                    && bounds.contains(f.getLocation()))
+                    && bounds.contains(ComponentUtil.getCenter(f)))
                 frames.add(f);
 
         // this screen contains the main frame ?
@@ -656,8 +657,44 @@ public class MainFrame extends JRibbonFrame
 
         int k = 0;
         for (int i = 0; i < numLine; ++i)
+        {
             for (int j = 0; j < numCol && k < numFrames; ++j, ++k)
-                frames.get(i * numCol + j).setBounds(x + (j * dx), y + (i * dy), dx, dy);
+            {
+                final int fx = x + (j * dx);
+                final int fy = y + (i * dy);
+
+                final int ind = getClosestFrameIndex(frames, (fx + dx) / 2, (fy + dy) / 2);
+                frames.get(ind).setBounds(fx, fy, dx, dy);
+                frames.remove(ind);
+            }
+        }
+    }
+
+    private int getClosestFrameIndex(ArrayList<Frame> frames, int x, int y)
+    {
+        if (frames.size() == 0)
+            return -1;
+
+        final double dx = x;
+        final double dy = y;
+
+        int result = 0;
+        final Point fc0 = ComponentUtil.getCenter(frames.get(0));
+        double minDist = Point2D.distanceSq(fc0.x, fc0.y, dx, dy);
+
+        for (int i = 1; i < frames.size(); i++)
+        {
+            final Point fc = ComponentUtil.getCenter(frames.get(i));
+            final double dist = Point2D.distanceSq(fc.x, fc.y, dx, dy);
+
+            if (dist < minDist)
+            {
+                minDist = dist;
+                result = i;
+            }
+        }
+
+        return result;
     }
 
     /**

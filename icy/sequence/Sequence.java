@@ -377,8 +377,6 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      */
     public Sequence convertToType(DataType dataType, boolean rescale)
     {
-        final Sequence output = new Sequence();
-
         final double boundsSrc[] = getGlobalChannelTypeBounds();
         final double boundsDst[];
 
@@ -388,7 +386,21 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
             boundsDst = boundsSrc;
 
         // use scaler to scale data
-        final Scaler scaler = new Scaler(boundsSrc[0], boundsSrc[1], boundsDst[0], boundsDst[1], false);
+        return convertToType(dataType, new Scaler(boundsSrc[0], boundsSrc[1], boundsDst[0], boundsDst[1], false));
+    }
+
+    /**
+     * Returns a new sequence with specified dataType from current sequence.
+     * 
+     * @param dataType
+     *        data type wanted.
+     * @param scaler
+     *        scaler for scaling internal data during conversion.
+     * @return converted image
+     */
+    public Sequence convertToType(DataType dataType, Scaler scaler)
+    {
+        final Sequence output = new Sequence();
 
         output.beginUpdate();
         try

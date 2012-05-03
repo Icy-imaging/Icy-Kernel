@@ -44,7 +44,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
 /**
- * This class is a toolbox with many simple gui routines.
+ * This class is a toolbox with many simple GUI routines.
  * 
  * @author Fabrice & Stephane
  */
@@ -427,5 +427,4 @@ public class GuiUtil
     {
         GraphicsUtil.drawCenteredString(g, string, w / 2, h / 2, false);
     }
-
 }

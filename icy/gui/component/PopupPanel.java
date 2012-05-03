@@ -55,6 +55,7 @@ public class PopupPanel extends JPanel
             super(text, new IcyIcon(image, 14));
 
             setHorizontalAlignment(SwingConstants.LEADING);
+            setFocusPainted(false);
 
             if (subPopupPanel)
                 ComponentUtil.setFixedHeight(this, getTextSize().height);

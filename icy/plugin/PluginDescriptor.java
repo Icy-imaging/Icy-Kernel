@@ -94,10 +94,11 @@ public class PluginDescriptor implements XMLPersistent
     private static final int IMAGE_SIZE = 256;
 
     private static final URL DEFAULT_ICON_URL = Plugin.class.getResource("plugin_icon.png");
-    private static final ImageIcon DEFAULT_ICON = ResourceUtil.getImageIcon(ImageUtil.loadImage(DEFAULT_ICON_URL),
-            ICON_SIZE);
     private static final URL DEFAULT_IMAGE_URL = Plugin.class.getResource("plugin.png");
-    private static final Image DEFAULT_IMAGE = ImageUtil.scaleImage(ImageUtil.loadImage(DEFAULT_IMAGE_URL), IMAGE_SIZE,
+
+    public static final ImageIcon DEFAULT_ICON = ResourceUtil.getImageIcon(ImageUtil.loadImage(DEFAULT_ICON_URL),
+            ICON_SIZE);
+    public static final Image DEFAULT_IMAGE = ImageUtil.scaleImage(ImageUtil.loadImage(DEFAULT_IMAGE_URL), IMAGE_SIZE,
             IMAGE_SIZE);
 
     static final String ID_CLASSNAME = "classname";

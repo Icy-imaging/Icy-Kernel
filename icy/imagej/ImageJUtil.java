@@ -317,6 +317,7 @@ public class ImageJUtil
             r.setC(roi.getCPosition() - 1);
             r.setZ(roi.getZPosition() - 1);
             r.setT(roi.getTPosition() - 1);
+            r.setSelected(false, false);
         }
 
         return result;

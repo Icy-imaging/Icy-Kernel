@@ -295,15 +295,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
                 // then to ROI
                 super.mousePressed(e, imagePoint, canvas);
-
-                // not yet consumed...
-                if (!e.isConsumed())
-                {
-                    // right button action
-                    if (EventUtil.isRightMouseButton(e))
-                        // unselect
-                        ROI2DShape.this.setSelected(false, false);
-                }
             }
             finally
             {
@@ -364,6 +355,22 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
                 // then to ROI
                 super.mouseClick(e, imagePoint, canvas);
+
+                // not yet consumed...
+                if (!e.isConsumed())
+                {
+                    // single click
+                    if (e.getClickCount() == 1)
+                    {
+                        // right click action
+                        if (EventUtil.isRightMouseButton(e))
+                        {
+                            // unselect (don't consume event)
+                            if (selected)
+                                ROI2DShape.this.setSelected(false, false);
+                        }
+                    }
+                }
             }
             finally
             {
@@ -484,7 +491,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                 // 3D canvas
                 final Canvas3D canvas3d = (Canvas3D) canvas;
 
-                // FIXME : probably need a better implementation
+                // FIXME : need a better implementation
                 final double[] s = canvas3d.getVolumeScale();
 
                 // scaling changed ?

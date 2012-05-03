@@ -255,9 +255,9 @@ public abstract class ROI2D extends ROI
                         else if (selected)
                         {
                             // try to add a new point
-                            addPointAt(imagePoint, EventUtil.isControlDown(e));
-                            // consume
-                            e.consume();
+                            if (addPointAt(imagePoint, EventUtil.isControlDown(e)))
+                                // consume
+                                e.consume();
                         }
                     }
                     else
@@ -268,9 +268,9 @@ public abstract class ROI2D extends ROI
                         if (selected)
                         {
                             // try to remove point
-                            removePointAt(canvas, imagePoint);
-                            // consume
-                            e.consume();
+                            if (removePointAt(canvas, imagePoint))
+                                // consume
+                                e.consume();
                         }
                     }
                 }
@@ -308,7 +308,7 @@ public abstract class ROI2D extends ROI
             // no editable --> no action here
             if (!editable)
                 return;
-            
+
             if (!e.isConsumed())
             {
                 // unselect ROI on double click
@@ -316,7 +316,7 @@ public abstract class ROI2D extends ROI
                 {
                     if (selected)
                     {
-                        setSelected(false, false);
+                        setSelected(false, true);
                         e.consume();
                     }
                 }

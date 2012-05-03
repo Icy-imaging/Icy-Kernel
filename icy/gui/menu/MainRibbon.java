@@ -60,6 +60,7 @@ import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceLoader;
 
 import java.awt.Component;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -67,6 +68,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import javax.swing.ImageIcon;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -101,23 +103,34 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     {
         final String name = plugin.getName();
         final String className = plugin.getClassName();
+        final String description = plugin.getDescription();
         final String website = plugin.getWeb();
         final String author = plugin.getAuthor();
+        final ImageIcon plugIcon = plugin.getIcon();
+        final Image plugImg = plugin.getImage();
 
         // udpate text & icon
         button.setText(name);
-        button.setIcon(new BasicResizableIcon(plugin.getIcon()));
+        button.setIcon(new BasicResizableIcon(plugIcon));
         // save class name here
         button.setName(className);
 
         // build richToolTip for command button
-        final RichTooltip richToolTip = new RichTooltip(name, plugin.getDescription());
-        richToolTip.setMainImage(plugin.getIconAsImage());
-        richToolTip.setFooterImage(plugin.getImage());
+        final RichTooltip richToolTip = new RichTooltip();
+
+        richToolTip.setTitle(name);
+        if (plugIcon != PluginDescriptor.DEFAULT_ICON)
+            richToolTip.setMainImage(plugIcon.getImage());
+
+        if (!StringUtil.isEmpty(description))
+            richToolTip.addDescriptionSection(description);
         if (!StringUtil.isEmpty(website))
             richToolTip.addDescriptionSection(website);
         if (!StringUtil.isEmpty(author))
             richToolTip.addDescriptionSection(author);
+
+        if (plugImg != PluginDescriptor.DEFAULT_IMAGE)
+            richToolTip.setFooterImage(plugin.getImage());
 
         button.setActionRichTooltip(richToolTip);
 
