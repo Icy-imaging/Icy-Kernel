@@ -29,6 +29,7 @@ import java.awt.Frame;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -186,15 +187,15 @@ public class ComponentUtil
     /**
      * Returns the center position of the specified component.
      */
-    public static Point getCenter(Component c)
+    public static Point2D.Double getCenter(Component c)
     {
         if (c != null)
         {
             final Rectangle r = c.getBounds();
-            return new Point(r.x + (r.width / 2), r.y + (r.height / 2));
+            return new Point2D.Double(r.getX() + (r.getWidth() / 2d), r.getY() + (r.getHeight() / 2d));
         }
 
-        return new Point(0, 0);
+        return new Point2D.Double(0d, 0d);
     }
 
     public static int getComponentIndex(Component c)

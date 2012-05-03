@@ -27,6 +27,7 @@ import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.MainRibbon;
 import icy.gui.util.WindowPositionSaver;
+import icy.math.HungarianAlgorithm;
 import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyApplicationIcon;
@@ -652,49 +653,34 @@ public class MainFrame extends JRibbonFrame
                 break;
         }
 
+        final double[][] framesDistances = new double[numFrames][numFrames];
+
         final int dx = w / numCol;
         final int dy = h / numLine;
-
         int k = 0;
-        for (int i = 0; i < numLine; ++i)
+
+        for (int i = 0; i < numLine; i++)
         {
-            for (int j = 0; j < numCol && k < numFrames; ++j, ++k)
+            for (int j = 0; j < numCol && k < numFrames; j++, k++)
             {
-                final int fx = x + (j * dx);
-                final int fy = y + (i * dy);
+                final double[] distances = framesDistances[k];
+                final double fx = x + (j * dx) + (dx / 2d);
+                final double fy = y + (i * dy) + (dy / 2d);
 
-                final int ind = getClosestFrameIndex(frames, (fx + dx) / 2, (fy + dy) / 2);
-                frames.get(ind).setBounds(fx, fy, dx, dy);
-                frames.remove(ind);
-            }
-        }
-    }
-
-    private int getClosestFrameIndex(ArrayList<Frame> frames, int x, int y)
-    {
-        if (frames.size() == 0)
-            return -1;
-
-        final double dx = x;
-        final double dy = y;
-
-        int result = 0;
-        final Point fc0 = ComponentUtil.getCenter(frames.get(0));
-        double minDist = Point2D.distanceSq(fc0.x, fc0.y, dx, dy);
-
-        for (int i = 1; i < frames.size(); i++)
-        {
-            final Point fc = ComponentUtil.getCenter(frames.get(i));
-            final double dist = Point2D.distanceSq(fc.x, fc.y, dx, dy);
-
-            if (dist < minDist)
-            {
-                minDist = dist;
-                result = i;
+                for (int f = 0; f < numFrames; f++)
+                {
+                    final Point2D.Double center = ComponentUtil.getCenter(frames.get(f));
+                    distances[f] = Point2D.distanceSq(center.x, center.y, fx, fy);
+                }
             }
         }
 
-        return result;
+        final int[] framePos = new HungarianAlgorithm(framesDistances).resolve();
+
+        k = 0;
+        for (int i = 0; i < numLine; i++)
+            for (int j = 0; j < numCol && k < numFrames; j++, k++)
+                frames.get(framePos[k]).setBounds(x + (j * dx), y + (i * dy), dx, dy);
     }
 
     /**

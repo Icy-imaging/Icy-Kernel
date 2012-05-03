@@ -20,6 +20,7 @@ package icy.gui.main;
 
 import icy.gui.component.ComponentUtil;
 import icy.main.Icy;
+import icy.math.HungarianAlgorithm;
 import icy.resource.ResourceUtil;
 import icy.util.GraphicsUtil;
 import icy.util.Random;
@@ -31,7 +32,6 @@ import java.awt.Composite;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -370,22 +370,34 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
                 break;
         }
 
+        final double[][] framesDistances = new double[numFrames][numFrames];
+
         final int dx = w / numCol;
         final int dy = h / numLine;
-
         int k = 0;
-        for (int i = 0; i < numLine; ++i)
-        {
-            for (int j = 0; j < numCol && k < numFrames; ++j, ++k)
-            {
-                final int x = j * dx;
-                final int y = i * dy;
 
-                final int ind = getClosestFrameIndex(frames, (x + dx) / 2, (y + dy) / 2);
-                frames.get(ind).setBounds(x, y, dx, dy);
-                frames.remove(ind);
+        for (int i = 0; i < numLine; i++)
+        {
+            for (int j = 0; j < numCol && k < numFrames; j++, k++)
+            {
+                final double[] distances = framesDistances[k];
+                final double x = (j * dx) + (dx / 2d);
+                final double y = (i * dy) + (dy / 2d);
+
+                for (int f = 0; f < numFrames; f++)
+                {
+                    final Point2D.Double center = ComponentUtil.getCenter(frames.get(f));
+                    distances[f] = Point2D.distanceSq(center.x, center.y, x, y);
+                }
             }
         }
+
+        final int[] framePos = new HungarianAlgorithm(framesDistances).resolve();
+
+        k = 0;
+        for (int i = 0; i < numLine; i++)
+            for (int j = 0; j < numCol && k < numFrames; j++, k++)
+                frames.get(framePos[k]).setBounds(j * dx, i * dy, dx, dy);
     }
 
     /**
@@ -395,33 +407,6 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
     public void organizeTile()
     {
         organizeTile(MainFrame.TILE_GRID);
-    }
-
-    private int getClosestFrameIndex(ArrayList<JInternalFrame> frames, int x, int y)
-    {
-        if (frames.size() == 0)
-            return -1;
-
-        final double dx = x;
-        final double dy = y;
-
-        int result = 0;
-        final Point fc0 = ComponentUtil.getCenter(frames.get(0));
-        double minDist = Point2D.distanceSq(fc0.x, fc0.y, dx, dy);
-
-        for (int i = 1; i < frames.size(); i++)
-        {
-            final Point fc = ComponentUtil.getCenter(frames.get(i));
-            final double dist = Point2D.distanceSq(fc.x, fc.y, dx, dy);
-
-            if (dist < minDist)
-            {
-                minDist = dist;
-                result = i;
-            }
-        }
-
-        return result;
     }
 
     /**
