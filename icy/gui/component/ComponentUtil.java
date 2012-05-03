@@ -191,7 +191,7 @@ public class ComponentUtil
         if (c != null)
         {
             final Rectangle r = c.getBounds();
-            return new Point((r.x + r.width) / 2, (r.y + r.height) / 2);
+            return new Point(r.x + (r.width / 2), r.y + (r.height / 2));
         }
 
         return new Point(0, 0);
