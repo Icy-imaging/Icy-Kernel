@@ -19,6 +19,7 @@
 package icy.network;
 
 import icy.common.listener.ProgressListener;
+import icy.common.listener.weak.WeakListener;
 import icy.preferences.ApplicationPreferences;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
@@ -39,14 +40,18 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
+import java.net.NetworkInterface;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.security.Security;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import sun.misc.BASE64Encoder;
 
@@ -55,13 +60,278 @@ import sun.misc.BASE64Encoder;
  */
 public class NetworkUtil
 {
+    public interface NetworkConnectionListener
+    {
+        /**
+         * Network interface connected.
+         */
+        public void networkConnected();
+
+        /**
+         * Network interface disconnected.
+         */
+        public void networkDisconnected();
+
+        /**
+         * Internet connection available.
+         */
+        public void internetConnected();
+
+        /**
+         * Internet connection no more available.
+         */
+        public void internetDisconnected();
+    }
+
+    /**
+     * Weak listener wrapper for NetworkConnectionListener.
+     * 
+     * @author Stephane
+     */
+    public static class WeakNetworkConnectionListener extends WeakListener<NetworkConnectionListener> implements
+            NetworkConnectionListener
+    {
+        public WeakNetworkConnectionListener(NetworkConnectionListener listener)
+        {
+            super(listener);
+        }
+
+        @Override
+        public void removeListener(Object source)
+        {
+            removeNetworkConnectionListener(this);
+        }
+
+        @Override
+        public void networkConnected()
+        {
+            final NetworkConnectionListener listener = getListener();
+
+            if (listener != null)
+                listener.networkConnected();
+        }
+
+        @Override
+        public void networkDisconnected()
+        {
+            final NetworkConnectionListener listener = getListener();
+
+            if (listener != null)
+                listener.networkDisconnected();
+        }
+
+        @Override
+        public void internetConnected()
+        {
+            final NetworkConnectionListener listener = getListener();
+
+            if (listener != null)
+                listener.internetConnected();
+        }
+
+        @Override
+        public void internetDisconnected()
+        {
+            final NetworkConnectionListener listener = getListener();
+
+            if (listener != null)
+                listener.internetDisconnected();
+        }
+    }
+
     static final String REPORT_URL = "http://www.bioimageanalysis.org/icy/index.php";
+
     public static final String USER_INTERRUPT_MESS = "Load interrupted by user";
+
+    /**
+     * List of all listeners on network connection changes.
+     */
+    protected final static Set<NetworkConnectionListener> listeners = new HashSet<NetworkConnectionListener>();
+
+    protected static boolean networkConnected;
+    protected static boolean internetConnected;
+
+    public static final Thread internetMonitor = new Thread(new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            while (true)
+            {
+                boolean connected = false;
+
+                // only necessary if network connected
+                if (hasNetworkConnection())
+                {
+                    URLConnection urlConnection;
+
+                    try
+                    {
+                        urlConnection = openConnection("http://www.google.com", true, false);
+                        if (urlConnection != null)
+                        {
+                            urlConnection.setConnectTimeout(3000);
+                            urlConnection.setReadTimeout(3000);
+                            urlConnection.getInputStream();
+                            connected = true;
+                        }
+                    }
+                    catch (Throwable t)
+                    {
+                        // ignore
+                    }
+
+                    if (!connected)
+                    {
+                        try
+                        {
+                            urlConnection = openConnection("http://www.java.com", true, false);
+                            if (urlConnection != null)
+                            {
+                                urlConnection.setConnectTimeout(3000);
+                                urlConnection.setReadTimeout(3000);
+                                urlConnection.getInputStream();
+                                connected = true;
+                            }
+                        }
+                        catch (Throwable t)
+                        {
+                            // ignore
+                        }
+                    }
+                }
+
+                setInternetConnected(connected);
+                ThreadUtil.sleep(1000);
+            }
+        }
+    }, "Internet monitor");
+    
+    public static final Thread networkMonitor = new Thread(new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            while (true)
+            {
+                boolean connected = false;
+
+                try
+                {
+                    final Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+
+                    while (interfaces.hasMoreElements() && !connected)
+                    {
+                        final NetworkInterface interf = interfaces.nextElement();
+
+                        if (!interf.isLoopback() && interf.isUp())
+                            connected = true;
+                    }
+                }
+                catch (Throwable t)
+                {
+                    // ignore
+                }
+
+                setNetworkConnected(connected);
+                ThreadUtil.sleep(1000);
+            }
+        }
+    }, "Network monitor");
 
     public static void init()
     {
+        networkConnected = true;
+        internetConnected = true;
+
         // use system proxy by default
         enableSystemProxy();
+
+        // start monitors threads
+        networkMonitor.start();
+        internetMonitor.start();
+    }
+
+    static void setNetworkConnected(boolean value)
+    {
+        // force "Internet connected" to false
+        if (!value)
+            setInternetConnected(false);
+
+        if (networkConnected != value)
+        {
+            networkConnected = value;
+            fireNetworkConnectionEvent(value);
+        }
+    }
+
+    static void setInternetConnected(boolean value)
+    {
+        if (internetConnected != value)
+        {
+            internetConnected = value;
+            fireInternetConnectionEvent(value);
+        }
+    }
+
+    private static void fireInternetConnectionEvent(boolean value)
+    {
+        if (value)
+        {
+            for (NetworkConnectionListener l : listeners)
+                l.internetConnected();
+        }
+        else
+        {
+            for (NetworkConnectionListener l : listeners)
+                l.internetDisconnected();
+        }
+    }
+
+    private static void fireNetworkConnectionEvent(boolean value)
+    {
+        if (value)
+        {
+            for (NetworkConnectionListener l : listeners)
+                l.networkConnected();
+        }
+        else
+        {
+            for (NetworkConnectionListener l : listeners)
+                l.networkDisconnected();
+        }
+    }
+
+    /**
+     * Adds a new listener on network connection change.
+     */
+    public static void addNetworkConnectionListener(NetworkConnectionListener skinChangeListener)
+    {
+        listeners.add(skinChangeListener);
+    }
+
+    /**
+     * Removes a listener on network connection change.
+     */
+    public static void removeNetworkConnectionListener(NetworkConnectionListener skinChangeListener)
+    {
+        listeners.remove(skinChangeListener);
+    }
+
+    /**
+     * Returns true if we currently have network connection (not necessary Internet).
+     */
+    public static boolean hasNetworkConnection()
+    {
+        return networkConnected;
+    }
+
+    /**
+     * Returns true if we currently have Internet connection.
+     */
+    public static boolean hasInternetConnection()
+    {
+        return networkConnected && internetConnected;
     }
 
     /**
@@ -456,31 +726,36 @@ public class NetworkUtil
             {
                 if (displayError)
                 {
-                    String urlString = uc.getURL().toString();
-
-                    // obfuscation
-                    if (urlString.startsWith(ApplicationPreferences.getUpdateRepositoryBase()))
-                    {
-                        if (e instanceof FileNotFoundException)
-                            System.out.println("Update site URL does not exists or file '" + uc.getURL().getPath()
-                                    + "' does not exists.");
-                        else if (e.getMessage().indexOf("HTTP response code: 500 ") != -1)
-                            System.out.println("Network error : can't connect to update site");
-                        else
-                            System.out.println("Can't connect to update site...");
-                    }
+                    if (!hasInternetConnection())
+                        System.out.println("You are not connected to internet.");
                     else
                     {
-                        urlString = "'" + urlString + "'";
+                        String urlString = uc.getURL().toString();
 
-                        if (e instanceof FileNotFoundException)
-                            System.out.println("Address " + urlString + " does not exists.");
-                        else if (e.getMessage().indexOf("HTTP response code: 500 ") != -1)
-                            System.out.println("Network error : can't connect to " + urlString);
+                        // obfuscation
+                        if (urlString.startsWith(ApplicationPreferences.getUpdateRepositoryBase()))
+                        {
+                            if (e instanceof FileNotFoundException)
+                                System.out.println("Update site URL does not exists or file '" + uc.getURL().getPath()
+                                        + "' does not exists.");
+                            else if (e.getMessage().indexOf("HTTP response code: 500 ") != -1)
+                                System.out.println("Network error : can't connect to update site");
+                            else
+                                System.out.println("Can't connect to update site...");
+                        }
                         else
-                            System.out.println("NetworkUtil.getInputStream(" + urlString + ",...) error :");
+                        {
+                            urlString = "'" + urlString + "'";
 
-                        IcyExceptionHandler.showErrorMessage(e, false, false);
+                            if (e instanceof FileNotFoundException)
+                                System.out.println("Address " + urlString + " does not exists.");
+                            else if (e.getMessage().indexOf("HTTP response code: 500 ") != -1)
+                                System.out.println("Network error : can't connect to " + urlString);
+                            else
+                                System.out.println("NetworkUtil.getInputStream(" + urlString + ",...) error :");
+
+                            IcyExceptionHandler.showErrorMessage(e, false, false);
+                        }
                     }
                 }
             }

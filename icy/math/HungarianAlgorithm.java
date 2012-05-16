@@ -309,7 +309,7 @@ public class HungarianAlgorithm
         }
 
         // subtract minimum from uncovered elements
-        // and add it to elements covered 2 times
+        // and add it to double covered elements
         for (int r = 0; r < numRow; r++)
         {
             final double[] rowCosts = costs[r];

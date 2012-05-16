@@ -6,7 +6,6 @@ package icy.gui.frame.progress;
 import icy.gui.frame.IcyFrame;
 import icy.gui.util.GuiUtil;
 import icy.preferences.GeneralPreferences;
-import icy.preferences.XMLPreferences;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
@@ -31,16 +30,12 @@ import javax.swing.text.html.HTMLDocument;
  */
 public class ToolTipFrame extends TaskFrame
 {
-    // property
-    final private static String ID_DISPLAY = "display";
-
     Timer timer;
     JEditorPane editorPane;
     JCheckBox doNotDisplayCheckbox;
 
     final int liveTime;
     final String id;
-    final XMLPreferences pref;
 
     /**
      * Show an tool tip with specified parameters
@@ -62,18 +57,14 @@ public class ToolTipFrame extends TaskFrame
 
         if (!StringUtil.isEmpty(id))
         {
-            pref = GeneralPreferences.getPreferencesToolTips().node(id);
-
             // tool tip should not be displayed ?
-            if (alreadyExist(id) || !pref.getBoolean(ID_DISPLAY, true))
+            if (alreadyExist(id) || !GeneralPreferences.getPreferencesToolTips().getBoolean(id, true))
             {
                 // close and exit
                 close();
                 return;
             }
         }
-        else
-            pref = null;
 
         timer = new Timer(liveTime * 1000, new ActionListener()
         {
@@ -108,13 +99,13 @@ public class ToolTipFrame extends TaskFrame
                     }
                 });
 
-                doNotDisplayCheckbox = new JCheckBox("Do not display in future", false);
+                doNotDisplayCheckbox = new JCheckBox("Do not display again", false);
                 doNotDisplayCheckbox.setToolTipText("Do not display this tooltip the next time");
 
                 mainPanel.setLayout(new BorderLayout());
 
                 mainPanel.add(editorPane, BorderLayout.CENTER);
-                if (pref != null)
+                if (!StringUtil.isEmpty(ToolTipFrame.this.id))
                     mainPanel.add(GuiUtil.createLineBoxPanel(doNotDisplayCheckbox, Box.createHorizontalGlue()),
                             BorderLayout.SOUTH);
                 pack();
@@ -182,8 +173,8 @@ public class ToolTipFrame extends TaskFrame
         close();
 
         // save display flag only if set to false
-        if ((pref != null) && doNotDisplayCheckbox.isSelected())
-            pref.putBoolean(ID_DISPLAY, false);
+        if (!StringUtil.isEmpty(id) && doNotDisplayCheckbox.isSelected())
+            GeneralPreferences.getPreferencesToolTips().putBoolean(id, false);
     }
 
     public void setText(final String text)

@@ -22,12 +22,18 @@ import icy.gui.component.ComponentUtil;
 import icy.gui.component.ImageComponent;
 import icy.gui.frame.IcyFrame;
 import icy.gui.util.GuiUtil;
+import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLauncher;
 import icy.system.thread.ThreadUtil;
 import icy.util.Random;
+import icy.util.StringUtil;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -35,14 +41,19 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
 /**
  * @author stephane
  */
-public class PluginDetailPanel extends IcyFrame
+public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
 {
     private class ExecuteActionButton extends JButton implements ActionListener
     {
@@ -95,6 +106,17 @@ public class PluginDetailPanel extends IcyFrame
     private final CloseActionButton closeButton;
 
     /**
+     * gui
+     */
+    final JPanel imagePanel;
+    final ImageComponent pluginImage;
+    final JLabel pluginAuthorLabel;
+    final JLabel pluginWebsiteLabel;
+    final JLabel pluginEmailLabel;
+    final JTextPane pluginDescriptionText;
+    final JTextPane pluginChangeLogText;
+
+    /**
      * @param plugin
      */
     public PluginDetailPanel(PluginDescriptor plugin)
@@ -109,7 +131,89 @@ public class PluginDetailPanel extends IcyFrame
 
         setPreferredSize(new Dimension(640, 480));
 
-        build();
+        // build top panel
+        pluginDescriptionText = new JTextPane();
+        pluginDescriptionText.setContentType("text/html");
+        pluginDescriptionText.setEditable(false);
+        pluginDescriptionText.setOpaque(false);
+        pluginDescriptionText.addHyperlinkListener(this);
+        ComponentUtil.setFixedHeight(pluginDescriptionText, 256);
+
+        final JScrollPane scDescription = new JScrollPane(pluginDescriptionText);
+        scDescription.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
+
+        pluginImage = new ImageComponent(plugin.getImage());
+
+        imagePanel = new JPanel(new BorderLayout());
+        imagePanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+        imagePanel.add(pluginImage, BorderLayout.CENTER);
+
+        final JPanel topPanel = new JPanel(new BorderLayout());
+
+        topPanel.add(imagePanel, BorderLayout.WEST);
+        topPanel.add(scDescription, BorderLayout.CENTER);
+
+        // center panel
+        pluginAuthorLabel = new JLabel();
+        pluginWebsiteLabel = new JLabel();
+        pluginEmailLabel = new JLabel();
+
+        final JPanel infosPanel = new JPanel();
+        infosPanel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 8));
+        infosPanel.setLayout(new BoxLayout(infosPanel, BoxLayout.PAGE_AXIS));
+
+        infosPanel.add(GuiUtil.createTabBoldLabel("Author", 1));
+        infosPanel.add(GuiUtil.createTabLabel(pluginAuthorLabel, 32));
+        infosPanel.add(Box.createVerticalStrut(4));
+        infosPanel.add(GuiUtil.createTabBoldLabel("Web site", 1));
+        infosPanel.add(GuiUtil.createTabLabel(pluginWebsiteLabel, 32));
+        infosPanel.add(Box.createVerticalStrut(4));
+        infosPanel.add(GuiUtil.createTabBoldLabel("Email", 1));
+        infosPanel.add(GuiUtil.createTabLabel(pluginEmailLabel, 32));
+        infosPanel.add(Box.createVerticalStrut(4));
+        infosPanel.add(Box.createVerticalGlue());
+
+        pluginChangeLogText = new JTextPane();
+        pluginChangeLogText.setContentType("text/html");
+        pluginChangeLogText.setEditable(false);
+        pluginChangeLogText.setOpaque(false);
+        pluginChangeLogText.addHyperlinkListener(this);
+
+        final JScrollPane scChangeLog = new JScrollPane(pluginChangeLogText);
+        scChangeLog.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
+
+        final JPanel changeLogPanel = new JPanel(new BorderLayout());
+        changeLogPanel.setBorder(BorderFactory.createEmptyBorder(0, 8, 4, 4));
+
+        changeLogPanel.add(GuiUtil.createTabBoldLabel("ChangeLog", 1), BorderLayout.NORTH);
+        changeLogPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(32), scChangeLog), BorderLayout.CENTER);
+
+        final JPanel centerPanel = new JPanel(new BorderLayout());
+
+        centerPanel.add(infosPanel, BorderLayout.WEST);
+        centerPanel.add(changeLogPanel, BorderLayout.CENTER);
+
+        // bottom panel
+        final JPanel buttonsPanel = new JPanel();
+        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.LINE_AXIS));
+
+        buttonsPanel.add(Box.createHorizontalStrut(4));
+        buttonsPanel.add(executeButton);
+        buttonsPanel.add(Box.createHorizontalGlue());
+        buttonsPanel.add(Box.createHorizontalStrut(4));
+        buttonsPanel.add(closeButton);
+        buttonsPanel.add(Box.createHorizontalStrut(4));
+
+        final JPanel bottomPanel = new JPanel(new BorderLayout());
+
+        bottomPanel.add(new JSeparator(SwingConstants.HORIZONTAL), BorderLayout.NORTH);
+        bottomPanel.add(buttonsPanel, BorderLayout.CENTER);
+
+        setLayout(new BorderLayout());
+
+        add(topPanel, BorderLayout.NORTH);
+        add(centerPanel, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
 
         addToMainDesktopPane();
         // random position for more fun
@@ -132,111 +236,66 @@ public class PluginDetailPanel extends IcyFrame
                         @Override
                         public void run()
                         {
-                            build();
+                            updateGui();
                         }
                     });
                 }
             });
         }
+        else
+            updateGui();
     }
 
-    private JPanel getTopPanel()
+    void updateGui()
     {
-        final JPanel panel = new JPanel();
+        final Font sysFont = pluginAuthorLabel.getFont();
+        final Image img = plugin.getImage();
+        final String description = plugin.getDescription();
+        final String changesLog = plugin.getChangesLog();
+        final String author = plugin.getAuthor();
+        final String email = plugin.getEmail();
+        final String web = plugin.getWeb();
 
-        panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+        pluginImage.setImage(img);
 
-        // image at left
-        final ImageComponent image = new ImageComponent(plugin.getImage());
-        ComponentUtil.setFixedSize(image, new Dimension(256, 256));
-        panel.add(image);
+        if (StringUtil.isEmpty(description))
+            pluginDescriptionText.setText("No description");
+        else
+        {
+            pluginDescriptionText.setText(description.replaceAll("(\r\n|\n\r|\r|\n)", "<br/>"));
+            pluginDescriptionText.setCaretPosition(0);
+        }
 
-        // infos panel at right
-        final JPanel infos = new JPanel();
+        ComponentUtil.setJTextPaneFont(pluginDescriptionText, sysFont, Color.black);
 
-        infos.setLayout(new BoxLayout(infos, BoxLayout.PAGE_AXIS));
-        infos.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-
-        infos.add(GuiUtil.createTabBoldLabel("Author", 1));
-        infos.add(GuiUtil.createTabLabel(plugin.getAuthor(), 32));
-        infos.add(Box.createVerticalStrut(4));
-        infos.add(GuiUtil.createTabBoldLabel("Web site", 1));
-        infos.add(GuiUtil.createTabLabel(plugin.getWeb(), 32));
-        infos.add(Box.createVerticalStrut(4));
-        infos.add(GuiUtil.createTabBoldLabel("Email", 1));
-        infos.add(GuiUtil.createTabLabel(plugin.getEmail(), 32));
-        infos.add(Box.createVerticalStrut(4));
-        // infos.add(createBoldLabel("Capabilities"));
-        // infos.add(createBooleanLabel(PluginDescriptor.TYPE_IMAGE_ANALYSIS));
-        // infos.add(createBooleanLabel(PluginDescriptor.TYPE_FILE));
-        // infos.add(createBooleanLabel(PluginDescriptor.TYPE_CFG_PARAM));
-        // infos.add(createBooleanLabel(PluginDescriptor.TYPE_ROI));
-        // infos.add(createBooleanLabel(PluginDescriptor.TYPE_UNDOABLE));
-        infos.add(GuiUtil.createTabBoldLabel("Description", 1));
-        infos.add(GuiUtil.createTabArea(plugin.getDescription(), 32, 140));
-        infos.add(Box.createVerticalGlue());
-
-        panel.add(infos);
-
-        return panel;
-    }
-
-    private JPanel getMedPanel()
-    {
-        final JPanel panel = new JPanel();
-
-        panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-        panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-
-        panel.add(GuiUtil.createTabBoldLabel("ChangeLog", 1));
-        panel.add(Box.createVerticalStrut(4));
-        panel.add(GuiUtil.createTabArea(plugin.getChangesLog(), 32, 160));
-
-        return panel;
-    }
-
-    private JPanel getBottomPanel()
-    {
-        final JPanel panel = new JPanel();
-
-        panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-
-        // panel.add(Box.createHorizontalStrut(5));
-        // panel.add(changesLogButton);
-        panel.add(Box.createHorizontalStrut(4));
-        // panel.add(Box.createHorizontalGlue());
-        panel.add(executeButton);
-        panel.add(Box.createHorizontalGlue());
-        panel.add(Box.createHorizontalStrut(4));
-        panel.add(closeButton);
-        panel.add(Box.createHorizontalStrut(4));
-
-        return panel;
-    }
-
-    void build()
-    {
-        getContentPane().removeAll();
-        setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
-
-        add(getTopPanel());
-        add(getMedPanel());
-        add(new JSeparator(SwingConstants.HORIZONTAL));
-        add(Box.createVerticalStrut(8));
-        add(getBottomPanel());
-        add(Box.createVerticalStrut(6));
+        if (StringUtil.isEmpty(changesLog))
+            pluginChangeLogText.setText("---");
+        else
+        {
+            pluginChangeLogText.setText(changesLog.replaceAll("(\r\n|\n\r|\r|\n)", "<br/>"));
+            pluginChangeLogText.setCaretPosition(0);
+        }
+        ComponentUtil.setJTextPaneFont(pluginChangeLogText, new Font("courier", Font.PLAIN, 11), Color.black);
+        if (StringUtil.isEmpty(author))
+            pluginAuthorLabel.setText("---");
+        else
+            pluginAuthorLabel.setText(author);
+        if (StringUtil.isEmpty(email))
+            pluginEmailLabel.setText("---");
+        else
+            pluginEmailLabel.setText(email);
+        if (StringUtil.isEmpty(web))
+            pluginWebsiteLabel.setText("---");
+        else
+            pluginWebsiteLabel.setText(web);
 
         pack();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.swing.ICYFrame#updateUI()
-     */
     @Override
-    public void updateUI()
+    public void hyperlinkUpdate(HyperlinkEvent e)
     {
-        build();
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
+            NetworkUtil.openURL(e.getURL());
     }
 }

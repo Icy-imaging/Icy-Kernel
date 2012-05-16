@@ -7,6 +7,7 @@ import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.FontUtil;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
+import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.ToolTipFrame;
 import icy.gui.main.IcyDesktopPane;
 import icy.gui.main.IcyDesktopPane.AbstractDesktopOverlay;
@@ -17,6 +18,8 @@ import icy.gui.util.GuiUtil;
 import icy.main.Icy;
 import icy.network.IRCClient;
 import icy.network.IRCEventListenerImpl;
+import icy.network.NetworkUtil;
+import icy.network.NetworkUtil.NetworkConnectionListener;
 import icy.preferences.ChatPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
@@ -70,7 +73,7 @@ import javax.swing.text.StyledDocument;
 import org.schwering.irc.lib.IRCModeParser;
 import org.schwering.irc.lib.IRCUser;
 
-public class ChatPanel extends ExternalizablePanel
+public class ChatPanel extends ExternalizablePanel implements NetworkConnectionListener
 {
     /**
      * 
@@ -396,6 +399,7 @@ public class ChatPanel extends ExternalizablePanel
 
             connectButton.setEnabled(true);
             refreshGUI();
+            refreshUsers();
         }
 
         @Override
@@ -582,6 +586,10 @@ public class ChatPanel extends ExternalizablePanel
             final String n;
             final String t;
 
+            // ignore close link
+            if (msg.startsWith("Error: Closing Link:"))
+                return;
+
             // target is current user --> incoming private message
             if (isCurrentUser(target))
             {
@@ -746,8 +754,11 @@ public class ChatPanel extends ExternalizablePanel
         refreshGUI();
         refreshDesktopOverlayState();
 
-        if (ChatPreferences.getAutoConnect())
-            connect();
+        // call default internet connection callback to process auto connect
+        if (NetworkUtil.hasInternetConnection())
+            internetConnected();
+
+        NetworkUtil.addNetworkConnectionListener(this);
     }
 
     public boolean isConnected()
@@ -996,7 +1007,15 @@ public class ChatPanel extends ExternalizablePanel
             public void actionPerformed(ActionEvent e)
             {
                 if (connectButton.isSelected())
-                    connect();
+                {
+                    if (!NetworkUtil.hasInternetConnection())
+                    {
+                        new AnnounceFrame("You need internet connection to connect to the chat.", 10);
+                        connectButton.setSelected(false);
+                    }
+                    else
+                        connect();
+                }
                 else
                     disconnect("Manual disconnect");
             }
@@ -1410,5 +1429,32 @@ public class ChatPanel extends ExternalizablePanel
         // refresh desktop overlay
         if ((desktopPane != null) && ChatPreferences.getDesktopOverlay())
             desktopPane.repaint();
+    }
+
+    @Override
+    public void networkConnected()
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void networkDisconnected()
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void internetConnected()
+    {
+        if (ChatPreferences.getAutoConnect())
+            connect();
+    }
+
+    @Override
+    public void internetDisconnected()
+    {
+        disconnect("Connection lost");
     }
 }

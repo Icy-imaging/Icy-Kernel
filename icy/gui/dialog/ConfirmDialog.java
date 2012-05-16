@@ -25,6 +25,8 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 /**
+ * Simple confirmation dialog.
+ * 
  * @author stephane
  */
 public class ConfirmDialog
@@ -92,5 +94,4 @@ public class ConfirmDialog
     {
         return confirm(title, message, YES_NO_OPTION);
     }
-
 }

@@ -376,7 +376,7 @@ public class PluginLoader
     /**
      * Stop daemons plugins.
      */
-    static void stopDaemons()
+    public static void stopDaemons()
     {
         final ArrayList<Plugin> activePlugins = Icy.getMainInterface().getActivePlugins();
 

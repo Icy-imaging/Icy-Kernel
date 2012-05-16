@@ -23,6 +23,7 @@ import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.util.GuiUtil;
+import icy.network.NetworkUtil;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
@@ -274,7 +275,12 @@ public class PluginUpdater extends ActionFrame
             if (PluginRepositoryLoader.failed())
             {
                 if (showProgress)
-                    new AnnounceFrame("Can't connect to repositories... You should verify your connection.", 10);
+                {
+                    if (!NetworkUtil.hasInternetConnection())
+                        new AnnounceFrame("You are not connected to internet.", 10);
+                    else
+                        new AnnounceFrame("Can't access the repositories... You should verify your connection.", 10);
+                }
 
                 return;
             }

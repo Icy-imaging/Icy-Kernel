@@ -19,6 +19,7 @@
 package icy.plugin;
 
 import icy.main.Icy;
+import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginDescriptor.PluginNameSorter;
 import icy.plugin.PluginDescriptor.PluginOnlineIdent;
@@ -59,6 +60,13 @@ public class PluginRepositoryLoader
         @Override
         public void run()
         {
+            // no internet connection ?
+            if (!NetworkUtil.hasInternetConnection())
+            {
+                failed = true;
+                return;
+            }
+
             final ArrayList<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
 
             try
@@ -89,10 +97,7 @@ public class PluginRepositoryLoader
                 // sort list on plugin class name
                 Collections.sort(newPlugins, PluginNameSorter.instance);
 
-                synchronized (plugins)
-                {
-                    plugins = newPlugins;
-                }
+                plugins = newPlugins;
             }
             catch (Exception e)
             {
@@ -111,12 +116,21 @@ public class PluginRepositoryLoader
                 // reload requested --> stop current loading
                 if (processor.hasWaitingTasks())
                     return;
+                // internet connection lost --> failed
+                if (!NetworkUtil.hasInternetConnection())
+                {
+                    failed = true;
+                    return;
+                }
 
                 plugin.loadDescriptor();
             }
 
             // sort list on plugin name
-            Collections.sort(plugins, PluginNameSorter.instance);
+            synchronized (plugins)
+            {
+                Collections.sort(plugins, PluginNameSorter.instance);
+            }
 
             // notify final change for descriptors loading
             descriptorsLoaded = true;
@@ -128,6 +142,12 @@ public class PluginRepositoryLoader
                 // reload requested --> stop current loading
                 if (processor.hasWaitingTasks())
                     return;
+                // internet connection lost --> failed
+                if (!NetworkUtil.hasInternetConnection())
+                {
+                    failed = true;
+                    return;
+                }
 
                 plugin.loadImages();
                 // notify change
@@ -291,7 +311,10 @@ public class PluginRepositoryLoader
         // error while retrieving identifiers ?
         if (idents == null)
         {
-            System.out.println("Can't connect to repository : " + repos.getName() + " - " + repos.getLocation());
+            if (!NetworkUtil.hasInternetConnection())
+                System.out.println("You are not connected to internet.");
+            else
+                System.out.println("Can't access repository : " + repos.getName() + " - " + repos.getLocation());
             return null;
         }
 
@@ -374,7 +397,7 @@ public class PluginRepositoryLoader
      */
     public static boolean isBasicLoaded()
     {
-        return instance.basicLoaded;
+        return instance.failed || instance.basicLoaded;
     }
 
     /**
@@ -382,7 +405,7 @@ public class PluginRepositoryLoader
      */
     public static boolean isDescriptorsLoaded()
     {
-        return instance.descriptorsLoaded;
+        return instance.failed || instance.descriptorsLoaded;
     }
 
     /**
@@ -390,7 +413,7 @@ public class PluginRepositoryLoader
      */
     public static boolean isImagesLoaded()
     {
-        return instance.imagesLoaded;
+        return instance.failed || instance.imagesLoaded;
     }
 
     /**
@@ -398,7 +421,7 @@ public class PluginRepositoryLoader
      */
     public static void waitBasicLoaded()
     {
-        while (!failed() && !isBasicLoaded())
+        while (!isBasicLoaded())
             ThreadUtil.sleep(10);
     }
 
@@ -407,12 +430,12 @@ public class PluginRepositoryLoader
      */
     public static void waitDescriptorsLoaded()
     {
-        while (!failed() && !isDescriptorsLoaded())
+        while (!isDescriptorsLoaded())
             ThreadUtil.sleep(10);
     }
 
     /**
-     * return true if an error occurred during the plugin loading process
+     * Returns true if an error occurred during the plugin loading process.
      */
     public static boolean failed()
     {
@@ -420,7 +443,7 @@ public class PluginRepositoryLoader
     }
 
     /**
-     * plugin list has changed
+     * Plugin list has changed
      */
     void changed()
     {

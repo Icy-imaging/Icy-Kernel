@@ -1,5 +1,7 @@
 package icy.preferences;
 
+import icy.gui.dialog.IdConfirmDialog;
+import icy.gui.frame.progress.ToolTipFrame;
 import icy.gui.util.LookAndFeelUtil;
 import icy.main.Icy;
 import icy.math.MathUtil;
@@ -13,38 +15,45 @@ public class GeneralPreferences
     /**
      * pref id
      */
-    private static final String PREF_GENERAL_ID = "general";
-    private static final String TOOLTIPS_ID = "toolTips";
+    public static final String PREF_GENERAL_ID = "general";
+    public static final String TOOLTIPS_ID = "toolTips";
+    public static final String CONFIRMS_ID = "confirms";
 
     /**
-     * id
+     * id general
      */
-    private static final String ID_EXIT_CONFIRM = "exitConfirm";
-    private static final String ID_SEQUENCE_PERSISTENCE = "sequencePersistence";
-    private static final String ID_AUTO_UPDATE = "autoUpdate";
-    private static final String ID_AUTO_CHECK_UPDATE = "autoCheckUpdate";
-    private static final String ID_DETACHED_MODE = "detached";
-    private static final String ID_ALWAYS_ON_TOP = "alwaysOnTop";
-    private static final String ID_GUI_SKIN = "guiSkin";
-    private static final String ID_GUI_FONT_SIZE = "guiFontSize";
-    private static final String ID_STARTUP_TOOLTIP = "startupTooltip";
-    private static final String ID_MAX_MEMORY = "maxMemory";
-    private static final String ID_STACK_SIZE = "stackSize";
-    private static final String ID_EXTRA_VMPARAMS = "extraVMParams";
-    private static final String ID_OS_EXTRA_VMPARAMS = "osExtraVMParams";
-    private static final String ID_APP_PARAMS = "appParams";
+    public static final String ID_SEQUENCE_PERSISTENCE = "sequencePersistence";
+    public static final String ID_AUTO_UPDATE = "autoUpdate";
+    public static final String ID_AUTO_CHECK_UPDATE = "autoCheckUpdate";
+    public static final String ID_DETACHED_MODE = "detached";
+    public static final String ID_ALWAYS_ON_TOP = "alwaysOnTop";
+    public static final String ID_GUI_SKIN = "guiSkin";
+    public static final String ID_GUI_FONT_SIZE = "guiFontSize";
+    public static final String ID_STARTUP_TOOLTIP = "startupTooltip";
+    public static final String ID_MAX_MEMORY = "maxMemory";
+    public static final String ID_STACK_SIZE = "stackSize";
+    public static final String ID_EXTRA_VMPARAMS = "extraVMParams";
+    public static final String ID_OS_EXTRA_VMPARAMS = "osExtraVMParams";
+    public static final String ID_APP_PARAMS = "appParams";
+
+    /**
+     * id confirm
+     */
+    public static final String ID_CONFIRM_EXIT = "exit";
 
     /**
      * preferences
      */
     private static XMLPreferences prefGeneral;
     private static XMLPreferences prefToolTips;
+    private static XMLPreferences prefConfirms;
 
     public static void load()
     {
         // load preferences
         prefGeneral = ApplicationPreferences.getPreferences().node(PREF_GENERAL_ID);
         prefToolTips = prefGeneral.node(TOOLTIPS_ID);
+        prefConfirms = prefGeneral.node(CONFIRMS_ID);
 
         // set here settings which need to be initialized
         setMaxMemoryMB(GeneralPreferences.getMaxMemoryMB());
@@ -68,11 +77,19 @@ public class GeneralPreferences
     }
 
     /**
-     * @return the preferences for toolTips
+     * @return the preferences for tool tips ({@link ToolTipFrame}).
      */
     public static XMLPreferences getPreferencesToolTips()
     {
         return prefToolTips;
+    }
+
+    /**
+     * @return the preferences for confirm dialog ({@link IdConfirmDialog}).
+     */
+    public static XMLPreferences getPreferencesConfirms()
+    {
+        return prefConfirms;
     }
 
     /**
@@ -157,7 +174,7 @@ public class GeneralPreferences
 
     public static boolean getExitConfirm()
     {
-        return prefGeneral.getBoolean(ID_EXIT_CONFIRM, true);
+        return prefConfirms.getBoolean(ID_CONFIRM_EXIT, true);
     }
 
     public static boolean getSequencePersistence()
@@ -242,7 +259,7 @@ public class GeneralPreferences
 
     public static void setExitConfirm(boolean value)
     {
-        prefGeneral.putBoolean(ID_EXIT_CONFIRM, value);
+        prefConfirms.putBoolean(ID_CONFIRM_EXIT, value);
     }
 
     public static void setSequencePersistence(boolean value)

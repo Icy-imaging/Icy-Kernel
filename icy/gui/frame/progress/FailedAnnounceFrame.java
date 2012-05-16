@@ -42,8 +42,8 @@ public class FailedAnnounceFrame extends AnnounceFrame
             @Override
             public void run()
             {
-                label.setOpaque(true);
-                label.setBackground(new Color(255, 128, 128));
+                mainPanel.setOpaque(true);
+                mainPanel.setBackground(new Color(255, 128, 128));
             }
         });
     }

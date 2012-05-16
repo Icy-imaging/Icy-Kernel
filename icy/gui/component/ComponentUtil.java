@@ -21,6 +21,7 @@ package icy.gui.component;
 import icy.gui.frame.IcyFrame;
 import icy.network.NetworkUtil;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -35,11 +36,15 @@ import java.util.Collections;
 
 import javax.swing.JInternalFrame;
 import javax.swing.JSlider;
+import javax.swing.JTextPane;
 import javax.swing.JTree;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
@@ -273,6 +278,31 @@ public class ComponentUtil
     public static void setFontBold(Component c)
     {
         setFontStyle(c, c.getFont().getStyle() | Font.BOLD);
+    }
+
+    public static void setJTextPaneFont(JTextPane tp, Font font, Color c)
+    {
+        final MutableAttributeSet attrs = tp.getInputAttributes();
+
+        // Set the font family, size, and style, based on properties of
+        // the Font object. Note that JTextPane supports a number of
+        // character attributes beyond those supported by the Font class.
+        // For example, underline, strike-through, super- and sub-script.
+        StyleConstants.setFontFamily(attrs, font.getFamily());
+        StyleConstants.setFontSize(attrs, font.getSize());
+        StyleConstants.setItalic(attrs, (font.getStyle() & Font.ITALIC) != 0);
+        StyleConstants.setBold(attrs, (font.getStyle() & Font.BOLD) != 0);
+
+        // Set the font color
+        StyleConstants.setForeground(attrs, c);
+
+        // Retrieve the pane's document object
+        StyledDocument doc = tp.getStyledDocument();
+
+        // Replace the style for the entire document. We exceed the length
+        // of the document by 1 so that text entered at the end of the
+        // document uses the attributes.
+        doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
     }
 
     public static void setTickMarkers(JSlider slider)

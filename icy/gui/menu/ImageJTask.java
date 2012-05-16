@@ -238,7 +238,7 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
                     toolTip.addFooterSection("Icy needs to be in detached mode to enabled this feature.");
 
                     // convert to ICY sequence
-                    button.setText("Convert to ICY");
+                    button.setText("Convert to Icy");
                     // button.setIcon(new IcyIcon("icon_ij_icy_2", false));
                     button.setIcon(new IcyIcon("to_icy", true));
                     button.setActionRichTooltip(toolTip);

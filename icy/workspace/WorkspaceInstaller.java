@@ -24,6 +24,7 @@ import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.frame.progress.SuccessfullAnnounceFrame;
 import icy.main.Icy;
+import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginLoader;
@@ -131,6 +132,13 @@ public class WorkspaceInstaller
     {
         if (workspace != null)
         {
+            if (!NetworkUtil.hasInternetConnection())
+            {
+                new FailedAnnounceFrame("Cannot install '" + workspace.getName()
+                        + "' workspace : you are not connected to Internet.", 10);
+                return;
+            }
+
             synchronized (installFIFO)
             {
                 installFIFO.add(new WorkspaceInstallInfo(workspace, showConfirm));

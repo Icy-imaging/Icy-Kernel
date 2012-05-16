@@ -1694,7 +1694,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Add an image to the last VolumetricImage (create it if needed)
+     * Add an image to the last VolumetricImage (create it if needed).
      * 
      * @param image
      *        image to add
@@ -1708,7 +1708,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Add an image to the VolumetricImage[t] (the volumetricImage must exist)
+     * Add an image to the VolumetricImage[t] (the volumetricImage must exist).
      * 
      * @param image
      *        image to add
@@ -1721,7 +1721,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * Remove the image at the specified position
+     * Remove the image at the specified position.
      * 
      * @param t
      * @param z

@@ -1,4 +1,7 @@
 Manifest-Version: 1.0
+Specification-Title: Icy
+Specification-Vendor: Institut Pasteur
+Implementation-Vendor: Institut Pasteur
 Class-Path: resources.jar ij/ij.jar lib/arpack-combo.jar lib/bio-formats.jar
   lib/bsh.jar lib/csparsej.jar lib/customizer.jar lib/ejml.jar lib/flamingo.jar
   lib/flanagan.jar lib/irclib.jar lib/j3dcore.jar lib/j3dutils.jar lib/jai_codec.jar

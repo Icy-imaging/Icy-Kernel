@@ -924,7 +924,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         multiWindowGroup.setSelected(multiWindowButton, GeneralPreferences.getMultiWindowMode());
 
         // LOOK AND FEEL
-        final IcyCommandButton lafButton = new IcyCommandButton(new IcyIcon("emotion_smile"));
+        final IcyCommandButton lafButton = new IcyCommandButton(new IcyIcon(ResourceUtil.ICON_SMILEY_HAPPY));
 
         lafButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
         lafButton.setPopupRichTooltip(new RichTooltip("Look and feel", "Change appearance of the interface"));
@@ -1017,6 +1017,23 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                     {
                         final JCommandPopupMenu result = new JCommandPopupMenu();
 
+                        // Tile grid
+                        final IcyCommandMenuButton gridTileButton = new IcyCommandMenuButton("Grid", new IcyIcon(
+                                "2x2_grid"));
+                        gridTileButton.setPopupRichTooltip(new RichTooltip("Grid tile arrangement",
+                                "Reorganise all opened windows in grid tile."));
+                        gridTileButton.addActionListener(new ActionListener()
+                        {
+                            @Override
+                            public void actionPerformed(ActionEvent e)
+                            {
+                                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+                                if (mainFrame != null)
+                                    mainFrame.organizeTile(MainFrame.TILE_GRID);
+                            }
+                        });
+                        result.addMenuButton(gridTileButton);
+
                         // Tile horizontal
                         final IcyCommandMenuButton horizontalTileButton = new IcyCommandMenuButton("Horizontal",
                                 new IcyIcon("tile_horizontal"));
@@ -1050,23 +1067,6 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                             }
                         });
                         result.addMenuButton(verticalTileButton);
-
-                        // Tile grid
-                        final IcyCommandMenuButton gridTileButton = new IcyCommandMenuButton("Grid", new IcyIcon(
-                                "2x2_grid"));
-                        gridTileButton.setPopupRichTooltip(new RichTooltip("Grid tile arrangement",
-                                "Reorganise all opened windows in grid tile."));
-                        gridTileButton.addActionListener(new ActionListener()
-                        {
-                            @Override
-                            public void actionPerformed(ActionEvent e)
-                            {
-                                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
-                                if (mainFrame != null)
-                                    mainFrame.organizeTile(MainFrame.TILE_GRID);
-                            }
-                        });
-                        result.addMenuButton(gridTileButton);
 
                         return result;
                     }

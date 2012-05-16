@@ -87,6 +87,11 @@ public class ResourceUtil
     public static final Image ICON_SQUARE_PREV = ResourceUtil.getAlphaIconAsImage("sq_prev.png");
     public static final Image ICON_SQUARE_NEXT = ResourceUtil.getAlphaIconAsImage("sq_next.png");
 
+    public static final Image ICON_SMILEY_HAPPY = ResourceUtil.getAlphaIconAsImage("emotion_smile.png");
+    public static final Image ICON_SMILEY_SAD = ResourceUtil.getAlphaIconAsImage("emotion_sad.png");
+
+    public static final Image ICON_NETWORK = ResourceUtil.getAlphaIconAsImage("network.png");
+
     private static final String ICON_PATH = "res/icon/";
     private static final String IMAGE_PATH = "res/image/";
 

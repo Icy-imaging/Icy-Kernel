@@ -20,6 +20,7 @@ package icy.plugin;
 
 import icy.file.FileUtil;
 import icy.gui.dialog.ConfirmDialog;
+import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.ProgressFrame;
@@ -114,6 +115,13 @@ public class PluginInstaller
     {
         if ((plugin != null) && isEnabled())
         {
+            if (!NetworkUtil.hasInternetConnection())
+            {
+                new FailedAnnounceFrame("Cannot install '" + plugin.getName()
+                        + "' plugin : you are not connected to Internet.", 10);
+                return;
+            }
+
             synchronized (installFIFO)
             {
                 installFIFO.add(new PluginInstallInfo(plugin, showConfirm));
@@ -656,9 +664,9 @@ public class PluginInstaller
                         message = message + "<br>";
 
                         // message not empty ? display confirmation
-                        if (!ConfirmDialog.confirm("<html>" + message + "Do you want to continue ?</html>"))
+                        if (!IdConfirmDialog.confirm("<html>" + message + "Do you want to continue ?</html>", "pluginInstall1"))
                         {
-                            System.err.println(INSTALL_INTERRUPT);
+                            System.out.println(INSTALL_INTERRUPT);
                             return false;
                         }
                     }
@@ -671,7 +679,7 @@ public class PluginInstaller
                 // cancel requested ?
                 if ((taskFrame != null) && taskFrame.isCancelRequested())
                 {
-                    System.err.println(INSTALL_INTERRUPT);
+                    System.out.println(INSTALL_INTERRUPT);
                     return false;
                 }
 
@@ -767,7 +775,11 @@ public class PluginInstaller
                 PluginLoader.reload(false);
 
                 // print error
-                System.err.println(error);
+                if (error.equals(INSTALL_INTERRUPT))
+                    System.out.println(error);
+                else
+                    System.err.println(error);
+
                 result = false;
             }
 

@@ -18,6 +18,7 @@
  */
 package icy.workspace;
 
+import icy.network.NetworkUtil;
 import icy.network.URLUtil;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
@@ -54,6 +55,13 @@ public class WorkspaceRepositoryLoader
         @Override
         public void run()
         {
+            // no Internet connection ?
+            if (!NetworkUtil.hasInternetConnection())
+            {
+                failed = true;
+                return;
+            }
+
             final ArrayList<Workspace> newWorkspaces = new ArrayList<Workspace>();
 
             failed = false;
@@ -169,7 +177,12 @@ public class WorkspaceRepositoryLoader
             }
         }
         else
-            System.err.println("Can't connect to repository '" + repos.getName() + "'");
+        {
+            if (!NetworkUtil.hasInternetConnection())
+                System.out.println("You are not connected to internet.");
+            else
+                System.out.println("Can't access repository '" + repos.getName() + "'");
+        }
 
         return result;
     }
@@ -215,7 +228,10 @@ public class WorkspaceRepositoryLoader
         // error while retrieving paths ?
         if (paths == null)
         {
-            System.out.println("Can't connect to repository : " + repos.getName() + " - " + repos.getLocation());
+            if (!NetworkUtil.hasInternetConnection())
+                System.out.println("You are not connected to internet.");
+            else
+                System.out.println("Can't access repository : " + repos.getName() + " - " + repos.getLocation());
             return null;
         }
 

@@ -53,7 +53,6 @@ public class ImageComponent extends JPanel
             dim = new Dimension(image.getWidth(this), image.getHeight(this));
 
         setPreferredSize(dim);
-        setSize(dim);
 
         setVisible(true);
     }

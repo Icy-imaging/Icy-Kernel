@@ -98,7 +98,7 @@ public class PluginErrorReport
                                         "An update is available for this plugin.\n"
                                                 + "It is highly recommended to install the update as you meet problem with current version.\n"
                                                 + "Do you want to install the update ?"))
-                            PluginInstaller.install(onlinePlugin, true);
+                            PluginInstaller.install(onlinePlugin, false);
                     }
                     else
                     {

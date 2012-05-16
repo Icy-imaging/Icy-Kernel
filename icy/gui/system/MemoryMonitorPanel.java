@@ -18,7 +18,10 @@
  */
 package icy.gui.system;
 
+import icy.image.ImageUtil;
 import icy.math.UnitUtil;
+import icy.network.NetworkUtil;
+import icy.resource.ResourceUtil;
 import icy.system.SystemUtil;
 import icy.util.ColorUtil;
 import icy.util.GraphicsUtil;
@@ -41,7 +44,7 @@ import javax.swing.Timer;
 /**
  * Memory monitor.
  * 
- * @author Fab
+ * @author Fab & Stephane
  */
 public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionListener
 {
@@ -93,17 +96,9 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
     @Override
     protected void paintComponent(Graphics g)
     {
-        super.paintComponent(g);
-
         final int w = getWidth();
         final int h = getHeight();
 
-        // final double totalMemory = SystemUtil.getJavaTotalMemory();
-        // final double usedMemory = totalMemory - SystemUtil.getJavaFreeMemory();
-        // final float memRatio = (float) (usedMemory / maxMemory);
-
-        // final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
-        // final Color memColor = ColorUtil.mix(new Color(memRatio, 1 - memRatio, 0), Color.white);
         final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
         final Color memColor = Color.green;
 
@@ -167,19 +162,46 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
 
         // display Used & Max Memory
         g2.setColor(Color.black);
-        GraphicsUtil.drawHCenteredString(g2, infos[0], (w + 1) / 2, 6 + 1, false);
+        GraphicsUtil.drawHCenteredString(g2, infos[0], (w / 2) + 1, 6 + 1, false);
         g2.setColor(ColorUtil.mix(memColor, Color.white));
         GraphicsUtil.drawHCenteredString(g2, infos[0], w / 2, 6, false);
         // display CPU Load
         g2.setColor(Color.black);
-        GraphicsUtil.drawHCenteredString(g2, infos[1], (w + 1) / 2, 18 + 1, false);
+        GraphicsUtil.drawHCenteredString(g2, infos[1], (w / 2) + 1, 18 + 1, false);
         g2.setColor(ColorUtil.mix(cpuColor, Color.white));
         GraphicsUtil.drawHCenteredString(g2, infos[1], w / 2, 18, false);
 
+        String text;
+        Color c;
+
+        // display internet connection
+        if (NetworkUtil.hasInternetConnection())
+        {
+            c = Color.green;
+            text = "Connected to internet";
+            g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_NETWORK, c), 10, 30, 14, 14, null);
+        }
+        else
+        {
+            c = Color.red;
+            text = "Not connected to internet";
+            g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_NETWORK, c), 10, 30, 14, 14, null);
+            // g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_DELETE, c), 12,
+            // 34, 9, 9, null);
+        }
+
         if (displayHelpMessage)
         {
+            g2.setColor(Color.black);
+            GraphicsUtil.drawHCenteredString(g2, text, (w / 2) + 1, 30 + 1, false);
+            g2.setColor(ColorUtil.mix(c, Color.white));
+            GraphicsUtil.drawHCenteredString(g2, text, w / 2, 30, false);
+
+            text = "click to force a garbage collector event";
+            g2.setColor(Color.black);
+            GraphicsUtil.drawHCenteredString(g2, text, (w / 2) + 1, 44 + 1, false);
             g2.setColor(Color.white);
-            GraphicsUtil.drawHCenteredString(g2, "click to force a garbage collector event", w / 2, 44, false);
+            GraphicsUtil.drawHCenteredString(g2, text, w / 2, 44, false);
         }
 
         g2.dispose();
@@ -196,9 +218,9 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
         // save CPU load
         newValue(1, cpuLoad);
 
-        setInfo(0, "Used: " + UnitUtil.getBytesString(usedMemory) + "  (Max: " + UnitUtil.getBytesString(maxMemory)
+        setInfo(0, "Memory: " + UnitUtil.getBytesString(usedMemory) + "  (Max: " + UnitUtil.getBytesString(maxMemory)
                 + ")");
-        setInfo(1, "CPU Load: " + cpuLoad + "%");
+        setInfo(1, "CPU: " + cpuLoad + "%");
 
         repaint();
     }

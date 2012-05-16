@@ -653,7 +653,7 @@ public class MainFrame extends JRibbonFrame
                 break;
         }
 
-        final double[][] framesDistances = new double[numFrames][numFrames];
+        final double[][] framesDistances = new double[numCol * numLine][numFrames];
 
         final int dx = w / numCol;
         final int dy = h / numLine;
@@ -661,7 +661,7 @@ public class MainFrame extends JRibbonFrame
 
         for (int i = 0; i < numLine; i++)
         {
-            for (int j = 0; j < numCol && k < numFrames; j++, k++)
+            for (int j = 0; j < numCol; j++, k++)
             {
                 final double[] distances = framesDistances[k];
                 final double fx = x + (j * dx) + (dx / 2d);
@@ -679,8 +679,14 @@ public class MainFrame extends JRibbonFrame
 
         k = 0;
         for (int i = 0; i < numLine; i++)
+        {
             for (int j = 0; j < numCol && k < numFrames; j++, k++)
-                frames.get(framePos[k]).setBounds(x + (j * dx), y + (i * dy), dx, dy);
+            {
+                final int f = framePos[k];
+                if (f < numFrames)
+                    frames.get(f).setBounds(x + (j * dx), y + (i * dy), dx, dy);
+            }
+        }
     }
 
     /**

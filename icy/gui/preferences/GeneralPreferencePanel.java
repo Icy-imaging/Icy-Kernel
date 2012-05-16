@@ -23,6 +23,7 @@ import icy.gui.util.GuiUtil;
 import icy.math.MathUtil;
 import icy.preferences.GeneralPreferences;
 
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -31,6 +32,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
@@ -46,7 +48,7 @@ public class GeneralPreferencePanel extends PreferencePanel
     /**
      * gui
      */
-    private final JCheckBox exitConfirm;
+    final JCheckBox exitConfirm;
     private final JCheckBox sequencePersistence;
     final JCheckBox autoUpdateCheckBox;
     final JCheckBox autoCheckUpdateCheckBox;
@@ -54,6 +56,7 @@ public class GeneralPreferencePanel extends PreferencePanel
     private final JSpinner maxMemoryMBSpinner;
     private final JSpinner uiFontSizeSpinner;
     private final JButton reenableAllToolTipButton;
+    private final JButton reenableAllConfirmButton;
 
     /**
      * @param parent
@@ -104,29 +107,56 @@ public class GeneralPreferencePanel extends PreferencePanel
             }
         });
 
+        reenableAllConfirmButton = new JButton("Reactivate confirmations");
+        reenableAllConfirmButton.setToolTipText("All hidden confimation dialogs be made visible again");
+        reenableAllConfirmButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                // clear the saved tool tips preference to re-enable them
+                GeneralPreferences.getPreferencesConfirms().removeChildren();
+                GeneralPreferences.getPreferencesConfirms().clear();
+                exitConfirm.setSelected(true);
+
+                MessageDialog.showDialog("All confirmation dialogs are now enabled again !");
+            }
+        });
+
         load();
 
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
+        final JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.PAGE_AXIS));
 
-        mainPanel.add(GuiUtil.createLineBoxPanel(alwaysOnTopCheckBox, Box.createHorizontalGlue()));
-        mainPanel.add(Box.createVerticalStrut(6));
-        mainPanel.add(GuiUtil.createLineBoxPanel(exitConfirm, Box.createHorizontalGlue()));
-        mainPanel.add(Box.createVerticalStrut(6));
-        mainPanel.add(GuiUtil.createLineBoxPanel(autoUpdateCheckBox, Box.createHorizontalGlue()));
-        mainPanel.add(Box.createVerticalStrut(6));
-        mainPanel.add(GuiUtil.createLineBoxPanel(autoCheckUpdateCheckBox, Box.createHorizontalGlue()));
-        mainPanel.add(Box.createVerticalStrut(6));
-        mainPanel.add(GuiUtil.createLineBoxPanel(sequencePersistence, Box.createHorizontalGlue()));
-        mainPanel.add(Box.createVerticalStrut(18));
-        mainPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" GUI font size  "), uiFontSizeSpinner,
+        topPanel.add(GuiUtil.createLineBoxPanel(alwaysOnTopCheckBox, Box.createHorizontalGlue()));
+        topPanel.add(Box.createVerticalStrut(6));
+        topPanel.add(GuiUtil.createLineBoxPanel(exitConfirm, Box.createHorizontalGlue()));
+        topPanel.add(Box.createVerticalStrut(6));
+        topPanel.add(GuiUtil.createLineBoxPanel(autoUpdateCheckBox, Box.createHorizontalGlue()));
+        topPanel.add(Box.createVerticalStrut(6));
+        topPanel.add(GuiUtil.createLineBoxPanel(autoCheckUpdateCheckBox, Box.createHorizontalGlue()));
+        topPanel.add(Box.createVerticalStrut(6));
+        topPanel.add(GuiUtil.createLineBoxPanel(sequencePersistence, Box.createHorizontalGlue()));
+        topPanel.add(Box.createVerticalStrut(18));
+        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" GUI font size  "), uiFontSizeSpinner,
                 Box.createHorizontalGlue()));
-        mainPanel.add(Box.createVerticalStrut(12));
-        mainPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Max memory  "), maxMemoryMBSpinner, new JLabel(
-                " MB  (<= " + maxMemLimit + " MB)"), Box.createHorizontalGlue()));
-        mainPanel.add(Box.createVerticalStrut(6));
-        mainPanel.add(Box.createVerticalGlue());
-        mainPanel.add(GuiUtil.createLineBoxPanel(reenableAllToolTipButton, Box.createHorizontalGlue()));
-        mainPanel.add(Box.createVerticalStrut(6));
+        topPanel.add(Box.createVerticalStrut(12));
+        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Max memory  "), maxMemoryMBSpinner, new JLabel(" MB  (<= "
+                + maxMemLimit + " MB)"), Box.createHorizontalGlue()));
+        topPanel.add(Box.createVerticalStrut(6));
+
+        final JPanel bottomPanel = new JPanel();
+        bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.PAGE_AXIS));
+
+        bottomPanel.add(GuiUtil.createLineBoxPanel(reenableAllToolTipButton, Box.createHorizontalStrut(8),
+                reenableAllConfirmButton, Box.createHorizontalGlue()));
+        bottomPanel.add(Box.createVerticalStrut(6));
+
+        mainPanel.setLayout(new BorderLayout());
+
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(Box.createGlue(), BorderLayout.CENTER);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
         mainPanel.validate();
     }

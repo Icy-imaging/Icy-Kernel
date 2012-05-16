@@ -112,7 +112,7 @@ public class AnnounceFrame extends TaskFrame implements ActionListener
                 button = new JButton();
                 label = new JLabel();
                 action = btnAction;
-                
+
                 if (liveTime != 0)
                 {
                     timer = new Timer(liveTime * 1000, AnnounceFrame.this);
@@ -122,6 +122,7 @@ public class AnnounceFrame extends TaskFrame implements ActionListener
 
                 label.setText("   " + message + "   ");
                 button.setText(buttonText);
+                button.setFocusable(false);
                 button.addActionListener(AnnounceFrame.this);
 
                 mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.LINE_AXIS));

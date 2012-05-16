@@ -1,0 +1,143 @@
+/**
+ * 
+ */
+package icy.gui.dialog;
+
+import icy.gui.util.GuiUtil;
+import icy.main.Icy;
+import icy.preferences.GeneralPreferences;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
+
+import java.awt.BorderLayout;
+
+import javax.swing.Box;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+
+/**
+ * Confirmation dialog with a "do not display again" bottom checkbox.<br>
+ * The id is used to store the "do not display again" state.<br>
+ * If you call confirm(...) with "do not display again" already set to true then confirm dialog is
+ * not displayed.
+ * 
+ * @author Stephane
+ */
+public class IdConfirmDialog
+{
+    private static class Confirmer implements Runnable
+    {
+        private final String title;
+        private final String message;
+        private final int optionType;
+        private final String id;
+
+        boolean result;
+        JCheckBox doNotDisplayCheckbox;
+
+        /**
+         * @param title
+         * @param message
+         * @param optionType
+         */
+        public Confirmer(String title, String message, int optionType, String id)
+        {
+            super();
+
+            this.id = id;
+            this.title = title;
+            this.message = message;
+            this.optionType = optionType;
+        }
+
+        @Override
+        public void run()
+        {
+            if (!StringUtil.isEmpty(id))
+            {
+                // Confirm dialog should not be displayed ?
+                if (!GeneralPreferences.getPreferencesConfirms().getBoolean(id, true))
+                {
+                    // confirmed and exit
+                    result = true;
+                    return;
+                }
+
+                // display checkbox
+                doNotDisplayCheckbox = new JCheckBox("Do not show this message again", false);
+            }
+            else
+                doNotDisplayCheckbox = null;
+
+            final JFrame parent = Icy.getMainInterface().getMainFrame();
+            final JOptionPane pane = new JOptionPane(message, JOptionPane.QUESTION_MESSAGE, optionType, null, null,
+                    null);
+
+            pane.setInitialValue(null);
+            pane.setComponentOrientation(parent.getComponentOrientation());
+
+            final JDialog dialog = pane.createDialog(parent, title);
+
+            pane.selectInitialValue();
+            if (doNotDisplayCheckbox != null)
+            {
+                dialog.getContentPane().add(
+                        GuiUtil.createLineBoxPanel(doNotDisplayCheckbox, Box.createHorizontalGlue()),
+                        BorderLayout.SOUTH);
+                dialog.pack();
+            }
+            dialog.show();
+            dialog.dispose();
+
+            final Object selectedValue = pane.getValue();
+
+            // save checkbox state
+            if ((doNotDisplayCheckbox != null) && doNotDisplayCheckbox.isSelected())
+                GeneralPreferences.getPreferencesConfirms().putBoolean(id, false);
+
+            if (selectedValue == null)
+                result = false;
+            else
+            {
+                if (selectedValue instanceof Integer)
+                    result = getBooleanReturnValue(((Integer) selectedValue).intValue());
+                else
+                    result = false;
+            }
+        }
+    }
+
+    public static final int DEFAULT_OPTION = JOptionPane.YES_NO_CANCEL_OPTION;
+    /** Type used for <code>showConfirmDialog</code>. */
+    public static final int YES_NO_OPTION = JOptionPane.YES_NO_OPTION;
+    /** Type used for <code>showConfirmDialog</code>. */
+    public static final int YES_NO_CANCEL_OPTION = JOptionPane.YES_NO_CANCEL_OPTION;
+    /** Type used for <code>showConfirmDialog</code>. */
+    public static final int OK_CANCEL_OPTION = JOptionPane.OK_CANCEL_OPTION;
+
+    public static boolean getBooleanReturnValue(final int returnValue)
+    {
+        return (returnValue == JOptionPane.YES_OPTION) || (returnValue == JOptionPane.OK_OPTION);
+    }
+
+    public static boolean confirm(String title, String message, int optionType, String id)
+    {
+        final Confirmer confirmer = new Confirmer(title, message, optionType, id);
+
+        ThreadUtil.invokeNow(confirmer);
+
+        return confirmer.result;
+    }
+
+    public static boolean confirm(final String title, final String message, String id)
+    {
+        return confirm(title, message, YES_NO_OPTION, id);
+    }
+
+    public static boolean confirm(final String message, String id)
+    {
+        return confirm("Confirmation", message, YES_NO_OPTION, id);
+    }
+}

@@ -21,6 +21,7 @@ package icy.main;
 import icy.common.Version;
 import icy.file.FileUtil;
 import icy.gui.dialog.ConfirmDialog;
+import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.ExitFrame;
 import icy.gui.frame.GeneralToolTipFrame;
@@ -155,7 +156,7 @@ public class Icy
             // load plugins classes (need preferences init)
             PluginLoader.reloadAsynch();
             WorkspaceLoader.reload_asynch();
-            
+
             // patches ImageJ classes
             ImageJPatcher.applyPatches();
 
@@ -369,7 +370,7 @@ public class Icy
         else if (showConfirm && GeneralPreferences.getExitConfirm())
         {
             // we need user confirmation
-            if (!ConfirmDialog.confirm("Quit the application ?"))
+            if (!IdConfirmDialog.confirm("Quit the application ?", GeneralPreferences.ID_CONFIRM_EXIT))
                 return false;
 
             return true;
@@ -453,6 +454,9 @@ public class Icy
                         exitFrame = new ExitFrame(EXIT_FORCE_DELAY);
                     }
                 });
+                
+                // stop daemon plugin
+                PluginLoader.stopDaemons();
 
                 // wait that background processors completed theirs tasks
                 while (!ThreadUtil.isShutdownAndTerminated() && !exitFrame.isForced())

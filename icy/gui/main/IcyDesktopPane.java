@@ -370,7 +370,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
                 break;
         }
 
-        final double[][] framesDistances = new double[numFrames][numFrames];
+        final double[][] framesDistances = new double[numCol * numLine][numFrames];
 
         final int dx = w / numCol;
         final int dy = h / numLine;
@@ -378,7 +378,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
 
         for (int i = 0; i < numLine; i++)
         {
-            for (int j = 0; j < numCol && k < numFrames; j++, k++)
+            for (int j = 0; j < numCol; j++, k++)
             {
                 final double[] distances = framesDistances[k];
                 final double x = (j * dx) + (dx / 2d);
@@ -396,8 +396,14 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
 
         k = 0;
         for (int i = 0; i < numLine; i++)
-            for (int j = 0; j < numCol && k < numFrames; j++, k++)
-                frames.get(framePos[k]).setBounds(j * dx, i * dy, dx, dy);
+        {
+            for (int j = 0; j < numCol; j++, k++)
+            {
+                final int f = framePos[k];
+                if (f < numFrames)
+                    frames.get(f).setBounds(j * dx, i * dy, dx, dy);
+            }
+        }
     }
 
     /**
