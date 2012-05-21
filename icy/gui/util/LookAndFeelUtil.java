@@ -289,7 +289,7 @@ public class LookAndFeelUtil
     public static String getDefaultSkin()
     {
         // should be Cerulean
-        return skins.get(5).getDisplayName();
+        return skins.get(4).getDisplayName();
     }
 
     // /**

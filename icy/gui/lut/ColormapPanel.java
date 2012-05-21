@@ -94,7 +94,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
 
         // colormap type
         rgbBtn = new IcyToggleButton(new IcyIcon("rgb", false));
-        rgbBtn.setToolTipText("Color");
+        rgbBtn.setToolTipText("Set colormap type to Color");
         rgbBtn.setFocusPainted(false);
         ComponentUtil.setFixedWidth(rgbBtn, 26);
         rgbBtn.addActionListener(new ActionListener()
@@ -106,7 +106,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
             }
         });
         grayBtn = new IcyToggleButton(new IcyIcon("gray", false));
-        grayBtn.setToolTipText("Gray");
+        grayBtn.setToolTipText("Set colormap type to Gray");
         grayBtn.setFocusPainted(false);
         ComponentUtil.setFixedWidth(grayBtn, 26);
         grayBtn.addActionListener(new ActionListener()
@@ -118,7 +118,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
             }
         });
         alphaBtn = new IcyToggleButton(new IcyIcon("alpha", false));
-        alphaBtn.setToolTipText("Alpha (transparency)");
+        alphaBtn.setToolTipText("Set colormap type to Alpha (transparency)");
         alphaBtn.setFocusPainted(false);
         ComponentUtil.setFixedWidth(alphaBtn, 26);
         alphaBtn.addActionListener(new ActionListener()
