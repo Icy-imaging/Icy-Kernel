@@ -26,6 +26,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread{Processor.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.update{ElementDescriptor.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread{InstanceProcessor.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin{PluginDescriptor.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.util{ZipUtil.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.util{XMLUtil.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file{FileUtil.java"/>

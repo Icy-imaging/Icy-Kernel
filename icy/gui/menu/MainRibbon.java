@@ -915,7 +915,12 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                GeneralPreferences.setMultiWindowMode(multiWindowGroup.getSelected() != null);
+                final boolean value = (multiWindowGroup.getSelected() != null);
+                
+                // set detached mode
+                Icy.getMainInterface().setDetachedMode(value);
+                // and save state
+                GeneralPreferences.setMultiWindowMode(value);
             }
         });
         ribbon.addTaskbarComponent(multiWindowButton);
@@ -964,6 +969,9 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                     {
                         final boolean value = (aotGroup.getSelected() != null);
 
+                        // set "always on top" state
+                        Icy.getMainInterface().setAlwaysOnTop(value);
+                        // and save state
                         GeneralPreferences.setAlwaysOnTop(value);
                     }
                 });

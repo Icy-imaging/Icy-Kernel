@@ -3,8 +3,6 @@
  */
 package icy.preferences;
 
-import icy.plugin.PluginLoader;
-
 import java.util.ArrayList;
 
 /**
@@ -106,9 +104,6 @@ public class PluginPreferences
 
         // clean up all non element nodes
         node.clean();
-
-        // restart daemon plugin
-        PluginLoader.resetDaemons();
     }
 
 }

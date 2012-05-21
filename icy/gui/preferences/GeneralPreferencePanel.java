@@ -20,6 +20,8 @@ package icy.gui.preferences;
 
 import icy.gui.dialog.MessageDialog;
 import icy.gui.util.GuiUtil;
+import icy.gui.util.LookAndFeelUtil;
+import icy.main.Icy;
 import icy.math.MathUtil;
 import icy.preferences.GeneralPreferences;
 
@@ -178,19 +180,27 @@ public class GeneralPreferencePanel extends PreferencePanel
     @Override
     protected void save()
     {
-        final int maxMemory = ((Integer) maxMemoryMBSpinner.getValue()).intValue();
+        int intValue;
+        boolean booleanValue;
 
+        intValue = ((Integer) maxMemoryMBSpinner.getValue()).intValue();
         // launcher setting modified, restart needed
-        if (GeneralPreferences.getMaxMemoryMB() != maxMemory)
+        if (GeneralPreferences.getMaxMemoryMB() != intValue)
             getPreferenceFrame().setNeedRestart();
+        GeneralPreferences.setMaxMemoryMB(intValue);
 
-        GeneralPreferences.setMaxMemoryMB(maxMemory);
-        GeneralPreferences.setGuiFontSize(((Integer) uiFontSizeSpinner.getValue()).intValue());
+        intValue = ((Integer) uiFontSizeSpinner.getValue()).intValue();
+        LookAndFeelUtil.setFontSize(intValue);
+        GeneralPreferences.setGuiFontSize(intValue);
+
         GeneralPreferences.setExitConfirm(exitConfirm.isSelected());
         GeneralPreferences.setSequencePersistence(sequencePersistence.isSelected());
         GeneralPreferences.setAutomaticUpdate(autoUpdateCheckBox.isSelected());
         GeneralPreferences.setAutomaticCheckUpdate(autoCheckUpdateCheckBox.isSelected());
-        GeneralPreferences.setAlwaysOnTop(alwaysOnTopCheckBox.isSelected());
+
+        booleanValue = alwaysOnTopCheckBox.isSelected();
+        Icy.getMainInterface().setAlwaysOnTop(booleanValue);
+        GeneralPreferences.setAlwaysOnTop(booleanValue);
     }
 
 }

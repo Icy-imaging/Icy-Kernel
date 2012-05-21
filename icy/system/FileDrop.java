@@ -282,7 +282,7 @@ public class FileDrop
      *        Listens for <tt>filesDropped</tt>.
      * @since 1.0
      */
-    public FileDrop(final Component c, final Listener listener)
+    public FileDrop(final Component c, final FileDropListener listener)
     {
         this(null, // Logging stream
                 c, // Drop target
@@ -305,7 +305,7 @@ public class FileDrop
      *        Listens for <tt>filesDropped</tt>.
      * @since 1.0
      */
-    public FileDrop(final Component c, final boolean recursive, final Listener listener)
+    public FileDrop(final Component c, final boolean recursive, final FileDropListener listener)
     {
         this(null, // Logging stream
                 c, // Drop target
@@ -330,7 +330,7 @@ public class FileDrop
      *        Listens for <tt>filesDropped</tt>.
      * @since 1.0
      */
-    public FileDrop(final PrintStream out, final Component c, final Listener listener)
+    public FileDrop(final PrintStream out, final Component c, final FileDropListener listener)
     {
         this(out, // Logging stream
                 c, // Drop target
@@ -358,7 +358,7 @@ public class FileDrop
      *        Listens for <tt>filesDropped</tt>.
      * @since 1.0
      */
-    public FileDrop(final PrintStream out, final Component c, final boolean recursive, final Listener listener)
+    public FileDrop(final PrintStream out, final Component c, final boolean recursive, final FileDropListener listener)
     {
         this(out, // Logging stream
                 c, // Drop target
@@ -379,7 +379,7 @@ public class FileDrop
      *        Listens for <tt>filesDropped</tt>.
      * @since 1.0
      */
-    public FileDrop(final Component c, final Border dragBorder, final Listener listener)
+    public FileDrop(final Component c, final Border dragBorder, final FileDropListener listener)
     {
         this(null, // Logging stream
                 c, // Drop target
@@ -403,7 +403,7 @@ public class FileDrop
      *        Listens for <tt>filesDropped</tt>.
      * @since 1.0
      */
-    public FileDrop(final Component c, final Border dragBorder, final boolean recursive, final Listener listener)
+    public FileDrop(final Component c, final Border dragBorder, final boolean recursive, final FileDropListener listener)
     {
         this(null, c, dragBorder, recursive, listener);
     } // end constructor
@@ -425,7 +425,7 @@ public class FileDrop
      *        Listens for <tt>filesDropped</tt>.
      * @since 1.0
      */
-    public FileDrop(final PrintStream out, final Component c, final Border dragBorder, final Listener listener)
+    public FileDrop(final PrintStream out, final Component c, final Border dragBorder, final FileDropListener listener)
     {
         this(out, // Logging stream
                 c, // Drop target
@@ -454,7 +454,7 @@ public class FileDrop
      * @since 1.0
      */
     public FileDrop(final PrintStream out, final Component c, final Border dragBorder, final boolean recursive,
-            final Listener listener)
+            final FileDropListener listener)
     {
         // Make a drop listener
         dropListener = new DropTargetListener()
@@ -818,7 +818,7 @@ public class FileDrop
      * 
      * @since 1.1
      */
-    public static interface Listener
+    public static interface FileDropListener
     {
 
         /**
@@ -835,9 +835,9 @@ public class FileDrop
     /* ******** I N N E R C L A S S ******** */
 
     /**
-     * This is the event that is passed to the {@link FileDrop.Listener#filesDropped
+     * This is the event that is passed to the {@link FileDrop.FileDropListener#filesDropped
      * filesDropped(...)} method in
-     * your {@link FileDrop.Listener} when files are dropped onto
+     * your {@link FileDrop.FileDropListener} when files are dropped onto
      * a registered drop target.
      * <p>
      * I'm releasing this code into the Public Domain. Enjoy.

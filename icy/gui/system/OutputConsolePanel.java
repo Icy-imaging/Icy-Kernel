@@ -22,9 +22,9 @@ import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.util.GuiUtil;
-import icy.plugin.abstract_.Plugin;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
+import icy.system.IcyExceptionHandler;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -172,7 +172,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
                 try
                 {
                     // send report
-                    Plugin.report(null, doc.getText(0, doc.getLength()));
+                    IcyExceptionHandler.report(null, doc.getText(0, doc.getLength()));
                 }
                 catch (BadLocationException e1)
                 {

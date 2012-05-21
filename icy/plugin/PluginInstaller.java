@@ -27,8 +27,8 @@ import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.frame.progress.SuccessfullAnnounceFrame;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor.PluginIdent;
-import icy.plugin.abstract_.Plugin;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
+import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.update.Updater;
 import icy.util.StringUtil;
@@ -664,7 +664,8 @@ public class PluginInstaller
                         message = message + "<br>";
 
                         // message not empty ? display confirmation
-                        if (!IdConfirmDialog.confirm("<html>" + message + "Do you want to continue ?</html>", "pluginInstall1"))
+                        if (!IdConfirmDialog.confirm("<html>" + message + "Do you want to continue ?</html>",
+                                "pluginInstall1"))
                         {
                             System.out.println(INSTALL_INTERRUPT);
                             return false;
@@ -765,7 +766,7 @@ public class PluginInstaller
                     // send report to all plugins we tried to install
                     // as we can't know where is the problem exactly
                     for (PluginDescriptor plugin : installingPlugins)
-                        Plugin.report(plugin, "An error occured while installing the plugin :\n" + error);
+                        IcyExceptionHandler.report(plugin, "An error occured while installing the plugin :\n" + error);
                 }
 
                 if (taskFrame != null)

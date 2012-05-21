@@ -646,7 +646,7 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * Create from class, used for local plugin
+     * Create from class, used for local plugin.
      */
     public PluginDescriptor(Class<? extends Plugin> clazz)
     {
@@ -678,8 +678,11 @@ public class PluginDescriptor implements XMLPersistent
         // can't load XML from specified URL ?
         if (!loadFromXML(url))
         {
-            // xml is absent, we set default informations
+            // xml is absent or incorrect, we set default informations
             ident.setClassName(pluginClass.getName());
+            // TODO: remove that when plugin will be updated
+            if (pluginClass.getName().startsWith("plugins.fab.MiceProfiler"))
+                ident.setVersion(new Version("0.0.0.1"));
             name = pluginClass.getSimpleName();
             desc = name + " plugin";
         }

@@ -198,7 +198,12 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    GeneralPreferences.setMultiWindowMode(detachedGrp.getSelected() == detachedBtn);
+                    final boolean value = (detachedGrp.getSelected() == detachedBtn);
+                    
+                    // set detached mode
+                    Icy.getMainInterface().setDetachedMode(value);
+                    // and save state
+                    GeneralPreferences.setMultiWindowMode(value);
                 }
             });
 

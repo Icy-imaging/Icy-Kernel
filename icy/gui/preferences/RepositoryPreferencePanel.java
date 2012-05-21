@@ -21,8 +21,10 @@ package icy.gui.preferences;
 import icy.gui.component.ComponentUtil;
 import icy.gui.dialog.ActionDialog;
 import icy.main.Icy;
+import icy.plugin.PluginRepositoryLoader;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
+import icy.workspace.WorkspaceRepositoryLoader;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -406,7 +408,12 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
     @Override
     protected void save()
     {
+        // save to rpeferences
         RepositoryPreferences.setRepositeries(repositories);
+        
+        // then reload online plugins and workspace as repositories changed
+        PluginRepositoryLoader.reload();
+        WorkspaceRepositoryLoader.reload();
 
         // update repositories on Workspace and Plugin panel
         ((PluginLocalPreferencePanel) getPreferencePanel(PluginLocalPreferencePanel.class)).updateRepositories();

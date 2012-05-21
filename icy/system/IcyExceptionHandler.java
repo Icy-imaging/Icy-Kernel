@@ -20,18 +20,24 @@ package icy.system;
 
 import icy.gui.dialog.MessageDialog;
 import icy.gui.plugin.PluginErrorReport;
+import icy.main.Icy;
+import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
 
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.HashMap;
 
 /**
  * @author Stephane
  */
 public class IcyExceptionHandler implements UncaughtExceptionHandler
 {
+    public static final String ID_PLUGINCLASSNAME = "pluginClassName";
+    public static final String ID_ERRORLOG = "errorLog";
+
     private static IcyExceptionHandler exceptionHandler = new IcyExceptionHandler();
 
     public static void init()
@@ -170,5 +176,37 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
             PluginErrorReport.report(pluginDesc, "An error occured while the plugin was running.\n\nStack trace :\n"
                     + IcyExceptionHandler.getErrorMessage(t, true));
         }
+    }
+
+    /**
+     * Report an error log to the Icy web site.
+     * 
+     * @param plugin
+     *        The plugin responsible of the error or <code>null</code> if the error comes from the application.
+     * @param errorLog
+     *        Error log to report.
+     */
+    public static void report(PluginDescriptor plugin, String errorLog)
+    {
+        final HashMap<String, String> values = new HashMap<String, String>();
+
+        if (plugin != null)
+            values.put(ID_PLUGINCLASSNAME, plugin.getClassName());
+        else
+            values.put(ID_PLUGINCLASSNAME, "");
+
+        final String icyId;
+        final String pluginId;
+
+        icyId = "ICY Version " + Icy.version + "\n";
+        if (plugin != null)
+            pluginId = "Plugin " + plugin.toString() + "\n";
+        else
+            pluginId = "";
+
+        values.put(ID_ERRORLOG, icyId + pluginId + "\n" + errorLog);
+
+        // send report
+        NetworkUtil.report(values);
     }
 }

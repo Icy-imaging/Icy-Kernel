@@ -23,18 +23,17 @@ import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.ImageUtil;
 import icy.main.Icy;
-import icy.network.IcyNetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
 import icy.preferences.PluginsPreferences;
 import icy.preferences.XMLPreferences;
 import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
+import icy.system.IcyExceptionHandler;
 
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import javax.swing.ImageIcon;
 
@@ -47,31 +46,13 @@ import javax.swing.ImageIcon;
  */
 public abstract class Plugin
 {
-    private static final String ID_PLUGINCLASSNAME = "pluginClassName";
-    private static final String ID_ERRORLOG = "errorLog";
-
+    /**
+     * @deprecated Uses {@link IcyExceptionHandler#report(PluginDescriptor, String)} instead.
+     */
+    @Deprecated
     public static void report(PluginDescriptor plugin, String errorLog)
     {
-        final HashMap<String, String> values = new HashMap<String, String>();
-
-        if (plugin != null)
-            values.put(ID_PLUGINCLASSNAME, plugin.getClassName());
-        else
-            values.put(ID_PLUGINCLASSNAME, "");
-
-        final String icyId;
-        final String pluginId;
-
-        icyId = "ICY Version " + Icy.version + "\n";
-        if (plugin != null)
-            pluginId = "Plugin " + plugin.toString() + "\n";
-        else
-            pluginId = "";
-
-        values.put(ID_ERRORLOG, icyId + pluginId + "\n" + errorLog);
-
-        // send report
-        IcyNetworkUtil.report(values);
+        IcyExceptionHandler.report(plugin, errorLog);
     }
 
     public static Plugin getPlugin(ArrayList<Plugin> list, String className)

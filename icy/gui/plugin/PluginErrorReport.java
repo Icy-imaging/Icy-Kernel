@@ -25,7 +25,6 @@ import icy.gui.util.GuiUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginUpdater;
-import icy.plugin.abstract_.Plugin;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
@@ -264,7 +263,7 @@ public class PluginErrorReport
                     final Document errorDoc = textPane.getDocument();
                     error = error + "\n\n" + errorDoc.getText(0, errorDoc.getLength());
 
-                    Plugin.report(plugin, error);
+                    IcyExceptionHandler.report(plugin, error);
                 }
                 catch (BadLocationException ex)
                 {

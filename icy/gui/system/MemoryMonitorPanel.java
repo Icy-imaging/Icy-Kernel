@@ -172,31 +172,28 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
         GraphicsUtil.drawHCenteredString(g2, infos[1], w / 2, 18, false);
 
         String text;
-        Color c;
 
         // display internet connection
-        if (NetworkUtil.hasInternetConnection())
+        if (!NetworkUtil.hasInternetConnection())
         {
-            c = Color.green;
-            text = "Connected to internet";
-            g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_NETWORK, c), 10, 30, 14, 14, null);
-        }
-        else
-        {
-            c = Color.red;
-            text = "Not connected to internet";
-            g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_NETWORK, c), 10, 30, 14, 14, null);
-            // g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_DELETE, c), 12,
-            // 34, 9, 9, null);
+            g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_NETWORK, Color.gray), 10, 30, 16, 16,
+                    null);
+            g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_DELETE, Color.red), 13, 35, 10, 10,
+                    null);
+
+            if (displayHelpMessage)
+            {
+                text = "Not connected to internet";
+
+                g2.setColor(Color.black);
+                GraphicsUtil.drawHCenteredString(g2, text, (w / 2) + 1, 30 + 1, false);
+                g2.setColor(ColorUtil.mix(Color.red, Color.white));
+                GraphicsUtil.drawHCenteredString(g2, text, w / 2, 30, false);
+            }
         }
 
         if (displayHelpMessage)
         {
-            g2.setColor(Color.black);
-            GraphicsUtil.drawHCenteredString(g2, text, (w / 2) + 1, 30 + 1, false);
-            g2.setColor(ColorUtil.mix(c, Color.white));
-            GraphicsUtil.drawHCenteredString(g2, text, w / 2, 30, false);
-
             text = "click to force a garbage collector event";
             g2.setColor(Color.black);
             GraphicsUtil.drawHCenteredString(g2, text, (w / 2) + 1, 44 + 1, false);

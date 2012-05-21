@@ -34,7 +34,6 @@
 
 package icy.system;
 
-import icy.plugin.PluginLoader;
 import icy.util.StringUtil;
 
 import java.util.ArrayList;
@@ -45,7 +44,6 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.CtNewMethod;
-import javassist.LoaderClassPath;
 import javassist.NotFoundException;
 
 /**
@@ -73,7 +71,7 @@ public class ClassPatcher
     {
         pool = ClassPool.getDefault();
         pool.appendClassPath(new ClassClassPath(getClass()));
-        pool.appendClassPath(new LoaderClassPath(PluginLoader.getLoader()));
+//        pool.appendClassPath(new LoaderClassPath(PluginLoader.getLoader()));
         this.patchPackage = patchPackage;
         this.patchSuffix = patchSuffix;
     }

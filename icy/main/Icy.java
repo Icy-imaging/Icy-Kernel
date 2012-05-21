@@ -83,7 +83,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.2.3.1");
+    public static Version version = new Version("1.2.3.2");
 
     /**
      * Main interface
@@ -441,6 +441,9 @@ public class Icy
                     if (frame != mainFrame)
                         frame.dispose();
 
+                // stop daemon plugin
+                PluginLoader.stopDaemons();
+
                 // shutdown background processor after frame close
                 ThreadUtil.shutdown();
 
@@ -455,9 +458,6 @@ public class Icy
                     }
                 });
                 
-                // stop daemon plugin
-                PluginLoader.stopDaemons();
-
                 // wait that background processors completed theirs tasks
                 while (!ThreadUtil.isShutdownAndTerminated() && !exitFrame.isForced())
                     ThreadUtil.sleep(10);

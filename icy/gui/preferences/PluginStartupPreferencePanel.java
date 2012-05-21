@@ -99,7 +99,10 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
     @Override
     protected void save()
     {
+        // save preferences
         PluginPreferences.setInactiveDaemons(new ArrayList<String>(inactives));
+        // restart daemon plugins
+        PluginLoader.resetDaemons();
     }
 
     @Override

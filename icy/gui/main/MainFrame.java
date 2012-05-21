@@ -32,6 +32,7 @@ import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyApplicationIcon;
 import icy.system.FileDrop;
+import icy.system.FileDrop.FileDropListener;
 import icy.system.SystemUtil;
 
 import java.awt.BorderLayout;
@@ -135,6 +136,9 @@ public class MainFrame extends JRibbonFrame
         setIconImages(ResourceUtil.getIcyIconImages());
         setApplicationIcon(new IcyApplicationIcon());
 
+        // set minimized state
+        getRibbon().setMinimized(GeneralPreferences.getRibbonMinimized());
+
         // main center pane (contains desktop pane)
         centerPanel = new JPanel();
         centerPanel.setLayout(new BorderLayout());
@@ -160,7 +164,7 @@ public class MainFrame extends JRibbonFrame
         centerPanel.add(desktopPane, BorderLayout.CENTER);
 
         // action on file drop
-        final FileDrop.Listener fileDropListener = new FileDrop.Listener()
+        final FileDropListener fileDropListener = new FileDropListener()
         {
             @Override
             public void filesDropped(File[] files)
@@ -179,9 +183,14 @@ public class MainFrame extends JRibbonFrame
             @Override
             public void propertyChange(PropertyChangeEvent evt)
             {
+                final boolean value = ((Boolean) evt.getNewValue()).booleanValue();
+
                 // pack the frame in detached mode
                 if (detachedMode)
                     pack();
+
+                // save state in preferene
+                GeneralPreferences.setRibbonMinimized(value);
             }
         });
     }
@@ -713,16 +722,11 @@ public class MainFrame extends JRibbonFrame
                 previousHeight = getHeight();
                 previousMaximized = ComponentUtil.isMaximized(this);
 
-                // hide main pane & resize window to ribbon dimension
+                // hide main pane and remove maximized state
                 remove(mainPane);
                 ComponentUtil.setMaximized(this, false);
                 // and pack the frame
                 pack();
-
-                // recompute layout
-                // validate();
-                // force resize to ribbon size
-                // setSize(getWidth(), getMinimumSize().height);
             }
             // single window mode
             else

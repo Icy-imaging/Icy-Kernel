@@ -3,7 +3,6 @@ package icy.preferences;
 import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.frame.progress.ToolTipFrame;
 import icy.gui.util.LookAndFeelUtil;
-import icy.main.Icy;
 import icy.math.MathUtil;
 import icy.system.SystemUtil;
 
@@ -25,6 +24,7 @@ public class GeneralPreferences
     public static final String ID_SEQUENCE_PERSISTENCE = "sequencePersistence";
     public static final String ID_AUTO_UPDATE = "autoUpdate";
     public static final String ID_AUTO_CHECK_UPDATE = "autoCheckUpdate";
+    public static final String ID_RIBBON_MINIMIZED = "ribbonMinimized";
     public static final String ID_DETACHED_MODE = "detached";
     public static final String ID_ALWAYS_ON_TOP = "alwaysOnTop";
     public static final String ID_GUI_SKIN = "guiSkin";
@@ -192,6 +192,11 @@ public class GeneralPreferences
         return prefGeneral.getBoolean(ID_AUTO_CHECK_UPDATE, true);
     }
 
+    public static boolean getRibbonMinimized()
+    {
+        return prefGeneral.getBoolean(ID_RIBBON_MINIMIZED, false);
+    }
+
     public static boolean getMultiWindowMode()
     {
         return prefGeneral.getBoolean(ID_DETACHED_MODE, false);
@@ -277,20 +282,19 @@ public class GeneralPreferences
         prefGeneral.putBoolean(ID_AUTO_CHECK_UPDATE, value);
     }
 
+    public static void setRibbonMinimized(boolean value)
+    {
+        prefGeneral.putBoolean(ID_RIBBON_MINIMIZED, value);
+    }
+
     public static void setMultiWindowMode(boolean value)
     {
         prefGeneral.putBoolean(ID_DETACHED_MODE, value);
-
-        // set detached mode
-        Icy.getMainInterface().setDetachedMode(value);
     }
 
     public static void setAlwaysOnTop(boolean value)
     {
         prefGeneral.putBoolean(ID_ALWAYS_ON_TOP, value);
-
-        // set "always on top" state
-        Icy.getMainInterface().setAlwaysOnTop(value);
     }
 
     public static void setStatupTooltip(boolean value)
@@ -300,21 +304,11 @@ public class GeneralPreferences
 
     public static void setGuiFontSize(int value)
     {
-        // set new font size
-        if (value != getGuiFontSize())
-        {
-            prefGeneral.putInt(ID_GUI_FONT_SIZE, value);
-            LookAndFeelUtil.setFontSize(value);
-        }
+        prefGeneral.putInt(ID_GUI_FONT_SIZE, value);
     }
 
     public static void setGuiSkin(String value)
     {
-        // set new look and feel
-        if (value != getGuiSkin())
-        {
-            prefGeneral.put(ID_GUI_SKIN, value);
-            LookAndFeelUtil.setSkin(value);
-        }
+        prefGeneral.put(ID_GUI_SKIN, value);
     }
 }

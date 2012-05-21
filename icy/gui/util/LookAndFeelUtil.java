@@ -24,6 +24,7 @@ import icy.preferences.GeneralPreferences;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
+import icy.util.StringUtil;
 import ij.util.Java2;
 
 import java.awt.Color;
@@ -99,6 +100,8 @@ public class LookAndFeelUtil
     static Map<String, SkinInfo> map;
     private static ArrayList<SkinInfo> skins;
 
+    static int currentFontSize;
+
     public static void init()
     {
         // so ImageJ won't change look and feel later
@@ -168,6 +171,7 @@ public class LookAndFeelUtil
         final FontSet fontSet = fontPolicy.getFontSet("Substance", null);
 
         defaultFontSize = fontSet.getMessageFont().getSize();
+        currentFontSize = defaultFontSize;
 
         // set default font size
         setFontSize(GeneralPreferences.getGuiFontSize());
@@ -205,7 +209,12 @@ public class LookAndFeelUtil
      */
     public static String getCurrentSkinName()
     {
-        return getCurrentSkin().getDisplayName();
+        final SubstanceSkin skin = getCurrentSkin();
+
+        if (skin != null)
+            return skin.getDisplayName();
+
+        return null;
     }
 
     // /**
@@ -247,10 +256,10 @@ public class LookAndFeelUtil
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    // not the same --> set LAF
-                    if (!currentSkinName.equals(skinName))
-                        // save to preferences
-                        GeneralPreferences.setGuiSkin(skinName);
+                    // set LAF
+                    LookAndFeelUtil.setSkin(skinName);
+                    // and save to preferences
+                    GeneralPreferences.setGuiSkin(skinName);
                 }
             });
 
@@ -293,52 +302,67 @@ public class LookAndFeelUtil
     // }
 
     /**
-     * Set Look And Feel font size
+     * Get current LookAndFeel font size
      */
-    public static void setFontSize(final int size)
+    public static int getFontSize()
     {
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                final float scaleFactor = (float) size / (float) defaultFontSize;
-
-                try
-                {
-                    // will fail here if look and feel is not a substance one
-                    SubstanceLookAndFeel.setFontPolicy(SubstanceFontUtilities.getScaledFontPolicy(scaleFactor));
-                }
-                catch (Exception e)
-                {
-                    System.out.println("LookAndFeelUtil.setFontSize(...) error :");
-                    IcyExceptionHandler.showErrorMessage(e, false);
-                }
-            }
-        });
+        return currentFontSize;
     }
 
     /**
-     * Set the specified skin (skin display name)
+     * Set LookAndFeel font size
+     */
+    public static void setFontSize(final int size)
+    {
+        if (size != currentFontSize)
+        {
+            ThreadUtil.invokeLater(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    final float scaleFactor = (float) size / (float) defaultFontSize;
+
+                    try
+                    {
+                        // will fail here if look and feel is not a substance one
+                        SubstanceLookAndFeel.setFontPolicy(SubstanceFontUtilities.getScaledFontPolicy(scaleFactor));
+                        currentFontSize = size;
+                    }
+                    catch (Exception e)
+                    {
+                        System.err.println("LookAndFeelUtil.setFontSize(...) error :");
+                        IcyExceptionHandler.showErrorMessage(e, false);
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Set the specified LookAndFeel skin (skin display name)
      */
     public static void setSkin(final String skinName)
     {
-        ThreadUtil.invokeLater(new Runnable()
+        if (!StringUtil.equals(skinName, getCurrentSkinName()))
         {
-            @Override
-            public void run()
+            ThreadUtil.invokeLater(new Runnable()
             {
-                try
+                @Override
+                public void run()
                 {
-                    SubstanceLookAndFeel.setSkin(map.get(skinName).getClassName());
+                    try
+                    {
+                        SubstanceLookAndFeel.setSkin(map.get(skinName).getClassName());
+                    }
+                    catch (Exception e)
+                    {
+                        System.err.println("LookAndFeelUtil.setSkin(...) error :");
+                        IcyExceptionHandler.showErrorMessage(e, false);
+                    }
                 }
-                catch (Exception e)
-                {
-                    System.err.println("LookAndFeelUtil.setSkin(...) error :");
-                    IcyExceptionHandler.showErrorMessage(e, false);
-                }
-            }
-        });
+            });
+        }
     }
 
     /**

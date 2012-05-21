@@ -190,19 +190,19 @@ public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
 
         final JPanel centerPanel = new JPanel(new BorderLayout());
 
+        centerPanel.add(new JSeparator(SwingConstants.HORIZONTAL), BorderLayout.NORTH);
         centerPanel.add(infosPanel, BorderLayout.WEST);
         centerPanel.add(changeLogPanel, BorderLayout.CENTER);
 
         // bottom panel
         final JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.LINE_AXIS));
+        buttonsPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
-        buttonsPanel.add(Box.createHorizontalStrut(4));
         buttonsPanel.add(executeButton);
         buttonsPanel.add(Box.createHorizontalGlue());
         buttonsPanel.add(Box.createHorizontalStrut(4));
         buttonsPanel.add(closeButton);
-        buttonsPanel.add(Box.createHorizontalStrut(4));
 
         final JPanel bottomPanel = new JPanel(new BorderLayout());
 
@@ -262,7 +262,14 @@ public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
             pluginDescriptionText.setText("No description");
         else
         {
-            pluginDescriptionText.setText(description.replaceAll("(\r\n|\n\r|\r|\n)", "<br/>"));
+            final boolean hasHtmlBR = (description.indexOf("<br>") != -1) || (description.indexOf("<BR>") != -1)
+                    || (description.indexOf("<br/>") != -1) || (description.indexOf("<BR/>") != -1);
+
+            if (hasHtmlBR)
+                pluginDescriptionText.setText(description.replaceAll("(\r\n|\n\r|\r|\n)", ""));
+            else
+                pluginDescriptionText.setText(description.replaceAll("(\r\n|\n\r|\r|\n)", "<br/>"));
+            
             pluginDescriptionText.setCaretPosition(0);
         }
 
