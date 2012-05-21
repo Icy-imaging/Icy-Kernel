@@ -307,7 +307,7 @@ public class PluginUpdater extends ActionFrame
             if (auto)
             {
                 // automatically install all updates (orderer depending dependencies)
-                updatePlugins(toInstallPlugins, true);
+                updatePlugins(toInstallPlugins, showProgress);
             }
             else
             {

@@ -652,29 +652,26 @@ public class ElementDescriptor implements XMLPersistent
         // update version info
         version = updateElement.version;
 
-        files.clear();
+        // updateElement contains only new or modified files (do not contain unmodified ones)
+        // so we have to add or update files but not remove old ones.
         for (ElementFile updateFile : updateElement.files)
-            files.add(updateFile);
+        {
+            // get corresponding file
+            final ElementFile localFile = getElementFile(updateFile.getLocalPath());
 
-        // // add or update files
-        // for (ElementFile updateFile : updateElement.files)
-        // {
-        // // get corresponding file
-        // final ElementFile localFile = getElementFile(updateFile.getLocalPath());
-        //
-        // // file missing ? --> add it
-        // if (localFile == null)
-        // files.add(updateFile);
-        // else
-        // {
-        // // update file (we don't care about online information)
-        // localFile.setDateModif(updateFile.getDateModif());
-        // localFile.setExecutable(updateFile.isExecutable());
-        // localFile.setLink(updateFile.isLink());
-        // localFile.setWritable(updateFile.isWritable());
-        // localFile.setDirectory(updateFile.isDirectory());
-        // }
-        // }
+            // file missing ? --> add it
+            if (localFile == null)
+                files.add(updateFile);
+            else
+            {
+                // update file (we don't care about online information)
+                localFile.setDateModif(updateFile.getDateModif());
+                localFile.setExecutable(updateFile.isExecutable());
+                localFile.setLink(updateFile.isLink());
+                localFile.setWritable(updateFile.isWritable());
+                localFile.setDirectory(updateFile.isDirectory());
+            }
+        }
     }
 
     @Override
