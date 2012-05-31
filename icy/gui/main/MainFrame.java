@@ -689,7 +689,7 @@ public class MainFrame extends JRibbonFrame
         k = 0;
         for (int i = 0; i < numLine; i++)
         {
-            for (int j = 0; j < numCol && k < numFrames; j++, k++)
+            for (int j = 0; j < numCol; j++, k++)
             {
                 final int f = framePos[k];
                 if (f < numFrames)

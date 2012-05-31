@@ -57,7 +57,6 @@ import java.util.Arrays;
 
 import vtk.vtkActor;
 import vtk.vtkActor2D;
-import vtk.vtkDataObject;
 import vtk.vtkPointSet;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
@@ -82,7 +81,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             super();
 
             // avoid to use vtk objects when vtk library is missing.
-            if (Icy.vktLibraryLoaded)
+            if (Icy.isVtkLibraryLoaded())
             {
                 // init 3D painters stuff
                 polyData = new vtkPolyData();
@@ -209,7 +208,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             ((vtkPolyData) polyData).SetPolys(VtkUtil.getCells(polyList.size(), VtkUtil.prepareCells(indexes)));
             ((vtkPointSet) polyData).SetPoints(VtkUtil.getPoints(vertices));
 
-            ((vtkDataObject) polyMapper).Update();
+            ((vtkPolyDataMapper) polyMapper).Update();
         }
 
         @Override

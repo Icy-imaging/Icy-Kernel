@@ -27,6 +27,7 @@ import icy.util.ColorUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
+import java.util.Arrays;
 
 import javax.swing.event.EventListenerList;
 
@@ -950,6 +951,36 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     public String toString()
     {
         return name + " : " + super.toString();
+    }
+
+    /**
+     * Return true if the colormap has the same type and same color intensities than specified one.
+     */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof IcyColorMap)
+        {
+            final IcyColorMap colormap = (IcyColorMap) obj;
+
+            if (colormap.getType() != type)
+                return false;
+
+            if (!Arrays.equals(red.map, colormap.red.map))
+                return false;
+            if (!Arrays.equals(green.map, colormap.green.map))
+                return false;
+            if (!Arrays.equals(blue.map, colormap.blue.map))
+                return false;
+            if (!Arrays.equals(gray.map, colormap.gray.map))
+                return false;
+            if (!Arrays.equals(alpha.map, colormap.alpha.map))
+                return false;
+
+            return true;
+        }
+
+        return super.equals(obj);
     }
 
     @Override

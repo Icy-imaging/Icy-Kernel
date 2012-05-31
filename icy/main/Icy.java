@@ -51,13 +51,16 @@ import icy.system.IcySecurityManager;
 import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
+import icy.util.ReflectionUtil;
 import icy.util.StringUtil;
 import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceLoader;
 import ij.ImageJ;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
@@ -83,7 +86,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.2.4.1");
+    public static Version version = new Version("1.2.5.0");
 
     /**
      * Main interface
@@ -101,16 +104,30 @@ public class Icy
     static SplashScreenFrame splashScreen = null;
 
     /**
-     * VTK loaded flag
+     * VTK library loaded flag
      */
-    public static boolean vktLibraryLoaded = false;
+    static boolean vtkLibraryLoaded = false;
+
+    /**
+     * ITK library loaded flag
+     */
+    static boolean itkLibraryLoaded = false;
+
+    /**
+     * Headless flag
+     */
+    static boolean headless = false;
+
+    /**
+     * Exiting flag
+     */
+    static boolean exiting = false;
 
     /**
      * internals
      */
-    static boolean exiting = false;
     static ExitFrame exitFrame = null;
-    private static Thread terminer = null;
+    static Thread terminer = null;
 
     /**
      * @param args
@@ -123,29 +140,32 @@ public class Icy
             System.out.println("Initializing...");
             System.out.println();
 
+            // handle arguments
+            handleAppArgs(args);
+
             // check if ICY is already running.
             checkUnique = new CheckUniqueTool();
 
-            // prepare splashScreen (ok to create it here as we are not yet in substance laf)
-            splashScreen = new SplashScreenFrame();
-
-            // It's important to initialize AWT now (with InvokeNow(...) for instance) to avoid
-            // the JVM deadlock bug (id: 5104239). It happen when the AWT thread is initialized
-            // while others threads load some new library with ClassLoader.loadLibrary
-
-            // display splash NOW
-            ThreadUtil.invokeNow(new Runnable()
+            if (!headless)
             {
-                @Override
-                public void run()
-                {
-                    // display splash screen
-                    splashScreen.setVisible(true);
-                }
-            });
+                // prepare splashScreen (ok to create it here as we are not yet in substance laf)
+                splashScreen = new SplashScreenFrame();
 
-            // handle arguments
-            handleAppArgs(args);
+                // It's important to initialize AWT now (with InvokeNow(...) for instance) to avoid
+                // the JVM deadlock bug (id: 5104239). It happen when the AWT thread is initialized
+                // while others threads load some new library with ClassLoader.loadLibrary
+
+                // display splash NOW
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        // display splash screen
+                        splashScreen.setVisible(true);
+                    }
+                });
+            }
 
             // initialize network (better to do it at first as a lot of things need networking)
             NetworkUtil.init();
@@ -176,7 +196,10 @@ public class Icy
             // });
 
             // build main interface
-            mainInterface = new MainInterfaceGui();
+            if (headless)
+                mainInterface = new MainInterfaceBatch();
+            else
+                mainInterface = new MainInterfaceGui();
         }
         catch (Throwable t)
         {
@@ -211,11 +234,14 @@ public class Icy
             @Override
             public void run()
             {
-                // we can now hide splash as we have interface
-                splashScreen.dispose();
-                // show tool tip
-                if (GeneralPreferences.getStatupTooltip())
-                    new GeneralToolTipFrame();
+                if (!headless)
+                {
+                    // we can now hide splash as we have interface
+                    splashScreen.dispose();
+                    // show tool tip
+                    if (GeneralPreferences.getStatupTooltip())
+                        new GeneralToolTipFrame();
+                }
             }
         });
 
@@ -228,6 +254,7 @@ public class Icy
         System.out.println("System total memory : " + UnitUtil.getBytesString(SystemUtil.getTotalMemory()));
         System.out.println("System available memory : " + UnitUtil.getBytesString(SystemUtil.getFreeMemory()));
         System.out.println("Max java memory : " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()));
+        System.out.println();
 
         // initialize OSX specific stuff
         if (SystemUtil.isMac())
@@ -260,6 +287,10 @@ public class Icy
             // special flag to disabled JCL (needed for development)
             if (arg.equalsIgnoreCase("--disableJCL") || arg.equalsIgnoreCase("-dJCL"))
                 PluginLoader.JCLDisabled = true;
+
+            // headless mode
+            if (arg.equalsIgnoreCase("--headless") || arg.equalsIgnoreCase("-hl"))
+                headless = true;
         }
     }
 
@@ -457,7 +488,7 @@ public class Icy
                         exitFrame = new ExitFrame(EXIT_FORCE_DELAY);
                     }
                 });
-                
+
                 // wait that background processors completed theirs tasks
                 while (!ThreadUtil.isShutdownAndTerminated() && !exitFrame.isForced())
                     ThreadUtil.sleep(10);
@@ -507,6 +538,30 @@ public class Icy
     }
 
     /**
+     * Return true is VTK library loaded.
+     */
+    public static boolean isVtkLibraryLoaded()
+    {
+        return vtkLibraryLoaded;
+    }
+
+    /**
+     * Return true is VTK library loaded.
+     */
+    public static boolean isItkLibraryLoaded()
+    {
+        return itkLibraryLoaded;
+    }
+
+    /**
+     * Return true is the application is running in headless mode (no screen device).
+     */
+    public static boolean isHeadLess()
+    {
+        return headless;
+    }
+
+    /**
      * Return true is the application is currently exiting.
      */
     public static boolean isExiting()
@@ -548,21 +603,54 @@ public class Icy
         final String os = SystemUtil.getOSArchIdString();
         final boolean osChanged = !StringUtil.equals(lastOs, os);
 
-        // build the native local library path
-        final String path = LIB_PATH + FileUtil.separator + os;
-        // get file list (we don't want hidden files if any)
-        final ArrayList<File> libraryFiles = FileUtil.getFileList(path, true, false);
+        // build the local native library path
+        final String libPath = LIB_PATH + FileUtil.separator + os;
 
-        // copy to root directory
-        for (File libraryFile : libraryFiles)
+        // get all files in local native library path
+        final ArrayList<File> files = FileUtil.getFileList(libPath, true, true, false);
+
+        try
         {
-            // get destination file (directly copy in root application directory)
-            final File dstFile = new File(libraryFile.getName());
+            // patch user library paths...
+            final Field pathsField = ReflectionUtil.getField(ClassLoader.class, "usr_paths", true);
+            // get current user paths
+            final ArrayList<String> paths = new ArrayList<String>(Arrays.asList((String[]) pathsField.get(null)));
 
-            // check if we need to copy the file
-            if (osChanged || !dstFile.exists() || (dstFile.lastModified() != libraryFile.lastModified()))
-                FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false);
+            // add base local native library path to user library paths
+            paths.add(new File(libPath).getAbsolutePath());
+
+            for (File f : files)
+            {
+                if (f.isDirectory())
+                {
+                    // add all directories to user library paths
+                    final String filePath = f.getAbsolutePath();
+                    if (!paths.contains(filePath))
+                        paths.add(filePath);
+                }
+            }
+
+            // set back user library path
+            pathsField.set(null, paths.toArray(new String[paths.size()]));
         }
+        catch (Exception e)
+        {
+            System.err.println("Cannot patch Java Library Path.");
+            System.err.println("Native libraries won't be loaded.");
+        }
+
+//        // get VTK library file list (we don't want hidden files if any)
+//        final ArrayList<File> libraryFiles = FileUtil.getFileList(libPath + "vtk", true, false);
+//        // copy to root directory
+//        for (File libraryFile : libraryFiles)
+//        {
+//            // get destination file (directly copy in root application directory)
+//            final File dstFile = new File(libraryFile.getName());
+//
+//            // check if we need to copy the file
+//            if (osChanged || !dstFile.exists() || (dstFile.lastModified() != libraryFile.lastModified()))
+//                FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false);
+//        }
 
         // save os change
         if (osChanged)
@@ -570,33 +658,110 @@ public class Icy
 
         // load native libraries
         loadVtkLibrary();
+        loadItkLibrary();
+    }
+
+    private static void loadLibraryFile(String name, boolean mandatory, boolean showLog)
+    {
+        if (mandatory)
+            System.loadLibrary(name);
+        else
+        {
+            try
+            {
+                System.loadLibrary(name);
+            }
+            catch (Throwable e)
+            {
+                if (showLog)
+                    System.out.println("cannot load " + name + ", skipping...");
+            }
+        }
+    }
+
+    private static void loadLibraryFile(String name, boolean mandatory)
+    {
+        loadLibraryFile(name, mandatory, false);
+    }
+
+    private static void loadLibraryFile(String name)
+    {
+        loadLibraryFile(name, false, false);
     }
 
     private static void loadVtkLibrary()
     {
         try
         {
-            System.loadLibrary("vtkCommonJava");
-            System.loadLibrary("vtkFilteringJava");
-            System.loadLibrary("vtkIOJava");
-            System.loadLibrary("vtkImagingJava");
-            System.loadLibrary("vtkGraphicsJava");
-            System.loadLibrary("vtkRenderingJava");
-            try
-            {
-                System.loadLibrary("vtkHybridJava");
-            }
-            catch (Throwable e)
-            {
-                System.out.println("cannot load vtkHybrid, skipping...");
-            }
+            loadLibraryFile("vtksys");
+            loadLibraryFile("vtkCommon");
+            loadLibraryFile("vtkFiltering");
+            loadLibraryFile("vtkDICOMParser");
+            loadLibraryFile("vtkNetCDF");
+            loadLibraryFile("vtkNetCDF_cxx");
+            loadLibraryFile("vtkzlib");
+            loadLibraryFile("vtkmetaio");
+            loadLibraryFile("vtkpng");
+            loadLibraryFile("vtkjpeg");
+            loadLibraryFile("vtktiff");
+            loadLibraryFile("vtkexpat");
+            loadLibraryFile("vtkIO");
+            loadLibraryFile("vtkImaging");
+            loadLibraryFile("vtkverdict");
+            loadLibraryFile("vtkGraphics");
+            loadLibraryFile("vtkfreetype");
+            loadLibraryFile("vtkftgl");
+            loadLibraryFile("vtkRendering");
+            loadLibraryFile("vtkexoIIc");
+            loadLibraryFile("vtkHybrid");
+            loadLibraryFile("vtkGenericFiltering");
+            loadLibraryFile("vtklibxml2");
+            loadLibraryFile("vtkalglib");
+            loadLibraryFile("vtkInfovis");
+            loadLibraryFile("vtkWidgets");
+            loadLibraryFile("vtkViews");
+            loadLibraryFile("vtkVolumeRendering");
+            loadLibraryFile("vtkCharts");
+            loadLibraryFile("vtkproj4");
+            loadLibraryFile("vtkGeovis");
+
+            loadLibraryFile("vtkCommonJava", true);
+            loadLibraryFile("vtkFilteringJava", true);
+            loadLibraryFile("vtkIOJava", true);
+            loadLibraryFile("vtkImagingJava", true);
+            loadLibraryFile("vtkGraphicsJava", true);
+            loadLibraryFile("vtkRenderingJava", true);
+            loadLibraryFile("vtkHybridJava", false, true);
+            loadLibraryFile("vtkGenericFilteringJava", true);
+            loadLibraryFile("vtkInfovisJava", true);
+            loadLibraryFile("vtkWidgetsJava", true);
+            loadLibraryFile("vtkViewsJava", true);
+            loadLibraryFile("vtkVolumeRenderingJava", true);
+            loadLibraryFile("vtkChartsJava", false, true);
+            loadLibraryFile("vtkGeovisJava", false, true);
+            loadLibraryFile("vtkParallelJava", false, true);
 
             System.out.println("VTK library successfully loaded...");
-            vktLibraryLoaded = true;
+            vtkLibraryLoaded = true;
         }
         catch (Throwable e)
         {
             System.out.println("Cannot load VTK library...");
+        }
+    }
+
+    private static void loadItkLibrary()
+    {
+        try
+        {
+            loadLibraryFile("SimpleITKJava", true);
+            
+            System.out.println("ITK library successfully loaded...");
+            itkLibraryLoaded = true;
+        }
+        catch (Throwable e)
+        {
+            System.out.println("Cannot load ITK library...");
         }
     }
 

@@ -3,40 +3,49 @@
  */
 package icy.itk;
 
-import icy.type.TypeUtil;
+import icy.image.IcyBufferedImage;
+import icy.sequence.Sequence;
+import icy.type.DataType;
 
+import org.itk.simple.Image;
 import org.itk.simple.PixelIDValueEnum;
+import org.itk.simple.VectorUInt32;
 
 /**
  * @author Stephane
  */
 public class ItkUtil
 {
-    public static int getDataTypeFromPixelID(int value)
+    public static DataType getDataTypeFromPixelID(int value)
     {
         return getDataTypeFromPixelID(PixelIDValueEnum.swigToEnum(value));
     }
 
-    public static int getDataTypeFromPixelID(PixelIDValueEnum value)
+    public static DataType getDataTypeFromPixelID(PixelIDValueEnum value)
     {
-        if ((value == PixelIDValueEnum.sitkInt8) || (value == PixelIDValueEnum.sitkUInt8))
-            return TypeUtil.TYPE_BYTE;
-        if ((value == PixelIDValueEnum.sitkInt16) || (value == PixelIDValueEnum.sitkUInt16))
-            return TypeUtil.TYPE_SHORT;
-        if ((value == PixelIDValueEnum.sitkInt32) || (value == PixelIDValueEnum.sitkUInt32))
-            return TypeUtil.TYPE_INT;
+        if (value == PixelIDValueEnum.sitkInt8)
+            return DataType.BYTE;
+        if (value == PixelIDValueEnum.sitkUInt8)
+            return DataType.UBYTE;
+        if (value == PixelIDValueEnum.sitkInt16)
+            return DataType.SHORT;
+        if (value == PixelIDValueEnum.sitkUInt16)
+            return DataType.USHORT;
+        if (value == PixelIDValueEnum.sitkInt32)
+            return DataType.INT;
+        if (value == PixelIDValueEnum.sitkUInt32)
+            return DataType.UINT;
         if (value == PixelIDValueEnum.sitkFloat32)
-            return TypeUtil.TYPE_FLOAT;
+            return DataType.FLOAT;
         if (value == PixelIDValueEnum.sitkFloat64)
-            return TypeUtil.TYPE_DOUBLE;
+            return DataType.DOUBLE;
 
-        return TypeUtil.TYPE_UNDEFINED;
+        return DataType.UNDEFINED;
     }
 
     public static boolean isSignedPixelID(int value)
     {
         return isSignedPixelID(PixelIDValueEnum.swigToEnum(value));
-
     }
 
     public static boolean isSignedPixelID(PixelIDValueEnum value)
@@ -46,62 +55,499 @@ public class ItkUtil
                 || (value == PixelIDValueEnum.sitkFloat64);
     }
 
-    public static PixelIDValueEnum getPixelIDFromDataType(int dataType, boolean signed)
+    public static PixelIDValueEnum getPixelIDFromDataType(DataType dataType)
     {
         switch (dataType)
         {
-            case TypeUtil.TYPE_BYTE:
-                if (signed)
-                    return PixelIDValueEnum.sitkInt8;
+            case BYTE:
+                return PixelIDValueEnum.sitkInt8;
+            case UBYTE:
                 return PixelIDValueEnum.sitkUInt8;
-
-            case TypeUtil.TYPE_SHORT:
-                if (signed)
-                    return PixelIDValueEnum.sitkInt16;
+            case SHORT:
+                return PixelIDValueEnum.sitkInt16;
+            case USHORT:
                 return PixelIDValueEnum.sitkUInt16;
-
-            case TypeUtil.TYPE_INT:
-                if (signed)
-                    return PixelIDValueEnum.sitkInt32;
+            case INT:
+                return PixelIDValueEnum.sitkInt32;
+            case UINT:
                 return PixelIDValueEnum.sitkUInt32;
-
-            case TypeUtil.TYPE_FLOAT:
+            case FLOAT:
                 return PixelIDValueEnum.sitkFloat32;
-
-            case TypeUtil.TYPE_DOUBLE:
+            case DOUBLE:
                 return PixelIDValueEnum.sitkFloat64;
         }
 
         return PixelIDValueEnum.sitkUnknown;
     }
 
-    public static int getPixelIDAsIntFromDataType(int dataType, boolean signed)
+    public static int getPixelIDAsIntFromDataType(DataType dataType)
     {
-        switch (dataType)
-        {
-            case TypeUtil.TYPE_BYTE:
-                if (signed)
-                    return PixelIDValueEnum.sitkInt8.swigValue();
-                return PixelIDValueEnum.sitkUInt8.swigValue();
-
-            case TypeUtil.TYPE_SHORT:
-                if (signed)
-                    return PixelIDValueEnum.sitkInt16.swigValue();
-                return PixelIDValueEnum.sitkUInt16.swigValue();
-
-            case TypeUtil.TYPE_INT:
-                if (signed)
-                    return PixelIDValueEnum.sitkInt32.swigValue();
-                return PixelIDValueEnum.sitkUInt32.swigValue();
-
-            case TypeUtil.TYPE_FLOAT:
-                return PixelIDValueEnum.sitkFloat32.swigValue();
-
-            case TypeUtil.TYPE_DOUBLE:
-                return PixelIDValueEnum.sitkFloat64.swigValue();
-        }
-
-        return PixelIDValueEnum.sitkUnknown.swigValue();
+        return getPixelIDFromDataType(dataType).swigValue();
     }
 
+    /**
+     * Convert the specified ICY sequence to ITK image.<br>
+     * ITK images are only 3D [XYZ] so multiple channels images
+     * or multiple frames are not supported.
+     */
+    public static Image getItkIImage(Sequence sequence)
+    {
+        final int sizeX = sequence.getSizeX();
+        final int sizeY = sequence.getSizeY();
+        final int sizeZ = sequence.getSizeZ();
+        final DataType dataType = sequence.getDataType_();
+
+        final Image result = new Image(sizeX, sizeY, sizeZ, getPixelIDFromDataType(dataType));
+        final VectorUInt32 idx = new VectorUInt32(3);
+
+        switch (dataType)
+        {
+            case BYTE:
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    final byte[] data = sequence.getDataXYAsByte(0, z, 0);
+                    int offset = 0;
+                    // set index
+                    idx.set(2, z);
+
+                    for (int y = 0; y < sizeY; y++)
+                    {
+                        // set index
+                        idx.set(1, y);
+
+                        for (int x = 0; x < sizeX; x++, offset++)
+                        {
+                            // set index
+                            idx.set(0, x);
+                            // set pixel
+                            result.setPixelAsInt8(idx, data[offset]);
+                        }
+                    }
+                }
+                break;
+
+            case UBYTE:
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    final byte[] data = sequence.getDataXYAsByte(0, z, 0);
+                    int offset = 0;
+                    // set index
+                    idx.set(2, z);
+
+                    for (int y = 0; y < sizeY; y++)
+                    {
+                        // set index
+                        idx.set(1, y);
+
+                        for (int x = 0; x < sizeX; x++, offset++)
+                        {
+                            // set index
+                            idx.set(0, x);
+                            // set pixel
+                            result.setPixelAsUInt8(idx, data[offset]);
+                        }
+                    }
+                }
+                break;
+
+            case SHORT:
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    final short[] data = sequence.getDataXYAsShort(0, z, 0);
+                    int offset = 0;
+                    // set index
+                    idx.set(2, z);
+
+                    for (int y = 0; y < sizeY; y++)
+                    {
+                        // set index
+                        idx.set(1, y);
+
+                        for (int x = 0; x < sizeX; x++, offset++)
+                        {
+                            // set index
+                            idx.set(0, x);
+                            // set pixel
+                            result.setPixelAsInt16(idx, data[offset]);
+                        }
+                    }
+                }
+                break;
+
+            case USHORT:
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    final short[] data = sequence.getDataXYAsShort(0, z, 0);
+                    int offset = 0;
+                    // set index
+                    idx.set(2, z);
+
+                    for (int y = 0; y < sizeY; y++)
+                    {
+                        // set index
+                        idx.set(1, y);
+
+                        for (int x = 0; x < sizeX; x++, offset++)
+                        {
+                            // set index
+                            idx.set(0, x);
+                            // set pixel
+                            result.setPixelAsUInt16(idx, data[offset]);
+                        }
+                    }
+                }
+                break;
+
+            case INT:
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    final int[] data = sequence.getDataXYAsInt(0, z, 0);
+                    int offset = 0;
+                    // set index
+                    idx.set(2, z);
+
+                    for (int y = 0; y < sizeY; y++)
+                    {
+                        // set index
+                        idx.set(1, y);
+
+                        for (int x = 0; x < sizeX; x++, offset++)
+                        {
+                            // set index
+                            idx.set(0, x);
+                            // set pixel
+                            result.setPixelAsInt32(idx, data[offset]);
+                        }
+                    }
+                }
+                break;
+
+            case UINT:
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    final int[] data = sequence.getDataXYAsInt(0, z, 0);
+                    int offset = 0;
+                    // set index
+                    idx.set(2, z);
+
+                    for (int y = 0; y < sizeY; y++)
+                    {
+                        // set index
+                        idx.set(1, y);
+
+                        for (int x = 0; x < sizeX; x++, offset++)
+                        {
+                            // set index
+                            idx.set(0, x);
+                            // set pixel
+                            result.setPixelAsUInt32(idx, data[offset]);
+                        }
+                    }
+                }
+                break;
+
+            case FLOAT:
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    final float[] data = sequence.getDataXYAsFloat(0, z, 0);
+                    int offset = 0;
+                    // set index
+                    idx.set(2, z);
+
+                    for (int y = 0; y < sizeY; y++)
+                    {
+                        // set index
+                        idx.set(1, y);
+
+                        for (int x = 0; x < sizeX; x++, offset++)
+                        {
+                            // set index
+                            idx.set(0, x);
+                            // set pixel
+                            result.setPixelAsFloat(idx, data[offset]);
+                        }
+                    }
+                }
+                break;
+
+            case DOUBLE:
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    final double[] data = sequence.getDataXYAsDouble(0, z, 0);
+                    int offset = 0;
+                    // set index
+                    idx.set(2, z);
+
+                    for (int y = 0; y < sizeY; y++)
+                    {
+                        // set index
+                        idx.set(1, y);
+
+                        for (int x = 0; x < sizeX; x++, offset++)
+                        {
+                            // set index
+                            idx.set(0, x);
+                            // set pixel
+                            result.setPixelAsDouble(idx, data[offset]);
+                        }
+                    }
+                }
+                break;
+        }
+
+        return result;
+    }
+
+    /**
+     * Convert the specified ITK image to ICY sequence.<br>
+     * ITK images are only 3D [XYZ] so multiple channels images
+     * or multiple frames are not supported.
+     */
+    public static Sequence getSequence(Image itkImg)
+    {
+        final int sizeX = (int) itkImg.getWidth();
+        final int sizeY = (int) itkImg.getHeight();
+        final int sizeZ = (int) itkImg.getDepth();
+        final DataType dataType = getDataTypeFromPixelID(itkImg.getPixelIDValue());
+
+        final Sequence result = new Sequence();
+        final VectorUInt32 idx = new VectorUInt32(3);
+
+        result.beginUpdate();
+        try
+        {
+            switch (dataType)
+            {
+                case BYTE:
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final IcyBufferedImage img = new IcyBufferedImage(sizeX, sizeY, 1, dataType);
+                        final byte[] data = img.getDataXYAsByte(0);
+                        int offset = 0;
+                        // set index
+                        idx.set(2, z);
+
+                        for (int y = 0; y < sizeY; y++)
+                        {
+                            // set index
+                            idx.set(1, y);
+
+                            for (int x = 0; x < sizeX; x++, offset++)
+                            {
+                                // set index
+                                idx.set(0, x);
+                                // get pixel
+                                data[offset] = itkImg.getPixelAsInt8(idx);
+                            }
+                        }
+
+                        img.dataChanged();
+                        result.setImage(0, z, img);
+                    }
+                    break;
+
+                case UBYTE:
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final IcyBufferedImage img = new IcyBufferedImage(sizeX, sizeY, 1, dataType);
+                        final byte[] data = img.getDataXYAsByte(0);
+                        int offset = 0;
+                        // set index
+                        idx.set(2, z);
+
+                        for (int y = 0; y < sizeY; y++)
+                        {
+                            // set index
+                            idx.set(1, y);
+
+                            for (int x = 0; x < sizeX; x++, offset++)
+                            {
+                                // set index
+                                idx.set(0, x);
+                                // get pixel
+                                data[offset] = (byte) itkImg.getPixelAsUInt8(idx);
+                            }
+                        }
+
+                        img.dataChanged();
+                        result.setImage(0, z, img);
+                    }
+                    break;
+
+                case SHORT:
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final IcyBufferedImage img = new IcyBufferedImage(sizeX, sizeY, 1, dataType);
+                        final short[] data = img.getDataXYAsShort(0);
+                        int offset = 0;
+                        // set index
+                        idx.set(2, z);
+
+                        for (int y = 0; y < sizeY; y++)
+                        {
+                            // set index
+                            idx.set(1, y);
+
+                            for (int x = 0; x < sizeX; x++, offset++)
+                            {
+                                // set index
+                                idx.set(0, x);
+                                // get pixel
+                                data[offset] = itkImg.getPixelAsInt16(idx);
+                            }
+                        }
+
+                        img.dataChanged();
+                        result.setImage(0, z, img);
+                    }
+                    break;
+
+                case USHORT:
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final IcyBufferedImage img = new IcyBufferedImage(sizeX, sizeY, 1, dataType);
+                        final short[] data = img.getDataXYAsShort(0);
+                        int offset = 0;
+                        // set index
+                        idx.set(2, z);
+
+                        for (int y = 0; y < sizeY; y++)
+                        {
+                            // set index
+                            idx.set(1, y);
+
+                            for (int x = 0; x < sizeX; x++, offset++)
+                            {
+                                // set index
+                                idx.set(0, x);
+                                // get pixel
+                                data[offset] = (short) itkImg.getPixelAsUInt16(idx);
+                            }
+                        }
+
+                        img.dataChanged();
+                        result.setImage(0, z, img);
+                    }
+                    break;
+
+                case INT:
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final IcyBufferedImage img = new IcyBufferedImage(sizeX, sizeY, 1, dataType);
+                        final int[] data = img.getDataXYAsInt(0);
+                        int offset = 0;
+                        // set index
+                        idx.set(2, z);
+
+                        for (int y = 0; y < sizeY; y++)
+                        {
+                            // set index
+                            idx.set(1, y);
+
+                            for (int x = 0; x < sizeX; x++, offset++)
+                            {
+                                // set index
+                                idx.set(0, x);
+                                // get pixel
+                                data[offset] = itkImg.getPixelAsInt32(idx);
+                            }
+                        }
+
+                        img.dataChanged();
+                        result.setImage(0, z, img);
+                    }
+                    break;
+
+                case UINT:
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final IcyBufferedImage img = new IcyBufferedImage(sizeX, sizeY, 1, dataType);
+                        final int[] data = img.getDataXYAsInt(0);
+                        int offset = 0;
+                        // set index
+                        idx.set(2, z);
+
+                        for (int y = 0; y < sizeY; y++)
+                        {
+                            // set index
+                            idx.set(1, y);
+
+                            for (int x = 0; x < sizeX; x++, offset++)
+                            {
+                                // set index
+                                idx.set(0, x);
+                                // get pixel
+                                data[offset] = (int) itkImg.getPixelAsUInt32(idx);
+                            }
+                        }
+
+                        img.dataChanged();
+                        result.setImage(0, z, img);
+                    }
+                    break;
+
+                case FLOAT:
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final IcyBufferedImage img = new IcyBufferedImage(sizeX, sizeY, 1, dataType);
+                        final float[] data = img.getDataXYAsFloat(0);
+                        int offset = 0;
+                        // set index
+                        idx.set(2, z);
+
+                        for (int y = 0; y < sizeY; y++)
+                        {
+                            // set index
+                            idx.set(1, y);
+
+                            for (int x = 0; x < sizeX; x++, offset++)
+                            {
+                                // set index
+                                idx.set(0, x);
+                                // get pixel
+                                data[offset] = itkImg.getPixelAsFloat(idx);
+                            }
+                        }
+
+                        img.dataChanged();
+                        result.setImage(0, z, img);
+                    }
+                    break;
+
+                case DOUBLE:
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        final IcyBufferedImage img = new IcyBufferedImage(sizeX, sizeY, 1, dataType);
+                        final double[] data = img.getDataXYAsDouble(0);
+                        int offset = 0;
+                        // set index
+                        idx.set(2, z);
+
+                        for (int y = 0; y < sizeY; y++)
+                        {
+                            // set index
+                            idx.set(1, y);
+
+                            for (int x = 0; x < sizeX; x++, offset++)
+                            {
+                                // set index
+                                idx.set(0, x);
+                                // get pixel
+                                data[offset] = itkImg.getPixelAsDouble(idx);
+                            }
+                        }
+
+                        img.dataChanged();
+                        result.setImage(0, z, img);
+                    }
+                    break;
+            }
+        }
+        finally
+        {
+            result.endUpdate();
+        }
+
+        return result;
+    }
 }

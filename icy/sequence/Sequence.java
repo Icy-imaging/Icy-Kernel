@@ -81,7 +81,9 @@ import org.w3c.dom.Node;
  * 
  * @author Fabrice de Chaumont & Stephane
  */
-public class Sequence implements IcyColorModelListener, IcyBufferedImageListener, ChangeListener, ROIListener
+
+public class Sequence implements SequenceModel, IcyColorModelListener, IcyBufferedImageListener, ChangeListener,
+        ROIListener
 {
     private static final String DEFAULT_NAME = "no name";
 
@@ -324,7 +326,8 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     }
 
     /**
-     * called when sequence has been closed (all viewers displaying it closed)
+     * Called when sequence has been closed (all viewers displaying it closed).<br>
+     * You should not call it this method directly !
      */
     public void closed()
     {
@@ -696,9 +699,17 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         while (index >= c)
         {
             // set default channel name
-            metaData.setChannelName(DEFAULT_CHANNEL_NAME + c, 0, c);
+            metaData.setChannelName(getDefaultChannelName(c), 0, c);
             c++;
         }
+    }
+
+    /**
+     * Get default name for specified channel
+     */
+    public String getDefaultChannelName(int index)
+    {
+        return DEFAULT_CHANNEL_NAME + index;
     }
 
     /**
@@ -709,7 +720,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
         // needed as LOCI does not initialize them on read
         prepareMetaChannelName(index);
 
-        return StringUtil.getValue(metaData.getChannelName(0, index), DEFAULT_CHANNEL_NAME + index);
+        return StringUtil.getValue(metaData.getChannelName(0, index), getDefaultChannelName(index));
     }
 
     /**
@@ -1562,6 +1573,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
      * @see icy.image.IcyBufferedImage#extractChannel(int)
      * @since version 1.0.3.3b
      */
+    @Override
     public IcyBufferedImage getImage(int t, int z, int c)
     {
         final IcyBufferedImage src = getImage(t, z);
@@ -1575,6 +1587,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Returns image at time t and depth z
      */
+    @Override
     public IcyBufferedImage getImage(int t, int z)
     {
         final VolumetricImage volImg = getVolumetricImage(t);
@@ -1862,6 +1875,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * return the number of volumetricImage in the sequence
      */
+    @Override
     public int getSizeT()
     {
         synchronized (volumetricImages)
@@ -1889,6 +1903,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Returns the global number of z stack in the sequence.
      */
+    @Override
     public int getSizeZ()
     {
         final int sizeT = getSizeT();
@@ -1933,6 +1948,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Returns the number of component/channel/band per image
      */
+    @Override
     public int getSizeC()
     {
         if (colorModel != null)
@@ -1952,6 +1968,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Returns the height of the sequence (0 if the sequence contains no image).
      */
+    @Override
     public int getSizeY()
     {
         final IcyBufferedImage img = getFirstNonNullImage();
@@ -1973,6 +1990,7 @@ public class Sequence implements IcyColorModelListener, IcyBufferedImageListener
     /**
      * Returns the width of the sequence (0 if the sequence contains no image).
      */
+    @Override
     public int getSizeX()
     {
         final IcyBufferedImage img = getFirstNonNullImage();

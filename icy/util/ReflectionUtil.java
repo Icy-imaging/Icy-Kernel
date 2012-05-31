@@ -17,10 +17,10 @@ public class ReflectionUtil
     /**
      * Return the Method object corresponding to the specified method name and parameters.
      */
-    public static Method getMethod(Object object, String methodName, boolean forceAccess, Class<?>... parameterTypes)
-            throws SecurityException, NoSuchMethodException
+    public static Method getMethod(Class<?> objectClass, String methodName, boolean forceAccess,
+            Class<?>... parameterTypes) throws SecurityException, NoSuchMethodException
     {
-        Class<?> clazz = object.getClass();
+        Class<?> clazz = objectClass;
         Method result = null;
 
         while ((clazz != null) && (result == null))
@@ -38,13 +38,24 @@ public class ReflectionUtil
         }
 
         if (result == null)
-            throw new NoSuchMethodException("Method " + methodName + "(..) not found in class "
-                    + object.getClass().getName());
+            throw new NoSuchMethodException("Method " + methodName + "(..) not found in class " + objectClass.getName());
 
         if (forceAccess)
             result.setAccessible(true);
 
         return result;
+    }
+
+    /**
+     * Return the Method object corresponding to the specified method name and parameters.
+     * 
+     * @deprecated Uses {@link #getMethod(Class, String, boolean, Class...)} instead.
+     */
+    @Deprecated
+    public static Method getMethod(Object object, String methodName, boolean forceAccess, Class<?>... parameterTypes)
+            throws SecurityException, NoSuchMethodException
+    {
+        return getMethod(object.getClass(), methodName, forceAccess, parameterTypes);
     }
 
     /**
@@ -70,10 +81,10 @@ public class ReflectionUtil
     /**
      * Return the Field object corresponding to the specified field name.
      */
-    public static Field getField(Object object, String fieldName, boolean forceAccess) throws SecurityException,
+    public static Field getField(Class<?> objectClass, String fieldName, boolean forceAccess) throws SecurityException,
             NoSuchFieldException
     {
-        Class<?> clazz = object.getClass();
+        Class<?> clazz = objectClass;
         Field result = null;
 
         while ((clazz != null) && (result == null))
@@ -91,7 +102,7 @@ public class ReflectionUtil
         }
 
         if (result == null)
-            throw new NoSuchFieldException(" Field " + fieldName + " not found in class " + object.getClass().getName());
+            throw new NoSuchFieldException(" Field " + fieldName + " not found in class " + objectClass.getName());
 
         if (forceAccess)
             result.setAccessible(true);
@@ -100,11 +111,23 @@ public class ReflectionUtil
     }
 
     /**
+     * Return the Field object corresponding to the specified field name.
+     * 
+     * @deprecated Uses {@link #getField(Class, String, boolean)} instead.
+     */
+    @Deprecated
+    public static Field getField(Object object, String fieldName, boolean forceAccess) throws SecurityException,
+            NoSuchFieldException
+    {
+        return getField(object.getClass(), fieldName, forceAccess);
+    }
+
+    /**
      * Return the object instance corresponding to the specified field name.
      */
     public static Object getFieldObject(Object object, String fieldName, boolean forceAccess)
             throws IllegalArgumentException, IllegalAccessException, SecurityException, NoSuchFieldException
     {
-        return getField(object, fieldName, forceAccess).get(object);
+        return getField(object.getClass(), fieldName, forceAccess).get(object);
     }
 }

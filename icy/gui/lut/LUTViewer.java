@@ -31,6 +31,7 @@ import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
 import icy.sequence.WeakSequenceListener;
 import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -41,6 +42,7 @@ import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JRadioButton;
+import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -80,6 +82,7 @@ public class LUTViewer extends IcyLutViewer
         lutBandViewers = new ArrayList<LUTBandViewer>();
 
         bottomPane = new CheckTabbedPane(SwingConstants.BOTTOM, true);
+        bottomPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         bottomPane.addChangeListener(new ChangeListener()
         {
             @Override
@@ -108,11 +111,9 @@ public class LUTViewer extends IcyLutViewer
         for (LUTBand lutBand : lut.getLutBands())
         {
             final LUTBandViewer lbv = new LUTBandViewer(viewer, lutBand);
-            final int ch = lutBand.getComponent();
 
             lutBandViewers.add(lbv);
-            bottomPane.addTab("ch " + ch, lbv);
-            bottomPane.setToolTipTextAt(ch, "Channel " + ch);
+            bottomPane.addTab("channel", lbv);
         }
 
         refreshChannelsName(sequence);
@@ -128,7 +129,7 @@ public class LUTViewer extends IcyLutViewer
             }
         });
 
-        autoBoundsCheckBox = new JCheckBox("Bounds", false);
+        autoBoundsCheckBox = new JCheckBox("Auto bounds", false);
         autoBoundsCheckBox.setToolTipText("Automatically ajdust bounds when data is modified");
         autoBoundsCheckBox.addActionListener(new ActionListener()
         {
@@ -170,8 +171,8 @@ public class LUTViewer extends IcyLutViewer
 
         setLayout(new BorderLayout());
 
-        add(GuiUtil.createLineBoxPanel(autoRefreshHistoCheckBox, Box.createHorizontalStrut(2), autoBoundsCheckBox,
-                Box.createHorizontalGlue(), Box.createHorizontalStrut(8), logButton, linearButton), BorderLayout.NORTH);
+        add(GuiUtil.createLineBoxPanel(autoRefreshHistoCheckBox, autoBoundsCheckBox, Box.createHorizontalGlue(),
+                Box.createHorizontalStrut(4), logButton, linearButton), BorderLayout.NORTH);
         add(bottomPane, BorderLayout.CENTER);
 
         validate();
@@ -228,7 +229,7 @@ public class LUTViewer extends IcyLutViewer
             double[][] typeBounds = sequence.getChannelsTypeBounds();
             double[][] bounds = sequence.getChannelsBounds();
 
-            for (int i = 0; i < lutBandViewers.size(); i++)
+            for (int i = 0; i < Math.min(lutBandViewers.size(), typeBounds.length); i++)
             {
                 double[] tb = typeBounds[i];
                 double[] b = bounds[i];
@@ -245,10 +246,16 @@ public class LUTViewer extends IcyLutViewer
     {
         if (sequence != null)
         {
-            final int sizeC = sequence.getSizeC();
+            for (int c = 0; c < Math.min(bottomPane.getTabCount(), sequence.getSizeC()); c++)
+            {
+                final String channelName = sequence.getChannelName(c);
 
-            for (int c = 0; c < sizeC; c++)
-                bottomPane.setTitleAt(c, sequence.getChannelName(c));
+                bottomPane.setTitleAt(c, StringUtil.limit(channelName, 10));
+                if (sequence.getDefaultChannelName(c).equals(channelName))
+                    bottomPane.setToolTipTextAt(c, "Channel " + c);
+                else
+                    bottomPane.setToolTipTextAt(c, channelName + " (channel " + c + ")");
+            }
         }
     }
 }

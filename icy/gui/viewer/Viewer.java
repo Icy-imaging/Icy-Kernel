@@ -58,7 +58,6 @@ import icy.util.StringUtil;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -86,12 +85,6 @@ import plugins.kernel.canvas.Canvas3DPlugin;
  */
 public class Viewer extends IcyFrame implements KeyListener, SequenceListener, IcyCanvasListener
 {
-    static final Image ICON_LAYER = ResourceUtil.getAlphaIconAsImage("layers_2.png");
-    static final Image ICON_DUPLICATE = ResourceUtil.getAlphaIconAsImage("duplicate.png");
-    static final Image ICON_PHOTO = ResourceUtil.getAlphaIconAsImage("photo.png");
-    static final Image ICON_PHOTO_SMALL = ResourceUtil.getAlphaIconAsImage("photo_small.png");
-    static final Image ICON_UNLOCKED = ResourceUtil.getAlphaIconAsImage("padlock_open.png");
-
     private class DuplicateAction extends IcyAbstractAction
     {
         /**
@@ -101,7 +94,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         public DuplicateAction()
         {
-            super("Duplicate view", new IcyIcon(ICON_DUPLICATE), "Duplicate view", KeyEvent.VK_F2);
+            super("Duplicate view", new IcyIcon(ResourceUtil.ICON_DUPLICATE), "Duplicate view", KeyEvent.VK_F2);
         }
 
         @Override
@@ -129,7 +122,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         public ScreenShotAction()
         {
-            super("", new IcyIcon(ICON_PHOTO), "Take a screenshot of current view");
+            super("", new IcyIcon(ResourceUtil.ICON_PHOTO), "Take a screenshot of current view");
         }
 
         @Override
@@ -179,7 +172,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         public ScreenShotAlternateAction()
         {
-            super("", new IcyIcon(ICON_PHOTO_SMALL),
+            super("", new IcyIcon(ResourceUtil.ICON_PHOTO_SMALL),
                     "Take a screenshot of current view with original sequence dimensions");
         }
 
@@ -455,7 +448,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         final ArrayList<PluginDescriptor> result = PluginLoader.getPlugins(PluginCanvas.class);
 
         // remove VTK canvas if VTK is not loaded
-        if (!Icy.vktLibraryLoaded)
+        if (!Icy.isVtkLibraryLoaded())
             PluginDescriptor.removeFromList(result, Canvas3DPlugin.class.getName());
 
         return result;
@@ -470,7 +463,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         final JMenuItem overlayItem = new JMenuItem("Display layers");
         overlayItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, 0));
-        overlayItem.setIcon(new IcyIcon(ICON_LAYER));
+        overlayItem.setIcon(new IcyIcon(ResourceUtil.ICON_LAYER));
         if ((canvas != null) && canvas.getDrawLayers())
             overlayItem.setText("Hide layers");
         else
@@ -506,7 +499,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         JLabel label;
 
         // no synchro
-        label = new JLabel(new IcyIcon(ICON_UNLOCKED));
+        label = new JLabel(new IcyIcon(ResourceUtil.ICON_LOCK_CLOSE));
         label.setToolTipText("Synchronization disabled");
         labels.add(label);
 
@@ -613,7 +606,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         buildCanvasCombo();
 
         // build buttons
-        layersEnabledButton = new IcyToggleButton(new IcyIcon(ICON_LAYER));
+        layersEnabledButton = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_LAYER));
         layersEnabledButton.setToolTipText("Hide layers");
         layersEnabledButton.setFocusable(false);
         layersEnabledButton.setSelected(true);
@@ -800,8 +793,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             // sequence type has changed, we need to recreate a compatible LUT
             final LUT newLut = sequence.createCompatibleLUT();
 
-            // keep the color map of previous LUT
-            if (lut != null)
+            // keep the color map of previous LUT if they have the same number of channels
+            if ((lut != null) && (lut.getNumComponents() == newLut.getNumComponents()))
                 newLut.getColorSpace().copyColormaps(lut.getColorSpace());
 
             // set the new lut

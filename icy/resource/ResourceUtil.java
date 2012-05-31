@@ -67,13 +67,17 @@ public class ResourceUtil
     public static final Image ICON_COG = ResourceUtil.getAlphaIconAsImage("cog.png");
     public static final Image ICON_UNCHECKED = ResourceUtil.getAlphaIconAsImage("checkbox_unchecked.png");
     public static final Image ICON_CHECKED = ResourceUtil.getAlphaIconAsImage("checkbox_checked.png");
-    public static final Image ICON_LOCK_OPEN = ResourceUtil.getAlphaIconAsImage("padlock_open.png");
-    public static final Image ICON_LOCK_CLOSE = ResourceUtil.getAlphaIconAsImage("padlock_closed.png");
-    public static final Image ICON_LOCKED_BASE = ResourceUtil.getAlphaIconAsImage("locked.png");
+    public static final Image ICON_LOCK_OPEN = ResourceUtil.getAlphaIconAsImage("unlocked.png");
+    public static final Image ICON_LOCK_CLOSE = ResourceUtil.getAlphaIconAsImage("locked.png");
     public static final Image ICON_PROPERTIES = ICON_DOCTEXT1;
     public static final Image ICON_TOOLS = ResourceUtil.getAlphaIconAsImage("wrench_plus_2.png");;
     public static final Image ICON_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png");
     public static final Image ICON_NOT_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_close.png");
+
+    public static final Image ICON_LAYER = ResourceUtil.getAlphaIconAsImage("layers_2.png");
+    public static final Image ICON_DUPLICATE = ResourceUtil.getAlphaIconAsImage("duplicate.png");
+    public static final Image ICON_PHOTO = ResourceUtil.getAlphaIconAsImage("photo.png");
+    public static final Image ICON_PHOTO_SMALL = ResourceUtil.getAlphaIconAsImage("photo_small.png");
 
     public static final Image ICON_PLUS = ResourceUtil.getAlphaIconAsImage("plus.png");
     public static final Image ICON_MINUS = ResourceUtil.getAlphaIconAsImage("minus.png");
@@ -146,7 +150,7 @@ public class ResourceUtil
      */
     public static BufferedImage getLockedImage(int number)
     {
-        final BufferedImage result = ImageUtil.getCopy(ICON_LOCKED_BASE);
+        final BufferedImage result = ImageUtil.getCopy(ICON_LOCK_CLOSE);
 
         // nice for 48 pixels image
         ImageUtil.drawTextTopRight(result, StringUtil.toString(number), 26, true, Color.black);
@@ -159,7 +163,7 @@ public class ResourceUtil
      */
     public static BufferedImage getLockedImage(char letter)
     {
-        final BufferedImage result = ImageUtil.getCopy(ICON_LOCKED_BASE);
+        final BufferedImage result = ImageUtil.getCopy(ICON_LOCK_CLOSE);
 
         // nice for 48 pixels image
         ImageUtil.drawTextTopRight(result, String.valueOf(letter), 26, true, Color.black);

@@ -56,7 +56,6 @@ public class Processor extends ThreadPoolExecutor
 
             return result;
         }
-
     }
 
     protected class Runner implements Runnable

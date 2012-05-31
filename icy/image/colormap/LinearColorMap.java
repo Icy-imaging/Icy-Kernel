@@ -27,7 +27,6 @@ import java.awt.Color;
  */
 public class LinearColorMap extends IcyColorMap
 {
-
     /**
      * A built-in 'black-to-black' linear color map
      */
@@ -36,7 +35,15 @@ public class LinearColorMap extends IcyColorMap
     /**
      * A built-in 'black-to-white' linear color map
      */
-    public static final LinearColorMap white_ = new LinearColorMap("White", Color.white, IcyColorMapType.GRAY);
+    public static final LinearColorMap gray_ = new LinearColorMap("Gray", Color.white, IcyColorMapType.GRAY);
+    public static final LinearColorMap white_ = gray_;
+
+    /**
+     * A built-in 'white-to-black' linear color map
+     */
+    public static final LinearColorMap gray_inv_ = new LinearColorMap("Gray inverse", Color.white, Color.black,
+            IcyColorMapType.GRAY);
+    public static final LinearColorMap white_inv_ = gray_inv_;
 
     /**
      * A built-in 'black-to-red' linear color map

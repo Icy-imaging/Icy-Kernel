@@ -383,7 +383,7 @@ public class FileUtil
                     System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
                             + "'");
                     System.err.println("The destination already exists.");
-                    System.err.println("Uses 'force' flag to force file move.");
+                    System.err.println("Uses 'force' flag to force file rename operation.");
                     return false;
                 }
             }
@@ -786,8 +786,8 @@ public class FileUtil
     }
 
     /**
-     * Get file list from specified directory applying the specified parameters (doesn't return sub
-     * directory)
+     * Get file list from specified directory applying the specified parameters<br>
+     * This function does not return sub directory.
      */
     public static ArrayList<String> getFileListAsString(String path, boolean recursive, boolean wantHidden)
     {
@@ -795,8 +795,8 @@ public class FileUtil
     }
 
     /**
-     * Get file list from specified directory applying the specified parameters (doesn't return sub
-     * directory)
+     * Get file list from specified directory applying the specified parameters<br>
+     * This function does not return sub directory.
      */
     public static ArrayList<String> getFileListAsString(String path, FileFilter filter, boolean recursive,
             boolean wantHidden)
@@ -805,8 +805,8 @@ public class FileUtil
     }
 
     /**
-     * Get file list from specified directory applying the specified parameters (doesn't return sub
-     * directory)
+     * Get file list from specified directory applying the specified parameters.<br>
+     * This function does not return sub directory.
      */
     public static ArrayList<File> getFileList(String path, boolean recursive, boolean wantHidden)
     {
@@ -814,8 +814,8 @@ public class FileUtil
     }
 
     /**
-     * Get file list from specified directory applying the specified parameters (doesn't return sub
-     * directory)
+     * Get file list from specified directory applying the specified parameters<br>
+     * This function does not return sub directory.
      */
     public static ArrayList<File> getFileList(String path, FileFilter filter, boolean recursive, boolean wantHidden)
     {
@@ -823,8 +823,8 @@ public class FileUtil
     }
 
     /**
-     * Get file list from specified directory applying the specified parameters (doesn't return sub
-     * directory)
+     * Get file list from specified directory applying the specified parameters<br>
+     * This function does not return sub directory.
      */
     public static ArrayList<File> getFileList(File file, boolean recursive, boolean wantHidden)
     {
@@ -832,8 +832,8 @@ public class FileUtil
     }
 
     /**
-     * Get file list from specified directory applying the specified parameters (doesn't return sub
-     * directory)
+     * Get file list from specified directory applying the specified parameters<br>
+     * This function does not return sub directory.
      */
     public static ArrayList<File> getFileList(File file, FileFilter filter, boolean recursive, boolean wantHidden)
     {
@@ -914,8 +914,20 @@ public class FileUtil
             // then delete empty directory
             result = result & f.delete();
         }
-        else
-            result = !f.exists() || f.delete();
+        else if (f.exists())
+        {
+            final long start = System.currentTimeMillis();
+
+            result = f.delete();
+
+            // retry for locked file (we try for 15s max)
+            while ((!result) && (System.currentTimeMillis() - start) < (15 * 1000))
+            {
+                // can help for file deletion...
+                System.gc();
+                result = f.delete();
+            }
+        }
 
         return result;
     }

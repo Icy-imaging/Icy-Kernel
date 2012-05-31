@@ -163,10 +163,10 @@ public class ImageSaverDialog extends JFileChooser
                 tSpinner);
 
         zRange = new RangeComponent(0, sequence.getSizeZ() - 1, 1);
-        zRange.setLabelVisible(false);
+        zRange.setSliderVisible(false);
         zRangePanel = GuiUtil.createLineBoxPanel(new JLabel("Z range "), Box.createHorizontalGlue(), zRange);
         tRange = new RangeComponent(0, sequence.getSizeT() - 1, 1);
-        tRange.setLabelVisible(false);
+        tRange.setSliderVisible(false);
         tRangePanel = GuiUtil.createLineBoxPanel(new JLabel("T range "), Box.createHorizontalGlue(), tRange);
 
         final JPanel settingPanel = new JPanel();
@@ -226,8 +226,8 @@ public class ImageSaverDialog extends JFileChooser
                         zMin = zMax = ((Integer) zSpinner.getValue()).intValue();
                     else if (zRangePanel.isVisible())
                     {
-                        zMin = ((Integer) zRange.getStart()).intValue();
-                        zMax = ((Integer) zRange.getEnd()).intValue();
+                        zMin = (int) zRange.getMin();
+                        zMax = (int) zRange.getMax();
                     }
                     else
                         zMin = zMax = 0;
@@ -235,8 +235,8 @@ public class ImageSaverDialog extends JFileChooser
                         tMin = tMax = ((Integer) tSpinner.getValue()).intValue();
                     else if (tRangePanel.isVisible())
                     {
-                        tMin = ((Integer) tRange.getStart()).intValue();
-                        tMax = ((Integer) tRange.getEnd()).intValue();
+                        tMin = (int) tRange.getMin();
+                        tMax = (int) tRange.getMax();
                     }
                     else
                         tMin = tMax = 0;
@@ -305,7 +305,13 @@ public class ImageSaverDialog extends JFileChooser
 
     private FileFormat getSelectedFileFormat()
     {
-        return FileFormat.getFileFormat(((ExtensionFileFilter) getFileFilter()).getExtension(), FileFormat.TIFF);
+        final FileFilter ff = getFileFilter();
+
+        // default
+        if (ff == null)
+            return FileFormat.TIFF;
+
+        return FileFormat.getFileFormat(((ExtensionFileFilter) ff).getExtension(), FileFormat.TIFF);
     }
 
     void updateSettingPanel()

@@ -103,6 +103,7 @@ public class ClassUtil
 
     /**
      * Transform the specified path in qualified name.<br>
+     * <br>
      * ex : "document/class/loader.class" --> "document.class.loader.class" (unix)
      * "document\class\loader.class" --> "document.class.loader.class" (win)
      * 
@@ -115,8 +116,10 @@ public class ClassUtil
 
     /**
      * Transform the specified qualified name in path.<br>
-     * ex : "plugins.class.loader.class" --> "plugins/class/loader.class" (unix)
-     * "plugins.class.loader.class" --> "plugins\class\loader.class" (win)
+     * Be careful, this function do not handle the file extension.<br>
+     * <br>
+     * ex : "plugins.class.loader.class" --> "plugins/class/loader/class" (unix)
+     * "plugins.class.loader.class" --> "plugins\class\loader\class" (win)
      * 
      * @param qualifiedName
      */

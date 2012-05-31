@@ -101,7 +101,7 @@ public class AppleUtil
     /**
      * Apple fix live run (fixes specific OS X JVM stuff)
      */
-    private static void appleFixLiveRun()
+    static void appleFixLiveRun()
     {
         while (true)
         {

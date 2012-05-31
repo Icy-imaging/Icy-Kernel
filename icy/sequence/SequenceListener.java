@@ -22,8 +22,14 @@ import java.util.EventListener;
 
 public interface SequenceListener extends EventListener
 {
+    /**
+     * Called when sequence has changed (type, data, metadata or property).
+     */
     public void sequenceChanged(SequenceEvent sequenceEvent);
 
+    /**
+     * Called when sequence has been closed (all viewers displaying it closed).
+     */
     public void sequenceClosed(Sequence sequence);
 
 }

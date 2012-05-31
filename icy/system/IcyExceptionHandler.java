@@ -108,7 +108,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     @Override
     public void uncaughtException(Thread t, Throwable e)
     {
-        final Thread thread = t;
+        // final Thread thread = t;
         final Throwable throwable = e;
 
         ThreadUtil.invokeLater(new Runnable()
@@ -116,7 +116,8 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
             @Override
             public void run()
             {
-                IcyExceptionHandler.showErrorMessage(throwable, true);
+                if (!(throwable instanceof IcyHandledException))
+                    IcyExceptionHandler.showErrorMessage(throwable, true);
 
                 if (throwable instanceof OutOfMemoryError)
                 {
@@ -156,7 +157,9 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
 
     public static void handlePluginException(PluginDescriptor pluginDesc, Throwable t, boolean print)
     {
-        if (print)
+        final boolean handledException = t instanceof IcyHandledException;
+
+        if (!handledException && print)
         {
             // show message
             System.err.println("An error occured while plugin '" + pluginDesc.getName() + "' was running :");
@@ -168,6 +171,12 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
             // handle out of memory error differently
             MessageDialog.showDialog("Out of memory error !",
                     "You're running out of memory !\nTry to increase the Maximum Memory parameter in Preferences.",
+                    MessageDialog.ERROR_MESSAGE);
+        }
+        else if (handledException)
+        {
+            // handle HandledException differently
+            MessageDialog.showDialog(t.getMessage() + ((t.getCause() == null) ? "" : "\n" + t.getCause()),
                     MessageDialog.ERROR_MESSAGE);
         }
         else
@@ -182,7 +191,8 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
      * Report an error log to the Icy web site.
      * 
      * @param plugin
-     *        The plugin responsible of the error or <code>null</code> if the error comes from the application.
+     *        The plugin responsible of the error or <code>null</code> if the error comes from the
+     *        application.
      * @param errorLog
      *        Error log to report.
      */

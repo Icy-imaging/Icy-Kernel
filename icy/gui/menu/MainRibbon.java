@@ -752,8 +752,9 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 }
             }
 
-            // add task to ribbon
-            ribbon.addTask(ribbonTask);
+            // add task to ribbon only if not empty
+            if (ribbonTask.getBandCount() > 0)
+                ribbon.addTask(ribbonTask);
         }
     }
 
@@ -916,7 +917,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
             public void actionPerformed(ActionEvent e)
             {
                 final boolean value = (multiWindowGroup.getSelected() != null);
-                
+
                 // set detached mode
                 Icy.getMainInterface().setDetachedMode(value);
                 // and save state

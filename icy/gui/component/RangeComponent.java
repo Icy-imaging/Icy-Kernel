@@ -3,8 +3,9 @@
  */
 package icy.gui.component;
 
-import javax.media.jai.util.Range;
-import javax.swing.BoxLayout;
+import java.awt.BorderLayout;
+
+import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -22,172 +23,212 @@ public class RangeComponent extends JPanel implements ChangeListener
      */
     private static final long serialVersionUID = 7244476681262628392L;
 
-    final private JSpinner startSpinner;
-    final private JSpinner endSpinner;
-    final private JLabel startLabel;
-    final private JLabel endLabel;
+    final private JSpinner lowSpinner;
+    final private JSpinner highSpinner;
+    final private RangeSlider slider;
 
-    public RangeComponent()
+    public RangeComponent(double min, double max, double step)
     {
         super();
 
-        startSpinner = new JSpinner();
-        endSpinner = new JSpinner();
+        lowSpinner = new JSpinner(new SpinnerNumberModel(min, min, max, step));
+        highSpinner = new JSpinner(new SpinnerNumberModel(max, min, max, step));
+        slider = new RangeSlider();
+        slider.setFocusPainted(false);
+        updateSliderModel();
 
-        startSpinner.addChangeListener(this);
-        endSpinner.addChangeListener(this);
+        lowSpinner.addChangeListener(this);
+        highSpinner.addChangeListener(this);
+        slider.addChangeListener(this);
 
-        startLabel = new JLabel("start");
-        endLabel = new JLabel("end");
+        setLayout(new BorderLayout());
 
-        setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+        add(lowSpinner, BorderLayout.WEST);
+        add(slider, BorderLayout.CENTER);
+        add(highSpinner, BorderLayout.EAST);
 
-        add(startLabel);
-        add(startSpinner);
-        add(new JLabel(" - "));
-        add(endLabel);
-        add(endSpinner);
-
-        setLabelVisible(true);
-
-        revalidate();
+        validate();
     }
 
-    public RangeComponent(double start, double end, double step)
+    public RangeComponent()
     {
-        this();
-        setAbsoluteRange(start, end, step);
+        this(0d, 100d, 1d);
     }
 
-    public RangeComponent(int start, int end, int step)
+    private SpinnerNumberModel getLowModel()
     {
-        this();
-        setAbsoluteRange(start, end, step);
+        return (SpinnerNumberModel) lowSpinner.getModel();
     }
 
-    private SpinnerNumberModel getStartModel()
+    private SpinnerNumberModel getHighModel()
     {
-        return (SpinnerNumberModel) startSpinner.getModel();
+        return (SpinnerNumberModel) highSpinner.getModel();
     }
 
-    private SpinnerNumberModel getEndModel()
+    private double getRange()
     {
-        return (SpinnerNumberModel) endSpinner.getModel();
+        return getMax() - getMin();
     }
 
-    public Number getStart()
+    private int getSliderRange()
     {
-        return getStartModel().getNumber();
+        return slider.getMaximum() - slider.getMinimum();
     }
 
-    public Number getEnd()
+    private int spinnerToSlider(double value)
     {
-        return getEndModel().getNumber();
+        final double spinnerRange = getRange();
+
+        if (spinnerRange == 0)
+            return 0;
+
+        return (int) ((value - getMin()) * getSliderRange() / spinnerRange);
     }
 
-    public Range getRange()
+    private double sliderToSpinner(int value)
     {
-        final Number start = getStart();
+        final int sliderRange = getSliderRange();
 
-        return new Range(start.getClass(), (Comparable<?>) start, (Comparable<?>) getEnd());
+        if (sliderRange == 0)
+            return 0d;
+
+        return (value * getRange() / sliderRange) + getMin();
     }
 
-    public void setAbsoluteRange(Range range)
+    private void updateSliderModel()
     {
-        startSpinner.setModel(new SpinnerNumberModel((Number) range.getMinValue(), range.getMinValue(), range
-                .getMaxValue(), new Integer(1)));
-        endSpinner.setModel(new SpinnerNumberModel((Number) range.getMaxValue(), range.getMinValue(), range
-                .getMaxValue(), new Integer(1)));
+        final int sliderRange = (int) Math.round(getRange() / getStep());
+
+        slider.setModel(new DefaultBoundedRangeModel(0, 0, 0, sliderRange));
+        slider.setLowerValue(spinnerToSlider(getLow()));
+        slider.setUpperValue(spinnerToSlider(getHigh()));
     }
 
-    public void setAbsoluteRange(int start, int end, int step)
+    public double getLow()
     {
-        startSpinner.setModel(new SpinnerNumberModel(start, start, end, step));
-        endSpinner.setModel(new SpinnerNumberModel(end, start, end, step));
+        return getLowModel().getNumber().doubleValue();
     }
 
-    public void setAbsoluteRange(double start, double end, double step)
+    public double getHigh()
     {
-        startSpinner.setModel(new SpinnerNumberModel(start, start, end, step));
-        endSpinner.setModel(new SpinnerNumberModel(end, start, end, step));
+        return getHighModel().getNumber().doubleValue();
     }
 
-    public void setAbsoluteStart(int start)
+    public void setLow(double value)
     {
-        getStartModel().setMinimum(Integer.valueOf(start));
+        getLowModel().setValue(Double.valueOf(value));
     }
 
-    public void setAbsoluteStart(double start)
+    public void setHigh(double value)
     {
-        getStartModel().setMinimum(new Double(start));
+        getHighModel().setValue(Double.valueOf(value));
     }
 
-    public void setAbsoluteEnd(int end)
+    /**
+     * Return true if the range use integer number
+     */
+    public boolean isInteger()
     {
-        getEndModel().setMinimum(Integer.valueOf(end));
+        final SpinnerNumberModel model = getLowModel();
+        final Number value = model.getNumber();
+        final Number step = model.getStepSize();
+
+        return (value.doubleValue() == value.longValue()) && (step.doubleValue() == step.longValue());
     }
 
-    public void setAbsoluteEnd(double end)
+    public double getMin()
     {
-        getEndModel().setMinimum(new Double(end));
+        return ((Double) getLowModel().getMinimum()).doubleValue();
     }
 
-    public void setRange(Range range)
+    public double getMax()
     {
-        startSpinner.setValue(range.getMinValue());
-        endSpinner.setValue(range.getMaxValue());
+        return ((Double) getHighModel().getMaximum()).doubleValue();
     }
 
-    public void setRange(int start, int end)
+    public double getStep()
     {
-        startSpinner.setValue(Integer.valueOf(start));
-        endSpinner.setValue(Integer.valueOf(end));
+        return getLowModel().getStepSize().doubleValue();
     }
 
-    public void setRange(double start, double end)
+    public void setMinMaxStep(double min, double max, double step)
     {
-        startSpinner.setValue(new Double(start));
-        endSpinner.setValue(new Double(end));
+        final double low = Math.max(Math.min(getLow(), max), min);
+        final double high = Math.max(Math.min(getHigh(), max), min);
+
+        lowSpinner.setModel(new SpinnerNumberModel(low, min, max, step));
+        highSpinner.setModel(new SpinnerNumberModel(high, min, max, step));
+
+        updateSliderModel();
     }
 
-    public void setLabelVisible(boolean value)
+    public void setMinMax(double min, double max)
     {
-        startLabel.setVisible(value);
-        endLabel.setVisible(value);
+        setMinMaxStep(min, max, getStep());
+    }
+
+    public void setMin(double value)
+    {
+        setMinMaxStep(value, getMax(), getStep());
+    }
+
+    public void setMax(double value)
+    {
+        setMinMaxStep(getMin(), value, getStep());
+    }
+
+    public void setStep(double value)
+    {
+        setMinMaxStep(getMin(), getMax(), value);
+    }
+
+    public void setSliderVisible(boolean value)
+    {
+        if (value)
+            add(slider, BorderLayout.CENTER);
+        else
+            add(new JLabel(" - "), BorderLayout.CENTER);
     }
 
     @Override
     public void setEnabled(boolean enabled)
     {
-        startSpinner.setEnabled(enabled);
-        endSpinner.setEnabled(enabled);
+        lowSpinner.setEnabled(enabled);
+        highSpinner.setEnabled(enabled);
+        slider.setEnabled(enabled);
 
         super.setEnabled(enabled);
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public void stateChanged(ChangeEvent e)
     {
-        if (e.getSource() == startSpinner)
+        final Object source = e.getSource();
+        final double low = getLow();
+        final double high = getHigh();
+
+        if (source == lowSpinner)
         {
-            final Comparable startValue = (Comparable) startSpinner.getValue();
-            final Comparable endValue = (Comparable) endSpinner.getValue();
+            slider.setLowerValue(spinnerToSlider(low));
 
-            if (endValue.compareTo(startValue) < 0)
-                endSpinner.setValue(startValue);
+            if (high < low)
+                setHigh(low);
 
-            getEndModel().setMinimum(startValue);
+            getHighModel().setMinimum(Double.valueOf(low));
         }
-        else
+        else if (source == highSpinner)
         {
-            final Comparable startValue = (Comparable) startSpinner.getValue();
-            final Comparable endValue = (Comparable) endSpinner.getValue();
+            slider.setUpperValue(spinnerToSlider(high));
 
-            if (startValue.compareTo(endValue) > 0)
-                startSpinner.setValue(endValue);
+            if (low > high)
+                setLow(high);
 
-            getStartModel().setMaximum(endValue);
+            getLowModel().setMaximum(Double.valueOf(high));
+        }
+        else if (source == slider)
+        {
+            setLow(sliderToSpinner(slider.getLowerValue()));
+            setHigh(sliderToSpinner(slider.getUpperValue()));
         }
     }
 }

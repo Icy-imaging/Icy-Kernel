@@ -416,7 +416,7 @@ public class Updater
         {
             // backup failed
             System.err.println("Updater.udpateFile(" + localPath + ") failed :");
-            System.err.println("Can't backup file to '" + BACKUP_DIRECTORY + FileUtil.separator + localPath);
+            System.err.println("Cannot backup file to '" + BACKUP_DIRECTORY + FileUtil.separator + localPath);
             return false;
         }
 
@@ -425,7 +425,7 @@ public class Updater
         {
             // move failed
             System.err.println("Updater.udpateFile('" + localPath + "') failed !");
-            System.err.println("Can't move file from '" + UPDATE_DIRECTORY + FileUtil.separator + localPath + "' to '"
+            System.err.println("Cannot rename file from '" + UPDATE_DIRECTORY + FileUtil.separator + localPath + "' to '"
                     + localPath + "'");
             return false;
         }
