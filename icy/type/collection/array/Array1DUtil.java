@@ -7,6 +7,7 @@ import icy.math.MathUtil;
 import icy.type.DataType;
 import icy.type.TypeUtil;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 
 /**
@@ -3788,6 +3789,17 @@ public class Array1DUtil
                     }
                 }
                 break;
+            }
+            
+            default:
+            {
+                if (len > 0)
+                    result.append(Array.get(array, 0).toString());
+                for (int i = 1; i < len; i++)
+                {
+                    result.append(separator);
+                    result.append(Array.get(array, i).toString());
+                }
             }
         }
 
