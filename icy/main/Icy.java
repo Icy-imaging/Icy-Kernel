@@ -639,18 +639,21 @@ public class Icy
             System.err.println("Native libraries won't be loaded.");
         }
 
-//        // get VTK library file list (we don't want hidden files if any)
-//        final ArrayList<File> libraryFiles = FileUtil.getFileList(libPath + "vtk", true, false);
-//        // copy to root directory
-//        for (File libraryFile : libraryFiles)
-//        {
-//            // get destination file (directly copy in root application directory)
-//            final File dstFile = new File(libraryFile.getName());
-//
-//            // check if we need to copy the file
-//            if (osChanged || !dstFile.exists() || (dstFile.lastModified() != libraryFile.lastModified()))
-//                FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false);
-//        }
+        if (SystemUtil.isMac())
+        {
+        	// get VTK library file list (we don't want hidden files if any)
+        	final ArrayList<File> libraryFiles = FileUtil.getFileList(libPath + "/vtk", true, false);
+        	// copy to root directory
+        	for (File libraryFile : libraryFiles)
+        	{
+        		// get destination file (directly copy in root application directory)
+        		final File dstFile = new File(libraryFile.getName());
+
+        		// check if we need to copy the file
+        		if (osChanged || !dstFile.exists() || (dstFile.lastModified() != libraryFile.lastModified()))
+        			FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false);
+        	}
+        }
 
         // save os change
         if (osChanged)
