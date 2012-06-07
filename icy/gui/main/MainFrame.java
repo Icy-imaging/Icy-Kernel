@@ -318,7 +318,7 @@ public class MainFrame extends JRibbonFrame
     public ArrayList<JInternalFrame> getInternalFrames()
     {
         if (desktopPane != null)
-            return (ArrayList<JInternalFrame>) Arrays.asList(desktopPane.getAllFrames());
+            return new ArrayList<JInternalFrame>(Arrays.asList(desktopPane.getAllFrames()));
 
         return new ArrayList<JInternalFrame>();
     }
