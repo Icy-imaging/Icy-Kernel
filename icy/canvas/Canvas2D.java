@@ -1314,7 +1314,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
                 if (CanvasPreferences.getFiltering())
                 {
-                    if (getScaleX() < 4d && getScaleY() < 4d)
+                    if (getScaleX() < 3d && getScaleY() < 3d)
                     {
                     	if (transform.isMoving())
                     	{
