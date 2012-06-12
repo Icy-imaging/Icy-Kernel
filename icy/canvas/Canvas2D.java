@@ -1313,8 +1313,20 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 {
                     if (getScaleX() < 4d && getScaleY() < 4d)
                     {
-                        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                    	if (transform.isMoving())
+                    	{
+                    		// when the view is moving, draw with a fast bilinear
+                    		// interpolation
+                            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                                    RenderingHints.VALUE_INTERPOLATION_BILINEAR);                    		
+                    	}
+                    	else
+                    	{
+                    		// when the view is static, draw with a better-looking
+                    		// bicubic interpolation
+                            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);                    		
+                    	}
                     }
                     else
                     {
