@@ -1337,11 +1337,13 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                                     RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 
-                            // downsample the image before displaying it
-                            ResampleOp resampleOp = new ResampleOp (getDestImageCanvasSizeX(), getDestImageCanvasSizeY());
-                            img = resampleOp.filter(img, null);
-                            // the scale transformation is no longer needed
-                            imgTransform.scale(1./getScaleX(), 1./getScaleY());
+                            if (getScaleX() < 1d && getScaleY() < 1d) {
+	                            // downsample the image before displaying it
+	                            ResampleOp resampleOp = new ResampleOp (getDestImageCanvasSizeX(), getDestImageCanvasSizeY());
+	                            img = resampleOp.filter(img, null);
+	                            // the scale transformation is no longer needed
+	                            imgTransform.scale(1./getScaleX(), 1./getScaleY());
+                            }
                     	}
                     }
                     else
