@@ -78,6 +78,8 @@ import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import com.mortennobel.imagescaling.ResampleOp;
+
 /**
  * New Canvas 2D : default ICY 2D viewer.<br>
  * Support translation / scale and rotation transformation.<br>
@@ -1303,8 +1305,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             final int canvasCenterX = getCanvasSizeX() / 2;
             final int canvasCenterY = getCanvasSizeY() / 2;
 
-            final BufferedImage img = imageCache.getImage();
-
+            BufferedImage img = imageCache.getImage();
+            AffineTransform imgTransform = (AffineTransform) getTransform().clone();
+            
             if (img != null)
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
@@ -1325,7 +1328,13 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     		// when the view is static, draw with a better-looking
                     		// bicubic interpolation
                             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);                    		
+                                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+
+                            // downsample the image before displaying it
+                            ResampleOp resampleOp = new ResampleOp (getDestImageCanvasSizeX(), getDestImageCanvasSizeY());
+                            img = resampleOp.filter(img, null);
+                            // the scale transformation is no longer needed
+                            imgTransform.scale(1./getScaleX(), 1./getScaleY());
                     	}
                     }
                     else
@@ -1335,9 +1344,11 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     }
                 }
 
-                g2.transform(getTransform());
+                g2.transform(imgTransform);
                 g2.drawImage(img, null, 0, 0);
 
+                g2.transform(getTransform());
+                
                 if (getDrawLayers())
                 {
                     final Sequence seq = getSequence();
