@@ -543,8 +543,15 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 final Graphics2D g2 = (Graphics2D) g.create();
                 final BufferedImage img = canvasView.imageCache.getImage();
 
+                // downsample the image before displaying it
+                AffineTransform imgTrans = (AffineTransform) trans.clone();      
+                ResampleOp resampleOp = new ResampleOp ((int) (img.getWidth()*imgTrans.getScaleX()), (int) (img.getHeight()*imgTrans.getScaleY()));
+                imgTrans.scale(1./imgTrans.getScaleX(), 1./imgTrans.getScaleY());
+                // use bicubic interpolation for better-looking image
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                		RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                 // draw image
-                g2.drawImage(img, trans, null);
+                g2.drawImage(resampleOp.filter(img, null), imgTrans, null);
 
                 // then apply canvas inverse transformation
                 trans.scale(1 / getScaleX(), 1 / getScaleY());
