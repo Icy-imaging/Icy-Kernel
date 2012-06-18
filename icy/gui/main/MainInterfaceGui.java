@@ -98,7 +98,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     /**
      * used to generate focused sequence & viewer events
      */
-    private final ViewerListener viewerListener;
+    private final ViewerListener focusedViewerListener;
     private final SequenceListener sequenceListener;
 
     private final List<Viewer> viewers;
@@ -110,7 +110,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     MainFrame mainFrame;
 
     Viewer focusedViewer;
-    private Sequence focusedSequence;
+    Sequence focusedSequence;
 
     /**
      * init() should be called next to the constructor to add internal frames and windows.
@@ -125,8 +125,8 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
         swimmingPool = new SwimmingPool();
         taskFrameManager = new TaskFrameManager();
 
-        // global focused viewer listener
-        viewerListener = new ViewerAdapter()
+        // focused viewer listener
+        focusedViewerListener = new ViewerAdapter()
         {
             @Override
             public void viewerChanged(ViewerEvent event)
@@ -135,7 +135,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
             }
         };
 
-        // global focused sequence listener
+        // global and focused sequence listener
         sequenceListener = new SequenceAdapter()
         {
             @Override
@@ -259,6 +259,9 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
 
         if (focusedViewer != null)
         {
+            // remove focused viewer listener
+            focusedViewer.removeListener(focusedViewerListener);
+
             // force previous viewer internal frame to release focus
             try
             {
@@ -271,6 +274,10 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
         }
 
         focusedViewer = viewer;
+
+        // add focused viewer listener
+        if (focusedViewer != null)
+            focusedViewer.addListener(focusedViewerListener);
 
         // focus changed
         viewerFocusChanged(viewer);
@@ -738,15 +745,6 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     /**
-     * fire viewer focused event
-     */
-    private void fireViewerFocusedEvent(Viewer viewer)
-    {
-        for (FocusedViewerListener listener : listeners.getListeners(FocusedViewerListener.class))
-            listener.viewerFocused(viewer);
-    }
-
-    /**
      * fire focused viewer changed event
      */
     private void fireFocusedViewerChangedEvent(ViewerEvent event)
@@ -780,15 +778,6 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     {
         for (MainListener listener : listeners.getListeners(MainListener.class))
             listener.sequenceFocused(event);
-    }
-
-    /**
-     * fire sequence focused event
-     */
-    private void fireSequenceFocusedEvent(Sequence sequence)
-    {
-        for (FocusedSequenceListener listener : listeners.getListeners(FocusedSequenceListener.class))
-            listener.sequenceFocused(sequence);
     }
 
     /**
@@ -845,6 +834,24 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
             listener.painterRemoved(event);
     }
 
+    /**
+     * fire viewer focused event
+     */
+    private void fireFocusChangedEvent(Viewer viewer)
+    {
+        for (FocusedViewerListener listener : listeners.getListeners(FocusedViewerListener.class))
+            listener.focusChanged(viewer);
+    }
+
+    /**
+     * fire sequence focused event
+     */
+    private void fireFocusChangedEvent(Sequence sequence)
+    {
+        for (FocusedSequenceListener listener : listeners.getListeners(FocusedSequenceListener.class))
+            listener.focusChanged(sequence);
+    }
+
     @Override
     public boolean canExitExternal()
     {
@@ -897,13 +904,9 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
         // check if a sequence has been opened
         final Sequence sequence;
 
+        // get the sequence
         if (viewer != null)
-        {
-            // listen the viewer
-            viewer.addListener(viewerListener);
-            // get the sequence
             sequence = viewer.getSequence();
-        }
         else
             sequence = null;
 
@@ -974,9 +977,9 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
                 sequenceClosed(sequence);
         }
 
-        // remove from viewer listener
-        if (viewer != null)
-            viewer.removeListener(viewerListener);
+        // remove focused viewer listener
+        if (viewer == focusedViewer)
+            viewer.removeListener(focusedViewerListener);
     }
 
     /**
@@ -1192,7 +1195,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
 
                         case FOCUSED:
                             fireViewerFocusedEvent(event);
-                            fireViewerFocusedEvent((Viewer) event.getSource());
+                            fireFocusChangedEvent((Viewer) event.getSource());
                             break;
 
                         case CLOSED:
@@ -1210,7 +1213,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
 
                         case FOCUSED:
                             fireSequenceFocusedEvent(event);
-                            fireSequenceFocusedEvent((Sequence) event.getSource());
+                            fireFocusChangedEvent((Sequence) event.getSource());
                             break;
 
                         case CLOSED:
@@ -1247,12 +1250,23 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
             }
         }
 
+        // sequence focused event
         if (object instanceof SequenceEvent)
-            // only possible sequence event here
-            fireFocusedSequenceChangedEvent((SequenceEvent) object);
+        {
+            final SequenceEvent event = (SequenceEvent) object;
 
+            // send event only if this is the focused sequence
+            if (event.getSequence() == focusedSequence)
+                fireFocusedSequenceChangedEvent((SequenceEvent) object);
+        }
+
+        // viewer focused event
         if (object instanceof ViewerEvent)
-            // only possible sequence event here
-            fireFocusedViewerChangedEvent((ViewerEvent) object);
+        {
+            final ViewerEvent event = (ViewerEvent) object;
+
+            if (event.getSource() == focusedViewer)
+                fireFocusedViewerChangedEvent((ViewerEvent) object);
+        }
     }
 }

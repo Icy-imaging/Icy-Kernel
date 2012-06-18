@@ -24,6 +24,7 @@ import icy.gui.util.GuiUtil;
 import icy.main.Icy;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.XMLPreferences;
+import icy.type.collection.CollectionUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -31,7 +32,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -125,7 +125,7 @@ public class ImageLoaderDialog extends JFileChooser
         {
             // store current path
             preferences.put("path", getCurrentDirectory().getAbsolutePath());
-            Loader.load(Arrays.asList(getSelectedFiles()), separateSeqCheck.isSelected());
+            Loader.load(CollectionUtil.asList(getSelectedFiles()), separateSeqCheck.isSelected());
         }
 
         try

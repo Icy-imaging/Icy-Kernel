@@ -905,7 +905,7 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
     }
 
     @Override
-    public void viewerFocused(Viewer viewer)
+    public void focusChanged(Viewer viewer)
     {
         // TODO Auto-generated method stub
 
@@ -919,7 +919,7 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
     }
 
     @Override
-    public void sequenceFocused(Sequence value)
+    public void focusChanged(Sequence value)
     {
         if (sequence != value)
         {

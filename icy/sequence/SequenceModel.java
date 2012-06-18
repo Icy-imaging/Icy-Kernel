@@ -12,7 +12,7 @@ import java.awt.Image;
  * 
  * @author Stephane
  */
-public interface SequenceModel
+public interface SequenceModel extends SequenceImageProvider
 {
     public int getSizeX();
 
@@ -23,8 +23,6 @@ public interface SequenceModel
     public int getSizeT();
 
     public int getSizeC();
-
-    public Image getImage(int t, int z);
 
     public Image getImage(int t, int z, int c);
 }

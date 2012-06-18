@@ -50,6 +50,7 @@ import icy.system.IcyExceptionHandler;
 import icy.system.IcySecurityManager;
 import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
+import icy.type.collection.CollectionUtil;
 import icy.update.IcyUpdater;
 import icy.util.ReflectionUtil;
 import icy.util.StringUtil;
@@ -60,7 +61,6 @@ import ij.ImageJ;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
@@ -114,9 +114,9 @@ public class Icy
     static boolean itkLibraryLoaded = false;
 
     /**
-     * Headless flag
+     * Headless flag (default = true)
      */
-    static boolean headless = false;
+    static boolean headless = true;
 
     /**
      * Exiting flag
@@ -140,7 +140,7 @@ public class Icy
             System.out.println("Initializing...");
             System.out.println();
 
-            // handle arguments
+            // handle arguments (must be the first thing to do)
             handleAppArgs(args);
 
             // check if ICY is already running.
@@ -203,7 +203,7 @@ public class Icy
         }
         catch (Throwable t)
         {
-            // any error at this point is just fatal
+            // any error at this point is fatal
             fatalError(t);
         }
 
@@ -282,6 +282,8 @@ public class Icy
 
     private static void handleAppArgs(String[] args)
     {
+        boolean hasHeadLess = false;
+
         for (String arg : args)
         {
             // special flag to disabled JCL (needed for development)
@@ -290,8 +292,11 @@ public class Icy
 
             // headless mode
             if (arg.equalsIgnoreCase("--headless") || arg.equalsIgnoreCase("-hl"))
-                headless = true;
+                hasHeadLess = true;
         }
+
+        if (!hasHeadLess)
+            headless = false;
     }
 
     static void checkParameters()
@@ -614,7 +619,7 @@ public class Icy
             // patch user library paths...
             final Field pathsField = ReflectionUtil.getField(ClassLoader.class, "usr_paths", true);
             // get current user paths
-            final ArrayList<String> paths = new ArrayList<String>(Arrays.asList((String[]) pathsField.get(null)));
+            final ArrayList<String> paths = CollectionUtil.asArrayList((String[]) pathsField.get(null));
 
             // add base local native library path to user library paths
             paths.add(new File(libPath).getAbsolutePath());
@@ -641,18 +646,18 @@ public class Icy
 
         if (SystemUtil.isMac())
         {
-        	// get VTK library file list (we don't want hidden files if any)
-        	final ArrayList<File> libraryFiles = FileUtil.getFileList(libPath + "/vtk", true, false);
-        	// copy to root directory
-        	for (File libraryFile : libraryFiles)
-        	{
-        		// get destination file (directly copy in root application directory)
-        		final File dstFile = new File(libraryFile.getName());
+            // get VTK library file list (we don't want hidden files if any)
+            final ArrayList<File> libraryFiles = FileUtil.getFileList(libPath + "/vtk", true, false);
+            // copy to root directory
+            for (File libraryFile : libraryFiles)
+            {
+                // get destination file (directly copy in root application directory)
+                final File dstFile = new File(libraryFile.getName());
 
-        		// check if we need to copy the file
-        		if (osChanged || !dstFile.exists() || (dstFile.lastModified() != libraryFile.lastModified()))
-        			FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false);
-        	}
+                // check if we need to copy the file
+                if (osChanged || !dstFile.exists() || (dstFile.lastModified() != libraryFile.lastModified()))
+                    FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false);
+            }
         }
 
         // save os change
@@ -758,13 +763,13 @@ public class Icy
         try
         {
             loadLibraryFile("SimpleITKJava", true);
-            
-            System.out.println("ITK library successfully loaded...");
+
+            System.out.println("SimpleITK library successfully loaded...");
             itkLibraryLoaded = true;
         }
         catch (Throwable e)
         {
-            System.out.println("Cannot load ITK library...");
+            System.out.println("Cannot load SimpleITK library...");
         }
     }
 

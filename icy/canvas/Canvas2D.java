@@ -2881,24 +2881,13 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             if (canvasView)
             {
                 final Dimension size = getCanvasSize();
-                final int canvasCenterX = getCanvasSizeX() / 2;
-                final int canvasCenterY = getCanvasSizeY() / 2;
 
                 // get result image and graphics object
                 result = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
                 g = result.createGraphics();
 
-                final AffineTransform trans = new AffineTransform();
-
-                trans.translate(canvasCenterX, canvasCenterY);
-                trans.rotate(getRotationZ());
-                trans.translate(-canvasCenterX, -canvasCenterY);
-
-                trans.translate(getOffsetX(), getOffsetY());
-                trans.scale(getScaleX(), getScaleY());
-
                 // apply transformation (translation + scale)
-                g.transform(trans);
+                g.transform(getTransform());
 
                 // draw transformed image
                 g.drawImage(img, 0, 0, null);

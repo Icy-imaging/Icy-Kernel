@@ -25,6 +25,7 @@ import icy.main.Icy;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginDescriptor.PluginNameSorter;
 import icy.plugin.abstract_.Plugin;
+import icy.plugin.interface_.PluginBundled;
 import icy.plugin.interface_.PluginDaemon;
 import icy.preferences.PluginPreferences;
 import icy.system.IcyExceptionHandler;
@@ -446,36 +447,68 @@ public class PluginLoader
     }
 
     /**
-     * Return the list of loaded plugins
+     * Return the list of loaded plugins.
      */
     public static ArrayList<PluginDescriptor> getPlugins()
     {
+        return getPlugins(true);
+    }
+
+    /**
+     * Return the list of loaded plugins.
+     * 
+     * @param wantBundled
+     *        specify if we also want plugin implementing the {@link PluginBundled} interface.
+     */
+    public static ArrayList<PluginDescriptor> getPlugins(boolean wantBundled)
+    {
         prepare();
+
+        final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
         // better to return a copy as we have async list loading
         synchronized (plugins)
         {
-            return new ArrayList<PluginDescriptor>(plugins);
+            for (PluginDescriptor plugin : plugins)
+            {
+                final Class<? extends Plugin> classPlug = plugin.getPluginClass();
+
+                if (classPlug != null)
+                {
+                    if (wantBundled || !PluginBundled.class.isAssignableFrom(classPlug))
+                        result.add(plugin);
+                }
+            }
         }
+
+        return result;
     }
 
     /**
-     * Return the list of loaded plugins which derive from the specified class
+     * Return the list of loaded plugins which derive from the specified class.
+     * 
+     * @param clazz
+     *        The class object defining the class we want plugin derive from.
      */
     public static ArrayList<PluginDescriptor> getPlugins(Class<?> clazz)
     {
-        return getPlugins(clazz, false, false);
+        return getPlugins(clazz, false, false, true);
     }
 
     /**
-     * Return the list of loaded plugins which derive from the specified class
+     * Return the list of loaded plugins which derive from the specified class.
      * 
+     * @param clazz
+     *        The class object defining the class we want plugin derive from.
+     * @param wantBundled
+     *        specify if we also want plugin implementing the {@link PluginBundled} interface
      * @param wantAbstract
-     *        specified if we also want abstract classes
+     *        specify if we also want abstract classes
      * @param wantInterface
-     *        specified if we also want interfaces
+     *        specify if we also want interfaces
      */
-    public static ArrayList<PluginDescriptor> getPlugins(Class<?> clazz, boolean wantAbstract, boolean wantInterface)
+    public static ArrayList<PluginDescriptor> getPlugins(Class<?> clazz, boolean wantBundled, boolean wantAbstract,
+            boolean wantInterface)
     {
         prepare();
 
@@ -493,7 +526,8 @@ public class PluginLoader
                     {
                         // accept class ?
                         if ((wantAbstract || !ClassUtil.isAbstract(classPlug))
-                                && (wantInterface || !classPlug.isInterface()))
+                                && (wantInterface || !classPlug.isInterface())
+                                && (wantBundled || !PluginBundled.class.isAssignableFrom(classPlug)))
                             result.add(pluginDescriptor);
                     }
                 }
@@ -504,9 +538,12 @@ public class PluginLoader
     }
 
     /**
-     * Return the list of "actionable" plugins (mean we can launch them from GUI)
+     * Return the list of "actionable" plugins (mean we can launch them from GUI).
+     * 
+     * @param wantBundled
+     *        specify if we also want plugin implementing the {@link PluginBundled} interface
      */
-    public static ArrayList<PluginDescriptor> getActionablePlugins()
+    public static ArrayList<PluginDescriptor> getActionablePlugins(boolean wantBundled)
     {
         prepare();
 
@@ -515,11 +552,28 @@ public class PluginLoader
         synchronized (plugins)
         {
             for (PluginDescriptor pluginDescriptor : plugins)
-                if (pluginDescriptor.isActionable())
-                    result.add(pluginDescriptor);
+            {
+                final Class<? extends Plugin> classPlug = pluginDescriptor.getPluginClass();
+
+                if (classPlug != null)
+                {
+                    if (pluginDescriptor.isActionable()
+                            && (wantBundled || !PluginBundled.class.isAssignableFrom(classPlug)))
+                        result.add(pluginDescriptor);
+                }
+            }
         }
 
         return result;
+    }
+
+    /**
+     * Return the list of "actionable" plugins (mean we can launch them from GUI).<br>
+     * By default plugin implementing the {@link PluginBundled} interface are not returned.
+     */
+    public static ArrayList<PluginDescriptor> getActionablePlugins()
+    {
+        return getActionablePlugins(false);
     }
 
     /**
@@ -553,14 +607,20 @@ public class PluginLoader
     {
         prepare();
 
-        return PluginDescriptor.getPlugin(getPlugins(), ident, acceptNewer);
+        synchronized (plugins)
+        {
+            return PluginDescriptor.getPlugin(plugins, ident, acceptNewer);
+        }
     }
 
     public static PluginDescriptor getPlugin(String className)
     {
         prepare();
 
-        return PluginDescriptor.getPlugin(getPlugins(), className);
+        synchronized (plugins)
+        {
+            return PluginDescriptor.getPlugin(plugins, className);
+        }
     }
 
     public static Class<? extends Plugin> getPluginClass(String className)
@@ -568,6 +628,7 @@ public class PluginLoader
         prepare();
 
         final PluginDescriptor descriptor = getPlugin(className);
+
         if (descriptor != null)
             return descriptor.getPluginClass();
 

@@ -19,7 +19,844 @@ import ome.xml.model.enums.PixelType;
  */
 public enum DataType
 {
-    UBYTE, BYTE, USHORT, SHORT, UINT, INT, ULONG, LONG, FLOAT, DOUBLE, UNDEFINED;
+    UBYTE
+    {
+        @Override
+        public DataType getJavaType()
+        {
+            return BYTE;
+        }
+
+        @Override
+        public double getMinValue()
+        {
+            return 0d;
+        }
+
+        @Override
+        public double getMaxValue()
+        {
+            return MathUtil.POW2_8_DOUBLE - 1d;
+        }
+
+        @Override
+        public boolean isJavaType()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean isSigned()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean isFloat()
+        {
+            return false;
+        }
+
+        @Override
+        public int getBitSize()
+        {
+            return Byte.SIZE;
+        }
+
+        @Override
+        public Class<?> toPrimitiveClass()
+        {
+            return java.lang.Byte.TYPE;
+        }
+
+        @Override
+        public int toDataBufferType()
+        {
+            return DataBuffer.TYPE_BYTE;
+        }
+
+        @Override
+        public PixelType toPixelType()
+        {
+            return PixelType.UINT8;
+        }
+
+        @Override
+        public String toLongString()
+        {
+            return "unsigned byte (8 bits)";
+        }
+
+        @Override
+        public String toString()
+        {
+            return "unsigned byte";
+        }
+    },
+    BYTE
+    {
+        @Override
+        public DataType getJavaType()
+        {
+            return BYTE;
+        }
+
+        @Override
+        public double getMinValue()
+        {
+            return Byte.MIN_VALUE;
+        }
+
+        @Override
+        public double getMaxValue()
+        {
+            return Byte.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isJavaType()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isSigned()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isFloat()
+        {
+            return false;
+        }
+
+        @Override
+        public int getBitSize()
+        {
+            return Byte.SIZE;
+        }
+
+        @Override
+        public Class<?> toPrimitiveClass()
+        {
+            return Byte.TYPE;
+        }
+
+        @Override
+        public int toDataBufferType()
+        {
+            return DataBuffer.TYPE_BYTE;
+        }
+
+        @Override
+        public PixelType toPixelType()
+        {
+            return PixelType.INT8;
+        }
+
+        @Override
+        public String toLongString()
+        {
+            return "signed byte (8 bits)";
+        }
+
+        @Override
+        public String toString()
+        {
+            return "byte";
+        }
+    },
+    USHORT
+    {
+        @Override
+        public DataType getJavaType()
+        {
+            return SHORT;
+        }
+
+        @Override
+        public double getMinValue()
+        {
+            return 0d;
+        }
+
+        @Override
+        public double getMaxValue()
+        {
+            return MathUtil.POW2_16_DOUBLE - 1d;
+        }
+
+        @Override
+        public boolean isJavaType()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean isSigned()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean isFloat()
+        {
+            return false;
+        }
+
+        @Override
+        public int getBitSize()
+        {
+            return Short.SIZE;
+        }
+
+        @Override
+        public Class<?> toPrimitiveClass()
+        {
+            return Short.TYPE;
+        }
+
+        @Override
+        public int toDataBufferType()
+        {
+            return DataBuffer.TYPE_USHORT;
+        }
+
+        @Override
+        public PixelType toPixelType()
+        {
+            return PixelType.UINT16;
+        }
+
+        @Override
+        public String toLongString()
+        {
+            return "unsigned short (16 bits)";
+        }
+
+        @Override
+        public String toString()
+        {
+            return "unsigned short";
+        }
+    },
+    SHORT
+    {
+        @Override
+        public DataType getJavaType()
+        {
+            return SHORT;
+        }
+
+        @Override
+        public double getMinValue()
+        {
+            return Short.MIN_VALUE;
+        }
+
+        @Override
+        public double getMaxValue()
+        {
+            return Short.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isJavaType()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isSigned()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isFloat()
+        {
+            return false;
+        }
+
+        @Override
+        public int getBitSize()
+        {
+            return Short.SIZE;
+        }
+
+        @Override
+        public Class<?> toPrimitiveClass()
+        {
+            return Short.TYPE;
+        }
+
+        @Override
+        public int toDataBufferType()
+        {
+            return DataBuffer.TYPE_SHORT;
+        }
+
+        @Override
+        public PixelType toPixelType()
+        {
+            return PixelType.INT16;
+        }
+
+        @Override
+        public String toLongString()
+        {
+            return "signed short (16 bits)";
+        }
+
+        @Override
+        public String toString()
+        {
+            return "short";
+        }
+    },
+    UINT
+    {
+        @Override
+        public DataType getJavaType()
+        {
+            return INT;
+        }
+
+        @Override
+        public double getMinValue()
+        {
+            return 0d;
+        }
+
+        @Override
+        public double getMaxValue()
+        {
+            return MathUtil.POW2_32_DOUBLE - 1d;
+        }
+
+        @Override
+        public boolean isJavaType()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean isSigned()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean isFloat()
+        {
+            return false;
+        }
+
+        @Override
+        public int getBitSize()
+        {
+            return Integer.SIZE;
+        }
+
+        @Override
+        public Class<?> toPrimitiveClass()
+        {
+            return Integer.TYPE;
+        }
+
+        @Override
+        public int toDataBufferType()
+        {
+            return DataBuffer.TYPE_INT;
+        }
+
+        @Override
+        public PixelType toPixelType()
+        {
+            return PixelType.UINT32;
+        }
+
+        @Override
+        public String toLongString()
+        {
+            return "unsigned int (32 bits)";
+        }
+
+        @Override
+        public String toString()
+        {
+            return "unsigned int";
+        }
+    },
+    INT
+    {
+        @Override
+        public DataType getJavaType()
+        {
+            return INT;
+        }
+
+        @Override
+        public double getMinValue()
+        {
+            return Integer.MIN_VALUE;
+        }
+
+        @Override
+        public double getMaxValue()
+        {
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isJavaType()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isSigned()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isFloat()
+        {
+            return false;
+        }
+
+        @Override
+        public int getBitSize()
+        {
+            return Integer.SIZE;
+        }
+
+        @Override
+        public Class<?> toPrimitiveClass()
+        {
+            return Integer.TYPE;
+        }
+
+        @Override
+        public int toDataBufferType()
+        {
+            return DataBuffer.TYPE_INT;
+        }
+
+        @Override
+        public PixelType toPixelType()
+        {
+            return PixelType.INT32;
+        }
+
+        @Override
+        public String toLongString()
+        {
+            return "signed int (32 bits)";
+        }
+
+        @Override
+        public String toString()
+        {
+            return "int";
+        }
+    },
+    ULONG
+    {
+        @Override
+        public DataType getJavaType()
+        {
+            return LONG;
+        }
+
+        @Override
+        public double getMinValue()
+        {
+            return 0d;
+        }
+
+        @Override
+        public double getMaxValue()
+        {
+            // WARNING : double data type loss information here compared to long
+            return MathUtil.POW2_64_DOUBLE - 1d;
+        }
+
+        @Override
+        public boolean isJavaType()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean isSigned()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean isFloat()
+        {
+            return false;
+        }
+
+        @Override
+        public int getBitSize()
+        {
+            return Long.SIZE;
+        }
+
+        @Override
+        public Class<?> toPrimitiveClass()
+        {
+            return Long.TYPE;
+        }
+
+        @Override
+        public int toDataBufferType()
+        {
+            // not supported
+            return DataBuffer.TYPE_UNDEFINED;
+        }
+
+        @Override
+        public PixelType toPixelType()
+        {
+            // not supported
+            return null;
+        }
+
+        @Override
+        public String toLongString()
+        {
+            return "unsigned long (64 bits)";
+        }
+
+        @Override
+        public String toString()
+        {
+            return "unsigned long";
+        }
+    },
+    LONG
+    {
+        @Override
+        public DataType getJavaType()
+        {
+            return LONG;
+        }
+
+        @Override
+        public double getMinValue()
+        {
+            // WARNING : double data type loss information here compared to long
+            return Long.MIN_VALUE;
+        }
+
+        @Override
+        public double getMaxValue()
+        {
+            // WARNING : double data type loss information here compared to long
+            return Long.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isJavaType()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isSigned()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isFloat()
+        {
+            return false;
+        }
+
+        @Override
+        public int getBitSize()
+        {
+            return Long.SIZE;
+        }
+
+        @Override
+        public Class<?> toPrimitiveClass()
+        {
+            return Long.TYPE;
+        }
+
+        @Override
+        public int toDataBufferType()
+        {
+            // not supported
+            return DataBuffer.TYPE_UNDEFINED;
+        }
+
+        @Override
+        public PixelType toPixelType()
+        {
+            // not supported
+            return null;
+        }
+
+        @Override
+        public String toLongString()
+        {
+            return "signed long (64 bits)";
+        }
+
+        @Override
+        public String toString()
+        {
+            return "long";
+        }
+    },
+    FLOAT
+    {
+        @Override
+        public DataType getJavaType()
+        {
+            return FLOAT;
+        }
+
+        @Override
+        public double getMinValue()
+        {
+            return Float.MIN_VALUE;
+        }
+
+        @Override
+        public double getMaxValue()
+        {
+            return Float.MAX_VALUE;
+        }
+
+        @Override
+        public double[] getDefaultBounds()
+        {
+            // default to [0..1] for float data type
+            return new double[] {0d, 1d};
+        }
+
+        @Override
+        public boolean isJavaType()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isSigned()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isFloat()
+        {
+            return true;
+        }
+
+        @Override
+        public int getBitSize()
+        {
+            return Float.SIZE;
+        }
+
+        @Override
+        public Class<?> toPrimitiveClass()
+        {
+            return Float.TYPE;
+        }
+
+        @Override
+        public int toDataBufferType()
+        {
+            return DataBuffer.TYPE_FLOAT;
+        }
+
+        @Override
+        public PixelType toPixelType()
+        {
+            return PixelType.FLOAT;
+        }
+
+        @Override
+        public String toLongString()
+        {
+            return "float (32 bits)";
+        }
+
+        @Override
+        public String toString()
+        {
+            return "float";
+        }
+    },
+    DOUBLE
+    {
+        @Override
+        public DataType getJavaType()
+        {
+            return DOUBLE;
+        }
+
+        @Override
+        public double getMinValue()
+        {
+            return Double.MIN_VALUE;
+        }
+
+        @Override
+        public double getMaxValue()
+        {
+            return Double.MAX_VALUE;
+        }
+
+        @Override
+        public double[] getDefaultBounds()
+        {
+            // default to [0..1] for float data type
+            return new double[] {0d, 1d};
+        }
+
+        @Override
+        public boolean isJavaType()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isSigned()
+        {
+            return true;
+        }
+
+        @Override
+        public boolean isFloat()
+        {
+            return true;
+        }
+
+        @Override
+        public int getBitSize()
+        {
+            return Double.SIZE;
+        }
+
+        @Override
+        public Class<?> toPrimitiveClass()
+        {
+            return Double.TYPE;
+        }
+
+        @Override
+        public int toDataBufferType()
+        {
+            return DataBuffer.TYPE_DOUBLE;
+        }
+
+        @Override
+        public PixelType toPixelType()
+        {
+            return PixelType.DOUBLE;
+        }
+
+        @Override
+        public String toLongString()
+        {
+            return "double (8 bits)";
+        }
+
+        @Override
+        public String toString()
+        {
+            return "double";
+        }
+    },
+    UNDEFINED
+    {
+        @Override
+        public DataType getJavaType()
+        {
+            return UNDEFINED;
+        }
+
+        @Override
+        public double getMinValue()
+        {
+            return 0d;
+        }
+
+        @Override
+        public double getMaxValue()
+        {
+            return 0d;
+        }
+
+        @Override
+        public boolean isJavaType()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean isSigned()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean isFloat()
+        {
+            return false;
+        }
+
+        @Override
+        public int getBitSize()
+        {
+            return 0;
+        }
+
+        @Override
+        public Class<?> toPrimitiveClass()
+        {
+            // not supported
+            return null;
+        }
+
+        @Override
+        public int toDataBufferType()
+        {
+            // not supported
+            return DataBuffer.TYPE_UNDEFINED;
+        }
+
+        @Override
+        public PixelType toPixelType()
+        {
+            // not supported
+            return null;
+        }
+
+        @Override
+        public String toLongString()
+        {
+            return "undefined";
+        }
+
+        @Override
+        public String toString()
+        {
+            return "undefined";
+        }
+    };
 
     /**
      * cached
@@ -235,81 +1072,17 @@ public enum DataType
      * {@link DataType#DOUBLE}<br>
      * {@link DataType#UNDEFINED}<br>
      */
-    public DataType getJavaType()
-    {
-        switch (this)
-        {
-            case UBYTE:
-                return BYTE;
-            case USHORT:
-                return SHORT;
-            case UINT:
-                return INT;
-            case ULONG:
-                return LONG;
-            default:
-                return this;
-        }
-    }
+    public abstract DataType getJavaType();
 
     /**
      * Return the minimum value for current DataType
      */
-    public double getMinValue()
-    {
-        switch (this)
-        {
-            case BYTE:
-                return Byte.MIN_VALUE;
-            case SHORT:
-                return Short.MIN_VALUE;
-            case INT:
-                return Integer.MIN_VALUE;
-            case LONG:
-                // double type loss information here...
-                return Long.MIN_VALUE;
-            case FLOAT:
-                return -Float.MAX_VALUE;
-            case DOUBLE:
-                return -Double.MAX_VALUE;
-            default:
-                return 0d;
-        }
-    }
+    public abstract double getMinValue();
 
     /**
      * Return the maximum value for current DataType
      */
-    public double getMaxValue()
-    {
-        switch (this)
-        {
-            case UBYTE:
-                return UBYTE_MAX_VALUE;
-            case BYTE:
-                return Byte.MAX_VALUE;
-            case USHORT:
-                return USHORT_MAX_VALUE;
-            case SHORT:
-                return Short.MAX_VALUE;
-            case UINT:
-                return UINT_MAX_VALUE;
-            case INT:
-                return Integer.MAX_VALUE;
-            case ULONG:
-                // double type loss information here...
-                return ULONG_MAX_VALUE;
-            case LONG:
-                // double type loss information here...
-                return Long.MAX_VALUE;
-            case FLOAT:
-                return Float.MAX_VALUE;
-            case DOUBLE:
-                return Double.MAX_VALUE;
-            default:
-                return 0d;
-        }
-    }
+    public abstract double getMaxValue();
 
     /**
      * Get the default bounds for current DataType.<br>
@@ -317,14 +1090,11 @@ public enum DataType
      */
     public double[] getDefaultBounds()
     {
-        if (isFloat())
-            return new double[] {0d, 1d};
-
         return new double[] {getMinValue(), getMaxValue()};
     }
 
     /**
-     * Get the bounds for current DataType.
+     * Get the bounds <code>[min,max]</code> for current DataType.
      */
     public double[] getBounds()
     {
@@ -334,28 +1104,17 @@ public enum DataType
     /**
      * Return true if this is a compatible java data type (signed integer type only)
      */
-    public boolean isJavaType()
-    {
-        return (this == BYTE) || (this == SHORT) || (this == INT) || (this == LONG) || (this == FLOAT)
-                || (this == LONG);
-    }
+    public abstract boolean isJavaType();
 
     /**
      * Return true if this is a signed data type
      */
-    public boolean isSigned()
-    {
-        return (this == BYTE) || (this == SHORT) || (this == INT) || (this == LONG) || (this == FLOAT)
-                || (this == LONG);
-    }
+    public abstract boolean isSigned();
 
     /**
      * Return true if this is a float data type
      */
-    public boolean isFloat()
-    {
-        return (this == FLOAT) || (this == DOUBLE);
-    }
+    public abstract boolean isFloat();
 
     /**
      * Return true if this is an integer data type
@@ -385,30 +1144,7 @@ public enum DataType
     /**
      * Return the size (in bit) of the specified dataType
      */
-    public int getBitSize()
-    {
-        switch (this)
-        {
-            case UBYTE:
-            case BYTE:
-                return Byte.SIZE;
-            case USHORT:
-            case SHORT:
-                return Short.SIZE;
-            case UINT:
-            case INT:
-                return Integer.SIZE;
-            case FLOAT:
-                return Float.SIZE;
-            case ULONG:
-            case LONG:
-                return Long.SIZE;
-            case DOUBLE:
-                return Double.SIZE;
-            default:
-                return 0;
-        }
-    }
+    public abstract int getBitSize();
 
     /**
      * Return true if specified data type has same "basic" type (no sign information) data type
@@ -421,84 +1157,17 @@ public enum DataType
     /**
      * Return the corresponding primitive class type corresponding to this DataType.
      */
-    public Class<?> toPrimitiveClass()
-    {
-        switch (this)
-        {
-            case UBYTE:
-            case BYTE:
-                return java.lang.Byte.TYPE;
-            case USHORT:
-            case SHORT:
-                return java.lang.Short.TYPE;
-            case UINT:
-            case INT:
-                return java.lang.Integer.TYPE;
-            case ULONG:
-            case LONG:
-                return java.lang.Long.TYPE;
-            case FLOAT:
-                return java.lang.Float.TYPE;
-            case DOUBLE:
-                return java.lang.Double.TYPE;
-            default:
-                return java.lang.Void.TYPE;
-        }
-    }
+    public abstract Class<?> toPrimitiveClass();
 
     /**
      * Return the DataBuffer type corresponding to current DataType
      */
-    public int toDataBufferType()
-    {
-        switch (this)
-        {
-            case UBYTE:
-            case BYTE:
-                return DataBuffer.TYPE_BYTE;
-            case SHORT:
-                return DataBuffer.TYPE_SHORT;
-            case USHORT:
-                return DataBuffer.TYPE_USHORT;
-            case UINT:
-            case INT:
-                return DataBuffer.TYPE_INT;
-            case FLOAT:
-                return DataBuffer.TYPE_FLOAT;
-            case DOUBLE:
-                return DataBuffer.TYPE_DOUBLE;
-            default:
-                return DataBuffer.TYPE_UNDEFINED;
-        }
-    }
+    public abstract int toDataBufferType();
 
     /**
      * Return the PixelType corresponding to current DataType
      */
-    public PixelType toPixelType()
-    {
-        switch (this)
-        {
-            case BYTE:
-                return PixelType.INT8;
-            case UBYTE:
-                return PixelType.UINT8;
-            case SHORT:
-                return PixelType.INT16;
-            case USHORT:
-                return PixelType.UINT16;
-            case INT:
-                return PixelType.INT32;
-            case UINT:
-                return PixelType.UINT32;
-            case FLOAT:
-                return PixelType.FLOAT;
-            case DOUBLE:
-                return PixelType.DOUBLE;
-            default:
-                return PixelType.UINT8;
-        }
-    }
+    public abstract PixelType toPixelType();
 
     /**
      * Convert DataType to String.<br>
@@ -517,61 +1186,8 @@ public enum DataType
     /**
      * Convert DataType to long String (long description with bpp information)
      */
-    public String toLongString()
-    {
-        String result = toString();
-
-        if (isInteger() && isSigned())
-            result = "signed " + result;
-
-        switch (this)
-        {
-            case UBYTE:
-            case BYTE:
-                return result + " (8 bpp)";
-            case USHORT:
-            case SHORT:
-                return result + " (16 bpp)";
-            case UINT:
-            case INT:
-            case FLOAT:
-                return result + " (32 bpp)";
-            case ULONG:
-            case LONG:
-            case DOUBLE:
-                return result + " (64 bpp)";
-            default:
-                return result;
-        }
-    }
+    public abstract String toLongString();
 
     @Override
-    public String toString()
-    {
-        switch (this)
-        {
-            case UBYTE:
-                return "unsigned byte";
-            case BYTE:
-                return "byte";
-            case USHORT:
-                return "unsigned short";
-            case SHORT:
-                return "short";
-            case UINT:
-                return "unsigned int";
-            case INT:
-                return "int";
-            case ULONG:
-                return "unsigned long";
-            case LONG:
-                return "long";
-            case FLOAT:
-                return "float";
-            case DOUBLE:
-                return "double";
-            default:
-                return "undefined";
-        }
-    }
+    public abstract String toString();
 }

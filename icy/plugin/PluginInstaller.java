@@ -445,13 +445,13 @@ public class PluginInstaller
     }
 
     /**
-     * Return local plugin list which depend from specified plugin
+     * Return local plugin list which depend from specified plugin.
      */
     public static ArrayList<PluginDescriptor> getLocalDependenciesFrom(PluginDescriptor plugin)
     {
         final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
-        for (PluginDescriptor curPlug : PluginLoader.getPlugins())
+        for (PluginDescriptor curPlug : PluginLoader.getPlugins(false))
             // require specified plugin ?
             if (curPlug.requires(plugin))
                 PluginDescriptor.addToList(result, curPlug);
@@ -764,7 +764,7 @@ public class PluginInstaller
                 if (verifyError)
                 {
                     // send report to all plugins we tried to install
-                    // as we can't know where is the problem exactly
+                    // as we do not know where the problem is exactly
                     for (PluginDescriptor plugin : installingPlugins)
                         IcyExceptionHandler.report(plugin, "An error occured while installing the plugin :\n" + error);
                 }

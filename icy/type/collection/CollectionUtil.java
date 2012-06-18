@@ -19,6 +19,7 @@
 package icy.type.collection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,6 +27,16 @@ import java.util.List;
  */
 public class CollectionUtil
 {
+    public static <T> ArrayList<T> asArrayList(T... a)
+    {
+        return new ArrayList<T>(Arrays.asList(a));
+    }
+
+    public static <T> List<T> asList(T... a)
+    {
+        return Arrays.asList(a);
+    }
+
     public static <T> ArrayList<T> createArrayList(T t)
     {
         final ArrayList<T> result = new ArrayList<T>();

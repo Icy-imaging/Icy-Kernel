@@ -258,7 +258,7 @@ public class PluginUpdater extends ActionFrame
     static void processCheckUpdate(boolean showProgress, boolean auto)
     {
         final ArrayList<PluginDescriptor> toInstallPlugins = new ArrayList<PluginDescriptor>();
-        final ArrayList<PluginDescriptor> localPlugins = PluginLoader.getPlugins();
+        final ArrayList<PluginDescriptor> localPlugins = PluginLoader.getPlugins(false);
         final ProgressFrame checkingFrame;
 
         if (showProgress)
@@ -312,7 +312,7 @@ public class PluginUpdater extends ActionFrame
             else
             {
                 // show announcement for 15 seconds
-                new AnnounceFrame(toInstallPlugins.size() + " plugin updates are availables", "View", new Runnable()
+                new AnnounceFrame(toInstallPlugins.size() + " plugin update are availables", "View", new Runnable()
                 {
                     @Override
                     public void run()

@@ -232,11 +232,11 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
     }
 
     @Override
-    public void viewerFocused(Viewer viewer)
+    public void focusChanged(Viewer viewer)
     {
-        sequencePanel.viewerFocused(viewer);
-        roisPanel.viewerFocused(viewer);
-        layersPanel.viewerFocused(viewer);
+        sequencePanel.focusChanged(viewer);
+        roisPanel.focusChanged(viewer);
+        layersPanel.focusChanged(viewer);
 
         // FIXME : why this is needed ?
         // revalidate();
@@ -255,11 +255,11 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
     }
 
     @Override
-    public void sequenceFocused(Sequence sequence)
+    public void focusChanged(Sequence sequence)
     {
-        sequencePanel.sequenceFocused(sequence);
-        roisPanel.sequenceFocused(sequence);
-        layersPanel.sequenceFocused(sequence);
+        sequencePanel.focusChanged(sequence);
+        roisPanel.focusChanged(sequence);
+        layersPanel.focusChanged(sequence);
     }
 
     /**

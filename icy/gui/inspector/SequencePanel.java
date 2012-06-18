@@ -115,7 +115,7 @@ public class SequencePanel extends InspectorSubPanel
     }
 
     @Override
-    public void viewerFocused(Viewer viewer)
+    public void focusChanged(Viewer viewer)
     {
         if (viewer != null)
         {
@@ -128,7 +128,7 @@ public class SequencePanel extends InspectorSubPanel
             setCanvasPanel(null);
         }
 
-        sequenceInfosPanel.viewerFocused(viewer);
+        sequenceInfosPanel.focusChanged(viewer);
     }
 
     @Override
@@ -156,9 +156,9 @@ public class SequencePanel extends InspectorSubPanel
     }
 
     @Override
-    public void sequenceFocused(Sequence sequence)
+    public void focusChanged(Sequence sequence)
     {
-        sequenceInfosPanel.sequenceFocused(sequence);
+        sequenceInfosPanel.focusChanged(sequence);
     }
 
     @Override

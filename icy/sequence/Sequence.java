@@ -4689,11 +4689,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         return persistent.setNode(name);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString()
     {

@@ -194,6 +194,8 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         @Override
         protected void paintComponent(Graphics g)
         {
+            updateHisto();
+
             GraphicsUtil.paintIcyBackGround(this, g);
 
             super.paintComponent(g);
@@ -402,6 +404,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
     private ScalerHistogramPanel histogram;
     private boolean histoEnabled;
     private boolean autoBounds;
+    private boolean histoNeedRefresh;
 
     /**
      * listeners
@@ -454,10 +457,10 @@ public class ScalerViewer extends JPanel implements LUTBandListener
             @Override
             public void histogramNeedRefresh(HistogramPanel source)
             {
-                // request histogram recalculation
-                refreshHistoData();
+                internalRequestHistoDataRefresh();
             }
         });
+        histoNeedRefresh = false;
         histoEnabled = true;
         autoBounds = false;
 
@@ -466,39 +469,52 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         validate();
 
         // force first refresh
-        refreshHistoData();
-    }
-
-    @Override
-    public void addNotify()
-    {
-        super.addNotify();
+        internalRequestHistoDataRefresh();
 
         // add listeners
         lutBand.addListener(this);
     }
 
-    @Override
-    public void removeNotify()
+    public void requestHistoDataRefresh()
     {
-        super.removeNotify();
-
-        // remove listeners
-        lutBand.removeListener(this);
+        if (histoEnabled)
+            internalRequestHistoDataRefresh();
     }
 
-    public void refreshHistoData()
+    private boolean isHistoVisible()
     {
-        // we want background refresh
+        if (!isValid())
+            return false;
+
+        return getVisibleRect().intersects(histogram.getBounds());
+    }
+
+    void internalRequestHistoDataRefresh()
+    {
+        if (isHistoVisible())
+            refreshHistoData();
+        else
+            histoNeedRefresh = true;
+    }
+
+    void updateHisto()
+    {
+        if (histoNeedRefresh)
+        {
+            refreshHistoData();
+            histoNeedRefresh = false;
+        }
+    }
+
+    private void refreshHistoData()
+    {
+        // send refresh operation
         processor.addTask(histoUpdater);
     }
 
     // this method is called by processor, we don't mind about exception here
     void refreshHistoDataInternal()
     {
-        if (!histoEnabled)
-            return;
-
         // init histoGram
         histogram.reset();
 
@@ -557,6 +573,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         }
 
         histogram.done();
+        repaint();
     }
 
     /**
@@ -628,7 +645,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
             repaint();
         }
     }
-    
+
     /**
      * @return the autoBounds
      */
@@ -648,7 +665,6 @@ public class ScalerViewer extends JPanel implements LUTBandListener
             histogram.repaint();
         }
     }
-
 
     /**
      * @return the histoEnabled

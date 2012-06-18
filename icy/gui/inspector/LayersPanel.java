@@ -672,7 +672,7 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Te
     }
 
     @Override
-    public void viewerFocused(Viewer viewer)
+    public void focusChanged(Viewer viewer)
     {
         if (viewer != null)
             canvasRefresher.newCanvas = viewer.getCanvas();
@@ -693,7 +693,7 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Te
     }
 
     @Override
-    public void sequenceFocused(Sequence value)
+    public void focusChanged(Sequence value)
     {
 
     }

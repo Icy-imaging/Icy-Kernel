@@ -173,9 +173,9 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     @Override
     protected ArrayList<PluginDescriptor> getPlugins()
     {
-        final ArrayList<PluginDescriptor> result = PluginLoader.getPlugins();
+        final ArrayList<PluginDescriptor> result = PluginLoader.getPlugins(false);
 
-        // only display installed plugins (this hide inner plugins)
+        // only display installed plugins (this hide inner or dev plugins)
         for (int i = result.size() - 1; i >= 0; i--)
             if (!result.get(i).isInstalled())
                 result.remove(i);

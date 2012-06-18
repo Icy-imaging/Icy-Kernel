@@ -25,6 +25,7 @@ import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
+import icy.type.collection.CollectionUtil;
 import icy.util.DateUtil;
 import icy.util.GraphicsUtil;
 import icy.util.IRCUtil;
@@ -47,7 +48,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -540,7 +540,7 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
             {
                 case 353:
                     // add users to tmp list
-                    tmpUserList.addAll(Arrays.asList(msg.split(" ")));
+                    tmpUserList.addAll(CollectionUtil.asList(msg.split(" ")));
                     break;
 
                 case 366:

@@ -679,7 +679,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
      */
     private void buildWorkspaces()
     {
-        final ArrayList<PluginDescriptor> plugins = PluginLoader.getPlugins();
+        final ArrayList<PluginDescriptor> plugins = PluginLoader.getPlugins(false);
 
         // get all TaskDefinition from all active workspace
         for (TaskDefinition task : getTasks())
@@ -763,7 +763,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
      */
     public void cleanWorkspaces()
     {
-        final ArrayList<PluginDescriptor> plugins = PluginLoader.getPlugins();
+        final ArrayList<PluginDescriptor> plugins = PluginLoader.getPlugins(false);
 
         // get all items TaskDefinition from all active workspace
         for (ItemDefinition item : getAllItems())

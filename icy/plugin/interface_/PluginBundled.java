@@ -6,7 +6,7 @@ package icy.plugin.interface_;
 import icy.plugin.PluginLoader;
 
 /**
- * Interface for inner packaged plugin.
+ * Interface for inner bundled plugin.
  * This interface should be used for plugin which are packaged inside others plugins<br>
  * (in a single JAR plugin file).<br>
  * Generally you should avoid that as only one plugin can be correctly identified in a JAR<br>
@@ -17,7 +17,7 @@ import icy.plugin.PluginLoader;
  * 
  * @author Stephane
  */
-public interface PluginPackaged
+public interface PluginBundled
 {
     public String getMainPluginClassName();
 }

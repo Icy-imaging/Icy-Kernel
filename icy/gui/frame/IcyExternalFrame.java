@@ -100,7 +100,6 @@ public class IcyExternalFrame extends JFrame
 
         titleBarVisible = true;
         initialized = true;
-
     }
 
     /**

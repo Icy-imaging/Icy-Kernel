@@ -3603,7 +3603,8 @@ public class Array1DUtil
 
     /**
      * Return the specified 1D array as string<br>
-     * ex : [0,1,2,3,4] --> "0:1:2:3:4"
+     * ex : [0,1,2,3,4] --> "0:1:2:3:4"<br>
+     * ex : [Obj0,Obj1,Obj2,Obj3,Obj4] --> "Obj0:Obj1:Obj2:Obj3:Obj4"<br>
      * 
      * @param array
      *        1D array containing values to return as string
@@ -3791,6 +3792,7 @@ public class Array1DUtil
                 break;
             }
             
+            // generic method
             default:
             {
                 if (len > 0)

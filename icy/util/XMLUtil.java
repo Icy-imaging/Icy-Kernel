@@ -483,9 +483,9 @@ public class XMLUtil
     }
 
     /**
-     * Get all child node of specified node
+     * Get all child node of specified node.
      */
-    public static ArrayList<Node> getSubNodes(Node node)
+    public static ArrayList<Node> getChildren(Node node)
     {
         final ArrayList<Node> result = new ArrayList<Node>();
         final NodeList nodeList = node.getChildNodes();
@@ -496,7 +496,12 @@ public class XMLUtil
             if (nodeList != null)
             {
                 for (int i = 0; i < nodeList.getLength(); i++)
-                    result.add(nodeList.item(i));
+                {
+                    final Node n = nodeList.item(i);
+
+                    if (n != null)
+                        result.add(n);
+                }
             }
         }
         catch (Exception e)
@@ -512,7 +517,7 @@ public class XMLUtil
      * Get the first child node with specified name from node.<br>
      * Return null if not found.
      */
-    public static Node getSubNode(Node node, String name)
+    public static Node getChild(Node node, String name)
     {
         final NodeList nodeList = node.getChildNodes();
 
@@ -524,7 +529,8 @@ public class XMLUtil
                 for (int i = 0; i < nodeList.getLength(); i++)
                 {
                     final Node n = nodeList.item(i);
-                    if (n.getNodeName().equals(name))
+
+                    if ((n != null) && n.getNodeName().equals(name))
                         return n;
                 }
             }
@@ -541,7 +547,7 @@ public class XMLUtil
     /**
      * Get all child nodes with specified name from node.
      */
-    public static ArrayList<Node> getSubNodes(Node node, String name)
+    public static ArrayList<Node> getChildren(Node node, String name)
     {
         final ArrayList<Node> result = new ArrayList<Node>();
         final NodeList nodeList = node.getChildNodes();
@@ -554,7 +560,8 @@ public class XMLUtil
                 for (int i = 0; i < nodeList.getLength(); i++)
                 {
                     final Node n = nodeList.item(i);
-                    if (n.getNodeName().equals(name))
+
+                    if ((n != null) && n.getNodeName().equals(name))
                         result.add(n);
                 }
             }
@@ -569,9 +576,36 @@ public class XMLUtil
     }
 
     /**
-     * Get all child element of specified node
+     * @deprecated Uses {@link #getChildren(Node)} instead.
      */
-    public static ArrayList<Element> getSubElements(Node node)
+    @Deprecated
+    public static ArrayList<Node> getSubNodes(Node node)
+    {
+        return getChildren(node);
+    }
+
+    /**
+     * @deprecated Uses {@link #getChild(Node, String)} instead.
+     */
+    @Deprecated
+    public static Node getSubNode(Node node, String name)
+    {
+        return getChild(node, name);
+    }
+
+    /**
+     * @deprecated Uses {@link #getChildren(Node, String)} instead.
+     */
+    @Deprecated
+    public static ArrayList<Node> getSubNodes(Node node, String name)
+    {
+        return getChildren(node, name);
+    }
+
+    /**
+     * Get all child element of specified node.
+     */
+    public static ArrayList<Element> getElements(Node node)
     {
         final ArrayList<Element> result = new ArrayList<Element>();
         final NodeList nodeList = node.getChildNodes();
@@ -583,10 +617,10 @@ public class XMLUtil
             {
                 for (int i = 0; i < nodeList.getLength(); i++)
                 {
-                    final Node subNode = nodeList.item(i);
+                    final Node n = nodeList.item(i);
 
-                    if (subNode instanceof Element)
-                        result.add((Element) subNode);
+                    if (n instanceof Element)
+                        result.add((Element) n);
                 }
             }
         }
@@ -603,7 +637,7 @@ public class XMLUtil
      * Get the first child element with specified name from node.<br>
      * Return null if not found.
      */
-    public static Element getSubElement(Node node, String name)
+    public static Element getElement(Node node, String name)
     {
         final NodeList nodeList = node.getChildNodes();
 
@@ -614,10 +648,10 @@ public class XMLUtil
             {
                 for (int i = 0; i < nodeList.getLength(); i++)
                 {
-                    final Node subNode = nodeList.item(i);
+                    final Node n = nodeList.item(i);
 
-                    if (subNode.getNodeName().equals(name) && (subNode instanceof Element))
-                        return (Element) subNode;
+                    if ((n instanceof Element) && n.getNodeName().equals(name))
+                        return (Element) n;
                 }
             }
         }
@@ -631,9 +665,9 @@ public class XMLUtil
     }
 
     /**
-     * Get all child element with specified name of specified node
+     * Get all child element with specified name of specified node.
      */
-    public static ArrayList<Element> getSubElements(Node node, String name)
+    public static ArrayList<Element> getElements(Node node, String name)
     {
         final ArrayList<Element> result = new ArrayList<Element>();
         final NodeList nodeList = node.getChildNodes();
@@ -645,10 +679,10 @@ public class XMLUtil
             {
                 for (int i = 0; i < nodeList.getLength(); i++)
                 {
-                    final Node subNode = nodeList.item(i);
+                    final Node n = nodeList.item(i);
 
-                    if (subNode.getNodeName().equals(name) && (subNode instanceof Element))
-                        result.add((Element) subNode);
+                    if ((n instanceof Element) && n.getNodeName().equals(name))
+                        result.add((Element) n);
                 }
             }
         }
@@ -662,9 +696,36 @@ public class XMLUtil
     }
 
     /**
-     * Get all child element with specified type (name) from specified node
+     * @deprecated Uses {@link #getElements(Node)} instead.
      */
-    public static ArrayList<Element> getSubGenericElements(Node node, String type)
+    @Deprecated
+    public static ArrayList<Element> getSubElements(Node node)
+    {
+        return getElements(node);
+    }
+
+    /**
+     * @deprecated Uses {@link #getElement(Node, String)} instead.
+     */
+    @Deprecated
+    public static Element getSubElement(Node node, String name)
+    {
+        return getElement(node, name);
+    }
+
+    /**
+     * @deprecated Uses {@link #getElements(Node, String)} instead.
+     */
+    @Deprecated
+    public static ArrayList<Element> getSubElements(Node node, String name)
+    {
+        return getElements(node, name);
+    }
+
+    /**
+     * Get all child element with specified type (name) from specified node.
+     */
+    public static ArrayList<Element> getGenericElements(Node node, String type)
     {
         final ArrayList<Element> result = new ArrayList<Element>();
         final NodeList nodeList = node.getChildNodes();
@@ -676,10 +737,10 @@ public class XMLUtil
             {
                 for (int i = 0; i < nodeList.getLength(); i++)
                 {
-                    final Node subNode = nodeList.item(i);
+                    final Node n = nodeList.item(i);
 
-                    if (subNode.getNodeName().equals(type) && (subNode instanceof Element))
-                        result.add((Element) subNode);
+                    if ((n instanceof Element) && n.getNodeName().equals(type))
+                        result.add((Element) n);
                 }
             }
         }
@@ -694,9 +755,9 @@ public class XMLUtil
 
     /**
      * Get all child element with specified type (name) and name ('name attribute value')
-     * from specified node
+     * from specified node.
      */
-    public static ArrayList<Element> getSubGenericElements(Node node, String type, String name)
+    public static ArrayList<Element> getGenericElements(Node node, String type, String name)
     {
         final ArrayList<Element> result = new ArrayList<Element>();
         final NodeList nodeList = node.getChildNodes();
@@ -708,11 +769,11 @@ public class XMLUtil
             {
                 for (int i = 0; i < nodeList.getLength(); i++)
                 {
-                    final Node subNode = nodeList.item(i);
+                    final Node n = nodeList.item(i);
 
-                    if (subNode.getNodeName().equals(type) && (subNode instanceof Element))
+                    if ((n instanceof Element) && n.getNodeName().equals(type))
                     {
-                        final Element element = (Element) subNode;
+                        final Element element = (Element) n;
 
                         if (element.getAttribute(ATTR_NAME_NAME).equals(name))
                             result.add(element);
@@ -730,11 +791,21 @@ public class XMLUtil
     }
 
     /**
-     * Get child element with specified name from specified node.
+     * @deprecated Uses {@link #getGenericElements(Node, String)} instead.
      */
-    public static Element getElement(Node node, String name)
+    @Deprecated
+    public static ArrayList<Element> getSubGenericElements(Node node, String type)
     {
-        return (Element) getSubNode(node, name);
+        return getGenericElements(node, type);
+    }
+
+    /**
+     * @deprecated Uses {@link #getGenericElements(Node, String, String)} instead.
+     */
+    @Deprecated
+    public static ArrayList<Element> getSubGenericElements(Node node, String type, String name)
+    {
+        return getGenericElements(node, type, name);
     }
 
     /**
@@ -752,11 +823,11 @@ public class XMLUtil
             {
                 for (int i = 0; i < nodeList.getLength(); i++)
                 {
-                    final Node subNode = nodeList.item(i);
+                    final Node n = nodeList.item(i);
 
-                    if (subNode.getNodeName().equals(type) && (subNode instanceof Element))
+                    if ((n instanceof Element) && n.getNodeName().equals(type))
                     {
-                        final Element element = (Element) subNode;
+                        final Element element = (Element) n;
 
                         if (element.getAttribute(ATTR_NAME_NAME).equals(name))
                             return element;

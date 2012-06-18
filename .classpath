@@ -56,5 +56,7 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/parallelcolt.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/javassist.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/xuggler.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/substance-swingx.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/swingx-core.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

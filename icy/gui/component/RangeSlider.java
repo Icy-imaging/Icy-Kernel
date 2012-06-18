@@ -44,8 +44,6 @@ public class RangeSlider extends JSlider
      */
     private static final long serialVersionUID = 2079286476964629269L;
 
-    private boolean focusPainted;
-
     /**
      * Creates a range slider with the specified orientation and the
      * specified minimum, maximum, initial values and extend.
@@ -78,7 +76,7 @@ public class RangeSlider extends JSlider
     public RangeSlider(int orientation, int min, int max, int low, int high)
     {
         super(orientation, min, max, low);
-        focusPainted = true;
+        super.setFocusable(false);
         setExtent(high);
     }
 
@@ -153,6 +151,13 @@ public class RangeSlider extends JSlider
     public RangeSlider()
     {
         this(HORIZONTAL, 0, 100, 40, 20);
+    }
+
+    @Override
+    public void setFocusable(boolean focusable)
+    {
+        // not focusable
+        super.setFocusable(false);
     }
 
     /**
@@ -236,25 +241,5 @@ public class RangeSlider extends JSlider
 
         // Set extent to set upper value.
         setExtent(newExtent);
-    }
-
-    /**
-     * Returns true if focused state is painted.
-     */
-    public boolean isFocusPainted()
-    {
-        return focusPainted;
-    }
-
-    /**
-     * Define if focused state is painted.
-     */
-    public void setFocusPainted(boolean value)
-    {
-        if (focusPainted != value)
-        {
-            focusPainted = value;
-            repaint();
-        }
     }
 }

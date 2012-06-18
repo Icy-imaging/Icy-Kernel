@@ -34,6 +34,7 @@ import icy.resource.icon.IcyApplicationIcon;
 import icy.system.FileDrop;
 import icy.system.FileDrop.FileDropListener;
 import icy.system.SystemUtil;
+import icy.type.collection.CollectionUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -56,7 +57,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.swing.BorderFactory;
 import javax.swing.JInternalFrame;
@@ -169,7 +169,7 @@ public class MainFrame extends JRibbonFrame
             @Override
             public void filesDropped(File[] files)
             {
-                Loader.load(Arrays.asList(files));
+                Loader.load(CollectionUtil.asList(files));
             }
         };
 
@@ -318,7 +318,7 @@ public class MainFrame extends JRibbonFrame
     public ArrayList<JInternalFrame> getInternalFrames()
     {
         if (desktopPane != null)
-            return new ArrayList<JInternalFrame>(Arrays.asList(desktopPane.getAllFrames()));
+            return CollectionUtil.asArrayList(desktopPane.getAllFrames());
 
         return new ArrayList<JInternalFrame>();
     }

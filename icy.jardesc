@@ -30,6 +30,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.colormap"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.common.listener.weak"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.ui"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.plugin"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.common.listener"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.main"/>
@@ -69,6 +70,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.imagej"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.button"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.sequence"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.util"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.swimmingPool"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.list"/>

@@ -852,6 +852,20 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
+     * Return true if color maps associated to this {@link IcyColorModel} are all linear map.
+     * 
+     * @see IcyColorMap#isLinear()
+     */
+    public boolean hasLinearColormaps()
+    {
+        for (int c = 0; c < numComponents; c++)
+            if (!getColormap(c).isLinear())
+                return false;
+        
+        return true;
+    }
+
+    /**
      * Returns the <code>String</code> representation of the contents of this
      * <code>ColorModel</code>object.
      * 

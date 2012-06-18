@@ -10,6 +10,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -23,18 +24,19 @@ public class RangeComponent extends JPanel implements ChangeListener
      */
     private static final long serialVersionUID = 7244476681262628392L;
 
-    final private JSpinner lowSpinner;
-    final private JSpinner highSpinner;
-    final private RangeSlider slider;
+    final protected JSpinner lowSpinner;
+    final protected JSpinner highSpinner;
+    final protected RangeSlider slider;
 
-    public RangeComponent(double min, double max, double step)
+    public RangeComponent(int orientation, double min, double max, double step)
     {
         super();
 
         lowSpinner = new JSpinner(new SpinnerNumberModel(min, min, max, step));
+        lowSpinner.setToolTipText("Set low bound");
         highSpinner = new JSpinner(new SpinnerNumberModel(max, min, max, step));
-        slider = new RangeSlider();
-        slider.setFocusPainted(false);
+        highSpinner.setToolTipText("Set high bound");
+        slider = new RangeSlider(orientation);
         updateSliderModel();
 
         lowSpinner.addChangeListener(this);
@@ -43,16 +45,35 @@ public class RangeComponent extends JPanel implements ChangeListener
 
         setLayout(new BorderLayout());
 
-        add(lowSpinner, BorderLayout.WEST);
-        add(slider, BorderLayout.CENTER);
-        add(highSpinner, BorderLayout.EAST);
+        if (orientation == SwingConstants.VERTICAL)
+        {
+            add(lowSpinner, BorderLayout.SOUTH);
+            add(slider, BorderLayout.CENTER);
+            add(highSpinner, BorderLayout.NORTH);
+        }
+        else
+        {
+            add(lowSpinner, BorderLayout.WEST);
+            add(slider, BorderLayout.CENTER);
+            add(highSpinner, BorderLayout.EAST);
+        }
 
         validate();
     }
 
+    public RangeComponent(double min, double max, double step)
+    {
+        this(SwingConstants.HORIZONTAL, min, max, step);
+    }
+
+    public RangeComponent(int orientation)
+    {
+        this(orientation, 0d, 100d, 1d);
+    }
+
     public RangeComponent()
     {
-        this(0d, 100d, 1d);
+        this(SwingConstants.HORIZONTAL, 0d, 100d, 1d);
     }
 
     private SpinnerNumberModel getLowModel()
@@ -104,21 +125,59 @@ public class RangeComponent extends JPanel implements ChangeListener
         slider.setUpperValue(spinnerToSlider(getHigh()));
     }
 
+    /**
+     * Set the lower and higher range value.
+     * 
+     * @see #setLow(double)
+     * @see #setHigh(double)
+     * @see #setMin(double)
+     * @see #setMax(double)
+     */
+    public void setLowHigh(double low, double high)
+    {
+        getLowModel().setValue(Double.valueOf(low));
+        getHighModel().setValue(Double.valueOf(high));
+    }
+
+    /**
+     * Get the lower range value.
+     * 
+     * @see #getHigh()
+     * @see #getMin()
+     */
     public double getLow()
     {
         return getLowModel().getNumber().doubleValue();
     }
 
+    /**
+     * Get the higher range value.
+     * 
+     * @see #getLow()
+     * @see #getMax()
+     */
     public double getHigh()
     {
         return getHighModel().getNumber().doubleValue();
     }
 
+    /**
+     * Set the lower range value.
+     * 
+     * @see #setHigh(double)
+     * @see #setMin(double)
+     */
     public void setLow(double value)
     {
         getLowModel().setValue(Double.valueOf(value));
     }
 
+    /**
+     * Set the higher range value.
+     * 
+     * @see #setLow(double)
+     * @see #setMax(double)
+     */
     public void setHigh(double value)
     {
         getHighModel().setValue(Double.valueOf(value));
@@ -136,21 +195,46 @@ public class RangeComponent extends JPanel implements ChangeListener
         return (value.doubleValue() == value.longValue()) && (step.doubleValue() == step.longValue());
     }
 
+    /**
+     * Get range minimum value.
+     * 
+     * @see #getMax()
+     * @see #getLow()
+     */
     public double getMin()
     {
         return ((Double) getLowModel().getMinimum()).doubleValue();
     }
 
+    /**
+     * Get range minimum value.
+     * 
+     * @see #getMin()
+     * @see #getHigh()
+     */
     public double getMax()
     {
         return ((Double) getHighModel().getMaximum()).doubleValue();
     }
 
+    /**
+     * Get range step value.
+     * 
+     * @see #getMin()
+     * @see #getMax()
+     */
     public double getStep()
     {
         return getLowModel().getStepSize().doubleValue();
     }
 
+    /**
+     * Set range bounds and step value.
+     * 
+     * @see #setMin(double)
+     * @see #setMax(double)
+     * @see #setStep(double)
+     */
     public void setMinMaxStep(double min, double max, double step)
     {
         final double low = Math.max(Math.min(getLow(), max), min);
@@ -162,32 +246,69 @@ public class RangeComponent extends JPanel implements ChangeListener
         updateSliderModel();
     }
 
+    /**
+     * Set range bounds value.
+     * 
+     * @see #setMin(double)
+     * @see #setMax(double)
+     * @see #setLow(double)
+     * @see #setHigh(double)
+     */
     public void setMinMax(double min, double max)
     {
         setMinMaxStep(min, max, getStep());
     }
 
+    /**
+     * Set range minimum value.
+     * 
+     * @see #setMax(double)
+     * @see #setLow(double)
+     */
     public void setMin(double value)
     {
         setMinMaxStep(value, getMax(), getStep());
     }
 
+    /**
+     * Set range maximum value.
+     * 
+     * @see #setMin(double)
+     * @see #setHigh(double)
+     */
     public void setMax(double value)
     {
         setMinMaxStep(getMin(), value, getStep());
     }
 
+    /**
+     * Set range step value.
+     * 
+     * @see #setMin(double)
+     * @see #setMax(double)
+     */
     public void setStep(double value)
     {
         setMinMaxStep(getMin(), getMax(), value);
     }
 
+    /**
+     * Set slider visible or not.
+     */
     public void setSliderVisible(boolean value)
     {
         if (value)
             add(slider, BorderLayout.CENTER);
         else
             add(new JLabel(" - "), BorderLayout.CENTER);
+    }
+
+    @Override
+    public void setToolTipText(String text)
+    {
+        slider.setToolTipText(text);
+
+        super.setToolTipText(text);
     }
 
     @Override
@@ -198,6 +319,22 @@ public class RangeComponent extends JPanel implements ChangeListener
         slider.setEnabled(enabled);
 
         super.setEnabled(enabled);
+    }
+
+    protected void fireChangedEvent(ChangeEvent event)
+    {
+        for (ChangeListener listener : getListeners(ChangeListener.class))
+            listener.stateChanged(event);
+    }
+
+    public void addChangeListener(ChangeListener listener)
+    {
+        listenerList.add(ChangeListener.class, listener);
+    }
+
+    public void removeChangeListener(ChangeListener listener)
+    {
+        listenerList.remove(ChangeListener.class, listener);
     }
 
     @Override
@@ -230,5 +367,7 @@ public class RangeComponent extends JPanel implements ChangeListener
             setLow(sliderToSpinner(slider.getLowerValue()));
             setHigh(sliderToSpinner(slider.getUpperValue()));
         }
+
+        fireChangedEvent(e);
     }
 }

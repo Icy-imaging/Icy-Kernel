@@ -29,6 +29,7 @@ import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -167,7 +168,9 @@ public class RangeSliderUI extends SubstanceSliderUI
             @Override
             public boolean isInside(MouseEvent me)
             {
-                return isInsideLowerThumb(me) || isInsideUpperThumb(me);
+                final double x = me.getX();
+                final double y = me.getY();
+                return isInsideLowerThumbInternal(x, y) || isInsideUpperThumbInternal(x, y);
             }
 
             @Override
@@ -185,7 +188,7 @@ public class RangeSliderUI extends SubstanceSliderUI
             @Override
             public boolean isInside(MouseEvent me)
             {
-                return isInsideUpperThumb(me);
+                return isInsideUpperThumb(me.getX(), me.getY());
             }
 
             @Override
@@ -336,40 +339,63 @@ public class RangeSliderUI extends SubstanceSliderUI
         }
     }
 
-    // /**
-    // * Returns the size of a thumb.
-    // */
-    // @Override
-    // protected Dimension getThumbSize()
-    // {
-    // return new Dimension(12, 12);
-    // }
-
-    // /*
-    // * (non-Javadoc)
-    // *
-    // * @see
-    // * org.pushingpixels.substance.Trackable#isInside(java.awt.event.MouseEvent)
-    // */
-    // @Override
-    // public boolean isInside(MouseEvent me)
-    // {
-    // Rectangle thumbR = this.thumbRect;
-    // Rectangle upperThumbR = this.upperThumbRect;
-    // return ((thumbR != null) && thumbR.contains(me.getX(), me.getY()))
-    // || ((upperThumbR != null) && upperThumbR.contains(me.getX(), me.getY()));
-    // }
-
-    public boolean isInsideLowerThumb(MouseEvent me)
+    @Override
+    public boolean isInside(MouseEvent me)
     {
-        // default isIndide implementation
-        return isInside(me);
+        return isInsideLowerThumb(me.getX(), me.getY());
     }
 
-    public boolean isInsideUpperThumb(MouseEvent me)
+    public boolean isInsideLowerThumbInternal(double x, double y)
     {
-        Rectangle upperThumbR = this.upperThumbRect;
-        return (upperThumbR != null) && upperThumbR.contains(me.getX(), me.getY());
+        final Rectangle thumbB = this.thumbRect;
+        return thumbB != null && thumbB.contains(x, y);
+    }
+
+    public boolean isInsideLowerThumb(double x, double y)
+    {
+        // inside lower ?
+        if (isInsideLowerThumbInternal(x, y))
+        {
+            // also inside upper ?
+            if (isInsideUpperThumbInternal(x, y))
+            {
+                final double dl = Point2D.distance(thumbRect.getCenterX(), thumbRect.getCenterY(), x, y);
+                final double du = Point2D.distance(upperThumbRect.getCenterX(), upperThumbRect.getCenterY(), x, y);
+
+                return (dl < du);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean isInsideUpperThumbInternal(double x, double y)
+    {
+        final Rectangle upperThumbR = upperThumbRect;
+        return (upperThumbR != null) && upperThumbR.contains(x, y);
+    }
+
+    public boolean isInsideUpperThumb(double x, double y)
+    {
+        // inside lower ?
+        if (isInsideUpperThumbInternal(x, y))
+        {
+            // also inside upper ?
+            if (isInsideLowerThumbInternal(x, y))
+            {
+                // find closest one
+                final double dl = Point2D.distance(thumbRect.getCenterX(), thumbRect.getCenterY(), x, y);
+                final double du = Point2D.distance(upperThumbRect.getCenterX(), upperThumbRect.getCenterY(), x, y);
+
+                return (du <= dl);
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     @Override
@@ -466,8 +492,8 @@ public class RangeSliderUI extends SubstanceSliderUI
         {
             paintTicks(graphics);
         }
-        if (((RangeSlider) slider).isFocusPainted())
-            paintFocus(graphics);
+        // don't paint focus as component is not focusable
+        // paintFocus(graphics);
         if (clip.intersects(thumbRect))
         {
             paintLowerThumb(graphics);
@@ -499,21 +525,21 @@ public class RangeSliderUI extends SubstanceSliderUI
     {
         paintingUpperThumb = true;
 
-        Graphics2D graphics = (Graphics2D) g.create();
-        // graphics.setComposite(TransitionLayout.getAlphaComposite(slider));
-        Rectangle knobBounds = this.upperThumbRect;
+        final Graphics2D graphics = (Graphics2D) g.create();
+        final Rectangle knobBounds = upperThumbRect;
 
         graphics.translate(knobBounds.x, knobBounds.y);
 
-        Icon icon = this.getIcon();
-        if (this.slider.getOrientation() == SwingConstants.HORIZONTAL)
+        final Icon icon = getIcon();
+
+        if (slider.getOrientation() == SwingConstants.HORIZONTAL)
         {
             if (icon != null)
                 icon.paintIcon(this.slider, graphics, -1, 0);
         }
         else
         {
-            if (this.slider.getComponentOrientation().isLeftToRight())
+            if (slider.getComponentOrientation().isLeftToRight())
             {
                 if (icon != null)
                     icon.paintIcon(this.slider, graphics, 0, -1);
@@ -857,50 +883,27 @@ public class RangeSliderUI extends SubstanceSliderUI
      */
     public class RangeTrackListener extends TrackListener
     {
-
         @Override
         public void mousePressed(MouseEvent e)
         {
             if (!slider.isEnabled())
-            {
                 return;
-            }
 
             currentMouseX = e.getX();
             currentMouseY = e.getY();
 
             if (slider.isRequestFocusEnabled())
-            {
                 slider.requestFocus();
-            }
 
             // Determine which thumb is pressed. If the upper thumb is
             // selected (last one dragged), then check its position first;
             // otherwise check the position of the lower thumb first.
             boolean lowerPressed = false;
             boolean upperPressed = false;
-            if (upperThumbSelected)
-            {
-                if (upperThumbRect.contains(currentMouseX, currentMouseY))
-                {
-                    upperPressed = true;
-                }
-                else if (thumbRect.contains(currentMouseX, currentMouseY))
-                {
-                    lowerPressed = true;
-                }
-            }
-            else
-            {
-                if (thumbRect.contains(currentMouseX, currentMouseY))
-                {
-                    lowerPressed = true;
-                }
-                else if (upperThumbRect.contains(currentMouseX, currentMouseY))
-                {
-                    upperPressed = true;
-                }
-            }
+            if (isInsideLowerThumb(currentMouseX, currentMouseY))
+                lowerPressed = true;
+            else if (isInsideUpperThumb(currentMouseX, currentMouseY))
+                upperPressed = true;
 
             // Handle lower thumb pressed.
             if (lowerPressed)

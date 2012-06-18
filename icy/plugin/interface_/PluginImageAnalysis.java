@@ -21,7 +21,12 @@ package icy.plugin.interface_;
 import icy.plugin.abstract_.PluginActionable;
 
 /**
- * @deprecated use {@link PluginActionable} instead
+ * The old declaration :<br>
+ * <code>class MyPlugin extends Plugin implements PluginImageAnalysis</code><br>
+ * becomes :<br>
+ * <code>class MyPlugin extends PluginActionable</code>
+ * 
+ * @deprecated Uses {@link PluginActionable} instead.
  */
 @Deprecated
 public interface PluginImageAnalysis

@@ -21,6 +21,7 @@ package icy.gui.system;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
+import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.util.GuiUtil;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
@@ -169,6 +170,8 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
             @Override
             public void actionPerformed(ActionEvent e)
             {
+                final ProgressFrame progressFrame = new ProgressFrame("Sending report...");
+
                 try
                 {
                     // send report
@@ -177,6 +180,10 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
                 catch (BadLocationException e1)
                 {
                     // ignore
+                }
+                finally
+                {
+                    progressFrame.close();
                 }
             }
         });

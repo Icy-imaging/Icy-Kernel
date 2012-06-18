@@ -4,14 +4,14 @@
 package icy.system;
 
 /**
- * Handled exception.<br>
+ * Runtime handled exception.<br>
  * The Icy exception handler display a simple error dialog instead of the complete report dialog<br>
  * when it catches this exception.<br>
  * Also no log is saved in the console.
  * 
  * @author Stephane
  */
-public class IcyHandledException extends Exception
+public class IcyHandledException extends RuntimeException
 {
     /**
      * 

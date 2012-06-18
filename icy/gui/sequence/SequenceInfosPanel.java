@@ -256,7 +256,7 @@ public class SequenceInfosPanel extends InspectorSubPanel
     }
 
     @Override
-    public void viewerFocused(Viewer viewer)
+    public void focusChanged(Viewer viewer)
     {
 
     }
@@ -268,7 +268,7 @@ public class SequenceInfosPanel extends InspectorSubPanel
     }
 
     @Override
-    public void sequenceFocused(Sequence sequence)
+    public void focusChanged(Sequence sequence)
     {
         updateInfos(sequence);
     }

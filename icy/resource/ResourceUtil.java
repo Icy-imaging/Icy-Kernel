@@ -81,10 +81,33 @@ public class ResourceUtil
 
     public static final Image ICON_PLUS = ResourceUtil.getAlphaIconAsImage("plus.png");
     public static final Image ICON_MINUS = ResourceUtil.getAlphaIconAsImage("minus.png");
+
+    public static final Image ICON_ROUND_PLUS = ResourceUtil.getAlphaIconAsImage("round_plus.png");
+    public static final Image ICON_ROUND_MINUS = ResourceUtil.getAlphaIconAsImage("round_minus.png");
+
     public static final Image ICON_ROTATE_UNCLOCK = ResourceUtil.getAlphaIconAsImage("rot_unclock.png");
     public static final Image ICON_ROTATE_CLOCK = ResourceUtil.getAlphaIconAsImage("playback_reload.png");
 
+    public static final Image ICON_ARROW_UP = ResourceUtil.getAlphaIconAsImage("arrow_top.png");
+    /**
+     * @deprecated Uses {@link #ICON_ARROW_TOP} instead.
+     */
+    @Deprecated
+    public static final Image ICON_ARROW_TOP = ICON_ARROW_UP;
+    public static final Image ICON_ARROW_LEFT = ResourceUtil.getAlphaIconAsImage("arrow_left.png");
+    public static final Image ICON_ARROW_RIGHT = ResourceUtil.getAlphaIconAsImage("arrow_right.png");
+    public static final Image ICON_ARROW_DOWN = ResourceUtil.getAlphaIconAsImage("arrow_bottom.png");
+    /**
+     * @deprecated Uses {@link #ICON_ARROW_TOP} instead.
+     */
+    @Deprecated
+    public static final Image ICON_ARROW_BOTTOM = ICON_ARROW_DOWN;
     public static final Image ICON_ARROW_TOP_RIGHT = ResourceUtil.getAlphaIconAsImage("arrow_top_right.png");
+
+    public static final Image ICON_ROUND_ARROW_UP = ResourceUtil.getAlphaIconAsImage("round_arrow_up.png");
+    public static final Image ICON_ROUND_ARROW_LEFT = ResourceUtil.getAlphaIconAsImage("round_arrow_left.png");
+    public static final Image ICON_ROUND_ARROW_RIGHT = ResourceUtil.getAlphaIconAsImage("round_arrow_right.png");
+    public static final Image ICON_ROUND_ARROW_DOWN = ResourceUtil.getAlphaIconAsImage("round_arrow_down.png");
 
     public static final Image ICON_SQUARE_DOWN = ResourceUtil.getAlphaIconAsImage("sq_down.png");
     public static final Image ICON_SQUARE_UP = ResourceUtil.getAlphaIconAsImage("sq_up.png");

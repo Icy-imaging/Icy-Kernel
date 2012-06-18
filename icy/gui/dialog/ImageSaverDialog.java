@@ -28,6 +28,7 @@ import icy.preferences.ApplicationPreferences;
 import icy.preferences.XMLPreferences;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
+import icy.type.collection.CollectionUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -35,7 +36,6 @@ import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.Arrays;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -272,7 +272,7 @@ public class ImageSaverDialog extends JFileChooser
             preferences.putInt(ID_WIDTH, getWidth());
             preferences.putInt(ID_HEIGHT, getHeight());
             preferences.putBoolean(ID_MULTIPLEFILE, multipleFileCheck.isSelected());
-            preferences.putInt(ID_FILETYPE, Arrays.asList(getChoosableFileFilters()).indexOf(getFileFilter()));
+            preferences.putInt(ID_FILETYPE, CollectionUtil.asList(getChoosableFileFilters()).indexOf(getFileFilter()));
         }
     }
 

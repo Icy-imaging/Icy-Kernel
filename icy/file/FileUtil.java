@@ -87,7 +87,7 @@ public class FileUtil
         return result;
     }
 
-    private static void ensureParentDirExist(String filename)
+    public static void ensureParentDirExist(String filename)
     {
         ensureParentDirExist(new File(getGenericPath(filename)));
     }

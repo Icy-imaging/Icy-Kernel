@@ -19,8 +19,8 @@
 package icy.gui.frame.sequence;
 
 import icy.gui.component.ComponentUtil;
-import icy.gui.component.SequenceChooser;
-import icy.gui.component.SequenceChooser.SequenceChooserListener;
+import icy.gui.component.sequence.SequenceChooser;
+import icy.gui.component.sequence.SequenceChooser.SequenceChooserListener;
 import icy.gui.frame.ActionFrame;
 import icy.main.Icy;
 import icy.sequence.Sequence;

@@ -527,6 +527,30 @@ public class IcyColorMapBand implements XMLPersistent
     }
 
     /**
+     * Return true is the color map band is a linear one.<br>
+     * Linear map are used to display plain gray or plain color image.<br>
+     * Non linear map means you may have an indexed color image or
+     * you want to enhance contrast/color in display.
+     */
+    public boolean isLinear()
+    {
+        float lastdiff = mapf[1] - mapf[0];
+
+        for (int i = 2; i < IcyColorMap.SIZE; i++)
+        {
+            final float diff = mapf[i] - mapf[i - 1];
+
+            // important difference in difference
+            if ((diff != lastdiff) && (Math.abs(diff / (diff-lastdiff)) < 1000f))
+                return false;
+            
+            lastdiff = diff;
+        }
+
+        return true;
+    }
+
+    /**
      * update float map from int map
      */
     private void updateFloatMapFromIntMap()

@@ -1163,7 +1163,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
                 PluginLoader.endUpdate();
             }
 
-            final ArrayList<PluginDescriptor> installedPlugins = PluginLoader.getPlugins();
+            final ArrayList<PluginDescriptor> installedPlugins = PluginLoader.getPlugins(false);
 
             // get number of correctly installed plugins
             int numberOfInstalledPlugin = 0;

@@ -14,12 +14,12 @@ import java.util.EventListener;
 public interface FocusedViewerListener extends EventListener
 {
     /**
-     * A viewer just got the focus
+     * The focus just changed to another viewer.
      */
-    public void viewerFocused(Viewer viewer);
+    public void focusChanged(Viewer viewer);
 
     /**
-     * The focused viewer has changed
+     * The focused viewer has changed.
      */
     public void focusedViewerChanged(ViewerEvent event);
 }

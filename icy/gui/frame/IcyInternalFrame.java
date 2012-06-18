@@ -96,7 +96,7 @@ public class IcyInternalFrame extends JInternalFrame
         setVisible(false);
 
         systemMenuCallback = null;
-        closeItemVisible = true;
+        closeItemVisible = closable;
         updateTitlePane(LookAndFeelUtil.getTitlePane(this));
 
         titleBarVisible = true;
@@ -133,34 +133,35 @@ public class IcyInternalFrame extends JInternalFrame
         }
     }
 
-//    /**
-//     * Return true if specified point is located on title bar icon (system icon)
-//     */
-//    protected boolean isOnSystemIcon(Point p)
-//    {
-//        if (titlePane == null)
-//            return false;
-//
-//        final int w = titlePane.getWidth();
-//        final int h = titlePane.getHeight();
-//        final Dimension iconSize = getSystemIconSize();
-//
-//        final Rectangle rect;
-//
-//        if (getComponentOrientation().isLeftToRight())
-//            rect = new Rectangle(5, (h / 2) - (iconSize.height / 2), iconSize.width, iconSize.height);
-//        else
-//            rect = new Rectangle(w - (5 + iconSize.width), (h / 2) - (iconSize.height / 2), iconSize.width,
-//                    iconSize.height);
-//
-//        return rect.contains(p);
-//    }
-//
-//    protected Dimension getSystemIconSize()
-//    {
-//        final Icon icon = getFrameIcon();
-//        return new Dimension(icon.getIconWidth(), icon.getIconHeight());
-//    }
+    // /**
+    // * Return true if specified point is located on title bar icon (system icon)
+    // */
+    // protected boolean isOnSystemIcon(Point p)
+    // {
+    // if (titlePane == null)
+    // return false;
+    //
+    // final int w = titlePane.getWidth();
+    // final int h = titlePane.getHeight();
+    // final Dimension iconSize = getSystemIconSize();
+    //
+    // final Rectangle rect;
+    //
+    // if (getComponentOrientation().isLeftToRight())
+    // rect = new Rectangle(5, (h / 2) - (iconSize.height / 2), iconSize.width, iconSize.height);
+    // else
+    // rect = new Rectangle(w - (5 + iconSize.width), (h / 2) - (iconSize.height / 2),
+    // iconSize.width,
+    // iconSize.height);
+    //
+    // return rect.contains(p);
+    // }
+    //
+    // protected Dimension getSystemIconSize()
+    // {
+    // final Icon icon = getFrameIcon();
+    // return new Dimension(icon.getIconWidth(), icon.getIconHeight());
+    // }
 
     /**
      * Refresh system menu
@@ -279,7 +280,7 @@ public class IcyInternalFrame extends JInternalFrame
         if (closeItemVisible != value)
         {
             closeItemVisible = value;
-            
+
             ThreadUtil.invokeLater(new Runnable()
             {
                 @Override
@@ -289,6 +290,15 @@ public class IcyInternalFrame extends JInternalFrame
                 }
             });
         }
+    }
+
+    @Override
+    public void setClosable(boolean b)
+    {
+        super.setClosable(b);
+
+        if (!b)
+            setCloseItemVisible(false);
     }
 
     /**
@@ -336,7 +346,7 @@ public class IcyInternalFrame extends JInternalFrame
         if (systemMenuCallback != value)
         {
             systemMenuCallback = value;
-            
+
             ThreadUtil.invokeLater(new Runnable()
             {
                 @Override

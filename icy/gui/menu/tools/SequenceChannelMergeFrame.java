@@ -19,7 +19,7 @@
 package icy.gui.menu.tools;
 
 import icy.gui.component.ComponentUtil;
-import icy.gui.component.SequenceChooser;
+import icy.gui.component.sequence.SequenceChooser;
 import icy.gui.frame.ActionFrame;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.image.IcyBufferedImage;

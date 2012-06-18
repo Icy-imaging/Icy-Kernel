@@ -14,12 +14,12 @@ import java.util.EventListener;
 public interface FocusedSequenceListener extends EventListener
 {
     /**
-     * A sequence just got the focus
+     * The focus just changed to another sequence.
      */
-    public void sequenceFocused(Sequence sequence);
+    public void focusChanged(Sequence sequence);
 
     /**
-     * The focused sequence has changed
+     * The focused sequence has changed.
      */
     public void focusedSequenceChanged(SequenceEvent event);
 }

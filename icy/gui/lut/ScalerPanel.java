@@ -64,12 +64,6 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
         add(scalerViewer, BorderLayout.CENTER);
 
         validate();
-    }
-
-    @Override
-    public void addNotify()
-    {
-        super.addNotify();
 
         // add listeners
         final Sequence sequence = viewer.getSequence();
@@ -78,20 +72,6 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
             sequence.addListener(this);
         viewer.addListener(this);
         lutBand.addListener(this);
-    }
-
-    @Override
-    public void removeNotify()
-    {
-        super.removeNotify();
-
-        final Sequence sequence = viewer.getSequence();
-
-        // remove listeners
-        lutBand.removeListener(this);
-        viewer.removeListener(this);
-        if (sequence != null)
-            sequence.removeListener(this);
     }
 
     /**
@@ -105,7 +85,7 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
     public void refreshHistoData()
     {
         // update histogram
-        scalerViewer.refreshHistoData();
+        scalerViewer.requestHistoDataRefresh();
     }
 
     /**

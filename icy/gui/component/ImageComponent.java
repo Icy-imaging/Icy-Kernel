@@ -49,8 +49,10 @@ public class ImageComponent extends JPanel
 
         if (d != null)
             dim = d;
-        else
+        else if (image != null)
             dim = new Dimension(image.getWidth(this), image.getHeight(this));
+        else
+            dim = new Dimension(320, 200);
 
         setPreferredSize(dim);
 
@@ -94,11 +96,6 @@ public class ImageComponent extends JPanel
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see javax.swing.JComponent#paint(java.awt.Graphics)
-     */
     @Override
     public void paint(Graphics g)
     {
