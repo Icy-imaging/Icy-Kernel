@@ -771,7 +771,7 @@ public enum DataType
         @Override
         public String toLongString()
         {
-            return "double (8 bits)";
+            return "double (64 bits)";
         }
 
         @Override
