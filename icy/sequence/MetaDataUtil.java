@@ -105,7 +105,10 @@ public class MetaDataUtil
      */
     public static int getSizeX(OMEXMLMetadataImpl metaData, int serie)
     {
-        return OMEUtil.getValue(metaData.getPixelsSizeX(serie), 0);
+        if (serie < getNumSerie(metaData))
+            return OMEUtil.getValue(metaData.getPixelsSizeX(serie), 0);
+
+        return 0;
     }
 
     /**
@@ -113,7 +116,10 @@ public class MetaDataUtil
      */
     public static int getSizeY(OMEXMLMetadataImpl metaData, int serie)
     {
-        return OMEUtil.getValue(metaData.getPixelsSizeY(serie), 0);
+        if (serie < getNumSerie(metaData))
+            return OMEUtil.getValue(metaData.getPixelsSizeY(serie), 0);
+
+        return 0;
     }
 
     /**
@@ -121,7 +127,10 @@ public class MetaDataUtil
      */
     public static int getSizeC(OMEXMLMetadataImpl metaData, int serie)
     {
-        return OMEUtil.getValue(metaData.getPixelsSizeC(serie), 0);
+        if (serie < getNumSerie(metaData))
+            return OMEUtil.getValue(metaData.getPixelsSizeC(serie), 0);
+
+        return 0;
     }
 
     /**
@@ -129,7 +138,10 @@ public class MetaDataUtil
      */
     public static int getSizeZ(OMEXMLMetadataImpl metaData, int serie)
     {
-        return OMEUtil.getValue(metaData.getPixelsSizeX(serie), 0);
+        if (serie < getNumSerie(metaData))
+            return OMEUtil.getValue(metaData.getPixelsSizeX(serie), 0);
+
+        return 0;
     }
 
     /**
@@ -137,7 +149,10 @@ public class MetaDataUtil
      */
     public static int getSizeT(OMEXMLMetadataImpl metaData, int serie)
     {
-        return OMEUtil.getValue(metaData.getPixelsSizeT(serie), 0);
+        if (serie < getNumSerie(metaData))
+            return OMEUtil.getValue(metaData.getPixelsSizeT(serie), 0);
+
+        return 0;
     }
 
     /**
@@ -145,7 +160,10 @@ public class MetaDataUtil
      */
     public static String getName(OMEXMLMetadataImpl metaData, int serie)
     {
-        return metaData.getImageName(serie);
+        if (serie < getNumSerie(metaData))
+            return metaData.getImageName(serie);
+
+        return "";
     }
 
     /**
@@ -161,7 +179,10 @@ public class MetaDataUtil
      */
     public static double getPixelSizeX(OMEXMLMetadataImpl metaData, int serie)
     {
-        return OMEUtil.getValue(metaData.getPixelsPhysicalSizeX(serie), 1d);
+        if (serie < getNumSerie(metaData))
+            return OMEUtil.getValue(metaData.getPixelsPhysicalSizeX(serie), 1d);
+
+        return 1d;
     }
 
     /**
@@ -169,7 +190,10 @@ public class MetaDataUtil
      */
     public static double getPixelSizeY(OMEXMLMetadataImpl metaData, int serie)
     {
-        return OMEUtil.getValue(metaData.getPixelsPhysicalSizeY(serie), 1d);
+        if (serie < getNumSerie(metaData))
+            return OMEUtil.getValue(metaData.getPixelsPhysicalSizeY(serie), 1d);
+
+        return 1d;
     }
 
     /**
@@ -177,7 +201,10 @@ public class MetaDataUtil
      */
     public static double getPixelSizeZ(OMEXMLMetadataImpl metaData, int serie)
     {
-        return OMEUtil.getValue(metaData.getPixelsPhysicalSizeZ(serie), 1d);
+        if (serie < getNumSerie(metaData))
+            return OMEUtil.getValue(metaData.getPixelsPhysicalSizeZ(serie), 1d);
+
+        return 1d;
     }
 
     /**
@@ -185,7 +212,10 @@ public class MetaDataUtil
      */
     public static double getTimeInterval(OMEXMLMetadataImpl metaData, int serie)
     {
-        return TypeUtil.getDouble(metaData.getPixelsTimeIncrement(serie), 1d);
+        if (serie < getNumSerie(metaData))
+            return TypeUtil.getDouble(metaData.getPixelsTimeIncrement(serie), 1d);
+
+        return 1d;
     }
 
     /**

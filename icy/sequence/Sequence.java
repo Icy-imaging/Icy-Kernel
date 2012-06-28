@@ -235,7 +235,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         else
         {
             // default name
-            if (StringUtil.isEmpty(MetaDataUtil.getName(meta, 0)))
+            if (StringUtil.isEmpty(MetaDataUtil.getName(metaData, 0)))
                 MetaDataUtil.setName(metaData, 0, DEFAULT_NAME + StringUtil.toString(id, 3));
         }
         filename = null;
