@@ -653,25 +653,25 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     @Override
-    public void addListener(MainListener listener)
+    public synchronized void addListener(MainListener listener)
     {
         listeners.add(MainListener.class, listener);
     }
 
     @Override
-    public void removeListener(MainListener listener)
+    public synchronized void removeListener(MainListener listener)
     {
         listeners.remove(MainListener.class, listener);
     }
 
     @Override
-    public void addCanExitListener(AcceptListener listener)
+    public synchronized void addCanExitListener(AcceptListener listener)
     {
         listeners.add(WeakAcceptListener.class, new WeakAcceptListener(listener));
     }
 
     @Override
-    public void removeCanExitListener(AcceptListener listener)
+    public synchronized void removeCanExitListener(AcceptListener listener)
     {
         // we use weak reference so we have to find base listener...
         for (WeakAcceptListener l : listeners.getListeners(WeakAcceptListener.class))
@@ -679,31 +679,31 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
                 internalRemoveCanExitListener(l);
     }
 
-    public void internalRemoveCanExitListener(WeakAcceptListener listener)
+    public synchronized void internalRemoveCanExitListener(WeakAcceptListener listener)
     {
         listeners.remove(WeakAcceptListener.class, listener);
     }
 
     @Override
-    public void addFocusedViewerListener(FocusedViewerListener listener)
+    public synchronized void addFocusedViewerListener(FocusedViewerListener listener)
     {
         listeners.add(FocusedViewerListener.class, listener);
     }
 
     @Override
-    public void removeFocusedViewerListener(FocusedViewerListener listener)
+    public synchronized void removeFocusedViewerListener(FocusedViewerListener listener)
     {
         listeners.remove(FocusedViewerListener.class, listener);
     }
 
     @Override
-    public void addFocusedSequenceListener(FocusedSequenceListener listener)
+    public synchronized void addFocusedSequenceListener(FocusedSequenceListener listener)
     {
         listeners.add(FocusedSequenceListener.class, listener);
     }
 
     @Override
-    public void removeFocusedSequenceListener(FocusedSequenceListener listener)
+    public synchronized void removeFocusedSequenceListener(FocusedSequenceListener listener)
     {
         listeners.remove(FocusedSequenceListener.class, listener);
     }

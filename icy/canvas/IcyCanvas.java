@@ -48,6 +48,7 @@ import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.sequence.SequenceListener;
 import icy.system.IcyExceptionHandler;
 import icy.util.ClassUtil;
+import icy.util.OMEUtil;
 
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
@@ -2984,6 +2985,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
         if (seqIn != null)
         {
+            // derive original metadata
+            result.setMetaData(OMEUtil.createOMEMetadata(seqIn.getMetadata()));
+
             final int posT = getPositionT();
             final int posZ = getPositionZ();
             final int posC = getPositionC();

@@ -103,6 +103,10 @@ public class PluginLoader
      * static class
      */
     private static ClassLoader loader = new PluginClassLoader();
+    /**
+     * active daemons plugins
+     */
+    private static ArrayList<PluginDaemon> activeDaemons = new ArrayList<PluginDaemon>();
 
     /**
      * JAR Class Loader disabled flag
@@ -192,7 +196,7 @@ public class PluginLoader
     /**
      * Stop and restart all daemons plugins.
      */
-    public static void resetDaemons()
+    public static synchronized void resetDaemons()
     {
         // reset will be done later
         if (isLoading())
@@ -317,7 +321,7 @@ public class PluginLoader
     }
 
     /**
-     * Returns list of daemon plugins.
+     * Returns the list of daemon type plugins.
      */
     public static ArrayList<PluginDescriptor> getDaemonPlugins()
     {
@@ -342,11 +346,23 @@ public class PluginLoader
     }
 
     /**
+     * Returns the list of active daemon plugins.
+     */
+    public static ArrayList<PluginDaemon> getActiveDaemons()
+    {
+        synchronized (activeDaemons)
+        {
+            return new ArrayList<PluginDaemon>(activeDaemons);
+        }
+    }
+
+    /**
      * Start daemons plugins.
      */
-    static void startDaemons()
+    static synchronized void startDaemons()
     {
         final ArrayList<String> inactives = PluginPreferences.getInactiveDaemons();
+        final ArrayList<PluginDaemon> newDaemons = new ArrayList<PluginDaemon>();
 
         for (PluginDescriptor pluginDesc : getDaemonPlugins())
         {
@@ -358,6 +374,7 @@ public class PluginLoader
                     final Plugin plugin = pluginDesc.getPluginClass().newInstance();
                     final Thread thread = new Thread((PluginDaemon) plugin, pluginDesc.getName());
 
+                    thread.setName(pluginDesc.getName());
                     // so icy can exit even with running daemon plugin
                     thread.setDaemon(true);
 
@@ -365,6 +382,9 @@ public class PluginLoader
                     thread.start();
                     // register daemon plugin (so we can stop it later)
                     Icy.getMainInterface().registerPlugin(plugin);
+
+                    // add daemon plugin to list
+                    newDaemons.add((PluginDaemon) plugin);
                 }
                 catch (Throwable t)
                 {
@@ -372,31 +392,30 @@ public class PluginLoader
                 }
             }
         }
+
+        activeDaemons = newDaemons;
     }
 
     /**
      * Stop daemons plugins.
      */
-    public static void stopDaemons()
+    public synchronized static void stopDaemons()
     {
-        final ArrayList<Plugin> activePlugins = Icy.getMainInterface().getActivePlugins();
-
-        for (PluginDescriptor pluginDesc : getDaemonPlugins())
+        for (PluginDaemon daemonPlug : getActiveDaemons())
         {
             try
             {
-                // search the specified daemon plugin in current active plugins
-                final Plugin plugin = Plugin.getPlugin(activePlugins, pluginDesc.getClassName());
-
                 // stop the daemon
-                if (plugin != null)
-                    ((PluginDaemon) plugin).stop();
+                daemonPlug.stop();
             }
             catch (Throwable t)
             {
-                IcyExceptionHandler.handlePluginException(pluginDesc, t, true);
+                IcyExceptionHandler.handlePluginException(((Plugin) daemonPlug).getDescriptor(), t, true);
             }
         }
+
+        // no more active daamons
+        activeDaemons = new ArrayList<PluginDaemon>();
     }
 
     /**

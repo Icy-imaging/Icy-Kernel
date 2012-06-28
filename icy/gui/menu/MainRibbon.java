@@ -23,6 +23,7 @@ import icy.gui.component.button.IcyCommandMenuButton;
 import icy.gui.component.button.IcyCommandToggleButton;
 import icy.gui.component.button.IcyCommandToggleMenuButton;
 import icy.gui.frame.AboutFrame;
+import icy.gui.frame.IcyFrame;
 import icy.gui.main.MainAdapter;
 import icy.gui.main.MainEvent;
 import icy.gui.main.MainFrame;
@@ -1102,6 +1103,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 result.addMenuSeparator();
 
                 // OPENED SEQUENCES
+                final ArrayList<Viewer> allViewers = Icy.getMainInterface().getViewers();
                 final IcyCommandMenuButton sequencesButton = new IcyCommandMenuButton("Opened sequences", new IcyIcon(
                         "folder_arrow"));
                 sequencesButton.setPopupRichTooltip(new RichTooltip("Opened Sequences", "Show the selected sequence"));
@@ -1114,7 +1116,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                         final JCommandPopupMenu result = new JCommandPopupMenu();
 
                         // SEQUENCES
-                        for (Viewer viewer : Icy.getMainInterface().getViewers())
+                        for (Viewer viewer : allViewers)
                         {
                             final Viewer v = viewer;
 
@@ -1135,6 +1137,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                                                 v.setMinimized(false);
                                             // then grab focus
                                             v.requestFocus();
+                                            v.toFront();
                                         }
                                     }, true);
                                 }
@@ -1145,9 +1148,60 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                         return result;
                     }
                 });
-                sequencesButton.setEnabled(Icy.getMainInterface().getViewers().size() > 0);
-
+                sequencesButton.setEnabled(allViewers.size() > 0);
                 result.addMenuButton(sequencesButton);
+
+                // OPENED FRAMES
+                final ArrayList<IcyFrame> allFrames = IcyFrame.getAllFrames();
+                final IcyCommandMenuButton framesButton = new IcyCommandMenuButton("Opened Frames", new IcyIcon(
+                        "folder_arrow"));
+                framesButton.setPopupRichTooltip(new RichTooltip("Opened Frames", "Show all frames"));
+                framesButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
+                framesButton.setPopupCallback(new PopupPanelCallback()
+                {
+                    @Override
+                    public JPopupPanel getPopupPanel(JCommandButton commandButton)
+                    {
+                        final JCommandPopupMenu result = new JCommandPopupMenu();
+
+                        // FRAMES
+                        for (IcyFrame frame : allFrames)
+                        {
+                            if (allViewers.contains(frame) || !frame.isVisible())
+                                continue;
+                            String title = frame.getTitle();
+                            final IcyFrame f = frame;
+
+                            final IcyCommandMenuButton frameButton = new IcyCommandMenuButton(title, new IcyIcon(
+                                    ResourceUtil.ICON_PICTURE));
+                            frameButton.addActionListener(new ActionListener()
+                            {
+                                @Override
+                                public void actionPerformed(ActionEvent e)
+                                {
+                                    ThreadUtil.invokeLater(new Runnable()
+                                    {
+                                        @Override
+                                        public void run()
+                                        {
+                                            // remove minimized state
+                                            if (f.isMinimized())
+                                                f.setMinimized(false);
+                                            // then grab focus
+                                            f.requestFocus();
+                                            f.toFront();
+                                        }
+                                    }, true);
+                                }
+                            });
+                            result.addMenuButton(frameButton);
+                        }
+
+                        return result;
+                    }
+                });
+                framesButton.setEnabled(allFrames.size() > 0);
+                result.addMenuButton(framesButton);
 
                 return result;
             }

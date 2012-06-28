@@ -35,7 +35,9 @@ import java.util.HashMap;
  */
 public class IcyExceptionHandler implements UncaughtExceptionHandler
 {
+    public static final String ID_KERNELVERSION = "kernelVersion";
     public static final String ID_PLUGINCLASSNAME = "pluginClassName";
+    public static final String ID_PLUGINVERSION = "pluginVersion";
     public static final String ID_ERRORLOG = "errorLog";
 
     private static IcyExceptionHandler exceptionHandler = new IcyExceptionHandler();
@@ -200,10 +202,18 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     {
         final HashMap<String, String> values = new HashMap<String, String>();
 
+        values.put(ID_KERNELVERSION, Icy.version.toString());
+
         if (plugin != null)
+        {
             values.put(ID_PLUGINCLASSNAME, plugin.getClassName());
+            values.put(ID_PLUGINVERSION, plugin.getVersion().toString());
+        }
         else
+        {
             values.put(ID_PLUGINCLASSNAME, "");
+            values.put(ID_PLUGINVERSION, "");
+        }
 
         final String icyId;
         final String pluginId;

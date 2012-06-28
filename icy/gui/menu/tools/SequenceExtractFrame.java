@@ -45,6 +45,7 @@ import javax.swing.JRadioButton;
  * @author Stephane
  * @deprecated
  */
+@Deprecated
 public class SequenceExtractFrame extends SequenceActionFrame implements SourceChangeListener
 {
     protected static final String SCALAR_CMD = "scalar";
@@ -195,7 +196,7 @@ public class SequenceExtractFrame extends SequenceActionFrame implements SourceC
                         if (extractType == ExtractType.SCALAR)
                         {
                             // whole sequence
-                            seqOut = seqIn.extractBands(selectedBands);
+                            seqOut = seqIn.extractChannels(selectedBands);
                             // set sequence name
                             seqOut.setName("Band extraction of " + seqIn.getName());
                         }

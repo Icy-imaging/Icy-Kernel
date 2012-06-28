@@ -97,7 +97,6 @@ public class SequenceCropper
                 // create output sequence
                 final Sequence out = in.getSubSequence((int) adjustedRect.getMinX(), (int) adjustedRect.getMinY(), 0,
                         0, (int) adjustedRect.getWidth(), (int) adjustedRect.getHeight(), in.getSizeZ(), in.getSizeT());
-                out.setName("Crop of " + in.getName());
 
                 ThreadUtil.invokeLater(new Runnable()
                 {

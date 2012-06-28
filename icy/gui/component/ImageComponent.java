@@ -97,11 +97,10 @@ public class ImageComponent extends JPanel
     }
 
     @Override
-    public void paint(Graphics g)
+    protected void paintComponent(Graphics g)
     {
-        super.paint(g);
+        super.paintComponent(g);
 
         g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
     }
-
 }

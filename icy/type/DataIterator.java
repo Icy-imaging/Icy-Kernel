@@ -26,24 +26,7 @@ public interface DataIterator
     /**
      * Returns <tt>true</tt> if the iterator has no more elements.
      */
-    public boolean isDone();
-
-    /**
-     * Returns the current element in the iteration and pass to the next.
-     * 
-     * @return the current element in the iteration.
-     * @exception NoSuchElementException
-     *            iteration has no more elements.
-     */
-    public double getAndNext();
-
-    /**
-     * Sets the current element in the iteration and pass to the next.
-     * 
-     * @exception NoSuchElementException
-     *            iteration has no more elements.
-     */
-    public void setAndNext(double value);
+    public boolean done();
 
     /**
      * Returns the current element in the iteration.

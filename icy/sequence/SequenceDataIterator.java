@@ -311,7 +311,7 @@ public class SequenceDataIterator implements DataIterator
         else
             imageIterator = new ImageDataIterator(img, startX, endX, startY, endY, startC, endC);
 
-        return imageIterator.isDone();
+        return imageIterator.done();
     }
 
     @Override
@@ -342,7 +342,7 @@ public class SequenceDataIterator implements DataIterator
      */
     protected void nextImageifNeeded()
     {
-        while (!done && imageIterator.isDone())
+        while (!done && imageIterator.done())
         {
             prepareDataXYC();
 
@@ -357,30 +357,9 @@ public class SequenceDataIterator implements DataIterator
     }
 
     @Override
-    public boolean isDone()
+    public boolean done()
     {
         return done;
-    }
-
-    @Override
-    public double getAndNext()
-    {
-        if (done)
-            throw new NoSuchElementException(null);
-
-        final double result = imageIterator.get();
-        next();
-        return result;
-    }
-
-    @Override
-    public void setAndNext(double value)
-    {
-        if (done)
-            throw new NoSuchElementException(null);
-
-        imageIterator.set(value);
-        next();
     }
 
     @Override

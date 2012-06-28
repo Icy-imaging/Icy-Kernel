@@ -21,7 +21,7 @@ public class DataIteratorMath
 
         it.reset();
 
-        while (!it.isDone())
+        while (!it.done())
         {
             it.next();
             result++;
@@ -40,8 +40,11 @@ public class DataIteratorMath
 
         it.reset();
 
-        while (!it.isDone())
-            result += it.getAndNext();
+        while (!it.done())
+        {
+            result += it.get();
+            it.next();
+        }
 
         return result;
     }
@@ -56,11 +59,12 @@ public class DataIteratorMath
 
         it.reset();
 
-        while (!it.isDone())
+        while (!it.done())
         {
-            final double value = it.getAndNext();
+            final double value = it.get();
             if (value < result)
                 result = value;
+            it.next();
         }
 
         return result;
@@ -76,11 +80,12 @@ public class DataIteratorMath
 
         it.reset();
 
-        while (!it.isDone())
+        while (!it.done())
         {
-            final double value = it.getAndNext();
+            final double value = it.get();
             if (value > result)
                 result = value;
+            it.next();
         }
 
         return result;
@@ -97,10 +102,11 @@ public class DataIteratorMath
 
         it.reset();
 
-        while (!it.isDone())
+        while (!it.done())
         {
-            result += it.getAndNext();
+            result += it.get();
             numSample++;
+            it.next();
         }
 
         return result / numSample;

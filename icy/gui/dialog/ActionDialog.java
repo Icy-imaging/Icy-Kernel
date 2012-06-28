@@ -47,6 +47,7 @@ public class ActionDialog extends JDialog implements ActionListener
     protected static final String CANCEL_CMD = "cancel";
 
     protected final JPanel mainPanel;
+    protected final JPanel buttonPanel;
 
     final JButton okBtn;
     final JButton cancelBtn;
@@ -64,12 +65,11 @@ public class ActionDialog extends JDialog implements ActionListener
         super(owner, title, true);
 
         setIconImages(ResourceUtil.getIcyIconImages());
-        setModal(true);
 
         // GUI
         mainPanel = new JPanel();
 
-        final JPanel buttonPanel = new JPanel();
+        buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
@@ -137,6 +137,14 @@ public class ActionDialog extends JDialog implements ActionListener
     public JPanel getMainPanel()
     {
         return mainPanel;
+    }
+
+    /**
+     * @return the buttonPanel
+     */
+    public JPanel getButtonPanel()
+    {
+        return buttonPanel;
     }
 
     /**

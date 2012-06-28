@@ -63,7 +63,6 @@ import java.util.TreeMap;
 import javax.swing.event.EventListenerList;
 
 import loci.formats.ome.OMEXMLMetadataImpl;
-import ome.xml.model.primitives.PositiveFloat;
 
 import org.w3c.dom.Node;
 
@@ -127,8 +126,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     public static final String ID_CHANNEL_NAME = "channelName";
 
-    public static final String DEFAULT_CHANNEL_NAME = "ch ";
-
     /**
      * id generator
      */
@@ -155,10 +152,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * colorModel of sequence
      */
     private IcyColorModel colorModel;
-    /**
-     * name of sequence
-     */
-    private String name;
     /**
      * origin filename (from/to which the sequence has been loaded/saved)
      * null --> no file attachment
@@ -218,9 +211,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     private boolean channelBoundsInvalid;
 
     /**
-     * Creates a new empty sequence
+     * Creates a new empty sequence with specified meta data object and name.
      */
-    public Sequence()
+    public Sequence(OMEXMLMetadataImpl meta, String name)
     {
         super();
 
@@ -231,15 +224,27 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             id_gen++;
         }
 
-        name = DEFAULT_NAME + StringUtil.toString(id, 3);
+        // set metadata object
+        if (meta == null)
+            metaData = new OMEXMLMetadataImpl();
+        else
+            metaData = meta;
+        // set name
+        if (!StringUtil.isEmpty(name))
+            MetaDataUtil.setName(metaData, 0, name);
+        else
+        {
+            // default name
+            if (StringUtil.isEmpty(MetaDataUtil.getName(meta, 0)))
+                MetaDataUtil.setName(metaData, 0, DEFAULT_NAME + StringUtil.toString(id, 3));
+        }
         filename = null;
-        metaData = new OMEXMLMetadataImpl();
 
         // default pixel size and time interval
-        metaData.setPixelsPhysicalSizeX(new PositiveFloat(Double.valueOf(1d)), 0);
-        metaData.setPixelsPhysicalSizeY(new PositiveFloat(Double.valueOf(1d)), 0);
-        metaData.setPixelsPhysicalSizeZ(new PositiveFloat(Double.valueOf(1d)), 0);
-        metaData.setPixelsTimeIncrement(Double.valueOf(1d), 0);
+        MetaDataUtil.setPixelSizeX(metaData, 0, 1d);
+        MetaDataUtil.setPixelSizeY(metaData, 0, 1d);
+        MetaDataUtil.setPixelSizeZ(metaData, 0, 1d);
+        MetaDataUtil.setTimeInterval(metaData, 0, 100d);
 
         volumetricImages = new TreeMap<Integer, VolumetricImage>();
         painters = new HashSet<Painter>();
@@ -258,34 +263,47 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Creates a sequence containing the specified image
-     */
-    public Sequence(IcyBufferedImage image)
-    {
-        this();
-
-        addImage(image);
-    }
-
-    /**
-     * Creates an empty sequence with specified name
-     */
-    public Sequence(String name)
-    {
-        this();
-
-        setName(name);
-    }
-
-    /**
      * Creates a sequence with specified name and containing the specified image
      */
     public Sequence(String name, IcyBufferedImage image)
     {
-        this();
+        this((OMEXMLMetadataImpl) null, name);
 
-        setName(name);
         addImage(image);
+    }
+
+    /**
+     * Creates a new empty sequence with specified metadata.
+     */
+    public Sequence(OMEXMLMetadataImpl meta)
+    {
+        this(meta, null);
+    }
+
+    /**
+     * Creates a sequence containing the specified image
+     */
+    public Sequence(IcyBufferedImage image)
+    {
+        this((OMEXMLMetadataImpl) null, null);
+
+        addImage(image);
+    }
+
+    /**
+     * Creates an empty sequence with specified name.
+     */
+    public Sequence(String name)
+    {
+        this(null, name);
+    }
+
+    /**
+     * Creates an empty sequence.
+     */
+    public Sequence()
+    {
+        this((OMEXMLMetadataImpl) null, null);
     }
 
     @Override
@@ -403,7 +421,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public Sequence convertToType(DataType dataType, Scaler scaler)
     {
-        final Sequence output = new Sequence();
+        final Sequence output = new Sequence(OMEUtil.createOMEMetadata(metaData));
 
         output.beginUpdate();
         try
@@ -428,7 +446,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 }
             }
 
-            output.setName(getName() + " (" + output.getDataType_() + " data type)");
+            output.setName(getName() + " (" + output.getDataType_() + ")");
         }
         finally
         {
@@ -470,11 +488,31 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public Sequence extractChannels(List<Integer> channelNumbers)
     {
-        final Sequence outSequence = new Sequence();
+        final Sequence outSequence = new Sequence(OMEUtil.createOMEMetadata(metaData));
 
         for (int t = 0; t < getSizeT(); t++)
             for (int z = 0; z < getSizeZ(); z++)
                 outSequence.setImage(t, z, getImage(t, z).extractChannels(channelNumbers));
+
+        // sequence name
+        if (channelNumbers.size() > 1)
+        {
+            String s = "";
+            for (int i = 0; i < channelNumbers.size(); i++)
+                s += " " + channelNumbers.get(i).toString();
+
+            outSequence.setName(getName() + " (channels" + s + ")");
+        }
+        else if (channelNumbers.size() == 1)
+            outSequence.setName(getName() + " (" + getChannelName(channelNumbers.get(0).intValue()) + ")");
+
+        // channel name
+        int c = 0;
+        for (Integer i : channelNumbers)
+        {
+            outSequence.setChannelName(c, getChannelName(i.intValue()));
+            c++;
+        }
 
         return outSequence;
     }
@@ -554,18 +592,18 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Sequence name
      */
-    public void setName(String name)
+    public void setName(String value)
     {
-        if (this.name != name)
+        if (getName() != value)
         {
-            this.name = name;
+            MetaDataUtil.setName(metaData, 0, value);
             metaChanged(ID_NAME);
         }
     }
 
     public String getName()
     {
-        return name;
+        return MetaDataUtil.getName(metaData, 0);
     }
 
     /**
@@ -614,7 +652,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double getPixelSizeX()
     {
-        return OMEUtil.getValue(metaData.getPixelsPhysicalSizeX(0), 1d);
+        return MetaDataUtil.getPixelSizeX(metaData, 0);
     }
 
     /**
@@ -622,7 +660,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double getPixelSizeY()
     {
-        return OMEUtil.getValue(metaData.getPixelsPhysicalSizeY(0), 1d);
+        return MetaDataUtil.getPixelSizeY(metaData, 0);
     }
 
     /**
@@ -630,7 +668,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double getPixelSizeZ()
     {
-        return OMEUtil.getValue(metaData.getPixelsPhysicalSizeZ(0), 1d);
+        return MetaDataUtil.getPixelSizeZ(metaData, 0);
     }
 
     /**
@@ -638,7 +676,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double getTimeInterval()
     {
-        return TypeUtil.getDouble(metaData.getPixelsTimeIncrement(0), 1d);
+        return MetaDataUtil.getTimeInterval(metaData, 0);
     }
 
     /**
@@ -648,7 +686,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         if (getPixelSizeX() != value)
         {
-            metaData.setPixelsPhysicalSizeX(OMEUtil.getPositiveFloat(value), 0);
+            MetaDataUtil.setPixelSizeX(metaData, 0, value);
             metaChanged(ID_PIXEL_SIZE_X);
         }
     }
@@ -660,7 +698,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         if (getPixelSizeY() != value)
         {
-            metaData.setPixelsPhysicalSizeY(OMEUtil.getPositiveFloat(value), 0);
+            MetaDataUtil.setPixelSizeY(metaData, 0, value);
             metaChanged(ID_PIXEL_SIZE_Y);
         }
     }
@@ -672,7 +710,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         if (getPixelSizeZ() != value)
         {
-            metaData.setPixelsPhysicalSizeZ(OMEUtil.getPositiveFloat(value), 0);
+            MetaDataUtil.setPixelSizeZ(metaData, 0, value);
             metaChanged(ID_PIXEL_SIZE_Z);
         }
     }
@@ -684,23 +722,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         if (getTimeInterval() != value)
         {
-            metaData.setPixelsTimeIncrement(Double.valueOf(value), 0);
+            MetaDataUtil.setTimeInterval(metaData, 0, value);
             metaChanged(ID_TIME_INTERVAL);
-        }
-    }
-
-    /**
-     * Initialize default channel name until specified index if they are missing.
-     */
-    private void prepareMetaChannelName(int index)
-    {
-        int c = metaData.getChannelCount(0);
-
-        while (index >= c)
-        {
-            // set default channel name
-            metaData.setChannelName(getDefaultChannelName(c), 0, c);
-            c++;
         }
     }
 
@@ -709,7 +732,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public String getDefaultChannelName(int index)
     {
-        return DEFAULT_CHANNEL_NAME + index;
+        return MetaDataUtil.getDefaultChannelName(index);
     }
 
     /**
@@ -717,10 +740,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public String getChannelName(int index)
     {
-        // needed as LOCI does not initialize them on read
-        prepareMetaChannelName(index);
-
-        return StringUtil.getValue(metaData.getChannelName(0, index), getDefaultChannelName(index));
+        return MetaDataUtil.getChannelName(metaData, 0, index);
     }
 
     /**
@@ -728,12 +748,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void setChannelName(int index, String value)
     {
-        // needed as LOCI only add current channel if it's missing
-        prepareMetaChannelName(index - 1);
-
         if (!StringUtil.equals(getChannelName(index), value))
         {
-            metaData.setChannelName(value, 0, index);
+            MetaDataUtil.setChannelName(metaData, 0, index, value);
             metaChanged(ID_CHANNEL_NAME, index);
         }
     }
@@ -1856,7 +1873,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public boolean isDefaultName()
     {
-        return name.startsWith(DEFAULT_NAME);
+        return getName().startsWith(DEFAULT_NAME);
     }
 
     /**
@@ -4570,7 +4587,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public Sequence getSubSequence(int startX, int startY, int startZ, int startT, int sizeX, int sizeY, int sizeZ,
             int sizeT)
     {
-        final Sequence result = new Sequence();
+        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(metaData));
 
         result.beginUpdate();
         try
@@ -4593,7 +4610,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             result.endUpdate();
         }
 
-        result.setName("Sub part of " + getName());
+        result.setName(getName() + " (crop)");
 
         return result;
     }
@@ -4603,7 +4620,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public Sequence getCopy()
     {
-        final Sequence result = new Sequence();
+        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(metaData));
         final int sizeT = getSizeT();
         final int sizeZ = getSizeZ();
 
@@ -4692,7 +4709,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     public String toString()
     {
-        return name;
+        return getName();
     }
 
     /**

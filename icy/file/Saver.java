@@ -24,6 +24,7 @@ import icy.gui.menu.ApplicationMenu;
 import icy.image.IcyBufferedImage;
 import icy.image.colormodel.IcyColorModel;
 import icy.main.Icy;
+import icy.preferences.GeneralPreferences;
 import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
@@ -381,6 +382,9 @@ public class Saver
                     mainMenu.addRecentLoadedFile(file);
             }
 
+            // Sequence persistence enabled --> save XML
+            if (GeneralPreferences.getSequencePersistence())
+                sequence.saveXMLData();
         }
         catch (Exception e)
         {

@@ -564,7 +564,7 @@ public class MainFrame extends JRibbonFrame
         }
         else
         {
-            // process desktop pane cascade organization
+            // process desktop pane tile organization
             desktopPane.organizeTile(type);
 
             // we process screen where the mainFrame is not visible

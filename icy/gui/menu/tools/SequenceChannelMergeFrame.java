@@ -25,6 +25,7 @@ import icy.gui.frame.progress.ProgressFrame;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImage.FilterType;
 import icy.main.Icy;
+import icy.sequence.MetaDataUtil;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
@@ -330,11 +331,27 @@ public class SequenceChannelMergeFrame extends ActionFrame
 
                                         // add a new composed image
                                         seqOut.setImage(t, z, IcyBufferedImage.createFrom(imgList));
+
                                     }
                                 }
 
                                 // set sequence name
                                 seqOut.setName("Channels merge");
+
+                                // set channels name
+                                int c = 0;
+                                for (Integer chan : channels1)
+                                {
+                                    seqOut.setChannelName(c, (seqIn1 == null) ? MetaDataUtil.getDefaultChannelName(c)
+                                            : seqIn1.getChannelName(chan.intValue()));
+                                    c++;
+                                }
+                                for (Integer chan : channels2)
+                                {
+                                    seqOut.setChannelName(c, (seqIn2 == null) ? MetaDataUtil.getDefaultChannelName(c)
+                                            : seqIn2.getChannelName(chan.intValue()));
+                                    c++;
+                                }
                             }
                             finally
                             {

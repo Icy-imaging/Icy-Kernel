@@ -37,7 +37,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
 {
     private enum PluginOnlineState
     {
-        NULL, INSTALLING, HAS_INSTALL, INSTALLED, OLDER, NEWER
+        NULL, INSTALLING, REMOVING, HAS_INSTALL, INSTALLED, OLDER, NEWER
     }
 
     /**
@@ -82,6 +82,9 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
 
         if ((PluginInstaller.isInstallingPlugin(plugin)))
             return PluginOnlineState.INSTALLING;
+
+        if ((PluginInstaller.isDesinstallingPlugin(plugin)))
+            return PluginOnlineState.REMOVING;
 
         // if (PluginLoader.isLoaded(plugin, false))
         // return PluginOnlineState.INSTALLED;
@@ -169,6 +172,9 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
             case INSTALLING:
                 return "installing...";
 
+            case REMOVING:
+                return "removing...";
+
             case NEWER:
                 return "update available";
 
@@ -225,6 +231,11 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
         {
             case INSTALLING:
                 action1Button.setText("Installing...");
+                action1Button.setEnabled(false);
+                break;
+
+            case REMOVING:
+                action1Button.setText("Removing...");
                 action1Button.setEnabled(false);
                 break;
 

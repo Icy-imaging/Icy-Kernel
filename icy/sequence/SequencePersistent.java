@@ -177,11 +177,10 @@ public class SequencePersistent implements XMLPersistent
             sequence.setPixelSizeY(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Y, 1d));
             sequence.setPixelSizeZ(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Z, 1d));
             sequence.setTimeInterval(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_TIME_INTERVAL, 1d));
+
             for (int c = 0; c < sequence.getSizeC(); c++)
-                sequence.setChannelName(
-                        c,
-                        XMLUtil.getElementValue(nodeMeta, Sequence.ID_CHANNEL_NAME + c, Sequence.DEFAULT_CHANNEL_NAME
-                                + c));
+                sequence.setChannelName(c, XMLUtil.getElementValue(nodeMeta, Sequence.ID_CHANNEL_NAME + c,
+                        MetaDataUtil.DEFAULT_CHANNEL_NAME + c));
         }
     }
 
@@ -191,7 +190,7 @@ public class SequencePersistent implements XMLPersistent
 
         if (nodeROIs != null)
         {
-            final ArrayList<Node> nodesROI = XMLUtil.getSubNodes(nodeROIs, ID_ROI);
+            final ArrayList<Node> nodesROI = XMLUtil.getChildren(nodeROIs, ID_ROI);
 
             if (nodesROI != null)
             {
@@ -231,6 +230,7 @@ public class SequencePersistent implements XMLPersistent
             XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Y, sequence.getPixelSizeY());
             XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Z, sequence.getPixelSizeZ());
             XMLUtil.setElementDoubleValue(nodeMeta, Sequence.ID_TIME_INTERVAL, sequence.getTimeInterval());
+
             for (int c = 0; c < sequence.getSizeC(); c++)
                 XMLUtil.setElementValue(nodeMeta, Sequence.ID_CHANNEL_NAME + c, sequence.getChannelName(c));
         }
@@ -243,9 +243,9 @@ public class SequencePersistent implements XMLPersistent
         if (nodeROIs != null)
         {
             XMLUtil.removeAllChildren(nodeROIs);
-            
+
             final ArrayList<ROI> rois = sequence.getROIs();
-            
+
             // sort on id
             Collections.sort(rois, ROI.idComparator);
 
@@ -270,7 +270,7 @@ public class SequencePersistent implements XMLPersistent
      */
     public Node getNode(String name)
     {
-        return XMLUtil.getSubNode(document.getDocumentElement(), name);
+        return XMLUtil.getChild(document.getDocumentElement(), name);
     }
 
     /**

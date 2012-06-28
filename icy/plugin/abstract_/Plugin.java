@@ -71,10 +71,11 @@ public abstract class Plugin
         // get descriptor from loader
         descriptor = PluginLoader.getPlugin(getClass().getName());
 
-        if (descriptor == null)
+        // don't check for anonymous plugin class...
+        if ((descriptor == null) && !getClass().isAnonymousClass())
         {
-            System.err.println("Plugin '" + getClass().getName() + "' started but not found in PluginLoader !");
-            System.err.println("Local XML plugin description file is probably incorrect.");
+            System.out.println("Warning : Plugin '" + getClass().getName() + "' started but not found in PluginLoader !");
+            System.out.println("Local XML plugin description file is probably incorrect.");
         }
     }
 

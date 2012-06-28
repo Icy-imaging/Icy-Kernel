@@ -18,6 +18,7 @@
  */
 package icy.file;
 
+import icy.gui.dialog.SeriesSelectionDialog;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.FileFrame;
@@ -89,6 +90,7 @@ public class Loader
         final boolean display;
         final boolean directory;
         IFormatReader lastUsedReader;
+        ArrayList<Integer> selectedSeries;
 
         public SequenceLoader(List<File> files, boolean display, boolean directory)
         {
@@ -102,6 +104,7 @@ public class Loader
             lastUsedReader = null;
             this.display = display;
             this.directory = directory;
+            selectedSeries = new ArrayList<Integer>();
         }
 
         @Override
@@ -226,12 +229,25 @@ public class Loader
                         prevPos.setC(filePosition.getC());
 
                         // create a new sequence for this component
-                        final Sequence seq = new Sequence();
-                        seq.setName(FileUtil.getFileName(filename, false) + " Channel " + newPos.getC());
+                        final Sequence seq = new Sequence(OMEUtil.getOMEMetadata((IMetadata) lastUsedReader
+                                .getMetadataStore()));
+
+                        // default name loaded from metadata (if available)
+                        String name;
+                        if (StringUtil.isEmpty(seq.getName()))
+                            name = FileUtil.getFileName(filename, false);
+                        else
+                            name = seq.getName();
+                        // then we add channel name information if available
+                        if (seq.getDefaultChannelName(c).equals(seq.getChannelName(c)))
+                            name += " (channel " + newPos.getC() + ")";
+                        else
+                            name += "(" + seq.getChannelName(index) + ")";
+                        seq.setName(name);
+                        
                         seq.setFilename(FileUtil.setExtension(
                                 FileUtil.setExtension(filename, "") + "_C" + newPos.getC(),
                                 FileUtil.getFileExtension(filename, true)));
-                        seq.setMetaData(OMEUtil.getOMEMetadata((IMetadata) lastUsedReader.getMetadataStore()));
                         sequences.add(seq);
                     }
                     else if (prevPos.getT() != filePosition.getT())
@@ -325,7 +341,30 @@ public class Loader
             // load file with LOCI library
             reader.setId(path);
 
-            final int series = reader.getSeriesCount();
+            final int sizeS = reader.getSeriesCount();
+
+            if (sizeS > 1)
+            {
+                // use invokeNow carefully !
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        selectedSeries = new SeriesSelectionDialog(reader).getSelectedSeries();
+                    }
+                });
+            }
+            else
+                selectedSeries.add(Integer.valueOf(0));
+
+            // no selected serie --> exit
+            if ((selectedSeries == null) || selectedSeries.isEmpty())
+            {
+                reader.close();
+                return;
+            }
+
             final int seqSize = sequences.size();
             Sequence seq;
 
@@ -335,48 +374,52 @@ public class Loader
             else
             {
                 // create and add the first sequence
-                seq = new Sequence();
-                seq.setName(FileUtil.getFileName(path, false));
+                seq = new Sequence(OMEUtil.getOMEMetadata((IMetadata) reader.getMetadataStore()));
+                // set name only if empty (default name loaded from metadata)
+                if (StringUtil.isEmpty(seq.getName()))
+                    seq.setName(FileUtil.getFileName(file.getName(), false));
+                // set filename
                 seq.setFilename(path);
-                seq.setMetaData(OMEUtil.getOMEMetadata((IMetadata) reader.getMetadataStore()));
                 sequences.add(seq);
             }
 
             int progress = 0;
+            boolean firstSerie = true;
+
             seq.beginUpdate();
             try
             {
-                for (int s = 0; s < series; s++)
+                for (Integer s : selectedSeries)
                 {
-                    reader.setSeries(s);
+                    reader.setSeries(s.intValue());
 
                     final int frames = reader.getSizeT();
                     final int planes = reader.getSizeZ();
 
                     // set local length for loader frame
-                    final int progressLen = series * frames * planes;
+                    final int progressLen = sizeS * frames * planes;
                     if (progressLen > 10)
                         loaderFrame.setLength(progressLen);
 
-                    // no single image -> create new sequence
-                    if (s > 0)
+                    // several serie -> create new sequence
+                    if (!firstSerie)
                     {
                         // remove empty element on current sequence
                         seq.packImageList();
                         seq.endUpdate();
 
                         // and add a new sequence
-                        seq = new Sequence();
-                        seq.setName(FileUtil.getFileName(file.getName(), false));
+                        seq = new Sequence(OMEUtil.getOMEMetadata((IMetadata) reader.getMetadataStore()));
+                        // set name only if empty (default name loaded from metadata)
+                        if (StringUtil.isEmpty(seq.getName()))
+                            seq.setName(FileUtil.getFileName(file.getName(), false));
+                        // set filename
                         seq.setFilename(path);
-                        seq.setMetaData(OMEUtil.getOMEMetadata((IMetadata) reader.getMetadataStore()));
                         sequences.add(seq);
                         seq.beginUpdate();
 
                         // re init position
                         position.set(0, 0, 0);
-                        // position.setT(position.getT() + 1);
-                        // position.setZ(0);
                     }
 
                     for (int t = 0; t < frames; t++)
@@ -414,10 +457,11 @@ public class Loader
                                 seq.endUpdate();
 
                                 // and add a new sequence
-                                seq = new Sequence();
-                                seq.setName(FileUtil.getFileName(file.getName(), false));
+                                seq = new Sequence(OMEUtil.getOMEMetadata((IMetadata) reader.getMetadataStore()));
+                                // set name only if empty (default name loaded from metadata)
+                                if (StringUtil.isEmpty(seq.getName()))
+                                    seq.setName(FileUtil.getFileName(file.getName(), false));
                                 seq.setFilename(path);
-                                seq.setMetaData(OMEUtil.getOMEMetadata((IMetadata) reader.getMetadataStore()));
                                 sequences.add(seq);
                                 seq.beginUpdate();
 
@@ -429,6 +473,8 @@ public class Loader
                             seq.setImage(position.getT(), position.getZ(), icyImage);
                         }
                     }
+
+                    firstSerie = false;
                 }
             }
             finally
@@ -437,6 +483,68 @@ public class Loader
                 reader.close();
             }
         }
+    }
+
+    /**
+     * Returns true if the specified file is a valid and supported image file.
+     */
+    public static boolean isImageFile(String path)
+    {
+        final String ext = FileUtil.getFileExtension(path, false).toLowerCase();
+
+        // removes typical extension we can find mixed with image
+        if (StringUtil.equals(ext, "xml") || StringUtil.equals(ext, "txt") || StringUtil.equals(ext, "pdf")
+                || StringUtil.equals(ext, "xls") || StringUtil.equals(ext, "doc") || StringUtil.equals(ext, "doc")
+                || StringUtil.equals(ext, "docx"))
+            return false;
+
+        return new ImageReader().isThisType(path);
+    }
+
+    /**
+     * Returns the reader for the specified image file.<br>
+     * Returns null if the specified file is not a valid (or supported) image file.
+     * 
+     * @throws IOException
+     * @throws FormatException
+     */
+    public static IFormatReader getReader(String path) throws FormatException, IOException
+    {
+        return new ImageReader().getReader(path);
+    }
+
+    /**
+     * Returns metadata of the specified image file using the specified Reader.<br>
+     * Returns null if the specified file is not a valid (or supported) image file.
+     * 
+     * @param reader
+     *        the reader to use to retrieve the metadata
+     * @param path
+     *        filename of the image we want to retrieve metadata.
+     * @throws IOException
+     * @throws FormatException
+     */
+    protected static OMEXMLMetadataImpl getMetaData(IFormatReader reader, String path) throws FormatException,
+            IOException
+    {
+        // prepare meta data store structure
+        reader.setMetadataStore(new OMEXMLMetadataImpl());
+        // load file with LOCI library
+        reader.setId(path);
+
+        return (OMEXMLMetadataImpl) reader.getMetadataStore();
+    }
+
+    /**
+     * Returns metadata of the specified image file.<br>
+     * Returns null if the specified file is not a valid (or supported) image file.
+     * 
+     * @throws IOException
+     * @throws FormatException
+     */
+    public static OMEXMLMetadataImpl getMetaData(String path) throws FormatException, IOException
+    {
+        return getMetaData(getReader(path), path);
     }
 
     /**
@@ -466,32 +574,55 @@ public class Loader
     }
 
     /**
-     * Load a sequence from the specified file.<br>
-     * As the function can take sometime you should not call it from the AWT.
+     * Load a list of sequence from the specified list of file and returns them.<br>
+     * As the function can take sometime you should not call it from the AWT EDT.<br>
      * 
-     * @param file
-     * @return Sequence
+     * @param files
+     *        List of image file to load.
+     * @param separate
+     *        Force image to be loaded in separate sequence.
+     * @param display
+     *        If set to true sequences will be automatically displayed after being loaded.
+     * @param addToRecent
+     *        If set to true the files list will be traced in recent opened sequence.
+     */
+    public static List<Sequence> loadSequences(List<File> files, boolean separate, boolean display, boolean addToRecent)
+    {
+        final boolean directory = (files.size() == 1) && files.get(0).isDirectory();
+
+        // explode file list and load internally
+        return internalLoadWait(explodeAndClean(files), separate, directory, false, false);
+    }
+
+    /**
+     * Load a sequence from the specified list of file and returns it.<br>
+     * As the function can take sometime you should not call it from the AWT EDT.<br>
+     * The function can return null if no sequence can be loaded from the specified files.
+     * 
+     * @param files
+     *        List of image file to load.
+     * @param display
+     *        If set to true the sequence will be automatically displayed after being loaded.
+     * @param addToRecent
+     *        If set to true the files list will be traced in recent opened sequence.
+     */
+    public static Sequence loadSequence(List<File> files, boolean display, boolean addToRecent)
+    {
+        final List<Sequence> result = loadSequences(files, false, display, addToRecent);
+
+        if (result.size() > 0)
+            return result.get(0);
+
+        return null;
+    }
+
+    /**
+     * Load a sequence from the specified file.<br>
+     * As the function can take sometime you should not call it from the AWT EDT.
      */
     public static Sequence loadSequence(File file)
     {
-        final ApplicationMenu mainMenu = Icy.getMainInterface().getApplicationMenu();
-
-        // add as one item to recent file list
-        if (mainMenu != null)
-            mainMenu.addRecentLoadedFile(file);
-
-        // create sequence loader
-        final SequenceLoader seqLoader = new SequenceLoader(CollectionUtil.createArrayList(file), false,
-                file.isDirectory());
-
-        // run sequence loader
-        seqLoader.run();
-
-        // return first sequence if it exists
-        if (seqLoader.sequences.size() > 0)
-            return seqLoader.sequences.get(0);
-
-        return null;
+        return loadSequence(CollectionUtil.createArrayList(file), false, true);
     }
 
     /**
@@ -608,6 +739,59 @@ public class Loader
                 }
             }
         });
+    }
+
+    /**
+     * This method load the specified files and return them as Sequence.<br>
+     * As this method can take sometime, you should not call it from the EDT.
+     */
+    private static List<Sequence> internalLoadWait(final List<File> files, final boolean separate,
+            final boolean directory, final boolean display, final boolean addToRecent)
+    {
+        final ApplicationMenu mainMenu = Icy.getMainInterface().getApplicationMenu();
+        final ArrayList<Sequence> result = new ArrayList<Sequence>();
+
+        // loading
+        if (separate)
+        {
+            for (File file : files)
+            {
+                // add as separate item to recent file list
+                if (addToRecent && (mainMenu != null))
+                    mainMenu.addRecentLoadedFile(file);
+
+                // create sequence loader
+                final SequenceLoader t = new SequenceLoader(CollectionUtil.createArrayList(file), display, directory);
+                // load sequence
+                t.run();
+                // then add results
+                result.addAll(t.sequences);
+            }
+        }
+        else
+        {
+            if (files.size() > 0)
+            {
+                // add as one item to recent file list
+                if (addToRecent && (mainMenu != null))
+                {
+                    // set only the directory entry
+                    if (directory)
+                        mainMenu.addRecentLoadedFile(files.get(0).getParentFile());
+                    else
+                        mainMenu.addRecentLoadedFile(files);
+                }
+
+                // create and run sequence loader
+                final SequenceLoader t = new SequenceLoader(files, display, directory);
+                // load sequence
+                t.run();
+                // then add results
+                result.addAll(t.sequences);
+            }
+        }
+
+        return result;
     }
 
     private static void setPositionFromNumberString(FilePosition position, String number)

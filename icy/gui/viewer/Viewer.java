@@ -199,7 +199,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                             if (seqOut != null)
                             {
                                 // set sequence name
-                                seqOut.setName("Rendering shot of '" + seqIn.getName() + "' view");
+                                seqOut.setName("Rendering of '" + seqIn.getName() + "' view");
                                 // add sequence
                                 Icy.addSequence(seqOut);
                             }

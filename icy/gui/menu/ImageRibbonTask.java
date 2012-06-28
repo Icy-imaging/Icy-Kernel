@@ -174,22 +174,10 @@ public class ImageRibbonTask extends RibbonTask
                         if (chNum == -1)
                         {
                             for (int ch = 0; ch < seqIn.getSizeC(); ch++)
-                            {
-                                final Sequence seqOut = seqIn.extractChannel(ch);
-
-                                seqOut.setName(seqIn.getName() + " - (" + seqIn.getChannelName(ch) + ")");
-
-                                Icy.addSequence(seqOut);
-                            }
+                                Icy.addSequence(seqIn.extractChannel(ch));
                         }
                         else
-                        {
-                            final Sequence seqOut = seqIn.extractChannel(chNum);
-
-                            seqOut.setName(seqIn.getName() + " - (" + seqIn.getChannelName(chNum) + ")");
-
-                            Icy.addSequence(seqOut);
-                        }
+                            Icy.addSequence(seqIn.extractChannel(chNum));
                     }
                     finally
                     {
@@ -323,15 +311,10 @@ public class ImageRibbonTask extends RibbonTask
                             public void run()
                             {
                                 final ProgressFrame pf = new ProgressFrame("Converting...");
+
                                 try
                                 {
-                                    final Sequence seqOut = sequence.convertToType(dataType,
-                                            scaledCheckBox.isSelected());
-
-                                    // set sequence name
-                                    seqOut.setName(sequence.getName() + " [" + dataType.toString(true) + "]");
-
-                                    Icy.addSequence(seqOut);
+                                    Icy.addSequence(sequence.convertToType(dataType, scaledCheckBox.isSelected()));
                                 }
                                 finally
                                 {

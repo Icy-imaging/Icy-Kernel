@@ -226,7 +226,7 @@ public class PluginRepositoryLoader
                 // flag for beta version allowed
                 final boolean betaAllowed = PluginPreferences.getAllowBeta();
                 // ident nodes
-                final ArrayList<Node> nodes = XMLUtil.getSubNodes(pluginsNode, ID_PLUGIN);
+                final ArrayList<Node> nodes = XMLUtil.getChildren(pluginsNode, ID_PLUGIN);
 
                 for (Node node : nodes)
                 {

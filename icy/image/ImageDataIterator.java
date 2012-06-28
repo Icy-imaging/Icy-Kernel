@@ -368,30 +368,9 @@ public class ImageDataIterator implements DataIterator
     }
 
     @Override
-    public boolean isDone()
+    public boolean done()
     {
         return done;
-    }
-
-    @Override
-    public double getAndNext()
-    {
-        if (done)
-            throw new NoSuchElementException(null);
-
-        final double result = Array1DUtil.getValue(data, image.getOffset(x, y), dataType);
-        next();
-        return result;
-    }
-
-    @Override
-    public void setAndNext(double value)
-    {
-        if (done)
-            throw new NoSuchElementException(null);
-
-        Array1DUtil.setValue(data, image.getOffset(x, y), dataType, value);
-        next();
     }
 
     @Override

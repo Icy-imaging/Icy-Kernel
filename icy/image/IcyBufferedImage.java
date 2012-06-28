@@ -261,15 +261,35 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
     /**
      * Load the image located at (Z, T) position from the specified IFormatReader<br>
-     * and return it as an IcyBufferedImage
+     * and return it as an IcyBufferedImage.
      * 
      * @param reader
      *        {@link IFormatReader}
+     * @param z
+     *        Z position of the image to load
+     * @param t
+     *        T position of the image to load
+     * @param thumbnail
+     *        Define if we want a thumbnail image
      * @return {@link IcyBufferedImage}
      */
-    static public IcyBufferedImage createFrom(IFormatReader reader, int z, int t) throws FormatException, IOException
+    static public IcyBufferedImage createFrom(IFormatReader reader, int z, int t, boolean thumbnail)
+            throws FormatException, IOException
     {
         final boolean oldMethod = false;
+        final int sizeX;
+        final int sizeY;
+
+        if (thumbnail)
+        {
+            sizeX = reader.getThumbSizeX();
+            sizeY = reader.getThumbSizeY();
+        }
+        else
+        {
+            sizeX = reader.getSizeX();
+            sizeY = reader.getSizeY();
+        }
 
         // use LOCI tools to handle indexed image
         if (oldMethod)
@@ -278,8 +298,16 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             final int sizeC = reader.getEffectiveSizeC();
 
             for (int c = 0; c < sizeC; c++)
-                imageList.add(AWTImageTools.openImage(reader.openBytes(reader.getIndex(z, c, t)), reader,
-                        reader.getSizeX(), reader.getSizeY()));
+            {
+                final byte[] data;
+
+                if (thumbnail)
+                    data = reader.openThumbBytes(reader.getIndex(z, c, t));
+                else
+                    data = reader.openBytes(reader.getIndex(z, c, t));
+
+                imageList.add(AWTImageTools.openImage(data, reader, sizeX, sizeY));
+            }
 
             // combine channels
             return createFrom(imageList);
@@ -288,8 +316,6 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         // convert in our data type
         final DataType dataType = DataType.getDataTypeFromFormatToolsType(reader.getPixelType());
         // prepare informations
-        final int sizeX = reader.getSizeX();
-        final int sizeY = reader.getSizeY();
         final int sizeXY = sizeX * sizeY;
         final int effSizeC = reader.getEffectiveSizeC();
         final int rgbChanCount = reader.getRGBChannelCount();
@@ -314,7 +340,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
         for (int effC = 0; effC < effSizeC; effC++)
         {
-            final byte[] byteData = reader.openBytes(reader.getIndex(z, effC, t));
+            final byte[] byteData;
+
+            if (thumbnail)
+                byteData = reader.openThumbBytes(reader.getIndex(z, effC, t));
+            else
+                byteData = reader.openBytes(reader.getIndex(z, effC, t));
 
             // current final component
             final int c = effC * rgbChanCount;
@@ -391,6 +422,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         }
 
         return result;
+    }
+
+    /**
+     * Load the image located at (Z, T) position from the specified IFormatReader<br>
+     * and return it as an IcyBufferedImage
+     * 
+     * @param reader
+     *        {@link IFormatReader}
+     * @return {@link IcyBufferedImage}
+     */
+    static public IcyBufferedImage createFrom(IFormatReader reader, int z, int t) throws FormatException, IOException
+    {
+        return createFrom(reader, z, t, false);
     }
 
     /**

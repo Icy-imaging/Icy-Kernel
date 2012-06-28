@@ -143,7 +143,7 @@ public class GeneralPreferences
      */
     public static String getExtraVMParams()
     {
-        return prefGeneral.get(ID_EXTRA_VMPARAMS, "-XX:CompileCommand=exclude,icy/image/IcyBufferedImage.createFrom");
+        return prefGeneral.get(ID_EXTRA_VMPARAMS, "-XX:CompileCommand=exclude,icy/image/IcyBufferedImage.createFrom -XX:MaxPermSize=128M");
     }
 
     /**
