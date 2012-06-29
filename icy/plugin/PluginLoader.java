@@ -361,6 +361,10 @@ public class PluginLoader
      */
     static synchronized void startDaemons()
     {
+        // at this point active daemons should be empty !
+        if (!activeDaemons.isEmpty())
+            stopDaemons();
+
         final ArrayList<String> inactives = PluginPreferences.getInactiveDaemons();
         final ArrayList<PluginDaemon> newDaemons = new ArrayList<PluginDaemon>();
 
@@ -414,7 +418,7 @@ public class PluginLoader
             }
         }
 
-        // no more active daamons
+        // no more active daemons
         activeDaemons = new ArrayList<PluginDaemon>();
     }
 

@@ -101,6 +101,47 @@ public class MetaDataUtil
     }
 
     /**
+     * Return pixels object at specified index for the specified metaData description.
+     */
+    public static Pixels getPixels(OMEXMLMetadataImpl metaData, int index)
+    {
+        final OME ome = getOME(metaData);
+
+        if (index < ome.sizeOfImageList())
+            return ome.getImage(index).getPixels();
+
+        return null;
+    }
+
+    /**
+     * Ensure the pixels at specified index exist for the specified metaData description.
+     */
+    public static Pixels ensurePixels(OME ome, int index)
+    {
+        Image img;
+        Pixels result;
+
+        // create missing image
+        while (ome.sizeOfImageList() <= index)
+        {
+            img = new Image();
+            ome.addImage(img);
+        }
+
+        img = ome.getImage(index);
+        result = img.getPixels();
+
+        // create Pixels object
+        if (result == null)
+        {
+            result = new Pixels();
+            img.setPixels(result);
+        }
+
+        return result;
+    }
+
+    /**
      * Returns the width (sizeX) of the specified image serie.
      */
     public static int getSizeX(OMEXMLMetadataImpl metaData, int serie)
@@ -263,8 +304,10 @@ public class MetaDataUtil
      */
     public static int getNumChannel(OMEXMLMetadataImpl metaData, int serie)
     {
-        if (serie < metaData.getImageCount())
-            return metaData.getChannelCount(serie);
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return pix.sizeOfChannelList();
 
         return 0;
     }
@@ -274,10 +317,10 @@ public class MetaDataUtil
      */
     public static Channel getChannel(OMEXMLMetadataImpl metaData, int serie, int index)
     {
-        final Image img = getSerie(metaData, serie);
+        final Pixels pix = getPixels(metaData, serie);
 
-        if ((img != null) && (img.getPixels() != null))
-            return img.getPixels().getChannel(index);
+        if (pix != null)
+            return pix.getChannel(index);
 
         return null;
     }
@@ -328,7 +371,7 @@ public class MetaDataUtil
      */
     private static void prepareMetaChannelName(OMEXMLMetadataImpl metaData, int serie, int channel)
     {
-        int c = metaData.getChannelCount(0);
+        int c = getNumChannel(metaData, serie);
 
         while (channel >= c)
         {
