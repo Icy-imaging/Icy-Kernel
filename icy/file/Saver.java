@@ -25,6 +25,7 @@ import icy.image.IcyBufferedImage;
 import icy.image.colormodel.IcyColorModel;
 import icy.main.Icy;
 import icy.preferences.GeneralPreferences;
+import icy.sequence.MetaDataUtil;
 import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
@@ -108,20 +109,37 @@ public class Saver
      */
     public static IFormatWriter getWriter(FileFormat fileFormat)
     {
+        final IFormatWriter result;
+
         switch (fileFormat)
         {
             case PNG:
-                return new APNGWriter();
+                result = new APNGWriter();
+                break;
 
             case JPG:
-                return new JPEGWriter();
+                result = new JPEGWriter();
+                break;
 
             case AVI:
-                return new AVIWriter();
+                result = new AVIWriter();
+                break;
 
             default:
-                return new OMETiffWriter();
+                result = new OMETiffWriter();
+                // this way we are sure the TIF saver is always compressing
+                try
+                {
+                    result.setCompression("LZW");
+                }
+                catch (FormatException e)
+                {
+                    // no compression
+                }
+                break;
         }
+
+        return result;
     }
 
     /**
@@ -417,7 +435,7 @@ public class Saver
 
         try
         {
-            writer.setMetadataRetrieve(OMEUtil.generateMetaData(width, height, numChannel, dataType,
+            writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(width, height, numChannel, dataType,
                     getSeparateChannelFlag(writer, numChannel, dataType)));
         }
         catch (ServiceException e)
@@ -474,7 +492,7 @@ public class Saver
 
         try
         {
-            writer.setMetadataRetrieve(OMEUtil.generateMetaData(image,
+            writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(image,
                     getSeparateChannelFlag(writer, image.getIcyColorModel())));
         }
         catch (ServiceException e)
@@ -536,7 +554,6 @@ public class Saver
 
         if (formatWriter == null)
             writer = getWriter(file);
-        // writer = new BufferedImageWriter();
         else
             writer = formatWriter;
 
@@ -556,7 +573,7 @@ public class Saver
             // set settings
             writer.setFramesPerSecond(fps);
             // generate metadata
-            writer.setMetadataRetrieve(OMEUtil.generateMetaData(sequence, (zMax - zMin) + 1, (tMax - tMin) + 1,
+            writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(sequence, (zMax - zMin) + 1, (tMax - tMin) + 1,
                     separateChannel));
             // interleaved flag
             writer.setInterleaved(interleaved);

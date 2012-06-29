@@ -24,6 +24,7 @@ import icy.gui.component.button.IcyCommandToggleButton;
 import icy.gui.component.button.IcyCommandToggleMenuButton;
 import icy.gui.frame.AboutFrame;
 import icy.gui.frame.IcyFrame;
+import icy.gui.frame.progress.TaskFrame;
 import icy.gui.main.MainAdapter;
 import icy.gui.main.MainEvent;
 import icy.gui.main.MainFrame;
@@ -1105,7 +1106,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 // OPENED SEQUENCES
                 final ArrayList<Viewer> allViewers = Icy.getMainInterface().getViewers();
                 final IcyCommandMenuButton sequencesButton = new IcyCommandMenuButton("Opened sequences", new IcyIcon(
-                        "folder_arrow"));
+                        ResourceUtil.ICON_PICTURE));
                 sequencesButton.setPopupRichTooltip(new RichTooltip("Opened Sequences", "Show the selected sequence"));
                 sequencesButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
                 sequencesButton.setPopupCallback(new PopupPanelCallback()
@@ -1120,8 +1121,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                         {
                             final Viewer v = viewer;
 
-                            final IcyCommandMenuButton seqButton = new IcyCommandMenuButton(viewer.getTitle(),
-                                    new IcyIcon(ResourceUtil.ICON_PICTURE));
+                            final IcyCommandMenuButton seqButton = new IcyCommandMenuButton(viewer.getTitle());
                             seqButton.addActionListener(new ActionListener()
                             {
                                 @Override
@@ -1153,9 +1153,9 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
 
                 // OPENED FRAMES
                 final ArrayList<IcyFrame> allFrames = IcyFrame.getAllFrames();
-                final IcyCommandMenuButton framesButton = new IcyCommandMenuButton("Opened Frames", new IcyIcon(
-                        "folder_arrow"));
-                framesButton.setPopupRichTooltip(new RichTooltip("Opened Frames", "Show all frames"));
+                final IcyCommandMenuButton framesButton = new IcyCommandMenuButton("Opened frames", new IcyIcon(
+                        ResourceUtil.ICON_WINDOW));
+                framesButton.setPopupRichTooltip(new RichTooltip("Opened frames", "Show all frames"));
                 framesButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
                 framesButton.setPopupCallback(new PopupPanelCallback()
                 {
@@ -1167,13 +1167,12 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                         // FRAMES
                         for (IcyFrame frame : allFrames)
                         {
-                            if (allViewers.contains(frame) || !frame.isVisible())
+                            if ((frame instanceof Viewer) || (frame instanceof TaskFrame) || !frame.isVisible())
                                 continue;
-                            String title = frame.getTitle();
+
                             final IcyFrame f = frame;
 
-                            final IcyCommandMenuButton frameButton = new IcyCommandMenuButton(title, new IcyIcon(
-                                    ResourceUtil.ICON_PICTURE));
+                            final IcyCommandMenuButton frameButton = new IcyCommandMenuButton(frame.getTitle());
                             frameButton.addActionListener(new ActionListener()
                             {
                                 @Override
@@ -1200,7 +1199,14 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                         return result;
                     }
                 });
-                framesButton.setEnabled(allFrames.size() > 0);
+
+                // check if we have visible frame
+                boolean hasVisibleFrame = false;
+                for (IcyFrame frame : allFrames)
+                    if (!((frame instanceof Viewer) || (frame instanceof TaskFrame) || !frame.isVisible()))
+                        hasVisibleFrame = true;
+
+                framesButton.setEnabled(hasVisibleFrame);
                 result.addMenuButton(framesButton);
 
                 return result;

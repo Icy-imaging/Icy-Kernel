@@ -246,7 +246,7 @@ public class IcyUpdater
             }
         }
         else
-            frame = new ActionFrame("New version available", true);
+            frame = new ActionFrame("Application update", true);
 
         frame.setPreferredSize(new Dimension(640, 500));
 

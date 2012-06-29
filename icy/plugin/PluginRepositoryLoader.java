@@ -324,11 +324,7 @@ public class PluginRepositoryLoader
         {
             try
             {
-                final PluginDescriptor plugin = new PluginDescriptor(ident, repos);
-                // also set the name
-                plugin.setName(ident.getName());
-
-                result.add(plugin);
+                result.add(new PluginDescriptor(ident, repos));
             }
             catch (Exception e)
             {

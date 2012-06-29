@@ -41,13 +41,21 @@ public class SingleProcessor extends Processor
     /**
      * 
      */
-    public SingleProcessor(boolean enableQueue)
+    public SingleProcessor(boolean enableQueue, String name)
     {
         super(1, 1);
 
         queue = enableQueue;
         setRejectedExecutionHandler(new SingleProcessorRejectedExecutionHandler());
-        setDefaultThreadName("SingleProcessor");
+        setDefaultThreadName(name);
+    }
+
+    /**
+     * 
+     */
+    public SingleProcessor(boolean enableQueue)
+    {
+        this(enableQueue, "SingleProcessor");
     }
 
     /**
