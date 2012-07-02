@@ -375,20 +375,22 @@ public class PluginLoader
             {
                 try
                 {
-                    final Plugin plugin = pluginDesc.getPluginClass().newInstance();
-                    final Thread thread = new Thread((PluginDaemon) plugin, pluginDesc.getName());
+                    final PluginDaemon plugin = (PluginDaemon) pluginDesc.getPluginClass().newInstance();
+                    final Thread thread = new Thread(plugin, pluginDesc.getName());
 
                     thread.setName(pluginDesc.getName());
                     // so icy can exit even with running daemon plugin
                     thread.setDaemon(true);
 
-                    // start the daemon
+                    // init daemon
+                    plugin.init();
+                    // start daemon
                     thread.start();
                     // register daemon plugin (so we can stop it later)
-                    Icy.getMainInterface().registerPlugin(plugin);
+                    Icy.getMainInterface().registerPlugin((Plugin) plugin);
 
                     // add daemon plugin to list
-                    newDaemons.add((PluginDaemon) plugin);
+                    newDaemons.add(plugin);
                 }
                 catch (Throwable t)
                 {

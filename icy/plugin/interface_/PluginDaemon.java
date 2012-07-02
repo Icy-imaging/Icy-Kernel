@@ -15,7 +15,13 @@ package icy.plugin.interface_;
 public interface PluginDaemon extends PluginThreaded
 {
     /**
-     * Called by Icy to start the daemon plugin.<br>
+     * Called by Icy to initialize the daemon plugin (init singleton, register listeners...)<br>
+     * This method is synchronous and should not consume too much time.
+     */
+    public void init();
+
+    /**
+     * Called by Icy to execute the daemon plugin.<br>
      * This method is executed in a separate thread and should not return until <code>stop()</code>
      * is called.
      */
@@ -24,7 +30,9 @@ public interface PluginDaemon extends PluginThreaded
 
     /**
      * Called by Icy to stop the daemon plugin.<br>
-     * After this method has been called, the <code>run()</code> should end execution.
+     * After this method has been called, the <code>run()</code> should terminate.<br>
+     * The method is also used to "uninitialize" plugin (unregister listeners).<br>
+     * This method is synchronous and should not consume too much time.
      */
     public void stop();
 }
