@@ -23,6 +23,7 @@ import icy.gui.util.GuiUtil;
 import icy.gui.util.LookAndFeelUtil;
 import icy.main.Icy;
 import icy.math.MathUtil;
+import icy.preferences.ApplicationPreferences;
 import icy.preferences.GeneralPreferences;
 
 import java.awt.BorderLayout;
@@ -87,7 +88,7 @@ public class GeneralPreferencePanel extends PreferencePanel
         autoCheckUpdateCheckBox.setToolTipText("Check if a new application version is available at startup");
         alwaysOnTopCheckBox = new JCheckBox("Application window always on top");
 
-        final int maxMemLimit = (int) MathUtil.prevMultiple(GeneralPreferences.getMaxMemoryMBLimit(), 32);
+        final int maxMemLimit = (int) MathUtil.prevMultiple(ApplicationPreferences.getMaxMemoryMBLimit(), 32);
         maxMemoryMBSpinner = new JSpinner(new SpinnerNumberModel(128, 64, maxMemLimit, 32));
         maxMemoryMBSpinner.setToolTipText("Change the maximum memory available for application");
 
@@ -166,7 +167,7 @@ public class GeneralPreferencePanel extends PreferencePanel
     @Override
     protected void load()
     {
-        maxMemoryMBSpinner.setValue(Integer.valueOf(GeneralPreferences.getMaxMemoryMB()));
+        maxMemoryMBSpinner.setValue(Integer.valueOf(ApplicationPreferences.getMaxMemoryMB()));
         uiFontSizeSpinner.setValue(Integer.valueOf(GeneralPreferences.getGuiFontSize()));
         exitConfirm.setSelected(GeneralPreferences.getExitConfirm());
         sequencePersistence.setSelected(GeneralPreferences.getSequencePersistence());
@@ -185,9 +186,9 @@ public class GeneralPreferencePanel extends PreferencePanel
 
         intValue = ((Integer) maxMemoryMBSpinner.getValue()).intValue();
         // launcher setting modified, restart needed
-        if (GeneralPreferences.getMaxMemoryMB() != intValue)
+        if (ApplicationPreferences.getMaxMemoryMB() != intValue)
             getPreferenceFrame().setNeedRestart();
-        GeneralPreferences.setMaxMemoryMB(intValue);
+        ApplicationPreferences.setMaxMemoryMB(intValue);
 
         intValue = ((Integer) uiFontSizeSpinner.getValue()).intValue();
         LookAndFeelUtil.setFontSize(intValue);

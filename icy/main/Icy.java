@@ -302,7 +302,7 @@ public class Icy
     static void checkParameters()
     {
         // we verify that some parameters are incorrect
-        if ((GeneralPreferences.getMaxMemoryMB() <= 128) && (GeneralPreferences.getMaxMemoryMBLimit() > 128))
+        if ((ApplicationPreferences.getMaxMemoryMB() <= 128) && (ApplicationPreferences.getMaxMemoryMBLimit() > 128))
             MessageDialog.showDialog(
                     "Your maximum memory setting is low, you should increase it in preferences setting.",
                     MessageDialog.WARNING_MESSAGE);
