@@ -78,6 +78,8 @@ import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import com.mortennobel.imagescaling.ResampleOp;
+
 /**
  * New Canvas 2D : default ICY 2D viewer.<br>
  * Support translation / scale and rotation transformation.<br>
@@ -541,8 +543,15 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 final Graphics2D g2 = (Graphics2D) g.create();
                 final BufferedImage img = canvasView.imageCache.getImage();
 
+                // downsample the image before displaying it
+                AffineTransform imgTrans = (AffineTransform) trans.clone();      
+                ResampleOp resampleOp = new ResampleOp ((int) (img.getWidth()*imgTrans.getScaleX()), (int) (img.getHeight()*imgTrans.getScaleY()));
+                imgTrans.scale(1./imgTrans.getScaleX(), 1./imgTrans.getScaleY());
+                // use bicubic interpolation for better-looking image
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                		RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                 // draw image
-                g2.drawImage(img, trans, null);
+                g2.drawImage(resampleOp.filter(img, null), imgTrans, null);
 
                 // then apply canvas inverse transformation
                 trans.scale(1 / getScaleX(), 1 / getScaleY());
@@ -1303,18 +1312,39 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             final int canvasCenterX = getCanvasSizeX() / 2;
             final int canvasCenterY = getCanvasSizeY() / 2;
 
-            final BufferedImage img = imageCache.getImage();
-
+            BufferedImage img = imageCache.getImage();
+            AffineTransform imgTransform = (AffineTransform) getTransform().clone();
+            
             if (img != null)
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
 
                 if (CanvasPreferences.getFiltering())
                 {
-                    if (getScaleX() < 4d && getScaleY() < 4d)
+                    if (getScaleX() < 3d && getScaleY() < 3d)
                     {
-                        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                    	if (transform.isMoving())
+                    	{
+                    		// when the view is moving, draw with a fast bilinear
+                    		// interpolation
+                            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                                    RenderingHints.VALUE_INTERPOLATION_BILINEAR);                    		
+                    	}
+                    	else
+                    	{
+                    		// when the view is static, draw with a better-looking
+                    		// bicubic interpolation
+                            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+
+                            if (getScaleX() < 1d && getScaleY() < 1d) {
+	                            // downsample the image before displaying it
+	                            ResampleOp resampleOp = new ResampleOp (getDestImageCanvasSizeX(), getDestImageCanvasSizeY());
+	                            img = resampleOp.filter(img, null);
+	                            // the scale transformation is no longer needed
+	                            imgTransform.scale(1./getScaleX(), 1./getScaleY());
+                            }
+                    	}
                     }
                     else
                     {
@@ -1323,9 +1353,11 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     }
                 }
 
-                g2.transform(getTransform());
+                g2.transform(imgTransform);
                 g2.drawImage(img, null, 0, 0);
 
+                g2.transform(getTransform());
+                
                 if (getDrawLayers())
                 {
                     final Sequence seq = getSequence();
