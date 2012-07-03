@@ -410,6 +410,9 @@ public class IcyColorMapBand implements XMLPersistent
      */
     public void copyFrom(IcyColorMapBand source)
     {
+    	// copy the rawData property
+    	rawData = source.rawData;
+    	
         // we remove all controls points (even fixed ones)
         controlPoints.clear();
 
