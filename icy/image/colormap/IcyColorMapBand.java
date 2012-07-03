@@ -721,6 +721,15 @@ public class IcyColorMapBand implements XMLPersistent
     {
         return updateCnt > 0;
     }
+    
+    /**
+     * returns true when the LUT is specified by raw data (for example GIF files),
+     * false when the LUT is specified by control points.
+     */
+    public boolean isRawData()
+    {
+    	return rawData;
+    }
 
     @Override
     public boolean loadFromXML(Node node)
