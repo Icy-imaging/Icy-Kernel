@@ -43,7 +43,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.EventListener;
@@ -291,36 +290,40 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
 
     private void drawColormap(Graphics2D g, IcyColorMapBand cmb)
     {
+        final int x = getClientX();
+        final int w = getClientWidth();
+
         final Graphics2D g2 = (Graphics2D) g.create();
 
         // enable anti alias for better rendering
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        GeneralPath polyline = new GeneralPath(GeneralPath.WIND_EVEN_ODD, cmb.getControlPointCount());
-
-        ArrayList<ControlPoint> controlPoints = cmb.getControlPoints();
-
-        int x = getPixelPosX(controlPoints.get(0));
-        int y = getPixelPosY(controlPoints.get(0));
-        polyline.moveTo(x, y);
-
-        for (int i = 1; i<cmb.getControlPointCount(); i += 1)
-        {
-            x = getPixelPosX(controlPoints.get(i));
-            y = getPixelPosY(controlPoints.get(i));
-            polyline.lineTo(x, y);
-        }
-        
         if (isFocused(cmb))
             g2.setColor(Color.lightGray);
         else
             g2.setColor(Color.black);
         g2.setStroke(new BasicStroke(LINE_SIZE + 1));
-        g2.draw(polyline);
+
+        int prevIntensity = valueToPix(cmb.map[pixToIndex(0)]);
+
+        for (int i = x; i < (w + x); i++)
+        {
+            final int intensity = valueToPix(cmb.map[pixToIndex(i)]);
+            g2.drawLine(i, prevIntensity, i, intensity);
+            prevIntensity = intensity;
+        }
 
         g2.setColor(getColor(cmb));
         g2.setStroke(new BasicStroke(LINE_SIZE));
-        g2.draw(polyline);
+
+        prevIntensity = valueToPix(cmb.map[pixToIndex(0)]);
+
+        for (int i = x; i < (w + x); i++)
+        {
+            final int intensity = valueToPix(cmb.map[pixToIndex(i)]);
+            g2.drawLine(i, prevIntensity, i, intensity);
+            prevIntensity = intensity;
+        }
 
         g2.dispose();
     }
