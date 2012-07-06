@@ -726,10 +726,6 @@ public class PluginLoader implements ChangeListener
      */
     public static String verifyPluginsAreValid(ArrayList<PluginDescriptor> pluginsToVerify)
     {
-        if (isLoading())
-            System.out.println("Verify error, should not be loading...");
-
-        System.out.println("start verify");
         synchronized (instance.loader)
         {
             for (PluginDescriptor plugin : pluginsToVerify)
@@ -763,7 +759,6 @@ public class PluginLoader implements ChangeListener
                 }
             }
         }
-        System.out.println("end verify");
 
         return "";
     }

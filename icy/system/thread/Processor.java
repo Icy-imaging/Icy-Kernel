@@ -500,6 +500,8 @@ public class Processor extends ThreadPoolExecutor
      */
     public void removeAllWaitingTasks()
     {
+        waitingExecution = null;
+
         synchronized (getQueue())
         {
             // remove all tasks
