@@ -132,6 +132,7 @@ public class Processor extends ThreadPoolExecutor
      * internal
      */
     private Runner waitingExecution;
+    private long lastAdd;
 
     /**
      * Create a new Processor with specified number of maximum waiting and processing tasks.<br>
@@ -359,9 +360,11 @@ public class Processor extends ThreadPoolExecutor
     {
         final int result = getQueue().size();
 
-        // queue can be empty even if we have a waiting execution
-        // in this particular case we return 1
-        if ((result == 0) && (waitingExecution != null))
+        // TODO : be sure that waitingExecution pass to null when task has been taken in account.
+        // Queue can be empty right after a task submission.
+        // For this particular case we return 1 if a task has been submitted
+        // and not taken in account with a timeout of 1 second.
+        if ((result == 0) && ((waitingExecution != null) && ((System.currentTimeMillis() - lastAdd) < 1000)))
             return 1;
 
         return result;

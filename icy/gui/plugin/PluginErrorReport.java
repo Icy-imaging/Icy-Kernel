@@ -18,7 +18,6 @@
  */
 package icy.gui.plugin;
 
-import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.plugin.PluginDescriptor;
@@ -40,15 +39,15 @@ public class PluginErrorReport
         if (reportFrameAlreadyExist(plugin))
             return;
 
-        final CancelableProgressFrame info = new CancelableProgressFrame("Plugin '" + plugin.getName()
-                + "' has crashed, searching for update...");
-
         // always do that in background process
         ThreadUtil.bgRun(new Runnable()
         {
             @Override
             public void run()
             {
+                final CancelableProgressFrame info = new CancelableProgressFrame("Plugin '" + plugin.getName()
+                        + "' has crashed, searching for update...");
+
                 PluginDescriptor onlinePlugin = null;
 
                 try
@@ -66,14 +65,7 @@ public class PluginErrorReport
                 {
                     // update found
                     if (onlinePlugin != null)
-                    {
-                        // confim and install
-                        if (IdConfirmDialog.confirm("Plugin update", "An update is available for '" + plugin.getName()
-                                + "'.\n"
-                                + "It is highly recommended to install it as you meet problem with current version.\n"
-                                + "Do you want to install the update ?", "updatePluginAfterError"))
-                            PluginInstaller.install(onlinePlugin, false);
-                    }
+                        PluginInstaller.install(onlinePlugin, false);
                     else
                     {
                         // display report as no update were found
