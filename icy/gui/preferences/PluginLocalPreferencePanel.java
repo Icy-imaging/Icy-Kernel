@@ -38,7 +38,7 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
 {
     private enum PluginLocalState
     {
-        NULL, UPDATING, HAS_UPDATE, NO_UPDATE, CHECKING_UPDATE
+        NULL, UPDATING, REMOVING, HAS_UPDATE, NO_UPDATE, CHECKING_UPDATE
     }
 
     /**
@@ -84,6 +84,9 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
             if (!PluginRepositoryLoader.isBasicLoaded())
                 return PluginLocalState.CHECKING_UPDATE;
 
+            if ((PluginInstaller.isDesinstallingPlugin(plugin)))
+                return PluginLocalState.REMOVING;
+
             // get online version
             final PluginDescriptor onlinePlugin = PluginUpdater.getUpdate(plugin);
 
@@ -96,7 +99,11 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
                 return PluginLocalState.HAS_UPDATE;
             }
 
-            return PluginLocalState.NO_UPDATE;
+            if (plugin.isInstalled())
+                return PluginLocalState.NO_UPDATE;
+
+            // here the plugin has just been removed but plugin list is not yet updated
+            return PluginLocalState.REMOVING;
         }
 
         return PluginLocalState.NULL;
@@ -109,7 +116,6 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
         PluginInstaller.desinstall(plugin, true);
         // refresh state
         refreshTableData();
-        updateButtonsState();
     }
 
     @Override
@@ -124,7 +130,6 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
                 PluginInstaller.install(onlinePlugin, true);
                 // refresh state
                 refreshTableData();
-                updateButtonsState();
                 break;
         }
     }
@@ -148,12 +153,11 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
         if (plugin == null)
             return "";
 
-        // special case where plugin is currently begin removed
-        if (PluginInstaller.isDesinstallingPlugin(plugin))
-            return "Deleting...";
-
         switch (getPluginLocalState(plugin))
         {
+            case REMOVING:
+                return "removing...";
+
             case CHECKING_UPDATE:
                 return "checking...";
 
@@ -164,7 +168,7 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
                 return "update available";
 
             case NO_UPDATE:
-                return "up to date";
+                return "";
         }
 
         return "";
@@ -274,8 +278,16 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     }
 
     @Override
-    public void pluginRepositeryLoaderChanged()
+    public void pluginRepositeryLoaderChanged(PluginDescriptor plugin)
     {
-        refreshTableData();
+        if (plugin != null)
+        {
+            final int ind = getPluginModelIndex(plugin.getClassName());
+
+            if (ind != -1)
+                tableModel.fireTableRowsUpdated(ind, ind);
+        }
+        else
+            refreshTableData();
     }
 }

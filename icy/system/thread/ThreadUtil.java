@@ -20,6 +20,8 @@ package icy.system.thread;
 
 import icy.system.IcyExceptionHandler;
 
+import java.util.concurrent.TimeUnit;
+
 import javax.swing.SwingUtilities;
 
 /**
@@ -36,12 +38,15 @@ public class ThreadUtil
     static
     {
         bgProcessor.setDefaultThreadName("Background processor");
+        bgProcessor.setKeepAliveTime(3, TimeUnit.SECONDS);
 
         // instance processors initialization
         for (int i = 0; i < instanceProcessors.length; i++)
         {
             instanceProcessors[i] = new InstanceProcessor();
             instanceProcessors[i].setDefaultThreadName("Background single processor " + (i + 1));
+            // we want the processor to stay alive
+            instanceProcessors[i].setKeepAliveTime(1, TimeUnit.DAYS);
         }
     }
 

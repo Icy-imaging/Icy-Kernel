@@ -20,10 +20,15 @@ package icy.gui.dialog;
 
 import icy.file.FileFormat;
 import icy.file.Loader;
+import icy.gui.component.ThumbnailComponent;
 import icy.gui.util.GuiUtil;
+import icy.image.IcyBufferedImage;
 import icy.main.Icy;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.XMLPreferences;
+import icy.resource.ResourceUtil;
+import icy.system.thread.ThreadUtil;
+import icy.type.DataType;
 import icy.type.collection.CollectionUtil;
 
 import java.awt.BorderLayout;
@@ -41,12 +46,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
 
-import loci.formats.gui.PreviewPane;
+import loci.formats.ImageReader;
 
 /**
  * @author Stephane
  */
-public class ImageLoaderDialog extends JFileChooser
+public class ImageLoaderDialog extends JFileChooser implements PropertyChangeListener, Runnable
 {
     /**
      * 
@@ -56,8 +61,12 @@ public class ImageLoaderDialog extends JFileChooser
     private static final String PREF_ID = "frame/imageLoader";
 
     // GUI
-    final JCheckBox separateSeqCheck;
-    final JPanel separateSeqPanel;
+    private final JCheckBox separateSeqCheck;
+    private final JPanel separateSeqPanel;
+    private final ThumbnailComponent preview;
+
+    // internal
+    private String fileId;
 
     /**
      * 
@@ -92,28 +101,25 @@ public class ImageLoaderDialog extends JFileChooser
                 Box.createHorizontalGlue(), separateSeqCheck);
 
         // preview pane
-        final PreviewPane pp = new PreviewPane(this);
+        // final PreviewPane pp = new PreviewPane(this);
+        preview = new ThumbnailComponent(false);
 
         final JPanel settingPanel = new JPanel();
         settingPanel.setBorder(BorderFactory.createTitledBorder((Border) null));
         settingPanel.setLayout(new BorderLayout());
 
-        settingPanel.add(pp, BorderLayout.NORTH);
+        // settingPanel.add(pp, BorderLayout.NORTH);
+        settingPanel.add(preview, BorderLayout.NORTH);
         settingPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
         settingPanel.add(separateSeqPanel, BorderLayout.SOUTH);
 
         setAccessory(settingPanel);
         updateSettingPanel();
 
+        fileId = null;
+
         // listen file filter change
-        addPropertyChangeListener(new PropertyChangeListener()
-        {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt)
-            {
-                updateSettingPanel();
-            }
-        });
+        addPropertyChangeListener(this);
 
         setDialogTitle("ICY - Load image file");
 
@@ -128,23 +134,94 @@ public class ImageLoaderDialog extends JFileChooser
             Loader.load(CollectionUtil.asList(getSelectedFiles()), separateSeqCheck.isSelected());
         }
 
-        try
-        {
-            // close opened files by PreviewPane
-            pp.close();
-        }
-        catch (IOException e)
-        {
-            // ignore
-        }
+        // try
+        // {
+        // // close opened files by PreviewPane
+        // pp.close();
+        // }
+        // catch (IOException e)
+        // {
+        // // ignore
+        // }
 
         // store interface option
         preferences.putInt("width", getWidth());
         preferences.putInt("height", getHeight());
     }
 
+    @Override
+    public void propertyChange(PropertyChangeEvent evt)
+    {
+        final String prop = evt.getPropertyName();
+
+        if (prop.equals(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY))
+        {
+            File f = (File) evt.getNewValue();
+
+            if (f != null && (f.isDirectory() || !f.exists()))
+                f = null;
+
+            if (f != null)
+            {
+                fileId = f.getAbsolutePath();
+                // refresh preview
+                ThreadUtil.bgRunSingle(this);
+            }
+
+            // and setting state
+            updateSettingPanel();
+        }
+    }
+
     void updateSettingPanel()
     {
         separateSeqCheck.setEnabled(getSelectedFiles().length > 1);
+    }
+
+    @Override
+    public void run()
+    {
+        preview.setImage(null);
+        preview.setTitle("loading...");
+        preview.setInfos("");
+        preview.setInfos2("");
+
+        final ImageReader reader = new ImageReader();
+
+        try
+        {
+            reader.setId(fileId);
+            reader.setSeries(0);
+
+            final int sizeC = reader.getSizeC();
+
+            final IcyBufferedImage img = IcyBufferedImage.createFrom(reader, reader.getSizeZ() / 2,
+                    reader.getSizeT() / 2, true);
+            preview.setImage(img.getARGBImage());
+            preview.setTitle(reader.getFormat());
+            preview.setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - " + reader.getSizeZ() + "Z x "
+                    + reader.getSizeT() + "T");
+            preview.setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
+                    + DataType.getDataTypeFromFormatToolsType(reader.getPixelType()) + ")");
+        }
+        catch (Exception e)
+        {
+            // error image, we just totally ignore error here...
+            preview.setImage(ResourceUtil.ICON_DELETE);
+            preview.setTitle("Cannot read file");
+            preview.setInfos("");
+            preview.setInfos2("");
+        }
+        finally
+        {
+            try
+            {
+                reader.close();
+            }
+            catch (IOException e)
+            {
+                // ignore
+            }
+        }
     }
 }

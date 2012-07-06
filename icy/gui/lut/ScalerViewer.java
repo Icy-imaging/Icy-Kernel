@@ -52,6 +52,7 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 import java.lang.reflect.Array;
 import java.util.EventListener;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JPanel;
 import javax.swing.event.EventListenerList;
@@ -430,9 +431,10 @@ public class ScalerViewer extends JPanel implements LUTBandListener
 
         message = "";
         scalerMapPositionListeners = new EventListenerList();
-        processor = new SingleProcessor(true);
+        processor = new SingleProcessor(true,"Histogram updater");
         processor.setPriority(Thread.MIN_PRIORITY);
-        processor.setDefaultThreadName("histogram updater");
+        // we want the processor to stay alive for few time
+        processor.setKeepAliveTime(30, TimeUnit.SECONDS);
         histoUpdater = new Runnable()
         {
             @Override

@@ -412,7 +412,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
                 if (node == null)
                     return false;
 
-                final ArrayList<Node> nodesItem = XMLUtil.getSubNodes(node);
+                final ArrayList<Node> nodesItem = XMLUtil.getChildren(node);
                 for (Node n : nodesItem)
                 {
                     final ItemDefinition item = new ItemDefinition(n);
@@ -704,7 +704,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
             // clear before loading
             bands.clear();
 
-            final ArrayList<Node> nodesBand = XMLUtil.getSubNodes(node, ID_BAND);
+            final ArrayList<Node> nodesBand = XMLUtil.getChildren(node, ID_BAND);
             for (Node n : nodesBand)
                 bands.add(new BandDefinition(n));
 
@@ -1041,7 +1041,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
         // clear before loading
         tasks.clear();
 
-        final ArrayList<Node> nodesTask = XMLUtil.getSubNodes(node, ID_TASK);
+        final ArrayList<Node> nodesTask = XMLUtil.getChildren(node, ID_TASK);
         for (Node n : nodesTask)
             tasks.add(new TaskDefinition(n));
 

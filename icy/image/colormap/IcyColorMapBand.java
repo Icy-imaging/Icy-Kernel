@@ -410,9 +410,9 @@ public class IcyColorMapBand implements XMLPersistent
      */
     public void copyFrom(IcyColorMapBand source)
     {
-    	// copy the rawData property
-    	rawData = source.rawData;
-    	
+        // copy the rawData property
+        rawData = source.rawData;
+
         // we remove all controls points (even fixed ones)
         controlPoints.clear();
 
@@ -544,9 +544,9 @@ public class IcyColorMapBand implements XMLPersistent
             final float diff = mapf[i] - mapf[i - 1];
 
             // important difference in difference
-            if ((diff != lastdiff) && (Math.abs(diff / (diff-lastdiff)) < 1000f))
+            if ((diff != lastdiff) && (Math.abs(diff / (diff - lastdiff)) < 1000f))
                 return false;
-            
+
             lastdiff = diff;
         }
 
@@ -745,14 +745,14 @@ public class IcyColorMapBand implements XMLPersistent
     {
         return updateCnt > 0;
     }
-    
+
     /**
      * returns true when the LUT is specified by raw data (for example GIF files),
      * false when the LUT is specified by control points.
      */
     public boolean isRawData()
     {
-    	return rawData;
+        return rawData;
     }
 
     @Override
@@ -763,7 +763,7 @@ public class IcyColorMapBand implements XMLPersistent
 
         rawData = XMLUtil.getAttributeBooleanValue((Element) node, ID_RAWDATA, false);
 
-        final ArrayList<Node> nodesPoint = XMLUtil.getSubNodes(node, ID_POINT);
+        final ArrayList<Node> nodesPoint = XMLUtil.getChildren(node, ID_POINT);
 
         beginUpdate();
         try

@@ -280,16 +280,20 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         final int sizeX;
         final int sizeY;
 
-        if (thumbnail)
-        {
-            sizeX = reader.getThumbSizeX();
-            sizeY = reader.getThumbSizeY();
-        }
-        else
-        {
-            sizeX = reader.getSizeX();
-            sizeY = reader.getSizeY();
-        }
+        // thumbnail support in LOCI is incomplete so we use our own method
+        // if (thumbnail)
+        // {
+        // sizeX = reader.getThumbSizeX();
+        // sizeY = reader.getThumbSizeY();
+        // }
+        // else
+        // {
+        // sizeX = reader.getSizeX();
+        // sizeY = reader.getSizeY();
+        // }
+
+        sizeX = reader.getSizeX();
+        sizeY = reader.getSizeY();
 
         // use LOCI tools to handle indexed image
         if (oldMethod)
@@ -301,10 +305,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             {
                 final byte[] data;
 
-                if (thumbnail)
-                    data = reader.openThumbBytes(reader.getIndex(z, c, t));
-                else
-                    data = reader.openBytes(reader.getIndex(z, c, t));
+                // thumbnail support in LOCI is incomplete so we use our own method
+                // if (thumbnail)
+                // data = reader.openThumbBytes(reader.getIndex(z, c, t));
+                // else
+                // data = reader.openBytes(reader.getIndex(z, c, t));
+
+                data = reader.openBytes(reader.getIndex(z, c, t));
 
                 imageList.add(AWTImageTools.openImage(data, reader, sizeX, sizeY));
             }
@@ -342,10 +349,13 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         {
             final byte[] byteData;
 
-            if (thumbnail)
-                byteData = reader.openThumbBytes(reader.getIndex(z, effC, t));
-            else
-                byteData = reader.openBytes(reader.getIndex(z, effC, t));
+            // thumbnail support in LOCI is incomplete so we use our own method
+            // if (thumbnail)
+            // byteData = reader.openThumbBytes(reader.getIndex(z, effC, t));
+            // else
+            // byteData = reader.openBytes(reader.getIndex(z, effC, t));
+
+            byteData = reader.openBytes(reader.getIndex(z, effC, t));
 
             // current final component
             final int c = effC * rgbChanCount;
@@ -420,6 +430,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 }
             }
         }
+
+        if (thumbnail)
+            return result.getScaledCopy(reader.getThumbSizeX(), reader.getThumbSizeY());
 
         return result;
     }

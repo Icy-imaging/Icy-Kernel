@@ -68,6 +68,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -625,12 +626,14 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             {
                 super();
 
-                processor = new SingleProcessor(true);
-                processor.setDefaultThreadName("Canvas2D renderer");
+                processor = new SingleProcessor(true, "Canvas2D renderer");
+                // we want the processor to stay alive for sometime
+                processor.setKeepAliveTime(5, TimeUnit.MINUTES);
+
                 imageCache = null;
                 needRebuild = true;
                 // build cache
-                processor.addTask(this, false);
+                processor.addTask(this);
             }
 
             public void invalidCache()
@@ -652,7 +655,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             {
                 if (needRebuild)
                     // rebuild cache
-                    processor.addTask(this, false);
+                    processor.addTask(this);
 
                 // just repaint
                 CanvasView.this.repaint();

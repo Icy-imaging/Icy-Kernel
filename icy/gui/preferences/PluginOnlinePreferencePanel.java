@@ -86,21 +86,21 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
         if ((PluginInstaller.isDesinstallingPlugin(plugin)))
             return PluginOnlineState.REMOVING;
 
-        // if (PluginLoader.isLoaded(plugin, false))
-        // return PluginOnlineState.INSTALLED;
-
-        // get local version
-        final PluginDescriptor localPlugin = PluginLoader.getPlugin(plugin.getClassName());
-
         // has a local version ?
-        if (localPlugin != null)
+        if (plugin.isInstalled())
         {
-            if (plugin.equals(localPlugin))
-                return PluginOnlineState.INSTALLED;
-            if (plugin.isOlder(localPlugin))
-                return PluginOnlineState.OLDER;
-            if (plugin.isNewer(localPlugin))
-                return PluginOnlineState.NEWER;
+            // get local version
+            final PluginDescriptor localPlugin = PluginLoader.getPlugin(plugin.getClassName());
+
+            if (localPlugin != null)
+            {
+                if (plugin.equals(localPlugin))
+                    return PluginOnlineState.INSTALLED;
+                if (plugin.isOlder(localPlugin))
+                    return PluginOnlineState.OLDER;
+                if (plugin.isNewer(localPlugin))
+                    return PluginOnlineState.NEWER;
+            }
         }
 
         return PluginOnlineState.HAS_INSTALL;
@@ -129,7 +129,6 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
                     PluginInstaller.install(plugin, true);
                     // refresh state
                     refreshTableData();
-                    updateButtonsState();
                 }
                 break;
 
@@ -138,7 +137,6 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
                 PluginInstaller.desinstall(plugin, true);
                 // refresh state
                 refreshTableData();
-                updateButtonsState();
                 break;
         }
     }
@@ -275,23 +273,28 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     }
 
     @Override
-    public void pluginRepositeryLoaderChanged()
+    public void pluginRepositeryLoaderChanged(PluginDescriptor plugin)
     {
-        pluginsChanged();
+        if (plugin != null)
+        {
+            final int ind = getPluginModelIndex(plugin.getClassName());
+
+            if (ind != -1)
+                tableModel.fireTableRowsUpdated(ind, ind);
+        }
+        else
+            pluginsChanged();
     }
 
     @Override
     public void pluginInstalled(boolean success)
     {
         refreshTableData();
-        updateButtonsState();
     }
 
     @Override
     public void pluginRemoved(boolean success)
     {
         refreshTableData();
-        updateButtonsState();
     }
-
 }

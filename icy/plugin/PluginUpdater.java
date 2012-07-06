@@ -26,6 +26,7 @@ import icy.network.NetworkUtil;
 import icy.system.thread.SingleProcessor;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Plugin updater class.
@@ -57,6 +58,12 @@ public class PluginUpdater
     private static final int ANNOUNCE_SHOWTIME = 15;
 
     private static final SingleProcessor processor = new SingleProcessor(false, "Plugin updater");
+
+    static
+    {
+        // we want the processor to stay alive
+        processor.setKeepAliveTime(1, TimeUnit.DAYS);
+    }
 
     /**
      * Do the check update process
@@ -119,7 +126,7 @@ public class PluginUpdater
         finally
         {
             PluginLoader.setLogError(b);
-            PluginLoader.reload(false);
+            PluginLoader.reloadAsynch();
         }
     }
 

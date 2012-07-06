@@ -51,6 +51,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.Box;
 import javax.swing.JCheckBox;
@@ -285,6 +286,9 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         // initialize internals
         processor = new InstanceProcessor();
         processor.setDefaultThreadName("Canvas3D renderer");
+        // we want the processor to stay alive for sometime
+        processor.setKeepAliveTime(3, TimeUnit.MINUTES);
+
         displayRefresher = new Runnable()
         {
             @Override
@@ -480,7 +484,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
     private void buildVolumeMapper()
     {
-        processor.addTask(volumeMapperBuilder, false);
+        processor.addTask(volumeMapperBuilder);
     }
 
     void internalBuildVolumeMapper()
@@ -544,7 +548,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
     private void buildImageData()
     {
-        processor.addTask(imageDataBuilder, false);
+        processor.addTask(imageDataBuilder);
     }
 
     void internalBuildImageData()
@@ -1252,7 +1256,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             return;
 
         // then refresh 3D display in background processing
-        processor.addTask(displayRefresher, false);
+        processor.addTask(displayRefresher);
     }
 
     @Override

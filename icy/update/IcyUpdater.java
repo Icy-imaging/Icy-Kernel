@@ -19,7 +19,6 @@
 package icy.update;
 
 import icy.file.FileUtil;
-import icy.gui.dialog.ConfirmDialog;
 import icy.gui.frame.ActionFrame;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.CancelableProgressFrame;
@@ -42,6 +41,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.Box;
 import javax.swing.JLabel;
@@ -87,11 +87,12 @@ public class IcyUpdater
     static boolean wantUpdate = false;
     static boolean updating = false;
 
-    private static final SingleProcessor processor = new SingleProcessor(false);
+    private static final SingleProcessor processor = new SingleProcessor(false, "General updater");
 
     static
     {
-        processor.setDefaultThreadName("General updater");
+        // we want the processor to stay alive
+        processor.setKeepAliveTime(1, TimeUnit.DAYS);
     }
 
     private static ActionFrame frame = null;
@@ -104,8 +105,7 @@ public class IcyUpdater
             wantUpdate = true;
 
             // ask to update and restart application now
-            if (ConfirmDialog.confirm("Application need to be restarted, do you want to do it now ?"))
-                Icy.exit(true);
+            Icy.confirmRestart();
         }
     };
 

@@ -29,6 +29,7 @@ import icy.plugin.interface_.PluginBundled;
 import icy.plugin.interface_.PluginDaemon;
 import icy.preferences.PluginPreferences;
 import icy.system.IcyExceptionHandler;
+import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
 
@@ -40,6 +41,7 @@ import java.util.EventListener;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.event.EventListenerList;
 
@@ -51,7 +53,7 @@ import org.xeustechnologies.jcl.JarClassLoader;
  * 
  * @author Stephane<br>
  */
-public class PluginLoader
+public class PluginLoader implements ChangeListener
 {
     public static class PluginClassLoader extends JarClassLoader
     {
@@ -102,95 +104,123 @@ public class PluginLoader
     /**
      * static class
      */
-    private static ClassLoader loader = new PluginClassLoader();
+    private static final PluginLoader instance = new PluginLoader();
+
+    /**
+     * class loader
+     */
+    private ClassLoader loader;
     /**
      * active daemons plugins
      */
-    private static ArrayList<PluginDaemon> activeDaemons = new ArrayList<PluginDaemon>();
-
-    /**
-     * JAR Class Loader disabled flag
-     */
-    public static boolean JCLDisabled = false;
-
+    private ArrayList<PluginDaemon> activeDaemons;
     /**
      * Loaded plugin list
      */
-    private static ArrayList<PluginDescriptor> plugins = new ArrayList<PluginDescriptor>();
+    private ArrayList<PluginDescriptor> plugins;
 
     /**
      * internal updater (no need to dispatch event on the AWT thread)
      */
-    private static final UpdateEventHandler updater = new UpdateEventHandler(new ChangeListener()
-    {
-        @Override
-        public void onChanged(EventHierarchicalChecker e)
-        {
-            final PluginLoaderEvent event = (PluginLoaderEvent) e;
-
-            // start daemon plugins
-            startDaemons();
-
-            // notify listener we have changed
-            fireEvent(event);
-        }
-    }, false);
-
+    private final UpdateEventHandler updater;
     /**
      * listeners
      */
-    private static final EventListenerList listeners = new EventListenerList();
+    private final EventListenerList listeners;
 
     /**
-     * internal
+     * JAR Class Loader disabled flag
      */
-    private static final Runnable reloader = new Runnable()
+    protected boolean JCLDisabled;
+
+    /**
+     * internals
+     */
+    private final Runnable reloader;
+    final SingleProcessor processor;
+
+    private boolean initialized;
+    private boolean needReload;
+    private boolean logError;
+
+    /**
+     * static class
+     */
+    private PluginLoader()
     {
-        @Override
-        public void run()
+        super();
+
+        // default class loader
+        loader = new PluginClassLoader();
+        // active daemons
+        activeDaemons = new ArrayList<PluginDaemon>();
+
+        JCLDisabled = false;
+        initialized = false;
+        needReload = false;
+        logError = true;
+
+        plugins = new ArrayList<PluginDescriptor>();
+        listeners = new EventListenerList();
+
+        // change event
+        updater = new UpdateEventHandler(this);
+
+        // reloader
+        reloader = new Runnable()
         {
-            reloadInternal();
-        }
-    };;
+            @Override
+            public void run()
+            {
+                reloadInternal();
+            }
+        };
 
-    private static boolean initialized = false;
-    private static boolean needReload = false;
-    private static boolean loading = false;
-    private static boolean logError = true;
+        processor = new SingleProcessor(true, "Local Plugin Loader");
+        // we want the processor to stay alive
+        processor.setKeepAliveTime(1, TimeUnit.DAYS);
 
-    public static void prepare()
+        // don't load by default as we need Preferences to be ready first
+    };
+
+    static void prepare()
     {
-        if (!initialized)
+        if (!instance.initialized)
         {
             if (isLoading())
                 waitWhileLoading();
             else
-                reloadInternal();
+                reload();
         }
     }
 
     /**
-     * Reload the list of installed plugins.<br>
-     * Asynchronous version
+     * Reload the list of installed plugins (asynchronous version).
      */
     public static void reloadAsynch()
     {
-        loading = true;
-        ThreadUtil.bgRunSingle(reloader);
+        if (isUpdating())
+            instance.needReload = true;
+        else
+            instance.processor.addTask(instance.reloader);
     }
 
     /**
-     * Reload the list of installed plugins.
+     * Reload the list of installed plugins (wait for completion).
      */
-    public static void reload(boolean forceReloadNow)
+    public static void reload()
     {
-        if ((!forceReloadNow) && isUpdating())
-            needReload = true;
-        else
-        {
-            waitWhileLoading();
-            reloadInternal();
-        }
+        instance.processor.addTask(instance.reloader);
+        waitWhileLoading();
+    }
+
+    /**
+     * @deprecated USes {@link #reload()} instead.
+     */
+    @Deprecated
+    public static void reload(boolean forceNow)
+    {
+        reload();
     }
 
     /**
@@ -209,9 +239,8 @@ public class PluginLoader
     /**
      * Reload the list of installed plugins (in "plugins" directory)
      */
-    static void reloadInternal()
+    void reloadInternal()
     {
-        loading = true;
         needReload = false;
 
         // stop daemon plugins
@@ -230,6 +259,10 @@ public class PluginLoader
             // reload plugins directory to search path
             ((PluginClassLoader) newLoader).add(PLUGIN_PATH);
         }
+
+        // no need to complete loading...
+        if (processor.hasWaitingTasks())
+            return;
 
         final HashSet<String> classes = new HashSet<String>();
 
@@ -251,6 +284,10 @@ public class PluginLoader
 
         for (String className : classes)
         {
+            // no need to complete loading...
+            if (processor.hasWaitingTasks())
+                return;
+
             try
             {
                 // don't load class without package name (JCL don't like them)
@@ -327,9 +364,9 @@ public class PluginLoader
     {
         final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
-        synchronized (plugins)
+        synchronized (instance.plugins)
         {
-            for (PluginDescriptor pluginDescriptor : plugins)
+            for (PluginDescriptor pluginDescriptor : instance.plugins)
             {
                 final Class<? extends Plugin> classPlug = pluginDescriptor.getPluginClass();
 
@@ -350,9 +387,9 @@ public class PluginLoader
      */
     public static ArrayList<PluginDaemon> getActiveDaemons()
     {
-        synchronized (activeDaemons)
+        synchronized (instance.activeDaemons)
         {
-            return new ArrayList<PluginDaemon>(activeDaemons);
+            return new ArrayList<PluginDaemon>(instance.activeDaemons);
         }
     }
 
@@ -362,7 +399,7 @@ public class PluginLoader
     static synchronized void startDaemons()
     {
         // at this point active daemons should be empty !
-        if (!activeDaemons.isEmpty())
+        if (!instance.activeDaemons.isEmpty())
             stopDaemons();
 
         final ArrayList<String> inactives = PluginPreferences.getInactiveDaemons();
@@ -399,7 +436,7 @@ public class PluginLoader
             }
         }
 
-        activeDaemons = newDaemons;
+        instance.activeDaemons = newDaemons;
     }
 
     /**
@@ -421,7 +458,7 @@ public class PluginLoader
         }
 
         // no more active daemons
-        activeDaemons = new ArrayList<PluginDaemon>();
+        instance.activeDaemons = new ArrayList<PluginDaemon>();
     }
 
     /**
@@ -429,7 +466,7 @@ public class PluginLoader
      */
     public static ClassLoader getLoader()
     {
-        return loader;
+        return instance.loader;
     }
 
     /**
@@ -439,8 +476,11 @@ public class PluginLoader
     {
         prepare();
 
-        if (loader instanceof JarClassLoader)
-            ((JarClassLoader) loader).getLoadedResources();
+        synchronized (instance.loader)
+        {
+            if (instance.loader instanceof JarClassLoader)
+                ((JarClassLoader) instance.loader).getLoadedResources();
+        }
 
         return new HashMap<String, byte[]>();
     }
@@ -452,8 +492,11 @@ public class PluginLoader
     {
         prepare();
 
-        if (loader instanceof JarClassLoader)
-            ((JarClassLoader) loader).getLoadedClasses();
+        synchronized (instance.loader)
+        {
+            if (instance.loader instanceof JarClassLoader)
+                ((JarClassLoader) instance.loader).getLoadedClasses();
+        }
 
         return new HashMap<String, Class<?>>();
     }
@@ -468,7 +511,10 @@ public class PluginLoader
     {
         prepare();
 
-        return loader.getResourceAsStream(name);
+        synchronized (instance.loader)
+        {
+            return instance.loader.getResourceAsStream(name);
+        }
     }
 
     /**
@@ -492,9 +538,9 @@ public class PluginLoader
         final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
         // better to return a copy as we have async list loading
-        synchronized (plugins)
+        synchronized (instance.plugins)
         {
-            for (PluginDescriptor plugin : plugins)
+            for (PluginDescriptor plugin : instance.plugins)
             {
                 final Class<? extends Plugin> classPlug = plugin.getPluginClass();
 
@@ -541,9 +587,9 @@ public class PluginLoader
 
         if (clazz != null)
         {
-            synchronized (plugins)
+            synchronized (instance.plugins)
             {
-                for (PluginDescriptor pluginDescriptor : plugins)
+                for (PluginDescriptor pluginDescriptor : instance.plugins)
                 {
                     final Class<? extends Plugin> classPlug = pluginDescriptor.getPluginClass();
 
@@ -574,9 +620,9 @@ public class PluginLoader
 
         final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
-        synchronized (plugins)
+        synchronized (instance.plugins)
         {
-            for (PluginDescriptor pluginDescriptor : plugins)
+            for (PluginDescriptor pluginDescriptor : instance.plugins)
             {
                 final Class<? extends Plugin> classPlug = pluginDescriptor.getPluginClass();
 
@@ -606,7 +652,7 @@ public class PluginLoader
      */
     public static boolean isLoading()
     {
-        return loading;
+        return instance.processor.isProcessing();
     }
 
     /**
@@ -632,9 +678,9 @@ public class PluginLoader
     {
         prepare();
 
-        synchronized (plugins)
+        synchronized (instance.plugins)
         {
-            return PluginDescriptor.getPlugin(plugins, ident, acceptNewer);
+            return PluginDescriptor.getPlugin(instance.plugins, ident, acceptNewer);
         }
     }
 
@@ -642,9 +688,9 @@ public class PluginLoader
     {
         prepare();
 
-        synchronized (plugins)
+        synchronized (instance.plugins)
         {
-            return PluginDescriptor.getPlugin(plugins, className);
+            return PluginDescriptor.getPlugin(instance.plugins, className);
         }
     }
 
@@ -667,10 +713,10 @@ public class PluginLoader
     {
         prepare();
 
-        synchronized (loader)
+        synchronized (instance.loader)
         {
             // try to load class and check we have a Plugin class at same time
-            return loader.loadClass(className);
+            return instance.loader.loadClass(className);
         }
     }
 
@@ -680,14 +726,18 @@ public class PluginLoader
      */
     public static String verifyPluginsAreValid(ArrayList<PluginDescriptor> pluginsToVerify)
     {
-        synchronized (loader)
+        if (isLoading())
+            System.out.println("Verify error, should not be loading...");
+
+        System.out.println("start verify");
+        synchronized (instance.loader)
         {
             for (PluginDescriptor plugin : pluginsToVerify)
             {
                 try
                 {
                     // then try to load the plugin class as Plugin class
-                    loader.loadClass(plugin.getClassName()).asSubclass(Plugin.class);
+                    instance.loader.loadClass(plugin.getClassName()).asSubclass(Plugin.class);
                 }
                 catch (Error e)
                 {
@@ -713,6 +763,7 @@ public class PluginLoader
                 }
             }
         }
+        System.out.println("end verify");
 
         return "";
     }
@@ -754,19 +805,52 @@ public class PluginLoader
     // return result;
     // }
 
+    public static boolean isJCLDisabled()
+    {
+        return instance.JCLDisabled;
+    }
+
+    public static void setJCLDisabled(boolean value)
+    {
+        instance.JCLDisabled = value;
+    }
+
     /**
-     * 
+     * @return the logError
      */
-    static void changed()
+    public static boolean getLogError()
+    {
+        return instance.logError;
+    }
+
+    public static void setLogError(boolean value)
+    {
+        instance.logError = value;
+    }
+
+    /**
+     * Called when class loader
+     */
+    private void changed()
     {
         synchronized (updater)
         {
             initialized = true;
-            loading = false;
 
             // plugin list has changed
             updater.changed(new PluginLoaderEvent());
         }
+    }
+
+    @Override
+    public void onChanged(EventHierarchicalChecker e)
+    {
+        final PluginLoaderEvent event = (PluginLoaderEvent) e;
+
+        // start daemon plugins
+        startDaemons();
+        // notify listener we have changed
+        fireEvent(event);
     }
 
     /**
@@ -776,9 +860,9 @@ public class PluginLoader
      */
     public static void addListener(PluginLoaderListener listener)
     {
-        synchronized (listeners)
+        synchronized (instance.listeners)
         {
-            listeners.add(PluginLoaderListener.class, listener);
+            instance.listeners.add(PluginLoaderListener.class, listener);
         }
     }
 
@@ -789,61 +873,50 @@ public class PluginLoader
      */
     public static void removeListener(PluginLoaderListener listener)
     {
-        synchronized (listeners)
+        synchronized (instance.listeners)
         {
-            listeners.remove(PluginLoaderListener.class, listener);
+            instance.listeners.remove(PluginLoaderListener.class, listener);
         }
     }
 
     /**
      * fire event
      */
-    static void fireEvent(PluginLoaderEvent e)
+    void fireEvent(PluginLoaderEvent e)
     {
-        for (PluginLoaderListener listener : listeners.getListeners(PluginLoaderListener.class))
-            listener.pluginLoaderChanged(e);
+        synchronized (listeners)
+        {
+            for (PluginLoaderListener listener : listeners.getListeners(PluginLoaderListener.class))
+                listener.pluginLoaderChanged(e);
+        }
     }
 
     public static void beginUpdate()
     {
-        synchronized (updater)
+        synchronized (instance.updater)
         {
-            updater.beginUpdate();
+            instance.updater.beginUpdate();
         }
     }
 
     public static void endUpdate()
     {
-        synchronized (updater)
+        synchronized (instance.updater)
         {
-            updater.endUpdate();
-            if (!updater.isUpdating())
+            instance.updater.endUpdate();
+
+            if (!instance.updater.isUpdating())
             {
                 // proceed pending tasks
-                if (needReload)
-                    reloadInternal();
+                if (instance.needReload)
+                    reloadAsynch();
             }
         }
     }
 
     public static boolean isUpdating()
     {
-        synchronized (updater)
-        {
-            return updater.isUpdating();
-        }
+        return instance.updater.isUpdating();
     }
 
-    /**
-     * @return the logError
-     */
-    public static boolean getLogError()
-    {
-        return logError;
-    }
-
-    public static void setLogError(boolean value)
-    {
-        logError = value;
-    }
 }

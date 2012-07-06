@@ -89,6 +89,8 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
         public CustomIRCClient(String host, int port, String pass, String nickName, String userName, String realName)
         {
             super(host, port, pass, nickName, userName, realName);
+
+            setName("Chat IRC listener");
         }
     }
 

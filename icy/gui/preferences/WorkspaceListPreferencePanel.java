@@ -32,6 +32,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -94,6 +95,8 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
         processor = new InstanceProcessor();
         processor.setDefaultThreadName("Workspace preferences GUI");
+        // we want the processor to stay alive for sometime
+        processor.setKeepAliveTime(5, TimeUnit.MINUTES);
 
         buttonsStateUpdater = new Runnable()
         {

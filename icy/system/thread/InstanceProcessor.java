@@ -42,6 +42,7 @@ public class InstanceProcessor extends Processor
     public InstanceProcessor(int priority)
     {
         super(Processor.DEFAULT_MAX_WAITING, 1, priority);
+
         setDefaultThreadName("InstanceProcessor");
     }
 
@@ -54,7 +55,7 @@ public class InstanceProcessor extends Processor
     }
 
     /**
-     * Add a task to processor
+     * Add a task to the processor.<br>
      */
     @Override
     public synchronized boolean addTask(Runnable task, boolean onAWTEventThread, int id)
@@ -77,4 +78,5 @@ public class InstanceProcessor extends Processor
 
         return true;
     }
+
 }

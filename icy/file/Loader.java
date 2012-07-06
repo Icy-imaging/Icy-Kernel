@@ -244,7 +244,7 @@ public class Loader
                         else
                             name += "(" + seq.getChannelName(index) + ")";
                         seq.setName(name);
-                        
+
                         seq.setFilename(FileUtil.setExtension(
                                 FileUtil.setExtension(filename, "") + "_C" + newPos.getC(),
                                 FileUtil.getFileExtension(filename, true)));
@@ -356,7 +356,10 @@ public class Loader
                 });
             }
             else
+            {
+                selectedSeries.clear();
                 selectedSeries.add(Integer.valueOf(0));
+            }
 
             // no selected serie --> exit
             if ((selectedSeries == null) || selectedSeries.isEmpty())

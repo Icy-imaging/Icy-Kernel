@@ -42,7 +42,7 @@ public class Processor extends ThreadPoolExecutor
 
     public interface ProcessorEventListener extends EventListener
     {
-        public void processDone(Processor source);
+        public void processDone(Processor source, Runnable runnable);
     }
 
     class ProcessorThreadFactory implements ThreadFactory
@@ -131,7 +131,7 @@ public class Processor extends ThreadPoolExecutor
     /**
      * internal
      */
-    boolean rejected;
+    private Runner waitingExecution;
 
     /**
      * Create a new Processor with specified number of maximum waiting and processing tasks.<br>
@@ -153,6 +153,8 @@ public class Processor extends ThreadPoolExecutor
         this.priority = priority;
         defaultThreadName = "Processor";
         listeners = new EventListenerList();
+
+        waitingExecution = null;
     }
 
     /**
@@ -193,13 +195,15 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Add a task to the processor
+     * Add a task to the processor.
      */
     public boolean addTask(Runnable task, boolean onEventThread, int id)
     {
         try
         {
-            execute(new Runner(task, onEventThread, id));
+            final Runner runner = new Runner(task, onEventThread, id);
+            execute(runner);
+            waitingExecution = runner;
         }
         catch (RejectedExecutionException E)
         {
@@ -210,7 +214,7 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Add a task to the processor
+     * Add a task to the processor.
      */
     public boolean addTask(Runnable task, boolean onEventThread)
     {
@@ -218,19 +222,29 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Add a task to the processor
+     * Add a task to the processor.
      */
     public boolean addTask(Runnable task)
     {
         return addTask(task, false, -1);
     }
 
+    @Override
+    public boolean remove(Runnable task)
+    {
+        // don't forget to remove the reference here
+        if (waitingExecution == task)
+            waitingExecution = null;
+
+        return super.remove(task);
+    }
+
     /**
-     * return true if one or more process are executing
+     * Return true if one or more process are executing or we still have waiting tasks.
      */
     public boolean isProcessing()
     {
-        return (getActiveCount() > 0);
+        return (getActiveCount() > 0) || hasWaitingTasks();
     }
 
     /**
@@ -339,15 +353,22 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * return the number of waiting task
+     * Return the number of waiting task
      */
     public int getWaitingTasksCount()
     {
-        return getQueue().size();
+        final int result = getQueue().size();
+
+        // queue can be empty even if we have a waiting execution
+        // in this particular case we return 1
+        if ((result == 0) && (waitingExecution != null))
+            return 1;
+
+        return result;
     }
 
     /**
-     * return the number of task with specified id waiting in queue
+     * Return the number of task with specified id waiting in queue
      */
     public int getWaitingTasksCount(int id)
     {
@@ -361,7 +382,7 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * return the number of task from specified instance waiting in queue
+     * Return the number of task from specified instance waiting in queue
      */
     public int getWaitingTasksCount(Runnable task)
     {
@@ -375,7 +396,7 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * return true if we have at least one task waiting in queue
+     * Return true if we have at least one task waiting in queue
      */
     public boolean hasWaitingTasks()
     {
@@ -383,7 +404,7 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * return true if we have at least one task with specified id waiting in queue
+     * Return true if we have at least one task with specified id waiting in queue
      */
     public boolean hasWaitingTasks(int id)
     {
@@ -396,7 +417,7 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * return true if we have at least one task from specified instance waiting in queue
+     * Return true if we have at least one task from specified instance waiting in queue
      */
     public boolean hasWaitingTasks(Runnable task)
     {
@@ -479,8 +500,11 @@ public class Processor extends ThreadPoolExecutor
      */
     public void removeAllWaitingTasks()
     {
-        // remove current task if any
-        getQueue().clear();
+        synchronized (getQueue())
+        {
+            // remove all tasks
+            getQueue().clear();
+        }
     }
 
     /**
@@ -552,11 +576,13 @@ public class Processor extends ThreadPoolExecutor
 
     /**
      * fire event
+     * 
+     * @param task
      */
-    public void fireDoneEvent()
+    public void fireDoneEvent(Runnable task)
     {
         for (ProcessorEventListener listener : listeners.getListeners(ProcessorEventListener.class))
-            listener.processDone(this);
+            listener.processDone(this, task);
     }
 
     @Override
@@ -565,7 +591,7 @@ public class Processor extends ThreadPoolExecutor
         super.afterExecute(r, t);
 
         // notify we just achieved a process
-        fireDoneEvent();
+        fireDoneEvent(((Runner) r).getTask());
     }
 
     @Override
@@ -573,7 +599,8 @@ public class Processor extends ThreadPoolExecutor
     {
         super.beforeExecute(t, r);
 
-        //
+        // ok we can remove reference...
+        waitingExecution = null;
     }
 
 }

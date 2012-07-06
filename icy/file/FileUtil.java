@@ -925,6 +925,7 @@ public class FileUtil
             {
                 // can help for file deletion...
                 System.gc();
+                ThreadUtil.sleep(1000);
                 result = f.delete();
             }
         }

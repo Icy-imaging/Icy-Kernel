@@ -34,6 +34,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -99,6 +100,8 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
         processor = new InstanceProcessor();
         processor.setDefaultThreadName("Plugin preferences GUI");
+        // we want the processor to stay alive for sometime
+        processor.setKeepAliveTime(5, TimeUnit.MINUTES);
 
         buttonsStateUpdater = new Runnable()
         {
@@ -433,6 +436,22 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected abstract ArrayList<PluginDescriptor> getPlugins();
 
+    protected int getPluginTableIndex(int rowIndex)
+    {
+        if (rowIndex == -1)
+            return rowIndex;
+
+        try
+        {
+
+            return table.convertRowIndexToView(rowIndex);
+        }
+        catch (IndexOutOfBoundsException e)
+        {
+            return -1;
+        }
+    }
+
     protected int getPluginIndex(PluginDescriptor plugin)
     {
         return plugins.indexOf(plugin);
@@ -445,20 +464,30 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected int getPluginTableIndex(PluginDescriptor plugin)
     {
-        final int ind = getPluginModelIndex(plugin);
+        return getPluginTableIndex(getPluginModelIndex(plugin));
+    }
 
-        if (ind == -1)
-            return ind;
-
-        try
+    protected int getPluginIndex(String pluginClassName)
+    {
+        for (int i = 0; i < plugins.size(); i++)
         {
+            final PluginDescriptor plugin = plugins.get(i);
 
-            return table.convertRowIndexToView(ind);
+            if (plugin.getClassName().equals(pluginClassName))
+                return i;
         }
-        catch (IndexOutOfBoundsException e)
-        {
-            return -1;
-        }
+
+        return -1;
+    }
+
+    protected int getPluginModelIndex(String pluginClassName)
+    {
+        return getPluginIndex(pluginClassName);
+    }
+
+    protected int getPluginTableIndex(String pluginClassName)
+    {
+        return getPluginTableIndex(getPluginModelIndex(pluginClassName));
     }
 
     PluginDescriptor getSelectedPlugin()
@@ -502,7 +531,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected final void refreshPlugins()
     {
-        processor.addTask(pluginsListRefresher, false);
+        processor.addTask(pluginsListRefresher);
     }
 
     protected void updateButtonsStateInternal()
@@ -616,6 +645,15 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
     @Override
     public void valueChanged(ListSelectionEvent e)
     {
-        updateButtonsState();
+        final int selected = table.getSelectedRow();
+
+        if (!e.getValueIsAdjusting() && (selected != -1))
+        {
+            final int fi = e.getFirstIndex();
+            final int li = e.getLastIndex();
+
+            if ((fi == -1) || ((fi <= selected) && (li >= selected)))
+                updateButtonsState();
+        }
     }
 }

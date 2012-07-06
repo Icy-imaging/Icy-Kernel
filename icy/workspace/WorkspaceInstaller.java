@@ -41,7 +41,7 @@ import javax.swing.event.EventListenerList;
 /**
  * @author Stephane
  */
-public class WorkspaceInstaller
+public class WorkspaceInstaller implements Runnable
 {
     public static interface WorkspaceInstallerListener extends EventListener
     {
@@ -95,35 +95,54 @@ public class WorkspaceInstaller
     }
 
     /**
+     * static class
+     */
+    private static final WorkspaceInstaller instance = new WorkspaceInstaller();
+
+    /**
      * workspace to install FIFO
      */
-    private static final ArrayList<WorkspaceInstallInfo> installFIFO = new ArrayList<WorkspaceInstallInfo>();
+    private final ArrayList<WorkspaceInstallInfo> installFIFO;
     /**
      * workspace to delete FIFO
      */
-    private static final ArrayList<WorkspaceInstallInfo> removeFIFO = new ArrayList<WorkspaceInstallInfo>();
-
-    private static final Runnable runner = new Runnable()
-    {
-        @Override
-        public void run()
-        {
-            processTasks();
-        }
-    };
-
-    // currently installing workspace
-    private static Workspace installingWorkspace = null;
-    // currently deleting workspace
-    private static Workspace desinstallingWorkspace = null;
-
-    private static boolean installing = false;
-    private static boolean deinstalling = false;
+    private final ArrayList<WorkspaceInstallInfo> removeFIFO;
 
     /**
      * listeners
      */
-    private static final EventListenerList listeners = new EventListenerList();
+    private final EventListenerList listeners;
+
+    /**
+     * internals
+     */
+    private Workspace installingWorkspace;
+    private Workspace desinstallingWorkspace;
+
+    private boolean installing;
+    private boolean deinstalling;
+
+    /**
+     * static class
+     */
+    private WorkspaceInstaller()
+    {
+        super();
+
+        installFIFO = new ArrayList<WorkspaceInstallInfo>();
+        removeFIFO = new ArrayList<WorkspaceInstallInfo>();
+
+        listeners = new EventListenerList();
+
+        installingWorkspace = null;
+        desinstallingWorkspace = null;
+
+        installing = false;
+        deinstalling = false;
+
+        // launch installer thread
+        new Thread(this, "Workspace installer").start();
+    }
 
     /**
      * install a workspace (asynchronous)
@@ -139,13 +158,11 @@ public class WorkspaceInstaller
                 return;
             }
 
-            synchronized (installFIFO)
+            synchronized (instance.installFIFO)
             {
-                installFIFO.add(new WorkspaceInstallInfo(workspace, showConfirm));
+                instance.installFIFO.add(new WorkspaceInstallInfo(workspace, showConfirm));
             }
         }
-
-        ThreadUtil.bgRunSingle(runner, false);
     }
 
     /**
@@ -161,7 +178,7 @@ public class WorkspaceInstaller
      */
     public static boolean isInstalling()
     {
-        return (!installFIFO.isEmpty()) || installing;
+        return (!instance.installFIFO.isEmpty()) || instance.installing;
     }
 
     /**
@@ -171,9 +188,9 @@ public class WorkspaceInstaller
     {
         final String workspaceName = workspace.getName();
 
-        synchronized (installFIFO)
+        synchronized (instance.installFIFO)
         {
-            for (WorkspaceInstallInfo info : installFIFO)
+            for (WorkspaceInstallInfo info : instance.installFIFO)
                 if (workspaceName.equals(info.workspace.getName()))
                     return true;
         }
@@ -186,7 +203,7 @@ public class WorkspaceInstaller
      */
     public static Workspace getCurrentInstallingWorkspace()
     {
-        return installingWorkspace;
+        return instance.installingWorkspace;
     }
 
     /**
@@ -194,9 +211,9 @@ public class WorkspaceInstaller
      */
     public static boolean isInstallingWorkspace(Workspace workspace)
     {
-        if (installingWorkspace != null)
+        if (instance.installingWorkspace != null)
         {
-            if (installingWorkspace.getName().equals(workspace.getName()))
+            if (instance.installingWorkspace.getName().equals(workspace.getName()))
                 return true;
         }
 
@@ -210,13 +227,11 @@ public class WorkspaceInstaller
     {
         if (workspace != null)
         {
-            synchronized (removeFIFO)
+            synchronized (instance.removeFIFO)
             {
-                removeFIFO.add(new WorkspaceInstallInfo(workspace, showConfirm));
+                instance.removeFIFO.add(new WorkspaceInstallInfo(workspace, showConfirm));
             }
         }
-
-        ThreadUtil.bgRunSingle(runner);
     }
 
     /**
@@ -224,7 +239,7 @@ public class WorkspaceInstaller
      */
     public static boolean isDesinstalling()
     {
-        return (!removeFIFO.isEmpty()) || deinstalling;
+        return (!instance.removeFIFO.isEmpty()) || instance.deinstalling;
     }
 
     /**
@@ -234,9 +249,9 @@ public class WorkspaceInstaller
     {
         final String workspaceName = workspace.getName();
 
-        synchronized (removeFIFO)
+        synchronized (instance.removeFIFO)
         {
-            for (WorkspaceInstallInfo info : removeFIFO)
+            for (WorkspaceInstallInfo info : instance.removeFIFO)
                 if (workspaceName.equals(info.workspace.getName()))
                     return true;
         }
@@ -249,89 +264,91 @@ public class WorkspaceInstaller
      */
     public static boolean isDesinstallingWorkspace(Workspace workspace)
     {
-        if (desinstallingWorkspace != null)
+        if (instance.desinstallingWorkspace != null)
         {
-            if (desinstallingWorkspace.getName().equals(workspace.getName()))
+            if (instance.desinstallingWorkspace.getName().equals(workspace.getName()))
                 return true;
         }
 
         return isWaitingForDesinstall(workspace);
     }
 
-    static void processTasks()
+    @Override
+    public void run()
     {
-        boolean empty;
-        boolean result;
-        WorkspaceInstallInfo installInfo = null;
-
-        // process installations
-        synchronized (installFIFO)
+        while (true)
         {
+            boolean empty;
+            boolean result;
+            WorkspaceInstallInfo installInfo = null;
+
+            // process installations
             empty = installFIFO.isEmpty();
-        }
 
-        installing = true;
-        try
-        {
-            while (!empty)
+            if (!empty)
             {
-                synchronized (installFIFO)
+                installing = true;
+                try
                 {
-                    installInfo = installFIFO.remove(0);
-                }
+                    while (!empty)
+                    {
+                        synchronized (installFIFO)
+                        {
+                            installInfo = installFIFO.remove(0);
+                            empty = installFIFO.isEmpty();
+                        }
 
-                // don't install if the workspace is already installed
-                if (!WorkspaceLoader.isLoaded(installInfo.workspace))
-                {
-                    result = internal_install(installInfo);
-                    // process on workspace installation
-                    installed(installInfo.workspace, result);
-                }
+                        // don't install if the workspace is already installed
+                        if (!WorkspaceLoader.isLoaded(installInfo.workspace))
+                        {
+                            result = internal_install(installInfo);
+                            // process on workspace installation
+                            installed(installInfo.workspace, result);
+                        }
 
-                synchronized (installFIFO)
+                        synchronized (installFIFO)
+                        {
+                        }
+                    }
+                }
+                finally
                 {
-                    empty = installFIFO.isEmpty();
+                    installing = false;
                 }
             }
-        }
-        finally
-        {
-            installing = false;
-        }
 
-        // process deletions
-        synchronized (removeFIFO)
-        {
+            // process deletions
             empty = removeFIFO.isEmpty();
-        }
 
-        deinstalling = true;
-        try
-        {
-            while (!empty)
+            if (!empty)
             {
-                synchronized (removeFIFO)
+                deinstalling = true;
+                try
                 {
-                    installInfo = removeFIFO.remove(0);
+                    while (!empty)
+                    {
+                        synchronized (removeFIFO)
+                        {
+                            installInfo = removeFIFO.remove(0);
+                            empty = removeFIFO.isEmpty();
+                        }
+
+                        result = internal_desinstall(installInfo);
+                        // process on workspace deletion
+                        desinstalled(installInfo.workspace, result);
+                    }
                 }
-
-                result = internal_desinstall(installInfo);
-                // process on workspace deletion
-                desinstalled(installInfo.workspace, result);
-
-                synchronized (removeFIFO)
+                finally
                 {
-                    empty = removeFIFO.isEmpty();
+                    deinstalling = false;
                 }
             }
-        }
-        finally
-        {
-            deinstalling = false;
+
+            ThreadUtil.sleep(200);
         }
     }
 
-    private static boolean deleteWorkspace(Workspace workspace)
+    private boolean deleteWorkspace(Workspace workspace)
     {
         if (!FileUtil.delete(workspace.getLocalFilename(), false))
             System.err.println("deleteWorkspace : Can't delete " + workspace.getLocalFilename());
@@ -345,7 +362,7 @@ public class WorkspaceInstaller
     /**
      * Return local plugins of specified workspace
      */
-    private static ArrayList<PluginDescriptor> getLocalPlugins(Workspace workspace)
+    private ArrayList<PluginDescriptor> getLocalPlugins(Workspace workspace)
     {
         final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
@@ -372,7 +389,7 @@ public class WorkspaceInstaller
     /**
      * Return independent plugins of workspace (so they can be deleted)
      */
-    private static ArrayList<PluginDescriptor> getIndependentPlugins(Workspace workspace)
+    private ArrayList<PluginDescriptor> getIndependentPlugins(Workspace workspace)
     {
         // get plugins of specified workspace
         final ArrayList<PluginDescriptor> result = getLocalPlugins(workspace);
@@ -399,7 +416,7 @@ public class WorkspaceInstaller
         return result;
     }
 
-    private static boolean internal_install(WorkspaceInstallInfo installInfo)
+    private boolean internal_install(WorkspaceInstallInfo installInfo)
     {
         final Workspace workspace = installInfo.workspace;
         final boolean showConfirm = installInfo.showConfirm;
@@ -486,7 +503,7 @@ public class WorkspaceInstaller
         }
     }
 
-    private static boolean internal_desinstall(WorkspaceInstallInfo installInfo)
+    private boolean internal_desinstall(WorkspaceInstallInfo installInfo)
     {
         final Workspace workspace = installInfo.workspace;
         final boolean showConfirm = installInfo.showConfirm;
@@ -579,7 +596,7 @@ public class WorkspaceInstaller
     /**
      * process on workspace install
      */
-    private static void installed(Workspace workspace, boolean result)
+    private void installed(Workspace workspace, boolean result)
     {
         if (result)
         {
@@ -595,7 +612,7 @@ public class WorkspaceInstaller
     /**
      * process on workspace remove
      */
-    private static void desinstalled(Workspace workspace, boolean result)
+    private void desinstalled(Workspace workspace, boolean result)
     {
         if (result)
             // show an announcement for restart
@@ -611,9 +628,9 @@ public class WorkspaceInstaller
      */
     public static void addListener(WorkspaceInstallerListener listener)
     {
-        synchronized (listeners)
+        synchronized (instance.listeners)
         {
-            listeners.add(WorkspaceInstallerListener.class, listener);
+            instance.listeners.add(WorkspaceInstallerListener.class, listener);
         }
     }
 
@@ -624,16 +641,16 @@ public class WorkspaceInstaller
      */
     public static void removeListener(WorkspaceInstallerListener listener)
     {
-        synchronized (listeners)
+        synchronized (instance.listeners)
         {
-            listeners.remove(WorkspaceInstallerListener.class, listener);
+            instance.listeners.remove(WorkspaceInstallerListener.class, listener);
         }
     }
 
     /**
      * fire workspace installed event
      */
-    private static void fireInstalledEvent(WorkspaceInstallerEvent e)
+    private void fireInstalledEvent(WorkspaceInstallerEvent e)
     {
         for (WorkspaceInstallerListener listener : listeners.getListeners(WorkspaceInstallerListener.class))
             listener.workspaceInstalled(e);
@@ -642,7 +659,7 @@ public class WorkspaceInstaller
     /**
      * fire workspace removed event
      */
-    private static void fireRemovedEvent(WorkspaceInstallerEvent e)
+    private void fireRemovedEvent(WorkspaceInstallerEvent e)
     {
         for (WorkspaceInstallerListener listener : listeners.getListeners(WorkspaceInstallerListener.class))
             listener.workspaceRemoved(e);

@@ -59,6 +59,14 @@ public class UpdateEventHandler
     }
 
     /**
+     * 
+     */
+    public UpdateEventHandler(ChangeListener parent)
+    {
+        this(parent, false);
+    }
+
+    /**
      * @return the awtDispatch
      */
     public boolean isAwtDispatch()

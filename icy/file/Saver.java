@@ -111,34 +111,51 @@ public class Saver
     {
         final IFormatWriter result;
 
-        switch (fileFormat)
+        if (fileFormat == null)
         {
-            case PNG:
-                result = new APNGWriter();
-                break;
+            result = new OMETiffWriter();
 
-            case JPG:
-                result = new JPEGWriter();
-                break;
-
-            case AVI:
-                result = new AVIWriter();
-                break;
-
-            default:
-                result = new OMETiffWriter();
-                // this way we are sure the TIF saver is always compressing
-                try
-                {
-                    result.setCompression("LZW");
-                }
-                catch (FormatException e)
-                {
-                    // no compression
-                }
-                break;
+            // this way we are sure the TIF saver is always compressing
+            try
+            {
+                result.setCompression("LZW");
+            }
+            catch (FormatException e)
+            {
+                // no compression
+            }
         }
+        else
+        {
+            switch (fileFormat)
+            {
+                case PNG:
+                    result = new APNGWriter();
+                    break;
 
+                case JPG:
+                    result = new JPEGWriter();
+                    break;
+
+                case AVI:
+                    result = new AVIWriter();
+                    break;
+
+                default:
+                    result = new OMETiffWriter();
+                    // this way we are sure the TIF saver is always compressing
+                    try
+                    {
+                        result.setCompression("LZW");
+                    }
+                    catch (FormatException e)
+                    {
+                        // no compression
+                    }
+                    break;
+            }
+        }
+        
         return result;
     }
 

@@ -92,9 +92,10 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
                 if (index < series)
                 {
-                    final ThumbnailComponent thumb = new ThumbnailComponent();
+                    final ThumbnailComponent thumb = new ThumbnailComponent(true);
 
                     serieComponents[index] = thumb;
+                    thumb.setEnabled(true);
                     thumb.setTitle("loading...");
                     thumb.setInfos("");
                     thumb.setInfos2("");
@@ -166,7 +167,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         getContentPane().add(panel, BorderLayout.NORTH);
         panel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
 
-        JLabel lblSelect = new JLabel("Multi series sequence : select serie(s) to open and validate.");
+        JLabel lblSelect = new JLabel("Click on a serie to select / unselect it.");
         ComponentUtil.setFontBold(lblSelect);
         ComponentUtil.setFontSize(lblSelect, 12);
         panel.add(lblSelect);
@@ -221,6 +222,9 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
             {
                 // error image, we just totally ignore error here...
                 serieComponents[i].setImage(ResourceUtil.ICON_DELETE);
+                serieComponents[i].setTitle("Cannot read file");
+                serieComponents[i].setInfos("");
+                serieComponents[i].setInfos2("");
             }
         }
     }

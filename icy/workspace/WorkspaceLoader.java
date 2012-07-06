@@ -20,6 +20,7 @@ package icy.workspace;
 
 import icy.common.EventHierarchicalChecker;
 import icy.file.FileUtil;
+import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.workspace.WorkspaceLoader.WorkspaceLoaderEvent.WorkspaceLoaderEventType;
 
@@ -28,6 +29,7 @@ import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventListener;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.event.EventListenerList;
 
@@ -75,19 +77,18 @@ public class WorkspaceLoader
         }
     }
 
-    public final static String WORKSPACE_PATH = "workspace";
-    public final static String EXT = ".xml";
+    public static final String WORKSPACE_PATH = "workspace";
+    public static final String EXT = ".xml";
 
     /**
      * static class
      */
-    private static final WorkspaceLoader loader = new WorkspaceLoader();
-    private static boolean initialized = false;
+    private static final WorkspaceLoader instance = new WorkspaceLoader();
 
     /**
      * Loaded workspace list
      */
-    private final ArrayList<Workspace> workspaces;
+    private ArrayList<Workspace> workspaces;
 
     /**
      * listeners
@@ -95,10 +96,12 @@ public class WorkspaceLoader
     private final EventListenerList listeners;
 
     /**
-     * internal
+     * internals
      */
     private final Runnable reloader;
-    private boolean loading;
+    final SingleProcessor processor;
+
+    private boolean initialized;
 
     /**
      * @param path
@@ -117,12 +120,19 @@ public class WorkspaceLoader
                 internal_reload();
             }
         };
-        loading = false;
+
+        initialized = false;
+
+        processor = new SingleProcessor(true, "Local Workspace Loader");
+        // we want the processor to stay alive
+        processor.setKeepAliveTime(1, TimeUnit.DAYS);
+
+        // don't load by default as we need Preferences to be ready first
     }
 
     public static void prepare()
     {
-        if (!initialized)
+        if (!instance.initialized)
         {
             if (isLoading())
                 waitWhileLoading();
@@ -132,14 +142,21 @@ public class WorkspaceLoader
     }
 
     /**
-     * Reload the list of installed workspaces (workspaces present in the "workspaces" directory)<br>
-     * Asynchronous version
+     * Reload the list of installed workspaces (workspaces present in the "workspaces" directory).<br>
+     * Asynchronous version.
      */
+    public static void reloadAsynch()
+    {
+        instance.processor.addTask(instance.reloader);
+    }
+
+    /**
+     * @deprecated Uses {@link #reloadAsynch()} instead.
+     */
+    @Deprecated
     public static void reload_asynch()
     {
-        loader.loading = true;
-
-        ThreadUtil.bgRunSingle(loader.reloader);
+        reloadAsynch();
     }
 
     /**
@@ -147,7 +164,8 @@ public class WorkspaceLoader
      */
     public static void reload()
     {
-        loader.internal_reload();
+        reloadAsynch();
+        waitWhileLoading();
     }
 
     /**
@@ -155,45 +173,42 @@ public class WorkspaceLoader
      */
     void internal_reload()
     {
-        loading = true;
+        final ArrayList<Workspace> newWorkspaces = new ArrayList<Workspace>();
 
-        synchronized (workspaces)
+        final ArrayList<File> files = FileUtil.getFileList(WORKSPACE_PATH, new FileFilter()
         {
-            // reset list
-            workspaces.clear();
-
-            final ArrayList<File> files = FileUtil.getFileList(WORKSPACE_PATH, new FileFilter()
+            @Override
+            public boolean accept(File pathname)
             {
-                @Override
-                public boolean accept(File pathname)
-                {
-                    // only accept xml file
-                    return FileUtil.getFileExtension(pathname.getPath(), true).toLowerCase().equals(EXT);
-                }
-            }, true, false);
-
-            for (File file : files)
-            {
-                final Workspace workspace = new Workspace(file);
-
-                // don't load the specific system workspace
-                if (!workspace.getName().equals(Workspace.WORKSPACE_SYSTEM_NAME))
-                {
-                    // empty workspace ?
-                    if (workspace.isEmpty())
-                    {
-                        // don't show this message for default workspace
-                        // if (!workspace.getName().equals(Workspace.WORKSPACE_DEFAULT_NAME))
-                        System.err.println("Empty workspace '" + workspace.getName() + "' is not loaded");
-                    }
-                    else
-                        workspaces.add(workspace);
-                }
+                // only accept xml file
+                return FileUtil.getFileExtension(pathname.getPath(), true).toLowerCase().equals(EXT);
             }
+        }, true, false);
 
-            // sort list
-            Collections.sort(workspaces);
+        for (File file : files)
+        {
+            final Workspace workspace = new Workspace(file);
+
+            // don't load the specific system workspace
+            if (!workspace.getName().equals(Workspace.WORKSPACE_SYSTEM_NAME))
+            {
+                // empty workspace ?
+                if (workspace.isEmpty())
+                {
+                    // don't show this message for default workspace
+                    // if (!workspace.getName().equals(Workspace.WORKSPACE_DEFAULT_NAME))
+                    System.err.println("Empty workspace '" + workspace.getName() + "' is not loaded");
+                }
+                else
+                    newWorkspaces.add(workspace);
+            }
         }
+
+        // sort list
+        Collections.sort(newWorkspaces);
+
+        // set workspace list
+        workspaces = newWorkspaces;
 
         // notify change
         changed();
@@ -206,10 +221,10 @@ public class WorkspaceLoader
     {
         prepare();
 
-        synchronized (loader.workspaces)
+        synchronized (instance.workspaces)
         {
             // better to return a copy as we have async list loading
-            return new ArrayList<Workspace>(loader.workspaces);
+            return new ArrayList<Workspace>(instance.workspaces);
         }
     }
 
@@ -218,7 +233,7 @@ public class WorkspaceLoader
      */
     public static boolean isLoading()
     {
-        return loader.loading;
+        return instance.processor.isProcessing();
     }
 
     /**
@@ -242,13 +257,9 @@ public class WorkspaceLoader
         return Workspace.getWorkspace(getWorkspaces(), name);
     }
 
-    /**
-     * 
-     */
     private void changed()
     {
         initialized = true;
-        loading = false;
 
         // workspace list has changed
         fireEvent(new WorkspaceLoaderEvent(WorkspaceLoaderEventType.RELOADED));
@@ -261,9 +272,9 @@ public class WorkspaceLoader
      */
     public static void addListener(WorkspaceLoaderListener listener)
     {
-        synchronized (loader.listeners)
+        synchronized (instance.listeners)
         {
-            loader.listeners.add(WorkspaceLoaderListener.class, listener);
+            instance.listeners.add(WorkspaceLoaderListener.class, listener);
         }
     }
 
@@ -274,9 +285,9 @@ public class WorkspaceLoader
      */
     public static void removeListener(WorkspaceLoaderListener listener)
     {
-        synchronized (loader.listeners)
+        synchronized (instance.listeners)
         {
-            loader.listeners.remove(WorkspaceLoaderListener.class, listener);
+            instance.listeners.remove(WorkspaceLoaderListener.class, listener);
         }
     }
 

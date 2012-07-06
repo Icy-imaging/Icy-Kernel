@@ -165,7 +165,7 @@ public class WorkspaceRepositoryLoader
             // workspaces node found
             if (workspacesNode != null)
             {
-                final ArrayList<Node> nodes = XMLUtil.getSubNodes(workspacesNode, ID_WORKSPACE);
+                final ArrayList<Node> nodes = XMLUtil.getChildren(workspacesNode, ID_WORKSPACE);
 
                 for (Node node : nodes)
                 {

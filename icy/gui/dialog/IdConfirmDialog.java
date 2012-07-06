@@ -133,11 +133,11 @@ public class IdConfirmDialog
 
     public static boolean confirm(final String title, final String message, String id)
     {
-        return confirm(title, message, YES_NO_OPTION, id);
+        return confirm(title, message, OK_CANCEL_OPTION, id);
     }
 
     public static boolean confirm(final String message, String id)
     {
-        return confirm("Confirmation", message, YES_NO_OPTION, id);
+        return confirm("Confirmation", message, OK_CANCEL_OPTION, id);
     }
 }

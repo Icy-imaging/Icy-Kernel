@@ -22,6 +22,7 @@ import icy.system.thread.ThreadUtil;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -57,8 +58,9 @@ public class SequenceInfosPanel extends InspectorSubPanel
     {
         super();
 
-        processor = new SingleProcessor(true);
-        processor.setDefaultThreadName("Sequence infos GUI");
+        processor = new SingleProcessor(true,"Sequence infos GUI");
+        // we want the processor to stay alive for some time
+        processor.setKeepAliveTime(10, TimeUnit.MINUTES);
 
         nameLabel = new JLabel();
         ComponentUtil.setFixedWidth(nameLabel, 160);

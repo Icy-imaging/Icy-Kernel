@@ -34,6 +34,7 @@ import icy.util.XMLUtil;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventListener;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.event.EventListenerList;
 
@@ -47,7 +48,7 @@ public class PluginRepositoryLoader
 {
     public static interface PluginRepositoryLoaderListener extends EventListener
     {
-        public void pluginRepositeryLoaderChanged();
+        public void pluginRepositeryLoaderChanged(PluginDescriptor plugin);
     }
 
     private class Loader implements Runnable
@@ -108,7 +109,7 @@ public class PluginRepositoryLoader
 
             // notify change for basic infos
             basicLoaded = true;
-            changed();
+            changed(null);
 
             // we load descriptor
             for (PluginDescriptor plugin : plugins)
@@ -134,7 +135,7 @@ public class PluginRepositoryLoader
 
             // notify final change for descriptors loading
             descriptorsLoaded = true;
-            changed();
+            changed(null);
 
             // then we load images
             for (PluginDescriptor plugin : plugins)
@@ -151,7 +152,7 @@ public class PluginRepositoryLoader
 
                 plugin.loadImages();
                 // notify change
-                changed();
+                changed(plugin);
             }
 
             // images loaded
@@ -200,8 +201,9 @@ public class PluginRepositoryLoader
         listeners = new EventListenerList();
 
         loader = new Loader();
-        processor = new SingleProcessor(true);
-        processor.setDefaultThreadName("Online Plugin Loader");
+        processor = new SingleProcessor(true, "Online Plugin Loader");
+        // we want the processor to stay alive
+        processor.setKeepAliveTime(1, TimeUnit.DAYS);
 
         // initial loading
         load();
@@ -441,9 +443,9 @@ public class PluginRepositoryLoader
     /**
      * Plugin list has changed
      */
-    void changed()
+    void changed(PluginDescriptor plugin)
     {
-        fireEvent();
+        fireEvent(plugin);
     }
 
     /**
@@ -474,10 +476,12 @@ public class PluginRepositoryLoader
 
     /**
      * fire event
+     * 
+     * @param plugin
      */
-    private void fireEvent()
+    private void fireEvent(PluginDescriptor plugin)
     {
         for (PluginRepositoryLoaderListener listener : listeners.getListeners(PluginRepositoryLoaderListener.class))
-            listener.pluginRepositeryLoaderChanged();
+            listener.pluginRepositeryLoaderChanged(plugin);
     }
 }

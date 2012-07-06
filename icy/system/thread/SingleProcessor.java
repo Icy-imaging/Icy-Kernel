@@ -59,7 +59,7 @@ public class SingleProcessor extends Processor
     }
 
     /**
-     * Request a process
+     * Add a task to the processor.<br>
      */
     @Override
     public boolean addTask(Runnable task, boolean onEventThread, int id)

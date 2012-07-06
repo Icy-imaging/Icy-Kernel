@@ -24,7 +24,6 @@ import icy.gui.dialog.ConfirmDialog;
 import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.ExitFrame;
-import icy.gui.frame.GeneralToolTipFrame;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.SplashScreenFrame;
 import icy.gui.frame.progress.AnnounceFrame;
@@ -86,7 +85,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.2.6.0");
+    public static Version version = new Version("1.2.6.1");
 
     /**
      * Main interface
@@ -175,7 +174,7 @@ public class Icy
 
             // load plugins classes (need preferences init)
             PluginLoader.reloadAsynch();
-            WorkspaceLoader.reload_asynch();
+            WorkspaceLoader.reloadAsynch();
 
             // patches ImageJ classes
             ImageJPatcher.applyPatches();
@@ -238,9 +237,6 @@ public class Icy
                 {
                     // we can now hide splash as we have interface
                     splashScreen.dispose();
-                    // show tool tip
-                    if (GeneralPreferences.getStatupTooltip())
-                        new GeneralToolTipFrame();
                 }
             }
         });
@@ -288,7 +284,7 @@ public class Icy
         {
             // special flag to disabled JCL (needed for development)
             if (arg.equalsIgnoreCase("--disableJCL") || arg.equalsIgnoreCase("-dJCL"))
-                PluginLoader.JCLDisabled = true;
+                PluginLoader.setJCLDisabled(true);
 
             // headless mode
             if (arg.equalsIgnoreCase("--headless") || arg.equalsIgnoreCase("-hl"))
@@ -667,6 +663,9 @@ public class Icy
         // load native libraries
         loadVtkLibrary();
         loadItkLibrary();
+        
+        // disable native lib support for JAI as we don't provide them (for the moment)
+        System.setProperty("com.sun.media.jai.disableMediaLib", "true");
     }
 
     private static void loadLibraryFile(String name, boolean mandatory, boolean showLog)
