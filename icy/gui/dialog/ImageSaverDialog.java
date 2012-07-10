@@ -148,7 +148,7 @@ public class ImageSaverDialog extends JFileChooser
                 updateSettingPanel();
             }
         });
-        multiplesFilePanel = GuiUtil.createLineBoxPanel(new JLabel("Save as multiple file "),
+        multiplesFilePanel = GuiUtil.createLineBoxPanel(new JLabel("Save as multiple files "),
                 Box.createHorizontalGlue(), multipleFileCheck);
 
         fpsSpinner = new JSpinner(new SpinnerNumberModel(15, 1, 99, 1));
@@ -210,7 +210,7 @@ public class ImageSaverDialog extends JFileChooser
                     file = new File(outfileName + "." + extensionFilter.getExtension());
 
                 // ask for confirmation as file already exists
-                if (!file.exists() || ConfirmDialog.confirm("Overwrite existings file ?"))
+                if (!file.exists() || ConfirmDialog.confirm("Overwrite existing file(s) ?"))
                 {
                     // store current path
                     preferences.put(ID_PATH, getCurrentDirectory().getAbsolutePath());
@@ -264,8 +264,8 @@ public class ImageSaverDialog extends JFileChooser
             {
                 // incompatible saver for this sequence
                 MessageDialog
-                        .showDialog("The selected image save format is not compatible with your sequence format.\n"
-                                + "Convert your sequence to RGB or Grayscale sequence or choose a compatible save format (as TIFF).");
+                        .showDialog("The selected format is not compatible with your sequence format.\n"
+                                + "Convert your sequence to RGB or Grayscale, or choose a compatible format (e.g. TIFF).");
             }
 
             // store interface option
