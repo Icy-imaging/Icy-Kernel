@@ -424,7 +424,7 @@ public class Saver
         catch (Exception e)
         {
             IcyExceptionHandler.showErrorMessage(e, true);
-            new FailedAnnounceFrame("Failed to save images (see output console for detail)", 15);
+            new FailedAnnounceFrame("Failed to save image(s) (see output console for details)", 15);
             return;
         }
         finally
@@ -447,7 +447,7 @@ public class Saver
             if (force)
                 file.delete();
             else
-                throw new IOException("File already exist");
+                throw new IOException("File already exists");
         }
 
         try
@@ -504,7 +504,7 @@ public class Saver
             if (force)
                 file.delete();
             else
-                throw new IOException("File already exist");
+                throw new IOException("File already exists");
         }
 
         try
@@ -660,7 +660,7 @@ public class Saver
         catch (Exception e)
         {
             IcyExceptionHandler.showErrorMessage(e, true);
-            new FailedAnnounceFrame("Failed to save image (see output console for detail)", 15);
+            new FailedAnnounceFrame("Failed to save image(s) (see output console for details)", 15);
             return;
         }
     }
