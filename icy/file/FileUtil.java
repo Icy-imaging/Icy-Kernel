@@ -373,8 +373,8 @@ public class FileUtil
                         System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
                                 + "'");
                         System.err.println("Reason : destination cannot be overwritten.");
-                        System.err.println("Verify it is not locked by another program (as Eclipse)");
-                        System.err.println("also check you've the rights to do this operation.");
+                        System.err.println("Make sure it is not locked by another program (e.g. Eclipse)");
+                        System.err.println("Also check that you have the rights to do this operation.");
                         return false;
                     }
                 }
@@ -383,7 +383,7 @@ public class FileUtil
                     System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
                             + "'");
                     System.err.println("The destination already exists.");
-                    System.err.println("Uses 'force' flag to force file rename operation.");
+                    System.err.println("Use the 'force' flag to force the operation.");
                     return false;
                 }
             }
@@ -408,7 +408,7 @@ public class FileUtil
             if (!done)
             {
                 System.err.println("Cannot rename '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
-                System.err.println("Check the source file is not locked.");
+                System.err.println("Check that the source file is not locked.");
                 return false;
             }
 
@@ -565,8 +565,8 @@ public class FileUtil
                         System.err.println("Cannot copy '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath()
                                 + "'");
                         System.err.println("Reason : destination cannot be overwritten.");
-                        System.err.println("Verify it is not locked by another program (as Eclipse)");
-                        System.err.println("also check you've the rights to do this operation.");
+                        System.err.println("Make sure it is not locked by another program (e.g. Eclipse)");
+                        System.err.println("Also check that you have the rights to do this operation.");
                         return false;
                     }
                 }
@@ -575,7 +575,7 @@ public class FileUtil
                     System.err
                             .println("Cannot copy '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
                     System.err.println("The destination already exists.");
-                    System.err.println("Uses 'force' flag to force file copy.");
+                    System.err.println("Use the 'force' flag to force file copy.");
                     return false;
                 }
             }
