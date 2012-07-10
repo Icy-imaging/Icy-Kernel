@@ -437,10 +437,14 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
             {
                 // add the channel pane if needed
                 addChannelPane(chan);
-                onReceive(null, chan, "Welcome to " + IRCUtil.getBoldString(chan.substring(1)) + ".");
+                if (getShowStatusMessages())
+                    onReceive(null, chan, "Welcome to " + IRCUtil.getBoldString(chan.substring(1)) + ".");
             }
             else
-                onReceive(null, chan, u.getNick() + " joined.");
+            {
+                if (getShowStatusMessages())
+                    onReceive(null, chan, u.getNick() + " joined.");
+            }
 
             // refresh user list
             refreshUsers();
@@ -458,10 +462,13 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
         @Override
         public void onLeave(String chan, IRCUser u, String msg)
         {
-            if (StringUtil.isEmpty(msg))
-                onReceive(null, chan, u.getNick() + " left.");
-            else
-                onReceive(null, chan, u.getNick() + " left" + " (" + msg + ").");
+            if (getShowStatusMessages())
+            {
+                if (StringUtil.isEmpty(msg))
+                    onReceive(null, chan, u.getNick() + " left.");
+                else
+                    onReceive(null, chan, u.getNick() + " left" + " (" + msg + ").");
+            }
 
             // remove the channel pane if needed
             if (isCurrentUser(u))
@@ -502,8 +509,11 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
         {
             if (msg != null)
             {
-                if (msg.indexOf("Looking up your hostname") != -1)
-                    onReceive(null, null, "Connecting...");
+                if (getShowStatusMessages())
+                {
+                    if (msg.indexOf("Looking up your hostname") != -1)
+                        onReceive(null, null, "Connecting...");
+                }
 
                 // ignore all others notices...
 
@@ -615,6 +625,12 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
 
             // show message
             addMessage(n, t, msg);
+        }
+
+        @Override
+        protected boolean getShowStatusMessages()
+        {
+            return ChatPreferences.getShowStatusMessages();
         }
     }
 

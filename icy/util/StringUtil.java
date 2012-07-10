@@ -454,4 +454,56 @@ public class StringUtil
 
         return value.substring(0, l - count);
     }
+
+    /**
+     * Creates a flattened version of the provided String. The flattening operation splits the
+     * string by inserting spaces between words starting with an upper case letter, and converts
+     * upper case letters to lower case (with the exception of the first word). Note that
+     * <b>consecutive upper case letters will remain grouped</b>, as they are considered to
+     * represent an acronym.<br/>
+     * <br/>
+     * <u>NOTE:</u> This method is optimized for class names that follow the Java naming convention. <br/>
+     * Examples:<br/>
+     * MyGreatClass -> "My great class"<br/>
+     * MyXYZClass -> "My XYZ class"
+     * 
+     * @param string
+     *        the string to flatten
+     * @return a flattened (i.e. pretty-printed) String based on the name of the string
+     */
+    public static String getFlattened(String string)
+    {
+        String[] words = string.split("(?=[A-Z])");
+
+        String output = words[0];
+        if (words.length > 1)
+        {
+            // words[0] is always empty here
+            output = words[1];
+
+            for (int i = 2; i < words.length; i++)
+            {
+                String word = words[i];
+                if (word.length() == 1)
+                {
+                    // single letter
+                    if (words[i - 1].length() == 1)
+                    {
+                        // append to the previous letter (acronym)
+                        output += word;
+                    }
+                    else
+                    {
+                        // new isolated letter or acronym
+                        output += " " + word;
+                    }
+                }
+                else
+                    output += " " + word.toLowerCase();
+            }
+        }
+
+        return output;
+    }
+
 }

@@ -21,7 +21,11 @@ package icy.common;
 import icy.util.StringUtil;
 
 /**
- * @author stephane
+ * Version class.<br>
+ * This class is used to describe a version number encoded on 4 digits.<br>
+ * Each digit should not exceed 99.
+ * 
+ * @author Stephane
  */
 public class Version implements Comparable<Version>
 {

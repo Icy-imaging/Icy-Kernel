@@ -13,6 +13,7 @@ import java.util.ArrayList;
 
 import loci.common.services.ServiceException;
 import loci.formats.MetadataTools;
+import loci.formats.meta.MetadataRetrieve;
 import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.model.Channel;
@@ -98,6 +99,19 @@ public class MetaDataUtil
 
         // create missing image
         ensureSerie(ome, num - 1);
+    }
+
+    /**
+     * Keep only the specified image serie.
+     */
+    public static void keepSingleSerie(OMEXMLMetadataImpl metaData, int num)
+    {
+        final OME ome = getOME(metaData);
+
+        // keep only the desired image
+        for (int i = ome.sizeOfImageList() - 1; i >= 0; i--)
+            if (i != num)
+                ome.removeImage(ome.getImage(i));
     }
 
     /**
@@ -413,6 +427,21 @@ public class MetaDataUtil
         result.createRoot();
         result.setImageID(MetadataTools.createLSID("Image", 0), 0);
         result.setImageName(name, 0);
+
+        return result;
+    }
+
+    /**
+     * Create a new single serie OME Metadata object from the specified Metadata object.
+     * 
+     * @param serie
+     *        Index of the serie we want to keep.
+     */
+    public static OMEXMLMetadataImpl createOMEMetadata(MetadataRetrieve metadata, int serie)
+    {
+        final OMEXMLMetadataImpl result = OMEUtil.createOMEMetadata(metadata);
+
+        MetaDataUtil.keepSingleSerie(result, serie);
 
         return result;
     }

@@ -195,8 +195,8 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
 
             final int sizeC = reader.getSizeC();
 
-            final IcyBufferedImage img = IcyBufferedImage.createFrom(reader, reader.getSizeZ() / 2,
-                    reader.getSizeT() / 2, true);
+            final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader, reader.getSizeZ() / 2,
+                    reader.getSizeT() / 2);
             preview.setImage(img.getARGBImage());
             preview.setTitle(reader.getFormat());
             preview.setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - " + reader.getSizeZ() + "Z x "

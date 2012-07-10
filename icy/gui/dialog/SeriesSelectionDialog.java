@@ -209,8 +209,8 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
                 final int sizeC = reader.getSizeC();
 
-                final IcyBufferedImage img = IcyBufferedImage.createFrom(reader, reader.getSizeZ() / 2,
-                        reader.getSizeT() / 2, true);
+                final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader, reader.getSizeZ() / 2,
+                        reader.getSizeT() / 2);
                 serieComponents[i].setImage(img.getARGBImage());
                 serieComponents[i].setTitle(metadata.getImageName(i));
                 serieComponents[i].setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - " + reader.getSizeZ()

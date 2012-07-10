@@ -59,7 +59,38 @@ public class ClassUtil
     }
 
     /**
-     * Get Class object of specified class from the system class loader
+     * @param primitiveName
+     * @return The Java primitive type represented by the given name, or null if the given name does
+     *         not represent a primitive type
+     */
+    public static Class<?> getPrimitiveType(String primitiveName)
+    {
+        if (primitiveName.equals("byte"))
+            return byte.class;
+        if (primitiveName.equals("short"))
+            return short.class;
+        if (primitiveName.equals("int"))
+            return int.class;
+        if (primitiveName.equals("long"))
+            return long.class;
+        if (primitiveName.equals("char"))
+            return char.class;
+        if (primitiveName.equals("float"))
+            return float.class;
+        if (primitiveName.equals("double"))
+            return double.class;
+        if (primitiveName.equals("boolean"))
+            return boolean.class;
+        if (primitiveName.equals("void"))
+            return void.class;
+
+        return null;
+    }
+
+    /**
+     * Get Class object of specified class name.<br>
+     * First search in Plugin Class loader then from the system class loader.<br>
+     * Primitive type are accepted.
      * 
      * @throws ClassNotFoundException
      */
@@ -93,6 +124,12 @@ public class ClassUtil
                     }
                     catch (ClassNotFoundException e4)
                     {
+                        // try with primitive type...
+                        final Class<?> result = getPrimitiveType(className);
+
+                        if (result != null)
+                            return result;
+
                         // last luck...
                         return Class.forName(className);
                     }

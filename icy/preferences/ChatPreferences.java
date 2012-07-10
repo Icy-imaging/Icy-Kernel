@@ -29,6 +29,7 @@ public class ChatPreferences
     private static final String ID_USER_PASSWORD = "userPassword";
 
     private static final String ID_AUTO_CONNECT = "autoConnect";
+    private static final String ID_SHOW_STATUS_MESSAGES = "showStatusMessages";
     private static final String ID_SHOW_USERS_PANEL = "showUsersPanel";
     private static final String ID_DESKTOP_OVERLAY = "desktopOverlay";
     private static final String ID_USERS_PANEL_WIDTH = "usersPanelWidth";
@@ -148,6 +149,11 @@ public class ChatPreferences
         return preferences.getBoolean(ID_AUTO_CONNECT, true);
     }
 
+    public static boolean getShowStatusMessages()
+    {
+        return preferences.getBoolean(ID_SHOW_STATUS_MESSAGES, false);
+    }
+
     public static boolean getShowUsersPanel()
     {
         return preferences.getBoolean(ID_SHOW_USERS_PANEL, false);
@@ -181,6 +187,11 @@ public class ChatPreferences
     public static void setAutoConnect(boolean value)
     {
         preferences.putBoolean(ID_AUTO_CONNECT, value);
+    }
+
+    public static void setShowStatusMessages(boolean value)
+    {
+        preferences.putBoolean(ID_SHOW_STATUS_MESSAGES, value);
     }
 
     public static void setShowUsersPanel(boolean value)

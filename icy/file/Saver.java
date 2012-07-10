@@ -155,7 +155,7 @@ public class Saver
                     break;
             }
         }
-        
+
         return result;
     }
 
@@ -313,6 +313,11 @@ public class Saver
      * Save the specified sequence in the specified file.<br>
      * If sequence contains severals images then file is used as a directory<br>
      * to store all single images.
+     * 
+     * @param sequence
+     *        sequence to save
+     * @param file
+     *        file where we want to save sequence
      */
     public static void save(Sequence sequence, File file)
     {
@@ -323,10 +328,36 @@ public class Saver
      * Save the specified sequence in the specified file.<br>
      * When the sequence contains severals image the multiFile flag is used to indicate<br>
      * if images are saved in severals files (file then specify a directory) or in a single file.
+     * 
+     * @param sequence
+     *        sequence to save
+     * @param file
+     *        file where we want to save sequence
+     * @param multipleFile
+     *        flag to indicate if images are saved in separate file
      */
     public static void save(Sequence sequence, File file, boolean multipleFile)
     {
         save(sequence, file, 0, sequence.getSizeZ() - 1, 0, sequence.getSizeT() - 1, 15, multipleFile);
+    }
+
+    /**
+     * Save the specified sequence in the specified file.<br>
+     * When the sequence contains severals image the multiFile flag is used to indicate<br>
+     * if images are saved in severals files (file then specify a directory) or in a single file.
+     * 
+     * @param sequence
+     *        sequence to save
+     * @param file
+     *        file where we want to save sequence
+     * @param multipleFile
+     *        flag to indicate if images are saved in separate file
+     * @param showProgress
+     *        show progress bar
+     */
+    public static void save(Sequence sequence, File file, boolean multipleFile, boolean showProgress)
+    {
+        save(sequence, file, 0, sequence.getSizeZ() - 1, 0, sequence.getSizeT() - 1, 15, multipleFile, showProgress);
     }
 
     /**
@@ -355,18 +386,55 @@ public class Saver
     public static void save(Sequence sequence, File file, int zMin, int zMax, int tMin, int tMax, int fps,
             boolean multipleFile)
     {
+        save(sequence, file, zMin, zMax, tMin, tMax, fps, multipleFile, true);
+    }
+
+    /**
+     * Save the specified sequence in the specified file.<br>
+     * When the sequence contains severals image the multipleFile flag is used to indicate<br>
+     * if images are saved as separate files (file then specify a directory) or not.<br>
+     * zMin - zMax and tMin - tMax define the Z and T images range to save.<br>
+     * 
+     * @param sequence
+     *        sequence to save
+     * @param file
+     *        file where we want to save sequence
+     * @param zMin
+     *        start Z position to save
+     * @param zMax
+     *        end Z position to save
+     * @param tMin
+     *        start T position to save
+     * @param tMax
+     *        end T position to save
+     * @param fps
+     *        frame rate for AVI sequence save
+     * @param multipleFile
+     *        flag to indicate if images are saved in separate file
+     * @param showProgress
+     *        show progress bar
+     */
+    public static void save(Sequence sequence, File file, int zMin, int zMax, int tMin, int tMax, int fps,
+            boolean multipleFile, boolean showProgress)
+    {
         final String filePath = file.getAbsolutePath();
         final int sizeT = (tMax - tMin) + 1;
         final int sizeZ = (zMax - zMin) + 1;
         final int numImages = sizeT * sizeZ;
-
-        final FileFrame saveFrame = new FileFrame("Saving", file.getAbsolutePath());
+        final FileFrame saveFrame;
         final ApplicationMenu mainMenu = Icy.getMainInterface().getApplicationMenu();
 
+        if (showProgress)
+            saveFrame = new FileFrame("Saving", file.getAbsolutePath());
+        else
+            saveFrame = null;
         try
         {
-            saveFrame.setLength(numImages);
-            saveFrame.setPosition(0);
+            if (showProgress)
+            {
+                saveFrame.setLength(numImages);
+                saveFrame.setPosition(0);
+            }
 
             if ((numImages > 0) && multipleFile)
             {
@@ -424,12 +492,14 @@ public class Saver
         catch (Exception e)
         {
             IcyExceptionHandler.showErrorMessage(e, true);
-            new FailedAnnounceFrame("Failed to save image(s) (see output console for details)", 15);
+            if (showProgress)
+                new FailedAnnounceFrame("Failed to save image(s) (see output console for details)", 15);
             return;
         }
         finally
         {
-            saveFrame.close();
+            if (showProgress)
+                saveFrame.close();
         }
     }
 
@@ -560,8 +630,8 @@ public class Saver
      *        end T position to save
      * @param fps
      *        frame rate for AVI sequence save
-     * @param multipleFile
-     *        flag to indicate if images are saved in separate file
+     * @param saveFrame
+     *        progress frame for save operation (can be null)
      */
     private static void save(IFormatWriter formatWriter, Sequence sequence, String filename, int zMin, int zMax,
             int tMin, int tMax, int fps, FileFrame saveFrame)
@@ -660,7 +730,8 @@ public class Saver
         catch (Exception e)
         {
             IcyExceptionHandler.showErrorMessage(e, true);
-            new FailedAnnounceFrame("Failed to save image(s) (see output console for details)", 15);
+            if (saveFrame != null)
+                new FailedAnnounceFrame("Failed to save image(s) (see output console for details)", 15);
             return;
         }
     }

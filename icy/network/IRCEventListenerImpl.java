@@ -28,7 +28,8 @@ public abstract class IRCEventListenerImpl implements IRCEventListener
 
     public void onConnected()
     {
-        onReceive(null, null, "Connected");
+        if (getShowStatusMessages())
+            onReceive(null, null, "Connected");
     }
 
     @Override
@@ -41,7 +42,8 @@ public abstract class IRCEventListenerImpl implements IRCEventListener
     @Override
     public void onDisconnected()
     {
-        onReceive(null, null, "Disconnected.");
+        if (getShowStatusMessages())
+            onReceive(null, null, "Disconnected.");
     }
 
     @Override
@@ -59,45 +61,54 @@ public abstract class IRCEventListenerImpl implements IRCEventListener
     @Override
     public void onInvite(String chan, IRCUser u, String nickPass)
     {
-        onReceive(null, chan, u.getNick() + " invites " + nickPass + ".");
+        if (getShowStatusMessages())
+            onReceive(null, chan, u.getNick() + " invites " + nickPass + ".");
     }
 
     @Override
     public void onJoin(String chan, IRCUser u)
     {
-        onReceive(null, chan, u.getNick() + " joins " + chan + ".");
+        if (getShowStatusMessages())
+            onReceive(null, chan, u.getNick() + " joins " + chan + ".");
     }
 
     @Override
     public void onKick(String chan, IRCUser u, String nickPass, String msg)
     {
-        onReceive(null, chan, u.getNick() + " kicks " + nickPass + ".");
+        if (getShowStatusMessages())
+            onReceive(null, chan, u.getNick() + " kicks " + nickPass + ".");
     }
 
     public void onLeave(String chan, IRCUser u, String msg)
     {
-        if (StringUtil.isEmpty(msg))
-            onReceive(null, chan, u.getNick() + " leaves " + chan + ".");
-        else
-            onReceive(null, chan, u.getNick() + " leaves " + chan + "(" + msg + ").");
+        if (getShowStatusMessages())
+        {
+            if (StringUtil.isEmpty(msg))
+                onReceive(null, chan, u.getNick() + " leaves " + chan + ".");
+            else
+                onReceive(null, chan, u.getNick() + " leaves " + chan + "(" + msg + ").");
+        }
     }
 
     @Override
     public void onMode(IRCUser u, String nickPass, String mode)
     {
-        onReceive(null, null, u.getNick() + " sets modes " + mode + " " + nickPass + ".");
+        if (getShowStatusMessages())
+            onReceive(null, null, u.getNick() + " sets modes " + mode + " " + nickPass + ".");
     }
 
     @Override
     public void onMode(String chan, IRCUser u, IRCModeParser mp)
     {
-        onReceive(null, chan, u.getNick() + " sets mode: " + mp.getLine() + ".");
+        if (getShowStatusMessages())
+            onReceive(null, chan, u.getNick() + " sets mode: " + mp.getLine() + ".");
     }
 
     @Override
     public void onNick(IRCUser u, String nickNew)
     {
-        onReceive(null, null, u.getNick() + " is now known as " + nickNew + ".");
+        if (getShowStatusMessages())
+            onReceive(null, null, u.getNick() + " is now known as " + nickNew + ".");
     }
 
     @Override
@@ -122,10 +133,13 @@ public abstract class IRCEventListenerImpl implements IRCEventListener
     @Override
     public void onQuit(IRCUser u, String msg)
     {
-        if (StringUtil.isEmpty(msg))
-            onReceive(null, null, u.getNick() + " quits chat.");
-        else
-            onReceive(null, null, u.getNick() + " quits chat (" + msg + ").");
+        if (getShowStatusMessages())
+        {
+            if (StringUtil.isEmpty(msg))
+                onReceive(null, null, u.getNick() + " quits chat.");
+            else
+                onReceive(null, null, u.getNick() + " quits chat (" + msg + ").");
+        }
     }
 
     @Override
@@ -152,4 +166,6 @@ public abstract class IRCEventListenerImpl implements IRCEventListener
         onReceive(null, null, a + " " + b + ">" + c + " " + d);
         // onReceive(d);
     }
+
+    protected abstract boolean getShowStatusMessages();
 }

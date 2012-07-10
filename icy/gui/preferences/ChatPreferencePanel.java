@@ -30,6 +30,7 @@ public class ChatPreferencePanel extends PreferencePanel
     private JCheckBox connectAtStartCheckBox;
     private JCheckBox enableDesktopOverlayCheckBox;
     JTextField desktopChannelsField;
+    private JCheckBox statusMessageCheckBox;
 
     /**
      * Create the panel.
@@ -39,7 +40,6 @@ public class ChatPreferencePanel extends PreferencePanel
         super(parent, NODE_NAME, PreferenceFrame.NODE_NAME);
 
         initialize();
-
         validate();
 
         load();
@@ -49,21 +49,31 @@ public class ChatPreferencePanel extends PreferencePanel
     {
         GridBagLayout gridBagLayout = new GridBagLayout();
         gridBagLayout.columnWidths = new int[] {46, 97, 0, 0, 18, 60, 0, 0};
-        gridBagLayout.rowHeights = new int[] {0, 0, 0, 0, 0, 0};
+        gridBagLayout.rowHeights = new int[] {0, 0, 0, 0, 0, 0, 0};
         gridBagLayout.columnWeights = new double[] {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
-        gridBagLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+        gridBagLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
         mainPanel.setLayout(gridBagLayout);
 
         connectAtStartCheckBox = new JCheckBox("Connect at start up");
         connectAtStartCheckBox.setToolTipText("Automatically connect when application starts");
         GridBagConstraints gbc_connectAtStartCheckBox = new GridBagConstraints();
         gbc_connectAtStartCheckBox.anchor = GridBagConstraints.WEST;
-        gbc_connectAtStartCheckBox.gridwidth = 2;
+        gbc_connectAtStartCheckBox.gridwidth = 4;
         gbc_connectAtStartCheckBox.insets = new Insets(0, 0, 5, 5);
         gbc_connectAtStartCheckBox.gridx = 0;
         gbc_connectAtStartCheckBox.gridy = 0;
         mainPanel.add(connectAtStartCheckBox, gbc_connectAtStartCheckBox);
-        
+
+        statusMessageCheckBox = new JCheckBox("Show status messages");
+        statusMessageCheckBox.setToolTipText("Show status changes messages");
+        GridBagConstraints gbc_statusMessageCheckBox = new GridBagConstraints();
+        gbc_statusMessageCheckBox.anchor = GridBagConstraints.WEST;
+        gbc_statusMessageCheckBox.gridwidth = 4;
+        gbc_statusMessageCheckBox.insets = new Insets(0, 0, 5, 5);
+        gbc_statusMessageCheckBox.gridx = 0;
+        gbc_statusMessageCheckBox.gridy = 1;
+        mainPanel.add(statusMessageCheckBox, gbc_statusMessageCheckBox);
+
         enableDesktopOverlayCheckBox = new JCheckBox("Enable desktop chat");
         enableDesktopOverlayCheckBox.setToolTipText("Display chat in the application desktop");
         GridBagConstraints gbc_enableDesktopOverlayCheckBox = new GridBagConstraints();
@@ -71,7 +81,7 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_enableDesktopOverlayCheckBox.gridwidth = 2;
         gbc_enableDesktopOverlayCheckBox.insets = new Insets(0, 0, 5, 5);
         gbc_enableDesktopOverlayCheckBox.gridx = 0;
-        gbc_enableDesktopOverlayCheckBox.gridy = 1;
+        gbc_enableDesktopOverlayCheckBox.gridy = 2;
         mainPanel.add(enableDesktopOverlayCheckBox, gbc_enableDesktopOverlayCheckBox);
 
         desktopChannelsField = new JTextField();
@@ -83,7 +93,7 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_desktopChannelsField.insets = new Insets(0, 0, 5, 5);
         gbc_desktopChannelsField.fill = GridBagConstraints.HORIZONTAL;
         gbc_desktopChannelsField.gridx = 2;
-        gbc_desktopChannelsField.gridy = 1;
+        gbc_desktopChannelsField.gridy = 2;
         mainPanel.add(desktopChannelsField, gbc_desktopChannelsField);
         desktopChannelsField.setColumns(10);
 
@@ -99,7 +109,7 @@ public class ChatPreferencePanel extends PreferencePanel
         GridBagConstraints gbc_btnDefault_1 = new GridBagConstraints();
         gbc_btnDefault_1.insets = new Insets(0, 0, 5, 5);
         gbc_btnDefault_1.gridx = 5;
-        gbc_btnDefault_1.gridy = 1;
+        gbc_btnDefault_1.gridy = 2;
         mainPanel.add(btnDefault_1, gbc_btnDefault_1);
 
         JLabel lblNewLabel_2 = new JLabel("Real name");
@@ -108,7 +118,7 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_lblNewLabel_2.anchor = GridBagConstraints.EAST;
         gbc_lblNewLabel_2.insets = new Insets(0, 0, 5, 5);
         gbc_lblNewLabel_2.gridx = 0;
-        gbc_lblNewLabel_2.gridy = 2;
+        gbc_lblNewLabel_2.gridy = 3;
         mainPanel.add(lblNewLabel_2, gbc_lblNewLabel_2);
 
         realNameField = new JTextField();
@@ -118,7 +128,7 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_realNameField.gridwidth = 3;
         gbc_realNameField.insets = new Insets(0, 0, 5, 5);
         gbc_realNameField.gridx = 1;
-        gbc_realNameField.gridy = 2;
+        gbc_realNameField.gridy = 3;
         mainPanel.add(realNameField, gbc_realNameField);
         realNameField.setColumns(10);
 
@@ -128,7 +138,7 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_lblPassword.anchor = GridBagConstraints.EAST;
         gbc_lblPassword.insets = new Insets(0, 0, 5, 5);
         gbc_lblPassword.gridx = 0;
-        gbc_lblPassword.gridy = 3;
+        gbc_lblPassword.gridy = 4;
         mainPanel.add(lblPassword, gbc_lblPassword);
 
         passwordField = new JPasswordField();
@@ -139,7 +149,7 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_passwordField.fill = GridBagConstraints.HORIZONTAL;
         gbc_passwordField.insets = new Insets(0, 0, 5, 5);
         gbc_passwordField.gridx = 1;
-        gbc_passwordField.gridy = 3;
+        gbc_passwordField.gridy = 4;
         mainPanel.add(passwordField, gbc_passwordField);
 
         JLabel lblChannels = new JLabel("Extra channels");
@@ -149,7 +159,7 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_lblChannels.anchor = GridBagConstraints.EAST;
         gbc_lblChannels.insets = new Insets(0, 0, 0, 5);
         gbc_lblChannels.gridx = 0;
-        gbc_lblChannels.gridy = 4;
+        gbc_lblChannels.gridy = 5;
         mainPanel.add(lblChannels, gbc_lblChannels);
 
         extraChannelsField = new JTextField();
@@ -160,7 +170,7 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_channelsField.insets = new Insets(0, 0, 0, 5);
         gbc_channelsField.fill = GridBagConstraints.HORIZONTAL;
         gbc_channelsField.gridx = 1;
-        gbc_channelsField.gridy = 4;
+        gbc_channelsField.gridy = 5;
         mainPanel.add(extraChannelsField, gbc_channelsField);
         extraChannelsField.setColumns(10);
 
@@ -176,7 +186,7 @@ public class ChatPreferencePanel extends PreferencePanel
         GridBagConstraints gbc_btnDefault = new GridBagConstraints();
         gbc_btnDefault.insets = new Insets(0, 0, 0, 5);
         gbc_btnDefault.gridx = 5;
-        gbc_btnDefault.gridy = 4;
+        gbc_btnDefault.gridy = 5;
         mainPanel.add(btnDefault, gbc_btnDefault);
     }
 
@@ -187,6 +197,7 @@ public class ChatPreferencePanel extends PreferencePanel
         passwordField.setText(ChatPreferences.getUserPassword());
         extraChannelsField.setText(ChatPreferences.getExtraChannels());
         connectAtStartCheckBox.setSelected(ChatPreferences.getAutoConnect());
+        statusMessageCheckBox.setSelected(ChatPreferences.getShowStatusMessages());
         enableDesktopOverlayCheckBox.setSelected(ChatPreferences.getDesktopOverlay());
         desktopChannelsField.setText(ChatPreferences.getDesktopChannels());
     }
@@ -198,6 +209,7 @@ public class ChatPreferencePanel extends PreferencePanel
         ChatPreferences.setUserPassword(new String(passwordField.getPassword()));
         ChatPreferences.setExtraChannels(extraChannelsField.getText());
         ChatPreferences.setAutoConnect(connectAtStartCheckBox.isSelected());
+        ChatPreferences.setShowStatusMessages(statusMessageCheckBox.isSelected());
         ChatPreferences.setDesktopOverlay(enableDesktopOverlayCheckBox.isSelected());
         ChatPreferences.setDesktopChannels(desktopChannelsField.getText());
 
