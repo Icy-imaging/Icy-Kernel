@@ -166,11 +166,11 @@ public class Icy
                 });
             }
 
-            // initialize network (better to do it at first as a lot of things need networking)
-            NetworkUtil.init();
-
-            // initialize preferences (need network init)
+            // initialize preferences
             IcyPreferences.init();
+
+            // initialize network (need preferences)
+            NetworkUtil.init();
 
             // load plugins classes (need preferences init)
             PluginLoader.reloadAsynch();

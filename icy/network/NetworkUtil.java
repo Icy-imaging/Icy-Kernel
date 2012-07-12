@@ -21,6 +21,7 @@ package icy.network;
 import icy.common.listener.ProgressListener;
 import icy.common.listener.weak.WeakListener;
 import icy.preferences.ApplicationPreferences;
+import icy.preferences.NetworkPreferences;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
@@ -206,7 +207,7 @@ public class NetworkUtil
             }
         }
     }, "Internet monitor");
-    
+
     public static final Thread networkMonitor = new Thread(new Runnable()
     {
         @Override
@@ -244,12 +245,69 @@ public class NetworkUtil
         networkConnected = true;
         internetConnected = true;
 
-        // use system proxy by default
-        enableSystemProxy();
+        updateNetworkSetting();
 
         // start monitors threads
         networkMonitor.start();
         internetMonitor.start();
+    }
+
+    /**
+     * Update network setting from the actual preferences
+     */
+    public static void updateNetworkSetting()
+    {
+        final int proxySetting = NetworkPreferences.getProxySetting();
+
+        if (proxySetting == 0)
+        {
+            // no proxy
+            disableProxySetting();
+            disableSystemProxy();
+        }
+        else if (proxySetting == 1)
+        {
+            // system proxy
+            disableProxySetting();
+            enableSystemProxy();
+        }
+        else
+        {
+            String host;
+
+            // manual proxy
+            enableProxySetting();
+            disableSystemProxy();
+
+            // HTTP proxy
+            host = NetworkPreferences.getProxyHTTPHost();
+            if (!StringUtil.isEmpty(host))
+            {
+                setHTTPProxyHost(host);
+                setHTTPProxyPort(NetworkPreferences.getProxyHTTPPort());
+            }
+            // HTTPS proxy
+            host = NetworkPreferences.getProxyHTTPSHost();
+            if (!StringUtil.isEmpty(host))
+            {
+                setHTTPSProxyHost(host);
+                setHTTPSProxyPort(NetworkPreferences.getProxyHTTPSPort());
+            }
+            // FTP proxy
+            host = NetworkPreferences.getProxyFTPHost();
+            if (!StringUtil.isEmpty(host))
+            {
+                setFTPProxyHost(host);
+                setFTPProxyPort(NetworkPreferences.getProxyFTPPort());
+            }
+            // SOCKS proxy
+            host = NetworkPreferences.getProxySOCKSHost();
+            if (!StringUtil.isEmpty(host))
+            {
+                setSOCKSProxyHost(host);
+                setSOCKSProxyPort(NetworkPreferences.getProxySOCKSPort());
+            }
+        }
     }
 
     static void setNetworkConnected(boolean value)
@@ -962,6 +1020,7 @@ public class NetworkUtil
     {
         Security.setProperty("proxySet", "true");
         Security.setProperty("http.proxySet", "true");
+        Security.setProperty("https.proxySet", "true");
         Security.setProperty("ftp.proxySet", "true");
     }
 
@@ -969,6 +1028,7 @@ public class NetworkUtil
     {
         Security.setProperty("proxySet", "false");
         Security.setProperty("http.proxySet", "false");
+        Security.setProperty("https.proxySet", "false");
         Security.setProperty("ftp.proxySet", "false");
     }
 
@@ -992,6 +1052,26 @@ public class NetworkUtil
         Security.setProperty("http.proxyPassword", password);
     }
 
+    public static void setHTTPSProxyHost(String host)
+    {
+        Security.setProperty("https.proxyHost", host);
+    }
+
+    public static void setHTTPSProxyPort(int port)
+    {
+        Security.setProperty("https.proxyPort", Integer.toString(port));
+    }
+
+    public static void setHTTPSProxyUser(String user)
+    {
+        Security.setProperty("https.proxyUser", user);
+    }
+
+    public static void setHTTPSProxyPassword(String password)
+    {
+        Security.setProperty("https.proxyPassword", password);
+    }
+
     public static void setFTPProxyHost(String host)
     {
         Security.setProperty("ftp.proxyHost", host);
@@ -1012,6 +1092,26 @@ public class NetworkUtil
         Security.setProperty("ftp.proxyPassword", password);
     }
 
+    public static void setSOCKSProxyHost(String host)
+    {
+        Security.setProperty("socksProxyHost", host);
+    }
+
+    public static void setSOCKSProxyPort(int port)
+    {
+        Security.setProperty("socksProxyPort", Integer.toString(port));
+    }
+
+    public static void setSOCKSProxyUser(String user)
+    {
+        Security.setProperty("socksProxyUser", user);
+    }
+
+    public static void setSOCKSProxyPassword(String password)
+    {
+        Security.setProperty("socksProxyPassword", password);
+    }
+
     public static String getHTTPProxyHost()
     {
         return Security.getProperty("http.proxyHost");
@@ -1029,6 +1129,23 @@ public class NetworkUtil
         }
     }
 
+    public static String getHTTPSProxyHost()
+    {
+        return Security.getProperty("https.proxyHost");
+    }
+
+    public static int getHTTPSProxyPort()
+    {
+        try
+        {
+            return Integer.parseInt(Security.getProperty("https.proxyPort"));
+        }
+        catch (NumberFormatException e)
+        {
+            return 0;
+        }
+    }
+
     public static String getFTPProxyHost()
     {
         return Security.getProperty("ftp.proxyHost");
@@ -1039,6 +1156,23 @@ public class NetworkUtil
         try
         {
             return Integer.parseInt(Security.getProperty("ftp.proxyPort"));
+        }
+        catch (NumberFormatException e)
+        {
+            return 0;
+        }
+    }
+
+    public static String getSOCKSProxyHost()
+    {
+        return Security.getProperty("socksProxyHost");
+    }
+
+    public static int getSOCKSProxyPort()
+    {
+        try
+        {
+            return Integer.parseInt(Security.getProperty("socksProxyPort"));
         }
         catch (NumberFormatException e)
         {

@@ -24,6 +24,7 @@ public class ChatPreferencePanel extends PreferencePanel
     private static final long serialVersionUID = 2856629717614258089L;
 
     public static final String NODE_NAME = "Chat";
+
     private JTextField realNameField;
     private JPasswordField passwordField;
     JTextField extraChannelsField;

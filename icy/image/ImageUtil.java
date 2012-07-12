@@ -45,8 +45,6 @@ import java.net.URL;
 
 import javax.imageio.ImageIO;
 
-import sun.awt.image.SunWritableRaster;
-
 /**
  * Image utilities class.
  * 
@@ -114,19 +112,6 @@ public class ImageUtil
     {
         final WritableRaster raster = Raster.createInterleavedRaster(new DataBufferByte(data, w * h, 0), w, h, w, 1,
                 new int[] {0}, null);
-
-        // enable acceleration
-        if (raster instanceof SunWritableRaster)
-        {
-            try
-            {
-                ((SunWritableRaster) raster).setStolen(false);
-            }
-            catch (Throwable t)
-            {
-                // ignore, some early 6.0 JVM doesn't have this method
-            }
-        }
 
         return new BufferedImage(cm, raster, false, null);
     }
@@ -484,7 +469,6 @@ public class ImageUtil
         g.drawString(text, x, y);
 
         g.dispose();
-
     }
 
     /**
