@@ -18,12 +18,12 @@
  */
 package icy.gui.inspector;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.ImageComponent;
 import icy.gui.component.button.IcyButton;
 import icy.gui.main.MainAdapter;
 import icy.gui.main.MainEvent;
 import icy.gui.main.MainListener;
+import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.abstract_.Plugin;

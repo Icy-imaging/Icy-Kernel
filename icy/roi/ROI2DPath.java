@@ -19,7 +19,7 @@ import org.w3c.dom.Node;
 /**
  * ROI Path.<br>
  * This ROI can display a Path2D shape.<br>
- * You can modify and remove points (adding new point isn't supported)
+ * You can modify and remove points (adding new point isn't supported).
  * 
  * @author Stephane
  */

@@ -3,10 +3,10 @@
  */
 package icy.gui.sequence;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.button.IcyButton;
 import icy.gui.frame.GenericFrame;
 import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
+import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;

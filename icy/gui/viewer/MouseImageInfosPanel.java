@@ -20,7 +20,7 @@ package icy.gui.viewer;
 
 import icy.canvas.IcyCanvas;
 import icy.gui.component.ColorComponent;
-import icy.gui.component.ComponentUtil;
+import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.image.IcyBufferedImage;
 import icy.image.lut.LUT;

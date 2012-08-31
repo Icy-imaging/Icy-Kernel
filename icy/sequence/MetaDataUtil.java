@@ -160,8 +160,10 @@ public class MetaDataUtil
      */
     public static int getSizeX(OMEXMLMetadataImpl metaData, int serie)
     {
-        if (serie < getNumSerie(metaData))
-            return OMEUtil.getValue(metaData.getPixelsSizeX(serie), 0);
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return OMEUtil.getValue(pix.getSizeX(), 0);
 
         return 0;
     }
@@ -171,8 +173,10 @@ public class MetaDataUtil
      */
     public static int getSizeY(OMEXMLMetadataImpl metaData, int serie)
     {
-        if (serie < getNumSerie(metaData))
-            return OMEUtil.getValue(metaData.getPixelsSizeY(serie), 0);
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return OMEUtil.getValue(pix.getSizeY(), 0);
 
         return 0;
     }
@@ -182,8 +186,10 @@ public class MetaDataUtil
      */
     public static int getSizeC(OMEXMLMetadataImpl metaData, int serie)
     {
-        if (serie < getNumSerie(metaData))
-            return OMEUtil.getValue(metaData.getPixelsSizeC(serie), 0);
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return OMEUtil.getValue(pix.getSizeC(), 0);
 
         return 0;
     }
@@ -193,8 +199,10 @@ public class MetaDataUtil
      */
     public static int getSizeZ(OMEXMLMetadataImpl metaData, int serie)
     {
-        if (serie < getNumSerie(metaData))
-            return OMEUtil.getValue(metaData.getPixelsSizeX(serie), 0);
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return OMEUtil.getValue(pix.getSizeZ(), 0);
 
         return 0;
     }
@@ -204,8 +212,10 @@ public class MetaDataUtil
      */
     public static int getSizeT(OMEXMLMetadataImpl metaData, int serie)
     {
-        if (serie < getNumSerie(metaData))
-            return OMEUtil.getValue(metaData.getPixelsSizeT(serie), 0);
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return OMEUtil.getValue(pix.getSizeT(), 0);
 
         return 0;
     }
@@ -215,8 +225,10 @@ public class MetaDataUtil
      */
     public static String getName(OMEXMLMetadataImpl metaData, int serie)
     {
-        if (serie < getNumSerie(metaData))
-            return metaData.getImageName(serie);
+        final Image img = getSerie(metaData, serie);
+
+        if (img != null)
+            return img.getName();
 
         return "";
     }
@@ -234,8 +246,10 @@ public class MetaDataUtil
      */
     public static double getPixelSizeX(OMEXMLMetadataImpl metaData, int serie)
     {
-        if (serie < getNumSerie(metaData))
-            return OMEUtil.getValue(metaData.getPixelsPhysicalSizeX(serie), 1d);
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return OMEUtil.getValue(pix.getPhysicalSizeX(), 1d);
 
         return 1d;
     }
@@ -245,8 +259,10 @@ public class MetaDataUtil
      */
     public static double getPixelSizeY(OMEXMLMetadataImpl metaData, int serie)
     {
-        if (serie < getNumSerie(metaData))
-            return OMEUtil.getValue(metaData.getPixelsPhysicalSizeY(serie), 1d);
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return OMEUtil.getValue(pix.getPhysicalSizeY(), 1d);
 
         return 1d;
     }
@@ -256,8 +272,10 @@ public class MetaDataUtil
      */
     public static double getPixelSizeZ(OMEXMLMetadataImpl metaData, int serie)
     {
-        if (serie < getNumSerie(metaData))
-            return OMEUtil.getValue(metaData.getPixelsPhysicalSizeZ(serie), 1d);
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return OMEUtil.getValue(pix.getPhysicalSizeZ(), 1d);
 
         return 1d;
     }
@@ -267,8 +285,10 @@ public class MetaDataUtil
      */
     public static double getTimeInterval(OMEXMLMetadataImpl metaData, int serie)
     {
-        if (serie < getNumSerie(metaData))
-            return TypeUtil.getDouble(metaData.getPixelsTimeIncrement(serie), 1d);
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return TypeUtil.getDouble(pix.getTimeIncrement(), 1d);
 
         return 1d;
     }

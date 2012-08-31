@@ -54,7 +54,6 @@ public class GeneralPreferencePanel extends PreferencePanel
     final JCheckBox exitConfirm;
     private final JCheckBox sequencePersistence;
     final JCheckBox autoUpdateCheckBox;
-    final JCheckBox autoCheckUpdateCheckBox;
     private final JCheckBox alwaysOnTopCheckBox;
     private final JSpinner maxMemoryMBSpinner;
     private final JSpinner uiFontSizeSpinner;
@@ -72,20 +71,8 @@ public class GeneralPreferencePanel extends PreferencePanel
         sequencePersistence = new JCheckBox("Enable sequence persistence");
         sequencePersistence
                 .setToolTipText("Enable the XML persistence for Sequence (file is automatically loaded/saved when sequence is opened/closed)");
-        autoUpdateCheckBox = new JCheckBox("Enable auto update");
-        autoUpdateCheckBox.setToolTipText("Enable silent update for application as soon a new version is available");
-        autoUpdateCheckBox.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (autoUpdateCheckBox.isSelected())
-                    autoCheckUpdateCheckBox.setSelected(true);
-                autoCheckUpdateCheckBox.setEnabled(!autoUpdateCheckBox.isSelected());
-            }
-        });
-        autoCheckUpdateCheckBox = new JCheckBox("Check for application update at startup");
-        autoCheckUpdateCheckBox.setToolTipText("Check if a new application version is available at startup");
+        autoUpdateCheckBox = new JCheckBox("Enable automatic update");
+        autoUpdateCheckBox.setToolTipText("Enable automatic update for application as soon a new version is available");
         alwaysOnTopCheckBox = new JCheckBox("Application window always on top");
 
         final int maxMemLimit = (int) MathUtil.prevMultiple(ApplicationPreferences.getMaxMemoryMBLimit(), 32);
@@ -137,8 +124,6 @@ public class GeneralPreferencePanel extends PreferencePanel
         topPanel.add(Box.createVerticalStrut(6));
         topPanel.add(GuiUtil.createLineBoxPanel(autoUpdateCheckBox, Box.createHorizontalGlue()));
         topPanel.add(Box.createVerticalStrut(6));
-        topPanel.add(GuiUtil.createLineBoxPanel(autoCheckUpdateCheckBox, Box.createHorizontalGlue()));
-        topPanel.add(Box.createVerticalStrut(6));
         topPanel.add(GuiUtil.createLineBoxPanel(sequencePersistence, Box.createHorizontalGlue()));
         topPanel.add(Box.createVerticalStrut(18));
         topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" GUI font size  "), uiFontSizeSpinner,
@@ -172,9 +157,6 @@ public class GeneralPreferencePanel extends PreferencePanel
         exitConfirm.setSelected(GeneralPreferences.getExitConfirm());
         sequencePersistence.setSelected(GeneralPreferences.getSequencePersistence());
         autoUpdateCheckBox.setSelected(GeneralPreferences.getAutomaticUpdate());
-        autoCheckUpdateCheckBox.setSelected(GeneralPreferences.getAutomaticCheckUpdate()
-                || autoUpdateCheckBox.isSelected());
-        autoCheckUpdateCheckBox.setEnabled(!autoUpdateCheckBox.isSelected());
         alwaysOnTopCheckBox.setSelected(GeneralPreferences.getAlwaysOnTop());
     }
 
@@ -197,7 +179,6 @@ public class GeneralPreferencePanel extends PreferencePanel
         GeneralPreferences.setExitConfirm(exitConfirm.isSelected());
         GeneralPreferences.setSequencePersistence(sequencePersistence.isSelected());
         GeneralPreferences.setAutomaticUpdate(autoUpdateCheckBox.isSelected());
-        GeneralPreferences.setAutomaticCheckUpdate(autoCheckUpdateCheckBox.isSelected());
 
         booleanValue = alwaysOnTopCheckBox.isSelected();
         Icy.getMainInterface().setAlwaysOnTop(booleanValue);

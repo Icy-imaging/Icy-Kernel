@@ -1,6 +1,7 @@
 package icy.gui.component.sequence;
 
 import icy.image.IcyBufferedImage;
+import icy.image.IcyBufferedImageUtil;
 import icy.sequence.SequenceModel;
 import icy.system.thread.ThreadUtil;
 import icy.util.GraphicsUtil;
@@ -68,12 +69,24 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
                 final int sh = getSizeY();
                 final int iw = cache.getWidth(null);
                 final int ih = cache.getHeight(null);
+                final int fiw;
+                final int fih;
 
-                final double ratio1 = Math.max((double) iw / (double) sw, (double) ih / (double) sh);
-                final double ratio2 = Math.max((double) sw / (double) w, (double) sh / (double) h);
+                if (fitToView)
+                {
+                    final double ratio1 = Math.max((double) iw / (double) sw, (double) ih / (double) sh);
+                    final double ratio2 = Math.max((double) sw / (double) w, (double) sh / (double) h);
 
-                final int fiw = (int) (iw / (ratio1 * ratio2));
-                final int fih = (int) (ih / (ratio1 * ratio2));
+                    fiw = (int) (iw / (ratio1 * ratio2));
+                    fih = (int) (ih / (ratio1 * ratio2));
+                }
+                else
+                {
+                    final double ratio = Math.max((double) sw / (double) w, (double) sh / (double) h);
+
+                    fiw = (int) (iw / ratio);
+                    fih = (int) (ih / ratio);
+                }
 
                 g2.drawImage(cache, (w - fiw) / 2, (h - fih) / 2, fiw, fih, null);
             }
@@ -112,7 +125,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
             final Image img = getImage();
 
             if (img instanceof IcyBufferedImage)
-                cache = ((IcyBufferedImage) img).getARGBImage();
+                cache = IcyBufferedImageUtil.getARGBImage((IcyBufferedImage) img);
             else
                 cache = img;
 
@@ -121,6 +134,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
     }
 
     protected boolean autoHideSliders;
+    protected boolean fitToView;
 
     protected JSlider tSlider;
     protected JSlider zSlider;
@@ -143,6 +157,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
         super();
 
         this.autoHideSliders = autoHideSliders;
+        fitToView = true;
 
         model = null;
 
@@ -235,7 +250,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
 
         zSlider = new JSlider(SwingConstants.VERTICAL);
         zPanel.add(zSlider, BorderLayout.CENTER);
-        zSlider.setFocusable(false);
+        // zSlider.setFocusable(false);
 
         lblZValue = new JLabel("0");
         zPanel.add(lblZValue, BorderLayout.SOUTH);
@@ -260,7 +275,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
 
         tSlider = new JSlider(SwingConstants.HORIZONTAL);
         tPanel.add(tSlider, BorderLayout.CENTER);
-        tSlider.setFocusable(false);
+        // tSlider.setFocusable(false);
 
         lblT = new JLabel("T");
         tPanel.add(lblT, BorderLayout.EAST);
@@ -299,6 +314,27 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
             zPanel.setVisible((zSlider.getMaximum() > 0) && value);
             tPanel.setVisible((tSlider.getMaximum() > 0) && value);
         }
+    }
+
+    public void setFitToView(boolean value)
+    {
+        if (fitToView != value)
+        {
+            fitToView = value;
+            imagePanel.imageChanged();
+        }
+    }
+
+    public void setPositionZ(int z)
+    {
+        zSlider.setValue(z);
+        imageChanged();
+    }
+
+    public void setPositionT(int t)
+    {
+        tSlider.setValue(t);
+        imageChanged();
     }
 
     private void setMaxZ(int value)

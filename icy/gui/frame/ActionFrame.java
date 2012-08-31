@@ -31,16 +31,16 @@ import javax.swing.JPanel;
 /**
  * @author Stephane
  */
-public class ActionFrame extends TitledFrame implements ActionListener
+public class ActionFrame extends TitledFrame
 {
     protected static final String OK_CMD = "ok";
     protected static final String CANCEL_CMD = "cancel";
 
-    final JButton okBtn;
-    final JButton cancelBtn;
+    protected final JButton okBtn;
+    protected final JButton cancelBtn;
 
-    private ActionListener okAction;
-    private boolean closeAfterAction;
+    protected ActionListener okAction;
+    protected boolean closeAfterAction;
 
     public ActionFrame(String title)
     {
@@ -73,8 +73,30 @@ public class ActionFrame extends TitledFrame implements ActionListener
         // OTHERS
         okBtn.setActionCommand(OK_CMD);
         cancelBtn.setActionCommand(CANCEL_CMD);
-        okBtn.addActionListener(this);
-        cancelBtn.addActionListener(this);
+
+        final ActionListener buttonActions = new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final String cmd = e.getActionCommand();
+
+                if (CANCEL_CMD.equals(cmd))
+                    close();
+                else if (OK_CMD.equals(cmd))
+                {
+                    // do action here
+                    if (okAction != null)
+                        okAction.actionPerformed(e);
+                    // close if wanted
+                    if (closeAfterAction)
+                        close();
+                }
+            }
+        };
+
+        okBtn.addActionListener(buttonActions);
+        cancelBtn.addActionListener(buttonActions);
 
         okAction = null;
         closeAfterAction = true;
@@ -130,21 +152,4 @@ public class ActionFrame extends TitledFrame implements ActionListener
         return cancelBtn;
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e)
-    {
-        final String cmd = e.getActionCommand();
-
-        if (CANCEL_CMD.equals(cmd))
-            close();
-        else if (OK_CMD.equals(cmd))
-        {
-            // do action here
-            if (okAction != null)
-                okAction.actionPerformed(e);
-            // close if wanted
-            if (closeAfterAction)
-                close();
-        }
-    }
 }

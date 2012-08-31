@@ -76,12 +76,27 @@ public class RangeComponent extends JPanel implements ChangeListener
         this(SwingConstants.HORIZONTAL, 0d, 100d, 1d);
     }
 
-    private SpinnerNumberModel getLowModel()
+    public JSpinner getLowSpinner()
+    {
+        return lowSpinner;
+    }
+
+    public JSpinner getHighSpinner()
+    {
+        return highSpinner;
+    }
+
+    public RangeSlider getSlider()
+    {
+        return slider;
+    }
+
+    public SpinnerNumberModel getLowModel()
     {
         return (SpinnerNumberModel) lowSpinner.getModel();
     }
 
-    private SpinnerNumberModel getHighModel()
+    public SpinnerNumberModel getHighModel()
     {
         return (SpinnerNumberModel) highSpinner.getModel();
     }

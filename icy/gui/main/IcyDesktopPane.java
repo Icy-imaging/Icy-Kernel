@@ -18,7 +18,7 @@
  */
 package icy.gui.main;
 
-import icy.gui.component.ComponentUtil;
+import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.math.HungarianAlgorithm;
 import icy.resource.ResourceUtil;

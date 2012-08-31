@@ -18,7 +18,7 @@
  */
 package icy.image;
 
-import icy.gui.component.FontUtil;
+import icy.gui.util.FontUtil;
 import icy.network.URLUtil;
 import icy.util.GraphicsUtil;
 
@@ -119,7 +119,7 @@ public class ImageUtil
     /**
      * Load an image from specified path
      */
-    public static BufferedImage loadImage(String path, boolean displayError)
+    public static BufferedImage load(String path, boolean displayError)
     {
         return loadImage(URLUtil.getURL(path), displayError);
     }
@@ -127,7 +127,7 @@ public class ImageUtil
     /**
      * Load an image from specified path
      */
-    public static BufferedImage loadImage(String path)
+    public static BufferedImage load(String path)
     {
         return loadImage(path, true);
     }
@@ -135,7 +135,7 @@ public class ImageUtil
     /**
      * Load an image from specified url
      */
-    public static BufferedImage loadImage(URL url, boolean displayError)
+    public static BufferedImage load(URL url, boolean displayError)
     {
         if (url != null)
         {
@@ -156,7 +156,7 @@ public class ImageUtil
     /**
      * Load an image from specified url
      */
-    public static Image loadImage(URL url)
+    public static Image load(URL url)
     {
         return loadImage(url, true);
     }
@@ -164,7 +164,7 @@ public class ImageUtil
     /**
      * Load an image from specified file
      */
-    public static BufferedImage loadImage(File file, boolean displayError)
+    public static BufferedImage load(File file, boolean displayError)
     {
         if (file != null)
         {
@@ -185,7 +185,7 @@ public class ImageUtil
     /**
      * Load an image from specified file
      */
-    public static BufferedImage loadImage(File file)
+    public static BufferedImage load(File file)
     {
         return loadImage(file, true);
     }
@@ -193,7 +193,7 @@ public class ImageUtil
     /**
      * Load an image from specified InputStream
      */
-    public static BufferedImage loadImage(InputStream input, boolean displayError)
+    public static BufferedImage load(InputStream input, boolean displayError)
     {
         if (input != null)
         {
@@ -214,15 +214,89 @@ public class ImageUtil
     /**
      * Load an image from specified InputStream
      */
-    public static BufferedImage loadImage(InputStream input)
+    public static BufferedImage load(InputStream input)
     {
         return loadImage(input, true);
     }
 
     /**
+     * @deprecated Uses {@link ImageUtil#load(String, boolean)} instead
+     */
+    @Deprecated
+    public static BufferedImage loadImage(String path, boolean displayError)
+    {
+        return load(path, displayError);
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#load(String)} instead
+     */
+    @Deprecated
+    public static BufferedImage loadImage(String path)
+    {
+        return load(path);
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#load(URL, boolean)} instead
+     */
+    @Deprecated
+    public static BufferedImage loadImage(URL url, boolean displayError)
+    {
+        return load(url, displayError);
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#load(URL)} instead
+     */
+    @Deprecated
+    public static Image loadImage(URL url)
+    {
+        return load(url);
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#load(File, boolean)} instead
+     */
+    @Deprecated
+    public static BufferedImage loadImage(File file, boolean displayError)
+    {
+        return load(file, displayError);
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#load(File)} instead
+     */
+    @Deprecated
+    public static BufferedImage loadImage(File file)
+    {
+        return load(file);
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#load(InputStream, boolean)} instead
+     */
+    @Deprecated
+    public static BufferedImage loadImage(InputStream input, boolean displayError)
+    {
+        return load(input, displayError);
+
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#load(InputStream)} instead
+     */
+    @Deprecated
+    public static BufferedImage loadImage(InputStream input)
+    {
+        return load(input);
+
+    }
+
+    /**
      * Save an image to specified path in specified format
      */
-    public static boolean saveImage(RenderedImage image, String format, String path)
+    public static boolean save(RenderedImage image, String format, String path)
     {
         if (path != null)
         {
@@ -242,7 +316,7 @@ public class ImageUtil
     /**
      * Save an image to specified file in specified format
      */
-    public static boolean saveImage(RenderedImage image, String format, File file)
+    public static boolean save(RenderedImage image, String format, File file)
     {
         if (file != null)
         {
@@ -257,6 +331,24 @@ public class ImageUtil
         }
 
         return false;
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#save(RenderedImage, String, String)} instead
+     */
+    @Deprecated
+    public static boolean saveImage(RenderedImage image, String format, String path)
+    {
+        return save(image, format, path);
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#save(RenderedImage, String, File)} instead
+     */
+    @Deprecated
+    public static boolean saveImage(RenderedImage image, String format, File file)
+    {
+        return save(image, format, file);
     }
 
     /**
@@ -287,9 +379,9 @@ public class ImageUtil
     }
 
     /**
-     * Scale an image with specified size
+     * Scale an image with specified size.
      */
-    public static BufferedImage scaleImage(Image image, int width, int height)
+    public static BufferedImage scale(Image image, int width, int height)
     {
         if (image != null)
         {
@@ -312,7 +404,7 @@ public class ImageUtil
     /**
      * Scale an image with specified size
      */
-    public static BufferedImage scaleImageQuality(Image image, int width, int height)
+    public static BufferedImage scaleQuality(Image image, int width, int height)
     {
         if (image != null)
         {
@@ -334,7 +426,7 @@ public class ImageUtil
      * Convert an image to a BufferedImage.<br>
      * If <code>out</out> is null, by default a <code>BufferedImage.TYPE_INT_ARGB</code> is created.
      */
-    public static BufferedImage convertImage(Image in, BufferedImage out)
+    public static BufferedImage convert(Image in, BufferedImage out)
     {
         final BufferedImage result;
 
@@ -352,13 +444,49 @@ public class ImageUtil
     /**
      * Convert an image to grey image.
      */
-    public static BufferedImage toGrayImage(Image image)
+    public static BufferedImage toGray(Image image)
     {
         if (image != null)
             return convertImage(image, new BufferedImage(image.getWidth(null), image.getHeight(null),
                     BufferedImage.TYPE_BYTE_GRAY));
 
         return null;
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#scale(Image, int, int)} instead.
+     */
+    @Deprecated
+    public static BufferedImage scaleImage(Image image, int width, int height)
+    {
+        return scale(image, width, height);
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#scaleQuality(Image, int, int)} instead.
+     */
+    @Deprecated
+    public static BufferedImage scaleImageQuality(Image image, int width, int height)
+    {
+        return scaleQuality(image, width, height);
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#convert(Image, BufferedImage)} instead.
+     */
+    @Deprecated
+    public static BufferedImage convertImage(Image in, BufferedImage out)
+    {
+        return convert(in, out);
+    }
+
+    /**
+     * @deprecated Uses {@link ImageUtil#toGray(Image)} instead.
+     */
+    @Deprecated
+    public static BufferedImage toGrayImage(Image image)
+    {
+        return toGray(image);
     }
 
     /**

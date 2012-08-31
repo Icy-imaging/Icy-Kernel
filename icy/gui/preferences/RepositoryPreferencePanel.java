@@ -18,8 +18,8 @@
  */
 package icy.gui.preferences;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.dialog.ActionDialog;
+import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.plugin.PluginRepositoryLoader;
 import icy.preferences.RepositoryPreferences;

@@ -18,7 +18,6 @@
  */
 package icy.gui.menu;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandMenuButton;
@@ -26,6 +25,7 @@ import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.menu.tools.SequenceChannelMergeFrame;
 import icy.gui.menu.tools.SequenceCropper;
 import icy.gui.menu.tools.Time2Volume;
+import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.gui.util.RibbonUtil;
 import icy.gui.viewer.Viewer;
@@ -81,7 +81,7 @@ public class ImageRibbonTask extends RibbonTask
 
         public ChannelOperationRibbonBand()
         {
-            super(NAME, new IcyIcon("wrench_plus"));
+            super(NAME, new IcyIcon(ResourceUtil.ICON_TOOLS));
 
             // single channel extraction
             extractSingleChannelButton = new IcyCommandButton("Extract channel");
@@ -174,10 +174,10 @@ public class ImageRibbonTask extends RibbonTask
                         if (chNum == -1)
                         {
                             for (int ch = 0; ch < seqIn.getSizeC(); ch++)
-                                Icy.addSequence(seqIn.extractChannel(ch));
+                                Icy.getMainInterface().addSequence(seqIn.extractChannel(ch));
                         }
                         else
-                            Icy.addSequence(seqIn.extractChannel(chNum));
+                            Icy.getMainInterface().addSequence(seqIn.extractChannel(chNum));
                     }
                     finally
                     {
@@ -212,7 +212,7 @@ public class ImageRibbonTask extends RibbonTask
 
         public ConvertRibbonBand()
         {
-            super(NAME, new IcyIcon("wrench_plus"));
+            super(NAME, new IcyIcon(ResourceUtil.ICON_TOOLS));
 
             JRibbonComponent comp;
 
@@ -231,7 +231,7 @@ public class ImageRibbonTask extends RibbonTask
                     final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
                     if (sequence != null)
-                        Icy.addSequence(sequence.getCopy());
+                        Icy.getMainInterface().addSequence(sequence.getCopy());
                 }
             });
             comp = new JRibbonComponent(cloneButton);
@@ -314,7 +314,7 @@ public class ImageRibbonTask extends RibbonTask
 
                                 try
                                 {
-                                    Icy.addSequence(sequence.convertToType(dataType, scaledCheckBox.isSelected()));
+                                    Icy.getMainInterface().addSequence(sequence.convertToType(dataType, scaledCheckBox.isSelected()));
                                 }
                                 finally
                                 {
@@ -360,7 +360,7 @@ public class ImageRibbonTask extends RibbonTask
 
         public ZStackOperationRibbonBand()
         {
-            super(NAME, new IcyIcon("layers_1"));
+            super(NAME, new IcyIcon(ResourceUtil.ICON_LAYER_V1));
 
             // REMOVE
             startGroup();
@@ -614,7 +614,7 @@ public class ImageRibbonTask extends RibbonTask
 
         public TStackOperationRibbonBand()
         {
-            super(NAME, new IcyIcon("layers_1"));
+            super(NAME, new IcyIcon(ResourceUtil.ICON_LAYER_H1));
 
             // REMOVE
             startGroup();
@@ -862,7 +862,7 @@ public class ImageRibbonTask extends RibbonTask
 
         public SizeOperationRibbonBand()
         {
-            super(NAME, new IcyIcon("layers_1"));
+            super(NAME, new IcyIcon(ResourceUtil.ICON_COG));
 
             // SIZE
             startGroup();
@@ -907,7 +907,7 @@ public class ImageRibbonTask extends RibbonTask
 
         public StackConversionRibbonBand()
         {
-            super(NAME, new IcyIcon("layers_1"));
+            super(NAME, new IcyIcon(ResourceUtil.ICON_LAYER_V2));
 
             // CONVERT
             startGroup();

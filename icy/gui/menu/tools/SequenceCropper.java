@@ -23,6 +23,7 @@ import icy.gui.viewer.Viewer;
 import icy.main.Icy;
 import icy.roi.ROI2D;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceUtil;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.Rectangle;
@@ -69,8 +70,7 @@ public class SequenceCropper
             }
             else if (size > 1)
             {
-                MessageDialog.showDialog(
-                        "There is severals selected ROI.\nSelect only one ROI to do the crop operation.",
+                MessageDialog.showDialog("You must have only one selected ROI to do the crop operation.",
                         MessageDialog.INFORMATION_MESSAGE);
                 return;
             }
@@ -79,12 +79,12 @@ public class SequenceCropper
         crop(v, rois.get(0).getBounds());
     }
 
-    public static void crop(final Viewer vin, final Rectangle rect)
+    public static void crop(final Viewer viewer, final Rectangle rect)
     {
-        if ((vin == null) || (vin.getSequence() == null))
+        if ((viewer == null) || (viewer.getSequence() == null))
             return;
 
-        final Sequence in = vin.getSequence();
+        final Sequence in = viewer.getSequence();
 
         // get intersect rectangle
         final Rectangle2D adjustedRect = in.getBounds().createIntersection(rect);
@@ -95,8 +95,9 @@ public class SequenceCropper
             public void run()
             {
                 // create output sequence
-                final Sequence out = in.getSubSequence((int) adjustedRect.getMinX(), (int) adjustedRect.getMinY(), 0,
-                        0, (int) adjustedRect.getWidth(), (int) adjustedRect.getHeight(), in.getSizeZ(), in.getSizeT());
+                final Sequence out = SequenceUtil.getSubSequence(in, (int) adjustedRect.getMinX(),
+                        (int) adjustedRect.getMinY(), 0, 0, (int) adjustedRect.getWidth(),
+                        (int) adjustedRect.getHeight(), in.getSizeZ(), in.getSizeT());
 
                 ThreadUtil.invokeLater(new Runnable()
                 {
@@ -106,7 +107,7 @@ public class SequenceCropper
                         // get output viewer
                         final Viewer vout = new Viewer(out);
                         // copy colormap from input viewer
-                        vout.getLut().copyFrom(vin.getLut());
+                        vout.getLut().copyFrom(viewer.getLut());
                     }
                 });
             }

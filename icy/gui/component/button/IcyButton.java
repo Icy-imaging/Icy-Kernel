@@ -19,7 +19,7 @@
 package icy.gui.component.button;
 
 import icy.common.IcyAbstractAction;
-import icy.gui.component.ComponentUtil;
+import icy.gui.util.ComponentUtil;
 import icy.resource.icon.IcyIcon;
 import icy.util.StringUtil;
 

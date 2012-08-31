@@ -18,9 +18,9 @@
  */
 package icy.gui.preferences;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
+import icy.gui.util.ComponentUtil;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.thread.InstanceProcessor;

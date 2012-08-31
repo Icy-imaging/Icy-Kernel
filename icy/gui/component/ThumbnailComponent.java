@@ -1,5 +1,6 @@
 package icy.gui.component;
 
+import icy.gui.util.ComponentUtil;
 import icy.image.ImageUtil;
 import icy.resource.ResourceUtil;
 

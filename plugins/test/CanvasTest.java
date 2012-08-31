@@ -16,12 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with ICY. If not, see <http://www.gnu.org/licenses/>.
  */
-package icy.canvas;
+package plugins.test;
 
+import icy.canvas.IcyCanvas;
 import icy.gui.viewer.Viewer;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
@@ -138,11 +140,6 @@ public class CanvasTest extends IcyCanvas
         renderer.ResetCameraClippingRange();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.viewer.IcyCanvas#clean()
-     */
     @Override
     public void shutDown()
     {
@@ -260,6 +257,12 @@ public class CanvasTest extends IcyCanvas
     public vtkRenderer getRenderer()
     {
         return renderer;
+    }
+
+    @Override
+    public Component getViewComponent()
+    {
+        return renderPanel;
     }
 
     /**

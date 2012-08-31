@@ -481,7 +481,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     }
 
     /**
-     * Return the toRGB colormap of specified component
+     * Return the RGB colormap of specified component.
      */
     public IcyColorMap getColormap(int component)
     {
@@ -489,7 +489,20 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     }
 
     /**
-     * Set the toRGB colormap of specified component
+     * Set the RGB colormap of specified component.
+     */
+    public void copyColormap(int component, IcyColorMap srcColorMap, boolean copyName, boolean copyAlpha)
+    {
+        final IcyColorMap dstColormap = toRGBmaps[component];
+
+        dstColormap.copyFrom(srcColorMap, copyAlpha);
+
+        if (copyName)
+            dstColormap.setName(srcColorMap.getName());
+    }
+
+    /**
+     * Set the RGB colormap of specified component.
      */
     public void copyColormap(int component, IcyColorMap srcColorMap, boolean copyName)
     {
@@ -502,7 +515,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     }
 
     /**
-     * Set the toRGB colormap of specified component
+     * Set the RGB colormap of specified component.
      */
     public void copyColormap(int component, IcyColorMap map)
     {
@@ -510,7 +523,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     }
 
     /**
-     * Return the fromRGB colormap of specified RGB component
+     * Return the RGB inverse colormap for specified RGB component.
      */
     public FromRGBColorMap getFromRGBMap(int component)
     {
@@ -518,7 +531,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     }
 
     /**
-     * Set the toRGB colormaps from a compatible colorModel
+     * Set the RGB colormaps from a compatible colorModel
      */
     public void copyColormaps(ColorModel cm)
     {

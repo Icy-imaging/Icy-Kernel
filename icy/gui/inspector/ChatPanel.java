@@ -2,9 +2,7 @@ package icy.gui.inspector;
 
 import icy.gui.component.CloseableTabbedPane;
 import icy.gui.component.CloseableTabbedPane.CloseableTabbedPaneListener;
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.ExternalizablePanel;
-import icy.gui.component.FontUtil;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.frame.progress.AnnounceFrame;
@@ -14,6 +12,8 @@ import icy.gui.main.IcyDesktopPane.AbstractDesktopOverlay;
 import icy.gui.main.MainFrame;
 import icy.gui.preferences.ChatPreferencePanel;
 import icy.gui.preferences.PreferenceFrame;
+import icy.gui.util.ComponentUtil;
+import icy.gui.util.FontUtil;
 import icy.gui.util.GuiUtil;
 import icy.main.Icy;
 import icy.network.IRCClient;

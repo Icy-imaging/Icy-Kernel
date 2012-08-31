@@ -20,9 +20,6 @@ package icy.gui.preferences;
 
 import icy.preferences.PluginPreferences;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
@@ -37,27 +34,15 @@ public class PluginPreferencePanel extends PreferencePanel
      * gui
      */
     final JCheckBox autoUpdateCheckBox;
-    final JCheckBox autoCheckUpdateCheckBox;
     private final JCheckBox allowBetaCheckBox;
 
     PluginPreferencePanel(PreferenceFrame parent)
     {
         super(parent, NODE_NAME, PreferenceFrame.NODE_NAME);
 
-        autoUpdateCheckBox = new JCheckBox("Enable auto update");
-        autoUpdateCheckBox.setToolTipText("Enable silent update for plugins as soon a new version is available");
-        autoUpdateCheckBox.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (autoUpdateCheckBox.isSelected())
-                    autoCheckUpdateCheckBox.setSelected(true);
-                autoCheckUpdateCheckBox.setEnabled(!autoUpdateCheckBox.isSelected());
-            }
-        });
-        autoCheckUpdateCheckBox = new JCheckBox("Check for update at startup");
-        autoCheckUpdateCheckBox.setToolTipText("Check for new plugins version at startup and notify user about it");
+        autoUpdateCheckBox = new JCheckBox("Enable automatic update");
+        autoUpdateCheckBox
+                .setToolTipText("Enable (silent) automatic update for plugins as soon a new version is available");
         allowBetaCheckBox = new JCheckBox("Allow beta version");
         allowBetaCheckBox
                 .setToolTipText("Show beta version in online plugins, also beta version can be used for update");
@@ -68,8 +53,6 @@ public class PluginPreferencePanel extends PreferencePanel
 
         mainPanel.add(autoUpdateCheckBox);
         mainPanel.add(Box.createVerticalStrut(6));
-        mainPanel.add(autoCheckUpdateCheckBox);
-        mainPanel.add(Box.createVerticalStrut(6));
         mainPanel.add(allowBetaCheckBox);
         mainPanel.add(Box.createVerticalStrut(6));
         mainPanel.add(Box.createVerticalGlue());
@@ -79,9 +62,6 @@ public class PluginPreferencePanel extends PreferencePanel
     protected void load()
     {
         autoUpdateCheckBox.setSelected(PluginPreferences.getAutomaticUpdate());
-        autoCheckUpdateCheckBox.setSelected(PluginPreferences.getAutomaticCheckUpdate()
-                || autoUpdateCheckBox.isSelected());
-        autoCheckUpdateCheckBox.setEnabled(!autoUpdateCheckBox.isSelected());
         allowBetaCheckBox.setSelected(PluginPreferences.getAllowBeta());
     }
 
@@ -89,7 +69,6 @@ public class PluginPreferencePanel extends PreferencePanel
     protected void save()
     {
         PluginPreferences.setAutomaticUpdate(autoUpdateCheckBox.isSelected());
-        PluginPreferences.setAutomaticCheckUpdate(autoCheckUpdateCheckBox.isSelected());
         PluginPreferences.setAllowBeta(allowBetaCheckBox.isSelected());
     }
 }

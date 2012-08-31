@@ -175,7 +175,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
                 try
                 {
                     // send report
-                    IcyExceptionHandler.report(null, doc.getText(0, doc.getLength()));
+                    IcyExceptionHandler.report(doc.getText(0, doc.getLength()));
                 }
                 catch (BadLocationException e1)
                 {

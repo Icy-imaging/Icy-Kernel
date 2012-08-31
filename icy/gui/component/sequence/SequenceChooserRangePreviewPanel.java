@@ -2,6 +2,7 @@ package icy.gui.component.sequence;
 
 import icy.gui.component.sequence.SequenceChooser.SequenceChooserListener;
 import icy.gui.component.sequence.SequenceRangePreviewPanel.RangeChangeListener;
+import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceModel;
 
@@ -18,7 +19,7 @@ public class SequenceChooserRangePreviewPanel extends JPanel implements Sequence
      */
     private static final long serialVersionUID = 4467616009787995713L;
 
-    protected final boolean dimZ;
+    protected final DimensionId dim;
 
     protected SequenceChooserPanel sequenceChooser;
     protected SequenceRangePreviewPanel sequenceRangePreview;
@@ -26,15 +27,18 @@ public class SequenceChooserRangePreviewPanel extends JPanel implements Sequence
     /**
      * Create the panel.
      * 
-     * @param dimZ
-     *        If true we display Z range selection else we display T range selection
+     * @param dim
+     *        Select which dimension range to display (only Z ot T is possible)
      * @wbp.parser.constructor
      */
-    public SequenceChooserRangePreviewPanel(String title, boolean dimZ)
+    public SequenceChooserRangePreviewPanel(String title, DimensionId dim)
     {
         super();
 
-        this.dimZ = dimZ;
+        if ((dim != DimensionId.Z) && (dim != DimensionId.T))
+            throw new IllegalArgumentException("Only Z or T dimension allowed");
+
+        this.dim = dim;
 
         initialize(title);
 
@@ -55,12 +59,12 @@ public class SequenceChooserRangePreviewPanel extends JPanel implements Sequence
     /**
      * Create the panel.
      * 
-     * @param dimZ
-     *        If true we display Z range selection else we display T range selection
+     * @param dim
+     *        Select which dimension range to display (only Z ot T is possible)
      */
-    public SequenceChooserRangePreviewPanel(boolean dimZ)
+    public SequenceChooserRangePreviewPanel(DimensionId dim)
     {
-        this(null, dimZ);
+        this(null, dim);
     }
 
     private void initialize(String title)
@@ -75,7 +79,7 @@ public class SequenceChooserRangePreviewPanel extends JPanel implements Sequence
         sequenceChooser.setBorder(new EmptyBorder(0, 0, 4, 0));
         panel.add(sequenceChooser, BorderLayout.NORTH);
 
-        sequenceRangePreview = new SequenceRangePreviewPanel(dimZ);
+        sequenceRangePreview = new SequenceRangePreviewPanel(dim);
         panel.add(sequenceRangePreview, BorderLayout.CENTER);
 
         validate();
@@ -91,19 +95,19 @@ public class SequenceChooserRangePreviewPanel extends JPanel implements Sequence
         sequenceRangePreview.setPreviewVisible(value);
     }
 
-    public int getRangeMax()
+    public int getRangeLow()
     {
-        return sequenceRangePreview.getRangeMax();
+        return sequenceRangePreview.getRangeLow();
     }
 
-    public boolean isRangeIndexSelected(int index)
+    public int getRangeHigh()
     {
-        return sequenceRangePreview.isRangeIndexSelected(index);
+        return sequenceRangePreview.getRangeHigh();
     }
 
-    public int getRangeNumSelected()
+    public boolean isIndexSelected(int index)
     {
-        return sequenceRangePreview.getRangeNumSelected();
+        return sequenceRangePreview.isIndexSelected(index);
     }
 
     public int getKeepValue()

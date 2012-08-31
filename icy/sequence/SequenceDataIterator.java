@@ -81,6 +81,7 @@ public class SequenceDataIterator implements DataIterator
         this.sequence = sequence;
         this.roi = null;
         maskXY = null;
+        imageIterator = null;
 
         if (sequence != null)
         {
@@ -147,7 +148,7 @@ public class SequenceDataIterator implements DataIterator
      * Create a new SequenceData iterator to iterate all data.
      * 
      * @param sequence
-     *        Sequence we want to iterate data from
+     *        Sequence we want to iterate data from.
      */
     public SequenceDataIterator(Sequence sequence)
     {
@@ -159,11 +160,13 @@ public class SequenceDataIterator implements DataIterator
      * Create a new SequenceData iterator to iterate data through the specified ROI.
      * 
      * @param sequence
-     *        Sequence we want to iterate data from
+     *        Sequence we want to iterate data from.
      * @param roi
-     *        ROI defining the region to iterate
+     *        ROI defining the region to iterate.
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels in the ROI are included.
      */
-    public SequenceDataIterator(Sequence sequence, ROI roi)
+    public SequenceDataIterator(Sequence sequence, ROI roi, boolean inclusive)
     {
         super();
 
@@ -175,7 +178,7 @@ public class SequenceDataIterator implements DataIterator
         {
             final ROI2D roi2d = (ROI2D) roi;
 
-            maskXY = roi2d.getAsBooleanMask();
+            maskXY = roi2d.getAsBooleanMask(inclusive);
 
             final Rectangle bounds = maskXY.bounds;
 
@@ -281,6 +284,19 @@ public class SequenceDataIterator implements DataIterator
         reset();
     }
 
+    /**
+     * Create a new SequenceData iterator to iterate data through the specified ROI.
+     * 
+     * @param sequence
+     *        Sequence we want to iterate data from.
+     * @param roi
+     *        ROI defining the region to iterate.
+     */
+    public SequenceDataIterator(Sequence sequence, ROI roi)
+    {
+        this(sequence, roi, false);
+    }
+
     @Override
     public void reset()
     {
@@ -342,10 +358,8 @@ public class SequenceDataIterator implements DataIterator
      */
     protected void nextImageifNeeded()
     {
-        while (!done && imageIterator.done())
+        while (imageIterator.done() && !done)
         {
-            prepareDataXYC();
-
             if (++z > endZ)
             {
                 z = startZ;
@@ -353,6 +367,9 @@ public class SequenceDataIterator implements DataIterator
                 if (++t > endT)
                     done = true;
             }
+
+            if (!done)
+                prepareDataXYC();
         }
     }
 
@@ -379,4 +396,54 @@ public class SequenceDataIterator implements DataIterator
 
         imageIterator.set(value);
     }
+
+    /**
+     * Return current X position.
+     */
+    public int getPositionX()
+    {
+        if (imageIterator != null)
+            return imageIterator.getPositionX();
+
+        return 0;
+    }
+
+    /**
+     * Return current Y position.
+     */
+    public int getPositionY()
+    {
+        if (imageIterator != null)
+            return imageIterator.getPositionY();
+
+        return 0;
+    }
+
+    /**
+     * Return current C position.
+     */
+    public int getPositionC()
+    {
+        if (imageIterator != null)
+            return imageIterator.getPositionC();
+
+        return 0;
+    }
+
+    /**
+     * Return current Z position.
+     */
+    public int getPositionZ()
+    {
+        return z;
+    }
+
+    /**
+     * Return current T position.
+     */
+    public int getPositionT()
+    {
+        return t;
+    }
+
 }

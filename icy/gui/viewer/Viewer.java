@@ -25,7 +25,6 @@ import icy.canvas.IcyCanvasEvent;
 import icy.canvas.IcyCanvasListener;
 import icy.common.IcyAbstractAction;
 import icy.common.MenuCallback;
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.component.renderer.LabelComboBoxRenderer;
@@ -36,6 +35,7 @@ import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.lut.LUTViewer;
 import icy.gui.lut.abstract_.IcyLutViewer;
 import icy.gui.plugin.PluginComboBoxRenderer;
+import icy.gui.util.ComponentUtil;
 import icy.gui.viewer.ViewerEvent.ViewerEventType;
 import icy.image.IcyBufferedImage;
 import icy.image.lut.LUT;
@@ -94,7 +94,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         public DuplicateAction()
         {
-            super("Duplicate view", new IcyIcon(ResourceUtil.ICON_DUPLICATE), "Duplicate view", KeyEvent.VK_F2);
+            super("Duplicate view", new IcyIcon(ResourceUtil.ICON_DUPLICATE), "Duplicate view (no data duplication)",
+                    KeyEvent.VK_F2);
         }
 
         @Override
@@ -150,7 +151,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                                 // set sequence name
                                 seqOut.setName("Screen shot of '" + seqIn.getName() + "' view");
                                 // add sequence
-                                Icy.addSequence(seqOut);
+                                Icy.getMainInterface().addSequence(seqOut);
                             }
                         }
                         finally
@@ -201,7 +202,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                                 // set sequence name
                                 seqOut.setName("Rendering of '" + seqIn.getName() + "' view");
                                 // add sequence
-                                Icy.addSequence(seqOut);
+                                Icy.getMainInterface().addSequence(seqOut);
                             }
                         }
                         finally
@@ -463,7 +464,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         final JMenuItem overlayItem = new JMenuItem("Display layers");
         overlayItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, 0));
-        overlayItem.setIcon(new IcyIcon(ResourceUtil.ICON_LAYER));
+        overlayItem.setIcon(new IcyIcon(ResourceUtil.ICON_LAYER_H2));
         if ((canvas != null) && canvas.getDrawLayers())
             overlayItem.setText("Hide layers");
         else
@@ -606,7 +607,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         buildCanvasCombo();
 
         // build buttons
-        layersEnabledButton = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_LAYER));
+        layersEnabledButton = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_LAYER_H2));
         layersEnabledButton.setToolTipText("Hide layers");
         layersEnabledButton.setFocusable(false);
         layersEnabledButton.setSelected(true);

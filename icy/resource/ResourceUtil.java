@@ -43,9 +43,11 @@ public class ResourceUtil
     public static final ImageIcon ICON_ICY_32 = ResourceUtil.getImageIcon(IMAGE_ICY_32);
     public static final ImageIcon ICON_ICY_256 = ResourceUtil.getImageIcon(IMAGE_ICY_256);
 
+    public static final Image ICON_NULL = ResourceUtil.getAlphaIconAsImage("null.png");
     public static final Image ICON_EXPAND = ResourceUtil.getAlphaIconAsImage("top_right_expand.png");
     public static final Image ICON_COLLAPSE = ResourceUtil.getAlphaIconAsImage("top_right_collapse.png");
     public static final Image ICON_PICTURE = ResourceUtil.getAlphaIconAsImage("picture.png");
+    public static final Image ICON_PICTURE_COPY = ResourceUtil.getAlphaIconAsImage("picture_copy.png");
     public static final Image ICON_WINDOW = ResourceUtil.getAlphaIconAsImage("app_window.png");
     public static final Image ICON_DETACHED_WINDOW = ResourceUtil.getAlphaIconAsImage("app_detached.png");
     public static final Image ICON_NEWDOC = ResourceUtil.getAlphaIconAsImage("doc_new.png");
@@ -70,11 +72,31 @@ public class ResourceUtil
     public static final Image ICON_LOCK_OPEN = ResourceUtil.getAlphaIconAsImage("unlocked.png");
     public static final Image ICON_LOCK_CLOSE = ResourceUtil.getAlphaIconAsImage("locked.png");
     public static final Image ICON_PROPERTIES = ICON_DOCTEXT1;
-    public static final Image ICON_TOOLS = ResourceUtil.getAlphaIconAsImage("wrench_plus_2.png");;
+    public static final Image ICON_TAG = ResourceUtil.getAlphaIconAsImage("tag.png");
+    public static final Image ICON_TOOLS = ResourceUtil.getAlphaIconAsImage("wrench_plus_2.png");
+    public static final Image ICON_CUT = ResourceUtil.getAlphaIconAsImage("clipboard_cut.png");
     public static final Image ICON_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png");
     public static final Image ICON_NOT_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_close.png");
 
-    public static final Image ICON_LAYER = ResourceUtil.getAlphaIconAsImage("layers_2.png");
+    public static final Image ICON_LAYER_H1 = ResourceUtil.getAlphaIconAsImage("layers_h1.png");
+    public static final Image ICON_LAYER_H2 = ResourceUtil.getAlphaIconAsImage("layers_h2.png");
+    public static final Image ICON_LAYER_REVERSE_H = ResourceUtil.getAlphaIconAsImage("layers_reverse_h.png");
+    public static final Image ICON_LAYER_EXTRACT_H = ResourceUtil.getAlphaIconAsImage("layers_extract_h.png");
+    public static final Image ICON_LAYER_INSERT_H = ResourceUtil.getAlphaIconAsImage("layers_insert_h.png");
+    public static final Image ICON_LAYER_REMOVE_H = ResourceUtil.getAlphaIconAsImage("layers_remove_h.png");
+    public static final Image ICON_LAYER_REMOVE_ADV_H = ResourceUtil.getAlphaIconAsImage("layers_remove_adv_h.png");
+    public static final Image ICON_LAYER_V1 = ResourceUtil.getAlphaIconAsImage("layers_v1.png");
+    public static final Image ICON_LAYER_V2 = ResourceUtil.getAlphaIconAsImage("layers_v2.png");
+    public static final Image ICON_LAYER_REVERSE_V = ResourceUtil.getAlphaIconAsImage("layers_reverse_v.png");
+    public static final Image ICON_LAYER_EXTRACT_V = ResourceUtil.getAlphaIconAsImage("layers_extract_v.png");
+    public static final Image ICON_LAYER_INSERT_V = ResourceUtil.getAlphaIconAsImage("layers_insert_v.png");
+    public static final Image ICON_LAYER_REMOVE_V = ResourceUtil.getAlphaIconAsImage("layers_remove_v.png");
+    public static final Image ICON_LAYER_REMOVE_ADV_V = ResourceUtil.getAlphaIconAsImage("layers_remove_adv_v.png");
+
+    public static final Image ICON_INDENT_DECREASE = ResourceUtil.getAlphaIconAsImage("indent_decrease.png");
+    public static final Image ICON_INDENT_INCREASE = ResourceUtil.getAlphaIconAsImage("indent_increase.png");
+    public static final Image ICON_INDENT_REMOVE = ResourceUtil.getAlphaIconAsImage("indent_remove.png");
+
     public static final Image ICON_DUPLICATE = ResourceUtil.getAlphaIconAsImage("duplicate.png");
     public static final Image ICON_PHOTO = ResourceUtil.getAlphaIconAsImage("photo.png");
     public static final Image ICON_PHOTO_SMALL = ResourceUtil.getAlphaIconAsImage("photo_small.png");
@@ -90,7 +112,7 @@ public class ResourceUtil
 
     public static final Image ICON_ARROW_UP = ResourceUtil.getAlphaIconAsImage("arrow_top.png");
     /**
-     * @deprecated Uses {@link #ICON_ARROW_TOP} instead.
+     * @deprecated Uses {@link #ICON_ARROW_UP} instead.
      */
     @Deprecated
     public static final Image ICON_ARROW_TOP = ICON_ARROW_UP;
@@ -98,7 +120,7 @@ public class ResourceUtil
     public static final Image ICON_ARROW_RIGHT = ResourceUtil.getAlphaIconAsImage("arrow_right.png");
     public static final Image ICON_ARROW_DOWN = ResourceUtil.getAlphaIconAsImage("arrow_bottom.png");
     /**
-     * @deprecated Uses {@link #ICON_ARROW_TOP} instead.
+     * @deprecated Uses {@link #ICON_ARROW_DOWN} instead.
      */
     @Deprecated
     public static final Image ICON_ARROW_BOTTOM = ICON_ARROW_DOWN;
@@ -114,10 +136,21 @@ public class ResourceUtil
     public static final Image ICON_SQUARE_PREV = ResourceUtil.getAlphaIconAsImage("sq_prev.png");
     public static final Image ICON_SQUARE_NEXT = ResourceUtil.getAlphaIconAsImage("sq_next.png");
 
+    public static final Image ICON_BAND_RIGHT = ResourceUtil.getAlphaIconAsImage("arrow_r.png");
+    public static final Image ICON_BAND_LEFT = ResourceUtil.getAlphaIconAsImage("arrow_l.png");
+
     public static final Image ICON_SMILEY_HAPPY = ResourceUtil.getAlphaIconAsImage("emotion_smile.png");
     public static final Image ICON_SMILEY_SAD = ResourceUtil.getAlphaIconAsImage("emotion_sad.png");
 
     public static final Image ICON_NETWORK = ResourceUtil.getAlphaIconAsImage("network.png");
+
+    public static final Image ICON_RESIZE = ResourceUtil.getAlphaIconAsImage("cursor_drag_arrow.png");
+    public static final Image ICON_RESIZE_2 = ResourceUtil.getAlphaIconAsImage("cursor_drag_arrow_2.png");
+
+    public static final Image ICON_ALPHA_COLOR = ResourceUtil.getColorIconAsImage("alpha.png");
+    public static final Image ICON_ARGB_COLOR = ResourceUtil.getColorIconAsImage("argb.png");
+    public static final Image ICON_RGB_COLOR = ResourceUtil.getColorIconAsImage("rgb.png");
+    public static final Image ICON_GRAY_COLOR = ResourceUtil.getColorIconAsImage("gray.png");
 
     private static final String ICON_PATH = "res/icon/";
     private static final String IMAGE_PATH = "res/image/";
@@ -143,7 +176,7 @@ public class ResourceUtil
         {
             // resize only if image has different size
             if ((image.getWidth(null) != size) || (image.getWidth(null) != size))
-                return ImageUtil.scaleImage(image, size, size);
+                return ImageUtil.scale(image, size, size);
         }
 
         return image;
@@ -161,9 +194,9 @@ public class ResourceUtil
         final URL url = ResourceUtil.class.getResource("/" + IMAGE_PATH + name);
 
         if (url != null)
-            result = ImageUtil.loadImage(url, true);
+            result = ImageUtil.load(url, true);
         else
-            result = ImageUtil.loadImage(new File(IMAGE_PATH + name), true);
+            result = ImageUtil.load(new File(IMAGE_PATH + name), true);
 
         return result;
     }
@@ -206,9 +239,9 @@ public class ResourceUtil
         final URL url = ResourceUtil.class.getResource("/" + ICON_PATH + name);
 
         if (url != null)
-            image = ImageUtil.loadImage(url, true);
+            image = ImageUtil.load(url, true);
         else
-            image = ImageUtil.loadImage(new File(ICON_PATH + name), true);
+            image = ImageUtil.load(new File(ICON_PATH + name), true);
 
         if (image == null)
         {

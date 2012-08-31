@@ -19,9 +19,11 @@
 package icy.gui.plugin;
 
 import icy.gui.frame.IcyFrame;
+import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
+import icy.plugin.PluginRepositoryLoader;
 import icy.plugin.PluginUpdater;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
@@ -34,9 +36,23 @@ import icy.util.StringUtil;
  */
 public class PluginErrorReport
 {
-    public static void report(final PluginDescriptor plugin, final String message)
+    /**
+     * Report an error thrown by the specified plugin.
+     * 
+     * @param plugin
+     *        {@link PluginDescriptor} of the plugin which thrown the error.
+     * @param devId
+     *        Plugin developer Id, used only if we do not have plugin descriptor information.
+     * @param message
+     *        Error message to report
+     */
+    public static void report(final PluginDescriptor plugin, final String devId, final String message)
     {
-        if (reportFrameAlreadyExist(plugin))
+        // cannot be reported...
+        if ((plugin == null) && StringUtil.isEmpty(devId))
+            return;
+
+        if (reportFrameAlreadyExist(plugin, devId))
             return;
 
         // always do that in background process
@@ -45,52 +61,92 @@ public class PluginErrorReport
             @Override
             public void run()
             {
-                final CancelableProgressFrame info = new CancelableProgressFrame("Plugin '" + plugin.getName()
-                        + "' has crashed, searching for update...");
-
-                PluginDescriptor onlinePlugin = null;
-
-                try
+                if (plugin != null)
                 {
-                    // search for update
-                    if (!info.isCancelRequested())
-                        onlinePlugin = PluginUpdater.getUpdate(plugin);
-                }
-                finally
-                {
-                    info.close();
-                }
+                    final CancelableProgressFrame info = new CancelableProgressFrame("Plugin '" + plugin.getName()
+                            + "' has crashed, searching for update...");
 
-                if (!info.isCancelRequested())
-                {
-                    // update found
-                    if (onlinePlugin != null)
-                        PluginInstaller.install(onlinePlugin, false);
-                    else
+                    // wait for online basic info loaded
+                    PluginRepositoryLoader.waitBasicLoaded();
+
+                    PluginDescriptor onlinePlugin = null;
+
+                    try
                     {
-                        // display report as no update were found
-                        ThreadUtil.invokeLater(new Runnable()
-                        {
-                            @Override
-                            public void run()
-                            {
-                                new PluginErrorReportFrame(plugin, message);
-                            }
-                        });
+                        // search for update
+                        if (!info.isCancelRequested())
+                            onlinePlugin = PluginUpdater.getUpdate(plugin);
                     }
+                    finally
+                    {
+                        info.close();
+                    }
+
+                    if (!info.isCancelRequested())
+                    {
+                        // update found
+                        if (onlinePlugin != null)
+                        {
+                            PluginInstaller.install(onlinePlugin, false);
+                            new AnnounceFrame(
+                                    "The plugin crashed but a new version has been found, try it again when installation is done",
+                                    10);
+                        }
+                        else
+                        {
+                            // display report as no update were found
+                            ThreadUtil.invokeLater(new Runnable()
+                            {
+                                @Override
+                                public void run()
+                                {
+                                    new PluginErrorReportFrame(plugin, message);
+                                }
+                            });
+                        }
+                    }
+                }
+                else
+                {
+                    // directly display report frame
+                    ThreadUtil.invokeLater(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            new PluginErrorReportFrame(devId, message);
+                        }
+                    });
                 }
             }
         });
     }
 
+    public static void report(PluginDescriptor plugin, String message)
+    {
+        report(plugin, null, message);
+    }
+
     /**
      * This function test if we already have an active report for the specified plugin
      */
-    private static boolean reportFrameAlreadyExist(PluginDescriptor plugin)
+    private static boolean reportFrameAlreadyExist(PluginDescriptor plugin, String devId)
     {
         for (IcyFrame frame : IcyFrame.getAllFrames(PluginErrorReportFrame.class))
-            if (StringUtil.equals(((PluginErrorReportFrame) frame).getPlugin().getName(), plugin.getName()))
-                return true;
+        {
+            final PluginErrorReportFrame f = (PluginErrorReportFrame) frame;
+
+            if (plugin != null)
+            {
+                if (StringUtil.equals(f.getPlugin().getName(), plugin.getName()))
+                    return true;
+            }
+            else
+            {
+                if (StringUtil.equals(f.getDevId(), devId))
+                    return true;
+            }
+        }
 
         return false;
     }

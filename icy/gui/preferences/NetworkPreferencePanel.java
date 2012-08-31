@@ -3,6 +3,8 @@
  */
 package icy.gui.preferences;
 
+import icy.gui.component.IcyTextField;
+import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.network.NetworkUtil;
 import icy.preferences.NetworkPreferences;
 
@@ -16,13 +18,15 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
-import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  * @author stephane
  */
-public class NetworkPreferencePanel extends PreferencePanel
+public class NetworkPreferencePanel extends PreferencePanel implements ActionListener, TextChangeListener,
+        ChangeListener
 {
     /**
      * 
@@ -31,15 +35,15 @@ public class NetworkPreferencePanel extends PreferencePanel
 
     public static final String NODE_NAME = "Network";
 
-    private JTextField httpHostField;
+    private JComboBox proxySettingComboBox;
+    private IcyTextField httpHostField;
     private JSpinner httpPortField;
-    private JTextField httpsHostField;
-    private JTextField ftpHostField;
+    private IcyTextField httpsHostField;
+    private IcyTextField ftpHostField;
     private JSpinner httpsPortField;
     private JSpinner ftpPortField;
-    private JTextField socksHostField;
+    private IcyTextField socksHostField;
     private JSpinner socksPortField;
-    private JComboBox proxySettingComboBox;
 
     public NetworkPreferencePanel(PreferenceFrame parent)
     {
@@ -48,25 +52,19 @@ public class NetworkPreferencePanel extends PreferencePanel
         initialize();
         validate();
 
-        proxySettingComboBox.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent arg0)
-            {
-                final boolean enabled = proxySettingComboBox.getSelectedIndex() == 2;
-
-                httpHostField.setEnabled(enabled);
-                httpPortField.setEnabled(enabled);
-                httpsHostField.setEnabled(enabled);
-                httpsPortField.setEnabled(enabled);
-                ftpHostField.setEnabled(enabled);
-                ftpPortField.setEnabled(enabled);
-                socksHostField.setEnabled(enabled);
-                socksPortField.setEnabled(enabled);
-            }
-        });
-
         load();
+
+        updateComponentsState();
+
+        proxySettingComboBox.addActionListener(this);
+        httpHostField.addTextChangeListener(this);
+        httpPortField.addChangeListener(this);
+        httpsHostField.addTextChangeListener(this);
+        httpsPortField.addChangeListener(this);
+        ftpHostField.addTextChangeListener(this);
+        ftpPortField.addChangeListener(this);
+        socksHostField.addTextChangeListener(this);
+        socksPortField.addChangeListener(this);
     }
 
     void initialize()
@@ -105,7 +103,7 @@ public class NetworkPreferencePanel extends PreferencePanel
         gbc_lblNewLabel.gridy = 1;
         mainPanel.add(lblNewLabel, gbc_lblNewLabel);
 
-        httpHostField = new JTextField();
+        httpHostField = new IcyTextField();
         httpHostField.setToolTipText("HTTP proxy host");
         GridBagConstraints gbc_httpHostField = new GridBagConstraints();
         gbc_httpHostField.insets = new Insets(0, 0, 5, 5);
@@ -133,7 +131,7 @@ public class NetworkPreferencePanel extends PreferencePanel
         gbc_lblNewLabel_1.gridy = 2;
         mainPanel.add(lblNewLabel_1, gbc_lblNewLabel_1);
 
-        httpsHostField = new JTextField();
+        httpsHostField = new IcyTextField();
         httpsHostField.setToolTipText("HTTPS proxy host");
         GridBagConstraints gbc_httpsHostField = new GridBagConstraints();
         gbc_httpsHostField.insets = new Insets(0, 0, 5, 5);
@@ -161,7 +159,7 @@ public class NetworkPreferencePanel extends PreferencePanel
         gbc_lblNewLabel_2.gridy = 3;
         mainPanel.add(lblNewLabel_2, gbc_lblNewLabel_2);
 
-        ftpHostField = new JTextField();
+        ftpHostField = new IcyTextField();
         ftpHostField.setToolTipText("FTP proxy host");
         GridBagConstraints gbc_ftpHostField = new GridBagConstraints();
         gbc_ftpHostField.insets = new Insets(0, 0, 5, 5);
@@ -189,7 +187,7 @@ public class NetworkPreferencePanel extends PreferencePanel
         gbc_lblNewLabel_3.gridy = 4;
         mainPanel.add(lblNewLabel_3, gbc_lblNewLabel_3);
 
-        socksHostField = new JTextField();
+        socksHostField = new IcyTextField();
         socksHostField.setToolTipText("SOCKS host");
         GridBagConstraints gbc_socksHostField = new GridBagConstraints();
         gbc_socksHostField.insets = new Insets(0, 0, 5, 5);
@@ -208,6 +206,44 @@ public class NetworkPreferencePanel extends PreferencePanel
         gbc_socksPortField.gridx = 2;
         gbc_socksPortField.gridy = 4;
         mainPanel.add(socksPortField, gbc_socksPortField);
+    }
+
+    private void updateComponentsState()
+    {
+        final boolean enabled = proxySettingComboBox.getSelectedIndex() == 2;
+
+        httpHostField.setEnabled(enabled);
+        httpPortField.setEnabled(enabled);
+        httpsHostField.setEnabled(enabled);
+        httpsPortField.setEnabled(enabled);
+        ftpHostField.setEnabled(enabled);
+        ftpPortField.setEnabled(enabled);
+        socksHostField.setEnabled(enabled);
+        socksPortField.setEnabled(enabled);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        if (e.getSource() == proxySettingComboBox)
+            updateComponentsState();
+
+        // network setting changed, restart needed
+        getPreferenceFrame().setNeedRestart();
+    }
+
+    @Override
+    public void textChanged(IcyTextField source)
+    {
+        // network setting changed, restart needed
+        getPreferenceFrame().setNeedRestart();
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e)
+    {
+        // network setting changed, restart needed
+        getPreferenceFrame().setNeedRestart();
     }
 
     @Override

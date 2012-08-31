@@ -20,8 +20,8 @@ package icy.gui.frame;
 
 import icy.common.IcyAbstractAction;
 import icy.common.MenuCallback;
-import icy.gui.component.ComponentUtil;
 import icy.gui.main.MainFrame;
+import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;

@@ -18,10 +18,10 @@
  */
 package icy.gui.lut;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.lut.ColormapViewer.ColormapPositionListener;
 import icy.gui.lut.ScalerViewer.ScalerPositionListener;
 import icy.gui.lut.abstract_.IcyLutBandViewer;
+import icy.gui.util.ComponentUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.lut.LUTBand;
 import icy.math.MathUtil;

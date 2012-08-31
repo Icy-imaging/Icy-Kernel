@@ -4,14 +4,15 @@
 package icy.canvas;
 
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.menu.ToolRibbonTask;
 import icy.gui.menu.ToolRibbonTask.ToolRibbonTaskListener;
+import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
+import icy.image.IcyBufferedImageUtil;
 import icy.image.ImageUtil;
 import icy.main.Icy;
 import icy.math.Interpolator;
@@ -41,6 +42,7 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -675,7 +677,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 final IcyBufferedImage img = Canvas2D.this.getCurrentImage();
 
                 if (img != null)
-                    imageCache = img.getARGBImage(getLut(), imageCache);
+                    imageCache = IcyBufferedImageUtil.getARGBImage(img, getLut(), imageCache);
                 else
                     imageCache = null;
 
@@ -709,6 +711,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         double curScaleX;
         double curScaleY;
         private double startRotationZ;
+        private int previousCursor;
         private boolean moving;
         private boolean rotating;
         boolean hasMouseFocus;
@@ -723,6 +726,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             startDragPosition = null;
             curScaleX = -1;
             curScaleY = -1;
+            previousCursor = getCursor().getType();
             moving = false;
             rotating = false;
             hasMouseFocus = false;
@@ -1213,8 +1217,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             if (onMousePressed(e.isConsumed(), EventUtil.isLeftMouseButton(e), EventUtil.isRightMouseButton(e),
                     EventUtil.isControlDown(e)))
                 e.consume();
-
-            updateCursor();
         }
 
         @Override
@@ -1496,6 +1498,12 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         void updateCursor()
         {
+            final int cursor = getCursor().getType();
+
+            // save previous cursor if different from HAND
+            if (cursor != Cursor.HAND_CURSOR)
+                previousCursor = cursor;
+
             if (isDragging())
             {
                 GuiUtil.setCursor(this, Cursor.HAND_CURSOR);
@@ -1535,7 +1543,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 }
             }
 
-            GuiUtil.setCursor(this, Cursor.DEFAULT_CURSOR);
+            GuiUtil.setCursor(this, previousCursor);
         }
 
         public void refresh()
@@ -2209,6 +2217,12 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         panel.add(subPanel, BorderLayout.SOUTH);
     }
 
+    @Override
+    public Component getViewComponent()
+    {
+        return canvasView;
+    }
+
     /**
      * Return the {@link CanvasView} component of Canvas2D.
      */
@@ -2877,7 +2891,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         try
         {
             // FIXME : not really optimal in memory and processing
-            final BufferedImage img = srcImg.getARGBImage(getLut());
+            final BufferedImage img = IcyBufferedImageUtil.getARGBImage(srcImg, getLut());
             final BufferedImage result;
             final Graphics2D g;
 

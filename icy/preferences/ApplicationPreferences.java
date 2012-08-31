@@ -16,6 +16,7 @@ public class ApplicationPreferences
      */
     private static final String PREF_ID = "icy";
 
+    public static final String ID_ICY_ID = "id";
     public static final String ID_OS = "os";
     public static final String ID_UPDATE_REPOSITORY_BASE = "updateRepositoryBase";
     public static final String ID_UPDATE_REPOSITORY_FILE = "updateRepositoryFile";
@@ -58,6 +59,16 @@ public class ApplicationPreferences
     public static void setOs(String value)
     {
         preferences.put(ID_OS, value);
+    }
+
+    public static int getId()
+    {
+        return preferences.getInt(ID_ICY_ID, -1);
+    }
+
+    public static void setId(int value)
+    {
+        preferences.putInt(ID_ICY_ID, value);
     }
 
     public static String getUpdateRepositoryBase()

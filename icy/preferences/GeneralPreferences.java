@@ -21,7 +21,6 @@ public class GeneralPreferences
      */
     public static final String ID_SEQUENCE_PERSISTENCE = "sequencePersistence";
     public static final String ID_AUTO_UPDATE = "autoUpdate";
-    public static final String ID_AUTO_CHECK_UPDATE = "autoCheckUpdate";
     public static final String ID_RIBBON_MINIMIZED = "ribbonMinimized";
     public static final String ID_DETACHED_MODE = "detached";
     public static final String ID_ALWAYS_ON_TOP = "alwaysOnTop";
@@ -82,7 +81,6 @@ public class GeneralPreferences
         return prefConfirms;
     }
 
-
     public static boolean getExitConfirm()
     {
         return prefConfirms.getBoolean(ID_CONFIRM_EXIT, true);
@@ -96,11 +94,6 @@ public class GeneralPreferences
     public static boolean getAutomaticUpdate()
     {
         return prefGeneral.getBoolean(ID_AUTO_UPDATE, true);
-    }
-
-    public static boolean getAutomaticCheckUpdate()
-    {
-        return prefGeneral.getBoolean(ID_AUTO_CHECK_UPDATE, true);
     }
 
     public static boolean getRibbonMinimized()
@@ -146,11 +139,6 @@ public class GeneralPreferences
     public static void setAutomaticUpdate(boolean value)
     {
         prefGeneral.putBoolean(ID_AUTO_UPDATE, value);
-    }
-
-    public static void setAutomaticCheckUpdate(boolean value)
-    {
-        prefGeneral.putBoolean(ID_AUTO_CHECK_UPDATE, value);
     }
 
     public static void setRibbonMinimized(boolean value)

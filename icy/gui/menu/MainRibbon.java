@@ -253,7 +253,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     // private final JRibbonBand othersPluginsBand;
     private final JRibbonBand setupPluginsBand;
     private final JRibbonBand newPluginsBand;
-    private final ImageRibbonTask imageTask;
+//    private final ImageRibbonTask imageTask;
+    private final SequenceOperationTask sequenceOperationTask;
     private final ToolRibbonTask toolRibbonTask;
     private final ImageJTask ijTask;
     final JMenu othersPluginsMenu;
@@ -290,12 +291,14 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         // FIXED TASKS
 
         // load image task first as tools task need all plugins loaded...
-        imageTask = new ImageRibbonTask();
+//        imageTask = new ImageRibbonTask();
+        sequenceOperationTask = new SequenceOperationTask();
         toolRibbonTask = new ToolRibbonTask();
         ijTask = new ImageJTask();
         // we want tools task to be the first task
         ribbon.addTask(toolRibbonTask);
-        ribbon.addTask(imageTask);
+//        ribbon.addTask(imageTask);
+        ribbon.addTask(sequenceOperationTask);
         ribbon.addTask(ijTask);
 
         // WORKSPACES
@@ -1334,7 +1337,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     public void sequenceFocused(MainEvent event)
     {
         // dispatch event to all interested
-        imageTask.onSequenceFocusChange();
+//        imageTask.onSequenceFocusChange();
+        sequenceOperationTask.onSequenceFocusChange();
         applicationMenu.onSequenceFocusChange();
     }
 

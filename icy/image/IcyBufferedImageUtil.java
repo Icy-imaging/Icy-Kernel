@@ -1,0 +1,652 @@
+/**
+ * 
+ */
+package icy.image;
+
+import icy.image.lut.LUT;
+import icy.math.Scaler;
+import icy.type.DataType;
+import icy.type.collection.array.Array1DUtil;
+import icy.type.collection.array.ArrayUtil;
+
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.media.jai.Interpolation;
+import javax.media.jai.RenderedOp;
+import javax.media.jai.operator.ScaleDescriptor;
+import javax.swing.SwingConstants;
+
+/**
+ * {@link IcyBufferedImage} utilities class.<br>
+ * You can find here tools to clone, manipulate the image data type, its size...
+ * 
+ * @author Stephane
+ */
+public class IcyBufferedImageUtil
+{
+    public static enum FilterType
+    {
+        NEAREST, BILINEAR, BICUBIC
+    };
+
+    /**
+     * used for getARGBImage method (fast conversion)
+     */
+    private static ARGBImageBuilder argbImageBuilder = new ARGBImageBuilder();
+
+    /**
+     * @deprecated Uses {@link IcyBufferedImage#createFrom(BufferedImage)} instead.
+     */
+    @Deprecated
+    public static IcyBufferedImage toIcyBufferedImage(BufferedImage image)
+    {
+        return IcyBufferedImage.createFrom(image);
+    }
+
+    /**
+     * @deprecated Uses {@link IcyBufferedImage#createFrom(List)} instead.
+     */
+    @Deprecated
+    public static IcyBufferedImage toIcyBufferedImage(List<BufferedImage> images)
+    {
+        return IcyBufferedImage.createFrom(images);
+    }
+
+    /**
+     * Draw the source {@link IcyBufferedImage} into the destination {@link BufferedImage}<br>
+     * If <code>dest</code> is null then a new TYPE_INT_ARGB {@link BufferedImage} is returned.<br>
+     * 
+     * @param source
+     *        source image
+     * @param dest
+     *        destination image
+     * @param lut
+     *        {@link LUT} is used for color calculation (internal lut is used if null).
+     */
+    public static BufferedImage toBufferedImage(IcyBufferedImage source, BufferedImage dest, LUT lut)
+    {
+        if (dest == null)
+            return getARGBImage(source, lut, null);
+
+        // dest is ARGB, use it directly as destination for getARGBImage(..)
+        if (dest.getType() == BufferedImage.TYPE_INT_ARGB)
+            getARGBImage(source, lut, dest);
+
+        // else we need to convert to wanted type...
+        dest.getGraphics().drawImage(getARGBImage(source, lut, null), 0, 0, null);
+
+        return dest;
+    }
+
+    /**
+     * Draw the source {@link IcyBufferedImage} into the destination {@link BufferedImage}<br>
+     * If <code>dest</code> is null then a new TYPE_INT_ARGB {@link BufferedImage} is returned.
+     * 
+     * @param source
+     *        source image
+     * @param dest
+     *        destination image
+     */
+    public static BufferedImage toBufferedImage(IcyBufferedImage source, BufferedImage dest)
+    {
+        return toBufferedImage(source, dest, null);
+    }
+
+    /**
+     * Convert the current {@link IcyBufferedImage} into a {@link BufferedImage} of the specified
+     * type.
+     * 
+     * @param source
+     *        source image
+     * @param imageType
+     *        wanted image type, only the following is accepted :<br>
+     *        BufferedImage.TYPE_INT_ARGB<br>
+     *        BufferedImage.TYPE_INT_RGB<br>
+     *        BufferedImage.TYPE_BYTE_GRAY<br>
+     * @param lut
+     *        lut used for color calculation (source image lut is used if null)
+     * @return BufferedImage
+     */
+    public static BufferedImage toBufferedImage(IcyBufferedImage source, int imageType, LUT lut)
+    {
+        if (imageType == BufferedImage.TYPE_INT_ARGB)
+            return getARGBImage(source, lut, null);
+
+        final BufferedImage outImg = new BufferedImage(source.getWidth(), source.getHeight(), imageType);
+
+        toBufferedImage(source, outImg, lut);
+
+        return outImg;
+    }
+
+    /**
+     * Draw the source {@link IcyBufferedImage} into the destination ARGB {@link BufferedImage}<br>
+     * If <code>dest</code> is null then a new ARGB {@link BufferedImage} is returned.<br>
+     * This function is faster than {@link #toBufferedImage(IcyBufferedImage, BufferedImage, LUT)}
+     * but the output {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB)
+     * 
+     * @param source
+     *        source image
+     * @param dest
+     *        destination image
+     * @param lut
+     *        {@link LUT} is used for color calculation (internal lut is used if null).
+     */
+    public static BufferedImage getARGBImage(IcyBufferedImage source, LUT lut, BufferedImage dest)
+    {
+        // use image lut when no specific lut
+        if (lut == null)
+            return argbImageBuilder.buildARGBImage(source, source.getLUT(), dest);
+
+        return argbImageBuilder.buildARGBImage(source, lut, dest);
+    }
+
+    /**
+     * Draw the source {@link IcyBufferedImage} into the destination ARGB {@link BufferedImage}<br>
+     * If <code>dest</code> is null then a new ARGB {@link BufferedImage} is returned.<br>
+     * <br>
+     * This function is faster than {@link #toBufferedImage(IcyBufferedImage, BufferedImage)} but
+     * the output {@link BufferedImage} is fixed to ARGB type (TYPE_INT_ARGB)
+     * 
+     * @param source
+     *        source image
+     * @param dest
+     *        destination image
+     */
+    public static BufferedImage getARGBImage(IcyBufferedImage source, BufferedImage dest)
+    {
+        return getARGBImage(source, null, dest);
+    }
+
+    /**
+     * Convert the current {@link IcyBufferedImage} into a ARGB {@link BufferedImage}.
+     * 
+     * @param source
+     *        source image
+     * @param lut
+     *        {@link LUT} is used for color calculation (internal lut is used if null).
+     */
+    public static BufferedImage getARGBImage(IcyBufferedImage source, LUT lut)
+    {
+        return getARGBImage(source, lut, null);
+    }
+
+    /**
+     * Convert the current {@link IcyBufferedImage} into a ARGB {@link BufferedImage}.
+     * 
+     * @param source
+     *        source image
+     */
+    public static BufferedImage getARGBImage(IcyBufferedImage source)
+    {
+        return getARGBImage(source, null, null);
+    }
+
+    /**
+     * Convert the source image to the specified data type.<br>
+     * Create a copy if conversion needed else return current image.
+     * 
+     * @param source
+     *        source image
+     * @param dataType
+     *        data type wanted
+     * @param scaler
+     *        scaler for scaling internal data during conversion
+     * @return converted image
+     */
+    public static IcyBufferedImage convertToType(IcyBufferedImage source, DataType dataType, Scaler scaler)
+    {
+        final DataType srcDataType = source.getDataType_();
+
+        // no conversion needed
+        if ((srcDataType == dataType) && scaler.isNull())
+            return source;
+        // can't convert
+        if ((srcDataType == DataType.UNDEFINED) || (dataType == DataType.UNDEFINED))
+            return null;
+
+        final boolean srcSigned = srcDataType.isSigned();
+        final int sizeC = source.getSizeC();
+        final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(), sizeC, dataType);
+
+        for (int c = 0; c < sizeC; c++)
+        {
+            // no rescale ?
+            if (scaler.isNull())
+                // simple type change
+                ArrayUtil.arrayToArray(source.getDataXY(c), result.getDataXY(c), srcSigned);
+            else
+            {
+                // first we convert in double
+                final double[] darray = Array1DUtil.arrayToDoubleArray(source.getDataXY(c), srcSigned);
+                // then we scale data
+                scaler.scale(darray);
+                // and finally we convert in wanted datatype
+                Array1DUtil.doubleArrayToArray(darray, result.getDataXY(c));
+            }
+        }
+
+        // copy colormap from source image
+        result.copyColormap(source);
+        // notify we modified data
+        result.dataChanged();
+
+        return result;
+    }
+
+    /**
+     * Convert the source image to the specified data type.<br>
+     * Create a copy if conversion needed else return current image.
+     * 
+     * @param dataType
+     *        data type wanted
+     * @param rescale
+     *        indicate if we want to scale data value according to data type range
+     * @return converted image
+     */
+    public static IcyBufferedImage convertToType(IcyBufferedImage source, DataType dataType, boolean rescale)
+    {
+        final double boundsSrc[] = source.getChannelTypeGlobalBounds();
+        final double boundsDst[];
+
+        if (rescale)
+            boundsDst = dataType.getDefaultBounds();
+        else
+            boundsDst = boundsSrc;
+
+        // use scaler to scale data
+        final Scaler scaler = new Scaler(boundsSrc[0], boundsSrc[1], boundsDst[0], boundsDst[1], false);
+
+        return convertToType(source, dataType, scaler);
+    }
+
+    /**
+     * Create a copy of the specified image.
+     */
+    public static IcyBufferedImage getCopy(IcyBufferedImage source)
+    {
+        // create a compatible image
+        final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(), source.getSizeC(),
+                source.getDataType_());
+        // copy data from this image
+        result.copyData(source);
+
+        return result;
+    }
+
+    /**
+     * Creates a new image which is a sub part of the source image from the specified
+     * coordinates and dimensions.
+     */
+    public static IcyBufferedImage getSubImage(IcyBufferedImage source, int x, int y, int w, int h)
+    {
+        // adjust rectangle
+        final Rectangle r = new Rectangle(x, y, w, h).intersection(source.getBounds());
+
+        final DataType dataType = source.getDataType_();
+        final boolean signed = dataType.isSigned();
+        final int sizeC = source.getSizeC();
+        final int dstSizeX = r.width;
+        final int dstSizeY = r.height;
+
+        final IcyBufferedImage result = new IcyBufferedImage(dstSizeX, dstSizeY, sizeC, dataType);
+
+        final int srcSizeX = source.getSizeX();
+
+        for (int c = 0; c < sizeC; c++)
+        {
+            final Object src = source.getDataXY(c);
+            final Object dst = result.getDataXY(c);
+
+            int srcOffset = source.getOffset(r.x, r.y);
+            int dstOffset = 0;
+
+            for (int curY = 0; curY < dstSizeY; curY++)
+            {
+                Array1DUtil.arrayToArray(src, srcOffset, dst, dstOffset, dstSizeX, signed);
+                srcOffset += srcSizeX;
+                dstOffset += dstSizeX;
+            }
+        }
+
+        result.dataChanged();
+
+        return result;
+    }
+
+    /**
+     * Build a new single channel image (greyscale) from the specified source image channel.
+     */
+    public static IcyBufferedImage extractChannel(IcyBufferedImage source, int channelNumber)
+    {
+        final ArrayList<Integer> list = new ArrayList<Integer>();
+
+        list.add(Integer.valueOf(channelNumber));
+
+        return extractChannels(source, list);
+    }
+
+    /**
+     * Build a new image from the specified source image channels.
+     */
+    public static IcyBufferedImage extractChannels(IcyBufferedImage source, List<Integer> channelNumbers)
+    {
+        // create output
+        final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(),
+                channelNumbers.size(), source.getDataType_());
+        final int sizeC = source.getSizeC();
+
+        // set data from specified band
+        for (int i = 0; i < channelNumbers.size(); i++)
+        {
+            final int channel = channelNumbers.get(i).intValue();
+
+            if (channel < sizeC)
+                result.setDataXY(i, source.getDataXY(channel));
+        }
+
+        return result;
+    }
+
+    /**
+     * Add empty channel(s) to the specified image and return result as a new image.
+     * 
+     * @param source
+     *        source image.
+     * @param index
+     *        position where we want to add channel(s).
+     * @param num
+     *        number of channel(s) to add.
+     */
+    public static IcyBufferedImage addChannels(IcyBufferedImage source, int index, int num)
+    {
+        final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(), source.getSizeC()
+                + num, source.getDataType_());
+
+        for (int c = 0; c < index; c++)
+            result.copyData(source, c, c);
+        for (int c = index; c < source.getSizeC(); c++)
+            result.copyData(source, c, c + num);
+
+        return result;
+    }
+
+    /**
+     * Add an empty channel to the specified image and return result as a new image.
+     * 
+     * @param source
+     *        source image.
+     * @param index
+     *        position where we want to add channel.
+     */
+    public static IcyBufferedImage addChannel(IcyBufferedImage source, int index)
+    {
+        return addChannels(source, index, 1);
+    }
+
+    /**
+     * Add an empty channel to the specified image and return result as a new image.
+     * 
+     * @param source
+     *        source image.
+     */
+    public static IcyBufferedImage addChannel(IcyBufferedImage source)
+    {
+        return addChannels(source, source.getSizeC(), 1);
+    }
+
+    /**
+     * Return a copy of the source image with specified size, alignment rules and filter type.
+     * 
+     * @param source
+     *        source image
+     * @param resizeContent
+     *        indicate if content should be resized or not (empty area are 0 filled)
+     * @param xAlign
+     *        horizontal image alignment (SwingConstants.LEFT / CENTER / RIGHT)<br>
+     *        (used only if resizeContent is false)
+     * @param yAlign
+     *        vertical image alignment (SwingConstants.TOP / CENTER / BOTTOM)<br>
+     *        (used only if resizeContent is false)
+     * @param filterType
+     *        filter method used for scale (used only if resizeContent is true)
+     */
+    public static IcyBufferedImage scale(IcyBufferedImage source, int width, int height, boolean resizeContent,
+            int xAlign, int yAlign, FilterType filterType)
+    {
+        final IcyBufferedImage result;
+
+        // no content resize ?
+        if (!resizeContent)
+        {
+            final int xt;
+            final int yt;
+
+            // calculate translation values
+            final int dx = width - source.getWidth();
+            switch (xAlign)
+            {
+                default:
+                case SwingConstants.LEFT:
+                    xt = 0;
+                    break;
+
+                case SwingConstants.CENTER:
+                    xt = dx / 2;
+                    break;
+
+                case SwingConstants.RIGHT:
+                    xt = dx;
+                    break;
+            }
+
+            final int dy = height - source.getHeight();
+            switch (yAlign)
+            {
+                default:
+                case SwingConstants.TOP:
+                    yt = 0;
+                    break;
+
+                case SwingConstants.CENTER:
+                    yt = dy / 2;
+                    break;
+
+                case SwingConstants.BOTTOM:
+                    yt = dy;
+                    break;
+            }
+
+            // create an empty image with specified size and current colormodel description
+            result = new IcyBufferedImage(width, height, source.getIcyColorModel());
+            // copy data from current image to specified destination
+            result.copyData(source, null, new Point(xt, yt));
+        }
+        else
+        {
+            final Float xScale = Float.valueOf((float) width / source.getWidth());
+            final Float yScale = Float.valueOf((float) height / source.getHeight());
+            final Interpolation interpolation;
+
+            switch (filterType)
+            {
+                default:
+                case NEAREST:
+                    interpolation = Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+                    break;
+
+                case BILINEAR:
+                    interpolation = Interpolation.getInstance(Interpolation.INTERP_BILINEAR);
+                    break;
+
+                case BICUBIC:
+                    interpolation = Interpolation.getInstance(Interpolation.INTERP_BICUBIC);
+                    break;
+            }
+
+            // use JAI scaler (use a copy to avoid source alteration)
+            final RenderedOp renderedOp = ScaleDescriptor.create(getCopy(source), xScale, yScale, Float.valueOf(0f),
+                    Float.valueOf(0f), interpolation, null);
+
+            // JAI keep dataType and others stuff in their BufferedImage
+            result = IcyBufferedImage.createFrom(renderedOp.getAsBufferedImage());
+        }
+
+        return result;
+    }
+
+    /**
+     * Return a copy of the image with specified size.<br>
+     * By default the FilterType.BILINEAR is used as filter method if resizeContent is true
+     * 
+     * @param source
+     *        source image
+     * @param resizeContent
+     *        indicate if content should be resized or not (empty area are 0 filled)
+     * @param xAlign
+     *        horizontal image alignment (SwingConstants.LEFT / CENTER / RIGHT)<br>
+     *        (used only if resizeContent is false)
+     * @param yAlign
+     *        vertical image alignment (SwingConstants.TOP / CENTER / BOTTOM)<br>
+     *        (used only if resizeContent is false)
+     */
+    public static IcyBufferedImage scale(IcyBufferedImage source, int width, int height, boolean resizeContent,
+            int xAlign, int yAlign)
+    {
+        return scale(source, width, height, resizeContent, xAlign, yAlign, FilterType.BILINEAR);
+    }
+
+    /**
+     * Return a copy of the image with specified size<br>
+     * 
+     * @param source
+     *        source image
+     * @param filterType
+     *        filter method used for scale (used only if resizeContent is true)
+     */
+    public static IcyBufferedImage scale(IcyBufferedImage source, int width, int height, FilterType filterType)
+    {
+        return scale(source, width, height, true, 0, 0, filterType);
+    }
+
+    /**
+     * Return a copy of the image with specified size.<br>
+     * By default the FilterType.BILINEAR is used as filter method.
+     */
+    public static IcyBufferedImage scale(IcyBufferedImage source, int width, int height)
+    {
+        return scale(source, width, height, FilterType.BILINEAR);
+    }
+
+    /**
+     * Translate image internal data of specified channel by the specified (x,y) vector.<br>
+     * Data going "outside" image bounds is lost.
+     */
+    public static void translate(IcyBufferedImage source, int dx, int dy, int channel)
+    {
+        // nothing to do
+        if ((dx == 0) && (dy == 0))
+            return;
+
+        final int sizeX = source.getSizeX();
+        final int sizeY = source.getSizeY();
+
+        // limit to sizeX / sizeY
+        final int adx = Math.min(Math.max(-sizeX, dx), sizeX);
+        final int ady = Math.min(Math.max(-sizeY, dy), sizeY);
+
+        final int fromFill;
+        final int toFill;
+        final int fromCopy;
+        final int toCopy;
+        final int wCopy;
+
+        if (adx < 0)
+        {
+            fromCopy = -adx;
+            toCopy = 0;
+            wCopy = sizeX + adx;
+            fromFill = wCopy;
+            toFill = sizeX;
+        }
+        else
+        {
+            fromFill = 0;
+            toFill = adx;
+            fromCopy = fromFill;
+            toCopy = toFill;
+            wCopy = sizeX - adx;
+        }
+
+        final Object data = source.getDataXY(channel);
+
+        if (ady < 0)
+        {
+            final int hCopy = sizeY + ady;
+            int toOffset = 0;
+            int fromOffset = -ady * sizeX;
+
+            // copy
+            for (int y = 0; y < hCopy; y++)
+            {
+                // copy first
+                ArrayUtil.innerCopy(data, fromOffset + fromCopy, toOffset + toCopy, wCopy);
+                // then fill
+                ArrayUtil.fill(data, toOffset + fromFill, toOffset + toFill, 0d);
+                // adjust offset
+                fromOffset += sizeX;
+                toOffset += sizeX;
+            }
+            // fill
+            ArrayUtil.fill(data, toOffset, fromOffset, 0d);
+        }
+        else
+        {
+            final int hCopy = sizeY - ady;
+            int toOffset = (sizeY - 1) * sizeX;
+            int fromOffset = toOffset - (ady * sizeX);
+
+            // copy
+            for (int y = 0; y < hCopy; y++)
+            {
+                // copy first
+                ArrayUtil.innerCopy(data, fromOffset + fromCopy, toOffset + toCopy, wCopy);
+                // then fill
+                ArrayUtil.fill(data, toOffset + fromFill, toOffset + toFill, 0d);
+                // adjust offset
+                fromOffset -= sizeX;
+                toOffset -= sizeX;
+            }
+            // fill
+            ArrayUtil.fill(data, 0, 0 + (ady * sizeX), 0d);
+        }
+
+        // notify data changed
+        source.dataChanged();
+    }
+
+    /**
+     * Translate image internal data (all channels) by the specified (x,y) vector.<br>
+     * Data going "outside" image bounds is lost.
+     */
+    public static void translate(IcyBufferedImage source, int dx, int dy)
+    {
+        final int sizeC = source.getSizeC();
+
+        source.beginUpdate();
+        try
+        {
+            for (int c = 0; c < sizeC; c++)
+                translate(source, dx, dy, c);
+        }
+        finally
+        {
+            source.endUpdate();
+        }
+    }
+
+}

@@ -18,10 +18,10 @@
  */
 package icy.gui.preferences;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcyLogo;
 import icy.gui.dialog.ConfirmDialog;
 import icy.gui.frame.IcyFrame;
+import icy.gui.util.ComponentUtil;
 import icy.gui.util.WindowPositionSaver;
 import icy.main.Icy;
 import icy.preferences.IcyPreferences;

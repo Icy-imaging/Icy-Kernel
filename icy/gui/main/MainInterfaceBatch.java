@@ -215,6 +215,12 @@ public class MainInterfaceBatch implements MainInterface
     }
 
     @Override
+    public ArrayList<Sequence> getSequences(String name)
+    {
+        return new ArrayList<Sequence>();
+    }
+
+    @Override
     public Sequence getFirstSequencesContaining(ROI roi)
     {
         return null;
@@ -416,6 +422,12 @@ public class MainInterfaceBatch implements MainInterface
 
     @Override
     public void removeFocusedSequenceListener(FocusedSequenceListener listener)
+    {
+
+    }
+
+    @Override
+    public void addSequence(Sequence sequence)
     {
 
     }

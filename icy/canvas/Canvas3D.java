@@ -19,11 +19,11 @@
 package icy.canvas;
 
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.button.ColorChooserButton;
 import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
+import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
@@ -46,6 +46,7 @@ import icy.vtk.VtkUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -996,6 +997,12 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                     renderer.RemoveActor2D(actor);
             }
         }
+    }
+
+    @Override
+    public Component getViewComponent()
+    {
+        return panel3D;
     }
 
     public vtkPanel getPanel3D()

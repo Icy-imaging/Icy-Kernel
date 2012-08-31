@@ -45,6 +45,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
+import javax.swing.filechooser.FileFilter;
 
 import loci.formats.ImageReader;
 
@@ -53,6 +54,21 @@ import loci.formats.ImageReader;
  */
 public class ImageLoaderDialog extends JFileChooser implements PropertyChangeListener, Runnable
 {
+    public static class AllImageFileFilter extends FileFilter
+    {
+        @Override
+        public boolean accept(File file)
+        {
+            return !Loader.canDiscardImageFile(file.getName());
+        }
+
+        @Override
+        public String getDescription()
+        {
+            return "All images file";
+        }
+    }
+
     /**
      * 
      */
@@ -89,7 +105,7 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         addChoosableFileFilter(FileFormat.LSM.getExtensionFileFilter());
         addChoosableFileFilter(FileFormat.AVI.getExtensionFileFilter());
         // so we have AllFileFilter selected and in last position
-        addChoosableFileFilter(getAcceptAllFileFilter());
+        addChoosableFileFilter(new AllImageFileFilter());
 
         setMultiSelectionEnabled(true);
         setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);

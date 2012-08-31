@@ -54,12 +54,6 @@ public class ROIEdge extends ROI
             edgeImage = null;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see icy.painter.AbstractPainter#mouseMove(java.awt.event.MouseEvent,
-         * java.awt.geom.Point2D, icy.canvas.IcyCanvas)
-         */
         @Override
         public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
@@ -72,12 +66,6 @@ public class ROIEdge extends ROI
             changed();
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see icy.painter.AbstractPainter#paint(java.awt.Graphics2D, icy.sequence.Sequence,
-         * icy.canvas.IcyCanvas)
-         */
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {

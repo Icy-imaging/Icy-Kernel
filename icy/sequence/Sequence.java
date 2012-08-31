@@ -25,6 +25,7 @@ import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageEvent;
 import icy.image.IcyBufferedImageListener;
+import icy.image.IcyBufferedImageUtil;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colormodel.IcyColorModelEvent;
 import icy.image.colormodel.IcyColorModelListener;
@@ -48,7 +49,6 @@ import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
 import icy.undo.IcyUndoManager;
-import icy.util.OMEUtil;
 import icy.util.StringUtil;
 
 import java.awt.Dimension;
@@ -229,6 +229,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             metaData = new OMEXMLMetadataImpl();
         else
             metaData = meta;
+
         // set name
         if (!StringUtil.isEmpty(name))
             MetaDataUtil.setName(metaData, 0, name);
@@ -241,10 +242,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         filename = null;
 
         // default pixel size and time interval
-        MetaDataUtil.setPixelSizeX(metaData, 0, 1d);
-        MetaDataUtil.setPixelSizeY(metaData, 0, 1d);
-        MetaDataUtil.setPixelSizeZ(metaData, 0, 1d);
-        MetaDataUtil.setTimeInterval(metaData, 0, 100d);
+        if (MetaDataUtil.getPixelSizeX(metaData, 0) == 1d)
+            MetaDataUtil.setPixelSizeX(metaData, 0, 1d);
+        if (MetaDataUtil.getPixelSizeY(metaData, 0) == 1d)
+            MetaDataUtil.setPixelSizeY(metaData, 0, 1d);
+        if (MetaDataUtil.getPixelSizeZ(metaData, 0) == 1d)
+            MetaDataUtil.setPixelSizeZ(metaData, 0, 1d);
+        if (MetaDataUtil.getTimeInterval(metaData, 0) == 1d)
+            MetaDataUtil.setTimeInterval(metaData, 0, 1d);
 
         volumetricImages = new TreeMap<Integer, VolumetricImage>();
         painters = new HashSet<Painter>();
@@ -388,76 +393,25 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns a new sequence with specified dataType from current sequence
-     * 
-     * @param dataType
-     *        data type wanted
-     * @param rescale
-     *        indicate if we want to scale data value according to data type range
-     * @return converted sequence
+     * @deprecated Uses {@link SequenceUtil#convertToType(Sequence, DataType, boolean)} instead.
      */
+    @Deprecated
     public Sequence convertToType(DataType dataType, boolean rescale)
     {
-        final double boundsSrc[] = getGlobalChannelTypeBounds();
-        final double boundsDst[];
-
-        if (rescale)
-            boundsDst = dataType.getDefaultBounds();
-        else
-            boundsDst = boundsSrc;
-
-        // use scaler to scale data
-        return convertToType(dataType, new Scaler(boundsSrc[0], boundsSrc[1], boundsDst[0], boundsDst[1], false));
+        return SequenceUtil.convertToType(this, dataType, rescale);
     }
 
     /**
-     * Returns a new sequence with specified dataType from current sequence.
-     * 
-     * @param dataType
-     *        data type wanted.
-     * @param scaler
-     *        scaler for scaling internal data during conversion.
-     * @return converted image
+     * @deprecated Uses {@link SequenceUtil#convertToType(Sequence, DataType, Scaler)} instead.
      */
+    @Deprecated
     public Sequence convertToType(DataType dataType, Scaler scaler)
     {
-        final Sequence output = new Sequence(OMEUtil.createOMEMetadata(metaData));
-
-        output.beginUpdate();
-        try
-        {
-            for (int t = 0; t < getSizeT(); t++)
-            {
-                for (int z = 0; z < getSizeZ(); z++)
-                {
-                    final IcyBufferedImage converted = getImage(t, z).convertToType(dataType, scaler);
-
-                    // FIXME : why we did that ??
-                    // this is not a good idea to force bounds when rescale = false
-
-                    // set bounds manually for the converted image
-                    // for (int c = 0; c < getSizeC(); c++)
-                    // {
-                    // converted.setComponentBounds(c, boundsDst);
-                    // converted.setComponentUserBounds(c, boundsDst);
-                    // }
-
-                    output.setImage(t, z, converted);
-                }
-            }
-
-            output.setName(getName() + " (" + output.getDataType_() + ")");
-        }
-        finally
-        {
-            output.endUpdate();
-        }
-
-        return output;
+        return SequenceUtil.convertToType(this, dataType, scaler);
     }
 
     /**
-     * @deprecated use {@link #convertToType(DataType, boolean)} instead
+     * @deprecated Uses {@link SequenceUtil#convertToType(Sequence, DataType, boolean)} instead
      */
     @Deprecated
     public Sequence convertToType(int dataType, boolean signed, boolean rescale)
@@ -466,63 +420,25 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Build a new 1 channel sequence (grey) from the specified channel number
-     * 
-     * @param channelNumber
-     * @return Sequence
+     * @deprecated Uses {@link SequenceUtil#extractChannel(Sequence, int)} instead.
      */
+    @Deprecated
     public Sequence extractChannel(int channelNumber)
     {
-        final ArrayList<Integer> list = new ArrayList<Integer>();
-
-        list.add(Integer.valueOf(channelNumber));
-
-        return extractChannels(list);
+        return SequenceUtil.extractChannel(this, channelNumber);
     }
 
     /**
-     * Build a new sequence from the specified sequence channels
-     * 
-     * @param channelNumbers
-     * @return Sequence
+     * @deprecated Uses {@link SequenceUtil#extractChannels(Sequence, List)} instead.
      */
+    @Deprecated
     public Sequence extractChannels(List<Integer> channelNumbers)
     {
-        final Sequence outSequence = new Sequence(OMEUtil.createOMEMetadata(metaData));
-
-        for (int t = 0; t < getSizeT(); t++)
-            for (int z = 0; z < getSizeZ(); z++)
-                outSequence.setImage(t, z, getImage(t, z).extractChannels(channelNumbers));
-
-        // sequence name
-        if (channelNumbers.size() > 1)
-        {
-            String s = "";
-            for (int i = 0; i < channelNumbers.size(); i++)
-                s += " " + channelNumbers.get(i).toString();
-
-            outSequence.setName(getName() + " (channels" + s + ")");
-        }
-        else if (channelNumbers.size() == 1)
-            outSequence.setName(getName() + " (" + getChannelName(channelNumbers.get(0).intValue()) + ")");
-
-        // channel name
-        int c = 0;
-        for (Integer i : channelNumbers)
-        {
-            outSequence.setChannelName(c, getChannelName(i.intValue()));
-            c++;
-        }
-
-        return outSequence;
+        return SequenceUtil.extractChannels(this, channelNumbers);
     }
 
     /**
-     * Use {@link #extractChannel(int)} instead
-     * 
-     * @param bandNumber
-     * @return Sequence
-     * @deprecated
+     * @deprecated Uses {@link SequenceUtil#extractChannel(Sequence, int)} instead
      */
     @Deprecated
     public Sequence extractBand(int bandNumber)
@@ -531,11 +447,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Same as {@link #extractChannels(List)}
-     * 
-     * @param bandNumbers
-     * @return Sequence
-     * @deprecated
+     * @deprecated Uses {@link SequenceUtil#extractChannels(Sequence, List)} instead
      */
     @Deprecated
     public Sequence extractBands(List<Integer> bandNumbers)
@@ -866,7 +778,10 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Get the Undo manager of this sequence
+     * 
+     * @deprecated Don't use it as this is not supported yet.
      */
+    @Deprecated
     public IcyUndoManager getUndoManager()
     {
         return undoManager;
@@ -917,6 +832,23 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns painters of specified class attached to this sequence
+     */
+    public List<Painter> getPainters(Class<? extends Painter> painterClass)
+    {
+        final ArrayList<Painter> result = new ArrayList<Painter>();
+
+        synchronized (painters)
+        {
+            for (Painter painter : painters)
+                if (painter.getClass().isAssignableFrom(painterClass))
+                    result.add(painter);
+        }
+
+        return result;
+    }
+
+    /**
      * Returns all ROIs attached to this sequence
      */
     public ArrayList<ROI> getROIs()
@@ -945,9 +877,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         final ArrayList<ROI2D> result = new ArrayList<ROI2D>();
 
-        for (ROI roi : getROIs())
-            if (roi instanceof ROI2D)
-                result.add((ROI2D) roi);
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi instanceof ROI2D)
+                    result.add((ROI2D) roi);
+        }
 
         return result;
     }
@@ -959,9 +894,44 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         final ArrayList<ROI3D> result = new ArrayList<ROI3D>();
 
-        for (ROI roi : getROIs())
-            if (roi instanceof ROI3D)
-                result.add((ROI3D) roi);
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi instanceof ROI3D)
+                    result.add((ROI3D) roi);
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns true if the sequence contains ROI of specified ROI class.
+     */
+    public boolean hasROI(Class<? extends ROI> roiClass)
+    {
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.getClass().isAssignableFrom(roiClass))
+                    return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns ROIs of specified class attached to this sequence
+     */
+    public List<ROI> getROIs(Class<? extends ROI> roiClass)
+    {
+        final ArrayList<ROI> result = new ArrayList<ROI>();
+
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.getClass().isAssignableFrom(roiClass))
+                    result.add(roi);
+        }
 
         return result;
     }
@@ -973,9 +943,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         int result = 0;
 
-        for (ROI roi : getROIs())
-            if (roi.getClass().isAssignableFrom(roiClass))
-                result++;
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.getClass().isAssignableFrom(roiClass))
+                    result++;
+        }
 
         return result;
     }
@@ -985,9 +958,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public ROI getSelectedROI()
     {
-        for (ROI roi : getROIs())
-            if (roi.isSelected())
-                return roi;
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.isSelected())
+                    return roi;
+        }
 
         return null;
     }
@@ -997,9 +973,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public ROI2D getSelectedROI2D()
     {
-        for (ROI2D roi : getROI2Ds())
-            if (roi.isSelected())
-                return roi;
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if ((roi instanceof ROI2D) && roi.isSelected())
+                    return (ROI2D) roi;
+        }
 
         return null;
     }
@@ -1009,9 +988,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public ROI3D getSelectedROI3D()
     {
-        for (ROI3D roi : getROI3Ds())
-            if (roi.isSelected())
-                return roi;
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if ((roi instanceof ROI3D) && roi.isSelected())
+                    return (ROI3D) roi;
+        }
 
         return null;
     }
@@ -1023,9 +1005,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         final ArrayList<ROI> result = new ArrayList<ROI>();
 
-        for (ROI roi : getROIs())
-            if (roi.isSelected())
-                result.add(roi);
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.isSelected())
+                    result.add(roi);
+        }
 
         return result;
     }
@@ -1037,9 +1022,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         final ArrayList<ROI2D> result = new ArrayList<ROI2D>();
 
-        for (ROI2D roi : getROI2Ds())
-            if (roi.isSelected())
-                result.add(roi);
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if ((roi instanceof ROI2D) && roi.isSelected())
+                    result.add((ROI2D) roi);
+        }
 
         return result;
     }
@@ -1051,9 +1039,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         final ArrayList<ROI3D> result = new ArrayList<ROI3D>();
 
-        for (ROI3D roi : getROI3Ds())
-            if (roi.isSelected())
-                result.add(roi);
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if ((roi instanceof ROI3D) && roi.isSelected())
+                    result.add((ROI3D) roi);
+        }
 
         return result;
     }
@@ -1063,9 +1054,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public ROI getFocusedROI()
     {
-        for (ROI roi : getROIs())
-            if (roi.isFocused())
-                return roi;
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.isFocused())
+                    return roi;
+        }
 
         return null;
     }
@@ -1177,18 +1171,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         {
             endUpdate();
         }
-
-        return false;
-    }
-
-    /**
-     * Returns true if the sequence contains ROI of specified ROI class.
-     */
-    public boolean hasROI(Class<? extends ROI> roiClass)
-    {
-        for (ROI roi : getROIs())
-            if (roi.getClass().isAssignableFrom(roiClass))
-                return true;
 
         return false;
     }
@@ -1587,7 +1569,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * {@link #getImage(int, int)}<br>
      * if <code>((c < 0) || (c >= sizeC))</code> then it returns <code>null</code>
      * 
-     * @see icy.image.IcyBufferedImage#extractChannel(int)
+     * @see IcyBufferedImageUtil#extractChannel(IcyBufferedImage, int)
      * @since version 1.0.3.3b
      */
     @Override
@@ -1877,6 +1859,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns true is the specified channel uses default attributed name
+     */
+    public boolean isDefaultChannelName(int index)
+    {
+        return StringUtil.equals(getChannelName(index), getDefaultChannelName(index));
+    }
+
+    /**
      * Returns the number of volumetricImage in the sequence<br>
      * Use getSizeT instead
      * 
@@ -2032,6 +2022,16 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public Rectangle getBounds()
     {
         return new Rectangle(getSizeX(), getSizeY());
+    }
+
+    /**
+     * Returns the number of sample.<br>
+     * This is equivalent to<br>
+     * <code>getSizeX() * getSizeY() * getSizeC() * getSizeZ() * getSizeT()</code>
+     */
+    public int getNumSample()
+    {
+        return getSizeX() * getSizeY() * getSizeC() * getSizeZ() * getSizeT();
     }
 
     /**
@@ -2316,6 +2316,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double getChannelTypeMin(int channel)
     {
+        if (colorModel == null)
+            return 0d;
+
         return colorModel.getComponentAbsMinValue(channel);
     }
 
@@ -2324,6 +2327,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double getChannelTypeMax(int channel)
     {
+        if (colorModel == null)
+            return 0d;
+
         return colorModel.getComponentAbsMaxValue(channel);
     }
 
@@ -2333,6 +2339,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double[] getChannelTypeBounds(int channel)
     {
+        if (colorModel == null)
+            return new double[] {0d, 0d};
+
         return colorModel.getComponentAbsBounds(channel);
     }
 
@@ -2354,7 +2363,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Get the global preferred data type bounds (min and max values) for all channels.
      */
-    public double[] getGlobalChannelTypeBounds()
+    public double[] getChannelTypeGlobalBounds()
     {
         final int sizeC = getSizeC();
         final double[] result = getChannelTypeBounds(0);
@@ -2367,6 +2376,15 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         }
 
         return result;
+    }
+
+    /**
+     * @deprecated Uses {@link #getChannelTypeGlobalBounds()} instead.
+     */
+    @Deprecated
+    public double[] getGlobalChannelTypeBounds()
+    {
+        return getChannelTypeGlobalBounds();
     }
 
     /**
@@ -2411,7 +2429,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Deprecated
     public double[] getGlobalComponentAbsBounds()
     {
-        return getGlobalChannelTypeBounds();
+        return getChannelTypeGlobalBounds();
     }
 
     /**
@@ -2419,6 +2437,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double getChannelMin(int channel)
     {
+        if (colorModel == null)
+            return 0d;
+
         return colorModel.getComponentUserMinValue(channel);
     }
 
@@ -2427,6 +2448,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double getChannelMax(int channel)
     {
+        if (colorModel == null)
+            return 0d;
+
         return colorModel.getComponentUserMaxValue(channel);
     }
 
@@ -2435,6 +2459,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public double[] getChannelBounds(int channel)
     {
+        if (colorModel == null)
+            return new double[] {0d, 0d};
+
         return colorModel.getComponentUserBounds(channel);
     }
 
@@ -2448,6 +2475,30 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         for (int c = 0; c < sizeC; c++)
             result[c] = getChannelBounds(c);
+
+        return result;
+    }
+
+    /**
+     * Get global bounds (min and max values) in the whole sequence for all channels.
+     */
+    public double[] getChannelsGlobalBounds()
+    {
+        final int sizeC = getSizeC();
+        final double[] result = new double[2];
+
+        result[0] = Double.MAX_VALUE;
+        result[1] = -Double.MAX_VALUE;
+
+        for (int c = 0; c < sizeC; c++)
+        {
+            final double[] bounds = getChannelBounds(c);
+
+            if (bounds[0] < result[0])
+                result[0] = bounds[0];
+            if (bounds[1] > result[1])
+                result[1] = bounds[1];
+        }
 
         return result;
     }
@@ -4582,64 +4633,24 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Creates a sub sequence with from specified coordinates and with specified dimensions
+     * @deprecated Uses
+     *             {@link SequenceUtil#getSubSequence(Sequence, int, int, int, int, int, int, int, int)}
+     *             instead.
      */
+    @Deprecated
     public Sequence getSubSequence(int startX, int startY, int startZ, int startT, int sizeX, int sizeY, int sizeZ,
             int sizeT)
     {
-        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(metaData));
-
-        result.beginUpdate();
-        try
-        {
-            for (int t = 0; t < sizeT; t++)
-            {
-                for (int z = 0; z < sizeZ; z++)
-                {
-                    final IcyBufferedImage img = getImage(startT + t, startZ + z);
-
-                    if (img != null)
-                        result.setImage(t, z, img.getSubImageCopy(startX, startY, sizeX, sizeY));
-                    else
-                        result.setImage(t, z, null);
-                }
-            }
-        }
-        finally
-        {
-            result.endUpdate();
-        }
-
-        result.setName(getName() + " (crop)");
-
-        return result;
+        return SequenceUtil.getSubSequence(this, startX, startY, startZ, startT, sizeX, sizeY, sizeZ, sizeT);
     }
 
     /**
-     * Creates and return a copy of the sequence
+     * @deprecated Uses {@link SequenceUtil#getCopy(Sequence)} instead.
      */
+    @Deprecated
     public Sequence getCopy()
     {
-        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(metaData));
-        final int sizeT = getSizeT();
-        final int sizeZ = getSizeZ();
-
-        for (int t = 0; t < sizeT; t++)
-        {
-            for (int z = 0; z < sizeZ; z++)
-            {
-                final IcyBufferedImage img = getImage(t, z);
-
-                if (img != null)
-                    result.setImage(t, z, img.getCopy());
-                else
-                    setImage(t, z, null);
-            }
-        }
-
-        result.setName(getName() + " (copy)");
-
-        return result;
+        return SequenceUtil.getCopy(this);
     }
 
     /**
@@ -4684,23 +4695,39 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Get XML data node identified by specified name
+     * Returns true if the specified XML data node exist
      * 
      * @param name
-     *        name of wanted node
+     *        name of node
+     * @see #getNode(String)
      */
-    public Node getNode(String name)
+    public Node isNodeExisting(String name)
     {
         return persistent.getNode(name);
     }
 
     /**
-     * Creates a node with specified name and return it<br>
-     * If the node already exists the existing node is returned
+     * Get XML data node identified by specified name.<br>
+     * The node is created if needed.
      * 
      * @param name
-     *        name of node to set in attached XML data
+     *        name of wanted node
+     * @see #isNodeExisting(String)
      */
+    public Node getNode(String name)
+    {
+        final Node result = persistent.getNode(name);
+
+        if (result == null)
+            return persistent.setNode(name);
+
+        return result;
+    }
+
+    /**
+     * @deprecated Uses {@link #getNode(String)} instead.
+     */
+    @Deprecated
     public Node setNode(String name)
     {
         return persistent.setNode(name);

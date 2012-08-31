@@ -101,9 +101,14 @@ public class LUTBand implements ScalerListener, IcyColorSpaceListener
         return getColorSpace().getColormap(component);
     }
 
+    public void copyColorMap(IcyColorMap colorMap, boolean copyName, boolean copyAlpha)
+    {
+        getColorSpace().copyColormap(component, colorMap, copyName, copyAlpha);
+    }
+
     public void copyColorMap(IcyColorMap colorMap)
     {
-        getColorSpace().copyColormap(component, colorMap);
+        copyColorMap(colorMap, true, true);
     }
 
     // private void adJustBounds()

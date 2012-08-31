@@ -19,7 +19,7 @@
 package icy.gui.component.button;
 
 import icy.common.IcyAbstractAction;
-import icy.gui.component.ComponentUtil;
+import icy.gui.util.ComponentUtil;
 import icy.resource.icon.IcyIcon;
 import icy.util.StringUtil;
 
@@ -173,6 +173,19 @@ public class IcyToggleButton extends JToggleButton
     }
 
     /**
+     * Return the selected icon as IcyIcon
+     */
+    public IcyIcon getSelectedIcyIcon()
+    {
+        final Icon icon = getSelectedIcon();
+
+        if (icon instanceof IcyIcon)
+            return (IcyIcon) icon;
+
+        return null;
+    }
+
+    /**
      * @return the flat
      */
     public boolean isFlat()
@@ -227,12 +240,55 @@ public class IcyToggleButton extends JToggleButton
     }
 
     /**
+     * @return the icon name
+     */
+    public String getSelectedIconName()
+    {
+        final IcyIcon icon = getSelectedIcyIcon();
+
+        if (icon != null)
+            return icon.getName();
+
+        return null;
+    }
+
+    /**
+     * @param iconName
+     *        the iconName to set
+     */
+    public void setSelectedIconName(String iconName)
+    {
+        final IcyIcon icon = getSelectedIcyIcon();
+
+        if (icon != null)
+        {
+            icon.setName(iconName);
+            updateSize();
+        }
+    }
+
+    /**
      * @param iconImage
      *        the iconImage to set
      */
     public void setIconImage(Image iconImage)
     {
         final IcyIcon icon = getIcyIcon();
+
+        if (icon != null)
+        {
+            icon.setImage(iconImage);
+            updateSize();
+        }
+    }
+
+    /**
+     * @param iconImage
+     *        the iconImage to set
+     */
+    public void setSelectedIconImage(Image iconImage)
+    {
+        final IcyIcon icon = getSelectedIcyIcon();
 
         if (icon != null)
         {

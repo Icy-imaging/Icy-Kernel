@@ -32,7 +32,6 @@ import icy.gui.main.MainInterface;
 import icy.gui.main.MainInterfaceBatch;
 import icy.gui.main.MainInterfaceGui;
 import icy.gui.util.LookAndFeelUtil;
-import icy.gui.viewer.Viewer;
 import icy.imagej.ImageJPatcher;
 import icy.math.UnitUtil;
 import icy.network.NetworkUtil;
@@ -47,6 +46,7 @@ import icy.sequence.Sequence;
 import icy.system.AppleUtil;
 import icy.system.IcyExceptionHandler;
 import icy.system.IcySecurityManager;
+import icy.system.SingleInstanceCheck;
 import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.type.collection.CollectionUtil;
@@ -65,6 +65,8 @@ import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
+
+import loci.common.DebugTools;
 
 /**
  * <br>
@@ -85,7 +87,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.2.6.2");
+    public static Version version = new Version("1.2.6.5");
 
     /**
      * Main interface
@@ -95,7 +97,7 @@ public class Icy
     /**
      * Unique instance checker
      */
-    static CheckUniqueTool checkUnique = null;
+    static SingleInstanceCheck checkSingle = null;
 
     /**
      * private splash for initial loading
@@ -113,10 +115,14 @@ public class Icy
     static boolean itkLibraryLoaded = false;
 
     /**
-     * Headless flag (default = true)
+     * Headless flag (default = false)
      */
-    static boolean headless = true;
+    static boolean headless = false;
 
+    /**
+     * No splash screen flag (default = false)
+     */
+    static boolean noSplash = false;
     /**
      * Exiting flag
      */
@@ -143,9 +149,9 @@ public class Icy
             handleAppArgs(args);
 
             // check if ICY is already running.
-            checkUnique = new CheckUniqueTool();
+            checkSingle = new SingleInstanceCheck("icy");
 
-            if (!headless)
+            if (!headless && !noSplash)
             {
                 // prepare splashScreen (ok to create it here as we are not yet in substance laf)
                 splashScreen = new SplashScreenFrame();
@@ -178,21 +184,6 @@ public class Icy
 
             // patches ImageJ classes
             ImageJPatcher.applyPatches();
-
-            // FIXME : We use InvokeNow(...) to avoid the JVM deadlock bug (id: 5104239) when the
-            // AWT
-            // thread is initialized while others threads load some new library with
-            // ClassLoader.loadLibrary
-            // ThreadUtil.invokeNow(new Runnable()
-            // {
-            // @Override
-            // public void run()
-            // {
-            // // preload them here so further process won't wait them too much...
-            // PluginLoader.reload_asynch();
-            // WorkspaceLoader.reload_asynch();
-            // }
-            // });
 
             // build main interface
             if (headless)
@@ -227,19 +218,20 @@ public class Icy
             }
         });
 
-        // then do less important stuff later
-        ThreadUtil.invokeLater(new Runnable()
+        // splash screen initialized --> hide it
+        if (splashScreen != null)
         {
-            @Override
-            public void run()
+            // then do less important stuff later
+            ThreadUtil.invokeLater(new Runnable()
             {
-                if (!headless)
+                @Override
+                public void run()
                 {
                     // we can now hide splash as we have interface
                     splashScreen.dispose();
                 }
-            }
-        });
+            });
+        }
 
         // show general informations
         System.out.println(SystemUtil.getJavaName() + " " + SystemUtil.getJavaVersion() + " ("
@@ -263,11 +255,14 @@ public class Icy
         prepareNativeLibraries();
 
         // check for core update
-        if (GeneralPreferences.getAutomaticUpdate() || GeneralPreferences.getAutomaticCheckUpdate())
-            IcyUpdater.checkUpdate(false, GeneralPreferences.getAutomaticUpdate());
+        if (GeneralPreferences.getAutomaticUpdate())
+            IcyUpdater.checkUpdate(false, true);
         // check for plugin update
-        if (PluginPreferences.getAutomaticUpdate() || PluginPreferences.getAutomaticCheckUpdate())
-            PluginUpdater.checkUpdate(false, PluginPreferences.getAutomaticUpdate());
+        if (PluginPreferences.getAutomaticUpdate())
+            PluginUpdater.checkUpdate(false, true);
+
+        // set LOCI debug level
+        DebugTools.enableLogging("ERROR");
 
         System.out.println();
         System.out.println("ICY Version " + version + " started !");
@@ -278,8 +273,6 @@ public class Icy
 
     private static void handleAppArgs(String[] args)
     {
-        boolean hasHeadLess = false;
-
         for (String arg : args)
         {
             // special flag to disabled JCL (needed for development)
@@ -288,11 +281,12 @@ public class Icy
 
             // headless mode
             if (arg.equalsIgnoreCase("--headless") || arg.equalsIgnoreCase("-hl"))
-                hasHeadLess = true;
-        }
+                headless = true;
 
-        if (!hasHeadLess)
-            headless = false;
+            // disable splash-screen
+            if (arg.equalsIgnoreCase("--nosplash") || arg.equalsIgnoreCase("-ns"))
+                noSplash = true;
+        }
     }
 
     static void checkParameters()
@@ -507,8 +501,8 @@ public class Icy
                 // clean up native library files
                 // unPrepareNativeLibraries();
 
-                if (checkUnique != null)
-                    checkUnique.releaseUnique();
+                if (checkSingle != null)
+                    checkSingle.release();
 
                 final boolean doUpdate = IcyUpdater.getWantUpdate();
 
@@ -580,22 +574,12 @@ public class Icy
     }
 
     /**
-     * Add a viewer for the specified sequence
-     * 
-     * @param sequence
-     *        The sequence to display
+     * @deprecated Uses <code>Icy.getMainInterface().addSequence(Sequence)</code> instead.
      */
+    @Deprecated
     public static void addSequence(final Sequence sequence)
     {
-        // thread safe
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                new Viewer(sequence);
-            }
-        });
+        Icy.getMainInterface().addSequence(sequence);
     }
 
     static void prepareNativeLibraries()
@@ -663,7 +647,7 @@ public class Icy
         // load native libraries
         loadVtkLibrary();
         loadItkLibrary();
-        
+
         // disable native lib support for JAI as we don't provide them (for the moment)
         System.setProperty("com.sun.media.jai.disableMediaLib", "true");
     }

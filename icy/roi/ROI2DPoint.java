@@ -21,14 +21,15 @@ package icy.roi;
 import icy.painter.Anchor2D;
 import icy.util.XMLUtil;
 
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import org.w3c.dom.Node;
 
 /**
- * ROI Point class.<br>
- * Define a single point ROI which is both contained and intersected :<br>
+ * ROI 2D Point class.<br>
+ * Define a single point ROI<br>
  * 
  * @author Stephane
  */
@@ -43,7 +44,7 @@ public class ROI2DPoint extends ROI2DShape
      */
     public ROI2DPoint(Point2D position, boolean cm)
     {
-        super(new Rectangle2D.Double());
+        super(new Line2D.Double());
 
         this.position = createAnchor(position);
 
@@ -78,9 +79,19 @@ public class ROI2DPoint extends ROI2DShape
         this(new Point2D.Double(), false);
     }
 
+    /**
+     * @deprecated Uses {@link #getLine()} instead.
+     */
+    @Deprecated
     public Rectangle2D getRectangle()
     {
-        return (Rectangle2D) shape;
+        final Point2D pt = getPoint();
+        return new Rectangle2D.Double(pt.getX(), pt.getY(), 0d, 0d);
+    }
+
+    public Line2D getLine()
+    {
+        return (Line2D) shape;
     }
 
     public Point2D getPoint()
@@ -91,8 +102,11 @@ public class ROI2DPoint extends ROI2DShape
     @Override
     protected void updateShape()
     {
-        getRectangle().setFrameFromDiagonal(Math.floor(position.getX()), Math.floor(position.getY()),
-                Math.ceil(position.getX()), Math.ceil(position.getY()));
+        final Point2D pt = getPoint();
+        final double x = pt.getX();
+        final double y = pt.getY();
+
+        getLine().setLine(x, y, x, y);
 
         // call super method after shape has been updated
         super.updateShape();

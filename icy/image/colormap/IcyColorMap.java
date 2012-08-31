@@ -733,9 +733,12 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Copy data from specified source colormap
+     * Copy data from specified source colormap.
+     * 
+     * @param copyAlpha
+     *        Also copy the alpha information.
      */
-    public void copyFrom(IcyColorMap srcColorMap)
+    public void copyFrom(IcyColorMap srcColorMap, boolean copyAlpha)
     {
         beginUpdate();
         try
@@ -745,7 +748,8 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
             green.copyFrom(srcColorMap.green);
             blue.copyFrom(srcColorMap.blue);
             gray.copyFrom(srcColorMap.gray);
-            alpha.copyFrom(srcColorMap.alpha);
+            if (copyAlpha)
+                alpha.copyFrom(srcColorMap.alpha);
             // copy type
             setType(srcColorMap.type);
         }
@@ -756,9 +760,20 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Copy data from specified 2D byte array
+     * Copy data from specified source colormap
      */
-    public void copyFrom(byte[][] maps)
+    public void copyFrom(IcyColorMap srcColorMap)
+    {
+        copyFrom(srcColorMap, true);
+    }
+
+    /**
+     * Copy data from specified 2D byte array.
+     * 
+     * @param copyAlpha
+     *        Also copy the alpha information.
+     */
+    public void copyFrom(byte[][] maps, boolean copyAlpha)
     {
         final int len = maps.length;
 
@@ -772,7 +787,7 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
                 green.copyFrom(maps[1]);
             if (len > 2)
                 blue.copyFrom(maps[2]);
-            if (len > 3)
+            if (copyAlpha && (len > 3))
                 alpha.copyFrom(maps[3]);
         }
         finally
@@ -782,9 +797,20 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Copy data from specified 2D short array.
+     * Copy data from specified 2D byte array
      */
-    public void copyFrom(short[][] maps)
+    public void copyFrom(byte[][] maps)
+    {
+        copyFrom(maps, true);
+    }
+
+    /**
+     * Copy data from specified 2D short array.
+     * 
+     * @param copyAlpha
+     *        Also copy the alpha information.
+     */
+    public void copyFrom(short[][] maps, boolean copyAlpha)
     {
         final int len = maps.length;
 
@@ -798,13 +824,21 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
                 green.copyFrom(maps[1], 8);
             if (len > 2)
                 blue.copyFrom(maps[2], 8);
-            if (len > 3)
+            if (copyAlpha && (len > 3))
                 alpha.copyFrom(maps[3], 8);
         }
         finally
         {
             endUpdate();
         }
+    }
+
+    /**
+     * Copy data from specified 2D short array.
+     */
+    public void copyFrom(short[][] maps)
+    {
+        copyFrom(maps, true);
     }
 
     /**

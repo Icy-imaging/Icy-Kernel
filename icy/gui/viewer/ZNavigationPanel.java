@@ -3,8 +3,8 @@
  */
 package icy.gui.viewer;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcySlider;
+import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.system.thread.ThreadUtil;
 

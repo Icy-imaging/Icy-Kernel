@@ -51,6 +51,7 @@ import icy.util.ClassUtil;
 import icy.util.OMEUtil;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
@@ -179,10 +180,22 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     private static final long serialVersionUID = -8461229450296203011L;
 
     /**
-     * gui
+     * Navigations bar
      */
     final protected ZNavigationPanel zNav;
     final protected TNavigationPanel tNav;
+
+    /**
+     * The panel where mouse informations are displayed
+     */
+    protected final MouseImageInfosPanel mouseInfPanel;
+
+    /**
+     * The panel contains all settings and informations data such as<br>
+     * scale factor, rendering mode...
+     * Will be retrieved by the inspector to get information on the current canvas.
+     */
+    protected JPanel panel;
 
     /**
      * attached viewer
@@ -201,16 +214,6 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * 4 = slice synchronization group (only T and Z navigation are synchronized)
      */
     protected int syncId;
-    /**
-     * The panel contains all settings and informations data such as<br>
-     * scale factor, rendering mode...
-     * Will be retrieved by the inspector to get information on the current canvas.
-     */
-    protected JPanel panel;
-    /**
-     * The panel where mouse informations are displayed
-     */
-    protected final MouseImageInfosPanel mouseInfPanel;
 
     /**
      * Layers attached to canvas<br>
@@ -415,6 +418,11 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     {
         return viewer.getSequence();
     }
+
+    /**
+     * @return the main view component
+     */
+    public abstract Component getViewComponent();
 
     /**
      * @return the Z navigation bar panel
@@ -3417,6 +3425,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                             tNav.setValue(curT);
                         break;
                 }
+                // refresh mouse panel informations
+                mouseInfPanel.updateInfos(this);
                 break;
 
             case MOUSE_IMAGE_POSITION_CHANGED:

@@ -18,21 +18,295 @@
  */
 package icy.sequence;
 
+import icy.common.listener.ProgressListener;
 import icy.image.IcyBufferedImage;
+import icy.image.IcyBufferedImageUtil;
+import icy.image.IcyBufferedImageUtil.FilterType;
+import icy.math.Scaler;
+import icy.type.DataType;
+import icy.util.OMEUtil;
+import icy.util.StringUtil;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import javax.swing.SwingConstants;
+
 /**
- * This is a pool of tools to manipulate the organization of the image within a sequence
+ * {@link Sequence} utilities class.<br>
+ * You can find here tools to manipulate the sequence organization, its data type, its size...
  * 
  * @author fab & stephane
  */
 public class SequenceUtil
 {
+    public static class MergeCHelper
+    {
+        private static IcyBufferedImage getImageFromSequenceInternal(Sequence seq, int t, int z, boolean fillEmpty)
+        {
+            IcyBufferedImage img = seq.getImage(t, z);
+
+            if ((img == null) && fillEmpty)
+            {
+                int curZ = z;
+
+                // missing Z slice ?
+                if (z >= seq.getSizeZ())
+                {
+                    // searching in previous slice
+                    while ((img == null) && (curZ > 0))
+                        img = seq.getImage(t, --curZ);
+                }
+
+                if (img == null)
+                {
+                    int curT = t;
+
+                    // searching in previous frame
+                    while ((img == null) && (curT > 0))
+                        img = seq.getImage(--curT, z);
+                }
+
+                return img;
+            }
+
+            return img;
+        }
+
+        public static IcyBufferedImage getImage(Sequence[] sequences, int sizeX, int sizeY, int t, int z,
+                boolean fillEmpty, boolean rescale)
+        {
+            if (sequences.length == 0)
+                return null;
+
+            final List<BufferedImage> images = new ArrayList<BufferedImage>();
+
+            for (Sequence seq : sequences)
+            {
+                IcyBufferedImage img = getImageFromSequenceInternal(seq, t, z, fillEmpty);
+
+                // create an empty image
+                if (img == null)
+                    img = new IcyBufferedImage(sizeX, sizeY, 1, seq.getDataType_());
+                // resize X and Y dimension if needed
+                else if ((img.getSizeX() != sizeX) || (img.getSizeY() != sizeY))
+                    img = IcyBufferedImageUtil.scale(img, sizeX, sizeY, rescale, SwingConstants.CENTER,
+                            SwingConstants.CENTER, FilterType.BILINEAR);
+
+                images.add(img);
+            }
+
+            return IcyBufferedImage.createFrom(images);
+        }
+    }
+
+    public static class MergeZHelper
+    {
+        private static IcyBufferedImage getImageFromSequenceInternal(Sequence seq, int t, int z, boolean fillEmpty)
+        {
+            IcyBufferedImage img = seq.getImage(t, z);
+
+            if ((img == null) && fillEmpty)
+            {
+                int curZ = z;
+
+                // missing Z slice ?
+                if (z >= seq.getSizeZ())
+                {
+                    // searching in previous slice
+                    while ((img == null) && (curZ > 0))
+                        img = seq.getImage(t, --curZ);
+                }
+
+                if (img == null)
+                {
+                    int curT = t;
+
+                    // searching in previous frame
+                    while ((img == null) && (curT > 0))
+                        img = seq.getImage(--curT, z);
+                }
+
+                return img;
+            }
+
+            return img;
+        }
+
+        private static IcyBufferedImage getImageInternal(Sequence[] sequences, int t, int z, boolean interlaced,
+                boolean fillEmpty)
+        {
+            int zRemaining = z;
+
+            if (interlaced)
+            {
+                int zInd = 0;
+
+                while (zRemaining >= 0)
+                {
+                    for (Sequence seq : sequences)
+                    {
+                        if (zInd < seq.getSizeZ())
+                        {
+                            if (zRemaining-- == 0)
+                                return getImageFromSequenceInternal(seq, t, zInd, fillEmpty);
+                        }
+                    }
+
+                    zInd++;
+                }
+            }
+            else
+            {
+                for (Sequence seq : sequences)
+                {
+                    final int sizeZ = seq.getSizeZ();
+
+                    // we found the sequence
+                    if (zRemaining < sizeZ)
+                        return getImageFromSequenceInternal(seq, t, zRemaining, fillEmpty);
+
+                    zRemaining -= sizeZ;
+                }
+            }
+
+            return null;
+        }
+
+        public static IcyBufferedImage getImage(Sequence[] sequences, int sizeX, int sizeY, int sizeC, int t, int z,
+                boolean interlaced, boolean fillEmpty, boolean rescale)
+        {
+            final IcyBufferedImage origin = getImageInternal(sequences, t, z, interlaced, fillEmpty);
+            IcyBufferedImage img = origin;
+
+            if (img != null)
+            {
+                // resize X and Y dimension if needed
+                if ((img.getSizeX() != sizeX) || (img.getSizeY() != sizeY))
+                    img = IcyBufferedImageUtil.scale(img, sizeX, sizeY, rescale, SwingConstants.CENTER,
+                            SwingConstants.CENTER, FilterType.BILINEAR);
+
+                final int imgSizeC = img.getSizeC();
+
+                // resize C dimension if needed
+                if (imgSizeC < sizeC)
+                    return IcyBufferedImageUtil.addChannels(img, imgSizeC, sizeC - imgSizeC);
+
+                // always return a copy
+                if (img == origin)
+                    return IcyBufferedImageUtil.getCopy(img);
+            }
+
+            return img;
+        }
+    }
+
+    public static class MergeTHelper
+    {
+        private static IcyBufferedImage getImageFromSequenceInternal(Sequence seq, int t, int z, boolean fillEmpty)
+        {
+            IcyBufferedImage img = seq.getImage(t, z);
+
+            if ((img == null) && fillEmpty)
+            {
+                int curT = t;
+
+                // missing T frame?
+                if (t >= seq.getSizeT())
+                {
+                    // searching in previous frame
+                    while ((img == null) && (curT > 0))
+                        img = seq.getImage(--curT, z);
+                }
+
+                if (img == null)
+                {
+                    int curZ = z;
+
+                    // searching in previous slice
+                    while ((img == null) && (curZ > 0))
+                        img = seq.getImage(t, --curZ);
+                }
+
+                return img;
+            }
+
+            return img;
+        }
+
+        private static IcyBufferedImage getImageInternal(Sequence[] sequences, int t, int z, boolean interlaced,
+                boolean fillEmpty)
+        {
+            int tRemaining = t;
+
+            if (interlaced)
+            {
+                int tInd = 0;
+
+                while (tRemaining >= 0)
+                {
+                    for (Sequence seq : sequences)
+                    {
+                        if (tInd < seq.getSizeT())
+                        {
+                            if (tRemaining-- == 0)
+                                return getImageFromSequenceInternal(seq, tInd, z, fillEmpty);
+                        }
+                    }
+
+                    tInd++;
+                }
+            }
+            else
+            {
+                for (Sequence seq : sequences)
+                {
+                    final int sizeT = seq.getSizeT();
+
+                    // we found the sequence
+                    if (tRemaining < sizeT)
+                        return getImageFromSequenceInternal(seq, tRemaining, z, fillEmpty);
+
+                    tRemaining -= sizeT;
+                }
+            }
+
+            return null;
+        }
+
+        public static IcyBufferedImage getImage(Sequence[] sequences, int sizeX, int sizeY, int sizeC, int t, int z,
+                boolean interlaced, boolean fillEmpty, boolean rescale)
+        {
+            final IcyBufferedImage origin = getImageInternal(sequences, t, z, interlaced, fillEmpty);
+            IcyBufferedImage img = origin;
+
+            if (img != null)
+            {
+                // resize X and Y dimension if needed
+                if ((img.getSizeX() != sizeX) || (img.getSizeY() != sizeY))
+                    img = IcyBufferedImageUtil.scale(img, sizeX, sizeY, rescale, SwingConstants.CENTER,
+                            SwingConstants.CENTER, FilterType.BILINEAR);
+
+                final int imgSizeC = img.getSizeC();
+
+                // resize C dimension if needed
+                if (imgSizeC < sizeC)
+                    return IcyBufferedImageUtil.addChannels(img, imgSizeC, sizeC - imgSizeC);
+
+                // always return a copy
+                if (img == origin)
+                    return IcyBufferedImageUtil.getCopy(img);
+            }
+
+            return img;
+        }
+    }
+
     /**
-     * Exchange 2 T stack on the whole sequence<br>
+     * Exchange 2 frames position on the sequence.
      */
     public static void swapT(Sequence sequence, int t1, int t2)
     {
@@ -77,8 +351,8 @@ public class SequenceUtil
     }
 
     /**
-     * modify stack t position<br>
-     * the previous stack present at 'newT' position is lost
+     * Modify frame position.<br>
+     * The previous frame present at <code>newT</code> position is lost.
      * 
      * @param sequence
      * @param t
@@ -121,13 +395,13 @@ public class SequenceUtil
     }
 
     /**
-     * modify t position of a range of stacks by the specified offset
+     * Modify T position of a range of frame by the specified offset
      * 
      * @param sequence
      * @param from
-     *        start of stacks range (t position)
+     *        start of range (t position)
      * @param to
-     *        end of stacks range (t position)
+     *        end of range (t position)
      * @param offset
      *        position shift
      */
@@ -154,7 +428,7 @@ public class SequenceUtil
     }
 
     /**
-     * remove all a stack at time t
+     * Remove a frame at position t.
      * 
      * @param sequence
      * @param t
@@ -170,7 +444,7 @@ public class SequenceUtil
     }
 
     /**
-     * remove a complete stack at position t and shift all the further t by -1
+     * Remove a frame at position t and shift all the further t by -1.
      * 
      * @param sequence
      * @param t
@@ -195,7 +469,7 @@ public class SequenceUtil
     }
 
     /**
-     * Reverse T stacks order
+     * Reverse T frames order.
      */
     public static void reverseT(Sequence sequence)
     {
@@ -243,7 +517,7 @@ public class SequenceUtil
     }
 
     /**
-     * Exchange 2 Z slices on the whole sequence<br>
+     * Exchange 2 slices position on the sequence.
      */
     public static void swapZ(Sequence sequence, int z1, int z2)
     {
@@ -279,8 +553,8 @@ public class SequenceUtil
     }
 
     /**
-     * modify images z position on the whole sequence<br>
-     * previous images present at 'newZ' position are lost
+     * Modify slice position.<br>
+     * The previous slice present at <code>newZ</code> position is lost.
      * 
      * @param sequence
      * @param z
@@ -322,13 +596,13 @@ public class SequenceUtil
     }
 
     /**
-     * modify z position of a range of images by the specified offset
+     * Modify Z position of a range of slice by the specified offset
      * 
      * @param sequence
      * @param from
-     *        start of images range (z position)
+     *        start of range (z position)
      * @param to
-     *        end of images range (t position)
+     *        end of range (z position)
      * @param offset
      *        position shift
      */
@@ -355,7 +629,7 @@ public class SequenceUtil
     }
 
     /**
-     * remove a specific z in all the sequence.
+     * Remove a slice at position Z.
      * 
      * @param sequence
      * @param z
@@ -382,7 +656,7 @@ public class SequenceUtil
     }
 
     /**
-     * remove a specific z and shift z above in all the sequence.
+     * Remove a slice at position t and shift all the further t by -1.
      * 
      * @param sequence
      * @param z
@@ -407,7 +681,7 @@ public class SequenceUtil
     }
 
     /**
-     * Reverse Z stack order
+     * Reverse Z slices order
      */
     public static void reverseZ(Sequence sequence)
     {
@@ -444,8 +718,7 @@ public class SequenceUtil
     }
 
     /**
-     * Flatten the sequence to have only single image stacks.<br>
-     * (all images are set in T dimension)
+     * Set all images of the sequence in T dimension.
      */
     public static void convertToTime(Sequence sequence)
     {
@@ -465,15 +738,13 @@ public class SequenceUtil
     }
 
     /**
-     * Convert the sequence to a single stack with all the images.<br>
-     * (all images are set in Z dimension)
+     * Set all images of the sequence in Z dimension.
      */
     public static void convertToVolume(Sequence sequence)
     {
         sequence.beginUpdate();
         try
         {
-
             final ArrayList<IcyBufferedImage> images = sequence.getAllImage();
 
             sequence.removeAllImage();
@@ -486,8 +757,656 @@ public class SequenceUtil
         }
     }
 
-    // Add an other sequence at the end of the current sequence
-    // Insert other sequence at t
-    // reverse Z
+    /**
+     * Remove the specified channel from the source sequence.
+     * 
+     * @param source
+     *        Source sequence
+     * @param channel
+     *        Channel index to remove
+     */
+    public static void removeChannel(Sequence source, int channel)
+    {
+        final ArrayList<Integer> channelsToKeep = new ArrayList<Integer>();
+
+        for (int c = 0; c < source.getSizeC(); c++)
+            if (c != channel)
+                channelsToKeep.add(Integer.valueOf(c));
+
+        final Sequence tmp = extractChannels(source, channelsToKeep);
+
+        source.beginUpdate();
+        try
+        {
+            // we need to clear the source sequence to change its type
+            source.removeAllImage();
+
+            // get back all images
+            for (int t = 0; t < tmp.getSizeT(); t++)
+                for (int z = 0; z < tmp.getSizeZ(); z++)
+                    source.setImage(t, z, tmp.getImage(t, z));
+
+            // get back modified metadata
+            source.setMetaData(tmp.getMetadata());
+        }
+        finally
+        {
+            source.endUpdate();
+        }
+    }
+
+    /**
+     * Returns the max size of specified dimension for the given sequences.
+     */
+    public static int getMaxDim(Sequence[] sequences, DimensionId dim)
+    {
+        int result = 0;
+
+        for (Sequence seq : sequences)
+        {
+            switch (dim)
+            {
+                case X:
+                    result = Math.max(result, seq.getSizeX());
+                    break;
+                case Y:
+                    result = Math.max(result, seq.getSizeY());
+                    break;
+                case C:
+                    result = Math.max(result, seq.getSizeC());
+                    break;
+                case Z:
+                    result = Math.max(result, seq.getSizeZ());
+                    break;
+                case T:
+                    result = Math.max(result, seq.getSizeT());
+                    break;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Create and returns a new sequence by concatenating all given sequences on C dimension.
+     * 
+     * @param sequences
+     *        Sequences to concatenate (use array order).
+     * @param fillEmpty
+     *        Replace empty image by the previous non empty one.
+     * @param rescale
+     *        Images are scaled to all fit in the same XY dimension.
+     * @param pl
+     *        ProgressListener to indicate processing progress.
+     */
+    public static Sequence concatC(Sequence[] sequences, boolean fillEmpty, boolean rescale, ProgressListener pl)
+    {
+        final int sizeX = getMaxDim(sequences, DimensionId.X);
+        final int sizeY = getMaxDim(sequences, DimensionId.Y);
+        final int sizeZ = getMaxDim(sequences, DimensionId.Z);
+        final int sizeT = getMaxDim(sequences, DimensionId.T);
+
+        final Sequence result = new Sequence("C Merge");
+
+        int ind = 0;
+        for (int t = 0; t < sizeT; t++)
+        {
+            for (int z = 0; z < sizeZ; z++)
+            {
+                if (pl != null)
+                    pl.notifyProgress(ind, sizeT * sizeZ);
+
+                result.setImage(t, z, MergeCHelper.getImage(sequences, sizeX, sizeY, t, z, fillEmpty, rescale));
+
+                ind++;
+            }
+        }
+
+        int c = 0;
+        for (Sequence seq : sequences)
+        {
+            for (int sc = 0; sc < seq.getSizeC(); sc++, c++)
+            {
+                final String channelName = seq.getChannelName(sc);
+
+                // not default channel name --> we keep it
+                if (!StringUtil.equals(seq.getDefaultChannelName(sc), channelName))
+                    result.setChannelName(c, channelName);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Create and returns a new sequence by concatenating all given sequences on C dimension.
+     * 
+     * @param sequences
+     *        Sequences to concatenate (use array order).
+     * @param fillEmpty
+     *        Replace empty image by the previous non empty one.
+     * @param rescale
+     *        Images are scaled to all fit in the same XY dimension.
+     */
+    public static Sequence concatC(Sequence[] sequences, boolean fillEmpty, boolean rescale)
+    {
+        return concatC(sequences, fillEmpty, rescale, null);
+
+    }
+
+    /**
+     * Create and returns a new sequence by concatenating all given sequences on C dimension.
+     * 
+     * @param sequences
+     *        Sequences to concatenate (use array order).
+     */
+    public static Sequence concatC(Sequence[] sequences)
+    {
+        return concatC(sequences, true, false, null);
+    }
+
+    /**
+     * Create and returns a new sequence by concatenating all given sequences on Z dimension.
+     * 
+     * @param sequences
+     *        Sequences to concatenate (use array order).
+     * @param interlaced
+     *        Interlace images.<br>
+     *        normal : 1,1,1,2,2,2,3,3,..<br>
+     *        interlaced : 1,2,3,1,2,3,..<br>
+     * @param fillEmpty
+     *        Replace empty image by the previous non empty one.
+     * @param rescale
+     *        Images are scaled to all fit in the same XY dimension.
+     * @param pl
+     *        ProgressListener to indicate processing progress.
+     */
+    public static Sequence concatZ(Sequence[] sequences, boolean interlaced, boolean fillEmpty, boolean rescale,
+            ProgressListener pl)
+    {
+        final int sizeX = getMaxDim(sequences, DimensionId.X);
+        final int sizeY = getMaxDim(sequences, DimensionId.Y);
+        final int sizeC = getMaxDim(sequences, DimensionId.C);
+        final int sizeT = getMaxDim(sequences, DimensionId.T);
+        int sizeZ = 0;
+
+        for (Sequence seq : sequences)
+            sizeZ += seq.getSizeZ();
+
+        final Sequence result = new Sequence("Z Merge");
+
+        int ind = 0;
+        for (int t = 0; t < sizeT; t++)
+        {
+            for (int z = 0; z < sizeZ; z++)
+            {
+                if (pl != null)
+                    pl.notifyProgress(ind, sizeT * sizeZ);
+
+                result.setImage(t, z,
+                        MergeZHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, interlaced, fillEmpty, rescale));
+
+                ind++;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Create and returns a new sequence by concatenating all given sequences on Z dimension.
+     * 
+     * @param sequences
+     *        Sequences to concatenate (use array order).
+     * @param interlaced
+     *        Interlace images.<br>
+     *        normal : 1,1,1,2,2,2,3,3,..<br>
+     *        interlaced : 1,2,3,1,2,3,..<br>
+     * @param fillEmpty
+     *        Replace empty image by the previous non empty one.
+     * @param rescale
+     *        Images are scaled to all fit in the same XY dimension.
+     */
+    public static Sequence concatZ(Sequence[] sequences, boolean interlaced, boolean fillEmpty, boolean rescale)
+    {
+        return concatZ(sequences, interlaced, fillEmpty, rescale, null);
+
+    }
+
+    /**
+     * Create and returns a new sequence by concatenating all given sequences on Z dimension.
+     * 
+     * @param sequences
+     *        Sequences to concatenate (use array order).
+     */
+    public static Sequence concatZ(Sequence[] sequences)
+    {
+        return concatZ(sequences, false, true, false, null);
+    }
+
+    /**
+     * Create and returns a new sequence by concatenating all given sequences on T dimension.
+     * 
+     * @param sequences
+     *        sequences to concatenate (use array order).
+     * @param interlaced
+     *        interlace images.<br>
+     *        normal : 1,1,1,2,2,2,3,3,..<br>
+     *        interlaced : 1,2,3,1,2,3,..<br>
+     * @param fillEmpty
+     *        replace empty image by the previous non empty one.
+     * @param rescale
+     *        Images are scaled to all fit in the same XY dimension.
+     * @param pl
+     *        ProgressListener to indicate processing progress.
+     */
+    public static Sequence concatT(Sequence[] sequences, boolean interlaced, boolean fillEmpty, boolean rescale,
+            ProgressListener pl)
+    {
+        final int sizeX = getMaxDim(sequences, DimensionId.X);
+        final int sizeY = getMaxDim(sequences, DimensionId.Y);
+        final int sizeC = getMaxDim(sequences, DimensionId.C);
+        final int sizeZ = getMaxDim(sequences, DimensionId.Z);
+        int sizeT = 0;
+
+        for (Sequence seq : sequences)
+            sizeT += seq.getSizeT();
+
+        final Sequence result = new Sequence("T Merge");
+
+        int ind = 0;
+        for (int t = 0; t < sizeT; t++)
+        {
+            for (int z = 0; z < sizeZ; z++)
+            {
+                if (pl != null)
+                    pl.notifyProgress(ind, sizeT * sizeZ);
+
+                result.setImage(t, z,
+                        MergeTHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, interlaced, fillEmpty, rescale));
+
+                ind++;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Create and returns a new sequence by concatenating all given sequences on T dimension.
+     * 
+     * @param sequences
+     *        Sequences to concatenate (use array order).
+     * @param interlaced
+     *        Interlace images.<br>
+     *        normal : 1,1,1,2,2,2,3,3,..<br>
+     *        interlaced : 1,2,3,1,2,3,..<br>
+     * @param fillEmpty
+     *        Replace empty image by the previous non empty one.
+     * @param rescale
+     *        Images are scaled to all fit in the same XY dimension.
+     */
+    public static Sequence concatT(Sequence[] sequences, boolean interlaced, boolean fillEmpty, boolean rescale)
+    {
+        return concatT(sequences, interlaced, fillEmpty, rescale, null);
+
+    }
+
+    /**
+     * Create and returns a new sequence by concatenating all given sequences on T dimension.
+     * 
+     * @param sequences
+     *        Sequences to concatenate (use array order).
+     */
+    public static Sequence concatT(Sequence[] sequences)
+    {
+        return concatT(sequences, false, true, false, null);
+    }
+
+    /**
+     * Converts the source sequence to the specified data type.<br>
+     * This method returns a new sequence (the source sequence is not modified).
+     * 
+     * @param source
+     *        Source sequence to convert
+     * @param dataType
+     *        data type wanted
+     * @param rescale
+     *        indicate if we want to scale data value according to data type range
+     * @return converted sequence
+     */
+    public static Sequence convertToType(Sequence source, DataType dataType, boolean rescale)
+    {
+        final double boundsSrc[] = source.getChannelTypeGlobalBounds();
+        final double boundsDst[];
+
+        if (rescale)
+            boundsDst = dataType.getDefaultBounds();
+        else
+            boundsDst = boundsSrc;
+
+        // use scaler to scale data
+        return convertToType(source, dataType,
+                new Scaler(boundsSrc[0], boundsSrc[1], boundsDst[0], boundsDst[1], false));
+    }
+
+    /**
+     * Converts the source sequence to the specified data type.<br>
+     * This method returns a new sequence (the source sequence is not modified).
+     * 
+     * @param source
+     *        Source sequence to convert
+     * @param dataType
+     *        data type wanted.
+     * @param scaler
+     *        scaler for scaling internal data during conversion.
+     * @return converted image
+     */
+    public static Sequence convertToType(Sequence source, DataType dataType, Scaler scaler)
+    {
+        final Sequence output = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+
+        output.beginUpdate();
+        try
+        {
+            for (int t = 0; t < source.getSizeT(); t++)
+            {
+                for (int z = 0; z < source.getSizeZ(); z++)
+                {
+                    final IcyBufferedImage converted = IcyBufferedImageUtil.convertToType(source.getImage(t, z),
+                            dataType, scaler);
+
+                    // FIXME : why we did that ??
+                    // this is not a good idea to force bounds when rescale = false
+
+                    // set bounds manually for the converted image
+                    // for (int c = 0; c < getSizeC(); c++)
+                    // {
+                    // converted.setComponentBounds(c, boundsDst);
+                    // converted.setComponentUserBounds(c, boundsDst);
+                    // }
+
+                    output.setImage(t, z, converted);
+                }
+            }
+
+            output.setName(source.getName() + " (" + output.getDataType_() + ")");
+        }
+        finally
+        {
+            output.endUpdate();
+        }
+
+        return output;
+    }
+
+    /**
+     * Build a new single channel sequence (grey) from the specified channel of the source sequence.
+     * 
+     * @param source
+     *        Source sequence
+     * @param channel
+     *        Channel index to extract from the source sequence.
+     * @return Sequence
+     */
+    public static Sequence extractChannel(Sequence source, int channel)
+    {
+        final ArrayList<Integer> list = new ArrayList<Integer>();
+
+        list.add(Integer.valueOf(channel));
+
+        return extractChannels(source, list);
+    }
+
+    /**
+     * Build a new sequence by extracting the specified channels from the source sequence.
+     * 
+     * @param source
+     *        Source sequence
+     * @param channels
+     *        Channel indexes to extract from the source sequence.
+     * @return Sequence
+     */
+    public static Sequence extractChannels(Sequence source, List<Integer> channels)
+    {
+        final Sequence outSequence = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+
+        outSequence.beginUpdate();
+        try
+        {
+            for (int t = 0; t < source.getSizeT(); t++)
+                for (int z = 0; z < source.getSizeZ(); z++)
+                    outSequence.setImage(t, z, IcyBufferedImageUtil.extractChannels(source.getImage(t, z), channels));
+        }
+        finally
+        {
+            outSequence.endUpdate();
+        }
+
+        // sequence name
+        if (channels.size() > 1)
+        {
+            String s = "";
+            for (int i = 0; i < channels.size(); i++)
+                s += " " + channels.get(i).toString();
+
+            outSequence.setName(source.getName() + " (channels" + s + ")");
+        }
+        else if (channels.size() == 1)
+            outSequence.setName(source.getName() + " (" + source.getChannelName(channels.get(0).intValue()) + ")");
+
+        // channel name
+        int c = 0;
+        for (Integer i : channels)
+        {
+            outSequence.setChannelName(c, source.getChannelName(i.intValue()));
+            c++;
+        }
+
+        return outSequence;
+    }
+
+    /**
+     * Build a new sequence by extracting the specified Z slice from the source sequence.
+     * 
+     * @param source
+     *        Source sequence
+     * @param z
+     *        Slice index to extract from the source sequence.
+     * @return Sequence
+     */
+    public static Sequence extractSlice(Sequence source, int z)
+    {
+        final Sequence outSequence = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+
+        outSequence.beginUpdate();
+        try
+        {
+            for (int t = 0; t < source.getSizeT(); t++)
+                outSequence.setImage(t, 0, source.getImage(t, z));
+        }
+        finally
+        {
+            outSequence.endUpdate();
+        }
+
+        outSequence.setName(source.getName() + " (slice " + z + ")");
+
+        return outSequence;
+    }
+
+    /**
+     * Build a new sequence by extracting the specified T frame from the source sequence.
+     * 
+     * @param source
+     *        Source sequence
+     * @param t
+     *        Frame index to extract from the source sequence.
+     * @return Sequence
+     */
+    public static Sequence extractFrame(Sequence source, int t)
+    {
+        final Sequence outSequence = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+
+        outSequence.beginUpdate();
+        try
+        {
+            for (int z = 0; z < source.getSizeZ(); z++)
+                outSequence.setImage(0, z, source.getImage(t, z));
+        }
+        finally
+        {
+            outSequence.endUpdate();
+        }
+
+        outSequence.setName(source.getName() + " (frame " + t + ")");
+
+        return outSequence;
+    }
+
+    /**
+     * Return a copy of the source sequence with specified size, alignment rules and filter type.
+     * 
+     * @param source
+     *        source sequence
+     * @param resizeContent
+     *        indicate if content should be resized or not (empty area are 0 filled)
+     * @param xAlign
+     *        horizontal image alignment (SwingConstants.LEFT / CENTER / RIGHT)<br>
+     *        (used only if resizeContent is false)
+     * @param yAlign
+     *        vertical image alignment (SwingConstants.TOP / CENTER / BOTTOM)<br>
+     *        (used only if resizeContent is false)
+     * @param filterType
+     *        filter method used for scale (used only if resizeContent is true)
+     */
+    public static Sequence scale(Sequence source, int width, int height, boolean resizeContent, int xAlign, int yAlign,
+            FilterType filterType)
+    {
+        final int sizeT = source.getSizeT();
+        final int sizeZ = source.getSizeZ();
+        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+
+        result.beginUpdate();
+        try
+        {
+            for (int t = 0; t < sizeT; t++)
+                for (int z = 0; z < sizeZ; z++)
+                    result.setImage(t, z, IcyBufferedImageUtil.scale(source.getImage(t, z), width, height,
+                            resizeContent, xAlign, yAlign, filterType));
+        }
+        finally
+        {
+            result.endUpdate();
+        }
+
+        result.setName(source.getName() + " (resized)");
+
+        return result;
+    }
+
+    /**
+     * Return a copy of the sequence with specified size.<br>
+     * By default the FilterType.BILINEAR is used as filter method if resizeContent is true
+     * 
+     * @param source
+     *        source sequence
+     * @param resizeContent
+     *        indicate if content should be resized or not (empty area are 0 filled)
+     * @param xAlign
+     *        horizontal image alignment (SwingConstants.LEFT / CENTER / RIGHT)<br>
+     *        (used only if resizeContent is false)
+     * @param yAlign
+     *        vertical image alignment (SwingConstants.TOP / CENTER / BOTTOM)<br>
+     *        (used only if resizeContent is false)
+     */
+    public static Sequence scale(Sequence source, int width, int height, boolean resizeContent, int xAlign, int yAlign)
+    {
+        return scale(source, width, height, resizeContent, xAlign, yAlign, FilterType.BILINEAR);
+    }
+
+    /**
+     * Return a copy of the sequence with specified size.
+     * 
+     * @param source
+     *        source sequence
+     * @param filterType
+     *        filter method used for scale (used only if resizeContent is true)
+     */
+    public static Sequence scale(Sequence source, int width, int height, FilterType filterType)
+    {
+        return scale(source, width, height, true, 0, 0, filterType);
+    }
+
+    /**
+     * Return a copy of the sequence with specified size.<br>
+     * By default the FilterType.BILINEAR is used as filter method.
+     */
+    public static Sequence scale(Sequence source, int width, int height)
+    {
+        return scale(source, width, height, FilterType.BILINEAR);
+    }
+
+    /**
+     * Creates a new sequence which is a sub part of the source sequence from the specified
+     * coordinates and dimensions.
+     */
+    public static Sequence getSubSequence(Sequence source, int startX, int startY, int startZ, int startT, int sizeX,
+            int sizeY, int sizeZ, int sizeT)
+    {
+        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+
+        result.beginUpdate();
+        try
+        {
+            for (int t = 0; t < sizeT; t++)
+            {
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    final IcyBufferedImage img = source.getImage(startT + t, startZ + z);
+
+                    if (img != null)
+                        result.setImage(t, z, IcyBufferedImageUtil.getSubImage(img, startX, startY, sizeX, sizeY));
+                    else
+                        result.setImage(t, z, null);
+                }
+            }
+        }
+        finally
+        {
+            result.endUpdate();
+        }
+
+        result.setName(source.getName() + " (crop)");
+
+        return result;
+    }
+
+    /**
+     * Creates and return a copy of the sequence.
+     */
+    public static Sequence getCopy(Sequence source)
+    {
+        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final int sizeT = source.getSizeT();
+        final int sizeZ = source.getSizeZ();
+
+        for (int t = 0; t < sizeT; t++)
+        {
+            for (int z = 0; z < sizeZ; z++)
+            {
+                final IcyBufferedImage img = source.getImage(t, z);
+
+                if (img != null)
+                    result.setImage(t, z, IcyBufferedImageUtil.getCopy(img));
+                else
+                    source.setImage(t, z, null);
+            }
+        }
+
+        result.setName(source.getName() + " (copy)");
+
+        return result;
+    }
 
 }

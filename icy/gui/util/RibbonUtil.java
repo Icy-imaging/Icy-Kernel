@@ -269,12 +269,18 @@ public class RibbonUtil
 
     public static RibbonElementPriority getButtonPriority(JRibbonBand band, AbstractCommandButton button)
     {
-        final RibbonElementPriority result = band.getControlPanel().getPriority(button);
+        final RibbonElementPriority result;
+        final JBandControlPanel controlPanel = band.getControlPanel();
 
-        if (result == null)
-            return RibbonElementPriority.LOW;
+        if (controlPanel != null)
+            result = controlPanel.getPriority(button);
+        else
+            result = null;
 
-        return result;
+        if (result != null)
+            return result;
+
+        return RibbonElementPriority.LOW;
     }
 
     // public static int getButtonPosition(JRibbonBand band, AbstractCommandButton button)
@@ -316,7 +322,12 @@ public class RibbonUtil
 
     public static List<AbstractCommandButton> getButtons(JRibbonBand band)
     {
-        return band.getControlPanel().getAllCommandButtons();
+        final JBandControlPanel controlPanel = band.getControlPanel();
+
+        if (controlPanel != null)
+            return controlPanel.getAllCommandButtons();
+
+        return new ArrayList<AbstractCommandButton>();
     }
 
     public static AbstractCommandButton findButton(List<AbstractCommandButton> buttons, String name)

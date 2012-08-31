@@ -45,6 +45,8 @@ import icy.sequence.SequenceAdapter;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
 import icy.swimmingPool.SwimmingPool;
+import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
@@ -164,6 +166,22 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
             {
                 // exit application
                 Icy.exit(false);
+            }
+        });
+    }
+
+    @Override
+    public void addSequence(Sequence sequence)
+    {
+        final Sequence seq = sequence;
+
+        // thread safe
+        ThreadUtil.invokeLater(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                new Viewer(seq);
             }
         });
     }
@@ -482,6 +500,26 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
 
                 // no duplicate
                 if (!result.contains(sequence))
+                    result.add(sequence);
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public ArrayList<Sequence> getSequences(String name)
+    {
+        final ArrayList<Sequence> result = new ArrayList<Sequence>();
+
+        synchronized (viewers)
+        {
+            for (Viewer viewer : viewers)
+            {
+                final Sequence sequence = viewer.getSequence();
+
+                // matching name and no duplicate
+                if (!result.contains(sequence) && StringUtil.equals(name, sequence.getName()))
                     result.add(sequence);
             }
         }

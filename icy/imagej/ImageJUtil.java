@@ -40,6 +40,7 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * ImageJ utilities class.
@@ -194,6 +195,7 @@ public class ImageJUtil
     /**
      * Convert the specified Icy {@link Sequence} object to ImageJ {@link ImagePlus}.
      */
+    @SuppressWarnings("unchecked")
     public static ImagePlus convertToImageJImage(Sequence sequence, ProgressListener progressListener)
     {
         final int sizeX = sequence.getSizeX();
@@ -227,9 +229,17 @@ public class ImageJUtil
         final ImagePlus result = new ImagePlus(sequence.getName(), stack);
 
         // convert ROI
-        final ArrayList<ROI2D> rois = sequence.getROI2Ds();
-        if (rois.size() > 0)
-            result.setRoi(convertToImageJRoi(rois.get(0)));
+        final List<? extends ROI> points = sequence.getROIs(ROI2DPoint.class);
+        // multiple points --> converting to ImageJ multi point roi
+        if (points.size() > 1)
+            result.setRoi(convertToImageJRoiPoint((List<ROI2DPoint>) points));
+        else
+        {
+            final ArrayList<ROI2D> rois = sequence.getROI2Ds();
+            sequence.getROICount(ROI2DPoint.class);
+            if (rois.size() > 0)
+                result.setRoi(convertToImageJRoi(rois.get(0)));
+        }
         // calibrate
         calibrateImageJImage(result, sequence);
 
@@ -388,5 +398,25 @@ public class ImageJUtil
         result.setStrokeColor(roi.getColor());
 
         return result;
+    }
+
+    /**
+     * Convert the specified list of Icy {@link ROI2DPoint} object to ImageJ {@link PointRoi}.
+     */
+    public static PointRoi convertToImageJRoiPoint(List<ROI2DPoint> points)
+    {
+        final int size = points.size();
+        final float x[] = new float[size];
+        final float y[] = new float[size];
+
+        for (int i = 0; i < points.size(); i++)
+        {
+            final ROI2DPoint point = points.get(i);
+
+            x[i] = (float) point.getPoint().getX();
+            y[i] = (float) point.getPoint().getY();
+        }
+
+        return new PointRoi(x, y, size);
     }
 }

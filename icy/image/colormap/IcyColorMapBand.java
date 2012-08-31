@@ -530,6 +530,44 @@ public class IcyColorMapBand implements XMLPersistent
     }
 
     /**
+     * Return true is the color map band is all set to a fixed value.
+     */
+    public boolean isAllSame()
+    {
+        final short value = map[0];
+
+        for (int i = 1; i < IcyColorMap.SIZE; i++)
+            if (map[i] != value)
+                return false;
+
+        return true;
+    }
+
+    /**
+     * Return true is the color map band is all set to zero.
+     */
+    public boolean isAllZero()
+    {
+        for (short value : map)
+            if (value != 0)
+                return false;
+
+        return true;
+    }
+
+    /**
+     * Return true is the color map band is all set to one.
+     */
+    public boolean isAllOne()
+    {
+        for (short value : map)
+            if (value != IcyColorMap.MAX_LEVEL)
+                return false;
+
+        return true;
+    }
+
+    /**
      * Return true is the color map band is a linear one.<br>
      * Linear map are used to display plain gray or plain color image.<br>
      * Non linear map means you may have an indexed color image or

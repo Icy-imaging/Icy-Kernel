@@ -32,11 +32,12 @@ public abstract class IcyColormapPanel extends JPanel
      * 
      */
     private static final long serialVersionUID = 5837250304098381166L;
+    
     /**
      * associated Viewer & LUTBand
      */
-    protected final Viewer viewer;
-    protected final LUTBand lutBand;
+    public final Viewer viewer;
+    public final LUTBand lutBand;
 
     public IcyColormapPanel(Viewer viewer, LUTBand lutBand)
     {

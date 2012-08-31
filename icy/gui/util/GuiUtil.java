@@ -18,7 +18,6 @@
  */
 package icy.gui.util;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.frame.TitledFrame;
 import icy.util.GraphicsUtil;
 
@@ -350,7 +349,7 @@ public class GuiUtil
             return;
 
         if (c.getCursor().getType() != cursor)
-            c.setCursor(new Cursor(cursor));
+            c.setCursor(Cursor.getPredefinedCursor(cursor));
     }
 
     /**

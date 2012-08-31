@@ -60,7 +60,7 @@ public class PluginLauncher
             }
             catch (Throwable t)
             {
-                IcyExceptionHandler.handlePluginException(pluginDesc, t, true);
+                IcyExceptionHandler.handleException(pluginDesc, t, true);
             }
         }
     }
@@ -94,7 +94,7 @@ public class PluginLauncher
         }
         catch (Throwable t)
         {
-            IcyExceptionHandler.handlePluginException(pluginDesc, t, true);
+            IcyExceptionHandler.handleException(pluginDesc, t, true);
         }
     }
 }

@@ -1,8 +1,8 @@
 package icy.gui.sequence;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
+import icy.gui.util.ComponentUtil;
 import icy.math.UnitUtil;
 import icy.math.UnitUtil.UnitPrefix;
 import icy.sequence.Sequence;

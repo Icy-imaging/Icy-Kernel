@@ -381,7 +381,7 @@ public class ElementDescriptor implements XMLPersistent
         version = new Version(XMLUtil.getElementValue(node, ID_VERSION, ""));
         changelog = XMLUtil.getElementValue(node, ID_CHANGESLOG, "");
 
-        final ArrayList<Node> nodesFile = XMLUtil.getSubNodes(XMLUtil.getElement(node, ID_FILES), ID_FILE);
+        final ArrayList<Node> nodesFile = XMLUtil.getChildren(XMLUtil.getElement(node, ID_FILES), ID_FILE);
         if (nodesFile != null)
         {
             for (Node n : nodesFile)

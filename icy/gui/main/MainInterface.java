@@ -53,9 +53,14 @@ public interface MainInterface
     public abstract void init();
 
     /**
-     * check if exit is allowed from registered listeners
+     * Check if exit is allowed from registered listeners
      */
     public abstract boolean canExitExternal();
+
+    /**
+     * Open a viewer for the specified sequence.
+     */
+    public abstract void addSequence(Sequence sequence);
 
     /**
      * Return all internal frames
@@ -192,6 +197,11 @@ public interface MainInterface
      * Return list of active sequence (displayed in a viewer)
      */
     public abstract ArrayList<Sequence> getSequences();
+
+    /**
+     * Return list of active sequence (displayed in a viewer) matching the specified name.
+     */
+    public abstract ArrayList<Sequence> getSequences(String name);
 
     /**
      * Return true if specified sequence is currently opened (displayed in a viewer)

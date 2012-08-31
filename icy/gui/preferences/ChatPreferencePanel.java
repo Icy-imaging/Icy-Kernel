@@ -66,7 +66,7 @@ public class ChatPreferencePanel extends PreferencePanel
         mainPanel.add(connectAtStartCheckBox, gbc_connectAtStartCheckBox);
 
         statusMessageCheckBox = new JCheckBox("Show status messages");
-        statusMessageCheckBox.setToolTipText("Show status changes messages");
+        statusMessageCheckBox.setToolTipText("Show chat status change messages");
         GridBagConstraints gbc_statusMessageCheckBox = new GridBagConstraints();
         gbc_statusMessageCheckBox.anchor = GridBagConstraints.WEST;
         gbc_statusMessageCheckBox.gridwidth = 4;

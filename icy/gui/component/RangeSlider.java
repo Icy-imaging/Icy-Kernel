@@ -76,6 +76,7 @@ public class RangeSlider extends JSlider
     public RangeSlider(int orientation, int min, int max, int low, int high)
     {
         super(orientation, min, max, low);
+        // remove focus as we cannot choose which bound to move
         super.setFocusable(false);
         setExtent(high);
     }

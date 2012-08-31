@@ -18,13 +18,13 @@
  */
 package icy.gui.inspector;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.button.ColorChooserButton;
 import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
+import icy.gui.util.ComponentUtil;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.resource.ResourceUtil;

@@ -33,16 +33,18 @@ import javax.swing.text.StyleConstants;
 public class PluginErrorReportFrame extends TitledFrame
 {
     final PluginDescriptor plugin;
+    final String devId;
     final String message;
 
     /**
      * Create the panel.
      */
-    public PluginErrorReportFrame(PluginDescriptor plugin, String message)
+    public PluginErrorReportFrame(PluginDescriptor plugin, String devId, String message)
     {
         super("Bug report", true, true, true, true);
 
         this.plugin = plugin;
+        this.devId = devId;
         this.message = message;
 
         initialize();
@@ -52,6 +54,22 @@ public class PluginErrorReportFrame extends TitledFrame
         setVisible(true);
         requestFocus();
         center();
+    }
+
+    /**
+     * Create the panel.
+     */
+    public PluginErrorReportFrame(String devId, String message)
+    {
+        this(null, devId, message);
+    }
+
+    /**
+     * Create the panel.
+     */
+    public PluginErrorReportFrame(PluginDescriptor plugin, String message)
+    {
+        this(plugin, null, message);
     }
 
     private void initialize()
@@ -122,8 +140,16 @@ public class PluginErrorReportFrame extends TitledFrame
         scComment.setBorder(new TitledBorder("Comment"));
 
         // Description
-        final JLabel label = new JLabel("<html><br>The plugin named <b>" + plugin.getName()
-                + "</b> has encountered a problem.<br><br>"
+        String description;
+
+        if (plugin != null)
+            description = "<html><br>The plugin named <b>" + plugin.getName()
+                    + "</b> has encountered a problem.<br><br>";
+        else
+            description = "<html><br>The plugin from the developer <b>" + devId
+                    + "</b> has encountered a problem.<br><br>";
+
+        final JLabel label = new JLabel(description
                 + "Reporting this problem is anonymous and will help improving this plugin" + "<br><br></html>",
                 SwingConstants.CENTER);
         final JButton reportButton = new JButton("Report");
@@ -133,7 +159,8 @@ public class PluginErrorReportFrame extends TitledFrame
         // North message + icon
         JPanel panelPluginAndMessage = new JPanel();
         panelPluginAndMessage.setLayout(new BoxLayout(panelPluginAndMessage, BoxLayout.X_AXIS));
-        panelPluginAndMessage.add(new JLabel(plugin.getIcon()));
+        if (plugin != null)
+            panelPluginAndMessage.add(new JLabel(plugin.getIcon()));
         panelPluginAndMessage.add(Box.createHorizontalStrut(10));
         panelPluginAndMessage.add(GuiUtil.besidesPanel(label));
 
@@ -207,7 +234,7 @@ public class PluginErrorReportFrame extends TitledFrame
                     final Document errorDoc = textPane.getDocument();
                     error = error + "\n\n" + errorDoc.getText(0, errorDoc.getLength());
 
-                    IcyExceptionHandler.report(plugin, error);
+                    IcyExceptionHandler.report(plugin, devId, error);
                 }
                 catch (BadLocationException ex)
                 {
@@ -238,5 +265,10 @@ public class PluginErrorReportFrame extends TitledFrame
     public PluginDescriptor getPlugin()
     {
         return plugin;
+    }
+
+    public String getDevId()
+    {
+        return devId;
     }
 }

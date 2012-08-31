@@ -18,6 +18,7 @@
  */
 package icy.gui.component;
 
+import icy.gui.util.ComponentUtil;
 import icy.util.GraphicsUtil;
 
 import java.awt.Color;

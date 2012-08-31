@@ -1,7 +1,7 @@
 package icy.gui.dialog;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.ThumbnailComponent;
+import icy.gui.util.ComponentUtil;
 import icy.image.IcyBufferedImage;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;

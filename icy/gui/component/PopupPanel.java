@@ -19,6 +19,7 @@
 package icy.gui.component;
 
 import icy.gui.component.button.IcyToggleButton;
+import icy.gui.util.ComponentUtil;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.util.GraphicsUtil;

@@ -21,7 +21,6 @@ package icy.gui.util;
 import icy.common.listener.weak.WeakComponentListener;
 import icy.common.listener.weak.WeakIcyFrameListener;
 import icy.common.listener.weak.WeakWindowListener;
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.ExternalizablePanel.StateListener;
 import icy.gui.component.ExternalizablePanel.WeakStateListener;

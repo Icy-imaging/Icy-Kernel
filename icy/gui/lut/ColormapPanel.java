@@ -18,13 +18,14 @@
  */
 package icy.gui.lut;
 
+import icy.canvas.IcyCanvas3D;
 import icy.file.xml.XMLPersistentHelper;
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.dialog.LoadDialog;
 import icy.gui.dialog.SaveDialog;
 import icy.gui.lut.abstract_.IcyColormapPanel;
+import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.colormap.FireColorMap;
@@ -88,7 +89,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         colormapViewer = new ColormapViewer(lutBand);
 
         // colormap type
-        rgbBtn = new IcyToggleButton(new IcyIcon("rgb", false));
+        rgbBtn = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_RGB_COLOR, false));
         rgbBtn.setToolTipText("Set colormap type to Color");
         rgbBtn.setFocusPainted(false);
         ComponentUtil.setFixedWidth(rgbBtn, 26);
@@ -100,7 +101,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
                 colormap.setType(IcyColorMapType.RGB);
             }
         });
-        grayBtn = new IcyToggleButton(new IcyIcon("gray", false));
+        grayBtn = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_GRAY_COLOR, false));
         grayBtn.setToolTipText("Set colormap type to Gray");
         grayBtn.setFocusPainted(false);
         ComponentUtil.setFixedWidth(grayBtn, 26);
@@ -112,7 +113,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
                 colormap.setType(IcyColorMapType.GRAY);
             }
         });
-        alphaBtn = new IcyToggleButton(new IcyIcon("alpha", false));
+        alphaBtn = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_ALPHA_COLOR, false));
         alphaBtn.setToolTipText("Set colormap type to Alpha (transparency)");
         alphaBtn.setFocusPainted(false);
         ComponentUtil.setFixedWidth(alphaBtn, 26);
@@ -192,7 +193,7 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                lutBand.copyColorMap((IcyColorMap) colormapComboBox.getSelectedItem());
+                copyColorMap((IcyColorMap) colormapComboBox.getSelectedItem());
             }
         });
 
@@ -211,7 +212,11 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
                         DEFAULT_COLORMAP_NAME);
 
                 if (filename != null)
-                    XMLPersistentHelper.loadFromXML(colormap, filename);
+                {
+                    final IcyColorMap map = new IcyColorMap();
+                    XMLPersistentHelper.loadFromXML(map, filename);
+                    copyColorMap(map);
+                }
             }
         });
 
@@ -296,6 +301,19 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
                 colormapTypeBtnGrp.setSelected(alphaBtn.getModel(), true);
                 break;
         }
+    }
+
+    public void copyColorMap(IcyColorMap src)
+    {
+        final boolean copyAlpha;
+
+        // 3D canvas, copy alpha component only if we have specific alpha info
+        if (viewer.getCanvas() instanceof IcyCanvas3D)
+            copyAlpha = !src.alpha.isAllSame();
+        else
+            copyAlpha = true;
+
+        colormap.copyFrom(src, copyAlpha);
     }
 
     @Override

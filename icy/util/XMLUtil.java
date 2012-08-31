@@ -233,6 +233,7 @@ public class XMLUtil
                     System.err.println("XMLUtil.loadDocument('" + path + "') error :");
                     IcyExceptionHandler.showErrorMessage(e, false);
                 }
+                
                 return null;
             }
         }

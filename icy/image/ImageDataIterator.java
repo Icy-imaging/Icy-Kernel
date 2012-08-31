@@ -359,10 +359,11 @@ public class ImageDataIterator implements DataIterator
             if (++y > endY)
             {
                 y = startY;
-                prepareDataXY();
 
                 if (++c > endC)
                     done = true;
+                else
+                    prepareDataXY();
             }
         }
     }
@@ -389,5 +390,29 @@ public class ImageDataIterator implements DataIterator
             throw new NoSuchElementException(null);
 
         Array1DUtil.setValue(data, image.getOffset(x, y), dataType, value);
+    }
+
+    /**
+     * Return current X position.
+     */
+    public int getPositionX()
+    {
+        return x;
+    }
+
+    /**
+     * Return current Y position.
+     */
+    public int getPositionY()
+    {
+        return y;
+    }
+
+    /**
+     * Return current C position.
+     */
+    public int getPositionC()
+    {
+        return c;
     }
 }

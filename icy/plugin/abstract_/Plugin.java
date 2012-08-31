@@ -118,7 +118,7 @@ public abstract class Plugin
 
     public void addSequence(final Sequence sequence)
     {
-        Icy.addSequence(sequence);
+        Icy.getMainInterface().addSequence(sequence);
     }
 
     public void removeSequence(final Sequence sequence)

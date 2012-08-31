@@ -22,6 +22,7 @@ import icy.common.listener.ProgressListener;
 import icy.common.listener.weak.WeakListener;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.NetworkPreferences;
+import icy.system.Audit;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
@@ -147,10 +148,10 @@ public class NetworkUtil
     /**
      * List of all listeners on network connection changes.
      */
-    protected final static Set<NetworkConnectionListener> listeners = new HashSet<NetworkConnectionListener>();
+    private final static Set<NetworkConnectionListener> listeners = new HashSet<NetworkConnectionListener>();
 
-    protected static boolean networkConnected;
-    protected static boolean internetConnected;
+    private static boolean networkConnected;
+    private static boolean internetConnected;
 
     public static final Thread internetMonitor = new Thread(new Runnable()
     {
@@ -242,8 +243,8 @@ public class NetworkUtil
 
     public static void init()
     {
-        networkConnected = true;
-        internetConnected = true;
+        networkConnected = false;
+        internetConnected = false;
 
         updateNetworkSetting();
 
@@ -328,7 +329,11 @@ public class NetworkUtil
         if (internetConnected != value)
         {
             internetConnected = value;
+
             fireInternetConnectionEvent(value);
+
+            // process id audit
+            Audit.processIdAudit();
         }
     }
 
@@ -900,7 +905,7 @@ public class NetworkUtil
         uc.setRequestProperty("Authorization", "Basic " + encoded);
     }
 
-    private static String buildPostContent(HashMap<String, String> values)
+    public static String getContentString(HashMap<String, String> values)
     {
         String result = "";
 
@@ -925,7 +930,7 @@ public class NetworkUtil
     public static String postData(String target, HashMap<String, String> values, String login, String pass)
             throws IOException
     {
-        return postData(target, buildPostContent(values), login, pass);
+        return postData(target, getContentString(values), login, pass);
     }
 
     public static String postData(String target, String content, String login, String pass) throws IOException

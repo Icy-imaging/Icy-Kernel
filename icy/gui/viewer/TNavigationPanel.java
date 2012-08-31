@@ -18,10 +18,10 @@
  */
 package icy.gui.viewer;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcySlider;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
+import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.resource.icon.IcyIcon;
 import icy.system.thread.ThreadUtil;

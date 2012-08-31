@@ -50,8 +50,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -1086,33 +1084,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     public boolean intersects(double x, double y, double w, double h)
     {
         return shape.intersects(x, y, w, h);
-    }
-
-    @Override
-    public boolean[] getAsBooleanMask(int x, int y, int w, int h, boolean inclusive)
-    {
-        if ((w <= 0) || (h <= 0))
-            return new boolean[0];
-
-        final BufferedImage maskImg = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_GRAY);
-        final Graphics2D g = maskImg.createGraphics();
-
-        // draw shape in image
-        g.setColor(Color.white);
-        g.translate(-x, -y);
-        g.fill(shape);
-        if (inclusive)
-            g.draw(shape);
-        g.dispose();
-
-        // use the image to define the mask
-        final byte[] maskData = ((DataBufferByte) maskImg.getRaster().getDataBuffer()).getData();
-        final boolean[] result = new boolean[w * h];
-
-        for (int i = 0; i < result.length; i++)
-            result[i] = (maskData[i] != 0);
-
-        return result;
     }
 
     @Override

@@ -26,6 +26,7 @@ import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
+import icy.util.StringUtil;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashMap;
@@ -38,6 +39,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     public static final String ID_KERNELVERSION = "kernelVersion";
     public static final String ID_PLUGINCLASSNAME = "pluginClassName";
     public static final String ID_PLUGINVERSION = "pluginVersion";
+    public static final String ID_DEVELOPERID = "developerId";
     public static final String ID_ERRORLOG = "errorLog";
 
     private static IcyExceptionHandler exceptionHandler = new IcyExceptionHandler();
@@ -132,6 +134,8 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                 }
                 else
                 {
+                    boolean done = false;
+
                     // search plugin class (start from the end of stack trace)
                     for (StackTraceElement trace : throwable.getStackTrace())
                     {
@@ -146,27 +150,50 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                             // plugin found --> show the plugin report frame
                             if (plugin != null)
                             {
-                                handlePluginException(plugin, throwable, false);
+                                handleException(plugin, throwable, false);
                                 // only send to last plugin raising the exception
+                                done = true;
                                 break;
                             }
                         }
+                    }
+
+                    if (!done)
+                    {
+                        // we did not find plugin class so we will search for plugin developer id
+                        for (StackTraceElement trace : throwable.getStackTrace())
+                        {
+                            final String className = trace.getClassName();
+
+                            // plugin class ?
+                            if (className.startsWith(PluginLoader.PLUGIN_PACKAGE + "."))
+                            {
+                                // use plugin developer id
+                                handleException(className.split("\\.")[1], throwable, false);
+                                // only send to last plugin raising the exception
+                                done = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!done)
+                    {
+                        // general exception (no plugin information found)
+                        handleException(throwable, false);
                     }
                 }
             }
         });
     }
 
-    public static void handlePluginException(PluginDescriptor pluginDesc, Throwable t, boolean print)
+    /**
+     * Handle the specified exception.<br>
+     * It actually display a message or report dialog depending the exception type.
+     */
+    private static void handleException(PluginDescriptor plugin, String devId, Throwable t, boolean print)
     {
         final boolean handledException = t instanceof IcyHandledException;
-
-        if (!handledException && print)
-        {
-            // show message
-            System.err.println("An error occured while plugin '" + pluginDesc.getName() + "' was running :");
-            IcyExceptionHandler.showErrorMessage(t, true);
-        }
 
         if (t instanceof OutOfMemoryError)
         {
@@ -183,14 +210,112 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         }
         else
         {
-            // report error
-            PluginErrorReport.report(pluginDesc, "An error occured while the plugin was running.\n\nStack trace :\n"
-                    + IcyExceptionHandler.getErrorMessage(t, true));
+            // write message in console if wanted
+            if (print)
+            {
+                if (plugin != null)
+                    System.err.println("An error occured while plugin '" + plugin.getName() + "' was running :");
+                else if (!StringUtil.isEmpty(devId))
+                    System.err.println("An error occured while a plugin was running :");
+                IcyExceptionHandler.showErrorMessage(t, true);
+            }
+
+            // do report only for plugin error
+            if ((plugin != null) || !StringUtil.isEmpty(devId))
+            {
+                // report error
+                PluginErrorReport.report(
+                        plugin,
+                        devId,
+                        "An error occured while the plugin was running.\n\nStack trace :\n"
+                                + IcyExceptionHandler.getErrorMessage(t, true));
+            }
         }
     }
 
     /**
-     * Report an error log to the Icy web site.
+     * Handle the specified exception.<br>
+     * It actually display a message or report dialog depending the exception type.
+     */
+    public static void handleException(PluginDescriptor pluginDesc, Throwable t, boolean print)
+    {
+        handleException(pluginDesc, null, t, print);
+    }
+
+    /**
+     * Handle the specified exception.<br>
+     * It actually display a message or report dialog depending the exception type.
+     */
+    public static void handleException(String devId, Throwable t, boolean print)
+    {
+        handleException(null, devId, t, print);
+    }
+
+    /**
+     * Handle the specified exception.<br>
+     * It actually display a message or report dialog depending the exception type.
+     */
+    public static void handleException(Throwable t, boolean print)
+    {
+        handleException(null, null, t, print);
+    }
+
+    /**
+     * @deprecated Uses {@link #handleException(PluginDescriptor, Throwable, boolean)} instead.
+     */
+    @Deprecated
+    public static void handlePluginException(PluginDescriptor pluginDesc, Throwable t, boolean print)
+    {
+        handleException(pluginDesc, t, print);
+    }
+
+    /**
+     * Report an error log from a given plugin or developer id to Icy web site.
+     * 
+     * @param plugin
+     *        The plugin responsible of the error or <code>null</code> if the error comes from the
+     *        application or if we are not able to get the plugin descriptor.
+     * @param devId
+     *        The developer id of the plugin responsible of the error when the plugin descriptor was
+     *        not found or <code>null</code> if the error comes from the application.
+     * @param errorLog
+     *        Error log to report.
+     */
+    public static void report(PluginDescriptor plugin, String devId, String errorLog)
+    {
+        final String icyId;
+        final String pluginId;
+        final HashMap<String, String> values = new HashMap<String, String>();
+
+        values.put(ID_KERNELVERSION, Icy.version.toString());
+        icyId = "ICY Version " + Icy.version + "\n";
+
+        if (plugin != null)
+        {
+            values.put(ID_PLUGINCLASSNAME, plugin.getClassName());
+            values.put(ID_PLUGINVERSION, plugin.getVersion().toString());
+            pluginId = "Plugin " + plugin.toString() + "\n";
+        }
+        else
+        {
+            values.put(ID_PLUGINCLASSNAME, "");
+            values.put(ID_PLUGINVERSION, "");
+            pluginId = "";
+        }
+
+        if (StringUtil.isEmpty(devId))
+            values.put(ID_DEVELOPERID, devId);
+        else
+            values.put(ID_DEVELOPERID, "");
+
+        values.put(ID_ERRORLOG, icyId + pluginId + "\n" + errorLog);
+
+        // send report
+        NetworkUtil.report(values);
+    }
+
+    /**
+     * Report an error log from a given plugin to Icy web site.
      * 
      * @param plugin
      *        The plugin responsible of the error or <code>null</code> if the error comes from the
@@ -200,33 +325,32 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
      */
     public static void report(PluginDescriptor plugin, String errorLog)
     {
-        final HashMap<String, String> values = new HashMap<String, String>();
-
-        values.put(ID_KERNELVERSION, Icy.version.toString());
-
-        if (plugin != null)
-        {
-            values.put(ID_PLUGINCLASSNAME, plugin.getClassName());
-            values.put(ID_PLUGINVERSION, plugin.getVersion().toString());
-        }
-        else
-        {
-            values.put(ID_PLUGINCLASSNAME, "");
-            values.put(ID_PLUGINVERSION, "");
-        }
-
-        final String icyId;
-        final String pluginId;
-
-        icyId = "ICY Version " + Icy.version + "\n";
-        if (plugin != null)
-            pluginId = "Plugin " + plugin.toString() + "\n";
-        else
-            pluginId = "";
-
-        values.put(ID_ERRORLOG, icyId + pluginId + "\n" + errorLog);
-
-        // send report
-        NetworkUtil.report(values);
+        report(plugin, null, errorLog);
     }
+
+    /**
+     * Report an error log from the application to Icy web site.
+     * 
+     * @param errorLog
+     *        Error log to report.
+     */
+    public static void report(String errorLog)
+    {
+        report(null, null, errorLog);
+    }
+
+    /**
+     * Report an error log from a given plugin developer id to the Icy web site.
+     * 
+     * @param devId
+     *        The developer id of the plugin responsible of the error or <code>null</code> if the
+     *        error comes from the application.
+     * @param errorLog
+     *        Error log to report.
+     */
+    public static void report(String devId, String errorLog)
+    {
+        report(null, devId, errorLog);
+    }
+
 }

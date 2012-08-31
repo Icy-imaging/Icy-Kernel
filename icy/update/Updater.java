@@ -182,7 +182,7 @@ public class Updater
             final Node obsoletes = XMLUtil.getElement(document.getDocumentElement(), ID_OBSOLETES);
 
             // get all local path
-            final ArrayList<Node> nodesLocalpath = XMLUtil.getSubNodes(obsoletes, ID_LOCALPATH);
+            final ArrayList<Node> nodesLocalpath = XMLUtil.getChildren(obsoletes, ID_LOCALPATH);
             if (nodesLocalpath != null)
             {
                 for (Node n : nodesLocalpath)
@@ -212,7 +212,7 @@ public class Updater
             final Node elements = XMLUtil.getElement(document.getDocumentElement(), ID_ELEMENTS);
 
             // get elements
-            final ArrayList<Node> nodesElement = XMLUtil.getSubNodes(elements, ID_ELEMENT);
+            final ArrayList<Node> nodesElement = XMLUtil.getChildren(elements, ID_ELEMENT);
             if (nodesElement != null)
             {
                 for (Node n : nodesElement)
@@ -425,8 +425,8 @@ public class Updater
         {
             // move failed
             System.err.println("Updater.udpateFile('" + localPath + "') failed !");
-            System.err.println("Cannot rename file from '" + UPDATE_DIRECTORY + FileUtil.separator + localPath + "' to '"
-                    + localPath + "'");
+            System.err.println("Cannot rename file from '" + UPDATE_DIRECTORY + FileUtil.separator + localPath
+                    + "' to '" + localPath + "'");
             return false;
         }
 

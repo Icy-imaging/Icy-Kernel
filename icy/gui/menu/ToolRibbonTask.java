@@ -329,7 +329,6 @@ public class ToolRibbonTask extends RibbonTask
 
             if (button != null)
             {
-                buttonGroup.setSelected(getButtonFromToolName(currentTool), false);
                 buttonGroup.setSelected(button, true);
 
                 currentTool = toolName;

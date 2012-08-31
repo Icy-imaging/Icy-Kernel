@@ -18,10 +18,10 @@
  */
 package icy.gui.preferences;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.plugin.PluginDetailPanel;
+import icy.gui.util.ComponentUtil;
 import icy.plugin.PluginDescriptor;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;

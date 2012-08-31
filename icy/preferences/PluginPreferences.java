@@ -20,7 +20,6 @@ public class PluginPreferences
      */
     private static final String ID_ALLOW_BETA = "allowBeta";
     private static final String ID_AUTO_UPDATE = "autoUpdate";
-    private static final String ID_AUTO_CHECK_UPDATE = "autoCheckUpdate";
     private static final String ID_INACTIVES_DAEMON = "inactivesdaemon";
 
     /**
@@ -47,11 +46,6 @@ public class PluginPreferences
         return preferences.getBoolean(ID_AUTO_UPDATE, true);
     }
 
-    public static boolean getAutomaticCheckUpdate()
-    {
-        return preferences.getBoolean(ID_AUTO_CHECK_UPDATE, true);
-    }
-
     public static boolean getAllowBeta()
     {
         return preferences.getBoolean(ID_ALLOW_BETA, false);
@@ -76,11 +70,6 @@ public class PluginPreferences
     public static void setAutomaticUpdate(boolean value)
     {
         preferences.putBoolean(ID_AUTO_UPDATE, value);
-    }
-
-    public static void setAutomaticCheckUpdate(boolean value)
-    {
-        preferences.putBoolean(ID_AUTO_CHECK_UPDATE, value);
     }
 
     public static void setAllowBeta(boolean value)

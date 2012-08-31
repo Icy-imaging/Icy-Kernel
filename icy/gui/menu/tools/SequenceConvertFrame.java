@@ -18,9 +18,9 @@
  */
 package icy.gui.menu.tools;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.frame.sequence.SequenceActionFrame;
 import icy.gui.frame.sequence.SequenceActionFrame.SourceChangeListener;
+import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
@@ -42,7 +42,8 @@ import javax.swing.JPanel;
  * @author Stephane
  * @deprecated
  */
-public class SequenceConvertFrame extends SequenceActionFrame implements SourceChangeListener
+@Deprecated
+public class SequenceConvertFrame extends SequenceActionFrame implements SourceChangeListener, ActionListener
 {
     protected static final String DATATYPE_CMD = "datatype";
     protected static final String SIGNED_CMD = "signed";
@@ -165,7 +166,7 @@ public class SequenceConvertFrame extends SequenceActionFrame implements SourceC
                         outSeq.setName(seqIn.getName() + " [" + TypeUtil.toLongString(dataType, signed) + "]");
 
                         // add sequence
-                        Icy.addSequence(outSeq);
+                        Icy.getMainInterface().addSequence(outSeq);
                     }
                 });
             }
@@ -269,16 +270,9 @@ public class SequenceConvertFrame extends SequenceActionFrame implements SourceC
         getOkBtn().setEnabled(getSequence() != null);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.frame.ActionFrame#actionPerformed(java.awt.event.ActionEvent)
-     */
     @Override
     public void actionPerformed(ActionEvent e)
     {
-        super.actionPerformed(e);
-
         final String cmd = e.getActionCommand();
 
         if (DATATYPE_CMD.equals(cmd))

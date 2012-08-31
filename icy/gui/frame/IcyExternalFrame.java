@@ -5,7 +5,7 @@ package icy.gui.frame;
 
 import icy.common.IcyAbstractAction;
 import icy.common.MenuCallback;
-import icy.gui.component.ComponentUtil;
+import icy.gui.util.ComponentUtil;
 import icy.gui.util.LookAndFeelUtil;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;

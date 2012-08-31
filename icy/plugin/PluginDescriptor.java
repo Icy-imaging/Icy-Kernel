@@ -96,10 +96,9 @@ public class PluginDescriptor implements XMLPersistent
     private static final URL DEFAULT_ICON_URL = Plugin.class.getResource("plugin_icon.png");
     private static final URL DEFAULT_IMAGE_URL = Plugin.class.getResource("plugin.png");
 
-    public static final ImageIcon DEFAULT_ICON = ResourceUtil.getImageIcon(ImageUtil.loadImage(DEFAULT_ICON_URL),
-            ICON_SIZE);
-    public static final Image DEFAULT_IMAGE = ImageUtil.scaleImage(ImageUtil.loadImage(DEFAULT_IMAGE_URL), IMAGE_SIZE,
-            IMAGE_SIZE);
+    public static final ImageIcon DEFAULT_ICON = ResourceUtil.getImageIcon(ImageUtil.load(DEFAULT_ICON_URL), ICON_SIZE);
+    public static final Image DEFAULT_IMAGE = ImageUtil
+            .scale(ImageUtil.load(DEFAULT_IMAGE_URL), IMAGE_SIZE, IMAGE_SIZE);
 
     static final String ID_CLASSNAME = "classname";
     static final String ID_URL = "url";
@@ -843,7 +842,7 @@ public class PluginDescriptor implements XMLPersistent
         // load icon
         if (url != null)
             icon = ResourceUtil.getImageIcon(
-                    ImageUtil.loadImage(NetworkUtil.getInputStream(url,
+                    ImageUtil.load(NetworkUtil.getInputStream(url,
                             (repository != null) ? repository.getAuthenticationInfo() : null, true, false), false),
                     ICON_SIZE);
         // get default icon
@@ -855,8 +854,8 @@ public class PluginDescriptor implements XMLPersistent
     {
         // load image
         if (url != null)
-            image = ImageUtil.scaleImage(
-                    ImageUtil.loadImage(NetworkUtil.getInputStream(url,
+            image = ImageUtil.scale(
+                    ImageUtil.load(NetworkUtil.getInputStream(url,
                             (repository != null) ? repository.getAuthenticationInfo() : null, true, false), false),
                     IMAGE_SIZE, IMAGE_SIZE);
         // get default image
@@ -939,7 +938,7 @@ public class PluginDescriptor implements XMLPersistent
         final Node nodeDependances = XMLUtil.getElement(node, ID_DEPENDENCIES);
         if (nodeDependances != null)
         {
-            final ArrayList<Node> nodesDependances = XMLUtil.getSubNodes(nodeDependances, ID_DEPENDENCY);
+            final ArrayList<Node> nodesDependances = XMLUtil.getChildren(nodeDependances, ID_DEPENDENCY);
 
             for (Node n : nodesDependances)
             {

@@ -19,13 +19,13 @@
 package icy.gui.main;
 
 import icy.file.Loader;
-import icy.gui.component.ComponentUtil;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.ExternalizablePanel.StateListener;
 import icy.gui.inspector.ChatPanel;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.MainRibbon;
+import icy.gui.util.ComponentUtil;
 import icy.gui.util.WindowPositionSaver;
 import icy.math.HungarianAlgorithm;
 import icy.preferences.GeneralPreferences;

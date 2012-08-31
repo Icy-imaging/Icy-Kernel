@@ -3,6 +3,8 @@
  */
 package icy.gui.component;
 
+import icy.gui.util.ComponentUtil;
+
 import javax.swing.BoundedRangeModel;
 import javax.swing.JSlider;
 

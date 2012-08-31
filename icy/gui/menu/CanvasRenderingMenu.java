@@ -101,7 +101,7 @@ public class CanvasRenderingMenu extends JMenu
                                         // set sequence name
                                         seqOut.setName("LUT rendering of " + seqIn.getName());
                                         // add sequence
-                                        Icy.addSequence(seqOut);
+                                        Icy.getMainInterface().addSequence(seqOut);
                                     }
                                 }
                                 finally

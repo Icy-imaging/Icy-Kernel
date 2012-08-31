@@ -116,11 +116,6 @@ public class WorkspaceLocalPreferencePanel extends WorkspaceListPreferencePanel 
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.preferences.WorkspaceListPreferencePanel#load()
-     */
     @Override
     protected void load()
     {
@@ -129,11 +124,6 @@ public class WorkspaceLocalPreferencePanel extends WorkspaceListPreferencePanel 
         activesWorkspace = WorkspaceLocalPreferences.getActivesWorkspace();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.preferences.WorkspaceListPreferencePanel#save()
-     */
     @Override
     protected void save()
     {
@@ -151,7 +141,7 @@ public class WorkspaceLocalPreferencePanel extends WorkspaceListPreferencePanel 
     @Override
     protected void reloadWorkspaces()
     {
-        WorkspaceLoader.reload_asynch();
+        WorkspaceLoader.reloadAsynch();
         updateButtonsState();
     }
 

@@ -209,7 +209,7 @@ public class IcyIcon implements ResizableIcon
     {
         if (image != null)
         {
-            cache = ImageUtil.scaleImageQuality(image, dim.width, dim.height);
+            cache = ImageUtil.scaleQuality(image, dim.width, dim.height);
             alphaImage = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_ARGB);
         }
         else

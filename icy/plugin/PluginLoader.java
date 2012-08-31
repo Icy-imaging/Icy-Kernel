@@ -256,6 +256,7 @@ public class PluginLoader implements ChangeListener
         else
         {
             newLoader = new PluginClassLoader();
+
             // reload plugins directory to search path
             ((PluginClassLoader) newLoader).add(PLUGIN_PATH);
         }
@@ -290,18 +291,14 @@ public class PluginLoader implements ChangeListener
 
             try
             {
-                // don't load class without package name (JCL don't like them)
-                if (!ClassUtil.getPackageName(className).isEmpty())
-                {
-                    // try to load class and check we have a Plugin class at same time
-                    final Class<? extends Plugin> pluginClass = newLoader.loadClass(className).asSubclass(Plugin.class);
+                // try to load class and check we have a Plugin class at same time
+                final Class<? extends Plugin> pluginClass = newLoader.loadClass(className).asSubclass(Plugin.class);
 
-                    // // ignore interface or abstract classes
-                    // if ((!pluginClass.isInterface()) && (!ClassUtil.isAbstract(pluginClass)))
-                    // plugins.add(new PluginDescriptor(pluginClass));
+                // // ignore interface or abstract classes
+                // if ((!pluginClass.isInterface()) && (!ClassUtil.isAbstract(pluginClass)))
+                // plugins.add(new PluginDescriptor(pluginClass));
 
-                    newPlugins.add(new PluginDescriptor(pluginClass));
-                }
+                newPlugins.add(new PluginDescriptor(pluginClass));
             }
             catch (NoClassDefFoundError e)
             {
@@ -431,7 +428,7 @@ public class PluginLoader implements ChangeListener
                 }
                 catch (Throwable t)
                 {
-                    IcyExceptionHandler.handlePluginException(pluginDesc, t, true);
+                    IcyExceptionHandler.handleException(pluginDesc, t, true);
                 }
             }
         }
@@ -453,7 +450,7 @@ public class PluginLoader implements ChangeListener
             }
             catch (Throwable t)
             {
-                IcyExceptionHandler.handlePluginException(((Plugin) daemonPlug).getDescriptor(), t, true);
+                IcyExceptionHandler.handleException(((Plugin) daemonPlug).getDescriptor(), t, true);
             }
         }
 

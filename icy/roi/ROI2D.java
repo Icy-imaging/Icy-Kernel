@@ -800,7 +800,7 @@ public abstract class ROI2D extends ROI
      */
     public boolean[] getAsBooleanMask(Rectangle rect, boolean inclusive)
     {
-        return getAsBooleanMask(rect.x, rect.y, rect.width, rect.height);
+        return getAsBooleanMask(rect.x, rect.y, rect.width, rect.height, inclusive);
     }
 
     /**
@@ -830,7 +830,7 @@ public abstract class ROI2D extends ROI
         {
             for (int i = 0; i < w; i++)
             {
-                result[offset] = contains(x + i, y + j);
+                result[offset] = contains(x + i, y + j, 1, 1);
                 if (inclusive)
                     result[offset] |= intersects(x + i, y + j, 1, 1);
                 offset++;

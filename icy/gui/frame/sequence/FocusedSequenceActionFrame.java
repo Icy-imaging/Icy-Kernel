@@ -18,10 +18,10 @@
  */
 package icy.gui.frame.sequence;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.frame.ActionFrame;
 import icy.gui.main.MainAdapter;
 import icy.gui.main.MainEvent;
+import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;

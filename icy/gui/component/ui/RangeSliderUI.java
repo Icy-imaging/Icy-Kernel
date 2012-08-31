@@ -120,7 +120,7 @@ public class RangeSliderUI extends SubstanceSliderUI
     /**
      * Constructs a RangeSliderUI for the specified slider component.
      * 
-     * @param b
+     * @param rangeSlider
      *        RangeSlider
      */
     public RangeSliderUI(RangeSlider rangeSlider)

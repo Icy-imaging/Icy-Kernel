@@ -18,7 +18,7 @@
  */
 package icy.gui.preferences;
 
-import icy.gui.component.ComponentUtil;
+import icy.gui.util.ComponentUtil;
 
 import java.awt.BorderLayout;
 

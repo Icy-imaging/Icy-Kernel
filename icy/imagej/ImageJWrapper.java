@@ -81,7 +81,7 @@ public class ImageJWrapper extends ImageJ
         try
         {
             // patch imageJ toolbar to uses our wrapper
-            ReflectionUtil.getField(this, "toolbar", true).set(this, swingToolBar);
+            ReflectionUtil.getField(this.getClass(), "toolbar", true).set(this, swingToolBar);
         }
         catch (Exception e)
         {

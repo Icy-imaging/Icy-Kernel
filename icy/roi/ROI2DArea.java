@@ -476,7 +476,10 @@ public class ROI2DArea extends ROI2D
     double translateX, translateY;
     Color previousColor;
 
-    public ROI2DArea(Point2D position)
+    /**
+     * Create a ROI2D Area type from the specified {@link BooleanMask2D}.
+     */
+    public ROI2DArea()
     {
         super();
 
@@ -506,6 +509,26 @@ public class ROI2DArea extends ROI2D
         // get data pointer
         maskData = ((DataBufferByte) imageMask.getRaster().getDataBuffer()).getData();
 
+        setName("Area2D");
+    }
+
+    /**
+     * Create a ROI2D Area type from the specified {@link BooleanMask2D}.
+     */
+    public ROI2DArea(BooleanMask2D mask)
+    {
+        this();
+
+        setAsBooleanMask(mask);
+    }
+
+    /**
+     * Create a ROI2D Area type with a single point.
+     */
+    public ROI2DArea(Point2D position)
+    {
+        this();
+
         if (position != null)
         {
             // init mouse position
@@ -513,13 +536,6 @@ public class ROI2DArea extends ROI2D
             // add current point to mask
             addPointAt(position, false);
         }
-
-        setName("Area2D");
-    }
-
-    public ROI2DArea()
-    {
-        this(null);
     }
 
     void addToBounds(Rectangle bnd)
@@ -955,8 +971,8 @@ public class ROI2DArea extends ROI2D
         // replace to origin
         final int xi = (int) x - bounds.x;
         final int yi = (int) y - bounds.y;
-        final int wi = (int) w;
-        final int hi = (int) h;
+        final int wi = (int) (x + w) - (int) x;
+        final int hi = (int) (y + h) - (int) y;
 
         // scan all pixels, can take sometime if mask is large
         int offset = (yi * bounds.width) + xi;
@@ -994,8 +1010,8 @@ public class ROI2DArea extends ROI2D
         // replace to origin
         int xi = (int) x - bounds.x;
         int yi = (int) y - bounds.y;
-        int wi = (int) w;
-        int hi = (int) h;
+        int wi = (int) (x + w) - (int) x;
+        int hi = (int) (y + h) - (int) y;
 
         // adjust box to mask size
         if (xi < 0)

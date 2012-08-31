@@ -21,11 +21,11 @@ package icy.gui.menu;
 import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.file.Saver;
-import icy.gui.component.ComponentUtil;
 import icy.gui.dialog.ImageLoaderDialog;
 import icy.gui.dialog.ImageSaverDialog;
 import icy.gui.preferences.GeneralPreferencePanel;
 import icy.gui.preferences.PreferenceFrame;
+import icy.gui.util.ComponentUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.main.Icy;
@@ -209,8 +209,9 @@ public class ApplicationMenu extends RibbonApplicationMenu
                     @Override
                     public void actionPerformed(ActionEvent e)
                     {
-                        Icy.addSequence(new Sequence("Single channel sequence", new IcyBufferedImage(512, 512, 1,
-                                DataType.UBYTE)));
+                        Icy.getMainInterface().addSequence(
+                                new Sequence("Single channel sequence", new IcyBufferedImage(512, 512, 1,
+                                        DataType.UBYTE)));
                     }
                 }, CommandButtonKind.ACTION_ONLY);
 
@@ -220,8 +221,9 @@ public class ApplicationMenu extends RibbonApplicationMenu
                     @Override
                     public void actionPerformed(ActionEvent e)
                     {
-                        Icy.addSequence(new Sequence("Single channel sequence", new IcyBufferedImage(512, 512, 1,
-                                DataType.UBYTE)));
+                        Icy.getMainInterface().addSequence(
+                                new Sequence("Single channel sequence", new IcyBufferedImage(512, 512, 1,
+                                        DataType.UBYTE)));
                     }
                 }, CommandButtonKind.ACTION_ONLY);
         amesNewGraySequence.setDescriptionText("Create a 1 gray level channel sequence.");
@@ -232,7 +234,8 @@ public class ApplicationMenu extends RibbonApplicationMenu
                     @Override
                     public void actionPerformed(ActionEvent e)
                     {
-                        Icy.addSequence(new Sequence("RGB sequence", new IcyBufferedImage(512, 512, 3, DataType.UBYTE)));
+                        Icy.getMainInterface().addSequence(
+                                new Sequence("RGB sequence", new IcyBufferedImage(512, 512, 3, DataType.UBYTE)));
                     }
                 }, CommandButtonKind.ACTION_ONLY);
         amesNewRGBSequence.setDescriptionText("Create a 3 channels sequence (red, green, blue).");
@@ -243,7 +246,8 @@ public class ApplicationMenu extends RibbonApplicationMenu
                     @Override
                     public void actionPerformed(ActionEvent e)
                     {
-                        Icy.addSequence(new Sequence("RGBA sequence", new IcyBufferedImage(512, 512, 4, DataType.UBYTE)));
+                        Icy.getMainInterface().addSequence(
+                                new Sequence("RGBA sequence", new IcyBufferedImage(512, 512, 4, DataType.UBYTE)));
                     }
                 }, CommandButtonKind.ACTION_ONLY);
         amesNewRGBASequence.setDescriptionText("Create a 4 channels sequence (red, green, blue, alpha).");

@@ -18,9 +18,9 @@
  */
 package icy.gui.menu.tools;
 
-import icy.gui.component.ComponentUtil;
 import icy.gui.frame.sequence.SequenceActionFrame;
 import icy.gui.frame.sequence.SequenceActionFrame.SourceChangeListener;
+import icy.gui.util.ComponentUtil;
 import icy.image.lut.LUT;
 import icy.main.Icy;
 import icy.sequence.Sequence;
@@ -46,7 +46,7 @@ import javax.swing.JRadioButton;
  * @deprecated
  */
 @Deprecated
-public class SequenceExtractFrame extends SequenceActionFrame implements SourceChangeListener
+public class SequenceExtractFrame extends SequenceActionFrame implements SourceChangeListener, ActionListener
 {
     protected static final String SCALAR_CMD = "scalar";
     protected static final String COLOR_CMD = "color";
@@ -227,7 +227,7 @@ public class SequenceExtractFrame extends SequenceActionFrame implements SourceC
                         }
 
                         // add sequence
-                        Icy.addSequence(seqOut);
+                        Icy.getMainInterface().addSequence(seqOut);
                     }
                 });
             }
@@ -365,16 +365,9 @@ public class SequenceExtractFrame extends SequenceActionFrame implements SourceC
         getOkBtn().setEnabled(ok && sourceOk);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see icy.gui.frame.ActionFrame#actionPerformed(java.awt.event.ActionEvent)
-     */
     @Override
     public void actionPerformed(ActionEvent e)
     {
-        super.actionPerformed(e);
-
         final String cmd = e.getActionCommand();
 
         if (SCALAR_CMD.equals(cmd))
