@@ -264,12 +264,12 @@ public class Loader
 
                         // default name loaded from metadata (if available)
                         String name;
-                        if (StringUtil.isEmpty(seq.getName()))
+                        if (seq.isDefaultName())
                             name = FileUtil.getFileName(filename, false);
                         else
                             name = seq.getName();
                         // then we add channel name information if available
-                        if (seq.getDefaultChannelName(c).equals(seq.getChannelName(c)))
+                        if (seq.isDefaultChannelName(c))
                             name += " (channel " + newPos.getC() + ")";
                         else
                             name += "(" + seq.getChannelName(index) + ")";
@@ -326,7 +326,8 @@ public class Loader
                     final String fileDir = FileUtil.getGenericPath(files.get(0).getParentFile().getAbsolutePath());
 
                     // set name and filename to use directory instead
-                    seq.setName(FileUtil.getFileName(fileDir, false));
+                    if (seq.isDefaultName())
+                        seq.setName(FileUtil.getFileName(fileDir, false));
                     seq.setFilename(fileDir);
                 }
 
@@ -425,8 +426,8 @@ public class Loader
                         // create and add the first sequence
                         seq = new Sequence(MetaDataUtil.createOMEMetadata((IMetadata) reader.getMetadataStore(),
                                 serieIndex));
-                        // set name only if empty (default name loaded from metadata)
-                        if (StringUtil.isEmpty(seq.getName()))
+                        // set name only if default name used
+                        if (seq.isDefaultName())
                             seq.setName(FileUtil.getFileName(file.getName(), false));
                         // set filename
                         seq.setFilename(path);
@@ -494,8 +495,8 @@ public class Loader
                                     // and add a new sequence
                                     seq = new Sequence(MetaDataUtil.createOMEMetadata(
                                             (IMetadata) reader.getMetadataStore(), serieIndex));
-                                    // set name only if empty (default name loaded from metadata)
-                                    if (StringUtil.isEmpty(seq.getName()))
+                                    // set name only if default name used
+                                    if (seq.isDefaultName())
                                         seq.setName(FileUtil.getFileName(file.getName(), false));
                                     seq.setFilename(path);
                                     sequences.add(seq);
@@ -628,13 +629,12 @@ public class Loader
      * @throws IOException
      * @throws FormatException
      */
-    public static IcyBufferedImage loadImage(IFormatReader reader, int z, int t) throws FormatException,
-            IOException
+    public static IcyBufferedImage loadImage(IFormatReader reader, int z, int t) throws FormatException, IOException
     {
-            // return an icy image
-            return IcyBufferedImage.createFrom(reader, z, t);
+        // return an icy image
+        return IcyBufferedImage.createFrom(reader, z, t);
     }
-    
+
     /**
      * Load and return a single image from the specified reader.<br>
      * If the specified file contains severals image the first image is returned.
@@ -645,11 +645,10 @@ public class Loader
      * @throws IOException
      * @throws FormatException
      */
-    public static IcyBufferedImage loadImage(IFormatReader reader) throws FormatException,
-            IOException
+    public static IcyBufferedImage loadImage(IFormatReader reader) throws FormatException, IOException
     {
-            // return an icy image
-            return IcyBufferedImage.createFrom(reader, 0, 0);
+        // return an icy image
+        return IcyBufferedImage.createFrom(reader, 0, 0);
     }
 
     /**
@@ -665,8 +664,7 @@ public class Loader
      * @throws IOException
      * @throws FormatException
      */
-    public static IcyBufferedImage loadImage(File file, int z, int t) throws FormatException,
-            IOException
+    public static IcyBufferedImage loadImage(File file, int z, int t) throws FormatException, IOException
     {
         final ImageReader reader = new ImageReader();
 

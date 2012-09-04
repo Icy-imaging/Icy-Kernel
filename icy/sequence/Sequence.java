@@ -2009,6 +2009,29 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns the size of the specified dimension
+     */
+    public int getSize(DimensionId dim)
+    {
+        switch (dim)
+        {
+            case X:
+                return getSizeX();
+            case Y:
+                return getSizeY();
+            case C:
+                return getSizeC();
+            case Z:
+                return getSizeZ();
+            case T:
+                return getSizeT();
+            default:
+            case NULL:
+                return 0;
+        }
+    }
+
+    /**
      * Returns 2D dimension of sequence {sizeX, sizeY}
      */
     public Dimension getDimension()
@@ -5051,4 +5074,5 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         // notify listener we have changed
         fireChangeEvent(event);
     }
+
 }

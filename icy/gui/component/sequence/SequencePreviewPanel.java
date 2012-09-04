@@ -220,7 +220,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
         mainPanel = new JPanel();
         add(mainPanel, BorderLayout.CENTER);
         GridBagLayout gbl_mainPanel = new GridBagLayout();
-        gbl_mainPanel.columnWidths = new int[] {28, 0, 0};
+        gbl_mainPanel.columnWidths = new int[] {0, 0, 0};
         gbl_mainPanel.rowHeights = new int[] {0, 0, 0};
         gbl_mainPanel.columnWeights = new double[] {0.0, 1.0, Double.MIN_VALUE};
         gbl_mainPanel.rowWeights = new double[] {1.0, 0.0, Double.MIN_VALUE};

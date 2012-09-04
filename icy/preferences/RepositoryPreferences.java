@@ -228,7 +228,7 @@ public class RepositoryPreferences
     private static XMLPreferences preferences;
 
     public static final String DEFAULT_REPOSITERY_NAME = "default";
-    public static final String DEFAULT_REPOSITERY_LOCATION = "http://www.bioimageanalysis.org/icy/repository/";
+    public static final String DEFAULT_REPOSITERY_LOCATION = "http://icy.bioimageanalysis.org/repository/";
 
     public static void load()
     {

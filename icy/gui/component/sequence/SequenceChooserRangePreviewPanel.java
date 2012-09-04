@@ -110,14 +110,9 @@ public class SequenceChooserRangePreviewPanel extends JPanel implements Sequence
         return sequenceRangePreview.isIndexSelected(index);
     }
 
-    public int getKeepValue()
+    public int getExtractValue()
     {
-        return sequenceRangePreview.getKeepValue();
-    }
-
-    public int getIgnoreValue()
-    {
-        return sequenceRangePreview.getIgnoreValue();
+        return sequenceRangePreview.getExtractValue();
     }
 
     public int getLoopValue()

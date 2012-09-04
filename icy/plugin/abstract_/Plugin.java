@@ -150,7 +150,7 @@ public abstract class Plugin
      */
     public BufferedImage getImageResource(String resourceName)
     {
-        return ImageUtil.loadImage(getResourceAsStream(resourceName));
+        return ImageUtil.load(getResourceAsStream(resourceName));
     }
 
     /**

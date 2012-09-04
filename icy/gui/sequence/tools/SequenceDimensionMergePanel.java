@@ -1,6 +1,3 @@
-/**
- * 
- */
 package icy.gui.sequence.tools;
 
 import icy.gui.component.button.IcyButton;
@@ -20,8 +17,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
@@ -44,14 +39,44 @@ import javax.swing.event.ListSelectionListener;
  */
 public class SequenceDimensionMergePanel extends JPanel
 {
+    static class SequenceChannelEntry
+    {
+        final Sequence sequence;
+        final int c;
+
+        /**
+         * @param sequence
+         * @param c
+         */
+        public SequenceChannelEntry(Sequence sequence, int c)
+        {
+            super();
+
+            this.sequence = sequence;
+            this.c = c;
+        }
+
+        public SequenceChannelEntry(Sequence sequence)
+        {
+            this(sequence, -1);
+        }
+
+        @Override
+        public String toString()
+        {
+            if (c == -1)
+                return sequence.toString();
+
+            return sequence.toString() + "    [channel " + c + "]";
+        }
+    }
+
     /**
      * 
      */
     private static final long serialVersionUID = -5908902915282090447L;
 
-    protected DefaultListModel listModel;
-    protected ListSelectionModel selectionModel;
-
+    // GUI
     protected IcyButton addButton;
     protected IcyButton removeButton;
     protected IcyButton upButton;
@@ -65,12 +90,19 @@ public class SequenceDimensionMergePanel extends JPanel
     private JLabel bottomArrowLabel;
     private JLabel dimLabel;
 
+    // internals
+    protected DefaultListModel listModel;
+    protected ListSelectionModel selectionModel;
+    protected final DimensionId dim;
+
     /**
      * Create the panel.
      */
     public SequenceDimensionMergePanel(DimensionId dim)
     {
         super();
+
+        this.dim = dim;
 
         listModel = new DefaultListModel();
 
@@ -113,7 +145,7 @@ public class SequenceDimensionMergePanel extends JPanel
                 previewImageChanged();
             }
         });
-        
+
         addButton.addActionListener(new ActionListener()
         {
             @Override
@@ -123,12 +155,16 @@ public class SequenceDimensionMergePanel extends JPanel
 
                 if (seq != null)
                 {
-                    if (!isCompatibleSequence(seq))
-                        MessageDialog
-                                .showDialog("You can merge only sequence of same data type and with the same number of channel");
-                    else
+                    if (checkSequenceIsCompatible(seq, true, true))
                     {
-                        listModel.addElement(seq);
+                        if (SequenceDimensionMergePanel.this.dim == DimensionId.C)
+                        {
+                            // add per channel
+                            for (int c = 0; c < seq.getSizeC(); c++)
+                                listModel.addElement(new SequenceChannelEntry(seq, c));
+                        }
+                        else
+                            listModel.addElement(new SequenceChannelEntry(seq));
 
                         refreshButtonsState();
                         fireChangedEvent();
@@ -195,6 +231,7 @@ public class SequenceDimensionMergePanel extends JPanel
 
         // interlace not available for channel merge operation
         interlaceCheckBox.setVisible(dim != DimensionId.C);
+        fillEmptyImageCheckBox.setVisible(false);
 
         refreshButtonsState();
     }
@@ -311,37 +348,42 @@ public class SequenceDimensionMergePanel extends JPanel
         gbc_fitCheckbox.gridy = 6;
         add(fitCheckbox, gbc_fitCheckbox);
 
+        interlaceCheckBox = new JCheckBox("Interlace image");
+        interlaceCheckBox.setToolTipText("Interlace sequence image");
+        GridBagConstraints gbc_interlaceCheckBox = new GridBagConstraints();
+        gbc_interlaceCheckBox.gridwidth = 2;
+        gbc_interlaceCheckBox.fill = GridBagConstraints.BOTH;
+        gbc_interlaceCheckBox.insets = new Insets(0, 0, 5, 0);
+        gbc_interlaceCheckBox.gridx = 2;
+        gbc_interlaceCheckBox.gridy = 6;
+        add(interlaceCheckBox, gbc_interlaceCheckBox);
+
         fillEmptyImageCheckBox = new JCheckBox("Fill empty image");
         fillEmptyImageCheckBox.setToolTipText("Replace empty image by the previous non empty one");
         GridBagConstraints gbc_noEmptyImageCheckBox = new GridBagConstraints();
         gbc_noEmptyImageCheckBox.gridwidth = 2;
         gbc_noEmptyImageCheckBox.fill = GridBagConstraints.VERTICAL;
         gbc_noEmptyImageCheckBox.anchor = GridBagConstraints.WEST;
-        gbc_noEmptyImageCheckBox.insets = new Insets(0, 0, 5, 0);
-        gbc_noEmptyImageCheckBox.gridx = 2;
-        gbc_noEmptyImageCheckBox.gridy = 6;
+        gbc_noEmptyImageCheckBox.insets = new Insets(0, 0, 5, 5);
+        gbc_noEmptyImageCheckBox.gridx = 0;
+        gbc_noEmptyImageCheckBox.gridy = 7;
         add(fillEmptyImageCheckBox, gbc_noEmptyImageCheckBox);
-
-        interlaceCheckBox = new JCheckBox("Interlace image");
-        interlaceCheckBox.setToolTipText("Interlace sequence image");
-        GridBagConstraints gbc_interlaceCheckBox = new GridBagConstraints();
-        gbc_interlaceCheckBox.gridwidth = 2;
-        gbc_interlaceCheckBox.fill = GridBagConstraints.BOTH;
-        gbc_interlaceCheckBox.insets = new Insets(0, 0, 5, 5);
-        gbc_interlaceCheckBox.gridx = 0;
-        gbc_interlaceCheckBox.gridy = 7;
-        add(interlaceCheckBox, gbc_interlaceCheckBox);
 
         sequencePreview = new SequencePreviewPanel();
         sequencePreview
                 .setBorder(new TitledBorder(null, "Preview", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         GridBagConstraints gbc_sequencePreview = new GridBagConstraints();
-        gbc_sequencePreview.gridwidth = 3;
+        gbc_sequencePreview.gridwidth = 4;
         gbc_sequencePreview.insets = new Insets(0, 0, 0, 5);
         gbc_sequencePreview.fill = GridBagConstraints.BOTH;
         gbc_sequencePreview.gridx = 0;
         gbc_sequencePreview.gridy = 8;
         add(sequencePreview, gbc_sequencePreview);
+    }
+
+    public DimensionId getDimensionId()
+    {
+        return dim;
     }
 
     void refreshButtonsState()
@@ -355,21 +397,115 @@ public class SequenceDimensionMergePanel extends JPanel
         downButton.setEnabled(notEmpty && (index != (size - 1)));
     }
 
-    public List<Sequence> getSequences()
+    public int[] getSelectedChannels()
     {
-        final ArrayList<Sequence> result = new ArrayList<Sequence>();
+        final int[] result = new int[listModel.size()];
 
         for (int i = 0; i < listModel.getSize(); i++)
-            result.add((Sequence) listModel.get(i));
+            result[i] = ((SequenceChannelEntry) listModel.get(i)).c;
 
         return result;
     }
 
-    boolean isCompatibleSequence(Sequence seq)
+    public Sequence[] getSequences()
     {
-        for (Sequence s : getSequences())
-            if (!seq.isCompatible(s.getColorModel()))
+        final Sequence result[] = new Sequence[listModel.size()];
+
+        for (int i = 0; i < listModel.getSize(); i++)
+            result[i] = ((SequenceChannelEntry) listModel.get(i)).sequence;
+
+        return result;
+    }
+
+    boolean checkSequenceIsCompatible(Sequence seq, boolean showMessage, boolean showWarning)
+    {
+        boolean warningXYDone = false;
+
+        for (Sequence sequence : getSequences())
+        {
+            // first check for data type
+            if (!seq.getDataType_().equals(sequence.getDataType_()))
+            {
+                if (showMessage)
+                    MessageDialog.showDialog("You cannot merge sequences with different data type.");
+
                 return false;
+            }
+
+            // then depending dimension merge check for dimension equality
+            switch (getDimensionId())
+            {
+                case C:
+                    if (seq.getSizeZ() != sequence.getSizeZ())
+                    {
+                        if (showMessage)
+                            MessageDialog.showDialog("You cannot merge channels from sequences with different Z size.");
+
+                        return false;
+                    }
+                    if (seq.getSizeT() != sequence.getSizeT())
+                    {
+                        if (showMessage)
+                            MessageDialog.showDialog("You cannot merge channels from sequences with different T size.");
+
+                        return false;
+                    }
+                    break;
+
+                case Z:
+                    if (seq.getSizeC() != sequence.getSizeC())
+                    {
+                        if (showMessage)
+                            MessageDialog
+                                    .showDialog("You cannot merge slices from sequences with different number of channel.");
+
+                        return false;
+                    }
+                    if (seq.getSizeT() != sequence.getSizeT())
+                    {
+                        if (showMessage)
+                            MessageDialog.showDialog("You cannot merge slices from sequences with different T size.");
+
+                        return false;
+                    }
+                    break;
+
+                case T:
+                    if (seq.getSizeC() != sequence.getSizeC())
+                    {
+                        if (showMessage)
+                            MessageDialog.showDialog(
+                                    "You cannot merge frames from sequences with different number of channel.",
+                                    MessageDialog.PLAIN_MESSAGE);
+
+                        return false;
+                    }
+                    if (seq.getSizeZ() != sequence.getSizeZ())
+                    {
+                        if (showMessage)
+                            MessageDialog.showDialog("You cannot merge frames from sequences with different Z size.");
+
+                        return false;
+                    }
+                    break;
+            }
+
+            // also consider the XY size
+            if (!isFitImagesEnabled())
+            {
+                if ((seq.getSizeX() != sequence.getSizeX()) || (seq.getSizeY() != sequence.getSizeY()))
+                {
+                    if (showWarning && !warningXYDone)
+                    {
+                        MessageDialog
+                                .showDialog(
+                                        "Sequences have different XY size !\nYou can enable the \"Scale image\" option to resize images if needed.",
+                                        MessageDialog.WARNING_MESSAGE);
+                        warningXYDone = true;
+                    }
+                }
+            }
+        }
 
         return true;
     }

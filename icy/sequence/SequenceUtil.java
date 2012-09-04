@@ -29,6 +29,7 @@ import icy.util.StringUtil;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -39,15 +40,86 @@ import javax.swing.SwingConstants;
  * {@link Sequence} utilities class.<br>
  * You can find here tools to manipulate the sequence organization, its data type, its size...
  * 
- * @author fab & stephane
+ * @author Stephane
  */
 public class SequenceUtil
 {
+    public static class AddZHelper
+    {
+        public static IcyBufferedImage getExtendedImage(Sequence sequence, int t, int z, int insertPosition,
+                int numInsert, int copyLast)
+        {
+            if (z < insertPosition)
+                // always return a copy
+                return IcyBufferedImageUtil.getCopy(sequence.getImage(t, z));
+
+            final int pos = z - insertPosition;
+
+            // return new image
+            if (pos < numInsert)
+            {
+                // return copy of previous image(s)
+                if ((insertPosition > 0) && (copyLast > 0))
+                {
+                    // should be < insert position
+                    final int duplicate = Math.min(insertPosition, copyLast);
+                    final int baseReplicate = insertPosition - duplicate;
+
+                    // always return a copy
+                    return IcyBufferedImageUtil.getCopy(sequence.getImage(t, baseReplicate + (pos % duplicate)));
+                }
+
+                // return new empty image
+                return new IcyBufferedImage(sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(),
+                        sequence.getDataType_());
+            }
+
+            // always return a copy
+            return IcyBufferedImageUtil.getCopy(sequence.getImage(t, z - numInsert));
+        }
+    }
+
+    public static class AddTHelper
+    {
+        public static IcyBufferedImage getExtendedImage(Sequence sequence, int t, int z, int insertPosition,
+                int numInsert, int copyLast)
+        {
+            if (t < insertPosition)
+                // always return a copy
+                return IcyBufferedImageUtil.getCopy(sequence.getImage(t, z));
+
+            final int pos = t - insertPosition;
+
+            // return new image
+            if (pos < numInsert)
+            {
+                // return copy of previous image(s)
+                if ((insertPosition > 0) && (copyLast > 0))
+                {
+                    // should be < insert position
+                    final int duplicate = Math.min(insertPosition, copyLast);
+                    final int baseReplicate = insertPosition - duplicate;
+
+                    // always return a copy
+                    return IcyBufferedImageUtil.getCopy(sequence.getImage(baseReplicate + (pos % duplicate), z));
+                }
+
+                // return new empty image
+                return new IcyBufferedImage(sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(),
+                        sequence.getDataType_());
+            }
+
+            // always return a copy
+            return IcyBufferedImageUtil.getCopy(sequence.getImage(t - numInsert, z));
+        }
+    }
+
     public static class MergeCHelper
     {
-        private static IcyBufferedImage getImageFromSequenceInternal(Sequence seq, int t, int z, boolean fillEmpty)
+        private static IcyBufferedImage getImageFromSequenceInternal(Sequence seq, int t, int z, int c,
+                boolean fillEmpty)
         {
-            IcyBufferedImage img = seq.getImage(t, z);
+            IcyBufferedImage img = seq.getImage(t, z, c);
 
             if ((img == null) && fillEmpty)
             {
@@ -58,7 +130,7 @@ public class SequenceUtil
                 {
                     // searching in previous slice
                     while ((img == null) && (curZ > 0))
-                        img = seq.getImage(t, --curZ);
+                        img = seq.getImage(t, --curZ, c);
                 }
 
                 if (img == null)
@@ -67,7 +139,7 @@ public class SequenceUtil
 
                     // searching in previous frame
                     while ((img == null) && (curT > 0))
-                        img = seq.getImage(--curT, z);
+                        img = seq.getImage(--curT, z, c);
                 }
 
                 return img;
@@ -76,17 +148,20 @@ public class SequenceUtil
             return img;
         }
 
-        public static IcyBufferedImage getImage(Sequence[] sequences, int sizeX, int sizeY, int t, int z,
-                boolean fillEmpty, boolean rescale)
+        public static IcyBufferedImage getImage(Sequence[] sequences, int[] channels, int sizeX, int sizeY, int t,
+                int z, boolean fillEmpty, boolean rescale)
         {
             if (sequences.length == 0)
                 return null;
 
             final List<BufferedImage> images = new ArrayList<BufferedImage>();
 
-            for (Sequence seq : sequences)
+            for (int i = 0; i < sequences.length; i++)
             {
-                IcyBufferedImage img = getImageFromSequenceInternal(seq, t, z, fillEmpty);
+                final Sequence seq = sequences[i];
+                final int c = channels[i];
+
+                IcyBufferedImage img = getImageFromSequenceInternal(seq, t, z, c, fillEmpty);
 
                 // create an empty image
                 if (img == null)
@@ -306,6 +381,77 @@ public class SequenceUtil
     }
 
     /**
+     * Add one or severals frames at position t.
+     * 
+     * @param t
+     *        Position where to add frame(s)
+     * @param num
+     *        Number of frame to add
+     * @param copyLast
+     *        Number of last frame(s) to copy to fill added frames.<br>
+     *        0 means that new frames are empty.<br>
+     *        1 means we duplicate the last frame.<br>
+     *        2 means we duplicate the two last frames.<br>
+     *        and so on...
+     */
+    public static void addT(Sequence sequence, int t, int num, int copyLast)
+    {
+        final int sizeZ = sequence.getSizeZ();
+        final int sizeT = sequence.getSizeT();
+
+        sequence.beginUpdate();
+        try
+        {
+            moveT(sequence, t, sizeT - 1, num);
+
+            for (int i = 0; i < num; i++)
+                for (int z = 0; z < sizeZ; z++)
+                    sequence.setImage(t + i, z, AddTHelper.getExtendedImage(sequence, t + i, z, t, num, copyLast));
+        }
+        finally
+        {
+            sequence.endUpdate();
+        }
+    }
+
+    /**
+     * Add one or severals frames at position t.
+     * 
+     * @param t
+     *        Position where to add frame(s)
+     * @param num
+     *        Number of frame to add
+     */
+    public static void addT(Sequence sequence, int t, int num)
+    {
+        addT(sequence, t, num, 0);
+    }
+
+    /**
+     * Add one or severals frames at position t.
+     * 
+     * @param num
+     *        Number of frame to add
+     */
+    public static void addT(Sequence sequence, int num)
+    {
+        addT(sequence, sequence.getSizeT(), num, 0);
+    }
+
+    /**
+     * Add one or severals frames at position t.
+     * 
+     * @param num
+     *        Number of frame to add
+     * @param copyLast
+     *        If true then the last frame is copied in added frames.
+     */
+    public static void addT(Sequence sequence, int num, boolean copyLast)
+    {
+        addT(sequence, sequence.getSizeT(), num, 0);
+    }
+
+    /**
      * Exchange 2 frames position on the sequence.
      */
     public static void swapT(Sequence sequence, int t1, int t2)
@@ -364,7 +510,7 @@ public class SequenceUtil
     {
         final int sizeT = sequence.getSizeT();
 
-        if ((t < 0) || (t >= sizeT) || (newT < 0))
+        if ((t < 0) || (t >= sizeT) || (newT < 0) || (t == newT))
             return;
 
         // get volume image at position t
@@ -517,6 +663,77 @@ public class SequenceUtil
     }
 
     /**
+     * Add one or severals slices at position z.
+     * 
+     * @param z
+     *        Position where to add slice(s)
+     * @param num
+     *        Number of slice to add
+     * @param copyLast
+     *        Number of last slice(s) to copy to fill added slices.<br>
+     *        0 means that new slices are empty.<br>
+     *        1 means we duplicate the last slice.<br>
+     *        2 means we duplicate the two last slices.<br>
+     *        and so on...
+     */
+    public static void addZ(Sequence sequence, int z, int num, int copyLast)
+    {
+        final int sizeZ = sequence.getSizeZ();
+        final int sizeT = sequence.getSizeT();
+
+        sequence.beginUpdate();
+        try
+        {
+            moveZ(sequence, z, sizeZ - 1, num);
+
+            for (int i = 0; i < num; i++)
+                for (int t = 0; t < sizeT; t++)
+                    sequence.setImage(t, z + i, AddZHelper.getExtendedImage(sequence, t, z + i, z, num, copyLast));
+        }
+        finally
+        {
+            sequence.endUpdate();
+        }
+    }
+
+    /**
+     * Add one or severals slices at position z.
+     * 
+     * @param z
+     *        Position where to add slice(s)
+     * @param num
+     *        Number of slice to add
+     */
+    public static void addZ(Sequence sequence, int z, int num)
+    {
+        addZ(sequence, z, num, 0);
+    }
+
+    /**
+     * Add one or severals slices at position z.
+     * 
+     * @param num
+     *        Number of slice to add
+     */
+    public static void addZ(Sequence sequence, int num)
+    {
+        addZ(sequence, sequence.getSizeZ(), num, 0);
+    }
+
+    /**
+     * Add one or severals slices at position z.
+     * 
+     * @param num
+     *        Number of slice to add
+     * @param copyLast
+     *        If true then the last slice is copied in added slices.
+     */
+    public static void addZ(Sequence sequence, int num, boolean copyLast)
+    {
+        addZ(sequence, sequence.getSizeZ(), num, 0);
+    }
+
+    /**
      * Exchange 2 slices position on the sequence.
      */
     public static void swapZ(Sequence sequence, int z1, int z2)
@@ -567,7 +784,7 @@ public class SequenceUtil
         final int sizeZ = sequence.getSizeZ();
         final int sizeT = sequence.getSizeT();
 
-        if ((z < 0) || (z >= sizeZ) || (newZ < 0))
+        if ((z < 0) || (z >= sizeZ) || (newZ < 0) || (z == newZ))
             return;
 
         sequence.beginUpdate();
@@ -832,6 +1049,13 @@ public class SequenceUtil
      * 
      * @param sequences
      *        Sequences to concatenate (use array order).
+     * @param channels
+     *        Selected channel for each sequence (<code>channels.length = sequences.length</code>)<br>
+     *        If you want to select 2 or more channels from a sequence, just duplicate the sequence
+     *        entry in the <code>sequences</code> parameter :</code><br>
+     *        <code>sequences[n] = Sequence1; channels[n] = 0;</code><br>
+     *        <code>sequences[n+1] = Sequence1; channels[n+1] = 2;</code><br>
+     *        <code>...</code>
      * @param fillEmpty
      *        Replace empty image by the previous non empty one.
      * @param rescale
@@ -839,7 +1063,8 @@ public class SequenceUtil
      * @param pl
      *        ProgressListener to indicate processing progress.
      */
-    public static Sequence concatC(Sequence[] sequences, boolean fillEmpty, boolean rescale, ProgressListener pl)
+    public static Sequence concatC(Sequence[] sequences, int[] channels, boolean fillEmpty, boolean rescale,
+            ProgressListener pl)
     {
         final int sizeX = getMaxDim(sequences, DimensionId.X);
         final int sizeY = getMaxDim(sequences, DimensionId.Y);
@@ -856,7 +1081,8 @@ public class SequenceUtil
                 if (pl != null)
                     pl.notifyProgress(ind, sizeT * sizeZ);
 
-                result.setImage(t, z, MergeCHelper.getImage(sequences, sizeX, sizeY, t, z, fillEmpty, rescale));
+                result.setImage(t, z,
+                        MergeCHelper.getImage(sequences, channels, sizeX, sizeY, t, z, fillEmpty, rescale));
 
                 ind++;
             }
@@ -876,6 +1102,25 @@ public class SequenceUtil
         }
 
         return result;
+    }
+
+    /**
+     * Create and returns a new sequence by concatenating all given sequences on C dimension.
+     * 
+     * @param sequences
+     *        Sequences to concatenate (use array order).
+     * @param fillEmpty
+     *        Replace empty image by the previous non empty one.
+     * @param rescale
+     *        Images are scaled to all fit in the same XY dimension.
+     * @param pl
+     *        ProgressListener to indicate processing progress.
+     */
+    public static Sequence concatC(Sequence[] sequences, boolean fillEmpty, boolean rescale, ProgressListener pl)
+    {
+        final int channels[] = new int[sequences.length];
+        Arrays.fill(channels, -1);
+        return concatC(sequences, channels, fillEmpty, rescale, pl);
     }
 
     /**

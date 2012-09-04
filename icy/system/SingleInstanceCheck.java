@@ -4,7 +4,6 @@
 package icy.system;
 
 import icy.file.FileUtil;
-import icy.gui.dialog.ConfirmDialog;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -18,44 +17,38 @@ import java.nio.channels.FileLock;
  */
 public class SingleInstanceCheck
 {
-    private FileLock lock;
-
-    public SingleInstanceCheck(String id)
+    public static FileLock lock(String id)
     {
+        FileLock result;
         final File f = new File(FileUtil.getGenericPath(FileUtil.getTempDirectory() + "/" + id + ".lock"));
 
         try
         {
-            lock = new FileOutputStream(f).getChannel().tryLock();
+            result = new FileOutputStream(f).getChannel().tryLock();
         }
         catch (Exception e)
         {
-            lock = null;
+            result = null;
         }
 
-        if (lock == null)
-        {
-            if (!ConfirmDialog.confirm("ICY is already running on this computer. Start anyway ?"))
-                System.exit(0);
-        }
+        return result;
     }
 
-    /**
-     * Release lock
-     */
-    public void release()
+    public static boolean release(FileLock lock)
     {
         if (lock != null)
         {
             try
             {
                 lock.release();
+                return true;
             }
             catch (IOException e)
             {
                 // ignore
-                lock = null;
             }
         }
+
+        return false;
     }
 }

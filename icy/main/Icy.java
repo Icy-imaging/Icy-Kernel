@@ -59,6 +59,7 @@ import ij.ImageJ;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.nio.channels.FileLock;
 import java.util.ArrayList;
 
 import javax.swing.JDesktopPane;
@@ -87,7 +88,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.2.6.5");
+    public static Version version = new Version("1.2.6.7");
 
     /**
      * Main interface
@@ -97,7 +98,7 @@ public class Icy
     /**
      * Unique instance checker
      */
-    static SingleInstanceCheck checkSingle = null;
+    static FileLock lock = null;
 
     /**
      * private splash for initial loading
@@ -149,7 +150,19 @@ public class Icy
             handleAppArgs(args);
 
             // check if ICY is already running.
-            checkSingle = new SingleInstanceCheck("icy");
+            lock = SingleInstanceCheck.lock("icy");
+            if (lock == null)
+            {
+                // we always accept multi instance in headless mode
+                if (!headless)
+                {
+                    if (!ConfirmDialog.confirm("ICY is already running on this computer. Start anyway ?"))
+                    {
+                        System.exit(0);
+                        return;
+                    }
+                }
+            }
 
             if (!headless && !noSplash)
             {
@@ -501,8 +514,8 @@ public class Icy
                 // clean up native library files
                 // unPrepareNativeLibraries();
 
-                if (checkSingle != null)
-                    checkSingle.release();
+                if (lock != null)
+                    SingleInstanceCheck.release(lock);
 
                 final boolean doUpdate = IcyUpdater.getWantUpdate();
 

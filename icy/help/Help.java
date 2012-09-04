@@ -139,7 +139,7 @@ public class Help implements KeyListener, ActionListener
     private void ShowHelp(String url)
     {
         if (url != null)
-            NetworkUtil.openURL("http://www.bioimageanalysis.org/icy/index.php?" + url);
+            NetworkUtil.openURL("http://icy.bioimageanalysis.org/index.php?" + url);
     }
 
     @Override

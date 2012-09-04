@@ -1,3 +1,6 @@
+/**
+ * 
+ */
 package icy.gui.sequence.tools;
 
 import icy.gui.component.sequence.SequencePreviewPanel;
@@ -5,21 +8,27 @@ import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
 import icy.image.IcyBufferedImageUtil.FilterType;
 import icy.math.UnitUtil;
+import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceModel;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Image;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
@@ -29,24 +38,27 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-public class SequenceResizePanel extends JPanel
+/**
+ * @author Stephane
+ */
+public abstract class SequenceBaseResizePanel extends JPanel
 {
     /**
      * 
      */
-    private static final long serialVersionUID = 1939174803542745108L;
+    private static final long serialVersionUID = -9220345511598410844L;
 
-    enum SizeUnit
+    protected enum SizeUnit
     {
         PIXEL, PERCENT, MILLIM, MICROM
     }
 
-    enum ResolutionUnit
+    protected enum ResolutionUnit
     {
         MILLIM_PIXEL, MICROM_PIXEL, PIXEL_MILLIM, PIXEL_MICROM
     }
 
-    private class OriginalModel implements SequenceModel
+    protected class OriginalModel implements SequenceModel
     {
         public OriginalModel()
         {
@@ -96,7 +108,7 @@ public class SequenceResizePanel extends JPanel
         }
     }
 
-    private class ResultModel implements SequenceModel
+    protected class ResultModel implements SequenceModel
     {
         public ResultModel()
         {
@@ -139,8 +151,7 @@ public class SequenceResizePanel extends JPanel
             try
             {
                 return IcyBufferedImageUtil.scale(sequence.getImage(t, z), getNewWidth(), getNewHeight(),
-                        resizeContentCheckBox.isSelected(), positionAlignmentPanel.getXAlign(),
-                        positionAlignmentPanel.getYAlign(), getFilterType());
+                        getResizeContent(), getXAlign(), getYAlign(), getFilterType());
             }
             catch (OutOfMemoryError e)
             {
@@ -158,30 +169,31 @@ public class SequenceResizePanel extends JPanel
     final Sequence sequence;
 
     // GUI
-    JCheckBox keepRatioCheckBox;
-    private JComboBox resizeMethodComboBox;
-    JCheckBox resizeContentCheckBox;
-    private JLabel contentAlignLabel;
-    PositionAlignmentPanel positionAlignmentPanel;
-    private JSpinner heightSpinner;
-    JSpinner widthSpinner;
-    private SequencePreviewPanel originalPreview;
-    private SequencePreviewPanel resultPreview;
-    private JPanel infoPanel;
-    JTextField widthField;
-    JTextField heightField;
-    private JTextField sizeField;
-    private JComboBox sizeUnitComboBox;
-    private JComboBox resolutionUnitComboBox;
-    private JSpinner resolutionSpinner;
+    protected JCheckBox keepRatioCheckBox;
+    protected JSpinner heightSpinner;
+    protected JSpinner widthSpinner;
+    protected SequencePreviewPanel originalPreview;
+    protected SequencePreviewPanel resultPreview;
+    protected JPanel infoPanel;
+    protected JTextField widthField;
+    protected JTextField heightField;
+    protected JTextField sizeField;
+    protected JComboBox sizeUnitComboBox;
+    protected JComboBox resolutionUnitComboBox;
+    protected JSpinner resolutionSpinner;
+    protected JLabel accolLeftLabel;
+    protected JPanel panel;
+    protected Component horizontalGlue;
+    protected Component horizontalGlue_1;
+    protected JPanel settingPanel;
 
     // internal
-    ResolutionUnit previousResolutionUnit;
+    protected ResolutionUnit previousResolutionUnit;
 
     /**
      * Create the panel.
      */
-    public SequenceResizePanel(Sequence sequence)
+    public SequenceBaseResizePanel(Sequence sequence)
     {
         super();
 
@@ -191,6 +203,9 @@ public class SequenceResizePanel extends JPanel
 
         setNewWidth(sequence.getSizeX());
         setNewHeight(sequence.getSizeY());
+
+        accolLeftLabel.setIcon(ResourceUtil.getImageIcon(ResourceUtil.IMAGE_ACCOLADE_LEFT));
+        accolLeftLabel.setText(null);
         resolutionSpinner.setValue(Double.valueOf(sequence.getPixelSizeX()));
 
         originalPreview.setFitToView(false);
@@ -200,26 +215,7 @@ public class SequenceResizePanel extends JPanel
 
         previousResolutionUnit = getResolutionUnit();
 
-        updateGUI();
         updatePreview();
-
-        final ActionListener actionUpdatePreview = new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                updatePreview();
-            }
-        };
-        final ActionListener actionUpdateBoth = new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                updateGUI();
-                updatePreview();
-            }
-        };
 
         final ChangeListener spinnerChangeListener = new ChangeListener()
         {
@@ -229,7 +225,7 @@ public class SequenceResizePanel extends JPanel
                 // maintain ratio
                 if (keepRatioCheckBox.isSelected())
                 {
-                    final Sequence seq = SequenceResizePanel.this.sequence;
+                    final Sequence seq = SequenceBaseResizePanel.this.sequence;
 
                     if (e.getSource() == widthSpinner)
                     {
@@ -248,10 +244,6 @@ public class SequenceResizePanel extends JPanel
                 updatePreview();
             }
         };
-
-        resizeContentCheckBox.addActionListener(actionUpdateBoth);
-        resizeMethodComboBox.addActionListener(actionUpdatePreview);
-        positionAlignmentPanel.addActionListener(actionUpdatePreview);
         heightSpinner.addChangeListener(spinnerChangeListener);
         widthSpinner.addChangeListener(spinnerChangeListener);
 
@@ -279,149 +271,219 @@ public class SequenceResizePanel extends JPanel
         });
     }
 
-    private void initialize()
+    protected void initialize()
     {
-        setLayout(null);
+        setLayout(new BorderLayout(0, 0));
+
+        panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+        add(panel, BorderLayout.NORTH);
 
         infoPanel = new JPanel();
-        infoPanel.setBounds(0, 0, 354, 83);
-        add(infoPanel);
+        panel.add(infoPanel);
         infoPanel
                 .setBorder(new TitledBorder(null, "Size / Memory", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-        infoPanel.setLayout(null);
+        GridBagLayout gbl_infoPanel = new GridBagLayout();
+        gbl_infoPanel.columnWidths = new int[] {20, 100, 20, 100, 20, 100, 20, 0};
+        gbl_infoPanel.rowHeights = new int[] {0, 0, 0};
+        gbl_infoPanel.columnWeights = new double[] {1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
+        gbl_infoPanel.rowWeights = new double[] {0.0, 0.0, Double.MIN_VALUE};
+        infoPanel.setLayout(gbl_infoPanel);
 
         final JLabel lblOriginalWidth = new JLabel("Width");
-        lblOriginalWidth.setBounds(23, 20, 43, 14);
-        infoPanel.add(lblOriginalWidth);
+        GridBagConstraints gbc_lblOriginalWidth = new GridBagConstraints();
+        gbc_lblOriginalWidth.fill = GridBagConstraints.BOTH;
+        gbc_lblOriginalWidth.insets = new Insets(0, 0, 5, 5);
+        gbc_lblOriginalWidth.gridx = 1;
+        gbc_lblOriginalWidth.gridy = 0;
+        infoPanel.add(lblOriginalWidth, gbc_lblOriginalWidth);
         lblOriginalWidth.setToolTipText("");
 
         final JLabel lblNewLabel_3 = new JLabel("Height");
-        lblNewLabel_3.setBounds(115, 20, 75, 14);
-        infoPanel.add(lblNewLabel_3);
+        GridBagConstraints gbc_lblNewLabel_3 = new GridBagConstraints();
+        gbc_lblNewLabel_3.fill = GridBagConstraints.BOTH;
+        gbc_lblNewLabel_3.insets = new Insets(0, 0, 5, 5);
+        gbc_lblNewLabel_3.gridx = 3;
+        gbc_lblNewLabel_3.gridy = 0;
+        infoPanel.add(lblNewLabel_3, gbc_lblNewLabel_3);
         lblNewLabel_3.setToolTipText("");
 
         final JLabel lblNewLabel_2 = new JLabel("Size");
-        lblNewLabel_2.setBounds(223, 20, 86, 14);
-        infoPanel.add(lblNewLabel_2);
+        GridBagConstraints gbc_lblNewLabel_2 = new GridBagConstraints();
+        gbc_lblNewLabel_2.fill = GridBagConstraints.BOTH;
+        gbc_lblNewLabel_2.insets = new Insets(0, 0, 5, 5);
+        gbc_lblNewLabel_2.gridx = 5;
+        gbc_lblNewLabel_2.gridy = 0;
+        infoPanel.add(lblNewLabel_2, gbc_lblNewLabel_2);
         lblNewLabel_2.setToolTipText("");
 
         widthField = new JTextField();
         widthField.setToolTipText("Width in pixel");
         widthField.setText("0000");
         widthField.setEditable(false);
-        widthField.setBounds(21, 40, 75, 20);
-        infoPanel.add(widthField);
-        widthField.setColumns(10);
+        GridBagConstraints gbc_widthField = new GridBagConstraints();
+        gbc_widthField.fill = GridBagConstraints.BOTH;
+        gbc_widthField.insets = new Insets(0, 0, 0, 5);
+        gbc_widthField.gridx = 1;
+        gbc_widthField.gridy = 1;
+        infoPanel.add(widthField, gbc_widthField);
+        widthField.setColumns(5);
 
         heightField = new JTextField();
         heightField.setToolTipText("Height in pixel");
         heightField.setText("0");
         heightField.setEditable(false);
-        heightField.setBounds(115, 40, 75, 20);
-        infoPanel.add(heightField);
-        heightField.setColumns(10);
+        GridBagConstraints gbc_heightField = new GridBagConstraints();
+        gbc_heightField.fill = GridBagConstraints.BOTH;
+        gbc_heightField.insets = new Insets(0, 0, 0, 5);
+        gbc_heightField.gridx = 3;
+        gbc_heightField.gridy = 1;
+        infoPanel.add(heightField, gbc_heightField);
+        heightField.setColumns(5);
 
         sizeField = new JTextField();
         sizeField.setToolTipText("Memory size");
         sizeField.setText("0.0B");
         sizeField.setEditable(false);
-        sizeField.setBounds(223, 40, 86, 20);
-        infoPanel.add(sizeField);
-        sizeField.setColumns(10);
+        GridBagConstraints gbc_sizeField = new GridBagConstraints();
+        gbc_sizeField.insets = new Insets(0, 0, 0, 5);
+        gbc_sizeField.fill = GridBagConstraints.BOTH;
+        gbc_sizeField.gridx = 5;
+        gbc_sizeField.gridy = 1;
+        infoPanel.add(sizeField, gbc_sizeField);
+        sizeField.setColumns(5);
 
-        JPanel settingPanel = new JPanel();
-        settingPanel.setBounds(0, 81, 354, 208);
-        add(settingPanel);
+        settingPanel = new JPanel();
+        panel.add(settingPanel);
         settingPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Setting",
                 TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
-        settingPanel.setLayout(null);
+        GridBagLayout gbl_settingPanel = new GridBagLayout();
+        gbl_settingPanel.columnWidths = new int[] {20, 100, 20, 100, 20, 100, 20, 0};
+        gbl_settingPanel.rowHeights = new int[] {0, 0, 0, 0, 10, 0, 0, 0};
+        gbl_settingPanel.columnWeights = new double[] {1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
+        gbl_settingPanel.rowWeights = new double[] {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+        settingPanel.setLayout(gbl_settingPanel);
 
         final JLabel lblWidth = new JLabel("Width");
-        lblWidth.setBounds(21, 26, 75, 14);
-        settingPanel.add(lblWidth);
-
-        widthSpinner = new JSpinner();
-        widthSpinner.setBounds(21, 45, 75, 20);
-        widthSpinner.setModel(new SpinnerNumberModel(new Integer(0), null, null, new Integer(1)));
-        widthSpinner.setToolTipText("New width to set");
-        settingPanel.add(widthSpinner);
-
-        final JLabel lblNewLabel = new JLabel("Height");
-        lblNewLabel.setBounds(21, 82, 75, 14);
-        settingPanel.add(lblNewLabel);
-
-        heightSpinner = new JSpinner();
-        lblNewLabel.setLabelFor(heightSpinner);
-        heightSpinner.setBounds(21, 100, 75, 20);
-        heightSpinner.setModel(new SpinnerNumberModel(new Integer(0), null, null, new Integer(1)));
-        heightSpinner.setToolTipText("New height to set");
-        settingPanel.add(heightSpinner);
+        GridBagConstraints gbc_lblWidth = new GridBagConstraints();
+        gbc_lblWidth.fill = GridBagConstraints.BOTH;
+        gbc_lblWidth.insets = new Insets(0, 0, 5, 5);
+        gbc_lblWidth.gridx = 1;
+        gbc_lblWidth.gridy = 0;
+        settingPanel.add(lblWidth, gbc_lblWidth);
 
         keepRatioCheckBox = new JCheckBox("Keep ratio");
-        keepRatioCheckBox.setBounds(223, 26, 87, 23);
+        keepRatioCheckBox.setVerticalAlignment(SwingConstants.TOP);
         keepRatioCheckBox.setToolTipText("Keep original aspect ratio");
         keepRatioCheckBox.setSelected(true);
-        settingPanel.add(keepRatioCheckBox);
+        GridBagConstraints gbc_keepRatioCheckBox = new GridBagConstraints();
+        gbc_keepRatioCheckBox.gridheight = 2;
+        gbc_keepRatioCheckBox.fill = GridBagConstraints.BOTH;
+        gbc_keepRatioCheckBox.insets = new Insets(0, 0, 5, 5);
+        gbc_keepRatioCheckBox.gridx = 5;
+        gbc_keepRatioCheckBox.gridy = 0;
+        settingPanel.add(keepRatioCheckBox, gbc_keepRatioCheckBox);
 
-        resizeContentCheckBox = new JCheckBox("Resize content");
-        resizeContentCheckBox.setBounds(223, 52, 110, 23);
-        resizeContentCheckBox.setToolTipText("Define if content is resized or not");
-        resizeContentCheckBox.setSelected(true);
-        settingPanel.add(resizeContentCheckBox);
+        widthSpinner = new JSpinner();
+        widthSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), new Integer(1), new Integer(1)));
+        widthSpinner.setToolTipText("New width to set");
+        GridBagConstraints gbc_widthSpinner = new GridBagConstraints();
+        gbc_widthSpinner.fill = GridBagConstraints.BOTH;
+        gbc_widthSpinner.insets = new Insets(0, 0, 5, 5);
+        gbc_widthSpinner.gridx = 1;
+        gbc_widthSpinner.gridy = 1;
+        settingPanel.add(widthSpinner, gbc_widthSpinner);
 
-        resizeMethodComboBox = new JComboBox();
-        resizeMethodComboBox.setBounds(233, 82, 100, 20);
-        resizeMethodComboBox.setToolTipText("Filter method used to resize content");
-        settingPanel.add(resizeMethodComboBox);
-        resizeMethodComboBox.setModel(new DefaultComboBoxModel(new String[] {"Nearest", "Bilinear", "Bicubic"}));
+        final JLabel lblNewLabel = new JLabel("Height");
+        GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
+        gbc_lblNewLabel.fill = GridBagConstraints.BOTH;
+        gbc_lblNewLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_lblNewLabel.gridx = 1;
+        gbc_lblNewLabel.gridy = 2;
+        settingPanel.add(lblNewLabel, gbc_lblNewLabel);
 
-        contentAlignLabel = new JLabel("Content alignment");
-        contentAlignLabel.setBounds(223, 83, 100, 18);
-        contentAlignLabel.setToolTipText("Set content alignment (only when content is not resized)");
-        settingPanel.add(contentAlignLabel);
-
-        positionAlignmentPanel = new PositionAlignmentPanel();
-        positionAlignmentPanel.setBounds(233, 110, 100, 90);
-        settingPanel.add(positionAlignmentPanel);
+        accolLeftLabel = new JLabel("");
+        accolLeftLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        GridBagConstraints gbc_accolLeftLabel = new GridBagConstraints();
+        gbc_accolLeftLabel.fill = GridBagConstraints.BOTH;
+        gbc_accolLeftLabel.gridheight = 3;
+        gbc_accolLeftLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_accolLeftLabel.gridx = 2;
+        gbc_accolLeftLabel.gridy = 1;
+        settingPanel.add(accolLeftLabel, gbc_accolLeftLabel);
+        lblNewLabel.setLabelFor(heightSpinner);
 
         sizeUnitComboBox = new JComboBox();
         sizeUnitComboBox.setToolTipText("Width / Height unit");
         sizeUnitComboBox.setModel(new DefaultComboBoxModel(new String[] {"pixel", "%", "mm", "\u00B5m"}));
         sizeUnitComboBox.setSelectedIndex(0);
-        sizeUnitComboBox.setBounds(115, 71, 87, 20);
-        settingPanel.add(sizeUnitComboBox);
+        GridBagConstraints gbc_sizeUnitComboBox = new GridBagConstraints();
+        gbc_sizeUnitComboBox.gridheight = 3;
+        gbc_sizeUnitComboBox.fill = GridBagConstraints.HORIZONTAL;
+        gbc_sizeUnitComboBox.insets = new Insets(0, 0, 5, 5);
+        gbc_sizeUnitComboBox.gridx = 3;
+        gbc_sizeUnitComboBox.gridy = 1;
+        settingPanel.add(sizeUnitComboBox, gbc_sizeUnitComboBox);
 
-        final JSeparator separator = new JSeparator();
-        separator.setOrientation(SwingConstants.VERTICAL);
-        separator.setBounds(105, 52, 2, 60);
-        settingPanel.add(separator);
-
-        final JSeparator separator_1 = new JSeparator();
-        separator_1.setBounds(105, 82, 8, 2);
-        settingPanel.add(separator_1);
+        heightSpinner = new JSpinner();
+        heightSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), new Integer(1), new Integer(1)));
+        heightSpinner.setToolTipText("New height to set");
+        GridBagConstraints gbc_heightSpinner = new GridBagConstraints();
+        gbc_heightSpinner.fill = GridBagConstraints.BOTH;
+        gbc_heightSpinner.insets = new Insets(0, 0, 5, 5);
+        gbc_heightSpinner.gridx = 1;
+        gbc_heightSpinner.gridy = 3;
+        settingPanel.add(heightSpinner, gbc_heightSpinner);
 
         final JLabel lblResolution = new JLabel("Resolution XY");
-        lblResolution.setBounds(21, 148, 75, 14);
-        settingPanel.add(lblResolution);
+        GridBagConstraints gbc_lblResolution = new GridBagConstraints();
+        gbc_lblResolution.gridwidth = 3;
+        gbc_lblResolution.fill = GridBagConstraints.BOTH;
+        gbc_lblResolution.insets = new Insets(0, 0, 5, 5);
+        gbc_lblResolution.gridx = 1;
+        gbc_lblResolution.gridy = 5;
+        settingPanel.add(lblResolution, gbc_lblResolution);
 
         resolutionSpinner = new JSpinner();
-        resolutionSpinner.setModel(new SpinnerNumberModel(1d, 0.0001d, Double.MAX_VALUE, 0.01d));
+        resolutionSpinner.setModel(new SpinnerNumberModel(new Double(1), new Double(0.0001), null, new Double(0.1)));
         resolutionSpinner.setToolTipText("Pixel resolution for X and Y dimension");
-        resolutionSpinner.setBounds(21, 168, 75, 20);
-        settingPanel.add(resolutionSpinner);
+        GridBagConstraints gbc_resolutionSpinner = new GridBagConstraints();
+        gbc_resolutionSpinner.fill = GridBagConstraints.BOTH;
+        gbc_resolutionSpinner.insets = new Insets(0, 0, 0, 5);
+        gbc_resolutionSpinner.gridx = 1;
+        gbc_resolutionSpinner.gridy = 6;
+        settingPanel.add(resolutionSpinner, gbc_resolutionSpinner);
 
         resolutionUnitComboBox = new JComboBox();
         resolutionUnitComboBox.setToolTipText("Resolution unit");
         resolutionUnitComboBox.setModel(new DefaultComboBoxModel(new String[] {"mm/pixel", "\u00B5m/pixel", "pixel/mm",
                 "pixel/\u00B5m"}));
         resolutionUnitComboBox.setSelectedIndex(0);
-        resolutionUnitComboBox.setBounds(115, 168, 87, 20);
-        settingPanel.add(resolutionUnitComboBox);
+        GridBagConstraints gbc_resolutionUnitComboBox = new GridBagConstraints();
+        gbc_resolutionUnitComboBox.fill = GridBagConstraints.BOTH;
+        gbc_resolutionUnitComboBox.insets = new Insets(0, 0, 0, 5);
+        gbc_resolutionUnitComboBox.gridx = 3;
+        gbc_resolutionUnitComboBox.gridy = 6;
+        settingPanel.add(resolutionUnitComboBox, gbc_resolutionUnitComboBox);
+
+        horizontalGlue = Box.createHorizontalGlue();
+        GridBagConstraints gbc_horizontalGlue = new GridBagConstraints();
+        gbc_horizontalGlue.fill = GridBagConstraints.HORIZONTAL;
+        gbc_horizontalGlue.insets = new Insets(0, 0, 0, 5);
+        gbc_horizontalGlue.gridx = 5;
+        gbc_horizontalGlue.gridy = 6;
+        settingPanel.add(horizontalGlue, gbc_horizontalGlue);
+
+        horizontalGlue_1 = Box.createHorizontalGlue();
+        GridBagConstraints gbc_horizontalGlue_1 = new GridBagConstraints();
+        gbc_horizontalGlue_1.fill = GridBagConstraints.HORIZONTAL;
+        gbc_horizontalGlue_1.gridx = 6;
+        gbc_horizontalGlue_1.gridy = 6;
+        settingPanel.add(horizontalGlue_1, gbc_horizontalGlue_1);
 
         final JPanel previewPanel = new JPanel();
-        previewPanel.setBounds(0, 288, 354, 161);
         previewPanel.setBorder(new TitledBorder(null, "Preview", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-        add(previewPanel);
+        add(previewPanel, BorderLayout.CENTER);
         previewPanel.setLayout(new BoxLayout(previewPanel, BoxLayout.LINE_AXIS));
 
         originalPreview = new SequencePreviewPanel("Original");
@@ -429,30 +491,6 @@ public class SequenceResizePanel extends JPanel
 
         resultPreview = new SequencePreviewPanel("Result");
         previewPanel.add(resultPreview);
-    }
-
-    void updateGUI()
-    {
-        final boolean resizeContent = resizeContentCheckBox.isSelected();
-
-        if (resizeContent)
-        {
-            resizeMethodComboBox.setVisible(true);
-            resizeMethodComboBox.setEnabled(true);
-            contentAlignLabel.setEnabled(false);
-            positionAlignmentPanel.setEnabled(false);
-            contentAlignLabel.setVisible(false);
-            positionAlignmentPanel.setVisible(false);
-        }
-        else
-        {
-            resizeMethodComboBox.setEnabled(false);
-            resizeMethodComboBox.setVisible(false);
-            contentAlignLabel.setVisible(true);
-            positionAlignmentPanel.setVisible(true);
-            contentAlignLabel.setEnabled(true);
-            positionAlignmentPanel.setEnabled(true);
-        }
     }
 
     void updatePreview()
@@ -472,43 +510,6 @@ public class SequenceResizePanel extends JPanel
     public Sequence getSequence()
     {
         return sequence;
-    }
-
-    public boolean getResizeContent()
-    {
-        return resizeContentCheckBox.isSelected();
-    }
-
-    /**
-     * Returns the selected horizontal alignment.<br>
-     * Possible values are <code>SwingConstants.LEFT / CENTER / RIGHT</code>
-     **/
-    public int getXAlign()
-    {
-        return positionAlignmentPanel.getXAlign();
-    }
-
-    /**
-     * Return the selected vertical alignment.<br>
-     * Possible values are <code>SwingConstants.TOP / CENTER / BOTTOM</code>
-     **/
-    public int getYAlign()
-    {
-        return positionAlignmentPanel.getYAlign();
-    }
-
-    public FilterType getFilterType()
-    {
-        switch (resizeMethodComboBox.getSelectedIndex())
-        {
-            default:
-            case 0:
-                return FilterType.NEAREST;
-            case 1:
-                return FilterType.BILINEAR;
-            case 2:
-                return FilterType.BICUBIC;
-        }
     }
 
     public SizeUnit getSizeUnit()
@@ -636,7 +637,7 @@ public class SequenceResizePanel extends JPanel
                 resol = 1d / (resol * 1000d);
                 break;
         }
-        
+
         resol = Math.max(0.000001, resol);
 
         resolutionSpinner.setValue(Double.valueOf(resol));
@@ -711,4 +712,12 @@ public class SequenceResizePanel extends JPanel
     {
         return Math.max(getNewHeight(), sequence.getSizeY());
     }
+
+    public abstract FilterType getFilterType();
+
+    public abstract boolean getResizeContent();
+
+    public abstract int getXAlign();
+
+    public abstract int getYAlign();
 }

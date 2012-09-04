@@ -97,11 +97,11 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     static final int ICON_SIZE = 20;
     static final int ICON_TARGET_SIZE = 20;
 
-    static final Image ICON_CENTER_IMAGE = ResourceUtil.getAlphaIconAsImage("center.png", ICON_SIZE);
-    static final Image ICON_FIT_IMAGE = ResourceUtil.getAlphaIconAsImage("fit_in2.png", ICON_SIZE);
-    static final Image ICON_FIT_CANVAS = ResourceUtil.getAlphaIconAsImage("fit_out.png", ICON_SIZE);
+    static final Image ICON_CENTER_IMAGE = ImageUtil.scale(ResourceUtil.ICON_CENTER_IMAGE, ICON_SIZE, ICON_SIZE);
+    static final Image ICON_FIT_IMAGE = ImageUtil.scale(ResourceUtil.ICON_FIT_IMAGE, ICON_SIZE, ICON_SIZE);
+    static final Image ICON_FIT_CANVAS = ImageUtil.scale(ResourceUtil.ICON_FIT_CANVAS, ICON_SIZE, ICON_SIZE);
 
-    static final Image ICON_TARGET = ResourceUtil.getAlphaIconAsImage("simple_target.png", ICON_TARGET_SIZE);
+    static final Image ICON_TARGET = ImageUtil.scale(ResourceUtil.ICON_TARGET, ICON_SIZE, ICON_SIZE);
     static final Image ICON_TARGET_BLACK = ImageUtil.getColorImageFromAlphaImage(ICON_TARGET, Color.black);
     static final Image ICON_TARGET_LIGHT = ImageUtil.getColorImageFromAlphaImage(ICON_TARGET, Color.lightGray);
 

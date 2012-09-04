@@ -206,7 +206,7 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
                     break;
 
                 default:
-                    System.out.println("code " + Integer.toString(text.charAt(index)));
+                    // System.out.println("code " + Integer.toString(text.charAt(index)));
                     break;
             }
 
@@ -600,6 +600,10 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
 
             // ignore close link
             if (msg.startsWith("Error: Closing Link:"))
+                return;
+
+            // ignore CTCP version request (can come from hacker)
+            if (msg.equals("\001VERSION\001"))
                 return;
 
             // target is current user --> incoming private message

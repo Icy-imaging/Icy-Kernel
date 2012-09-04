@@ -9,8 +9,10 @@ import icy.gui.component.button.IcyCommandMenuButton;
 import icy.gui.component.button.IcyCommandToggleMenuButton;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.menu.tools.SequenceCropper;
+import icy.gui.sequence.tools.SequenceCanvasResizeFrame;
 import icy.gui.sequence.tools.SequenceDimensionAdjustFrame;
 import icy.gui.sequence.tools.SequenceDimensionConvertFrame;
+import icy.gui.sequence.tools.SequenceDimensionExtendFrame;
 import icy.gui.sequence.tools.SequenceDimensionMergeFrame;
 import icy.gui.sequence.tools.SequenceResizeFrame;
 import icy.gui.util.ComponentUtil;
@@ -463,7 +465,8 @@ public class SequenceOperationTask extends RibbonTask
         private static final String NAME = "Plan (XY)";
 
         final IcyCommandButton cropButton;
-        final IcyCommandButton resizeButton;
+        final IcyCommandButton canvasResizeButton;
+        final IcyCommandButton imageResizeButton;
         final IcyCommandButton mergeButton;
 
         public PlanarOperationBand()
@@ -472,9 +475,9 @@ public class SequenceOperationTask extends RibbonTask
 
             setToolTipText("XY (plan) operation");
 
-            // crop operation
-            cropButton = new IcyCommandButton("Crop", new IcyIcon(ResourceUtil.ICON_CUT));
-            cropButton.setActionRichTooltip(new RichTooltip("Crop image", "Crop an image from a ROI."));
+            // fast crop operation
+            cropButton = new IcyCommandButton("Fast crop", new IcyIcon(ResourceUtil.ICON_CUT));
+            cropButton.setActionRichTooltip(new RichTooltip("Fast crop image", "Crop an image from a ROI."));
             cropButton.addActionListener(new ActionListener()
             {
                 @Override
@@ -485,11 +488,24 @@ public class SequenceOperationTask extends RibbonTask
             });
             addCommandButton(cropButton, RibbonElementPriority.MEDIUM);
 
-            // resize operation
-            resizeButton = new IcyCommandButton("Resize...", new IcyIcon(ResourceUtil.ICON_RESIZE));
-            resizeButton.setActionRichTooltip(new RichTooltip("Resize image",
-                    "Resize an image using different policies."));
-            resizeButton.addActionListener(new ActionListener()
+            // canvas resize operation
+            canvasResizeButton = new IcyCommandButton("Canvas size...", new IcyIcon(ResourceUtil.ICON_CROP));
+            canvasResizeButton.setActionRichTooltip(new RichTooltip("Canvas resize",
+                    "Resize the canvas without changing image size."));
+            canvasResizeButton.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    new SequenceCanvasResizeFrame(Icy.getMainInterface().getFocusedSequence());
+                }
+            });
+            addCommandButton(canvasResizeButton, RibbonElementPriority.MEDIUM);
+
+            // image resize operation
+            imageResizeButton = new IcyCommandButton("Image size...", new IcyIcon(ResourceUtil.ICON_FIT_CANVAS));
+            imageResizeButton.setActionRichTooltip(new RichTooltip("Image resize", "Resize the image."));
+            imageResizeButton.addActionListener(new ActionListener()
             {
                 @Override
                 public void actionPerformed(ActionEvent e)
@@ -497,7 +513,7 @@ public class SequenceOperationTask extends RibbonTask
                     new SequenceResizeFrame(Icy.getMainInterface().getFocusedSequence());
                 }
             });
-            addCommandButton(resizeButton, RibbonElementPriority.MEDIUM);
+            addCommandButton(imageResizeButton, RibbonElementPriority.MEDIUM);
 
             // merge operation
             mergeButton = new IcyCommandButton("Merge...");
@@ -522,7 +538,8 @@ public class SequenceOperationTask extends RibbonTask
             final boolean enabled = Icy.getMainInterface().getFocusedSequence() != null;
 
             cropButton.setEnabled(enabled);
-            resizeButton.setEnabled(enabled);
+            canvasResizeButton.setEnabled(enabled);
+            imageResizeButton.setEnabled(enabled);
             mergeButton.setEnabled(enabled);
         }
     }
@@ -739,6 +756,7 @@ public class SequenceOperationTask extends RibbonTask
         final IcyCommandButton extractButton;
         final IcyCommandButton removeButton;
         final IcyCommandButton advancedRemoveButton;
+        final IcyCommandButton addButton;
         final IcyCommandButton mergeButton;
 
         public ZOperationBand()
@@ -858,7 +876,36 @@ public class SequenceOperationTask extends RibbonTask
             // ADVANCED
             startGroup();
 
-            // advanced Z slice remove
+            // add slices
+            addButton = new IcyCommandButton("Add...", new IcyIcon(ResourceUtil.ICON_LAYER_ADD_V));
+            addButton.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
+            addButton.setActionRichTooltip(new RichTooltip("Add slice(s)",
+                    "Extends Z dimension by adding empty or duplicating slices."));
+            addButton.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    new SequenceDimensionExtendFrame(Icy.getMainInterface().getFocusedSequence(), DimensionId.Z);
+                }
+            });
+            addCommandButton(addButton, RibbonElementPriority.MEDIUM); // advanced Z slice remove
+
+            // Z stack merge
+            mergeButton = new IcyCommandButton("Merge...", new IcyIcon(ResourceUtil.ICON_LAYER_INSERT_V));
+            mergeButton.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
+            mergeButton.setActionRichTooltip(new RichTooltip("Merge Z stacks",
+                    "Merge Z stacks from severals input sequences to build a new sequence."));
+            mergeButton.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    new SequenceDimensionMergeFrame(DimensionId.Z);
+                }
+            });
+            addCommandButton(mergeButton, RibbonElementPriority.MEDIUM);
+
             advancedRemoveButton = new IcyCommandButton("Remove...", new IcyIcon(ResourceUtil.ICON_LAYER_REMOVE_ADV_V));
             advancedRemoveButton.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
             advancedRemoveButton.setActionRichTooltip(new RichTooltip("Advanced Z slice remove",
@@ -879,21 +926,6 @@ public class SequenceOperationTask extends RibbonTask
             });
             addCommandButton(advancedRemoveButton, RibbonElementPriority.MEDIUM);
 
-            // Z stack merge
-            mergeButton = new IcyCommandButton("Merge...", new IcyIcon(ResourceUtil.ICON_LAYER_INSERT_V));
-            mergeButton.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
-            mergeButton.setActionRichTooltip(new RichTooltip("Merge Z stacks",
-                    "Merge Z stacks from severals input sequences to build a new sequence."));
-            mergeButton.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    new SequenceDimensionMergeFrame(DimensionId.Z);
-                }
-            });
-            addCommandButton(mergeButton, RibbonElementPriority.MEDIUM);
-
             RibbonUtil.setRestrictiveResizePolicies(this);
             udpateButtonsState();
         }
@@ -907,8 +939,9 @@ public class SequenceOperationTask extends RibbonTask
             reverseButton.setEnabled(several);
             extractButton.setEnabled(several);
             removeButton.setEnabled(several);
-            advancedRemoveButton.setEnabled(several);
+            addButton.setEnabled(enabled);
             mergeButton.setEnabled(enabled);
+            advancedRemoveButton.setEnabled(several);
         }
     }
 
@@ -925,6 +958,7 @@ public class SequenceOperationTask extends RibbonTask
         final IcyCommandButton extractButton;
         final IcyCommandButton removeButton;
         final IcyCommandButton advancedRemoveButton;
+        final IcyCommandButton addButton;
         final IcyCommandButton mergeButton;
 
         public TOperationBand()
@@ -933,7 +967,7 @@ public class SequenceOperationTask extends RibbonTask
 
             setToolTipText("T (frame) operation");
 
-            // reverse stack
+            // reverse frame
             reverseButton = new IcyCommandButton("Reverse order", new IcyIcon(ResourceUtil.ICON_LAYER_REVERSE_H));
             reverseButton.setActionRichTooltip(new RichTooltip("Reverse order", "Reverse T frames order"));
             reverseButton.addActionListener(new ActionListener()
@@ -1043,7 +1077,37 @@ public class SequenceOperationTask extends RibbonTask
             // ADVANCED
             startGroup();
 
-            // advanced T framee remove
+            // add frames
+            addButton = new IcyCommandButton("Add...", new IcyIcon(ResourceUtil.ICON_LAYER_ADD_H));
+            addButton.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
+            addButton.setActionRichTooltip(new RichTooltip("Add frame(s)",
+                    "Extends T dimension by adding empty or duplicating frames."));
+            addButton.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    new SequenceDimensionExtendFrame(Icy.getMainInterface().getFocusedSequence(), DimensionId.T);
+                }
+            });
+            addCommandButton(addButton, RibbonElementPriority.MEDIUM);
+
+            // T frames merge
+            mergeButton = new IcyCommandButton("Merge...", new IcyIcon(ResourceUtil.ICON_LAYER_INSERT_H));
+            mergeButton.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
+            mergeButton.setActionRichTooltip(new RichTooltip("Merge T frames",
+                    "Merge T frames from severals input sequences to build a new sequence."));
+            mergeButton.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    new SequenceDimensionMergeFrame(DimensionId.T);
+                }
+            });
+            addCommandButton(mergeButton, RibbonElementPriority.MEDIUM);
+
+            // advanced T frame remove
             advancedRemoveButton = new IcyCommandButton("Remove...", new IcyIcon(ResourceUtil.ICON_LAYER_REMOVE_ADV_H));
             advancedRemoveButton.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
             advancedRemoveButton.setActionRichTooltip(new RichTooltip("Advanced T frame remove",
@@ -1064,21 +1128,6 @@ public class SequenceOperationTask extends RibbonTask
             });
             addCommandButton(advancedRemoveButton, RibbonElementPriority.MEDIUM);
 
-            // T frames merge
-            mergeButton = new IcyCommandButton("Merge...", new IcyIcon(ResourceUtil.ICON_LAYER_INSERT_H));
-            mergeButton.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
-            mergeButton.setActionRichTooltip(new RichTooltip("Merge T frames",
-                    "Merge T frames from severals input sequences to build a new sequence."));
-            mergeButton.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    new SequenceDimensionMergeFrame(DimensionId.T);
-                }
-            });
-            addCommandButton(mergeButton, RibbonElementPriority.MEDIUM);
-
             RibbonUtil.setRestrictiveResizePolicies(this);
             udpateButtonsState();
         }
@@ -1092,8 +1141,9 @@ public class SequenceOperationTask extends RibbonTask
             reverseButton.setEnabled(several);
             extractButton.setEnabled(several);
             removeButton.setEnabled(several);
-            advancedRemoveButton.setEnabled(several);
+            addButton.setEnabled(enabled);
             mergeButton.setEnabled(enabled);
+            advancedRemoveButton.setEnabled(several);
         }
     }
 

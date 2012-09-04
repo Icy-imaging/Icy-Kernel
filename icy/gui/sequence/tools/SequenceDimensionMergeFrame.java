@@ -29,13 +29,10 @@ import javax.swing.BorderFactory;
 public class SequenceDimensionMergeFrame extends ActionFrame implements SequenceModel
 {
     final SequenceDimensionMergePanel mergePanel;
-    final DimensionId dim;
 
     public SequenceDimensionMergeFrame(DimensionId dim)
     {
         super(dim.toString() + " Dimension merge", true);
-
-        this.dim = dim;
 
         setTitleVisible(false);
 
@@ -61,21 +58,21 @@ public class SequenceDimensionMergeFrame extends ActionFrame implements Sequence
 
                         final Sequence out;
 
-                        switch (SequenceDimensionMergeFrame.this.dim)
+                        switch (getDimensionId())
                         {
                             default:
                             case C:
-                                out = SequenceUtil.concatC(getSequences(), mergePanel.isFillEmptyImageEnabled(),
-                                        mergePanel.isFitImagesEnabled(), pf);
+                                out = SequenceUtil.concatC(mergePanel.getSequences(), mergePanel.getSelectedChannels(),
+                                        mergePanel.isFillEmptyImageEnabled(), mergePanel.isFitImagesEnabled(), pf);
                                 break;
 
                             case Z:
-                                out = SequenceUtil.concatZ(getSequences(), mergePanel.isInterlaceEnabled(),
+                                out = SequenceUtil.concatZ(mergePanel.getSequences(), mergePanel.isInterlaceEnabled(),
                                         mergePanel.isFillEmptyImageEnabled(), mergePanel.isFitImagesEnabled(), pf);
                                 break;
 
                             case T:
-                                out = SequenceUtil.concatT(getSequences(), mergePanel.isInterlaceEnabled(),
+                                out = SequenceUtil.concatT(mergePanel.getSequences(), mergePanel.isInterlaceEnabled(),
                                         mergePanel.isFillEmptyImageEnabled(), mergePanel.isFitImagesEnabled(), pf);
                                 break;
                         }
@@ -95,31 +92,31 @@ public class SequenceDimensionMergeFrame extends ActionFrame implements Sequence
         requestFocus();
     }
 
-    Sequence[] getSequences()
+    DimensionId getDimensionId()
     {
-        return mergePanel.getSequences().toArray(new Sequence[0]);
+        return mergePanel.getDimensionId();
     }
 
     @Override
     public int getSizeX()
     {
-        return SequenceUtil.getMaxDim(getSequences(), DimensionId.X);
+        return SequenceUtil.getMaxDim(mergePanel.getSequences(), DimensionId.X);
     }
 
     @Override
     public int getSizeY()
     {
-        return SequenceUtil.getMaxDim(getSequences(), DimensionId.Y);
+        return SequenceUtil.getMaxDim(mergePanel.getSequences(), DimensionId.Y);
     }
 
     @Override
     public int getSizeZ()
     {
-        if (dim != DimensionId.Z)
-            return SequenceUtil.getMaxDim(getSequences(), DimensionId.Z);
+        if (getDimensionId() != DimensionId.Z)
+            return SequenceUtil.getMaxDim(mergePanel.getSequences(), DimensionId.Z);
 
         int size = 0;
-        for (Sequence seq : getSequences())
+        for (Sequence seq : mergePanel.getSequences())
             size += seq.getSizeZ();
 
         return size;
@@ -128,11 +125,11 @@ public class SequenceDimensionMergeFrame extends ActionFrame implements Sequence
     @Override
     public int getSizeT()
     {
-        if (dim != DimensionId.T)
-            return SequenceUtil.getMaxDim(getSequences(), DimensionId.T);
+        if (getDimensionId() != DimensionId.T)
+            return SequenceUtil.getMaxDim(mergePanel.getSequences(), DimensionId.T);
 
         int size = 0;
-        for (Sequence seq : getSequences())
+        for (Sequence seq : mergePanel.getSequences())
             size += seq.getSizeT();
 
         return size;
@@ -141,31 +138,36 @@ public class SequenceDimensionMergeFrame extends ActionFrame implements Sequence
     @Override
     public int getSizeC()
     {
-        if (dim != DimensionId.C)
-            return SequenceUtil.getMaxDim(getSequences(), DimensionId.C);
-
         int size = 0;
-        for (Sequence seq : getSequences())
-            size += seq.getSizeC();
 
-        return size;
+        if (getDimensionId() != DimensionId.C)
+        {
+            for (Sequence seq : mergePanel.getSequences())
+                size = Math.max(size, seq.getSizeC());
+
+            return size;
+        }
+
+        // in this case we have only single channel sequence
+        return mergePanel.getSelectedChannels().length;
     }
 
     @Override
     public Image getImage(int t, int z)
     {
-        final Sequence[] sequences = getSequences();
+        final Sequence[] sequences = mergePanel.getSequences();
 
         final int sizeX = SequenceUtil.getMaxDim(sequences, DimensionId.X);
         final int sizeY = SequenceUtil.getMaxDim(sequences, DimensionId.Y);
-        final int sizeC = SequenceUtil.getMaxDim(sequences, DimensionId.C);
+        final int sizeC = getSizeC();
 
-        switch (dim)
+        switch (getDimensionId())
         {
             default:
             case C:
-                return MergeCHelper.getImage(sequences, sizeX, sizeY, t, z, mergePanel.isFillEmptyImageEnabled(),
-                        mergePanel.isFitImagesEnabled());
+
+                return MergeCHelper.getImage(sequences, mergePanel.getSelectedChannels(), sizeX, sizeY, t, z,
+                        mergePanel.isFillEmptyImageEnabled(), mergePanel.isFitImagesEnabled());
 
             case Z:
                 return MergeZHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, mergePanel.isInterlaceEnabled(),

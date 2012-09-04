@@ -463,8 +463,9 @@ public class Saver
                     }
                 }
 
-                // change sequence name
-                sequence.setName(fileName);
+                // default name used --> use filename
+                if (sequence.isDefaultName())
+                    sequence.setName(fileName);
                 sequence.setFilename(fileBaseDirectory);
 
                 // add as one item to recent file list
@@ -476,8 +477,9 @@ public class Saver
                 // save as multi images file
                 save(null, sequence, filePath, zMin, zMax, tMin, tMax, fps, saveFrame);
 
-                // change sequence name
-                sequence.setName(FileUtil.getFileName(filePath, false));
+                // default name used --> use filename
+                if (sequence.isDefaultName())
+                    sequence.setName(FileUtil.getFileName(filePath, false));
                 sequence.setFilename(filePath);
 
                 // add as one item to recent file list

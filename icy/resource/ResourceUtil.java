@@ -39,6 +39,8 @@ public class ResourceUtil
     public static final Image IMAGE_ICY_32 = ResourceUtil.getIconAsImage("icy32.png");
     public static final Image IMAGE_ICY_256 = ResourceUtil.getImage("logo.png");
 
+    public static final Image IMAGE_ACCOLADE_LEFT = ResourceUtil.getImage("app/accol_left.png");
+
     public static final ImageIcon ICON_ICY_16 = ResourceUtil.getImageIcon(IMAGE_ICY_16);
     public static final ImageIcon ICON_ICY_32 = ResourceUtil.getImageIcon(IMAGE_ICY_32);
     public static final ImageIcon ICON_ICY_256 = ResourceUtil.getImageIcon(IMAGE_ICY_256);
@@ -77,11 +79,19 @@ public class ResourceUtil
     public static final Image ICON_CUT = ResourceUtil.getAlphaIconAsImage("clipboard_cut.png");
     public static final Image ICON_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png");
     public static final Image ICON_NOT_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_close.png");
+    
+    public static final Image ICON_CENTER_IMAGE = ResourceUtil.getAlphaIconAsImage("center.png");
+    public static final Image ICON_CROP = ResourceUtil.getAlphaIconAsImage("crop.png");
+    public static final Image ICON_FIT_IMAGE = ResourceUtil.getAlphaIconAsImage("fit_in2.png");
+    public static final Image ICON_FIT_CANVAS = ResourceUtil.getAlphaIconAsImage("fit_out.png");
+
+    public static final Image ICON_TARGET = ResourceUtil.getAlphaIconAsImage("simple_target.png");
 
     public static final Image ICON_LAYER_H1 = ResourceUtil.getAlphaIconAsImage("layers_h1.png");
     public static final Image ICON_LAYER_H2 = ResourceUtil.getAlphaIconAsImage("layers_h2.png");
     public static final Image ICON_LAYER_REVERSE_H = ResourceUtil.getAlphaIconAsImage("layers_reverse_h.png");
     public static final Image ICON_LAYER_EXTRACT_H = ResourceUtil.getAlphaIconAsImage("layers_extract_h.png");
+    public static final Image ICON_LAYER_ADD_H = ResourceUtil.getAlphaIconAsImage("layers_add_h.png");
     public static final Image ICON_LAYER_INSERT_H = ResourceUtil.getAlphaIconAsImage("layers_insert_h.png");
     public static final Image ICON_LAYER_REMOVE_H = ResourceUtil.getAlphaIconAsImage("layers_remove_h.png");
     public static final Image ICON_LAYER_REMOVE_ADV_H = ResourceUtil.getAlphaIconAsImage("layers_remove_adv_h.png");
@@ -89,6 +99,7 @@ public class ResourceUtil
     public static final Image ICON_LAYER_V2 = ResourceUtil.getAlphaIconAsImage("layers_v2.png");
     public static final Image ICON_LAYER_REVERSE_V = ResourceUtil.getAlphaIconAsImage("layers_reverse_v.png");
     public static final Image ICON_LAYER_EXTRACT_V = ResourceUtil.getAlphaIconAsImage("layers_extract_v.png");
+    public static final Image ICON_LAYER_ADD_V = ResourceUtil.getAlphaIconAsImage("layers_add_v.png");
     public static final Image ICON_LAYER_INSERT_V = ResourceUtil.getAlphaIconAsImage("layers_insert_v.png");
     public static final Image ICON_LAYER_REMOVE_V = ResourceUtil.getAlphaIconAsImage("layers_remove_v.png");
     public static final Image ICON_LAYER_REMOVE_ADV_V = ResourceUtil.getAlphaIconAsImage("layers_remove_adv_v.png");
@@ -141,6 +152,8 @@ public class ResourceUtil
 
     public static final Image ICON_SMILEY_HAPPY = ResourceUtil.getAlphaIconAsImage("emotion_smile.png");
     public static final Image ICON_SMILEY_SAD = ResourceUtil.getAlphaIconAsImage("emotion_sad.png");
+
+    public static final Image ICON_STAR = ResourceUtil.getAlphaIconAsImage("star_fav.png");
 
     public static final Image ICON_NETWORK = ResourceUtil.getAlphaIconAsImage("network.png");
 

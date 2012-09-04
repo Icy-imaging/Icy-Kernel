@@ -17,33 +17,30 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.SwingConstants;
 
 /**
  * @author Stephane
  */
-public class SequenceResizeFrame extends ActionFrame
+public class SequenceCanvasResizeFrame extends ActionFrame
 {
-    class SequenceResizePanel extends SequenceBaseResizePanel
+    private class SequenceCanvasResizePanel extends SequenceBaseResizePanel
     {
         /**
          * 
          */
-        private static final long serialVersionUID = 5366610917009978874L;
+        private static final long serialVersionUID = -7929109041552115932L;
 
-        private JComboBox filterComboBox;
-        private JLabel lblFilterType;
+        private JLabel lblNewLabel_1;
+        private PositionAlignmentPanel positionAlignmentPanel;
 
-        public SequenceResizePanel(Sequence sequence)
+        public SequenceCanvasResizePanel(Sequence sequence)
         {
             super(sequence);
+            
+            keepRatioCheckBox.setSelected(false);
 
-            keepRatioCheckBox.setSelected(true);
-
-            filterComboBox.addActionListener(new ActionListener()
+            positionAlignmentPanel.addActionListener(new ActionListener()
             {
                 @Override
                 public void actionPerformed(ActionEvent e)
@@ -58,69 +55,59 @@ public class SequenceResizeFrame extends ActionFrame
         {
             super.initialize();
 
-            lblFilterType = new JLabel("Filter type");
-            GridBagConstraints gbc_lblFilterType = new GridBagConstraints();
-            gbc_lblFilterType.fill = GridBagConstraints.BOTH;
-            gbc_lblFilterType.insets = new Insets(0, 0, 5, 5);
-            gbc_lblFilterType.gridx = 5;
-            gbc_lblFilterType.gridy = 2;
-            settingPanel.add(lblFilterType, gbc_lblFilterType);
+            lblNewLabel_1 = new JLabel("Content alignment");
+            GridBagConstraints gbc_lblNewLabel_1 = new GridBagConstraints();
+            gbc_lblNewLabel_1.fill = GridBagConstraints.BOTH;
+            gbc_lblNewLabel_1.insets = new Insets(0, 0, 5, 0);
+            gbc_lblNewLabel_1.gridx = 5;
+            gbc_lblNewLabel_1.gridy = 2;
+            settingPanel.add(lblNewLabel_1, gbc_lblNewLabel_1);
 
-            filterComboBox = new JComboBox();
-            filterComboBox.setModel(new DefaultComboBoxModel(new String[] {"Nearest", "Bilinear", "Bicubic"}));
-            filterComboBox.setSelectedIndex(1);
-            GridBagConstraints gbc_filterComboBox = new GridBagConstraints();
-            gbc_filterComboBox.insets = new Insets(0, 0, 5, 5);
-            gbc_filterComboBox.fill = GridBagConstraints.HORIZONTAL;
-            gbc_filterComboBox.gridx = 5;
-            gbc_filterComboBox.gridy = 3;
-            settingPanel.add(filterComboBox, gbc_filterComboBox);
+            positionAlignmentPanel = new PositionAlignmentPanel();
+            GridBagConstraints gbc_positionAlignmentPanel = new GridBagConstraints();
+            gbc_positionAlignmentPanel.gridheight = 4;
+            gbc_positionAlignmentPanel.insets = new Insets(0, 0, 5, 5);
+            gbc_positionAlignmentPanel.fill = GridBagConstraints.BOTH;
+            gbc_positionAlignmentPanel.gridx = 5;
+            gbc_positionAlignmentPanel.gridy = 3;
+            settingPanel.add(positionAlignmentPanel, gbc_positionAlignmentPanel);
         }
 
         @Override
         public FilterType getFilterType()
         {
-            switch (filterComboBox.getSelectedIndex())
-            {
-                default:
-                case 0:
-                    return FilterType.NEAREST;
-                case 1:
-                    return FilterType.BILINEAR;
-                case 2:
-                    return FilterType.BICUBIC;
-            }
+            return null;
         }
 
         @Override
         public boolean getResizeContent()
         {
-            return true;
+            return false;
         }
 
         @Override
         public int getXAlign()
         {
-            return SwingConstants.CENTER;
+            return positionAlignmentPanel.getXAlign();
         }
 
         @Override
         public int getYAlign()
         {
-            return SwingConstants.CENTER;
+            return positionAlignmentPanel.getYAlign();
         }
     }
 
-    final SequenceResizePanel resizePanel;
+    final SequenceCanvasResizePanel resizePanel;
 
-    public SequenceResizeFrame(Sequence sequence)
+    public SequenceCanvasResizeFrame(Sequence sequence)
     {
-        super("Image size", true);
+        super("Canvas size", true);
 
         // GUI
         setTitleVisible(false);
 
-        resizePanel = new SequenceResizePanel(sequence);
+        resizePanel = new SequenceCanvasResizePanel(sequence);
         getMainPanel().add(resizePanel, BorderLayout.CENTER);
         validate();
 

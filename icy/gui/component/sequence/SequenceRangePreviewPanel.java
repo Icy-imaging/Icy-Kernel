@@ -6,11 +6,9 @@ import icy.sequence.SequenceModel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.FlowLayout;
 import java.util.EventListener;
 
-import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -39,8 +37,8 @@ public class SequenceRangePreviewPanel extends JPanel
     protected SequencePreviewPanel sequencePreviewPanel;
     protected RangeComponent range;
     private JPanel extractionRulePanel;
-    protected JSpinner keepSpinner;
-    protected JSpinner ignoreSpinner;
+    protected JSpinner extractSpinner;
+    protected JSpinner loopSpinner;
 
     // internal
     double oldLow;
@@ -124,17 +122,32 @@ public class SequenceRangePreviewPanel extends JPanel
             panel.add(range);
         }
 
-        final ChangeListener changeListener = new ChangeListener()
+        extractSpinner.addChangeListener(new ChangeListener()
+        {
+            @Override
+            public void stateChanged(ChangeEvent e)
+            {
+                final SpinnerNumberModel model = (SpinnerNumberModel) loopSpinner.getModel();
+                final int currentMin = ((Integer) model.getMinimum()).intValue();
+                final int currentValue = ((Integer) model.getValue()).intValue();
+                final int min = getExtractValue();
+
+                // adjust minimum value
+                if (currentMin < min)
+                    loopSpinner.setModel(new SpinnerNumberModel(Math.max(min, currentValue), min, (int) range.getMax(),
+                            1));
+
+                fireRangeChangedEvent();
+            }
+        });
+        loopSpinner.addChangeListener(new ChangeListener()
         {
             @Override
             public void stateChanged(ChangeEvent e)
             {
                 fireRangeChangedEvent();
             }
-        };
-
-        keepSpinner.addChangeListener(changeListener);
-        ignoreSpinner.addChangeListener(changeListener);
+        });
     }
 
     private void initialize()
@@ -145,32 +158,35 @@ public class SequenceRangePreviewPanel extends JPanel
         add(sequencePreviewPanel, BorderLayout.CENTER);
 
         extractionRulePanel = new JPanel();
-        extractionRulePanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"),
-                "Loop extraction rule", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+        extractionRulePanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Extraction rule",
+                TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
         add(extractionRulePanel, BorderLayout.SOUTH);
-
-        FlowLayout fl_extractionRulePanel = (FlowLayout) extractionRulePanel.getLayout();
+        FlowLayout fl_extractionRulePanel = new FlowLayout();
         fl_extractionRulePanel.setAlignment(FlowLayout.LEADING);
+        extractionRulePanel.setLayout(fl_extractionRulePanel);
 
-        JLabel label = new JLabel("Keep");
-        label.setToolTipText("Number of image to keep");
-        extractionRulePanel.add(label);
+        JLabel lblExtract = new JLabel("Extract");
+        lblExtract.setToolTipText("");
+        extractionRulePanel.add(lblExtract);
 
-        keepSpinner = new JSpinner();
-        keepSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), null, new Integer(1)));
-        keepSpinner.setToolTipText("Number of image to keep");
-        extractionRulePanel.add(keepSpinner);
+        extractSpinner = new JSpinner();
+        extractSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), null, new Integer(1)));
+        extractSpinner.setToolTipText("");
+        extractionRulePanel.add(extractSpinner);
 
-        Component horizontalStrut_1 = Box.createHorizontalStrut(8);
-        extractionRulePanel.add(horizontalStrut_1);
+        JLabel lblEvery = new JLabel("every");
+        lblEvery.setToolTipText("");
+        extractionRulePanel.add(lblEvery);
 
-        JLabel label_1 = new JLabel("Ignore");
-        label_1.setToolTipText("Number of image to ignore");
-        extractionRulePanel.add(label_1);
+        loopSpinner = new JSpinner();
+        loopSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), null, new Integer(1)));
+        loopSpinner.setToolTipText("");
+        extractionRulePanel.add(loopSpinner);
+    }
 
-        ignoreSpinner = new JSpinner();
-        ignoreSpinner.setToolTipText("Number of image to ignore");
-        extractionRulePanel.add(ignoreSpinner);
+    public DimensionId getDimensionId()
+    {
+        return dim;
     }
 
     public boolean isPreviewVisible()
@@ -183,46 +199,14 @@ public class SequenceRangePreviewPanel extends JPanel
         sequencePreviewPanel.setVisible(value);
     }
 
-    private void setMaxZ(int value)
+    private void setMax(int value)
     {
-        if (dim == DimensionId.Z)
-        {
-            range.setMinMaxStep(0, value, 1);
-            range.setLowHigh(0, value);
-            range.setVisible(value > 0);
+        range.setMinMaxStep(0, value, 1);
+        range.setLowHigh(0, value);
+        range.setVisible(value > 0);
 
-            if (value > 0)
-            {
-                keepSpinner.setModel(new SpinnerNumberModel(1, 1, value + 1, 1));
-                ignoreSpinner.setModel(new SpinnerNumberModel(0, 0, value, 1));
-            }
-            else
-            {
-                keepSpinner.setModel(new SpinnerNumberModel(1, 1, 1, 1));
-                ignoreSpinner.setModel(new SpinnerNumberModel(0, 0, 0, 1));
-            }
-        }
-    }
-
-    private void setMaxT(int value)
-    {
-        if (dim == DimensionId.T)
-        {
-            range.setMinMaxStep(0, value, 1);
-            range.setLowHigh(0, value);
-            range.setVisible(value > 0);
-
-            if (value > 0)
-            {
-                keepSpinner.setModel(new SpinnerNumberModel(1, 1, value + 1, 1));
-                ignoreSpinner.setModel(new SpinnerNumberModel(0, 0, value, 1));
-            }
-            else
-            {
-                keepSpinner.setModel(new SpinnerNumberModel(1, 1, 1, 1));
-                ignoreSpinner.setModel(new SpinnerNumberModel(0, 0, 0, 1));
-            }
-        }
+        extractSpinner.setModel(new SpinnerNumberModel(1, 1, Math.max(value, 1), 1));
+        loopSpinner.setModel(new SpinnerNumberModel(1, 1, Math.max(value, 1), 1));
     }
 
     public SequenceModel getModel()
@@ -252,14 +236,13 @@ public class SequenceRangePreviewPanel extends JPanel
 
         if (model != null)
         {
-            setMaxZ(model.getSizeZ() - 1);
-            setMaxT(model.getSizeT() - 1);
+            if (dim == DimensionId.Z)
+                setMax(model.getSizeZ());
+            else
+                setMax(model.getSizeT());
         }
         else
-        {
-            setMaxZ(0);
-            setMaxT(0);
-        }
+            setMax(0);
     }
 
     public void imageChanged()
@@ -284,22 +267,17 @@ public class SequenceRangePreviewPanel extends JPanel
         if (index > getRangeHigh())
             return false;
 
-        return ((index - getRangeLow()) % getLoopValue()) < getKeepValue();
+        return ((index - getRangeLow()) % getLoopValue()) < getExtractValue();
     }
 
-    public int getKeepValue()
+    public int getExtractValue()
     {
-        return ((Integer) keepSpinner.getValue()).intValue();
-    }
-
-    public int getIgnoreValue()
-    {
-        return ((Integer) ignoreSpinner.getValue()).intValue();
+        return ((Integer) extractSpinner.getValue()).intValue();
     }
 
     public int getLoopValue()
     {
-        return getKeepValue() + getIgnoreValue();
+        return ((Integer) loopSpinner.getValue()).intValue();
     }
 
     protected void fireRangeChangedEvent()
