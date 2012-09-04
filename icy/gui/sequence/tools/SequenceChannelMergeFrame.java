@@ -34,8 +34,10 @@ import javax.swing.SwingConstants;
 /**
  * Frame for channel merge operation.
  * 
+ * @deprecated Better to use the {@link SequenceDimensionMergeFrame} instead.
  * @author Stephane
  */
+@Deprecated
 public class SequenceChannelMergeFrame extends ActionFrame
 {
     private class ChannelChooserPanel extends JPanel implements ActionListener
@@ -204,7 +206,7 @@ public class SequenceChannelMergeFrame extends ActionFrame
     public SequenceChannelMergeFrame()
     {
         super("Channel merge", true);
-        
+
         setTitleVisible(false);
 
         // channel extraction on validation

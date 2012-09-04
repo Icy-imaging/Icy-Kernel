@@ -105,7 +105,8 @@ public class SequenceDimensionAdjustFrame extends ActionFrame implements Sequenc
             }
         });
 
-        setSize(320, 360);
+        setSizeExternal(320, 360);
+        setSizeInternal(320, 360);
         setVisible(true);
         addToMainDesktopPane();
         center();

@@ -85,7 +85,8 @@ public class SequenceDimensionMergeFrame extends ActionFrame implements Sequence
             }
         });
 
-        setSize(340, 520);
+        setSizeExternal(340, 520);
+        setSizeInternal(340, 520);
         setVisible(true);
         addToMainDesktopPane();
         center();

@@ -84,7 +84,8 @@ public class SequenceDimensionExtendFrame extends ActionFrame implements Sequenc
             }
         });
 
-        setSize(340, 400);
+        setSizeExternal(340, 400);
+        setSizeInternal(340, 400);
         setVisible(true);
         addToMainDesktopPane();
         center();
