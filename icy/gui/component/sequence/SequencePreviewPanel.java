@@ -241,19 +241,38 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
         gbc_zPanel.gridx = 0;
         gbc_zPanel.gridy = 0;
         mainPanel.add(zPanel, gbc_zPanel);
-        zPanel.setLayout(new BorderLayout(0, 0));
+        GridBagLayout gbl_zPanel = new GridBagLayout();
+        gbl_zPanel.columnWidths = new int[] {0, 0};
+        gbl_zPanel.rowHeights = new int[] {0, 0, 0, 0};
+        gbl_zPanel.columnWeights = new double[] {0.0, Double.MIN_VALUE};
+        gbl_zPanel.rowWeights = new double[] {0.0, 1.0, 0.0, Double.MIN_VALUE};
+        zPanel.setLayout(gbl_zPanel);
 
         lblZ = new JLabel("Z");
-        zPanel.add(lblZ, BorderLayout.NORTH);
+        GridBagConstraints gbc_lblZ = new GridBagConstraints();
+        gbc_lblZ.fill = GridBagConstraints.BOTH;
+        gbc_lblZ.insets = new Insets(0, 0, 5, 0);
+        gbc_lblZ.gridx = 0;
+        gbc_lblZ.gridy = 0;
+        zPanel.add(lblZ, gbc_lblZ);
         lblZ.setFont(new Font("Tahoma", Font.BOLD, 12));
         lblZ.setHorizontalAlignment(SwingConstants.CENTER);
 
         zSlider = new JSlider(SwingConstants.VERTICAL);
-        zPanel.add(zSlider, BorderLayout.CENTER);
+        GridBagConstraints gbc_zSlider = new GridBagConstraints();
+        gbc_zSlider.fill = GridBagConstraints.BOTH;
+        gbc_zSlider.insets = new Insets(0, 0, 5, 0);
+        gbc_zSlider.gridx = 0;
+        gbc_zSlider.gridy = 1;
+        zPanel.add(zSlider, gbc_zSlider);
         // zSlider.setFocusable(false);
 
         lblZValue = new JLabel("0");
-        zPanel.add(lblZValue, BorderLayout.SOUTH);
+        GridBagConstraints gbc_lblZValue = new GridBagConstraints();
+        gbc_lblZValue.fill = GridBagConstraints.BOTH;
+        gbc_lblZValue.gridx = 0;
+        gbc_lblZValue.gridy = 2;
+        zPanel.add(lblZValue, gbc_lblZValue);
         lblZValue.setHorizontalAlignment(SwingConstants.CENTER);
         lblZValue.setFont(new Font("Tahoma", Font.BOLD, 11));
 
@@ -263,26 +282,56 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
         gbc_tPanel.gridx = 1;
         gbc_tPanel.gridy = 1;
         mainPanel.add(tPanel, gbc_tPanel);
-        tPanel.setLayout(new BorderLayout(0, 0));
+        GridBagLayout gbl_tPanel = new GridBagLayout();
+        gbl_tPanel.columnWidths = new int[] {0, 0, 0, 0};
+        gbl_tPanel.rowHeights = new int[] {0, 0};
+        gbl_tPanel.columnWeights = new double[] {0.0, 1.0, 0.0, Double.MIN_VALUE};
+        gbl_tPanel.rowWeights = new double[] {1.0, Double.MIN_VALUE};
+        tPanel.setLayout(gbl_tPanel);
 
         lblTValue = new JLabel("0");
         lblTValue.setMaximumSize(new Dimension(1000, 14));
         lblTValue.setPreferredSize(new Dimension(20, 14));
         lblTValue.setMinimumSize(new Dimension(20, 14));
-        tPanel.add(lblTValue, BorderLayout.WEST);
+        GridBagConstraints gbc_lblTValue = new GridBagConstraints();
+        gbc_lblTValue.fill = GridBagConstraints.BOTH;
+        gbc_lblTValue.insets = new Insets(0, 0, 0, 5);
+        gbc_lblTValue.gridx = 0;
+        gbc_lblTValue.gridy = 0;
+        tPanel.add(lblTValue, gbc_lblTValue);
         lblTValue.setHorizontalAlignment(SwingConstants.CENTER);
         lblTValue.setFont(new Font("Tahoma", Font.BOLD, 11));
 
         tSlider = new JSlider(SwingConstants.HORIZONTAL);
-        tPanel.add(tSlider, BorderLayout.CENTER);
+        GridBagConstraints gbc_tSlider = new GridBagConstraints();
+        gbc_tSlider.fill = GridBagConstraints.BOTH;
+        gbc_tSlider.insets = new Insets(0, 0, 0, 5);
+        gbc_tSlider.gridx = 1;
+        gbc_tSlider.gridy = 0;
+        tPanel.add(tSlider, gbc_tSlider);
         // tSlider.setFocusable(false);
 
         lblT = new JLabel("T");
-        tPanel.add(lblT, BorderLayout.EAST);
+        lblT.setPreferredSize(new Dimension(20, 14));
+        lblT.setMaximumSize(new Dimension(1000, 14));
+        lblT.setMinimumSize(new Dimension(20, 14));
+        GridBagConstraints gbc_lblT = new GridBagConstraints();
+        gbc_lblT.fill = GridBagConstraints.BOTH;
+        gbc_lblT.gridx = 2;
+        gbc_lblT.gridy = 0;
+        tPanel.add(lblT, gbc_lblT);
         lblT.setFont(new Font("Tahoma", Font.BOLD, 12));
         lblT.setHorizontalAlignment(SwingConstants.CENTER);
 
         validate();
+    }
+
+    /**
+     * @return the main panel
+     */
+    public JPanel getMainPanel()
+    {
+        return mainPanel;
     }
 
     /**

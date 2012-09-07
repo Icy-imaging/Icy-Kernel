@@ -3,7 +3,6 @@
  */
 package icy.gui.sequence.tools;
 
-import icy.gui.component.sequence.SequenceRangePreviewPanel;
 import icy.gui.frame.ActionFrame;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.sequence.DimensionId;
@@ -25,7 +24,7 @@ import javax.swing.BorderFactory;
 public class SequenceDimensionAdjustFrame extends ActionFrame implements SequenceModel
 {
     final Sequence sequence;
-    final SequenceRangePreviewPanel rangePanel;
+    final SequenceDimensionAdjustPanel rangePanel;
     final DimensionId dim;
 
     public SequenceDimensionAdjustFrame(Sequence sequence, DimensionId dim)
@@ -37,7 +36,7 @@ public class SequenceDimensionAdjustFrame extends ActionFrame implements Sequenc
 
         setTitleVisible(false);
 
-        rangePanel = new SequenceRangePreviewPanel(dim);
+        rangePanel = new SequenceDimensionAdjustPanel(dim);
         rangePanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 4));
 
         mainPanel.add(rangePanel, BorderLayout.CENTER);

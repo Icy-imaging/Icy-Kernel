@@ -3,123 +3,65 @@
  */
 package icy.gui.sequence.tools;
 
-import icy.gui.frame.IcyFrame;
-import icy.gui.util.GuiUtil;
-import icy.main.Icy;
+import icy.gui.frame.ActionFrame;
+import icy.gui.frame.progress.ProgressFrame;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceUtil;
 import icy.system.thread.ThreadUtil;
 
-import java.awt.Dimension;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.BorderFactory;
 
 /**
  * Advanced conversion of Z and T dimension.
  * 
  * @author Stephane
  */
-public class SequenceDimensionConvertFrame implements ActionListener
+public class SequenceDimensionConvertFrame extends ActionFrame
 {
-    IcyFrame mainFrame;
-    JButton startButton = new JButton("Convert !");
-    JTextField numberOfSlicePerStackTextField = new JTextField("10");
+    final SequenceDimensionConvertPanel convertPanel;
 
-    public SequenceDimensionConvertFrame()
+    public SequenceDimensionConvertFrame(Sequence sequence)
     {
-        super();
+        super("Z / T dimension conversion", true);
 
-        ThreadUtil.invokeLater(new Runnable()
+        setTitleVisible(false);
+
+        convertPanel = new SequenceDimensionConvertPanel(sequence);
+        convertPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 4));
+
+        mainPanel.add(convertPanel, BorderLayout.CENTER);
+        validate();
+
+        setOkAction(new ActionListener()
         {
             @Override
-            public void run()
+            public void actionPerformed(ActionEvent e)
             {
-                JPanel panel = new JPanel();
-                mainFrame = GuiUtil.generateTitleFrame("Volume to stack converter", panel, new Dimension(300, 100),
-                        false, true, false, true);
+                ThreadUtil.bgRun(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        final ProgressFrame pf = new ProgressFrame("Converting Z / T dimension...");
 
-                panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-                panel.add(GuiUtil.createLineBoxPanel(Box.createVerticalStrut(30)));
-                panel.add(GuiUtil.createLineBoxPanel(new JLabel("Number of Z-slices per stack: ")));
-                panel.add(GuiUtil.createLineBoxPanel(Box.createVerticalStrut(15)));
-                panel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(50), numberOfSlicePerStackTextField,
-                        Box.createHorizontalStrut(50)));
-                panel.add(GuiUtil.createLineBoxPanel(Box.createVerticalStrut(30)));
-                panel.add(GuiUtil.createLineBoxPanel(startButton));
-                panel.add(GuiUtil.createLineBoxPanel(Box.createVerticalStrut(30)));
+                        SequenceUtil.adjustZT(convertPanel.getSequence(), convertPanel.getNewSizeZ(),
+                                convertPanel.getNewSizeT(), convertPanel.isOrderReversed());
 
-                startButton.addActionListener(SequenceDimensionConvertFrame.this);
-
-                mainFrame.pack();
-                mainFrame.addToMainDesktopPane();
-                mainFrame.center();
-                mainFrame.requestFocus();
+                        pf.close();
+                    }
+                });
             }
         });
-    }
 
-    @Override
-    public void actionPerformed(ActionEvent e)
-    {
-        if (e.getSource() == startButton)
-        {
-            int numberOfSlicePerStack = 0;
-            try
-            {
-                numberOfSlicePerStack = Integer.parseInt(numberOfSlicePerStackTextField.getText());
-            }
-            catch (Exception e1)
-            {
-                System.out.println("invalid number");
-                return;
-            }
-
-            if (numberOfSlicePerStack < 2)
-            {
-                mainFrame.close();
-                return;
-            }
-
-            Sequence sequence = Icy.getMainInterface().getFocusedSequence();
-
-            if (sequence == null)
-            {
-                System.out.println("No sequence selected");
-                return;
-            }
-
-            sequence.beginUpdate();
-            try
-            {
-                int cursorZ = 0;
-                int cursorT = 0;
-                for (int t = 0; t < sequence.getSizeT(); t++)
-                {
-                    sequence.setImage(cursorT, cursorZ, sequence.getImage(t, 0));
-                    if (t != cursorT)
-                    {
-                        sequence.removeImage(t, 0);
-                    }
-                    cursorZ++;
-                    if (cursorZ > numberOfSlicePerStack - 1)
-                    {
-                        cursorT++;
-                        cursorZ = 0;
-                    }
-                }
-            }
-            finally
-            {
-                sequence.endUpdate();
-            }
-
-            mainFrame.close();
-        }
+        setSizeExternal(340, 400);
+        setSizeInternal(340, 400);
+        setVisible(true);
+        addToMainDesktopPane();
+        center();
+        requestFocus();
     }
 }

@@ -104,6 +104,13 @@ public class Help implements KeyListener, ActionListener
         return Helpbutton;
     }
 
+    public IcyCommandMenuButton getIcyCommandMenuButton(String s, IcyIcon icon)
+    {
+        IcyCommandMenuButton Helpbutton = new IcyCommandMenuButton(s, icon);
+        Helpbutton.addActionListener(this);
+        return Helpbutton;
+    }
+
     public JMenuItem getMenuItem()
     {
         JMenuItem item = new JMenuItem("Help");
@@ -139,7 +146,7 @@ public class Help implements KeyListener, ActionListener
     private void ShowHelp(String url)
     {
         if (url != null)
-            NetworkUtil.openURL("http://icy.bioimageanalysis.org/index.php?" + url);
+            NetworkUtil.openURL(NetworkUtil.WEBSITE_URL + url);
     }
 
     @Override

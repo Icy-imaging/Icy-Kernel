@@ -21,8 +21,8 @@ import org.w3c.dom.Node;
 public class Audit
 {
     // network URL
-    private static final String URL_REGISTER = "http://icy.bioimageanalysis.org/register/registerClient.php?";
-    private static final String URL_AUDIT_VERSION = "http://icy.bioimageanalysis.org/register/auditVersion.php?";
+    private static final String URL_REGISTER = NetworkUtil.WEBSITE_URL + "register/registerClient.php?";
+    private static final String URL_AUDIT_VERSION = NetworkUtil.WEBSITE_URL + "register/auditVersion.php?";
 
     // network id
     private static final String ID_REQUEST = "requestId";

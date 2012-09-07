@@ -141,7 +141,9 @@ public class NetworkUtil
         }
     }
 
-    static final String REPORT_URL = "http://icy.bioimageanalysis.org/index.php";
+    public static final String WEBSITE_URL = "http://icy.bioimageanalysis.org/";
+
+    static final String REPORT_URL = WEBSITE_URL + "index.php";
 
     public static final String USER_INTERRUPT_MESS = "Load interrupted by user";
 

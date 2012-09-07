@@ -1,6 +1,7 @@
-package icy.gui.component.sequence;
+package icy.gui.sequence.tools;
 
 import icy.gui.component.RangeComponent;
+import icy.gui.component.sequence.SequencePreviewPanel;
 import icy.sequence.DimensionId;
 import icy.sequence.SequenceModel;
 
@@ -19,7 +20,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-public class SequenceRangePreviewPanel extends JPanel
+public class SequenceDimensionAdjustPanel extends JPanel
 {
     /**
      * 
@@ -47,7 +48,7 @@ public class SequenceRangePreviewPanel extends JPanel
     /**
      * Create the panel.
      */
-    public SequenceRangePreviewPanel(DimensionId dim)
+    public SequenceDimensionAdjustPanel(DimensionId dim)
     {
         super();
 
@@ -60,15 +61,15 @@ public class SequenceRangePreviewPanel extends JPanel
 
         if (dim == DimensionId.Z)
         {
-            sequencePreviewPanel.mainPanel.setBorder(new TitledBorder(null, "Select Z interval", TitledBorder.LEADING,
-                    TitledBorder.TOP, null, null));
+            sequencePreviewPanel.getMainPanel().setBorder(
+                    new TitledBorder(null, "Select Z interval", TitledBorder.LEADING, TitledBorder.TOP, null, null));
             range = new RangeComponent(SwingConstants.VERTICAL);
             range.setToolTipText("Select Z interval");
         }
         else
         {
-            sequencePreviewPanel.mainPanel.setBorder(new TitledBorder(null, "Select T interval", TitledBorder.LEADING,
-                    TitledBorder.TOP, null, null));
+            sequencePreviewPanel.getMainPanel().setBorder(
+                    new TitledBorder(null, "Select T interval", TitledBorder.LEADING, TitledBorder.TOP, null, null));
             range = new RangeComponent(SwingConstants.HORIZONTAL);
             range.setToolTipText("Select T interval");
         }
@@ -86,7 +87,7 @@ public class SequenceRangePreviewPanel extends JPanel
                 if (oldLow != low)
                 {
                     // low value changed
-                    if (SequenceRangePreviewPanel.this.dim == DimensionId.Z)
+                    if (SequenceDimensionAdjustPanel.this.dim == DimensionId.Z)
                         sequencePreviewPanel.setPositionZ((int) low);
                     else
                         sequencePreviewPanel.setPositionT((int) low);
@@ -94,7 +95,7 @@ public class SequenceRangePreviewPanel extends JPanel
                 else if (oldHigh != high)
                 {
                     // high value changed
-                    if (SequenceRangePreviewPanel.this.dim == DimensionId.Z)
+                    if (SequenceDimensionAdjustPanel.this.dim == DimensionId.Z)
                         sequencePreviewPanel.setPositionZ((int) high);
                     else
                         sequencePreviewPanel.setPositionT((int) high);
@@ -112,14 +113,16 @@ public class SequenceRangePreviewPanel extends JPanel
             // replace z slider by z range component
             final JPanel panel = sequencePreviewPanel.getZPanel();
             panel.removeAll();
-            panel.add(range);
+            panel.setLayout(new BorderLayout());
+            panel.add(range, BorderLayout.CENTER);
         }
         else
         {
             // replace t slider by t range component
             final JPanel panel = sequencePreviewPanel.getTPanel();
             panel.removeAll();
-            panel.add(range);
+            panel.setLayout(new BorderLayout());
+            panel.add(range, BorderLayout.CENTER);
         }
 
         extractSpinner.addChangeListener(new ChangeListener()
@@ -165,22 +168,21 @@ public class SequenceRangePreviewPanel extends JPanel
         fl_extractionRulePanel.setAlignment(FlowLayout.LEADING);
         extractionRulePanel.setLayout(fl_extractionRulePanel);
 
-        JLabel lblExtract = new JLabel("Extract");
-        lblExtract.setToolTipText("");
-        extractionRulePanel.add(lblExtract);
+        JLabel lblKeep = new JLabel("Keep");
+        extractionRulePanel.add(lblKeep);
 
         extractSpinner = new JSpinner();
         extractSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), null, new Integer(1)));
-        extractSpinner.setToolTipText("");
+        extractSpinner
+                .setToolTipText("Number of frames to keep every N frames. 'Keep 1 every 2' means keep every other frame.");
         extractionRulePanel.add(extractSpinner);
 
         JLabel lblEvery = new JLabel("every");
-        lblEvery.setToolTipText("");
         extractionRulePanel.add(lblEvery);
 
         loopSpinner = new JSpinner();
         loopSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), null, new Integer(1)));
-        loopSpinner.setToolTipText("");
+        loopSpinner.setToolTipText("Size for the extraction rule loop.");
         extractionRulePanel.add(loopSpinner);
     }
 

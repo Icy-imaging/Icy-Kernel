@@ -4,6 +4,7 @@
 package icy.preferences;
 
 import icy.network.AuthenticationInfo;
+import icy.network.NetworkUtil;
 import icy.util.StringUtil;
 
 import java.util.ArrayList;
@@ -196,6 +197,12 @@ public class RepositoryPreferences
                     && RepositoryPreferences.DEFAULT_REPOSITERY_LOCATION.equals(location);
         }
 
+        public boolean isOldDefault()
+        {
+            return RepositoryPreferences.DEFAULT_REPOSITERY_NAME.equals(name)
+                    && RepositoryPreferences.DEFAULT_REPOSITERY_LOCATION_OLD.equals(location);
+        }
+
         @Override
         public String toString()
         {
@@ -228,7 +235,8 @@ public class RepositoryPreferences
     private static XMLPreferences preferences;
 
     public static final String DEFAULT_REPOSITERY_NAME = "default";
-    public static final String DEFAULT_REPOSITERY_LOCATION = "http://icy.bioimageanalysis.org/repository/";
+    public static final String DEFAULT_REPOSITERY_LOCATION = NetworkUtil.WEBSITE_URL + "repository/";
+    public static final String DEFAULT_REPOSITERY_LOCATION_OLD = "http://www.bioimageanalysis.org/icy/repository/";
 
     public static void load()
     {
@@ -256,7 +264,8 @@ public class RepositoryPreferences
         {
             final RepositoryInfo reposInf = new RepositoryInfo(preferences.node(child));
 
-            if (!reposInf.isEmpty())
+            // ignore empty and old default repository
+            if (!reposInf.isEmpty() && !reposInf.isOldDefault())
                 result.add(reposInf);
         }
 

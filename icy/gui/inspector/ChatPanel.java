@@ -705,6 +705,7 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
         attributes = new SimpleAttributeSet();
         content = new StringBuilder();
         lastCmd = "";
+        client = null;
 
         // build GUI
         initialize();
@@ -810,6 +811,10 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
             if (StringUtil.isEmpty(realName))
                 realName = nickName;
 
+            // remove listener from previous client
+            if (client != null)
+                client.removeListener(ircListener);
+
             // we need to recreate the client
             client = new CustomIRCClient(ChatPreferences.getServer(), ChatPreferences.getPort(),
                     ChatPreferences.getServerPassword(), nickName, userName, realName);
@@ -844,7 +849,7 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
                         });
                     }
                 }
-            }).start();
+            }, "IRC client connection").start();
         }
     }
 

@@ -35,9 +35,9 @@ import icy.gui.preferences.PreferenceFrame;
 import icy.gui.util.LookAndFeelUtil;
 import icy.gui.util.RibbonUtil;
 import icy.gui.viewer.Viewer;
-import icy.help.Help;
 import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
+import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginDescriptor.PluginClassNameSorter;
 import icy.plugin.PluginLauncher;
@@ -253,7 +253,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     // private final JRibbonBand othersPluginsBand;
     private final JRibbonBand setupPluginsBand;
     private final JRibbonBand newPluginsBand;
-//    private final ImageRibbonTask imageTask;
+    // private final ImageRibbonTask imageTask;
     private final SequenceOperationTask sequenceOperationTask;
     private final ToolRibbonTask toolRibbonTask;
     private final ImageJTask ijTask;
@@ -291,13 +291,13 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         // FIXED TASKS
 
         // load image task first as tools task need all plugins loaded...
-//        imageTask = new ImageRibbonTask();
+        // imageTask = new ImageRibbonTask();
         sequenceOperationTask = new SequenceOperationTask();
         toolRibbonTask = new ToolRibbonTask();
         ijTask = new ImageJTask();
         // we want tools task to be the first task
         ribbon.addTask(toolRibbonTask);
-//        ribbon.addTask(imageTask);
+        // ribbon.addTask(imageTask);
         ribbon.addTask(sequenceOperationTask);
         ribbon.addTask(ijTask);
 
@@ -907,6 +907,20 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         });
         ribbon.addTaskbarComponent(preferencesButton);
 
+        // PLUGINS
+        final IcyCommandButton pluginsButton = new IcyCommandButton(new IcyIcon(ResourceUtil.ICON_PLUGIN));
+
+        pluginsButton.setActionRichTooltip(new RichTooltip("Plugins", "Install new plugins."));
+        pluginsButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                new PreferenceFrame(PluginOnlinePreferencePanel.NODE_NAME);
+            }
+        });
+        ribbon.addTaskbarComponent(pluginsButton);
+
         // SEPARATOR
         ribbon.addTaskbarComponent(new JSeparator(SwingConstants.VERTICAL));
 
@@ -933,23 +947,6 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
 
         multiWindowGroup.add(multiWindowButton);
         multiWindowGroup.setSelected(multiWindowButton, GeneralPreferences.getMultiWindowMode());
-
-        // LOOK AND FEEL
-        final IcyCommandButton lafButton = new IcyCommandButton(new IcyIcon(ResourceUtil.ICON_SMILEY_HAPPY));
-
-        lafButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
-        lafButton.setPopupRichTooltip(new RichTooltip("Look and feel", "Change appearance of the interface"));
-        lafButton.setPopupCallback(new PopupPanelCallback()
-        {
-            @Override
-            public JPopupPanel getPopupPanel(JCommandButton commandButton)
-            {
-                // better to build it on request as it takes a bit of time
-                // and we want to speed up the initial loading
-                return LookAndFeelUtil.getLookAndFeelMenu();
-            }
-        });
-        ribbon.addTaskbarComponent(lafButton);
 
         // WINDOWS
         final IcyCommandButton windowsButton = new IcyCommandButton(new IcyIcon("app_window"));
@@ -985,6 +982,27 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
 
                 aotGroup.add(aotButton);
                 aotGroup.setSelected(aotButton, GeneralPreferences.getAlwaysOnTop());
+
+                // SEPARATOR
+                result.addMenuSeparator();
+
+                // LOOK AND FEEL
+                final IcyCommandMenuButton lafButton = new IcyCommandMenuButton("Appearance",  new IcyIcon(
+                        ResourceUtil.ICON_SMILEY_HAPPY));
+
+                lafButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
+                lafButton.setPopupRichTooltip(new RichTooltip("Look and feel", "Change appearance of the interface"));
+                lafButton.setPopupCallback(new PopupPanelCallback()
+                {
+                    @Override
+                    public JPopupPanel getPopupPanel(JCommandButton commandButton)
+                    {
+                        // better to build it on request as it takes a bit of time
+                        // and we want to speed up the initial loading
+                        return LookAndFeelUtil.getLookAndFeelMenu();
+                    }
+                });
+                result.addMenuButton(lafButton);
 
                 // SEPARATOR
                 result.addMenuSeparator();
@@ -1224,7 +1242,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         final IcyCommandButton helpAndInfoButton = new IcyCommandButton(new IcyIcon("info"));
 
         helpAndInfoButton.setPopupRichTooltip(new RichTooltip("General help and information",
-                "Help, Updates and Information about ICY"));
+                "Help, Updates and Informations about Icy."));
         helpAndInfoButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
         helpAndInfoButton.setPopupCallback(new PopupPanelCallback()
         {
@@ -1234,9 +1252,37 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 final JCommandPopupMenu result = new JCommandPopupMenu();
 
                 // HELP
-                final IcyCommandMenuButton helpButton = new Help("display=faq")
-                        .getIcyCommandMenuButton("Help (online)");
+                final IcyCommandMenuButton helpButton = new IcyCommandMenuButton("Help (online)", new IcyIcon(
+                        ResourceUtil.ICON_HELP));
+                helpButton.addActionListener(new ActionListener()
+                {
+                    @Override
+                    public void actionPerformed(ActionEvent e)
+                    {
+                        // open browser on help page
+                        NetworkUtil.openURL(NetworkUtil.WEBSITE_URL + "support");
+                    }
+                });
                 result.addMenuButton(helpButton);
+
+                // WEB SITE
+                final IcyCommandMenuButton webButton = new IcyCommandMenuButton("Website", new IcyIcon(
+                        ResourceUtil.ICON_BROWSER));
+                webButton.addActionListener(new ActionListener()
+                {
+                    @Override
+                    public void actionPerformed(ActionEvent e)
+                    {
+                        // open browser on website
+                        NetworkUtil.openURL(NetworkUtil.WEBSITE_URL);
+                    }
+                });
+                result.addMenuButton(webButton);
+
+                // // FAQ
+                // final IcyCommandMenuButton faqButton = new Help("faq")
+                // .getIcyCommandMenuButton("Help (online)");
+                // result.addMenuButton(faqButton);
 
                 // CHECK FOR UPDATE
                 final IcyCommandMenuButton checkUpdateButton = new IcyCommandMenuButton("Check for update",
@@ -1337,7 +1383,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     public void sequenceFocused(MainEvent event)
     {
         // dispatch event to all interested
-//        imageTask.onSequenceFocusChange();
+        // imageTask.onSequenceFocusChange();
         sequenceOperationTask.onSequenceFocusChange();
         applicationMenu.onSequenceFocusChange();
     }

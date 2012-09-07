@@ -859,7 +859,7 @@ public class SequenceOperationTask extends RibbonTask
                                 final ProgressFrame pf = new ProgressFrame("Removing slice...");
                                 try
                                 {
-                                    SequenceUtil.removeZ(viewer.getSequence(), viewer.getZ());
+                                    SequenceUtil.removeZAndShift(viewer.getSequence(), viewer.getZ());
                                     ZOperationBand.this.udpateButtonsState();
                                 }
                                 finally
@@ -1060,7 +1060,7 @@ public class SequenceOperationTask extends RibbonTask
                                 final ProgressFrame pf = new ProgressFrame("Removing frame...");
                                 try
                                 {
-                                    SequenceUtil.removeT(viewer.getSequence(), viewer.getT());
+                                    SequenceUtil.removeTAndShift(viewer.getSequence(), viewer.getT());
                                     TOperationBand.this.udpateButtonsState();
                                 }
                                 finally
@@ -1147,24 +1147,24 @@ public class SequenceOperationTask extends RibbonTask
         }
     }
 
-    public static class DimConversionBand extends JRibbonBand
+    public static class ZTConversionBand extends JRibbonBand
     {
         /**
          * 
          */
         private static final long serialVersionUID = 8210688977085548878L;
 
-        private static final String NAME = "Dimension operation";
+        private static final String NAME = "Z / T conversion";
 
         final IcyCommandButton convertToZButton;
         final IcyCommandButton convertToTButton;
         final IcyCommandButton advancedConvertButton;
 
-        public DimConversionBand()
+        public ZTConversionBand()
         {
             super(NAME, new IcyIcon(ResourceUtil.ICON_LAYER_V2));
 
-            setToolTipText("Dimension conversion");
+            setToolTipText("Z/T conversion");
 
             // convert to Z stack
             convertToZButton = new IcyCommandButton("Convert to stack", new IcyIcon(ResourceUtil.ICON_LAYER_V1));
@@ -1217,7 +1217,7 @@ public class SequenceOperationTask extends RibbonTask
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    new SequenceDimensionConvertFrame();
+                    new SequenceDimensionConvertFrame(Icy.getMainInterface().getFocusedSequence());
                 }
             });
             addCommandButton(advancedConvertButton, RibbonElementPriority.MEDIUM);
@@ -1413,7 +1413,7 @@ public class SequenceOperationTask extends RibbonTask
 
     private final CopyConvertBand copyConvertBand;
     private final RenderingBand colorConvertBand;
-    private final DimConversionBand stackConversionBand;
+    private final ZTConversionBand stackConversionBand;
     private final PlanarOperationBand planarOperationBand;
     private final ChannelOperationBand channelOperationBand;
     private final ZOperationBand zStackOperationBand;
@@ -1423,14 +1423,14 @@ public class SequenceOperationTask extends RibbonTask
     public SequenceOperationTask()
     {
         super(NAME, new CopyConvertBand(), new PlanarOperationBand(), new ChannelOperationBand(), new ZOperationBand(),
-                new TOperationBand(), new DimConversionBand(), new RenderingBand(), new ModifyRibbonBand());
+                new TOperationBand(), new ZTConversionBand(), new RenderingBand(), new ModifyRibbonBand());
 
         copyConvertBand = (CopyConvertBand) getBand(0);
         planarOperationBand = (PlanarOperationBand) getBand(1);
         channelOperationBand = (ChannelOperationBand) getBand(2);
         zStackOperationBand = (ZOperationBand) getBand(3);
         tStackOperationBand = (TOperationBand) getBand(4);
-        stackConversionBand = (DimConversionBand) getBand(5);
+        stackConversionBand = (ZTConversionBand) getBand(5);
         colorConvertBand = (RenderingBand) getBand(6);
         modifyBand = (ModifyRibbonBand) getBand(7);
     }
