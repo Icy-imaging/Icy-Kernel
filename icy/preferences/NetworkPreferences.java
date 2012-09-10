@@ -3,6 +3,8 @@
  */
 package icy.preferences;
 
+import icy.network.NetworkUtil;
+
 /**
  * @author stephane
  */
@@ -47,7 +49,7 @@ public class NetworkPreferences
 
     public static int getProxySetting()
     {
-        return preferences.getInt(ID_PROXY_SETTING, 0);
+        return preferences.getInt(ID_PROXY_SETTING, NetworkUtil.SYSTEM_PROXY);
     }
 
     public static void setProxySetting(int value)

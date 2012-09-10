@@ -62,6 +62,10 @@ import sun.misc.BASE64Encoder;
  */
 public class NetworkUtil
 {
+    public static final int NO_PROXY = 0; 
+    public static final int SYSTEM_PROXY = 1; 
+    public static final int USER_PROXY = 2; 
+    
     public interface NetworkConnectionListener
     {
         /**
@@ -262,13 +266,13 @@ public class NetworkUtil
     {
         final int proxySetting = NetworkPreferences.getProxySetting();
 
-        if (proxySetting == 0)
+        if (proxySetting == NO_PROXY)
         {
             // no proxy
             disableProxySetting();
             disableSystemProxy();
         }
-        else if (proxySetting == 1)
+        else if (proxySetting == SYSTEM_PROXY)
         {
             // system proxy
             disableProxySetting();
