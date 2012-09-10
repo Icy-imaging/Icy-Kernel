@@ -915,8 +915,17 @@ public class NetworkUtil
         {
             try
             {
-                result += "&" + URLEncoder.encode(entry.getKey(), "UTF-8") + "="
-                        + URLEncoder.encode(entry.getValue(), "UTF-8");
+                final String key = entry.getKey();
+
+                if (!StringUtil.isEmpty(key))
+                {
+                    final String value = entry.getValue();
+
+                    result += "&" + URLEncoder.encode(key, "UTF-8") + "=";
+
+                    if (!StringUtil.isEmpty(value))
+                        result += URLEncoder.encode(value, "UTF-8");
+                }
             }
             catch (UnsupportedEncodingException e)
             {

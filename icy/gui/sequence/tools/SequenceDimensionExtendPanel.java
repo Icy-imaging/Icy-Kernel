@@ -120,6 +120,9 @@ public class SequenceDimensionExtendPanel extends JPanel
             public void actionPerformed(ActionEvent e)
             {
                 duplicateSpinner.setEnabled(duplicateCheckBox.isSelected());
+                
+                previewImageChanged();
+                fireChangedEvent();
             }
         });
 
