@@ -22,6 +22,7 @@ import icy.painter.PathAnchor2D;
 
 import java.awt.Graphics2D;
 import java.awt.Shape;
+import java.awt.geom.Area;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -39,6 +40,99 @@ public class ShapeUtil
     public interface ShapeConsumer
     {
         public boolean consume(Shape shape);
+    }
+
+    public enum ShapeOperation
+    {
+        OR, AND, XOR
+    }
+
+    /**
+     * Merge the specified array of {@link Shape} with the given {@link ShapeOperation}.<br>
+     * 
+     * @param shapes
+     *        Shapes we want to merge.
+     * @param operation
+     *        {@link ShapeOperation} to apply.
+     * @return {@link Area} shape representing the result of the merge operation.
+     */
+    public static Area merge(Shape[] shapes, ShapeOperation operation)
+    {
+        if (shapes.length == 0)
+            return new Area();
+
+        final Area result = new Area(shapes[0]);
+
+        // merge rois
+        for (int s = 1; s < shapes.length; s++)
+        {
+            final Shape shape = shapes[s];
+
+            switch (operation)
+            {
+                case OR:
+                    result.add(new Area(shape));
+                    break;
+
+                case AND:
+                    result.intersect(new Area(shape));
+                    break;
+
+                case XOR:
+                    result.exclusiveOr(new Area(shape));
+                    break;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Add 2 shapes and return result in an {@link Area} type shape.
+     */
+    public static Area add(Shape shape1, Shape shape2)
+    {
+        final Area result = new Area(shape1);
+
+        result.add(new Area(shape2));
+
+        return result;
+    }
+
+    /**
+     * Intersect 2 shapes and return result in an {@link Area} type shape.
+     */
+    public static Area intersect(Shape shape1, Shape shape2)
+    {
+        final Area result = new Area(shape1);
+
+        result.intersect(new Area(shape2));
+
+        return result;
+    }
+
+    /**
+     * Exclusive Or 2 shapes and return result in an {@link Area} type shape.
+     */
+    public static Area xor(Shape shape1, Shape shape2)
+    {
+        final Area result = new Area(shape1);
+
+        result.exclusiveOr(new Area(shape2));
+
+        return result;
+    }
+
+    /**
+     * Subtract shape2 from shape1 return result in an {@link Area} type shape.
+     */
+    public static Area subtract(Shape shape1, Shape shape2)
+    {
+        final Area result = new Area(shape1);
+
+        result.subtract(new Area(shape2));
+
+        return result;
     }
 
     /**
@@ -62,7 +156,7 @@ public class ShapeUtil
         {
             final double deltaW = (newW - w) / 2;
             final double deltaH = (newH - h) / 2;
-            
+
             shape.setFrame(shape.getX() - deltaW, shape.getY() - deltaH, newW, newH);
         }
         else

@@ -4886,7 +4886,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * sequence meta has changed
      */
-    private void metaChanged(String metaName)
+    public void metaChanged(String metaName)
     {
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_META, metaName));
     }
@@ -4894,7 +4894,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * sequence meta has changed
      */
-    private void metaChanged(String metaName, int param)
+    public void metaChanged(String metaName, int param)
     {
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_META, metaName, null, param));
     }

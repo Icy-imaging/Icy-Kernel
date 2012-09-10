@@ -2417,60 +2417,50 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Convert specified canvas delta X to image delta X
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.canvasToImageDelta(...) instead
+     * Convert specified canvas delta X to image delta X.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.canvasToImageDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public double canvasToImageDeltaX(int value)
     {
         return value / getScaleX();
     }
 
     /**
-     * Convert specified canvas delta Y to image delta Y
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.canvasToImageDelta(...) instead
+     * Convert specified canvas delta Y to image delta Y.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.canvasToImageDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public double canvasToImageDeltaY(int value)
     {
         return value / getScaleY();
     }
 
     /**
-     * Convert specified canvas delta Z to image delta Z
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.canvasToImageDelta(...) instead
+     * Convert specified canvas delta Z to image delta Z.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.canvasToImageDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public double canvasToImageDeltaZ(int value)
     {
         return value / getScaleZ();
     }
 
     /**
-     * Convert specified canvas delta T to image delta T
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.canvasToImageDelta(...) instead
+     * Convert specified canvas delta T to image delta T.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.canvasToImageDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public double canvasToImageDeltaT(int value)
     {
         return value / getScaleT();
     }
 
     /**
-     * Convert specified canvas delta C to image delta C
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.canvasToImageDelta(...) instead
+     * Convert specified canvas delta C to image delta C.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.canvasToImageDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public double canvasToImageDeltaC(int value)
     {
         return value / getScaleC();
@@ -2478,12 +2468,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Convert specified canvas delta X to log image delta X.<br>
-     * The conversion is still affected by zoom ratio but with specified logarithm form.
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.canvasToImageLogDelta(...) instead
+     * The conversion is still affected by zoom ratio but with specified logarithm form.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.canvasToImageLogDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public double canvasToImageLogDeltaX(int value, double logFactor)
     {
         final double scaleFactor = getScaleX();
@@ -2493,12 +2481,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Convert specified canvas delta X to log image delta X.<br>
-     * The conversion is still affected by zoom ratio but with logarithm form.
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.canvasToImageLogDelta(...) instead
+     * The conversion is still affected by zoom ratio but with logarithm form.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.canvasToImageLogDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public double canvasToImageLogDeltaX(int value)
     {
         return canvasToImageLogDeltaX(value, 5d);
@@ -2506,12 +2492,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Convert specified canvas delta Y to log image delta Y.<br>
-     * The conversion is still affected by zoom ratio but with specified logarithm form.
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.canvasToImageLogDelta(...) instead
+     * The conversion is still affected by zoom ratio but with specified logarithm form.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.canvasToImageLogDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public double canvasToImageLogDeltaY(int value, double logFactor)
     {
         final double scaleFactor = getScaleY();
@@ -2521,12 +2505,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Convert specified canvas delta Y to log image delta Y.<br>
-     * The conversion is still affected by zoom ratio but with logarithm form.
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.canvasToImageLogDelta(...) instead
+     * The conversion is still affected by zoom ratio but with logarithm form.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.canvasToImageLogDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public double canvasToImageLogDeltaY(int value)
     {
         return canvasToImageLogDeltaY(value, 5d);
@@ -2593,60 +2575,50 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Convert specified image delta X to canvas delta X
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.imageToCanvasDelta(...) instead
+     * Convert specified image delta X to canvas delta X.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.imageToCanvasDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public int imageToCanvasDeltaX(double value)
     {
         return (int) (value * getScaleX());
     }
 
     /**
-     * Convert specified image delta Y to canvas delta Y
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.imageToCanvasDelta(...) instead
+     * Convert specified image delta Y to canvas delta Y.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.imageToCanvasDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public int imageToCanvasDeltaY(double value)
     {
         return (int) (value * getScaleY());
     }
 
     /**
-     * Convert specified image delta Z to canvas delta Z
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.imageToCanvasDelta(...) instead
+     * Convert specified image delta Z to canvas delta Z.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.imageToCanvasDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public int imageToCanvasDeltaZ(double value)
     {
         return (int) (value * getScaleZ());
     }
 
     /**
-     * Convert specified image delta T to canvas delta T
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.imageToCanvasDelta(...) instead
+     * Convert specified image delta T to canvas delta T.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.imageToCanvasDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public int imageToCanvasDeltaT(double value)
     {
         return (int) (value * getScaleT());
     }
 
     /**
-     * Convert specified image delta C to canvas delta C
-     * 
-     * @deprecated Cannot give correct result if rotation is applied so use
-     *             IcyCanvasXD.imageToCanvasDelta(...) instead
+     * Convert specified image delta C to canvas delta C.<br>
+     * WARNING: Does not take in account the rotation transformation.<br>
+     * Use the IcyCanvasXD.imageToCanvasDelta(...) method instead for rotation transformed delta.
      */
-    @Deprecated
     public int imageToCanvasDeltaC(double value)
     {
         return (int) (value * getScaleC());

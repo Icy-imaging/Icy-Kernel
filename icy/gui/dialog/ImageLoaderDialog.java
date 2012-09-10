@@ -23,6 +23,7 @@ import icy.file.Loader;
 import icy.gui.component.ThumbnailComponent;
 import icy.gui.util.GuiUtil;
 import icy.image.IcyBufferedImage;
+import icy.image.IcyBufferedImageUtil;
 import icy.main.Icy;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.XMLPreferences;
@@ -183,10 +184,10 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
                 // refresh preview
                 ThreadUtil.bgRunSingle(this);
             }
-
-            // and setting state
-            updateSettingPanel();
         }
+
+        // setting state
+        updateSettingPanel();
     }
 
     void updateSettingPanel()
@@ -213,7 +214,7 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
 
             final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader, reader.getSizeZ() / 2,
                     reader.getSizeT() / 2);
-            preview.setImage(img.getARGBImage());
+            preview.setImage(IcyBufferedImageUtil.getARGBImage(img));
             preview.setTitle(reader.getFormat());
             preview.setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - " + reader.getSizeZ() + "Z x "
                     + reader.getSizeT() + "T");

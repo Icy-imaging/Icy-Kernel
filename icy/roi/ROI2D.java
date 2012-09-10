@@ -20,6 +20,7 @@ package icy.roi;
 
 import icy.canvas.IcyCanvas;
 import icy.util.EventUtil;
+import icy.util.ShapeUtil.ShapeOperation;
 import icy.util.XMLUtil;
 
 import java.awt.Point;
@@ -27,6 +28,7 @@ import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -48,6 +50,84 @@ public abstract class ROI2D extends ROI
         for (ROI roi : rois)
             if (roi instanceof ROI2D)
                 result.add((ROI2D) roi);
+
+        return result;
+    }
+
+    /**
+     * Return ROI2D of ROI list
+     */
+    public static ROI2D[] getROI2DList(ROI[] rois)
+    {
+        final ArrayList<ROI2D> result = new ArrayList<ROI2D>();
+
+        for (ROI roi : rois)
+            if (roi instanceof ROI2D)
+                result.add((ROI2D) roi);
+
+        return result.toArray(new ROI2D[result.size()]);
+    }
+
+    /**
+     * Merge the specified array of {@link ROI2DShape} with the given {@link ShapeOperation}.<br>
+     * 
+     * @param rois
+     *        ROIs we want to merge.
+     * @param operation
+     *        {@link ShapeOperation} to apply.
+     * @return {@link Area} shape representing the result of the merge operation.
+     */
+    public static ROI2D merge(ROI2D[] rois, ShapeOperation operation)
+    {
+        // test if we only have ROI2DShape
+        if (ROI.getROIList(rois, ROI2DShape.class).size() == rois.length)
+        {
+            // convert array
+            final ROI2DShape roisShape[] = new ROI2DShape[rois.length];
+            System.arraycopy(rois, 0, roisShape, 0, rois.length);
+            // we can use the Shape merge
+            return ROI2DShape.merge(roisShape, operation);
+        }
+
+        // we use a boolean mask
+        final ROI2DArea result = new ROI2DArea();
+
+        switch (operation)
+        {
+            case OR:
+                result.setAsBooleanMask(BooleanMask2D.getUnionBooleanMask(rois));
+                result.setName("Union");
+                break;
+            case AND:
+                result.setAsBooleanMask(BooleanMask2D.getIntersectBooleanMask(rois));
+                result.setName("Intersection");
+                break;
+            case XOR:
+                result.setAsBooleanMask(BooleanMask2D.getXorBooleanMask(rois));
+                result.setName("Exclusive union");
+                break;
+            default:
+                result.setName("Merge");
+        }
+
+        return result;
+    }
+
+    /**
+     * Subtract the content of the roi2 from the roi1 and return the result as a new {@link ROI2D}.
+     * 
+     * @return {@link ROI2D} representing the result of subtraction.
+     */
+    public static ROI2D substract(ROI2D roi1, ROI2D roi2)
+    {
+        if ((roi1 instanceof ROI2DShape) && (roi2 instanceof ROI2DShape))
+            return ROI2DShape.substract((ROI2DShape) roi1, (ROI2DShape) roi2);
+
+        // use ROI2DArea
+        final ROI2DArea result = new ROI2DArea(BooleanMask2D.getSubtractionMask(roi1.getAsBooleanMask(),
+                roi2.getAsBooleanMask()));
+
+        result.setName("Substraction");
 
         return result;
     }

@@ -29,17 +29,14 @@ import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
-import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
-import icy.roi.ROI2DArea;
-import icy.roi.ROI2DPath;
-import icy.roi.ROI2DShape;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.thread.ThreadUtil;
+import icy.util.ShapeUtil.ShapeOperation;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -47,7 +44,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.Area;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
@@ -416,80 +412,31 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
             public void actionPerformed(ActionEvent e)
             {
                 final Object src = e.getSource();
+                final ShapeOperation op;
+
+                // OR operation
+                if (src == orMergeItem)
+                    op = ShapeOperation.OR;
+                // AND operation
+                else if (src == andMergeItem)
+                    op = ShapeOperation.AND;
+                // XOR operation
+                else if (src == xorMergeItem)
+                    op = ShapeOperation.XOR;
+                else
+                    return;
 
                 sequence.beginUpdate();
                 try
                 {
                     final ArrayList<ROI> selectedROI = getSelectedRois();
                     // only ROI2D supported now
-                    final ArrayList<ROI2D> selectedROI2D = ROI2D.getROI2DList(selectedROI);
-                    final ROI newROI;
+                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
 
-                    // test if we have ROIArea
-                    if (ROI.getROIList(selectedROI2D, ROI2DArea.class).size() == 0)
-                    {
-                        // no ROIArea, we can use shape
-                        final Area area = new Area();
-                        boolean first = true;
+                    final ROI mergeROI = ROI2D.merge(selectedROI2D, op);
 
-                        // merge selected rois
-                        for (ROI roi : selectedROI)
-                        {
-                            if (roi instanceof ROI2DShape)
-                            {
-                                // OR operation
-                                if (src == orMergeItem)
-                                    area.add(new Area(((ROI2DShape) roi).getShape()));
-                                // AND operation
-                                else if (src == andMergeItem)
-                                {
-                                    if (first)
-                                    {
-                                        area.add(new Area(((ROI2DShape) roi).getShape()));
-                                        first = false;
-                                    }
-                                    else
-                                        area.intersect(new Area(((ROI2DShape) roi).getShape()));
-                                }
-                                // XOR operation
-                                else if (src == xorMergeItem)
-                                    area.exclusiveOr(new Area(((ROI2DShape) roi).getShape()));
-                            }
-                        }
-
-                        newROI = new ROI2DPath(area);
-                    }
-                    else
-                    {
-                        // we have ROIArea so we use boolean mask
-                        final BooleanMask2D mask;
-
-                        // OR operation
-                        if (src == orMergeItem)
-                            mask = BooleanMask2D.getUnionBooleanMask(selectedROI2D);
-                        // AND operation
-                        else if (src == andMergeItem)
-                            mask = BooleanMask2D.getIntersectBooleanMask(selectedROI2D);
-                        // XOR operation
-                        else if (src == xorMergeItem)
-                            mask = BooleanMask2D.getXorBooleanMask(selectedROI2D);
-                        else
-                            mask = null;
-
-                        newROI = new ROI2DArea();
-                        if (mask != null)
-                            ((ROI2DArea) newROI).setAsBooleanMask(mask);
-                    }
-
-                    if (src == orMergeItem)
-                        newROI.setName("Union");
-                    else if (src == andMergeItem)
-                        newROI.setName("Intersection");
-                    else if (src == xorMergeItem)
-                        newROI.setName("Exclusive union");
-
-                    sequence.addROI(newROI);
-                    sequence.setSelectedROI(newROI, true);
+                    sequence.addROI(mergeROI);
+                    sequence.setSelectedROI(mergeROI, true);
                 }
                 finally
                 {

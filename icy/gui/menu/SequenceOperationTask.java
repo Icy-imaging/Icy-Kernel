@@ -1228,11 +1228,13 @@ public class SequenceOperationTask extends RibbonTask
 
         void udpateButtonsState()
         {
-            final boolean enabled = Icy.getMainInterface().getFocusedSequence() != null;
+            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final boolean enabled = (seq != null);
+            final boolean several = enabled && ((seq.getSizeZ() > 1) || (seq.getSizeT() > 1));
 
-            convertToTButton.setEnabled(enabled);
-            convertToZButton.setEnabled(enabled);
-            advancedConvertButton.setEnabled(enabled);
+            convertToTButton.setEnabled(several);
+            convertToZButton.setEnabled(several);
+            advancedConvertButton.setEnabled(several);
         }
     }
 

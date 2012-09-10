@@ -184,6 +184,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public static ArrayList<ROI> getROIList(ArrayList<? extends ROI> rois, Class<? extends ROI> clazz)
     {
+        return getROIList(rois.toArray(new ROI[rois.size()]), clazz);
+    }
+
+    /**
+     * Return ROI of specified type from the ROI list
+     */
+    public static ArrayList<ROI> getROIList(ROI rois[], Class<? extends ROI> clazz)
+    {
         final ArrayList<ROI> result = new ArrayList<ROI>();
 
         for (ROI roi : rois)

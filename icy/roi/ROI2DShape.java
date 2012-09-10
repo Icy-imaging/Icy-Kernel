@@ -32,6 +32,7 @@ import icy.sequence.Sequence;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
+import icy.util.ShapeUtil.ShapeOperation;
 import icy.util.StringUtil;
 import icy.vtk.VtkUtil;
 
@@ -64,6 +65,58 @@ import vtk.vtkPolyDataMapper;
  */
 public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListener
 {
+    /**
+     * Merge the specified array of {@link ROI2DShape} with the given {@link ShapeOperation}.<br>
+     * 
+     * @param rois
+     *        ROIs we want to merge.
+     * @param operation
+     *        {@link ShapeOperation} to apply.
+     * @return {@link ROI2DArea} representing the result of the ROI merge operation.
+     */
+    public static ROI2DPath merge(ROI2DShape[] rois, ShapeOperation operation)
+    {
+        final Shape shapes[] = new Shape[rois.length];
+
+        for (int r = 0; r < rois.length; r++)
+            shapes[r] = rois[r].getShape();
+
+        final ROI2DPath result = new ROI2DPath(ShapeUtil.merge(shapes, operation));
+
+        switch (operation)
+        {
+            case OR:
+                result.setName("Union");
+                break;
+            case AND:
+                result.setName("Intersection");
+                break;
+            case XOR:
+                result.setName("Exclusive union");
+                break;
+            default:
+                result.setName("Merge");
+                break;
+        }
+
+        return result;
+    }
+
+    /**
+     * Subtract the content of the roi2 from the roi1 and return the result as a new
+     * {@link ROI2DPath}.
+     * 
+     * @return {@link ROI2DPath} representing the result of subtraction.
+     */
+    public static ROI2DPath substract(ROI2DShape roi1, ROI2DShape roi2)
+    {
+        final ROI2DPath result = new ROI2DPath(ShapeUtil.subtract(roi1, roi2));
+
+        result.setName("Substraction");
+
+        return result;
+    }
+
     protected class ROI2DShapePainter extends ROI2DPainter implements VtkPainter
     {
         // VTK 3D objects, we use Object to prevent UnsatisfiedLinkError
