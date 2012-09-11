@@ -51,7 +51,7 @@ public class FileUtil
 
     public static String getTempDirectory()
     {
-        return System.getProperty("java.io.tmpdir");
+        return SystemUtil.getProperty("java.io.tmpdir");
     }
 
     /**

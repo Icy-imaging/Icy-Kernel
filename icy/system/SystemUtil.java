@@ -33,6 +33,7 @@ import java.awt.image.ColorModel;
 import java.awt.image.VolatileImage;
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.util.Properties;
 
 import com.sun.management.OperatingSystemMXBean;
 
@@ -46,8 +47,10 @@ public class SystemUtil
     public static final String SYSTEM_UNIX = "unix";
 
     /**
-     * internal
+     * internals
      */
+    private static Properties props = System.getProperties();
+
     private static long lastNano = 0;
     private static long lastCpu = 0;
     private static int lastCpuLoad = 0;
@@ -107,6 +110,30 @@ public class SystemUtil
             return Desktop.getDesktop();
 
         return null;
+    }
+
+    /**
+     * @see System#getProperty(String)
+     */
+    public static String getProperty(String name)
+    {
+        return props.getProperty(name);
+    }
+
+    /**
+     * @see System#getProperty(String, String)
+     */
+    public static String getProperty(String name, String defaultValue)
+    {
+        return props.getProperty(name, defaultValue);
+    }
+
+    /**
+     * @see System#setProperty(String, String)
+     */
+    public static String setProperty(String name, String value)
+    {
+        return (String) props.setProperty(name, value);
     }
 
     /**
@@ -416,7 +443,7 @@ public class SystemUtil
      */
     public static String getUserName()
     {
-        return System.getProperty("user.name");
+        return getProperty("user.name");
     }
 
     /**
@@ -424,7 +451,7 @@ public class SystemUtil
      */
     public static String getJavaName()
     {
-        return System.getProperty("java.runtime.name");
+        return getProperty("java.runtime.name");
     }
 
     /**
@@ -432,7 +459,7 @@ public class SystemUtil
      */
     public static String getJavaVersion()
     {
-        return System.getProperty("java.runtime.version");
+        return getProperty("java.runtime.version");
     }
 
     /**
@@ -440,7 +467,7 @@ public class SystemUtil
      */
     public static int getJavaArchDataModel()
     {
-        return Integer.parseInt(System.getProperty("sun.arch.data.model"));
+        return Integer.parseInt(getProperty("sun.arch.data.model"));
     }
 
     /**
@@ -448,7 +475,7 @@ public class SystemUtil
      */
     public static String getOSName()
     {
-        return System.getProperty("os.name");
+        return getProperty("os.name");
     }
 
     /**
@@ -456,7 +483,7 @@ public class SystemUtil
      */
     public static String getOSArch()
     {
-        return System.getProperty("os.arch");
+        return getProperty("os.arch");
     }
 
     /**
@@ -464,7 +491,7 @@ public class SystemUtil
      */
     public static String getOSVersion()
     {
-        return System.getProperty("os.version");
+        return getProperty("os.version");
     }
 
     /**

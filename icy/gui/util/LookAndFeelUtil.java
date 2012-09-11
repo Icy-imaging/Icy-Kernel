@@ -22,6 +22,7 @@ import icy.common.listener.weak.WeakListener;
 import icy.image.ImageUtil;
 import icy.preferences.GeneralPreferences;
 import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
@@ -108,8 +109,8 @@ public class LookAndFeelUtil
         Java2.setSystemLookAndFeel();
 
         // enable or not EDT checking in substance
-        System.setProperty("insubstantial.checkEDT", "false");
-        System.setProperty("insubstantial.logEDT", "true");
+        SystemUtil.setProperty("insubstantial.checkEDT", "false");
+        SystemUtil.setProperty("insubstantial.logEDT", "true");
 
         // funny features of substance
 

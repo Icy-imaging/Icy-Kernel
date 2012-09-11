@@ -87,7 +87,7 @@ public class AppleUtil
             m.invoke(app);
 
             // set menu bar name
-            System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Icy");
+            SystemUtil.setProperty("com.apple.mrj.application.apple.menu.about.name", "Icy");
 
             // start the fix thread
             fixThread.start();

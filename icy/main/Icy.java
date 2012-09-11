@@ -88,7 +88,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.2.7.0");
+    public static Version version = new Version("1.2.7.1b");
 
     /**
      * Main interface
@@ -662,7 +662,7 @@ public class Icy
         loadItkLibrary();
 
         // disable native lib support for JAI as we don't provide them (for the moment)
-        System.setProperty("com.sun.media.jai.disableMediaLib", "true");
+        SystemUtil.setProperty("com.sun.media.jai.disableMediaLib", "true");
     }
 
     private static void loadLibraryFile(String name, boolean mandatory, boolean showLog)

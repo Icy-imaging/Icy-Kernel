@@ -20,6 +20,7 @@ import icy.resource.ResourceUtil;
 import icy.resource.icon.BasicResizableIcon;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
+import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import ij.Executer;
 import ij.ImageJ;
@@ -64,12 +65,12 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
 
         public ImageJRibbonBand()
         {
-            super(NAME, new BasicResizableIcon(ImageUtil.loadImage(ImageJ.class.getResource("/microscope.gif"))));
+            super(NAME, new BasicResizableIcon(ImageUtil.load(ImageJ.class.getResource("/microscope.gif"))));
 
             // initialize some static ImageJ stuff
 
             // home directory
-            System.setProperty("plugins.dir", "ij");
+            SystemUtil.setProperty("plugins.dir", "ij");
             // background color
             ImageJ.backgroundColor = LookAndFeelUtil.getBackground(this);
 
@@ -199,7 +200,7 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
                 public void actionPerformed(ActionEvent e)
                 {
                     final boolean value = (detachedGrp.getSelected() == detachedBtn);
-                    
+
                     // set detached mode
                     Icy.getMainInterface().setDetachedMode(value);
                     // and save state
