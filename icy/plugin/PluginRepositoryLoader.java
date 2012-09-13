@@ -34,6 +34,7 @@ import icy.util.XMLUtil;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventListener;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.event.EventListenerList;
@@ -214,7 +215,13 @@ public class PluginRepositoryLoader
      */
     public static ArrayList<PluginOnlineIdent> getPluginIdents(RepositoryInfo repos)
     {
-        final Document document = XMLUtil.loadDocument(repos.getLocation(), repos.getAuthenticationInfo(), false);
+        // prepare parameters for plugin list request
+        final HashMap<String, String> values = new HashMap<String, String>();
+
+        values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
+
+        final Document document = XMLUtil.loadDocument(
+                repos.getLocation() + "?" + NetworkUtil.getContentString(values), repos.getAuthenticationInfo(), false);
 
         if (document != null)
         {

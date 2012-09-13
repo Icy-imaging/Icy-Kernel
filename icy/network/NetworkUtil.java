@@ -144,11 +144,23 @@ public class NetworkUtil
         }
     }
 
+    /**
+     * URL
+     */
     public static final String WEBSITE_URL = "http://icy.bioimageanalysis.org/";
 
     static final String REPORT_URL = WEBSITE_URL + "index.php";
+    static final String USER_INTERRUPT_MESS = "Load interrupted by user";
 
-    public static final String USER_INTERRUPT_MESS = "Load interrupted by user";
+    /**
+     * Parameters id
+     */
+    public static final String ID_KERNELVERSION = "kernelVersion";
+    public static final String ID_PLUGINCLASSNAME = "pluginClassName";
+    public static final String ID_PLUGINVERSION = "pluginVersion";
+    public static final String ID_DEVELOPERID = "developerId";
+    public static final String ID_ERRORLOG = "errorLog";
+    
 
     /**
      * List of all listeners on network connection changes.

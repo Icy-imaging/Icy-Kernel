@@ -11,11 +11,14 @@ import icy.type.collection.array.ArrayUtil;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.media.jai.BorderExtender;
 import javax.media.jai.Interpolation;
+import javax.media.jai.JAI;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.ScaleDescriptor;
 import javax.swing.SwingConstants;
@@ -489,8 +492,15 @@ public class IcyBufferedImageUtil
             }
 
             // use JAI scaler (use a copy to avoid source alteration)
-            final RenderedOp renderedOp = ScaleDescriptor.create(getCopy(source), xScale, yScale, Float.valueOf(0f),
-                    Float.valueOf(0f), interpolation, null);
+            final RenderedOp renderedOp = ScaleDescriptor.create(
+                    getCopy(source),
+                    xScale,
+                    yScale,
+                    Float.valueOf(0f),
+                    Float.valueOf(0f),
+                    interpolation,
+                    new RenderingHints(JAI.KEY_BORDER_EXTENDER, BorderExtender
+                            .createInstance(BorderExtender.BORDER_COPY)));
 
             // JAI keep dataType and others stuff in their BufferedImage
             result = IcyBufferedImage.createFrom(renderedOp.getAsBufferedImage());

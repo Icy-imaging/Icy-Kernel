@@ -156,38 +156,13 @@ public class IcyExternalFrame extends JFrame
         }
     }
 
-    // /**
-    // * Return true if specified point is located on title bar icon (system icon)
-    // */
-    // boolean isOnSystemIcon(Point p)
-    // {
-    // if (titlePane == null)
-    // return false;
-    //
-    // final int w = titlePane.getWidth();
-    // final int h = titlePane.getHeight();
-    // final Icon icon = getFrameIcon();
-    // final int iw = icon.getIconWidth();
-    // final int ih = icon.getIconHeight();
-    //
-    // final Rectangle rect;
-    //
-    // if (getComponentOrientation().isLeftToRight())
-    // rect = new Rectangle(5, (h / 2) - (ih / 2), iw, ih);
-    // else
-    // rect = new Rectangle(w - (5 + iw), (h / 2) - (ih / 2), iw, ih);
-    //
-    // return rect.contains(p);
-    // }
-
     public void setTitleBarVisible(boolean value)
     {
         if (value)
-            // setUndecorated(false);
             getRootPane().setWindowDecorationStyle(JRootPane.FRAME);
         else
-            // setUndecorated(true);
             getRootPane().setWindowDecorationStyle(JRootPane.NONE);
+
         validate();
     }
 
@@ -236,8 +211,7 @@ public class IcyExternalFrame extends JFrame
      */
     public boolean isTitleBarVisible()
     {
-        // always visible for external frame
-        return true;
+        return getRootPane().getWindowDecorationStyle() != JRootPane.NONE;
     }
 
     /**

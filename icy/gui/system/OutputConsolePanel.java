@@ -154,15 +154,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
             {
                 final Clipboard clipboard = getToolkit().getSystemClipboard();
 
-                try
-                {
-                    final StringSelection contents = new StringSelection(doc.getText(0, doc.getLength()));
-                    clipboard.setContents(contents, OutputConsolePanel.this);
-                }
-                catch (BadLocationException e1)
-                {
-                    // ignore
-                }
+                clipboard.setContents(new StringSelection(getText()), OutputConsolePanel.this);
             }
         });
         reportLogButton.addActionListener(new ActionListener()
@@ -175,11 +167,7 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
                 try
                 {
                     // send report
-                    IcyExceptionHandler.report(doc.getText(0, doc.getLength()));
-                }
-                catch (BadLocationException e1)
-                {
-                    // ignore
+                    IcyExceptionHandler.report(getText());
                 }
                 finally
                 {
@@ -246,6 +234,21 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         }
 
         changed(isError);
+    }
+
+    /**
+     * Get console content.
+     */
+    public String getText()
+    {
+        try
+        {
+            return doc.getText(0, doc.getLength());
+        }
+        catch (BadLocationException e)
+        {
+            return "";
+        }
     }
 
     private void changed(boolean isError)

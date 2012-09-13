@@ -22,6 +22,7 @@ import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandToggleButton;
 import icy.gui.dialog.ImageLoaderDialog;
 import icy.gui.frame.progress.ToolTipFrame;
+import icy.gui.plugin.PluginCommandButton;
 import icy.gui.util.RibbonUtil;
 import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
@@ -241,7 +242,7 @@ public class ToolRibbonTask extends RibbonTask
 
             for (PluginDescriptor plugin : roiPlugins)
             {
-                button = MainRibbon.buildPluginCommandToggleButton(plugin, null);
+                button = PluginCommandButton.createToggleButton(plugin, null);
                 addCommandButton(button, RibbonElementPriority.MEDIUM);
             }
 

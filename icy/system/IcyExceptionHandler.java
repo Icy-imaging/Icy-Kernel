@@ -36,12 +36,6 @@ import java.util.HashMap;
  */
 public class IcyExceptionHandler implements UncaughtExceptionHandler
 {
-    public static final String ID_KERNELVERSION = "kernelVersion";
-    public static final String ID_PLUGINCLASSNAME = "pluginClassName";
-    public static final String ID_PLUGINVERSION = "pluginVersion";
-    public static final String ID_DEVELOPERID = "developerId";
-    public static final String ID_ERRORLOG = "errorLog";
-
     private static IcyExceptionHandler exceptionHandler = new IcyExceptionHandler();
 
     public static void init()
@@ -287,28 +281,28 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         final String pluginId;
         final HashMap<String, String> values = new HashMap<String, String>();
 
-        values.put(ID_KERNELVERSION, Icy.version.toString());
+        values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
         icyId = "ICY Version " + Icy.version + "\n";
 
         if (plugin != null)
         {
-            values.put(ID_PLUGINCLASSNAME, plugin.getClassName());
-            values.put(ID_PLUGINVERSION, plugin.getVersion().toString());
+            values.put(NetworkUtil.ID_PLUGINCLASSNAME, plugin.getClassName());
+            values.put(NetworkUtil.ID_PLUGINVERSION, plugin.getVersion().toString());
             pluginId = "Plugin " + plugin.toString() + "\n";
         }
         else
         {
-            values.put(ID_PLUGINCLASSNAME, "");
-            values.put(ID_PLUGINVERSION, "");
+            values.put(NetworkUtil.ID_PLUGINCLASSNAME, "");
+            values.put(NetworkUtil.ID_PLUGINVERSION, "");
             pluginId = "";
         }
 
         if (StringUtil.isEmpty(devId))
-            values.put(ID_DEVELOPERID, devId);
+            values.put(NetworkUtil.ID_DEVELOPERID, devId);
         else
-            values.put(ID_DEVELOPERID, "");
+            values.put(NetworkUtil.ID_DEVELOPERID, "");
 
-        values.put(ID_ERRORLOG, icyId + pluginId + "\n" + errorLog);
+        values.put(NetworkUtil.ID_ERRORLOG, icyId + pluginId + "\n" + errorLog);
 
         // send report
         NetworkUtil.report(values);

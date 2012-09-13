@@ -28,6 +28,7 @@ import icy.gui.frame.progress.TaskFrame;
 import icy.gui.main.MainAdapter;
 import icy.gui.main.MainEvent;
 import icy.gui.main.MainFrame;
+import icy.gui.plugin.PluginCommandButton;
 import icy.gui.preferences.GeneralPreferencePanel;
 import icy.gui.preferences.PluginLocalPreferencePanel;
 import icy.gui.preferences.PluginOnlinePreferencePanel;
@@ -40,7 +41,6 @@ import icy.main.Icy;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginDescriptor.PluginClassNameSorter;
-import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
 import icy.plugin.PluginLoader.PluginLoaderListener;
@@ -48,12 +48,10 @@ import icy.plugin.PluginUpdater;
 import icy.preferences.GeneralPreferences;
 import icy.preferences.WorkspaceLocalPreferences;
 import icy.resource.ResourceUtil;
-import icy.resource.icon.BasicResizableIcon;
 import icy.resource.icon.IcyIcon;
 import icy.swimmingPool.SwimmingPoolViewer;
 import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
-import icy.util.StringUtil;
 import icy.workspace.Workspace;
 import icy.workspace.Workspace.TaskDefinition;
 import icy.workspace.Workspace.TaskDefinition.BandDefinition;
@@ -62,7 +60,6 @@ import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceLoader;
 
 import java.awt.Component;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -70,7 +67,6 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import javax.swing.ImageIcon;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -98,135 +94,6 @@ import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPo
  */
 public class MainRibbon extends MainAdapter implements PluginLoaderListener
 {
-    /**
-     * Set a plugin button with specified action
-     */
-    public static void setPluginButton(AbstractCommandButton button, PluginDescriptor plugin, ActionListener action)
-    {
-        final String name = plugin.getName();
-        final String className = plugin.getClassName();
-        final String description = plugin.getDescription();
-        final String website = plugin.getWeb();
-        final String author = plugin.getAuthor();
-        final ImageIcon plugIcon = plugin.getIcon();
-        final Image plugImg = plugin.getImage();
-
-        // udpate text & icon
-        button.setText(name);
-        button.setIcon(new BasicResizableIcon(plugIcon));
-        // save class name here
-        button.setName(className);
-
-        // build richToolTip for command button
-        final RichTooltip richToolTip = new RichTooltip();
-
-        richToolTip.setTitle(name);
-        if (plugIcon != PluginDescriptor.DEFAULT_ICON)
-            richToolTip.setMainImage(plugIcon.getImage());
-
-        if (!StringUtil.isEmpty(description))
-            richToolTip.addDescriptionSection(description);
-        if (!StringUtil.isEmpty(website))
-            richToolTip.addDescriptionSection(website);
-        if (!StringUtil.isEmpty(author))
-            richToolTip.addDescriptionSection(author);
-
-        if (plugImg != PluginDescriptor.DEFAULT_IMAGE)
-            richToolTip.setFooterImage(plugin.getImage());
-
-        button.setActionRichTooltip(richToolTip);
-
-        // remove previous action listeners
-        final ActionListener[] listeners = button.getListeners(ActionListener.class);
-        for (ActionListener listener : listeners)
-            button.removeActionListener(listener);
-
-        if (action != null)
-            button.addActionListener(action);
-    }
-
-    /**
-     * Set a plugin button with default action
-     */
-    public static void setPluginButton(AbstractCommandButton button, final PluginDescriptor plugin)
-    {
-        setPluginButton(button, plugin, new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                PluginLauncher.launch(plugin);
-            }
-        });
-    }
-
-    /**
-     * Build a plugin button
-     */
-    public static AbstractCommandButton buildPluginButton(final PluginDescriptor plugin, ActionListener action,
-            boolean toggle)
-    {
-        final AbstractCommandButton result;
-
-        // build command button
-        if (toggle)
-            result = new IcyCommandToggleButton();
-        else
-            result = new IcyCommandButton();
-
-        setPluginButton(result, plugin, action);
-
-        return result;
-    }
-
-    /**
-     * Build a plugin button with specified action
-     */
-    public static IcyCommandButton buildPluginCommandButton(final PluginDescriptor plugin, ActionListener action)
-    {
-        return (IcyCommandButton) buildPluginButton(plugin, action, false);
-    }
-
-    /**
-     * Build a plugin button with default action (execute plugin)
-     */
-    public static IcyCommandButton buildPluginCommandButton(final PluginDescriptor plugin)
-    {
-        // build with default action listener
-        return (IcyCommandButton) buildPluginButton(plugin, new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                PluginLauncher.launch(plugin);
-            }
-        }, false);
-    }
-
-    /**
-     * Build a plugin toggle button with specified action
-     */
-    public static IcyCommandToggleButton buildPluginCommandToggleButton(final PluginDescriptor plugin,
-            ActionListener action)
-    {
-        return (IcyCommandToggleButton) buildPluginButton(plugin, action, true);
-    }
-
-    /**
-     * Build a plugin toggle button with default action (execute plugin)
-     */
-    public static IcyCommandToggleButton buildPluginCommandToggleButton(final PluginDescriptor plugin)
-    {
-        return (IcyCommandToggleButton) buildPluginButton(plugin, new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                PluginLauncher.launch(plugin);
-            }
-        }, true);
-    }
-
     /**
      * TASK / BAND NAMES
      */
@@ -523,7 +390,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         // check that plugin can be displayed in menu
         if ((plugin != null) && plugin.isActionable())
         {
-            final IcyCommandButton pluginButton = buildPluginCommandButton(plugin);
+            final IcyCommandButton pluginButton = PluginCommandButton.createButton(plugin);
 
             // add it to the new installed plugins workspace and save it
             newPluginsBandDef.addItem(plugin.getClassName(), RibbonElementPriority.TOP);
@@ -552,8 +419,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
 
                 // button found --> udpate it
                 if (button != null)
-                    setPluginButton(button, plugin);
-
+                    PluginCommandButton.setButton(button, plugin);
             }
             else
             {
@@ -742,7 +608,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                                 {
                                     // check that menu can be displayed in menu
                                     if (plugin.isActionable())
-                                        ribbonBand.addCommandButton(buildPluginCommandButton(plugin),
+                                        ribbonBand.addCommandButton(PluginCommandButton.createButton(plugin),
                                                 item.getPriority());
                                 }
                                 // remove from workspace
@@ -987,7 +853,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 result.addMenuSeparator();
 
                 // LOOK AND FEEL
-                final IcyCommandMenuButton lafButton = new IcyCommandMenuButton("Appearance",  new IcyIcon(
+                final IcyCommandMenuButton lafButton = new IcyCommandMenuButton("Appearance", new IcyIcon(
                         ResourceUtil.ICON_SMILEY_HAPPY));
 
                 lafButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
