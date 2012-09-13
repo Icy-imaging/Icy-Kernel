@@ -13,7 +13,7 @@ Class-Path: resources.jar ij/ij.jar lib/arpack-combo.jar lib/bio-formats.jar
   lib/netlib-java.jar lib/ome-xml.jar lib/optimization.jar lib/parallelcolt.jar
   lib/phys2d.jar lib/scifio.jar lib/simpleItk.jar lib/slf4j-api.jar lib/slf4j-log4j.jar
   lib/sound.jar lib/substance.jar lib/substance-flamingo.jar lib/substance-swingx.jar
-  lib/swingx-core.jar lib/Tracking.jar lib/trident.jar lib/vecmath.jar lib/vtk.jar
+  lib/swingx-all.jar lib/Tracking.jar lib/trident.jar lib/vecmath.jar lib/vtk.jar
   lib/xuggler.jar	
   
 Main-Class: icy.main.Icy
