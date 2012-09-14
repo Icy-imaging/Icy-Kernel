@@ -31,63 +31,67 @@ import javax.swing.RootPaneContainer;
 /**
  * @author stephane
  */
-public class CustomPopupFactory extends PopupFactory {
-	private static final Float OPAQUE = new Float(1.0F);
+public class CustomPopupFactory extends PopupFactory
+{
+    private static final Float OPAQUE = new Float(1.0F);
 
-	private final boolean macos;
+    private final boolean macos;
 
-	/**
-	 * this is to mimic osx style
-	 */
-	boolean windowShadowEnabled;
+    /**
+     * this is to mimic osx style
+     */
+    boolean windowShadowEnabled;
 
-	public CustomPopupFactory() {
-		super();
+    public CustomPopupFactory()
+    {
+        super();
 
-		macos = SystemUtil.isMac();
-		// this is specific to apple os
-		windowShadowEnabled = macos;
-	}
+        macos = SystemUtil.isMac();
+        // this is specific to apple os
+        windowShadowEnabled = macos;
+    }
 
-	public boolean isWindowShadowEnabled() {
-		return windowShadowEnabled;
-	}
+    public boolean isWindowShadowEnabled()
+    {
+        return windowShadowEnabled;
+    }
 
-	public void setWindowShadowEnabled(boolean windowShadowEnabled) {
-		// only for mac os
-		this.windowShadowEnabled = windowShadowEnabled & macos;
-	}
+    public void setWindowShadowEnabled(boolean windowShadowEnabled)
+    {
+        // only for mac os
+        this.windowShadowEnabled = windowShadowEnabled & macos;
+    }
 
-	private static Window getWindow(Component component) {
-		Object obj;
-		for (obj = component; !(obj instanceof Window) && obj != null; obj = ((Component) (obj))
-				.getParent())
-			;
-		return (Window) obj;
-	}
+    private static Window getWindow(Component component)
+    {
+        Object obj;
+        for (obj = component; !(obj instanceof Window) && obj != null; obj = ((Component) (obj)).getParent())
+            ;
+        return (Window) obj;
+    }
 
-	@Override
-	public Popup getPopup(Component component, Component component1, int x,
-			int y) {
-		if (macos) {
-			// this is intended to force Heavy Weight popup component
-			final Popup popup = super.getPopup(null, component1, x, y);
+    @Override
+    public Popup getPopup(Component component, Component component1, int x, int y)
+    {
+        if (macos)
+        {
+            // this is intended to force Heavy Weight popup component
+            final Popup popup = super.getPopup(null, component1, x, y);
 
-			final Window window = getWindow(component1);
+            final Window window = getWindow(component1);
 
-			if (window == null)
-				return popup;
-			if (!(window instanceof RootPaneContainer))
-				return popup;
+            if (window == null)
+                return popup;
+            if (!(window instanceof RootPaneContainer))
+                return popup;
 
-			final JRootPane popupRootPane = ((RootPaneContainer) window)
-					.getRootPane();
-			popupRootPane.putClientProperty("Window.alpha", OPAQUE);
-			popupRootPane.putClientProperty("Window.shadow", Boolean.FALSE);
+            final JRootPane popupRootPane = ((RootPaneContainer) window).getRootPane();
+            popupRootPane.putClientProperty("Window.alpha", OPAQUE);
+            popupRootPane.putClientProperty("Window.shadow", Boolean.FALSE);
 
-			return popup;
-		}
+            return popup;
+        }
 
-		return super.getPopup(component, component1, x, y);
-	}
+        return super.getPopup(component, component1, x, y);
+    }
 }

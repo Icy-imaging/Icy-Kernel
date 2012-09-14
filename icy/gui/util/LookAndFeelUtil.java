@@ -41,7 +41,6 @@ import java.util.Map;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
-import javax.swing.PopupFactory;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.plaf.ColorUIResource;
@@ -186,10 +185,10 @@ public class LookAndFeelUtil
         // set default font size
         setFontSize(GeneralPreferences.getGuiFontSize());
 
-        // Define custom PopupFactory : 
-        // That fix Ribbon repaint bugs on Medium Weight components for OSX 
-        // but that also add problem on JComboBox in JDialog (FIXME) 
-//        PopupFactory.setSharedInstance(new CustomPopupFactory());
+        // Define custom PopupFactory :
+        // That fix Ribbon repaint bugs on Medium Weight components for OSX
+        // but that also add problem on JComboBox in JDialog (FIXME)
+        // PopupFactory.setSharedInstance(new CustomPopupFactory());
     }
 
     /**
