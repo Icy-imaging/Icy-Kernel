@@ -25,6 +25,7 @@ import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
+import icy.util.ReflectionUtil;
 import icy.util.StringUtil;
 import ij.util.Java2;
 
@@ -105,8 +106,16 @@ public class LookAndFeelUtil
 
     public static void init()
     {
-        // so ImageJ won't change look and feel later
-        Java2.setSystemLookAndFeel();
+        try
+        {
+            // so ImageJ won't change look and feel later
+            ReflectionUtil.getField(Java2.class, "lookAndFeelSet", true).set(null, Boolean.valueOf(true));
+        }
+        catch (Exception e)
+        {
+            // do it in another way (slower)
+            Java2.setSystemLookAndFeel();
+        }
 
         // enable or not EDT checking in substance
         SystemUtil.setProperty("insubstantial.checkEDT", "false");
