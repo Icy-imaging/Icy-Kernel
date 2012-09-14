@@ -61,9 +61,7 @@ import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
-import javax.swing.ToolTipManager;
 
 import org.pushingpixels.flamingo.api.ribbon.JRibbon;
 import org.pushingpixels.flamingo.api.ribbon.JRibbonFrame;
@@ -113,10 +111,9 @@ public class MainFrame extends JRibbonFrame
         super(TITLE);
 
         // RibbonFrame force these properties to false
-        // but this add a problem on external JComboBox with mac osx
-        // FIXME : problem with JComboBox and modal Dialog (OSX)
-        JPopupMenu.setDefaultLightWeightPopupEnabled(true);
-        ToolTipManager.sharedInstance().setLightWeightPopupEnabled(true);
+        // but this might add problems with mac OSX
+        // JPopupMenu.setDefaultLightWeightPopupEnabled(true);
+        // ToolTipManager.sharedInstance().setLightWeightPopupEnabled(true);
 
         // FIXME : remove this when Ribbon with have fixed KeyTipLayer component
         getRootPane().getLayeredPane().getComponent(0).setVisible(false);

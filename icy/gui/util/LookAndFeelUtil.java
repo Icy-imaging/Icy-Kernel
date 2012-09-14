@@ -186,7 +186,9 @@ public class LookAndFeelUtil
         // set default font size
         setFontSize(GeneralPreferences.getGuiFontSize());
 
-        // define custom PopupFactory (fix mac osx repaint bugs on Medium Weight components)
+        // Define custom PopupFactory : 
+        // That fix repaint bugs on Medium Weight components for OSX 
+        // but that also add problem on JComboBox in JDialog (FIXME) 
         PopupFactory.setSharedInstance(new CustomPopupFactory());
     }
 
