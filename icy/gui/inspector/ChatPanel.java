@@ -263,7 +263,7 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
         }
 
         @Override
-        public void Paint(Graphics g, int width, int height)
+        public void paint(Graphics g, int width, int height)
         {
             final Graphics2D g2 = (Graphics2D) g.create();
 

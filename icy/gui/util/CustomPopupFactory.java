@@ -20,7 +20,6 @@ package icy.gui.util;
 
 import icy.system.SystemUtil;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Window;
 
@@ -28,94 +27,67 @@ import javax.swing.JRootPane;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
 import javax.swing.RootPaneContainer;
-import javax.swing.SwingUtilities;
 
 /**
  * @author stephane
  */
-public class CustomPopupFactory extends PopupFactory
-{
-    private static final Color WHITE_ALPHA = new Color(255, 255, 255, 254);
-    private static final Float TRANSLUCENT = new Float(0.972549F);
-    private static final Float OPAQUE = new Float(1.0F);
+public class CustomPopupFactory extends PopupFactory {
+	private static final Float OPAQUE = new Float(1.0F);
 
-    private final boolean macos;
+	private final boolean macos;
 
-    /**
-     * this is to mimic osx style
-     */
-    boolean windowShadowEnabled;
+	/**
+	 * this is to mimic osx style
+	 */
+	boolean windowShadowEnabled;
 
-    public CustomPopupFactory()
-    {
-        super();
+	public CustomPopupFactory() {
+		super();
 
-        macos = SystemUtil.isMac();
-        // this is specific to apple os
-        windowShadowEnabled = macos;
-    }
+		macos = SystemUtil.isMac();
+		// this is specific to apple os
+		windowShadowEnabled = macos;
+	}
 
-    public boolean isWindowShadowEnabled()
-    {
-        return windowShadowEnabled;
-    }
+	public boolean isWindowShadowEnabled() {
+		return windowShadowEnabled;
+	}
 
-    public void setWindowShadowEnabled(boolean windowShadowEnabled)
-    {
-        // only for mac os
-        this.windowShadowEnabled = windowShadowEnabled & macos;
-    }
+	public void setWindowShadowEnabled(boolean windowShadowEnabled) {
+		// only for mac os
+		this.windowShadowEnabled = windowShadowEnabled & macos;
+	}
 
-    private static Window getWindow(Component component)
-    {
-        Object obj;
-        for (obj = component; !(obj instanceof Window) && obj != null; obj = ((Component) (obj)).getParent())
-            ;
-        return (Window) obj;
-    }
+	private static Window getWindow(Component component) {
+		Object obj;
+		for (obj = component; !(obj instanceof Window) && obj != null; obj = ((Component) (obj))
+				.getParent())
+			;
+		return (Window) obj;
+	}
 
-    @Override
-    public Popup getPopup(Component component, Component component1, int x, int y)
-    {
-        if (macos)
-        {
-            // this is intended to force Heavy Weight popup component
-            final Popup popup = super.getPopup(null, component1, x, y);
-            
-            final Window window = getWindow(component1);
+	@Override
+	public Popup getPopup(Component component, Component component1, int x,
+			int y) {
+		if (macos) {
+			// this is intended to force Heavy Weight popup component
+			final Popup popup = super.getPopup(null, component1, x, y);
 
-            if (window == null)
-                return popup;
-            if (!(window instanceof RootPaneContainer))
-                return popup;
+			final Window window = getWindow(component1);
 
-            final JRootPane popupRootPane = ((RootPaneContainer) window).getRootPane();
-            if (windowShadowEnabled)
-            {
-                popupRootPane.putClientProperty("Window.alpha", TRANSLUCENT);
-                popupRootPane.putClientProperty("Window.shadow", Boolean.TRUE);
-                popupRootPane.putClientProperty("apple.awt._windowFadeDelegate", component1);
-                window.setBackground(WHITE_ALPHA);
-                popupRootPane.putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
-                SwingUtilities.invokeLater(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        popupRootPane.putClientProperty("apple.awt.windowShadow.revalidateNow",
-                                Double.valueOf(Math.random()));
-                    }
-                });
-            }
-            else
-            {
-                popupRootPane.putClientProperty("Window.alpha", OPAQUE);
-                popupRootPane.putClientProperty("Window.shadow", Boolean.FALSE);
-            }
+			if (window == null)
+				return popup;
+			if (!(window instanceof RootPaneContainer))
+				return popup;
 
-            return popup;
-        }
+			final JRootPane popupRootPane = ((RootPaneContainer) window)
+					.getRootPane();
+			popupRootPane.putClientProperty("Window.alpha", OPAQUE);
+			popupRootPane.putClientProperty("Window.shadow", Boolean.FALSE);
 
-        return super.getPopup(component, component1, x, y);
-    }
+			return popup;
+		}
+
+		return super.getPopup(component, component1, x, y);
+	}
 }
