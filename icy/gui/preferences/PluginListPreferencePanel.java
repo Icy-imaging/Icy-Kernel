@@ -404,11 +404,13 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
         for (PluginDescriptor plugin : list)
         {
+            final String classname = plugin.getClassName().toUpperCase();
             final String name = plugin.getName().toUpperCase();
             final String desc = plugin.getDescription().toUpperCase();
 
             // search in name and description
-            if (empty || (name.indexOf(filterUp) != -1) || (desc.indexOf(filterUp) != -1))
+            if (empty || (classname.indexOf(filterUp) != -1) || (name.indexOf(filterUp) != -1)
+                    || (desc.indexOf(filterUp) != -1))
                 result.add(plugin);
         }
 

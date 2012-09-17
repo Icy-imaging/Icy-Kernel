@@ -18,6 +18,7 @@
  */
 package icy.gui.util;
 
+import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.util.ReflectionUtil;
 
@@ -29,7 +30,7 @@ import javax.swing.PopupFactory;
 
 public class CustomPopupFactory extends PopupFactory
 {
-//    private static final Float OPAQUE = new Float(1.0F);
+    // private static final Float OPAQUE = new Float(1.0F);
 
     private final boolean macos;
 
@@ -49,12 +50,14 @@ public class CustomPopupFactory extends PopupFactory
         {
             try
             {
+                // those methods should be protected...
                 getPopupMethod = ReflectionUtil.getMethod(PopupFactory.class, "getPopup", true, Component.class,
                         Component.class, int.class, int.class, int.class);
                 heavy = ReflectionUtil.getField(PopupFactory.class, "HEAVY_WEIGHT_POPUP", true).getInt(null);
             }
             catch (Exception e)
             {
+                IcyExceptionHandler.showErrorMessage(e, false);
                 getPopupMethod = null;
                 heavy = 0;
             }

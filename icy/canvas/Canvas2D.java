@@ -711,7 +711,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         double curScaleX;
         double curScaleY;
         private double startRotationZ;
-        private int previousCursor;
+        private Cursor previousCursor;
         private boolean moving;
         private boolean rotating;
         boolean hasMouseFocus;
@@ -726,7 +726,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             startDragPosition = null;
             curScaleX = -1;
             curScaleY = -1;
-            previousCursor = getCursor().getType();
+            previousCursor = getCursor();
             moving = false;
             rotating = false;
             hasMouseFocus = false;
@@ -1498,10 +1498,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         void updateCursor()
         {
-            final int cursor = getCursor().getType();
+            final Cursor cursor = getCursor();
 
             // save previous cursor if different from HAND
-            if (cursor != Cursor.HAND_CURSOR)
+            if (cursor.getType() != Cursor.HAND_CURSOR)
                 previousCursor = cursor;
 
             if (isDragging())
@@ -1543,7 +1543,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 }
             }
 
-            GuiUtil.setCursor(this, previousCursor);
+            setCursor(previousCursor);
         }
 
         public void refresh()
