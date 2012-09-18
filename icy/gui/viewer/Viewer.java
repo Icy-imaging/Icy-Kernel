@@ -58,6 +58,7 @@ import icy.util.StringUtil;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -864,6 +865,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         updateSystemMenu();
         updateToolbarComponents();
         refreshToolBar();
+        
+        // fix the OSX lost keyboard focus on canvas change in detached mode.
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().upFocusCycle(getCanvas());
 
         // notify canvas changed to listener
         fireViewerChanged(ViewerEventType.CANVAS_CHANGED);

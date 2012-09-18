@@ -68,6 +68,7 @@ import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
 
 import loci.common.DebugTools;
+import vtk.vtkNativeLibrary;
 
 /**
  * <br>
@@ -606,74 +607,55 @@ public class Icy
 
         // get all files in local native library path
         final ArrayList<File> files = FileUtil.getFileList(libPath, true, true, false);
+        final ArrayList<String> directories = new ArrayList<String>();
 
-        try
+        // add base local native library path to user library paths
+        directories.add(new File(libPath).getAbsolutePath());
+
+        for (File f : files)
         {
-            // patch user library paths...
-            final Field pathsField = ReflectionUtil.getField(ClassLoader.class, "usr_paths", true);
-            // get current user paths
-            final ArrayList<String> paths = CollectionUtil.asArrayList((String[]) pathsField.get(null));
-
-            // add base local native library path to user library paths
-            paths.add(new File(libPath).getAbsolutePath());
-
-            for (File f : files)
+            if (f.isDirectory())
             {
-                if (f.isDirectory())
-                {
-                    // add all directories to user library paths
-                    final String filePath = f.getAbsolutePath();
-                    if (!paths.contains(filePath))
-                        paths.add(filePath);
-                }
-            }
-
-            // set back user library path
-            pathsField.set(null, paths.toArray(new String[paths.size()]));
-        }
-        catch (Exception e)
-        {
-            System.err.println("Cannot patch Java Library Path.");
-            System.err.println("Native libraries won't be loaded.");
-        }
-
-        if (SystemUtil.isMac())
-        {
-            // get VTK library file list (we don't want hidden files if any)
-            final ArrayList<File> libraryFiles = FileUtil.getFileList(libPath + "/vtk", true, false);
-            // copy to root directory
-            for (File libraryFile : libraryFiles)
-            {
-                // get destination file (directly copy in root application directory)
-                final File dstFile = new File(libraryFile.getName());
-
-                // check if we need to copy the file
-                if (osChanged || !dstFile.exists() || (dstFile.lastModified() != libraryFile.lastModified()))
-                    FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false);
+                // add all directories to user library paths
+                final String filePath = f.getAbsolutePath();
+                if (!directories.contains(filePath))
+                    directories.add(filePath);
             }
         }
+
+        addToJavaLibraryPath(directories.toArray(new String[directories.size()]));
 
         // save os change
         if (osChanged)
             ApplicationPreferences.setOs(os);
 
         // load native libraries
-        loadVtkLibrary();
-        loadItkLibrary();
+        loadVtkLibrary(libPath, osChanged);
+        loadItkLibrary(libPath);
 
         // disable native lib support for JAI as we don't provide them (for the moment)
         SystemUtil.setProperty("com.sun.media.jai.disableMediaLib", "true");
     }
 
-    private static void loadLibraryFile(String name, boolean mandatory, boolean showLog)
+    private static void internalLoadLibrary(String dir, String name)
+    {
+        final File libPath = new File(dir, System.mapLibraryName(name));
+
+        if (libPath.exists())
+            Runtime.getRuntime().load(libPath.getAbsolutePath());
+        else
+            System.loadLibrary(name);
+    }
+
+    private static void loadLibrary(String dir, String name, boolean mandatory, boolean showLog)
     {
         if (mandatory)
-            System.loadLibrary(name);
+            internalLoadLibrary(dir, name);
         else
         {
             try
             {
-                System.loadLibrary(name);
+                internalLoadLibrary(dir, name);
             }
             catch (Throwable e)
             {
@@ -683,67 +665,124 @@ public class Icy
         }
     }
 
-    private static void loadLibraryFile(String name, boolean mandatory)
+    private static void loadLibrary(String dir, String name, boolean mandatory)
     {
-        loadLibraryFile(name, mandatory, false);
+        loadLibrary(dir, name, mandatory, false);
     }
 
-    private static void loadLibraryFile(String name)
+    private static void loadLibrary(String dir, String name)
     {
-        loadLibraryFile(name, false, false);
+        loadLibrary(dir, name, false, false);
     }
 
-    private static void loadVtkLibrary()
+    private static void loadVtkLibrary(String libPath, boolean osChanged)
     {
+        final String vtkLibPath = libPath + FileUtil.separator + "vtk";
+
         try
         {
-            loadLibraryFile("vtksys");
-            loadLibraryFile("vtkCommon");
-            loadLibraryFile("vtkFiltering");
-            loadLibraryFile("vtkDICOMParser");
-            loadLibraryFile("vtkNetCDF");
-            loadLibraryFile("vtkNetCDF_cxx");
-            loadLibraryFile("vtkzlib");
-            loadLibraryFile("vtkmetaio");
-            loadLibraryFile("vtkpng");
-            loadLibraryFile("vtkjpeg");
-            loadLibraryFile("vtktiff");
-            loadLibraryFile("vtkexpat");
-            loadLibraryFile("vtkIO");
-            loadLibraryFile("vtkImaging");
-            loadLibraryFile("vtkverdict");
-            loadLibraryFile("vtkGraphics");
-            loadLibraryFile("vtkfreetype");
-            loadLibraryFile("vtkftgl");
-            loadLibraryFile("vtkRendering");
-            loadLibraryFile("vtkexoIIc");
-            loadLibraryFile("vtkHybrid");
-            loadLibraryFile("vtkGenericFiltering");
-            loadLibraryFile("vtklibxml2");
-            loadLibraryFile("vtkalglib");
-            loadLibraryFile("vtkInfovis");
-            loadLibraryFile("vtkWidgets");
-            loadLibraryFile("vtkViews");
-            loadLibraryFile("vtkVolumeRendering");
-            loadLibraryFile("vtkCharts");
-            loadLibraryFile("vtkproj4");
-            loadLibraryFile("vtkGeovis");
+            if (SystemUtil.isWindow())
+            {
+                loadLibrary(vtkLibPath, "vtksys");
+                loadLibrary(vtkLibPath, "vtkCommon");
+                loadLibrary(vtkLibPath, "vtkFiltering");
+                loadLibrary(vtkLibPath, "vtkDICOMParser");
+                loadLibrary(vtkLibPath, "vtkNetCDF");
+                loadLibrary(vtkLibPath, "vtkNetCDF_cxx");
+                loadLibrary(vtkLibPath, "vtkzlib");
+                loadLibrary(vtkLibPath, "vtkmetaio");
+                loadLibrary(vtkLibPath, "vtkpng");
+                loadLibrary(vtkLibPath, "vtkjpeg");
+                loadLibrary(vtkLibPath, "vtktiff");
+                loadLibrary(vtkLibPath, "vtkexpat");
+                loadLibrary(vtkLibPath, "vtkIO");
+                loadLibrary(vtkLibPath, "vtkImaging");
+                loadLibrary(vtkLibPath, "vtkverdict");
+                loadLibrary(vtkLibPath, "vtkGraphics");
+                loadLibrary(vtkLibPath, "vtkfreetype");
+                loadLibrary(vtkLibPath, "vtkftgl");
+                loadLibrary(vtkLibPath, "vtkRendering");
+                loadLibrary(vtkLibPath, "vtkexoIIc");
+                loadLibrary(vtkLibPath, "vtkHybrid");
+                loadLibrary(vtkLibPath, "vtkGenericFiltering");
+                loadLibrary(vtkLibPath, "vtklibxml2");
+                loadLibrary(vtkLibPath, "vtkalglib");
+                loadLibrary(vtkLibPath, "vtkInfovis");
+                loadLibrary(vtkLibPath, "vtkWidgets");
+                loadLibrary(vtkLibPath, "vtkViews");
+                loadLibrary(vtkLibPath, "vtkVolumeRendering");
+                loadLibrary(vtkLibPath, "vtkCharts");
+                loadLibrary(vtkLibPath, "vtkproj4");
+                loadLibrary(vtkLibPath, "vtkGeovis");
+            }
 
-            loadLibraryFile("vtkCommonJava", true);
-            loadLibraryFile("vtkFilteringJava", true);
-            loadLibraryFile("vtkIOJava", true);
-            loadLibraryFile("vtkImagingJava", true);
-            loadLibraryFile("vtkGraphicsJava", true);
-            loadLibraryFile("vtkRenderingJava", true);
-            loadLibraryFile("vtkHybridJava", false, true);
-            loadLibraryFile("vtkGenericFilteringJava", true);
-            loadLibraryFile("vtkInfovisJava", true);
-            loadLibraryFile("vtkWidgetsJava", true);
-            loadLibraryFile("vtkViewsJava", true);
-            loadLibraryFile("vtkVolumeRenderingJava", true);
-            loadLibraryFile("vtkChartsJava", false, true);
-            loadLibraryFile("vtkGeovisJava", false, true);
-            loadLibraryFile("vtkParallelJava", false, true);
+            final String prefix;
+
+            // VTK library loading from inner directory do not work on MAC OSX
+            // so we have to copy lib files to the root
+            if (SystemUtil.isMac())
+            {
+                // get VTK library file list (we don't want hidden files if any)
+                final ArrayList<File> libraryFiles = FileUtil.getFileList(vtkLibPath, true, false);
+                // copy to root directory
+                for (File libraryFile : libraryFiles)
+                {
+                    // get destination file (directly copy in root application directory)
+                    final File dstFile = new File(libraryFile.getName());
+
+                    // check if we need to copy the file
+                    if (osChanged || !dstFile.exists() || (dstFile.lastModified() != libraryFile.lastModified()))
+                        FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false);
+                }
+
+                prefix = null;
+            }
+            else
+            {
+                // else we load it directly from inner lib path
+                System.setProperty("vtk.lib.dir", vtkLibPath);
+                prefix = vtkLibPath;
+            }
+
+            // use the VTK native method to load library so it don't try to load them later...
+            vtkNativeLibrary.COMMON.LoadLibrary();
+            vtkNativeLibrary.FILTERING.LoadLibrary();
+            vtkNativeLibrary.IO.LoadLibrary();
+            vtkNativeLibrary.IMAGING.LoadLibrary();
+            vtkNativeLibrary.GRAPHICS.LoadLibrary();
+            vtkNativeLibrary.RENDERING.LoadLibrary();
+            try
+            {
+                vtkNativeLibrary.HYBRID.LoadLibrary();
+            }
+            catch (UnsatisfiedLinkError e)
+            {
+                System.out.println("cannot load vtkHybrid, skipping...");
+            }
+            loadLibrary(prefix, "vtkGenericFilteringJava", true);
+            vtkNativeLibrary.INFOVIS.LoadLibrary();
+            vtkNativeLibrary.WIDGETS.LoadLibrary();
+            vtkNativeLibrary.VIEWS.LoadLibrary();
+            vtkNativeLibrary.VOLUME_RENDERING.LoadLibrary();
+            try
+            {
+                vtkNativeLibrary.CHARTS.LoadLibrary();
+            }
+            catch (UnsatisfiedLinkError e)
+            {
+                System.out.println("cannot load vtkHybrid, skipping...");
+            }
+            try
+            {
+                vtkNativeLibrary.GEOVIS.LoadLibrary();
+            }
+            catch (UnsatisfiedLinkError e)
+            {
+                System.out.println("cannot load vtkHybrid, skipping...");
+            }
+            loadLibrary(prefix, "vtkParallelJava", false, true);
+
+            vtkNativeLibrary.DisableOutputWindow(new File("vtk.log"));
 
             System.out.println("VTK library successfully loaded...");
             vtkLibraryLoaded = true;
@@ -754,11 +793,13 @@ public class Icy
         }
     }
 
-    private static void loadItkLibrary()
+    private static void loadItkLibrary(String osDir)
     {
+        final String itkLibDir = osDir + FileUtil.separator + "itk";
+
         try
         {
-            loadLibraryFile("SimpleITKJava", true);
+            loadLibrary(itkLibDir, "SimpleITKJava", true);
 
             System.out.println("SimpleITK library successfully loaded...");
             itkLibraryLoaded = true;
@@ -786,4 +827,37 @@ public class Icy
                 file.deleteOnExit();
         }
     }
+
+    private static void addToJavaLibraryPath(String directories[])
+    {
+        try
+        {
+            final String path_separator = System.getProperty("path.separator");
+
+            // patch user library paths...
+            final Field pathsField = ReflectionUtil.getField(ClassLoader.class, "usr_paths", true);
+            // get current user paths
+            final ArrayList<String> userPaths = CollectionUtil.asArrayList((String[]) pathsField.get(null));
+            // get current system paths
+            String sysPaths = System.getProperty("java.library.path");
+
+            for (String dir : directories)
+            {
+                if (!userPaths.contains(dir))
+                    userPaths.add(dir);
+                sysPaths += path_separator + dir;
+            }
+
+            // set back user library path
+            pathsField.set(null, userPaths.toArray(new String[userPaths.size()]));
+            // set back system library path
+            System.setProperty("java.library.path", sysPaths);
+        }
+        catch (Exception e)
+        {
+            System.err.println("Cannot patch Java Library Path.");
+            System.err.println("Native libraries won't be loaded.");
+        }
+    }
+
 }
