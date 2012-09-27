@@ -43,7 +43,7 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
         // remove columns 2 and 3 (not used here)
         table.removeColumn(table.getColumn(columnIds[3]));
 
-        filter.setVisible(false);
+//        filter.setVisible(false);
         action1Button.setVisible(false);
         action2Button.setVisible(false);
         refreshButton.setVisible(false);

@@ -27,6 +27,7 @@ import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
+import icy.image.IcyBufferedImageUtil;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.IcyColorMapBand;
 import icy.image.lut.LUT;
@@ -124,7 +125,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                 }
             }
 
-            // then refresh
+            // then do 3D rendering
             super.paint(g);
         }
     }
@@ -297,7 +298,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             {
                 // TODO: VTK doesn't accept to run from anywhere except AWT dispatch
                 // we keep the method just if VTK change someday
-                ThreadUtil.invokeLater(new Runnable()
+                ThreadUtil.invokeNow(new Runnable()
                 {
                     @Override
                     public void run()
@@ -305,8 +306,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                         try
                         {
                             // refresh rendering
-                            panel3D.repaint();
-                            // panel3D.Render();
+                            panel3D.paint(panel3D.getGraphics());
                         }
                         catch (Exception E)
                         {
@@ -323,7 +323,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             {
                 // TODO: VTK doesn't accept to run from anywhere except AWT dispatch
                 // we keep the method just if VTK change someday
-                ThreadUtil.invokeLater(new Runnable()
+                ThreadUtil.invokeNow(new Runnable()
                 {
                     @Override
                     public void run()
@@ -347,7 +347,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             {
                 // TODO: VTK doesn't accept to run from anywhere except AWT dispatch
                 // we keep the method just if VTK change someday
-                ThreadUtil.invokeLater(new Runnable()
+                ThreadUtil.invokeNow(new Runnable()
                 {
                     @Override
                     public void run()
@@ -1185,10 +1185,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         setPositionC(c);
         try
         {
-            // wait while processing 3D rendering
-            while (processor.isProcessing())
-                ThreadUtil.sleep(10);
-
             final vtkRenderWindow renderWindow = renderer.GetRenderWindow();
             final int[] size = renderWindow.GetSize();
             final vtkUnsignedCharArray array = new vtkUnsignedCharArray();
@@ -1199,6 +1195,11 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                 @Override
                 public void run()
                 {
+                    // rebuild data
+                    internalBuildImageData();
+                    // render
+                    panel3D.paint(panel3D.getGraphics());
+                    
                     // NOTE: in vtk the [0,0] pixel is bottom left, so a vertical flip is required
                     renderWindow.GetRGBACharPixelData(0, 0, size[0] - 1, size[1] - 1, 1, array);
                 }
@@ -1206,7 +1207,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
             // convert the vtk array into a IcyBufferedImage
             final byte[] data = array.GetJavaArray();
-            final IcyBufferedImage image = new IcyBufferedImage(size[0], size[1], 4, DataType.UBYTE);
+            final IcyBufferedImage image = new IcyBufferedImage(size[0], size[1], 3, DataType.UBYTE);
             final byte[][] c_xy = image.getDataXYCAsByte();
 
             int offset = 0;
@@ -1220,11 +1221,11 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                     c_xy[0][xy] = data[offset++]; // R
                     c_xy[1][xy] = data[offset++]; // G
                     c_xy[2][xy] = data[offset++]; // B
-                    c_xy[3][xy] = data[offset++]; // 1
+                    offset++; // A
                 }
             }
 
-            return image;
+            return IcyBufferedImageUtil.toBufferedImage(image, BufferedImage.TYPE_INT_RGB, null);
         }
         finally
         {

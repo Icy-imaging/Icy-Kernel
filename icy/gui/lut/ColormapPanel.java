@@ -37,6 +37,7 @@ import icy.image.colormap.IcyColorMapEvent;
 import icy.image.colormap.IcyColorMapListener;
 import icy.image.colormap.JETColorMap;
 import icy.image.colormap.LinearColorMap;
+import icy.image.lut.LUT;
 import icy.image.lut.LUTBand;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
@@ -148,9 +149,22 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
         // }
         // });
 
-        final IcyColorMap defaultColormap = viewer.getSequence().createCompatibleLUT()
-                .getLutBand(lutBand.getComponent()).getColorMap();
-        defaultColormap.setName("Default");
+        final IcyColorMap defaultColormap;
+        final LUT defaultLUT = viewer.getSequence().createCompatibleLUT();
+        
+        // compatible colormap (should always be the case)
+        if (defaultLUT.getNumComponents() == lutBand.getLut().getNumComponents())
+        {
+            defaultColormap = defaultLUT.getLutBand(lutBand.getComponent()).getColorMap();
+            defaultColormap.setName("Default");
+        }
+        else
+        {
+            // asynchronous sequence change, get a default colormap from current one
+            defaultColormap = new IcyColorMap("default");
+            // copy from current colormap
+            defaultColormap.copyFrom(colormap);
+        }
 
         // colormap models
         final ArrayList<IcyColorMap> colormaps = new ArrayList<IcyColorMap>();

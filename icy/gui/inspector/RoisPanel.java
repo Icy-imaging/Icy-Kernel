@@ -41,7 +41,6 @@ import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -51,9 +50,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -90,9 +87,12 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
 
     final IcyTextField nameField;
     final ColorChooserButton colorButton;
+    final IcyButton orButton;
+    final IcyButton andButton;
+    final IcyButton xorButton;
+    final IcyButton subButton;
     final IcyButton deleteButton;
-    final IcyButton copyButton;
-    final IcyButton mergeButton;
+    // final IcyButton copyButton;
     final JPanel controlPanel;
 
     // internals
@@ -176,7 +176,7 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
 
         colorButton = new ColorChooserButton();
         ComponentUtil.setFixedHeight(colorButton, 22);
-        colorButton.setToolTipText("Edit color of selected ROI(s)");
+        colorButton.setToolTipText("Change color of selected ROI(s)");
         colorButton.addColorChangeListener(new ColorChangeListener()
         {
             @Override
@@ -204,20 +204,48 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
             }
         });
 
-        copyButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOCCOPY));
-        copyButton.setFlat(true);
-        copyButton.setToolTipText("Duplicate selected ROI(s)");
-        copyButton.addActionListener(new ActionListener()
+        // copyButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOCCOPY));
+        // copyButton.setFlat(true);
+        // copyButton.setToolTipText("Duplicate selected ROI(s)");
+        // copyButton.addActionListener(new ActionListener()
+        // {
+        // @Override
+        // public void actionPerformed(ActionEvent e)
+        // {
+        // sequence.beginUpdate();
+        // try
+        // {
+        // // clone selected rois
+        // for (ROI roi : getSelectedRois())
+        // sequence.addROI(roi.getCopy());
+        // }
+        // finally
+        // {
+        // sequence.endUpdate();
+        // }
+        // }
+        // });
+        //
+        orButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_OR));
+        orButton.setFlat(true);
+        orButton.setToolTipText("Create a new ROI representing the union of selected ROIs");
+        orButton.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
+                // OR operation
                 sequence.beginUpdate();
                 try
                 {
-                    // clone selected rois
-                    for (ROI roi : getSelectedRois())
-                        sequence.addROI(roi.getCopy());
+                    final ArrayList<ROI> selectedROI = getSelectedRois();
+                    // only ROI2D supported now
+                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
+
+                    final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.OR);
+
+                    sequence.addROI(mergeROI);
+                    sequence.setSelectedROI(mergeROI, true);
                 }
                 finally
                 {
@@ -226,19 +254,95 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
             }
         });
 
-        mergeButton = new IcyButton(new IcyIcon("lighting"));
-        mergeButton.setFlat(true);
-        mergeButton.setToolTipText("Merge selected ROI(s)...");
-        mergeButton.addActionListener(new ActionListener()
+        andButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_AND));
+        andButton.setFlat(true);
+        andButton.setToolTipText("Create a new ROI representing the intersection of selected ROIs");
+        andButton.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                showROIMergeMenu(mergeButton);
+                // OR operation
+                sequence.beginUpdate();
+                try
+                {
+                    final ArrayList<ROI> selectedROI = getSelectedRois();
+                    // only ROI2D supported now
+                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
+
+                    final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.AND);
+
+                    sequence.addROI(mergeROI);
+                    sequence.setSelectedROI(mergeROI, true);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
             }
         });
 
-        deleteButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_TRASH));
+        xorButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_XOR));
+        xorButton.setFlat(true);
+        xorButton.setToolTipText("Create a new ROI representing the exclusive union of selected ROIs");
+        xorButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                // OR operation
+                sequence.beginUpdate();
+                try
+                {
+                    final ArrayList<ROI> selectedROI = getSelectedRois();
+                    // only ROI2D supported now
+                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
+
+                    final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.XOR);
+
+                    sequence.addROI(mergeROI);
+                    sequence.setSelectedROI(mergeROI, true);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+            }
+        });
+
+        subButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_SUB));
+        subButton.setFlat(true);
+        subButton.setToolTipText("Create a new ROI from the result of first ROI minus the second ROI");
+        subButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                // OR operation
+                sequence.beginUpdate();
+                try
+                {
+                    final ArrayList<ROI> selectedROI = getSelectedRois();
+                    // only ROI2D supported now
+                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
+
+                    // Subtraction work only when 2 ROI are selected
+                    if (selectedROI2D.length != 2)
+                        return;
+
+                    final ROI mergeROI = ROI2D.subtract(selectedROI2D[0], selectedROI2D[1]);
+
+                    sequence.addROI(mergeROI);
+                    sequence.setSelectedROI(mergeROI, true);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+            }
+        });
+
+        deleteButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE));
         deleteButton.setFlat(true);
         deleteButton.setToolTipText("Delete selected ROI(s)");
         deleteButton.addActionListener(new ActionListener()
@@ -269,10 +373,13 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
         controlPanel.add(Box.createHorizontalStrut(8));
         controlPanel.add(colorButton);
         controlPanel.add(Box.createHorizontalStrut(8));
-        controlPanel.add(copyButton);
-        controlPanel.add(Box.createHorizontalStrut(4));
-        controlPanel.add(mergeButton);
-        controlPanel.add(Box.createHorizontalStrut(4));
+        // controlPanel.add(copyButton);
+        // controlPanel.add(Box.createHorizontalStrut(4));
+        controlPanel.add(orButton);
+        controlPanel.add(andButton);
+        controlPanel.add(xorButton);
+        controlPanel.add(subButton);
+        controlPanel.add(Box.createHorizontalStrut(8));
         controlPanel.add(deleteButton);
         controlPanel.add(Box.createHorizontalGlue());
 
@@ -388,70 +495,71 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
         refreshRoiTypeList();
     }
 
-    /**
-     * show popup menu
-     */
-    void showROIMergeMenu(Component comp)
-    {
-        final JPopupMenu menu = new JPopupMenu();
-
-        final JMenuItem orMergeItem = new JMenuItem("union");
-        final JMenuItem andMergeItem = new JMenuItem("intersection");
-        final JMenuItem xorMergeItem = new JMenuItem("exclusive union");
-
-        menu.add(orMergeItem);
-        menu.add(andMergeItem);
-        menu.add(xorMergeItem);
-
-        menu.pack();
-        menu.validate();
-
-        final ActionListener actionListener = new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final Object src = e.getSource();
-                final ShapeOperation op;
-
-                // OR operation
-                if (src == orMergeItem)
-                    op = ShapeOperation.OR;
-                // AND operation
-                else if (src == andMergeItem)
-                    op = ShapeOperation.AND;
-                // XOR operation
-                else if (src == xorMergeItem)
-                    op = ShapeOperation.XOR;
-                else
-                    return;
-
-                sequence.beginUpdate();
-                try
-                {
-                    final ArrayList<ROI> selectedROI = getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
-
-                    final ROI mergeROI = ROI2D.merge(selectedROI2D, op);
-
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
-                }
-                finally
-                {
-                    sequence.endUpdate();
-                }
-            }
-        };
-
-        orMergeItem.addActionListener(actionListener);
-        andMergeItem.addActionListener(actionListener);
-        xorMergeItem.addActionListener(actionListener);
-
-        // display menu
-        menu.show(comp, 0, comp.getHeight());
-    }
+    // /**
+    // * show popup menu
+    // */
+    // void showROIMergeMenu(Component comp)
+    // {
+    // final JPopupMenu menu = new JPopupMenu();
+    //
+    // final JMenuItem orMergeItem = new JMenuItem("union");
+    // final JMenuItem andMergeItem = new JMenuItem("intersection");
+    // final JMenuItem xorMergeItem = new JMenuItem("exclusive union");
+    //
+    // menu.add(orMergeItem);
+    // menu.add(andMergeItem);
+    // menu.add(xorMergeItem);
+    //
+    // menu.pack();
+    // menu.validate();
+    //
+    // final ActionListener actionListener = new ActionListener()
+    // {
+    // @Override
+    // public void actionPerformed(ActionEvent e)
+    // {
+    // final Object src = e.getSource();
+    // final ShapeOperation op;
+    //
+    // // OR operation
+    // if (src == orMergeItem)
+    // op = ShapeOperation.OR;
+    // // AND operation
+    // else if (src == andMergeItem)
+    // op = ShapeOperation.AND;
+    // // XOR operation
+    // else if (src == xorMergeItem)
+    // op = ShapeOperation.XOR;
+    // else
+    // return;
+    //
+    // sequence.beginUpdate();
+    // try
+    // {
+    // final ArrayList<ROI> selectedROI = getSelectedRois();
+    // // only ROI2D supported now
+    // final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new
+    // ROI[selectedROI.size()]));
+    //
+    // final ROI mergeROI = ROI2D.merge(selectedROI2D, op);
+    //
+    // sequence.addROI(mergeROI);
+    // sequence.setSelectedROI(mergeROI, true);
+    // }
+    // finally
+    // {
+    // sequence.endUpdate();
+    // }
+    // }
+    // };
+    //
+    // orMergeItem.addActionListener(actionListener);
+    // andMergeItem.addActionListener(actionListener);
+    // xorMergeItem.addActionListener(actionListener);
+    //
+    // // display menu
+    // menu.show(comp, 0, comp.getHeight());
+    // }
 
     public void setTypeFilter(String type)
     {
@@ -763,12 +871,16 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
 
                 // final boolean singleSelect = (selectedRois.size() == 1);
                 final boolean hasSelected = (selectedRois.size() > 0);
+                final boolean twoSelected = (selectedRois.size() == 2);
                 final boolean severalsSelected = (selectedRois.size() > 1);
 
                 nameField.setEnabled(hasSelected && editable);
                 colorButton.setEnabled(hasSelected && editable);
-                copyButton.setEnabled(hasSelected);
-                mergeButton.setEnabled(severalsSelected);
+                // copyButton.setEnabled(hasSelected);
+                orButton.setEnabled(severalsSelected);
+                andButton.setEnabled(severalsSelected);
+                xorButton.setEnabled(severalsSelected);
+                subButton.setEnabled(twoSelected);
                 deleteButton.setEnabled(hasSelected && editable);
 
                 if (hasSelected)
@@ -788,8 +900,11 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
             {
                 nameField.setEnabled(false);
                 colorButton.setEnabled(false);
-                copyButton.setEnabled(false);
-                mergeButton.setEnabled(false);
+                // copyButton.setEnabled(false);
+                orButton.setEnabled(false);
+                andButton.setEnabled(false);
+                xorButton.setEnabled(false);
+                subButton.setEnabled(false);
                 deleteButton.setEnabled(false);
                 nameField.setText("");
             }
@@ -854,14 +969,12 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
     @Override
     public void focusChanged(Viewer viewer)
     {
-        // TODO Auto-generated method stub
 
     }
 
     @Override
     public void focusedViewerChanged(ViewerEvent event)
     {
-        // TODO Auto-generated method stub
 
     }
 

@@ -2386,7 +2386,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Get the global preferred data type bounds (min and max values) for all channels.
      */
-    public double[] getChannelTypeGlobalBounds()
+    public double[] getChannelsGlobalTypeBounds()
     {
         final int sizeC = getSizeC();
         final double[] result = getChannelTypeBounds(0);
@@ -2399,6 +2399,15 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         }
 
         return result;
+    }
+
+    /**
+     * @deprecated Uses {@link #getChannelsGlobalTypeBounds()} instead
+     */
+    @Deprecated
+    public double[] getChannelTypeGlobalBounds()
+    {
+        return getChannelsGlobalTypeBounds();
     }
 
     /**

@@ -108,13 +108,22 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      * 
      * @return {@link ROI2DPath} representing the result of subtraction.
      */
-    public static ROI2DPath substract(ROI2DShape roi1, ROI2DShape roi2)
+    public static ROI2DPath subtract(ROI2DShape roi1, ROI2DShape roi2)
     {
         final ROI2DPath result = new ROI2DPath(ShapeUtil.subtract(roi1, roi2));
 
         result.setName("Substraction");
 
         return result;
+    }
+
+    /**
+     * @deprecated Uses {@link ROI2DShape#subtract(ROI2DShape, ROI2DShape)} instead
+     */
+    @Deprecated
+    public static ROI2DPath substract(ROI2DShape roi1, ROI2DShape roi2)
+    {
+        return subtract(roi1, roi2);
     }
 
     protected class ROI2DShapePainter extends ROI2DPainter implements VtkPainter

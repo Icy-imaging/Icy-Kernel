@@ -118,10 +118,10 @@ public abstract class ROI2D extends ROI
      * 
      * @return {@link ROI2D} representing the result of subtraction.
      */
-    public static ROI2D substract(ROI2D roi1, ROI2D roi2)
+    public static ROI2D subtract(ROI2D roi1, ROI2D roi2)
     {
         if ((roi1 instanceof ROI2DShape) && (roi2 instanceof ROI2DShape))
-            return ROI2DShape.substract((ROI2DShape) roi1, (ROI2DShape) roi2);
+            return ROI2DShape.subtract((ROI2DShape) roi1, (ROI2DShape) roi2);
 
         // use ROI2DArea
         final ROI2DArea result = new ROI2DArea(BooleanMask2D.getSubtractionMask(roi1.getAsBooleanMask(),
@@ -130,6 +130,15 @@ public abstract class ROI2D extends ROI
         result.setName("Substraction");
 
         return result;
+    }
+
+    /**
+     * @deprecated Uses {@link ROI2D#subtract(ROI2D, ROI2D)} instead
+     */
+    @Deprecated
+    public static ROI2D substract(ROI2D roi1, ROI2D roi2)
+    {
+        return subtract(roi1, roi2);
     }
 
     protected abstract class ROI2DPainter extends ROIPainter

@@ -262,14 +262,11 @@ public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
             pluginDescriptionText.setText("No description");
         else
         {
-            final boolean hasHtmlBR = (description.indexOf("<br>") != -1) || (description.indexOf("<BR>") != -1)
-                    || (description.indexOf("<br/>") != -1) || (description.indexOf("<BR/>") != -1);
-
-            if (hasHtmlBR)
-                pluginDescriptionText.setText(description.replaceAll("(\r\n|\n\r|\r|\n)", ""));
+            if (StringUtil.containHtmlCR(description))
+                pluginDescriptionText.setText(StringUtil.removeCR(description));
             else
-                pluginDescriptionText.setText(description.replaceAll("(\r\n|\n\r|\r|\n)", "<br/>"));
-            
+                pluginDescriptionText.setText(StringUtil.toHtmlCR(description));
+
             pluginDescriptionText.setCaretPosition(0);
         }
 
@@ -279,7 +276,7 @@ public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
             pluginChangeLogText.setText("---");
         else
         {
-            pluginChangeLogText.setText(changesLog.replaceAll("(\r\n|\n\r|\r|\n)", "<br/>"));
+            pluginChangeLogText.setText(StringUtil.toHtmlCR(changesLog));
             pluginChangeLogText.setCaretPosition(0);
         }
         ComponentUtil.setJTextPaneFont(pluginChangeLogText, new Font("courier", Font.PLAIN, 11), Color.black);

@@ -157,9 +157,9 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     @Override
     protected void reloadPlugins()
     {
-        // reload online plugins
         PluginRepositoryLoader.reload();
-        updateButtonsState();
+        // so we display the empty list during reload
+        pluginsChanged();
     }
 
     @Override
@@ -189,6 +189,10 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     @Override
     protected ArrayList<PluginDescriptor> getPlugins()
     {
+        // loading...
+        if (!PluginRepositoryLoader.isBasicLoaded())
+            return new ArrayList<PluginDescriptor>();
+
         // get selected repository
         final Object selectedItem = repository.getSelectedItem();
 

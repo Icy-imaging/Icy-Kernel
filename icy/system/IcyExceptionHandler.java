@@ -217,12 +217,12 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
             // do report only for plugin error
             if ((plugin != null) || !StringUtil.isEmpty(devId))
             {
-                // report error
-                PluginErrorReport.report(
-                        plugin,
-                        devId,
-                        "An error occured while the plugin was running.\n\nStack trace :\n"
-                                + IcyExceptionHandler.getErrorMessage(t, true));
+                String title = t.getMessage();
+
+                if (StringUtil.isEmpty(title))
+                    title = t.toString();
+
+                PluginErrorReport.report(plugin, devId, title, IcyExceptionHandler.getErrorMessage(t, true));
             }
         }
     }

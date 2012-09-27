@@ -55,6 +55,9 @@ public class ActionDialog extends JDialog implements ActionListener
     private ActionListener okAction;
     private boolean closeAfterAction;
 
+    /**
+     * @wbp.parser.constructor
+     */
     public ActionDialog(String title)
     {
         this(Icy.getMainInterface().getMainFrame(), title);
@@ -84,8 +87,8 @@ public class ActionDialog extends JDialog implements ActionListener
         buttonPanel.add(Box.createHorizontalGlue());
         buttonPanel.add(Box.createHorizontalStrut(10));
 
-        add(mainPanel, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
+        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
         // OTHERS
         okBtn.setActionCommand(OK_CMD);

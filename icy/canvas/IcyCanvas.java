@@ -2897,7 +2897,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Return a RGBA renderer image for image at position (t, z, c)<br>
+     * Return a RGB rendered image for image at position (t, z, c)<br>
      * Free feel to the canvas to handle or not a specific dimension.
      * 
      * @param t
@@ -2912,7 +2912,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     public abstract BufferedImage getRenderedImage(int t, int z, int c, boolean canvasView);
 
     /**
-     * Return a RGBA renderer image representing the canvas view for image at position (t, z) .
+     * Return a RGB rendered image representing the canvas view for image at position (t, z) .
      * 
      * @param t
      *        T position of wanted image (-1 for complete sequence)

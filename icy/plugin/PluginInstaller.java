@@ -317,6 +317,8 @@ public class PluginInstaller implements Runnable
                             // notify plugin installation
                             fireInstalledEvent(result);
                         }
+                        else
+                            System.out.println("Info: plugin " + installInfo.plugin.toString() + " already installed.");
                     }
                 }
                 finally

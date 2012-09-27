@@ -834,35 +834,56 @@ public class TypeUtil
 
         return unsign(value);
     }
-    
+
     /**
      * Safe integer evaluation from Integer object.<br>
-     * Return 0 if specified object is null.
+     * Return <code>defaultValue</code> if specified object is null.
      */
-    public static int getInt(Integer obj, int defaultValue) {
-        if (obj == null) return defaultValue;
-        
+    public static int getInt(Integer obj, int defaultValue)
+    {
+        if (obj == null)
+            return defaultValue;
+
         return obj.intValue();
     }
 
     /**
      * Safe float evaluation from Float object.<br>
-     * Return 0 if specified object is null.
+     * Return <code>defaultValue</code> if specified object is null.
      */
-    public static float getFloat(Float obj, float defaultValue) {
-        if (obj == null) return defaultValue;
-        
+    public static float getFloat(Float obj, float defaultValue)
+    {
+        if (obj == null)
+            return defaultValue;
+
         return obj.floatValue();
     }
 
     /**
      * Safe double evaluation from Double object.<br>
-     * Return 0 if specified object is null.
+     * Return <code>defaultValue</code> if <code>obj</code> is null or equal to infinite with
+     * <code>allowInfinite</code> set to false.
      */
-    public static double getDouble(Double obj, double defaultValue) {
-        if (obj == null) return defaultValue;
-        
-        return obj.doubleValue();
+    public static double getDouble(Double obj, double defaultValue, boolean allowInfinite)
+    {
+        if (obj == null)
+            return defaultValue;
+
+        final double result = obj.doubleValue();
+
+        if ((!allowInfinite) && Double.isInfinite(result))
+            return defaultValue;
+
+        return result;
+    }
+
+    /**
+     * Safe double evaluation from Double object.<br>
+     * Return <code>defaultValue</code> if specified object is null.
+     */
+    public static double getDouble(Double obj, double defaultValue)
+    {
+        return getDouble(obj, defaultValue, true);
     }
 
     public static Point toPoint(Point2D p)

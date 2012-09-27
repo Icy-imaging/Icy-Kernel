@@ -19,7 +19,7 @@ import javax.swing.undo.UndoableEdit;
  */
 public class IcyUndoableEdit implements UndoableEdit
 {
-    private static final IcyIcon DEFAULT_ICON = new IcyIcon("lighting", 16);
+    private static final IcyIcon DEFAULT_ICON = new IcyIcon(ResourceUtil.ICON_LIGHTING, 16);
 
     /**
      * Source of the UndoableEdit (weak reference as it should not retain it)

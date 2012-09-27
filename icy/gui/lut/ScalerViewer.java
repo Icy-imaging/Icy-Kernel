@@ -18,9 +18,9 @@
  */
 package icy.gui.lut;
 
-import icy.gui.component.FontUtil;
 import icy.gui.math.HistogramPanel;
 import icy.gui.math.HistogramPanel.HistogramPanelListener;
+import icy.gui.util.FontUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.lut.LUTBand;
 import icy.image.lut.LUTBandEvent;
@@ -69,7 +69,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
 
     public static interface ScalerPositionListener extends EventListener
     {
-        public void positionChanged(double index, double value);
+        public void positionChanged(double index, int value, double normalizedValue);
     }
 
     private class ScalerHistogramPanel extends HistogramPanel implements MouseListener, MouseMotionListener,
@@ -124,12 +124,12 @@ public class ScalerViewer extends JPanel implements LUTBandListener
                 setCursor(Cursor.getPredefinedCursor(cursor));
         }
 
-        private void setPositionInfo(double index, double value)
+        private void setPositionInfo(double index, int value, double normalizedValue)
         {
             if ((positionInfo.getX() != index) || (positionInfo.getY() != value))
             {
-                positionInfo.setLocation(index, value);
-                scalerPositionChanged(index, value);
+                positionInfo.setLocation(index, normalizedValue);
+                scalerPositionChanged(index, value, normalizedValue);
                 repaint();
             }
         }
@@ -279,7 +279,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
 
             // hide message
             setMessage("");
-            setPositionInfo(-1, -1);
+            setPositionInfo(-1, -1, -1);
         }
 
         @Override
@@ -365,7 +365,10 @@ public class ScalerViewer extends JPanel implements LUTBandListener
             }
 
             if (getBinNumber() > 0)
-                setPositionInfo(pixelToData(pos.x), getAdjustedBinSize(pixelToBin(pos.x)));
+            {
+                final int bin = pixelToBin(pos.x);
+                setPositionInfo(pixelToData(pos.x), getBinSize(bin), getAdjustedBinSize(bin));
+            }
         }
 
         @Override
@@ -376,7 +379,10 @@ public class ScalerViewer extends JPanel implements LUTBandListener
             updateCursor(e.getPoint());
 
             if (getBinNumber() > 0)
-                setPositionInfo(pixelToData(pos.x), getAdjustedBinSize(pixelToBin(pos.x)));
+            {
+                final int bin = pixelToBin(pos.x);
+                setPositionInfo(pixelToData(pos.x), getBinSize(bin), getAdjustedBinSize(bin));
+            }
         }
 
         @Override
@@ -431,7 +437,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
 
         message = "";
         scalerMapPositionListeners = new EventListenerList();
-        processor = new SingleProcessor(true,"Histogram updater");
+        processor = new SingleProcessor(true, "Histogram updater");
         processor.setPriority(Thread.MIN_PRIORITY);
         // we want the processor to stay alive for few time
         processor.setKeepAliveTime(30, TimeUnit.SECONDS);
@@ -576,6 +582,14 @@ public class ScalerViewer extends JPanel implements LUTBandListener
 
         histogram.done();
         repaint();
+    }
+
+    /**
+     * @return the histogram
+     */
+    public HistogramPanel getHistogram()
+    {
+        return histogram;
     }
 
     /**
@@ -771,10 +785,10 @@ public class ScalerViewer extends JPanel implements LUTBandListener
     /**
      * mouse position on scaler info changed
      */
-    public void scalerPositionChanged(double index, double value)
+    public void scalerPositionChanged(double index, int value, double normalizedValue)
     {
         for (ScalerPositionListener listener : scalerMapPositionListeners.getListeners(ScalerPositionListener.class))
-            listener.positionChanged(index, value);
+            listener.positionChanged(index, value, normalizedValue);
     }
 
     @Override

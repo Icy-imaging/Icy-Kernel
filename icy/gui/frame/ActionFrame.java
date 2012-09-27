@@ -67,6 +67,7 @@ public class ActionFrame extends TitledFrame
         buttonPanel.add(okBtn);
         buttonPanel.add(Box.createHorizontalStrut(10));
         buttonPanel.add(cancelBtn);
+        buttonPanel.add(Box.createHorizontalGlue());
 
         add(buttonPanel, BorderLayout.SOUTH);
 

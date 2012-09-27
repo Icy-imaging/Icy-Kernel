@@ -506,4 +506,39 @@ public class StringUtil
         return output;
     }
 
+    /**
+     * Replace all C line break sequence : <code>"\n", "\r", "\r\n"</code><br>
+     * from the specified <code>text</code> by <code>str</code>.
+     */
+    public static String replaceCR(String text, String str)
+    {
+        return text.replaceAll("(\r\n|\n\r|\r|\n)", str);
+    }
+
+    /**
+     * Remove all C line break sequence : <code>"\n", "\r", "\r\n"</code><br>
+     * from the specified text.
+     */
+    public static String removeCR(String text)
+    {
+        return replaceCR(text, "");
+    }
+
+    /**
+     * Convert the C line break sequence : <code>"\n", "\r", "\r\n"</code><br>
+     * to HTML line break sequence.
+     */
+    public static String toHtmlCR(String text)
+    {
+        return replaceCR(text, "<br/>");
+    }
+
+    /**
+     * Return true if the specified text contains HTML line break sequence.
+     */
+    public static boolean containHtmlCR(String text)
+    {
+        return (text.indexOf("<br>") != -1) || (text.indexOf("<BR>") != -1) || (text.indexOf("<br/>") != -1)
+                || (text.indexOf("<BR/>") != -1);
+    }
 }

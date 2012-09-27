@@ -144,7 +144,8 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     protected void reloadPlugins()
     {
         PluginLoader.reloadAsynch();
-        updateButtonsState();
+        // so we display the empty list during reload
+        pluginsChanged();
     }
 
     @Override
@@ -177,6 +178,10 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     @Override
     protected ArrayList<PluginDescriptor> getPlugins()
     {
+        // loading...
+        if (PluginLoader.isLoading())
+            return new ArrayList<PluginDescriptor>();
+
         final ArrayList<PluginDescriptor> result = PluginLoader.getPlugins(false);
 
         // only display installed plugins (this hide inner or dev plugins)

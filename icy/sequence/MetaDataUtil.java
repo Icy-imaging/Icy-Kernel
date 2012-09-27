@@ -249,7 +249,7 @@ public class MetaDataUtil
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return OMEUtil.getValue(pix.getPhysicalSizeX(), 1d);
+            return OMEUtil.getValue(pix.getPhysicalSizeX(), 1d, false);
 
         return 1d;
     }
@@ -262,7 +262,7 @@ public class MetaDataUtil
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return OMEUtil.getValue(pix.getPhysicalSizeY(), 1d);
+            return OMEUtil.getValue(pix.getPhysicalSizeY(), 1d, false);
 
         return 1d;
     }
@@ -275,7 +275,7 @@ public class MetaDataUtil
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return OMEUtil.getValue(pix.getPhysicalSizeZ(), 1d);
+            return OMEUtil.getValue(pix.getPhysicalSizeZ(), 1d, false);
 
         return 1d;
     }
@@ -288,7 +288,7 @@ public class MetaDataUtil
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return TypeUtil.getDouble(pix.getTimeIncrement(), 1d);
+            return TypeUtil.getDouble(pix.getTimeIncrement(), 1d, false);
 
         return 1d;
     }

@@ -68,6 +68,7 @@ public class ImageSaverDialog extends JFileChooser
     private static final String ID_HEIGHT = "height";
     private static final String ID_PATH = "path";
     private static final String ID_MULTIPLEFILE = "multipleFile";
+    private static final String ID_OVERWRITENAME = "overwriteName";
     private static final String ID_FILETYPE = "fileType";
 
     // GUI
@@ -86,6 +87,9 @@ public class ImageSaverDialog extends JFileChooser
     final JPanel zRangePanel;
     final RangeComponent tRange;
     final JPanel tRangePanel;
+
+    final JCheckBox overwriteNameCheck;
+    final JPanel overwriteNamePanel;
 
     // internal
     final boolean singleZ;
@@ -139,6 +143,7 @@ public class ImageSaverDialog extends JFileChooser
         }
 
         multipleFileCheck = new JCheckBox();
+        multipleFileCheck.setToolTipText("Save each sequence image in a separate file");
         multipleFileCheck.setSelected(preferences.getBoolean(ID_MULTIPLEFILE, false));
         multipleFileCheck.addChangeListener(new ChangeListener()
         {
@@ -169,6 +174,12 @@ public class ImageSaverDialog extends JFileChooser
         tRange.setSliderVisible(false);
         tRangePanel = GuiUtil.createLineBoxPanel(new JLabel("T range "), Box.createHorizontalGlue(), tRange);
 
+        overwriteNameCheck = new JCheckBox();
+        overwriteNameCheck.setToolTipText("Overwrite metadata name with filename");
+        overwriteNameCheck.setSelected(preferences.getBoolean(ID_OVERWRITENAME, true));
+        overwriteNamePanel = GuiUtil.createLineBoxPanel(new JLabel("Overwrite metadata name "),
+                Box.createHorizontalGlue(), overwriteNameCheck);
+
         final JPanel settingPanel = new JPanel();
         settingPanel.setBorder(BorderFactory.createTitledBorder((Border) null));
         settingPanel.setLayout(new BorderLayout());
@@ -177,6 +188,7 @@ public class ImageSaverDialog extends JFileChooser
                 GuiUtil.createPageBoxPanel(multiplesFilePanel, fpsPanel, zPanel, tPanel, zRangePanel, tRangePanel),
                 BorderLayout.NORTH);
         settingPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
+        settingPanel.add(overwriteNamePanel, BorderLayout.SOUTH);
 
         setAccessory(settingPanel);
         updateSettingPanel();
@@ -222,6 +234,10 @@ public class ImageSaverDialog extends JFileChooser
                     final int fps;
                     final boolean multipleFile;
 
+                    // overwrite sequence name with filename
+                    if (overwriteNameCheck.isSelected())
+                        s.setName(FileUtil.getFileName(file.getAbsolutePath(), false));
+
                     if (zPanel.isVisible())
                         zMin = zMax = ((Integer) zSpinner.getValue()).intValue();
                     else if (zRangePanel.isVisible())
@@ -261,17 +277,14 @@ public class ImageSaverDialog extends JFileChooser
                 }
             }
             else
-            {
                 // incompatible saver for this sequence
-                MessageDialog
-                        .showDialog("The selected format is not compatible with your sequence format.\n"
-                                + "Convert your sequence to RGB or Grayscale, or choose a compatible format (e.g. TIFF).");
-            }
+                new IncompatibleImageFormatDialog();
 
             // store interface option
             preferences.putInt(ID_WIDTH, getWidth());
             preferences.putInt(ID_HEIGHT, getHeight());
             preferences.putBoolean(ID_MULTIPLEFILE, multipleFileCheck.isSelected());
+            preferences.putBoolean(ID_OVERWRITENAME, overwriteNameCheck.isSelected());
             preferences.putInt(ID_FILETYPE, CollectionUtil.asList(getChoosableFileFilters()).indexOf(getFileFilter()));
         }
     }
@@ -354,9 +367,5 @@ public class ImageSaverDialog extends JFileChooser
         }
 
         fpsPanel.setVisible(avi);
-
-        getAccessory().setVisible(
-                zPanel.isVisible() || zRangePanel.isVisible() || tPanel.isVisible() || tRangePanel.isVisible()
-                        || multiplesFilePanel.isVisible() || fpsPanel.isVisible());
     }
 }

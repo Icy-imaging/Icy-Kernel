@@ -141,7 +141,7 @@ public class XMLPreferences
     {
         final ArrayList<XMLPreferences> result = new ArrayList<XMLPreferences>();
 
-        for (Element element : XMLUtil.getSubGenericElements(currentElement, TYPE_SECTION))
+        for (Element element : XMLUtil.getGenericElements(currentElement, TYPE_SECTION))
             result.add(new XMLPreferences(root, element));
 
         return result;
@@ -151,7 +151,7 @@ public class XMLPreferences
     {
         final ArrayList<String> result = new ArrayList<String>();
 
-        for (Element element : XMLUtil.getSubGenericElements(currentElement, TYPE_SECTION))
+        for (Element element : XMLUtil.getGenericElements(currentElement, TYPE_SECTION))
             result.add(XMLUtil.getGenericElementName(element));
 
         return result;
@@ -231,6 +231,14 @@ public class XMLPreferences
     }
 
     /**
+     * Return the {@link XMLPreferences} node as an XML node.
+     */
+    public Element getXMLNode()
+    {
+        return currentElement;
+    }
+
+    /**
      * Return true if current node is existing
      */
     public boolean exists()
@@ -279,7 +287,7 @@ public class XMLPreferences
     {
         final ArrayList<String> result = new ArrayList<String>();
 
-        for (Element element : XMLUtil.getSubGenericElements(currentElement, TYPE_KEY))
+        for (Element element : XMLUtil.getGenericElements(currentElement, TYPE_KEY))
             result.add(XMLUtil.getGenericElementName(element));
 
         return result;
@@ -290,7 +298,7 @@ public class XMLPreferences
      */
     public void clean()
     {
-        final ArrayList<Node> nodes = XMLUtil.getSubNodes(currentElement);
+        final ArrayList<Node> nodes = XMLUtil.getChildren(currentElement);
 
         for (Node node : nodes)
         {
@@ -306,7 +314,7 @@ public class XMLPreferences
      */
     public void clear()
     {
-        XMLUtil.removeChilds(currentElement, TYPE_KEY);
+        XMLUtil.removeChildren(currentElement, TYPE_KEY);
     }
 
     /**
@@ -344,7 +352,7 @@ public class XMLPreferences
      */
     public void removeChildren()
     {
-        XMLUtil.removeChilds(currentElement, TYPE_SECTION);
+        XMLUtil.removeChildren(currentElement, TYPE_SECTION);
     }
 
     public String get(String key, String def)

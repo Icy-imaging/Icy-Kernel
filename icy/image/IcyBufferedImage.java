@@ -1262,7 +1262,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     /**
      * Get global type bounds (min and max values) for all channels.
      */
-    public double[] getChannelTypeGlobalBounds()
+    public double[] getChannelsGlobalTypeBounds()
     {
         final int sizeC = getSizeC();
         final double[] result = getChannelTypeBounds(0);
@@ -1275,6 +1275,15 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         }
 
         return result;
+    }
+
+    /**
+     * @deprecated Uses {@link #getChannelsGlobalTypeBounds()} instead.
+     */
+    @Deprecated
+    public double[] getChannelTypeGlobalBounds()
+    {
+        return getChannelsGlobalTypeBounds();
     }
 
     /**

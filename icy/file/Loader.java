@@ -326,8 +326,7 @@ public class Loader
                     final String fileDir = FileUtil.getGenericPath(files.get(0).getParentFile().getAbsolutePath());
 
                     // set name and filename to use directory instead
-                    if (seq.isDefaultName())
-                        seq.setName(FileUtil.getFileName(fileDir, false));
+                    seq.setName(FileUtil.getFileName(fileDir, false));
                     seq.setFilename(fileDir);
                 }
 
@@ -426,9 +425,18 @@ public class Loader
                         // create and add the first sequence
                         seq = new Sequence(MetaDataUtil.createOMEMetadata((IMetadata) reader.getMetadataStore(),
                                 serieIndex));
-                        // set name only if default name used
+                        // default name used --> use better name
                         if (seq.isDefaultName())
-                            seq.setName(FileUtil.getFileName(file.getName(), false));
+                        {
+                            // multi series image --> add serie info
+                            if (selectedSeries.size() > 1)
+                                seq.setName(FileUtil.getFileName(path, false) + " - serie " + s);
+                            else
+                                seq.setName(FileUtil.getFileName(path, false));
+                        }
+                        // multi series image --> adjust name to keep file name info
+                        else if (selectedSeries.size() > 1)
+                            seq.setName(FileUtil.getFileName(path, false) + " - " + seq.getName());
                         // set filename
                         seq.setFilename(path);
                         sequences.add(seq);
@@ -495,9 +503,18 @@ public class Loader
                                     // and add a new sequence
                                     seq = new Sequence(MetaDataUtil.createOMEMetadata(
                                             (IMetadata) reader.getMetadataStore(), serieIndex));
-                                    // set name only if default name used
+                                    // default name used --> use better name
                                     if (seq.isDefaultName())
-                                        seq.setName(FileUtil.getFileName(file.getName(), false));
+                                    {
+                                        // multi series image --> add serie info
+                                        if (selectedSeries.size() > 1)
+                                            seq.setName(FileUtil.getFileName(path, false) + " - serie " + s);
+                                        else
+                                            seq.setName(FileUtil.getFileName(path, false));
+                                    }
+                                    // multi series image --> adjust name to keep file name info
+                                    else if (selectedSeries.size() > 1)
+                                        seq.setName(FileUtil.getFileName(path, false) + " - " + seq.getName());
                                     seq.setFilename(path);
                                     sequences.add(seq);
                                     seq.beginUpdate();

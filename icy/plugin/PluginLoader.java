@@ -140,6 +140,7 @@ public class PluginLoader implements ChangeListener
     final SingleProcessor processor;
 
     private boolean initialized;
+    private boolean loading;
     private boolean needReload;
     private boolean logError;
 
@@ -157,6 +158,7 @@ public class PluginLoader implements ChangeListener
 
         JCLDisabled = false;
         initialized = false;
+        loading = false;
         needReload = false;
         logError = true;
 
@@ -242,6 +244,7 @@ public class PluginLoader implements ChangeListener
     void reloadInternal()
     {
         needReload = false;
+        loading = true;
 
         // stop daemon plugins
         stopDaemons();
@@ -349,6 +352,8 @@ public class PluginLoader implements ChangeListener
 
         loader = newLoader;
         plugins = newPlugins;
+
+        loading = false;
 
         // notify change
         changed();
@@ -649,7 +654,7 @@ public class PluginLoader implements ChangeListener
      */
     public static boolean isLoading()
     {
-        return instance.processor.isProcessing();
+        return instance.processor.hasWaitingTasks() || instance.loading;
     }
 
     /**

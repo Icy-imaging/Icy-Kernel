@@ -246,6 +246,39 @@ public class IcyBufferedImageUtil
      * Create a copy if conversion needed else return current image.
      * 
      * @param dataType
+     *        Data type wanted
+     * @param rescale
+     *        Indicate if we want to scale data value according to data (or data type) range
+     * @param useDataBounds
+     *        Only used when <code>rescale</code> parameter is true.<br>
+     *        Specify if we use the data bounds for rescaling instead of data type bounds.
+     * @return converted image
+     */
+    public static IcyBufferedImage convertToType(IcyBufferedImage source, DataType dataType, boolean rescale,
+            boolean useDataBounds)
+    {
+        if (!rescale)
+            return convertToType(source, dataType, null);
+
+        // convert with rescale
+        final double boundsSrc[];
+        final double boundsDst[] = dataType.getDefaultBounds();
+
+        if (useDataBounds)
+            boundsSrc = source.getChannelsGlobalBounds();
+        else
+            boundsSrc = source.getChannelsGlobalTypeBounds();
+
+        // use scaler to scale data
+        return convertToType(source, dataType,
+                new Scaler(boundsSrc[0], boundsSrc[1], boundsDst[0], boundsDst[1], false));
+    }
+
+    /**
+     * Convert the source image to the specified data type.<br>
+     * Create a copy if conversion needed else return current image.
+     * 
+     * @param dataType
      *        data type wanted
      * @param rescale
      *        indicate if we want to scale data value according to data type range
@@ -253,18 +286,7 @@ public class IcyBufferedImageUtil
      */
     public static IcyBufferedImage convertToType(IcyBufferedImage source, DataType dataType, boolean rescale)
     {
-        final double boundsSrc[] = source.getChannelTypeGlobalBounds();
-        final double boundsDst[];
-
-        if (rescale)
-            boundsDst = dataType.getDefaultBounds();
-        else
-            boundsDst = boundsSrc;
-
-        // use scaler to scale data
-        final Scaler scaler = new Scaler(boundsSrc[0], boundsSrc[1], boundsDst[0], boundsDst[1], false);
-
-        return convertToType(source, dataType, scaler);
+        return convertToType(source, dataType, rescale, false);
     }
 
     /**

@@ -118,7 +118,6 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
                 Box.createHorizontalGlue(), separateSeqCheck);
 
         // preview pane
-        // final PreviewPane pp = new PreviewPane(this);
         preview = new ThumbnailComponent(false);
 
         final JPanel settingPanel = new JPanel();
@@ -150,16 +149,6 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
             preferences.put("path", getCurrentDirectory().getAbsolutePath());
             Loader.load(CollectionUtil.asList(getSelectedFiles()), separateSeqCheck.isSelected());
         }
-
-        // try
-        // {
-        // // close opened files by PreviewPane
-        // pp.close();
-        // }
-        // catch (IOException e)
-        // {
-        // // ignore
-        // }
 
         // store interface option
         preferences.putInt("width", getWidth());

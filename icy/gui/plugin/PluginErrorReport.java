@@ -43,10 +43,13 @@ public class PluginErrorReport
      *        {@link PluginDescriptor} of the plugin which thrown the error.
      * @param devId
      *        Plugin developer Id, used only if we do not have plugin descriptor information.
+     * @param title
+     *        Error title if any
      * @param message
      *        Error message to report
      */
-    public static void report(final PluginDescriptor plugin, final String devId, final String message)
+    public static void report(final PluginDescriptor plugin, final String devId, final String title,
+            final String message)
     {
         // cannot be reported...
         if ((plugin == null) && StringUtil.isEmpty(devId))
@@ -100,7 +103,7 @@ public class PluginErrorReport
                                 @Override
                                 public void run()
                                 {
-                                    new PluginErrorReportFrame(plugin, message);
+                                    new PluginErrorReportFrame(plugin, null, title, message);
                                 }
                             });
                         }
@@ -114,7 +117,7 @@ public class PluginErrorReport
                         @Override
                         public void run()
                         {
-                            new PluginErrorReportFrame(devId, message);
+                            new PluginErrorReportFrame(null, devId, title, message);
                         }
                     });
                 }
@@ -122,9 +125,32 @@ public class PluginErrorReport
         });
     }
 
+    /**
+     * Report an error thrown by the specified plugin.
+     * 
+     * @param plugin
+     *        {@link PluginDescriptor} of the plugin which thrown the error.
+     * @param devId
+     *        Plugin developer Id, used only if we do not have plugin descriptor information.
+     * @param message
+     *        Error message to report
+     */
+    public static void report(final PluginDescriptor plugin, final String devId, final String message)
+    {
+        report(plugin, devId, null, message);
+    }
+
+    /**
+     * Report an error thrown by the specified plugin.
+     * 
+     * @param plugin
+     *        {@link PluginDescriptor} of the plugin which thrown the error.
+     * @param message
+     *        Error message to report
+     */
     public static void report(PluginDescriptor plugin, String message)
     {
-        report(plugin, null, message);
+        report(plugin, null, null, message);
     }
 
     /**

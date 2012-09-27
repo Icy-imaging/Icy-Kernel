@@ -77,9 +77,8 @@ public class CloseableTabbedPane extends JTabbedPane
 
             closeButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE, 12));
             closeButton.setFlat(true);
-            // closeButton.setContentAreaFilled(false);
+            closeButton.setContentAreaFilled(false);
             closeButton.setToolTipText("close");
-            closeButton.setOpaque(false);
 
             closeButton.addActionListener(new ActionListener()
             {

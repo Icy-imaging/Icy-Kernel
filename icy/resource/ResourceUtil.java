@@ -42,7 +42,7 @@ public class ResourceUtil
 
     // default icon size
     public static final int DEFAULT_ICON_SIZE = IcyIcon.DEFAULT_SIZE;
-    
+
     // application images
     public static final Image IMAGE_ICY_16 = ResourceUtil.getIconAsImage("icy16.png");
     public static final Image IMAGE_ICY_32 = ResourceUtil.getIconAsImage("icy32.png");
@@ -55,7 +55,7 @@ public class ResourceUtil
     // alpha mask icons
     public static final ImageIcon ICON_ICY_16 = ResourceUtil.getImageIcon(IMAGE_ICY_16);
     public static final ImageIcon ICON_ICY_32 = ResourceUtil.getImageIcon(IMAGE_ICY_32);
-//    public static final ImageIcon ICON_ICY_256 = ResourceUtil.getImageIcon(IMAGE_ICY_256);
+    // public static final ImageIcon ICON_ICY_256 = ResourceUtil.getImageIcon(IMAGE_ICY_256);
 
     public static final Image ICON_NULL = ResourceUtil.getAlphaIconAsImage("null.png");
     public static final Image ICON_EXPAND = ResourceUtil.getAlphaIconAsImage("top_right_expand.png");
@@ -78,7 +78,7 @@ public class ResourceUtil
     // public static final Image ICON_EXIT =
     // ResourceUtil.getAlphaIconAsImage("arrow_bottom_left.png");
     public static final Image ICON_HELP = ResourceUtil.getAlphaIconAsImage("help.png");
-    
+
     public static final Image ICON_ON_OFF = ResourceUtil.getAlphaIconAsImage("on-off.png");
     public static final Image ICON_TRASH = ResourceUtil.getAlphaIconAsImage("trash.png");
     public static final Image ICON_DELETE = ResourceUtil.getAlphaIconAsImage("delete.png");
@@ -91,6 +91,7 @@ public class ResourceUtil
     public static final Image ICON_TAG = ResourceUtil.getAlphaIconAsImage("tag.png");
     public static final Image ICON_TOOLS = ResourceUtil.getAlphaIconAsImage("wrench_plus_2.png");
     public static final Image ICON_CUT = ResourceUtil.getAlphaIconAsImage("clipboard_cut.png");
+    public static final Image ICON_LIGHTING = ResourceUtil.getAlphaIconAsImage("lighting.png");
     public static final Image ICON_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png");
     public static final Image ICON_NOT_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_close.png");
 
@@ -118,6 +119,11 @@ public class ResourceUtil
     public static final Image ICON_LAYER_REMOVE_V = ResourceUtil.getAlphaIconAsImage("layers_remove_v.png");
     public static final Image ICON_LAYER_REMOVE_ADV_V = ResourceUtil.getAlphaIconAsImage("layers_remove_adv_v.png");
     public static final Image ICON_LAYER_ADJUST_HV = ResourceUtil.getAlphaIconAsImage("layers_adjust_hv.png");
+
+    public static final Image ICON_ROI_OR = ResourceUtil.getAlphaIconAsImage("roi_or.png");
+    public static final Image ICON_ROI_AND = ResourceUtil.getAlphaIconAsImage("roi_and.png");
+    public static final Image ICON_ROI_XOR = ResourceUtil.getAlphaIconAsImage("roi_xor.png");
+    public static final Image ICON_ROI_SUB = ResourceUtil.getAlphaIconAsImage("roi_sub.png");
 
     public static final Image ICON_INDENT_DECREASE = ResourceUtil.getAlphaIconAsImage("indent_decrease.png");
     public static final Image ICON_INDENT_INCREASE = ResourceUtil.getAlphaIconAsImage("indent_increase.png");
@@ -181,9 +187,8 @@ public class ResourceUtil
     public static final Image ICON_ARGB_COLOR = ResourceUtil.getColorIconAsImage("argb.png");
     public static final Image ICON_RGB_COLOR = ResourceUtil.getColorIconAsImage("rgb.png");
     public static final Image ICON_GRAY_COLOR = ResourceUtil.getColorIconAsImage("gray.png");
-    
-    public static final Image ICON_PLUGIN_COLOR = ResourceUtil.getColorIconAsImage("plugin.png");
 
+    public static final Image ICON_PLUGIN_COLOR = ResourceUtil.getColorIconAsImage("plugin.png");
 
     public static ArrayList<Image> getIcyIconImages()
     {

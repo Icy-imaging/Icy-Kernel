@@ -22,6 +22,7 @@ import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.plugin.PluginDetailPanel;
 import icy.gui.util.ComponentUtil;
+import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
@@ -79,6 +80,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
     final JPanel repositoryPanel;
     final IcyTextField filter;
     final JButton refreshButton;
+    final JButton documentationButton;
     final JButton detailButton;
     final JButton action1Button;
     final JButton action2Button;
@@ -182,6 +184,21 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         });
         ComponentUtil.setFixedSize(refreshButton, buttonsDim);
 
+        documentationButton = new JButton("Help");
+        documentationButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final PluginDescriptor plugin = getSelectedPlugin();
+
+                // open plugin web page
+                if (plugin != null)
+                    NetworkUtil.openURL(plugin.getWeb());
+            }
+        });
+        ComponentUtil.setFixedSize(documentationButton, buttonsDim);
+
         detailButton = new JButton("Show detail");
         detailButton.addActionListener(new ActionListener()
         {
@@ -223,7 +240,9 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.PAGE_AXIS));
 
         buttonsPanel.add(refreshButton);
-        buttonsPanel.add(Box.createVerticalStrut(64));
+        buttonsPanel.add(Box.createVerticalStrut(34));
+        buttonsPanel.add(documentationButton);
+        buttonsPanel.add(Box.createVerticalStrut(8));
         buttonsPanel.add(detailButton);
         buttonsPanel.add(Box.createVerticalStrut(8));
         buttonsPanel.add(action1Button);
@@ -538,9 +557,11 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected void updateButtonsStateInternal()
     {
-        final boolean pluginSelected = (getSelectedPlugin() != null);
+        final PluginDescriptor plugin = getSelectedPlugin();
+        final boolean pluginSelected = (plugin != null);
 
         detailButton.setEnabled(pluginSelected);
+        documentationButton.setEnabled(pluginSelected && !StringUtil.isEmpty(plugin.getWeb()));
     }
 
     protected final void updateButtonsState()

@@ -2891,7 +2891,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         try
         {
             // FIXME : not really optimal in memory and processing
-            final BufferedImage img = IcyBufferedImageUtil.getARGBImage(srcImg, getLut());
+            final BufferedImage img = IcyBufferedImageUtil
+                    .toBufferedImage(srcImg, BufferedImage.TYPE_INT_RGB, getLut());
             final BufferedImage result;
             final Graphics2D g;
 
@@ -2900,7 +2901,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 final Dimension size = getCanvasSize();
 
                 // get result image and graphics object
-                result = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+                result = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
                 g = result.createGraphics();
 
                 // apply transformation (translation + scale)

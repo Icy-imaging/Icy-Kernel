@@ -40,14 +40,24 @@ public class OMEUtil
 
     /**
      * Safe float evaluation from PositiveFloat object.<br>
-     * Return defaultValue if specified object is null.
+     * Return <code>defaultValue</code> if <code>obj</code> is null or equal to infinite with
+     * <code>allowInfinite</code> set to false.
      */
-    public static double getValue(PositiveFloat obj, double defaultValue)
+    public static double getValue(PositiveFloat obj, double defaultValue, boolean allowInfinite)
     {
         if (obj == null)
             return defaultValue;
 
-        return TypeUtil.getDouble(obj.getValue(), defaultValue);
+        return TypeUtil.getDouble(obj.getValue(), defaultValue, allowInfinite);
+    }
+
+    /**
+     * Safe float evaluation from PositiveFloat object.<br>
+     * Return defaultValue if specified object is null.
+     */
+    public static double getValue(PositiveFloat obj, double defaultValue)
+    {
+        return getValue(obj, defaultValue, true);
     }
 
     /**

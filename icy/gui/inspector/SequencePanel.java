@@ -100,6 +100,9 @@ public class SequencePanel extends InspectorSubPanel
             canvasPanel.add(panel, BorderLayout.CENTER);
 
         canvasPanel.revalidate();
+        // we need it for zoom value refresh in detached mode
+        // FIXME : normally revalidate should be enough
+        canvasPanel.repaint();
     }
 
     public void setLutPanel(JPanel panel)
@@ -110,7 +113,8 @@ public class SequencePanel extends InspectorSubPanel
             lutPanel.add(panel, BorderLayout.CENTER);
 
         lutPanel.revalidate();
-        // FIXME : why we need this ??
+        // we need it for histogram refresh in detached mode
+        // FIXME : normally revalidate should be enough
         lutPanel.repaint();
     }
 

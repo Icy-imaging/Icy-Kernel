@@ -451,6 +451,11 @@ public class Saver
                 // create output directory
                 FileUtil.createDir(fileBaseDirectory);
 
+                // default name used --> use filename
+                if (sequence.isDefaultName())
+                    sequence.setName(fileName);
+                sequence.setFilename(fileBaseDirectory);
+
                 for (int t = tMin; t <= tMax; t++)
                 {
                     for (int z = zMin; z <= zMax; z++)
@@ -463,24 +468,19 @@ public class Saver
                     }
                 }
 
-                // default name used --> use filename
-                if (sequence.isDefaultName())
-                    sequence.setName(fileName);
-                sequence.setFilename(fileBaseDirectory);
-
                 // add as one item to recent file list
                 if (mainMenu != null)
                     mainMenu.addRecentLoadedFile(new File(fileBaseDirectory));
             }
             else
             {
-                // save as multi images file
-                save(null, sequence, filePath, zMin, zMax, tMin, tMax, fps, saveFrame);
-
                 // default name used --> use filename
                 if (sequence.isDefaultName())
                     sequence.setName(FileUtil.getFileName(filePath, false));
                 sequence.setFilename(filePath);
+
+                // save as multi images file
+                save(null, sequence, filePath, zMin, zMax, tMin, tMax, fps, saveFrame);
 
                 // add as one item to recent file list
                 if (mainMenu != null)

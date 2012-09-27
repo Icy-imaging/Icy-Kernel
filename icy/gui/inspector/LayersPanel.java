@@ -99,7 +99,7 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Te
      */
     private static final long serialVersionUID = 4550426171735455449L;
 
-    static final String[] columnNames = {"Name", "", ""};
+    static final String[] columnNames = {"Name", "Opacity", ""};
 
     ArrayList<Layer> layers;
     IcyCanvas canvas;
@@ -169,7 +169,7 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Te
         nameField.setToolTipText("Edit name of selected Layer(s)");
         nameField.addTextChangeListener(this);
 
-        deleteButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_TRASH));
+        deleteButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE));
         deleteButton.setFlat(true);
         deleteButton.setToolTipText("Delete selected Layer(s)");
         deleteButton.addActionListener(new ActionListener()
