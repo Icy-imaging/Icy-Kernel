@@ -139,14 +139,11 @@ public class PluginErrorReportPanel extends JPanel
      */
     PluginErrorReportPanel()
     {
-        this(new PluginDescriptor(plugins.test.PluginTestBug.class), null, null, "Error !!");
+        this(new PluginDescriptor(plugins.kernel.canvas.Canvas2DPlugin.class), null, null, "Error !!");
     }
 
     private void initialize()
     {
-        // top description label
-        String description;
-
         if (plugin != null)
             label = new JLabel("", plugin.getIcon(), SwingConstants.CENTER);
         else
