@@ -107,7 +107,7 @@ public abstract class ROI2DRectShape extends ROI2DShape
         return (RectangularShape) shape;
     }
 
-    public void setRectangle(Rectangle2D bounds)
+    public void setBounds2D(Rectangle2D bounds)
     {
         beginUpdate();
         try
@@ -120,7 +120,7 @@ public abstract class ROI2DRectShape extends ROI2DShape
         {
             endUpdate();
         }
-    }
+    }   
 
     @Override
     protected void updateShape()

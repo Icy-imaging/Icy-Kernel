@@ -233,10 +233,11 @@ public class NetworkPreferencePanel extends PreferencePanel implements ActionLis
     }
 
     @Override
-    public void textChanged(IcyTextField source)
+    public void textChanged(IcyTextField source, boolean validate)
     {
         // network setting changed, restart needed
-        getPreferenceFrame().setNeedRestart();
+        if (validate)
+            getPreferenceFrame().setNeedRestart();
     }
 
     @Override

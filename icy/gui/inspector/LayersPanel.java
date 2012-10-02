@@ -634,26 +634,29 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Te
     }
 
     @Override
-    public void textChanged(IcyTextField source)
+    public void textChanged(IcyTextField source, boolean validate)
     {
-        if (source == nameField)
+        if (validate)
         {
-            if (isLayerPropertiesAdjusting)
-                return;
-
-            if (nameField.isEnabled())
+            if (source == nameField)
             {
-                final String name = source.getText();
+                if (isLayerPropertiesAdjusting)
+                    return;
 
-                canvas.beginUpdate();
-                try
+                if (nameField.isEnabled())
                 {
-                    for (Layer layer : getSelectedLayers())
-                        layer.setName(name);
-                }
-                finally
-                {
-                    canvas.endUpdate();
+                    final String name = source.getText();
+
+                    canvas.beginUpdate();
+                    try
+                    {
+                        for (Layer layer : getSelectedLayers())
+                            layer.setName(name);
+                    }
+                    finally
+                    {
+                        canvas.endUpdate();
+                    }
                 }
             }
         }

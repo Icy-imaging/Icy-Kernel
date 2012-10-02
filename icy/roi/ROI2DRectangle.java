@@ -83,4 +83,9 @@ public class ROI2DRectangle extends ROI2DRectShape
     {
         return (Rectangle2D) shape;
     }
+
+    public void setRectangle(Rectangle2D rectangle)
+    {
+        setBounds2D(rectangle);
+    }
 }

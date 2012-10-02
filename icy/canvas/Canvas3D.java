@@ -1199,7 +1199,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                     internalBuildImageData();
                     // render
                     panel3D.paint(panel3D.getGraphics());
-                    
+
                     // NOTE: in vtk the [0,0] pixel is bottom left, so a vertical flip is required
                     renderWindow.GetRGBACharPixelData(0, 0, size[0] - 1, size[1] - 1, 1, array);
                 }
@@ -1245,12 +1245,16 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
     }
 
     @Override
-    public void textChanged(IcyTextField source)
+    public void textChanged(IcyTextField source, boolean validate)
     {
-        if ((source == specularTextField) || (source == specularPowerTextField))
+        // only on validation
+        if (validate)
         {
-            setupSpecular();
-            refresh();
+            if ((source == specularTextField) || (source == specularPowerTextField))
+            {
+                setupSpecular();
+                refresh();
+            }
         }
     }
 

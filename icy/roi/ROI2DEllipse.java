@@ -85,4 +85,8 @@ public class ROI2DEllipse extends ROI2DRectShape
         return (Ellipse2D) shape;
     }
 
+    public void setEllipse(Ellipse2D ellipse)
+    {
+        setBounds2D(ellipse.getBounds2D());
+    }
 }

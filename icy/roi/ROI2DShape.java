@@ -709,6 +709,15 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     @Override
+    public void setSelectedColor(Color value)
+    {
+        super.setSelectedColor(value);
+
+        for (Anchor2D anchor : controlPoints)
+            anchor.setColor(value);
+    }
+
+    @Override
     public void setSelected(boolean value, boolean exclusive)
     {
         // unselected ? --> unselected all control points

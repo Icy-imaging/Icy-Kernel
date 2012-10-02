@@ -25,6 +25,7 @@ import icy.util.XMLUtil;
 import java.awt.Color;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
 import org.w3c.dom.Node;
 
@@ -123,6 +124,25 @@ public class ROI2DLine extends ROI2DShape
     public Line2D getLine()
     {
         return (Line2D) shape;
+    }
+
+    public void setBounds2D(Rectangle2D bounds)
+    {
+        beginUpdate();
+        try
+        {
+            pt1.setPosition(bounds.getMinX(), bounds.getMinY());
+            pt2.setPosition(bounds.getMaxX(), bounds.getMaxY());
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    public void setLine(Line2D line)
+    {
+        setBounds2D(line.getBounds2D());
     }
 
     @Override

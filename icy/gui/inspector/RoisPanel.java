@@ -20,32 +20,22 @@ package icy.gui.inspector;
 
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
-import icy.gui.component.button.ColorChooserButton;
-import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
-import icy.gui.component.button.IcyButton;
 import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
-import icy.gui.util.ComponentUtil;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
 import icy.roi.ROI;
-import icy.roi.ROI2D;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.thread.ThreadUtil;
-import icy.util.ShapeUtil.ShapeOperation;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
@@ -85,20 +75,19 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
     final IcyTextField nameFilter;
     private final JPanel filtersPanel;
 
-    final IcyTextField nameField;
-    final ColorChooserButton colorButton;
-    final IcyButton orButton;
-    final IcyButton andButton;
-    final IcyButton xorButton;
-    final IcyButton subButton;
-    final IcyButton deleteButton;
-    // final IcyButton copyButton;
-    final JPanel controlPanel;
+    // final IcyTextField nameField;
+    // final ColorChooserButton colorButton;
+    // final IcyButton orButton;
+    // final IcyButton andButton;
+    // final IcyButton xorButton;
+    // final IcyButton subButton;
+    // final IcyButton deleteButton;
+    // final JPanel controlPanel;
+    final RoiControlPanel roiControlPanel;
 
     // internals
     boolean isSelectionAdjusting;
     boolean isRoiTypeAdjusting;
-    boolean isRoiPropertiesAdjusting;
 
     final Runnable tableDataRefresher;
     final Runnable roiTypeListRefresher;
@@ -112,7 +101,6 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
         sequence = null;
         isSelectionAdjusting = false;
         isRoiTypeAdjusting = false;
-        isRoiPropertiesAdjusting = false;
 
         tableDataRefresher = new Runnable()
         {
@@ -170,54 +158,61 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
         filtersPanel.add(nameFilter);
 
         // build control panel
-        nameField = new IcyTextField();
-        nameField.setToolTipText("Edit name of selected ROI(s)");
-        nameField.addTextChangeListener(this);
-
-        colorButton = new ColorChooserButton();
-        ComponentUtil.setFixedHeight(colorButton, 22);
-        colorButton.setToolTipText("Change color of selected ROI(s)");
-        colorButton.addColorChangeListener(new ColorChangeListener()
-        {
-            @Override
-            public void colorChanged(ColorChooserButton source)
-            {
-                if (isRoiPropertiesAdjusting)
-                    return;
-
-                if (colorButton.isEnabled())
-                {
-                    final Color color = source.getColor();
-
-                    sequence.beginUpdate();
-                    try
-                    {
-                        for (ROI roi : getSelectedRois())
-                            if (roi.isEditable())
-                                roi.setColor(color);
-                    }
-                    finally
-                    {
-                        sequence.endUpdate();
-                    }
-                }
-            }
-        });
-
-        // copyButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOCCOPY));
-        // copyButton.setFlat(true);
-        // copyButton.setToolTipText("Duplicate selected ROI(s)");
-        // copyButton.addActionListener(new ActionListener()
+        // nameField = new IcyTextField();
+        // nameField.setToolTipText("Edit name of selected ROI(s)");
+        // nameField.addTextChangeListener(this);
+        //
+        // colorButton = new ColorChooserButton();
+        // ComponentUtil.setFixedHeight(colorButton, 22);
+        // colorButton.setToolTipText("Change color of selected ROI(s)");
+        // colorButton.addColorChangeListener(new ColorChangeListener()
+        // {
+        // @Override
+        // public void colorChanged(ColorChooserButton source)
+        // {
+        // if (isRoiPropertiesAdjusting)
+        // return;
+        //
+        // if (colorButton.isEnabled())
+        // {
+        // final Color color = source.getColor();
+        //
+        // sequence.beginUpdate();
+        // try
+        // {
+        // for (ROI roi : getSelectedRois())
+        // if (roi.isEditable())
+        // roi.setColor(color);
+        // }
+        // finally
+        // {
+        // sequence.endUpdate();
+        // }
+        // }
+        // }
+        // });
+        //
+        // orButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_OR));
+        // orButton.setFlat(true);
+        // orButton.setToolTipText("Create a new ROI representing the union of selected ROIs");
+        // orButton.addActionListener(new ActionListener()
         // {
         // @Override
         // public void actionPerformed(ActionEvent e)
         // {
+        // // OR operation
         // sequence.beginUpdate();
         // try
         // {
-        // // clone selected rois
-        // for (ROI roi : getSelectedRois())
-        // sequence.addROI(roi.getCopy());
+        // final ArrayList<ROI> selectedROI = getSelectedRois();
+        // // only ROI2D supported now
+        // final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new
+        // ROI[selectedROI.size()]));
+        //
+        // final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.OR);
+        //
+        // sequence.addROI(mergeROI);
+        // sequence.setSelectedROI(mergeROI, true);
         // }
         // finally
         // {
@@ -226,164 +221,139 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
         // }
         // });
         //
-        orButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_OR));
-        orButton.setFlat(true);
-        orButton.setToolTipText("Create a new ROI representing the union of selected ROIs");
-        orButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                // OR operation
-                sequence.beginUpdate();
-                try
-                {
-                    final ArrayList<ROI> selectedROI = getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
+        // andButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_AND));
+        // andButton.setFlat(true);
+        // andButton.setToolTipText("Create a new ROI representing the intersection of selected ROIs");
+        // andButton.addActionListener(new ActionListener()
+        // {
+        // @Override
+        // public void actionPerformed(ActionEvent e)
+        // {
+        // // OR operation
+        // sequence.beginUpdate();
+        // try
+        // {
+        // final ArrayList<ROI> selectedROI = getSelectedRois();
+        // // only ROI2D supported now
+        // final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new
+        // ROI[selectedROI.size()]));
+        //
+        // final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.AND);
+        //
+        // sequence.addROI(mergeROI);
+        // sequence.setSelectedROI(mergeROI, true);
+        // }
+        // finally
+        // {
+        // sequence.endUpdate();
+        // }
+        // }
+        // });
+        //
+        // xorButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_XOR));
+        // xorButton.setFlat(true);
+        // xorButton.setToolTipText("Create a new ROI representing the exclusive union of selected ROIs");
+        // xorButton.addActionListener(new ActionListener()
+        // {
+        // @Override
+        // public void actionPerformed(ActionEvent e)
+        // {
+        // // OR operation
+        // sequence.beginUpdate();
+        // try
+        // {
+        // final ArrayList<ROI> selectedROI = getSelectedRois();
+        // // only ROI2D supported now
+        // final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new
+        // ROI[selectedROI.size()]));
+        //
+        // final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.XOR);
+        //
+        // sequence.addROI(mergeROI);
+        // sequence.setSelectedROI(mergeROI, true);
+        // }
+        // finally
+        // {
+        // sequence.endUpdate();
+        // }
+        // }
+        // });
+        //
+        // subButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_SUB));
+        // subButton.setFlat(true);
+        // subButton.setToolTipText("Create a new ROI from the result of first ROI minus the second ROI");
+        // subButton.addActionListener(new ActionListener()
+        // {
+        // @Override
+        // public void actionPerformed(ActionEvent e)
+        // {
+        // // OR operation
+        // sequence.beginUpdate();
+        // try
+        // {
+        // final ArrayList<ROI> selectedROI = getSelectedRois();
+        // // only ROI2D supported now
+        // final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new
+        // ROI[selectedROI.size()]));
+        //
+        // // Subtraction work only when 2 ROI are selected
+        // if (selectedROI2D.length != 2)
+        // return;
+        //
+        // final ROI mergeROI = ROI2D.subtract(selectedROI2D[0], selectedROI2D[1]);
+        //
+        // sequence.addROI(mergeROI);
+        // sequence.setSelectedROI(mergeROI, true);
+        // }
+        // finally
+        // {
+        // sequence.endUpdate();
+        // }
+        // }
+        // });
+        //
+        // deleteButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE));
+        // deleteButton.setFlat(true);
+        // deleteButton.setToolTipText("Delete selected ROI(s)");
+        // deleteButton.addActionListener(new ActionListener()
+        // {
+        // @Override
+        // public void actionPerformed(ActionEvent e)
+        // {
+        // sequence.beginUpdate();
+        // try
+        // {
+        // // delete selected rois
+        // for (ROI roi : getSelectedRois())
+        // if (roi.isEditable())
+        // sequence.removeROI(roi);
+        // }
+        // finally
+        // {
+        // sequence.endUpdate();
+        // }
+        // }
+        // });
+        //
+        // controlPanel = new JPanel();
+        // controlPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
+        // controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.LINE_AXIS));
+        //
+        // controlPanel.add(nameField);
+        // controlPanel.add(Box.createHorizontalStrut(8));
+        // controlPanel.add(colorButton);
+        // controlPanel.add(Box.createHorizontalStrut(8));
+        // controlPanel.add(orButton);
+        // controlPanel.add(andButton);
+        // controlPanel.add(xorButton);
+        // controlPanel.add(subButton);
+        // controlPanel.add(Box.createHorizontalStrut(8));
+        // controlPanel.add(deleteButton);
+        // controlPanel.add(Box.createHorizontalGlue());
+        //
+        // controlPanel.setVisible(showControl);
 
-                    final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.OR);
-
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
-                }
-                finally
-                {
-                    sequence.endUpdate();
-                }
-            }
-        });
-
-        andButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_AND));
-        andButton.setFlat(true);
-        andButton.setToolTipText("Create a new ROI representing the intersection of selected ROIs");
-        andButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                // OR operation
-                sequence.beginUpdate();
-                try
-                {
-                    final ArrayList<ROI> selectedROI = getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
-
-                    final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.AND);
-
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
-                }
-                finally
-                {
-                    sequence.endUpdate();
-                }
-            }
-        });
-
-        xorButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_XOR));
-        xorButton.setFlat(true);
-        xorButton.setToolTipText("Create a new ROI representing the exclusive union of selected ROIs");
-        xorButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                // OR operation
-                sequence.beginUpdate();
-                try
-                {
-                    final ArrayList<ROI> selectedROI = getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
-
-                    final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.XOR);
-
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
-                }
-                finally
-                {
-                    sequence.endUpdate();
-                }
-            }
-        });
-
-        subButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_SUB));
-        subButton.setFlat(true);
-        subButton.setToolTipText("Create a new ROI from the result of first ROI minus the second ROI");
-        subButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                // OR operation
-                sequence.beginUpdate();
-                try
-                {
-                    final ArrayList<ROI> selectedROI = getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
-
-                    // Subtraction work only when 2 ROI are selected
-                    if (selectedROI2D.length != 2)
-                        return;
-
-                    final ROI mergeROI = ROI2D.subtract(selectedROI2D[0], selectedROI2D[1]);
-
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
-                }
-                finally
-                {
-                    sequence.endUpdate();
-                }
-            }
-        });
-
-        deleteButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE));
-        deleteButton.setFlat(true);
-        deleteButton.setToolTipText("Delete selected ROI(s)");
-        deleteButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                sequence.beginUpdate();
-                try
-                {
-                    // delete selected rois
-                    for (ROI roi : getSelectedRois())
-                        if (roi.isEditable())
-                            sequence.removeROI(roi);
-                }
-                finally
-                {
-                    sequence.endUpdate();
-                }
-            }
-        });
-
-        controlPanel = new JPanel();
-        controlPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
-        controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.LINE_AXIS));
-
-        controlPanel.add(nameField);
-        controlPanel.add(Box.createHorizontalStrut(8));
-        controlPanel.add(colorButton);
-        controlPanel.add(Box.createHorizontalStrut(8));
-        // controlPanel.add(copyButton);
-        // controlPanel.add(Box.createHorizontalStrut(4));
-        controlPanel.add(orButton);
-        controlPanel.add(andButton);
-        controlPanel.add(xorButton);
-        controlPanel.add(subButton);
-        controlPanel.add(Box.createHorizontalStrut(8));
-        controlPanel.add(deleteButton);
-        controlPanel.add(Box.createHorizontalGlue());
-
-        controlPanel.setVisible(showControl);
+        roiControlPanel = new RoiControlPanel(this);
 
         // build table
         tableModel = new AbstractTableModel()
@@ -488,7 +458,8 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
         add(topPanel, BorderLayout.NORTH);
         add(middlePanel, BorderLayout.CENTER);
         if (showControl)
-            add(controlPanel, BorderLayout.SOUTH);
+            // add(controlPanel, BorderLayout.SOUTH);
+            add(roiControlPanel, BorderLayout.SOUTH);
 
         validate();
 
@@ -560,6 +531,11 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
     // // display menu
     // menu.show(comp, 0, comp.getHeight());
     // }
+
+    Sequence getSequence()
+    {
+        return sequence;
+    }
 
     public void setTypeFilter(String type)
     {
@@ -858,61 +834,64 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
 
     protected void refreshControlPanel()
     {
-        isRoiPropertiesAdjusting = true;
-        try
-        {
-            if (sequence != null)
-            {
-                final ArrayList<ROI> selectedRois = getSelectedRois();
+        // isRoiPropertiesAdjusting = true;
+        // try
+        // {
+        // roiControlPanel.refresh();
+        // if (sequence != null)
+        // {
+        // final ArrayList<ROI> selectedRois = getSelectedRois();
+        //
+        // boolean editable = false;
+        // for (ROI roi : selectedRois)
+        // editable |= roi.isEditable();
+        //
+        // // final boolean singleSelect = (selectedRois.size() == 1);
+        // final boolean hasSelected = (selectedRois.size() > 0);
+        // final boolean twoSelected = (selectedRois.size() == 2);
+        // final boolean severalsSelected = (selectedRois.size() > 1);
+        //
+        // nameField.setEnabled(hasSelected && editable);
+        // colorButton.setEnabled(hasSelected && editable);
+        // // copyButton.setEnabled(hasSelected);
+        // orButton.setEnabled(severalsSelected);
+        // andButton.setEnabled(severalsSelected);
+        // xorButton.setEnabled(severalsSelected);
+        // subButton.setEnabled(twoSelected);
+        // deleteButton.setEnabled(hasSelected && editable);
+        //
+        // if (hasSelected)
+        // {
+        // final ROI roi = selectedRois.get(0);
+        // final String name = roi.getName();
+        //
+        // // handle it manually as setText doesn't check for equality
+        // if (!name.equals(nameField.getText()))
+        // nameField.setText(name);
+        // colorButton.setColor(roi.getColor());
+        // }
+        // else
+        // nameField.setText("");
+        // }
+        // else
+        // {
+        // nameField.setEnabled(false);
+        // colorButton.setEnabled(false);
+        // // copyButton.setEnabled(false);
+        // orButton.setEnabled(false);
+        // andButton.setEnabled(false);
+        // xorButton.setEnabled(false);
+        // subButton.setEnabled(false);
+        // deleteButton.setEnabled(false);
+        // nameField.setText("");
+        // }
+        // }
+        // finally
+        // {
+        // isRoiPropertiesAdjusting = false;
+        // }
 
-                boolean editable = false;
-                for (ROI roi : selectedRois)
-                    editable |= roi.isEditable();
-
-                // final boolean singleSelect = (selectedRois.size() == 1);
-                final boolean hasSelected = (selectedRois.size() > 0);
-                final boolean twoSelected = (selectedRois.size() == 2);
-                final boolean severalsSelected = (selectedRois.size() > 1);
-
-                nameField.setEnabled(hasSelected && editable);
-                colorButton.setEnabled(hasSelected && editable);
-                // copyButton.setEnabled(hasSelected);
-                orButton.setEnabled(severalsSelected);
-                andButton.setEnabled(severalsSelected);
-                xorButton.setEnabled(severalsSelected);
-                subButton.setEnabled(twoSelected);
-                deleteButton.setEnabled(hasSelected && editable);
-
-                if (hasSelected)
-                {
-                    final ROI roi = selectedRois.get(0);
-                    final String name = roi.getName();
-
-                    // handle it manually as setText doesn't check for equality
-                    if (!name.equals(nameField.getText()))
-                        nameField.setText(name);
-                    colorButton.setColor(roi.getColor());
-                }
-                else
-                    nameField.setText("");
-            }
-            else
-            {
-                nameField.setEnabled(false);
-                colorButton.setEnabled(false);
-                // copyButton.setEnabled(false);
-                orButton.setEnabled(false);
-                andButton.setEnabled(false);
-                xorButton.setEnabled(false);
-                subButton.setEnabled(false);
-                deleteButton.setEnabled(false);
-                nameField.setText("");
-            }
-        }
-        finally
-        {
-            isRoiPropertiesAdjusting = false;
-        }
+        roiControlPanel.refresh();
     }
 
     /**
@@ -928,31 +907,8 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
     }
 
     @Override
-    public void textChanged(IcyTextField source)
+    public void textChanged(IcyTextField source, boolean validate)
     {
-        if (source == nameField)
-        {
-            if (isRoiPropertiesAdjusting)
-                return;
-
-            if (nameField.isEnabled())
-            {
-                final String name = source.getText();
-
-                sequence.beginUpdate();
-                try
-                {
-                    for (ROI roi : getSelectedRois())
-                        if (roi.isEditable())
-                            roi.setName(name);
-                }
-                finally
-                {
-                    sequence.endUpdate();
-                }
-            }
-        }
-
         if (source == nameFilter)
             refreshRois();
     }

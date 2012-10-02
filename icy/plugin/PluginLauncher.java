@@ -66,9 +66,10 @@ public class PluginLauncher
     }
 
     /**
-     * Start the plugin
+     * Start the plugin.<br>
+     * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin)
      */
-    public synchronized static void launch(PluginDescriptor pluginDesc)
+    public static Plugin launch(PluginDescriptor pluginDesc)
     {
         try
         {
@@ -91,10 +92,14 @@ public class PluginLauncher
             else
                 // direct launch in EDT now (no thread creation)
                 ThreadUtil.invokeNow(thread);
+
+            return plugin;
         }
         catch (Throwable t)
         {
             IcyExceptionHandler.handleException(pluginDesc, t, true);
         }
+
+        return null;
     }
 }

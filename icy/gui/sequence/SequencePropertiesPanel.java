@@ -33,8 +33,8 @@ public class SequencePropertiesPanel extends JPanel
     private static final long serialVersionUID = -1568878218022361239L;
 
     private IcyTextField nameField;
-    private IcyTextField tfPxSizeX;
-    private IcyTextField tfPxSizeY;
+    IcyTextField tfPxSizeX;
+    IcyTextField tfPxSizeY;
     private IcyTextField tfPxSizeZ;
     private JComboBox cbPxSizeX;
     private JComboBox cbPxSizeY;
@@ -49,7 +49,7 @@ public class SequencePropertiesPanel extends JPanel
     private JPanel panelPxSizeY;
     private JPanel panelPxSizeZ;
     private JPanel panelPxSizeT;
-    private JCheckBox checkLinked;
+    JCheckBox checkLinked;
     private JPanel panelPxSizeXLeft;
     private Component horizontalGlue;
     private JPanel panelPxSizeXRight;
@@ -121,7 +121,7 @@ public class SequencePropertiesPanel extends JPanel
         tfPxSizeX.addTextChangeListener(new TextChangeListener()
         {
             @Override
-            public void textChanged(IcyTextField source)
+            public void textChanged(IcyTextField source, boolean validate)
             {
                 if (checkLinked.isSelected())
                     tfPxSizeY.setText(tfPxSizeX.getText());

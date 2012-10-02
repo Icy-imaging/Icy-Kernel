@@ -660,7 +660,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
     }
 
     @Override
-    public void textChanged(IcyTextField source)
+    public void textChanged(IcyTextField source, boolean validate)
     {
         pluginsChanged();
     }

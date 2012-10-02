@@ -557,7 +557,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
     }
 
     @Override
-    public void textChanged(IcyTextField source)
+    public void textChanged(IcyTextField source, boolean validate)
     {
         workspacesChanged();
     }

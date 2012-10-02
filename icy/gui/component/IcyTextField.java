@@ -18,6 +18,10 @@
  */
 package icy.gui.component;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.text.Format;
 import java.util.EventListener;
 
@@ -30,23 +34,20 @@ import javax.swing.event.DocumentListener;
  * 
  * @author Stephane
  */
-public class IcyTextField extends JFormattedTextField implements DocumentListener
+public class IcyTextField extends JFormattedTextField implements DocumentListener, ActionListener, FocusListener
 {
     /**
      * 
      */
     private static final long serialVersionUID = 4294607311366304781L;
 
-    @Deprecated
-    public interface IcyTextListener extends EventListener
+    public interface TextChangeListener extends EventListener
     {
-        public void textChanged(IcyTextField source);
+        public void textChanged(IcyTextField source, boolean validate);
     }
 
-    public interface TextChangeListener extends IcyTextListener
-    {
-
-    }
+    // internal
+    private boolean changed;
 
     /**
      * Creates a <code>IcyTextField</code> with no <code>AbstractFormatterFactory</code>. Use
@@ -107,33 +108,34 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
 
     private void init()
     {
+        changed = false;
+
         getDocument().addDocumentListener(this);
+        addActionListener(this);
+        addFocusListener(this);
     }
 
-    private void textChanged()
+    private void textChanged(boolean validate)
     {
-        for (IcyTextListener listener : listenerList.getListeners(IcyTextListener.class))
-            listener.textChanged(this);
-        for (TextChangeListener listener : listenerList.getListeners(TextChangeListener.class))
-            listener.textChanged(this);
-    }
+        // simple text change
+        if (!validate)
+        {
+            // keep mark of text change
+            changed = true;
 
-    /**
-     * @deprecated uses {@link #addTextChangeListener(TextChangeListener)} instead
-     */
-    @Deprecated
-    public void addTextListener(IcyTextListener listener)
-    {
-        listenerList.add(IcyTextListener.class, listener);
-    }
-
-    /**
-     * @deprecated uses {@link #removeTextChangeListener(TextChangeListener)} instead
-     */
-    @Deprecated
-    public void removeTextListener(IcyTextListener listener)
-    {
-        listenerList.remove(IcyTextListener.class, listener);
+            for (TextChangeListener listener : listenerList.getListeners(TextChangeListener.class))
+                listener.textChanged(this, false);
+        }
+        else
+        {
+            // previous text change
+            if (changed)
+            {
+                for (TextChangeListener listener : listenerList.getListeners(TextChangeListener.class))
+                    listener.textChanged(this, true);
+                changed = false;
+            }
+        }
     }
 
     public void addTextChangeListener(TextChangeListener listener)
@@ -149,18 +151,37 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
     @Override
     public void changedUpdate(DocumentEvent e)
     {
-        textChanged();
+        textChanged(false);
     }
 
     @Override
     public void insertUpdate(DocumentEvent e)
     {
-        textChanged();
+        textChanged(false);
     }
 
     @Override
     public void removeUpdate(DocumentEvent e)
     {
-        textChanged();
+        textChanged(false);
     }
+
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        textChanged(true);
+    }
+
+    @Override
+    public void focusGained(FocusEvent e)
+    {
+        // nothing to do here
+    }
+
+    @Override
+    public void focusLost(FocusEvent e)
+    {
+        textChanged(true);
+    }
+
 }
