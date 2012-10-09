@@ -29,6 +29,7 @@ import icy.painter.PainterEvent;
 import icy.painter.PathAnchor2D;
 import icy.painter.VtkPainter;
 import icy.sequence.Sequence;
+import icy.type.point.Point3D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
@@ -645,20 +646,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         int p1;
         int p2;
         int p3;
-    }
-
-    class Point3D
-    {
-        public Point3D(double x, double y, double z)
-        {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-        }
-
-        double x;
-        double y;
-        double z;
     }
 
     /**

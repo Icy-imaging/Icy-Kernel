@@ -231,6 +231,7 @@ public class SequencePropertiesPanel extends JPanel
         panelPxSizeTRight.setLayout(new GridLayout(0, 2, 0, 0));
 
         cbTimeUnit = new JComboBox(new String[] {"h", "min", "s", "ms"});
+        cbTimeUnit.setSelectedIndex(2);
         panelPxSizeTRight.add(cbTimeUnit);
 
         horizontalGlue_2 = Box.createHorizontalGlue();
@@ -250,17 +251,17 @@ public class SequencePropertiesPanel extends JPanel
         final double pxSizeY = sequence.getPixelSizeY();
         final double pxSizeZ = sequence.getPixelSizeZ();
 
-        final UnitPrefix pxSizeXUnit = UnitUtil.getBestUnit(pxSizeX, UnitPrefix.MILLI);
-        final UnitPrefix pxSizeYUnit = UnitUtil.getBestUnit(pxSizeX, UnitPrefix.MILLI);
-        final UnitPrefix pxSizeZUnit = UnitUtil.getBestUnit(pxSizeX, UnitPrefix.MILLI);
+        final UnitPrefix pxSizeXUnit = UnitUtil.getBestUnit(pxSizeX, UnitPrefix.MICRO);
+        final UnitPrefix pxSizeYUnit = UnitUtil.getBestUnit(pxSizeX, UnitPrefix.MICRO);
+        final UnitPrefix pxSizeZUnit = UnitUtil.getBestUnit(pxSizeX, UnitPrefix.MICRO);
 
         cbPxSizeX.setSelectedItem(pxSizeXUnit.toString() + "m");
         cbPxSizeY.setSelectedItem(pxSizeYUnit.toString() + "m");
         cbPxSizeZ.setSelectedItem(pxSizeZUnit.toString() + "m");
 
-        tfPxSizeX.setText(StringUtil.toString(UnitUtil.getValueInUnit(pxSizeX, UnitPrefix.MILLI, pxSizeXUnit)));
-        tfPxSizeY.setText(StringUtil.toString(UnitUtil.getValueInUnit(pxSizeY, UnitPrefix.MILLI, pxSizeYUnit)));
-        tfPxSizeZ.setText(StringUtil.toString(UnitUtil.getValueInUnit(pxSizeZ, UnitPrefix.MILLI, pxSizeZUnit)));
+        tfPxSizeX.setText(StringUtil.toString(UnitUtil.getValueInUnit(pxSizeX, UnitPrefix.MICRO, pxSizeXUnit)));
+        tfPxSizeY.setText(StringUtil.toString(UnitUtil.getValueInUnit(pxSizeY, UnitPrefix.MICRO, pxSizeYUnit)));
+        tfPxSizeZ.setText(StringUtil.toString(UnitUtil.getValueInUnit(pxSizeZ, UnitPrefix.MICRO, pxSizeZUnit)));
 
         if (tfPxSizeX.getText().equals(tfPxSizeY.getText())
                 && cbPxSizeX.getSelectedIndex() == cbPxSizeY.getSelectedIndex())
@@ -268,7 +269,8 @@ public class SequencePropertiesPanel extends JPanel
             checkLinked.doClick();
         }
 
-        double timeInterval = sequence.getTimeInterval();
+        // get timeInterval in ms
+        double timeInterval = sequence.getTimeInterval() * 1000d;
         TimeUnit unit = UnitUtil.getBestUnit(timeInterval);
 
         switch (unit)

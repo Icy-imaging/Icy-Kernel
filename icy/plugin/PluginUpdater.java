@@ -151,7 +151,7 @@ public class PluginUpdater
             {
                 if (showProgress)
                 {
-                    if (!NetworkUtil.hasInternetConnection())
+                    if (!NetworkUtil.hasInternetAccess())
                         new AnnounceFrame("You are not connected to internet.", 10);
                     else
                         new AnnounceFrame("Can't access the repositories... You should verify your connection.", 10);

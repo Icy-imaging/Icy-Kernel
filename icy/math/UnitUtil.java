@@ -119,8 +119,8 @@ public class UnitUtil
      * <ul>
      * <li>value = 0.01</li>
      * <li>currentUnit = {@link UnitPrefix#MILLI}</li>
-     * <li>currentUnit = {@link UnitPrefix#MICRO}</li>
-     * <li>returns: {@link UnitPrefix#MICRO}</li>
+     * <li>wantedUnit = {@link UnitPrefix#MICRO}</li>
+     * <li>returns: 10</li>
      * </ul>
      * 
      * @param value

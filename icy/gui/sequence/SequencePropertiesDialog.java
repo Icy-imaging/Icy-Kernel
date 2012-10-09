@@ -43,26 +43,27 @@ public class SequencePropertiesDialog extends ActionDialog
             {
                 sequence.setName(panel.getNameFieldValue());
                 sequence.setPixelSizeX(UnitUtil.getValueInUnit(panel.getPixelSizeXFieldValue(),
-                        panel.getPixelSizeXUnit(), UnitPrefix.MILLI));
+                        panel.getPixelSizeXUnit(), UnitPrefix.MICRO));
                 sequence.setPixelSizeY(UnitUtil.getValueInUnit(panel.getPixelSizeYFieldValue(),
-                        panel.getPixelSizeYUnit(), UnitPrefix.MILLI));
+                        panel.getPixelSizeYUnit(), UnitPrefix.MICRO));
                 sequence.setPixelSizeZ(UnitUtil.getValueInUnit(panel.getPixelSizeZFieldValue(),
-                        panel.getPixelSizeZUnit(), UnitPrefix.MILLI));
+                        panel.getPixelSizeZUnit(), UnitPrefix.MICRO));
 
-                double valueInMs = panel.getTimeIntervalFieldValue();
+                double valueInSec = panel.getTimeIntervalFieldValue();
 
                 switch (panel.getTimeIntervalUnit())
                 {
                     case 0:
-                        valueInMs *= 60d;
+                        valueInSec *= 60d;
                     case 1:
-                        valueInMs *= 60d;
-                    case 2:
-                        valueInMs *= 1000d;
+                        valueInSec *= 60d;
+                        break;
+                    case 3:
+                        valueInSec /= 1000d;
                         break;
                 }
 
-                sequence.setTimeInterval(valueInMs);
+                sequence.setTimeInterval(valueInSec);
 
                 for (int c = 0; c < sequence.getSizeC(); c++)
                     sequence.setChannelName(c, panel.getChannelNameFieldValue(c));

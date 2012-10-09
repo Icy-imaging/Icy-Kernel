@@ -458,7 +458,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
         resolutionUnitComboBox.setToolTipText("Resolution unit");
         resolutionUnitComboBox.setModel(new DefaultComboBoxModel(new String[] {"mm/pixel", "\u00B5m/pixel", "pixel/mm",
                 "pixel/\u00B5m"}));
-        resolutionUnitComboBox.setSelectedIndex(0);
+        resolutionUnitComboBox.setSelectedIndex(1);
         GridBagConstraints gbc_resolutionUnitComboBox = new GridBagConstraints();
         gbc_resolutionUnitComboBox.fill = GridBagConstraints.BOTH;
         gbc_resolutionUnitComboBox.insets = new Insets(0, 0, 0, 5);
@@ -546,7 +546,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
 
     public int unitToPixel(double value, int originPixel, SizeUnit unit)
     {
-        final double mmPerPixel = getResolution();
+        final double micronPerPixel = getResolution();
 
         switch (unit)
         {
@@ -556,15 +556,15 @@ public abstract class SequenceBaseResizePanel extends JPanel
             case PERCENT:
                 return (int) Math.round((originPixel * value) / 100d);
             case MILLIM:
-                return (int) Math.round(value / mmPerPixel);
+                return (int) Math.round(value / (micronPerPixel / 1000d));
             case MICROM:
-                return (int) Math.round(value / (mmPerPixel * 1000d));
+                return (int) Math.round(value / micronPerPixel);
         }
     }
 
     public double pixelToUnit(int value, int originPixel, SizeUnit unit)
     {
-        final double mmPerPixel = getResolution();
+        final double micronPerPixel = getResolution();
 
         switch (unit)
         {
@@ -574,14 +574,14 @@ public abstract class SequenceBaseResizePanel extends JPanel
             case PERCENT:
                 return (int) Math.round((value * 100d) / originPixel);
             case MILLIM:
-                return (int) (value * mmPerPixel);
+                return (int) (value * (micronPerPixel / 1000d));
             case MICROM:
-                return (int) (value * mmPerPixel * 1000d);
+                return (int) (value * micronPerPixel);
         }
     }
 
     /**
-     * Get resolution in mm per pixel.
+     * Get resolution in µm per pixel.
      */
     public double getResolution()
     {
@@ -591,16 +591,16 @@ public abstract class SequenceBaseResizePanel extends JPanel
         {
             default:
             case MILLIM_PIXEL:
-                return value;
+                return value * 1000d;
 
             case MICROM_PIXEL:
-                return value / 1000d;
+                return value;
 
             case PIXEL_MILLIM:
-                return 1d / value;
+                return 1d / (value / 1000d);
 
             case PIXEL_MICROM:
-                return 1d / (value * 1000d);
+                return 1d / value;
         }
     }
 
@@ -611,14 +611,14 @@ public abstract class SequenceBaseResizePanel extends JPanel
         // convert to mm / pixel
         switch (previousResolutionUnit)
         {
-            case MICROM_PIXEL:
-                resol /= 1000d;
+            case MILLIM_PIXEL:
+                resol *= 1000d;
                 break;
             case PIXEL_MILLIM:
-                resol = 1d / resol;
+                resol = 1d / (resol / 1000d);
                 break;
             case PIXEL_MICROM:
-                resol = 1d / (resol * 1000d);
+                resol = 1d / resol;
                 break;
         }
 
@@ -627,21 +627,20 @@ public abstract class SequenceBaseResizePanel extends JPanel
         // convert back to wanted unit
         switch (previousResolutionUnit)
         {
-            case MICROM_PIXEL:
-                resol *= 1000d;
+            case MILLIM_PIXEL:
+                resol /= 1000d;
                 break;
             case PIXEL_MILLIM:
-                resol = 1d / resol;
+                resol = 1d / (resol / 1000d);
                 break;
             case PIXEL_MICROM:
-                resol = 1d / (resol * 1000d);
+                resol = 1d / resol;
                 break;
         }
 
         resol = Math.max(0.000001, resol);
 
         resolutionSpinner.setValue(Double.valueOf(resol));
-
     }
 
     public double getSpinnerSizeValue(JSpinner spinner)

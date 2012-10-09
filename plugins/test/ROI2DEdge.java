@@ -16,12 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with ICY. If not, see <http://www.gnu.org/licenses/>.
  */
-package icy.roi;
+package plugins.test;
 
 import icy.canvas.IcyCanvas;
 import icy.image.IcyBufferedImage;
 import icy.image.ImageUtil;
 import icy.image.lut.LUT;
+import icy.roi.ROI2D;
 import icy.sequence.Sequence;
 import icy.util.ColorUtil;
 
@@ -29,6 +30,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
@@ -36,9 +38,9 @@ import java.util.Arrays;
 /**
  * @author Stephane
  */
-public class ROIEdge extends ROI
+public class ROI2DEdge extends ROI2D
 {
-    protected class ROIEdgePainter extends ROIPainter
+    protected class ROI2DEdgePainter extends ROI2DPainter
     {
         final Point2D mousePos;
         BufferedImage edgeImage;
@@ -46,7 +48,7 @@ public class ROIEdge extends ROI
         /**
          * 
          */
-        public ROIEdgePainter()
+        public ROI2DEdgePainter()
         {
             super();
 
@@ -145,15 +147,106 @@ public class ROIEdge extends ROI
     /**
      * 
      */
-    public ROIEdge()
+    public ROI2DEdge()
     {
         super();
     }
 
     @Override
-    protected ROIEdgePainter createPainter()
+    protected ROI2DEdgePainter createPainter()
     {
-        return new ROIEdgePainter();
+        return new ROI2DEdgePainter();
+    }
+
+    @Override
+    public boolean canAddPoint()
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean canRemovePoint()
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean addPointAt(Point2D pos, boolean ctrl)
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean removePointAt(IcyCanvas canvas, Point2D imagePoint)
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    protected boolean removeSelectedPoint(IcyCanvas canvas, Point2D imagePoint)
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean hasSelectedPoint()
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean isOver(IcyCanvas canvas, double x, double y)
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean isOverPoint(IcyCanvas canvas, double x, double y)
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean contains(double x, double y)
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean contains(double x, double y, double w, double h)
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Rectangle2D getBounds2D()
+    {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean intersects(double x, double y, double w, double h)
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public void translate(double dx, double dy)
+    {
+        // TODO Auto-generated method stub
+
     }
 
 }

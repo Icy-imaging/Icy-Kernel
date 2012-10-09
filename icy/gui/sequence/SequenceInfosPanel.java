@@ -58,7 +58,7 @@ public class SequenceInfosPanel extends InspectorSubPanel
     {
         super();
 
-        processor = new SingleProcessor(true,"Sequence infos GUI");
+        processor = new SingleProcessor(true, "Sequence infos GUI");
         // we want the processor to stay alive for some time
         processor.setKeepAliveTime(10, TimeUnit.MINUTES);
 
@@ -193,18 +193,18 @@ public class SequenceInfosPanel extends InspectorSubPanel
             final double pxSizeY = sequence.getPixelSizeY();
             final double pxSizeZ = sequence.getPixelSizeZ();
 
-            final UnitPrefix pxSizeXUnit = UnitUtil.getBestUnit(pxSizeX, UnitPrefix.MILLI);
-            final UnitPrefix pxSizeYUnit = UnitUtil.getBestUnit(pxSizeY, UnitPrefix.MILLI);
+            final UnitPrefix pxSizeXUnit = UnitUtil.getBestUnit(pxSizeX, UnitPrefix.MICRO);
+            final UnitPrefix pxSizeYUnit = UnitUtil.getBestUnit(pxSizeY, UnitPrefix.MICRO);
 
             nameLabel.setText(sequence.getName());
             dimensionLabel.setText(sizeX + " x " + sizeY + " x " + sizeZ + " x " + sizeT);
             channelLabel.setText(sizeC + " - " + sequence.getDataType_());
             sizeLabel.setText(UnitUtil.getBytesString((double) sizeX * (double) sizeY * sizeZ * sizeT * sizeC
                     * sequence.getDataType_().getSize()));
-            resXLabel.setText(UnitUtil.getBestUnitInMeters(pxSizeX, 2, UnitPrefix.MILLI));
-            resYLabel.setText(UnitUtil.getBestUnitInMeters(pxSizeY, 2, UnitPrefix.MILLI));
-            resZLabel.setText(UnitUtil.getBestUnitInMeters(pxSizeZ, 2, UnitPrefix.MILLI));
-            resTLabel.setText(UnitUtil.displayTimeAsStringWithUnits(sequence.getTimeInterval(), false));
+            resXLabel.setText(UnitUtil.getBestUnitInMeters(pxSizeX, 2, UnitPrefix.MICRO));
+            resYLabel.setText(UnitUtil.getBestUnitInMeters(pxSizeY, 2, UnitPrefix.MICRO));
+            resZLabel.setText(UnitUtil.getBestUnitInMeters(pxSizeZ, 2, UnitPrefix.MICRO));
+            resTLabel.setText(UnitUtil.displayTimeAsStringWithUnits(sequence.getTimeInterval() * 1000d, false));
 
             pxSizeYdifferent = !(pxSizeX == pxSizeY && pxSizeXUnit == pxSizeYUnit);
 

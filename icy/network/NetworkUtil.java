@@ -42,13 +42,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
-import java.net.NetworkInterface;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -65,27 +63,17 @@ public class NetworkUtil
     public static final int SYSTEM_PROXY = 1;
     public static final int USER_PROXY = 2;
 
-    public interface NetworkConnectionListener
+    public interface InternetAccessListener
     {
-        /**
-         * Network interface connected.
-         */
-        public void networkConnected();
-
-        /**
-         * Network interface disconnected.
-         */
-        public void networkDisconnected();
-
         /**
          * Internet connection available.
          */
-        public void internetConnected();
+        public void internetUp();
 
         /**
          * Internet connection no more available.
          */
-        public void internetDisconnected();
+        public void internetDown();
     }
 
     /**
@@ -93,10 +81,10 @@ public class NetworkUtil
      * 
      * @author Stephane
      */
-    public static class WeakNetworkConnectionListener extends WeakListener<NetworkConnectionListener> implements
-            NetworkConnectionListener
+    public static class WeakInternetAccessListener extends WeakListener<InternetAccessListener> implements
+            InternetAccessListener
     {
-        public WeakNetworkConnectionListener(NetworkConnectionListener listener)
+        public WeakInternetAccessListener(InternetAccessListener listener)
         {
             super(listener);
         }
@@ -104,43 +92,25 @@ public class NetworkUtil
         @Override
         public void removeListener(Object source)
         {
-            removeNetworkConnectionListener(this);
+            removeInternetAccessListener(this);
         }
 
         @Override
-        public void networkConnected()
+        public void internetUp()
         {
-            final NetworkConnectionListener listener = getListener();
+            final InternetAccessListener listener = getListener();
 
             if (listener != null)
-                listener.networkConnected();
+                listener.internetUp();
         }
 
         @Override
-        public void networkDisconnected()
+        public void internetDown()
         {
-            final NetworkConnectionListener listener = getListener();
+            final InternetAccessListener listener = getListener();
 
             if (listener != null)
-                listener.networkDisconnected();
-        }
-
-        @Override
-        public void internetConnected()
-        {
-            final NetworkConnectionListener listener = getListener();
-
-            if (listener != null)
-                listener.internetConnected();
-        }
-
-        @Override
-        public void internetDisconnected()
-        {
-            final NetworkConnectionListener listener = getListener();
-
-            if (listener != null)
-                listener.internetDisconnected();
+                listener.internetDown();
         }
     }
 
@@ -160,16 +130,15 @@ public class NetworkUtil
     public static final String ID_PLUGINVERSION = "pluginVersion";
     public static final String ID_DEVELOPERID = "developerId";
     public static final String ID_ERRORLOG = "errorLog";
-    
 
     /**
      * List of all listeners on network connection changes.
      */
-    private final static Set<NetworkConnectionListener> listeners = new HashSet<NetworkConnectionListener>();
+    private final static Set<InternetAccessListener> listeners = new HashSet<InternetAccessListener>();;
 
-    private static boolean networkConnected;
-    private static boolean internetConnected;
-
+    /**
+     * Internet monitor
+     */
     public static final Thread internetMonitor = new Thread(new Runnable()
     {
         @Override
@@ -177,10 +146,10 @@ public class NetworkUtil
         {
             while (true)
             {
-                boolean connected = false;
+                boolean up = false;
+                int retry = 5;
 
-                // only necessary if network connected
-                if (hasNetworkConnection())
+                while (!up && (retry > 0))
                 {
                     URLConnection urlConnection;
 
@@ -192,7 +161,7 @@ public class NetworkUtil
                             urlConnection.setConnectTimeout(3000);
                             urlConnection.setReadTimeout(3000);
                             urlConnection.getInputStream();
-                            connected = true;
+                            up = true;
                         }
                     }
                     catch (Throwable t)
@@ -200,7 +169,7 @@ public class NetworkUtil
                         // ignore
                     }
 
-                    if (!connected)
+                    if (!up)
                     {
                         try
                         {
@@ -210,7 +179,7 @@ public class NetworkUtil
                                 urlConnection.setConnectTimeout(3000);
                                 urlConnection.setReadTimeout(3000);
                                 urlConnection.getInputStream();
-                                connected = true;
+                                up = true;
                             }
                         }
                         catch (Throwable t)
@@ -218,55 +187,30 @@ public class NetworkUtil
                             // ignore
                         }
                     }
+
+                    retry--;
+                    ThreadUtil.sleep(1000);
                 }
 
-                setInternetConnected(connected);
-                ThreadUtil.sleep(1000);
+                setInternetAccess(up);
+                ThreadUtil.sleep(5000);
             }
         }
     }, "Internet monitor");
 
-    public static final Thread networkMonitor = new Thread(new Runnable()
-    {
-        @Override
-        public void run()
-        {
-            while (true)
-            {
-                boolean connected = false;
-
-                try
-                {
-                    final Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-
-                    while (interfaces.hasMoreElements() && !connected)
-                    {
-                        final NetworkInterface interf = interfaces.nextElement();
-
-                        if (!interf.isLoopback() && interf.isUp())
-                            connected = true;
-                    }
-                }
-                catch (Throwable t)
-                {
-                    // ignore
-                }
-
-                setNetworkConnected(connected);
-                ThreadUtil.sleep(1000);
-            }
-        }
-    }, "Network monitor");
+    /**
+     * Internet access up flag
+     */
+    private static boolean internetAccess;
 
     public static void init()
     {
-        networkConnected = false;
-        internetConnected = false;
+        internetAccess = false;
 
         updateNetworkSetting();
 
-        // start monitors threads
-        networkMonitor.start();
+        // start monitor thread
+        internetMonitor.setPriority(Thread.MIN_PRIORITY);
         internetMonitor.start();
     }
 
@@ -359,24 +303,11 @@ public class NetworkUtil
         }
     }
 
-    static void setNetworkConnected(boolean value)
+    static void setInternetAccess(boolean value)
     {
-        // force "Internet connected" to false
-        if (!value)
-            setInternetConnected(false);
-
-        if (networkConnected != value)
+        if (internetAccess != value)
         {
-            networkConnected = value;
-            fireNetworkConnectionEvent(value);
-        }
-    }
-
-    static void setInternetConnected(boolean value)
-    {
-        if (internetConnected != value)
-        {
-            internetConnected = value;
+            internetAccess = value;
 
             fireInternetConnectionEvent(value);
 
@@ -389,60 +320,38 @@ public class NetworkUtil
     {
         if (value)
         {
-            for (NetworkConnectionListener l : listeners)
-                l.internetConnected();
+            for (InternetAccessListener l : listeners)
+                l.internetUp();
         }
         else
         {
-            for (NetworkConnectionListener l : listeners)
-                l.internetDisconnected();
-        }
-    }
-
-    private static void fireNetworkConnectionEvent(boolean value)
-    {
-        if (value)
-        {
-            for (NetworkConnectionListener l : listeners)
-                l.networkConnected();
-        }
-        else
-        {
-            for (NetworkConnectionListener l : listeners)
-                l.networkDisconnected();
+            for (InternetAccessListener l : listeners)
+                l.internetDown();
         }
     }
 
     /**
-     * Adds a new listener on network connection change.
+     * Adds a new listener on internet access change.
      */
-    public static void addNetworkConnectionListener(NetworkConnectionListener skinChangeListener)
+    public static void addInternetAccessListener(InternetAccessListener listener)
     {
-        listeners.add(skinChangeListener);
+        listeners.add(listener);
     }
 
     /**
-     * Removes a listener on network connection change.
+     * Removes a listener on internet access change.
      */
-    public static void removeNetworkConnectionListener(NetworkConnectionListener skinChangeListener)
+    public static void removeInternetAccessListener(InternetAccessListener listener)
     {
-        listeners.remove(skinChangeListener);
-    }
-
-    /**
-     * Returns true if we currently have network connection (not necessary Internet).
-     */
-    public static boolean hasNetworkConnection()
-    {
-        return networkConnected;
+        listeners.remove(listener);
     }
 
     /**
      * Returns true if we currently have Internet connection.
      */
-    public static boolean hasInternetConnection()
+    public static boolean hasInternetAccess()
     {
-        return networkConnected && internetConnected;
+        return internetAccess;
     }
 
     /**
@@ -837,7 +746,7 @@ public class NetworkUtil
             {
                 if (displayError)
                 {
-                    if (!hasInternetConnection())
+                    if (!hasInternetAccess())
                         System.out.println("You are not connected to internet.");
                     else
                     {

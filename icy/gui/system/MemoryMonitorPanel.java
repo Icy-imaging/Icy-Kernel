@@ -174,7 +174,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
         String text;
 
         // display internet connection
-        if (!NetworkUtil.hasInternetConnection())
+        if (!NetworkUtil.hasInternetAccess())
         {
             g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_NETWORK, Color.gray), 10, 30, 16, 16,
                     null);

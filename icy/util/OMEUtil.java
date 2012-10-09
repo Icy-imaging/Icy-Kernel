@@ -69,6 +69,14 @@ public class OMEUtil
     }
 
     /**
+     * Return a PositiveInteger object representing the specified value
+     */
+    public static PositiveInteger getPositiveInteger(int value)
+    {
+        return new PositiveInteger(Integer.valueOf(value));
+    }
+
+    /**
      * Create a new empty OME Metadata object.
      */
     public static OMEXMLMetadataImpl createOMEMetadata()

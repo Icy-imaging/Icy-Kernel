@@ -38,11 +38,6 @@ class LUTBandViewer extends IcyLutBandViewer
 {
     private static final long serialVersionUID = 8709589851405274816L;
 
-    final JLabel firstLabel;
-    final JLabel secondLabel;
-    final JLabel indexLabel;
-    final JLabel valueLabel;
-
     final ScalerPanel scalerPanel;
     final ColormapPanel colormapPanel;
 
@@ -52,84 +47,84 @@ class LUTBandViewer extends IcyLutBandViewer
 
         // scaler
         scalerPanel = new ScalerPanel(viewer, lutBand);
-        // refresh info on scaler mouse position change
-        scalerPanel.getScalerViewer().addScalerPositionListener(new ScalerPositionListener()
-        {
-            @Override
-            public void positionChanged(double index, int value, double normalizedValue)
-            {
-                firstLabel.setText("value :");
-                firstLabel.setToolTipText("Pixel value");
-                secondLabel.setText("count :");
-                secondLabel.setToolTipText("Pixel count");
-
-                if (index != -1d)
-                {
-                    if (lutBand.getScaler().isIntegerData())
-                        indexLabel.setText(Integer.toString((int) Math.round(index)));
-                    else
-                        indexLabel.setText(Double.toString(MathUtil.roundSignificant(index, 3, true)));
-                }
-                else
-                    indexLabel.setText("");
-
-                if (value != -1d)
-                    valueLabel.setText(Integer.toString(value));
-                else
-                    valueLabel.setText("");
-            }
-        });
+//        // refresh info on scaler mouse position change
+//        scalerPanel.getScalerViewer().addScalerPositionListener(new ScalerPositionListener()
+//        {
+//            @Override
+//            public void positionChanged(double index, int value, double normalizedValue)
+//            {
+//                firstLabel.setText("value :");
+//                firstLabel.setToolTipText("Pixel value");
+//                secondLabel.setText("count :");
+//                secondLabel.setToolTipText("Pixel count");
+//
+//                if (index != -1d)
+//                {
+//                    if (lutBand.getScaler().isIntegerData())
+//                        indexLabel.setText(Integer.toString((int) Math.round(index)));
+//                    else
+//                        indexLabel.setText(Double.toString(MathUtil.roundSignificant(index, 3, true)));
+//                }
+//                else
+//                    indexLabel.setText("");
+//
+//                if (value != -1d)
+//                    valueLabel.setText(Integer.toString(value));
+//                else
+//                    valueLabel.setText("");
+//            }
+//        });
 
         // colormap
         colormapPanel = new ColormapPanel(viewer, lutBand);
-        // refresh info on colormap mouse position change
-        colormapPanel.getColormapViewer().addColormapPositionListener(new ColormapPositionListener()
-        {
-            @Override
-            public void positionChanged(int index, int value)
-            {
-                firstLabel.setText("index :");
-                firstLabel.setToolTipText("Colormap index");
-                secondLabel.setText("value :");
-                secondLabel.setToolTipText("Colormap value");
+//        // refresh info on colormap mouse position change
+//        colormapPanel.getColormapViewer().addColormapPositionListener(new ColormapPositionListener()
+//        {
+//            @Override
+//            public void positionChanged(int index, int value)
+//            {
+//                firstLabel.setText("index :");
+//                firstLabel.setToolTipText("Colormap index");
+//                secondLabel.setText("value :");
+//                secondLabel.setToolTipText("Colormap value");
+//
+//                if (index != -1)
+//                    indexLabel.setText(Integer.toString(index));
+//                else
+//                    indexLabel.setText("");
+//
+//                if (value != -1)
+//                    valueLabel.setText(Integer.toString(value));
+//                else
+//                    valueLabel.setText("");
+//            }
+//        });
 
-                if (index != -1)
-                    indexLabel.setText(Integer.toString(index));
-                else
-                    indexLabel.setText("");
-
-                if (value != -1)
-                    valueLabel.setText(Integer.toString(value));
-                else
-                    valueLabel.setText("");
-            }
-        });
-
-        // intensity / value
-        final JPanel lutInfoPanel = new JPanel();
-        lutInfoPanel.setLayout(new BoxLayout(lutInfoPanel, BoxLayout.LINE_AXIS));
-
-        firstLabel = new JLabel("");
-        firstLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-        // ComponentUtil.setFixedWidth(firstLabel, 80);
-        secondLabel = new JLabel("");
-        secondLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-        // ComponentUtil.setFixedWidth(secondLabel, 80);
-
-        indexLabel = new JLabel("");
-        indexLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-        ComponentUtil.setFixedWidth(indexLabel, 80);
-        valueLabel = new JLabel("");
-        valueLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-        ComponentUtil.setFixedWidth(valueLabel, 80);
-
-        lutInfoPanel.add(firstLabel);
-        lutInfoPanel.add(indexLabel);
-        lutInfoPanel.add(Box.createHorizontalStrut(10));
-        lutInfoPanel.add(secondLabel);
-        lutInfoPanel.add(valueLabel);
-        lutInfoPanel.add(Box.createHorizontalGlue());
-        lutInfoPanel.validate();
+//        // intensity / value
+//        final JPanel lutInfoPanel = new JPanel();
+//        lutInfoPanel.setLayout(new BoxLayout(lutInfoPanel, BoxLayout.LINE_AXIS));
+//
+//        firstLabel = new JLabel("");
+//        firstLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+//        // ComponentUtil.setFixedWidth(firstLabel, 80);
+//        secondLabel = new JLabel("");
+//        secondLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+//        // ComponentUtil.setFixedWidth(secondLabel, 80);
+//
+//        indexLabel = new JLabel("");
+//        indexLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+//        ComponentUtil.setFixedWidth(indexLabel, 80);
+//        valueLabel = new JLabel("");
+//        valueLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+//        ComponentUtil.setFixedWidth(valueLabel, 80);
+//
+//        lutInfoPanel.add(firstLabel);
+//        lutInfoPanel.add(indexLabel);
+//        lutInfoPanel.add(Box.createHorizontalStrut(10));
+//        lutInfoPanel.add(secondLabel);
+//        lutInfoPanel.add(valueLabel);
+//        lutInfoPanel.add(Box.createHorizontalGlue());
+//        lutInfoPanel.validate();
 
         final JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
@@ -141,7 +136,7 @@ class LUTBandViewer extends IcyLutBandViewer
         setLayout(new BorderLayout());
 
         add(mainPanel, BorderLayout.CENTER);
-        add(lutInfoPanel, BorderLayout.SOUTH);
+//        add(lutInfoPanel, BorderLayout.SOUTH);
 
         validate();
     }

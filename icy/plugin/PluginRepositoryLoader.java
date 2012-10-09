@@ -63,7 +63,7 @@ public class PluginRepositoryLoader
         public void run()
         {
             // no internet connection ?
-            if (!NetworkUtil.hasInternetConnection())
+            if (!NetworkUtil.hasInternetAccess())
             {
                 failed = true;
                 return;
@@ -119,7 +119,7 @@ public class PluginRepositoryLoader
                 if (processor.hasWaitingTasks())
                     return;
                 // internet connection lost --> failed
-                if (!NetworkUtil.hasInternetConnection())
+                if (!NetworkUtil.hasInternetAccess())
                 {
                     failed = true;
                     return;
@@ -145,7 +145,7 @@ public class PluginRepositoryLoader
                 if (processor.hasWaitingTasks())
                     return;
                 // internet connection lost --> failed
-                if (!NetworkUtil.hasInternetConnection())
+                if (!NetworkUtil.hasInternetAccess())
                 {
                     failed = true;
                     return;
@@ -320,7 +320,7 @@ public class PluginRepositoryLoader
         // error while retrieving identifiers ?
         if (idents == null)
         {
-            if (!NetworkUtil.hasInternetConnection())
+            if (!NetworkUtil.hasInternetAccess())
                 System.out.println("You are not connected to internet.");
             else
                 System.out.println("Can't access repository : " + repos.getName() + " - " + repos.getLocation());

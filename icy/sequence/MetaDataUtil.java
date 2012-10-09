@@ -242,59 +242,59 @@ public class MetaDataUtil
     }
 
     /**
-     * Returns X pixel size of the specified image serie.
+     * Returns X pixel size (in µm) of the specified image serie.
      */
-    public static double getPixelSizeX(OMEXMLMetadataImpl metaData, int serie)
+    public static double getPixelSizeX(OMEXMLMetadataImpl metaData, int serie, double defaultValue)
     {
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return OMEUtil.getValue(pix.getPhysicalSizeX(), 1d, false);
+            return OMEUtil.getValue(pix.getPhysicalSizeX(), defaultValue, false);
 
         return 1d;
     }
 
     /**
-     * Returns Y pixel size of the specified image serie.
+     * Returns Y pixel size (in µm) of the specified image serie.
      */
-    public static double getPixelSizeY(OMEXMLMetadataImpl metaData, int serie)
+    public static double getPixelSizeY(OMEXMLMetadataImpl metaData, int serie, double defaultValue)
     {
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return OMEUtil.getValue(pix.getPhysicalSizeY(), 1d, false);
+            return OMEUtil.getValue(pix.getPhysicalSizeY(), defaultValue, false);
 
         return 1d;
     }
 
     /**
-     * Returns Z pixel size of the specified image serie.
+     * Returns Z pixel size (in µm) of the specified image serie.
      */
-    public static double getPixelSizeZ(OMEXMLMetadataImpl metaData, int serie)
+    public static double getPixelSizeZ(OMEXMLMetadataImpl metaData, int serie, double defaultValue)
     {
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return OMEUtil.getValue(pix.getPhysicalSizeZ(), 1d, false);
+            return OMEUtil.getValue(pix.getPhysicalSizeZ(), defaultValue, false);
 
         return 1d;
     }
 
     /**
-     * Returns T time size of the specified image serie.
+     * Returns T time size (in second) of the specified image serie.
      */
-    public static double getTimeInterval(OMEXMLMetadataImpl metaData, int serie)
+    public static double getTimeInterval(OMEXMLMetadataImpl metaData, int serie, double defaultValue)
     {
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return TypeUtil.getDouble(pix.getTimeIncrement(), 1d, false);
+            return TypeUtil.getDouble(pix.getTimeIncrement(), defaultValue, false);
 
         return 1d;
     }
 
     /**
-     * Set X pixel size of the specified image serie.
+     * Set X pixel size (in µm) of the specified image serie.
      */
     public static void setPixelSizeX(OMEXMLMetadataImpl metaData, int serie, double value)
     {
@@ -302,7 +302,7 @@ public class MetaDataUtil
     }
 
     /**
-     * Set X pixel size of the specified image serie.
+     * Set Y pixel size (in µm) of the specified image serie.
      */
     public static void setPixelSizeY(OMEXMLMetadataImpl metaData, int serie, double value)
     {
@@ -310,7 +310,7 @@ public class MetaDataUtil
     }
 
     /**
-     * Set X pixel size of the specified image serie.
+     * Set Z pixel size (in µm) of the specified image serie.
      */
     public static void setPixelSizeZ(OMEXMLMetadataImpl metaData, int serie, double value)
     {
@@ -318,7 +318,7 @@ public class MetaDataUtil
     }
 
     /**
-     * Set T time resolution of the specified image serie.
+     * Set T time resolution (in second) of the specified image serie.
      */
     public static void setTimeInterval(OMEXMLMetadataImpl metaData, int serie, double value)
     {
@@ -506,6 +506,12 @@ public class MetaDataUtil
         for (int c = 0; c < sizeC; c++)
             channelNames.add(getChannelName(metadata, 0, c));
 
+        // save pixel size and time interval informations
+        final double pixelSizeX = MetaDataUtil.getPixelSizeX(metadata, 0, 1d);
+        final double pixelSizeY = MetaDataUtil.getPixelSizeY(metadata, 0, 1d);
+        final double pixelSizeZ = MetaDataUtil.getPixelSizeZ(metadata, 0, 1d);
+        final double timeInterval = MetaDataUtil.getTimeInterval(metadata, 0, 0.1d);
+
         // init pixels object as we set specific size here
         ome.getImage(0).setPixels(new Pixels());
 
@@ -515,15 +521,21 @@ public class MetaDataUtil
             metadata.setImageName("Sample", 0);
 
         metadata.setPixelsID(MetadataTools.createLSID("Pixels", 0), 0);
-        // prefer big endian as JVM is actually big endian
+        // prefer big endian as JVM is big endian
         metadata.setPixelsBinDataBigEndian(Boolean.TRUE, 0, 0);
         metadata.setPixelsDimensionOrder(DimensionOrder.XYCZT, 0);
         metadata.setPixelsType(dataType.toPixelType(), 0);
-        metadata.setPixelsSizeX(new PositiveInteger(Integer.valueOf(sizeX)), 0);
-        metadata.setPixelsSizeY(new PositiveInteger(Integer.valueOf(sizeY)), 0);
-        metadata.setPixelsSizeC(new PositiveInteger(Integer.valueOf(sizeC)), 0);
-        metadata.setPixelsSizeZ(new PositiveInteger(Integer.valueOf(sizeZ)), 0);
-        metadata.setPixelsSizeT(new PositiveInteger(Integer.valueOf(sizeT)), 0);
+        metadata.setPixelsSizeX(OMEUtil.getPositiveInteger(sizeX), 0);
+        metadata.setPixelsSizeY(OMEUtil.getPositiveInteger(sizeY), 0);
+        metadata.setPixelsSizeC(OMEUtil.getPositiveInteger(sizeC), 0);
+        metadata.setPixelsSizeZ(OMEUtil.getPositiveInteger(sizeZ), 0);
+        metadata.setPixelsSizeT(OMEUtil.getPositiveInteger(sizeT), 0);
+
+        // restore pixel size and time interval informations
+        metadata.setPixelsPhysicalSizeX(OMEUtil.getPositiveFloat(pixelSizeX), 0);
+        metadata.setPixelsPhysicalSizeY(OMEUtil.getPositiveFloat(pixelSizeY), 0);
+        metadata.setPixelsPhysicalSizeZ(OMEUtil.getPositiveFloat(pixelSizeZ), 0);
+        metadata.setPixelsTimeIncrement(timeInterval, 0);
 
         if (separateChannel)
         {

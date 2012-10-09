@@ -134,7 +134,7 @@ public class PluginInstaller implements Runnable
     {
         if ((plugin != null) && isEnabled())
         {
-            if (!NetworkUtil.hasInternetConnection())
+            if (!NetworkUtil.hasInternetAccess())
             {
                 new FailedAnnounceFrame("Cannot install '" + plugin.getName()
                         + "' plugin : you are not connected to Internet.", 10);

@@ -20,12 +20,12 @@ package icy.gui.lut;
 
 import icy.gui.math.HistogramPanel;
 import icy.gui.math.HistogramPanel.HistogramPanelListener;
-import icy.gui.util.FontUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.lut.LUTBand;
 import icy.image.lut.LUTBandEvent;
 import icy.image.lut.LUTBandEvent.LUTBandEventType;
 import icy.image.lut.LUTBandListener;
+import icy.math.MathUtil;
 import icy.math.Scaler;
 import icy.sequence.Sequence;
 import icy.system.thread.SingleProcessor;
@@ -94,7 +94,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
             positionInfo = new Point2D.Double();
 
             // we want to display our own background
-            setOpaque(false);
+            // setOpaque(false);
             // dimension (don't change it or you will regret !)
             setMinimumSize(new Dimension(100, 100));
             setPreferredSize(new Dimension(240, 100));
@@ -197,7 +197,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         {
             updateHisto();
 
-            GraphicsUtil.paintIcyBackGround(this, g);
+            // GraphicsUtil.paintIcyBackGround(this, g);
 
             super.paintComponent(g);
 
@@ -212,31 +212,23 @@ public class ScalerViewer extends JPanel implements LUTBandListener
                     final int bottom = hRange + getClientY();
                     final int y = bottom - (int) (positionInfo.getY() * hRange);
 
-                    g2.setColor(Color.green);
+                    g2.setColor(ColorUtil.xor(getForeground()));
                     g2.drawLine(x, bottom, x, y);
                 }
 
                 displayBounds(g2);
 
-                // string display
-                g2.setFont(FontUtil.setSize(g2.getFont(), 10));
-                g2.setFont(FontUtil.setStyle(g2.getFont(), Font.BOLD));
-
                 if (!StringUtil.isEmpty(message))
-                    drawString(g2, message, 10, 14);
+                {
+                    // string display
+                    g2.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+                    GraphicsUtil.drawHint(g2, message, 10, 4, getForeground(), getBackground());
+                }
             }
             finally
             {
                 g2.dispose();
             }
-        }
-
-        private void drawString(Graphics g, String str, int x, int y)
-        {
-            g.setColor(Color.black);
-            g.drawString(str, x + 1, y + 1);
-            g.setColor(Color.green);
-            g.drawString(str, x, y);
         }
 
         /**
@@ -367,7 +359,23 @@ public class ScalerViewer extends JPanel implements LUTBandListener
             if (getBinNumber() > 0)
             {
                 final int bin = pixelToBin(pos.x);
-                setPositionInfo(pixelToData(pos.x), getBinSize(bin), getAdjustedBinSize(bin));
+                double index = pixelToData(pos.x);
+                final int value = getBinSize(bin);
+
+                // use integer index with integer data type
+                if (isIntegerType())
+                    index = Math.floor(index);
+
+                if (action == actionType.NULL)
+                {
+                    final String valueText = "value : " + MathUtil.roundSignificant(index, 5, true);
+                    final String pixelText = "pixel number : " + value;
+
+                    setMessage(valueText + "\n" + pixelText);
+//                    setToolTipText("<html>" + valueText + "<br>" + pixelText);
+                }
+
+                setPositionInfo(index, value, getAdjustedBinSize(bin));
             }
         }
 
@@ -381,7 +389,20 @@ public class ScalerViewer extends JPanel implements LUTBandListener
             if (getBinNumber() > 0)
             {
                 final int bin = pixelToBin(pos.x);
-                setPositionInfo(pixelToData(pos.x), getBinSize(bin), getAdjustedBinSize(bin));
+                double index = pixelToData(pos.x);
+                final int value = getBinSize(bin);
+
+                // use integer index with integer data type
+                if (isIntegerType())
+                    index = Math.floor(index);
+
+                final String valueText = "value : " + MathUtil.roundSignificant(index, 5, true);
+                final String pixelText = "pixel number : " + value;
+
+                setMessage(valueText + "\n" + pixelText);
+//                setToolTipText("<html>" + valueText + "<br>" + pixelText);
+
+                setPositionInfo(index, value, getAdjustedBinSize(bin));
             }
         }
 
@@ -390,7 +411,6 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         {
 
         }
-
     }
 
     /**

@@ -19,7 +19,7 @@ import icy.main.Icy;
 import icy.network.IRCClient;
 import icy.network.IRCEventListenerImpl;
 import icy.network.NetworkUtil;
-import icy.network.NetworkUtil.NetworkConnectionListener;
+import icy.network.NetworkUtil.InternetAccessListener;
 import icy.preferences.ChatPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
@@ -73,7 +73,7 @@ import javax.swing.text.StyledDocument;
 import org.schwering.irc.lib.IRCModeParser;
 import org.schwering.irc.lib.IRCUser;
 
-public class ChatPanel extends ExternalizablePanel implements NetworkConnectionListener
+public class ChatPanel extends ExternalizablePanel implements InternetAccessListener
 {
     /**
      * 
@@ -557,7 +557,7 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
 
                 case 366:
                     // end of user list
-                    userList.setListData(tmpUserList.toArray());
+                    userList.setListData(tmpUserList.toArray(new String[tmpUserList.size()]));
                     tmpUserList.clear();
                     break;
 
@@ -665,7 +665,7 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
      */
     CloseableTabbedPane tabPane;
     JScrollPane usersScrollPane;
-    JList userList;
+    JList<String> userList;
     JTextField sendEditor;
     JTextField txtNickName;
     IcyToggleButton connectButton;
@@ -778,10 +778,10 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
         refreshDesktopOverlayState();
 
         // call default internet connection callback to process auto connect
-        if (NetworkUtil.hasInternetConnection())
-            internetConnected();
+        if (NetworkUtil.hasInternetAccess())
+            internetUp();
 
-        NetworkUtil.addNetworkConnectionListener(this);
+        NetworkUtil.addInternetAccessListener(this);
     }
 
     public boolean isConnected()
@@ -932,7 +932,7 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
         lblUtilisateur.setHorizontalAlignment(SwingConstants.CENTER);
         usersScrollPane.setColumnHeaderView(lblUtilisateur);
 
-        userList = new JList();
+        userList = new JList<String>();
         userList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         userList.addMouseListener(new MouseAdapter()
         {
@@ -1035,7 +1035,7 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
             {
                 if (connectButton.isSelected())
                 {
-                    if (!NetworkUtil.hasInternetConnection())
+                    if (!NetworkUtil.hasInternetAccess())
                     {
                         new AnnounceFrame("You need internet connection to connect to the chat.", 10);
                         connectButton.setSelected(false);
@@ -1459,29 +1459,15 @@ public class ChatPanel extends ExternalizablePanel implements NetworkConnectionL
     }
 
     @Override
-    public void networkConnected()
+    public void internetUp()
     {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void networkDisconnected()
-    {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void internetConnected()
-    {
-        if (ChatPreferences.getAutoConnect())
+        if (!isConnected() && ChatPreferences.getAutoConnect())
             connect();
     }
 
     @Override
-    public void internetDisconnected()
+    public void internetDown()
     {
-        disconnect("Connection lost");
+        // disconnect("Connection lost");
     }
 }

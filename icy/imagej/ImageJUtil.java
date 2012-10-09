@@ -88,15 +88,15 @@ public class ImageJUtil
             cal.pixelHeight = psy;
             cal.pixelDepth = psz;
             // default unit size icy
-            cal.setUnit("mm");
+            cal.setUnit("µm");
         }
 
         final double ti = seq.getTimeInterval();
         // different from default value
-        if (ti != 1d)
+        if (ti != 0.1d)
         {
             cal.frameInterval = ti;
-            cal.setTimeUnit("msec");
+            cal.setTimeUnit("sec");
         }
 
         image.setDimensions(seq.getSizeC(), seq.getSizeZ(), seq.getSizeT());

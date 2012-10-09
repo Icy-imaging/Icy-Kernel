@@ -30,6 +30,8 @@ import java.awt.geom.Rectangle2D;
 import org.w3c.dom.Node;
 
 /**
+ * ROI 2D Line.
+ * 
  * @author Stephane
  */
 public class ROI2DLine extends ROI2DShape
@@ -201,4 +203,5 @@ public class ROI2DLine extends ROI2DShape
         return true;
     }
 
+   
 }

@@ -665,8 +665,8 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * return true if specified point coordinates overlap a ROI (control) point<br>
-     * used for roi manipulation
+     * Return true if specified point coordinates overlap a ROI control point (used for roi
+     * manipulation).
      */
     public abstract boolean isOverPoint(IcyCanvas canvas, double x, double y);
 
@@ -863,7 +863,7 @@ public abstract class ROI2D extends ROI
     public abstract boolean intersects(double x, double y, double w, double h);
 
     /**
-     * Get the roi as a BooleanMask2D object.<br>
+     * Get the {@link BooleanMask2D} object representing the roi.<br>
      * It contains the rectangle mask bounds and the associated boolean array mask.<br>
      * if the pixel (x,y) is contained in the roi then result.mask[(y * w) + x] = true<br>
      * if the pixel (x,y) is not contained in the roi then result.mask[(y * w) + x] = false
@@ -871,14 +871,14 @@ public abstract class ROI2D extends ROI
      * @param inclusive
      *        If true then all partially contained (intersected) pixels are included in the mask.
      */
-    public BooleanMask2D getAsBooleanMask(boolean inclusive)
+    public BooleanMask2D getBooleanMask(boolean inclusive)
     {
         final Rectangle bounds = getBounds();
-        return new BooleanMask2D(bounds, getAsBooleanMask(bounds, inclusive));
+        return new BooleanMask2D(bounds, getBooleanMask(bounds, inclusive));
     }
 
     /**
-     * Get the roi as a boolean bitmap mask for the specified rectangular area.<br>
+     * Get the boolean bitmap mask for the specified rectangular area of the roi.<br>
      * if the pixel (x,y) is contained in the roi then result[(y * w) + x] = true<br>
      * if the pixel (x,y) is not contained in the roi then result[(y * w) + x] = false
      * 
@@ -887,13 +887,13 @@ public abstract class ROI2D extends ROI
      * @param inclusive
      *        If true then all partially contained (intersected) pixels are included in the mask.
      */
-    public boolean[] getAsBooleanMask(Rectangle rect, boolean inclusive)
+    public boolean[] getBooleanMask(Rectangle rect, boolean inclusive)
     {
-        return getAsBooleanMask(rect.x, rect.y, rect.width, rect.height, inclusive);
+        return getBooleanMask(rect.x, rect.y, rect.width, rect.height, inclusive);
     }
 
     /**
-     * Get the roi as a boolean bitmap mask for the specified rectangular area.<br>
+     * Get the boolean bitmap mask for the specified rectangular area of the roi.<br>
      * if the pixel (x,y) is contained in the roi then result[(y * w) + x] = true<br>
      * if the pixel (x,y) is not contained in the roi then result[(y * w) + x] = false
      * 
@@ -909,7 +909,7 @@ public abstract class ROI2D extends ROI
      *        If true then all partially contained (intersected) pixels are included in the mask.
      * @return the boolean bitmap mask
      */
-    public boolean[] getAsBooleanMask(int x, int y, int w, int h, boolean inclusive)
+    public boolean[] getBooleanMask(int x, int y, int w, int h, boolean inclusive)
     {
         final boolean[] result = new boolean[w * h];
 
@@ -930,31 +930,31 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * Get the roi as a BooleanMask2D object.<br>
+     * Get the {@link BooleanMask2D} object representing the roi.<br>
      * It contains the rectangle mask bounds and the associated boolean array mask.<br>
      * if the pixel (x,y) is contained in the roi then result.mask[(y * w) + x] = true<br>
      * if the pixel (x,y) is not contained in the roi then result.mask[(y * w) + x] = false
      */
-    public BooleanMask2D getAsBooleanMask()
+    public BooleanMask2D getBooleanMask()
     {
-        return getAsBooleanMask(false);
+        return getBooleanMask(false);
     }
 
     /**
-     * Get the roi as a bitmap mask for the specified rectangular area.<br>
+     * Get the boolean bitmap mask for the specified rectangular area of the roi.<br>
      * if the pixel (x,y) is contained in the roi then result[(y * w) + x] = true<br>
      * if the pixel (x,y) is not contained in the roi then result[(y * w) + x] = false
      * 
      * @param rect
      *        area we want to retrieve the boolean mask
      */
-    public boolean[] getAsBooleanMask(Rectangle rect)
+    public boolean[] getBooleanMask(Rectangle rect)
     {
-        return getAsBooleanMask(rect, false);
+        return getBooleanMask(rect, false);
     }
 
     /**
-     * Get the roi as a bitmap mask for the specified rectangular area.<br>
+     * Get the boolean bitmap mask for the specified rectangular area of the roi.<br>
      * if the pixel (x,y) is contained in the roi then result[(y * w) + x] = true<br>
      * if the pixel (x,y) is not contained in the roi then result[(y * w) + x] = false
      * 
@@ -968,9 +968,57 @@ public abstract class ROI2D extends ROI
      *        the height of the specified rectangular area
      * @return the bitmap mask
      */
+    public boolean[] getBooleanMask(int x, int y, int w, int h)
+    {
+        return getBooleanMask(x, y, w, h, false);
+    }
+
+    /**
+     * @deprecated Uses {@link #getBooleanMask(boolean)} instead.
+     */
+    public BooleanMask2D getAsBooleanMask(boolean inclusive)
+    {
+        return getBooleanMask(inclusive);
+    }
+
+    /**
+     * @deprecated Uses {@link #getBooleanMask(Rectangle, boolean)} instead.
+     */
+    public boolean[] getAsBooleanMask(Rectangle rect, boolean inclusive)
+    {
+        return getBooleanMask(rect, inclusive);
+    }
+
+    /**
+     * @deprecated Uses {@link #getBooleanMask(int, int, int, int, boolean)} instead.
+     */
+    public boolean[] getAsBooleanMask(int x, int y, int w, int h, boolean inclusive)
+    {
+        return getBooleanMask(x, y, w, h, inclusive);
+    }
+
+    /**
+     * @deprecated Uses {@link #getBooleanMask(boolean)} instead.
+     */
+    public BooleanMask2D getAsBooleanMask()
+    {
+        return getBooleanMask();
+    }
+
+    /**
+     * @deprecated Uses {@link #getBooleanMask(boolean)} instead.
+     */
+    public boolean[] getAsBooleanMask(Rectangle rect)
+    {
+        return getBooleanMask(rect);
+    }
+
+    /**
+     * @deprecated Uses {@link #getBooleanMask(boolean)} instead.
+     */
     public boolean[] getAsBooleanMask(int x, int y, int w, int h)
     {
-        return getAsBooleanMask(x, y, w, h, false);
+        return getBooleanMask(x, y, w, h);
     }
 
     /**
@@ -990,6 +1038,106 @@ public abstract class ROI2D extends ROI
     {
         final Point2D oldPos = getPosition2D();
         translate(newPosition.getX() - oldPos.getX(), newPosition.getY() - oldPos.getY());
+    }
+
+    @Override
+    public boolean contains(double x, double y, double z, double t, double c)
+    {
+        return contains(x, y) && ((this.z == -1) || (this.z == z)) && ((this.t == -1) || (this.t == t))
+                && ((this.c == -1) || (this.c == c));
+    }
+
+    @Override
+    public boolean intersects(double x, double y, double z, double t, double c, double sizeX, double sizeY,
+            double sizeZ, double sizeT, double sizeC)
+    {
+        if ((sizeX == 0d) || (sizeY == 0d) || (sizeZ == 0d) || (sizeT == 0d) || (sizeC == 0d))
+            return false;
+
+        final int zmin = (int) Math.round(z);
+        final double zmax = z + sizeZ;
+        final int tmin = (int) Math.round(t);
+        final double tmax = t + sizeT;
+        final int cmin = (int) Math.round(c);
+        final double cmax = c + sizeC;
+
+        return intersects(x, y, sizeX, sizeY) && ((this.z == -1) || ((this.z >= zmin) && (this.z < zmax)))
+                && ((this.t == -1) || ((this.t >= tmin) && (this.t < tmax)))
+                && ((this.c == -1) || ((this.c >= cmin) && (this.c < cmax)));
+    }
+
+    @Override
+    public double getPerimeter()
+    {
+        --> uses getContour which return an array of point
+                --> then use number of point
+        
+        final BooleanMask2D bmask = getBooleanMask(true);
+        final int w = bmask.bounds.width;
+        final int h = bmask.bounds.height;
+
+        if ((w == 0) || (h == 0))
+            return 0d;
+
+        // naive and approximation by using boolean mask contour
+        double result = 0;
+        final double sq2m1 = Math.sqrt(2d) - 1d;
+
+        // first line
+        for (int x = 0; x < w; x++)
+            if (bmask.mask[x])
+                result++;
+
+        int off = w;
+        for (int y = 1; y < h; y++)
+        {
+            // first pixel
+            if (bmask.mask[off] && !bmask.mask[off - w])
+                result++;
+            if (w > 1)
+            {
+                if (bmask.mask[(off - w) + 1])
+                    result += sq2m1;
+            }
+
+            off++;
+
+            for (int x = 1; x < (w - 1); x++)
+            {
+                // is a contour ? 
+                if (bmask.mask[off] && !bmask.mask[off - w])
+                    result++;
+                // if (bmask.mask[(off -w) + (x - 1)])
+                off++;
+            }
+
+            // last pixel
+            if (w > 1)
+            {
+                if (bmask.mask[off] && !bmask.mask[off - w])
+                    result++;
+                if (bmask.mask[(off - w) - 1])
+                    result += sq2m1;
+                off++;
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public double getVolume()
+    {
+        final BooleanMask2D bmask = getBooleanMask(true);
+
+        // naive and approximation by using boolean mask
+        double result = 0;
+
+        for (int i = 0; i < bmask.bounds.width * bmask.bounds.height; i++)
+            if (bmask.mask[i])
+                result++;
+
+        return result;
     }
 
     @Override

@@ -56,7 +56,7 @@ public class WorkspaceRepositoryLoader
         public void run()
         {
             // no Internet connection ?
-            if (!NetworkUtil.hasInternetConnection())
+            if (!NetworkUtil.hasInternetAccess())
             {
                 failed = true;
                 return;
@@ -178,7 +178,7 @@ public class WorkspaceRepositoryLoader
         }
         else
         {
-            if (!NetworkUtil.hasInternetConnection())
+            if (!NetworkUtil.hasInternetAccess())
                 System.out.println("You are not connected to internet.");
             else
                 System.out.println("Can't access repository '" + repos.getName() + "'");
@@ -228,7 +228,7 @@ public class WorkspaceRepositoryLoader
         // error while retrieving paths ?
         if (paths == null)
         {
-            if (!NetworkUtil.hasInternetConnection())
+            if (!NetworkUtil.hasInternetAccess())
                 System.out.println("You are not connected to internet.");
             else
                 System.out.println("Can't access repository : " + repos.getName() + " - " + repos.getLocation());

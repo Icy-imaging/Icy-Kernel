@@ -8,11 +8,11 @@ import icy.math.ArrayMath;
 import icy.math.Histogram;
 import icy.math.MathUtil;
 import icy.type.collection.array.Array1DUtil;
-import icy.util.ColorUtil;
 
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.EventListener;
@@ -61,7 +61,9 @@ public class HistogramPanel extends BorderedPanel
      * display properties
      */
     boolean logScaling;
+    boolean useLAFColors;
     Color color;
+    Color backgroundColor;
 
     /**
      * ratios
@@ -100,8 +102,10 @@ public class HistogramPanel extends BorderedPanel
         this.integer = integer;
 
         logScaling = true;
+        useLAFColors = true;
         // default drawing color
         color = Color.white;
+        backgroundColor = Color.darkGray;
 
         dataToPixelRatio = 0d;
         pixelToDataRatio = 0d;
@@ -299,9 +303,28 @@ public class HistogramPanel extends BorderedPanel
     }
 
     /**
+     * Returns true if histogram use LAF color scheme.
+     * 
+     * @see #getColor()
+     * @see #getBackgroundColor()
+     */
+    public boolean getUseLAFColors()
+    {
+        return useLAFColors;
+    }
+
+    /**
      * Returns the drawing color
      */
     public Color getColor()
+    {
+        return color;
+    }
+
+    /**
+     * Returns the background color
+     */
+    public Color getBackgroundColor()
     {
         return color;
     }
@@ -387,11 +410,44 @@ public class HistogramPanel extends BorderedPanel
     }
 
     /**
+     * Set to true to use LAF color scheme.
+     * 
+     * @see #setColor()
+     * @see #setBackgroundColor()
+     */
+    public void setUseLAFColors(boolean value)
+    {
+        if (useLAFColors != value)
+        {
+            useLAFColors = value;
+            repaint();
+        }
+    }
+
+    /**
      * Set the drawing color
      */
-    public void setColor(Color color)
+    public void setColor(Color value)
     {
-        this.color = color;
+        if (!color.equals(value))
+        {
+            color = value;
+            if (!useLAFColors)
+                repaint();
+        }
+    }
+
+    /**
+     * Set the background color
+     */
+    public void setBackgroundColor(Color value)
+    {
+        if (!backgroundColor.equals(value))
+        {
+            backgroundColor = value;
+            if (!useLAFColors)
+                repaint();
+        }
     }
 
     protected void buildHistogram()
@@ -529,15 +585,31 @@ public class HistogramPanel extends BorderedPanel
     @Override
     protected void paintComponent(Graphics g)
     {
-        super.paintComponent(g);
-
         // always recalculate ratios as width can change before resize event
         refreshRatios();
 
-        final Color frontColor = color;
-        final Color backColor = ColorUtil.mix(frontColor, Color.black);
+        final Color fc;
+        final Color bc;
 
-        g.setColor(frontColor);
+        if (useLAFColors)
+        {
+            fc = getForeground();
+            bc = getBackground();
+        }
+        else
+        {
+            fc = color;
+            bc = backgroundColor;
+        }
+
+        final Graphics2D g2 = (Graphics2D) g.create();
+
+        g2.setColor(fc);
+        g2.setBackground(bc);
+
+        // background color
+        if (isOpaque())
+            g2.clearRect(0, 0, getWidth(), getHeight());
 
         // not yet computed
         if (histogramData.length != 0)
@@ -560,7 +632,7 @@ public class HistogramPanel extends BorderedPanel
                     else if (index > histoRange)
                         index = histoRange;
 
-                    g.drawLine(i, bottom, i, bottom - (int) Math.round(histogramData[index] * hRange));
+                    g2.drawLine(i, bottom, i, bottom - (int) Math.round(histogramData[index] * hRange));
                 }
             }
         }
@@ -570,10 +642,9 @@ public class HistogramPanel extends BorderedPanel
             final int x = (getWidth() / 2) - 60;
             final int y = (getHeight() / 2) - 20;
 
-            g.setColor(backColor);
-            g.drawString("computing...", x + 1, y);
-            g.setColor(frontColor);
-            g.drawString("computing...", x, y);
+            g2.drawString("computing...", x, y);
         }
+
+        g2.dispose();
     }
 }

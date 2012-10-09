@@ -242,14 +242,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         filename = null;
 
         // default pixel size and time interval
-        if (MetaDataUtil.getPixelSizeX(metaData, 0) == 1d)
+        if (MetaDataUtil.getPixelSizeX(metaData, 0, 1d) == 1d)
             MetaDataUtil.setPixelSizeX(metaData, 0, 1d);
-        if (MetaDataUtil.getPixelSizeY(metaData, 0) == 1d)
+        if (MetaDataUtil.getPixelSizeY(metaData, 0, 1d) == 1d)
             MetaDataUtil.setPixelSizeY(metaData, 0, 1d);
-        if (MetaDataUtil.getPixelSizeZ(metaData, 0) == 1d)
+        if (MetaDataUtil.getPixelSizeZ(metaData, 0, 1d) == 1d)
             MetaDataUtil.setPixelSizeZ(metaData, 0, 1d);
-        if (MetaDataUtil.getTimeInterval(metaData, 0) == 1d)
-            MetaDataUtil.setTimeInterval(metaData, 0, 1d);
+        if (MetaDataUtil.getTimeInterval(metaData, 0, 0.1d) == 0.1d)
+            MetaDataUtil.setTimeInterval(metaData, 0, 0.1d);
 
         volumetricImages = new TreeMap<Integer, VolumetricImage>();
         painters = new HashSet<Painter>();
@@ -270,7 +270,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Creates a sequence with specified name and containing the specified image
      */
-    public Sequence(String name, IcyBufferedImage image)
+    public Sequence(String name, BufferedImage image)
     {
         this((OMEXMLMetadataImpl) null, name);
 
@@ -288,7 +288,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Creates a sequence containing the specified image
      */
-    public Sequence(IcyBufferedImage image)
+    public Sequence(BufferedImage image)
     {
         this((OMEXMLMetadataImpl) null, null);
 
@@ -560,39 +560,39 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns X pixel size (in mm)
+     * Returns X pixel size (in µm to be OME compatible)
      */
     public double getPixelSizeX()
     {
-        return MetaDataUtil.getPixelSizeX(metaData, 0);
+        return MetaDataUtil.getPixelSizeX(metaData, 0, 1d);
     }
 
     /**
-     * Returns Y pixel size (in mm)
+     * Returns Y pixel size (in µm to be OME compatible)
      */
     public double getPixelSizeY()
     {
-        return MetaDataUtil.getPixelSizeY(metaData, 0);
+        return MetaDataUtil.getPixelSizeY(metaData, 0, 1d);
     }
 
     /**
-     * Returns Z pixel size (in mm)
+     * Returns Z pixel size (in µm to be OME compatible)
      */
     public double getPixelSizeZ()
     {
-        return MetaDataUtil.getPixelSizeZ(metaData, 0);
+        return MetaDataUtil.getPixelSizeZ(metaData, 0, 1d);
     }
 
     /**
-     * Returns T time size (in ms)
+     * Returns T time size (in second OME compatible)
      */
     public double getTimeInterval()
     {
-        return MetaDataUtil.getTimeInterval(metaData, 0);
+        return MetaDataUtil.getTimeInterval(metaData, 0, 0.1d);
     }
 
     /**
-     * Set X pixel size (in mm)
+     * Set X pixel size (in µm to be OME compatible)
      */
     public void setPixelSizeX(double value)
     {
@@ -604,7 +604,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Set Y pixel size (in mm)
+     * Set Y pixel size (in µm to be OME compatible)
      */
     public void setPixelSizeY(double value)
     {
@@ -616,7 +616,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Set Z pixel size (in mm)
+     * Set Z pixel size (in µm to be OME compatible)
      */
     public void setPixelSizeZ(double value)
     {
@@ -628,7 +628,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Set T time resolution (in ms)
+     * Set T time resolution (in second to be OME compatible)
      */
     public void setTimeInterval(double value)
     {

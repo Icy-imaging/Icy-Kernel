@@ -30,6 +30,8 @@ import icy.roi.ROIEvent.ROIEventType;
 import icy.roi.ROIEvent.ROIPointEventType;
 import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
+import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle5D;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
@@ -726,6 +728,88 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 setSelected(false, false);
         }
     }
+
+    /**
+     * Tests if a specified 5D point is inside the ROI.
+     * 
+     * @return <code>true</code> if the specified <code>Point5D</code> is inside the boundary of the
+     *         <code>ROI</code>; <code>false</code> otherwise.
+     */
+    public abstract boolean contains(double x, double y, double z, double t, double c);
+
+    /**
+     * Tests if a specified {@link Point5D} is inside the ROI.
+     * 
+     * @param p
+     *        the specified <code>Point5D</code> to be tested
+     * @return <code>true</code> if the specified <code>Point2D</code> is inside the boundary of the
+     *         <code>ROI</code>; <code>false</code> otherwise.
+     */
+    public boolean contains(Point5D p)
+    {
+        return contains(p.getX(), p.getY(), p.getZ(), p.getT(), p.getC());
+    }
+
+    /**
+     * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
+     * rectangular area. The rectangular area is considered to intersect the <code>ROI</code> if any
+     * point is contained in both the interior of the <code>ROI</code> and the specified rectangular
+     * area.
+     * <p>
+     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively
+     * return {@code true} when:
+     * <ul>
+     * <li>there is a high probability that the rectangular area and the <code>ROI</code> intersect,
+     * but
+     * <li>the calculations to accurately determine this intersection are prohibitively expensive.
+     * </ul>
+     * This means that for some {@code ROIs} this method might return {@code true} even though the
+     * rectangular area does not intersect the {@code ROI}.
+     * 
+     * @return <code>true</code> if the interior of the <code>ROI</code> and the interior of the
+     *         rectangular area intersect, or are both highly likely to intersect and intersection
+     *         calculations would be too expensive to perform; <code>false</code> otherwise.
+     */
+    public abstract boolean intersects(double x, double y, double z, double t, double c, double sizeX, double sizeY,
+            double sizeZ, double sizeT, double sizeC);
+
+    /**
+     * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
+     * rectangular area. The rectangular area is considered to intersect the <code>ROI</code> if any
+     * point is contained in both the interior of the <code>ROI</code> and the specified rectangular
+     * area.
+     * <p>
+     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively
+     * return {@code true} when:
+     * <ul>
+     * <li>there is a high probability that the rectangular area and the <code>ROI</code> intersect,
+     * but
+     * <li>the calculations to accurately determine this intersection are prohibitively expensive.
+     * </ul>
+     * This means that for some {@code ROIs} this method might return {@code true} even though the
+     * rectangular area does not intersect the {@code ROI}.
+     * 
+     * @return <code>true</code> if the interior of the <code>ROI</code> and the interior of the
+     *         rectangular area intersect, or are both highly likely to intersect and intersection
+     *         calculations would be too expensive to perform; <code>false</code> otherwise.
+     */
+    public boolean intersects(Rectangle5D r)
+    {
+        return intersects(r.getX(), r.getY(), r.getZ(), r.getT(), r.getC(), r.getSizeX(), r.getSizeY(), r.getSizeZ(),
+                r.getSizeT(), r.getSizeC());
+    }
+
+    /**
+     * Return perimeter of ROI in pixels.<br>
+     * Override this method to adapt and optimize for a specific ROI.
+     */
+    public abstract double getPerimeter();
+
+    /**
+     * Return volume of ROI in pixels.<br>
+     * Override this method to adapt and optimize for a specific ROI.
+     */
+    public abstract double getVolume();
 
     public void setMousePos(Point2D pos)
     {

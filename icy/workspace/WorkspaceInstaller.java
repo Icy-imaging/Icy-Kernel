@@ -151,7 +151,7 @@ public class WorkspaceInstaller implements Runnable
     {
         if (workspace != null)
         {
-            if (!NetworkUtil.hasInternetConnection())
+            if (!NetworkUtil.hasInternetAccess())
             {
                 new FailedAnnounceFrame("Cannot install '" + workspace.getName()
                         + "' workspace : you are not connected to Internet.", 10);

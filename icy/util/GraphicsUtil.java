@@ -137,7 +137,11 @@ public class GraphicsUtil
             return;
 
         final Color color = g.getColor();
-        final Color shadowColor = ColorUtil.mix(color, Color.black);
+        final Color shadowColor;
+        if (ColorUtil.getLuminance(color) > 128)
+            shadowColor = ColorUtil.sub(color, Color.gray);
+        else
+            shadowColor = ColorUtil.add(color, Color.gray);
         final Rectangle2D textRect = getStringBounds(g, "M");
 
         // get height for a single line of text
@@ -252,7 +256,7 @@ public class GraphicsUtil
         final Rectangle2D stringRect = getStringBounds(g, text);
         // calculate hint rect
         final RoundRectangle2D backgroundRect = new RoundRectangle2D.Double(x, y, (int) (stringRect.getWidth() + 10),
-                (int) (stringRect.getHeight() + 8), 5, 5);
+                (int) (stringRect.getHeight() + 8), 8, 8);
 
         g2.setStroke(new BasicStroke(1.3f));
         // draw translucent background

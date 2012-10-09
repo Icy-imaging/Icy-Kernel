@@ -295,16 +295,16 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
 
         // enable anti alias for better rendering
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
+
         GeneralPath polyline = null;
-        
+
         if (cmb.isRawData()) // the LUT is defined directly, without control points
         {
             final int x = getClientX();
             final int w = getClientWidth();
-            
-        	polyline = new GeneralPath(GeneralPath.WIND_EVEN_ODD, w);
-        	
+
+            polyline = new GeneralPath(GeneralPath.WIND_EVEN_ODD, w);
+
             int intensity = valueToPix(cmb.map[pixToIndex(0)]);
             polyline.moveTo(x, intensity);
 
@@ -314,19 +314,20 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
                 polyline.lineTo(i, intensity);
             }
         }
-        else // the LUT is defined through control points, use them.
+        else
+        // the LUT is defined through control points, use them.
         {
-        	polyline = new GeneralPath(GeneralPath.WIND_EVEN_ODD, cmb.getControlPointCount());
-        	
-        	ArrayList<ControlPoint> controlPoints = cmb.getControlPoints();
+            polyline = new GeneralPath(GeneralPath.WIND_EVEN_ODD, cmb.getControlPointCount());
+
+            ArrayList<ControlPoint> controlPoints = cmb.getControlPoints();
             int x = getPixelPosX(controlPoints.get(0));
             int y = getPixelPosY(controlPoints.get(0));
             polyline.moveTo(x, y);
 
             for (int i = 1; i < cmb.getControlPointCount(); i++)
             {
-            	x = getPixelPosX(controlPoints.get(i));
-                y = getPixelPosY(controlPoints.get(i));    
+                x = getPixelPosX(controlPoints.get(i));
+                y = getPixelPosY(controlPoints.get(i));
                 polyline.lineTo(x, y);
             }
         }
@@ -928,6 +929,8 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
             value = pixToValue(pos.y);
         }
 
+//        setToolTipText("<html>" + "index : " + index + "<br>" + "value : " + value);
+
         colormapPositionChanged(index, value);
     }
 
@@ -1062,5 +1065,4 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         updateCurrentElements(pos);
         updateColormapPositionInfo(pos);
     }
-
 }

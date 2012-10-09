@@ -252,11 +252,19 @@ public class ColorUtil
     }
 
     /**
-     * Sub 2 colors
+     * Subtract 2 colors
      */
     public static Color sub(Color c1, Color c2)
     {
         return sub(c1, c2, false);
+    }
+
+    /**
+     * Get opposite (XORed) color
+     */
+    public static Color xor(Color c)
+    {
+        return new Color(c.getRed() ^ 0xFF, c.getGreen() ^ 0xFF, c.getBlue() ^ 0xFF, c.getAlpha());
     }
 
     /**
