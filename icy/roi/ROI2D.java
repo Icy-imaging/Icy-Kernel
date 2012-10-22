@@ -1069,8 +1069,8 @@ public abstract class ROI2D extends ROI
     @Override
     public double getPerimeter()
     {
-        --> uses getContour which return an array of point
-                --> then use number of point
+		// --> uses getContour which return an array of point
+		// --> then use number of point
         
         final BooleanMask2D bmask = getBooleanMask(true);
         final int w = bmask.bounds.width;
