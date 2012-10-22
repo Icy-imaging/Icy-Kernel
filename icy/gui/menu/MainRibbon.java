@@ -87,6 +87,11 @@ import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
 import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
 import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPolicies;
 
+import plugins.kernel.searchbar.SearchBar;
+import plugins.kernel.searchbar.gui.SBDisplay;
+import plugins.kernel.searchbar.provider.LocalPluginProvider;
+import plugins.kernel.searchbar.provider.OnlinePluginProvider;
+
 /**
  * This class is used to separate ribbon construction from the ribbon frame
  * 
@@ -1186,6 +1191,11 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
             }
         });
         ribbon.addTaskbarComponent(helpAndInfoButton);
+        SearchBar searchBar = new SearchBar();
+        searchBar.setColumns(14);
+        SBDisplay.registerProvider(LocalPluginProvider.class);
+        SBDisplay.registerProvider(OnlinePluginProvider.class);
+        ribbon.addTaskbarComponent(searchBar);
     }
 
     private void checkPluginsMenuCoherence()
