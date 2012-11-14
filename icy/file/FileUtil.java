@@ -932,4 +932,30 @@ public class FileUtil
 
         return result;
     }
+    
+    /**
+     * Get the Icy Working Directory filename.
+	 * 
+	 * @return The correct Directory or null if an error occurred.
+	 */
+	public static String getIcyWorkingDirectory() 
+	{
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
+		URL packageURL = classLoader.getResource("icy");
+
+        if (packageURL != null) {
+    		// build jar file name, then loop through zipped entries
+    		String jarFileName;
+    		try {
+    			jarFileName = URLDecoder.decode(packageURL.getFile(), "UTF-8");
+    			jarFileName = jarFileName.substring(5, jarFileName.indexOf("!") - "icy.jar".length());
+    			return jarFileName;
+    		} catch (UnsupportedEncodingException e) {
+                // should never happen
+    			e.printStackTrace();
+    		}
+        }
+		return null;
+	}
 }
