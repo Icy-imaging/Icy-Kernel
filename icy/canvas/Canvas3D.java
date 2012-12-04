@@ -989,7 +989,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                 final VtkPainter vp = (VtkPainter) painter;
 
                 for (vtkProp actor : vp.getProps())
-                    renderer.RemoveProp(actor);
+                    VtkUtil.removeProp(renderer, actor);
             }
         }
     }

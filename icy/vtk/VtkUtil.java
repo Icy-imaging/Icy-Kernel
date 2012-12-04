@@ -71,7 +71,7 @@ public class VtkUtil
 
         // actor not yet present in renderer ? --> add it
         if (!VtkUtil.findProp(renderer, prop))
-            renderer.AddProp(prop);
+            renderer.AddViewProp(prop);
     }
 
     /**
@@ -103,6 +103,14 @@ public class VtkUtil
     }
 
     /**
+     * Remove an actor from the specified renderer.
+     */
+    public static void removeProp(vtkRenderer renderer, vtkProp actor)
+    {
+        renderer.RemoveViewProp(actor);
+    }
+
+    /**
      * Return true if the renderer contains the specified actor
      */
     public static boolean findProp(vtkRenderer renderer, vtkProp actor)
@@ -110,7 +118,7 @@ public class VtkUtil
         if ((renderer == null) || (actor == null))
             return false;
 
-        final vtkPropCollection actors = renderer.GetProps();
+        final vtkPropCollection actors = renderer.GetViewProps();
 
         actors.InitTraversal();
         for (int i = 0; i < actors.GetNumberOfItems(); i++)
@@ -413,5 +421,4 @@ public class VtkUtil
 
         return result;
     }
-
 }

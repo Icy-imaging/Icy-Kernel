@@ -625,7 +625,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         {
             return new vtkProp[] {(vtkProp) actor};
         }
-
     }
 
     class Poly3D
