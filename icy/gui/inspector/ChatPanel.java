@@ -665,7 +665,7 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
      */
     CloseableTabbedPane tabPane;
     JScrollPane usersScrollPane;
-    JList<String> userList;
+    JList userList;
     JTextField sendEditor;
     JTextField txtNickName;
     IcyToggleButton connectButton;
@@ -932,7 +932,7 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
         lblUtilisateur.setHorizontalAlignment(SwingConstants.CENTER);
         usersScrollPane.setColumnHeaderView(lblUtilisateur);
 
-        userList = new JList<String>();
+        userList = new JList();
         userList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         userList.addMouseListener(new MouseAdapter()
         {
@@ -1075,7 +1075,7 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
         Component horizontalStrut_5 = Box.createHorizontalStrut(2);
         topPanel.add(horizontalStrut_5);
 
-        desktopOverlayButton = new IcyToggleButton(new IcyIcon("spechbubble_sq_line", 20));
+        desktopOverlayButton = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_CHAT, 20));
         desktopOverlayButton.setFocusPainted(false);
         desktopOverlayButton.setMaximumSize(new Dimension(32, 32));
         desktopOverlayButton.setSelected(ChatPreferences.getDesktopOverlay());

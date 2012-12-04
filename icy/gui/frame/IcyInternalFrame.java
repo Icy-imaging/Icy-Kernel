@@ -20,7 +20,8 @@ import java.beans.PropertyVetoException;
 
 import javax.swing.JInternalFrame;
 import javax.swing.JMenu;
-import javax.swing.JMenuBar;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
 
 import org.pushingpixels.substance.internal.utils.SubstanceInternalFrameTitlePane;
 
@@ -48,7 +49,7 @@ public class IcyInternalFrame extends JInternalFrame
         }
 
         @Override
-        public void actionPerformed(ActionEvent e)
+        public void doAction(ActionEvent e)
         {
             close(false);
         }
@@ -58,8 +59,8 @@ public class IcyInternalFrame extends JInternalFrame
      * internals
      */
     SubstanceInternalFrameTitlePane titlePane = null;
-    JMenuBar systemMenuBar;
-    private MenuCallback systemMenuCallback;
+    // JMenu systemMenu;
+    MenuCallback systemMenuCallback;
     private boolean titleBarVisible;
     private boolean closeItemVisible;
     private boolean initialized = false;
@@ -92,6 +93,17 @@ public class IcyInternalFrame extends JInternalFrame
             }
         });
 
+        addInternalFrameListener(new InternalFrameAdapter()
+        {
+            @Override
+            public void internalFrameClosed(InternalFrameEvent e)
+            {
+                // release the system menu callback as it can lead to some memory leak
+                // (cycling reference)
+                systemMenuCallback = null;
+            }
+        });
+
         setFrameIcon(ResourceUtil.ICON_ICY_16);
         setVisible(false);
 
@@ -112,8 +124,8 @@ public class IcyInternalFrame extends JInternalFrame
         if (pane != null)
             titlePane = pane;
         // update menu
-        if (titlePane != null)
-            systemMenuBar = titlePane.getMenuBar();
+        // if (titlePane != null)
+        // systemMenuBar = titlePane.getMenuBar();
         // refresh system menu whatever
         updateSystemMenu();
     }
@@ -138,7 +150,7 @@ public class IcyInternalFrame extends JInternalFrame
      */
     public void updateSystemMenu()
     {
-        if ((systemMenuBar != null) && (systemMenuBar.getMenuCount() > 0))
+        if ((titlePane != null) && !isClosed())
         {
             final JMenu menu;
 
@@ -151,9 +163,10 @@ public class IcyInternalFrame extends JInternalFrame
             menu.getPopupMenu().setLightWeightPopupEnabled(false);
 
             // rebuild menu
-            systemMenuBar.removeAll();
-            systemMenuBar.add(menu);
-            systemMenuBar.validate();
+            titlePane.setSystemMenu(menu);
+            // systemMenuBar.removeAll();
+            // systemMenuBar.add(menu);
+            // systemMenuBar.validate();
         }
     }
 
@@ -281,7 +294,7 @@ public class IcyInternalFrame extends JInternalFrame
             LookAndFeelUtil.setTitlePane(this, titlePane);
         else
             LookAndFeelUtil.setTitlePane(this, null);
-        
+
         revalidate();
 
         titleBarVisible = value;

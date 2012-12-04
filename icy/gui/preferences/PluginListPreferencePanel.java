@@ -184,7 +184,8 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         });
         ComponentUtil.setFixedSize(refreshButton, buttonsDim);
 
-        documentationButton = new JButton("Help");
+        documentationButton = new JButton("Online doc");
+        documentationButton.setToolTipText("Open the online documentation");
         documentationButton.addActionListener(new ActionListener()
         {
             @Override

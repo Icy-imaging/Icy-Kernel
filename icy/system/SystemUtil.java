@@ -55,26 +55,87 @@ public class SystemUtil
     private static long lastCpu = 0;
     private static int lastCpuLoad = 0;
 
+    /**
+     * Launch specified jar file.
+     * 
+     * @param jarPath
+     *        jar file path.
+     * @param vmArgs
+     *        arguments for the java virtual machine.
+     * @param appArgs
+     *        arguments for jar application.
+     * @param workDir
+     *        working directory.
+     */
+    public static Process execJAR(String jarPath, String vmArgs, String appArgs, String workDir)
+    {
+        return exec("java " + vmArgs + " -jar " + jarPath + " " + appArgs, workDir);
+    }
+
+    /**
+     * Launch specified jar file.
+     * 
+     * @param jarPath
+     *        jar file path.
+     * @param vmArgs
+     *        arguments for the java virtual machine.
+     * @param appArgs
+     *        arguments for jar application.
+     */
     public static Process execJAR(String jarPath, String vmArgs, String appArgs)
     {
         return exec("java " + vmArgs + " -jar " + jarPath + " " + appArgs);
     }
 
+    /**
+     * Launch specified jar file.
+     * 
+     * @param jarPath
+     *        jar file path.
+     * @param appArgs
+     *        arguments for jar application.
+     */
     public static Process execJAR(String jarPath, String appArgs)
     {
         return execJAR(jarPath, "", appArgs);
     }
 
+    /**
+     * Launch specified jar file.
+     * 
+     * @param jarPath
+     *        jar file path.
+     */
     public static Process execJAR(String jarPath)
     {
         return execJAR(jarPath, "", "");
     }
 
+    /**
+     * Execute a system command and return the attached process.
+     * 
+     * @param cmd
+     *        system command to execute.
+     */
     public static Process exec(String cmd)
+    {
+        return exec(cmd, ".");
+    }
+
+    /**
+     * Execute a system command and return the attached process.
+     * 
+     * @param cmd
+     *        system command to execute.
+     * @param dir
+     *        the working directory of the subprocess, or null if the subprocess should inherit the
+     *        working directory of the current process.
+     */
+    public static Process exec(String cmd, String dir)
     {
         try
         {
-            return Runtime.getRuntime().exec(cmd, null, new File("."));
+            return Runtime.getRuntime().exec(cmd, null, new File(dir));
         }
         catch (Exception e)
         {

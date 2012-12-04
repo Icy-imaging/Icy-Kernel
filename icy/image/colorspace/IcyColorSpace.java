@@ -28,7 +28,6 @@ import icy.image.colormap.IcyColorMapEvent;
 import icy.image.colormap.IcyColorMapListener;
 import icy.image.colormap.LinearColorMap;
 import icy.image.colormodel.IcyColorModel;
-import icy.image.colorspace.IcyColorSpaceEvent.IcyColorSpaceEventType;
 import icy.type.DataType;
 import icy.type.collection.array.ArrayUtil;
 
@@ -319,7 +318,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
      */
     public int toRGBUnnorm(final int[] colorvalue)
     {
-        final int numComponents = getNumComponents();
+        final int numComponents = Math.min(getNumComponents(), colorvalue.length);
 
         // default alpha
         float alpha = 1f;
@@ -363,7 +362,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     public float[] toRGB(float[] colorvalue)
     {
         final float[] result = new float[4];
-        final int numComponents = getNumComponents();
+        final int numComponents = Math.min(getNumComponents(), colorvalue.length);
 
         // default alpha
         float alpha = 1f;
@@ -816,7 +815,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
         }
 
         // handle changed via updater object
-        updater.changed(new IcyColorSpaceEvent(this, IcyColorSpaceEventType.CHANGED, component));
+        updater.changed(new IcyColorSpaceEvent(this, component));
     }
 
     /**

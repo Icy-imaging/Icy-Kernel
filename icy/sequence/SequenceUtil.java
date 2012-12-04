@@ -23,10 +23,19 @@ import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
 import icy.image.IcyBufferedImageUtil.FilterType;
 import icy.math.Scaler;
+import icy.roi.ROI;
+import icy.roi.ROI2D;
+import icy.roi.ROI3D;
+import icy.roi.ROI4D;
+import icy.roi.ROI5D;
 import icy.type.DataType;
+import icy.type.rectangle.Rectangle3D;
+import icy.type.rectangle.Rectangle4D;
+import icy.type.rectangle.Rectangle5D;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
 
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -653,41 +662,30 @@ public class SequenceUtil
     public static void reverseT(Sequence sequence)
     {
         final int sizeT = sequence.getSizeT();
+        final int sizeZ = sequence.getSizeZ();
+
+        final Sequence save = new Sequence();
+
+        save.beginUpdate();
+        try
+        {
+            for (int t = 0; t < sizeT; t++)
+                for (int z = 0; z < sizeZ; z++)
+                    save.setImage(t, z, sequence.getImage(t, z));
+        }
+        finally
+        {
+            save.endUpdate();
+        }
 
         sequence.beginUpdate();
         try
         {
-            for (int t = 0; t < (sizeT >> 1); t++)
-            {
-                final int te = sizeT - (t + 1);
+            sequence.removeAllImage();
 
-                // get volume images at position t & te
-                final VolumetricImage vi = sequence.getVolumetricImage(t);
-                final VolumetricImage vie = sequence.getVolumetricImage(te);
-
-                // start by removing old volume image (if any)
-                sequence.removeVolumetricImage(t);
-                sequence.removeVolumetricImage(te);
-
-                // safe volume image copy (TODO : check if we can't direct set volume image
-                // internally)
-                if (vi != null)
-                {
-                    final TreeMap<Integer, IcyBufferedImage> images = vi.getImages();
-
-                    // copy images of volume image at position te
-                    for (Entry<Integer, IcyBufferedImage> entry : images.entrySet())
-                        sequence.setImage(te, entry.getKey().intValue(), entry.getValue());
-                }
-                if (vie != null)
-                {
-                    final TreeMap<Integer, IcyBufferedImage> images = vie.getImages();
-
-                    // copy images of volume image end at position t
-                    for (Entry<Integer, IcyBufferedImage> entry : images.entrySet())
-                        sequence.setImage(t, entry.getKey().intValue(), entry.getValue());
-                }
-            }
+            for (int t = 0; t < sizeT; t++)
+                for (int z = 0; z < sizeZ; z++)
+                    sequence.setImage(sizeT - (t + 1), z, save.getImage(t, z));
         }
         finally
         {
@@ -931,35 +929,35 @@ public class SequenceUtil
     }
 
     /**
-     * Reverse Z slices order
+     * Reverse Z slices order.
      */
     public static void reverseZ(Sequence sequence)
     {
         final int sizeT = sequence.getSizeT();
         final int sizeZ = sequence.getSizeZ();
 
-        sequence.beginUpdate();
+        final Sequence save = new Sequence();
+
+        save.beginUpdate();
         try
         {
             for (int t = 0; t < sizeT; t++)
-            {
-                for (int z = 0; z < (sizeZ >> 1); z++)
-                {
-                    final int ze = sizeZ - (z + 1);
-                    final IcyBufferedImage image1 = sequence.getImage(t, z);
-                    final IcyBufferedImage image2 = sequence.getImage(t, ze);
+                for (int z = 0; z < sizeZ; z++)
+                    save.setImage(t, z, sequence.getImage(t, z));
+        }
+        finally
+        {
+            save.endUpdate();
+        }
 
-                    // set image at new position
-                    if (image1 != null)
-                        sequence.setImage(t, ze, image1);
-                    else
-                        sequence.removeImage(t, ze);
-                    if (image2 != null)
-                        sequence.setImage(t, z, image2);
-                    else
-                        sequence.removeImage(t, z);
-                }
-            }
+        sequence.beginUpdate();
+        try
+        {
+            sequence.removeAllImage();
+
+            for (int t = 0; t < sizeT; t++)
+                for (int z = 0; z < sizeZ; z++)
+                    sequence.setImage(t, sizeZ - (z + 1), save.getImage(t, z));
         }
         finally
         {
@@ -1698,8 +1696,8 @@ public class SequenceUtil
      * Creates a new sequence which is a sub part of the source sequence from the specified
      * coordinates and dimensions.
      */
-    public static Sequence getSubSequence(Sequence source, int startX, int startY, int startZ, int startT, int sizeX,
-            int sizeY, int sizeZ, int sizeT)
+    public static Sequence getSubSequence(Sequence source, int startX, int startY, int startC, int startZ, int startT,
+            int sizeX, int sizeY, int sizeC, int sizeZ, int sizeT)
     {
         final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
 
@@ -1713,7 +1711,8 @@ public class SequenceUtil
                     final IcyBufferedImage img = source.getImage(startT + t, startZ + z);
 
                     if (img != null)
-                        result.setImage(t, z, IcyBufferedImageUtil.getSubImage(img, startX, startY, sizeX, sizeY));
+                        result.setImage(t, z,
+                                IcyBufferedImageUtil.getSubImage(img, startX, startY, startC, sizeX, sizeY, sizeC));
                     else
                         result.setImage(t, z, null);
                 }
@@ -1727,6 +1726,173 @@ public class SequenceUtil
         result.setName(source.getName() + " (crop)");
 
         return result;
+    }
+
+    /**
+     * Creates a new sequence which is a sub part of the source sequence from the specified
+     * coordinates and dimensions.
+     */
+    public static Sequence getSubSequence(Sequence source, int startX, int startY, int startZ, int startT, int sizeX,
+            int sizeY, int sizeZ, int sizeT)
+    {
+        return getSubSequence(source, startX, startY, 0, startZ, startT, sizeX, sizeY, source.getSizeC(), sizeZ, sizeT);
+    }
+
+    /**
+     * Creates a new sequence which is a sub part of the source sequence defined by the specified
+     * {@link ROI}.
+     */
+    public static Sequence getSubSequence(Sequence source, ROI roi)
+    {
+        final int startX, sizeX;
+        final int startY, sizeY;
+        final int startC, sizeC;
+        final int startZ, sizeZ;
+        final int startT, sizeT;
+
+        switch (roi.getDimension())
+        {
+            case 2:
+            {
+                final ROI2D roi2d = (ROI2D) roi;
+                final Rectangle2D rect2d = roi2d.getBounds2D();
+
+                startX = (int) rect2d.getX();
+                startY = (int) rect2d.getY();
+
+                sizeX = (int) Math.ceil(rect2d.getWidth());
+                sizeY = (int) Math.ceil(rect2d.getHeight());
+
+                final int z = roi2d.getT();
+                if (z == -1)
+                {
+                    startZ = 0;
+                    sizeZ = source.getSizeZ();
+                }
+                else
+                {
+                    startZ = z;
+                    sizeZ = 1;
+                }
+
+                final int t = roi2d.getT();
+                if (t == -1)
+                {
+                    startT = 0;
+                    sizeT = source.getSizeT();
+                }
+                else
+                {
+                    startT = t;
+                    sizeT = 1;
+                }
+
+                final int c = roi2d.getC();
+                if (c == -1)
+                {
+                    startC = 0;
+                    sizeC = source.getSizeC();
+                }
+                else
+                {
+                    startC = c;
+                    sizeC = 1;
+                }
+                break;
+            }
+
+            case 3:
+            {
+                final ROI3D roi3d = (ROI3D) roi;
+                final Rectangle3D rect3d = roi3d.getBounds3D();
+
+                startX = (int) rect3d.getX();
+                startY = (int) rect3d.getY();
+                startZ = (int) rect3d.getZ();
+
+                sizeX = (int) Math.ceil(rect3d.getSizeX());
+                sizeY = (int) Math.ceil(rect3d.getSizeY());
+                sizeZ = (int) Math.ceil(rect3d.getSizeZ());
+
+                final int t = roi3d.getT();
+                if (t == -1)
+                {
+                    startT = 0;
+                    sizeT = source.getSizeT();
+                }
+                else
+                {
+                    startT = t;
+                    sizeT = 1;
+                }
+
+                final int c = roi3d.getC();
+                if (c == -1)
+                {
+                    startC = 0;
+                    sizeC = source.getSizeC();
+                }
+                else
+                {
+                    startC = c;
+                    sizeC = 1;
+                }
+                break;
+            }
+
+            case 4:
+            {
+                final ROI4D roi4d = (ROI4D) roi;
+                final Rectangle4D rect4d = roi4d.getBounds4D();
+
+                startX = (int) rect4d.getX();
+                startY = (int) rect4d.getY();
+                startZ = (int) rect4d.getZ();
+                startT = (int) rect4d.getT();
+
+                sizeX = (int) Math.ceil(rect4d.getSizeX());
+                sizeY = (int) Math.ceil(rect4d.getSizeY());
+                sizeZ = (int) Math.ceil(rect4d.getSizeZ());
+                sizeT = (int) Math.ceil(rect4d.getSizeT());
+
+                final int c = roi4d.getC();
+                if (c == -1)
+                {
+                    startC = 0;
+                    sizeC = source.getSizeC();
+                }
+                else
+                {
+                    startC = c;
+                    sizeC = 1;
+                }
+                break;
+            }
+
+            case 5:
+            {
+                final ROI5D roi5d = (ROI5D) roi;
+                final Rectangle5D rect5d = roi5d.getBounds5D();
+
+                startX = (int) rect5d.getX();
+                startY = (int) rect5d.getY();
+                startZ = (int) rect5d.getZ();
+                startT = (int) rect5d.getT();
+                startC = (int) rect5d.getC();
+
+                sizeX = (int) Math.ceil(rect5d.getSizeX());
+                sizeY = (int) Math.ceil(rect5d.getSizeY());
+                sizeZ = (int) Math.ceil(rect5d.getSizeZ());
+                sizeT = (int) Math.ceil(rect5d.getSizeT());
+                sizeC = (int) Math.ceil(rect5d.getSizeC());
+                break;
+            }
+
+            default:
+                return getCopy(source);
+        }
+
+        return getSubSequence(source, startX, startY, startC, startZ, startT, sizeX, sizeY, sizeC, sizeZ, sizeT);
     }
 
     /**

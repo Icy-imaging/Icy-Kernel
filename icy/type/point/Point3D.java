@@ -3,41 +3,309 @@
  */
 package icy.type.point;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-
 /**
+ * Point3D class.<br>
+ * Incomplete implementation (work in progress...)
+ * 
  * @author Stephane
  */
-public class Point3D extends Point3d
+public abstract class Point3D
 {
     /**
+     * Returns the X coordinate of this <code>Point3D</code> in <code>double</code> precision.
      * 
+     * @return the X coordinate of this <code>Point3D</code>.
      */
-    private static final long serialVersionUID = 8749743213894368046L;
+    public abstract double getX();
 
-    public Point3D(double x, double y, double z)
+    /**
+     * Returns the Y coordinate of this <code>Point3D</code> in <code>double</code> precision.
+     * 
+     * @return the Y coordinate of this <code>Point3D</code>.
+     */
+    public abstract double getY();
+
+    /**
+     * Returns the Z coordinate of this <code>Point3D</code> in <code>double</code> precision.
+     * 
+     * @return the Z coordinate of this <code>Point3D</code>.
+     */
+    public abstract double getZ();
+
+    /**
+     * Sets the X coordinate of this <code>Point3D</code> in <code>double</code> precision.
+     */
+    public abstract void setX(double x);
+
+    /**
+     * Sets the Y coordinate of this <code>Point3D</code> in <code>double</code> precision.
+     */
+    public abstract void setY(double y);
+
+    /**
+     * Sets the Z coordinate of this <code>Point3D</code> in <code>double</code> precision.
+     */
+    public abstract void setZ(double z);
+
+    /**
+     * Sets the location of this <code>Point3D</code> to the
+     * specified <code>double</code> coordinates.
+     * 
+     * @param x
+     *        the new X coordinate of this {@code Point3D}
+     * @param y
+     *        the new Y coordinate of this {@code Point3D}
+     * @param z
+     *        the new Z coordinate of this {@code Point3D}
+     */
+    public void setLocation(double x, double y, double z)
     {
-        super(x, y, z);
+        setX(x);
+        setY(y);
+        setZ(z);
     }
 
-    public Point3D(double[] xyz)
+    /**
+     * Sets the location of this <code>Point3D</code> to the same
+     * coordinates as the specified <code>Point3D</code> object.
+     * 
+     * @param p
+     *        the specified <code>Point3D</code> to which to set
+     *        this <code>Point3D</code>
+     */
+    public void setLocation(Point3D p)
     {
-        super(xyz);
+        setLocation(p.getX(), p.getY(), p.getZ());
     }
 
-    public Point3D(Point3d pt)
+    public static class Double extends Point3D
     {
-        super(pt);
+        public double x;
+        public double y;
+        public double z;
+
+        public Double(double x, double y, double z)
+        {
+            super();
+
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public Double(double[] xyz)
+        {
+            final int len = xyz.length;
+
+            if (len > 0)
+                this.x = xyz[0];
+            if (len > 1)
+                this.y = xyz[1];
+            if (len > 2)
+                this.z = xyz[2];
+        }
+
+        public Double()
+        {
+            this(0, 0, 0);
+        }
+
+        @Override
+        public double getX()
+        {
+            return x;
+        }
+
+        @Override
+        public void setX(double x)
+        {
+            this.x = x;
+        }
+
+        @Override
+        public double getY()
+        {
+            return y;
+        }
+
+        @Override
+        public void setY(double y)
+        {
+            this.y = y;
+        }
+
+        @Override
+        public double getZ()
+        {
+            return z;
+        }
+
+        @Override
+        public void setZ(double z)
+        {
+            this.z = z;
+        }
+
+        @Override
+        public void setLocation(double x, double y, double z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
     }
 
-    public Point3D(Point3f pt)
+    public static class Float extends Point3D
     {
-        super(pt);
+        public float x;
+        public float y;
+        public float z;
+
+        public Float(float x, float y, float z)
+        {
+            super();
+
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public Float(float[] xyz)
+        {
+            final int len = xyz.length;
+
+            if (len > 0)
+                this.x = xyz[0];
+            if (len > 1)
+                this.y = xyz[1];
+            if (len > 2)
+                this.z = xyz[2];
+        }
+
+        public Float()
+        {
+            this(0, 0, 0);
+        }
+
+        @Override
+        public double getX()
+        {
+            return x;
+        }
+
+        @Override
+        public void setX(double x)
+        {
+            this.x = (float) x;
+        }
+
+        @Override
+        public double getY()
+        {
+            return y;
+        }
+
+        @Override
+        public void setY(double y)
+        {
+            this.y = (float) y;
+        }
+
+        @Override
+        public double getZ()
+        {
+            return z;
+        }
+
+        @Override
+        public void setZ(double z)
+        {
+            this.z = (float) z;
+        }
+
+        @Override
+        public void setLocation(double x, double y, double z)
+        {
+            this.x = (float) x;
+            this.y = (float) y;
+            this.z = (float) z;
+        }
     }
 
-    public Point3D()
+    public static class Integer extends Point3D
     {
-        super();
+        int x;
+        int y;
+        int z;
+
+        public Integer(int x, int y, int z)
+        {
+            super();
+
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public Integer(int[] xyz)
+        {
+            final int len = xyz.length;
+
+            if (len > 0)
+                this.x = xyz[0];
+            if (len > 1)
+                this.y = xyz[1];
+            if (len > 2)
+                this.z = xyz[2];
+        }
+
+        public Integer()
+        {
+            this(0, 0, 0);
+        }
+
+        @Override
+        public double getX()
+        {
+            return x;
+        }
+
+        @Override
+        public void setX(double x)
+        {
+            this.x = (int) x;
+        }
+
+        @Override
+        public double getY()
+        {
+            return y;
+        }
+
+        @Override
+        public void setY(double y)
+        {
+            this.y = (int) y;
+        }
+
+        @Override
+        public double getZ()
+        {
+            return z;
+        }
+
+        @Override
+        public void setZ(double z)
+        {
+            this.z = (int) z;
+        }
+
+        @Override
+        public void setLocation(double x, double y, double z)
+        {
+            this.x = (int) x;
+            this.y = (int) y;
+            this.z = (int) z;
+        }
     }
 }

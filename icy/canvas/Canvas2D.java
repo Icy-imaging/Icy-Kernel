@@ -706,14 +706,13 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         boolean actived;
         boolean handlingMouseMoveEvent;
         private Point startDragPosition;
-        private int startOffsetX;
-        private int startOffsetY;
+        private Point startOffset;
         double curScaleX;
         double curScaleY;
         private double startRotationZ;
         private Cursor previousCursor;
-        private boolean moving;
-        private boolean rotating;
+        boolean moving;
+        boolean rotating;
         boolean hasMouseFocus;
 
         public CanvasView()
@@ -724,6 +723,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             actived = false;
             handlingMouseMoveEvent = false;
             startDragPosition = null;
+            startOffset = null;
             curScaleX = -1;
             curScaleY = -1;
             previousCursor = getCursor();
@@ -858,18 +858,25 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     delta.x = 0;
             }
 
+            translate(startOffset, delta, control);
+        }
+
+        protected void translate(Point startPos, Point delta, boolean control)
+        {
             final Point2D.Double deltaD;
 
             // control button down
             if (control)
                 // drag is scaled by current scales factor
-                deltaD = canvasToImageDelta(delta.x, delta.y, 1d / getScaleX(), 1d / getScaleY(), getRotationZ());
+                // deltaD = canvasToImageDelta(delta.x, delta.y, 1d / getScaleX(), 1d / getScaleY(),
+                // getRotationZ());
+                deltaD = canvasToImageDelta(delta.x * 3, delta.y * 3, 1d, 1d, getRotationZ());
             else
                 // just get rid of rotation factor
                 deltaD = canvasToImageDelta(delta.x, delta.y, 1d, 1d, getRotationZ());
 
             // modify offset with smooth mover
-            setOffset((int) Math.round(startOffsetX + deltaD.x), (int) Math.round(startOffsetY + deltaD.y), true);
+            setOffset((int) Math.round(startPos.x + deltaD.x), (int) Math.round(startPos.y + deltaD.y), true);
         }
 
         protected void updateRot(boolean control, boolean shift)
@@ -965,8 +972,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 // start drag mouse position
                 startDragPosition = (Point) mouseCanvasPos.clone();
                 // store canvas parameters
-                startOffsetX = getOffsetX();
-                startOffsetY = getOffsetY();
+                startOffset = new Point(getOffsetX(), getOffsetY());
                 startRotationZ = getRotationZ();
 
                 // repaint
@@ -1331,7 +1337,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 g2.transform(getTransform());
                 g2.drawImage(img, null, 0, 0);
 
-                if (getDrawLayers())
+                if (isLayersVisible())
                 {
                     final Sequence seq = getSequence();
 
@@ -2767,6 +2773,45 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 e.consume();
                 break;
 
+            case KeyEvent.VK_NUMPAD2:
+                if (!canvasView.moving)
+                {
+                    final Point startPos = new Point(getOffsetX(), getOffsetY());
+                    final Point delta = new Point(0, -getCanvasSizeY() / 4);
+                    canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                    e.consume();
+                }
+                break;
+            case KeyEvent.VK_NUMPAD4:
+                if (!canvasView.moving)
+                {
+                    final Point startPos = new Point(getOffsetX(), getOffsetY());
+                    final Point delta = new Point(getCanvasSizeX() / 4, 0);
+                    canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                    e.consume();
+                }
+                break;
+
+            case KeyEvent.VK_NUMPAD6:
+                if (!canvasView.moving)
+                {
+                    final Point startPos = new Point(getOffsetX(), getOffsetY());
+                    final Point delta = new Point(-getCanvasSizeX() / 4, 0);
+                    canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                    e.consume();
+                }
+                break;
+
+            case KeyEvent.VK_NUMPAD8:
+                if (!canvasView.moving)
+                {
+                    final Point startPos = new Point(getOffsetX(), getOffsetY());
+                    final Point delta = new Point(0, getCanvasSizeY() / 4);
+                    canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                    e.consume();
+                }
+                break;
+
             case KeyEvent.VK_0:
                 setSyncId(0);
                 e.consume();
@@ -2879,7 +2924,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         // save position
         final int prevT = getPositionT();
         final int prevZ = getPositionZ();
-        final boolean dl = drawLayers;
+        final boolean dl = isLayersVisible();
 
         if (dl)
         {

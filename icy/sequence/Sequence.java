@@ -270,6 +270,16 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Creates a sequence with specified name and containing the specified image
      */
+    public Sequence(String name, IcyBufferedImage image)
+    {
+        this((OMEXMLMetadataImpl) null, name);
+
+        addImage(image);
+    }
+
+    /**
+     * Creates a sequence with specified name and containing the specified image
+     */
     public Sequence(String name, BufferedImage image)
     {
         this((OMEXMLMetadataImpl) null, name);
@@ -286,7 +296,18 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Creates a sequence containing the specified image
+     * @deprecated Uses {@link #Sequence(BufferedImage)} instead.
+     */
+    @Deprecated
+    public Sequence(IcyBufferedImage image)
+    {
+        this((OMEXMLMetadataImpl) null, null);
+
+        addImage(image);
+    }
+
+    /**
+     * Creates a sequence containing the specified image.
      */
     public Sequence(BufferedImage image)
     {
@@ -774,6 +795,25 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public SequenceListener[] getListeners()
     {
         return listeners.getListeners(SequenceListener.class);
+    }
+
+    /**
+     * Add the specified {@link icy.sequence.SequenceModel.SequenceModelListener} to listeners list
+     */
+    @Override
+    public void addSequenceModelListener(SequenceModelListener listener)
+    {
+        listeners.add(SequenceModelListener.class, listener);
+    }
+
+    /**
+     * Remove the specified {@link icy.sequence.SequenceModel.SequenceModelListener} from listeners
+     * list
+     */
+    @Override
+    public void removeSequenceModelListener(SequenceModelListener listener)
+    {
+        listeners.remove(SequenceModelListener.class, listener);
     }
 
     /**
@@ -4865,6 +4905,26 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             listener.sequenceClosed(this);
     }
 
+    /**
+     * fire model image changed event
+     */
+    @Override
+    public void fireModelImageChangedEvent()
+    {
+        for (SequenceModelListener listener : listeners.getListeners(SequenceModelListener.class))
+            listener.imageChanged();
+    }
+
+    /**
+     * fire model dimension changed event
+     */
+    @Override
+    public void fireModelDimensionChangedEvent()
+    {
+        for (SequenceModelListener listener : listeners.getListeners(SequenceModelListener.class))
+            listener.dimensionChanged();
+    }
+
     public void beginUpdate()
     {
         updater.beginUpdate();
@@ -5057,10 +5117,15 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                         // refresh sequence channel bounds from images bounds
                         internalUpdateChannelsBounds();
                 }
+
+                // fire SequenceModel event
+                fireModelImageChangedEvent();
                 break;
 
             // do here global process on sequence type change
             case SEQUENCE_TYPE:
+                // fire SequenceModel event
+                fireModelDimensionChangedEvent();
                 break;
 
             // do here global process on sequence colormap change

@@ -19,6 +19,9 @@
 package icy.roi;
 
 import icy.canvas.IcyCanvas;
+import icy.canvas.Layer;
+import icy.type.point.Point4D;
+import icy.type.rectangle.Rectangle4D;
 import icy.util.XMLUtil;
 
 import java.util.ArrayList;
@@ -59,6 +62,32 @@ public abstract class ROI4D extends ROI
         c = -1;
     }
 
+    @Override
+    final public int getDimension()
+    {
+        return 4;
+    }
+
+    /**
+     * Returns the bounding box of the <code>ROI</code>. Note that there is no guarantee that the
+     * returned {@link Rectangle4D} is the smallest bounding box that encloses the <code>ROI</code>,
+     * only that the <code>ROI</code> lies entirely within the indicated <code>Rectangle4D</code>.
+     * 
+     * @return an instance of <code>Rectangle4D</code> that is a bounding box of the
+     *         <code>ROI</code>.
+     */
+    public abstract Rectangle4D getBounds4D();
+
+    /**
+     * Returns the top left corner of the ROI bounds.<br>
+     * 
+     * @see #getBounds4D()
+     */
+    public Point4D getPosition4D()
+    {
+        return getBounds4D().getPosition();
+    }
+
     /**
      * @return the c
      */
@@ -82,25 +111,26 @@ public abstract class ROI4D extends ROI
 
     /**
      * Return true if the ROI is active for the specified canvas.<br>
-     * It internally uses the current canvas C coordinate
+     * It internally uses the current canvas C coordinate and the visible state of the
+     * attached layer.
      */
     public boolean isActiveFor(IcyCanvas canvas)
     {
-        return isActiveFor(canvas.getPositionC());
-    }
+        if (!canvas.isLayersVisible())
+            return false;
 
-    /**
-     * Return true if the ROI is active for the specified coordinate
-     */
-    public boolean isActiveFor(int c)
-    {
-        return isActiveForC(c);
+        final Layer layer = canvas.getLayer(painter);
+
+        if ((layer != null) && layer.isVisible())
+            return isActiveFor(canvas.getPositionC());
+
+        return false;
     }
 
     /**
      * Return true if the ROI is active for the specified C coordinate
      */
-    public boolean isActiveForC(int c)
+    public boolean isActiveFor(int c)
     {
         return (this.c == -1) || (this.c == c);
     }

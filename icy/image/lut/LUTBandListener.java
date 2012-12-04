@@ -21,8 +21,9 @@ package icy.image.lut;
 import java.util.EventListener;
 
 /**
- * @author stephane
+ * @deprecated
  */
+@Deprecated
 public interface LUTBandListener extends EventListener
 {
     public void lutBandChanged(LUTBandEvent e);

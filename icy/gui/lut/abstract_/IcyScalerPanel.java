@@ -24,8 +24,9 @@ import icy.image.lut.LUTBand;
 import javax.swing.JPanel;
 
 /**
- * @author Stephane
+ * @deprecated
  */
+@Deprecated
 public abstract class IcyScalerPanel extends JPanel
 {
     /**

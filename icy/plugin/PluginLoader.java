@@ -217,7 +217,7 @@ public class PluginLoader implements ChangeListener
     }
 
     /**
-     * @deprecated USes {@link #reload()} instead.
+     * @deprecated Uses {@link #reload()} instead.
      */
     @Deprecated
     public static void reload(boolean forceNow)
@@ -717,7 +717,7 @@ public class PluginLoader implements ChangeListener
 
         synchronized (instance.loader)
         {
-            // try to load class and check we have a Plugin class at same time
+            // try to load class
             return instance.loader.loadClass(className);
         }
     }

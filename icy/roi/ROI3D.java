@@ -19,6 +19,9 @@
 package icy.roi;
 
 import icy.canvas.IcyCanvas;
+import icy.canvas.Layer;
+import icy.type.point.Point3D;
+import icy.type.rectangle.Rectangle3D;
 import icy.util.XMLUtil;
 
 import java.util.ArrayList;
@@ -65,6 +68,32 @@ public abstract class ROI3D extends ROI
         c = -1;
     }
 
+    @Override
+    final public int getDimension()
+    {
+        return 3;
+    }
+
+    /**
+     * Returns the bounding box of the <code>ROI</code>. Note that there is no guarantee that the
+     * returned {@link Rectangle3D} is the smallest bounding box that encloses the <code>ROI</code>,
+     * only that the <code>ROI</code> lies entirely within the indicated <code>Rectangle3D</code>.
+     * 
+     * @return an instance of <code>Rectangle3D</code> that is a bounding box of the
+     *         <code>ROI</code>.
+     */
+    public abstract Rectangle3D getBounds3D();
+
+    /**
+     * Returns the top left corner of the ROI bounds.<br>
+     * 
+     * @see #getBounds3D()
+     */
+    public Point3D getPosition3D()
+    {
+        return getBounds3D().getPosition();
+    }
+
     /**
      * @return the t
      */
@@ -109,11 +138,20 @@ public abstract class ROI3D extends ROI
 
     /**
      * Return true if the ROI is active for the specified canvas.<br>
-     * It internally uses the current canvas T, C coordinates
+     * It internally uses the current canvas T, C coordinates and the visible state of the
+     * attached layer.
      */
     public boolean isActiveFor(IcyCanvas canvas)
     {
-        return isActiveFor(canvas.getPositionT(), canvas.getPositionC());
+        if (!canvas.isLayersVisible())
+            return false;
+
+        final Layer layer = canvas.getLayer(painter);
+
+        if ((layer != null) && layer.isVisible())
+            return isActiveFor(canvas.getPositionT(), canvas.getPositionC());
+
+        return false;
     }
 
     /**
@@ -121,23 +159,7 @@ public abstract class ROI3D extends ROI
      */
     public boolean isActiveFor(int t, int c)
     {
-        return isActiveForT(t) && isActiveForC(c);
-    }
-
-    /**
-     * Return true if the ROI is active for the specified T coordinate
-     */
-    public boolean isActiveForT(int t)
-    {
-        return (this.t == -1) || (this.t == t);
-    }
-
-    /**
-     * Return true if the ROI is active for the specified C coordinate
-     */
-    public boolean isActiveForC(int c)
-    {
-        return (this.c == -1) || (this.c == c);
+        return ((this.t == -1) || (this.t == t)) && ((this.c == -1) || (this.c == c));
     }
 
     @Override

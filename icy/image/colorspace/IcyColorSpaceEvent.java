@@ -25,21 +25,20 @@ import icy.common.EventHierarchicalChecker;
  */
 public class IcyColorSpaceEvent implements EventHierarchicalChecker
 {
+    @Deprecated
     public enum IcyColorSpaceEventType
     {
         CHANGED
     }
 
     private final IcyColorSpace colorSpace;
-    private final IcyColorSpaceEventType type;
     private final int component;
 
-    public IcyColorSpaceEvent(IcyColorSpace colorSpace, IcyColorSpaceEventType type, int component)
+    public IcyColorSpaceEvent(IcyColorSpace colorSpace, int component)
     {
         super();
 
         this.colorSpace = colorSpace;
-        this.type = type;
         this.component = component;
     }
 
@@ -56,7 +55,7 @@ public class IcyColorSpaceEvent implements EventHierarchicalChecker
      */
     public IcyColorSpaceEventType getType()
     {
-        return type;
+        return IcyColorSpaceEventType.CHANGED;
     }
 
     /**
@@ -74,7 +73,7 @@ public class IcyColorSpaceEvent implements EventHierarchicalChecker
         {
             final IcyColorSpaceEvent e = (IcyColorSpaceEvent) event;
 
-            return (type == e.getType()) && ((component == -1) || (component == e.getComponent()));
+            return (component == -1) || (component == e.getComponent());
         }
 
         return false;

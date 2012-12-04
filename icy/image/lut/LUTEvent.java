@@ -25,19 +25,26 @@ import icy.common.EventHierarchicalChecker;
  */
 public class LUTEvent implements EventHierarchicalChecker
 {
+    public enum LUTEventType
+    {
+        SCALER_CHANGED, COLORMAP_CHANGED
+    }
+
     private final LUT lut;
     private final int component;
+    private final LUTEventType type;
 
     /**
      * @param lut
      * @param component
      */
-    public LUTEvent(LUT lut, int component)
+    public LUTEvent(LUT lut, int component, LUTEventType type)
     {
         super();
 
         this.lut = lut;
         this.component = component;
+        this.type = type;
     }
 
     /**
@@ -56,6 +63,14 @@ public class LUTEvent implements EventHierarchicalChecker
         return component;
     }
 
+    /**
+     * @return the {@link LUTEventType}
+     */
+    public LUTEventType getType()
+    {
+        return type;
+    }
+
     @Override
     public boolean isEventRedundantWith(EventHierarchicalChecker event)
     {
@@ -63,7 +78,7 @@ public class LUTEvent implements EventHierarchicalChecker
         {
             final LUTEvent e = (LUTEvent) event;
 
-            return (component == -1) || (component == e.getComponent());
+            return (type == e.getType()) && ((component == -1) || (component == e.getComponent()));
         }
 
         return false;

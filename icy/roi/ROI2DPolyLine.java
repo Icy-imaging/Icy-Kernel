@@ -197,6 +197,12 @@ public class ROI2DPolyLine extends ROI2DShape
     }
 
     @Override
+    public double getPerimeter()
+    {
+        return getTotalDistance(getPoints());
+    }
+
+    @Override
     protected void updateShape()
     {
         final Path2D path = getPath();

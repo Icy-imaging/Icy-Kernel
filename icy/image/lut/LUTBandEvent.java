@@ -19,8 +19,9 @@
 package icy.image.lut;
 
 /**
- * @author stephane
+ * @deprecated
  */
+@Deprecated
 public class LUTBandEvent
 {
     public enum LUTBandEventType

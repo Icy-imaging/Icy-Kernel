@@ -24,7 +24,8 @@ import icy.gui.dialog.ConfirmDialog;
 import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.ExitFrame;
-import icy.gui.frame.IcyFrame;
+import icy.gui.frame.IcyExternalFrame;
+import icy.gui.frame.IcyInternalFrame;
 import icy.gui.frame.SplashScreenFrame;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.main.MainFrame;
@@ -66,6 +67,7 @@ import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
+import javax.swing.WindowConstants;
 
 import loci.common.DebugTools;
 import vtk.vtkNativeLibrary;
@@ -89,7 +91,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.2.7.2");
+    public static Version version = new Version("1.2.7.3");
 
     /**
      * Main interface
@@ -467,19 +469,44 @@ public class Icy
                     @Override
                     public void run()
                     {
-                        for (IcyFrame frame : IcyFrame.getAllFrames())
-                            frame.close();
+                        // for (IcyFrame frame : IcyFrame.getAllFrames())
+                        // frame.close();
+                        // close all JInternalFrames
+                        final JDesktopPane desktopPane = Icy.getMainInterface().getDesktopPane();
+                        if (desktopPane != null)
+                        {
+                            for (JInternalFrame frame : desktopPane.getAllFrames())
+                            {
+                                if (frame instanceof IcyInternalFrame)
+                                {
+                                    final IcyInternalFrame iFrame = (IcyInternalFrame) frame;
+                                    iFrame.close(true);
+                                    if (iFrame.getDefaultCloseOperation() != WindowConstants.DISPOSE_ON_CLOSE)
+                                        iFrame.dispose();
+                                }
+                                else
+                                    frame.dispose();
+                            }
+                        }
+
+                        // then close all external frames except main frame
+                        for (JFrame frame : Icy.getMainInterface().getExternalFrames())
+                        {
+                            if (frame != mainFrame)
+                            {
+                                if (frame instanceof IcyExternalFrame)
+                                {
+                                    final IcyExternalFrame iFrame = (IcyExternalFrame) frame;
+                                    iFrame.close();
+                                    if (iFrame.getDefaultCloseOperation() != WindowConstants.DISPOSE_ON_CLOSE)
+                                        iFrame.dispose();
+                                }
+                                else
+                                    frame.dispose();
+                            }
+                        }
                     }
                 });
-                // close all JInternalFrames
-                final JDesktopPane desktopPane = Icy.getMainInterface().getDesktopPane();
-                if (desktopPane != null)
-                    for (JInternalFrame frame : desktopPane.getAllFrames())
-                        frame.dispose();
-                // then close all external frames except main frame
-                for (JFrame frame : Icy.getMainInterface().getExternalFrames())
-                    if (frame != mainFrame)
-                        frame.dispose();
 
                 // stop daemon plugin
                 PluginLoader.stopDaemons();

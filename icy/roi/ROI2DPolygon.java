@@ -151,36 +151,43 @@ public class ROI2DPolygon extends ROI2DShape
     protected void updateShape()
     {
         final Path2D path = getPath();
+        Point2D pos;
 
         path.reset();
 
         // initial move
         if (controlPoints.size() > 0)
         {
-            final Point2D pos = controlPoints.get(0).getPosition();
+            pos = controlPoints.get(0).getPosition();
             path.moveTo(pos.getX(), pos.getY());
-        }
 
-        // special case we have only one point
-        if (controlPoints.size() == 1)
-        {
-            final Point2D pos = controlPoints.get(0).getPosition();
-            path.lineTo(pos.getX(), pos.getY());
-        }
-        else
-        {
-            // lines
-            for (int i = 1; i < controlPoints.size(); i++)
+            // special case we have only one point
+            if (controlPoints.size() == 1)
             {
-                final Point2D pos = controlPoints.get(i).getPosition();
+                pos = controlPoints.get(0).getPosition();
                 path.lineTo(pos.getX(), pos.getY());
             }
+            else
+            {
+                // lines
+                for (int i = 1; i < controlPoints.size(); i++)
+                {
+                    pos = controlPoints.get(i).getPosition();
+                    path.lineTo(pos.getX(), pos.getY());
+                }
 
-            path.closePath();
+                path.closePath();
+            }
         }
 
         // call super method after shape has been updated
         super.updateShape();
+    }
+
+    @Override
+    public double getPerimeter()
+    {
+        return getTotalDistance(getPoints());
     }
 
     @Override
@@ -194,7 +201,7 @@ public class ROI2DPolygon extends ROI2DShape
 
             removeAllPoint();
 
-            final ArrayList<Node> nodesPoint = XMLUtil.getSubNodes(XMLUtil.getElement(node, ID_POINTS), ID_POINT);
+            final ArrayList<Node> nodesPoint = XMLUtil.getChildren(XMLUtil.getElement(node, ID_POINTS), ID_POINT);
             if (nodesPoint != null)
             {
                 for (Node n : nodesPoint)

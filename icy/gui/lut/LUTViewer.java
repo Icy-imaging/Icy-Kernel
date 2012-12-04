@@ -23,7 +23,7 @@ import icy.gui.lut.abstract_.IcyLutViewer;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.lut.LUT;
-import icy.image.lut.LUTBand;
+import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.XMLPreferences;
@@ -60,7 +60,6 @@ public class LUTViewer extends IcyLutViewer
     private static final String PREF_ID_HISTO = "gui.histo";
 
     private static final String ID_AUTO_REFRESH = "autoRefresh";
-    // private static final String ID_AUTO_BOUNDS = "autoBounds";
     private static final String ID_LOG_VIEW = "logView";
 
     /**
@@ -77,7 +76,7 @@ public class LUTViewer extends IcyLutViewer
     /**
      * data
      */
-    final ArrayList<LUTBandViewer> lutBandViewers;
+    final ArrayList<LUTChannelViewer> lutChannelViewers;
 
     /**
      * preferences
@@ -96,7 +95,7 @@ public class LUTViewer extends IcyLutViewer
 
         pref = ApplicationPreferences.getPreferences().node(PREF_ID_HISTO);
 
-        lutBandViewers = new ArrayList<LUTBandViewer>();
+        lutChannelViewers = new ArrayList<LUTChannelViewer>();
 
         bottomPane = new CheckTabbedPane(SwingConstants.BOTTOM, true);
         bottomPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
@@ -105,7 +104,7 @@ public class LUTViewer extends IcyLutViewer
             @Override
             public void stateChanged(ChangeEvent e)
             {
-                for (int i = 0; i < lutBandViewers.size(); i++)
+                for (int i = 0; i < lutChannelViewers.size(); i++)
                 {
                     boolean b;
 
@@ -119,17 +118,17 @@ public class LUTViewer extends IcyLutViewer
                         b = true;
                     }
 
-                    lutBandViewers.get(i).getColormapPanel().getColormapViewer().getColormap().setEnabled(b);
+                    lutChannelViewers.get(i).getLutChannel().getColorMap().setEnabled(b);
                 }
             }
         });
 
         // GUI
-        for (LUTBand lutBand : lut.getLutBands())
+        for (LUTChannel lutChannel : lut.getLutChannels())
         {
-            final LUTBandViewer lbv = new LUTBandViewer(viewer, lutBand);
+            final LUTChannelViewer lbv = new LUTChannelViewer(viewer, lutChannel);
 
-            lutBandViewers.add(lbv);
+            lutChannelViewers.add(lbv);
             bottomPane.addTab("channel", lbv);
         }
 
@@ -143,11 +142,11 @@ public class LUTViewer extends IcyLutViewer
             public void actionPerformed(ActionEvent e)
             {
                 final boolean value = autoRefreshHistoCheckBox.isSelected();
-                setHistoEnabled(value);
+                AutoRefreshHistogramInternal(value);
                 pref.putBoolean(ID_AUTO_REFRESH, value);
             }
         });
-        setHistoEnabled(autoRefreshHistoCheckBox.isSelected());
+        AutoRefreshHistogramInternal(autoRefreshHistoCheckBox.isSelected());
 
         autoBoundsCheckBox = new JCheckBox("Auto bounds", getPreferredAutoBounds());
         autoBoundsCheckBox.setToolTipText("Automatically ajdust bounds when data is modified");
@@ -156,12 +155,31 @@ public class LUTViewer extends IcyLutViewer
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                if (autoBoundsCheckBox.isSelected())
+                final boolean value = autoBoundsCheckBox.isSelected();
+
+                if (value)
+                {
                     refreshBounds();
+                    AutoRefreshHistogramInternal(true);
+                    autoRefreshHistoCheckBox.setSelected(true);
+                    autoRefreshHistoCheckBox.setEnabled(false);
+                }
+                else
+                {
+                    final boolean refreshValue = pref.getBoolean(ID_AUTO_REFRESH, true);
+                    AutoRefreshHistogramInternal(refreshValue);
+                    autoRefreshHistoCheckBox.setSelected(refreshValue);
+                    autoRefreshHistoCheckBox.setEnabled(true);
+                }
             }
         });
         if (autoBoundsCheckBox.isSelected())
+        {
             refreshBounds();
+            AutoRefreshHistogramInternal(true);
+            autoRefreshHistoCheckBox.setSelected(true);
+            autoRefreshHistoCheckBox.setEnabled(false);
+        }
 
         scaleGroup = new ButtonGroup();
         logButton = new JRadioButton("log");
@@ -213,24 +231,17 @@ public class LUTViewer extends IcyLutViewer
             {
                 final SequenceEvent e = event;
 
-                ThreadUtil.invokeLater(new Runnable()
+                switch (e.getSourceType())
                 {
-                    @Override
-                    public void run()
-                    {
-                        switch (e.getSourceType())
-                        {
-                            case SEQUENCE_META:
-                                refreshChannelsName();
-                                break;
+                    case SEQUENCE_META:
+                        refreshChannelsName();
+                        break;
 
-                            case SEQUENCE_COMPONENTBOUNDS:
-                                if (autoBoundsCheckBox.isSelected())
-                                    refreshBounds();
-                                break;
-                        }
-                    }
-                });
+                    case SEQUENCE_COMPONENTBOUNDS:
+                        if (autoBoundsCheckBox.isSelected())
+                            refreshBounds();
+                        break;
+                }
             }
         };
 
@@ -239,7 +250,7 @@ public class LUTViewer extends IcyLutViewer
         getSequence().addListener(weakSequenceListener);
     }
 
-    boolean getPreferredAutoBounds()
+    private boolean getPreferredAutoBounds()
     {
         final Sequence sequence = getSequence();
 
@@ -257,16 +268,26 @@ public class LUTViewer extends IcyLutViewer
         return true;
     }
 
-    void setHistoEnabled(boolean value)
+    public boolean getAutoBounds()
     {
-        for (int i = 0; i < lutBandViewers.size(); i++)
-            lutBandViewers.get(i).getScalerPanel().getScalerViewer().setHistoEnabled(value);
+        return autoBoundsCheckBox.isSelected();
+    }
+
+    public boolean getAutoRefreshHistogram()
+    {
+        return autoRefreshHistoCheckBox.isSelected();
+    }
+
+    void AutoRefreshHistogramInternal(boolean value)
+    {
+        for (int i = 0; i < lutChannelViewers.size(); i++)
+            lutChannelViewers.get(i).getScalerPanel().getScalerViewer().setAutoRefresh(value);
     }
 
     void setLogScale(boolean value)
     {
-        for (int i = 0; i < lutBandViewers.size(); i++)
-            lutBandViewers.get(i).getScalerPanel().getScalerViewer().setLogScale(value);
+        for (int i = 0; i < lutChannelViewers.size(); i++)
+            lutChannelViewers.get(i).getScalerPanel().getScalerViewer().setLogScale(value);
     }
 
     void refreshBounds()
@@ -278,12 +299,12 @@ public class LUTViewer extends IcyLutViewer
             double[][] typeBounds = sequence.getChannelsTypeBounds();
             double[][] bounds = sequence.getChannelsBounds();
 
-            for (int i = 0; i < Math.min(lutBandViewers.size(), typeBounds.length); i++)
+            for (int i = 0; i < Math.min(lutChannelViewers.size(), typeBounds.length); i++)
             {
                 double[] tb = typeBounds[i];
                 double[] b = bounds[i];
 
-                final Scaler scaler = lutBandViewers.get(i).getScalerPanel().getScaler();
+                final Scaler scaler = lutChannelViewers.get(i).getScalerPanel().getScaler();
 
                 scaler.setAbsLeftRightIn(tb[0], tb[1]);
                 scaler.setLeftRightIn(b[0], b[1]);
@@ -297,16 +318,23 @@ public class LUTViewer extends IcyLutViewer
 
         if (sequence != null)
         {
-            for (int c = 0; c < Math.min(bottomPane.getTabCount(), sequence.getSizeC()); c++)
+            ThreadUtil.invokeLater(new Runnable()
             {
-                final String channelName = sequence.getChannelName(c);
+                @Override
+                public void run()
+                {
+                    for (int c = 0; c < Math.min(bottomPane.getTabCount(), sequence.getSizeC()); c++)
+                    {
+                        final String channelName = sequence.getChannelName(c);
 
-                bottomPane.setTitleAt(c, StringUtil.limit(channelName, 10));
-                if (sequence.getDefaultChannelName(c).equals(channelName))
-                    bottomPane.setToolTipTextAt(c, "Channel " + c);
-                else
-                    bottomPane.setToolTipTextAt(c, channelName + " (channel " + c + ")");
-            }
+                        bottomPane.setTitleAt(c, StringUtil.limit(channelName, 10));
+                        if (sequence.getDefaultChannelName(c).equals(channelName))
+                            bottomPane.setToolTipTextAt(c, "Channel " + c);
+                        else
+                            bottomPane.setToolTipTextAt(c, channelName + " (channel " + c + ")");
+                    }
+                }
+            });
         }
     }
 }

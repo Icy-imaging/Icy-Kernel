@@ -128,6 +128,18 @@ public class ROI2DPoint extends ROI2DShape
     }
 
     @Override
+    public double getPerimeter()
+    {
+        return 0d;
+    }
+
+    @Override
+    public double getVolume()
+    {
+        return 0d;
+    }
+
+    @Override
     public boolean loadFromXML(Node node)
     {
         beginUpdate();

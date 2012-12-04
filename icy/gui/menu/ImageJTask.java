@@ -5,31 +5,22 @@ package icy.gui.menu;
 
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandToggleButton;
-import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.main.MainFrame;
+import icy.gui.menu.action.GeneralActions;
 import icy.gui.util.LookAndFeelUtil;
 import icy.gui.util.RibbonUtil;
-import icy.gui.viewer.Viewer;
 import icy.image.ImageUtil;
-import icy.imagej.ImageJUtil;
 import icy.imagej.ImageJWrapper;
 import icy.imagej.ImageJWrapper.ImageJActiveImageListener;
 import icy.main.Icy;
-import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.BasicResizableIcon;
 import icy.resource.icon.IcyIcon;
-import icy.sequence.Sequence;
 import icy.system.SystemUtil;
-import icy.system.thread.ThreadUtil;
 import ij.Executer;
 import ij.ImageJ;
-import ij.ImagePlus;
-import ij.WindowManager;
 import ij.gui.ImageWindow;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -100,113 +91,29 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
         final IcyCommandButton button;
         final IcyCommandToggleButton detachedBtn;
         final CommandToggleButtonGroup detachedGrp;
-
-        boolean toIJ;
-        final ActionListener toIJAction;
-        final ActionListener toICYAction;
+        private boolean toIJ;
 
         public ImageJToolRibbonBand()
         {
             super(NAME, new IcyIcon("brackets"));
 
-            // action to convert to IJ image
-            toIJAction = new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    ThreadUtil.bgRun(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
-
-                            if (seq != null)
-                            {
-                                final ProgressFrame pf = new ProgressFrame("Converting to ImageJ image...");
-                                final ImagePlus ip = ImageJUtil.convertToImageJImage(seq, pf);
-                                pf.close();
-
-                                ThreadUtil.invokeLater(new Runnable()
-                                {
-                                    @Override
-                                    public void run()
-                                    {
-                                        // show the image
-                                        ip.show();
-                                    }
-                                });
-                            }
-                        }
-                    });
-                }
-            };
-
-            // action to convert to ICY sequence
-            toICYAction = new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    ThreadUtil.bgRun(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            final ImagePlus ip = WindowManager.getCurrentImage();
-
-                            if (ip != null)
-                            {
-                                final ProgressFrame pf = new ProgressFrame("Converting to ImageJ image...");
-                                final Sequence seq = ImageJUtil.convertToIcySequence(ip, pf);
-                                pf.close();
-
-                                ThreadUtil.invokeLater(new Runnable()
-                                {
-                                    @Override
-                                    public void run()
-                                    {
-                                        // show the sequence
-                                        new Viewer(seq);
-                                    }
-                                });
-                            }
-                        }
-                    });
-                }
-            };
-
             // convert operation
-            button = new IcyCommandButton("Convert to ImageJ", new IcyIcon("to_ij"));
+            button = new IcyCommandButton(GeneralActions.toIJAction);
 
             toIJ = false;
             updateAction(true);
 
             addCommandButton(button, RibbonElementPriority.TOP);
 
+            // detach windows button
+            detachedBtn = new IcyCommandToggleButton(GeneralActions.detachedModeAction);
+
             final RichTooltip richToolTip = new RichTooltip("Detached windows",
                     "Icy need to be set in detached mode to use ImageJ efficiently and enable image conversion.");
             richToolTip.setMainImage(detachForIJ);
             richToolTip
                     .addDescriptionSection("This button has the same effect as the detached mode button in the top toolbar.");
-
-            // detach windows button
-            detachedBtn = new IcyCommandToggleButton("Detached mode", new IcyIcon(ResourceUtil.ICON_DETACHED_WINDOW));
             detachedBtn.setActionRichTooltip(richToolTip);
-            detachedBtn.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    final boolean value = (detachedGrp.getSelected() == detachedBtn);
-
-                    // set detached mode
-                    Icy.getMainInterface().setDetachedMode(value);
-                    // and save state
-                    GeneralPreferences.setMultiWindowMode(value);
-                }
-            });
 
             detachedGrp = new CommandToggleButtonGroup();
             detachedGrp.add(detachedBtn);
@@ -220,37 +127,12 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
         {
             if (toIJ != ij)
             {
-                final RichTooltip toolTip = new RichTooltip();
                 toIJ = ij;
 
                 if (ij)
-                {
-                    toolTip.setTitle("Convert to ImageJ");
-                    toolTip.addDescriptionSection("Convert the selected Icy sequence to ImageJ image.");
-                    toolTip.addFooterSection("Icy needs to be in detached mode to enabled this feature.");
-
-                    // convert to IJ image
-                    button.setText("Convert to IJ");
-                    // button.setIcon(new IcyIcon("icon_icy_ij_2", false));
-                    button.setIcon(new IcyIcon("to_ij", true));
-                    button.setActionRichTooltip(toolTip);
-                    button.removeActionListener(toICYAction);
-                    button.addActionListener(toIJAction);
-                }
+                    button.setAction(GeneralActions.toIJAction);
                 else
-                {
-                    toolTip.setTitle("Convert to Icy");
-                    toolTip.addDescriptionSection("Convert the selected ImageJ image to Icy sequence.");
-                    toolTip.addFooterSection("Icy needs to be in detached mode to enabled this feature.");
-
-                    // convert to ICY sequence
-                    button.setText("Convert to Icy");
-                    // button.setIcon(new IcyIcon("icon_ij_icy_2", false));
-                    button.setIcon(new IcyIcon("to_icy", true));
-                    button.setActionRichTooltip(toolTip);
-                    button.removeActionListener(toIJAction);
-                    button.addActionListener(toICYAction);
-                }
+                    button.setAction(GeneralActions.toIcyAction);
             }
         }
 
@@ -279,7 +161,6 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
                 ((ImageJToolRibbonBand) getBand(1)).updateAction(iw == null);
             }
         });
-
     }
 
     /**
@@ -324,5 +205,4 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
         band.setDetachedBtnPressed(isDetached);
         band.updateEnable(isDetached);
     }
-
 }

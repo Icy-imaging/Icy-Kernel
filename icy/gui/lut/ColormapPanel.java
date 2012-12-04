@@ -24,7 +24,6 @@ import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.dialog.LoadDialog;
 import icy.gui.dialog.SaveDialog;
-import icy.gui.lut.abstract_.IcyColormapPanel;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
@@ -38,7 +37,7 @@ import icy.image.colormap.IcyColorMapListener;
 import icy.image.colormap.JETColorMap;
 import icy.image.colormap.LinearColorMap;
 import icy.image.lut.LUT;
-import icy.image.lut.LUTBand;
+import icy.image.lut.LUT.LUTChannel;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 
@@ -58,7 +57,7 @@ import javax.swing.SwingConstants;
 /**
  * @author stephane
  */
-public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListener
+public class ColormapPanel extends JPanel implements IcyColorMapListener
 {
     /**
      * 
@@ -78,16 +77,25 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
     final ButtonGroup colormapTypeBtnGrp;
 
     /**
+     * associated Viewer & LUTBand
+     */
+    public final Viewer viewer;
+    public final LUTChannel lutChannel;
+
+    /**
      * cached
      */
     final IcyColorMap colormap;
 
-    public ColormapPanel(final Viewer viewer, final LUTBand lutBand)
+    public ColormapPanel(final Viewer viewer, final LUTChannel lutChannel)
     {
-        super(viewer, lutBand);
+        super();
 
-        colormap = lutBand.getColorMap();
-        colormapViewer = new ColormapViewer(lutBand);
+        this.viewer = viewer;
+        this.lutChannel = lutChannel;
+
+        colormap = lutChannel.getColorMap();
+        colormapViewer = new ColormapViewer(lutChannel);
 
         // colormap type
         rgbBtn = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_RGB_COLOR, false));
@@ -151,11 +159,11 @@ public class ColormapPanel extends IcyColormapPanel implements IcyColorMapListen
 
         final IcyColorMap defaultColormap;
         final LUT defaultLUT = viewer.getSequence().createCompatibleLUT();
-        
+
         // compatible colormap (should always be the case)
-        if (defaultLUT.getNumComponents() == lutBand.getLut().getNumComponents())
+        if (defaultLUT.getNumChannel() == lutChannel.getLut().getNumChannel())
         {
-            defaultColormap = defaultLUT.getLutBand(lutBand.getComponent()).getColorMap();
+            defaultColormap = defaultLUT.getLutChannel(lutChannel.getChannel()).getColorMap();
             defaultColormap.setName("Default");
         }
         else

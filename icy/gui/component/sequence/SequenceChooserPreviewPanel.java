@@ -1,8 +1,8 @@
 package icy.gui.component.sequence;
 
 import icy.gui.component.sequence.SequenceChooser.SequenceChooserListener;
+import icy.sequence.AbstractSequenceModel;
 import icy.sequence.Sequence;
-import icy.sequence.SequenceModel;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -12,8 +12,94 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-public class SequenceChooserPreviewPanel extends JPanel implements SequenceChooserListener, SequenceModel
+public class SequenceChooserPreviewPanel extends JPanel implements SequenceChooserListener
 {
+    private class SequenceChooserPreviewModel extends AbstractSequenceModel
+    {
+        public SequenceChooserPreviewModel()
+        {
+            super();
+        }
+
+        @Override
+        public int getSizeX()
+        {
+            final Sequence sequence = sequenceChooser.getSelectedSequence();
+
+            if (sequence != null)
+                return sequence.getSizeX();
+
+            return 0;
+        }
+
+        @Override
+        public int getSizeY()
+        {
+            final Sequence sequence = sequenceChooser.getSelectedSequence();
+
+            if (sequence != null)
+                return sequence.getSizeY();
+
+            return 0;
+        }
+
+        @Override
+        public int getSizeZ()
+        {
+            final Sequence sequence = sequenceChooser.getSelectedSequence();
+
+            if (sequence != null)
+                return sequence.getSizeZ();
+
+            return 0;
+        }
+
+        @Override
+        public int getSizeT()
+        {
+            final Sequence sequence = sequenceChooser.getSelectedSequence();
+
+            if (sequence != null)
+                return sequence.getSizeT();
+
+            return 0;
+        }
+
+        @Override
+        public int getSizeC()
+        {
+            final Sequence sequence = sequenceChooser.getSelectedSequence();
+
+            if (sequence != null)
+                return sequence.getSizeC();
+
+            return 0;
+        }
+
+        @Override
+        public Image getImage(int t, int z)
+        {
+            final Sequence sequence = sequenceChooser.getSelectedSequence();
+
+            if (sequence != null)
+                return sequence.getImage(t, z);
+
+            return null;
+        }
+
+        @Override
+        public Image getImage(int t, int z, int c)
+        {
+            final Sequence sequence = sequenceChooser.getSelectedSequence();
+
+            if (sequence != null)
+                return sequence.getImage(t, z, c);
+
+            return null;
+        }
+
+    }
+
     /**
      * 
      */
@@ -34,7 +120,7 @@ public class SequenceChooserPreviewPanel extends JPanel implements SequenceChoos
 
         sequenceChanged(sequenceChooser.getSelectedSequence());
 
-        sequencePreviewPanel.setModel(this);
+        sequencePreviewPanel.setModel(new SequenceChooserPreviewModel());
         sequenceChooser.addListener(this);
     }
 
@@ -106,80 +192,19 @@ public class SequenceChooserPreviewPanel extends JPanel implements SequenceChoos
         sequencePreviewPanel.dimensionChanged();
     }
 
-    @Override
-    public int getSizeX()
+    /**
+     * @see SequencePreviewPanel#dimensionChanged()
+     */
+    public void dimensionChanged()
     {
-        final Sequence sequence = sequenceChooser.getSelectedSequence();
-
-        if (sequence != null)
-            return sequence.getSizeX();
-
-        return 0;
+        sequencePreviewPanel.dimensionChanged();
     }
 
-    @Override
-    public int getSizeY()
+    /**
+     * @see SequencePreviewPanel#imageChanged()
+     */
+    public void imageChanged()
     {
-        final Sequence sequence = sequenceChooser.getSelectedSequence();
-
-        if (sequence != null)
-            return sequence.getSizeY();
-
-        return 0;
-    }
-
-    @Override
-    public int getSizeZ()
-    {
-        final Sequence sequence = sequenceChooser.getSelectedSequence();
-
-        if (sequence != null)
-            return sequence.getSizeZ();
-
-        return 0;
-    }
-
-    @Override
-    public int getSizeT()
-    {
-        final Sequence sequence = sequenceChooser.getSelectedSequence();
-
-        if (sequence != null)
-            return sequence.getSizeT();
-
-        return 0;
-    }
-
-    @Override
-    public int getSizeC()
-    {
-        final Sequence sequence = sequenceChooser.getSelectedSequence();
-
-        if (sequence != null)
-            return sequence.getSizeC();
-
-        return 0;
-    }
-
-    @Override
-    public Image getImage(int t, int z)
-    {
-        final Sequence sequence = sequenceChooser.getSelectedSequence();
-
-        if (sequence != null)
-            return sequence.getImage(t, z);
-
-        return null;
-    }
-
-    @Override
-    public Image getImage(int t, int z, int c)
-    {
-        final Sequence sequence = sequenceChooser.getSelectedSequence();
-
-        if (sequence != null)
-            return sequence.getImage(t, z, c);
-
-        return null;
+        sequencePreviewPanel.imageChanged();
     }
 }

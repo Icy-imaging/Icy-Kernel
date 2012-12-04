@@ -96,8 +96,7 @@ public class ThumbnailComponent extends JToggleButton
             final float sy = imageComp.getHeight() / iy;
             final float s = Math.min(sx, sy);
 
-            imageComp.setIcon(ResourceUtil.getImageIcon(ImageUtil
-                    .scaleImageQuality(img, (int) (ix * s), (int) (iy * s))));
+            imageComp.setIcon(ResourceUtil.getImageIcon(ImageUtil.scaleQuality(img, (int) (ix * s), (int) (iy * s))));
         }
         else
             imageComp.setIcon(ResourceUtil.getImageIcon(ResourceUtil.ICON_DELETE));

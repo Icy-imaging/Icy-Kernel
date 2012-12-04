@@ -92,6 +92,11 @@ public class IcyIcon implements ResizableIcon
         this(null, image, DEFAULT_SIZE, true);
     }
 
+    public IcyIcon(IcyIcon icon)
+    {
+        this(icon.getName(), icon.getImage(), icon.getIconWidth(), icon.getAlpha());
+    }
+
     public int getSize()
     {
         return dim.width;
@@ -172,9 +177,18 @@ public class IcyIcon implements ResizableIcon
     }
 
     /**
+     * @deprecated Uses {@link #getAlpha()} instead
+     */
+    @Deprecated
+    public boolean isAlpha()
+    {
+        return getAlpha();
+    }
+
+    /**
      * @return the alpha
      */
-    public boolean isAlpha()
+    public boolean getAlpha()
     {
         return alpha;
     }

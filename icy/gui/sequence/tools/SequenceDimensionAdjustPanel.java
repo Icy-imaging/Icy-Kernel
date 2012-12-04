@@ -7,7 +7,9 @@ import icy.sequence.SequenceModel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.util.EventListener;
 
 import javax.swing.JLabel;
@@ -131,14 +133,11 @@ public class SequenceDimensionAdjustPanel extends JPanel
             public void stateChanged(ChangeEvent e)
             {
                 final SpinnerNumberModel model = (SpinnerNumberModel) loopSpinner.getModel();
-                final int currentMin = ((Integer) model.getMinimum()).intValue();
                 final int currentValue = ((Integer) model.getValue()).intValue();
                 final int min = getExtractValue();
 
                 // adjust minimum value
-                if (currentMin < min)
-                    loopSpinner.setModel(new SpinnerNumberModel(Math.max(min, currentValue), min, (int) range.getMax(),
-                            1));
+                loopSpinner.setModel(new SpinnerNumberModel(Math.max(min, currentValue), min, (int) range.getMax(), 1));
 
                 fireRangeChangedEvent();
             }
@@ -164,26 +163,51 @@ public class SequenceDimensionAdjustPanel extends JPanel
         extractionRulePanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Extraction rule",
                 TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
         add(extractionRulePanel, BorderLayout.SOUTH);
-        FlowLayout fl_extractionRulePanel = new FlowLayout();
-        fl_extractionRulePanel.setAlignment(FlowLayout.LEADING);
-        extractionRulePanel.setLayout(fl_extractionRulePanel);
+        GridBagLayout gbl_extractionRulePanel = new GridBagLayout();
+        gbl_extractionRulePanel.columnWidths = new int[] {0, 0, 0, 0, 0, 0};
+        gbl_extractionRulePanel.rowHeights = new int[] {20, 0};
+        gbl_extractionRulePanel.columnWeights = new double[] {0.0, 1.0, 0.0, 1.0, 2.0, Double.MIN_VALUE};
+        gbl_extractionRulePanel.rowWeights = new double[] {0.0, Double.MIN_VALUE};
+        extractionRulePanel.setLayout(gbl_extractionRulePanel);
 
         JLabel lblKeep = new JLabel("Keep");
-        extractionRulePanel.add(lblKeep);
+        GridBagConstraints gbc_lblKeep = new GridBagConstraints();
+        gbc_lblKeep.anchor = GridBagConstraints.EAST;
+        gbc_lblKeep.insets = new Insets(0, 0, 0, 5);
+        gbc_lblKeep.gridx = 0;
+        gbc_lblKeep.gridy = 0;
+        extractionRulePanel.add(lblKeep, gbc_lblKeep);
 
         extractSpinner = new JSpinner();
         extractSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), null, new Integer(1)));
         extractSpinner
                 .setToolTipText("Number of frames to keep every N frames. 'Keep 1 every 2' means keep every other frame.");
-        extractionRulePanel.add(extractSpinner);
+        GridBagConstraints gbc_extractSpinner = new GridBagConstraints();
+        gbc_extractSpinner.fill = GridBagConstraints.HORIZONTAL;
+        gbc_extractSpinner.anchor = GridBagConstraints.NORTH;
+        gbc_extractSpinner.insets = new Insets(0, 0, 0, 5);
+        gbc_extractSpinner.gridx = 1;
+        gbc_extractSpinner.gridy = 0;
+        extractionRulePanel.add(extractSpinner, gbc_extractSpinner);
 
         JLabel lblEvery = new JLabel("every");
-        extractionRulePanel.add(lblEvery);
+        GridBagConstraints gbc_lblEvery = new GridBagConstraints();
+        gbc_lblEvery.anchor = GridBagConstraints.EAST;
+        gbc_lblEvery.insets = new Insets(0, 0, 0, 5);
+        gbc_lblEvery.gridx = 2;
+        gbc_lblEvery.gridy = 0;
+        extractionRulePanel.add(lblEvery, gbc_lblEvery);
 
         loopSpinner = new JSpinner();
         loopSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), null, new Integer(1)));
         loopSpinner.setToolTipText("Size for the extraction rule loop.");
-        extractionRulePanel.add(loopSpinner);
+        GridBagConstraints gbc_loopSpinner = new GridBagConstraints();
+        gbc_loopSpinner.fill = GridBagConstraints.HORIZONTAL;
+        gbc_loopSpinner.insets = new Insets(0, 0, 0, 5);
+        gbc_loopSpinner.anchor = GridBagConstraints.NORTH;
+        gbc_loopSpinner.gridx = 3;
+        gbc_loopSpinner.gridy = 0;
+        extractionRulePanel.add(loopSpinner, gbc_loopSpinner);
     }
 
     public DimensionId getDimensionId()

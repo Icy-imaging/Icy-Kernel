@@ -23,6 +23,7 @@ import icy.image.colorspace.IcyColorSpace;
 import icy.image.colorspace.IcyColorSpaceEvent;
 import icy.image.colorspace.IcyColorSpaceEvent.IcyColorSpaceEventType;
 import icy.image.colorspace.IcyColorSpaceListener;
+import icy.image.lut.LUT.LUTChannel;
 import icy.image.lut.LUTBandEvent.LUTBandEventType;
 import icy.math.Scaler;
 import icy.math.ScalerEvent;
@@ -31,6 +32,10 @@ import icy.math.ScalerListener;
 
 import javax.swing.event.EventListenerList;
 
+/**
+ * @deprecated Uses {@link LUTChannel} instead.
+ */
+@Deprecated
 public class LUTBand implements ScalerListener, IcyColorSpaceListener
 {
     /**
@@ -73,9 +78,6 @@ public class LUTBand implements ScalerListener, IcyColorSpaceListener
         listeners = new EventListenerList();
     }
 
-    /*
-     * @see java.lang.Object#finalize()
-     */
     @Override
     protected void finalize() throws Throwable
     {

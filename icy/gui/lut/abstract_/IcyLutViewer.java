@@ -25,8 +25,9 @@ import icy.sequence.Sequence;
 import javax.swing.JPanel;
 
 /**
- * @author Stephane
+ * @deprecated
  */
+@Deprecated
 public class IcyLutViewer extends JPanel
 {
     /**

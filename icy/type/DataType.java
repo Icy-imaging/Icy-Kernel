@@ -46,10 +46,10 @@ public enum DataType
     LONG(Long.SIZE, true, true, Long.MIN_VALUE, Long.MAX_VALUE, Long.TYPE, DataBuffer.TYPE_UNDEFINED, null,
             "signed long (64 bits)", "long"),
     // FLOAT (signed 32 bits float)
-    FLOAT(Float.SIZE, false, true, Float.MIN_VALUE, Float.MAX_VALUE, Float.TYPE, DataBuffer.TYPE_FLOAT,
+    FLOAT(Float.SIZE, false, true, -Float.MAX_VALUE, Float.MAX_VALUE, Float.TYPE, DataBuffer.TYPE_FLOAT,
             PixelType.FLOAT, "float (32 bits)", "float"),
     // DOUBLE (signed 64 bits float)
-    DOUBLE(Double.SIZE, false, true, Double.MIN_VALUE, Double.MAX_VALUE, Double.TYPE, DataBuffer.TYPE_DOUBLE,
+    DOUBLE(Double.SIZE, false, true, -Double.MAX_VALUE, Double.MAX_VALUE, Double.TYPE, DataBuffer.TYPE_DOUBLE,
             PixelType.DOUBLE, "double (64 bits)", "double"),
     // UNDEFINED (undefined data type)
     UNDEFINED(0, true, false, 0d, 0d, null, DataBuffer.TYPE_UNDEFINED, null, "undefined", "undefined");

@@ -25,24 +25,25 @@ import icy.common.EventHierarchicalChecker;
  */
 public class ScalerEvent implements EventHierarchicalChecker
 {
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public enum ScalerEventType
     {
         CHANGED
     }
 
     private final Scaler scaler;
-    private final ScalerEventType type;
 
     /**
      * @param scaler
-     * @param type
      */
-    public ScalerEvent(Scaler scaler, ScalerEventType type)
+    public ScalerEvent(Scaler scaler)
     {
         super();
 
         this.scaler = scaler;
-        this.type = type;
     }
 
     /**
@@ -54,17 +55,18 @@ public class ScalerEvent implements EventHierarchicalChecker
     }
 
     /**
-     * @return the type
+     * @deprecated
      */
+    @Deprecated
     public ScalerEventType getType()
     {
-        return type;
+        return ScalerEventType.CHANGED;
     }
 
     @Override
     public boolean isEventRedundantWith(EventHierarchicalChecker event)
     {
-        return (event instanceof ScalerEvent) && (type == ((ScalerEvent) event).getType());
+        return (event instanceof ScalerEvent) && (scaler == ((ScalerEvent) event).getScaler());
     }
 
 }

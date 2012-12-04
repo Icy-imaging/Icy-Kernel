@@ -26,6 +26,7 @@ import java.awt.Color;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 
 import org.w3c.dom.Node;
 
@@ -172,6 +173,24 @@ public class ROI2DLine extends ROI2DShape
     }
 
     @Override
+    protected double getTotalDistance(ArrayList<Point2D> points)
+    {
+        return super.getTotalDistance(points, false);
+    }
+
+    @Override
+    public double getPerimeter()
+    {
+        return getTotalDistance(getPoints());
+    }
+
+    @Override
+    public double getVolume()
+    {
+        return 0d;
+    }
+
+    @Override
     public boolean loadFromXML(Node node)
     {
         beginUpdate();
@@ -203,5 +222,4 @@ public class ROI2DLine extends ROI2DShape
         return true;
     }
 
-   
 }

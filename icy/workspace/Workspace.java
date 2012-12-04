@@ -52,16 +52,6 @@ import org.w3c.dom.Node;
  */
 public class Workspace implements XMLPersistent, Comparable<Workspace>
 {
-    // public static class ItemDefinitionClassNameSorter implements
-    // Comparator<ItemDefinition>
-    // {
-    // @Override
-    // public int compare(ItemDefinition o1, ItemDefinition o2)
-    // {
-    // return o1.getClassName().compareToIgnoreCase(o2.getClassName());
-    // }
-    // }
-
     public static boolean contains(ArrayList<TaskDefinition> tasks, TaskDefinition task)
     {
         for (TaskDefinition t : tasks)

@@ -55,8 +55,8 @@ public class PreferenceFrame extends IcyFrame implements TreeSelectionListener
 {
     public static final String NODE_NAME = "Preferences";
 
-    /** true if the preference window is open. */
-    private static boolean singleton = false;
+    /** singleton frame */
+    private static PreferenceFrame instance = null;
 
     // needed to keep trace of non singleton frame
     ArrayList<PreferencePanel> preferencePanels = null;
@@ -75,9 +75,14 @@ public class PreferenceFrame extends IcyFrame implements TreeSelectionListener
     {
         super(NODE_NAME, true, true, false, false);
 
-        if (singleton)
+        // frame already opened ?
+        if (instance != null)
+        {
+            // just put it on front
+            instance.toFront();
             return;
-        singleton = true;
+        }
+        instance = this;
 
         positionSaver = new WindowPositionSaver(this, "frame/preference", new Point(100, 100), new Dimension(640, 480));
 
@@ -232,7 +237,7 @@ public class PreferenceFrame extends IcyFrame implements TreeSelectionListener
             for (PreferencePanel panel : preferencePanels)
                 panel.closed();
 
-            singleton = false;
+            instance = null;
 
             // restart needed and validated, ask user
             if (doRestart)

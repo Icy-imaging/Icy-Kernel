@@ -32,6 +32,8 @@ import vtk.vtkIdTypeArray;
 import vtk.vtkIntArray;
 import vtk.vtkLongArray;
 import vtk.vtkPoints;
+import vtk.vtkProp;
+import vtk.vtkPropCollection;
 import vtk.vtkRenderer;
 import vtk.vtkShortArray;
 import vtk.vtkUnsignedCharArray;
@@ -62,6 +64,20 @@ public class VtkUtil
      * Add an actor to the specified renderer.<br>
      * If the actor is already existing in the renderer then no operation is done.
      */
+    public static void addProp(vtkRenderer renderer, vtkProp prop)
+    {
+        if ((renderer == null) || (prop == null))
+            return;
+
+        // actor not yet present in renderer ? --> add it
+        if (!VtkUtil.findProp(renderer, prop))
+            renderer.AddProp(prop);
+    }
+
+    /**
+     * @deprecated Uses {@link #addProp(vtkRenderer, vtkProp)} instead.
+     */
+    @Deprecated
     public static void addActor(vtkRenderer renderer, vtkActor actor)
     {
         if ((renderer == null) || (actor == null))
@@ -73,9 +89,9 @@ public class VtkUtil
     }
 
     /**
-     * Add an actor2D to the specified renderer.<br>
-     * If the actor2D is already existing in the renderer then no operation is done.
+     * @deprecated Uses {@link #addProp(vtkRenderer, vtkProp)} instead.
      */
+    @Deprecated
     public static void addActor2D(vtkRenderer renderer, vtkActor2D actor)
     {
         if ((renderer == null) || (actor == null))
@@ -89,6 +105,30 @@ public class VtkUtil
     /**
      * Return true if the renderer contains the specified actor
      */
+    public static boolean findProp(vtkRenderer renderer, vtkProp actor)
+    {
+        if ((renderer == null) || (actor == null))
+            return false;
+
+        final vtkPropCollection actors = renderer.GetProps();
+
+        actors.InitTraversal();
+        for (int i = 0; i < actors.GetNumberOfItems(); i++)
+        {
+            final vtkProp curActor = actors.GetNextProp();
+
+            // already present --> exit
+            if (curActor == actor)
+                return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @deprecated Uses {@link #findProp(vtkRenderer, vtkProp)} instead.
+     */
+    @Deprecated
     public static boolean findActor(vtkRenderer renderer, vtkActor actor)
     {
         if ((renderer == null) || (actor == null))
@@ -113,42 +153,10 @@ public class VtkUtil
         return false;
     }
 
-    // /**
-    // * Return true if the source actor contains the specified actor
-    // */
-    // public static boolean findActor(vtkActor source, vtkActor actor)
-    // {
-    // if ((source == null) || (actor == null) || (source == actor))
-    // return false;
-    //
-    // final vtkActorCollection actors = new vtkActorCollection();
-    //
-    // source.GetActors(actors);
-    //
-    // actors.InitTraversal();
-    // for (int i = 0; i < actors.GetNumberOfItems(); i++)
-    // {
-    // final vtkActor curActor = actors.GetNextActor();
-    //
-    // // self contain
-    // if (curActor == source)
-    // continue;
-    //
-    // // already present --> exit
-    // if (curActor == actor)
-    // return true;
-    //
-    // // search in sub actor
-    // if (findActor(curActor, actor))
-    // return true;
-    // }
-    //
-    // return false;
-    // }
-
     /**
-     * Return true if the specified renderer contains the specified actor2D
+     * @deprecated Uses {@link #findProp(vtkRenderer, vtkProp)} instead.
      */
+    @Deprecated
     public static boolean findActor2D(vtkRenderer renderer, vtkActor2D actor)
     {
         if ((renderer == null) || (actor == null))
@@ -172,39 +180,6 @@ public class VtkUtil
 
         return false;
     }
-
-    // /**
-    // * Return true if the source actor2D contains the specified actor2D
-    // */
-    // public static boolean findActor2D(vtkActor2D source, vtkActor2D actor)
-    // {
-    // if ((source == null) || (actor == null) || (source == actor))
-    // return false;
-    //
-    // final vtkActor2DCollection actors = new vtkActor2DCollection();
-    //
-    // source.GetActors2D(actors);
-    //
-    // actors.InitTraversal();
-    // for (int i = 0; i < actors.GetNumberOfItems(); i++)
-    // {
-    // final vtkActor2D curActor = actors.GetNextActor2D();
-    //
-    // // self contain
-    // if (curActor == source)
-    // continue;
-    //
-    // // already present --> exit
-    // if (curActor == actor)
-    // return true;
-    //
-    // // search in sub actor
-    // if (findActor2D(curActor, actor))
-    // return true;
-    // }
-    //
-    // return false;
-    // }
 
     /**
      * Return a 1D cells array from a 2D indexes array

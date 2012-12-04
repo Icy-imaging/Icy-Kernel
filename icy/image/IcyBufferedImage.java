@@ -781,6 +781,69 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
+     * Create a single channel Icy formatted BufferedImage with specified width, height and input
+     * data.<br>
+     * ex : <code>img = new IcyBufferedImage(640, 480, new byte[640 * 480], true);</code><br>
+     * <br>
+     * This constructor provides the best performance for massive image creation and computation as
+     * it allow you to directly send the data array and disable the channel bounds calculation.
+     * 
+     * @param width
+     * @param height
+     * @param data
+     *        image data array.<br>
+     *        The length of the array should be equals to <code>width * height</code>.<br>
+     *        The array data type specify the internal data type.
+     * @param signed
+     *        use signed data for data type
+     * @param autoUpdateChannelBounds
+     *        If true then channel bounds are automatically calculated.<br>
+     *        When set to false, you have to set bounds manually by calling
+     *        {@link #updateChannelsBounds()} or #setC
+     * @see #IcyBufferedImage(int, int, Object[], boolean, boolean)
+     */
+    public IcyBufferedImage(int width, int height, Object data, boolean signed, boolean autoUpdateChannelBounds)
+    {
+        this(width, height, ArrayUtil.encapsulate(data), signed, autoUpdateChannelBounds);
+    }
+
+    /**
+     * Create a single channel Icy formatted BufferedImage with specified width, height and input
+     * data.<br>
+     * ex : <code>img = new IcyBufferedImage(640, 480, new byte[640 * 480]);</code>
+     * 
+     * @param width
+     * @param height
+     * @param data
+     *        image data<br>
+     *        The length of the array should be equals to <code>width * height</code>.<br>
+     *        The array data type specify the internal data type.
+     * @param signed
+     *        use signed data for data type
+     */
+    public IcyBufferedImage(int width, int height, Object data, boolean signed)
+    {
+        this(width, height, ArrayUtil.encapsulate(data), signed);
+    }
+
+    /**
+     * Create a single channel Icy formatted BufferedImage with specified width, height and input
+     * data.<br>
+     * ex : <code>img = new IcyBufferedImage(640, 480, new byte[640 * 480]);</code>
+     * 
+     * @param width
+     * @param height
+     * @param data
+     *        image data<br>
+     *        The length of the array should be equals to <code>width * height</code>.<br>
+     *        The array data type specify the internal data type.
+     */
+    public IcyBufferedImage(int width, int height, Object data)
+    {
+        this(width, height, ArrayUtil.encapsulate(data));
+    }
+
+    /**
      * Create an ICY formatted BufferedImage with specified width, height,<br>
      * number of component and dataType.
      * 
@@ -1031,8 +1094,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         if (sizeC == 1)
             return this;
 
-        return new IcyBufferedImage(getWidth(), getHeight(), (Object[]) ArrayUtil.encapsulate(getDataXY(c)),
-                isSignedDataType());
+        return new IcyBufferedImage(getWidth(), getHeight(), getDataXY(c), isSignedDataType());
     }
 
     /**
@@ -1161,12 +1223,16 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         min = bounds[0];
         max = bounds[1];
 
-        // we force min to 0 if > 0
-        if (min > 0d)
-            min = 0d;
-        // we force max to 0 if < 0
-        if (max < 0d)
-            max = 0d;
+        // only for integer data type
+        if (!isFloatDataType())
+        {
+            // we force min to 0 if > 0
+            if (min > 0d)
+                min = 0d;
+            // we force max to 0 if < 0
+            if (max < 0d)
+                max = 0d;
+        }
 
         final DataType dataType = getDataType_();
 

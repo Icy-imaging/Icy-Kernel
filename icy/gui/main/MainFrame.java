@@ -696,7 +696,7 @@ public class MainFrame extends JRibbonFrame
     }
 
     /**
-     * Set detached window mode.<br>
+     * Set detached window mode.
      */
     public void setDetachedMode(boolean value)
     {

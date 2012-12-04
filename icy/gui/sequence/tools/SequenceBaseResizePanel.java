@@ -9,8 +9,8 @@ import icy.image.IcyBufferedImageUtil;
 import icy.image.IcyBufferedImageUtil.FilterType;
 import icy.math.UnitUtil;
 import icy.resource.ResourceUtil;
+import icy.sequence.AbstractSequenceModel;
 import icy.sequence.Sequence;
-import icy.sequence.SequenceModel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -58,7 +58,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
         MILLIM_PIXEL, MICROM_PIXEL, PIXEL_MILLIM, PIXEL_MICROM
     }
 
-    protected class OriginalModel implements SequenceModel
+    protected class OriginalModel extends AbstractSequenceModel
     {
         public OriginalModel()
         {
@@ -108,7 +108,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
         }
     }
 
-    protected class ResultModel implements SequenceModel
+    protected class ResultModel extends AbstractSequenceModel
     {
         public ResultModel()
         {

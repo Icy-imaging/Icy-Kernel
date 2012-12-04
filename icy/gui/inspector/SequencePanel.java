@@ -123,7 +123,7 @@ public class SequencePanel extends InspectorSubPanel
     {
         if (viewer != null)
         {
-            setLutPanel(viewer.getLutPanel());
+            setLutPanel(viewer.getLutViewer());
             setCanvasPanel(viewer.getCanvasPanel());
         }
         else
@@ -148,7 +148,7 @@ public class SequencePanel extends InspectorSubPanel
 
             case LUT_CHANGED:
                 // refresh lut panel
-                setLutPanel(event.getSource().getLutPanel());
+                setLutPanel(event.getSource().getLutViewer());
                 break;
 
             case POSITION_CHANGED:

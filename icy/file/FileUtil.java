@@ -219,6 +219,14 @@ public class FileUtil
     }
 
     /**
+     * Return path of current directory.
+     */
+    public static String getCurrentDirectory()
+    {
+        return new File(".").getAbsolutePath();
+    }
+
+    /**
      * Return directory information from specified path<br>
      * <br>
      * getDirectory("/file.txt") --> "/"<br>

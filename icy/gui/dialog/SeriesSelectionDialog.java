@@ -3,6 +3,7 @@ package icy.gui.dialog;
 import icy.gui.component.ThumbnailComponent;
 import icy.gui.util.ComponentUtil;
 import icy.image.IcyBufferedImage;
+import icy.image.IcyBufferedImageUtil;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.system.thread.ThreadUtil;
@@ -15,6 +16,8 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 import javax.swing.Box;
@@ -50,6 +53,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
     protected IFormatReader reader;
     protected OMEXMLMetadataImpl metadata;
     protected ArrayList<Integer> selectedSeries;
+    protected final MouseAdapter serieDoubleClickAction;
 
     /**
      * Create the dialog.
@@ -61,6 +65,30 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         this.reader = reader;
 
         initialize();
+
+        // double cick action = direct selection
+        serieDoubleClickAction = new MouseAdapter()
+        {
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                if (e.getClickCount() == 2)
+                {
+                    final ThumbnailComponent thumb = (ThumbnailComponent) e.getSource();
+
+                    for (int i = 0; i < serieComponents.length; i++)
+                    {
+                        if (serieComponents[i] == thumb)
+                        {
+                            selectedSeries = new ArrayList<Integer>();
+                            
+                            selectedSeries.add(Integer.valueOf(i));
+                            dispose();
+                        }
+                    }
+                }
+            }
+        };
 
         final int series;
 
@@ -93,6 +121,13 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
                 if (index < series)
                 {
                     final ThumbnailComponent thumb = new ThumbnailComponent(true);
+
+                    // add mouse listener (double click action)
+                    thumb.addMouseListener(serieDoubleClickAction);
+
+                    // remove mouse listener (double click action)
+                    if (serieComponents[index] != null)
+                        serieComponents[index].removeMouseListener(serieDoubleClickAction);
 
                     serieComponents[index] = thumb;
                     thumb.setEnabled(true);
@@ -161,13 +196,11 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
     void initialize()
     {
-        mainPanel.setLayout(new BorderLayout(0, 0));
-
         JPanel panel = new JPanel();
         getContentPane().add(panel, BorderLayout.NORTH);
         panel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
 
-        JLabel lblSelect = new JLabel("Click on a serie to select / unselect it.");
+        JLabel lblSelect = new JLabel("Click on a serie to select / unselect it or double click to directly open it.");
         ComponentUtil.setFontBold(lblSelect);
         ComponentUtil.setFontSize(lblSelect, 12);
         panel.add(lblSelect);
@@ -211,7 +244,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
                 final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader, reader.getSizeZ() / 2,
                         reader.getSizeT() / 2);
-                serieComponents[i].setImage(img.getARGBImage());
+                serieComponents[i].setImage(IcyBufferedImageUtil.getARGBImage(img));
                 serieComponents[i].setTitle(metadata.getImageName(i));
                 serieComponents[i].setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - " + reader.getSizeZ()
                         + "Z x " + reader.getSizeT() + "T");

@@ -341,7 +341,15 @@ public class RibbonUtil
 
     public static AbstractCommandButton findButton(JRibbonBand band, String name)
     {
-        return findButton(band.getControlPanel().getAllCommandButtons(), name);
+        if (band != null)
+        {
+            final JBandControlPanel controlPanel = band.getControlPanel();
+
+            if (controlPanel != null)
+                return findButton(controlPanel.getAllCommandButtons(), name);
+        }
+
+        return null;
     }
 
     /**

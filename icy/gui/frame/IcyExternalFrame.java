@@ -15,13 +15,13 @@ import icy.system.thread.ThreadUtil;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
-import javax.swing.JMenuBar;
 import javax.swing.JRootPane;
 
 import org.pushingpixels.substance.internal.utils.SubstanceTitlePane;
@@ -50,7 +50,7 @@ public class IcyExternalFrame extends JFrame
         }
 
         @Override
-        public void actionPerformed(ActionEvent e)
+        public void doAction(ActionEvent e)
         {
             close();
         }
@@ -60,8 +60,8 @@ public class IcyExternalFrame extends JFrame
      * internals
      */
     private SubstanceTitlePane titlePane;
-    private JMenuBar systemMenuBar;
-    private MenuCallback systemMenuCallback;
+    // private JMenuBar systemMenuBar;
+    MenuCallback systemMenuCallback;
     private boolean titleBarVisible;
     private boolean closeItemVisible;
     private boolean initialized = false;
@@ -91,6 +91,16 @@ public class IcyExternalFrame extends JFrame
             }
         });
 
+        addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowClosed(WindowEvent e)
+            {
+                // release the system menu callback as it can lead to some memory leak
+                // (cycling reference)
+                systemMenuCallback = null;
+            }
+        });
         setIconImages(ResourceUtil.getIcyIconImages());
         setVisible(false);
 
@@ -111,8 +121,8 @@ public class IcyExternalFrame extends JFrame
         if (pane != null)
             titlePane = pane;
         // update menu
-        if (titlePane != null)
-            systemMenuBar = titlePane.getMenuBar();
+        // if (titlePane != null)
+        // systemMenuBar = titlePane.getMenuBar();
         // refresh system menu whatever
         updateSystemMenu();
     }
@@ -137,7 +147,7 @@ public class IcyExternalFrame extends JFrame
      */
     public void updateSystemMenu()
     {
-        if ((systemMenuBar != null) && (systemMenuBar.getMenuCount() > 0))
+        if (titlePane != null)
         {
             final JMenu menu;
 
@@ -150,9 +160,10 @@ public class IcyExternalFrame extends JFrame
             menu.getPopupMenu().setLightWeightPopupEnabled(false);
 
             // rebuild menu
-            systemMenuBar.removeAll();
-            systemMenuBar.add(menu);
-            systemMenuBar.validate();
+            titlePane.setSystemMenu(menu);
+            // systemMenuBar.removeAll();
+            // systemMenuBar.add(menu);
+            // systemMenuBar.validate();
         }
     }
 

@@ -149,6 +149,11 @@ public class ProgressFrame extends TaskFrame implements ProgressListener, Runnab
             progressBar.setToolTipText(tooltip);
     }
 
+    public String getMessage()
+    {
+        return message;
+    }
+
     public void setMessage(String value)
     {
         if (message != value)

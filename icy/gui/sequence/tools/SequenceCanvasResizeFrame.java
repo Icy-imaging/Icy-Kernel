@@ -3,8 +3,9 @@
  */
 package icy.gui.sequence.tools;
 
-import icy.gui.frame.ActionFrame;
+import icy.gui.dialog.ActionDialog;
 import icy.gui.frame.progress.ProgressFrame;
+import icy.gui.util.ComponentUtil;
 import icy.image.IcyBufferedImageUtil.FilterType;
 import icy.main.Icy;
 import icy.sequence.Sequence;
@@ -22,8 +23,13 @@ import javax.swing.JLabel;
 /**
  * @author Stephane
  */
-public class SequenceCanvasResizeFrame extends ActionFrame
+public class SequenceCanvasResizeFrame extends ActionDialog
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -430346980166539623L;
+
     private class SequenceCanvasResizePanel extends SequenceBaseResizePanel
     {
         /**
@@ -37,7 +43,7 @@ public class SequenceCanvasResizeFrame extends ActionFrame
         public SequenceCanvasResizePanel(Sequence sequence)
         {
             super(sequence);
-            
+
             keepRatioCheckBox.setSelected(false);
 
             positionAlignmentPanel.addActionListener(new ActionListener()
@@ -102,10 +108,7 @@ public class SequenceCanvasResizeFrame extends ActionFrame
 
     public SequenceCanvasResizeFrame(Sequence sequence)
     {
-        super("Canvas size", true);
-
-        // GUI
-        setTitleVisible(false);
+        super("Canvas size");
 
         resizePanel = new SequenceCanvasResizePanel(sequence);
         getMainPanel().add(resizePanel, BorderLayout.CENTER);
@@ -148,10 +151,9 @@ public class SequenceCanvasResizeFrame extends ActionFrame
             }
         });
 
-        setSizeExternal(420, 520);
-        setSizeInternal(420, 520);
-        addToMainDesktopPane();
-        center();
+        setSize(420, 520);
+        ComponentUtil.center(this);
+
         setVisible(true);
     }
 }

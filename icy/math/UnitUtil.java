@@ -84,10 +84,12 @@ public class UnitUtil
      *        : value used to get the best unit.
      * @param currentUnit
      *        : current unit of the value.
+     * @param dimension
+     *        : current unit dimension.
      * @return Return the best unit
      * @see #getValueInUnit(double, UnitPrefix, UnitPrefix)
      */
-    public static UnitPrefix getBestUnit(double value, UnitPrefix currentUnit)
+    public static UnitPrefix getBestUnit(double value, UnitPrefix currentUnit, int dimension)
     {
         // special case
         if (value == 0d)
@@ -96,19 +98,44 @@ public class UnitUtil
         int typeInd = currentUnit.ordinal();
         double v = value;
         final int maxInd = UnitPrefix.values().length - 1;
+        final double factor = Math.pow(1000d, dimension);
+        final double midFactor = Math.pow(100d, dimension);
 
         while (((int) v == 0) && (typeInd < maxInd))
         {
-            v *= 1000d;
+            v *= factor;
             typeInd++;
         }
-        while (((int) (v / 1000d) != 0) && (typeInd > 0))
+        while (((int) (v / midFactor) != 0) && (typeInd > 0))
         {
-            v /= 1000d;
+            v /= factor;
             typeInd--;
         }
 
         return UnitPrefix.values()[typeInd];
+    }
+
+    /**
+     * Get the best unit with the given value and {@link UnitPrefix}. Be
+     * careful, this method is supposed to be used with unit in <b>decimal</b>
+     * system. For sexagesimal system, please use {@link TimeUnit} methods.<br/>
+     * <b>Example:</b><br/>
+     * <ul>
+     * <li>value = 0.01</li>
+     * <li>currentUnit = {@link UnitPrefix#MILLI}</li>
+     * <li>returns: {@link UnitPrefix#MICRO}</li>
+     * </ul>
+     * 
+     * @param value
+     *        : value used to get the best unit.
+     * @param currentUnit
+     *        : current unit of the value.
+     * @return Return the best unit
+     * @see #getValueInUnit(double, UnitPrefix, UnitPrefix)
+     */
+    public static UnitPrefix getBestUnit(double value, UnitPrefix currentUnit)
+    {
+        return getBestUnit(value, currentUnit, 1);
     }
 
     /**
@@ -129,27 +156,35 @@ public class UnitUtil
      *        : current unit
      * @param wantedUnit
      *        : wanted unit
+     * @param dimension
+     *        : unit dimension.
      * @return Return a double value in the <code>wantedUnit</code> unit.
      * @see #getBestUnit(double, UnitPrefix)
      */
-    public static double getValueInUnit(double value, UnitPrefix currentUnit, UnitPrefix wantedUnit)
+    public static double getValueInUnit(double value, UnitPrefix currentUnit, UnitPrefix wantedUnit, int dimension)
     {
         int currentOrdinal = currentUnit.ordinal();
         int wantedOrdinal = wantedUnit.ordinal();
         double result = value;
+        final double factor = Math.pow(1000d, dimension);
 
         while (currentOrdinal < wantedOrdinal)
         {
-            result *= 1000d;
+            result *= factor;
             currentOrdinal++;
         }
         while (currentOrdinal > wantedOrdinal)
         {
-            result /= 1000d;
+            result /= factor;
             currentOrdinal--;
         }
 
         return result;
+    }
+
+    public static double getValueInUnit(double value, UnitPrefix currentUnit, UnitPrefix wantedUnit)
+    {
+        return getValueInUnit(value, currentUnit, wantedUnit, 1);
     }
 
     /**
@@ -163,7 +198,6 @@ public class UnitUtil
      *        : number of decimals to keep
      * @param currentUnit
      *        : current unit prefix (Ex: {@link UnitPrefix#MILLI}
-     * @return
      */
     public static String getBestUnitInMeters(double value, int decimals, UnitPrefix currentUnit)
     {
@@ -187,7 +221,7 @@ public class UnitUtil
      *        : value in milliseconds.
      * @return Return a {@link TimeUnit} enumeration value.
      */
-    public static TimeUnit getBestUnit(double valueInMs)
+    public static TimeUnit getBestTimeUnit(double valueInMs)
     {
         if (valueInMs % 1000 != 0)
             return TimeUnit.MILLISECONDS;
@@ -197,6 +231,15 @@ public class UnitUtil
             return TimeUnit.MINUTES;
 
         return TimeUnit.HOURS;
+    }
+
+    /**
+     * @deprecated Uses {@link #getBestTimeUnit(double)} instead.
+     */
+    @Deprecated
+    public static TimeUnit getBestUnit(double valueInMs)
+    {
+        return getBestTimeUnit(valueInMs);
     }
 
     /**

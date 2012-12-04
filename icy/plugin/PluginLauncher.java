@@ -69,7 +69,7 @@ public class PluginLauncher
      * Start the plugin.<br>
      * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin)
      */
-    public static Plugin launch(PluginDescriptor pluginDesc)
+    public static Plugin start(PluginDescriptor pluginDesc)
     {
         try
         {
@@ -101,5 +101,39 @@ public class PluginLauncher
         }
 
         return null;
+    }
+
+    /**
+     * @deprecated Uses {@link #start(PluginDescriptor)} instead.
+     */
+    @Deprecated
+    public synchronized static void launch(PluginDescriptor pluginDesc)
+    {
+        try
+        {
+            final Plugin plugin = pluginDesc.getPluginClass().newInstance();
+
+            // register plugin
+            Icy.getMainInterface().registerPlugin(plugin);
+
+            final Thread thread;
+
+            if (plugin instanceof PluginThreaded)
+                thread = new PluginThread(pluginDesc, plugin, (PluginThreaded) plugin);
+            else
+                thread = new PluginThread(pluginDesc, plugin, null);
+
+            // keep backward compatibility
+            if ((plugin instanceof PluginThreaded) || (plugin instanceof PluginStartAsThread))
+                // launch as thread
+                thread.start();
+            else
+                // direct launch in EDT now (no thread creation)
+                ThreadUtil.invokeNow(thread);
+        }
+        catch (Throwable t)
+        {
+            IcyExceptionHandler.handleException(pluginDesc, t, true);
+        }
     }
 }

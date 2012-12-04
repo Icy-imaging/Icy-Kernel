@@ -239,10 +239,12 @@ public class ROI2DArea extends ROI2D
                     switch (e.getKeyCode())
                     {
                         case KeyEvent.VK_ADD:
+                        case KeyEvent.VK_PLUS:
                             if (ROI2DArea.this.selected)
                                 setCursorSize(cursorSize * 1.1f);
                             break;
 
+                        case KeyEvent.VK_MINUS:
                         case KeyEvent.VK_SUBTRACT:
                             if (ROI2DArea.this.selected)
                                 setCursorSize(cursorSize * 0.9f);

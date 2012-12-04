@@ -362,6 +362,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected abstract ROIPainter createPainter();
 
     /**
+     * Return number of dimension.
+     */
+    public abstract int getDimension();
+
+    /**
      * generate unique id
      */
     private static int generateId()
@@ -801,12 +806,18 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
     /**
      * Return perimeter of ROI in pixels.<br>
+     * This is basically the number of pixel representing ROI edges.<br>
+     */
+    /*
      * Override this method to adapt and optimize for a specific ROI.
      */
     public abstract double getPerimeter();
 
     /**
      * Return volume of ROI in pixels.<br>
+     * For a 2D ROI, volume is equivalent to the area.<br>
+     */
+    /*
      * Override this method to adapt and optimize for a specific ROI.
      */
     public abstract double getVolume();
@@ -827,8 +838,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
         // then generate id and modify name
         result.id = generateId();
-        // change name too
-        result.setName(name + " copy");
 
         return result;
     }

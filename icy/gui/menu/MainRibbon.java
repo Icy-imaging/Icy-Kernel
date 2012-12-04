@@ -22,36 +22,36 @@ import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandMenuButton;
 import icy.gui.component.button.IcyCommandToggleButton;
 import icy.gui.component.button.IcyCommandToggleMenuButton;
-import icy.gui.frame.AboutFrame;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.progress.TaskFrame;
-import icy.gui.main.MainAdapter;
-import icy.gui.main.MainEvent;
+import icy.gui.main.FocusedSequenceListener;
 import icy.gui.main.MainFrame;
+import icy.gui.menu.action.GeneralActions;
+import icy.gui.menu.action.PreferencesActions;
+import icy.gui.menu.action.WindowActions;
 import icy.gui.plugin.PluginCommandButton;
-import icy.gui.preferences.GeneralPreferencePanel;
-import icy.gui.preferences.PluginLocalPreferencePanel;
-import icy.gui.preferences.PluginOnlinePreferencePanel;
-import icy.gui.preferences.PreferenceFrame;
 import icy.gui.util.LookAndFeelUtil;
 import icy.gui.util.RibbonUtil;
 import icy.gui.viewer.Viewer;
 import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
-import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginDescriptor.PluginClassNameSorter;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
 import icy.plugin.PluginLoader.PluginLoaderListener;
-import icy.plugin.PluginUpdater;
+import icy.plugin.interface_.PluginSearchProvider;
 import icy.preferences.GeneralPreferences;
 import icy.preferences.WorkspaceLocalPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
-import icy.swimmingPool.SwimmingPoolViewer;
+import icy.searchbar.SearchBar;
+import icy.searchbar.interfaces.SBProvider;
+import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
+import icy.sequence.SequenceEvent.SequenceEventSourceType;
+import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
-import icy.update.IcyUpdater;
 import icy.workspace.Workspace;
 import icy.workspace.Workspace.TaskDefinition;
 import icy.workspace.Workspace.TaskDefinition.BandDefinition;
@@ -66,6 +66,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -92,7 +93,7 @@ import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPo
  * 
  * @author Stephane
  */
-public class MainRibbon extends MainAdapter implements PluginLoaderListener
+public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
 {
     /**
      * TASK / BAND NAMES
@@ -107,6 +108,11 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
      */
     private final ArrayList<Workspace> workspaces;
     private Workspace systemWorkspace;
+
+    /**
+     * Search bar object
+     */
+    SearchBar searchBar;
 
     /**
      * internals
@@ -129,6 +135,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     CommandToggleButtonGroup multiWindowGroup;
     IcyCommandToggleButton multiWindowButton;
 
+    final Runnable searchProviderSetter;
+
     /**
      * @param ribbon
      */
@@ -137,6 +145,34 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         super();
 
         this.ribbon = ribbon;
+
+        searchProviderSetter = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                final List<Class<? extends SBProvider>> providers = new ArrayList<Class<? extends SBProvider>>();
+
+                // get search providers from plugin
+                for (PluginDescriptor plugin : PluginLoader.getPlugins(PluginSearchProvider.class))
+                {
+                    try
+                    {
+                        final PluginSearchProvider psp = (PluginSearchProvider) plugin.getPluginClass().newInstance();
+
+                        providers.add(psp.getSearchProviderClass());
+                    }
+                    catch (Throwable t)
+                    {
+                        IcyExceptionHandler.handleException(plugin, t, true);
+                    }
+
+                }
+
+                // update search bar providers
+                searchBar.setProvider(providers);
+            }
+        };
 
         workspaces = new ArrayList<Workspace>();
         othersPluginsMenu = new JMenu("Plugins");
@@ -194,7 +230,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         // saveWorkspaces();
 
         PluginLoader.addListener(this);
-        Icy.getMainInterface().addListener(this);
+        Icy.getMainInterface().addFocusedSequenceListener(this);
     }
 
     // some stuff which need to be initialized after ribbon creation
@@ -221,6 +257,11 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     public ImageJWrapper getImageJ()
     {
         return ijTask.getImageJ();
+    }
+
+    public SearchBar getSearchBar()
+    {
+        return searchBar;
     }
 
     private void loadWorkspaces()
@@ -455,34 +496,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
 
     private void buildSetupPluginBand()
     {
-        final IcyCommandButton localPlugin = new IcyCommandButton("local plugin", new IcyIcon("db"));
-        // build richToolTip for command button
-        localPlugin.setActionRichTooltip(new RichTooltip("Setup local plugin",
-                "Browse, update or delete installed plugins"));
-        localPlugin.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                new PreferenceFrame(PluginLocalPreferencePanel.NODE_NAME);
-            }
-        });
-
-        setupPluginsBand.addCommandButton(localPlugin, RibbonElementPriority.TOP);
-
-        final IcyCommandButton onlinePlugin = new IcyCommandButton("online plugin", new IcyIcon("network"));
-        // build richToolTip for command button
-        onlinePlugin.setActionRichTooltip(new RichTooltip("Setup online plugin", "Browse and install online plugins"));
-        onlinePlugin.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                new PreferenceFrame(PluginOnlinePreferencePanel.NODE_NAME);
-            }
-        });
-
-        setupPluginsBand.addCommandButton(onlinePlugin, RibbonElementPriority.TOP);
+        setupPluginsBand.addCommandButton(new IcyCommandButton(PreferencesActions.onlinePluginPreferencesAction),
+                RibbonElementPriority.TOP);
 
         RibbonUtil.setPermissiveResizePolicies(setupPluginsBand);
     }
@@ -611,9 +626,6 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                                         ribbonBand.addCommandButton(PluginCommandButton.createButton(plugin),
                                                 item.getPriority());
                                 }
-                                // remove from workspace
-                                // else
-                                // item.remove();
                             }
                         }
                     }
@@ -760,55 +772,17 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     private void buidlTaskBar()
     {
         // PREFERENCES
-        final IcyCommandButton preferencesButton = new IcyCommandButton(new IcyIcon(ResourceUtil.ICON_TOOLS));
-
-        preferencesButton.setActionRichTooltip(new RichTooltip("Preferences window", "Setup ICY general preferences."));
-        preferencesButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                new PreferenceFrame(GeneralPreferencePanel.NODE_NAME);
-            }
-        });
-        ribbon.addTaskbarComponent(preferencesButton);
+        ribbon.addTaskbarComponent(new IcyCommandButton(PreferencesActions.preferencesAction));
 
         // PLUGINS
-        final IcyCommandButton pluginsButton = new IcyCommandButton(new IcyIcon(ResourceUtil.ICON_PLUGIN));
-
-        pluginsButton.setActionRichTooltip(new RichTooltip("Plugins", "Install new plugins."));
-        pluginsButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                new PreferenceFrame(PluginOnlinePreferencePanel.NODE_NAME);
-            }
-        });
-        ribbon.addTaskbarComponent(pluginsButton);
+        ribbon.addTaskbarComponent(new IcyCommandButton(PreferencesActions.onlinePluginPreferencesAction));
 
         // SEPARATOR
         ribbon.addTaskbarComponent(new JSeparator(SwingConstants.VERTICAL));
 
         // MULTI FRAME MODE
         multiWindowGroup = new CommandToggleButtonGroup();
-        multiWindowButton = new IcyCommandToggleButton(new IcyIcon(ResourceUtil.ICON_DETACHED_WINDOW));
-
-        multiWindowButton.setActionRichTooltip(new RichTooltip("Detached mode ON/OFF",
-                "Switch to detached / attached mode"));
-        multiWindowButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final boolean value = (multiWindowGroup.getSelected() != null);
-
-                // set detached mode
-                Icy.getMainInterface().setDetachedMode(value);
-                // and save state
-                GeneralPreferences.setMultiWindowMode(value);
-            }
-        });
+        multiWindowButton = new IcyCommandToggleButton(GeneralActions.detachedModeAction);
         ribbon.addTaskbarComponent(multiWindowButton);
 
         multiWindowGroup.add(multiWindowButton);
@@ -829,21 +803,8 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
 
                 // ALWAYS ON TOP
                 final CommandToggleButtonGroup aotGroup = new CommandToggleButtonGroup();
-                final IcyCommandToggleMenuButton aotButton = new IcyCommandToggleMenuButton("Always on top",
-                        new IcyIcon("pin"));
-                aotButton.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        final boolean value = (aotGroup.getSelected() != null);
-
-                        // set "always on top" state
-                        Icy.getMainInterface().setAlwaysOnTop(value);
-                        // and save state
-                        GeneralPreferences.setAlwaysOnTop(value);
-                    }
-                });
+                final IcyCommandToggleMenuButton aotButton = new IcyCommandToggleMenuButton(
+                        WindowActions.stayOnTopAction);
                 result.addMenuButton(aotButton);
 
                 aotGroup.add(aotButton);
@@ -874,16 +835,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 result.addMenuSeparator();
 
                 // SWIMMING POOL
-                final IcyCommandMenuButton spButton = new IcyCommandMenuButton("Swimming Pool Viewer", new IcyIcon(
-                        "inbox"));
-                spButton.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        new SwimmingPoolViewer();
-                    }
-                });
+                final IcyCommandMenuButton spButton = new IcyCommandMenuButton(WindowActions.swimmingPoolAction);
                 result.addMenuButton(spButton);
 
                 // SCRIPT EDITOR
@@ -915,56 +867,12 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                     {
                         final JCommandPopupMenu result = new JCommandPopupMenu();
 
-                        // Tile grid
-                        final IcyCommandMenuButton gridTileButton = new IcyCommandMenuButton("Grid", new IcyIcon(
-                                "2x2_grid"));
-                        gridTileButton.setPopupRichTooltip(new RichTooltip("Grid tile arrangement",
-                                "Reorganise all opened windows in grid tile."));
-                        gridTileButton.addActionListener(new ActionListener()
-                        {
-                            @Override
-                            public void actionPerformed(ActionEvent e)
-                            {
-                                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
-                                if (mainFrame != null)
-                                    mainFrame.organizeTile(MainFrame.TILE_GRID);
-                            }
-                        });
-                        result.addMenuButton(gridTileButton);
-
-                        // Tile horizontal
-                        final IcyCommandMenuButton horizontalTileButton = new IcyCommandMenuButton("Horizontal",
-                                new IcyIcon("tile_horizontal"));
-                        horizontalTileButton.setPopupRichTooltip(new RichTooltip("Horizontal tile arrangement",
-                                "Reorganise all opened windows in horizontal tile."));
-                        horizontalTileButton.addActionListener(new ActionListener()
-                        {
-                            @Override
-                            public void actionPerformed(ActionEvent e)
-                            {
-                                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
-                                if (mainFrame != null)
-                                    mainFrame.organizeTile(MainFrame.TILE_HORIZONTAL);
-                            }
-                        });
-                        result.addMenuButton(horizontalTileButton);
-
-                        // Tile vertical
-                        final IcyCommandMenuButton verticalTileButton = new IcyCommandMenuButton("Vertical",
-                                new IcyIcon("tile_vertical"));
-                        verticalTileButton.setPopupRichTooltip(new RichTooltip("Vertical tile arrangement",
-                                "Reorganise all opened windows in vertical tile."));
-                        verticalTileButton.addActionListener(new ActionListener()
-                        {
-                            @Override
-                            public void actionPerformed(ActionEvent e)
-                            {
-                                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
-                                if (mainFrame != null)
-                                    mainFrame.organizeTile(MainFrame.TILE_VERTICAL);
-                            }
-                        });
-                        result.addMenuButton(verticalTileButton);
+                        // grid
+                        result.addMenuButton(new IcyCommandMenuButton(WindowActions.gridTileAction));
+                        // horizontal
+                        result.addMenuButton(new IcyCommandMenuButton(WindowActions.horizontalTileAction));
+                        // vertical
+                        result.addMenuButton(new IcyCommandMenuButton(WindowActions.verticalTileAction));
 
                         return result;
                     }
@@ -972,20 +880,7 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 result.addMenuButton(tileButton);
 
                 // REORGANIZE CASCADE
-                final IcyCommandMenuButton cascadeButton = new IcyCommandMenuButton("Cascade", new IcyIcon("cascade"));
-                cascadeButton.setPopupRichTooltip(new RichTooltip("Cascade arrangement",
-                        "Reorganise all opened windows in cascade"));
-                cascadeButton.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
-                        if (mainFrame != null)
-                            mainFrame.organizeCascade();
-                    }
-                });
-                result.addMenuButton(cascadeButton);
+                result.addMenuButton(new IcyCommandMenuButton(WindowActions.cascadeAction));
 
                 // SEPARATOR
                 result.addMenuSeparator();
@@ -1104,6 +999,15 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
         // SEPARATOR
         ribbon.addTaskbarComponent(new JSeparator(SwingConstants.VERTICAL));
 
+        // SEARCH BAR
+        searchBar = new SearchBar();
+        searchBar.setColumns(14);
+
+        // set search provider
+        updateSearchProviders();
+
+        ribbon.addTaskbarComponent(searchBar);
+
         // HELP / INFOS
         final IcyCommandButton helpAndInfoButton = new IcyCommandButton(new IcyIcon("info"));
 
@@ -1118,74 +1022,27 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
                 final JCommandPopupMenu result = new JCommandPopupMenu();
 
                 // HELP
-                final IcyCommandMenuButton helpButton = new IcyCommandMenuButton("Help (online)", new IcyIcon(
-                        ResourceUtil.ICON_HELP));
-                helpButton.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        // open browser on help page
-                        NetworkUtil.openURL(NetworkUtil.WEBSITE_URL + "support");
-                    }
-                });
-                result.addMenuButton(helpButton);
-
+                result.addMenuButton(new IcyCommandMenuButton(GeneralActions.onlineHelpAction));
                 // WEB SITE
-                final IcyCommandMenuButton webButton = new IcyCommandMenuButton("Website", new IcyIcon(
-                        ResourceUtil.ICON_BROWSER));
-                webButton.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        // open browser on website
-                        NetworkUtil.openURL(NetworkUtil.WEBSITE_URL);
-                    }
-                });
-                result.addMenuButton(webButton);
-
+                result.addMenuButton(new IcyCommandMenuButton(GeneralActions.websiteAction));
                 // // FAQ
                 // final IcyCommandMenuButton faqButton = new Help("faq")
                 // .getIcyCommandMenuButton("Help (online)");
                 // result.addMenuButton(faqButton);
-
                 // CHECK FOR UPDATE
-                final IcyCommandMenuButton checkUpdateButton = new IcyCommandMenuButton("Check for update",
-                        new IcyIcon("download"));
-                checkUpdateButton.setActionRichTooltip(new RichTooltip("Check for updates",
-                        "Search updates for application and plugins in all referenced repositories."));
-                checkUpdateButton.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        // check core update
-                        IcyUpdater.checkUpdate(true, false);
-                        // check plugin update
-                        PluginUpdater.checkUpdate(true, false);
-                    }
-                });
-                result.addMenuButton(checkUpdateButton);
-
+                result.addMenuButton(new IcyCommandMenuButton(GeneralActions.checkUpdateAction));
                 // ABOUT
-                final IcyCommandMenuButton aboutButton = new IcyCommandMenuButton("About", new IcyIcon("info"));
-                aboutButton.setActionRichTooltip(new RichTooltip("About",
-                        "Information about ICY's authors, license and copyrights."));
-                aboutButton.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        new AboutFrame();
-                    }
-                });
-                result.addMenuButton(aboutButton);
+                result.addMenuButton(new IcyCommandMenuButton(GeneralActions.aboutAction));
 
                 return result;
             }
         });
         ribbon.addTaskbarComponent(helpAndInfoButton);
+    }
+
+    private void updateSearchProviders()
+    {
+        ThreadUtil.bgRunSingle(searchProviderSetter);
     }
 
     private void checkPluginsMenuCoherence()
@@ -1243,15 +1100,23 @@ public class MainRibbon extends MainAdapter implements PluginLoaderListener
     {
         // update menu according to plugins change
         checkPluginsMenuCoherence();
+        // update search providers
+        updateSearchProviders();
     }
 
     @Override
-    public void sequenceFocused(MainEvent event)
+    public void focusChanged(Sequence sequence)
     {
-        // dispatch event to all interested
-        // imageTask.onSequenceFocusChange();
-        sequenceOperationTask.onSequenceFocusChange();
+        sequenceOperationTask.onSequenceChange();
         applicationMenu.onSequenceFocusChange();
     }
 
+    @Override
+    public void focusedSequenceChanged(SequenceEvent event)
+    {
+        final SequenceEventSourceType type = event.getSourceType();
+
+        if ((type == SequenceEventSourceType.SEQUENCE_DATA) || (type == SequenceEventSourceType.SEQUENCE_TYPE))
+            sequenceOperationTask.onSequenceChange();
+    }
 }

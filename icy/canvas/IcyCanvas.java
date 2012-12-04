@@ -36,6 +36,7 @@ import icy.image.IcyBufferedImage;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.lut.LUT;
 import icy.image.lut.LUTEvent;
+import icy.image.lut.LUTEvent.LUTEventType;
 import icy.image.lut.LUTListener;
 import icy.main.Icy;
 import icy.painter.Painter;
@@ -202,9 +203,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     protected final Viewer viewer;
     /**
-     * layers draw flag
+     * layers visible flag
      */
-    protected boolean drawLayers;
+    protected boolean layersVisible;
     /**
      * synchronization group :<br>
      * 0 = unsynchronized
@@ -269,7 +270,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         // default
         this.viewer = viewer;
 
-        drawLayers = true;
+        layersVisible = true;
         layers = new ArrayList<Layer>();
         layerIdGen = 1;
         syncId = 0;
@@ -383,23 +384,40 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     public abstract void refresh();
 
     /**
-     * @return the drawLayers
+     * @deprecated Uses {@link #isLayersVisible()} instead.
      */
+    @Deprecated
     public boolean getDrawLayers()
     {
-        return drawLayers;
+        return isLayersVisible();
     }
 
     /**
-     * @param drawLayers
-     *        the drawLayers to set
+     * @deprecated Uses {@link #setLayersVisible(boolean)} instead.
      */
-    public void setDrawLayers(boolean drawLayers)
+    @Deprecated
+    public void setDrawLayers(boolean value)
     {
-        if (this.drawLayers != drawLayers)
+        setLayersVisible(value);
+    }
+
+    /**
+     * Return true if layers are visible on the canvas.
+     */
+    public boolean isLayersVisible()
+    {
+        return layersVisible;
+    }
+
+    /**
+     * Make layers visible on this canvas (default = true).
+     */
+    public void setLayersVisible(boolean value)
+    {
+        if (layersVisible != value)
         {
-            this.drawLayers = drawLayers;
-            repaint();
+            layersVisible = value;
+            getViewComponent().repaint();
         }
     }
 
@@ -477,7 +495,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
             // launch a lutChanged event if wanted
             if (event)
-                lutChanged(new LUTEvent(lut, -1));
+                lutChanged(new LUTEvent(lut, -1, LUTEventType.COLORMAP_CHANGED));
         }
     }
 
@@ -529,14 +547,41 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
+     * Returns the list of layers orderer for event dispatching.
+     */
+    public ArrayList<Layer> getOrderedLayersForEvent()
+    {
+        final ArrayList<Layer> result = getLayers();
+
+        Collections.sort(result, EventLayerSorter.instance);
+
+        return result;
+    }
+
+    /**
+     * Returns the list of visible layers orderer for event dispatching.
+     */
+    public ArrayList<Layer> getVisibleOrderedLayersForEvent()
+    {
+        final ArrayList<Layer> result = getVisibleLayers();
+
+        Collections.sort(result, EventLayerSorter.instance);
+
+        return result;
+    }
+
+    /**
      * @return the painters of layers
      */
     public ArrayList<Painter> getLayersPainter()
     {
         final ArrayList<Painter> result = new ArrayList<Painter>();
 
-        for (Layer layer : getLayers())
-            result.add(layer.getPainter());
+        synchronized (layers)
+        {
+            for (Layer layer : layers)
+                result.add(layer.getPainter());
+        }
 
         return result;
     }
@@ -2985,7 +3030,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                 len *= sizeC;
 
             result.beginUpdate();
-            beginUpdate();
+            // this cause position changed event to not be sent during rendering
+            // which is a problem for painter relying on this
+            // beginUpdate();
             try
             {
                 if (posT != -1)
@@ -3085,7 +3132,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             }
             finally
             {
-                endUpdate();
+//                endUpdate();
                 result.endUpdate();
             }
         }
@@ -3227,15 +3274,6 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             // removed
             layerRemoved(layer);
         }
-    }
-
-    public ArrayList<Layer> getVisibleOrderedLayersForEvent()
-    {
-        final ArrayList<Layer> result = getVisibleLayers();
-
-        Collections.sort(result, EventLayerSorter.instance);
-
-        return result;
     }
 
     /**

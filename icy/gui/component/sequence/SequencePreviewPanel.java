@@ -3,6 +3,7 @@ package icy.gui.component.sequence;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
 import icy.sequence.SequenceModel;
+import icy.sequence.SequenceModel.SequenceModelListener;
 import icy.system.thread.ThreadUtil;
 import icy.util.GraphicsUtil;
 import icy.util.StringUtil;
@@ -26,7 +27,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-public class SequencePreviewPanel extends JPanel implements ChangeListener
+public class SequencePreviewPanel extends JPanel implements ChangeListener, SequenceModelListener
 {
     /**
      * 
@@ -412,7 +413,14 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
     {
         if (this.model != model)
         {
+            if (this.model != null)
+                this.model.removeSequenceModelListener(this);
+
             this.model = model;
+
+            if (model != null)
+                model.addSequenceModelListener(this);
+
             dimensionChanged();
         }
     }
@@ -426,6 +434,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
         }
     }
 
+    @Override
     public void dimensionChanged()
     {
         if (model != null)
@@ -442,6 +451,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener
         imagePanel.imageChanged();
     }
 
+    @Override
     public void imageChanged()
     {
         imagePanel.imageChanged();

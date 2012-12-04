@@ -19,6 +19,7 @@
 package icy.roi;
 
 import icy.canvas.IcyCanvas;
+import icy.canvas.Layer;
 import icy.util.EventUtil;
 import icy.util.ShapeUtil.ShapeOperation;
 import icy.util.XMLUtil;
@@ -103,7 +104,7 @@ public abstract class ROI2D extends ROI
                 result.setName("Intersection");
                 break;
             case XOR:
-                result.setAsBooleanMask(BooleanMask2D.getXorBooleanMask(rois));
+                result.setAsBooleanMask(BooleanMask2D.getExclusiveUnionBooleanMask(rois));
                 result.setName("Exclusive union");
                 break;
             default:
@@ -124,8 +125,8 @@ public abstract class ROI2D extends ROI
             return ROI2DShape.subtract((ROI2DShape) roi1, (ROI2DShape) roi2);
 
         // use ROI2DArea
-        final ROI2DArea result = new ROI2DArea(BooleanMask2D.getSubtractionMask(roi1.getAsBooleanMask(),
-                roi2.getAsBooleanMask()));
+        final ROI2DArea result = new ROI2DArea(BooleanMask2D.getSubtractionMask(roi1.getBooleanMask(),
+                roi2.getBooleanMask()));
 
         result.setName("Substraction");
 
@@ -506,6 +507,12 @@ public abstract class ROI2D extends ROI
         c = -1;
     }
 
+    @Override
+    final public int getDimension()
+    {
+        return 2;
+    }
+
     /**
      * @return the z
      */
@@ -571,11 +578,20 @@ public abstract class ROI2D extends ROI
 
     /**
      * Return true if the ROI is active for the specified canvas.<br>
-     * It internally uses the current canvas Z, T, C coordinates
+     * It internally uses the current canvas Z, T, C coordinates and the visible state of the
+     * attached layer.
      */
     public boolean isActiveFor(IcyCanvas canvas)
     {
-        return isActiveFor(canvas.getPositionZ(), canvas.getPositionT(), canvas.getPositionC());
+        if (!canvas.isLayersVisible())
+            return false;
+
+        final Layer layer = canvas.getLayer(painter);
+
+        if ((layer != null) && layer.isVisible())
+            return isActiveFor(canvas.getPositionZ(), canvas.getPositionT(), canvas.getPositionC());
+
+        return false;
     }
 
     /**
@@ -583,31 +599,8 @@ public abstract class ROI2D extends ROI
      */
     public boolean isActiveFor(int z, int t, int c)
     {
-        return isActiveForZ(z) && isActiveForT(t) && isActiveForC(c);
-    }
-
-    /**
-     * Return true if the ROI is active for the specified Z coordinate
-     */
-    public boolean isActiveForZ(int z)
-    {
-        return (this.z == -1) || (this.z == z);
-    }
-
-    /**
-     * Return true if the ROI is active for the specified T coordinate
-     */
-    public boolean isActiveForT(int t)
-    {
-        return (this.t == -1) || (this.t == t);
-    }
-
-    /**
-     * Return true if the ROI is active for the specified C coordinate
-     */
-    public boolean isActiveForC(int c)
-    {
-        return (this.c == -1) || (this.c == c);
+        return ((this.z == -1) || (this.z == z)) && ((this.t == -1) || (this.t == t))
+                && ((this.c == -1) || (this.c == c));
     }
 
     /**
@@ -976,6 +969,7 @@ public abstract class ROI2D extends ROI
     /**
      * @deprecated Uses {@link #getBooleanMask(boolean)} instead.
      */
+    @Deprecated
     public BooleanMask2D getAsBooleanMask(boolean inclusive)
     {
         return getBooleanMask(inclusive);
@@ -984,6 +978,7 @@ public abstract class ROI2D extends ROI
     /**
      * @deprecated Uses {@link #getBooleanMask(Rectangle, boolean)} instead.
      */
+    @Deprecated
     public boolean[] getAsBooleanMask(Rectangle rect, boolean inclusive)
     {
         return getBooleanMask(rect, inclusive);
@@ -992,6 +987,7 @@ public abstract class ROI2D extends ROI
     /**
      * @deprecated Uses {@link #getBooleanMask(int, int, int, int, boolean)} instead.
      */
+    @Deprecated
     public boolean[] getAsBooleanMask(int x, int y, int w, int h, boolean inclusive)
     {
         return getBooleanMask(x, y, w, h, inclusive);
@@ -1000,6 +996,7 @@ public abstract class ROI2D extends ROI
     /**
      * @deprecated Uses {@link #getBooleanMask(boolean)} instead.
      */
+    @Deprecated
     public BooleanMask2D getAsBooleanMask()
     {
         return getBooleanMask();
@@ -1008,6 +1005,7 @@ public abstract class ROI2D extends ROI
     /**
      * @deprecated Uses {@link #getBooleanMask(boolean)} instead.
      */
+    @Deprecated
     public boolean[] getAsBooleanMask(Rectangle rect)
     {
         return getBooleanMask(rect);
@@ -1016,6 +1014,7 @@ public abstract class ROI2D extends ROI
     /**
      * @deprecated Uses {@link #getBooleanMask(boolean)} instead.
      */
+    @Deprecated
     public boolean[] getAsBooleanMask(int x, int y, int w, int h)
     {
         return getBooleanMask(x, y, w, h);
@@ -1066,78 +1065,28 @@ public abstract class ROI2D extends ROI
                 && ((this.c == -1) || ((this.c >= cmin) && (this.c < cmax)));
     }
 
+    /*
+     * Generic implementation for ROI2D using the BooleanMask object so
+     * the result is just an approximation.
+     * Override to optimize for specific ROI.
+     */
     @Override
     public double getPerimeter()
     {
-        --> uses getContour which return an array of point
-                --> then use number of point
-        
-        final BooleanMask2D bmask = getBooleanMask(true);
-        final int w = bmask.bounds.width;
-        final int h = bmask.bounds.height;
-
-        if ((w == 0) || (h == 0))
-            return 0d;
-
-        // naive and approximation by using boolean mask contour
-        double result = 0;
-        final double sq2m1 = Math.sqrt(2d) - 1d;
-
-        // first line
-        for (int x = 0; x < w; x++)
-            if (bmask.mask[x])
-                result++;
-
-        int off = w;
-        for (int y = 1; y < h; y++)
-        {
-            // first pixel
-            if (bmask.mask[off] && !bmask.mask[off - w])
-                result++;
-            if (w > 1)
-            {
-                if (bmask.mask[(off - w) + 1])
-                    result += sq2m1;
-            }
-
-            off++;
-
-            for (int x = 1; x < (w - 1); x++)
-            {
-                // is a contour ? 
-                if (bmask.mask[off] && !bmask.mask[off - w])
-                    result++;
-                // if (bmask.mask[(off -w) + (x - 1)])
-                off++;
-            }
-
-            // last pixel
-            if (w > 1)
-            {
-                if (bmask.mask[off] && !bmask.mask[off - w])
-                    result++;
-                if (bmask.mask[(off - w) - 1])
-                    result += sq2m1;
-                off++;
-            }
-        }
-
-        return result;
+        // approximation by using number of point of the edge of boolean mask
+        return getBooleanMask(true).getEdgePoints().length;
     }
 
+    /*
+     * Generic implementation for ROI2D using the BooleanMask object so
+     * the result is just an approximation.
+     * Override to optimize for specific ROI.
+     */
     @Override
     public double getVolume()
     {
-        final BooleanMask2D bmask = getBooleanMask(true);
-
-        // naive and approximation by using boolean mask
-        double result = 0;
-
-        for (int i = 0; i < bmask.bounds.width * bmask.bounds.height; i++)
-            if (bmask.mask[i])
-                result++;
-
-        return result;
+        // approximation by using number of point of boolean mask
+        return getBooleanMask(true).getPoints().length;
     }
 
     @Override

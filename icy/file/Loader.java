@@ -368,7 +368,8 @@ public class Loader
             lastUsedReader = reader;
 
             // set current filename
-            loaderFrame.setFilename(path);
+            if (loaderFrame != null)
+                loaderFrame.setFilename(path);
 
             // prepare meta data store structure
             reader.setMetadataStore(new OMEXMLMetadataImpl());

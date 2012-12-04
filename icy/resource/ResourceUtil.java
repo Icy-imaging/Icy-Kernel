@@ -55,7 +55,6 @@ public class ResourceUtil
     // alpha mask icons
     public static final ImageIcon ICON_ICY_16 = ResourceUtil.getImageIcon(IMAGE_ICY_16);
     public static final ImageIcon ICON_ICY_32 = ResourceUtil.getImageIcon(IMAGE_ICY_32);
-    // public static final ImageIcon ICON_ICY_256 = ResourceUtil.getImageIcon(IMAGE_ICY_256);
 
     public static final Image ICON_NULL = ResourceUtil.getAlphaIconAsImage("null.png");
     public static final Image ICON_EXPAND = ResourceUtil.getAlphaIconAsImage("top_right_expand.png");
@@ -72,12 +71,12 @@ public class ResourceUtil
     public static final Image ICON_DOCEDIT = ResourceUtil.getAlphaIconAsImage("doc_edit.png");
     public static final Image ICON_DOCTEXT1 = ResourceUtil.getAlphaIconAsImage("doc_lines.png");
     public static final Image ICON_DOCTEXT2 = ResourceUtil.getAlphaIconAsImage("doc_lines_stright.png");
+    public static final Image ICON_DUPLICATE = ResourceUtil.getAlphaIconAsImage("duplicate.png");
     public static final Image ICON_OPEN = ResourceUtil.getAlphaIconAsImage("folder_open.png");
     public static final Image ICON_SAVE = ResourceUtil.getAlphaIconAsImage("save.png");
     public static final Image ICON_CLOSE = ResourceUtil.getAlphaIconAsImage("round_delete.png");
-    // public static final Image ICON_EXIT =
-    // ResourceUtil.getAlphaIconAsImage("arrow_bottom_left.png");
     public static final Image ICON_HELP = ResourceUtil.getAlphaIconAsImage("help.png");
+    public static final Image ICON_INFO = ResourceUtil.getAlphaIconAsImage("info.png");
 
     public static final Image ICON_ON_OFF = ResourceUtil.getAlphaIconAsImage("on-off.png");
     public static final Image ICON_TRASH = ResourceUtil.getAlphaIconAsImage("trash.png");
@@ -87,11 +86,13 @@ public class ResourceUtil
     public static final Image ICON_CHECKED = ResourceUtil.getAlphaIconAsImage("checkbox_checked.png");
     public static final Image ICON_LOCK_OPEN = ResourceUtil.getAlphaIconAsImage("unlocked.png");
     public static final Image ICON_LOCK_CLOSE = ResourceUtil.getAlphaIconAsImage("locked.png");
+    public static final Image ICON_DOWNLOAD = ResourceUtil.getAlphaIconAsImage("download.png");
     public static final Image ICON_PROPERTIES = ICON_DOCTEXT1;
     public static final Image ICON_TAG = ResourceUtil.getAlphaIconAsImage("tag.png");
     public static final Image ICON_TOOLS = ResourceUtil.getAlphaIconAsImage("wrench_plus_2.png");
     public static final Image ICON_CUT = ResourceUtil.getAlphaIconAsImage("clipboard_cut.png");
     public static final Image ICON_LIGHTING = ResourceUtil.getAlphaIconAsImage("lighting.png");
+    public static final Image ICON_SEARCH = ResourceUtil.getAlphaIconAsImage("zoom.png");
     public static final Image ICON_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png");
     public static final Image ICON_NOT_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_close.png");
 
@@ -129,9 +130,8 @@ public class ResourceUtil
     public static final Image ICON_INDENT_INCREASE = ResourceUtil.getAlphaIconAsImage("indent_increase.png");
     public static final Image ICON_INDENT_REMOVE = ResourceUtil.getAlphaIconAsImage("indent_remove.png");
 
-    public static final Image ICON_DUPLICATE = ResourceUtil.getAlphaIconAsImage("duplicate.png");
-    public static final Image ICON_PHOTO = ResourceUtil.getAlphaIconAsImage("photo.png");
-    public static final Image ICON_PHOTO_SMALL = ResourceUtil.getAlphaIconAsImage("photo_small.png");
+    public static final Image ICON_TOIJ = ResourceUtil.getAlphaIconAsImage("to_ij.png");
+    public static final Image ICON_TOICY = ResourceUtil.getAlphaIconAsImage("to_icy.png");
 
     public static final Image ICON_PLUS = ResourceUtil.getAlphaIconAsImage("plus.png");
     public static final Image ICON_MINUS = ResourceUtil.getAlphaIconAsImage("minus.png");
@@ -168,19 +168,25 @@ public class ResourceUtil
     public static final Image ICON_SQUARE_PREV = ResourceUtil.getAlphaIconAsImage("sq_prev.png");
     public static final Image ICON_SQUARE_NEXT = ResourceUtil.getAlphaIconAsImage("sq_next.png");
 
+    public static final Image ICON_PIN = ResourceUtil.getAlphaIconAsImage("pin.png");
+
     public static final Image ICON_BAND_RIGHT = ResourceUtil.getAlphaIconAsImage("arrow_r.png");
     public static final Image ICON_BAND_LEFT = ResourceUtil.getAlphaIconAsImage("arrow_l.png");
+
+    public static final Image ICON_RESIZE = ResourceUtil.getAlphaIconAsImage("cursor_drag_arrow.png");
+    public static final Image ICON_RESIZE_2 = ResourceUtil.getAlphaIconAsImage("cursor_drag_arrow_2.png");
 
     public static final Image ICON_SMILEY_HAPPY = ResourceUtil.getAlphaIconAsImage("emotion_smile.png");
     public static final Image ICON_SMILEY_SAD = ResourceUtil.getAlphaIconAsImage("emotion_sad.png");
 
     public static final Image ICON_PLUGIN = ResourceUtil.getAlphaIconAsImage("plugin.png");
+    public static final Image ICON_DATABASE = ResourceUtil.getAlphaIconAsImage("db.png");
     public static final Image ICON_STAR = ResourceUtil.getAlphaIconAsImage("star_fav.png");
     public static final Image ICON_NETWORK = ResourceUtil.getAlphaIconAsImage("network.png");
     public static final Image ICON_BROWSER = ResourceUtil.getAlphaIconAsImage("browser.png");
-
-    public static final Image ICON_RESIZE = ResourceUtil.getAlphaIconAsImage("cursor_drag_arrow.png");
-    public static final Image ICON_RESIZE_2 = ResourceUtil.getAlphaIconAsImage("cursor_drag_arrow_2.png");
+    public static final Image ICON_CHAT = ResourceUtil.getAlphaIconAsImage("spechbubble.png");
+    public static final Image ICON_PHOTO = ResourceUtil.getAlphaIconAsImage("photo.png");
+    public static final Image ICON_PHOTO_SMALL = ResourceUtil.getAlphaIconAsImage("photo_small.png");
 
     // color icons
     public static final Image ICON_ALPHA_COLOR = ResourceUtil.getColorIconAsImage("alpha.png");

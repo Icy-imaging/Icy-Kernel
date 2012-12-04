@@ -126,6 +126,12 @@ public class NetworkUtil
      * Parameters id
      */
     public static final String ID_KERNELVERSION = "kernelVersion";
+    public static final String ID_JAVANAME = "javaName";
+    public static final String ID_JAVAVERSION = "javaVersion";
+    public static final String ID_JAVABITS = "javaBits";
+    public static final String ID_OSNAME = "osName";
+    public static final String ID_OSVERSION = "osVersion";
+    public static final String ID_OSARCH = "osArch";
     public static final String ID_PLUGINCLASSNAME = "pluginClassName";
     public static final String ID_PLUGINVERSION = "pluginVersion";
     public static final String ID_DEVELOPERID = "developerId";
@@ -357,41 +363,46 @@ public class NetworkUtil
     /**
      * Open an URL in the default system browser
      */
-    public static void openURL(String url)
+    public static boolean openURL(String url)
     {
-        openURL(URLUtil.getURL(url));
+        return openURL(URLUtil.getURL(url));
     }
 
     /**
      * Open an URL in the default system browser
      */
-    public static void openURL(URL url)
+    public static boolean openURL(URL url)
     {
+        if (url == null)
+            return false;
+
         try
         {
-            openURL(url.toURI());
+            return openURL(url.toURI());
         }
         catch (URISyntaxException e)
         {
             // use other method
-            systemOpenURL(url.toString());
+            return systemOpenURL(url.toString());
         }
     }
 
     /**
      * Open an URL in the default system browser
      */
-    public static void openURL(URI uri)
+    public static boolean openURL(URI uri)
     {
+        if (uri == null)
+            return false;
+
         final Desktop desktop = SystemUtil.getDesktop();
-        boolean done = false;
 
         if ((desktop != null) && desktop.isSupported(Action.BROWSE))
         {
             try
             {
                 desktop.browse(uri);
-                done = true;
+                return true;
             }
             catch (IOException e)
             {
@@ -400,16 +411,17 @@ public class NetworkUtil
         }
 
         // not
-        if (!done)
-            systemOpenURL(uri.toString());
-
+        return systemOpenURL(uri.toString());
     }
 
     /**
      * Open an URL in the default system browser (low level method)
      */
-    private static void systemOpenURL(String url)
+    private static boolean systemOpenURL(String url)
     {
+        if (StringUtil.isEmpty(url))
+            return false;
+
         try
         {
             if (SystemUtil.isMac())
@@ -435,10 +447,13 @@ public class NetworkUtil
 
                 Runtime.getRuntime().exec(new String[] {browser, url});
             }
+
+            return true;
         }
         catch (Exception e)
         {
             System.err.println("Error while opening system browser :\n" + e.toString());
+            return false;
         }
     }
 
@@ -903,7 +918,10 @@ public class NetworkUtil
     {
         String response = "";
 
-        final URLConnection uc = openConnection(target, true, false);
+        final URLConnection uc = openConnection(target, true, true);
+
+        if (uc == null)
+            return null;
 
         // set connection parameters
         uc.setDoInput(true);
@@ -925,7 +943,11 @@ public class NetworkUtil
         out.close();
 
         // read response from the input stream.
-        final BufferedReader in = new BufferedReader(new InputStreamReader(getInputStream(uc, false)));
+        final InputStream inStream = getInputStream(uc, false);
+        if (inStream == null)
+            return null;
+
+        final BufferedReader in = new BufferedReader(new InputStreamReader(inStream));
 
         try
         {
@@ -966,7 +988,8 @@ public class NetworkUtil
             {
                 try
                 {
-                    postData(REPORT_URL, values);
+                    if (postData(REPORT_URL, values) == null)
+                        System.out.println("Error while reporting data, verifying your internet connection.");
                 }
                 catch (IOException e)
                 {

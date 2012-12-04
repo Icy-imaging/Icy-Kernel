@@ -51,6 +51,9 @@ public class SequenceChooser extends JComboBox
 {
     public interface SequenceChooserListener
     {
+        /**
+         * Called when the sequence chooser selection changed for specified sequence.
+         */
         public void sequenceChanged(Sequence sequence);
     }
 
@@ -123,13 +126,19 @@ public class SequenceChooser extends JComboBox
             public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
                     boolean cellHasFocus)
             {
-                if (value == null)
-                    return new JLabel(nullEntryName);
+                final JLabel result = new JLabel();
 
                 if (value instanceof Sequence)
-                    return new JLabel(StringUtil.limit(((Sequence) value).getName(), sequenceNameMaxLength));
+                {
+                    final String name = ((Sequence) value).getName();
 
-                return new JLabel("");
+                    result.setText(StringUtil.limit(name, sequenceNameMaxLength));
+                    result.setToolTipText(name);
+                }
+                else if (value == null)
+                    result.setText(nullEntryName);
+
+                return result;
             }
         });
 

@@ -20,7 +20,6 @@ package icy.gui.preferences;
 
 import icy.gui.dialog.ActionDialog;
 import icy.gui.util.ComponentUtil;
-import icy.main.Icy;
 import icy.plugin.PluginRepositoryLoader;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
@@ -82,7 +81,7 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
 
         public RepositoryDialog(String title, final RepositoryInfo reposInf)
         {
-            super(Icy.getMainInterface().getMainFrame(), title);
+            super(title);
 
             setMinimumSize(new Dimension(400, 200));
             // setPreferredSize(new Dimension(600, 200));

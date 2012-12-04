@@ -19,10 +19,13 @@
 package icy.gui.frame.progress;
 
 import icy.gui.frame.IcyFrame;
+import icy.gui.main.MainFrame;
 import icy.gui.main.TaskFrameManager;
+import icy.main.Icy;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -101,7 +104,7 @@ public abstract class TaskFrame extends IcyFrame
             {
                 mainPanel = new JPanel();
                 mainPanel.setBorder(BorderFactory.createTitledBorder(""));
-                
+
                 // no border on frame
                 setBorder(BorderFactory.createEmptyBorder());
                 // no focusable
@@ -109,14 +112,26 @@ public abstract class TaskFrame extends IcyFrame
                 // no title bar
                 setTitleBarVisible(false);
 
+                // set maximum size of task frame
+                Dimension maxDim = new Dimension(800, 600);
+
+                final MainFrame mf = Icy.getMainInterface().getMainFrame();
+                if (mf != null)
+                {
+                    final Dimension desktopSize = mf.getDesktopSize();
+                    if (desktopSize != null)
+                        maxDim = desktopSize;
+                }
+                setMaximumSize(maxDim);
+
                 setLayout(new BorderLayout());
-                
+
                 add(mainPanel, BorderLayout.CENTER);
             }
         });
 
         // add to the task manager if a GUI is present
-        final TaskFrameManager tfm = icy.main.Icy.getMainInterface().getTaskWindowManager();
+        final TaskFrameManager tfm = Icy.getMainInterface().getTaskWindowManager();
 
         if (tfm != null)
             tfm.addTaskWindow(this);

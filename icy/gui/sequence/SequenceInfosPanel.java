@@ -6,8 +6,6 @@ package icy.gui.sequence;
 import icy.gui.component.button.IcyButton;
 import icy.gui.frame.GenericFrame;
 import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
-import icy.gui.util.ComponentUtil;
-import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.main.Icy;
@@ -20,12 +18,13 @@ import icy.sequence.SequenceEvent;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 
 /**
@@ -38,45 +37,26 @@ public class SequenceInfosPanel extends InspectorSubPanel
      */
     private static final long serialVersionUID = -6123324347914804260L;
 
-    final JLabel nameLabel;
-    final JLabel dimensionLabel;
-    final JLabel resXLabel;
-    final JLabel resYLabel;
-    final JLabel resZLabel;
-    final JLabel resTLabel;
-    final JLabel sizeLabel;
-    final JLabel channelLabel;
+    private JLabel nameLabel;
+    private JLabel dimensionLabel;
+    private JLabel resXLabel;
+    private JLabel resYLabel;
+    private JLabel resZLabel;
+    private JLabel resTLabel;
+    private JLabel sizeLabel;
+    private JLabel channelLabel;
 
-    final IcyButton editBtn;
-    final IcyButton detailBtn;
+    private IcyButton editBtn;
+    private IcyButton detailBtn;
 
     final SingleProcessor processor;
-
-    boolean pxSizeYdifferent = true;
 
     public SequenceInfosPanel()
     {
         super();
 
-        processor = new SingleProcessor(true, "Sequence infos GUI");
-        // we want the processor to stay alive for some time
-        processor.setKeepAliveTime(10, TimeUnit.MINUTES);
+        initialize();
 
-        nameLabel = new JLabel();
-        ComponentUtil.setFixedWidth(nameLabel, 160);
-        resXLabel = new JLabel();
-        ComponentUtil.setPreferredWidth(resXLabel, 48);
-        resYLabel = new JLabel();
-        ComponentUtil.setPreferredWidth(resYLabel, 48);
-        resZLabel = new JLabel();
-        ComponentUtil.setPreferredWidth(resZLabel, 48);
-        resTLabel = new JLabel();
-        dimensionLabel = new JLabel();
-        sizeLabel = new JLabel();
-        channelLabel = new JLabel();
-
-        editBtn = new IcyButton("Edit properties", new IcyIcon(ResourceUtil.ICON_DOCEDIT));
-        editBtn.setToolTipText("Edit sequence properties");
         editBtn.addActionListener(new ActionListener()
         {
             @Override
@@ -90,8 +70,6 @@ public class SequenceInfosPanel extends InspectorSubPanel
             }
         });
 
-        detailBtn = new IcyButton("Show details", new IcyIcon(ResourceUtil.ICON_PROPERTIES));
-        detailBtn.setToolTipText("Show all associated metadata informations");
         detailBtn.addActionListener(new ActionListener()
         {
             @Override
@@ -112,59 +90,190 @@ public class SequenceInfosPanel extends InspectorSubPanel
             }
         });
 
-        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+        processor = new SingleProcessor(true, "Sequence infos GUI");
+        // we want the processor to stay alive for some time
+        processor.setKeepAliveTime(10, TimeUnit.MINUTES);
 
-        rebuild();
         updateInfos(null);
     }
 
-    public void rebuild()
+    public void initialize()
     {
-        removeAll();
+        GridBagLayout gridBagLayout = new GridBagLayout();
+        gridBagLayout.columnWidths = new int[] {0, 40, 40, 40, 0};
+        gridBagLayout.rowHeights = new int[] {18, 18, 18, 18, 18, 18, 18, 0};
+        gridBagLayout.columnWeights = new double[] {0.0, 1.0, 1.0, 1.0, Double.MIN_VALUE};
+        gridBagLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+        setLayout(gridBagLayout);
 
-        JLabel label;
+        JLabel lbl_name = new JLabel("Name");
+        lbl_name.setToolTipText("Sequence name");
+        GridBagConstraints gbc_lbl_name = new GridBagConstraints();
+        gbc_lbl_name.anchor = GridBagConstraints.WEST;
+        gbc_lbl_name.fill = GridBagConstraints.VERTICAL;
+        gbc_lbl_name.insets = new Insets(0, 0, 5, 5);
+        gbc_lbl_name.gridx = 0;
+        gbc_lbl_name.gridy = 0;
+        add(lbl_name, gbc_lbl_name);
 
-        label = GuiUtil.createFixedWidthLabel("Name", 90);
-        label.setToolTipText("Sequence name");
-        add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, nameLabel, Box.createHorizontalStrut(4),
-                Box.createHorizontalGlue()));
-        label = GuiUtil.createFixedWidthLabel("Dimension", 90);
-        label.setToolTipText("Size of X, Y, Z and T dimension");
-        add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, dimensionLabel,
-                Box.createHorizontalStrut(4), Box.createHorizontalGlue()));
-        label = GuiUtil.createFixedWidthLabel("Channel", 90);
-        label.setToolTipText("Number of channel - data type");
-        add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, channelLabel, Box.createHorizontalStrut(4),
-                Box.createHorizontalGlue()));
-        label = GuiUtil.createFixedWidthLabel("Size", 90);
-        label.setToolTipText("Size");
-        add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, sizeLabel, Box.createHorizontalStrut(4),
-                Box.createHorizontalGlue()));
-        label = GuiUtil.createFixedWidthLabel("Pixel size", 90);
+        nameLabel = new JLabel();
+        nameLabel.setText("---");
+        GridBagConstraints gbc_nameLabel = new GridBagConstraints();
+        gbc_nameLabel.gridwidth = 3;
+        gbc_nameLabel.anchor = GridBagConstraints.WEST;
+        gbc_nameLabel.fill = GridBagConstraints.VERTICAL;
+        gbc_nameLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_nameLabel.gridx = 1;
+        gbc_nameLabel.gridy = 0;
+        add(nameLabel, gbc_nameLabel);
 
-        if (pxSizeYdifferent)
-        {
-            label.setToolTipText("Pixel size for X, Y, Z dimension");
-            add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, resXLabel,
-                    Box.createHorizontalStrut(4), resYLabel, Box.createHorizontalStrut(4), resZLabel,
-                    Box.createHorizontalStrut(4), Box.createHorizontalGlue()));
-        }
-        else
-        {
-            label.setToolTipText("Pixel size for X/Y and Z dimension");
-            add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, resXLabel,
-                    Box.createHorizontalStrut(4), resZLabel, Box.createHorizontalStrut(4), Box.createHorizontalGlue()));
-        }
-        label = GuiUtil.createFixedWidthLabel("Time interval", 90);
-        label.setToolTipText("Time Interval");
-        add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), label, resTLabel, Box.createHorizontalStrut(4),
-                Box.createHorizontalGlue()));
-        add(Box.createVerticalStrut(4));
-        add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4), detailBtn, Box.createHorizontalGlue(), editBtn,
-                Box.createHorizontalStrut(4)));
-        add(Box.createVerticalStrut(4));
+        JLabel lbl_dim = new JLabel("Dimension");
+        lbl_dim.setToolTipText("Size of X, Y, Z and T dimension");
+        GridBagConstraints gbc_lbl_dim = new GridBagConstraints();
+        gbc_lbl_dim.anchor = GridBagConstraints.WEST;
+        gbc_lbl_dim.fill = GridBagConstraints.VERTICAL;
+        gbc_lbl_dim.insets = new Insets(0, 0, 5, 5);
+        gbc_lbl_dim.gridx = 0;
+        gbc_lbl_dim.gridy = 1;
+        add(lbl_dim, gbc_lbl_dim);
 
-        revalidate();
+        dimensionLabel = new JLabel();
+        dimensionLabel.setText("---");
+        GridBagConstraints gbc_dimensionLabel = new GridBagConstraints();
+        gbc_dimensionLabel.gridwidth = 3;
+        gbc_dimensionLabel.anchor = GridBagConstraints.WEST;
+        gbc_dimensionLabel.fill = GridBagConstraints.VERTICAL;
+        gbc_dimensionLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_dimensionLabel.gridx = 1;
+        gbc_dimensionLabel.gridy = 1;
+        add(dimensionLabel, gbc_dimensionLabel);
+
+        JLabel lbl_channel = new JLabel("Channel");
+        lbl_channel.setToolTipText("Number of channel - data type");
+        GridBagConstraints gbc_lbl_channel = new GridBagConstraints();
+        gbc_lbl_channel.anchor = GridBagConstraints.WEST;
+        gbc_lbl_channel.fill = GridBagConstraints.VERTICAL;
+        gbc_lbl_channel.insets = new Insets(0, 0, 5, 5);
+        gbc_lbl_channel.gridx = 0;
+        gbc_lbl_channel.gridy = 2;
+        add(lbl_channel, gbc_lbl_channel);
+
+        channelLabel = new JLabel();
+        channelLabel.setText("---");
+        GridBagConstraints gbc_channelLabel = new GridBagConstraints();
+        gbc_channelLabel.gridwidth = 3;
+        gbc_channelLabel.anchor = GridBagConstraints.WEST;
+        gbc_channelLabel.fill = GridBagConstraints.VERTICAL;
+        gbc_channelLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_channelLabel.gridx = 1;
+        gbc_channelLabel.gridy = 2;
+        add(channelLabel, gbc_channelLabel);
+
+        JLabel lbl_size = new JLabel("Size");
+        lbl_size.setToolTipText("Size");
+        GridBagConstraints gbc_lbl_size = new GridBagConstraints();
+        gbc_lbl_size.anchor = GridBagConstraints.WEST;
+        gbc_lbl_size.fill = GridBagConstraints.VERTICAL;
+        gbc_lbl_size.insets = new Insets(0, 0, 5, 5);
+        gbc_lbl_size.gridx = 0;
+        gbc_lbl_size.gridy = 3;
+        add(lbl_size, gbc_lbl_size);
+
+        sizeLabel = new JLabel();
+        sizeLabel.setText("---");
+        GridBagConstraints gbc_sizeLabel = new GridBagConstraints();
+        gbc_sizeLabel.gridwidth = 3;
+        gbc_sizeLabel.anchor = GridBagConstraints.WEST;
+        gbc_sizeLabel.fill = GridBagConstraints.VERTICAL;
+        gbc_sizeLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_sizeLabel.gridx = 1;
+        gbc_sizeLabel.gridy = 3;
+        add(sizeLabel, gbc_sizeLabel);
+
+        JLabel lbl_psx = new JLabel("Pixel size");
+        lbl_psx.setToolTipText("Pixel size for X, Y, Z dimension");
+        GridBagConstraints gbc_lbl_psx = new GridBagConstraints();
+        gbc_lbl_psx.anchor = GridBagConstraints.WEST;
+        gbc_lbl_psx.fill = GridBagConstraints.VERTICAL;
+        gbc_lbl_psx.insets = new Insets(0, 0, 5, 5);
+        gbc_lbl_psx.gridx = 0;
+        gbc_lbl_psx.gridy = 4;
+        add(lbl_psx, gbc_lbl_psx);
+
+        resXLabel = new JLabel();
+        resXLabel.setText("---");
+        GridBagConstraints gbc_resXLabel = new GridBagConstraints();
+        gbc_resXLabel.anchor = GridBagConstraints.WEST;
+        gbc_resXLabel.fill = GridBagConstraints.VERTICAL;
+        gbc_resXLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_resXLabel.gridx = 1;
+        gbc_resXLabel.gridy = 4;
+        add(resXLabel, gbc_resXLabel);
+
+        resYLabel = new JLabel();
+        resYLabel.setText("---");
+        GridBagConstraints gbc_resYLabel = new GridBagConstraints();
+        gbc_resYLabel.anchor = GridBagConstraints.WEST;
+        gbc_resYLabel.fill = GridBagConstraints.VERTICAL;
+        gbc_resYLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_resYLabel.gridx = 2;
+        gbc_resYLabel.gridy = 4;
+        add(resYLabel, gbc_resYLabel);
+
+        resZLabel = new JLabel();
+        resZLabel.setText("---");
+        GridBagConstraints gbc_resZLabel = new GridBagConstraints();
+        gbc_resZLabel.anchor = GridBagConstraints.WEST;
+        gbc_resZLabel.fill = GridBagConstraints.VERTICAL;
+        gbc_resZLabel.insets = new Insets(0, 0, 5, 0);
+        gbc_resZLabel.gridx = 3;
+        gbc_resZLabel.gridy = 4;
+        add(resZLabel, gbc_resZLabel);
+
+        JLabel lbl_time = new JLabel("Time interval");
+        lbl_time.setToolTipText("Time Interval");
+        GridBagConstraints gbc_lbl_time = new GridBagConstraints();
+        gbc_lbl_time.anchor = GridBagConstraints.WEST;
+        gbc_lbl_time.fill = GridBagConstraints.VERTICAL;
+        gbc_lbl_time.insets = new Insets(0, 0, 5, 5);
+        gbc_lbl_time.gridx = 0;
+        gbc_lbl_time.gridy = 5;
+        add(lbl_time, gbc_lbl_time);
+
+        resTLabel = new JLabel();
+        resTLabel.setText("---");
+        GridBagConstraints gbc_resTLabel = new GridBagConstraints();
+        gbc_resTLabel.gridwidth = 3;
+        gbc_resTLabel.anchor = GridBagConstraints.WEST;
+        gbc_resTLabel.fill = GridBagConstraints.VERTICAL;
+        gbc_resTLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_resTLabel.gridx = 1;
+        gbc_resTLabel.gridy = 5;
+        add(resTLabel, gbc_resTLabel);
+
+        editBtn = new IcyButton("Edit properties", new IcyIcon(ResourceUtil.ICON_DOCEDIT));
+        editBtn.setToolTipText("Edit sequence properties");
+
+        GridBagConstraints gbc_editBtn = new GridBagConstraints();
+        gbc_editBtn.gridwidth = 2;
+        gbc_editBtn.anchor = GridBagConstraints.WEST;
+        gbc_editBtn.fill = GridBagConstraints.VERTICAL;
+        gbc_editBtn.insets = new Insets(0, 0, 0, 5);
+        gbc_editBtn.gridx = 0;
+        gbc_editBtn.gridy = 6;
+        add(editBtn, gbc_editBtn);
+
+        detailBtn = new IcyButton("Show details", new IcyIcon(ResourceUtil.ICON_PROPERTIES));
+        detailBtn.setToolTipText("Show all associated metadata informations");
+
+        GridBagConstraints gbc_detailBtn = new GridBagConstraints();
+        gbc_detailBtn.gridwidth = 2;
+        gbc_detailBtn.insets = new Insets(0, 0, 0, 5);
+        gbc_detailBtn.anchor = GridBagConstraints.EAST;
+        gbc_detailBtn.fill = GridBagConstraints.VERTICAL;
+        gbc_detailBtn.gridx = 2;
+        gbc_detailBtn.gridy = 6;
+        add(detailBtn, gbc_detailBtn);
     }
 
     public void updateInfos(final Sequence sequence)
@@ -193,9 +302,6 @@ public class SequenceInfosPanel extends InspectorSubPanel
             final double pxSizeY = sequence.getPixelSizeY();
             final double pxSizeZ = sequence.getPixelSizeZ();
 
-            final UnitPrefix pxSizeXUnit = UnitUtil.getBestUnit(pxSizeX, UnitPrefix.MICRO);
-            final UnitPrefix pxSizeYUnit = UnitUtil.getBestUnit(pxSizeY, UnitPrefix.MICRO);
-
             nameLabel.setText(sequence.getName());
             dimensionLabel.setText(sizeX + " x " + sizeY + " x " + sizeZ + " x " + sizeT);
             channelLabel.setText(sizeC + " - " + sequence.getDataType_());
@@ -206,29 +312,22 @@ public class SequenceInfosPanel extends InspectorSubPanel
             resZLabel.setText(UnitUtil.getBestUnitInMeters(pxSizeZ, 2, UnitPrefix.MICRO));
             resTLabel.setText(UnitUtil.displayTimeAsStringWithUnits(sequence.getTimeInterval() * 1000d, false));
 
-            pxSizeYdifferent = !(pxSizeX == pxSizeY && pxSizeXUnit == pxSizeYUnit);
-
             nameLabel.setToolTipText(sequence.getName());
-            dimensionLabel.setToolTipText("Size X: " + sizeX + " Size Y: " + sizeY + " Size Z: " + sizeZ + " Size T: "
-                    + sizeT);
+            dimensionLabel.setToolTipText("Size X : " + sizeX + "   Size Y : " + sizeY + "   Size Z : " + sizeZ
+                    + "   Size T : " + sizeT);
             if (sizeC > 1)
                 channelLabel.setToolTipText(sizeC + " channels - " + sequence.getDataType_());
             else
                 channelLabel.setToolTipText(sizeC + " channel - " + sequence.getDataType_());
             sizeLabel.setToolTipText(sizeLabel.getText());
 
-            if (pxSizeYdifferent)
-                resXLabel.setToolTipText("X pixel resolution: " + resXLabel.getText());
-            else
-                resXLabel.setToolTipText("X / Y pixel resolution: " + resXLabel.getText());
+            resXLabel.setToolTipText("X pixel resolution: " + resXLabel.getText());
             resYLabel.setToolTipText("Y pixel resolution: " + resYLabel.getText());
             resZLabel.setToolTipText("Z pixel resolution: " + resZLabel.getText());
             resTLabel.setToolTipText("T time resolution: " + resTLabel.getText());
 
             editBtn.setEnabled(true);
             detailBtn.setEnabled(true);
-
-            rebuild();
         }
         else
         {

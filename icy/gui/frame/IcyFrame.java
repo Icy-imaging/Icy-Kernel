@@ -94,7 +94,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         }
 
         @Override
-        public void actionPerformed(ActionEvent e)
+        public void doAction(ActionEvent e)
         {
             switchState();
         }
@@ -1170,6 +1170,21 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public Rectangle getBoundsExternal()
     {
         return externalFrame.getBounds();
+    }
+
+    /**
+     * Implement getBounds method for external frame only
+     */
+    public Rectangle getVisibleRect()
+    {
+        if (isInternalized())
+            return internalFrame.getVisibleRect();
+
+        // not supported on external frame
+        if (externalFrame.isVisible())
+            return externalFrame.getBounds();
+        
+        return new Rectangle();
     }
 
     /**
@@ -2438,8 +2453,6 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         onClosed();
 
         // release some stuff else we have cycling reference
-        externalFrame.setSystemMenuCallback(null);
-        internalFrame.setSystemMenuCallback(null);
         switchStateAction = null;
     }
 

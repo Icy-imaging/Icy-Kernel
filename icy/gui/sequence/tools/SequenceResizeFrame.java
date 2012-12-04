@@ -3,8 +3,9 @@
  */
 package icy.gui.sequence.tools;
 
-import icy.gui.frame.ActionFrame;
+import icy.gui.dialog.ActionDialog;
 import icy.gui.frame.progress.ProgressFrame;
+import icy.gui.util.ComponentUtil;
 import icy.image.IcyBufferedImageUtil.FilterType;
 import icy.main.Icy;
 import icy.sequence.Sequence;
@@ -25,8 +26,13 @@ import javax.swing.SwingConstants;
 /**
  * @author Stephane
  */
-public class SequenceResizeFrame extends ActionFrame
+public class SequenceResizeFrame extends ActionDialog
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -8638672567750415881L;
+
     class SequenceResizePanel extends SequenceBaseResizePanel
     {
         /**
@@ -115,10 +121,7 @@ public class SequenceResizeFrame extends ActionFrame
 
     public SequenceResizeFrame(Sequence sequence)
     {
-        super("Image size", true);
-
-        // GUI
-        setTitleVisible(false);
+        super("Image size");
 
         resizePanel = new SequenceResizePanel(sequence);
         getMainPanel().add(resizePanel, BorderLayout.CENTER);
@@ -161,10 +164,9 @@ public class SequenceResizeFrame extends ActionFrame
             }
         });
 
-        setSizeExternal(420, 520);
-        setSizeInternal(420, 520);
-        addToMainDesktopPane();
-        center();
+        setSize(420, 520);
+        ComponentUtil.center(this);
+
         setVisible(true);
     }
 }

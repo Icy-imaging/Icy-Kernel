@@ -78,7 +78,7 @@ class ARGBImageBuilder
             processing = false;
         }
 
-        private void prepare(IcyBufferedImage image, LUT lut, int[] dest, int offset, int length)
+        private boolean prepare(IcyBufferedImage image, LUT lut, int[] dest, int offset, int length)
         {
             this.image = image;
             // use internal lut if specified lut is null
@@ -92,8 +92,13 @@ class ARGBImageBuilder
 
             numComponents = image.getNumComponents();
 
-            if (lut.getNumComponents() != numComponents)
-                throw new IllegalArgumentException("LUT.numComponents != IMAGE.numComponents");
+            if (lut.getNumChannel() != numComponents)
+            {
+                System.err.println("ARGBImageBuilder.prepare(...): LUT.numComponents != IMAGE.numComponents");
+                return false;
+            }
+
+            return true;
         }
 
         private void clean()
@@ -114,20 +119,28 @@ class ARGBImageBuilder
             }
 
             // prepare variables
-            prepare(image, lut, dest, offset, length);
-            // add task
-            final boolean result = processor.addTask(this, false);
-
-            // task not added ?
-            if (!result)
+            if (prepare(image, lut, dest, offset, length))
             {
+                // add task
+                if (processor.addTask(this, false))
+                    return true;
+
                 synchronized (this)
                 {
                     processing = false;
                 }
+
+                // task not added
+                return false;
             }
 
-            return result;
+            synchronized (this)
+            {
+                processing = false;
+            }
+
+            // error while preparing (synchronization error) --> ignore
+            return true;
         }
 
         @Override

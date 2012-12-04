@@ -3,8 +3,7 @@
  */
 package icy.painter;
 
-import vtk.vtkActor;
-import vtk.vtkActor2D;
+import vtk.vtkProp;
 
 /**
  * Basic VTK painter.<br>
@@ -15,7 +14,8 @@ import vtk.vtkActor2D;
  */
 public interface VtkPainter
 {
-    public vtkActor[] getActors();
-
-    public vtkActor2D[] getActors2D();
+    /**
+     * Returns the VTK actors for this painter.
+     */
+    public vtkProp[] getProps();
 }

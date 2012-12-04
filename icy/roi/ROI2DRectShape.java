@@ -77,11 +77,11 @@ public abstract class ROI2DRectShape extends ROI2DShape
         this.bottomLeft = createAnchor(topLeft.getX(), bottomRight.getY());
         this.bottomRight = createAnchor(bottomRight);
 
-        // add to the control point list
+        // add to the control point list (important to add them in clockwise order)
         controlPoints.add(this.topLeft);
         controlPoints.add(this.topRight);
-        controlPoints.add(this.bottomLeft);
         controlPoints.add(this.bottomRight);
+        controlPoints.add(this.bottomLeft);
 
         this.topLeft.addListener(this);
         this.topRight.addListener(this);

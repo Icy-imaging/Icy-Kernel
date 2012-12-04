@@ -116,6 +116,9 @@ public class IcyBufferedImageUtil
      */
     public static BufferedImage toBufferedImage(IcyBufferedImage source, int imageType, LUT lut)
     {
+        if (source == null)
+            return null;
+
         if (imageType == BufferedImage.TYPE_INT_ARGB)
             return getARGBImage(source, lut, null);
 
@@ -141,6 +144,9 @@ public class IcyBufferedImageUtil
      */
     public static BufferedImage getARGBImage(IcyBufferedImage source, LUT lut, BufferedImage dest)
     {
+        if (source == null)
+            return null;
+
         // use image lut when no specific lut
         if (lut == null)
             return argbImageBuilder.buildARGBImage(source, source.getLUT(), dest);
@@ -191,7 +197,7 @@ public class IcyBufferedImageUtil
 
     /**
      * Convert the source image to the specified data type.<br>
-     * Create a copy if conversion needed else return current image.
+     * This method returns a new image (the source image is not modified).
      * 
      * @param source
      *        source image
@@ -203,11 +209,11 @@ public class IcyBufferedImageUtil
      */
     public static IcyBufferedImage convertToType(IcyBufferedImage source, DataType dataType, Scaler scaler)
     {
+        if (source == null)
+            return null;
+
         final DataType srcDataType = source.getDataType_();
 
-        // no conversion needed
-        if ((srcDataType == dataType) && scaler.isNull())
-            return source;
         // can't convert
         if ((srcDataType == DataType.UNDEFINED) || (dataType == DataType.UNDEFINED))
             return null;
@@ -219,7 +225,7 @@ public class IcyBufferedImageUtil
         for (int c = 0; c < sizeC; c++)
         {
             // no rescale ?
-            if (scaler.isNull())
+            if ((scaler == null) || scaler.isNull())
                 // simple type change
                 ArrayUtil.arrayToArray(source.getDataXY(c), result.getDataXY(c), srcSigned);
             else
@@ -243,7 +249,7 @@ public class IcyBufferedImageUtil
 
     /**
      * Convert the source image to the specified data type.<br>
-     * Create a copy if conversion needed else return current image.
+     * This method returns a new image (the source image is not modified).
      * 
      * @param dataType
      *        Data type wanted
@@ -276,7 +282,7 @@ public class IcyBufferedImageUtil
 
     /**
      * Convert the source image to the specified data type.<br>
-     * Create a copy if conversion needed else return current image.
+     * This method returns a new image (the source image is not modified).
      * 
      * @param dataType
      *        data type wanted
@@ -294,6 +300,9 @@ public class IcyBufferedImageUtil
      */
     public static IcyBufferedImage getCopy(IcyBufferedImage source)
     {
+        if (source == null)
+            return null;
+
         // create a compatible image
         final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(), source.getSizeC(),
                 source.getDataType_());
@@ -307,14 +316,17 @@ public class IcyBufferedImageUtil
      * Creates a new image which is a sub part of the source image from the specified
      * coordinates and dimensions.
      */
-    public static IcyBufferedImage getSubImage(IcyBufferedImage source, int x, int y, int w, int h)
+    public static IcyBufferedImage getSubImage(IcyBufferedImage source, int x, int y, int c, int sizeX, int sizeY,
+            int sizeC)
     {
+        if (source == null)
+            return null;
+
         // adjust rectangle
-        final Rectangle r = new Rectangle(x, y, w, h).intersection(source.getBounds());
+        final Rectangle r = new Rectangle(x, y, sizeX, sizeY).intersection(source.getBounds());
 
         final DataType dataType = source.getDataType_();
         final boolean signed = dataType.isSigned();
-        final int sizeC = source.getSizeC();
         final int dstSizeX = r.width;
         final int dstSizeY = r.height;
 
@@ -322,10 +334,10 @@ public class IcyBufferedImageUtil
 
         final int srcSizeX = source.getSizeX();
 
-        for (int c = 0; c < sizeC; c++)
+        for (int ch = 0; ch < sizeC; ch++)
         {
-            final Object src = source.getDataXY(c);
-            final Object dst = result.getDataXY(c);
+            final Object src = source.getDataXY(ch + c);
+            final Object dst = result.getDataXY(ch);
 
             int srcOffset = source.getOffset(r.x, r.y);
             int dstOffset = 0;
@@ -341,6 +353,15 @@ public class IcyBufferedImageUtil
         result.dataChanged();
 
         return result;
+    }
+
+    /**
+     * Creates a new image which is a sub part of the source image from the specified
+     * coordinates and dimensions.
+     */
+    public static IcyBufferedImage getSubImage(IcyBufferedImage source, int x, int y, int w, int h)
+    {
+        return getSubImage(source, x, y, 0, w, h, source.getSizeC());
     }
 
     /**
@@ -360,6 +381,9 @@ public class IcyBufferedImageUtil
      */
     public static IcyBufferedImage extractChannels(IcyBufferedImage source, List<Integer> channelNumbers)
     {
+        if (source == null)
+            return null;
+
         // create output
         final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(),
                 channelNumbers.size(), source.getDataType_());
@@ -389,6 +413,9 @@ public class IcyBufferedImageUtil
      */
     public static IcyBufferedImage addChannels(IcyBufferedImage source, int index, int num)
     {
+        if (source == null)
+            return null;
+
         final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(), source.getSizeC()
                 + num, source.getDataType_());
 
@@ -443,6 +470,9 @@ public class IcyBufferedImageUtil
     public static IcyBufferedImage scale(IcyBufferedImage source, int width, int height, boolean resizeContent,
             int xAlign, int yAlign, FilterType filterType)
     {
+        if (source == null)
+            return null;
+
         final IcyBufferedImage result;
 
         // no content resize ?
@@ -580,6 +610,9 @@ public class IcyBufferedImageUtil
      */
     public static void translate(IcyBufferedImage source, int dx, int dy, int channel)
     {
+        if (source == null)
+            return;
+        
         // nothing to do
         if ((dx == 0) && (dy == 0))
             return;
@@ -667,17 +700,20 @@ public class IcyBufferedImageUtil
      */
     public static void translate(IcyBufferedImage source, int dx, int dy)
     {
-        final int sizeC = source.getSizeC();
+        if (source != null)
+        {
+            final int sizeC = source.getSizeC();
 
-        source.beginUpdate();
-        try
-        {
-            for (int c = 0; c < sizeC; c++)
-                translate(source, dx, dy, c);
-        }
-        finally
-        {
-            source.endUpdate();
+            source.beginUpdate();
+            try
+            {
+                for (int c = 0; c < sizeC; c++)
+                    translate(source, dx, dy, c);
+            }
+            finally
+            {
+                source.endUpdate();
+            }
         }
     }
 

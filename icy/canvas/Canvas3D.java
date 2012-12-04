@@ -31,7 +31,7 @@ import icy.image.IcyBufferedImageUtil;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.IcyColorMapBand;
 import icy.image.lut.LUT;
-import icy.image.lut.LUTBand;
+import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
 import icy.painter.Painter;
 import icy.painter.VtkPainter;
@@ -61,8 +61,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import vtk.vtkActor;
-import vtk.vtkActor2D;
 import vtk.vtkCamera;
 import vtk.vtkColorTransferFunction;
 import vtk.vtkDataArray;
@@ -75,6 +73,7 @@ import vtk.vtkOpenGLVolumeTextureMapper2D;
 import vtk.vtkPanel;
 import vtk.vtkPiecewiseFunction;
 import vtk.vtkPointData;
+import vtk.vtkProp;
 import vtk.vtkRenderWindow;
 import vtk.vtkRenderer;
 import vtk.vtkShortArray;
@@ -114,7 +113,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         public void paint(Graphics g)
         {
             // call paint on painters first
-            if (getDrawLayers())
+            if (isLayersVisible())
             {
                 final Sequence seq = getSequence();
 
@@ -783,7 +782,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         if (c == -1)
             setupColorProperties(lut);
         else
-            setupColorProperties(lut.getLutBand(c), 0);
+            setupColorProperties(lut.getLutChannel(c), 0);
     }
 
     /**
@@ -792,19 +791,19 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
      */
     private void setupColorProperties(LUT lut)
     {
-        for (int comp = 0; comp < lut.getNumComponents(); comp++)
-            setupColorProperties(lut.getLutBand(comp), comp);
+        for (int comp = 0; comp < lut.getNumChannel(); comp++)
+            setupColorProperties(lut.getLutChannel(comp), comp);
     }
 
     private void setDefaultOpacity(LUT lut)
     {
-        for (LUTBand lutBand : lut.getLutBands())
-            setDefaultOpacity(lutBand);
+        for (LUTChannel lutChannel : lut.getLutChannels())
+            setDefaultOpacity(lutChannel);
     }
 
-    private void setDefaultOpacity(LUTBand lutBand)
+    private void setDefaultOpacity(LUTChannel lutChannel)
     {
-        final IcyColorMapBand alphaBand = lutBand.getColorMap().alpha;
+        final IcyColorMapBand alphaBand = lutChannel.getColorMap().alpha;
 
         alphaBand.beginUpdate();
         try
@@ -822,13 +821,13 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
     private void restoreOpacity(LUT srcLut, LUT dstLut)
     {
-        final int numComp = Math.min(srcLut.getNumComponents(), dstLut.getNumComponents());
+        final int numComp = Math.min(srcLut.getNumChannel(), dstLut.getNumChannel());
 
         for (int c = 0; c < numComp; c++)
-            retoreOpacity(srcLut.getLutBand(c), dstLut.getLutBand(c));
+            retoreOpacity(srcLut.getLutChannel(c), dstLut.getLutChannel(c));
     }
 
-    private void retoreOpacity(LUTBand srcLutBand, LUTBand dstLutBand)
+    private void retoreOpacity(LUTChannel srcLutBand, LUTChannel dstLutBand)
     {
         dstLutBand.getColorMap().alpha.copyFrom(srcLutBand.getColorMap().alpha);
     }
@@ -849,7 +848,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
      * @param volumeProperty
      * @param lutBand
      */
-    private void setupColorProperties(LUTBand lutBand, int index)
+    private void setupColorProperties(LUTChannel lutBand, int index)
     {
         final IcyColorMap colorMap = lutBand.getColorMap();
         final Scaler scaler = lutBand.getScaler();
@@ -972,10 +971,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             {
                 final VtkPainter vp = (VtkPainter) painter;
 
-                for (vtkActor actor : vp.getActors())
-                    VtkUtil.addActor(renderer, actor);
-                for (vtkActor2D actor : vp.getActors2D())
-                    VtkUtil.addActor2D(renderer, actor);
+                for (vtkProp actor : vp.getProps())
+                    VtkUtil.addProp(renderer, actor);
             }
         }
     }
@@ -991,10 +988,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             {
                 final VtkPainter vp = (VtkPainter) painter;
 
-                for (vtkActor actor : vp.getActors())
-                    renderer.RemoveActor(actor);
-                for (vtkActor2D actor : vp.getActors2D())
-                    renderer.RemoveActor2D(actor);
+                for (vtkProp actor : vp.getProps())
+                    renderer.RemoveProp(actor);
             }
         }
     }
@@ -1392,7 +1387,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         if (component == -1)
             setupColorProperties(posC);
         else if (posC == -1)
-            setupColorProperties(lut.getLutBand(component), component);
+            setupColorProperties(lut.getLutChannel(component), component);
         else if (posC == component)
             setupColorProperties(posC);
 

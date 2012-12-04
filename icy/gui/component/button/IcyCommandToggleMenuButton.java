@@ -3,7 +3,12 @@
  */
 package icy.gui.component.button;
 
+import icy.common.IcyAbstractAction;
 import icy.resource.icon.IcyIcon;
+import icy.util.StringUtil;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import javax.swing.Icon;
 
@@ -19,9 +24,27 @@ public class IcyCommandToggleMenuButton extends JCommandToggleMenuButton
      */
     private static final long serialVersionUID = -7391297214095914082L;
 
+    /**
+     * internals
+     */
+    private IcyAbstractAction action;
+    private final PropertyChangeListener actionPropertyChangeListener;
+
     public IcyCommandToggleMenuButton(String title, IcyIcon icon)
     {
         super(title, icon);
+
+        action = null;
+
+        actionPropertyChangeListener = new PropertyChangeListener()
+        {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt)
+            {
+                if (StringUtil.equals("enabled", evt.getPropertyName()))
+                    repaint();
+            }
+        };
     }
 
     /**
@@ -41,6 +64,13 @@ public class IcyCommandToggleMenuButton extends JCommandToggleMenuButton
     public IcyCommandToggleMenuButton(String title)
     {
         this(title, (IcyIcon) null);
+    }
+
+    public IcyCommandToggleMenuButton(IcyAbstractAction action)
+    {
+        this(null, (IcyIcon) null);
+
+        setAction(action);
     }
 
     public IcyCommandToggleMenuButton()
@@ -84,5 +114,64 @@ public class IcyCommandToggleMenuButton extends JCommandToggleMenuButton
 
         if (icon != null)
             icon.setName(iconName);
+    }
+
+    @Override
+    public boolean isEnabled()
+    {
+        return super.isEnabled() && ((action == null) || action.isEnabled());
+    }
+
+    @Override
+    public void setEnabled(boolean b)
+    {
+        final boolean oldValue = isEnabled();
+
+        super.setEnabled(b);
+
+        if ((oldValue != b) && (action != null))
+            action.setEnabled(b);
+    }
+
+    /**
+     * Sets the {@link IcyAbstractAction} attached to this button.
+     */
+    public void setAction(IcyAbstractAction value)
+    {
+        if (action != value)
+        {
+            // remove listener from previous action
+            if (action != null)
+                action.removePropertyChangeListener(actionPropertyChangeListener);
+
+            action = value;
+
+            setText(action.getName());
+
+            final IcyIcon icon = action.getIcon();
+
+            if (icon != null)
+                setIcon(new IcyIcon(icon));
+            else
+                setIcon(null);
+
+            if (value != null)
+            {
+                // set tooltip
+                setActionRichTooltip(action.getRichToolTip());
+
+                // add listeners
+                addActionListener(value);
+                value.addPropertyChangeListener(actionPropertyChangeListener);
+            }
+        }
+    }
+
+    /**
+     * Returns the {@link IcyAbstractAction} attached to this button.
+     */
+    public IcyAbstractAction getAction()
+    {
+        return action;
     }
 }

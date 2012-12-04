@@ -100,7 +100,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         }
 
         @Override
-        public void actionPerformed(ActionEvent e)
+        public void doAction(ActionEvent e)
         {
             ThreadUtil.invokeLater(new Runnable()
             {
@@ -128,7 +128,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         }
 
         @Override
-        public void actionPerformed(ActionEvent e)
+        public void doAction(ActionEvent e)
         {
             // so it won't change during process
             final IcyCanvas canvas = getCanvas();
@@ -179,7 +179,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         }
 
         @Override
-        public void actionPerformed(ActionEvent e)
+        public void doAction(ActionEvent e)
         {
             // so it won't change during process
             final IcyCanvas canvas = getCanvas();
@@ -237,7 +237,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      */
     private JToolBar toolBar;
     private JPanel mainPanel;
-    private IcyLutViewer lutPanel;
+    private LUTViewer lutViewer;
 
     JComboBox canvasComboBox;
     JComboBox lockComboBox;
@@ -417,7 +417,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         // it's good to free as much reference we can here
         canvas.shutDown();
 
-        lutPanel.removeAll();
+        lutViewer.removeAll();
         mainPanel.removeAll();
         toolBar.removeAll();
 
@@ -426,7 +426,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         for (ViewerListener vl : vls)
             listeners.remove(ViewerListener.class, vl);
 
-        lutPanel = null;
+        lutViewer = null;
         mainPanel = null;
 
         canvas = null;
@@ -466,7 +466,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         final JMenuItem overlayItem = new JMenuItem("Display layers");
         overlayItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, 0));
         overlayItem.setIcon(new IcyIcon(ResourceUtil.ICON_LAYER_H2));
-        if ((canvas != null) && canvas.getDrawLayers())
+        if ((canvas != null) && canvas.isLayersVisible())
             overlayItem.setText("Hide layers");
         else
             overlayItem.setText("Show layers");
@@ -478,7 +478,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             {
                 if (canvas != null)
                 {
-                    canvas.setDrawLayers(!canvas.getDrawLayers());
+                    canvas.setLayersVisible(!canvas.isLayersVisible());
                     updateSystemMenu();
                     refreshToolBar();
                 }
@@ -620,7 +620,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 final IcyCanvas canvas = getCanvas();
 
                 if (canvas != null)
-                    canvas.setDrawLayers(layersEnabledButton.isSelected());
+                    canvas.setLayersVisible(layersEnabledButton.isSelected());
 
                 if (layersEnabledButton.isSelected())
                     layersEnabledButton.setToolTipText("Hide layers");
@@ -745,7 +745,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         // FIXME : switchStateButton stay selected after action
 
         if (canvas != null)
-            layersEnabledButton.setSelected(canvas.getDrawLayers());
+            layersEnabledButton.setSelected(canvas.isLayersVisible());
 
         if (layersEnabledButton.isSelected())
             layersEnabledButton.setToolTipText("Hide layers");
@@ -796,7 +796,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             final LUT newLut = sequence.createCompatibleLUT();
 
             // keep the color map of previous LUT if they have the same number of channels
-            if ((lut != null) && (lut.getNumComponents() == newLut.getNumComponents()))
+            if ((lut != null) && (lut.getNumChannel() == newLut.getNumChannel()))
                 newLut.getColorSpace().copyColormaps(lut.getColorSpace());
 
             // set the new lut
@@ -865,7 +865,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         updateSystemMenu();
         updateToolbarComponents();
         refreshToolBar();
-        
+
         // fix the OSX lost keyboard focus on canvas change in detached mode.
         KeyboardFocusManager.getCurrentKeyboardFocusManager().upFocusCycle(getCanvas());
 
@@ -903,17 +903,35 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     /**
      * Return the viewer Lut panel
      */
-    public IcyLutViewer getLutPanel()
+    public LUTViewer getLutViewer()
     {
-        return lutPanel;
+        return lutViewer;
     }
 
     /**
-     * Refresh lut panel
+     * Set the {@link LUTViewer} for this viewer.
      */
+    public void setLutViewer(LUTViewer value)
+    {
+        lutViewer = value;
+    }
+
+    /**
+     * @deprecated Uses {@link #getLutViewer()} instead
+     */
+    @Deprecated
+    public IcyLutViewer getLutPanel()
+    {
+        return getLutViewer();
+    }
+
+    /**
+     * @deprecated Uses {@link #setLutViewer(LUTViewer)} instead.
+     */
+    @Deprecated
     public void setLutPanel(IcyLutViewer lutViewer)
     {
-        lutPanel = lutViewer;
+        setLutViewer((LUTViewer) lutViewer);
     }
 
     /**
@@ -1112,22 +1130,6 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
     private void lutChanged()
     {
-        // final ArrayList<PluginDescriptor> result =
-        // PluginLoader.getPlugins(PluginLutViewer.class);
-        //
-        // if (result.size() > 0)
-        // {
-        // try
-        // {
-        // final Plugin plugin = result.get(0).getPluginClass().newInstance();
-        // setLutPanel(((PluginLutViewer) plugin).createLutViewer(this, getLut()));
-        // }
-        // catch (Exception e)
-        // {
-        // e.printStackTrace();
-        // }
-        // }
-
         // can be called from external thread, replace it in AWT dispatch thread
         ThreadUtil.invokeLater(new Runnable()
         {
@@ -1135,7 +1137,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             public void run()
             {
                 // refresh LUT viewer
-                setLutPanel(new LUTViewer(Viewer.this, getLut()));
+                setLutViewer(new LUTViewer(Viewer.this, getLut()));
 
                 fireViewerChanged(ViewerEventType.LUT_CHANGED);
             }
@@ -1251,7 +1253,10 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
             case SEQUENCE_COMPONENTBOUNDS:
                 // refresh lut scalers from sequence lut
-                lut.copyScalers(sequence.createCompatibleLUT());
+                final LUT sequenceLut = sequence.createCompatibleLUT();
+
+                if (!sequenceLut.isCompatible(lut) || (lutViewer == null) || lutViewer.getAutoBounds())
+                    lut.copyScalers(sequenceLut);
                 break;
 
             case SEQUENCE_PAINTER:

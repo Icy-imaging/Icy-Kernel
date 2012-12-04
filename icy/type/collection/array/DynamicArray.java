@@ -66,8 +66,41 @@ public abstract class DynamicArray
         return create(DataType.getDataType(type));
     }
 
+    public static class Generic extends DynamicArray
+    {
+        public void addSingle(Object value)
+        {
+            final ArrayBlock block = getAvailableBlock(true);
+            ((Object[]) block.array)[block.size++] = value;
+        }
+
+        @Override
+        protected Object createArray(int size)
+        {
+            return new Object[size];
+        }
+
+        @Override
+        protected int getArraySize(Object array)
+        {
+            return ((Object[]) array).length;
+        }
+
+        @Override
+        public Object[] asArray()
+        {
+            return (Object[]) super.asArray();
+        }
+    }
+
     public static class Byte extends DynamicArray
     {
+        public void addSingle(byte value)
+        {
+            final ArrayBlock block = getAvailableBlock(true);
+            ((byte[]) block.array)[block.size++] = value;
+        }
+
         @Override
         protected Object createArray(int size)
         {
@@ -89,6 +122,12 @@ public abstract class DynamicArray
 
     public static class Short extends DynamicArray
     {
+        public void addSingle(short value)
+        {
+            final ArrayBlock block = getAvailableBlock(true);
+            ((short[]) block.array)[block.size++] = value;
+        }
+
         @Override
         protected Object createArray(int size)
         {
@@ -110,6 +149,12 @@ public abstract class DynamicArray
 
     public static class Int extends DynamicArray
     {
+        public void addSingle(int value)
+        {
+            final ArrayBlock block = getAvailableBlock(true);
+            ((int[]) block.array)[block.size++] = value;
+        }
+
         @Override
         protected Object createArray(int size)
         {
@@ -131,6 +176,12 @@ public abstract class DynamicArray
 
     public static class Long extends DynamicArray
     {
+        public void addSingle(long value)
+        {
+            final ArrayBlock block = getAvailableBlock(true);
+            ((long[]) block.array)[block.size++] = value;
+        }
+
         @Override
         protected Object createArray(int size)
         {
@@ -152,6 +203,12 @@ public abstract class DynamicArray
 
     public static class Float extends DynamicArray
     {
+        public void addSingle(float value)
+        {
+            final ArrayBlock block = getAvailableBlock(true);
+            ((float[]) block.array)[block.size++] = value;
+        }
+
         @Override
         protected Object createArray(int size)
         {
@@ -173,6 +230,12 @@ public abstract class DynamicArray
 
     public static class Double extends DynamicArray
     {
+        public void addSingle(double value)
+        {
+            final ArrayBlock block = getAvailableBlock(true);
+            ((double[]) block.array)[block.size++] = value;
+        }
+
         @Override
         protected Object createArray(int size)
         {
@@ -262,7 +325,12 @@ public abstract class DynamicArray
         setSize(0);
     }
 
-    private ArrayBlock addBlock()
+    public boolean isEmpty()
+    {
+        return getSize() == 0;
+    }
+
+    protected ArrayBlock addBlock()
     {
         final ArrayBlock result = new ArrayBlock();
 
@@ -271,7 +339,7 @@ public abstract class DynamicArray
         return result;
     }
 
-    private void removeBlock()
+    protected void removeBlock()
     {
         final int numBlock = blocks.size();
 
@@ -280,7 +348,7 @@ public abstract class DynamicArray
             blocks.remove(numBlock - 1);
     }
 
-    private void checkCapacity(int size)
+    protected void checkCapacity(int size)
     {
         while (getCapacity() < size)
             setSize(size);
@@ -301,12 +369,12 @@ public abstract class DynamicArray
         return (BLOCK_SIZE * lastBlockIndex) + blocks.get(lastBlockIndex).getSize();
     }
 
-    private int getLastBlockIndex()
+    protected int getLastBlockIndex()
     {
         return blocks.size() - 1;
     }
 
-    private ArrayBlock getLastBlock()
+    protected ArrayBlock getLastBlock()
     {
         final int lastBlockIndex = getLastBlockIndex();
 
@@ -316,7 +384,7 @@ public abstract class DynamicArray
         return blocks.get(lastBlockIndex);
     }
 
-    private ArrayBlock getBlockFromOffset(int offset)
+    protected ArrayBlock getBlockFromOffset(int offset)
     {
         final int blockIndex = offset / BLOCK_SIZE;
 
@@ -326,7 +394,7 @@ public abstract class DynamicArray
         return null;
     }
 
-    private ArrayBlock getAvailableBlock(boolean create)
+    protected ArrayBlock getAvailableBlock(boolean create)
     {
         final ArrayBlock lastBlock = getLastBlock();
 
@@ -363,6 +431,13 @@ public abstract class DynamicArray
         // adjust last block size if needed
         if (getCapacity() > size)
             getLastBlock().size = getCapacity() - size;
+    }
+
+    public void addAll(DynamicArray in)
+    {
+        final Object array = in.asArray();
+
+        add(array, 0, getArraySize(array));
     }
 
     public void add(Object in)

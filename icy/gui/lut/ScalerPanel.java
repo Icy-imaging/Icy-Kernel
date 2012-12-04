@@ -18,27 +18,18 @@
  */
 package icy.gui.lut;
 
-import icy.gui.lut.abstract_.IcyScalerPanel;
 import icy.gui.viewer.Viewer;
-import icy.gui.viewer.ViewerEvent;
-import icy.gui.viewer.ViewerEvent.ViewerEventType;
-import icy.gui.viewer.ViewerListener;
-import icy.image.lut.LUTBand;
-import icy.image.lut.LUTBandEvent;
-import icy.image.lut.LUTBandEvent.LUTBandEventType;
-import icy.image.lut.LUTBandListener;
+import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
-import icy.sequence.Sequence;
-import icy.sequence.SequenceEvent;
-import icy.sequence.SequenceEvent.SequenceEventSourceType;
-import icy.sequence.SequenceListener;
 
 import java.awt.BorderLayout;
+
+import javax.swing.JPanel;
 
 /**
  * @author stephane
  */
-public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUTBandListener, ViewerListener
+public class ScalerPanel extends JPanel
 {
     /**
      * 
@@ -51,27 +42,28 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
     final ScalerViewer scalerViewer;
 
     /**
+     * associated Viewer & LUTBand
+     */
+    protected final Viewer viewer;
+    protected final LUTChannel lutChannel;
+
+    /**
      * 
      */
-    public ScalerPanel(Viewer viewer, LUTBand lutBand)
+    public ScalerPanel(Viewer viewer, LUTChannel lutChannel)
     {
-        super(viewer, lutBand);
+        super();
+
+        this.viewer = viewer;
+        this.lutChannel = lutChannel;
 
         setLayout(new BorderLayout());
 
-        scalerViewer = new ScalerViewer(viewer, lutBand);
+        scalerViewer = new ScalerViewer(viewer, lutChannel);
 
         add(scalerViewer, BorderLayout.CENTER);
 
         validate();
-
-        // add listeners
-        final Sequence sequence = viewer.getSequence();
-
-        if (sequence != null)
-            sequence.addListener(this);
-        viewer.addListener(this);
-        lutBand.addListener(this);
     }
 
     /**
@@ -82,37 +74,19 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
         return scalerViewer;
     }
 
+    /**
+     * @deprecated Uses {@link #refreshHistogram()} instead.
+     */
+    @Deprecated
     public void refreshHistoData()
+    {
+        refreshHistogram();
+    }
+
+    public void refreshHistogram()
     {
         // update histogram
         scalerViewer.requestHistoDataRefresh();
-    }
-
-    /**
-     * process on sequence change
-     */
-    void onSequenceDataChanged()
-    {
-        // update histogram
-        refreshHistoData();
-    }
-
-    /**
-     * process on scaler change
-     */
-    private void onScalerChanged()
-    {
-        // process on scaler change
-
-    }
-
-    /**
-     * process on position changed
-     */
-    private void onPositionChanged()
-    {
-        // update histogram
-        refreshHistoData();
     }
 
     /**
@@ -120,39 +94,7 @@ public class ScalerPanel extends IcyScalerPanel implements SequenceListener, LUT
      */
     public Scaler getScaler()
     {
-        return lutBand.getScaler();
+        return lutChannel.getScaler();
     }
 
-    @Override
-    public void sequenceChanged(SequenceEvent sequenceEvent)
-    {
-        if (sequenceEvent.getSourceType() == SequenceEventSourceType.SEQUENCE_DATA)
-            onSequenceDataChanged();
-    }
-
-    @Override
-    public void lutBandChanged(LUTBandEvent event)
-    {
-        if (event.getType() == LUTBandEventType.SCALER_CHANGED)
-            onScalerChanged();
-    }
-
-    @Override
-    public void viewerChanged(ViewerEvent event)
-    {
-        if (event.getType() == ViewerEventType.POSITION_CHANGED)
-            onPositionChanged();
-    }
-
-    @Override
-    public void viewerClosed(Viewer viewer)
-    {
-        viewer.removeListener(this);
-    }
-
-    @Override
-    public void sequenceClosed(Sequence sequence)
-    {
-        sequence.removeListener(this);
-    }
 }

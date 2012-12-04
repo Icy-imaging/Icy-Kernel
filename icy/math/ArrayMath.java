@@ -2342,7 +2342,7 @@ public class ArrayMath
      */
     public static float max(float[] array)
     {
-        float max = Float.MIN_VALUE;
+        float max = -Float.MAX_VALUE;
 
         for (float v : array)
             if (v > max)

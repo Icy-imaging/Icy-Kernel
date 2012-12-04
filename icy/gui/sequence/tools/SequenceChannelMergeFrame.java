@@ -4,7 +4,7 @@
 package icy.gui.sequence.tools;
 
 import icy.gui.component.sequence.SequenceChooser;
-import icy.gui.frame.ActionFrame;
+import icy.gui.dialog.ActionDialog;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.util.ComponentUtil;
 import icy.image.IcyBufferedImage;
@@ -38,8 +38,13 @@ import javax.swing.SwingConstants;
  * @author Stephane
  */
 @Deprecated
-public class SequenceChannelMergeFrame extends ActionFrame
+public class SequenceChannelMergeFrame extends ActionDialog
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -952913055693822372L;
+
     private class ChannelChooserPanel extends JPanel implements ActionListener
     {
         /**
@@ -205,9 +210,7 @@ public class SequenceChannelMergeFrame extends ActionFrame
 
     public SequenceChannelMergeFrame()
     {
-        super("Channel merge", true);
-
-        setTitleVisible(false);
+        super("Channel merge");
 
         // channel extraction on validation
         setOkAction(new ActionListener()
@@ -385,10 +388,8 @@ public class SequenceChannelMergeFrame extends ActionFrame
 
         setPreferredSize(new Dimension(640, 300));
         pack();
-        setVisible(true);
-        addToMainDesktopPane();
         setLocation(50, 50);
-        requestFocus();
+        setVisible(true);
     }
 
     void updateEnable()

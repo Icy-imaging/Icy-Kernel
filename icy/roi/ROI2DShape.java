@@ -56,10 +56,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import vtk.vtkActor;
-import vtk.vtkActor2D;
 import vtk.vtkPointSet;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
+import vtk.vtkProp;
 
 /**
  * @author Stephane
@@ -177,7 +177,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             if (seq == null)
                 return;
 
-            final ArrayList<Point3D> point3DList = new ArrayList<Point3D>();
+            final ArrayList<Point3D.Double> point3DList = new ArrayList<Point3D.Double>();
             final ArrayList<Poly3D> polyList = new ArrayList<Poly3D>();
             final double[] coords = new double[6];
 
@@ -212,10 +212,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
                         ind = point3DList.size();
 
-                        point3DList.add(new Point3D(x0 * scaling[0], y0 * scaling[1], 0));
-                        point3DList.add(new Point3D(x1 * scaling[0], y1 * scaling[1], 0));
-                        point3DList.add(new Point3D(x0 * scaling[0], y0 * scaling[1], nbSlice * scaling[2]));
-                        point3DList.add(new Point3D(x1 * scaling[0], y1 * scaling[1], nbSlice * scaling[2]));
+                        point3DList.add(new Point3D.Double(x0 * scaling[0], y0 * scaling[1], 0));
+                        point3DList.add(new Point3D.Double(x1 * scaling[0], y1 * scaling[1], 0));
+                        point3DList.add(new Point3D.Double(x0 * scaling[0], y0 * scaling[1], nbSlice * scaling[2]));
+                        point3DList.add(new Point3D.Double(x1 * scaling[0], y1 * scaling[1], nbSlice * scaling[2]));
                         polyList.add(new Poly3D(1 + ind, 2 + ind, 0 + ind));
                         polyList.add(new Poly3D(3 + ind, 2 + ind, 1 + ind));
 
@@ -229,10 +229,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
                         ind = point3DList.size();
 
-                        point3DList.add(new Point3D(x0 * scaling[0], y0 * scaling[1], 0));
-                        point3DList.add(new Point3D(x1 * scaling[0], y1 * scaling[1], 0));
-                        point3DList.add(new Point3D(x0 * scaling[0], y0 * scaling[1], nbSlice * scaling[2]));
-                        point3DList.add(new Point3D(x1 * scaling[0], y1 * scaling[1], nbSlice * scaling[2]));
+                        point3DList.add(new Point3D.Double(x0 * scaling[0], y0 * scaling[1], 0));
+                        point3DList.add(new Point3D.Double(x1 * scaling[0], y1 * scaling[1], 0));
+                        point3DList.add(new Point3D.Double(x0 * scaling[0], y0 * scaling[1], nbSlice * scaling[2]));
+                        point3DList.add(new Point3D.Double(x1 * scaling[0], y1 * scaling[1], nbSlice * scaling[2]));
                         polyList.add(new Poly3D(1 + ind, 2 + ind, 0 + ind));
                         polyList.add(new Poly3D(3 + ind, 2 + ind, 1 + ind));
 
@@ -249,7 +249,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             final int[][] indexes = new int[polyList.size()][3];
 
             int pointIndex = 0;
-            for (Point3D p3D : point3DList)
+            for (Point3D.Double p3D : point3DList)
             {
                 vertices[pointIndex][0] = p3D.x;
                 vertices[pointIndex][1] = p3D.y;
@@ -621,15 +621,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         }
 
         @Override
-        public vtkActor[] getActors()
+        public vtkProp[] getProps()
         {
-            return new vtkActor[] {(vtkActor) actor};
-        }
-
-        @Override
-        public vtkActor2D[] getActors2D()
-        {
-            return new vtkActor2D[] {};
+            return new vtkProp[] {(vtkProp) actor};
         }
 
     }
@@ -984,7 +978,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     protected double getTotalDistance(ArrayList<Point2D> points, boolean connectLastPoint)
     {
         final int size = points.size();
-        double result = 0;
+        double result = 0d;
 
         if (size > 1)
         {

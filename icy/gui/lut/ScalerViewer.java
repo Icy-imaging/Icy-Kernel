@@ -21,13 +21,19 @@ package icy.gui.lut;
 import icy.gui.math.HistogramPanel;
 import icy.gui.math.HistogramPanel.HistogramPanelListener;
 import icy.gui.viewer.Viewer;
-import icy.image.lut.LUTBand;
-import icy.image.lut.LUTBandEvent;
-import icy.image.lut.LUTBandEvent.LUTBandEventType;
-import icy.image.lut.LUTBandListener;
+import icy.gui.viewer.ViewerEvent;
+import icy.gui.viewer.ViewerEvent.ViewerEventType;
+import icy.gui.viewer.ViewerListener;
+import icy.image.lut.LUT.LUTChannel;
+import icy.image.lut.LUT.LUTChannelEvent;
+import icy.image.lut.LUT.LUTChannelEvent.LUTChannelEventType;
+import icy.image.lut.LUT.LUTChannelListener;
 import icy.math.MathUtil;
 import icy.math.Scaler;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
+import icy.sequence.SequenceEvent.SequenceEventSourceType;
+import icy.sequence.SequenceListener;
 import icy.system.thread.SingleProcessor;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
@@ -44,6 +50,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -60,7 +67,7 @@ import javax.swing.event.EventListenerList;
 /**
  * @author stephane
  */
-public class ScalerViewer extends JPanel implements LUTBandListener
+public class ScalerViewer extends JPanel implements SequenceListener, LUTChannelListener, ViewerListener
 {
     private static enum actionType
     {
@@ -85,6 +92,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
          */
         private actionType action;
         private final Point2D positionInfo;
+        private boolean mouseOnLeft;
 
         public ScalerHistogramPanel(Scaler s)
         {
@@ -92,6 +100,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
 
             action = actionType.NULL;
             positionInfo = new Point2D.Double();
+            mouseOnLeft = false;
 
             // we want to display our own background
             // setOpaque(false);
@@ -197,8 +206,6 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         {
             updateHisto();
 
-            // GraphicsUtil.paintIcyBackGround(this, g);
-
             super.paintComponent(g);
 
             final Graphics2D g2 = (Graphics2D) g.create();
@@ -222,7 +229,14 @@ public class ScalerViewer extends JPanel implements LUTBandListener
                 {
                     // string display
                     g2.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
-                    GraphicsUtil.drawHint(g2, message, 10, 4, getForeground(), getBackground());
+
+                    final Rectangle hintBounds = GraphicsUtil.getHintBounds(g2, message, 10, 4);
+
+                    if (mouseOnLeft)
+                        GraphicsUtil.drawHint(g2, message, getWidth() - (10 + hintBounds.width), 4, getForeground(),
+                                getBackground());
+                    else
+                        GraphicsUtil.drawHint(g2, message, 10, 4, getForeground(), getBackground());
                 }
             }
             finally
@@ -320,6 +334,9 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         public void mouseDragged(MouseEvent e)
         {
             final Point pos = e.getPoint();
+
+            mouseOnLeft = pos.x < (getWidth() / 2);
+
             final boolean shift = EventUtil.isShiftDown(e);
 
             switch (action)
@@ -330,8 +347,8 @@ public class ScalerViewer extends JPanel implements LUTBandListener
                     if (shift)
                     {
                         final double newLowBound = getLowBound();
-                        for (LUTBand lb : lutBand.getLut().getLutBands())
-                            lb.setMin(newLowBound);
+                        for (LUTChannel lc : lutChannel.getLut().getLutChannels())
+                            lc.setMin(newLowBound);
                     }
                     break;
 
@@ -341,8 +358,8 @@ public class ScalerViewer extends JPanel implements LUTBandListener
                     if (shift)
                     {
                         final double newHighBound = getHighBound();
-                        for (LUTBand lb : lutBand.getLut().getLutBands())
-                            lb.setMax(newHighBound);
+                        for (LUTChannel lc : lutChannel.getLut().getLutChannels())
+                            lc.setMax(newHighBound);
                     }
                     break;
             }
@@ -372,7 +389,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
                     final String pixelText = "pixel number : " + value;
 
                     setMessage(valueText + "\n" + pixelText);
-//                    setToolTipText("<html>" + valueText + "<br>" + pixelText);
+                    // setToolTipText("<html>" + valueText + "<br>" + pixelText);
                 }
 
                 setPositionInfo(index, value, getAdjustedBinSize(bin));
@@ -383,6 +400,8 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         public void mouseMoved(MouseEvent e)
         {
             final Point pos = e.getPoint();
+
+            mouseOnLeft = pos.x < (getWidth() / 2);
 
             updateCursor(e.getPoint());
 
@@ -400,7 +419,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
                 final String pixelText = "pixel number : " + value;
 
                 setMessage(valueText + "\n" + pixelText);
-//                setToolTipText("<html>" + valueText + "<br>" + pixelText);
+                // setToolTipText("<html>" + valueText + "<br>" + pixelText);
 
                 setPositionInfo(index, value, getAdjustedBinSize(bin));
             }
@@ -421,15 +440,15 @@ public class ScalerViewer extends JPanel implements LUTBandListener
     private static final int ISOVER_DEFAULT_MARGIN = 3;
 
     /**
-     * associated viewer & lutBand
+     * associated viewer & lutChannel
      */
     Viewer viewer;
-    LUTBand lutBand;
+    LUTChannel lutChannel;
     /**
      * histogram
      */
     private ScalerHistogramPanel histogram;
-    private boolean histoEnabled;
+    private boolean autoRefresh;
     private boolean autoBounds;
     private boolean histoNeedRefresh;
 
@@ -448,12 +467,12 @@ public class ScalerViewer extends JPanel implements LUTBandListener
     /**
      * 
      */
-    public ScalerViewer(Viewer viewer, LUTBand lutBand)
+    public ScalerViewer(Viewer viewer, LUTChannel lutChannel)
     {
         super();
 
         this.viewer = viewer;
-        this.lutBand = lutBand;
+        this.lutChannel = lutChannel;
 
         message = "";
         scalerMapPositionListeners = new EventListenerList();
@@ -478,7 +497,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
             }
         };
 
-        histogram = new ScalerHistogramPanel(lutBand.getScaler());
+        histogram = new ScalerHistogramPanel(lutChannel.getScaler());
         // listen for need refresh event
         histogram.addListener(new HistogramPanelListener()
         {
@@ -489,7 +508,7 @@ public class ScalerViewer extends JPanel implements LUTBandListener
             }
         });
         histoNeedRefresh = false;
-        histoEnabled = true;
+        autoRefresh = true;
         autoBounds = false;
 
         setLayout(new BorderLayout());
@@ -500,13 +519,17 @@ public class ScalerViewer extends JPanel implements LUTBandListener
         internalRequestHistoDataRefresh();
 
         // add listeners
-        lutBand.addListener(this);
+        final Sequence sequence = viewer.getSequence();
+
+        if (sequence != null)
+            sequence.addListener(this);
+        viewer.addListener(this);
+        lutChannel.addListener(this);
     }
 
     public void requestHistoDataRefresh()
     {
-        if (histoEnabled)
-            internalRequestHistoDataRefresh();
+        internalRequestHistoDataRefresh();
     }
 
     private boolean isHistoVisible()
@@ -548,59 +571,67 @@ public class ScalerViewer extends JPanel implements LUTBandListener
 
         final Sequence seq = viewer.getSequence();
 
-        if (seq != null)
+        try
         {
-
-            final int maxZ;
-            final int maxT;
-            int t = viewer.getT();
-            int z = viewer.getZ();
-
-            if (t != -1)
-                maxT = t;
-            else
+            if (seq != null)
             {
-                t = 0;
-                maxT = seq.getSizeT() - 1;
-            }
 
-            if (z != -1)
-                maxZ = z;
-            else
-            {
-                z = 0;
-                maxZ = seq.getSizeZ() - 1;
-            }
+                final int maxZ;
+                final int maxT;
+                int t = viewer.getT();
+                int z = viewer.getZ();
 
-            final int c = lutBand.getComponent();
-
-            for (; t <= maxT; t++)
-            {
-                for (; z <= maxZ; z++)
+                if (t != -1)
+                    maxT = t;
+                else
                 {
-                    final Object data = seq.getDataXY(t, z, c);
-                    final DataType dataType = seq.getDataType_();
-                    final int len = Array.getLength(data);
+                    t = 0;
+                    maxT = seq.getSizeT() - 1;
+                }
 
-                    for (int i = 0; i < len; i++)
+                if (z != -1)
+                    maxZ = z;
+                else
+                {
+                    z = 0;
+                    maxZ = seq.getSizeZ() - 1;
+                }
+
+                final int c = lutChannel.getChannel();
+
+                for (; t <= maxT; t++)
+                {
+                    for (; z <= maxZ; z++)
                     {
-                        if ((i & 0xFFF) == 0)
-                        {
-                            // need to be recalculated so don't waste time here...
-                            if (processor.hasWaitingTasks())
-                            {
-                                histogram.done();
-                                return;
-                            }
-                        }
+                        final Object data = seq.getDataXY(t, z, c);
+                        final DataType dataType = seq.getDataType_();
+                        final int len = Array.getLength(data);
 
-                        histogram.addValue(Array1DUtil.getValue(data, i, dataType));
+                        for (int i = 0; i < len; i++)
+                        {
+                            if ((i & 0xFFF) == 0)
+                            {
+                                // need to be recalculated so don't waste time here...
+                                if (processor.hasWaitingTasks())
+                                {
+                                    // histogram.done();
+                                    // return;
+                                }
+                            }
+
+                            histogram.addValue(Array1DUtil.getValue(data, i, dataType));
+                        }
                     }
                 }
             }
         }
+        catch (Exception e)
+        {
+            // System.out.println("error");
+        }
 
         histogram.done();
+
         repaint();
     }
 
@@ -625,27 +656,27 @@ public class ScalerViewer extends JPanel implements LUTBandListener
      */
     public Scaler getScaler()
     {
-        return lutBand.getScaler();
+        return lutChannel.getScaler();
     }
 
     public double getLowBound()
     {
-        return lutBand.getMin();
+        return lutChannel.getMin();
     }
 
     public double getHighBound()
     {
-        return lutBand.getMax();
+        return lutChannel.getMax();
     }
 
     void setLowBound(double value)
     {
-        lutBand.setMin(value);
+        lutChannel.setMin(value);
     }
 
     void setHighBound(double value)
     {
-        lutBand.setMax(value);
+        lutChannel.setMax(value);
     }
 
     /**
@@ -659,6 +690,26 @@ public class ScalerViewer extends JPanel implements LUTBandListener
 
         // repaint component now as bounds may have changed
         repaint();
+    }
+
+    /**
+     * process on sequence change
+     */
+    void onSequenceDataChanged()
+    {
+        // update histogram
+        if (autoRefresh)
+            requestHistoDataRefresh();
+    }
+
+    /**
+     * process on position changed
+     */
+    private void onPositionChanged()
+    {
+        // update histogram
+        if (autoRefresh)
+            requestHistoDataRefresh();
     }
 
     /**
@@ -703,23 +754,23 @@ public class ScalerViewer extends JPanel implements LUTBandListener
     }
 
     /**
-     * @return the histoEnabled
+     * @return the autoRefresh
      */
-    public boolean isHistoEnabled()
+    public boolean getAutoRefresh()
     {
-        return histoEnabled;
+        return autoRefresh;
     }
 
     /**
-     * Set the histoEnabled
+     * Set the autoRefresh
      */
-    public void setHistoEnabled(boolean value)
+    public void setAutoRefresh(boolean value)
     {
-        if (histoEnabled != value)
+        if (autoRefresh != value)
         {
             if (value)
-                refreshHistoData();
-            histoEnabled = value;
+                requestHistoDataRefresh();
+            autoRefresh = value;
         }
     }
 
@@ -812,10 +863,36 @@ public class ScalerViewer extends JPanel implements LUTBandListener
     }
 
     @Override
-    public void lutBandChanged(LUTBandEvent e)
+    public void lutChannelChanged(LUTChannelEvent event)
     {
-        if (e.getType() == LUTBandEventType.SCALER_CHANGED)
+        if (event.getType() == LUTChannelEventType.SCALER_CHANGED)
             onScalerChanged();
+    }
+
+    @Override
+    public void viewerChanged(ViewerEvent event)
+    {
+        if (event.getType() == ViewerEventType.POSITION_CHANGED)
+            onPositionChanged();
+    }
+
+    @Override
+    public void viewerClosed(Viewer viewer)
+    {
+        viewer.removeListener(this);
+    }
+
+    @Override
+    public void sequenceChanged(SequenceEvent sequenceEvent)
+    {
+        if (sequenceEvent.getSourceType() == SequenceEventSourceType.SEQUENCE_DATA)
+            onSequenceDataChanged();
+    }
+
+    @Override
+    public void sequenceClosed(Sequence sequence)
+    {
+        sequence.removeListener(this);
     }
 
 }

@@ -254,16 +254,16 @@ public class ArrayUtil
     /**
      * Encapsulate the specified array with a single cell array of the same type.
      */
-    public static Object encapsulate(Object array)
+    public static Object[] encapsulate(Object array)
     {
         final ArrayType type = getArrayType(array);
-        
+
         // increase dim
         type.setDim(type.getDim() + 1);
 
-        final Object result = createArray(type, 1);
+        final Object[] result = (Object[]) createArray(type, 1);
         // encapsulate
-        ((Object[]) result)[0] = array;
+        result[0] = array;
 
         return result;
     }

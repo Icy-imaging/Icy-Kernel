@@ -50,6 +50,7 @@ import javax.swing.plaf.InternalFrameUI;
 import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
 import org.pushingpixels.flamingo.api.common.JCommandToggleMenuButton;
 import org.pushingpixels.flamingo.api.common.popup.JCommandPopupMenu;
+import org.pushingpixels.substance.api.ColorSchemeAssociationKind;
 import org.pushingpixels.substance.api.ComponentState;
 import org.pushingpixels.substance.api.DecorationAreaType;
 import org.pushingpixels.substance.api.SubstanceColorScheme;
@@ -410,9 +411,18 @@ public class LookAndFeelUtil
         return ImageUtil.paintColorImageFromAlphaImage(alphaImage, out, getBackground(c));
     }
 
-    public static SubstanceColorScheme getActiveColorSheme(DecorationAreaType d)
+    public static SubstanceColorScheme getActiveColorScheme(DecorationAreaType d)
     {
         return getCurrentSkin().getActiveColorScheme(d);
+    }
+
+    /**
+     * @deprecated Uses {@link #getActiveColorScheme(DecorationAreaType)} instead.
+     */
+    @Deprecated
+    public static SubstanceColorScheme getActiveColorSheme(DecorationAreaType d)
+    {
+        return getActiveColorScheme(d);
     }
 
     public static SubstanceColorScheme getBackgroundColorScheme(DecorationAreaType d)
@@ -430,6 +440,11 @@ public class LookAndFeelUtil
         return getCurrentSkin().getDisabledColorScheme(d);
     }
 
+    public static SubstanceSkin getSkin()
+    {
+        return SubstanceLookAndFeel.getCurrentSkin();
+    }
+
     public static SubstanceSkin getSkin(Component c)
     {
         return SubstanceLookAndFeel.getCurrentSkin(c);
@@ -440,7 +455,17 @@ public class LookAndFeelUtil
         return SubstanceLookAndFeel.getDecorationType(c);
     }
 
-    public static SubstanceColorScheme getActiveColorSheme(Component c)
+    public static SubstanceColorScheme getColorScheme(Component c, ComponentState state)
+    {
+        return getSkin().getColorScheme(c, state);
+    }
+
+    public static SubstanceColorScheme getColorScheme(Component c, ColorSchemeAssociationKind kind, ComponentState state)
+    {
+        return getSkin().getColorScheme(c, kind, state);
+    }
+
+    public static SubstanceColorScheme getActiveColorScheme(Component c)
     {
         final SubstanceSkin skin = getSkin(c);
         final DecorationAreaType decoration = getDecoration(c);
@@ -451,9 +476,27 @@ public class LookAndFeelUtil
         return null;
     }
 
-    public static SubstanceColorScheme getActiveColorSheme(Component c, ComponentState state)
+    public static SubstanceColorScheme getActiveColorScheme(Component c, ComponentState state)
     {
         return SubstanceColorSchemeUtilities.getActiveColorScheme(c, state);
+    }
+
+    /**
+     * @deprecated Uses {@link #getActiveColorScheme(Component)} instead.
+     */
+    @Deprecated
+    public static SubstanceColorScheme getActiveColorSheme(Component c)
+    {
+        return getActiveColorScheme(c);
+    }
+
+    /**
+     * @deprecated Uses {@link #getActiveColorScheme(Component, ComponentState)} instead.
+     */
+    @Deprecated
+    public static SubstanceColorScheme getActiveColorSheme(Component c, ComponentState state)
+    {
+        return getActiveColorScheme(c, state);
     }
 
     public static SubstanceColorScheme getBackgroundColorScheme(Component c)
@@ -490,7 +533,7 @@ public class LookAndFeelUtil
     }
 
     /**
-     * Return the background color for the specified component
+     * Return the foreground color for the specified component
      */
     public static Color getForeground(Component c)
     {
@@ -503,6 +546,24 @@ public class LookAndFeelUtil
 
         if (colorScheme != null)
             return new ColorUIResource(colorScheme.getForegroundColor());
+
+        return c.getForeground();
+    }
+
+    /**
+     * Return the selected foreground color for the specified component
+     */
+    public static Color getSelectedForeground(Component c)
+    {
+        final SubstanceColorScheme colorScheme;
+
+        if (c.isEnabled())
+            colorScheme = getEnabledColorScheme(c);
+        else
+            colorScheme = getDisabledColorScheme(c);
+
+        if (colorScheme != null)
+            return new ColorUIResource(colorScheme.getSelectionForegroundColor());
 
         return c.getForeground();
     }
@@ -521,6 +582,24 @@ public class LookAndFeelUtil
 
         if (colorScheme != null)
             return new ColorUIResource(colorScheme.getBackgroundFillColor());
+
+        return c.getBackground();
+    }
+
+    /**
+     * Return the selected background color for the specified component
+     */
+    public static Color getSelectedBackground(Component c)
+    {
+        final SubstanceColorScheme colorScheme;
+
+        if (c.isEnabled())
+            colorScheme = getEnabledColorScheme(c);
+        else
+            colorScheme = getDisabledColorScheme(c);
+
+        if (colorScheme != null)
+            return new ColorUIResource(colorScheme.getSelectionBackgroundColor());
 
         return c.getBackground();
     }

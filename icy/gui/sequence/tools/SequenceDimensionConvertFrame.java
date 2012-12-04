@@ -3,8 +3,9 @@
  */
 package icy.gui.sequence.tools;
 
-import icy.gui.frame.ActionFrame;
+import icy.gui.dialog.ActionDialog;
 import icy.gui.frame.progress.ProgressFrame;
+import icy.gui.util.ComponentUtil;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceUtil;
 import icy.system.thread.ThreadUtil;
@@ -20,15 +21,18 @@ import javax.swing.BorderFactory;
  * 
  * @author Stephane
  */
-public class SequenceDimensionConvertFrame extends ActionFrame
+public class SequenceDimensionConvertFrame extends ActionDialog
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -6541431462734831647L;
+
     final SequenceDimensionConvertPanel convertPanel;
 
     public SequenceDimensionConvertFrame(Sequence sequence)
     {
-        super("Z / T dimension conversion", true);
-
-        setTitleVisible(false);
+        super("Z / T dimension conversion");
 
         convertPanel = new SequenceDimensionConvertPanel(sequence);
         convertPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 4));
@@ -57,11 +61,9 @@ public class SequenceDimensionConvertFrame extends ActionFrame
             }
         });
 
-        setSizeExternal(340, 400);
-        setSizeInternal(340, 400);
+        setSize(340, 400);
+        ComponentUtil.center(this);
+
         setVisible(true);
-        addToMainDesktopPane();
-        center();
-        requestFocus();
     }
 }

@@ -74,7 +74,8 @@ public abstract class Plugin
         // don't check for anonymous plugin class...
         if ((descriptor == null) && !getClass().isAnonymousClass())
         {
-            System.out.println("Warning : Plugin '" + getClass().getName() + "' started but not found in PluginLoader !");
+            System.out.println("Warning : Plugin '" + getClass().getName()
+                    + "' started but not found in PluginLoader !");
             System.out.println("Local XML plugin description file is probably incorrect.");
         }
     }
@@ -132,7 +133,8 @@ public abstract class Plugin
     }
 
     /**
-     * Return the resource as data stream from given resource name
+     * Return the resource as data stream from given resource name.<br>
+     * Ex: <code>getResourceAsStream("plugins/author/resources/def.xml");</code>
      * 
      * @param name
      *        resource name
@@ -144,6 +146,7 @@ public abstract class Plugin
 
     /**
      * Return the image resource from given resource name
+     * Ex: <code>getResourceAsStream("plugins/author/resources/image.png");</code>
      * 
      * @param resourceName
      *        resource name
@@ -155,6 +158,7 @@ public abstract class Plugin
 
     /**
      * Return the icon resource from given resource name
+     * Ex: <code>getResourceAsStream("plugins/author/resources/icon.png");</code>
      * 
      * @param resourceName
      *        resource name

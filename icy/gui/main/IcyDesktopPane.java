@@ -46,8 +46,6 @@ import java.util.ArrayList;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JInternalFrame;
-import javax.swing.event.InternalFrameAdapter;
-import javax.swing.event.InternalFrameEvent;
 
 /**
  * Icy {@link JDesktopPane} class.<br>
@@ -171,7 +169,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
     private static final long serialVersionUID = 7914161180763257329L;
 
     private final ComponentAdapter componentAdapter;
-    private final InternalFrameAdapter internalFrameAdapter;
+    // private final InternalFrameAdapter internalFrameAdapter;
 
     private final ArrayList<DesktopOverlay> overlays;
 
@@ -195,21 +193,6 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
             public void componentMoved(ComponentEvent e)
             {
                 checkPosition((JInternalFrame) e.getSource());
-            }
-        };
-
-        internalFrameAdapter = new InternalFrameAdapter()
-        {
-            @Override
-            public void internalFrameClosing(InternalFrameEvent e)
-            {
-                unregisterFrame(e.getInternalFrame());
-            }
-
-            @Override
-            public void internalFrameClosed(InternalFrameEvent e)
-            {
-                unregisterFrame(e.getInternalFrame());
             }
         };
 
@@ -242,13 +225,11 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
     private void registerFrame(JInternalFrame frame)
     {
         frame.addComponentListener(componentAdapter);
-        frame.addInternalFrameListener(internalFrameAdapter);
     }
 
     void unregisterFrame(JInternalFrame frame)
     {
         frame.removeComponentListener(componentAdapter);
-        frame.removeInternalFrameListener(internalFrameAdapter);
     }
 
     void checkPosition(JInternalFrame frame)
@@ -439,9 +420,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
         final Component comp = e.getChild();
 
         if (comp instanceof JInternalFrame)
-        {
             unregisterFrame((JInternalFrame) comp);
-        }
     }
 
     @Override

@@ -23,10 +23,10 @@ import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.IcyColorMap.IcyColorMapType;
 import icy.image.colormap.IcyColorMapBand;
 import icy.image.colormap.IcyColorMapBand.ControlPoint;
-import icy.image.lut.LUTBand;
-import icy.image.lut.LUTBandEvent;
-import icy.image.lut.LUTBandEvent.LUTBandEventType;
-import icy.image.lut.LUTBandListener;
+import icy.image.lut.LUT.LUTChannel;
+import icy.image.lut.LUT.LUTChannelEvent;
+import icy.image.lut.LUT.LUTChannelEvent.LUTChannelEventType;
+import icy.image.lut.LUT.LUTChannelListener;
 import icy.util.ColorUtil;
 import icy.util.EventUtil;
 
@@ -44,6 +44,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.EventListener;
@@ -57,7 +58,7 @@ import javax.swing.event.EventListenerList;
 /**
  * @author stephane
  */
-public class ColormapViewer extends BorderedPanel implements MouseListener, MouseMotionListener, LUTBandListener
+public class ColormapViewer extends BorderedPanel implements MouseListener, MouseMotionListener, LUTChannelListener
 {
     private enum ActionType
     {
@@ -85,9 +86,9 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
     private static final int MAX_VALUE = IcyColorMap.MAX_LEVEL;
 
     /**
-     * associated LUTBand
+     * associated {@link LUTChannel}
      */
-    private final LUTBand lutBand;
+    private final LUTChannel lutChannel;
 
     /**
      * alpha enabled
@@ -118,7 +119,7 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
     private IcyColorMapBand currentColormapBand;
     private ControlPoint currentControlPoint;
 
-    public ColormapViewer(LUTBand lutBand)
+    public ColormapViewer(LUTChannel lutChannel)
     {
         super();
 
@@ -131,8 +132,8 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         // set border
         setBorder(BorderFactory.createEmptyBorder(BORDER_HEIGHT, BORDER_WIDTH, BORDER_HEIGHT, BORDER_WIDTH));
 
-        this.lutBand = lutBand;
-        colormap = lutBand.getColorMap();
+        this.lutChannel = lutChannel;
+        colormap = lutChannel.getColorMap();
 
         colorMapPositionListeners = new EventListenerList();
 
@@ -159,7 +160,7 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         super.addNotify();
 
         // add listeners
-        lutBand.addListener(this);
+        lutChannel.addListener(this);
     }
 
     @Override
@@ -168,7 +169,7 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         super.removeNotify();
 
         // remove listeners
-        lutBand.removeListener(this);
+        lutChannel.removeListener(this);
     }
 
     /**
@@ -298,12 +299,13 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
 
         GeneralPath polyline = null;
 
-        if (cmb.isRawData()) // the LUT is defined directly, without control points
+        // the LUT is defined directly, without control points
+        if (cmb.isRawData())
         {
             final int x = getClientX();
             final int w = getClientWidth();
 
-            polyline = new GeneralPath(GeneralPath.WIND_EVEN_ODD, w);
+            polyline = new GeneralPath(Path2D.WIND_EVEN_ODD, w);
 
             int intensity = valueToPix(cmb.map[pixToIndex(0)]);
             polyline.moveTo(x, intensity);
@@ -317,7 +319,7 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         else
         // the LUT is defined through control points, use them.
         {
-            polyline = new GeneralPath(GeneralPath.WIND_EVEN_ODD, cmb.getControlPointCount());
+            polyline = new GeneralPath(Path2D.WIND_EVEN_ODD, cmb.getControlPointCount());
 
             ArrayList<ControlPoint> controlPoints = cmb.getControlPoints();
             int x = getPixelPosX(controlPoints.get(0));
@@ -929,7 +931,7 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
             value = pixToValue(pos.y);
         }
 
-//        setToolTipText("<html>" + "index : " + index + "<br>" + "value : " + value);
+        // setToolTipText("<html>" + "index : " + index + "<br>" + "value : " + value);
 
         colormapPositionChanged(index, value);
     }
@@ -973,9 +975,9 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
     }
 
     @Override
-    public void lutBandChanged(LUTBandEvent e)
+    public void lutChannelChanged(LUTChannelEvent e)
     {
-        if (e.getType() == LUTBandEventType.COLORMAP_CHANGED)
+        if (e.getType() == LUTChannelEventType.COLORMAP_CHANGED)
             onColormapChanged();
     }
 

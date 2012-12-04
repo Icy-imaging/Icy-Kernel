@@ -71,6 +71,7 @@ public class ActionDialog extends JDialog implements ActionListener
 
         // GUI
         mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
 
         buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
@@ -183,5 +184,4 @@ public class ActionDialog extends JDialog implements ActionListener
                 dispose();
         }
     }
-
 }

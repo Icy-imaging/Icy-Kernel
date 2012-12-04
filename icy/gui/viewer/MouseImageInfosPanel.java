@@ -23,7 +23,6 @@ import icy.gui.component.ColorComponent;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.image.IcyBufferedImage;
-import icy.image.lut.LUT;
 import icy.math.MathUtil;
 import icy.sequence.Sequence;
 import icy.type.collection.array.ArrayUtil;
@@ -297,8 +296,6 @@ public class MouseImageInfosPanel extends JPanel
 
         if (seq != null)
         {
-            final LUT lut = canvas.getLut();
-
             final double x = canvas.getMouseImagePosX();
             final double y = canvas.getMouseImagePosY();
             final double z = canvas.getMouseImagePosZ();
@@ -354,7 +351,7 @@ public class MouseImageInfosPanel extends JPanel
             if ((image != null) && (image.isInside(xi, yi)))
             {
                 // FIXME : should take C value in account to retrieve single component color
-                colorComp.setColor(image.getRGB(xi, yi, lut));
+                colorComp.setColor(image.getRGB(xi, yi, canvas.getLut()));
 
                 if (ci == -1)
                 {

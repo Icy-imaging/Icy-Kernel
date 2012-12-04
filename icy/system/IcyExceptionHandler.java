@@ -21,6 +21,7 @@ package icy.system;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.plugin.PluginErrorReport;
 import icy.main.Icy;
+import icy.math.UnitUtil;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
@@ -278,11 +279,26 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     public static void report(PluginDescriptor plugin, String devId, String errorLog)
     {
         final String icyId;
+        final String javaId;
+        final String osId;
+        final String memory;
         final String pluginId;
         final HashMap<String, String> values = new HashMap<String, String>();
 
         values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
+        values.put(NetworkUtil.ID_JAVANAME, SystemUtil.getJavaName());
+        values.put(NetworkUtil.ID_JAVAVERSION, SystemUtil.getJavaVersion());
+        values.put(NetworkUtil.ID_JAVABITS, Integer.toString(SystemUtil.getJavaArchDataModel()));
+        values.put(NetworkUtil.ID_OSNAME, SystemUtil.getOSName());
+        values.put(NetworkUtil.ID_OSVERSION, SystemUtil.getOSVersion());
+        values.put(NetworkUtil.ID_OSARCH, SystemUtil.getOSArch());
+
         icyId = "ICY Version " + Icy.version + "\n";
+        javaId = SystemUtil.getJavaName() + " " + SystemUtil.getJavaVersion() + " ("
+                + SystemUtil.getJavaArchDataModel() + " bit)\n";
+        osId = "Running on " + SystemUtil.getOSName() + " " + SystemUtil.getOSVersion() + " (" + SystemUtil.getOSArch()
+                + ")\n";
+        memory = "Max java memory : " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()) + "\n";
 
         if (plugin != null)
         {
@@ -302,7 +318,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         else
             values.put(NetworkUtil.ID_DEVELOPERID, "");
 
-        values.put(NetworkUtil.ID_ERRORLOG, icyId + pluginId + "\n" + errorLog);
+        values.put(NetworkUtil.ID_ERRORLOG, icyId + javaId + osId + memory + "\n" + pluginId + "\n" + errorLog);
 
         // send report
         NetworkUtil.report(values);

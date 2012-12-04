@@ -3,11 +3,12 @@
  */
 package icy.gui.sequence.tools;
 
-import icy.gui.frame.ActionFrame;
+import icy.gui.dialog.ActionDialog;
 import icy.gui.frame.progress.ProgressFrame;
+import icy.gui.util.ComponentUtil;
+import icy.sequence.AbstractSequenceModel;
 import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
-import icy.sequence.SequenceModel;
 import icy.sequence.SequenceUtil;
 import icy.system.thread.ThreadUtil;
 
@@ -21,20 +22,94 @@ import javax.swing.BorderFactory;
 /**
  * @author Stephane
  */
-public class SequenceDimensionAdjustFrame extends ActionFrame implements SequenceModel
+public class SequenceDimensionAdjustFrame extends ActionDialog
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -383226926743211242L;
+
+    private class SequenceDimensionAdjustFrameModel extends AbstractSequenceModel
+    {
+        public SequenceDimensionAdjustFrameModel()
+        {
+            super();
+        }
+
+        @Override
+        public int getSizeX()
+        {
+            if (sequence != null)
+                return sequence.getSizeX();
+
+            return 0;
+        }
+
+        @Override
+        public int getSizeY()
+        {
+            if (sequence != null)
+                return sequence.getSizeY();
+
+            return 0;
+        }
+
+        @Override
+        public int getSizeZ()
+        {
+            if (sequence != null)
+                return sequence.getSizeZ();
+
+            return 0;
+        }
+
+        @Override
+        public int getSizeT()
+        {
+            if (sequence != null)
+                return sequence.getSizeT();
+
+            return 0;
+        }
+
+        @Override
+        public int getSizeC()
+        {
+            if (sequence != null)
+                return sequence.getSizeC();
+
+            return 0;
+        }
+
+        @Override
+        public Image getImage(int t, int z)
+        {
+            if (sequence != null)
+                return sequence.getImage(t, z);
+
+            return null;
+        }
+
+        @Override
+        public Image getImage(int t, int z, int c)
+        {
+            if (sequence != null)
+                return sequence.getImage(t, z, c);
+
+            return null;
+        }
+    }
+
     final Sequence sequence;
     final SequenceDimensionAdjustPanel rangePanel;
     final DimensionId dim;
 
     public SequenceDimensionAdjustFrame(Sequence sequence, DimensionId dim)
     {
-        super("Adjust " + dim.toString() + " dimension", true);
+        super("Adjust " + dim.toString() + " dimension");
 
         this.sequence = sequence;
         this.dim = dim;
-
-        setTitleVisible(false);
 
         rangePanel = new SequenceDimensionAdjustPanel(dim);
         rangePanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 4));
@@ -42,7 +117,7 @@ public class SequenceDimensionAdjustFrame extends ActionFrame implements Sequenc
         mainPanel.add(rangePanel, BorderLayout.CENTER);
         validate();
 
-        rangePanel.setModel(this);
+        rangePanel.setModel(new SequenceDimensionAdjustFrameModel());
 
         setOkAction(new ActionListener()
         {
@@ -104,12 +179,10 @@ public class SequenceDimensionAdjustFrame extends ActionFrame implements Sequenc
             }
         });
 
-        setSizeExternal(320, 360);
-        setSizeInternal(320, 360);
+        setSize(320, 360);
+        ComponentUtil.center(this);
+
         setVisible(true);
-        addToMainDesktopPane();
-        center();
-        requestFocus();
     }
 
     /**
@@ -118,68 +191,5 @@ public class SequenceDimensionAdjustFrame extends ActionFrame implements Sequenc
     SequenceDimensionAdjustFrame()
     {
         this(new Sequence(), DimensionId.Z);
-    }
-
-    @Override
-    public int getSizeX()
-    {
-        if (sequence != null)
-            return sequence.getSizeX();
-
-        return 0;
-    }
-
-    @Override
-    public int getSizeY()
-    {
-        if (sequence != null)
-            return sequence.getSizeY();
-
-        return 0;
-    }
-
-    @Override
-    public int getSizeZ()
-    {
-        if (sequence != null)
-            return sequence.getSizeZ();
-
-        return 0;
-    }
-
-    @Override
-    public int getSizeT()
-    {
-        if (sequence != null)
-            return sequence.getSizeT();
-
-        return 0;
-    }
-
-    @Override
-    public int getSizeC()
-    {
-        if (sequence != null)
-            return sequence.getSizeC();
-
-        return 0;
-    }
-
-    @Override
-    public Image getImage(int t, int z)
-    {
-        if (sequence != null)
-            return sequence.getImage(t, z);
-
-        return null;
-    }
-
-    @Override
-    public Image getImage(int t, int z, int c)
-    {
-        if (sequence != null)
-            return sequence.getImage(t, z, c);
-
-        return null;
     }
 }

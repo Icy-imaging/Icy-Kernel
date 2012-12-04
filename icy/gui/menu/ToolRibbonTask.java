@@ -20,8 +20,8 @@ package icy.gui.menu;
 
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandToggleButton;
-import icy.gui.dialog.ImageLoaderDialog;
 import icy.gui.frame.progress.ToolTipFrame;
+import icy.gui.menu.action.FileActions;
 import icy.gui.plugin.PluginCommandButton;
 import icy.gui.util.RibbonUtil;
 import icy.main.Icy;
@@ -126,17 +126,7 @@ public class ToolRibbonTask extends RibbonTask
             {
                 IcyCommandButton button;
 
-                button = new IcyCommandButton("Open", new IcyIcon("folder_open"));
-                button.setActionRichTooltip(new RichTooltip("Open", "Open a sequence"));
-                button.addActionListener(new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        // new OpenFileDialog();
-                        new ImageLoaderDialog();
-                    }
-                });
+                button = new IcyCommandButton(FileActions.openSequenceAction);
                 addCommandButton(button, RibbonElementPriority.TOP);
 
                 RibbonUtil.setPermissiveResizePolicies(this);

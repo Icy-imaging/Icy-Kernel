@@ -82,7 +82,10 @@ public class Histogram
      */
     public void addValue(double value)
     {
-        bins[(int) ((value - minValue) * dataToBin)]++;
+        final int index = (int) ((value - minValue) * dataToBin);
+
+        if ((index >= 0) && (index < bins.length))
+            bins[index]++;
     }
 
     /**

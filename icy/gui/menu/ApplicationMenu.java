@@ -20,20 +20,17 @@ package icy.gui.menu;
 
 import icy.file.FileUtil;
 import icy.file.Loader;
-import icy.file.Saver;
-import icy.gui.dialog.ImageLoaderDialog;
-import icy.gui.dialog.ImageSaverDialog;
-import icy.gui.preferences.GeneralPreferencePanel;
-import icy.gui.preferences.PreferenceFrame;
+import icy.gui.component.button.IcyCommandButton;
+import icy.gui.component.menu.IcyRibbonApplicationMenuEntryPrimary;
+import icy.gui.component.menu.IcyRibbonApplicationMenuEntrySecondary;
+import icy.gui.menu.action.FileActions;
+import icy.gui.menu.action.GeneralActions;
+import icy.gui.menu.action.PreferencesActions;
 import icy.gui.util.ComponentUtil;
-import icy.gui.viewer.Viewer;
-import icy.image.IcyBufferedImage;
 import icy.main.Icy;
 import icy.preferences.IcyPreferences;
-import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
-import icy.type.DataType;
 import icy.type.collection.CollectionUtil;
 import icy.type.collection.list.RecentFileList;
 import icy.util.StringUtil;
@@ -51,7 +48,6 @@ import javax.swing.SwingConstants;
 
 import org.pushingpixels.flamingo.api.common.CommandButtonDisplayState;
 import org.pushingpixels.flamingo.api.common.JCommandButton;
-import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
 import org.pushingpixels.flamingo.api.common.JCommandButtonPanel;
 import org.pushingpixels.flamingo.api.common.JCommandButtonPanel.LayoutKind;
 import org.pushingpixels.flamingo.api.common.RichTooltip;
@@ -139,17 +135,7 @@ public class ApplicationMenu extends RibbonApplicationMenu
             // action group
             recentFilesPanel.addButtonGroup("Action");
 
-            final JCommandButton clearButton = new JCommandButton("Clear recent files");
-
-            clearButton.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent ae)
-                {
-                    recentFileList.clear();
-                }
-            });
-
+            final IcyCommandButton clearButton = new IcyCommandButton(FileActions.clearRecentFilesAction);
             recentFilesPanel.addButtonToLastGroup(clearButton);
 
             targetPanel.removeAll();
@@ -203,77 +189,18 @@ public class ApplicationMenu extends RibbonApplicationMenu
 
         // NEW FILE
 
-        amepNew = new RibbonApplicationMenuEntryPrimary(new IcyIcon(ResourceUtil.ICON_NEWDOC), "New",
-                new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        Icy.getMainInterface().addSequence(
-                                new Sequence("Single channel sequence", new IcyBufferedImage(512, 512, 1,
-                                        DataType.UBYTE)));
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
+        amepNew = new IcyRibbonApplicationMenuEntryPrimary(FileActions.newSequenceAction);
 
-        amesNewGraySequence = new RibbonApplicationMenuEntrySecondary(new IcyIcon(ResourceUtil.ICON_NEWDOC),
-                "Create a new 1 gray level channel sequence", new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        Icy.getMainInterface().addSequence(
-                                new Sequence("Single channel sequence", new IcyBufferedImage(512, 512, 1,
-                                        DataType.UBYTE)));
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
-        amesNewGraySequence.setDescriptionText("Create a 1 gray level channel sequence.");
-
-        amesNewRGBSequence = new RibbonApplicationMenuEntrySecondary(new IcyIcon(ResourceUtil.ICON_NEWDOC),
-                "Create a new RGB color sequence", new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        Icy.getMainInterface().addSequence(
-                                new Sequence("RGB sequence", new IcyBufferedImage(512, 512, 3, DataType.UBYTE)));
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
-        amesNewRGBSequence.setDescriptionText("Create a 3 channels sequence (red, green, blue).");
-
-        amesNewRGBASequence = new RibbonApplicationMenuEntrySecondary(new IcyIcon(ResourceUtil.ICON_NEWDOC),
-                "Create a new RGBA color sequence", new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        Icy.getMainInterface().addSequence(
-                                new Sequence("RGBA sequence", new IcyBufferedImage(512, 512, 4, DataType.UBYTE)));
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
-        amesNewRGBASequence.setDescriptionText("Create a 4 channels sequence (red, green, blue, alpha).");
+        amesNewGraySequence = new IcyRibbonApplicationMenuEntrySecondary(FileActions.newGraySequenceAction);
+        amesNewRGBSequence = new IcyRibbonApplicationMenuEntrySecondary(FileActions.newRGBSequenceAction);
+        amesNewRGBASequence = new IcyRibbonApplicationMenuEntrySecondary(FileActions.newARGBSequenceAction);
 
         amepNew.addSecondaryMenuGroup("New sequence", amesNewGraySequence, amesNewRGBSequence, amesNewRGBASequence);
 
         // OPEN & IMPORT
 
-        amepOpen = new RibbonApplicationMenuEntryPrimary(new IcyIcon(ResourceUtil.ICON_DOC), "Open",
-                new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        // new OpenFileDialog();
-                        new ImageLoaderDialog();
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
-        // amepOpen.setRolloverCallback(new OpenFilePrimaryRollOverCallBack());
+        amepOpen = new IcyRibbonApplicationMenuEntryPrimary(FileActions.openSequenceAction);
         amepOpen.setRolloverCallback(new OpenRecentFilePrimaryRollOverCallBack());
-
-        // final RibbonApplicationMenuEntryPrimary amepOpenRecent = new
-        // RibbonApplicationMenuEntryPrimary(
-        // new ICYResizableIcon.Icy("document.png"), "Open Recent", null,
-        // CommandButtonKind.ACTION_ONLY);
-        // amepOpenRecent.setRolloverCallback(new OpenRecentFilePrimaryRollOverCallBack());
 
         // final RibbonApplicationMenuEntryPrimary amEntryImport = new
         // RibbonApplicationMenuEntryPrimary(
@@ -289,45 +216,10 @@ public class ApplicationMenu extends RibbonApplicationMenu
 
         // SAVE & EXPORT
 
-        amepSave = new RibbonApplicationMenuEntryPrimary(new IcyIcon(ResourceUtil.ICON_SAVE), "Save",
-                new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
-                        final Sequence seq = viewer.getSequence();
-
-                        if (seq != null)
-                        {
-                            final String filename = seq.getFilename();
-
-                            if (StringUtil.isEmpty(filename))
-                                new ImageSaverDialog(seq, viewer.getZ(), viewer.getT());
-                            else
-                            {
-                                final File file = new File(filename);
-
-                                Saver.save(seq, file, !file.exists() || file.isDirectory());
-                            }
-                        }
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
+        amepSave = new IcyRibbonApplicationMenuEntryPrimary(FileActions.saveSequenceAction);
         amepSave.setRolloverCallback(new DefaultRollOverCallBack());
 
-        amepSaveAs = new RibbonApplicationMenuEntryPrimary(new IcyIcon(ResourceUtil.ICON_SAVE), "Save as...",
-                new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        // same as "Save as..."
-                        final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
-                        final Sequence seq = viewer.getSequence();
-
-                        new ImageSaverDialog(seq, viewer.getZ(), viewer.getT());
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
+        amepSaveAs = new IcyRibbonApplicationMenuEntryPrimary(FileActions.saveAsSequenceAction);
         amepSaveAs.setRolloverCallback(new DefaultRollOverCallBack());
 
         // final RibbonApplicationMenuEntryPrimary amepExport = new
@@ -344,90 +236,21 @@ public class ApplicationMenu extends RibbonApplicationMenu
 
         // CLOSE
 
-        amepClose = new RibbonApplicationMenuEntryPrimary(new IcyIcon(ResourceUtil.ICON_CLOSE), "Close",
-                new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+        amepClose = new IcyRibbonApplicationMenuEntryPrimary(FileActions.closeSequenceAction);
 
-                        if (seq != null)
-                        {
-                            for (Viewer viewer : Icy.getMainInterface().getViewers(seq))
-                                viewer.close();
-                        }
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
-
-        amesCloseCurrent = new RibbonApplicationMenuEntrySecondary(new IcyIcon(ResourceUtil.ICON_CLOSE),
-                "Close sequence", new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
-
-                        if (viewer != null)
-                            viewer.close();
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
-        amesCloseCurrent.setDescriptionText("Close last selected sequence.");
-
-        amesCloseOthers = new RibbonApplicationMenuEntrySecondary(new IcyIcon(ResourceUtil.ICON_CLOSE), "Close others",
-                new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        final Viewer focusedViewer = Icy.getMainInterface().getFocusedViewer();
-
-                        for (Viewer viewer : Icy.getMainInterface().getViewers())
-                            if (viewer != focusedViewer)
-                                viewer.close();
-
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
-        amesCloseOthers.setDescriptionText("Close all opened sequences except the last selected one.");
-
-        amesCloseAll = new RibbonApplicationMenuEntrySecondary(new IcyIcon(ResourceUtil.ICON_CLOSE),
-                "Close all sequences", new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        // closing all viewers will release all sequences
-                        Icy.getMainInterface().closeAllViewers();
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
-        amesCloseAll.setDescriptionText("Close all opened sequences.");
+        amesCloseCurrent = new IcyRibbonApplicationMenuEntrySecondary(FileActions.closeCurrentSequenceAction);
+        amesCloseOthers = new IcyRibbonApplicationMenuEntrySecondary(FileActions.closeOthersSequencesAction);
+        amesCloseAll = new IcyRibbonApplicationMenuEntrySecondary(FileActions.closeAllSequencesAction);
 
         amepClose.addSecondaryMenuGroup("Close Sequence", amesCloseCurrent, amesCloseOthers, amesCloseAll);
 
         // PREFERENCES
 
-        amepPreferences = new RibbonApplicationMenuEntryPrimary(new IcyIcon(ResourceUtil.ICON_TOOLS),
-                "Preferences    ", new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        new PreferenceFrame(GeneralPreferencePanel.NODE_NAME);
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
-        amepPreferences.setRolloverCallback(new DefaultRollOverCallBack());
+        amepPreferences = new IcyRibbonApplicationMenuEntryPrimary(PreferencesActions.preferencesAction);
 
         // EXIT
 
-        amepExit = new RibbonApplicationMenuEntryPrimary(new IcyIcon(ResourceUtil.ICON_ON_OFF), "Exit",
-                new ActionListener()
-                {
-                    @Override
-                    public void actionPerformed(ActionEvent e)
-                    {
-                        Icy.exit(false);
-                    }
-                }, CommandButtonKind.ACTION_ONLY);
+        amepExit = new IcyRibbonApplicationMenuEntryPrimary(GeneralActions.exitApplicationAction);
         amepExit.setRolloverCallback(new DefaultRollOverCallBack());
 
         // build menu
@@ -437,7 +260,6 @@ public class ApplicationMenu extends RibbonApplicationMenu
         addMenuEntry(amepSave);
         addMenuEntry(amepSaveAs);
 
-        // addMenuEntry(amepOpenRecent);
         // addMenuEntry(amEntryImport);
 
         // addMenuSeparator();

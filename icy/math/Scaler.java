@@ -22,7 +22,6 @@ import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;
-import icy.math.ScalerEvent.ScalerEventType;
 import icy.type.TypeUtil;
 import icy.type.collection.array.ArrayUtil;
 import icy.util.XMLUtil;
@@ -1242,7 +1241,7 @@ public class Scaler implements ChangeListener, XMLPersistent
     private void changed()
     {
         // handle changed via updater object
-        updater.changed(new ScalerEvent(this, ScalerEventType.CHANGED));
+        updater.changed(new ScalerEvent(this));
     }
 
     public void beginUpdate()

@@ -3,114 +3,472 @@
  */
 package icy.type.rectangle;
 
+import icy.type.point.Point4D;
+
 /**
- * Rectangle4D class.
+ * Rectangle4D class.<br>
+ * Incomplete implementation (work in progress...)
  * 
  * @author Stephane
  */
-public class Rectangle4D
+public abstract class Rectangle4D
 {
-    private double x;
-    private double y;
-    private double z;
-    private double t;
+    /**
+     * Returns the minimum X coordinate.
+     */
+    public abstract double getX();
 
-    private double sizeX;
-    private double sizeY;
-    private double sizeZ;
-    private double sizeT;
+    /**
+     * Returns the minimum Y coordinate.
+     */
+    public abstract double getY();
 
-    public Rectangle4D(double x, double y, double z, double t, double sizeX, double sizeY, double sizeZ, double sizeT)
+    /**
+     * Returns the minimum Z coordinate.
+     */
+    public abstract double getZ();
+
+    /**
+     * Returns the minimum T coordinate.
+     */
+    public abstract double getT();
+
+    /**
+     * Returns the size of X dimension.
+     */
+    public abstract double getSizeX();
+
+    /**
+     * Returns the size of Y dimension.
+     */
+    public abstract double getSizeY();
+
+    /**
+     * Returns the size of Z dimension.
+     */
+    public abstract double getSizeZ();
+
+    /**
+     * Returns the size of T dimension.
+     */
+    public abstract double getSizeT();
+
+    /**
+     * Returns the point coordinate.
+     */
+    public Point4D getPosition()
     {
-        super();
-
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.t = t;
-        this.sizeX = sizeX;
-        this.sizeY = sizeY;
-        this.sizeZ = sizeZ;
-        this.sizeT = sizeT;
+        return new Point4D.Double(getX(), getY(), getZ(), getT());
     }
 
-    public double getX()
+    /**
+     * Sets the minimum X coordinate.
+     */
+    public abstract void setX(double x);
+
+    /**
+     * Sets the minimum Y coordinate.
+     */
+    public abstract void setY(double y);
+
+    /**
+     * Sets the minimum Z coordinate.
+     */
+    public abstract void setZ(double z);
+
+    /**
+     * Sets the minimum T coordinate.
+     */
+    public abstract void setT(double t);
+
+    /**
+     * Sets the size of X dimension.
+     */
+    public abstract void setSizeX(double value);
+
+    /**
+     * Sets the size of Y dimension.
+     */
+    public abstract void setSizeY(double value);
+
+    /**
+     * Sets the size of Z dimension.
+     */
+    public abstract void setSizeZ(double value);
+
+    /**
+     * Sets the size of T dimension.
+     */
+    public abstract void setSizeT(double value);
+
+    public static class Double extends Rectangle4D
     {
-        return x;
+        private double x;
+        private double y;
+        private double z;
+        private double t;
+
+        private double sizeX;
+        private double sizeY;
+        private double sizeZ;
+        private double sizeT;
+
+        public Double(double x, double y, double z, double t, double sizeX, double sizeY, double sizeZ, double sizeT)
+        {
+            super();
+
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.t = t;
+            this.sizeX = sizeX;
+            this.sizeY = sizeY;
+            this.sizeZ = sizeZ;
+            this.sizeT = sizeT;
+        }
+
+        @Override
+        public double getX()
+        {
+            return x;
+        }
+
+        @Override
+        public void setX(double value)
+        {
+            x = value;
+        }
+
+        @Override
+        public double getY()
+        {
+            return y;
+        }
+
+        @Override
+        public void setY(double value)
+        {
+            y = value;
+        }
+
+        @Override
+        public double getZ()
+        {
+            return z;
+        }
+
+        @Override
+        public void setZ(double value)
+        {
+            z = value;
+        }
+
+        @Override
+        public double getT()
+        {
+            return t;
+        }
+
+        @Override
+        public void setT(double value)
+        {
+            t = value;
+        }
+
+        @Override
+        public double getSizeX()
+        {
+            return sizeX;
+        }
+
+        @Override
+        public void setSizeX(double value)
+        {
+            sizeX = value;
+        }
+
+        @Override
+        public double getSizeY()
+        {
+            return sizeY;
+        }
+
+        @Override
+        public void setSizeY(double value)
+        {
+            sizeY = value;
+        }
+
+        @Override
+        public double getSizeZ()
+        {
+            return sizeZ;
+        }
+
+        @Override
+        public void setSizeZ(double value)
+        {
+            sizeZ = value;
+        }
+
+        @Override
+        public double getSizeT()
+        {
+            return sizeT;
+        }
+
+        @Override
+        public void setSizeT(double value)
+        {
+            sizeT = value;
+        }
+
     }
 
-    public void setX(double value)
+    public static class Float extends Rectangle4D
     {
-        x = value;
+        private float x;
+        private float y;
+        private float z;
+        private float t;
+
+        private float sizeX;
+        private float sizeY;
+        private float sizeZ;
+        private float sizeT;
+
+        public Float(float x, float y, float z, float t, float sizeX, float sizeY, float sizeZ, float sizeT)
+        {
+            super();
+
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.t = t;
+            this.sizeX = sizeX;
+            this.sizeY = sizeY;
+            this.sizeZ = sizeZ;
+            this.sizeT = sizeT;
+        }
+
+        @Override
+        public double getX()
+        {
+            return x;
+        }
+
+        @Override
+        public void setX(double value)
+        {
+            x = (float) value;
+        }
+
+        @Override
+        public double getY()
+        {
+            return y;
+        }
+
+        @Override
+        public void setY(double value)
+        {
+            y = (float) value;
+        }
+
+        @Override
+        public double getZ()
+        {
+            return z;
+        }
+
+        @Override
+        public void setZ(double value)
+        {
+            z = (float) value;
+        }
+
+        @Override
+        public double getT()
+        {
+            return t;
+        }
+
+        @Override
+        public void setT(double value)
+        {
+            t = (float) value;
+        }
+
+        @Override
+        public double getSizeX()
+        {
+            return sizeX;
+        }
+
+        @Override
+        public void setSizeX(double value)
+        {
+            sizeX = (float) value;
+        }
+
+        @Override
+        public double getSizeY()
+        {
+            return sizeY;
+        }
+
+        @Override
+        public void setSizeY(double value)
+        {
+            sizeY = (float) value;
+        }
+
+        @Override
+        public double getSizeZ()
+        {
+            return sizeZ;
+        }
+
+        @Override
+        public void setSizeZ(double value)
+        {
+            sizeZ = (float) value;
+        }
+
+        @Override
+        public double getSizeT()
+        {
+            return sizeT;
+        }
+
+        @Override
+        public void setSizeT(double value)
+        {
+            sizeT = (float) value;
+        }
+
     }
 
-    public double getY()
+    public static class Integer extends Rectangle4D
     {
-        return y;
-    }
+        private int x;
+        private int y;
+        private int z;
+        private int t;
 
-    public void setY(double value)
-    {
-        y = value;
-    }
+        private int sizeX;
+        private int sizeY;
+        private int sizeZ;
+        private int sizeT;
 
-    public double getZ()
-    {
-        return z;
-    }
+        public Integer(int x, int y, int z, int t, int sizeX, int sizeY, int sizeZ, int sizeT)
+        {
+            super();
 
-    public void setZ(double value)
-    {
-        z = value;
-    }
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.t = t;
+            this.sizeX = sizeX;
+            this.sizeY = sizeY;
+            this.sizeZ = sizeZ;
+            this.sizeT = sizeT;
+        }
 
-    public double getT()
-    {
-        return t;
-    }
+        @Override
+        public double getX()
+        {
+            return x;
+        }
 
-    public void setT(double value)
-    {
-        t = value;
-    }
+        @Override
+        public void setX(double value)
+        {
+            x = (int) value;
+        }
 
-    public double getSizeX()
-    {
-        return sizeX;
-    }
+        @Override
+        public double getY()
+        {
+            return y;
+        }
 
-    public void setSizeX(double value)
-    {
-        sizeX = value;
-    }
+        @Override
+        public void setY(double value)
+        {
+            y = (int) value;
+        }
 
-    public double getSizeY()
-    {
-        return sizeY;
-    }
+        @Override
+        public double getZ()
+        {
+            return z;
+        }
 
-    public void setSizeY(double value)
-    {
-        sizeY = value;
-    }
+        @Override
+        public void setZ(double value)
+        {
+            z = (int) value;
+        }
 
-    public double getSizeZ()
-    {
-        return sizeZ;
-    }
+        @Override
+        public double getT()
+        {
+            return t;
+        }
 
-    public void setSizeZ(double value)
-    {
-        sizeZ = value;
-    }
+        @Override
+        public void setT(double value)
+        {
+            t = (int) value;
+        }
 
-    public double getSizeT()
-    {
-        return sizeT;
-    }
+        @Override
+        public double getSizeX()
+        {
+            return sizeX;
+        }
 
-    public void setSizeT(double value)
-    {
-        sizeT = value;
+        @Override
+        public void setSizeX(double value)
+        {
+            sizeX = (int) value;
+        }
+
+        @Override
+        public double getSizeY()
+        {
+            return sizeY;
+        }
+
+        @Override
+        public void setSizeY(double value)
+        {
+            sizeY = (int) value;
+        }
+
+        @Override
+        public double getSizeZ()
+        {
+            return sizeZ;
+        }
+
+        @Override
+        public void setSizeZ(double value)
+        {
+            sizeZ = (int) value;
+        }
+
+        @Override
+        public double getSizeT()
+        {
+            return sizeT;
+        }
+
+        @Override
+        public void setSizeT(double value)
+        {
+            sizeT = (int) value;
+        }
     }
 }

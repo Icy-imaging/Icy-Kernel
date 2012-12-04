@@ -5,8 +5,8 @@ package icy.gui.sequence.tools;
 
 import icy.gui.component.sequence.SequencePreviewPanel;
 import icy.image.IcyBufferedImage;
+import icy.sequence.AbstractSequenceModel;
 import icy.sequence.Sequence;
-import icy.sequence.SequenceModel;
 import icy.sequence.SequenceUtil;
 
 import java.awt.GridBagConstraints;
@@ -32,8 +32,59 @@ import javax.swing.event.ChangeListener;
 /**
  * @author Stephane
  */
-public class SequenceDimensionConvertPanel extends JPanel implements SequenceModel
+public class SequenceDimensionConvertPanel extends JPanel
 {
+    private class SequenceDimensionConvertPanelModel extends AbstractSequenceModel
+    {
+        public SequenceDimensionConvertPanelModel()
+        {
+            super();
+        }
+
+        @Override
+        public Image getImage(int t, int z)
+        {
+            return SequenceUtil.AdjustZTHelper
+                    .getImage(sequence, t, z, getNewSizeZ(), getNewSizeT(), isOrderReversed());
+        }
+
+        @Override
+        public int getSizeX()
+        {
+            return sequence.getSizeX();
+        }
+
+        @Override
+        public int getSizeY()
+        {
+            return sequence.getSizeY();
+        }
+
+        @Override
+        public int getSizeZ()
+        {
+            return getNewSizeZ();
+        }
+
+        @Override
+        public int getSizeT()
+        {
+            return getNewSizeT();
+        }
+
+        @Override
+        public int getSizeC()
+        {
+            return sequence.getSizeC();
+        }
+
+        @Override
+        public Image getImage(int t, int z, int c)
+        {
+            return ((IcyBufferedImage) getImage(t, z)).getImage(c);
+        }
+    }
+
     /**
      * 
      */
@@ -158,7 +209,7 @@ public class SequenceDimensionConvertPanel extends JPanel implements SequenceMod
             }
         });
 
-        previewPane.setModel(this);
+        previewPane.setModel(new SequenceDimensionConvertPanelModel());
     }
 
     private void initialize()
@@ -329,45 +380,4 @@ public class SequenceDimensionConvertPanel extends JPanel implements SequenceMod
         return ((Integer) sizeTSpinner.getValue()).intValue();
     }
 
-    @Override
-    public Image getImage(int t, int z)
-    {
-        return SequenceUtil.AdjustZTHelper.getImage(sequence, t, z, getNewSizeZ(), getNewSizeT(), isOrderReversed());
-    }
-
-    @Override
-    public int getSizeX()
-    {
-        return sequence.getSizeX();
-    }
-
-    @Override
-    public int getSizeY()
-    {
-        return sequence.getSizeY();
-    }
-
-    @Override
-    public int getSizeZ()
-    {
-        return getNewSizeZ();
-    }
-
-    @Override
-    public int getSizeT()
-    {
-        return getNewSizeT();
-    }
-
-    @Override
-    public int getSizeC()
-    {
-        return sequence.getSizeC();
-    }
-
-    @Override
-    public Image getImage(int t, int z, int c)
-    {
-        return ((IcyBufferedImage) getImage(t, z)).getImage(c);
-    }
 }
