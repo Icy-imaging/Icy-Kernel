@@ -481,7 +481,7 @@ public class PluginLoader implements ChangeListener
         synchronized (instance.loader)
         {
             if (instance.loader instanceof JarClassLoader)
-                ((JarClassLoader) instance.loader).getLoadedResources();
+                return ((JarClassLoader) instance.loader).getLoadedResources();
         }
 
         return new HashMap<String, byte[]>();
@@ -490,17 +490,17 @@ public class PluginLoader implements ChangeListener
     /**
      * Return all loaded classes
      */
-    public static Map<String, Class<?>> getAllClasses()
+    public static Map<String, Class> getAllClasses()
     {
         prepare();
 
         synchronized (instance.loader)
         {
             if (instance.loader instanceof JarClassLoader)
-                ((JarClassLoader) instance.loader).getLoadedClasses();
+                return ((JarClassLoader) instance.loader).getLoadedClasses();
         }
 
-        return new HashMap<String, Class<?>>();
+        return new HashMap<String, Class>();
     }
 
     /**
