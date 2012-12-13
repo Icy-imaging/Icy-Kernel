@@ -24,7 +24,7 @@ import java.util.List;
 import org.pushingpixels.flamingo.api.common.RichTooltip;
 
 /**
- * This class is used to provide kernel command elements to the Finder.
+ * This class is used to provide kernel command elements to the search engine.
  * 
  * @author Stephane
  */
@@ -33,12 +33,34 @@ public class KernelSearchProvider extends SearchResultProducer
     private class KernelSearchResult extends SearchResult
     {
         private final IcyAbstractAction action;
+        private String description;
 
-        public KernelSearchResult(SearchResultProducer provider, IcyAbstractAction action)
+        public KernelSearchResult(SearchResultProducer provider, IcyAbstractAction action, String searchWords[])
         {
             super(provider);
 
             this.action = action;
+
+            final String longDesc = action.getLongDescription();
+
+            if (!StringUtil.isEmpty(longDesc))
+            {
+                final String[] lds = longDesc.split("\n");
+
+                if (lds.length > 0)
+                    // no more than 80 characters for description
+                    description = StringUtil.limit(lds[0], 80, true);
+
+                // highlight search keywords (only for more than 2 characters search)
+                if ((searchWords.length > 1) || (searchWords[0].length() > 2))
+                {
+                    // highlight search keywords in description
+                    for (String word : searchWords)
+                        description = StringUtil.htmlBoldSubstring(description, word, true);
+                }
+            }
+            else
+                description = "";
         }
 
         @Override
@@ -66,18 +88,7 @@ public class KernelSearchProvider extends SearchResultProducer
         @Override
         public String getDescription()
         {
-            String result = "";
-            final String longDesc = action.getLongDescription();
-
-            if (!StringUtil.isEmpty(longDesc))
-            {
-                final String[] lds = longDesc.split("\n");
-
-                if (lds.length > 0)
-                    result += StringUtil.limit(lds[0], 75, true);
-            }
-
-            return result;
+            return description;
         }
 
         @Override
@@ -174,10 +185,11 @@ public class KernelSearchProvider extends SearchResultProducer
 
             // action match filter
             if (searchInAction(action, words, shortSearch))
-                tmpResults.add(new KernelSearchResult(this, action));
+                tmpResults.add(new KernelSearchResult(this, action, words));
         }
 
         results = tmpResults;
+        consumer.resultsChanged(this);
     }
 
     private boolean searchInAction(IcyAbstractAction action, String words[], boolean startWithOnly)

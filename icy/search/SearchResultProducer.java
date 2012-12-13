@@ -32,11 +32,7 @@ public abstract class SearchResultProducer
         {
             // perform search if we have at least one not empty keyword
             if ((words.length > 1) || !StringUtil.isEmpty(words[0]))
-            {
                 doSearch(words, consumer);
-                // notify result changed
-                consumer.resultsChanged(SearchResultProducer.this);
-            }
             else
             {
                 // clear the list if necessary

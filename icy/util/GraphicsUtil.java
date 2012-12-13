@@ -87,25 +87,59 @@ public class GraphicsUtil
     public static Rectangle2D getStringBounds(Graphics g, Font f, String text)
     {
         Rectangle2D result = new Rectangle2D.Double();
-        final FontMetrics fm;
 
-        if (f == null)
-            fm = g.getFontMetrics();
-        else
-            fm = g.getFontMetrics(f);
-
-        for (String s : text.split("\n"))
+        if (g != null)
         {
-            final Rectangle2D r = fm.getStringBounds(s, g);
+            final FontMetrics fm;
 
-            if (result.isEmpty())
-                result = r;
+            if (f == null)
+                fm = g.getFontMetrics();
             else
-                result.setRect(result.getX(), result.getY(), Math.max(result.getWidth(), r.getWidth()),
-                        result.getHeight() + r.getHeight());
+                fm = g.getFontMetrics(f);
+
+            for (String s : text.split("\n"))
+            {
+                final Rectangle2D r = fm.getStringBounds(s, g);
+
+                if (result.isEmpty())
+                    result = r;
+                else
+                    result.setRect(result.getX(), result.getY(), Math.max(result.getWidth(), r.getWidth()),
+                            result.getHeight() + r.getHeight());
+            }
         }
 
         return result;
+    }
+
+    /**
+     * Limit the single line string so it fits in the specified component width.
+     */
+    public static String limitStringFor(Component c, String text, int width)
+    {
+        if (width <= 0)
+            return "";
+
+        final int w = width - 20;
+
+        if (w <= 0)
+            return "..";
+
+        String str = text;
+        int textWidth = (int) getStringBounds(c, str).getWidth();
+        boolean changed = false;
+
+        while (textWidth > w)
+        {
+            str = str.substring(0, (str.length() * w) / textWidth);
+            textWidth = (int) getStringBounds(c, str).getWidth();
+            changed = true;
+        }
+
+        if (changed)
+            return str + "..";
+
+        return text;
     }
 
     /**

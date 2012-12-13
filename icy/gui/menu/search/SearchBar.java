@@ -5,6 +5,7 @@ import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.search.SearchEngine;
 import icy.search.SearchEngine.SearchEngineListener;
+import icy.search.SearchResult;
 import icy.util.EventUtil;
 import icy.util.StringUtil;
 
@@ -340,6 +341,13 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
     }
 
     @Override
+    public void resultChanged(SearchEngine source, SearchResult result)
+    {
+        if (initialized)
+            resultsPanel.resultChanged(result);
+    }
+
+    @Override
     public void resultsChanged(SearchEngine source)
     {
         if (initialized)
@@ -359,4 +367,5 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
         // for the busy loop animation
         repaint();
     }
+
 }

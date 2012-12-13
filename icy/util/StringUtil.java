@@ -149,7 +149,7 @@ public class StringUtil
     }
 
     /**
-     * Limit the length of the specified string to maxlen
+     * Limit the length of the specified string to maxlen.
      */
     public static String limit(String value, int maxlen, boolean tailLimit)
     {
@@ -173,7 +173,7 @@ public class StringUtil
     }
 
     /**
-     * Limit the length of the specified string to maxlen
+     * Limit the length of the specified string to maxlen.
      */
     public static String limit(String value, int maxlen)
     {
@@ -183,9 +183,7 @@ public class StringUtil
     /**
      * Truncate the text to a specific size, according a keyword.<br>
      * The text will be truncated around the place where the keyword is found.<br>
-     * The found keyword is highlighted by using bold html<b></b>
-     * If the string is
-     * found at the beginning, the text will be like this:<br/>
+     * If the string is found at the beginning, the text will be like this:<br/>
      * <b><center>Lorem ipsum dolor sit amet, consec...</center><b/>
      * 
      * @param fullText
@@ -194,10 +192,8 @@ public class StringUtil
      *        : string to be found in the text and truncated around.
      * @param maxSize
      *        : max size of the string
-     * @param highlight
-     *        : highlight keyword by enclosing it with bold html tag.
      */
-    public static String trunc(String fullText, String keyword, int maxSize, boolean highlight)
+    public static String trunc(String fullText, String keyword, int maxSize)
     {
         int idx = fullText.toLowerCase().indexOf(keyword.toLowerCase());
 
@@ -226,12 +222,12 @@ public class StringUtil
             if (idx <= maxSize / 2)
             {
                 toReturn = fullText.substring(0, maxSize);
-                toReturn += "...";
+                toReturn += "..";
             }
             else if ((fullTextSize - idx) <= maxSize / 2)
             {
                 toReturn = fullText.substring(fullTextSize - maxSize, fullTextSize);
-                toReturn = "..." + toReturn;
+                toReturn = ".." + toReturn;
             }
             else
             {
@@ -241,19 +237,8 @@ public class StringUtil
                     System.out.println(endIndex);
                 // beginIndex = beginIndex < 0 ? 0 : beginIndex;
                 // endIndex = endIndex > fullTextSize ? fullTextSize : endIndex;
-                toReturn = "..." + fullText.substring(beginIndex, endIndex) + "...";
+                toReturn = ".." + fullText.substring(beginIndex, endIndex) + "..";
             }
-
-            // update index for highlight
-            if (highlight)
-                idx = toReturn.toLowerCase().indexOf(keyword.toLowerCase());
-        }
-
-        // highlight needed ?
-        if (highlight && (idx != -1))
-        {
-            toReturn = toReturn.substring(0, idx) + "<b>" + toReturn.substring(idx, idx + keyword.length()) + "</b>"
-                    + toReturn.substring(idx + keyword.length());
         }
 
         return toReturn;
@@ -620,4 +605,45 @@ public class StringUtil
         return (text.indexOf("<br>") != -1) || (text.indexOf("<BR>") != -1) || (text.indexOf("<br/>") != -1)
                 || (text.indexOf("<BR/>") != -1);
     }
+
+    /**
+     * Bold (inserting HTML bold tag) the specified keyword in the text.
+     */
+    public static String htmlBoldSubstring(String text, String keyword, boolean ignoreCase)
+    {
+        if (!isEmpty(text) && !isEmpty(keyword))
+        {
+            final int keywordLen = keyword.length();
+            final String key;
+
+            if (ignoreCase)
+                key = keyword.toLowerCase();
+            else
+                key = keyword;
+
+            String result = text;
+            int index;
+
+            if (ignoreCase)
+                index = result.toLowerCase().indexOf(key);
+            else
+                index = result.indexOf(key);
+
+            while (index != -1)
+            {
+                result = result.substring(0, index) + "<b>" + result.substring(index, index + keywordLen) + "</b>"
+                        + result.substring(index + keywordLen);
+
+                if (ignoreCase)
+                    index = result.toLowerCase().indexOf(key, index + keywordLen + 6);
+                else
+                    index = result.indexOf(key, index + keywordLen + 6);
+            }
+
+            return result;
+        }
+
+        return text;
+    }
+
 }

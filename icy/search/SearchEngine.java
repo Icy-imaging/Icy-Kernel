@@ -23,6 +23,8 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
 {
     public interface SearchEngineListener
     {
+        public void resultChanged(SearchEngine source, SearchResult result);
+
         public void resultsChanged(SearchEngine source);
 
         public void searchStarted(SearchEngine source);
@@ -255,6 +257,13 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
     }
 
     @Override
+    public void resultChanged(SearchResultProducer producer, SearchResult result)
+    {
+        // notify listeners about results change
+        fireResultChangedEvent(result);
+    }
+
+    @Override
     public void resultsChanged(SearchResultProducer producer)
     {
         // notify listeners about results change
@@ -280,6 +289,12 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
         listeners.remove(listener);
     }
 
+    public void fireResultChangedEvent(SearchResult result)
+    {
+        for (SearchEngineListener listener : listeners)
+            listener.resultChanged(this, result);
+    }
+
     public void fireResultsChangedEvent()
     {
         for (SearchEngineListener listener : listeners)
@@ -297,4 +312,5 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
         for (SearchEngineListener listener : listeners)
             listener.searchCompleted(this);
     }
+
 }

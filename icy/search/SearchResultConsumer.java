@@ -9,7 +9,12 @@ package icy.search;
 public interface SearchResultConsumer
 {
     /**
-     * Notify consumer than results changed.
+     * Notify consumer than a single result has just been modified.
+     */
+    public void resultChanged(SearchResultProducer producer, SearchResult result);
+
+    /**
+     * Notify consumer than results list changed.
      */
     public void resultsChanged(SearchResultProducer producer);
 

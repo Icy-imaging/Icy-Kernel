@@ -18,7 +18,7 @@ import javax.swing.ImageIcon;
 import org.pushingpixels.flamingo.api.common.RichTooltip;
 
 /**
- * This class is used to provide plugin elements to the Finder.
+ * This class is used to provide installed plugin elements to the search engine.
  * 
  * @author Stephane
  */
@@ -30,7 +30,7 @@ public class LocalPluginProvider extends SearchResultProducer
     private class LocalPluginResult extends SearchResult
     {
         private final PluginDescriptor plugin;
-        private String filteredDescription;
+        private String description;
 
         public LocalPluginResult(SearchResultProducer provider, PluginDescriptor plugin, String searchWords[])
         {
@@ -40,12 +40,26 @@ public class LocalPluginProvider extends SearchResultProducer
 
             final String desc = plugin.getDescription();
             int wi = 0;
-            filteredDescription = "";
+            description = "";
 
-            while (StringUtil.isEmpty(filteredDescription) && (wi < searchWords.length))
+            while (StringUtil.isEmpty(description) && (wi < searchWords.length))
             {
-                filteredDescription = StringUtil.trunc(desc, searchWords[wi], 60, true);
+                // no more than 80 characters...
+                description = StringUtil.trunc(desc, searchWords[wi], 80);
                 wi++;
+            }
+
+            if (!StringUtil.isEmpty(description))
+            {
+                // remove carriage return
+                description = description.replace("\n", "");
+
+                // highlight search keywords (only for more than 2 characters search)
+                if ((searchWords.length > 1) || (searchWords[0].length() > 2))
+                {
+                    for (String word : searchWords)
+                        description = StringUtil.htmlBoldSubstring(description, word, true);
+                }
             }
         }
 
@@ -69,7 +83,7 @@ public class LocalPluginProvider extends SearchResultProducer
         @Override
         public String getDescription()
         {
-            return filteredDescription;
+            return description;
         }
 
         @Override
@@ -127,6 +141,7 @@ public class LocalPluginProvider extends SearchResultProducer
         }
 
         results = tmpResults;
+        consumer.resultsChanged(this);
     }
 
     private boolean searchInPlugin(PluginDescriptor plugin, String[] words, boolean startWithOnly)

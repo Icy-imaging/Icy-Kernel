@@ -52,11 +52,6 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     /** Associated Search Bar */
     private final SearchBar searchBar;
 
-    // /** Window used to display the panel as a popup */
-    // final JWindow window;
-    // /** External frame used to display complete result list */
-    // final IcyExternalFrame frame;
-
     /** PopupMenu */
     JRichTooltipPanel tooltipPanel;
     Popup tooltip;
@@ -71,6 +66,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
      * Internals
      */
     private final Runnable refresher;
+    private final Runnable toolTipRefresher;
 
     public SearchResultPanel(final SearchBar sb)
     {
@@ -87,6 +83,15 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
             public void run()
             {
                 refreshInternal();
+            }
+        };
+
+        toolTipRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                updateToolTip();
             }
         };
 
@@ -192,14 +197,6 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
 
         scrollPane = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-        // external frame used to display complete result list
-        // frame = new IcyExternalFrame("Search result");
-        // frame.setLayout(new BorderLayout());
-
-        // frame.add(scrollPane, BorderLayout.CENTER);
-        //
-        // frame.setSize(new Dimension(640, 480));
     }
 
     protected SearchEngine getSearchEngine()
@@ -216,6 +213,21 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
             return (SearchResult) table.getValueAt(index, SearchResultTableModel.COL_RESULT_OBJECT);
 
         return null;
+    }
+
+    /**
+     * Returns the index in the table for the specified SearchResult (-1 if not found)
+     */
+    protected int getRowIndex(SearchResult result)
+    {
+        if (result != null)
+        {
+            for (int i = 0; i < table.getRowCount(); i++)
+                if (result == table.getValueAt(i, SearchResultTableModel.COL_RESULT_OBJECT))
+                    return i;
+        }
+
+        return -1;
     }
 
     /**
@@ -418,6 +430,21 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     {
         // selection changed --> update tooltip
         updateToolTip();
+    }
+
+    public void resultChanged(SearchResult result)
+    {
+        if (isVisible())
+        {
+            // only update the specified result
+            final int rowIndex = getRowIndex(result);
+
+            if (rowIndex != -1)
+                tableModel.fireTableRowsUpdated(rowIndex, rowIndex);
+            // refresh toolTip if needed
+            if (result == getSelectedResult())
+                ThreadUtil.bgRunSingle(toolTipRefresher, true);
+        }
     }
 
     public void resultsChanged()

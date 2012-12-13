@@ -25,7 +25,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
- * This class is used to provide plugin elements to the SearchBar found Online.
+ * This class is used to provide online plugin elements to the search engine.
  * 
  * @author Thomas Provoost & Stephane
  */
@@ -37,7 +37,7 @@ public class OnlinePluginProvider extends SearchResultProducer
     private class OnlinePluginResult extends SearchResult
     {
         final PluginDescriptor plugin;
-        private String filteredDescription;
+        private String description;
 
         public OnlinePluginResult(SearchResultProducer provider, PluginDescriptor plugin, String text,
                 String searchWords[])
@@ -47,11 +47,26 @@ public class OnlinePluginProvider extends SearchResultProducer
             this.plugin = plugin;
 
             int wi = 0;
-            filteredDescription = "";
-            while (StringUtil.isEmpty(filteredDescription) && (wi < searchWords.length))
+            description = "";
+            while (StringUtil.isEmpty(description) && (wi < searchWords.length))
             {
-                filteredDescription = StringUtil.trunc(text, searchWords[wi], 60, true);
+                // no more than 80 characters...
+                description = StringUtil.trunc(text, searchWords[wi], 80);
                 wi++;
+            }
+
+            if (!StringUtil.isEmpty(description))
+            {
+                // remove carriage return
+                description = description.replace("\n", "");
+
+                // highlight search keywords (only for more than 2 characters search)
+                if ((searchWords.length > 1) || (searchWords[0].length() > 2))
+                {
+                    // highlight search keywords
+                    for (String word : searchWords)
+                        description = StringUtil.htmlBoldSubstring(description, word, true);
+                }
             }
         }
 
@@ -80,7 +95,7 @@ public class OnlinePluginProvider extends SearchResultProducer
         @Override
         public String getDescription()
         {
-            return filteredDescription;
+            return description;
         }
 
         @Override
@@ -175,7 +190,7 @@ public class OnlinePluginProvider extends SearchResultProducer
                 return;
         }
 
-//        System.out.println("Request: " + request);
+        // System.out.println("Request: " + request);
 
         Document doc = null;
         int retry = 0;
@@ -239,7 +254,7 @@ public class OnlinePluginProvider extends SearchResultProducer
                 return;
 
             ((OnlinePluginResult) result).getPlugin().loadDescriptor();
-            consumer.resultsChanged(this);
+            consumer.resultChanged(this, result);
         }
 
         // load images
@@ -250,7 +265,7 @@ public class OnlinePluginProvider extends SearchResultProducer
                 return;
 
             ((OnlinePluginResult) result).getPlugin().loadImages();
-            consumer.resultsChanged(this);
+            consumer.resultChanged(this, result);
         }
     }
 
