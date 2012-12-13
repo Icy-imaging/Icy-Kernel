@@ -237,7 +237,7 @@ public class SystemUtil
     /**
      * Return the number of screen device.
      */
-    public static int getScreenDeviceNumber()
+    public static int getScreenDeviceCount()
     {
         try
         {

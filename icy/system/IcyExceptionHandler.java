@@ -31,6 +31,7 @@ import icy.util.StringUtil;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author Stephane
@@ -131,6 +132,8 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                 {
                     boolean done = false;
 
+                    final List<PluginDescriptor> plugins = PluginLoader.getPlugins();
+
                     // search plugin class (start from the end of stack trace)
                     for (StackTraceElement trace : throwable.getStackTrace())
                     {
@@ -139,8 +142,8 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                         // plugin class ?
                         if (className.startsWith(PluginLoader.PLUGIN_PACKAGE + "."))
                         {
-                            final PluginDescriptor plugin = PluginLoader.getPlugin(ClassUtil
-                                    .getBaseClassName(className));
+                            // try to find a matching plugin
+                            final PluginDescriptor plugin = findMatchingLocalPlugin(plugins, className);
 
                             // plugin found --> show the plugin report frame
                             if (plugin != null)
@@ -180,6 +183,41 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                 }
             }
         });
+    }
+
+    static PluginDescriptor findMatchingLocalPlugin(List<PluginDescriptor> plugins, String text)
+    {
+        String className = ClassUtil.getBaseClassName(text);
+
+        while (!(StringUtil.equals(className, PluginLoader.PLUGIN_PACKAGE) || StringUtil.isEmpty(className)))
+        {
+            final PluginDescriptor plugin = findMatchingLocalPluginInternal(plugins, className);
+
+            if (plugin != null)
+                return plugin;
+
+            className = ClassUtil.getPackageName(className);
+        }
+
+        return null;
+    }
+
+    private static PluginDescriptor findMatchingLocalPluginInternal(List<PluginDescriptor> plugins, String text)
+    {
+        PluginDescriptor result = null;
+
+        for (PluginDescriptor plugin : plugins)
+        {
+            if (plugin.getClassName().startsWith(text))
+            {
+                if (result != null)
+                    return null;
+
+                result = plugin;
+            }
+        }
+
+        return result;
     }
 
     /**

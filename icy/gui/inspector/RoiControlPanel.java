@@ -3,17 +3,18 @@
  */
 package icy.gui.inspector;
 
+import icy.clipboard.Clipboard;
+import icy.clipboard.Clipboard.ClipboardListener;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.PopupPanel;
 import icy.gui.component.button.ColorChooserButton;
 import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
 import icy.gui.component.button.IcyButton;
+import icy.gui.menu.action.RoiActions;
 import icy.image.IntensityInfo;
 import icy.main.Icy;
 import icy.math.MathUtil;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.roi.ROI2DLine;
@@ -22,7 +23,6 @@ import icy.roi.ROI3D;
 import icy.roi.ROI4D;
 import icy.roi.ROI5D;
 import icy.sequence.Sequence;
-import icy.util.ShapeUtil.ShapeOperation;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -30,8 +30,6 @@ import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -46,7 +44,7 @@ import javax.swing.border.TitledBorder;
 /**
  * @author Stephane
  */
-public class RoiControlPanel extends JPanel implements ColorChangeListener, TextChangeListener
+public class RoiControlPanel extends JPanel implements ColorChangeListener, TextChangeListener, ClipboardListener
 {
     /**
      * 
@@ -78,6 +76,12 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     private JPanel generalPanel;
     private RoiExtraInfoPanel infosPanel;
     private PopupPanel popupPanel;
+    private JLabel lblBoolean;
+    private JLabel lblGeneral;
+    private IcyButton copyButton;
+    private IcyButton pasteButton;
+    private IcyButton saveButton;
+    private IcyButton loadButton;
 
     public RoiControlPanel(RoisPanel panel)
     {
@@ -102,148 +106,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         sizeYField.addTextChangeListener(this);
         sizeZField.addTextChangeListener(this);
         sizeTField.addTextChangeListener(this);
-        
-        popupPanel = new PopupPanel();
-        popupPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-        popupPanel.setExpanded(true);
-        popupPanel.setToolTipText("Extras informations about the current selected ROI");
-        popupPanel.setTitle("Extras informations");
-        add(popupPanel);
-                        popupPanel.getMainPanel().setLayout(new BorderLayout(0, 0));
-                
-                        infosPanel = new RoiExtraInfoPanel();
-                        popupPanel.getMainPanel().add(infosPanel);
 
-        orButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final Sequence sequence = getSequence();
-
-                // OR operation
-                sequence.beginUpdate();
-                try
-                {
-                    final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
-
-                    final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.OR);
-
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
-                }
-                finally
-                {
-                    sequence.endUpdate();
-                }
-            }
-        });
-        andButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final Sequence sequence = getSequence();
-
-                // AND operation
-                sequence.beginUpdate();
-                try
-                {
-                    final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
-
-                    final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.AND);
-
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
-                }
-                finally
-                {
-                    sequence.endUpdate();
-                }
-            }
-        });
-        xorButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final Sequence sequence = getSequence();
-
-                // XOR operation
-                sequence.beginUpdate();
-                try
-                {
-                    final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
-
-                    final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.XOR);
-
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
-                }
-                finally
-                {
-                    sequence.endUpdate();
-                }
-            }
-        });
-        subButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final Sequence sequence = getSequence();
-
-                // SUB operation
-                sequence.beginUpdate();
-                try
-                {
-                    final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
-
-                    // Subtraction work only when 2 ROI are selected
-                    if (selectedROI2D.length != 2)
-                        return;
-
-                    final ROI mergeROI = ROI2D.subtract(selectedROI2D[0], selectedROI2D[1]);
-
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
-                }
-                finally
-                {
-                    sequence.endUpdate();
-                }
-            }
-        });
-
-        deleteButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final Sequence sequence = getSequence();
-
-                sequence.beginUpdate();
-                try
-                {
-                    // delete selected rois
-                    for (ROI roi : roisPanel.getSelectedRois())
-                        if (roi.isEditable())
-                            sequence.removeROI(roi);
-                }
-                finally
-                {
-                    sequence.endUpdate();
-                }
-            }
-        });
+        Clipboard.addListener(this);
     }
 
     private void initialize()
@@ -255,56 +119,104 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
         add(booleanOpPanel);
         GridBagLayout gbl_booleanOpPanel = new GridBagLayout();
-        gbl_booleanOpPanel.columnWidths = new int[] {0, 0, 0, 0, 0, 0, 0};
-        gbl_booleanOpPanel.rowHeights = new int[] {0, 0};
-        gbl_booleanOpPanel.columnWeights = new double[] {0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
-        gbl_booleanOpPanel.rowWeights = new double[] {1.0, Double.MIN_VALUE};
+        gbl_booleanOpPanel.columnWidths = new int[] {0, 0, 0, 0, 0, 0, 0, 0};
+        gbl_booleanOpPanel.rowHeights = new int[] {0, 0, 0, 0};
+        gbl_booleanOpPanel.columnWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
+        gbl_booleanOpPanel.rowWeights = new double[] {1.0, 1.0, 0.0, Double.MIN_VALUE};
         booleanOpPanel.setLayout(gbl_booleanOpPanel);
 
-        orButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_OR));
-        orButton.setToolTipText("OR : create a new ROI representing the union of selected ROIs");
-        GridBagConstraints gbc_orButton = new GridBagConstraints();
-        gbc_orButton.fill = GridBagConstraints.BOTH;
-        gbc_orButton.insets = new Insets(0, 0, 0, 5);
-        gbc_orButton.gridx = 0;
-        gbc_orButton.gridy = 0;
-        booleanOpPanel.add(orButton, gbc_orButton);
+        lblGeneral = new JLabel("General");
+        GridBagConstraints gbc_lblGeneral = new GridBagConstraints();
+        gbc_lblGeneral.anchor = GridBagConstraints.WEST;
+        gbc_lblGeneral.insets = new Insets(0, 0, 5, 5);
+        gbc_lblGeneral.gridx = 0;
+        gbc_lblGeneral.gridy = 0;
+        booleanOpPanel.add(lblGeneral, gbc_lblGeneral);
 
-        andButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_AND));
-        andButton.setToolTipText("AND : create a new ROI representing the intersection of selected ROIs");
-        GridBagConstraints gbc_andButton = new GridBagConstraints();
-        gbc_andButton.fill = GridBagConstraints.BOTH;
-        gbc_andButton.insets = new Insets(0, 0, 0, 5);
-        gbc_andButton.gridx = 1;
-        gbc_andButton.gridy = 0;
-        booleanOpPanel.add(andButton, gbc_andButton);
+        loadButton = new IcyButton(RoiActions.loadAction);
+        loadButton.setText(null);
+        GridBagConstraints gbc_loadRoiButton = new GridBagConstraints();
+        gbc_loadRoiButton.insets = new Insets(0, 0, 5, 5);
+        gbc_loadRoiButton.gridx = 1;
+        gbc_loadRoiButton.gridy = 0;
+        booleanOpPanel.add(loadButton, gbc_loadRoiButton);
 
-        xorButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_XOR));
-        xorButton.setToolTipText("XOR : create a new ROI representing the exclusive union of selected ROIs");
-        GridBagConstraints gbc_xorButton = new GridBagConstraints();
-        gbc_xorButton.fill = GridBagConstraints.BOTH;
-        gbc_xorButton.insets = new Insets(0, 0, 0, 5);
-        gbc_xorButton.gridx = 2;
-        gbc_xorButton.gridy = 0;
-        booleanOpPanel.add(xorButton, gbc_xorButton);
+        saveButton = new IcyButton(RoiActions.saveAction);
+        saveButton.setText(null);
+        GridBagConstraints gbc_saveRoiButton = new GridBagConstraints();
+        gbc_saveRoiButton.insets = new Insets(0, 0, 5, 5);
+        gbc_saveRoiButton.gridx = 2;
+        gbc_saveRoiButton.gridy = 0;
+        booleanOpPanel.add(saveButton, gbc_saveRoiButton);
 
-        subButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_ROI_SUB));
-        subButton
-                .setToolTipText("SUBTRACT : create a new ROI representing the subtraction of second ROI from the first ROI");
-        GridBagConstraints gbc_subButton = new GridBagConstraints();
-        gbc_subButton.insets = new Insets(0, 0, 0, 5);
-        gbc_subButton.fill = GridBagConstraints.BOTH;
-        gbc_subButton.gridx = 3;
-        gbc_subButton.gridy = 0;
-        booleanOpPanel.add(subButton, gbc_subButton);
+        copyButton = new IcyButton(RoiActions.copyAction);
+        copyButton.setText(null);
+        GridBagConstraints gbc_copyButton = new GridBagConstraints();
+        gbc_copyButton.insets = new Insets(0, 0, 5, 5);
+        gbc_copyButton.gridx = 3;
+        gbc_copyButton.gridy = 0;
+        booleanOpPanel.add(copyButton, gbc_copyButton);
 
-        deleteButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE));
+        pasteButton = new IcyButton(RoiActions.pasteAction);
+        pasteButton.setText(null);
+        GridBagConstraints gbc_pasteButton = new GridBagConstraints();
+        gbc_pasteButton.insets = new Insets(0, 0, 5, 5);
+        gbc_pasteButton.gridx = 4;
+        gbc_pasteButton.gridy = 0;
+        booleanOpPanel.add(pasteButton, gbc_pasteButton);
+
+        deleteButton = new IcyButton(RoiActions.deleteAction);
+        deleteButton.setText(null);
         GridBagConstraints gbc_deleteButton = new GridBagConstraints();
+        gbc_deleteButton.insets = new Insets(0, 0, 5, 0);
         gbc_deleteButton.fill = GridBagConstraints.BOTH;
-        gbc_deleteButton.gridx = 5;
+        gbc_deleteButton.gridx = 6;
         gbc_deleteButton.gridy = 0;
         booleanOpPanel.add(deleteButton, gbc_deleteButton);
-        deleteButton.setToolTipText("Delete selected ROI(s)");
+
+        lblBoolean = new JLabel("Boolean");
+        GridBagConstraints gbc_lblBoolean = new GridBagConstraints();
+        gbc_lblBoolean.anchor = GridBagConstraints.WEST;
+        gbc_lblBoolean.insets = new Insets(0, 0, 5, 5);
+        gbc_lblBoolean.gridx = 0;
+        gbc_lblBoolean.gridy = 1;
+        booleanOpPanel.add(lblBoolean, gbc_lblBoolean);
+
+        orButton = new IcyButton(RoiActions.boolOrAction);
+        orButton.setText(null);
+        GridBagConstraints gbc_orButton = new GridBagConstraints();
+        gbc_orButton.fill = GridBagConstraints.BOTH;
+        gbc_orButton.insets = new Insets(0, 0, 5, 5);
+        gbc_orButton.gridx = 1;
+        gbc_orButton.gridy = 1;
+        booleanOpPanel.add(orButton, gbc_orButton);
+
+        andButton = new IcyButton(RoiActions.boolAndAction);
+        andButton.setText(null);
+        GridBagConstraints gbc_andButton = new GridBagConstraints();
+        gbc_andButton.fill = GridBagConstraints.BOTH;
+        gbc_andButton.insets = new Insets(0, 0, 5, 5);
+        gbc_andButton.gridx = 2;
+        gbc_andButton.gridy = 1;
+        booleanOpPanel.add(andButton, gbc_andButton);
+
+        xorButton = new IcyButton(RoiActions.boolXorAction);
+        xorButton.setText(null);
+        GridBagConstraints gbc_xorButton = new GridBagConstraints();
+        gbc_xorButton.fill = GridBagConstraints.BOTH;
+        gbc_xorButton.insets = new Insets(0, 0, 5, 5);
+        gbc_xorButton.gridx = 3;
+        gbc_xorButton.gridy = 1;
+        booleanOpPanel.add(xorButton, gbc_xorButton);
+
+        subButton = new IcyButton(RoiActions.boolSubtractAction);
+        subButton.setText(null);
+        GridBagConstraints gbc_subButton = new GridBagConstraints();
+        gbc_subButton.insets = new Insets(0, 0, 5, 5);
+        gbc_subButton.fill = GridBagConstraints.BOTH;
+        gbc_subButton.gridx = 4;
+        gbc_subButton.gridy = 1;
+        booleanOpPanel.add(subButton, gbc_subButton);
 
         generalPanel = new JPanel();
         generalPanel.setBorder(new TitledBorder(null, "General", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -529,11 +441,19 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         gbc_sizeTField.gridy = 1;
         sizePanel.add(sizeTField, gbc_sizeTField);
         sizeTField.setColumns(10);
-    }
 
-    private Sequence getSequence()
-    {
-        return Icy.getMainInterface().getFocusedSequence();
+        infosPanel = new RoiExtraInfoPanel();
+
+        popupPanel = new PopupPanel();
+        popupPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+        popupPanel.setExpanded(true);
+        popupPanel.setToolTipText("Extras informations about the current selected ROI");
+        popupPanel.setTitle("Extras informations");
+        add(popupPanel);
+
+        final JPanel panel = popupPanel.getMainPanel();
+        panel.setLayout(new BorderLayout(0, 0));
+        panel.add(infosPanel);
     }
 
     public void refresh()
@@ -560,7 +480,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
             sizeZField.setVisible(false);
             sizeTField.setVisible(false);
 
-            final Sequence sequence = getSequence();
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
             {
@@ -597,11 +517,17 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 colorButton.setEnabled(hasSelected && editable);
                 selectedColorButton.setEnabled(hasSelected && editable);
 
+                loadButton.setEnabled(true);
+                saveButton.setEnabled(hasSelected);
+                copyButton.setEnabled(hasSelected);
+                pasteButton.setEnabled(Clipboard.hasObjects(RoiActions.ID_ROI_COPY_CLIPBOARD, false));
+
+                deleteButton.setEnabled(hasSelected && editable);
+
                 orButton.setEnabled(severalsSelected);
                 andButton.setEnabled(severalsSelected);
                 xorButton.setEnabled(severalsSelected);
                 subButton.setEnabled(twoSelected);
-                deleteButton.setEnabled(hasSelected && editable);
 
                 if (hasSelected)
                 {
@@ -659,11 +585,16 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 colorButton.setEnabled(false);
                 selectedColorButton.setEnabled(false);
 
+                loadButton.setEnabled(false);
+                saveButton.setEnabled(false);
+                copyButton.setEnabled(false);
+                pasteButton.setEnabled(false);
+                deleteButton.setEnabled(false);
+
                 orButton.setEnabled(false);
                 andButton.setEnabled(false);
                 xorButton.setEnabled(false);
                 subButton.setEnabled(false);
-                deleteButton.setEnabled(false);
 
                 // refresh ROI infos
                 infosPanel.refresh(null, null);
@@ -798,18 +729,20 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         if (source.isEnabled())
         {
             final Color color = source.getColor();
-            final Sequence sequence = getSequence();
-            final ArrayList<ROI> selectedROI = RoiControlPanel.this.roisPanel.getSelectedRois();
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
 
             sequence.beginUpdate();
             try
             {
                 for (ROI roi : selectedROI)
+                {
                     if (roi.isEditable())
                         if (source == colorButton)
                             roi.setColor(color);
                         else
                             roi.setSelectedColor(color);
+                }
             }
             finally
             {
@@ -818,4 +751,9 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         }
     }
 
+    @Override
+    public void clipboardChanged()
+    {
+        refresh();
+    }
 }

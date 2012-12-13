@@ -27,77 +27,111 @@ import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 
 /**
- * This class launch plugins and provide an Id to them.<br>
- * The launch can be in a thread or in the graphic thread.
+ * This class launch plugins and register them to the main application.<br>
+ * The launch can be in a decicated thread or in the EDT.
  * 
  * @author Fabrice de Chaumont & Stephane
  */
-public class PluginLauncher
+public class PluginLauncher implements Runnable
 {
-    private static class PluginThread extends Thread
+    protected final PluginDescriptor descriptor;
+    protected Plugin plugin;
+
+    protected PluginLauncher(PluginDescriptor descriptor)
     {
-        final PluginDescriptor pluginDesc;
-        final Plugin plugin;
+        super();
 
-        public PluginThread(PluginDescriptor pluginDesc, Plugin plugin, PluginThreaded runnable)
+        this.descriptor = descriptor;
+        plugin = null;
+    }
+
+    protected void create()
+    {
+        // create the plugin instance on the AWT
+        ThreadUtil.invokeNow(new Runnable()
         {
-            super(runnable, pluginDesc.getName());
-
-            this.pluginDesc = pluginDesc;
-            this.plugin = plugin;
-        }
-
-        @Override
-        public void run()
-        {
-            try
+            @Override
+            public void run()
             {
-                if (plugin instanceof PluginImageAnalysis)
+                try
                 {
-                    PluginImageAnalysis pluginImageAnalysis = (PluginImageAnalysis) plugin;
-                    pluginImageAnalysis.compute();
+                    plugin = descriptor.getPluginClass().newInstance();
+                }
+                catch (Throwable t)
+                {
+                    plugin = null;
+                    IcyExceptionHandler.handleException(descriptor, t, true);
                 }
             }
-            catch (Throwable t)
-            {
-                IcyExceptionHandler.handleException(pluginDesc, t, true);
-            }
+        });
+    }
+
+    @Override
+    public void run()
+    {
+        try
+        {
+            // keep backward compatibility
+            if (plugin instanceof PluginImageAnalysis)
+                ((PluginImageAnalysis) plugin).compute();
+        }
+        catch (Throwable t)
+        {
+            IcyExceptionHandler.handleException(descriptor, t, true);
         }
     }
 
     /**
-     * Start the plugin.<br>
+     * Execute the plugin (instance should exists).
+     */
+    protected void execute()
+    {
+        final Thread thread;
+
+        if (plugin instanceof PluginThreaded)
+            thread = new Thread((PluginThreaded) plugin, descriptor.getName());
+        // keep backward compatibility
+        else if (plugin instanceof PluginStartAsThread)
+            thread = new Thread(this, descriptor.getName());
+        else
+            thread = null;
+
+        // launch as thread
+        if (thread != null)
+            thread.start();
+        else
+            // direct launch in EDT now (no thread creation)
+            ThreadUtil.invokeNow(this);
+    }
+
+    /**
+     * Start the specified plugin.<br>
      * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin)
      */
-    public static Plugin start(PluginDescriptor pluginDesc)
+    public static Plugin start(PluginDescriptor descriptor)
     {
         try
         {
-            final Plugin plugin = pluginDesc.getPluginClass().newInstance();
+            final PluginLauncher launcher = new PluginLauncher(descriptor);
 
-            // register plugin
-            Icy.getMainInterface().registerPlugin(plugin);
+            // create plugin instance
+            launcher.create();
 
-            final Thread thread;
+            final Plugin plugin = launcher.plugin;
 
-            if (plugin instanceof PluginThreaded)
-                thread = new PluginThread(pluginDesc, plugin, (PluginThreaded) plugin);
-            else
-                thread = new PluginThread(pluginDesc, plugin, null);
-
-            // keep backward compatibility
-            if ((plugin instanceof PluginThreaded) || (plugin instanceof PluginStartAsThread))
-                // launch as thread
-                thread.start();
-            else
-                // direct launch in EDT now (no thread creation)
-                ThreadUtil.invokeNow(thread);
+            if (plugin != null)
+            {
+                // register plugin
+                Icy.getMainInterface().registerPlugin(launcher.plugin);
+                // execute plugin
+                launcher.execute();
+            }
 
             return plugin;
         }
         catch (Throwable t)
         {
-            IcyExceptionHandler.handleException(pluginDesc, t, true);
+            IcyExceptionHandler.handleException(descriptor, t, true);
         }
 
         return null;
@@ -107,33 +141,8 @@ public class PluginLauncher
      * @deprecated Uses {@link #start(PluginDescriptor)} instead.
      */
     @Deprecated
-    public synchronized static void launch(PluginDescriptor pluginDesc)
+    public synchronized static void launch(PluginDescriptor descriptor)
     {
-        try
-        {
-            final Plugin plugin = pluginDesc.getPluginClass().newInstance();
-
-            // register plugin
-            Icy.getMainInterface().registerPlugin(plugin);
-
-            final Thread thread;
-
-            if (plugin instanceof PluginThreaded)
-                thread = new PluginThread(pluginDesc, plugin, (PluginThreaded) plugin);
-            else
-                thread = new PluginThread(pluginDesc, plugin, null);
-
-            // keep backward compatibility
-            if ((plugin instanceof PluginThreaded) || (plugin instanceof PluginStartAsThread))
-                // launch as thread
-                thread.start();
-            else
-                // direct launch in EDT now (no thread creation)
-                ThreadUtil.invokeNow(thread);
-        }
-        catch (Throwable t)
-        {
-            IcyExceptionHandler.handleException(pluginDesc, t, true);
-        }
+        start(descriptor);
     }
 }

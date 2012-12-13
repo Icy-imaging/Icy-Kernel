@@ -171,7 +171,7 @@ public class ThreadUtil
     }
 
     /**
-     * Add background processing of specified Runnable.<br>
+     * Add background processing (low priority) of specified Runnable.<br>
      * Return false if queue is full.
      */
     public static boolean bgRun(Runnable runnable, boolean onEventThread)
@@ -180,7 +180,7 @@ public class ThreadUtil
     }
 
     /**
-     * Add background processing of specified Runnable
+     * Add background processing (low priority) of specified Runnable.<br>
      * Return false if queue is full.
      */
     public static boolean bgRun(Runnable runnable)
@@ -198,7 +198,7 @@ public class ThreadUtil
     }
 
     /**
-     * Add single background processing of specified Runnable.<br>
+     * Add single background processing (normal priority) of specified Runnable.<br>
      * If this <code>runnable</code> instance is already pending in waiting background process<br>
      * then nothing is done.<br>
      * Return false if queue is full.
@@ -214,7 +214,7 @@ public class ThreadUtil
     }
 
     /**
-     * Add single background processing of specified Runnable.<br>
+     * Add single background processing (normal priority) of specified Runnable.<br>
      * If this <code>runnable</code> instance is already pending in waiting background process<br>
      * then nothing is done.<br>
      * Return false if queue is full.
@@ -225,7 +225,7 @@ public class ThreadUtil
     }
 
     /**
-     * Retrieve the instance processor to use for specified runnable
+     * Retrieve the instance processor to use for specified runnable.
      */
     private static InstanceProcessor getInstanceProcessor(Runnable runnable)
     {
@@ -251,7 +251,7 @@ public class ThreadUtil
     }
 
     /**
-     * Return the number of active background tasks
+     * Return the number of active background tasks.
      */
     public static int getActiveBgTaskCount()
     {

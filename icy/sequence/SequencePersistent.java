@@ -28,6 +28,7 @@ import icy.util.XMLUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -42,7 +43,6 @@ public class SequencePersistent implements XMLPersistent
     private final static String ROOT_META = "meta";
 
     private final static String ROOT_ROIS = "rois";
-    private final static String ID_ROI = "roi";
 
     private final Sequence sequence;
 
@@ -186,24 +186,11 @@ public class SequencePersistent implements XMLPersistent
 
     private void loadROIsFromXML(Node node)
     {
-        final Node nodeROIs = XMLUtil.getElement(node, ROOT_ROIS);
+        final List<ROI> rois = ROI.getROIsFromXML(XMLUtil.getElement(node, ROOT_ROIS));
 
-        if (nodeROIs != null)
-        {
-            final ArrayList<Node> nodesROI = XMLUtil.getChildren(nodeROIs, ID_ROI);
-
-            if (nodesROI != null)
-            {
-                for (Node n : nodesROI)
-                {
-                    final ROI roi = ROI.createFromXML(n);
-
-                    // add to sequence
-                    if (roi != null)
-                        sequence.addROI(roi);
-                }
-            }
-        }
+        // add to sequence
+        for (ROI roi : rois)
+            sequence.addROI(roi);
     }
 
     @Override
@@ -249,16 +236,8 @@ public class SequencePersistent implements XMLPersistent
             // sort on id
             Collections.sort(rois, ROI.idComparator);
 
-            for (ROI roi : rois)
-            {
-                final Node nodeROI = XMLUtil.addElement(nodeROIs, ID_ROI);
-
-                if (nodeROI != null)
-                {
-                    if (!roi.saveToXML(nodeROI))
-                        XMLUtil.removeNode(nodeROIs, nodeROI);
-                }
-            }
+            // set rois in the XML node
+            ROI.setROIsToXML(nodeROIs, rois);
         }
     }
 

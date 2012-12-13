@@ -24,6 +24,7 @@ import icy.common.listener.AcceptListener;
 import icy.common.listener.ChangeListener;
 import icy.common.listener.weak.WeakListener;
 import icy.gui.inspector.InspectorPanel;
+import icy.gui.inspector.RoisPanel;
 import icy.gui.main.MainEvent.MainEventSourceType;
 import icy.gui.main.MainEvent.MainEventType;
 import icy.gui.menu.ApplicationMenu;
@@ -221,6 +222,17 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     public InspectorPanel getInspector()
     {
         return mainFrame.getInspector();
+    }
+
+    @Override
+    public RoisPanel getRoisPanel()
+    {
+        final InspectorPanel inspector = mainFrame.getInspector();
+
+        if (inspector != null)
+            return inspector.getRoisPanel();
+
+        return null;
     }
 
     @Override

@@ -44,5 +44,4 @@ public class PluginRichToolTip extends RichTooltip
         if (plugImg != PluginDescriptor.DEFAULT_IMAGE)
             setFooterImage(plugin.getImage());
     }
-
 }

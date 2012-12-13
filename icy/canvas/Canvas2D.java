@@ -630,7 +630,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
                 processor = new SingleProcessor(true, "Canvas2D renderer");
                 // we want the processor to stay alive for sometime
-                processor.setKeepAliveTime(5, TimeUnit.MINUTES);
+                processor.setKeepAliveTime(3, TimeUnit.SECONDS);
 
                 imageCache = null;
                 needRebuild = true;

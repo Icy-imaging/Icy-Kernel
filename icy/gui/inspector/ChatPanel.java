@@ -777,6 +777,15 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
         refreshGUI();
         refreshDesktopOverlayState();
 
+        addStateListener(new StateListener()
+        {
+            @Override
+            public void stateChanged(ExternalizablePanel source, boolean externalized)
+            {
+                refreshGUI();
+            }
+        });
+
         // call default internet connection callback to process auto connect
         if (NetworkUtil.hasInternetAccess())
             internetUp();
@@ -924,7 +933,6 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
 
         usersScrollPane = new JScrollPane();
         usersScrollPane.setPreferredSize(new Dimension(130, 200));
-        add(usersScrollPane, BorderLayout.EAST);
 
         JLabel lblUtilisateur = new JLabel("Users");
         lblUtilisateur.setFont(new Font("Tahoma", Font.BOLD, 11));
@@ -1081,7 +1089,7 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
         desktopOverlayButton.setSelected(ChatPreferences.getDesktopOverlay());
         desktopOverlayButton.setMinimumSize(new Dimension(24, 24));
         desktopOverlayButton.setPreferredSize(new Dimension(24, 24));
-        desktopOverlayButton.setToolTipText("Enabled desktop chat");
+        desktopOverlayButton.setToolTipText("Enabled chat on desktop");
         desktopOverlayButton.addActionListener(new ActionListener()
         {
             @Override
@@ -1388,7 +1396,14 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
                 }
 
                 // user panel visible
-                usersScrollPane.setVisible(ChatPreferences.getShowUsersPanel());
+                remove(usersScrollPane);
+                if (ChatPreferences.getShowUsersPanel())
+                {
+                    if ((getWidth() * 1.5) > getHeight())
+                        add(usersScrollPane, BorderLayout.EAST);
+                    else
+                        add(usersScrollPane, BorderLayout.SOUTH);
+                }
 
                 validate();
             }

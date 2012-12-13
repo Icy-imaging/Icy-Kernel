@@ -181,6 +181,85 @@ public class StringUtil
     }
 
     /**
+     * Truncate the text to a specific size, according a keyword.<br>
+     * The text will be truncated around the place where the keyword is found.<br>
+     * The found keyword is highlighted by using bold html<b></b>
+     * If the string is
+     * found at the beginning, the text will be like this:<br/>
+     * <b><center>Lorem ipsum dolor sit amet, consec...</center><b/>
+     * 
+     * @param fullText
+     *        : text to be truncated.
+     * @param keyword
+     *        : string to be found in the text and truncated around.
+     * @param maxSize
+     *        : max size of the string
+     * @param highlight
+     *        : highlight keyword by enclosing it with bold html tag.
+     */
+    public static String trunc(String fullText, String keyword, int maxSize, boolean highlight)
+    {
+        int idx = fullText.toLowerCase().indexOf(keyword.toLowerCase());
+
+        // key not found
+        if (idx == -1)
+            return "";
+
+        String toReturn = fullText;
+        int fullTextSize = fullText.length();
+
+        if (fullTextSize > maxSize)
+        {
+            int firstSpaceAfter;
+            String textBeforeWord;
+            int lastSpaceBefore;
+
+            // extract the full word from the text
+            firstSpaceAfter = fullText.indexOf(' ', idx);
+            firstSpaceAfter = firstSpaceAfter == -1 ? fullTextSize : firstSpaceAfter;
+
+            textBeforeWord = fullText.substring(0, idx);
+            lastSpaceBefore = textBeforeWord.lastIndexOf(' ');
+            lastSpaceBefore = lastSpaceBefore == -1 ? 0 : lastSpaceBefore;
+
+            // determine if we are at the beginning, the end, or at the middle
+            if (idx <= maxSize / 2)
+            {
+                toReturn = fullText.substring(0, maxSize);
+                toReturn += "...";
+            }
+            else if ((fullTextSize - idx) <= maxSize / 2)
+            {
+                toReturn = fullText.substring(fullTextSize - maxSize, fullTextSize);
+                toReturn = "..." + toReturn;
+            }
+            else
+            {
+                int beginIndex = idx - maxSize / 2;
+                int endIndex = idx + maxSize / 2;
+                if (endIndex > fullTextSize)
+                    System.out.println(endIndex);
+                // beginIndex = beginIndex < 0 ? 0 : beginIndex;
+                // endIndex = endIndex > fullTextSize ? fullTextSize : endIndex;
+                toReturn = "..." + fullText.substring(beginIndex, endIndex) + "...";
+            }
+
+            // update index for highlight
+            if (highlight)
+                idx = toReturn.toLowerCase().indexOf(keyword.toLowerCase());
+        }
+
+        // highlight needed ?
+        if (highlight && (idx != -1))
+        {
+            toReturn = toReturn.substring(0, idx) + "<b>" + toReturn.substring(idx, idx + keyword.length()) + "</b>"
+                    + toReturn.substring(idx + keyword.length());
+        }
+
+        return toReturn;
+    }
+
+    /**
      * Return true if the specified String are exactly the same
      */
     public static boolean equals(String s1, String s2)

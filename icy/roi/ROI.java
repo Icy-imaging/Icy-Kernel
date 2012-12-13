@@ -41,6 +41,7 @@ import java.awt.geom.Point2D;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import javax.swing.event.EventListenerList;
 
@@ -69,6 +70,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             return 0;
         }
     }
+
+    public static final String ID_ROI = "roi";
 
     public static final String ID_CLASSNAME = "classname";
     public static final String ID_ID = "id";
@@ -175,7 +178,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         if (roi != null)
         {
             roi.loadFromXML(node);
-            roi.selected = false;
+            roi.setSelected(false, false);
         }
 
         return roi;
@@ -201,6 +204,62 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 result.add(roi);
 
         return result;
+    }
+
+    /**
+     * Return a list of ROI from a XML node.
+     * 
+     * @param node
+     *        XML node defining the ROI list
+     * @return a list of ROI
+     */
+    public static List<ROI> getROIsFromXML(Node node)
+    {
+        final ArrayList<ROI> result = new ArrayList<ROI>();
+
+        if (node != null)
+        {
+            final ArrayList<Node> nodesROI = XMLUtil.getChildren(node, ID_ROI);
+
+            if (nodesROI != null)
+            {
+                for (Node n : nodesROI)
+                {
+                    final ROI roi = createFromXML(n);
+
+                    // add to sequence
+                    if (roi != null)
+                        result.add(roi);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Set a list of ROI to a XML node.
+     * 
+     * @param node
+     *        XML node which is used to store the list of ROI
+     * @param rois
+     *        the list of ROI to store in the XML node
+     */
+    public static void setROIsToXML(Node node, List<ROI> rois)
+    {
+        if (node != null)
+        {
+            for (ROI roi : rois)
+            {
+                final Node nodeROI = XMLUtil.addElement(node, ID_ROI);
+
+                if (nodeROI != null)
+                {
+                    if (!roi.saveToXML(nodeROI))
+                        XMLUtil.removeNode(node, nodeROI);
+                }
+            }
+        }
     }
 
     /**

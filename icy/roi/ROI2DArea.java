@@ -205,16 +205,7 @@ public class ROI2DArea extends ROI2D
         @Override
         public void onChanged(EventHierarchicalChecker object)
         {
-            final Color roiColor = getDisplayColor();
-
-            // roi color changed ?
-            if (!previousColor.equals(roiColor))
-            {
-                // update mask color
-                updateMaskColor();
-                // set to new color
-                previousColor = getDisplayColor();
-            }
+            updateMaskColor(true);
 
             super.onChanged(object);
         }
@@ -489,20 +480,19 @@ public class ROI2DArea extends ROI2D
         boundsNeedUpdate = false;
         translateX = 0d;
         translateY = 0d;
-        // keep trace of previous color
-        previousColor = getDisplayColor();
 
         // prepare indexed image
         red = new byte[256];
         green = new byte[256];
         blue = new byte[256];
 
-        final Color c = getDisplayColor();
+        // keep trace of previous color
+        previousColor = getDisplayColor();
 
         // set colormap
-        red[1] = (byte) c.getRed();
-        green[1] = (byte) c.getGreen();
-        blue[1] = (byte) c.getBlue();
+        red[1] = (byte) previousColor.getRed();
+        green[1] = (byte) previousColor.getGreen();
+        blue[1] = (byte) previousColor.getBlue();
 
         // classic 8 bits indexed with one transparent color (index = 0)
         colorModel = new IndexColorModel(8, 256, red, green, blue, 0);
@@ -626,22 +616,28 @@ public class ROI2DArea extends ROI2D
         return (alpha << 24) | (ROI2DArea.this.getDisplayColor().getRGB() & 0x00FFFFFF);
     }
 
-    void updateMaskColor()
+    void updateMaskColor(boolean rebuildImage)
     {
-        final Color c = getDisplayColor();
+        final Color color = getDisplayColor();
 
-        // set colormap
-        red[1] = (byte) c.getRed();
-        green[1] = (byte) c.getGreen();
-        blue[1] = (byte) c.getBlue();
+        // roi color changed ?
+        if (!previousColor.equals(color))
+        {
+            // update colormap
+            red[1] = (byte) color.getRed();
+            green[1] = (byte) color.getGreen();
+            blue[1] = (byte) color.getBlue();
 
-        // and rebuild image
-        final int w = imageMask.getWidth();
-        final int h = imageMask.getHeight();
+            colorModel = new IndexColorModel(8, 256, red, green, blue, 0);
 
-        colorModel = new IndexColorModel(8, 256, red, green, blue, 0);
-        // recreate image from array data
-        imageMask = ImageUtil.createIndexedImage(w, h, colorModel, maskData);
+            // recreate image (needed so new colormodel takes effect)
+            if (rebuildImage)
+                imageMask = ImageUtil.createIndexedImage(imageMask.getWidth(), imageMask.getHeight(), colorModel,
+                        maskData);
+
+            // set to new color
+            previousColor = color;
+        }
     }
 
     /**

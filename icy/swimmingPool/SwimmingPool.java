@@ -18,7 +18,10 @@
  */
 package icy.swimmingPool;
 
+import icy.util.StringUtil;
+
 import java.util.ArrayList;
+import java.util.Collection;
 
 import javax.swing.event.EventListenerList;
 
@@ -37,29 +40,347 @@ public class SwimmingPool
     {
         if (object != null)
         {
-            objects.add(object);
+            synchronized (objects)
+            {
+                objects.add(object);
+            }
+
             fireSwimmingPoolEvent(new SwimmingPoolEvent(SwimmingPoolEventType.ELEMENT_ADDED, object));
         }
     }
 
     public void remove(SwimmingObject object)
     {
-        if (objects.remove(object))
+        final boolean b;
+
+        synchronized (objects)
+        {
+            b = objects.remove(object);
+        }
+
+        if (b)
             fireSwimmingPoolEvent(new SwimmingPoolEvent(SwimmingPoolEventType.ELEMENT_REMOVED, object));
     }
 
     public void removeAll()
     {
-        if (!objects.isEmpty())
+        final boolean b;
+
+        synchronized (objects)
         {
-            objects.clear();
-            fireSwimmingPoolEvent(new SwimmingPoolEvent(SwimmingPoolEventType.ELEMENT_REMOVED, null));
+            b = !objects.isEmpty();
+
+            if (b)
+                objects.clear();
         }
+
+        if (b)
+            fireSwimmingPoolEvent(new SwimmingPoolEvent(SwimmingPoolEventType.ELEMENT_REMOVED, null));
     }
 
+    /**
+     * Remove all objects contained in the collection from the swimming pool.
+     */
+    public void removeAll(Collection<SwimmingObject> sos)
+    {
+        final boolean b;
+
+        synchronized (objects)
+        {
+            b = objects.removeAll(sos);
+        }
+
+        if (b)
+            fireSwimmingPoolEvent(new SwimmingPoolEvent(SwimmingPoolEventType.ELEMENT_REMOVED, null));
+    }
+
+    /**
+     * Remove all object with specified name (or name starting with specified name).
+     */
+    public void removeAll(String name, boolean startWith)
+    {
+        boolean b = false;
+
+        synchronized (objects)
+        {
+            for (int i = objects.size() - 1; i >= 0; i--)
+            {
+                final SwimmingObject so = objects.get(i);
+
+                if (so != null)
+                {
+                    if (startWith)
+                    {
+                        if (so.getName().startsWith(name))
+                        {
+                            objects.remove(i);
+                            b = true;
+                        }
+                    }
+                    else if (StringUtil.equals(name, so.getName()))
+                    {
+                        objects.remove(i);
+                        b = true;
+                    }
+                }
+            }
+        }
+
+        if (b)
+            fireSwimmingPoolEvent(new SwimmingPoolEvent(SwimmingPoolEventType.ELEMENT_REMOVED, null));
+    }
+
+    /**
+     * Remove all object of specified class type
+     */
+    public void removeAll(Class<?> objectType)
+    {
+        boolean b = false;
+
+        synchronized (objects)
+        {
+            for (int i = objects.size() - 1; i >= 0; i--)
+            {
+                final SwimmingObject so = objects.get(i);
+
+                if (so != null)
+                {
+                    final Object obj = so.getObject();
+
+                    if ((obj != null) && objectType.isAssignableFrom(obj.getClass()))
+                    {
+                        objects.remove(i);
+                        b = true;
+                    }
+                }
+            }
+        }
+
+        if (b)
+            fireSwimmingPoolEvent(new SwimmingPoolEvent(SwimmingPoolEventType.ELEMENT_REMOVED, null));
+    }
+
+    /**
+     * Return all objects of the swimming pool
+     */
     public ArrayList<SwimmingObject> getObjects()
     {
         return new ArrayList<SwimmingObject>(objects);
+    }
+
+    /**
+     * Return objects with specified name (or name starting with specified name).
+     */
+    public ArrayList<SwimmingObject> getObjects(String name, boolean startWith)
+    {
+        final ArrayList<SwimmingObject> result = new ArrayList<SwimmingObject>();
+
+        synchronized (objects)
+        {
+            for (SwimmingObject so : objects)
+            {
+                if (so != null)
+                {
+                    if (startWith)
+                    {
+                        if (so.getName().startsWith(name))
+                            result.add(so);
+                    }
+                    else if (StringUtil.equals(name, so.getName()))
+                        result.add(so);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Return objects of specified class type
+     */
+    public ArrayList<SwimmingObject> getObjects(Class<?> objectType)
+    {
+        final ArrayList<SwimmingObject> result = new ArrayList<SwimmingObject>();
+
+        synchronized (objects)
+        {
+            for (SwimmingObject so : objects)
+            {
+                if (so != null)
+                {
+                    final Object obj = so.getObject();
+
+                    if ((obj != null) && objectType.isAssignableFrom(obj.getClass()))
+                        result.add(so);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Return and remove objects with specified name (or name starting with specified name).
+     */
+    public ArrayList<SwimmingObject> popObjects(String name, boolean startWith)
+    {
+        final ArrayList<SwimmingObject> result = new ArrayList<SwimmingObject>();
+
+        synchronized (objects)
+        {
+            for (int i = objects.size() - 1; i >= 0; i--)
+            {
+                final SwimmingObject so = objects.get(i);
+
+                if (so != null)
+                {
+                    if (startWith)
+                    {
+                        if (so.getName().startsWith(name))
+                        {
+                            result.add(so);
+                            objects.remove(i);
+                        }
+                    }
+                    else if (StringUtil.equals(name, so.getName()))
+                    {
+                        result.add(so);
+                        objects.remove(i);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Return and remove objects of specified class type
+     */
+    public ArrayList<SwimmingObject> popObjects(Class<?> objectType)
+    {
+        final ArrayList<SwimmingObject> result = new ArrayList<SwimmingObject>();
+
+        synchronized (objects)
+        {
+            for (int i = objects.size() - 1; i >= 0; i--)
+            {
+                final SwimmingObject so = objects.get(i);
+
+                if (so != null)
+                {
+                    final Object obj = so.getObject();
+
+                    if ((obj != null) && objectType.isAssignableFrom(obj.getClass()))
+                    {
+                        result.add(so);
+                        objects.remove(i);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Return true if the swimming pool contains at least one object with the specified name (or
+     * name starting with specified name).
+     */
+    public boolean hasObjects(String name, boolean startWith)
+    {
+        synchronized (objects)
+        {
+            for (SwimmingObject so : objects)
+            {
+                if (so != null)
+                {
+                    if (startWith)
+                    {
+                        if (so.getName().startsWith(name))
+                            return true;
+                    }
+                    else if (StringUtil.equals(name, so.getName()))
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Return true if the swimming pool contains at least one object with the specified class type.
+     */
+    public boolean hasObjects(Class<?> objectType)
+    {
+        synchronized (objects)
+        {
+            for (SwimmingObject so : objects)
+            {
+                if (so != null)
+                {
+                    final Object obj = so.getObject();
+
+                    if ((obj != null) && objectType.isAssignableFrom(obj.getClass()))
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Return the number of object with the specified name (or name starting with specified name)
+     * contained in the swimming pool.
+     */
+    public int getCount(String name, boolean startWith)
+    {
+        int result = 0;
+
+        synchronized (objects)
+        {
+            for (SwimmingObject so : objects)
+            {
+                if (so != null)
+                {
+                    if (startWith)
+                    {
+                        if (so.getName().startsWith(name))
+                            result++;
+                    }
+                    else if (StringUtil.equals(name, so.getName()))
+                        result++;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Return the number of object with the specified class type contained in the swimming pool.
+     */
+    public int getCount(Class<?> objectType)
+    {
+        int result = 0;
+
+        synchronized (objects)
+        {
+            for (SwimmingObject so : objects)
+            {
+                if (so != null)
+                {
+                    final Object obj = so.getObject();
+
+                    if ((obj != null) && objectType.isAssignableFrom(obj.getClass()))
+                        result++;
+                }
+            }
+        }
+
+        return result;
     }
 
     public void addListener(SwimmingPoolListener listener)

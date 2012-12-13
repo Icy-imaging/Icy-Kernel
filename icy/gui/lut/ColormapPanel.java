@@ -65,7 +65,7 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
     private static final long serialVersionUID = -4042084504553770641L;
 
     private static final String DEFAULT_COLORMAP_DIR = "colormap";
-    private static final String DEFAULT_COLORMAP_NAME = "colormap.map";
+    private static final String DEFAULT_COLORMAP_NAME = "colormap.xml";
 
     /**
      * gui

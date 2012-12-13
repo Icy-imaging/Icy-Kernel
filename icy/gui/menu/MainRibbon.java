@@ -29,6 +29,7 @@ import icy.gui.main.MainFrame;
 import icy.gui.menu.action.GeneralActions;
 import icy.gui.menu.action.PreferencesActions;
 import icy.gui.menu.action.WindowActions;
+import icy.gui.menu.search.SearchBar;
 import icy.gui.plugin.PluginCommandButton;
 import icy.gui.util.LookAndFeelUtil;
 import icy.gui.util.RibbonUtil;
@@ -40,17 +41,13 @@ import icy.plugin.PluginDescriptor.PluginClassNameSorter;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
 import icy.plugin.PluginLoader.PluginLoaderListener;
-import icy.plugin.interface_.PluginSearchProvider;
 import icy.preferences.GeneralPreferences;
 import icy.preferences.WorkspaceLocalPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
-import icy.searchbar.SearchBar;
-import icy.searchbar.interfaces.SBProvider;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
-import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.workspace.Workspace;
 import icy.workspace.Workspace.TaskDefinition;
@@ -66,7 +63,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -135,8 +131,6 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
     CommandToggleButtonGroup multiWindowGroup;
     IcyCommandToggleButton multiWindowButton;
 
-    final Runnable searchProviderSetter;
-
     /**
      * @param ribbon
      */
@@ -145,34 +139,6 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
         super();
 
         this.ribbon = ribbon;
-
-        searchProviderSetter = new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                final List<Class<? extends SBProvider>> providers = new ArrayList<Class<? extends SBProvider>>();
-
-                // get search providers from plugin
-                for (PluginDescriptor plugin : PluginLoader.getPlugins(PluginSearchProvider.class))
-                {
-                    try
-                    {
-                        final PluginSearchProvider psp = (PluginSearchProvider) plugin.getPluginClass().newInstance();
-
-                        providers.add(psp.getSearchProviderClass());
-                    }
-                    catch (Throwable t)
-                    {
-                        IcyExceptionHandler.handleException(plugin, t, true);
-                    }
-
-                }
-
-                // update search bar providers
-                searchBar.setProvider(providers);
-            }
-        };
 
         workspaces = new ArrayList<Workspace>();
         othersPluginsMenu = new JMenu("Plugins");
@@ -1003,9 +969,6 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
         searchBar = new SearchBar();
         searchBar.setColumns(14);
 
-        // set search provider
-        updateSearchProviders();
-
         ribbon.addTaskbarComponent(searchBar);
 
         // HELP / INFOS
@@ -1038,11 +1001,6 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
             }
         });
         ribbon.addTaskbarComponent(helpAndInfoButton);
-    }
-
-    private void updateSearchProviders()
-    {
-        ThreadUtil.bgRunSingle(searchProviderSetter);
     }
 
     private void checkPluginsMenuCoherence()
@@ -1100,8 +1058,6 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
     {
         // update menu according to plugins change
         checkPluginsMenuCoherence();
-        // update search providers
-        updateSearchProviders();
     }
 
     @Override

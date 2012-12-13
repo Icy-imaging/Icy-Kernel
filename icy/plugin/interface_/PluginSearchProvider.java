@@ -3,7 +3,7 @@
  */
 package icy.plugin.interface_;
 
-import icy.searchbar.interfaces.SBProvider;
+import icy.search.SearchResultProducer;
 
 /**
  * Plugin Search Provider interface.<br>
@@ -16,7 +16,7 @@ public interface PluginSearchProvider
     /**
      * Return the Search Provider.
      * 
-     * @see SBProvider
+     * @see SearchResultProducer
      */
-    public Class<? extends SBProvider> getSearchProviderClass();
+    public Class<? extends SearchResultProducer> getSearchProviderClass();
 }

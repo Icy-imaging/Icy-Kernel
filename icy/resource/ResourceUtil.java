@@ -73,8 +73,13 @@ public class ResourceUtil
     public static final Image ICON_DOCTEXT2 = ResourceUtil.getAlphaIconAsImage("doc_lines_stright.png");
     public static final Image ICON_DUPLICATE = ResourceUtil.getAlphaIconAsImage("duplicate.png");
     public static final Image ICON_OPEN = ResourceUtil.getAlphaIconAsImage("folder_open.png");
+    public static final Image ICON_LOAD = ICON_OPEN;
     public static final Image ICON_SAVE = ResourceUtil.getAlphaIconAsImage("save.png");
     public static final Image ICON_CLOSE = ResourceUtil.getAlphaIconAsImage("round_delete.png");
+    public static final Image ICON_COPY = ResourceUtil.getAlphaIconAsImage("clipboard_copy.png");
+    public static final Image ICON_CUT = ResourceUtil.getAlphaIconAsImage("clipboard_cut.png");
+    public static final Image ICON_PASTE = ResourceUtil.getAlphaIconAsImage("clipboard_past.png");
+
     public static final Image ICON_HELP = ResourceUtil.getAlphaIconAsImage("help.png");
     public static final Image ICON_INFO = ResourceUtil.getAlphaIconAsImage("info.png");
 
@@ -90,7 +95,6 @@ public class ResourceUtil
     public static final Image ICON_PROPERTIES = ICON_DOCTEXT1;
     public static final Image ICON_TAG = ResourceUtil.getAlphaIconAsImage("tag.png");
     public static final Image ICON_TOOLS = ResourceUtil.getAlphaIconAsImage("wrench_plus_2.png");
-    public static final Image ICON_CUT = ResourceUtil.getAlphaIconAsImage("clipboard_cut.png");
     public static final Image ICON_LIGHTING = ResourceUtil.getAlphaIconAsImage("lighting.png");
     public static final Image ICON_SEARCH = ResourceUtil.getAlphaIconAsImage("zoom.png");
     public static final Image ICON_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png");

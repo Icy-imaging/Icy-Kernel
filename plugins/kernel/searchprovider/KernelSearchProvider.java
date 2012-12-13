@@ -7,12 +7,13 @@ import icy.common.IcyAbstractAction;
 import icy.gui.menu.action.FileActions;
 import icy.gui.menu.action.GeneralActions;
 import icy.gui.menu.action.PreferencesActions;
+import icy.gui.menu.action.RoiActions;
 import icy.gui.menu.action.SequenceOperationActions;
 import icy.gui.menu.action.WindowActions;
 import icy.resource.icon.IcyIcon;
-import icy.searchbar.interfaces.SBLink;
-import icy.searchbar.interfaces.SBProvider;
-import icy.system.thread.ThreadUtil;
+import icy.search.SearchResult;
+import icy.search.SearchResultConsumer;
+import icy.search.SearchResultProducer;
 import icy.util.StringUtil;
 
 import java.awt.Image;
@@ -20,52 +21,24 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JButton;
-
 import org.pushingpixels.flamingo.api.common.RichTooltip;
-import org.w3c.dom.Element;
 
 /**
  * This class is used to provide kernel command elements to the Finder.
  * 
  * @author Stephane
  */
-public class KernelSearchProvider extends SBProvider
+public class KernelSearchProvider extends SearchResultProducer
 {
-    private class ActionLink extends SBLink
+    private class KernelSearchResult extends SearchResult
     {
         private final IcyAbstractAction action;
 
-        public ActionLink(SBProvider provider, IcyAbstractAction action)
+        public KernelSearchResult(SearchResultProducer provider, IcyAbstractAction action)
         {
             super(provider);
 
             this.action = action;
-        }
-
-        @Override
-        public String getLabel()
-        {
-            final String desc = action.getDescription();
-            final String longDesc = action.getLongDescription();
-
-            String result = "<html><b>";
-
-            if (!StringUtil.isEmpty(desc))
-                result += desc + "</b>";
-            else
-                result += action.getName() + "</b>";
-            if (!StringUtil.isEmpty(longDesc))
-            {
-                final String[] lds = longDesc.split("\n");
-
-                if (lds.length > 0)
-                    result += "<br>" + lds[0];
-                if (lds.length > 1)
-                    result += "...";
-            }
-
-            return result;
         }
 
         @Override
@@ -77,6 +50,50 @@ public class KernelSearchProvider extends SBProvider
                 return icon.getImage();
 
             return null;
+        }
+
+        @Override
+        public String getTitle()
+        {
+            final String desc = action.getDescription();
+
+            if (!StringUtil.isEmpty(desc))
+                return desc;
+
+            return action.getName();
+        }
+
+        @Override
+        public String getDescription()
+        {
+            String result = "";
+            final String longDesc = action.getLongDescription();
+
+            if (!StringUtil.isEmpty(longDesc))
+            {
+                final String[] lds = longDesc.split("\n");
+
+                if (lds.length > 0)
+                    result += StringUtil.limit(lds[0], 75, true);
+            }
+
+            return result;
+        }
+
+        @Override
+        public String getTooltip()
+        {
+            if (isEnabled())
+                return "Click to execute the action";
+
+            return "Inactive action";
+            // return action.getLongDescription();
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return action.isEnabled();
         }
 
         @Override
@@ -100,9 +117,9 @@ public class KernelSearchProvider extends SBProvider
         }
 
         @Override
-        public JButton getActionB()
+        public void executeAlternate()
         {
-            return null;
+            // nothing to do here...
         }
     }
 
@@ -120,28 +137,10 @@ public class KernelSearchProvider extends SBProvider
             actions.addAll(GeneralActions.getAllActions());
             actions.addAll(PreferencesActions.getAllActions());
             actions.addAll(SequenceOperationActions.getAllActions());
+            actions.addAll(RoiActions.getAllActions());
             actions.addAll(WindowActions.getAllActions());
         }
     }
-
-    private static boolean searchInAction(IcyAbstractAction action, String upperCaseText)
-    {
-        String text;
-
-        text = action.getName();
-        if (!StringUtil.isEmpty(text) && text.toUpperCase().contains(upperCaseText))
-            return true;
-        text = action.getDescription();
-        if (!StringUtil.isEmpty(text) && text.toUpperCase().contains(upperCaseText))
-            return true;
-        text = action.getLongDescription();
-        if (!StringUtil.isEmpty(text) && text.toUpperCase().contains(upperCaseText))
-            return true;
-
-        return false;
-    }
-
-    private volatile boolean processing = false;
 
     @Override
     public String getName()
@@ -152,55 +151,73 @@ public class KernelSearchProvider extends SBProvider
     @Override
     public String getTooltipText()
     {
-        return "";
+        return "Result coming from the application internals commands and actions";
     }
 
     @Override
-    public void performLocalRequest(String filter)
+    protected void doSearch(String[] words, SearchResultConsumer consumer)
     {
         // ensure actions has been initialized
         initActions();
 
-        isRequestCancelled = true;
-        waitCompletion();
+        if (hasWaitingSearch())
+            return;
 
-        final String upperCaseFilter = filter.toUpperCase();
+        final ArrayList<SearchResult> tmpResults = new ArrayList<SearchResult>();
+        final boolean shortSearch = (words.length == 1) && (words[0].length() <= 2);
 
-        elements.clear();
-        isRequestCancelled = false;
-        processing = true;
-        try
+        for (IcyAbstractAction action : actions)
         {
-            for (IcyAbstractAction action : actions)
-            {
-                // abort
-                if (isRequestCancelled)
-                    return;
+            // abort
+            if (hasWaitingSearch())
+                return;
 
-                // action match filter
-                if (searchInAction(action, upperCaseFilter))
-                    elements.add(new ActionLink(this, action));
-            }
-
-            // done
-            loaded();
+            // action match filter
+            if (searchInAction(action, words, shortSearch))
+                tmpResults.add(new KernelSearchResult(this, action));
         }
-        finally
+
+        results = tmpResults;
+    }
+
+    private boolean searchInAction(IcyAbstractAction action, String words[], boolean startWithOnly)
+    {
+        // we accept action which contains all words only
+        for (String word : words)
+            if (!searchInAction(action, word, startWithOnly))
+                return false;
+
+        return words.length > 0;
+    }
+
+    private boolean searchInAction(IcyAbstractAction action, String word, boolean startWithOnly)
+    {
+        final String wordlc = word.toLowerCase();
+        String text;
+
+        if (startWithOnly)
         {
-            processing = false;
+            text = action.getName();
+            if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
+                return true;
+            text = action.getDescription();
+            if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
+                return true;
         }
+        else
+        {
+            text = action.getName();
+            if (!StringUtil.isEmpty(text) && text.toLowerCase().contains(wordlc))
+                return true;
+            text = action.getDescription();
+            if (!StringUtil.isEmpty(text) && text.toLowerCase().contains(wordlc))
+                return true;
+            text = action.getLongDescription();
+            if (!StringUtil.isEmpty(text) && text.toLowerCase().contains(wordlc))
+                return true;
+        }
+
+        return false;
     }
 
-    @Override
-    public void processOnlineResult(String filter, Element result)
-    {
-        // no online search
-        loaded();
-    }
-
-    private void waitCompletion()
-    {
-        while (processing)
-            ThreadUtil.sleep(10);
-    }
 }

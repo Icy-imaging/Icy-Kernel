@@ -42,7 +42,7 @@ public class SwimmingObject
         return result;
     }
 
-    private static final String DEFAULT_NAME = "no name";
+    private static final String DEFAULT_NAME = "object";
     private static final ImageIcon DEFAULT_ICON = null;
 
     private static int id_gen = 1;

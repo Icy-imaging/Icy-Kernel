@@ -2,275 +2,288 @@ package plugins.kernel.searchprovider;
 
 import icy.gui.plugin.PluginRichToolTip;
 import icy.network.NetworkUtil;
+import icy.network.URLUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginRepositoryLoader;
-import icy.plugin.PluginRepositoryLoader.PluginRepositoryLoaderListener;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.searchbar.common.TextUtil;
-import icy.searchbar.interfaces.SBLink;
-import icy.searchbar.interfaces.SBProvider;
-import icy.searchbar.provider.ProviderListener;
+import icy.search.SearchResult;
+import icy.search.SearchResultConsumer;
+import icy.search.SearchResultProducer;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
-import java.awt.Cursor;
 import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Calendar;
 
-import javax.swing.JButton;
+import javax.swing.ImageIcon;
 
 import org.pushingpixels.flamingo.api.common.RichTooltip;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
  * This class is used to provide plugin elements to the SearchBar found Online.
  * 
- * @author Thomas Provoost
+ * @author Thomas Provoost & Stephane
  */
-public class OnlinePluginProvider extends SBProvider implements PluginRepositoryLoaderListener
+public class OnlinePluginProvider extends SearchResultProducer
 {
-
     /**
-     * This list is used for the second request, to be sure there is not twice
-     * the same element in the table.
+     * @author Stephane
      */
-    ArrayList<PluginDescriptor> pluginsAdded = new ArrayList<PluginDescriptor>();
-
-    public OnlinePluginProvider()
+    private class OnlinePluginResult extends SearchResult
     {
-        PluginRepositoryLoader.addListener(this);
-    }
+        final PluginDescriptor plugin;
+        private String filteredDescription;
 
-    @Override
-    public void performLocalRequest(String text)
-    {
-        if (!isRequestCancelled)
-        {
-            loaded();
-        }
-    }
-
-    @Override
-    public String getName()
-    {
-        return "Online Plugins";
-    }
-
-    @Override
-    public void cancelRequest()
-    {
-        super.cancelRequest();
-
-        PluginRepositoryLoader.removeListener(this);
-        if (SBProvider.DEBUG)
-            System.out.println(getName() + " " + getId() + " cancelled" + Calendar.getInstance().get(Calendar.SECOND)
-                    + ":" + Calendar.getInstance().get(Calendar.MILLISECOND));
-    }
-
-    /**
-     * @author Thomas Provoost
-     */
-    private class LinkOPlugin extends SBLink
-    {
-
-        /** Reference to the plugin this item refers to. */
-        private PluginDescriptor pd;
-        private String truncText;
-
-        public LinkOPlugin(SBProvider provider, PluginDescriptor pd, String text)
+        public OnlinePluginResult(SearchResultProducer provider, PluginDescriptor plugin, String text,
+                String searchWords[])
         {
             super(provider);
-            this.pd = pd;
-            this.truncText = text;
+
+            this.plugin = plugin;
+
+            int wi = 0;
+            filteredDescription = "";
+            while (StringUtil.isEmpty(filteredDescription) && (wi < searchWords.length))
+            {
+                filteredDescription = StringUtil.trunc(text, searchWords[wi], 60, true);
+                wi++;
+            }
         }
 
-        public LinkOPlugin(SBProvider provider, PluginDescriptor pd, String text, String request)
+        public PluginDescriptor getPlugin()
         {
-            super(provider);
-            this.pd = pd;
-            if (text.isEmpty())
-                text = pd.getDescription();
-            text = text.replaceAll("\\<.*?\\>", "");
-            truncText = TextUtil.truncateText(text, request);
-            truncText = "<br/>" + truncText;
+            return plugin;
         }
 
         @Override
-        public String getLabel()
+        public String getTitle()
         {
-            return pd.getName() + truncText;
+            return plugin.getName();
         }
 
         @Override
         public Image getImage()
         {
-            return pd.getIconAsImage();
+            final ImageIcon icon = plugin.getIcon();
+
+            if (icon != null)
+                return icon.getImage();
+
+            return null;
+        }
+
+        @Override
+        public String getDescription()
+        {
+            return filteredDescription;
+        }
+
+        @Override
+        public String getTooltip()
+        {
+            return "Left click: install & run / Right click: documentation";
+            // return plugin.getDescription();
         }
 
         @Override
         public void execute()
         {
-            // install and run the plugin (if user ok with install)
-            PluginInstaller.install(pd, true);
-            PluginInstaller.addListener(new PluginInstaller.PluginInstallerListener()
+            // can take sometime, better to execute it in background
+            ThreadUtil.bgRun(new Runnable()
             {
-
                 @Override
-                public void pluginRemoved(boolean success)
+                public void run()
                 {
-                }
+                    // install and run the plugin (if user ok with install)
+                    PluginInstaller.install(plugin, true);
+                    // wait for installation complete
+                    PluginInstaller.waitInstall();
 
-                @Override
-                public void pluginInstalled(boolean success)
-                {
-                    if (success)
-                        ThreadUtil.invokeLater(new Runnable()
-                        {
-                            @Override
-                            public void run()
-                            {
-                                PluginLauncher.launch(PluginLoader.getPlugin(pd.getClassName()));
-                            }
-                        });
-                    PluginInstaller.removeListener(this);
+                    // find the new installed plugin
+                    final PluginDescriptor localPlugin = PluginLoader.getPlugin(plugin.getClassName());
+                    // plugin found ? --> launch it !
+                    if (localPlugin != null)
+                        PluginLauncher.start(localPlugin);
                 }
             });
         }
 
-        // @Override
-        // public JWindow getPopup()
-        // {
-        // return new PluginPopup(pd);
-        // }
+        @Override
+        public void executeAlternate()
+        {
+            NetworkUtil.openURL(plugin.getWeb());
+        }
 
         @Override
         public RichTooltip getRichToolTip()
         {
-            return new PluginRichToolTip(pd);
-        }
-
-        @Override
-        public JButton getActionB()
-        {
-            boolean onlineFailed = PluginRepositoryLoader.failed();
-
-            JButton itemPluginPageDoc = new JButton();
-            itemPluginPageDoc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            itemPluginPageDoc.setIcon(new IcyIcon(ResourceUtil.ICON_DOC, 32));
-            itemPluginPageDoc.addActionListener(new ActionListener()
-            {
-
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    NetworkUtil.openURL("http://icy.bioimageanalysis.org/plugin/" + pd.getName());
-                }
-            });
-            if (onlineFailed)
-            {
-                itemPluginPageDoc.setEnabled(false);
-            }
-            return itemPluginPageDoc;
+            return new PluginRichToolTip(plugin);
         }
     }
 
+    private static final String SEARCH_URL = "http://bioimageanalysis.org/icy/search/search.php?search=";
+
+    private static final String ID_SEARCH_RESULT = "searchresult";
+    private static final String ID_PLUGIN = "plugin";
+    private static final String ID_CLASSNAME = "classname";
+    // private static final String ID_NAME = "name";
+    private static final String ID_TEXT = "string";
+
+    private final long REQUEST_INTERVAL = 400;
+
     @Override
-    public synchronized void processOnlineResult(String filter, Element result)
+    public String getName()
     {
-        if (isRequestCancelled)
-            return;
-        PluginRepositoryLoader.waitBasicLoaded();
-        if (isRequestCancelled)
-            return;
-        for (Element plugin : XMLUtil.getElements(result, "plugin"))
-        {
-            if (isRequestCancelled)
-            {
-                if (SBProvider.DEBUG)
-                    System.out.println(this.getName() + ": request cancelled");
-                return;
-            }
-            String name = XMLUtil.getElementValue(plugin, "name", "");
-            String className = XMLUtil.getElementValue(plugin, "classname", "");
-            String str = XMLUtil.getElementValue(plugin, "string", "");
-            if (SBProvider.DEBUG)
-                System.out.println(className);
-            if ((StringUtil.isEmpty(name) || !name.toLowerCase().contains(filter.toLowerCase()))
-                    && (StringUtil.isEmpty(str) || !str.toLowerCase().contains(filter.toLowerCase()) || StringUtil
-                            .isEmpty(className)))
-                continue;
-            final PluginDescriptor pd = PluginRepositoryLoader.getPlugin(className);
-            if (pd == null)
-            {
-                if (SBProvider.DEBUG)
-                    System.out.println(className + " not found.");
-            }
-            else if (PluginLoader.getPlugin(className) != null)
-            {
-                if (SBProvider.DEBUG)
-                    System.out.println(pd.getClassName() + ": already exists.");
-            }
-            else
-            {
-                pd.loadAll();
-                for (ProviderListener l : getListeners())
-                    l.updateDisplay();
-                SBLink link = new LinkOPlugin(this, pd, str, filter);
-                if (SBProvider.DEBUG)
-                    System.out.println(name + " added");
-                elements.add(link);
-            }
-        }
-        if (isRequestCancelled)
-            return;
-        loaded();
+        return "Online plugins";
     }
 
     @Override
     public String getTooltipText()
     {
-        return "left click: import + run / right click: documentation";
+        return "Result coming from online plugin";
     }
 
     @Override
-    protected boolean listConstains(SBLink link)
+    protected void doSearch(String[] words, SearchResultConsumer consumer)
     {
-        if (!elements.isEmpty())
+        String request = SEARCH_URL;
+
+        if (words.length > 0)
+            request += words[0].replace("+", "%2B").replace("&", "%26").replace("@", "%40").replace("<", "%3C")
+                    .replace(">", "%3E");
+        if (words.length > 1)
         {
-            LinkOPlugin plink = (LinkOPlugin) link;
-            for (SBLink p : elements)
-            {
-                if (StringUtil.equals(((LinkOPlugin) p).pd.getClassName(), plink.pd.getClassName()))
-                    return true;
-            }
+            for (int i = 1; i < words.length; i++)
+                request += "%20"
+                        + words[i].replace("+", "%2B").replace("&", "%26").replace("@", "%40").replace("<", "%3C")
+                                .replace(">", "%3E");
         }
-        return false;
-    }
 
-    private void pluginUpdated()
-    {
-        for (ProviderListener p : getListeners())
-            p.providerItemChanged();
-    }
+        final long startTime = System.currentTimeMillis();
 
-    @Override
-    public void pluginRepositeryLoaderChanged(PluginDescriptor plugin)
-    {
-        for (int i = 0; i < elements.size(); ++i)
+        // wait interval elapsed before sending request (avoid website request spam)
+        while ((System.currentTimeMillis() - startTime) < REQUEST_INTERVAL)
         {
-            if (((LinkOPlugin) elements.get(i)).pd == plugin)
-            {
-                pluginUpdated();
+            ThreadUtil.sleep(10);
+            // abort
+            if (hasWaitingSearch())
                 return;
-            }
+        }
+
+//        System.out.println("Request: " + request);
+
+        Document doc = null;
+        int retry = 0;
+
+        // let's 10 try to get the result
+        while ((doc == null) && (retry < 10))
+        {
+            // we use an online request as website can search in plugin documention
+            doc = XMLUtil.loadDocument(URLUtil.getURL(request), false);
+
+            // abort
+            if (hasWaitingSearch())
+                return;
+
+            // error ? --> wait a bit before retry
+            if (doc == null)
+                ThreadUtil.sleep(50);
+        }
+
+        // can't get result from website --> exit
+        if (doc == null)
+            return;
+
+        // Online plugin loader failed --> exit
+        if (!ensureOnlineLoaderLoaded())
+            return;
+
+        if (hasWaitingSearch())
+            return;
+
+        // get online plugins
+        final ArrayList<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins();
+        // get online result node
+        final Element resultElement = XMLUtil.getElement(doc.getDocumentElement(), ID_SEARCH_RESULT);
+
+        if (resultElement == null)
+            return;
+
+        final ArrayList<SearchResult> tmpResults = new ArrayList<SearchResult>();
+
+        for (Element plugin : XMLUtil.getElements(resultElement, ID_PLUGIN))
+        {
+            // abort
+            if (hasWaitingSearch())
+                return;
+
+            final SearchResult result = getResult(onlinePlugins, plugin, words);
+
+            if (result != null)
+                tmpResults.add(result);
+        }
+
+        results = tmpResults;
+        consumer.resultsChanged(this);
+
+        // load descriptions
+        for (SearchResult result : tmpResults)
+        {
+            // abort
+            if (hasWaitingSearch())
+                return;
+
+            ((OnlinePluginResult) result).getPlugin().loadDescriptor();
+            consumer.resultsChanged(this);
+        }
+
+        // load images
+        for (SearchResult result : tmpResults)
+        {
+            // abort
+            if (hasWaitingSearch())
+                return;
+
+            ((OnlinePluginResult) result).getPlugin().loadImages();
+            consumer.resultsChanged(this);
         }
     }
+
+    private boolean ensureOnlineLoaderLoaded()
+    {
+        PluginRepositoryLoader.waitBasicLoaded();
+
+        // repository loader failed --> retry once
+        if (PluginRepositoryLoader.failed() && NetworkUtil.hasInternetAccess())
+        {
+            PluginRepositoryLoader.reload();
+            PluginRepositoryLoader.waitBasicLoaded();
+        }
+
+        return !PluginRepositoryLoader.failed();
+    }
+
+    private OnlinePluginResult getResult(ArrayList<PluginDescriptor> onlinePlugins, Element pluginNode, String words[])
+    {
+        final String className = XMLUtil.getElementValue(pluginNode, ID_CLASSNAME, "");
+        final String text = XMLUtil.getElementValue(pluginNode, ID_TEXT, "");
+
+        final PluginDescriptor localPlugin = PluginLoader.getPlugin(className);
+        final PluginDescriptor onlinePlugin = PluginDescriptor.getPlugin(onlinePlugins, className);
+
+        // exists in local ? --> don't return result in online
+        if (localPlugin != null)
+            return null;
+        // cannot be found in online ? --> no result
+        if (onlinePlugin == null)
+            return null;
+
+        return new OnlinePluginResult(this, onlinePlugin, text, words);
+    }
+
 }

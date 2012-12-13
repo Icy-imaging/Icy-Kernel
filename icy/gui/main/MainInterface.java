@@ -22,6 +22,7 @@ package icy.gui.main;
 import icy.common.EventHierarchicalChecker;
 import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
+import icy.gui.inspector.RoisPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.ToolRibbonTask;
 import icy.gui.viewer.Viewer;
@@ -78,6 +79,11 @@ public interface MainInterface
      * Return the inspector object (right informations panel)
      */
     public abstract InspectorPanel getInspector();
+
+    /**
+     * Return the ROI manager panel
+     */
+    public abstract RoisPanel getRoisPanel();
 
     /**
      * Return the currently active plugins

@@ -22,6 +22,7 @@ package icy.gui.main;
 import icy.common.EventHierarchicalChecker;
 import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
+import icy.gui.inspector.RoisPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.ToolRibbonTask;
 import icy.gui.viewer.Viewer;
@@ -44,10 +45,20 @@ import javax.swing.JInternalFrame;
  * Default implementation used when Icy is launched in batch mode, without any GUI
  * 
  * @see icy.gui.main.MainInterfaceGui
- * @author Nicolas HERVE
+ * @author Nicolas HERVE & Stephane
  */
 public class MainInterfaceBatch implements MainInterface
 {
+    /**
+     * Swimming Pool can be useful even in batch mode
+     */
+    private final SwimmingPool swimmingPool;
+
+    public MainInterfaceBatch()
+    {
+        swimmingPool = new SwimmingPool();
+    }
+
     @Override
     public void init()
     {
@@ -74,6 +85,12 @@ public class MainInterfaceBatch implements MainInterface
 
     @Override
     public InspectorPanel getInspector()
+    {
+        return null;
+    }
+
+    @Override
+    public RoisPanel getRoisPanel()
     {
         return null;
     }
@@ -265,7 +282,7 @@ public class MainInterfaceBatch implements MainInterface
     @Override
     public SwimmingPool getSwimmingPool()
     {
-        return null;
+        return swimmingPool;
     }
 
     @Override
@@ -431,4 +448,5 @@ public class MainInterfaceBatch implements MainInterface
     {
 
     }
+
 }

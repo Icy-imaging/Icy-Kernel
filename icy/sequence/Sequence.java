@@ -272,9 +272,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public Sequence(String name, IcyBufferedImage image)
     {
-        this((OMEXMLMetadataImpl) null, name);
-
-        addImage(image);
+        this(name, (BufferedImage) image);
     }
 
     /**
@@ -296,14 +294,11 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #Sequence(BufferedImage)} instead.
+     * Creates a sequence containing the specified image.
      */
-    @Deprecated
     public Sequence(IcyBufferedImage image)
     {
-        this((OMEXMLMetadataImpl) null, null);
-
-        addImage(image);
+        this((BufferedImage) image);
     }
 
     /**

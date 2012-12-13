@@ -675,9 +675,6 @@ public class PluginDescriptor implements XMLPersistent
         {
             // xml is absent or incorrect, we set default informations
             ident.setClassName(pluginClass.getName());
-            // TODO: remove that when plugin will be updated
-            if (pluginClass.getName().startsWith("plugins.fab.MiceProfiler"))
-                ident.setVersion(new Version("0.0.0.1"));
             name = pluginClass.getSimpleName();
             desc = name + " plugin";
         }
@@ -714,7 +711,10 @@ public class PluginDescriptor implements XMLPersistent
     @Deprecated
     public boolean load(boolean loadImages)
     {
-        return loadDescriptor();
+        if (loadDescriptor())
+            if (loadImages) return loadImages();
+        
+        return false;
     }
 
     /**
@@ -1003,6 +1003,10 @@ public class PluginDescriptor implements XMLPersistent
         return pluginClass != null;
     }
 
+    /**
+     * Returns the plugin class name.<br>
+     * Ex: "plugins.tutorial.Example1"
+     */
     public String getClassName()
     {
         return ident.getClassName();

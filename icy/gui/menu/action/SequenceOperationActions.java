@@ -67,6 +67,12 @@ public class SequenceOperationActions
                 Icy.getMainInterface().addSequence(
                         SequenceUtil.convertToType(Icy.getMainInterface().getFocusedSequence(), dataType, scaled));
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+        }
     }
 
     static class SequenceColorAction extends IcyAbstractAction
@@ -168,6 +174,12 @@ public class SequenceOperationActions
                 }
             }
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+        }
     }
 
     public static class ExtractChannelAction extends IcyAbstractAction
@@ -178,11 +190,11 @@ public class SequenceOperationActions
 
         public ExtractChannelAction(int channel)
         {
-            super((channel == -1) ? "all channels" : "channel " + channel, null,
-                    (channel == -1) ? "Extract all channels" : "Extract channel " + channel,
-                    (channel == -1) ? "Separate all channels of active sequence"
-                            : "Create a new single channel sequence from channel " + channel + " of active sequence",
-                    true, (channel == -1) ? "Extracting channel(s)..." : "Extracting channel " + channel + "...");
+            super((channel == -1) ? "all channels" : "channel " + channel, new IcyIcon(
+                    ResourceUtil.ICON_INDENT_DECREASE), (channel == -1) ? "Extract all channels" : "Extract channel "
+                    + channel, (channel == -1) ? "Separate all channels of active sequence"
+                    : "Create a new single channel sequence from channel " + channel + " of active sequence", true,
+                    (channel == -1) ? "Extracting channel(s)..." : "Extracting channel " + channel + "...");
 
             this.channel = channel;
         }
@@ -203,6 +215,14 @@ public class SequenceOperationActions
                     Icy.getMainInterface().addSequence(SequenceUtil.extractChannel(sequence, channel));
             }
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+
+            return !processing && (seq != null) && (channel < seq.getSizeC());
+        }
     }
 
     public static class RemoveChannelAction extends IcyAbstractAction
@@ -213,8 +233,8 @@ public class SequenceOperationActions
 
         public RemoveChannelAction(int channel)
         {
-            super("channel " + channel, null, "Remove channel" + channel, "Remove channel " + channel
-                    + " from active sequence", true, "Removing channel " + channel + "...");
+            super("channel " + channel, new IcyIcon(ResourceUtil.ICON_INDENT_REMOVE), "Remove channel " + channel,
+                    "Remove channel " + channel + " from active sequence", true, "Removing channel " + channel + "...");
 
             this.channel = channel;
         }
@@ -226,6 +246,14 @@ public class SequenceOperationActions
 
             if (sequence != null)
                 SequenceUtil.removeChannel(sequence, channel);
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+
+            return !processing && (seq != null) && (channel < seq.getSizeC());
         }
     }
 
@@ -273,6 +301,12 @@ public class SequenceOperationActions
             if (sequence != null)
                 Icy.getMainInterface().addSequence(SequenceUtil.getCopy(sequence));
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+        }
     };
 
     public static IcyAbstractAction convertUByteScaledSequenceAction = new SequenceConvertAction(DataType.UBYTE, true);
@@ -308,6 +342,12 @@ public class SequenceOperationActions
         {
             new SequenceCropper();
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+        }
     };
 
     public static IcyAbstractAction canvasResizeAction = new IcyAbstractAction("Canvas size...", new IcyIcon(
@@ -323,6 +363,12 @@ public class SequenceOperationActions
             if (sequence != null)
                 new SequenceCanvasResizeFrame(sequence);
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+        }
     };
 
     public static IcyAbstractAction imageResizeAction = new IcyAbstractAction("Image size...", new IcyIcon(
@@ -337,6 +383,12 @@ public class SequenceOperationActions
 
             if (sequence != null)
                 new SequenceResizeFrame(sequence);
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -385,6 +437,15 @@ public class SequenceOperationActions
             if (z != -1)
                 Icy.getMainInterface().addSequence(SequenceUtil.extractSlice(viewer.getSequence(), z));
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final int z = (viewer == null) ? -1 : viewer.getZ();
+
+            return !processing && (z != -1);
+        }
     };
 
     public static IcyAbstractAction removeSliceAction = new IcyAbstractAction("Remove slice", new IcyIcon(
@@ -405,6 +466,15 @@ public class SequenceOperationActions
             if (z != -1)
                 SequenceUtil.removeZAndShift(viewer.getSequence(), z);
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final int z = (viewer == null) ? -1 : viewer.getZ();
+
+            return !processing && (z != -1);
+        }
     };
 
     public static IcyAbstractAction addSlicesAction = new IcyAbstractAction("Add...", new IcyIcon(
@@ -423,6 +493,12 @@ public class SequenceOperationActions
 
             if (sequence != null)
                 new SequenceDimensionExtendFrame(Icy.getMainInterface().getFocusedSequence(), DimensionId.Z);
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -444,6 +520,12 @@ public class SequenceOperationActions
             if (sequence != null)
                 new SequenceDimensionAdjustFrame(sequence, DimensionId.Z);
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+        }
     };
 
     // T operations
@@ -463,6 +545,12 @@ public class SequenceOperationActions
 
             if (sequence != null)
                 SequenceUtil.reverseT(sequence);
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -484,6 +572,15 @@ public class SequenceOperationActions
             if (t != -1)
                 Icy.getMainInterface().addSequence(SequenceUtil.extractFrame(viewer.getSequence(), t));
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final int t = (viewer == null) ? -1 : viewer.getT();
+
+            return !processing && (t != -1);
+        }
     };
 
     public static IcyAbstractAction removeFrameAction = new IcyAbstractAction("Remove frame", new IcyIcon(
@@ -504,6 +601,15 @@ public class SequenceOperationActions
             if (t != -1)
                 SequenceUtil.removeTAndShift(viewer.getSequence(), t);
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final int t = (viewer == null) ? -1 : viewer.getT();
+
+            return !processing && (t != -1);
+        }
     };
 
     public static IcyAbstractAction addFramesAction = new IcyAbstractAction("Add...", new IcyIcon(
@@ -522,6 +628,12 @@ public class SequenceOperationActions
 
             if (sequence != null)
                 new SequenceDimensionExtendFrame(Icy.getMainInterface().getFocusedSequence(), DimensionId.T);
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -542,6 +654,12 @@ public class SequenceOperationActions
 
             if (sequence != null)
                 new SequenceDimensionAdjustFrame(sequence, DimensionId.T);
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -572,6 +690,12 @@ public class SequenceOperationActions
                 }
             }
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+        }
     };
 
     public static IcyAbstractAction convertToFramesAction = new IcyAbstractAction("Convert to frames", new IcyIcon(
@@ -600,6 +724,12 @@ public class SequenceOperationActions
                 }
             }
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+        }
     };
 
     public static IcyAbstractAction advancedZTConvertAction = new IcyAbstractAction("Advanced...", new IcyIcon(
@@ -617,6 +747,12 @@ public class SequenceOperationActions
 
             if (sequence != null)
                 new SequenceDimensionConvertFrame(sequence);
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 

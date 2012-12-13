@@ -287,7 +287,9 @@ public class PluginRepositoryLoader
     }
 
     /**
-     * Reload all plugins from all active repositories (old list is cleared)
+     * Reload all plugins from all active repositories (old list is cleared).<br>
+     * Asynchronous process, use {@link #waitBasicLoaded()} or {@link #waitDescriptorsLoaded()}
+     * method to wait for specified data to be loaded.
      */
     public static synchronized void reload()
     {

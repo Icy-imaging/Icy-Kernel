@@ -97,6 +97,12 @@ public class GeneralActions
                 });
             }
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+        }
     };
 
     public static IcyAbstractAction toIcyAction = new IcyAbstractAction("Convert to Icy", new IcyIcon(
@@ -127,6 +133,12 @@ public class GeneralActions
                     }
                 });
             }
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (WindowManager.getCurrentImage() != null);
         }
     };
 

@@ -168,6 +168,15 @@ public class PluginInstaller implements Runnable
     }
 
     /**
+     * Wait while installer is installing plugin.
+     */
+    public static void waitInstall()
+    {
+        while (isInstalling())
+            ThreadUtil.sleep(100);
+    }
+
+    /**
      * return true if PluginInstaller is installing plugin(s)
      */
     public static boolean isInstalling()
@@ -252,6 +261,15 @@ public class PluginInstaller implements Runnable
         {
             return new ArrayList<PluginInstaller.PluginInstallInfo>(instance.removeFIFO);
         }
+    }
+
+    /**
+     * Wait while installer is removing plugin.
+     */
+    public static void waitDesinstall()
+    {
+        while (isDesinstalling())
+            ThreadUtil.sleep(100);
     }
 
     /**

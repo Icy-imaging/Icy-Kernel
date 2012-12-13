@@ -33,11 +33,11 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
     /**
      * internals
      */
-    private boolean bgProcess;
-    private boolean processing;
-    private String processMessage;
-    private ProgressFrame progressFrame;
-    private ActionEvent event;
+    protected boolean bgProcess;
+    protected boolean processing;
+    protected String processMessage;
+    protected ProgressFrame progressFrame;
+    protected ActionEvent event;
 
     public IcyAbstractAction(String name, IcyIcon icon, String description, String longDescription, int keyCode,
             int modifiers, boolean bgProcess, String processMessage)

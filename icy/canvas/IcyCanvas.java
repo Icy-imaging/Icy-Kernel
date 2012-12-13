@@ -3030,9 +3030,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                 len *= sizeC;
 
             result.beginUpdate();
-            // this cause position changed event to not be sent during rendering
-            // which is a problem for painter relying on this
-            // beginUpdate();
+            // This cause position changed event to not be sent during rendering.
+            // Painters have to take care of that, they should check the canvas position
+            // in the paint() method
+            beginUpdate();
             try
             {
                 if (posT != -1)
@@ -3132,7 +3133,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             }
             finally
             {
-//                endUpdate();
+                endUpdate();
                 result.endUpdate();
             }
         }
