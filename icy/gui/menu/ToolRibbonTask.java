@@ -72,7 +72,7 @@ public class ToolRibbonTask extends RibbonTask
     private static final String TOOLTIP_ROI2D_POLYLINE = "<b>ROI Polyline : multi line type ROI</b><br><br>"
             + "Add a new point with left click.<br>"
             + "Add a new point between two points with left click + CONTROL key.<br>"
-            + "Remove a point with DELETE key ot right click when the point is focused.<br>"
+            + "Remove a point with DELETE key when the point is focused.<br>"
             + "Unselect / end modification with ESC key or double click.<br>"
             + "Remove the ROI with DELETE key when the ROI is selected or focused.";
     private static final String TOOLTIP_ROI2D_RECTANGLE = "<b>ROI Rectangle : rectangle type ROI</b><br><br>"
@@ -86,7 +86,7 @@ public class ToolRibbonTask extends RibbonTask
     private static final String TOOLTIP_ROI2D_POLYGON = "<b>ROI Polygon : polygon type ROI</b><br><br>"
             + "Add a new point with left click.<br>"
             + "Add a new point between two points with left click + CONTROL key.<br>"
-            + "Remove a point with DELETE key ot right click when the point is focused.<br>"
+            + "Remove a point with DELETE key when the point is focused.<br>"
             + "Unselect / end modification with ESC key or double click.<br>"
             + "Remove the ROI with DELETE key when the ROI is selected or focused.";
     private static final String TOOLTIP_ROI2D_AREA = "<b>ROI Area : bitmap mask area type ROI</b><br><br>"

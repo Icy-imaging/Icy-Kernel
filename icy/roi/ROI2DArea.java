@@ -24,6 +24,7 @@ import icy.canvas.IcyCanvas3D;
 import icy.common.EventHierarchicalChecker;
 import icy.image.ImageUtil;
 import icy.sequence.Sequence;
+import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
 import icy.util.StringUtil;
@@ -264,22 +265,22 @@ public class ROI2DArea extends ROI2D
             {
                 super.mousePressed(e, imagePoint, canvas);
 
-                // if (!e.isConsumed())
-                // {
-                // // right button action
-                // if (EventUtil.isRightMouseButton(e))
-                // {
-                // // roi selected ?
-                // if (ROI2DArea.this.selected)
-                // {
-                // // roi not focused ? --> remove point from mask
-                // // if (!focused)
-                // removePointAt(canvas, imagePoint);
-                //
-                // e.consume();
-                // }
-                // }
-                // }
+                if (!e.isConsumed())
+                {
+                    // right button action
+                    if (EventUtil.isRightMouseButton(e))
+                    {
+                        // roi selected ?
+                        if (ROI2DArea.this.selected)
+                        {
+                            // roi not focused ? --> remove point from mask
+                            // if (!focused)
+                            removePointAt(canvas, imagePoint);
+
+                            e.consume();
+                        }
+                    }
+                }
             }
             finally
             {
@@ -316,22 +317,22 @@ public class ROI2DArea extends ROI2D
             {
                 super.mouseDrag(e, imagePoint, canvas);
 
-                // if (!e.isConsumed())
-                // {
-                // // right button action
-                // if (EventUtil.isRightMouseButton(e))
-                // {
-                // // roi selected ?
-                // if (ROI2DArea.this.selected)
-                // {
-                // // roi not focused ? --> remove point from mask
-                // if (!focused)
-                // removePointAt(canvas, imagePoint);
-                //
-                // e.consume();
-                // }
-                // }
-                // }
+                if (!e.isConsumed())
+                {
+                    // right button action
+                    if (EventUtil.isRightMouseButton(e))
+                    {
+                        // roi selected ?
+                        if (ROI2DArea.this.selected)
+                        {
+                            // roi not focused ? --> remove point from mask
+                            // if (!focused)
+                            removePointAt(canvas, imagePoint);
+
+                            e.consume();
+                        }
+                    }
+                }
             }
             finally
             {

@@ -285,14 +285,16 @@ public abstract class ROI2D extends ROI
                     // right button action
                     if (EventUtil.isRightMouseButton(e))
                     {
-                        // roi selected ?
-                        if (selected)
-                        {
-                            // try to remove point
-                            if (removePointAt(canvas, imagePoint))
-                                // consume
-                                e.consume();
-                        }
+                        // only use delete now to remove point
+                        
+//                        // roi selected ?
+//                        if (selected)
+//                        {
+//                            // try to remove point
+//                            if (removePointAt(canvas, imagePoint))
+//                                // consume
+//                                e.consume();
+//                        }
                     }
                 }
             }
@@ -354,14 +356,14 @@ public abstract class ROI2D extends ROI
                     // right button action
                     if (EventUtil.isRightMouseButton(e))
                     {
-                        // roi selected ?
-                        if (selected)
-                        {
-                            // try to remove point
-                            if (removePointAt(canvas, imagePoint))
-                                // consume
-                                e.consume();
-                        }
+//                        // roi selected ?
+//                        if (selected)
+//                        {
+//                            // try to remove point
+//                            if (removePointAt(canvas, imagePoint))
+//                                // consume
+//                                e.consume();
+//                        }
                     }
                 }
             }
