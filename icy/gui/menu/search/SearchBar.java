@@ -357,6 +357,8 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
     @Override
     public void searchStarted(SearchEngine source)
     {
+        if (initialized)
+            resultsPanel.searchStarted();
         // for the busy loop animation
         repaint();
     }

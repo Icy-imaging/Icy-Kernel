@@ -52,11 +52,11 @@ public class SearchResultTableCellRenderer extends SubstanceDefaultTableCellRend
                 setIcon(null);
 
             if (StringUtil.isEmpty(title))
-                text = "Unknow";
+                text = "<b>Unknow</b>";
             else
-                text = title;
+                text = "<b>" + title + "</b>";
             if (!StringUtil.isEmpty(description))
-                text = "<b>" + text + "</b><br>" + GraphicsUtil.limitStringFor(table, description, cellWidth);
+                text += "<br>" + GraphicsUtil.limitStringFor(table, description, cellWidth);
             setText("<html>" + text);
 
             setToolTipText(result.getTooltip());

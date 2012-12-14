@@ -162,11 +162,11 @@ public class StringUtil
         {
             // simple truncation
             if (tailLimit || (maxlen <= 8))
-                return value.substring(0, maxlen - 2) + "..";
+                return value.substring(0, maxlen - 2).trim() + "...";
 
             // cut center
             final int cut = (maxlen - 3) / 2;
-            return value.substring(0, cut) + "..." + value.substring(len - cut);
+            return value.substring(0, cut).trim() + "..." + value.substring(len - cut).trim();
         }
 
         return value;
@@ -222,12 +222,12 @@ public class StringUtil
             if (idx <= maxSize / 2)
             {
                 toReturn = fullText.substring(0, maxSize);
-                toReturn += "..";
+                toReturn = toReturn.trim() + "...";
             }
             else if ((fullTextSize - idx) <= maxSize / 2)
             {
                 toReturn = fullText.substring(fullTextSize - maxSize, fullTextSize);
-                toReturn = ".." + toReturn;
+                toReturn = "..." + toReturn.trim();
             }
             else
             {
@@ -237,7 +237,7 @@ public class StringUtil
                     System.out.println(endIndex);
                 // beginIndex = beginIndex < 0 ? 0 : beginIndex;
                 // endIndex = endIndex > fullTextSize ? fullTextSize : endIndex;
-                toReturn = ".." + fullText.substring(beginIndex, endIndex) + "..";
+                toReturn = "..." + fullText.substring(beginIndex, endIndex).trim() + "...";
             }
         }
 

@@ -78,25 +78,27 @@ public class SearchResultTableModel extends AbstractTableModel
     public Object getValueAt(int rowIndex, int columnIndex)
     {
         final List<SearchResult> results = searchEngine.getResults();
+        final int resultsCount = results.size();
 
-        if (rowIndex < results.size())
+        if (rowIndex < resultsCount)
         {
-            final int adjustedRowIndex = adjustIndex(rowIndex, results.size());
+            final int adjustedRowIndex = adjustIndex(rowIndex, resultsCount);
+
+            // can happen in rare case...
+            if (adjustedRowIndex >= resultsCount)
+                return null;
+
             final SearchResult element = results.get(adjustedRowIndex);
 
             switch (columnIndex)
             {
                 case 0:
                     final SearchResultProducer producer = element.getProducer();
-                    final boolean displayProducer;
 
-                    // only display producer on first producer result
+                    // display producer on first producer result
                     if (adjustedRowIndex == 0)
-                        displayProducer = true;
-                    else
-                        displayProducer = (results.get(adjustIndex(rowIndex - 1, results.size())).getProducer() != producer);
-
-                    if (displayProducer)
+                        return producer;
+                    else if (results.get(adjustIndex(rowIndex - 1, resultsCount)).getProducer() != producer)
                         return producer;
 
                     return null;

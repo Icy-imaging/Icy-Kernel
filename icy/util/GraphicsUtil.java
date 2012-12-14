@@ -137,7 +137,7 @@ public class GraphicsUtil
         }
 
         if (changed)
-            return str + "..";
+            return str.trim() + "...";
 
         return text;
     }

@@ -78,17 +78,16 @@ public class SplashScreenFrame extends JFrame
 	 */
     public SplashScreenFrame()
     {
-        super("ICY");
+        super("Icy");
 
         splash = new SplashPanel();
 
         setUndecorated(true);
-        setAlwaysOnTop(true);
+//        setAlwaysOnTop(true);
 
         add(splash);
         pack();
 
         setLocationRelativeTo(null);
     }
-
 }

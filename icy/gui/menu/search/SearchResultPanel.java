@@ -7,6 +7,7 @@ import icy.system.thread.ThreadUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -67,6 +68,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
      */
     private final Runnable refresher;
     private final Runnable toolTipRefresher;
+    private boolean firstResultsDisplay;
 
     public SearchResultPanel(final SearchBar sb)
     {
@@ -76,6 +78,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
 
         tooltipPanel = null;
         tooltip = null;
+        firstResultsDisplay = true;
 
         refresher = new Runnable()
         {
@@ -119,6 +122,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
         table.setShowVerticalLines(false);
         table.setShowHorizontalLines(false);
         table.setColumnSelectionAllowed(false);
+        table.setTableHeader(null);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getSelectionModel().addListSelectionListener(this);
         table.addMouseListener(new MouseAdapter()
@@ -187,16 +191,19 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
             }
         });
 
+        scrollPane = new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
         // window used to display quick result list
         setLayout(new BorderLayout());
-        add(table, BorderLayout.CENTER);
+        add(scrollPane, BorderLayout.CENTER);
         add(moreResultBtn, BorderLayout.SOUTH);
         setPreferredSize(new Dimension(600, 400));
         setAlwaysOnTop(true);
         setVisible(false);
 
-        scrollPane = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        // scrollPane.setViewportView(table);
+        // scrollPane.setRowHeader(null);
     }
 
     protected SearchEngine getSearchEngine()
@@ -250,16 +257,11 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     {
         // no more limit on row count
         tableModel.setMaxRowCount(-1);
-
-        // set the scrollpane and hide button
-        remove(table);
-        add(scrollPane, BorderLayout.CENTER);
+        // hide button
         moreResultBtn.setVisible(false);
 
-        // update scrollpane content
-        scrollPane.setViewportView(table);
-        scrollPane.setColumnHeader(null);
-        scrollPane.setRowHeader(null);
+        // update size
+        setSize(600, getPanelHeight());
     }
 
     void hideToolTip()
@@ -269,6 +271,24 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
             tooltip.hide();
             tooltip = null;
         }
+    }
+
+    /**
+     * Calculates and returns panel height.
+     */
+    int getPanelHeight()
+    {
+        final Insets margin = getInsets();
+        final Insets marginSC = scrollPane.getInsets();
+        final Insets marginT = table.getInsets();
+        int result;
+
+        result = Math.min(table.getRowCount(), MAX_ROW) * ROW_HEIGHT;
+        result += (margin.top + margin.bottom) + (marginSC.top + marginSC.bottom) + (marginT.top + marginT.bottom);
+        if (moreResultBtn.isVisible())
+            result += moreResultBtn.getPreferredSize().height;
+
+        return result;
     }
 
     /**
@@ -297,9 +317,8 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
                 int x = bounds.x + bounds.width;
                 int y = bounds.y + (ROW_HEIGHT * table.getSelectedRow());
 
-                // result list displayed in scroll pane ? --> adjust vertical position
-                if (scrollPane.getParent() != null)
-                    y -= scrollPane.getVerticalScrollBar().getValue();
+                // adjust vertical position
+                y -= scrollPane.getVerticalScrollBar().getValue();
 
                 // show tooltip
                 tooltip = PopupFactory.getSharedInstance().getPopup(Icy.getMainInterface().getMainFrame(),
@@ -364,31 +383,34 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
             return;
         }
 
-        // limit result list size to MAX_ROW and refresh table data
-        if (tableModel.getMaxRowCount() != MAX_ROW)
-            tableModel.setMaxRowCount(MAX_ROW);
+        if (firstResultsDisplay)
+        {
+            // limit result list size to MAX_ROW and refresh table data
+            if (tableModel.getMaxRowCount() != MAX_ROW)
+                tableModel.setMaxRowCount(MAX_ROW);
+            else
+                tableModel.fireTableDataChanged();
+
+            // no more need to re init the limited display
+            firstResultsDisplay = false;
+        }
         else
             tableModel.fireTableDataChanged();
 
-        if (resultCount > MAX_ROW)
+        final int maxRow = tableModel.getMaxRowCount();
+
+        // result list do not display all results ?
+        if ((maxRow > 0) && (resultCount > maxRow))
         {
-            moreResultBtn.setText(MAX_ROW + " / " + resultCount + " (show more...)");
+            moreResultBtn.setText(maxRow + " / " + resultCount + " (show all)");
             moreResultBtn.setVisible(true);
         }
         else
             moreResultBtn.setVisible(false);
 
-        int height = table.getRowCount() * ROW_HEIGHT;
-        if (moreResultBtn.isVisible())
-            height += 26;
-
         // update bounds and display window
         final Point p = searchBar.getLocationOnScreen();
-        setBounds(p.x, p.y + searchBar.getHeight(), 600, height);
-
-        // ensure we don't use the scrollpane
-        remove(scrollPane);
-        add(table, BorderLayout.CENTER);
+        setBounds(p.x, p.y + searchBar.getHeight(), 600, getPanelHeight());
 
         // show the result list
         setVisible(true);
@@ -430,6 +452,11 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     {
         // selection changed --> update tooltip
         updateToolTip();
+    }
+
+    public void searchStarted()
+    {
+        firstResultsDisplay = true;
     }
 
     public void resultChanged(SearchResult result)
