@@ -473,7 +473,7 @@ public class MainFrame extends JRibbonFrame
     {
         final GraphicsConfiguration graphicsConfiguration = graphicsDevice.getDefaultConfiguration();
         final Rectangle bounds = graphicsConfiguration.getBounds();
-        final Insets inset = Toolkit.getDefaultToolkit().getScreenInsets(graphicsConfiguration);
+        final Insets inset = getToolkit().getScreenInsets(graphicsConfiguration);
 
         // adjust bounds of current screen
         bounds.x += inset.left;

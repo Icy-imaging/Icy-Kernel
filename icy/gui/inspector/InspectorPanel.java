@@ -80,7 +80,7 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
      */
     public InspectorPanel()
     {
-        super("Inspector", "inspector", new Point(600, 140), new Dimension(280, 600));
+        super("Inspector", "inspector", new Point(600, 140), new Dimension(300, 600));
 
         // tab panel
         mainPane = new ExtTabbedPanel();
@@ -107,7 +107,7 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
         mainPane.addTab("Chat", null, chatPanel, "Chat room");
 
         // minimum required size for sequence infos panel
-        final Dimension minDim = new Dimension(280, 480);
+        final Dimension minDim = new Dimension(300, 480);
         getFrame().setMinimumSizeInternal(minDim);
         getFrame().setMinimumSizeExternal(minDim);
         setMinimumSize(minDim);

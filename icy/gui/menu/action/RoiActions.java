@@ -38,7 +38,7 @@ public class RoiActions
     public static final String ID_ROI_COPY_CLIPBOARD = "RoiCopyClipboardCommand";
 
     public static IcyAbstractAction loadAction = new IcyAbstractAction("Load", new IcyIcon(ResourceUtil.ICON_OPEN),
-            "Load ROI", "Load ROI from file")
+            "Load ROI from file")
     {
         /**
          * 
@@ -82,7 +82,7 @@ public class RoiActions
     };
 
     public static IcyAbstractAction saveAction = new IcyAbstractAction("Save", new IcyIcon(ResourceUtil.ICON_SAVE),
-            "Save ROI", "Save selected ROI to file")
+            "Save selected ROI to file")
     {
         /**
          * 
@@ -121,7 +121,7 @@ public class RoiActions
     };
 
     public static IcyAbstractAction copyAction = new IcyAbstractAction("Copy", new IcyIcon(ResourceUtil.ICON_COPY),
-            "Copy ROI", "Copy selected ROI to clipboard")
+            "Copy selected ROI to clipboard")
     {
         /**
          * 
@@ -155,7 +155,7 @@ public class RoiActions
     };
 
     public static IcyAbstractAction pasteAction = new IcyAbstractAction("Paste", new IcyIcon(ResourceUtil.ICON_PASTE),
-            "Paste ROI", "Paste ROI from clipboard")
+            "Paste ROI from clipboard")
     {
         /**
          * 
@@ -169,7 +169,7 @@ public class RoiActions
 
             if (sequence != null)
             {
-                final List<Object> rois = Clipboard.pop(ID_ROI_COPY_CLIPBOARD, false);
+                final List<Object> rois = Clipboard.get(ID_ROI_COPY_CLIPBOARD, false);
 
                 sequence.beginUpdate();
                 try
@@ -177,26 +177,48 @@ public class RoiActions
                     // add to sequence
                     for (Object roi : rois)
                         if (roi instanceof ROI)
-                            sequence.addROI((ROI) roi);
+                            sequence.addROI(((ROI) roi).getCopy());
                 }
                 finally
                 {
                     sequence.endUpdate();
                 }
-
-                pasteAction.setEnabled(false);
             }
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null)
+                    && Clipboard.hasObjects(RoiActions.ID_ROI_COPY_CLIPBOARD, false);
+        }
+    };
+
+    public static IcyAbstractAction clearClipboardAction = new IcyAbstractAction("Clear", new IcyIcon(
+            ResourceUtil.ICON_CLIPBOARD_CLEAR), "Remove ROI saved in clipboard")
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 4878585451006567513L;
+
+        @Override
+        public void doAction(ActionEvent e)
+        {
+            Clipboard.remove(ID_ROI_COPY_CLIPBOARD, false);
+            pasteAction.setEnabled(false);
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null)
+                    && Clipboard.hasObjects(RoiActions.ID_ROI_COPY_CLIPBOARD, false);
         }
     };
 
     public static IcyAbstractAction deleteAction = new IcyAbstractAction("Delete",
-            new IcyIcon(ResourceUtil.ICON_DELETE), "Delete ROI", "Delete selected ROI(s)")
+            new IcyIcon(ResourceUtil.ICON_DELETE), "Delete selected ROI(s)")
     {
         /**
          * 

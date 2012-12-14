@@ -78,6 +78,7 @@ public class ResourceUtil
     public static final Image ICON_CLOSE = ResourceUtil.getAlphaIconAsImage("round_delete.png");
     public static final Image ICON_COPY = ResourceUtil.getAlphaIconAsImage("clipboard_copy.png");
     public static final Image ICON_CUT = ResourceUtil.getAlphaIconAsImage("clipboard_cut.png");
+    public static final Image ICON_CLIPBOARD_CLEAR = ResourceUtil.getAlphaIconAsImage("clipboard_clear.png");
     public static final Image ICON_PASTE = ResourceUtil.getAlphaIconAsImage("clipboard_past.png");
 
     public static final Image ICON_HELP = ResourceUtil.getAlphaIconAsImage("help.png");

@@ -75,14 +75,6 @@ public class RoisPanel extends InspectorSubPanel implements TextChangeListener, 
     final IcyTextField nameFilter;
     private final JPanel filtersPanel;
 
-    // final IcyTextField nameField;
-    // final ColorChooserButton colorButton;
-    // final IcyButton orButton;
-    // final IcyButton andButton;
-    // final IcyButton xorButton;
-    // final IcyButton subButton;
-    // final IcyButton deleteButton;
-    // final JPanel controlPanel;
     final RoiControlPanel roiControlPanel;
 
     // internals

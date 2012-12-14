@@ -78,10 +78,11 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     private PopupPanel popupPanel;
     private JLabel lblBoolean;
     private JLabel lblGeneral;
+    private IcyButton loadButton;
+    private IcyButton saveButton;
     private IcyButton copyButton;
     private IcyButton pasteButton;
-    private IcyButton saveButton;
-    private IcyButton loadButton;
+    private IcyButton clearCPButton;
 
     public RoiControlPanel(RoisPanel panel)
     {
@@ -119,9 +120,9 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
         add(booleanOpPanel);
         GridBagLayout gbl_booleanOpPanel = new GridBagLayout();
-        gbl_booleanOpPanel.columnWidths = new int[] {0, 0, 0, 0, 0, 0, 0, 0};
+        gbl_booleanOpPanel.columnWidths = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0};
         gbl_booleanOpPanel.rowHeights = new int[] {0, 0, 0, 0};
-        gbl_booleanOpPanel.columnWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
+        gbl_booleanOpPanel.columnWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
         gbl_booleanOpPanel.rowWeights = new double[] {1.0, 1.0, 0.0, Double.MIN_VALUE};
         booleanOpPanel.setLayout(gbl_booleanOpPanel);
 
@@ -165,12 +166,20 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         gbc_pasteButton.gridy = 0;
         booleanOpPanel.add(pasteButton, gbc_pasteButton);
 
+        clearCPButton = new IcyButton(RoiActions.clearClipboardAction);
+        clearCPButton.setText(null);
+        GridBagConstraints gbc_clearCPButton = new GridBagConstraints();
+        gbc_clearCPButton.insets = new Insets(0, 0, 5, 5);
+        gbc_clearCPButton.gridx = 5;
+        gbc_clearCPButton.gridy = 0;
+        booleanOpPanel.add(clearCPButton, gbc_clearCPButton);
+
         deleteButton = new IcyButton(RoiActions.deleteAction);
         deleteButton.setText(null);
         GridBagConstraints gbc_deleteButton = new GridBagConstraints();
         gbc_deleteButton.insets = new Insets(0, 0, 5, 0);
         gbc_deleteButton.fill = GridBagConstraints.BOTH;
-        gbc_deleteButton.gridx = 6;
+        gbc_deleteButton.gridx = 7;
         gbc_deleteButton.gridy = 0;
         booleanOpPanel.add(deleteButton, gbc_deleteButton);
 
@@ -503,6 +512,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 final boolean singleSelect = hasSelected && !severalsSelected;
                 final boolean isRoi2d = roi instanceof ROI2D;
                 final boolean isRoi2dResizeable = (roi instanceof ROI2DLine) || (roi instanceof ROI2DRectShape);
+                final boolean hasROIinClipboard = Clipboard.hasObjects(RoiActions.ID_ROI_COPY_CLIPBOARD, false);
 
                 nameField.setEnabled(singleSelect && editable);
                 posXField.setEnabled(singleSelect && isRoi2d && editable);
@@ -520,7 +530,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 loadButton.setEnabled(true);
                 saveButton.setEnabled(hasSelected);
                 copyButton.setEnabled(hasSelected);
-                pasteButton.setEnabled(Clipboard.hasObjects(RoiActions.ID_ROI_COPY_CLIPBOARD, false));
+                pasteButton.setEnabled(hasROIinClipboard);
+                clearCPButton.setEnabled(hasROIinClipboard);
 
                 deleteButton.setEnabled(hasSelected && editable);
 
@@ -589,6 +600,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 saveButton.setEnabled(false);
                 copyButton.setEnabled(false);
                 pasteButton.setEnabled(false);
+                clearCPButton.setEnabled(false);
                 deleteButton.setEnabled(false);
 
                 orButton.setEnabled(false);
