@@ -204,23 +204,32 @@ public class KernelSearchProvider extends SearchResultProducer
 
     private boolean searchInAction(IcyAbstractAction action, String word, boolean startWithOnly)
     {
-        final String wordlc = word.toLowerCase();
+        final String wordlc = word.trim().toLowerCase();
         String text;
 
         if (startWithOnly)
         {
-            text = action.getName();
-            if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
-                return true;
+            // text = action.getName();
+            // if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
+            // return true;
             text = action.getDescription();
             if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
+            {
+                System.out.println(text);
                 return true;
+            }
+            text = action.getLongDescription();
+            if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
+            {
+                System.out.println(text);
+                return true;
+            }
         }
         else
         {
-            text = action.getName();
-            if (!StringUtil.isEmpty(text) && text.toLowerCase().contains(wordlc))
-                return true;
+            // text = action.getName();
+            // if (!StringUtil.isEmpty(text) && text.toLowerCase().contains(wordlc))
+            // return true;
             text = action.getDescription();
             if (!StringUtil.isEmpty(text) && text.toLowerCase().contains(wordlc))
                 return true;

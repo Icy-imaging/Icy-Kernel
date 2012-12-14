@@ -73,7 +73,7 @@ public class SequenceOperationTask extends RibbonTask
             addCommandButton(cloneButton, RibbonElementPriority.MEDIUM);
 
             // data type conversion
-            convertButton = new IcyCommandButton("Convert to", new IcyIcon(ResourceUtil.ICON_BAND_RIGHT));
+            convertButton = new IcyCommandButton("Conversion", new IcyIcon(ResourceUtil.ICON_BAND_RIGHT));
             convertButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
             convertButton.setPopupRichTooltip(new RichTooltip("Data type conversion",
                     "Convert the sequence to the selected data type (values are scaled to fit the new type)."));
@@ -105,7 +105,7 @@ public class SequenceOperationTask extends RibbonTask
             addCommandButton(convertButton, RibbonElementPriority.MEDIUM);
 
             // data type conversion
-            convertButtonRaw = new IcyCommandButton("Raw convert to", new IcyIcon(ResourceUtil.ICON_BAND_RIGHT));
+            convertButtonRaw = new IcyCommandButton("Raw conversion", new IcyIcon(ResourceUtil.ICON_BAND_RIGHT));
             convertButtonRaw.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
             convertButtonRaw
                     .setPopupRichTooltip(new RichTooltip(

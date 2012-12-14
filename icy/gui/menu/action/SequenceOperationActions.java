@@ -50,9 +50,9 @@ public class SequenceOperationActions
 
         public SequenceConvertAction(DataType dataType, boolean scaled)
         {
-            super(dataType.toString(true), null, "Convert to " + dataType.toString(true),
-                    "Convert sequence data type to " + dataType.toString(true), true, "Converting sequence to "
-                            + dataType.toString(false) + " ...");
+            super(dataType.toString(true), new IcyIcon(ResourceUtil.ICON_BAND_RIGHT), "Convert to "
+                    + dataType.toString(true), "Convert sequence data type to " + dataType.toString(true), true,
+                    "Converting sequence to " + dataType.toString(false) + " ...");
 
             this.dataType = dataType;
             this.scaled = scaled;
