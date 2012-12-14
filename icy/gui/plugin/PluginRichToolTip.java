@@ -35,7 +35,11 @@ public class PluginRichToolTip extends RichTooltip
             setMainImage(plugIcon.getImage());
 
         if (!StringUtil.isEmpty(description))
-            addDescriptionSection(description);
+        {
+            for (String str : description.split("\n"))
+                if (!StringUtil.isEmpty(str))
+                    addDescriptionSection(str);
+        }
         if (!StringUtil.isEmpty(website))
             addDescriptionSection(website);
         if (!StringUtil.isEmpty(author))

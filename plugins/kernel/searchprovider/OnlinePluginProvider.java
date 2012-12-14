@@ -101,7 +101,7 @@ public class OnlinePluginProvider extends SearchResultProducer
         @Override
         public String getTooltip()
         {
-            return "Left click: install & run / Right click: documentation";
+            return "Left click: Install and Run   -   Right click: Online documentation";
             // return plugin.getDescription();
         }
 
@@ -160,7 +160,7 @@ public class OnlinePluginProvider extends SearchResultProducer
     @Override
     public String getTooltipText()
     {
-        return "Result coming from online plugin";
+        return "Result(s) from online plugin";
     }
 
     @Override

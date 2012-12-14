@@ -118,7 +118,6 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
 
         // sets the table properties
         table.setIntercellSpacing(new Dimension(0, 0));
-        table.setRowHeight(ROW_HEIGHT);
         table.setShowVerticalLines(false);
         table.setShowHorizontalLines(false);
         table.setColumnSelectionAllowed(false);
@@ -201,9 +200,6 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
         setPreferredSize(new Dimension(600, 400));
         setAlwaysOnTop(true);
         setVisible(false);
-
-        // scrollPane.setViewportView(table);
-        // scrollPane.setRowHeader(null);
     }
 
     protected SearchEngine getSearchEngine()
@@ -251,6 +247,19 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     public SearchResult getSelectedResult()
     {
         return getResult(table.getSelectedRow());
+    }
+
+    /**
+     * Set selected result
+     */
+    public void setSelectedResult(SearchResult result)
+    {
+        final int row = getRowIndex(result);
+
+        if (row != -1)
+            table.getSelectionModel().setSelectionInterval(row, row);
+        else
+            table.getSelectionModel().removeSelectionInterval(0, table.getRowCount() - 1);
     }
 
     void showCompleteList()
@@ -383,6 +392,12 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
             return;
         }
 
+        // fix row height (can be changed on LAF change)
+        table.setRowHeight(ROW_HEIGHT);
+
+        // save selected
+        final SearchResult selected = getSelectedResult();
+
         if (firstResultsDisplay)
         {
             // limit result list size to MAX_ROW and refresh table data
@@ -396,6 +411,9 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
         }
         else
             tableModel.fireTableDataChanged();
+
+        // restore selected
+        setSelectedResult(selected);
 
         final int maxRow = tableModel.getMaxRowCount();
 

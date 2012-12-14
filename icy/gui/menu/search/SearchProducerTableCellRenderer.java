@@ -1,5 +1,6 @@
 package icy.gui.menu.search;
 
+import icy.gui.util.ComponentUtil;
 import icy.search.SearchResultProducer;
 
 import java.awt.Component;
@@ -25,7 +26,8 @@ public class SearchProducerTableCellRenderer extends SubstanceDefaultTableCellRe
         {
             final SearchResultProducer producer = (SearchResultProducer) value;
 
-            setText("<html><b>" + producer.getName() + "</b>");
+            setText(producer.getName());
+            ComponentUtil.setFontBold(this);
             setToolTipText(producer.getTooltipText());
         }
         else
@@ -34,7 +36,7 @@ public class SearchProducerTableCellRenderer extends SubstanceDefaultTableCellRe
             setToolTipText(null);
             setIcon(null);
         }
-        
+
         return this;
     }
 }

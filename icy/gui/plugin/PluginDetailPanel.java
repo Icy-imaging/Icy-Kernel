@@ -74,7 +74,7 @@ public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            PluginLauncher.launch(plugin);
+            PluginLauncher.start(plugin);
         }
     }
 

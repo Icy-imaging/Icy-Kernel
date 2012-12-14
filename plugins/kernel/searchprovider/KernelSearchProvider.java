@@ -162,7 +162,7 @@ public class KernelSearchProvider extends SearchResultProducer
     @Override
     public String getTooltipText()
     {
-        return "Result coming from the application internals commands and actions";
+        return "Result(s) from the internal commands and actions";
     }
 
     @Override

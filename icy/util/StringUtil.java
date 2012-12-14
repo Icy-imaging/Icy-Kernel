@@ -594,7 +594,7 @@ public class StringUtil
      */
     public static String toHtmlCR(String text)
     {
-        return replaceCR(text, "<br/>");
+        return replaceCR(text, "<br>").replaceAll("(<BR>|<br/>|<BR/>)", "<br>");
     }
 
     /**

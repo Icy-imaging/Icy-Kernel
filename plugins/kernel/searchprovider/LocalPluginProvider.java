@@ -1,5 +1,6 @@
 package plugins.kernel.searchprovider;
 
+import icy.gui.plugin.PluginDetailPanel;
 import icy.gui.plugin.PluginRichToolTip;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
@@ -89,14 +90,19 @@ public class LocalPluginProvider extends SearchResultProducer
         @Override
         public String getTooltip()
         {
-            return "Left click: run / Right click: documentation";
-            // return plugin.getDescription();
+            if (plugin.isActionable())
+                return "Left click: Run   -   Right click: Online documentation";
+
+            return "Left click: Show detail   -   Right click: Online documentation";
         }
 
         @Override
         public void execute()
         {
-            PluginLauncher.start(plugin);
+            if (plugin.isActionable())
+                PluginLauncher.start(plugin);
+            else
+                new PluginDetailPanel(plugin);
         }
 
         @Override
@@ -121,7 +127,7 @@ public class LocalPluginProvider extends SearchResultProducer
     @Override
     public String getTooltipText()
     {
-        return "Result coming from installed plugins";
+        return "Result(s) from installed plugins";
     }
 
     @Override
@@ -131,7 +137,7 @@ public class LocalPluginProvider extends SearchResultProducer
 
         final ArrayList<SearchResult> tmpResults = new ArrayList<SearchResult>();
 
-        for (PluginDescriptor plugin : PluginLoader.getActionablePlugins())
+        for (PluginDescriptor plugin : PluginLoader.getPlugins())
         {
             if (hasWaitingSearch())
                 return;
