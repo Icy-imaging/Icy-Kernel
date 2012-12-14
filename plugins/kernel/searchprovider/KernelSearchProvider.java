@@ -214,16 +214,10 @@ public class KernelSearchProvider extends SearchResultProducer
             // return true;
             text = action.getDescription();
             if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
-            {
-                System.out.println(text);
                 return true;
-            }
             text = action.getLongDescription();
             if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
-            {
-                System.out.println(text);
                 return true;
-            }
         }
         else
         {
