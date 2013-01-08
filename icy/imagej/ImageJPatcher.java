@@ -35,6 +35,7 @@
 package icy.imagej;
 
 import icy.system.ClassPatcher;
+import icy.system.SystemUtil;
 
 /**
  * Overrides class behavior of ImageJ classes using bytecode manipulation. This
@@ -62,6 +63,7 @@ public class ImageJPatcher
 
         // override behavior of ij.ImageJ
         hacker.insertAfterMethod("ij.ImageJ", "public void showStatus(java.lang.String s)");
+        hacker.replaceMethod("ij.ImageJ", "public void configureProxy()");
         hacker.loadClass("ij.ImageJ");
 
         // override behavior of ij.Menus
@@ -83,12 +85,25 @@ public class ImageJPatcher
         // hacker.insertAfterMethod("ij.ImagePlus", "public void hide()");
         // hacker.insertAfterMethod("ij.ImagePlus", "public void close()");
         // hacker.loadClass("ij.ImagePlus");
-        
+
         // override behavior of ij.gui.ImageWindow
         // hacker.insertMethod("ij.gui.ImageWindow", "public void setVisible(boolean vis)");
         // hacker.insertMethod("ij.gui.ImageWindow", "public void show()");
         // hacker.insertBeforeMethod("ij.gui.ImageWindow", "public void close()");
         hacker.insertAfterMethod("ij.gui.ImageWindow", "public void windowActivated(java.awt.event.WindowEvent e)");
         hacker.loadClass("ij.gui.ImageWindow");
+
+        // override behavior of MacAdapter
+        if (SystemUtil.isMac())
+        {
+            hacker.replaceMethod("MacAdapter", "public void handleAbout(com.apple.eawt.ApplicationEvent e)");
+            hacker.replaceMethod("MacAdapter", "public void handleOpenApplication(com.apple.eawt.ApplicationEvent e)");
+            hacker.replaceMethod("MacAdapter", "public void handleOpenFile(com.apple.eawt.ApplicationEvent e)");
+            hacker.replaceMethod("MacAdapter", "public void handlePreferences(com.apple.eawt.ApplicationEvent e)");
+            hacker.replaceMethod("MacAdapter", "public void handlePrintFile(com.apple.eawt.ApplicationEvent e)");
+            hacker.replaceMethod("MacAdapter", "public void handleReOpenApplication(com.apple.eawt.ApplicationEvent e)");
+            hacker.replaceMethod("MacAdapter", "public void handleQuit(com.apple.eawt.ApplicationEvent e)");
+            hacker.loadClass("MacAdapter");
+        }
     }
 }
