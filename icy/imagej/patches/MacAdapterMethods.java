@@ -22,37 +22,37 @@ public class MacAdapterMethods
     }
 
     /** Replaces {@link MacAdapter#handleOpenApplication(com.apple.eawt.ApplicationEvent)}. */
-    public void handleOpenApplication(final Object obj, Object event)
+    public static void handleOpenApplication(final Object obj, Object event)
     {
         // do nothing
     }
 
     /** Replaces {@link MacAdapter#handleOpenFile(com.apple.eawt.ApplicationEvent)}. */
-    public void handleOpenFile(final Object obj, Object event)
+    public static void handleOpenFile(final Object obj, Object event)
     {
         // do nothing
     }
 
     /** Replaces {@link MacAdapter#handlePreferences(com.apple.eawt.ApplicationEvent)}. */
-    public void handlePreferences(final Object obj, Object event)
+    public static void handlePreferences(final Object obj, Object event)
     {
         // do nothing
     }
 
     /** Replaces {@link MacAdapter#handlePrintFile(com.apple.eawt.ApplicationEvent)}. */
-    public void handlePrintFile(final Object obj, Object event)
+    public static void handlePrintFile(final Object obj, Object event)
     {
         // do nothing
     }
 
     /** Replaces {@link MacAdapter#handleQuit(com.apple.eawt.ApplicationEvent)}. */
-    public void handleQuit(final Object obj, Object event)
+    public static void handleQuit(final Object obj, Object event)
     {
         // do nothing
     }
 
     /** Replaces {@link MacAdapter#handleReOpenApplication(com.apple.eawt.ApplicationEvent)}. */
-    public void handleReOpenApplication(final Object obj, ApplicationEvent event)
+    public static void handleReOpenApplication(final Object obj, Object event)
     {
         // do nothing
     }
