@@ -59,8 +59,7 @@ public class SequenceUtil
                 int numInsert, int copyLast)
         {
             if (z < insertPosition)
-                // always return a copy
-                return IcyBufferedImageUtil.getCopy(sequence.getImage(t, z));
+                return sequence.getImage(t, z);
 
             final int pos = z - insertPosition;
 
@@ -74,8 +73,7 @@ public class SequenceUtil
                     final int duplicate = Math.min(insertPosition, copyLast);
                     final int baseReplicate = insertPosition - duplicate;
 
-                    // always return a copy
-                    return IcyBufferedImageUtil.getCopy(sequence.getImage(t, baseReplicate + (pos % duplicate)));
+                    return sequence.getImage(t, baseReplicate + (pos % duplicate));
                 }
 
                 // return new empty image
@@ -83,8 +81,7 @@ public class SequenceUtil
                         sequence.getDataType_());
             }
 
-            // always return a copy
-            return IcyBufferedImageUtil.getCopy(sequence.getImage(t, z - numInsert));
+            return sequence.getImage(t, z - numInsert);
         }
     }
 
@@ -94,8 +91,7 @@ public class SequenceUtil
                 int numInsert, int copyLast)
         {
             if (t < insertPosition)
-                // always return a copy
-                return IcyBufferedImageUtil.getCopy(sequence.getImage(t, z));
+                return sequence.getImage(t, z);
 
             final int pos = t - insertPosition;
 
@@ -109,8 +105,7 @@ public class SequenceUtil
                     final int duplicate = Math.min(insertPosition, copyLast);
                     final int baseReplicate = insertPosition - duplicate;
 
-                    // always return a copy
-                    return IcyBufferedImageUtil.getCopy(sequence.getImage(baseReplicate + (pos % duplicate), z));
+                    return sequence.getImage(baseReplicate + (pos % duplicate), z);
                 }
 
                 // return new empty image
@@ -118,8 +113,7 @@ public class SequenceUtil
                         sequence.getDataType_());
             }
 
-            // always return a copy
-            return IcyBufferedImageUtil.getCopy(sequence.getImage(t - numInsert, z));
+            return sequence.getImage(t - numInsert, z);
         }
     }
 
@@ -279,9 +273,8 @@ public class SequenceUtil
                 if (imgSizeC < sizeC)
                     return IcyBufferedImageUtil.addChannels(img, imgSizeC, sizeC - imgSizeC);
 
-                // always return a copy
                 if (img == origin)
-                    return IcyBufferedImageUtil.getCopy(img);
+                    return img;
             }
 
             return img;
@@ -380,9 +373,8 @@ public class SequenceUtil
                 if (imgSizeC < sizeC)
                     return IcyBufferedImageUtil.addChannels(img, imgSizeC, sizeC - imgSizeC);
 
-                // always return a copy
                 if (img == origin)
-                    return IcyBufferedImageUtil.getCopy(img);
+                    return img;
             }
 
             return img;
@@ -417,8 +409,7 @@ public class SequenceUtil
                 return new IcyBufferedImage(sequence.getSizeX(), sequence.getSizeY(), sequence.getSizeC(),
                         sequence.getDataType_());
 
-            // always return a copy
-            return IcyBufferedImageUtil.getCopy(sequence.getImage(tOrigin, zOrigin));
+            return sequence.getImage(tOrigin, zOrigin);
         }
     }
 
@@ -448,7 +439,8 @@ public class SequenceUtil
 
             for (int i = 0; i < num; i++)
                 for (int z = 0; z < sizeZ; z++)
-                    sequence.setImage(t + i, z, AddTHelper.getExtendedImage(sequence, t + i, z, t, num, copyLast));
+                    sequence.setImage(t + i, z, IcyBufferedImageUtil.getCopy(AddTHelper.getExtendedImage(sequence, t
+                            + i, z, t, num, copyLast)));
         }
         finally
         {
@@ -719,7 +711,8 @@ public class SequenceUtil
 
             for (int i = 0; i < num; i++)
                 for (int t = 0; t < sizeT; t++)
-                    sequence.setImage(t, z + i, AddZHelper.getExtendedImage(sequence, t, z + i, z, num, copyLast));
+                    sequence.setImage(t, z + i, IcyBufferedImageUtil.getCopy(AddZHelper.getExtendedImage(sequence, t, z
+                            + i, z, num, copyLast)));
         }
         finally
         {
@@ -1219,8 +1212,8 @@ public class SequenceUtil
                 if (pl != null)
                     pl.notifyProgress(ind, sizeT * sizeZ);
 
-                result.setImage(t, z,
-                        MergeZHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, interlaced, fillEmpty, rescale));
+                result.setImage(t, z, IcyBufferedImageUtil.getCopy(MergeZHelper.getImage(sequences, sizeX, sizeY,
+                        sizeC, t, z, interlaced, fillEmpty, rescale)));
 
                 ind++;
             }
@@ -1298,8 +1291,8 @@ public class SequenceUtil
                 if (pl != null)
                     pl.notifyProgress(ind, sizeT * sizeZ);
 
-                result.setImage(t, z,
-                        MergeTHelper.getImage(sequences, sizeX, sizeY, sizeC, t, z, interlaced, fillEmpty, rescale));
+                result.setImage(t, z, IcyBufferedImageUtil.getCopy(MergeTHelper.getImage(sequences, sizeX, sizeY,
+                        sizeC, t, z, interlaced, fillEmpty, rescale)));
 
                 ind++;
             }
@@ -1357,22 +1350,24 @@ public class SequenceUtil
         final Sequence tmp = new Sequence();
 
         tmp.beginUpdate();
-        try
-        {
-            for (int t = 0; t < sizeT; t++)
-                for (int z = 0; z < sizeZ; z++)
-                    tmp.setImage(t, z, sequence.getImage(t, z));
-        }
-        finally
-        {
-            tmp.endUpdate();
-        }
-
         sequence.beginUpdate();
         try
         {
-
-            sequence.removeAllImage();
+            try
+            {
+                for (int t = 0; t < sizeT; t++)
+                {
+                    for (int z = 0; z < sizeZ; z++)
+                    {
+                        tmp.setImage(t, z, sequence.getImage(t, z));
+                        sequence.removeImage(t, z);
+                    }
+                }
+            }
+            finally
+            {
+                tmp.endUpdate();
+            }
 
             for (int t = 0; t < newSizeT; t++)
                 for (int z = 0; z < newSizeZ; z++)

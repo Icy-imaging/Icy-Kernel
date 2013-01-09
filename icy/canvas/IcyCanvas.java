@@ -25,6 +25,7 @@ import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.common.listener.ProgressListener;
+import icy.gui.main.MainFrame;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.MouseImageInfosPanel;
 import icy.gui.viewer.TNavigationPanel;
@@ -49,6 +50,7 @@ import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.sequence.SequenceListener;
 import icy.system.IcyExceptionHandler;
 import icy.util.ClassUtil;
+import icy.util.EventUtil;
 import icy.util.OMEUtil;
 
 import java.awt.BorderLayout;
@@ -595,13 +597,17 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Set the synchronization group id (0 means unsynchronized)
+     * Set the synchronization group id (0 means unsynchronized).<br>
      * 
+     * @return <code>false</code> if the canvas do not support synchronization group.
      * @param id
      *        the syncId to set
      */
-    public void setSyncId(int id)
+    public boolean setSyncId(int id)
     {
+        if (!isSynchronizationSupported())
+            return false;
+
         if (this.syncId != id)
         {
             this.syncId = id;
@@ -609,6 +615,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             // notify sync has changed
             updater.changed(new IcyCanvasEvent(this, IcyCanvasEventType.SYNC_CHANGED));
         }
+
+        return true;
     }
 
     /**
@@ -2862,6 +2870,99 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     @Override
     public void keyPressed(KeyEvent e)
     {
+        if (!e.isConsumed())
+        {
+            final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+
+            switch (e.getKeyCode())
+            {
+                case KeyEvent.VK_0:
+                    if (EventUtil.isShiftDown(e))
+                        Icy.getMainInterface().setGlobalViewSyncId(0);
+                    else
+                        setSyncId(0);
+                    e.consume();
+                    break;
+
+                case KeyEvent.VK_1:
+                    if (EventUtil.isShiftDown(e))
+                        Icy.getMainInterface().setGlobalViewSyncId(1);
+                    // already set, switch it off
+                    else if (getSyncId() == 1)
+                        setSyncId(0);
+                    else
+                        setSyncId(1);
+                    e.consume();
+                    break;
+
+                case KeyEvent.VK_2:
+                    if (EventUtil.isShiftDown(e))
+                        Icy.getMainInterface().setGlobalViewSyncId(2);
+                    // already set, switch it off
+                    else if (getSyncId() == 2)
+                        setSyncId(0);
+                    else
+                        setSyncId(2);
+                    e.consume();
+                    break;
+
+                case KeyEvent.VK_3:
+                    if (EventUtil.isShiftDown(e))
+                        Icy.getMainInterface().setGlobalViewSyncId(3);
+                    // already set, switch it off
+                    else if (getSyncId() == 3)
+                        setSyncId(0);
+                    else
+                        setSyncId(3);
+                    e.consume();
+                    break;
+
+                case KeyEvent.VK_4:
+                    if (EventUtil.isShiftDown(e))
+                        Icy.getMainInterface().setGlobalViewSyncId(4);
+                    // already set, switch it off
+                    else if (getSyncId() == 4)
+                        setSyncId(0);
+                    else
+                        setSyncId(4);
+                    e.consume();
+                    break;
+
+                case KeyEvent.VK_G:
+                    if (EventUtil.isShiftDown(e))
+                    {
+                        if (mainFrame != null)
+                        {
+                            mainFrame.organizeTile(MainFrame.TILE_GRID);
+                            e.consume();
+                        }
+                    }
+                    break;
+
+                case KeyEvent.VK_H:
+                    if (EventUtil.isShiftDown(e))
+                    {
+                        if (mainFrame != null)
+                        {
+                            mainFrame.organizeTile(MainFrame.TILE_HORIZONTAL);
+                            e.consume();
+                        }
+                    }
+                    break;
+
+                case KeyEvent.VK_V:
+                    if (EventUtil.isShiftDown(e))
+                    {
+                        if (mainFrame != null)
+                        {
+                            mainFrame.organizeTile(MainFrame.TILE_VERTICAL);
+                            e.consume();
+                        }
+                    }
+                    break;
+            }
+        }
+
         // by default we only forward event to painters
         for (Layer layer : getVisibleOrderedLayersForEvent())
             layer.getPainter().keyPressed(e, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()), this);

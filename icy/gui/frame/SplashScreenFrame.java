@@ -51,7 +51,7 @@ public class SplashScreenFrame extends JFrame
 
         public SplashPanel()
         {
-            final String fileName = (int) (Math.random() * 10) + ".png";
+            final String fileName = (int) (Math.random() * 11) + ".png";
 
             image = ResourceUtil.getImage(SPLASH_PATH + fileName);
 

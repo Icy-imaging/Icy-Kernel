@@ -47,12 +47,20 @@ public class EventUtil
     }
 
     /**
-     * Returns true if Ctrl/Cmd key is pressed for the specified event
+     * Returns true if Ctrl key is pressed for the specified event
      */
     public static boolean isControlDown(InputEvent e)
     {
+        return e.isControlDown();
+    }
+
+    /**
+     * Returns true if Ctrl/Cmd menu key is pressed for the specified event.
+     */
+    public static boolean isMenuControlDown(InputEvent e)
+    {
         // take care of OSX CMD key here
-        return (e.getModifiers() & SystemUtil.getCtrlMask()) != 0;
+        return (e.getModifiers() & SystemUtil.getMenuCtrlMask()) != 0;
     }
 
     /**

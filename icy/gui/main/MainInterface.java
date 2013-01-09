@@ -119,6 +119,11 @@ public interface MainInterface
     public abstract void setFocusedViewer(Viewer viewer);
 
     /**
+     * Set all active viewers to specified synchronization group id (0 means unsynchronized).
+     */
+    public abstract void setGlobalViewSyncId(int id);
+
+    /**
      * Add the frame to the Desktop pane and change its layer value to make it over the other
      * internal frames.
      * 
@@ -275,8 +280,14 @@ public interface MainInterface
      */
     public abstract ImageJWrapper getImageJ();
 
+    /**
+     * Return current selected tool (ROI / Selection)
+     */
     public abstract String getSelectedTool();
 
+    /**
+     * Set current selected tool (ROI / Selection)
+     */
     public abstract void setSelectedTool(String command);
 
     public abstract ToolRibbonTask getToolRibbon();

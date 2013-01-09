@@ -19,8 +19,6 @@
 package icy.plugin;
 
 import icy.common.EventHierarchicalChecker;
-import icy.common.UpdateEventHandler;
-import icy.common.listener.ChangeListener;
 import icy.main.Icy;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginDescriptor.PluginNameSorter;
@@ -32,6 +30,7 @@ import icy.system.IcyExceptionHandler;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
+import icy.util.StringUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +40,7 @@ import java.util.EventListener;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.event.EventListenerList;
@@ -53,7 +53,7 @@ import org.xeustechnologies.jcl.JarClassLoader;
  * 
  * @author Stephane<br>
  */
-public class PluginLoader implements ChangeListener
+public class PluginLoader
 {
     public static class PluginClassLoader extends JarClassLoader
     {
@@ -120,10 +120,6 @@ public class PluginLoader implements ChangeListener
     private ArrayList<PluginDescriptor> plugins;
 
     /**
-     * internal updater (no need to dispatch event on the AWT thread)
-     */
-    private final UpdateEventHandler updater;
-    /**
      * listeners
      */
     private final EventListenerList listeners;
@@ -141,8 +137,8 @@ public class PluginLoader implements ChangeListener
 
     private boolean initialized;
     private boolean loading;
-    private boolean needReload;
-    private boolean logError;
+
+    // private boolean logError;
 
     /**
      * static class
@@ -159,14 +155,11 @@ public class PluginLoader implements ChangeListener
         JCLDisabled = false;
         initialized = false;
         loading = false;
-        needReload = false;
-        logError = true;
+        // needReload = false;
+        // logError = true;
 
         plugins = new ArrayList<PluginDescriptor>();
         listeners = new EventListenerList();
-
-        // change event
-        updater = new UpdateEventHandler(this);
 
         // reloader
         reloader = new Runnable()
@@ -201,10 +194,7 @@ public class PluginLoader implements ChangeListener
      */
     public static void reloadAsynch()
     {
-        if (isUpdating())
-            instance.needReload = true;
-        else
-            instance.processor.addTask(instance.reloader);
+        instance.processor.addTask(instance.reloader);
     }
 
     /**
@@ -213,6 +203,7 @@ public class PluginLoader implements ChangeListener
     public static void reload()
     {
         instance.processor.addTask(instance.reloader);
+        ThreadUtil.sleep(10);
         waitWhileLoading();
     }
 
@@ -243,7 +234,7 @@ public class PluginLoader implements ChangeListener
      */
     void reloadInternal()
     {
-        needReload = false;
+        // needReload = false;
         loading = true;
 
         // stop daemon plugins
@@ -279,7 +270,7 @@ public class PluginLoader implements ChangeListener
         }
         catch (IOException e)
         {
-            if (logError)
+            // if (logError)
             {
                 System.err.println("Error loading plugins :");
                 IcyExceptionHandler.showErrorMessage(e, true);
@@ -297,15 +288,11 @@ public class PluginLoader implements ChangeListener
                 // try to load class and check we have a Plugin class at same time
                 final Class<? extends Plugin> pluginClass = newLoader.loadClass(className).asSubclass(Plugin.class);
 
-                // // ignore interface or abstract classes
-                // if ((!pluginClass.isInterface()) && (!ClassUtil.isAbstract(pluginClass)))
-                // plugins.add(new PluginDescriptor(pluginClass));
-
                 newPlugins.add(new PluginDescriptor(pluginClass));
             }
             catch (NoClassDefFoundError e)
             {
-                if (logError)
+                // if (logError)
                 {
                     // fatal error
                     System.err.println("Class '" + className + "' cannot be loaded :");
@@ -321,7 +308,7 @@ public class PluginLoader implements ChangeListener
             }
             catch (Error e)
             {
-                if (logError)
+                // if (logError)
                 {
                     // fatal error
                     IcyExceptionHandler.showErrorMessage(e, false);
@@ -339,7 +326,7 @@ public class PluginLoader implements ChangeListener
             catch (Exception e)
             {
                 // fatal error
-                if (logError)
+                // if (logError)
                 {
                     IcyExceptionHandler.showErrorMessage(e, false);
                     System.err.println("Class '" + className + "' is discarded");
@@ -490,17 +477,26 @@ public class PluginLoader implements ChangeListener
     /**
      * Return all loaded classes
      */
-    public static Map<String, Class> getAllClasses()
+    @SuppressWarnings("rawtypes")
+    public static Map<String, Class<?>> getAllClasses()
     {
         prepare();
 
         synchronized (instance.loader)
         {
             if (instance.loader instanceof JarClassLoader)
-                return ((JarClassLoader) instance.loader).getLoadedClasses();
+            {
+                final HashMap<String, Class<?>> result = new HashMap<String, Class<?>>();
+                final Map<String, Class> classes = ((JarClassLoader) instance.loader).getLoadedClasses();
+
+                for (Entry<String, Class> entry : classes.entrySet())
+                    result.put(entry.getKey(), entry.getValue());
+                
+                return result;
+            }
         }
 
-        return new HashMap<String, Class>();
+        return new HashMap<String, Class<?>>();
     }
 
     /**
@@ -723,42 +719,58 @@ public class PluginLoader implements ChangeListener
     }
 
     /**
+     * Verify the specified plugin is valid.<br>
+     * Return the error string.
+     */
+    public static String verifyPlugin(PluginDescriptor plugin)
+    {
+        final String mess = "Fatal error while loading '" + plugin.getClassName() + "' class from "
+                + plugin.getJarFilename() + " :\n";
+
+        synchronized (instance.loader)
+        {
+            try
+            {
+                // then try to load the plugin class as Plugin class
+                instance.loader.loadClass(plugin.getClassName()).asSubclass(Plugin.class);
+            }
+            catch (Error e)
+            {
+                return mess + e.toString();
+            }
+            catch (ClassCastException e)
+            {
+                return mess + IcyExceptionHandler.getErrorMessage(e, false)
+                        + "Your plugin class should extends 'icy.plugin.abstract_.Plugin' class !";
+            }
+            catch (ClassNotFoundException e)
+            {
+                return mess + IcyExceptionHandler.getErrorMessage(e, false)
+                        + "Verify you correctly set the class name in your plugin description.";
+            }
+            catch (Exception e)
+            {
+                return mess + IcyExceptionHandler.getErrorMessage(e, false);
+            }
+        }
+
+        return "";
+    }
+
+    /**
      * Verify that specified plugins are valid.<br>
      * Return the error string if any (empty string = plugins are valid)
      */
-    public static String verifyPluginsAreValid(ArrayList<PluginDescriptor> pluginsToVerify)
+    public static String verifyPlugins(ArrayList<PluginDescriptor> plugins)
     {
         synchronized (instance.loader)
         {
-            for (PluginDescriptor plugin : pluginsToVerify)
+            for (PluginDescriptor plugin : plugins)
             {
-                try
-                {
-                    // then try to load the plugin class as Plugin class
-                    instance.loader.loadClass(plugin.getClassName()).asSubclass(Plugin.class);
-                }
-                catch (Error e)
-                {
-                    return "Fatal error while loading '" + plugin.getClassName() + "' class from "
-                            + plugin.getJarFilename() + " :\n" + e.toString();
-                }
-                catch (ClassCastException e)
-                {
-                    return "Fatal error while loading '" + plugin.getClassName() + "' class from "
-                            + plugin.getJarFilename() + " :\n" + IcyExceptionHandler.getErrorMessage(e, false)
-                            + "Your plugin class should extends 'icy.plugin.abstract_.Plugin' class !";
-                }
-                catch (ClassNotFoundException e)
-                {
-                    return "Fatal error while loading '" + plugin.getClassName() + "' class from "
-                            + plugin.getJarFilename() + " :\n" + IcyExceptionHandler.getErrorMessage(e, false)
-                            + "Verify you correctly set the class name in your plugin description.";
-                }
-                catch (Exception e)
-                {
-                    return "Fatal error while loading '" + plugin.getClassName() + "' class from "
-                            + plugin.getJarFilename() + " :\n" + IcyExceptionHandler.getErrorMessage(e, false);
-                }
+                final String result = verifyPlugin(plugin);
+
+                if (!StringUtil.isEmpty(result))
+                    return result;
             }
         }
 
@@ -813,42 +825,43 @@ public class PluginLoader implements ChangeListener
     }
 
     /**
-     * @return the logError
+     * @deprecated
      */
+    @Deprecated
     public static boolean getLogError()
     {
-        return instance.logError;
+        return false;
+        // return instance.logError;
     }
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static void setLogError(boolean value)
     {
-        instance.logError = value;
+        // instance.logError = value;
     }
 
     /**
      * Called when class loader
      */
-    private void changed()
+    protected void changed()
     {
-        synchronized (updater)
-        {
-            initialized = true;
-
-            // plugin list has changed
-            updater.changed(new PluginLoaderEvent());
-        }
-    }
-
-    @Override
-    public void onChanged(EventHierarchicalChecker e)
-    {
-        final PluginLoaderEvent event = (PluginLoaderEvent) e;
+        initialized = true;
 
         // start daemon plugins
         startDaemons();
         // notify listener we have changed
-        fireEvent(event);
+        fireEvent(new PluginLoaderEvent());
     }
+
+    // @Override
+    // public void onChanged(EventHierarchicalChecker e)
+    // {
+    // final PluginLoaderEvent event = (PluginLoaderEvent) e;
+    //
+    // }
 
     /**
      * Add a listener
@@ -887,33 +900,4 @@ public class PluginLoader implements ChangeListener
                 listener.pluginLoaderChanged(e);
         }
     }
-
-    public static void beginUpdate()
-    {
-        synchronized (instance.updater)
-        {
-            instance.updater.beginUpdate();
-        }
-    }
-
-    public static void endUpdate()
-    {
-        synchronized (instance.updater)
-        {
-            instance.updater.endUpdate();
-
-            if (!instance.updater.isUpdating())
-            {
-                // proceed pending tasks
-                if (instance.needReload)
-                    reloadAsynch();
-            }
-        }
-    }
-
-    public static boolean isUpdating()
-    {
-        return instance.updater.isUpdating();
-    }
-
 }

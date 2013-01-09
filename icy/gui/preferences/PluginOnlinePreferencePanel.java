@@ -291,13 +291,13 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     }
 
     @Override
-    public void pluginInstalled(boolean success)
+    public void pluginInstalled(PluginDescriptor plugin, boolean success)
     {
         refreshTableData();
     }
 
     @Override
-    public void pluginRemoved(boolean success)
+    public void pluginRemoved(PluginDescriptor plugin, boolean success)
     {
         refreshTableData();
     }

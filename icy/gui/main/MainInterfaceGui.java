@@ -1319,4 +1319,11 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
                 fireFocusedViewerChangedEvent((ViewerEvent) object);
         }
     }
+
+    @Override
+    public void setGlobalViewSyncId(int id)
+    {
+        for (Viewer viewer : getViewers())
+            viewer.setViewSyncId(id);
+    }
 }

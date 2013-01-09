@@ -271,13 +271,13 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     }
 
     @Override
-    public void pluginInstalled(boolean success)
+    public void pluginInstalled(PluginDescriptor plugin, boolean success)
     {
         updateButtonsState();
     }
 
     @Override
-    public void pluginRemoved(boolean success)
+    public void pluginRemoved(PluginDescriptor plugin, boolean success)
     {
         updateButtonsState();
     }

@@ -25,6 +25,8 @@ import icy.gui.inspector.ChatPanel;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.MainRibbon;
+import icy.gui.menu.action.FileActions;
+import icy.gui.menu.search.SearchBar;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.WindowPositionSaver;
 import icy.math.HungarianAlgorithm;
@@ -35,6 +37,7 @@ import icy.system.FileDrop;
 import icy.system.FileDrop.FileDropListener;
 import icy.system.SystemUtil;
 import icy.type.collection.CollectionUtil;
+import icy.util.EventUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -45,11 +48,14 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.HeadlessException;
 import java.awt.Insets;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
@@ -285,6 +291,46 @@ public class MainFrame extends JRibbonFrame
         mainRibbon.init();
 
         setVisible(true);
+
+        // can be done after setVisible
+        initGlobalShortcuts();
+    }
+
+    /**
+     * initialize global shortcuts
+     */
+    public void initGlobalShortcuts()
+    {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher()
+        {
+            @Override
+            public boolean dispatchKeyEvent(KeyEvent e)
+            {
+                switch (e.getKeyCode())
+                {
+                    case KeyEvent.VK_F3:
+                        final SearchBar sb = getSearchBar();
+
+                        if (sb != null)
+                        {
+                            sb.setFocus();
+                            e.consume();
+                        }
+                        break;
+
+                    case KeyEvent.VK_O:
+                        if (EventUtil.isMenuControlDown(e))
+                        {
+                            FileActions.openSequenceAction.doAction(null);
+                            e.consume();
+                        }
+                        break;
+                }
+
+                return false;
+            }
+        });
+
     }
 
     public ApplicationMenu getApplicationMenu()
@@ -293,12 +339,23 @@ public class MainFrame extends JRibbonFrame
     }
 
     /**
-     * Return the center pane, this pane contains the desktop pane.<br>
+     * Returns the center pane, this pane contains the desktop pane.<br>
      * Feel free to add temporary top/left/right or bottom pane to it.
      */
     public JPanel getCenterPanel()
     {
         return centerPanel;
+    }
+
+    /**
+     * Returns the {@link SearchBar} component.
+     */
+    public SearchBar getSearchBar()
+    {
+        if (mainRibbon != null)
+            return mainRibbon.getSearchBar();
+
+        return null;
     }
 
     /**

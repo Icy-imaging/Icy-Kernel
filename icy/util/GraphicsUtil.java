@@ -9,6 +9,7 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -31,6 +32,37 @@ import java.awt.geom.RoundRectangle2D;
  */
 public class GraphicsUtil
 {
+    public static float getAlpha(Graphics2D g)
+    {
+        final Composite composite = g.getComposite();
+
+        if (composite instanceof AlphaComposite)
+            return ((AlphaComposite) composite).getAlpha();
+
+        return 1f;
+    }
+
+    public static void mixAlpha(Graphics2D g, float factor)
+    {
+        mixAlpha(g, 0, factor);
+    }
+
+    public static void mixAlpha(Graphics2D g, int rule, float factor)
+    {
+        final Composite composite = g.getComposite();
+
+        if (composite instanceof AlphaComposite)
+        {
+            final AlphaComposite alphaComposite = (AlphaComposite) composite;
+            final float alpha = Math.min(1f, Math.max(0f, alphaComposite.getAlpha() * factor));
+
+            if (rule == 0)
+                g.setComposite(AlphaComposite.getInstance(alphaComposite.getRule(), alpha));
+            else
+                g.setComposite(AlphaComposite.getInstance(rule, alpha));
+        }
+    }
+
     /**
      * Draw ICY style background on the specified Graphics object with specified dimension.
      */
@@ -49,10 +81,12 @@ public class GraphicsUtil
 
         g2.setPaint(Color.black);
         g2.setColor(Color.black);
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+        mixAlpha(g2, AlphaComposite.SRC_OVER, 1f / 3f);
+        // g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
         g2.fillOval(-width + (width / 2), height / 2, width * 2, height);
 
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+        mixAlpha(g2, AlphaComposite.SRC_OVER, 3f / 1f);
+        // g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
         g2.setStroke(new BasicStroke(Math.max(1f, Math.min(5f, ray))));
         g2.draw(roundRect);
 
@@ -295,11 +329,13 @@ public class GraphicsUtil
         g2.setStroke(new BasicStroke(1.3f));
         // draw translucent background
         g2.setColor(bgColor);
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+        mixAlpha(g2, AlphaComposite.SRC_OVER, 1f / 2f);
+        // g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
         g2.fill(backgroundRect);
         // draw background border
         g2.setColor(ColorUtil.mix(bgColor, Color.black));
-        g2.setComposite(AlphaComposite.Src);
+        mixAlpha(g2, AlphaComposite.SRC_OVER, 2f / 1f);
+        // g2.setComposite(AlphaComposite.Src);
         g2.draw(backgroundRect);
         // draw text
         g2.setColor(textColor);

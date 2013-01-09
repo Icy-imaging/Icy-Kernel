@@ -28,7 +28,6 @@ import icy.plugin.PluginInstaller;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginRepositoryLoader;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
-import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 import icy.workspace.Workspace.TaskDefinition.BandDefinition;
@@ -1083,20 +1082,13 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
             final ArrayList<PluginDescriptor> pluginsToInstall = new ArrayList<PluginDescriptor>();
 
             if (progressFrame != null)
-            {
-                progressFrame.setLength(items.size() + 2);
-                progressFrame.setPosition(0);
-                progressFrame.setMessage("waiting for plugin loader to find plugins...");
-            }
+                progressFrame.setMessage("Waiting for plugin loader to find plugins...");
 
             // wait while online loader is ready
             PluginRepositoryLoader.waitBasicLoaded();
 
             if (progressFrame != null)
-            {
-                progressFrame.incPosition();
-                progressFrame.setMessage("installing workspace '" + name + "' : searching for installed plugins...");
-            }
+                progressFrame.setMessage("Installing workspace '" + name + "' : searching for installed plugins...");
 
             for (ItemDefinition item : items)
             {
@@ -1126,32 +1118,15 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
                 }
             }
 
-            PluginLoader.beginUpdate();
-            try
-            {
-                if (progressFrame != null)
-                {
-                    progressFrame.setLength(pluginsToInstall.size() + 2);
-                    progressFrame.incPosition();
-                    progressFrame.setMessage("installing workspace '" + name + "' : downloading plugins...");
-                }
+            if (progressFrame != null)
+                progressFrame.setMessage("Installing workspace '" + name + "' : downloading plugins...");
 
-                // install missing plugins (no confirmation needed)
-                for (PluginDescriptor plugin : pluginsToInstall)
-                    PluginInstaller.install(plugin, false);
+            // install missing plugins (no confirmation needed)
+            for (PluginDescriptor plugin : pluginsToInstall)
+                PluginInstaller.install(plugin, false);
 
-                // wait installation completion
-                while (PluginInstaller.isInstalling())
-                {
-                    ThreadUtil.sleep(10);
-                    // update progress frame
-                    progressFrame.setPosition(1 + (pluginsToInstall.size() - PluginInstaller.getInstallFIFO().size()));
-                }
-            }
-            finally
-            {
-                PluginLoader.endUpdate();
-            }
+            // wait installation completion
+            PluginInstaller.waitInstall();
 
             final ArrayList<PluginDescriptor> installedPlugins = PluginLoader.getPlugins(false);
 

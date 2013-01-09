@@ -1,12 +1,14 @@
 package icy.gui.menu.search;
 
+import icy.common.IcyAbstractAction;
 import icy.gui.component.IcyTextField;
+import icy.gui.main.MainFrame;
+import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.search.SearchEngine;
 import icy.search.SearchEngine.SearchEngineListener;
 import icy.search.SearchResult;
-import icy.util.EventUtil;
 import icy.util.StringUtil;
 
 import java.awt.AWTEvent;
@@ -23,12 +25,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import javax.swing.Timer;
 
 import org.jdesktop.swingx.painter.BusyPainter;
@@ -38,6 +42,36 @@ import org.jdesktop.swingx.painter.BusyPainter;
  */
 public class SearchBar extends IcyTextField implements SearchEngineListener
 {
+    public static class SearchAction extends IcyAbstractAction
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -7457421618693984393L;
+
+        public static final String NAME = "Search";
+
+        public SearchAction()
+        {
+            super(NAME, new IcyIcon(ResourceUtil.ICON_SEARCH), "Application search tool");
+        }
+
+        @Override
+        public void doAction(ActionEvent e)
+        {
+            final MainFrame mf = Icy.getMainInterface().getMainFrame();
+
+            if (mf != null)
+            {
+                final SearchBar sb = mf.getSearchBar();
+
+                if (sb != null)
+                    sb.setFocus();
+            }
+        }
+
+    }
+
     /**
      * 
      */
@@ -134,38 +168,38 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
                 setFocus();
             }
         });
-        addKeyListener(new KeyAdapter()
-        {
-            @Override
-            public void keyPressed(KeyEvent e)
-            {
-                if (initialized)
-                {
-                    switch (e.getKeyCode())
-                    {
-                        case KeyEvent.VK_ESCAPE:
-                            cancelSearch();
-                            break;
-
-                        case KeyEvent.VK_DOWN:
-                            resultsPanel.moveSelection(1);
-                            break;
-
-                        case KeyEvent.VK_UP:
-                            resultsPanel.moveSelection(-1);
-                            break;
-
-                        case KeyEvent.VK_ENTER:
-                            // result displayed --> launch selected result
-                            if (resultsPanel.isShowing())
-                                resultsPanel.executeSelected();
-                            else
-                                search(getText());
-                            break;
-                    }
-                }
-            }
-        });
+        // addKeyListener(new KeyAdapter()
+        // {
+        // @Override
+        // public void keyPressed(KeyEvent e)
+        // {
+        // if (initialized)
+        // {
+        // switch (e.getKeyCode())
+        // {
+        // case KeyEvent.VK_ESCAPE:
+        // cancelSearch();
+        // break;
+        //
+        // case KeyEvent.VK_DOWN:
+        // resultsPanel.moveSelection(1);
+        // break;
+        //
+        // case KeyEvent.VK_UP:
+        // resultsPanel.moveSelection(-1);
+        // break;
+        //
+        // case KeyEvent.VK_ENTER:
+        // // result displayed --> launch selected result
+        // if (resultsPanel.isShowing())
+        // resultsPanel.executeSelected();
+        // else
+        // search(getText());
+        // break;
+        // }
+        // }
+        // }
+        // });
         addFocusListener(new FocusListener()
         {
             @Override
@@ -182,32 +216,32 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
         });
 
         // global key listener to catch Ctrl+F in every case (not elegant)
-        getToolkit().addAWTEventListener(new AWTEventListener()
-        {
-            @Override
-            public void eventDispatched(AWTEvent event)
-            {
-                if (event instanceof KeyEvent)
-                {
-                    final KeyEvent key = (KeyEvent) event;
-
-                    if (key.getID() == KeyEvent.KEY_PRESSED)
-                    {
-                        // Handle key presses
-                        switch (key.getKeyCode())
-                        {
-                            case KeyEvent.VK_F:
-                                if (EventUtil.isControlDown(key))
-                                {
-                                    setFocus();
-                                    key.consume();
-                                }
-                                break;
-                        }
-                    }
-                }
-            }
-        }, AWTEvent.KEY_EVENT_MASK);
+        // getToolkit().addAWTEventListener(new AWTEventListener()
+        // {
+        // @Override
+        // public void eventDispatched(AWTEvent event)
+        // {
+        // if (event instanceof KeyEvent)
+        // {
+        // final KeyEvent key = (KeyEvent) event;
+        //
+        // if (key.getID() == KeyEvent.KEY_PRESSED)
+        // {
+        // // Handle key presses
+        // switch (key.getKeyCode())
+        // {
+        // case KeyEvent.VK_F:
+        // if (EventUtil.isControlDown(key))
+        // {
+        // setFocus();
+        // key.consume();
+        // }
+        // break;
+        // }
+        // }
+        // }
+        // }
+        // }, AWTEvent.KEY_EVENT_MASK);
 
         // global mouse listener to simulate focus lost (not elegant)
         getToolkit().addAWTEventListener(new AWTEventListener()
@@ -234,10 +268,80 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
             }
         }, AWTEvent.MOUSE_EVENT_MASK);
 
+        buildActionMap();
+
         busyPainterTimer.start();
         lastSearchingState = false;
 
         initialized = true;
+    }
+
+    void buildActionMap()
+    {
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0), SearchAction.NAME);
+        getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "Cancel");
+        getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "MoveDown");
+        getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "MoveUp");
+        getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Execute");
+
+        getActionMap().put(SearchAction.NAME, new SearchAction());
+        getActionMap().put("Cancel", new AbstractAction()
+        {
+            /**
+             * 
+             */
+            private static final long serialVersionUID = 6690317671269902666L;
+
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                if (initialized)
+                    cancelSearch();
+            }
+        });
+        getActionMap().put("MoveDown", new AbstractAction()
+        {
+            /**
+             * 
+             */
+            private static final long serialVersionUID = 8864361043092897904L;
+
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                if (initialized)
+                    moveDown();
+            }
+        });
+        getActionMap().put("MoveUp", new AbstractAction()
+        {
+            /**
+             * 
+             */
+            private static final long serialVersionUID = 6258168037713535447L;
+
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                if (initialized)
+                    moveUp();
+            }
+        });
+        getActionMap().put("Execute", new AbstractAction()
+        {
+            /**
+             * 
+             */
+            private static final long serialVersionUID = 5363650211730888168L;
+
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                if (initialized)
+                    execute();
+            }
+        });
     }
 
     public SearchEngine getSearchEngine()
@@ -269,7 +373,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
         return false;
     }
 
-    void setFocus()
+    public void setFocus()
     {
         if (!hasFocus())
         {
@@ -278,7 +382,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
         }
     }
 
-    void removeFocus()
+    public void removeFocus()
     {
         if (initialized)
         {
@@ -300,6 +404,25 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
             searchEngine.cancelSearch();
         else
             searchEngine.search(filter);
+    }
+
+    protected void execute()
+    {
+        // result displayed --> launch selected result
+        if (resultsPanel.isShowing())
+            resultsPanel.executeSelected();
+        else
+            search(getText());
+    }
+
+    protected void moveDown()
+    {
+        resultsPanel.moveSelection(1);
+    }
+
+    protected void moveUp()
+    {
+        resultsPanel.moveSelection(-1);
     }
 
     @Override

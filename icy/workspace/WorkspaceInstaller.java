@@ -301,7 +301,7 @@ public class WorkspaceInstaller implements Runnable
                         // don't install if the workspace is already installed
                         if (!WorkspaceLoader.isLoaded(installInfo.workspace))
                         {
-                            result = internal_install(installInfo);
+                            result = installInternal(installInfo);
                             // process on workspace installation
                             installed(installInfo.workspace, result);
                         }
@@ -333,7 +333,7 @@ public class WorkspaceInstaller implements Runnable
                             empty = removeFIFO.isEmpty();
                         }
 
-                        result = internal_desinstall(installInfo);
+                        result = desinstallInternal(installInfo);
                         // process on workspace deletion
                         desinstalled(installInfo.workspace, result);
                     }
@@ -416,7 +416,7 @@ public class WorkspaceInstaller implements Runnable
         return result;
     }
 
-    private boolean internal_install(WorkspaceInstallInfo installInfo)
+    private boolean installInternal(WorkspaceInstallInfo installInfo)
     {
         final Workspace workspace = installInfo.workspace;
         final boolean showConfirm = installInfo.showConfirm;
@@ -503,7 +503,7 @@ public class WorkspaceInstaller implements Runnable
         }
     }
 
-    private boolean internal_desinstall(WorkspaceInstallInfo installInfo)
+    private boolean desinstallInternal(WorkspaceInstallInfo installInfo)
     {
         final Workspace workspace = installInfo.workspace;
         final boolean showConfirm = installInfo.showConfirm;
@@ -545,7 +545,6 @@ public class WorkspaceInstaller implements Runnable
 
             if (showConfirm)
                 taskFrame = new ProgressFrame("removing workspace '" + workspaceDesc + "'...");
-            PluginLoader.beginUpdate();
             try
             {
                 // remove workspace independent plugins
@@ -554,15 +553,13 @@ public class WorkspaceInstaller implements Runnable
                         PluginInstaller.desinstall(plugin, false);
 
                 // wait for plugins desintallation
-                while (PluginInstaller.isDesinstalling())
-                    ThreadUtil.sleep(10);
+                PluginInstaller.waitDesinstall();
 
                 // delete workspace
                 result = deleteWorkspace(workspace);
             }
             finally
             {
-                PluginLoader.endUpdate();
                 if (taskFrame != null)
                     taskFrame.close();
             }

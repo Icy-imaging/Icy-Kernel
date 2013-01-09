@@ -2811,47 +2811,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     e.consume();
                 }
                 break;
-
-            case KeyEvent.VK_0:
-                setSyncId(0);
-                e.consume();
-                break;
-
-            case KeyEvent.VK_1:
-                // already set, switch it off
-                if (getSyncId() == 1)
-                    setSyncId(0);
-                else
-                    setSyncId(1);
-                e.consume();
-                break;
-
-            case KeyEvent.VK_2:
-                // already set, switch it off
-                if (getSyncId() == 2)
-                    setSyncId(0);
-                else
-                    setSyncId(2);
-                e.consume();
-                break;
-
-            case KeyEvent.VK_3:
-                // already set, switch it off
-                if (getSyncId() == 3)
-                    setSyncId(0);
-                else
-                    setSyncId(3);
-                e.consume();
-                break;
-
-            case KeyEvent.VK_4:
-                // already set, switch it off
-                if (getSyncId() == 4)
-                    setSyncId(0);
-                else
-                    setSyncId(4);
-                e.consume();
-                break;
         }
 
         // forward to view

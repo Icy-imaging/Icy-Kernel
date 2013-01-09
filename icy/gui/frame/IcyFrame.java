@@ -88,7 +88,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
 
             detachIcon = new IcyIcon(ResourceUtil.ICON_EXPAND, 20);
             attachIcon = new IcyIcon(ResourceUtil.ICON_COLLAPSE, 20);
-            setAccelerator(KeyEvent.VK_F3);
+            setAccelerator(KeyEvent.VK_F4);
 
             refreshState();
         }
@@ -350,7 +350,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     }
 
     /**
-     * close frame
+     * Close frame (send closing event)
      */
     public void close()
     {
@@ -362,6 +362,25 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             {
                 internalFrame.close(true);
                 externalFrame.close();
+            }
+        }, syncProcess);
+    }
+
+    /**
+     * Dispose frame (send closed event)
+     */
+    public void dispose()
+    {
+        // AWT safe
+        ThreadUtil.invoke(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                if (isInternalized())
+                    internalFrame.dispose();
+                else
+                    externalFrame.dispose();
             }
         }, syncProcess);
     }
@@ -1183,7 +1202,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         // not supported on external frame
         if (externalFrame.isVisible())
             return externalFrame.getBounds();
-        
+
         return new Rectangle();
     }
 
@@ -2451,9 +2470,6 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
 
         // easy onClosed handling
         onClosed();
-
-        // release some stuff else we have cycling reference
-        switchStateAction = null;
     }
 
     /**
@@ -2466,6 +2482,11 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         {
             frames.remove(this);
         }
+
+        // release some stuff else we have cycling reference
+        externalFrame.systemMenuCallback = null;
+        internalFrame.systemMenuCallback = null;
+        switchStateAction = null;
     }
 
     @Override

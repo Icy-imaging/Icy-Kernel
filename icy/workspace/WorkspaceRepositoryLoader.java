@@ -231,7 +231,8 @@ public class WorkspaceRepositoryLoader
             if (!NetworkUtil.hasInternetAccess())
                 System.out.println("You are not connected to internet.");
             else
-                System.out.println("Can't access repository : " + repos.getName() + " - " + repos.getLocation());
+                System.out.println("Can't access repository '" + repos.getName() + "'");
+            
             return null;
         }
 

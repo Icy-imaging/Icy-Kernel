@@ -20,6 +20,7 @@ package icy.main;
 
 import icy.common.Version;
 import icy.file.FileUtil;
+import icy.file.Loader;
 import icy.gui.dialog.ConfirmDialog;
 import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.dialog.MessageDialog;
@@ -37,6 +38,7 @@ import icy.imagej.ImageJPatcher;
 import icy.math.UnitUtil;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginInstaller;
+import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginUpdater;
 import icy.preferences.ApplicationPreferences;
@@ -131,6 +133,12 @@ public class Icy
      * Exiting flag
      */
     static boolean exiting = false;
+
+    /**
+     * Startup parameters
+     */
+    static String startupPlugin;
+    static String startupImage;
 
     /**
      * internals
@@ -285,23 +293,48 @@ public class Icy
         System.out.println();
 
         checkParameters();
+
+        // handle startup arguments
+        if (startupImage != null)
+            Icy.getMainInterface().addSequence(Loader.loadSequence(new File(startupImage)));
+        if (startupPlugin != null)
+        {
+            PluginLoader.waitWhileLoading();
+            PluginLauncher.start(startupPlugin);
+        }
     }
 
     private static void handleAppArgs(String[] args)
     {
+        startupImage = null;
+        startupPlugin = null;
+        boolean execute = false;
+
         for (String arg : args)
         {
-            // special flag to disabled JCL (needed for development)
-            if (arg.equalsIgnoreCase("--disableJCL") || arg.equalsIgnoreCase("-dJCL"))
-                PluginLoader.setJCLDisabled(true);
-
-            // headless mode
-            if (arg.equalsIgnoreCase("--headless") || arg.equalsIgnoreCase("-hl"))
-                headless = true;
-
-            // disable splash-screen
-            if (arg.equalsIgnoreCase("--nosplash") || arg.equalsIgnoreCase("-ns"))
-                noSplash = true;
+            if (execute)
+            {
+                startupPlugin = arg;
+                execute = false;
+            }
+            else
+            {
+                // special flag to disabled JCL (needed for development)
+                if (arg.equalsIgnoreCase("--disableJCL") || arg.equalsIgnoreCase("-dJCL"))
+                    PluginLoader.setJCLDisabled(true);
+                // headless mode
+                else if (arg.equalsIgnoreCase("--headless") || arg.equalsIgnoreCase("-hl"))
+                    headless = true;
+                // disable splash-screen
+                else if (arg.equalsIgnoreCase("--nosplash") || arg.equalsIgnoreCase("-ns"))
+                    noSplash = true;
+                // execute plugin
+                else if (arg.equalsIgnoreCase("--execute") || arg.equalsIgnoreCase("-x"))
+                    execute = true;
+                // image name ?
+                else
+                    startupImage = arg;
+            }
         }
     }
 

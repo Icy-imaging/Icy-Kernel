@@ -46,7 +46,7 @@ public class IcyExternalFrame extends JFrame
         public CloseAction()
         {
             super("Close", new IcyIcon(ResourceUtil.ICON_CLOSE, 20), "Close window", KeyEvent.VK_F4, SystemUtil
-                    .getCtrlMask());
+                    .getMenuCtrlMask());
         }
 
         @Override

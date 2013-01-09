@@ -40,7 +40,7 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
 
         PluginLoader.addListener(this);
 
-        // remove columns 2 and 3 (not used here)
+        // remove columns 3 (not used here)
         table.removeColumn(table.getColumn(columnIds[3]));
 
 //        filter.setVisible(false);
@@ -161,5 +161,4 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
     {
         pluginsChanged();
     }
-
 }

@@ -108,6 +108,21 @@ public class PluginLauncher implements Runnable
      * Start the specified plugin.<br>
      * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin)
      */
+    public static Plugin start(String pluginClassName)
+    {
+        final PluginDescriptor plugin = PluginLoader.getPlugin(pluginClassName);
+
+        if (plugin != null)
+            return start(plugin);
+
+        return null;
+
+    }
+
+    /**
+     * Start the specified plugin.<br>
+     * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin)
+     */
     public static Plugin start(PluginDescriptor descriptor)
     {
         try

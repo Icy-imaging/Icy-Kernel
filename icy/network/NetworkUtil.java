@@ -361,6 +361,15 @@ public class NetworkUtil
     }
 
     /**
+     * @deprecated Uses {@link #hasInternetAccess()} instead.
+     */
+    @Deprecated
+    public static boolean hasInternetConnection()
+    {
+        return hasInternetAccess();
+    }
+
+    /**
      * Open an URL in the default system browser
      */
     public static boolean openURL(String url)

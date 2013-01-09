@@ -198,20 +198,29 @@ public class SystemUtil
     }
 
     /**
-     * Return the CTRL key mask.
+     * @deprecated Uses {@link #getMenuCtrlMask()} instead.
      */
+    @Deprecated
     public static int getCtrlMask()
+    {
+        return getMenuCtrlMask();
+    }
+
+    /**
+     * Return the CTRL key mask used for Menu shortcut.
+     */
+    public static int getMenuCtrlMask()
     {
         return Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
     }
 
     /**
-     * @deprecated uses {@link #getCtrlMask()} instead
+     * @deprecated uses {@link #getMenuCtrlMask()} instead
      */
     @Deprecated
     public static int getSystemCtrlMask()
     {
-        return getCtrlMask();
+        return getMenuCtrlMask();
     }
 
     public static GraphicsEnvironment getLocalGraphicsEnvironment()

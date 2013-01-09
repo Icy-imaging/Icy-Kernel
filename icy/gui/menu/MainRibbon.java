@@ -465,7 +465,7 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
         setupPluginsBand.addCommandButton(new IcyCommandButton(PreferencesActions.onlinePluginPreferencesAction),
                 RibbonElementPriority.TOP);
 
-        RibbonUtil.setPermissiveResizePolicies(setupPluginsBand);
+        RibbonUtil.setFixedResizePolicies(setupPluginsBand);
     }
 
     // /**
@@ -571,6 +571,9 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
 
                         // refresh unassigned list
                         refreshOthersPluginsList();
+
+                        // adjust restrictive resize policy
+                        RibbonUtil.setFixedResizePolicies(ribbonBand);
                     }
                     else
                     {
@@ -594,10 +597,10 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
                                 }
                             }
                         }
-                    }
 
-                    // adjust restrictive resize policy
-                    RibbonUtil.setRestrictiveResizePolicies(ribbonBand);
+                        // adjust restrictive resize policy
+                        RibbonUtil.setRestrictiveResizePolicies(ribbonBand);
+                    }
                 }
             }
 

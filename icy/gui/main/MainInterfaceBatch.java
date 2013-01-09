@@ -449,4 +449,9 @@ public class MainInterfaceBatch implements MainInterface
 
     }
 
+    @Override
+    public void setGlobalViewSyncId(int id)
+    {
+
+    }
 }

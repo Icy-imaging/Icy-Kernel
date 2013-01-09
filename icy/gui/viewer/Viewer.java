@@ -43,6 +43,8 @@ import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
+import icy.plugin.PluginLoader.PluginLoaderEvent;
+import icy.plugin.PluginLoader.PluginLoaderListener;
 import icy.plugin.interface_.PluginCanvas;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
@@ -68,6 +70,7 @@ import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -84,7 +87,7 @@ import plugins.kernel.canvas.Canvas3DPlugin;
  * 
  * @author Fabrice de Chaumont & Stephane
  */
-public class Viewer extends IcyFrame implements KeyListener, SequenceListener, IcyCanvasListener
+public class Viewer extends IcyFrame implements KeyListener, SequenceListener, IcyCanvasListener, PluginLoaderListener
 {
     private class DuplicateAction extends IcyAbstractAction
     {
@@ -373,8 +376,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         });
 
         addKeyListener(this);
-
         sequence.addListener(this);
+        PluginLoader.addListener(this);
 
         // do this when viewer is initialized
         icy.main.Icy.getMainInterface().registerViewer(this);
@@ -410,6 +413,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         // remove listeners
         sequence.removeListener(this);
         canvas.removeCanvasListener(this);
+        PluginLoader.removeListener(this);
 
         icy.main.Icy.getMainInterface().unRegisterViewer(this);
 
@@ -1061,15 +1065,18 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
-     * Set the view synchronization group id (-1 means unsynchronized)
+     * Set the view synchronization group id (0 means unsynchronized).
      * 
      * @param id
      *        the view synchronization id to set
+     * @see IcyCanvas#setSyncId(int)
      */
-    public void setViewSyncId(int id)
+    public boolean setViewSyncId(int id)
     {
         if (canvas != null)
-            canvas.setSyncId(id);
+            return canvas.setSyncId(id);
+
+        return false;
     }
 
     /**
@@ -1307,5 +1314,16 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         super.propertyChange(evt);
 
         refreshToolBar();
+    }
+
+    @Override
+    public void pluginLoaderChanged(PluginLoaderEvent e)
+    {
+        // refresh availables canvas
+        if (canvasComboBox != null)
+        {
+            canvasComboBox.setModel(new DefaultComboBoxModel(getCanvasPlugins().toArray()));
+            refreshCanvasCombo();
+        }
     }
 }
