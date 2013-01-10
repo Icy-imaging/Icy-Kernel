@@ -339,7 +339,7 @@ public class SequenceDimensionMergePanel extends JPanel
         add(downButton, gbc_downButton);
 
         fitCheckbox = new JCheckBox("Scale image");
-        fitCheckbox.setToolTipText("Scale image to the maximum XY dimension");
+        fitCheckbox.setToolTipText("Scale all image to the largest one");
         GridBagConstraints gbc_fitCheckbox = new GridBagConstraints();
         gbc_fitCheckbox.fill = GridBagConstraints.HORIZONTAL;
         gbc_fitCheckbox.gridwidth = 2;

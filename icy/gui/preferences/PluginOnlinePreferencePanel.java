@@ -26,6 +26,7 @@ import icy.plugin.PluginLoader;
 import icy.plugin.PluginRepositoryLoader;
 import icy.plugin.PluginRepositoryLoader.PluginRepositoryLoaderListener;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
+import icy.system.thread.ThreadUtil;
 
 import java.util.ArrayList;
 
@@ -284,7 +285,16 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
             final int ind = getPluginModelIndex(plugin.getClassName());
 
             if (ind != -1)
-                tableModel.fireTableRowsUpdated(ind, ind);
+            {
+                ThreadUtil.invokeLater(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        tableModel.fireTableRowsUpdated(ind, ind);
+                    }
+                });
+            }
         }
         else
             pluginsChanged();

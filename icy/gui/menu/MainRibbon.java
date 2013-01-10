@@ -518,7 +518,16 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
             return ribbonTask;
         }
 
-        final RibbonTask result = new RibbonTask(name, createRibbonBands(task));
+        final RibbonTask result;
+
+        try
+        {
+            result = new RibbonTask(name, createRibbonBands(task));
+        }
+        catch (IllegalArgumentException e)
+        {
+            return null;
+        }
 
         // use roundRobin collapse policy
         result.setResizeSequencingPolicy(new CoreRibbonResizeSequencingPolicies.RoundRobin(result));
@@ -538,6 +547,10 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
         {
             // create the task with all needed bands
             final RibbonTask ribbonTask = createRibbonTask(task);
+
+            // empty task --> ignore
+            if (ribbonTask == null)
+                continue;
 
             for (BandDefinition band : getBands(task.getName()))
             {
