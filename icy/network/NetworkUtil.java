@@ -372,34 +372,34 @@ public class NetworkUtil
     /**
      * Open an URL in the default system browser
      */
-    public static boolean openURL(String url)
+    public static boolean openBrowser(String url)
     {
-        return openURL(URLUtil.getURL(url));
+        return openBrowser(URLUtil.getURL(url));
     }
 
     /**
      * Open an URL in the default system browser
      */
-    public static boolean openURL(URL url)
+    public static boolean openBrowser(URL url)
     {
         if (url == null)
             return false;
 
         try
         {
-            return openURL(url.toURI());
+            return openBrowser(url.toURI());
         }
         catch (URISyntaxException e)
         {
             // use other method
-            return systemOpenURL(url.toString());
+            return systemOpenBrowser(url.toString());
         }
     }
 
     /**
      * Open an URL in the default system browser
      */
-    public static boolean openURL(URI uri)
+    public static boolean openBrowser(URI uri)
     {
         if (uri == null)
             return false;
@@ -420,13 +420,13 @@ public class NetworkUtil
         }
 
         // not
-        return systemOpenURL(uri.toString());
+        return systemOpenBrowser(uri.toString());
     }
 
     /**
      * Open an URL in the default system browser (low level method)
      */
-    private static boolean systemOpenURL(String url)
+    private static boolean systemOpenBrowser(String url)
     {
         if (StringUtil.isEmpty(url))
             return false;
@@ -464,6 +464,33 @@ public class NetworkUtil
             System.err.println("Error while opening system browser :\n" + e.toString());
             return false;
         }
+    }
+
+    /**
+     * @deprecated Uses {@link #openBrowser(String)} instead.
+     */
+    @Deprecated
+    public static void openURL(String url)
+    {
+        openBrowser(url);
+    }
+
+    /**
+     * @deprecated Uses {@link #openBrowser(URL)} instead.
+     */
+    @Deprecated
+    public static void openURL(URL url)
+    {
+        openBrowser(url);
+    }
+
+    /**
+     * @deprecated Uses {@link #openBrowser(URI)} instead.
+     */
+    @Deprecated
+    public static void openURL(URI uri)
+    {
+        openBrowser(uri);
     }
 
     /**
