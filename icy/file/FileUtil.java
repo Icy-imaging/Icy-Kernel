@@ -399,18 +399,22 @@ public class FileUtil
             // create parent directory if not exist
             ensureParentDirExist(dst);
 
+            // we can need that first to rename file
+            if (!src.setWritable(true, false))
+                src.setWritable(true, true);
+
+            final long start = System.currentTimeMillis();
+
             // renameTo is not very reliable, better to do several try
             boolean done = src.renameTo(dst);
 
-            int retry = 0;
-            while (!done && (retry < 10))
+            while (!done && (System.currentTimeMillis() - start) < (10 * 1000))
             {
                 // try to release objects which maintain lock
                 System.gc();
-                ThreadUtil.sleep(50);
+                ThreadUtil.sleep(1000);
                 // retry
                 done = src.renameTo(dst);
-                retry++;
             }
 
             if (!done)
@@ -662,7 +666,15 @@ public class FileUtil
                     dst.setLastModified(src.lastModified());
                     return true;
                 }
+
+                return false;
             }
+
+            // cannot load input file
+            System.err.println("Cannot copy '" + src.getAbsolutePath() + "' to '" + dst.getAbsolutePath() + "'");
+            System.err.println("Input file '" + src.getAbsolutePath() + "' data cannot be loaded !");
+
+            return false;
         }
 
         // missing input file
@@ -926,10 +938,14 @@ public class FileUtil
         {
             final long start = System.currentTimeMillis();
 
+            // we can need that first to delete file
+            if (!f.setWritable(true, false))
+                f.setWritable(true, true);
+
             result = f.delete();
 
             // retry for locked file (we try for 15s max)
-            while ((!result) && (System.currentTimeMillis() - start) < (15 * 1000))
+            while ((!result) && (System.currentTimeMillis() - start) < (10 * 1000))
             {
                 // can help for file deletion...
                 System.gc();

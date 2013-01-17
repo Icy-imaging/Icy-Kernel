@@ -336,12 +336,12 @@ public class Updater
      */
     public static boolean updateFiles(ArrayList<ElementFile> files)
     {
-        boolean result = true;
-
         for (ElementFile file : files)
-            result = result & updateFile(file);
+            // if update fails --> exit
+            if (!updateFile(file))
+                return false;
 
-        return result;
+        return true;
     }
 
     /**
@@ -375,7 +375,8 @@ public class Updater
                 if (file.isExecutable())
                     dest.setExecutable(true, false);
                 if (file.isWritable())
-                    dest.setWritable(true, false);
+                    if (!dest.setWritable(true, false))
+                        dest.setWritable(true, true);
 
                 return true;
             }
@@ -416,7 +417,8 @@ public class Updater
         {
             // backup failed
             System.err.println("Updater.udpateFile(" + localPath + ") failed :");
-            System.err.println("Cannot backup file to '" + BACKUP_DIRECTORY + FileUtil.separator + localPath);
+            // System.err.println("Cannot backup file to '" + BACKUP_DIRECTORY + FileUtil.separator
+            // + localPath);
             return false;
         }
 
@@ -425,8 +427,9 @@ public class Updater
         {
             // move failed
             System.err.println("Updater.udpateFile('" + localPath + "') failed !");
-            System.err.println("Cannot rename file from '" + UPDATE_DIRECTORY + FileUtil.separator + localPath
-                    + "' to '" + localPath + "'");
+            // System.err.println("Cannot rename file from '" + UPDATE_DIRECTORY +
+            // FileUtil.separator + localPath
+            // + "' to '" + localPath + "'");
             return false;
         }
 
