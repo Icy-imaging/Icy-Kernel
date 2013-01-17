@@ -413,6 +413,11 @@ public class FileUtil
                 // try to release objects which maintain lock
                 System.gc();
                 ThreadUtil.sleep(1000);
+
+                // may help
+                if (!src.setWritable(true, false))
+                    src.setWritable(true, true);
+
                 // retry
                 done = src.renameTo(dst);
             }
@@ -950,6 +955,11 @@ public class FileUtil
                 // can help for file deletion...
                 System.gc();
                 ThreadUtil.sleep(1000);
+
+                // may help
+                if (!f.setWritable(true, false))
+                    f.setWritable(true, true);
+
                 result = f.delete();
             }
         }
