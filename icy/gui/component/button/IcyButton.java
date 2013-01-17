@@ -25,6 +25,7 @@ import icy.util.StringUtil;
 
 import java.awt.Image;
 
+import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.SwingConstants;
@@ -137,6 +138,25 @@ public class IcyButton extends JButton
 
         // manual change notify
         updateSize();
+    }
+    
+    @Override
+    public void setAction(Action a)
+    {
+        super.setAction(a);
+        
+        // override tooltip set from action
+        IcyAbstractAction.setToolTipTextFromAction(this, a);
+    }
+
+    @Override
+    protected void actionPropertyChanged(Action action, String propertyName)
+    {
+        // override tooltip set from action
+        if ((propertyName == Action.LONG_DESCRIPTION) || (propertyName == Action.SHORT_DESCRIPTION))
+            IcyAbstractAction.setToolTipTextFromAction(this, action);
+        else
+            super.actionPropertyChanged(action, propertyName);
     }
 
     /**

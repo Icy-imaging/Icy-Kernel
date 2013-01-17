@@ -106,7 +106,7 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
         init();
     }
 
-    private void init()
+    protected void init()
     {
         changed = false;
 
@@ -115,27 +115,35 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
         addFocusListener(this);
     }
 
-    private void textChanged(boolean validate)
+    protected void internalTextChanged(boolean validate)
     {
         // simple text change
         if (!validate)
         {
             // keep mark of text change
             changed = true;
-
-            for (TextChangeListener listener : listenerList.getListeners(TextChangeListener.class))
-                listener.textChanged(this, false);
+            textChanged(false);
         }
         else
         {
             // previous text change
             if (changed)
             {
-                for (TextChangeListener listener : listenerList.getListeners(TextChangeListener.class))
-                    listener.textChanged(this, true);
+                textChanged(true);
                 changed = false;
             }
         }
+    }
+
+    protected void textChanged(boolean validate)
+    {
+        fireTextChanged(validate);
+    }
+
+    protected void fireTextChanged(boolean validate)
+    {
+        for (TextChangeListener listener : listenerList.getListeners(TextChangeListener.class))
+            listener.textChanged(this, validate);
     }
 
     public void addTextChangeListener(TextChangeListener listener)
@@ -151,25 +159,25 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
     @Override
     public void changedUpdate(DocumentEvent e)
     {
-        textChanged(false);
+        internalTextChanged(false);
     }
 
     @Override
     public void insertUpdate(DocumentEvent e)
     {
-        textChanged(false);
+        internalTextChanged(false);
     }
 
     @Override
     public void removeUpdate(DocumentEvent e)
     {
-        textChanged(false);
+        internalTextChanged(false);
     }
 
     @Override
     public void actionPerformed(ActionEvent e)
     {
-        textChanged(true);
+        internalTextChanged(true);
     }
 
     @Override
@@ -181,7 +189,7 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
     @Override
     public void focusLost(FocusEvent e)
     {
-        textChanged(true);
+        internalTextChanged(true);
     }
 
 }

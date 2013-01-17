@@ -13,6 +13,7 @@ import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
+import icy.roi.ROI2DRectangle;
 import icy.sequence.Sequence;
 import icy.util.ShapeUtil.ShapeOperation;
 import icy.util.XMLUtil;
@@ -255,8 +256,58 @@ public class RoiActions
         }
     };
 
+    public static IcyAbstractAction boolNotAction = new IcyAbstractAction("NOT",
+            new IcyIcon(ResourceUtil.ICON_ROI_NOT), "Boolean NOT operation",
+            "Create a new ROI representing the inverse of selected ROI")
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 6360796066188754099L;
+
+        @Override
+        public void doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
+
+            if ((sequence != null) && (roisPanel != null))
+            {
+                // NOT operation
+                sequence.beginUpdate();
+                try
+                {
+                    final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
+                    // only ROI2D supported now
+                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
+
+                    // NOT work only on single ROI
+                    if (selectedROI2D.length != 1)
+                        return;
+
+                    // we do the NOT operation by subtracting current ROI to sequence bounds ROI
+                    final ROI mergeROI = ROI2D.subtract(new ROI2DRectangle(sequence.getBounds()), selectedROI2D[0]);
+                    mergeROI.setName("Inverse");
+
+                    sequence.addROI(mergeROI);
+                    sequence.setSelectedROI(mergeROI, true);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+            }
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+        }
+    };
+
     public static IcyAbstractAction boolOrAction = new IcyAbstractAction("OR", new IcyIcon(ResourceUtil.ICON_ROI_OR),
-            "Boolean OR operation", "OR : create a new ROI representing the union of selected ROIs")
+            "Boolean OR operation", "Create a new ROI representing the union of selected ROIs")
     {
         /**
          * 
@@ -300,7 +351,7 @@ public class RoiActions
 
     public static IcyAbstractAction boolAndAction = new IcyAbstractAction("AND",
             new IcyIcon(ResourceUtil.ICON_ROI_AND), "Boolean AND operation",
-            "AND : create a new ROI representing the intersection of selected ROIs")
+            "Create a new ROI representing the intersection of selected ROIs")
     {
         /**
          * 
@@ -344,7 +395,7 @@ public class RoiActions
 
     public static IcyAbstractAction boolXorAction = new IcyAbstractAction("XOR",
             new IcyIcon(ResourceUtil.ICON_ROI_XOR), "Boolean XOR operation",
-            "XOR : create a new ROI representing the exclusive union of selected ROIs")
+            "Create a new ROI representing the exclusive union of selected ROIs")
     {
         /**
          * 
@@ -388,7 +439,7 @@ public class RoiActions
 
     public static IcyAbstractAction boolSubtractAction = new IcyAbstractAction("SUBTRACT", new IcyIcon(
             ResourceUtil.ICON_ROI_SUB), "Boolean subtraction",
-            "SUBTRACT : create a new ROI representing the subtraction of second ROI from the first ROI")
+            "Create a new ROI representing the subtraction of second ROI from the first ROI")
     {
         /**
          * 

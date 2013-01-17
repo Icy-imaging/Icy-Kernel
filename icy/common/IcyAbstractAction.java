@@ -12,6 +12,7 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
 import org.pushingpixels.flamingo.api.common.RichTooltip;
@@ -23,6 +24,28 @@ import org.pushingpixels.flamingo.api.common.RichTooltip;
  */
 public abstract class IcyAbstractAction extends AbstractAction implements Runnable
 {
+    /**
+     * Sets the tooltip text of a component from an Action.
+     * 
+     * @param c
+     *        the Component to set the tooltip text on
+     * @param a
+     *        the Action to set the tooltip text from, may be null
+     */
+    public static void setToolTipTextFromAction(JComponent c, Action a)
+    {
+        if (a != null)
+        {
+            final String longDesc = (String) a.getValue(Action.LONG_DESCRIPTION);
+            final String shortDesc = (String) a.getValue(Action.SHORT_DESCRIPTION);
+
+            if (StringUtil.isEmpty(longDesc))
+                c.setToolTipText(shortDesc);
+            else
+                c.setToolTipText(longDesc);
+        }
+    }
+
     /**
      * 
      */

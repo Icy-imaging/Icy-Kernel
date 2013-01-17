@@ -521,6 +521,8 @@ public class Saver
             else
                 throw new IOException("File already exists");
         }
+        // ensure parent directory exist
+        FileUtil.ensureParentDirExist(file);
 
         try
         {
@@ -578,6 +580,8 @@ public class Saver
             else
                 throw new IOException("File already exists");
         }
+        // ensure parent directory exist
+        FileUtil.ensureParentDirExist(file);
 
         try
         {
@@ -651,6 +655,8 @@ public class Saver
             // forced ? first delete the file else LOCI won't save it
             if (file.exists())
                 file.delete();
+            // ensure parent directory exist
+            FileUtil.ensureParentDirExist(file);
 
             final int sizeC = sequence.getSizeC();
 

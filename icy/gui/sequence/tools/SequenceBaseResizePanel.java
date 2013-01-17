@@ -30,6 +30,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JSpinner.DefaultEditor;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
@@ -180,7 +181,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
     protected JTextField sizeField;
     protected JComboBox sizeUnitComboBox;
     protected JComboBox resolutionUnitComboBox;
-    protected JSpinner resolutionSpinner;
+    protected JSpinner resolutionField;
     protected JLabel accolLeftLabel;
     protected JPanel panel;
     protected Component horizontalGlue;
@@ -206,7 +207,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
 
         accolLeftLabel.setIcon(ResourceUtil.getImageIcon(ResourceUtil.IMAGE_ACCOLADE_LEFT));
         accolLeftLabel.setText(null);
-        resolutionSpinner.setValue(Double.valueOf(sequence.getPixelSizeX()));
+        resolutionField.setValue(Double.valueOf(sequence.getPixelSizeX()));
 
         originalPreview.setFitToView(false);
         resultPreview.setFitToView(false);
@@ -360,7 +361,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
         GridBagLayout gbl_settingPanel = new GridBagLayout();
         gbl_settingPanel.columnWidths = new int[] {20, 100, 20, 100, 20, 100, 20, 0};
         gbl_settingPanel.rowHeights = new int[] {0, 0, 0, 0, 10, 0, 0, 0};
-        gbl_settingPanel.columnWeights = new double[] {1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
+        gbl_settingPanel.columnWeights = new double[] {1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
         gbl_settingPanel.rowWeights = new double[] {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
         settingPanel.setLayout(gbl_settingPanel);
 
@@ -385,7 +386,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
         settingPanel.add(keepRatioCheckBox, gbc_keepRatioCheckBox);
 
         widthSpinner = new JSpinner();
-        widthSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), new Integer(1), new Integer(1)));
+        widthSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), null, new Integer(1)));
         widthSpinner.setToolTipText("New width to set");
         GridBagConstraints gbc_widthSpinner = new GridBagConstraints();
         gbc_widthSpinner.fill = GridBagConstraints.BOTH;
@@ -414,19 +415,20 @@ public abstract class SequenceBaseResizePanel extends JPanel
         lblNewLabel.setLabelFor(heightSpinner);
 
         sizeUnitComboBox = new JComboBox();
+        sizeUnitComboBox.setMaximumRowCount(4);
         sizeUnitComboBox.setToolTipText("Width / Height unit");
         sizeUnitComboBox.setModel(new DefaultComboBoxModel(new String[] {"pixel", "%", "mm", "\u00B5m"}));
         sizeUnitComboBox.setSelectedIndex(0);
         GridBagConstraints gbc_sizeUnitComboBox = new GridBagConstraints();
-        gbc_sizeUnitComboBox.gridheight = 3;
         gbc_sizeUnitComboBox.fill = GridBagConstraints.HORIZONTAL;
+        gbc_sizeUnitComboBox.gridheight = 3;
         gbc_sizeUnitComboBox.insets = new Insets(0, 0, 5, 5);
         gbc_sizeUnitComboBox.gridx = 3;
         gbc_sizeUnitComboBox.gridy = 1;
         settingPanel.add(sizeUnitComboBox, gbc_sizeUnitComboBox);
 
         heightSpinner = new JSpinner();
-        heightSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), new Integer(1), new Integer(1)));
+        heightSpinner.setModel(new SpinnerNumberModel(new Integer(1), new Integer(1), null, new Integer(1)));
         heightSpinner.setToolTipText("New height to set");
         GridBagConstraints gbc_heightSpinner = new GridBagConstraints();
         gbc_heightSpinner.fill = GridBagConstraints.BOTH;
@@ -444,17 +446,20 @@ public abstract class SequenceBaseResizePanel extends JPanel
         gbc_lblResolution.gridy = 5;
         settingPanel.add(lblResolution, gbc_lblResolution);
 
-        resolutionSpinner = new JSpinner();
-        resolutionSpinner.setModel(new SpinnerNumberModel(new Double(1), new Double(0.0001), null, new Double(0.1)));
-        resolutionSpinner.setToolTipText("Pixel resolution for X and Y dimension");
+        resolutionField = new JSpinner();
+        resolutionField.setModel(new SpinnerNumberModel(new Double(1), new Double(0.0001), null, new Double(0.1)));
+        // fix bad resize on double model
+        ((DefaultEditor) resolutionField.getEditor()).getTextField().setColumns(1);
+        resolutionField.setToolTipText("Pixel resolution for X and Y dimension");
         GridBagConstraints gbc_resolutionSpinner = new GridBagConstraints();
         gbc_resolutionSpinner.fill = GridBagConstraints.BOTH;
         gbc_resolutionSpinner.insets = new Insets(0, 0, 0, 5);
         gbc_resolutionSpinner.gridx = 1;
         gbc_resolutionSpinner.gridy = 6;
-        settingPanel.add(resolutionSpinner, gbc_resolutionSpinner);
+        settingPanel.add(resolutionField, gbc_resolutionSpinner);
 
         resolutionUnitComboBox = new JComboBox();
+        resolutionUnitComboBox.setMaximumRowCount(4);
         resolutionUnitComboBox.setToolTipText("Resolution unit");
         resolutionUnitComboBox.setModel(new DefaultComboBoxModel(new String[] {"mm/pixel", "\u00B5m/pixel", "pixel/mm",
                 "pixel/\u00B5m"}));
@@ -585,7 +590,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
      */
     public double getResolution()
     {
-        final double value = ((Double) resolutionSpinner.getValue()).doubleValue();
+        final double value = ((Double)resolutionField.getValue()).doubleValue();
 
         switch (getResolutionUnit())
         {
@@ -606,7 +611,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
 
     void updateResolution()
     {
-        double resol = ((Double) resolutionSpinner.getValue()).doubleValue();
+        double resol = ((Double)resolutionField.getValue()).doubleValue();
 
         // convert to mm / pixel
         switch (previousResolutionUnit)
@@ -640,7 +645,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
 
         resol = Math.max(0.000001, resol);
 
-        resolutionSpinner.setValue(Double.valueOf(resol));
+        resolutionField.setValue(Double.valueOf(resol));
     }
 
     public double getSpinnerSizeValue(JSpinner spinner)
@@ -679,15 +684,21 @@ public abstract class SequenceBaseResizePanel extends JPanel
             default:
             case PIXEL:
                 spinner.setModel(new SpinnerNumberModel((int) value, 0, 65535, 1));
+                // we don't want the model to affect
+                ((DefaultEditor) spinner.getEditor()).getTextField().setColumns(1);
                 break;
 
             case PERCENT:
                 spinner.setModel(new SpinnerNumberModel(value, 0d, Double.MAX_VALUE, 1d));
+                // we don't want the model to affect
+                ((DefaultEditor) spinner.getEditor()).getTextField().setColumns(1);
                 break;
 
             case MILLIM:
             case MICROM:
                 spinner.setModel(new SpinnerNumberModel(value, 0d, Double.MAX_VALUE, 0.01d));
+                // we don't want the model to affect
+                ((DefaultEditor) spinner.getEditor()).getTextField().setColumns(1);
                 break;
         }
     }

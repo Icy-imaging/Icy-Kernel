@@ -142,11 +142,11 @@ public class LUTViewer extends IcyLutViewer
             public void actionPerformed(ActionEvent e)
             {
                 final boolean value = autoRefreshHistoCheckBox.isSelected();
-                AutoRefreshHistogramInternal(value);
+                autoRefreshHistogramInternal(value);
                 pref.putBoolean(ID_AUTO_REFRESH, value);
             }
         });
-        AutoRefreshHistogramInternal(autoRefreshHistoCheckBox.isSelected());
+        autoRefreshHistogramInternal(autoRefreshHistoCheckBox.isSelected());
 
         autoBoundsCheckBox = new JCheckBox("Auto bounds", getPreferredAutoBounds());
         autoBoundsCheckBox.setToolTipText("Automatically ajdust bounds when data is modified");
@@ -160,14 +160,14 @@ public class LUTViewer extends IcyLutViewer
                 if (value)
                 {
                     refreshBounds();
-                    AutoRefreshHistogramInternal(true);
+                    autoRefreshHistogramInternal(true);
                     autoRefreshHistoCheckBox.setSelected(true);
                     autoRefreshHistoCheckBox.setEnabled(false);
                 }
                 else
                 {
                     final boolean refreshValue = pref.getBoolean(ID_AUTO_REFRESH, true);
-                    AutoRefreshHistogramInternal(refreshValue);
+                    autoRefreshHistogramInternal(refreshValue);
                     autoRefreshHistoCheckBox.setSelected(refreshValue);
                     autoRefreshHistoCheckBox.setEnabled(true);
                 }
@@ -176,7 +176,7 @@ public class LUTViewer extends IcyLutViewer
         if (autoBoundsCheckBox.isSelected())
         {
             refreshBounds();
-            AutoRefreshHistogramInternal(true);
+            autoRefreshHistogramInternal(true);
             autoRefreshHistoCheckBox.setSelected(true);
             autoRefreshHistoCheckBox.setEnabled(false);
         }
@@ -273,12 +273,22 @@ public class LUTViewer extends IcyLutViewer
         return autoBoundsCheckBox.isSelected();
     }
 
+    public void setAutoBound(boolean value)
+    {
+        autoBoundsCheckBox.setSelected(value);
+    }
+
     public boolean getAutoRefreshHistogram()
     {
         return autoRefreshHistoCheckBox.isSelected();
     }
 
-    void AutoRefreshHistogramInternal(boolean value)
+    public void setAutoRefreshHistogram(boolean value)
+    {
+        autoRefreshHistoCheckBox.setSelected(value);
+    }
+
+    void autoRefreshHistogramInternal(boolean value)
     {
         for (int i = 0; i < lutChannelViewers.size(); i++)
             lutChannelViewers.get(i).getScalerPanel().getScalerViewer().setAutoRefresh(value);

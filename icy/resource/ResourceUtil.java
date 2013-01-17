@@ -126,6 +126,7 @@ public class ResourceUtil
     public static final Image ICON_LAYER_REMOVE_ADV_V = ResourceUtil.getAlphaIconAsImage("layers_remove_adv_v.png");
     public static final Image ICON_LAYER_ADJUST_HV = ResourceUtil.getAlphaIconAsImage("layers_adjust_hv.png");
 
+    public static final Image ICON_ROI_NOT = ResourceUtil.getAlphaIconAsImage("roi_not.png");
     public static final Image ICON_ROI_OR = ResourceUtil.getAlphaIconAsImage("roi_or.png");
     public static final Image ICON_ROI_AND = ResourceUtil.getAlphaIconAsImage("roi_and.png");
     public static final Image ICON_ROI_XOR = ResourceUtil.getAlphaIconAsImage("roi_xor.png");

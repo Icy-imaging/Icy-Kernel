@@ -63,6 +63,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     private IcyTextField sizeTField;
     ColorChooserButton colorButton;
     private ColorChooserButton selectedColorButton;
+    private IcyButton notButton;
     private IcyButton orButton;
     private IcyButton andButton;
     private IcyButton xorButton;
@@ -191,12 +192,21 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         gbc_lblBoolean.gridy = 1;
         booleanOpPanel.add(lblBoolean, gbc_lblBoolean);
 
+        notButton = new IcyButton(RoiActions.boolNotAction);
+        notButton.setText(null);
+        GridBagConstraints gbc_notButton = new GridBagConstraints();
+        gbc_notButton.fill = GridBagConstraints.BOTH;
+        gbc_notButton.insets = new Insets(0, 0, 5, 5);
+        gbc_notButton.gridx = 1;
+        gbc_notButton.gridy = 1;
+        booleanOpPanel.add(notButton, gbc_notButton);
+
         orButton = new IcyButton(RoiActions.boolOrAction);
         orButton.setText(null);
         GridBagConstraints gbc_orButton = new GridBagConstraints();
         gbc_orButton.fill = GridBagConstraints.BOTH;
         gbc_orButton.insets = new Insets(0, 0, 5, 5);
-        gbc_orButton.gridx = 1;
+        gbc_orButton.gridx = 2;
         gbc_orButton.gridy = 1;
         booleanOpPanel.add(orButton, gbc_orButton);
 
@@ -205,7 +215,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         GridBagConstraints gbc_andButton = new GridBagConstraints();
         gbc_andButton.fill = GridBagConstraints.BOTH;
         gbc_andButton.insets = new Insets(0, 0, 5, 5);
-        gbc_andButton.gridx = 2;
+        gbc_andButton.gridx = 3;
         gbc_andButton.gridy = 1;
         booleanOpPanel.add(andButton, gbc_andButton);
 
@@ -214,7 +224,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         GridBagConstraints gbc_xorButton = new GridBagConstraints();
         gbc_xorButton.fill = GridBagConstraints.BOTH;
         gbc_xorButton.insets = new Insets(0, 0, 5, 5);
-        gbc_xorButton.gridx = 3;
+        gbc_xorButton.gridx = 4;
         gbc_xorButton.gridy = 1;
         booleanOpPanel.add(xorButton, gbc_xorButton);
 
@@ -223,7 +233,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         GridBagConstraints gbc_subButton = new GridBagConstraints();
         gbc_subButton.insets = new Insets(0, 0, 5, 5);
         gbc_subButton.fill = GridBagConstraints.BOTH;
-        gbc_subButton.gridx = 4;
+        gbc_subButton.gridx = 5;
         gbc_subButton.gridy = 1;
         booleanOpPanel.add(subButton, gbc_subButton);
 
@@ -535,6 +545,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
                 deleteButton.setEnabled(hasSelected && editable);
 
+                notButton.setEnabled(singleSelect);
                 orButton.setEnabled(severalsSelected);
                 andButton.setEnabled(severalsSelected);
                 xorButton.setEnabled(severalsSelected);
@@ -603,6 +614,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 clearCPButton.setEnabled(false);
                 deleteButton.setEnabled(false);
 
+                notButton.setEnabled(false);
                 orButton.setEnabled(false);
                 andButton.setEnabled(false);
                 xorButton.setEnabled(false);

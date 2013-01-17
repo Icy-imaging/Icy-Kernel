@@ -70,8 +70,10 @@ public class UnitUtil
     }
 
     /**
-     * Get the best unit with the given value and {@link UnitPrefix}. Be
-     * careful, this method is supposed to be used with unit in <b>decimal</b>
+     * Get the best unit with the given value and {@link UnitPrefix}.<br>
+     * By best unit we adapt the output unit so the value stay between 0.1 --> 100 range (for
+     * dimension 1).<br>
+     * Be careful, this method is supposed to be used with unit in <b>decimal</b>
      * system. For sexagesimal system, please use {@link TimeUnit} methods.<br/>
      * <b>Example:</b><br/>
      * <ul>
@@ -116,8 +118,10 @@ public class UnitUtil
     }
 
     /**
-     * Get the best unit with the given value and {@link UnitPrefix}. Be
-     * careful, this method is supposed to be used with unit in <b>decimal</b>
+     * Get the best unit with the given value and {@link UnitPrefix}.
+     * By best unit we adapt the output unit so the value stay between 0.1 --> 100 range (for
+     * dimension 1).<br>
+     * Be careful, this method is supposed to be used with unit in <b>decimal</b>
      * system. For sexagesimal system, please use {@link TimeUnit} methods.<br/>
      * <b>Example:</b><br/>
      * <ul>

@@ -1216,12 +1216,13 @@ public class BooleanMask2D
     }
 
     /**
-     * Modify bounds of BooleanMask, keep the mask data
+     * Modify bounds of BooleanMask.<br>
+     * Keep mask data intersecting from old bounds. 
      */
-    protected void setBounds(Rectangle value)
+    public void setBounds(Rectangle value)
     {
-        // dimension changed ?
-        if ((bounds.width != value.width) || (bounds.height != value.height))
+        // bounds changed ?
+        if (!bounds.equals(value))
         {
             // copy bounds as we modify them
             final Rectangle oldBounds = new Rectangle(bounds);
@@ -1262,9 +1263,8 @@ public class BooleanMask2D
 
             // set new image and maskData
             mask = newMask;
+            // set new bounds
+            bounds = value;
         }
-
-        // set new bounds
-        bounds = value;
     }
 }
