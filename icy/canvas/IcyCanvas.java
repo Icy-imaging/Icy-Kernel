@@ -766,24 +766,24 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                 // no information about dimension --> set all
                 if (processAll || (dim == DimensionId.NULL))
                 {
-                    final int posX = getPositionX();
-                    final int posY = getPositionY();
-                    final int posZ = getPositionZ();
-                    final int posT = getPositionT();
-                    final int posC = getPositionC();
+                    final int x = getPositionX();
+                    final int y = getPositionY();
+                    final int z = getPositionZ();
+                    final int t = getPositionT();
+                    final int c = getPositionC();
 
                     for (IcyCanvas cnv : canvasList)
                     {
-                        if (posX != -1)
-                            cnv.setPositionX(posX);
-                        if (posY != -1)
-                            cnv.setPositionY(posY);
-                        if (posZ != -1)
-                            cnv.setPositionZ(posZ);
-                        if (posT != -1)
-                            cnv.setPositionT(posT);
-                        if (posC != -1)
-                            cnv.setPositionC(posC);
+                        if (x != -1)
+                            cnv.setPositionX(x);
+                        if (y != -1)
+                            cnv.setPositionY(y);
+                        if (z != -1)
+                            cnv.setPositionZ(z);
+                        if (t != -1)
+                            cnv.setPositionT(t);
+                        if (c != -1)
+                            cnv.setPositionC(c);
                     }
                 }
                 else
@@ -1042,12 +1042,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (sequence == null)
             return 0;
 
-        final int maxX = getImageSizeX() - 1;
-
-        if (maxX < 0)
-            return 0;
-
-        return maxX;
+        return Math.max(0, getImageSizeX() - 1);
     }
 
     /**
@@ -1061,12 +1056,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (sequence == null)
             return 0;
 
-        final int maxY = getImageSizeY() - 1;
-
-        if (maxY < 0)
-            return 0;
-
-        return maxY;
+        return Math.max(0, getImageSizeY() - 1);
     }
 
     /**
@@ -1080,12 +1070,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (sequence == null)
             return 0;
 
-        final int maxZ = getImageSizeZ() - 1;
-
-        if (maxZ < 0)
-            return 0;
-
-        return maxZ;
+        return Math.max(0, getImageSizeZ() - 1);
     }
 
     /**
@@ -1099,12 +1084,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (sequence == null)
             return 0;
 
-        final int maxT = getImageSizeT() - 1;
-
-        if (maxT < 0)
-            return 0;
-
-        return maxT;
+        return Math.max(0, getImageSizeT() - 1);
     }
 
     /**
@@ -1118,12 +1098,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (sequence == null)
             return 0;
 
-        final int maxC = getImageSizeC() - 1;
-
-        if (maxC < 0)
-            return 0;
-
-        return maxC;
+        return Math.max(0, getImageSizeC() - 1);
     }
 
     /**
@@ -3114,20 +3089,20 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             // derive original metadata
             result.setMetaData(OMEUtil.createOMEMetadata(seqIn.getMetadata()));
 
-            final int posT = getPositionT();
-            final int posZ = getPositionZ();
-            final int posC = getPositionC();
+            int t = getPositionT();
+            int z = getPositionZ();
+            int c = getPositionC();
             final int sizeT = getImageSizeT();
             final int sizeZ = getImageSizeZ();
             final int sizeC = getImageSizeC();
 
             int pos = 0;
             int len = 1;
-            if (posT != -1)
+            if (t != -1)
                 len *= sizeT;
-            if (posZ != -1)
+            if (z != -1)
                 len *= sizeZ;
-            if (posC != -1)
+            if (c != -1)
                 len *= sizeC;
 
             result.beginUpdate();
@@ -3137,19 +3112,19 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             beginUpdate();
             try
             {
-                if (posT != -1)
+                if (t != -1)
                 {
-                    for (int t = 0; t < sizeT; t++)
+                    for (t = 0; t < sizeT; t++)
                     {
-                        if (posZ != -1)
+                        if (z != -1)
                         {
-                            for (int z = 0; z < sizeZ; z++)
+                            for (z = 0; z < sizeZ; z++)
                             {
-                                if (posC != -1)
+                                if (c != -1)
                                 {
                                     final ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
 
-                                    for (int c = 0; c < sizeC; c++)
+                                    for (c = 0; c < sizeC; c++)
                                     {
                                         images.add(getRenderedImage(t, z, c, canvasView));
                                         pos++;
@@ -3179,15 +3154,15 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                 }
                 else
                 {
-                    if (posZ != -1)
+                    if (z != -1)
                     {
-                        for (int z = 0; z < sizeZ; z++)
+                        for (z = 0; z < sizeZ; z++)
                         {
-                            if (posC != -1)
+                            if (c != -1)
                             {
                                 final ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
 
-                                for (int c = 0; c < sizeC; c++)
+                                for (c = 0; c < sizeC; c++)
                                 {
                                     images.add(getRenderedImage(-1, z, c, canvasView));
                                     pos++;
@@ -3208,11 +3183,11 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                     }
                     else
                     {
-                        if (posC != -1)
+                        if (c != -1)
                         {
                             final ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
 
-                            for (int c = 0; c < sizeC; c++)
+                            for (c = 0; c < sizeC; c++)
                             {
                                 images.add(getRenderedImage(-1, -1, c, canvasView));
                                 pos++;

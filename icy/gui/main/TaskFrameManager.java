@@ -25,21 +25,17 @@ import icy.system.thread.ThreadUtil;
 
 import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import javax.swing.Timer;
 
 /**
  * Manage the TaskFrame to display them on right of the window.
  * 
  * @author Fabrice de Chaumont & Stephane Dallongeville
  */
-public class TaskFrameManager implements ActionListener
+public class TaskFrameManager implements Runnable
 {
-    final Timer timer;
+    final Thread animThread;
     final ArrayList<TaskFrame> taskFrames;
     final HashMap<TaskFrame, Point> framesPosition;
     final HashMap<TaskFrame, FrameInformation> framesInfo;
@@ -101,7 +97,8 @@ public class TaskFrameManager implements ActionListener
     {
         super();
 
-        timer = new Timer(20, this);
+        animThread = new Thread(this, "TaskFrame manager");
+        animThread.start();
         taskFrames = new ArrayList<TaskFrame>();
         framesPosition = new HashMap<TaskFrame, Point>();
         framesInfo = new HashMap<TaskFrame, FrameInformation>();
@@ -121,32 +118,23 @@ public class TaskFrameManager implements ActionListener
 
     public void addTaskWindow(final TaskFrame tFrame, final long msBeforeDisplay, final long msAfterCloseRequest)
     {
-        ThreadUtil.invokeLater(new Runnable()
+        final Dimension desktopSize = getDesktopSize();
+
+        if (desktopSize != null)
         {
-            @Override
-            public void run()
+            synchronized (taskFrames)
             {
-                synchronized (taskFrames)
-                {
-                    final Dimension desktopSize = getDesktopSize();
+                // get bottom right border location
+                FrameInformation frameInformation = new FrameInformation(msBeforeDisplay, msAfterCloseRequest);
+                framesInfo.put(tFrame, frameInformation);
 
-                    if (desktopSize != null)
-                    {
-                        // get bottom right border location
-                        FrameInformation frameInformation = new FrameInformation(msBeforeDisplay, msAfterCloseRequest);
-                        framesInfo.put(tFrame, frameInformation);
-
-                        taskFrames.add(tFrame);
-                        tFrame.addToMainDesktopPane();
-                        // tFrame.setVisible(true);
-                        tFrame.setLocation(desktopSize.width + 10, 0);
-                        tFrame.toFront();
-                        lastAnimationMillisecondTime = System.currentTimeMillis();
-                        timer.start();
-                    }
-                }
+                taskFrames.add(tFrame);
             }
-        });
+
+            tFrame.addToMainDesktopPane();
+            tFrame.setLocation(desktopSize.width + 10, 0);
+            tFrame.toFront();
+        }
     }
 
     public void addTaskWindow(final TaskFrame tFrame, long msBeforeDisplay)
@@ -165,12 +153,12 @@ public class TaskFrameManager implements ActionListener
 
     private void animate()
     {
+        long currentMillisecondTime = System.currentTimeMillis();
+        long delayBetween2Animation = currentMillisecondTime - lastAnimationMillisecondTime;
+        lastAnimationMillisecondTime = currentMillisecondTime;
+
         synchronized (taskFrames)
         {
-            long currentMillisecondTime = System.currentTimeMillis();
-            long delayBetween2Animation = currentMillisecondTime - lastAnimationMillisecondTime;
-            lastAnimationMillisecondTime = currentMillisecondTime;
-
             for (TaskFrame frame : framesInfo.keySet())
             {
                 FrameInformation frameInformation = framesInfo.get(frame);
@@ -184,15 +172,18 @@ public class TaskFrameManager implements ActionListener
                     frameInformation.setMsBeforeClose(frameInformation.getMsBeforeClose() - delayBetween2Animation);
             }
 
-            // build target position.
-            framesPosition.clear();
             // get bottom right border location
             final Dimension desktopSize = getDesktopSize();
+            // not yet initialized
+            if (desktopSize == null)
+                return;
 
-            final ArrayList<TaskFrame> frames = new ArrayList<TaskFrame>(taskFrames);
+            // build target position.
+            framesPosition.clear();
 
-            for (TaskFrame frame : frames)
+            for (int i = taskFrames.size() - 1; i >= 0; i--)
             {
+                final TaskFrame frame = taskFrames.get(i);
                 FrameInformation frameInformation = framesInfo.get(frame);
 
                 // get frame position
@@ -204,7 +195,7 @@ public class TaskFrameManager implements ActionListener
                     if ((!frame.isVisible()) || ((location.x > desktopSize.width)))
                     {
                         // remove it from list
-                        taskFrames.remove(frame);
+                        taskFrames.remove(i);
                         framesInfo.remove(frame);
                         // and close it definitely
                         frame.internalClose();
@@ -291,14 +282,15 @@ public class TaskFrameManager implements ActionListener
                 }
             }
         }
-
-        if (taskFrames.size() == 0)
-            timer.stop();
     }
 
     @Override
-    public void actionPerformed(ActionEvent e)
+    public void run()
     {
-        animate();
+        while (true)
+        {
+            animate();
+            ThreadUtil.sleep(20);
+        }
     }
 }

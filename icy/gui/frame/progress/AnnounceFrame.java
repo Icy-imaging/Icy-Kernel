@@ -22,11 +22,12 @@ import icy.system.thread.ThreadUtil;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.Timer;
 
 public class AnnounceFrame extends TaskFrame implements ActionListener
 {
@@ -104,6 +105,20 @@ public class AnnounceFrame extends TaskFrame implements ActionListener
     {
         super("");
 
+        if (liveTime != 0)
+        {
+            timer = new Timer("Announce timer");
+            timer.schedule(new TimerTask()
+            {
+                @Override
+                public void run()
+                {
+                    // close frame (EDT safe)
+                    close();
+                }
+            }, liveTime * 1000);
+        }
+
         ThreadUtil.invokeLater(new Runnable()
         {
             @Override
@@ -112,13 +127,6 @@ public class AnnounceFrame extends TaskFrame implements ActionListener
                 button = new JButton();
                 label = new JLabel();
                 action = btnAction;
-
-                if (liveTime != 0)
-                {
-                    timer = new Timer(liveTime * 1000, AnnounceFrame.this);
-                    timer.setRepeats(false);
-                    timer.start();
-                }
 
                 label.setText("   " + message + "   ");
                 button.setText(buttonText);
@@ -157,7 +165,7 @@ public class AnnounceFrame extends TaskFrame implements ActionListener
     {
         // stop timer
         if (timer != null)
-            timer.stop();
+            timer.cancel();
 
         super.internalClose();
     }

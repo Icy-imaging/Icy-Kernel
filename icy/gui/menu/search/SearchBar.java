@@ -22,18 +22,18 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
-import javax.swing.Timer;
 
 import org.jdesktop.swingx.painter.BusyPainter;
 
@@ -132,10 +132,12 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
         busyPainter.setPointShape(new Rectangle2D.Float(0, 0, 4, 2));
         frame = 0;
 
-        busyPainterTimer = new Timer(DELAY, new ActionListener()
+        lastSearchingState = false;
+        busyPainterTimer = new Timer("Search animation timer");
+        busyPainterTimer.scheduleAtFixedRate(new TimerTask()
         {
             @Override
-            public void actionPerformed(ActionEvent e)
+            public void run()
             {
                 frame = (frame + 1) % BUSY_PAINTER_POINTS;
                 busyPainter.setFrame(frame);
@@ -149,7 +151,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
 
                 lastSearchingState = searching;
             }
-        });
+        }, DELAY, DELAY);
 
         // ADD LISTENERS
         addTextChangeListener(new TextChangeListener()
@@ -269,9 +271,6 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
         }, AWTEvent.MOUSE_EVENT_MASK);
 
         buildActionMap();
-
-        busyPainterTimer.start();
-        lastSearchingState = false;
 
         initialized = true;
     }

@@ -31,9 +31,17 @@ import java.awt.event.MouseEvent;
 public class EventUtil
 {
     /**
-     * Returns true if Shift key is pressed for the specified event
+     * Returns true if Shift key is pressed for the specified event.
      */
     public static boolean isShiftDown(InputEvent e)
+    {
+        return e.isShiftDown();
+    }
+
+    /**
+     * Returns true if Shift key is pressed for the specified event.
+     */
+    public static boolean isShiftDown(InputEvent e, boolean singleModifier)
     {
         return e.isShiftDown();
     }

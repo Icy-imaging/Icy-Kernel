@@ -12,16 +12,15 @@ import icy.util.StringUtil;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.Box;
 import javax.swing.JCheckBox;
 import javax.swing.JEditorPane;
-import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.text.html.HTMLDocument;
 
@@ -66,15 +65,19 @@ public class ToolTipFrame extends TaskFrame
             }
         }
 
-        timer = new Timer(liveTime * 1000, new ActionListener()
+        if (liveTime != 0)
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
+            timer = new Timer("ToolTip timer");
+            timer.schedule(new TimerTask()
             {
-                processClose();
-            }
-        });
-        timer.setRepeats(false);
+                @Override
+                public void run()
+                {
+                    // EDT safe
+                    doClose();
+                }
+            }, liveTime * 1000);
+        }
 
         ThreadUtil.invokeLater(new Runnable()
         {
@@ -95,7 +98,7 @@ public class ToolTipFrame extends TaskFrame
                     @Override
                     public void mouseClicked(MouseEvent e)
                     {
-                        processClose();
+                        doClose();
                     }
                 });
 
@@ -109,9 +112,6 @@ public class ToolTipFrame extends TaskFrame
                     mainPanel.add(GuiUtil.createLineBoxPanel(doNotDisplayCheckbox, Box.createHorizontalGlue()),
                             BorderLayout.SOUTH);
                 pack();
-
-                if (ToolTipFrame.this.liveTime != 0)
-                    timer.start();
             }
         });
     }
@@ -168,13 +168,13 @@ public class ToolTipFrame extends TaskFrame
         return false;
     }
 
-    void processClose()
+    void doClose()
     {
-        close();
-
         // save display flag only if set to false
         if (!StringUtil.isEmpty(id) && doNotDisplayCheckbox.isSelected())
             GeneralPreferences.getPreferencesToolTips().putBoolean(id, false);
+
+        close();
     }
 
     public void setText(final String text)
@@ -195,7 +195,7 @@ public class ToolTipFrame extends TaskFrame
     {
         // stop timer
         if (timer != null)
-            timer.stop();
+            timer.cancel();
 
         super.internalClose();
     }

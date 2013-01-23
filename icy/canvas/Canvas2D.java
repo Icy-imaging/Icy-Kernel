@@ -1810,7 +1810,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 dest = destValues[index];
 
             // number of step to reach final value
-            final int size = Math.max(moveTime / timer.getDelay(), 1);
+            final int size = Math.max(moveTime / getUpdateDelay(), 1);
 
             // calculate interpolation
             switch (type)
@@ -1902,10 +1902,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         super(viewer);
 
         // arrange to our dimension format
-        if (posZ == -1)
-            posZ = 0;
-        if (posT == -1)
-            posT = 0;
+        posZ = 0;
+        posT = 0;
         posC = -1;
 
         // view panel
@@ -2982,15 +2980,15 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 if (processAll || (dim == DimensionId.NULL))
                 {
                     // only support T and Z positioning
-                    final int posZ = getPositionZ();
-                    final int posT = getPositionT();
+                    final int z = getPositionZ();
+                    final int t = getPositionT();
 
                     for (IcyCanvas cnv : canvasList)
                     {
-                        if (posZ != -1)
-                            cnv.setPositionZ(posZ);
-                        if (posT != -1)
-                            cnv.setPositionT(posT);
+                        if (z != -1)
+                            cnv.setPositionZ(z);
+                        if (t != -1)
+                            cnv.setPositionT(t);
                     }
                 }
                 else

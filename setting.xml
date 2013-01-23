@@ -1,19 +1,56 @@
 <?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
 <root>
 <section name="icy">
+<key name="updateRepositoryBase" value="http://www.bioimageanalysis.org/icy/update_test/"/>
 <section name="general">
-<key name="maxMemory" value="128"/>
+<key name="maxMemory" value="2976"/>
 <key name="startupTooltip" value="false"/>
-<key name="exitConfirm" value="true"/>
-<key name="sequencePersistence" value="true"/>
+<key name="exitConfirm" value="false"/>
+<key name="sequencePersistence" value="false"/>
 <key name="autoUpdate" value="false"/>
 <key name="autoCheckUpdate" value="false"/>
 <key name="alwaysOnTop" value="false"/>
+<section name="toolTips">
+<key name="icy.roi.ROI2DRectangle" value="false"/>
+<key name="icy.roi.ROI2DPolyLine" value="false"/>
+<key name="icy.roi.ROI2DEllipse" value="false"/>
+<key name="icy.roi.ROI2DLine" value="false"/>
+<key name="icy.roi.ROI2DPoint" value="false"/>
+<key name="icy.roi.ROI2DPolygon" value="false"/>
+<key name="icy.roi.ROI2DArea" value="false"/>
+</section>
+<section name="chat">
+<key name="ircNickname" value="Stephane-D"/>
+<key name="showUsersPanel" value="true"/>
+<key name="usersPanelWidth" value="117"/>
+<key name="desktopOverlay" value="false"/>
+</section>
+<key name="invertMouseWheelAxis" value="false"/>
+<key name="detached" value="false"/>
+<key name="guiSkin" value="Cerulean"/>
+<section name="confirms">
+
+<key name="exit" value="false"/>
+<key name="pluginInstall1" value="false"/>
+</section>
+<key name="exit" value="false"/>
+<key name="ribbonMinimized" value="false"/>
+<key name="guiFontSize" value="12"/>
 </section>
 <section name="repositories">
 <section name="repos0">
 <key name="name" value="default"/>
-<key name="location" value="http://www.bioimageanalysis.org/icy/repository/"/>
+<key name="location" value="http://icy.bioimageanalysis.org/repository/"/>
+<key name="enabled" value="true"/>
+<section name="authentication">
+<key name="login" value=""/>
+<key name="password" value=""/>
+<key name="enabled" value="false"/>
+</section>
+</section>
+<section name="repos1">
+<key name="name" value="Sorin"/>
+<key name="location" value="http://zalmoxis.laiq.pasteur.fr/~spop/IcyRepo/repository.txt"/>
 <key name="enabled" value="true"/>
 <section name="authentication">
 <key name="login" value=""/>
@@ -23,15 +60,24 @@
 </section>
 </section>
 <section name="plugin">
-<section name="local"/>
+<section name="local">
+<section name="authentication"/>
+</section>
 <section name="online"/>
 <key name="autoUpdate" value="false"/>
 <key name="autoCheckUpdate" value="false"/>
-<key name="allowBeta" value="false"/>
+<key name="allowBeta" value="true"/>
+<section name="inactivesdaemon"/>
 </section>
 <section name="workspaces">
 <section name="local">
-<section name="actives"/>
+<section name="actives">
+<key name="Detection" value="true"/>
+<key name="Dev Tutorials" value="true"/>
+<key name="Microscopy" value="true"/>
+<key name="Processing" value="true"/>
+<key name="Tools" value="true"/>
+</section>
 </section>
 <section name="online"/>
 <key name="autoUpdate" value="false"/>
@@ -39,66 +85,404 @@
 </section>
 <section name="loader">
 <section name="entry0">
-<key name="nbFile" value="0"/>
+<key name="nbFile" value="1"/>
+<key name="file0" value="D:\Stephane\Pictures\bio\lsm\3D_Z\GFP5.lsm"/>
 </section>
 <section name="entry1">
-<key name="nbFile" value="0"/>
+<key name="nbFile" value="1"/>
+<key name="file0" value="D:\Stephane\Pictures\bio\jpg\adn.jpg"/>
 </section>
 <section name="entry2">
-<key name="nbFile" value="0"/>
+<key name="nbFile" value="1"/>
+<key name="file0" value="D:\Stephane\Pictures\bio\lsm\4D_CZ\anim_001.lsm"/>
 </section>
 <section name="entry3">
-<key name="nbFile" value="0"/>
+<key name="nbFile" value="1"/>
+<key name="file0" value="D:\Stephane\Pictures\bio\saved\test_cc3.png"/>
 </section>
 <section name="entry4">
-<key name="nbFile" value="0"/>
+<key name="nbFile" value="1"/>
+<key name="file0" value="D:\Stephane\Pictures\bio\vannary\2011-03-07 17.03.46.ndpis"/>
 </section>
 <section name="entry5">
-<key name="nbFile" value="0"/>
+<key name="nbFile" value="1"/>
+<key name="file0" value="D:\Stephane\Pictures\bio\tiff\4D_ZT\01"/>
 </section>
 <section name="entry6">
+<key name="nbFile" value="1"/>
+<key name="file0" value="D:\Stephane\Pictures\bio\vannary\2011-03-07 17.03.46-Fitc.ndpi"/>
+</section>
+<section name="entry7">
+<key name="nbFile" value="1"/>
+<key name="file0" value="D:\Stephane\Pictures\bio\vannary\2011-03-07 17.03.46-Dapi.ndpi"/>
+</section>
+<section name="entry8">
+<key name="nbFile" value="0"/>
+</section>
+<section name="entry9">
 <key name="nbFile" value="0"/>
 </section>
 </section>
 <key name="os" value="win64"/>
-</section>
-<section name="plugins"/>
 <section name="frame">
-<section name="main">
-<key name="XE" value="104"/>
-<key name="YE" value="94"/>
-<key name="WidthE" value="952"/>
-<key name="HeightE" value="672"/>
-<key name="MinimizedE" value="false"/>
+<section name="imageLoader">
+<key name="path" value="D:\Stephane\Pictures\bio\lsm\4D_CZ"/>
+<key name="width" value="600"/>
+<key name="height" value="400"/>
+</section>
+<section name="imageSaver">
+<key name="path" value="D:\Stephane\Pictures\bio\saved"/>
+<key name="width" value="600"/>
+<key name="height" value="400"/>
+<key name="multipleFile" value="false"/>
+<key name="fileType" value="1"/>
+<key name="overwriteName" value="true"/>
+</section>
+</section>
+<section name="Canvas2D">
+<key name="fitCanvas" value="true"/>
+</section>
+<section name="chat">
+<key name="ircNickname" value="Stephane-D"/>
+<key name="ircUsername" value="Stephane-D"/>
+<key name="ircRealname" value="Stephane Dallongeville"/>
+<key name="ircUserPassword" value="sonicc"/>
+<key name="ircChannels" value="icy"/>
+<key name="autoConnect" value="true"/>
+<key name="desktopOverlay" value="true"/>
+<key name="showUsersPanel" value="true"/>
+<key name="usersPanelWidth" value="130"/>
+<key name="nickname" value="Stephane-D"/>
+<key name="username" value="Stephane-D"/>
+<key name="realname" value="Stephane Dallongeville"/>
+<key name="userPassword" value="sonicc"/>
+<key name="extraChannels" value=""/>
+<key name="desktopChannels" value="icy"/>
+<key name="showStatusMessages" value="false"/>
+</section>
+<section name="canvas">
+<key name="mouseWheelSensibility" value="10"/>
+<key name="invertMouseWheelAxis" value="false"/>
+<key name="filtering" value="false"/>
+</section>
+<section name="gui.histo">
+<key name="autoBounds" value="false"/>
+<key name="logView" value="true"/>
+<key name="autoRefresh" value="true"/>
+</section>
+<key name="maxMemory" value="4064"/>
+<section name="network">
+<key name="proxySetting" value="1"/>
+<key name="proxyHTTPHost" value="cache.pasteur.fr"/>
+<key name="proxyHTTPPort" value="8080"/>
+<key name="proxyHTTPSHost" value="cache.pasteur.fr"/>
+<key name="proxyHTTPSPort" value="8080"/>
+<key name="proxyFTPHost" value="cache.pasteur.fr"/>
+<key name="proxyFTPPort" value="8080"/>
+<key name="proxySOCKSHost" value="cache.pasteur.fr"/>
+<key name="proxySOCKSPort" value="1080"/>
+</section>
+<key name="id" value="2532495"/>
+</section>
+<section name="plugins">
+<section name="Annotation">
+<key name="font" value="0"/>
+</section>
+<section name="tprovoost">
+<section name="recorder">
+<section name="Recorder">
+<section name="prefs">
+<key name="prev_file" value="D:/Stephane/Documents/"/>
+</section>
+</section>
+</section>
+<section name="Microscopy">
+<section name="microscopelive3d">
+<section name="MicroscopeLive3DPlugin"/>
+</section>
+</section>
+</section>
+<section name="plugins.adufour.protocols.Protocols">
+<key name="Window X" value="283"/>
+<key name="Window Y" value="10"/>
+</section>
+<section name="ylemontag">
+<section name="matlabcommunicator">
+<section name="MatlabCommunicatorDeamon">
+<section name="InterpreterVersions">
+<key name="plugins.ylemontag.matlabcommunicator.MatlabCommunicatorDeamon" value="1.0.3.0"/>
+<key name="plugins.ylemontag.matlabxserver.MatlabXServerDeamon" value="3.0.0.0"/>
+</section>
+</section>
+</section>
+<section name="sequencecomparator">
+<section name="gui">
+<section name="SequenceComparator">
+<section name="GlobalComparator">
+<key name="Name" value="L1 distance"/>
+</section>
+<section name="LocalComparator">
+<key name="Name" value="Local SSIM"/>
+</section>
+<section name="SSIMOptions">
+<key name="L" value="255"/>
+<key name="K1" value="0.01"/>
+<key name="K2" value="0.03"/>
+<key name="SigmaX" value="1.5"/>
+<key name="SigmaY" value="1.5"/>
+</section>
+</section>
+</section>
+</section>
+</section>
+<section name="MicroManagerForIcy">
+<section name="MMConfig_demo.cfg">
+<section name="ConfigPad"/>
+<section name="paintersPreferences">
+<section name="Borders">
+<key name="red" value="217"/>
+<key name="green" value="217"/>
+<key name="blue" value="217"/>
+<key name="alpha" value="100"/>
+</section>
+<section name="Text">
+<key name="red" value="250"/>
+<key name="green" value="253"/>
+<key name="blue" value="12"/>
+<key name="alpha" value="100"/>
+</section>
+<section name="Foreground">
+<key name="red" value="250"/>
+<key name="green" value="253"/>
+<key name="blue" value="12"/>
+<key name="alpha" value="100"/>
+</section>
+<section name="Normal">
+<key name="red" value="30"/>
+<key name="green" value="255"/>
+<key name="blue" value="255"/>
+<key name="alpha" value="100"/>
+</section>
+<section name="Shadow">
+<key name="red" value="128"/>
+<key name="green" value="128"/>
+<key name="blue" value="128"/>
+<key name="alpha" value="255"/>
+</section>
+<section name="Background">
+<key name="red" value="0"/>
+<key name="green" value="0"/>
+<key name="blue" value="0"/>
+<key name="alpha" value="75"/>
+</section>
+</section>
+<key name="shutter" value="Shutter"/>
+<key name="exposure" value="90.0"/>
+<key name="bitdepth" value="0"/>
+</section>
+</section>
+<section name="nherve">
+<section name="flickr">
+<section name="FlickrImageRetrieve">
+<key name="XE" value="0"/>
+<key name="YE" value="0"/>
+<key name="XI" value="0"/>
+<key name="YI" value="0"/>
+<key name="WidthE" value="500"/>
+<key name="HeightE" value="450"/>
+<key name="WidthI" value="500"/>
+<key name="HeightI" value="450"/>
+<key name="Externalized" value="false"/>
+<key name="MaximizedI" value="false"/>
 <key name="MaximizedE" value="false"/>
 </section>
-<section name="inspector">
-<key name="XE" value="600"/>
-<key name="YE" value="140"/>
-<key name="XI" value="684"/>
+</section>
+<section name="browser">
+<section name="ImageBrowser">
+<section name="directory"/>
+<key name="zoom" value="false"/>
+<key name="cache" value="true"/>
+<key name="XE" value="0"/>
+<key name="YE" value="0"/>
+<key name="XI" value="117"/>
+<key name="YI" value="83"/>
+<key name="WidthE" value="600"/>
+<key name="HeightE" value="400"/>
+<key name="WidthI" value="600"/>
+<key name="HeightI" value="400"/>
+<key name="Externalized" value="false"/>
+<key name="MaximizedI" value="false"/>
+<key name="MaximizedE" value="false"/>
+</section>
+</section>
+<section name="colorquantization">
+<section name="KMeansColorQuantization">
+<key name="XE" value="0"/>
+<key name="YE" value="0"/>
+<key name="XI" value="489"/>
+<key name="YI" value="290"/>
+<key name="Externalized" value="false"/>
+<key name="MaximizedI" value="false"/>
+<key name="MaximizedE" value="false"/>
+<key name="nbc2" value="10"/>
+<key name="nbi2" value="100"/>
+<key name="stab2" value="0.0010"/>
+<key name="cs" value="0"/>
+<key name="dsp" value="false"/>
+</section>
+</section>
+<section name="maskeditor">
+<section name="MaskEditor">
+<key name="XE" value="0"/>
+<key name="YE" value="0"/>
+<key name="XI" value="290"/>
 <key name="YI" value="0"/>
-<key name="WidthE" value="260"/>
-<key name="HeightE" value="600"/>
-<key name="WidthI" value="260"/>
-<key name="HeightI" value="510"/>
+<key name="WidthE" value="580"/>
+<key name="HeightE" value="800"/>
+<key name="WidthI" value="580"/>
+<key name="HeightI" value="639"/>
+<key name="Externalized" value="false"/>
+<key name="MaximizedI" value="false"/>
+<key name="MaximizedE" value="false"/>
+</section>
+</section>
+<section name="texseg">
+<section name="TextureSegmentation">
+<key name="XE" value="0"/>
+<key name="YE" value="0"/>
+<key name="XI" value="466"/>
+<key name="YI" value="162"/>
+<key name="Externalized" value="false"/>
+<key name="MaximizedI" value="false"/>
+<key name="MaximizedE" value="false"/>
+<key name="w" value="5"/>
+<key name="p" value="8"/>
+<key name="r" value="1"/>
+<key name="t" value="25"/>
+<key name="c" value="1"/>
+<key name="g" value="1"/>
+</section>
+</section>
+<section name="colorpickerthreshold">
+<section name="ColorPickerThreshold">
+<key name="XE" value="0"/>
+<key name="YE" value="0"/>
+<key name="XI" value="356"/>
+<key name="YI" value="183"/>
+<key name="Externalized" value="false"/>
+<key name="MaximizedI" value="false"/>
+<key name="MaximizedE" value="false"/>
+</section>
+</section>
+</section>
+<section name="scripteditor">
+<section name="openedFiles"/>
+</section>
+</section>
+<section name="frame">
+<section name="main">
+<key name="XE" value="59"/>
+<key name="YE" value="135"/>
+<key name="WidthE" value="1406"/>
+<key name="HeightE" value="947"/>
+<key name="MinimizedE" value="false"/>
+<key name="MaximizedE" value="false"/>
+<key name="previousState" value="true"/>
+</section>
+<section name="inspector">
+<key name="XE" value="1118"/>
+<key name="YE" value="215"/>
+<key name="XI" value="1143"/>
+<key name="YI" value="116"/>
+<key name="WidthE" value="356"/>
+<key name="HeightE" value="942"/>
+<key name="WidthI" value="321"/>
+<key name="HeightI" value="708"/>
 <key name="Extern" value="false"/>
 <key name="MinimizedE" value="false"/>
 <key name="MaximizedE" value="false"/>
+<key name="XC" value="1050"/>
+<key name="YC" value="0"/>
+<key name="WidthC" value="348"/>
+<key name="HeightC" value="785"/>
+<key name="Panelized" value="true"/>
+<key name="Externalized" value="false"/>
+<key name="MaximizedI" value="false"/>
+<key name="HeightC" value="813"/>
+<key name="MaximizedI" value="false"/>
+<key name="MaximizedI" value="false"/>
+<key name="XI" value="1143"/>
+<key name="YC" value="0"/>
+<key name="WidthC" value="280"/>
+<key name="HeightE" value="942"/>
+<key name="WidthI" value="321"/>
 </section>
 <section name="preference">
-<key name="XE" value="100"/>
-<key name="YE" value="100"/>
-<key name="XI" value="39"/>
-<key name="YI" value="3"/>
-<key name="WidthE" value="640"/>
-<key name="HeightE" value="480"/>
-<key name="WidthI" value="640"/>
-<key name="HeightI" value="480"/>
+<key name="XE" value="210"/>
+<key name="YE" value="349"/>
+<key name="XI" value="37"/>
+<key name="YI" value="59"/>
+<key name="WidthE" value="706"/>
+<key name="HeightE" value="498"/>
+<key name="WidthI" value="776"/>
+<key name="HeightI" value="595"/>
 <key name="Extern" value="false"/>
 <key name="MinimizedI" value="false"/>
 <key name="MaximizedI" value="false"/>
 <key name="MinimizedE" value="false"/>
 <key name="MaximizedE" value="false"/>
+<key name="Externalized" value="false"/>
+<key name="YE" value="357"/>
+</section>
+<section name="outputConsole">
+<key name="XC" value="4"/>
+<key name="YC" value="29"/>
+<key name="XE" value="1109"/>
+<key name="YE" value="382"/>
+<key name="XI" value="313"/>
+<key name="YI" value="175"/>
+<key name="WidthC" value="340"/>
+<key name="HeightC" value="697"/>
+<key name="WidthE" value="400"/>
+<key name="HeightE" value="300"/>
+<key name="WidthI" value="481"/>
+<key name="HeightI" value="343"/>
+<key name="Panelized" value="true"/>
+<key name="Externalized" value="false"/>
+<key name="MaximizedI" value="false"/>
+<key name="MaximizedE" value="false"/>
+<key name="XC" value="4"/>
+<key name="XI" value="200"/>
+<key name="WidthC" value="281"/>
+<key name="XI" value="200"/>
+<key name="Panelized" value="true"/>
+<key name="MaximizedE" value="false"/>
+<key name="Externalized" value="false"/>
+<key name="XI" value="313"/>
+</section>
+<section name="chatPanel">
+<key name="XC" value="4"/>
+<key name="YC" value="29"/>
+<key name="XE" value="243"/>
+<key name="YE" value="494"/>
+<key name="XI" value="280"/>
+<key name="YI" value="148"/>
+<key name="WidthC" value="340"/>
+<key name="HeightC" value="697"/>
+<key name="WidthE" value="518"/>
+<key name="HeightE" value="434"/>
+<key name="WidthI" value="287"/>
+<key name="HeightI" value="636"/>
+<key name="Panelized" value="true"/>
+<key name="Externalized" value="false"/>
+<key name="MaximizedI" value="false"/>
+<key name="MaximizedE" value="false"/>
+<key name="Panelized" value="true"/>
+<key name="Panelized" value="true"/>
+<key name="WidthC" value="285"/>
+<key name="Externalized" value="false"/>
+<key name="Panelized" value="true"/>
+<key name="WidthE" value="518"/>
 </section>
 </section>
 </root>

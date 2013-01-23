@@ -33,20 +33,19 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JPanel;
-import javax.swing.Timer;
 
 /**
  * Memory monitor.
  * 
  * @author Fab & Stephane
  */
-public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionListener
+public class MemoryMonitorPanel extends JPanel implements MouseListener
 {
     private static final long serialVersionUID = 5629509450385435829L;
 
@@ -67,7 +66,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
     {
         super();
 
-        updateTimer = new Timer(100, this);
+        updateTimer = new Timer("Memory / CPU monitor");
         maxMemory = SystemUtil.getJavaMaxMemory();
 
         // init tables
@@ -89,8 +88,14 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
 
         addMouseListener(this);
 
-        // start timer
-        updateTimer.start();
+        updateTimer.scheduleAtFixedRate(new TimerTask()
+        {
+            @Override
+            public void run()
+            {
+                updateMemoryMessageBar();
+            }
+        }, 100, 100);
     }
 
     @Override
@@ -204,7 +209,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
         g2.dispose();
     }
 
-    private void updateMemoryMessageBar()
+    void updateMemoryMessageBar()
     {
         final double totalMemory = SystemUtil.getJavaTotalMemory();
         final double usedMemory = totalMemory - SystemUtil.getJavaFreeMemory();
@@ -277,12 +282,5 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, ActionL
     public void mouseReleased(MouseEvent arg0)
     {
 
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e)
-    {
-        if (e.getSource() == updateTimer)
-            updateMemoryMessageBar();
     }
 }

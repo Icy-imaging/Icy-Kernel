@@ -306,25 +306,28 @@ public class MainFrame extends JRibbonFrame
             @Override
             public boolean dispatchKeyEvent(KeyEvent e)
             {
-                switch (e.getKeyCode())
+                if (e.getID() == KeyEvent.KEY_PRESSED)
                 {
-                    case KeyEvent.VK_F3:
-                        final SearchBar sb = getSearchBar();
+                    switch (e.getKeyCode())
+                    {
+                        case KeyEvent.VK_F3:
+                            final SearchBar sb = getSearchBar();
 
-                        if (sb != null)
-                        {
-                            sb.setFocus();
-                            e.consume();
-                        }
-                        break;
+                            if (sb != null)
+                            {
+                                sb.setFocus();
+                                e.consume();
+                            }
+                            break;
 
-                    case KeyEvent.VK_O:
-                        if (EventUtil.isMenuControlDown(e))
-                        {
-                            FileActions.openSequenceAction.doAction(null);
-                            e.consume();
-                        }
-                        break;
+                        case KeyEvent.VK_O:
+                            if (EventUtil.isMenuControlDown(e))
+                            {
+                                FileActions.openSequenceAction.doAction(null);
+                                e.consume();
+                            }
+                            break;
+                    }
                 }
 
                 return false;

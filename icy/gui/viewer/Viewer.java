@@ -306,7 +306,10 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         setSize(640, 480);
 
         // initial position in sequence
-        setZ(((sequence.getSizeZ() + 1) / 2) - 1);
+        if (sequence.isEmpty())
+            setZ(0);
+        else
+            setZ(((sequence.getSizeZ() + 1) / 2) - 1);
 
         addFrameListener(new IcyFrameAdapter()
         {
@@ -315,39 +318,11 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             {
                 if (!initialized)
                 {
-                    if (canvas instanceof IcyCanvas2D)
+                    if ((Viewer.this.sequence != null) && !Viewer.this.sequence.isEmpty())
                     {
-                        final IcyCanvas2D cnv = (IcyCanvas2D) canvas;
-
-                        final int ix = cnv.getImageSizeX();
-                        final int iy = cnv.getImageSizeY();
-
-                        if ((ix > 0) && (iy > 0))
-                        {
-                            // find scale factor to fit image in a 640x540 sized window
-                            // and limit zoom to 100%
-                            final double scale = Math.min(Math.min(640d / ix, 540d / iy), 1d);
-
-                            cnv.setScaleX(scale);
-                            cnv.setScaleY(scale);
-
-                            // this actually resize viewer as canvas size depend from it
-                            cnv.fitCanvasToImage();
-                        }
+                        adjustViewerToImageSize();
+                        initialized = true;
                     }
-
-                    // minimum size to start : 400, 240
-                    final Dimension size = new Dimension(Math.max(getWidth(), 400), Math.max(getHeight(), 240));
-                    // minimum size global : 200, 140
-                    final Dimension minSize = new Dimension(200, 140);
-
-                    // adjust size of both frames
-                    setSizeExternal(size);
-                    setSizeInternal(size);
-                    setMinimumSizeInternal(minSize);
-                    setMinimumSizeExternal(minSize);
-
-                    initialized = true;
                 }
             }
 
@@ -446,6 +421,41 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         switchStateButton = null;
 
         super.onClosed();
+    }
+
+    void adjustViewerToImageSize()
+    {
+        if (canvas instanceof IcyCanvas2D)
+        {
+            final IcyCanvas2D cnv = (IcyCanvas2D) canvas;
+
+            final int ix = cnv.getImageSizeX();
+            final int iy = cnv.getImageSizeY();
+
+            if ((ix > 0) && (iy > 0))
+            {
+                // find scale factor to fit image in a 640x540 sized window
+                // and limit zoom to 100%
+                final double scale = Math.min(Math.min(640d / ix, 540d / iy), 1d);
+
+                cnv.setScaleX(scale);
+                cnv.setScaleY(scale);
+
+                // this actually resize viewer as canvas size depend from it
+                cnv.fitCanvasToImage();
+            }
+        }
+
+        // minimum size to start : 400, 240
+        final Dimension size = new Dimension(Math.max(getWidth(), 400), Math.max(getHeight(), 240));
+        // minimum size global : 200, 140
+        final Dimension minSize = new Dimension(200, 140);
+
+        // adjust size of both frames
+        setSizeExternal(size);
+        setSizeInternal(size);
+        setMinimumSizeInternal(minSize);
+        setMinimumSizeExternal(minSize);
     }
 
     private ArrayList<PluginDescriptor> getCanvasPlugins()
@@ -1246,12 +1256,19 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 break;
 
             case SEQUENCE_TYPE:
+                // might need initialization
+                if (!initialized && (sequence != null) && !sequence.isEmpty())
+                {
+                    adjustViewerToImageSize();
+                    initialized = true;
+                }
+
                 // we update LUT on type change directly on getLut() method
 
                 // // try to keep current LUT if possible
-                // if (!sequence.isCompatible(lut))
-                // // need to update the lut according to the colormodel change
-                // setLut(sequence.createCompatibleLUT());
+                if (!sequence.isLutCompatible(lut))
+                    // need to update the lut according to the colormodel change
+                    setLut(sequence.createCompatibleLUT());
                 break;
 
             case SEQUENCE_COLORMAP:

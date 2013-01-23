@@ -124,12 +124,13 @@ public class LUTViewer extends IcyLutViewer
         });
 
         // GUI
-        for (LUTChannel lutChannel : lut.getLutChannels())
+        for (int c = 0; c < lut.getLutChannels().size(); c++)
         {
+            final LUTChannel lutChannel = lut.getLutChannels().get(c);
             final LUTChannelViewer lbv = new LUTChannelViewer(viewer, lutChannel);
 
             lutChannelViewers.add(lbv);
-            bottomPane.addTab("channel", lbv);
+            bottomPane.addTab("ch " + c, lbv);
         }
 
         refreshChannelsName();

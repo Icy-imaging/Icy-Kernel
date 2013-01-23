@@ -127,14 +127,14 @@ public abstract class TaskFrame extends IcyFrame
                 setLayout(new BorderLayout());
 
                 add(mainPanel, BorderLayout.CENTER);
+
+                // add to the task manager if a GUI is present
+                final TaskFrameManager tfm = Icy.getMainInterface().getTaskWindowManager();
+
+                if (tfm != null)
+                    tfm.addTaskWindow(TaskFrame.this);
             }
         });
-
-        // add to the task manager if a GUI is present
-        final TaskFrameManager tfm = Icy.getMainInterface().getTaskWindowManager();
-
-        if (tfm != null)
-            tfm.addTaskWindow(this);
     }
 
     @Override
