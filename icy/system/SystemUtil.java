@@ -278,6 +278,14 @@ public class SystemUtil
         return getDefaultScreenDevice().getDefaultConfiguration();
     }
 
+    /**
+     * Return true if current system is "head less" (no screen output device).
+     */
+    public static boolean isHeadLess()
+    {
+        return getLocalGraphicsEnvironment().isHeadlessInstance();
+    }
+
     public static ClassLoader getContextClassLoader()
     {
         return Thread.currentThread().getContextClassLoader();

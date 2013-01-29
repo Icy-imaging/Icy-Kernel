@@ -160,6 +160,10 @@ public class Icy
             // handle arguments (must be the first thing to do)
             handleAppArgs(args);
 
+            // force headless if we have a headless system
+            if (SystemUtil.isHeadLess())
+                headless = true;
+
             // check if ICY is already running.
             lock = SingleInstanceCheck.lock("icy");
             if (lock == null)
