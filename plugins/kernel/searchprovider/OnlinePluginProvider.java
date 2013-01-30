@@ -102,7 +102,6 @@ public class OnlinePluginProvider extends SearchResultProducer
         public String getTooltip()
         {
             return "Left click: Install and Run   -   Right click: Online documentation";
-            // return plugin.getDescription();
         }
 
         @Override
@@ -131,7 +130,7 @@ public class OnlinePluginProvider extends SearchResultProducer
         @Override
         public void executeAlternate()
         {
-            NetworkUtil.openURL(plugin.getWeb());
+            NetworkUtil.openBrowser(plugin.getWeb());
         }
 
         @Override
@@ -291,14 +290,14 @@ public class OnlinePluginProvider extends SearchResultProducer
         final PluginDescriptor localPlugin = PluginLoader.getPlugin(className);
         final PluginDescriptor onlinePlugin = PluginDescriptor.getPlugin(onlinePlugins, className);
 
-        // exists in local ? --> don't return result in online
+        // exists in local ?
         if (localPlugin != null)
             return null;
+
         // cannot be found in online ? --> no result
         if (onlinePlugin == null)
             return null;
 
         return new OnlinePluginResult(this, onlinePlugin, text, words);
     }
-
 }

@@ -5,6 +5,8 @@ package icy.gui.menu.action;
 
 import icy.common.IcyAbstractAction;
 import icy.gui.frame.AboutFrame;
+import icy.gui.main.MainFrame;
+import icy.gui.menu.search.SearchBar;
 import icy.gui.viewer.Viewer;
 import icy.imagej.ImageJUtil;
 import icy.main.Icy;
@@ -14,12 +16,14 @@ import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
+import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
 import ij.ImagePlus;
 import ij.WindowManager;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +36,30 @@ import java.util.List;
  */
 public class GeneralActions
 {
+    public static IcyAbstractAction searchAction =  new IcyAbstractAction("Search", new IcyIcon(
+            ResourceUtil.ICON_SEARCH),"Application search tool", KeyEvent.VK_F, SystemUtil
+            .getMenuCtrlMask())
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -7457421618693984393L;
+
+        @Override
+        public void doAction(ActionEvent e)
+        {
+            final MainFrame mf = Icy.getMainInterface().getMainFrame();
+
+            if (mf != null)
+            {
+                final SearchBar sb = mf.getSearchBar();
+
+                if (sb != null)
+                    sb.setFocus();
+            }
+        }
+    };
+
     public static IcyAbstractAction exitApplicationAction = new IcyAbstractAction("Exit", new IcyIcon(
             ResourceUtil.ICON_ON_OFF))
     {

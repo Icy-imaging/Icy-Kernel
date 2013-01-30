@@ -1,14 +1,13 @@
 package icy.gui.menu.search;
 
-import icy.common.IcyAbstractAction;
 import icy.gui.component.IcyTextField;
-import icy.gui.main.MainFrame;
-import icy.main.Icy;
+import icy.gui.menu.action.GeneralActions;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.search.SearchEngine;
 import icy.search.SearchEngine.SearchEngineListener;
 import icy.search.SearchResult;
+import icy.system.SystemUtil;
 import icy.util.StringUtil;
 
 import java.awt.AWTEvent;
@@ -32,6 +31,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
@@ -42,36 +43,6 @@ import org.jdesktop.swingx.painter.BusyPainter;
  */
 public class SearchBar extends IcyTextField implements SearchEngineListener
 {
-    public static class SearchAction extends IcyAbstractAction
-    {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = -7457421618693984393L;
-
-        public static final String NAME = "Search";
-
-        public SearchAction()
-        {
-            super(NAME, new IcyIcon(ResourceUtil.ICON_SEARCH), "Application search tool");
-        }
-
-        @Override
-        public void doAction(ActionEvent e)
-        {
-            final MainFrame mf = Icy.getMainInterface().getMainFrame();
-
-            if (mf != null)
-            {
-                final SearchBar sb = mf.getSearchBar();
-
-                if (sb != null)
-                    sb.setFocus();
-            }
-        }
-
-    }
-
     /**
      * 
      */
@@ -277,15 +248,19 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
 
     void buildActionMap()
     {
-        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
-                .put(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0), SearchAction.NAME);
-        getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "Cancel");
-        getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "MoveDown");
-        getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "MoveUp");
-        getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Execute");
+        final InputMap imap1 = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        final InputMap imap2 = getInputMap(JComponent.WHEN_FOCUSED);
+        final ActionMap amap = getActionMap();
 
-        getActionMap().put(SearchAction.NAME, new SearchAction());
-        getActionMap().put("Cancel", new AbstractAction()
+        imap1.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemUtil.getMenuCtrlMask()),
+                GeneralActions.searchAction.getName());
+        imap2.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "Cancel");
+        imap2.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "MoveDown");
+        imap2.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "MoveUp");
+        imap2.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Execute");
+
+        amap.put(GeneralActions.searchAction.getName(), GeneralActions.searchAction);
+        amap.put("Cancel", new AbstractAction()
         {
             /**
              * 

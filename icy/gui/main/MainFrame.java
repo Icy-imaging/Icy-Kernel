@@ -26,6 +26,7 @@ import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.MainRibbon;
 import icy.gui.menu.action.FileActions;
+import icy.gui.menu.action.GeneralActions;
 import icy.gui.menu.search.SearchBar;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.WindowPositionSaver;
@@ -37,7 +38,6 @@ import icy.system.FileDrop;
 import icy.system.FileDrop.FileDropListener;
 import icy.system.SystemUtil;
 import icy.type.collection.CollectionUtil;
-import icy.util.EventUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -48,8 +48,6 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.HeadlessException;
 import java.awt.Insets;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -64,10 +62,14 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.KeyStroke;
 
 import org.pushingpixels.flamingo.api.ribbon.JRibbon;
 import org.pushingpixels.flamingo.api.ribbon.JRibbonFrame;
@@ -293,47 +295,24 @@ public class MainFrame extends JRibbonFrame
         setVisible(true);
 
         // can be done after setVisible
-        initGlobalShortcuts();
+        buildActionMap();
     }
 
-    /**
-     * initialize global shortcuts
-     */
-    public void initGlobalShortcuts()
+    void buildActionMap()
     {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher()
-        {
-            @Override
-            public boolean dispatchKeyEvent(KeyEvent e)
-            {
-                if (e.getID() == KeyEvent.KEY_PRESSED)
-                {
-                    switch (e.getKeyCode())
-                    {
-                        case KeyEvent.VK_F3:
-                            final SearchBar sb = getSearchBar();
+        final InputMap imap = getDesktopPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        final ActionMap amap = getDesktopPane().getActionMap();
 
-                            if (sb != null)
-                            {
-                                sb.setFocus();
-                                e.consume();
-                            }
-                            break;
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemUtil.getMenuCtrlMask()),
+                GeneralActions.searchAction.getName());
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_O, SystemUtil.getMenuCtrlMask()),
+                FileActions.openSequenceAction.getName());
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, SystemUtil.getMenuCtrlMask()),
+                FileActions.saveAsSequenceAction.getName());
 
-                        case KeyEvent.VK_O:
-                            if (EventUtil.isMenuControlDown(e))
-                            {
-                                FileActions.openSequenceAction.doAction(null);
-                                e.consume();
-                            }
-                            break;
-                    }
-                }
-
-                return false;
-            }
-        });
-
+        amap.put(GeneralActions.searchAction.getName(), GeneralActions.searchAction);
+        amap.put(FileActions.openSequenceAction.getName(), FileActions.openSequenceAction);
+        amap.put(FileActions.saveAsSequenceAction.getName(), FileActions.saveAsSequenceAction);
     }
 
     public ApplicationMenu getApplicationMenu()

@@ -82,19 +82,23 @@ public class NumberTextField extends IcyTextField
     {
         super.textChanged(validate);
 
+        double oldValue = _value;
+
         try
         {
             final String text = getText();
-            double oldValue = _value;
             _value = text.isEmpty() ? 0.0 : Double.parseDouble(text);
             setForeground(Color.BLACK);
-            if (_value != oldValue)
-                valueChanged(validate);
         }
         catch (NumberFormatException err)
         {
             setForeground(Color.RED);
         }
+
+        if (validate)
+            valueChanged(validate);
+        else if (_value != oldValue)
+            valueChanged(false);
     }
 
     /**

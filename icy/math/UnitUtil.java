@@ -201,7 +201,7 @@ public class UnitUtil
      * @param decimals
      *        : number of decimals to keep
      * @param currentUnit
-     *        : current unit prefix (Ex: {@link UnitPrefix#MILLI}
+     *        : current unit prefix (Ex: {@link UnitPrefix#MILLI})
      */
     public static String getBestUnitInMeters(double value, int decimals, UnitPrefix currentUnit)
     {

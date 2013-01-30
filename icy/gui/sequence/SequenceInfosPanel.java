@@ -17,6 +17,7 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
+import icy.util.StringUtil;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -302,7 +303,7 @@ public class SequenceInfosPanel extends InspectorSubPanel
             final double pxSizeY = sequence.getPixelSizeY();
             final double pxSizeZ = sequence.getPixelSizeZ();
 
-            nameLabel.setText(sequence.getName());
+            nameLabel.setText(StringUtil.limit(sequence.getName(), 28, true));
             dimensionLabel.setText(sizeX + " x " + sizeY + " x " + sizeZ + " x " + sizeT);
             channelLabel.setText(sizeC + " - " + sequence.getDataType_());
             sizeLabel.setText(UnitUtil.getBytesString((double) sizeX * (double) sizeY * sizeZ * sizeT * sizeC

@@ -23,6 +23,7 @@ import icy.main.Icy;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginDescriptor.PluginNameSorter;
 import icy.plugin.abstract_.Plugin;
+import icy.plugin.classloader.JarClassLoader;
 import icy.plugin.interface_.PluginBundled;
 import icy.plugin.interface_.PluginDaemon;
 import icy.preferences.PluginPreferences;
@@ -44,8 +45,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.event.EventListenerList;
-
-import org.xeustechnologies.jcl.JarClassLoader;
 
 /**
  * Plugin Loader class.<br>
@@ -491,7 +490,7 @@ public class PluginLoader
 
                 for (Entry<String, Class> entry : classes.entrySet())
                     result.put(entry.getKey(), entry.getValue());
-                
+
                 return result;
             }
         }

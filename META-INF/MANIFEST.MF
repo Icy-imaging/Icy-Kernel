@@ -6,7 +6,7 @@ Class-Path: resources.jar ij/ij.jar lib/arpack-combo.jar lib/bio-formats.jar
   lib/bsh.jar lib/csparsej.jar lib/customizer.jar lib/ejml.jar lib/flamingo.jar
   lib/flanagan.jar lib/irclib.jar lib/j3dcore.jar lib/j3dutils.jar lib/jai_codec.jar
   lib/jai_core.jar lib/jai_imageio.jar lib/Jama.jar lib/javacl.jar lib/javassist.jar
-  lib/jcl-core.jar lib/jcommon.jar lib/jeval.jar lib/jfreechart.jar lib/jmf.jar
+  lib/jcommon.jar lib/jeval.jar lib/jfreechart.jar lib/jmf.jar
   lib/jplasma.jar lib/jtransforms.jar lib/junit.jar lib/jxl.jar lib/laf-plugin.jar
   lib/laf-widget.jar lib/loci-common.jar lib/log4j.jar lib/mediaplayer.jar
   lib/MMAcqEngine.jar lib/MMCoreJ.jar lib/MMJ_.jar lib/multiplayer.jar

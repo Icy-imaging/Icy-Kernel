@@ -389,20 +389,8 @@ public class PluginDescriptor implements XMLPersistent
     private static final String ID_WEB = "web";
     private static final String ID_EMAIL = "email";
     private static final String ID_DESCRIPTION = "description";
-    // private static final String ID_INSTALL_DATE = "install_date";
-    // private static final String ID_LASTUSE_DATE = "lastuse_date";
-    // private static final String ID_PUBLIC_CLASSES = "public_classes";
     private static final String ID_DEPENDENCIES = "dependencies";
     private static final String ID_DEPENDENCY = "dependency";
-
-    // public static final int TYPE_IMAGE_ANALYSIS = 0;
-    // public static final int TYPE_FILE = 1;
-    // public static final int TYPE_CFG_PARAM = 2;
-    // public static final int TYPE_ROI = 3;
-    // public static final int TYPE_UNDOABLE = 4;
-    //
-    // private static final String[] pluginTypeString = {"Image analysis", "File", "Parameters",
-    // "ROI", "Undo capable"};
 
     private Class<? extends Plugin> pluginClass;
 
@@ -420,9 +408,6 @@ public class PluginDescriptor implements XMLPersistent
     private String email;
     private String desc;
     private String changesLog;
-    // private int types;
-    // private Date lastUse;
-    // private Date installed;
 
     private boolean enabled;
     private boolean descriptorLoaded;
@@ -712,8 +697,9 @@ public class PluginDescriptor implements XMLPersistent
     public boolean load(boolean loadImages)
     {
         if (loadDescriptor())
-            if (loadImages) return loadImages();
-        
+            if (loadImages)
+                return loadImages();
+
         return false;
     }
 
@@ -722,8 +708,16 @@ public class PluginDescriptor implements XMLPersistent
      */
     public boolean loadDescriptor()
     {
+        return loadDescriptor(false);
+    }
+
+    /**
+     * Load descriptor informations (xmlUrl field should be correctly filled)
+     */
+    public boolean loadDescriptor(boolean reload)
+    {
         // already loaded ?
-        if (descriptorLoaded)
+        if (descriptorLoaded && !reload)
             return true;
 
         // retrieve document
@@ -744,7 +738,10 @@ public class PluginDescriptor implements XMLPersistent
             return true;
         }
 
-        System.err.println("Can't load XML file from '" + xmlUrl + "' for plugin class '" + ident.getClassName() + "'");
+        // display error only for first load
+        if (!reload)
+            System.err.println("Can't load XML file from '" + xmlUrl + "' for plugin class '" + ident.getClassName()
+                    + "'");
 
         return false;
     }
@@ -900,36 +897,6 @@ public class PluginDescriptor implements XMLPersistent
         email = XMLUtil.getElementValue(node, ID_EMAIL, "");
         desc = XMLUtil.getElementValue(node, ID_DESCRIPTION, "");
         changesLog = XMLUtil.getElementValue(node, ID_CHANGELOG, "");
-        // synchronized (dateFormatter)
-        // {
-        // try
-        // {
-        // installed = dateFormatter.parse(XMLUtil.getElementFirstValue(root, ID_INSTALL_DATE));
-        // }
-        // catch (Exception e)
-        // {
-        // installed = new Date();
-        // }
-        // try
-        // {
-        // lastUse = dateFormatter.parse(XMLUtil.getElementFirstValue(root, ID_LASTUSE_DATE));
-        // }
-        // catch (Exception e)
-        // {
-        // lastUse = new Date();
-        // }
-        // }
-
-        // final Node nodeClasses = XMLUtil.getElement(node, ID_PUBLIC_CLASSES);
-        // final ArrayList<Node> nodesClasses = XMLUtil.getSubNodesByName(nodeClasses,
-        // ID_CLASSNAME);
-        //
-        // for (Node n : nodesClasses)
-        // {
-        // final String value = XMLUtil.getStringValue((Element) n);
-        // if (!StringUtil.isEmpty(value, true))
-        // publicClasseNames.add(value);
-        // }
 
         final Node nodeDependances = XMLUtil.getElement(node, ID_DEPENDENCIES);
         if (nodeDependances != null)

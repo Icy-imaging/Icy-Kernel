@@ -1512,7 +1512,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Remove all volumetricImage
      */
-    private void removeAllVolumetricImage()
+    private void removeAllVolumetricImages()
     {
         beginUpdate();
         try
@@ -1805,7 +1805,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Remove all image at position t (same as removeVolumetricImage(t))
      */
-    public boolean removeAllImage(int t)
+    public boolean removeAllImages(int t)
     {
         return removeVolumetricImage(t);
     }
@@ -1813,9 +1813,27 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Remove all image (same as removeAllVolumetricImage)
      */
+    public void removeAllImages()
+    {
+        removeAllVolumetricImages();
+    }
+
+    /**
+     * @deprecated Uses {@link #removeAllImages(int)} instead.
+     */
+    @Deprecated
+    public boolean removeAllImage(int t)
+    {
+        return removeAllImages(t);
+    }
+
+    /**
+     * @deprecated Uses {@link #removeAllImages()} instead.
+     */
+    @Deprecated
     public void removeAllImage()
     {
-        removeAllVolumetricImage();
+        removeAllImages();
     }
 
     /**

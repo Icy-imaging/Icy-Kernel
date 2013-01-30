@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry including="icy/**|plugins/**|res/**" kind="src" path=""/>
+	<classpathentry including="icy/**|plugins/kernel/**|plugins/test/**|res/**" kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/bsh.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/customizer.jar"/>
@@ -12,7 +12,6 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/jai_core.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/Jama.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/javacl.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/jcl-core.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jcommon.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jeval.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jfreechart.jar"/>

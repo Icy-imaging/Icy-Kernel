@@ -11,6 +11,7 @@ import icy.resource.icon.BasicResizableIcon;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.ref.WeakReference;
 
 import javax.swing.ImageIcon;
 
@@ -24,9 +25,25 @@ import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
 public class PluginCommandButton
 {
     // Specific action class for plugin command button
-    public static abstract class PluginCommandAction implements ActionListener
+    public static class PluginCommandAction implements ActionListener
     {
+        final WeakReference<PluginDescriptor> pluginRef;
 
+        public PluginCommandAction(PluginDescriptor plugin)
+        {
+            super();
+
+            pluginRef = new WeakReference<PluginDescriptor>(plugin);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            final PluginDescriptor plugin = pluginRef.get();
+
+            if (plugin != null)
+                PluginLauncher.start(plugin);
+        }
     }
 
     /**
@@ -59,16 +76,9 @@ public class PluginCommandButton
     /**
      * Set a plugin button with default action
      */
-    public static void setButton(AbstractCommandButton button, final PluginDescriptor plugin)
+    public static void setButton(AbstractCommandButton button, PluginDescriptor plugin)
     {
-        setButton(button, plugin, new PluginCommandAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                PluginLauncher.start(plugin);
-            }
-        });
+        setButton(button, plugin, new PluginCommandAction(plugin));
     }
 
     /**
@@ -104,14 +114,7 @@ public class PluginCommandButton
     public static IcyCommandButton createButton(final PluginDescriptor plugin)
     {
         // build with default action listener
-        return (IcyCommandButton) createButton(plugin, new PluginCommandAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                PluginLauncher.start(plugin);
-            }
-        }, false);
+        return (IcyCommandButton) createButton(plugin, new PluginCommandAction(plugin), false);
     }
 
     /**
@@ -127,13 +130,6 @@ public class PluginCommandButton
      */
     public static IcyCommandToggleButton createToggleButton(final PluginDescriptor plugin)
     {
-        return (IcyCommandToggleButton) createButton(plugin, new PluginCommandAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                PluginLauncher.start(plugin);
-            }
-        }, true);
+        return (IcyCommandToggleButton) createButton(plugin, new PluginCommandAction(plugin), true);
     }
 }

@@ -108,7 +108,7 @@ public class LocalPluginProvider extends SearchResultProducer
         @Override
         public void executeAlternate()
         {
-            NetworkUtil.openURL(plugin.getWeb());
+            NetworkUtil.openBrowser(plugin.getWeb());
         }
 
         @Override
@@ -133,7 +133,7 @@ public class LocalPluginProvider extends SearchResultProducer
     @Override
     protected void doSearch(String[] words, SearchResultConsumer consumer)
     {
-        final boolean shortSearch = (words.length == 1) && (words[0].length() <= 2);
+        final boolean shortSearch = getShortSearch(words);
 
         final ArrayList<SearchResult> tmpResults = new ArrayList<SearchResult>();
 
@@ -150,7 +150,12 @@ public class LocalPluginProvider extends SearchResultProducer
         consumer.resultsChanged(this);
     }
 
-    private boolean searchInPlugin(PluginDescriptor plugin, String[] words, boolean startWithOnly)
+    static boolean getShortSearch(String[] words)
+    {
+        return (words.length == 1) && (words[0].length() <= 2);
+    }
+
+    static boolean searchInPlugin(PluginDescriptor plugin, String[] words, boolean startWithOnly)
     {
         // we accept plugin which contains all words only
         for (String word : words)
@@ -160,8 +165,12 @@ public class LocalPluginProvider extends SearchResultProducer
         return words.length > 0;
     }
 
-    private boolean searchInPlugin(PluginDescriptor plugin, String word, boolean startWithOnly)
+    static boolean searchInPlugin(PluginDescriptor plugin, String word, boolean startWithOnly)
     {
+        // we don't want abstract nor interface plugin in results list
+        if (plugin.isAbstract() || plugin.isInterface())
+            return false;
+
         final String wordlc = word.toLowerCase();
         final String name = plugin.getName().toLowerCase();
         final String description = plugin.getDescription().toLowerCase();

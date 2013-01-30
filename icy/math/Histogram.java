@@ -25,6 +25,10 @@ public class Histogram
     /**
      * Create a histogram for the specified value range and the desired number of bins.
      * 
+     * @param minValue
+     *        minimum value
+     * @param maxValue
+     *        maximum value
      * @param nbBin
      *        number of desired bins (should be > 0).
      * @param integer

@@ -646,4 +646,49 @@ public class StringUtil
         return text;
     }
 
+    /**
+     * Converts wildcard to regular expression.
+     * 
+     * @param wildcard
+     * @return regex
+     */
+    public static String wildcardToRegex(String wildcard)
+    {
+        final StringBuffer s = new StringBuffer(wildcard.length());
+        
+        s.append('^');        
+        for (int i = 0, is = wildcard.length(); i < is; i++)
+        {
+            char c = wildcard.charAt(i);
+            switch (c)
+            {
+                case '*':
+                    s.append(".*");
+                    break;
+                case '?':
+                    s.append(".");
+                    break;
+                case '(':
+                case ')':
+                case '[':
+                case ']':
+                case '$':
+                case '^':
+                case '.':
+                case '{':
+                case '}':
+                case '|':
+                case '\\':
+                    s.append("\\");
+                    s.append(c);
+                    break;
+                default:
+                    s.append(c);
+                    break;
+            }
+        }
+        s.append('$');
+        
+        return (s.toString());
+    }
 }
