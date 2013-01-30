@@ -42,11 +42,15 @@ import java.util.zip.ZipEntry;
  * JarResources reads jar files and loads the class content/bytes in a HashMap
  * 
  * @author Kamran Zafar
+ * @author Stephane Dallongeville
  */
 public class JarResources
 {
-
+    // <resourceName, content> map
     protected Map<String, byte[]> jarEntryContents;
+    // <resourceName, fileName> map
+    protected Map<String, URL> jarEntryUrls;
+
     protected boolean collisionAllowed;
 
     private static Logger logger = Logger.getLogger(JarResources.class.getName());
@@ -57,6 +61,7 @@ public class JarResources
     public JarResources()
     {
         jarEntryContents = new HashMap<String, byte[]>();
+        jarEntryUrls = new HashMap<String, URL>();
         collisionAllowed = Configuration.suppressCollisionException();
     }
 
@@ -64,17 +69,45 @@ public class JarResources
      * @param name
      * @return byte[]
      */
-    public byte[] getResource(String name)
+    public URL getResource(String name)
     {
-        return jarEntryContents.get(name);
+        return jarEntryUrls.get(name);
     }
 
     /**
-     * Returns an immutable Map of all jar resources
-     * 
-     * @return Map
+     * @param name
+     * @return byte[]
      */
-    public Map<String, byte[]> getResources()
+    public byte[] getResourceContent(String name)
+    {
+        byte content[] = jarEntryContents.get(name);
+
+        if (content == null)
+        {
+            final URL url = jarEntryUrls.get(name);
+
+            if (url != null)
+            {
+                // --> charger le contenu
+
+            }
+        }
+
+        return content;
+    }
+
+    /**
+     * Returns an immutable Map of all resources
+     */
+    public Map<String, URL> getResources()
+    {
+        return Collections.unmodifiableMap(jarEntryUrls);
+    }
+
+    /**
+     * Returns an immutable Map of all loaded jar resources
+     */
+    public Map<String, byte[]> getLoadedResources()
     {
         return Collections.unmodifiableMap(jarEntryContents);
     }
@@ -152,7 +185,6 @@ public class JarResources
      */
     public void loadJar(InputStream jarStream)
     {
-
         BufferedInputStream bis = null;
         JarInputStream jis = null;
 

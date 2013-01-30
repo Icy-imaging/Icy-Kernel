@@ -39,6 +39,7 @@ import java.util.logging.Logger;
  * files/paths
  * 
  * @author Kamran Zafar
+ * @author Stephane Dallongeville
  */
 public class ClasspathResources extends JarResources
 {

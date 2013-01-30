@@ -35,6 +35,7 @@ import icy.util.StringUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventListener;
@@ -458,9 +459,28 @@ public class PluginLoader
     }
 
     /**
-     * Return all loaded resources
+     * Return all resources.
      */
-    public static Map<String, byte[]> getAllResources()
+    public static Map<String, URL> getAllResources()
+    {
+        prepare();
+
+        synchronized (instance.loader)
+        {
+            if (instance.loader instanceof JarClassLoader)
+                return ((JarClassLoader) instance.loader).getResources();
+        }
+
+        return new HashMap<String, URL>();
+    }
+
+    /**
+     * Return content of all loaded resources.
+     * 
+     * @deprecated Only return loaded resources, uses {@link #getAllResources()} instead.
+     */
+    @Deprecated
+    public static Map<String, byte[]> getAllLoadedResources()
     {
         prepare();
 

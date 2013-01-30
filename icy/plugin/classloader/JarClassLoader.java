@@ -25,9 +25,11 @@ import icy.plugin.classloader.exception.JclException;
 import icy.plugin.classloader.exception.ResourceNotFoundException;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,7 @@ import java.util.logging.Logger;
  * ClasspathResources
  * 
  * @author Kamran Zafar
+ * @author Stephane Dallongeville
  */
 @SuppressWarnings("unchecked")
 public class JarClassLoader extends AbstractClassLoader
@@ -54,8 +57,19 @@ public class JarClassLoader extends AbstractClassLoader
 
     private static Logger logger = Logger.getLogger(JarClassLoader.class.getName());
 
+    public JarClassLoader(ClassLoader parent)
+    {
+        super(parent);
+
+        classpathResources = new ClasspathResources();
+        classes = Collections.synchronizedMap(new HashMap<String, Class>());
+        initialize();
+    }
+
     public JarClassLoader()
     {
+        super();
+
         classpathResources = new ClasspathResources();
         classes = Collections.synchronizedMap(new HashMap<String, Class>());
         initialize();
@@ -176,7 +190,7 @@ public class JarClassLoader extends AbstractClassLoader
     {
         className = formatClassName(className);
 
-        return classpathResources.getResource(className);
+        return classpathResources.getResourceContent(className);
     }
 
     /**
@@ -303,9 +317,10 @@ public class JarClassLoader extends AbstractClassLoader
         }
 
         @Override
-        public InputStream loadResource(String name)
+        public InputStream getResourceAsStream(String name)
         {
-            byte[] arr = classpathResources.getResource(name);
+            byte[] arr = classpathResources.getResourceContent(name);
+
             if (arr != null)
             {
                 if (logger.isLoggable(Level.FINEST))
@@ -315,6 +330,52 @@ public class JarClassLoader extends AbstractClassLoader
             }
 
             return null;
+        }
+
+        @Override
+        public URL getResource(String name)
+        {
+            URL url = classpathResources.getResource(name);
+
+            if (url != null)
+            {
+                if (logger.isLoggable(Level.FINEST))
+                    logger.finest("Returning newly loaded resource " + name);
+
+                return url;
+            }
+
+            return null;
+        }
+
+        @Override
+        public Enumeration<URL> getResources(String name) throws IOException
+        {
+            final URL url = getResource(name);
+
+            return new Enumeration<URL>()
+            {
+                boolean hasMore = (url != null);
+
+                @Override
+                public boolean hasMoreElements()
+                {
+                    return hasMore;
+                }
+
+                @Override
+                public URL nextElement()
+                {
+                    if (hasMore)
+                    {
+                        hasMore = false;
+                        return url;
+                    }
+
+                    return null;
+                }
+
+            };
         }
     }
 
@@ -329,13 +390,26 @@ public class JarClassLoader extends AbstractClassLoader
     }
 
     /**
-     * Returns all loaded classes and resources
+     * Returns an immutable Map of all resources
      * 
      * @return Map
      */
-    public Map<String, byte[]> getLoadedResources()
+    public Map<String, URL> getResources()
     {
         return classpathResources.getResources();
+    }
+
+    /**
+     * Returns all loaded classes and resources
+     * 
+     * @return Map
+     * @deprecated classloader is no more loading all data so this method<br>
+     *             is not supported anymore.
+     */
+    @Deprecated
+    public Map<String, byte[]> getLoadedResources()
+    {
+        return classpathResources.getLoadedResources();
     }
 
     /**
