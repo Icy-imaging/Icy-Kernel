@@ -30,6 +30,8 @@ import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -223,7 +225,39 @@ public class FileUtil
      */
     public static String getCurrentDirectory()
     {
-        return new File(".").getAbsolutePath();
+        String directory;
+
+        try
+        {
+            // try to get from resource
+            directory = new File(ClassLoader.getSystemClassLoader().getResource(".").toURI()).getAbsolutePath();
+        }
+        catch (Exception e1)
+        {
+            try
+            {
+                // try to get from sources
+                directory = new File(FileUtil.class.getProtectionDomain().getCodeSource().getLocation().toURI())
+                        .getParentFile().getAbsolutePath();
+            }
+            catch (Exception e2)
+            {
+                // use launch directory (which may be different from application directory)
+                directory = new File(System.getProperty("user.dir")).getAbsolutePath();
+            }
+        }
+
+        try
+        {
+            // so we replace any %20 sequence in space
+            directory = URLDecoder.decode(directory, "UTF-8");
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            // ignore
+        }
+
+        return directory;
     }
 
     /**
