@@ -31,9 +31,12 @@ import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -56,6 +59,26 @@ public class ClassUtil
     public static ClassLoader getSystemClassLoader()
     {
         return SystemUtil.getSystemClassLoader();
+    }
+
+    /**
+     * Return the list of all loaded classes by the specified {@link ClassLoader}.<br>
+     * Warning: this function is not safe and would not always work as expected.<br>
+     * It can return <code>null</code> if an error occured.
+     */
+    public static List<Class<?>> getLoadedClasses(ClassLoader cl)
+    {
+        try
+        {
+            final Vector classes = (Vector) ReflectionUtil.getFieldObject(cl, "classes", true);
+            return new ArrayList<Class<?>>(classes);
+        }
+        catch (Exception e)
+        {
+            // ignore
+        }
+
+        return null;
     }
 
     /**

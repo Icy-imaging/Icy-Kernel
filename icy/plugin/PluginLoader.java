@@ -270,11 +270,8 @@ public class PluginLoader
         }
         catch (IOException e)
         {
-            // if (logError)
-            {
-                System.err.println("Error loading plugins :");
-                IcyExceptionHandler.showErrorMessage(e, true);
-            }
+            System.err.println("Error loading plugins :");
+            IcyExceptionHandler.showErrorMessage(e, true);
         }
 
         for (String className : classes)
@@ -282,6 +279,10 @@ public class PluginLoader
             // no need to complete loading...
             if (processor.hasWaitingTasks())
                 return;
+
+            // we only want to load plugin classes
+            if (!className.startsWith(PLUGIN_PACKAGE))
+                continue;
 
             try
             {
@@ -292,13 +293,10 @@ public class PluginLoader
             }
             catch (NoClassDefFoundError e)
             {
-                // if (logError)
-                {
-                    // fatal error
-                    System.err.println("Class '" + className + "' cannot be loaded :");
-                    System.err.println("Required class '" + ClassUtil.getQualifiedNameFromPath(e.getMessage())
-                            + "' not found.");
-                }
+                // fatal error
+                System.err.println("Class '" + className + "' cannot be loaded :");
+                System.err.println("Required class '" + ClassUtil.getQualifiedNameFromPath(e.getMessage())
+                        + "' not found.");
             }
             catch (OutOfMemoryError e)
             {
@@ -308,12 +306,9 @@ public class PluginLoader
             }
             catch (Error e)
             {
-                // if (logError)
-                {
-                    // fatal error
-                    IcyExceptionHandler.showErrorMessage(e, false);
-                    System.err.println("Class '" + className + "' is discarded");
-                }
+                // fatal error
+                IcyExceptionHandler.showErrorMessage(e, false);
+                System.err.println("Class '" + className + "' is discarded");
             }
             catch (ClassCastException e)
             {
@@ -326,16 +321,17 @@ public class PluginLoader
             catch (Exception e)
             {
                 // fatal error
-                // if (logError)
-                {
-                    IcyExceptionHandler.showErrorMessage(e, false);
-                    System.err.println("Class '" + className + "' is discarded");
-                }
+                IcyExceptionHandler.showErrorMessage(e, false);
+                System.err.println("Class '" + className + "' is discarded");
             }
         }
 
         // sort list
         Collections.sort(newPlugins, PluginNameSorter.instance);
+
+        // release loaded resources
+        if (loader instanceof JarClassLoader)
+            ((JarClassLoader) loader).close();
 
         loader = newLoader;
         plugins = newPlugins;

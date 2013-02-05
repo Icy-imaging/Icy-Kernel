@@ -33,6 +33,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -49,7 +50,7 @@ public class JarClassLoader extends AbstractClassLoader
     /**
      * Class cache
      */
-    protected final Map<String, Class> classes;
+    protected final Map<String, Class> loadedClasses;
 
     protected final ClasspathResources classpathResources;
     private char classNameReplacementChar;
@@ -57,30 +58,22 @@ public class JarClassLoader extends AbstractClassLoader
 
     private static Logger logger = Logger.getLogger(JarClassLoader.class.getName());
 
-    public JarClassLoader(ClassLoader parent)
-    {
-        super(parent);
-
-        classpathResources = new ClasspathResources();
-        classes = Collections.synchronizedMap(new HashMap<String, Class>());
-        initialize();
-    }
-
     public JarClassLoader()
     {
         super();
 
         classpathResources = new ClasspathResources();
-        classes = Collections.synchronizedMap(new HashMap<String, Class>());
+        loadedClasses = Collections.synchronizedMap(new HashMap<String, Class>());
         initialize();
     }
 
-    /**
-     * Some initialisations
-     */
-    public void initialize()
+    public JarClassLoader(ClassLoader parent)
     {
-        loaders.add(localLoader);
+        super(parent);
+
+        classpathResources = new ClasspathResources();
+        loadedClasses = Collections.synchronizedMap(new HashMap<String, Class>());
+        initialize();
     }
 
     /**
@@ -106,6 +99,14 @@ public class JarClassLoader extends AbstractClassLoader
     }
 
     /**
+     * Some initialisations
+     */
+    public void initialize()
+    {
+        loaders.add(localLoader);
+    }
+
+    /**
      * Add all jar/class sources
      * 
      * @param sources
@@ -113,9 +114,7 @@ public class JarClassLoader extends AbstractClassLoader
     public void addAll(Object[] sources)
     {
         for (Object source : sources)
-        {
             add(source);
-        }
     }
 
     /**
@@ -126,9 +125,7 @@ public class JarClassLoader extends AbstractClassLoader
     public void addAll(List sources)
     {
         for (Object source : sources)
-        {
             add(source);
-        }
     }
 
     /**
@@ -139,7 +136,7 @@ public class JarClassLoader extends AbstractClassLoader
     public void add(Object source)
     {
         if (source instanceof InputStream)
-            add((InputStream) source);
+            throw new JclException("Unsupported resource type");
         else if (source instanceof URL)
             add((URL) source);
         else if (source instanceof String)
@@ -181,6 +178,16 @@ public class JarClassLoader extends AbstractClassLoader
     }
 
     /**
+     * Release all loaded resources.
+     * The ClassLoader cannot be used anymore to load any new resource.
+     */
+    public void close()
+    {
+        classpathResources.jarEntryContents.clear();
+        classpathResources.jarEntryUrls.clear();
+    }
+
+    /**
      * Reads the class bytes from different local and remote resources using
      * ClasspathResources
      * 
@@ -189,9 +196,7 @@ public class JarClassLoader extends AbstractClassLoader
      */
     protected byte[] getClassBytes(String className)
     {
-        className = formatClassName(className);
-
-        return classpathResources.getResourceContent(className);
+        return classpathResources.getResourceContent(formatClassName(className));
     }
 
     /**
@@ -205,11 +210,11 @@ public class JarClassLoader extends AbstractClassLoader
         if (logger.isLoggable(Level.FINEST))
             logger.finest("Unloading class " + className);
 
-        if (classes.containsKey(className))
+        if (loadedClasses.containsKey(className))
         {
             if (logger.isLoggable(Level.FINEST))
                 logger.finest("Removing loaded class " + className);
-            classes.remove(className);
+            loadedClasses.remove(className);
             try
             {
                 classpathResources.unload(formatClassName(className));
@@ -277,7 +282,7 @@ public class JarClassLoader extends AbstractClassLoader
             Class result = null;
             byte[] classBytes;
 
-            result = classes.get(className);
+            result = loadedClasses.get(className);
             if (result != null)
             {
                 if (logger.isLoggable(Level.FINEST))
@@ -287,16 +292,12 @@ public class JarClassLoader extends AbstractClassLoader
 
             classBytes = getClassBytes(className);
             if (classBytes == null)
-            {
                 return null;
-            }
 
             result = defineClass(className, classBytes, 0, classBytes.length);
 
             if (result == null)
-            {
                 return null;
-            }
 
             /*
              * Preserve package name.
@@ -311,7 +312,7 @@ public class JarClassLoader extends AbstractClassLoader
             if (resolveIt)
                 resolveClass(result);
 
-            classes.put(className, result);
+            loadedClasses.put(className, result);
             if (logger.isLoggable(Level.FINEST))
                 logger.finest("Return new local loaded class " + className);
             return result;
@@ -375,7 +376,6 @@ public class JarClassLoader extends AbstractClassLoader
 
                     return null;
                 }
-
             };
         }
     }
@@ -391,9 +391,15 @@ public class JarClassLoader extends AbstractClassLoader
     }
 
     /**
+     * Returns an immutable Set of all resources name
+     */
+    public Set<String> getResourcesName()
+    {
+        return classpathResources.getResourcesName();
+    }
+
+    /**
      * Returns an immutable Map of all resources
-     * 
-     * @return Map
      */
     public Map<String, URL> getResources()
     {
@@ -401,13 +407,8 @@ public class JarClassLoader extends AbstractClassLoader
     }
 
     /**
-     * Returns all loaded classes and resources
-     * 
-     * @return Map
-     * @deprecated classloader is no more loading all data so this method<br>
-     *             is not supported anymore.
+     * Returns all currently loaded classes and resources.
      */
-    @Deprecated
     public Map<String, byte[]> getLoadedResources()
     {
         return classpathResources.getLoadedResources();
@@ -428,6 +429,6 @@ public class JarClassLoader extends AbstractClassLoader
      */
     public Map<String, Class> getLoadedClasses()
     {
-        return Collections.unmodifiableMap(classes);
+        return Collections.unmodifiableMap(loadedClasses);
     }
 }

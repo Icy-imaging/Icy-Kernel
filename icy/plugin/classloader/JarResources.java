@@ -33,6 +33,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
@@ -54,6 +55,8 @@ public class JarResources
     protected Map<String, URL> jarEntryUrls;
 
     protected boolean collisionAllowed;
+    // keep trace of loaded resource size
+    protected int loadedSize;
 
     private static Logger logger = Logger.getLogger(JarResources.class.getName());
 
@@ -65,6 +68,7 @@ public class JarResources
         jarEntryContents = new HashMap<String, byte[]>();
         jarEntryUrls = new HashMap<String, URL>();
         collisionAllowed = Configuration.suppressCollisionException();
+        loadedSize = 0;
     }
 
     /**
@@ -115,6 +119,14 @@ public class JarResources
         }
 
         return false;
+    }
+
+    /**
+     * Returns an immutable Set of all resources names
+     */
+    public Set<String> getResourcesName()
+    {
+        return Collections.unmodifiableSet(jarEntryUrls.keySet());
     }
 
     /**
@@ -231,9 +243,6 @@ public class JarResources
                     continue;
                 }
 
-                if (logger.isLoggable(Level.FINEST))
-                    logger.finest("Entry Name: " + jarEntry.getName() + ", " + "Entry Size: " + jarEntry.getSize());
-
                 // add to internal resource HashMap
                 jarEntryUrls.put(jarEntry.getName(), new URL("jar:" + baseUrl.toString() + "!/" + jarEntry.getName()));
             }
@@ -306,6 +315,11 @@ public class JarResources
                     out.write(b, 0, len);
 
                 out.close();
+
+                loadedSize += out.size();
+
+//                System.out.println("Entry Name: " + jarEntry.getName() + ", Size: " + out.size() + " ("
+//                        + (loadedSize / 1024) + " KB)");
 
                 return out.toByteArray();
             }

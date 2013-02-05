@@ -101,6 +101,12 @@ public class ClasspathResources extends JarResources
             while (((byt = stream.read()) != -1))
                 out.write(byt);
 
+            loadedSize += out.size();
+
+            // System.out.println("Entry Name: " + url.getPath() + ", Size: " + out.size() + " (" +
+            // (loadedSize / 1024)
+            // + " KB)");
+
             return out.toByteArray();
         }
         catch (IOException e)
@@ -293,8 +299,14 @@ public class ClasspathResources extends JarResources
         byte[] content = null;
         try
         {
+            final int len = (int) resourceFile.length();
             fis = new FileInputStream(resourceFile);
-            content = new byte[(int) resourceFile.length()];
+            content = new byte[len];
+
+            loadedSize += len;
+
+            // System.out.println("Entry Name: " + url.getPath() + ", Size: " + len + " (" +
+            // (loadedSize / 1024) + " KB)");
 
             if (fis.read(content) != -1)
                 return content;
