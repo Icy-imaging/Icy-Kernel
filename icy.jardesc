@@ -34,6 +34,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.menu.action"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.colormap"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.classloader.exception"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.common.listener.weak"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.ui"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.plugin"/>
@@ -87,8 +88,8 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.preferences"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.menu.tools"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.array"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.classloader"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.itk"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.performance"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.script"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.lut.abstract_"/>
     </selectedElements>

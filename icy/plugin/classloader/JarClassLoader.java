@@ -160,13 +160,14 @@ public class JarClassLoader extends AbstractClassLoader
     }
 
     /**
-     * Loads classes from InputStream
+     * Loads classes from InputStream.
      * 
-     * @param jarStream
+     * @deprecated Not anymore supported (we need URL for getResource(..) method)
      */
+    @Deprecated
     public void add(InputStream jarStream)
     {
-        classpathResources.loadJar(jarStream);
+        // classpathResources.loadJar(jarStream);
     }
 
     /**
@@ -186,7 +187,7 @@ public class JarClassLoader extends AbstractClassLoader
      * @param className
      * @return byte[]
      */
-    protected byte[] loadClassBytes(String className)
+    protected byte[] getClassBytes(String className)
     {
         className = formatClassName(className);
 
@@ -284,7 +285,7 @@ public class JarClassLoader extends AbstractClassLoader
                 return result;
             }
 
-            classBytes = loadClassBytes(className);
+            classBytes = getClassBytes(className);
             if (classBytes == null)
             {
                 return null;

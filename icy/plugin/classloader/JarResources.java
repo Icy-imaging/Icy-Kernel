@@ -25,6 +25,7 @@ import icy.plugin.classloader.exception.JclException;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -82,18 +84,37 @@ public class JarResources
     {
         byte content[] = jarEntryContents.get(name);
 
+        // we load the content
         if (content == null)
         {
             final URL url = jarEntryUrls.get(name);
 
             if (url != null)
             {
-                // --> charger le contenu
-
+                // load content and return it
+                if (loadContent(name, url))
+                    return jarEntryContents.get(name);
             }
         }
 
         return content;
+    }
+
+    protected boolean loadContent(String name, URL url)
+    {
+        // only support JAR resource here
+        if (url.getProtocol().equalsIgnoreCase(("jar")))
+        {
+            final byte content[] = loadJarContent(url);
+
+            if (content != null)
+            {
+                setResourceContent(name, content);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -114,8 +135,6 @@ public class JarResources
 
     /**
      * Reads the specified jar file
-     * 
-     * @param jarFile
      */
     public void loadJar(String jarFile)
     {
@@ -126,7 +145,7 @@ public class JarResources
         try
         {
             fis = new FileInputStream(jarFile);
-            loadJar(fis);
+            loadJar(new File(jarFile).toURI().toURL(), fis);
         }
         catch (IOException e)
         {
@@ -148,8 +167,6 @@ public class JarResources
 
     /**
      * Reads the jar file from a specified URL
-     * 
-     * @param url
      */
     public void loadJar(URL url)
     {
@@ -160,7 +177,7 @@ public class JarResources
         try
         {
             in = url.openStream();
-            loadJar(in);
+            loadJar(url, in);
         }
         catch (IOException e)
         {
@@ -181,9 +198,9 @@ public class JarResources
     }
 
     /**
-     * Load the jar contents from InputStream
+     * Load the jar from InputStream
      */
-    public void loadJar(InputStream jarStream)
+    public void loadJar(URL baseUrl, InputStream jarStream)
     {
         BufferedInputStream bis = null;
         JarInputStream jis = null;
@@ -204,7 +221,7 @@ public class JarResources
                     continue;
                 }
 
-                if (jarEntryContents.containsKey(jarEntry.getName()))
+                if (jarEntryUrls.containsKey(jarEntry.getName()))
                 {
                     if (!collisionAllowed)
                         throw new JclException("Class/Resource " + jarEntry.getName() + " already loaded");
@@ -217,23 +234,8 @@ public class JarResources
                 if (logger.isLoggable(Level.FINEST))
                     logger.finest("Entry Name: " + jarEntry.getName() + ", " + "Entry Size: " + jarEntry.getSize());
 
-                byte[] b = new byte[2048];
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-                int len = 0;
-                while ((len = jis.read(b)) > 0)
-                {
-                    out.write(b, 0, len);
-                }
-
                 // add to internal resource HashMap
-                jarEntryContents.put(jarEntry.getName(), out.toByteArray());
-
-                if (logger.isLoggable(Level.FINEST))
-                    logger.finest(jarEntry.getName() + ": size=" + out.size() + " ,csize="
-                            + jarEntry.getCompressedSize());
-
-                out.close();
+                jarEntryUrls.put(jarEntry.getName(), new URL("jar:" + baseUrl.toString() + "!/" + jarEntry.getName()));
             }
         }
         catch (IOException e)
@@ -267,6 +269,104 @@ public class JarResources
                     throw new JclException(e);
                 }
         }
+    }
+
+    /**
+     * Load the jar contents from InputStream
+     */
+    protected byte[] loadJarContent(URL url)
+    {
+        InputStream in = null;
+        BufferedInputStream bis = null;
+        JarFile jf = null;
+
+        try
+        {
+            final String path = url.getPath();
+            final int ind = path.indexOf('!');
+            final String filename = path.substring(5, ind);
+            final String resname = path.substring(ind + 2);
+
+            jf = new JarFile(filename);
+            final JarEntry jarEntry = jf.getJarEntry(resname);
+
+            if (jarEntry != null)
+            {
+                if (logger.isLoggable(Level.FINEST))
+                    logger.finest(dump(jarEntry));
+
+                in = jf.getInputStream(jarEntry);
+                bis = new BufferedInputStream(in);
+
+                byte[] b = new byte[2048];
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+                int len = 0;
+                while ((len = bis.read(b)) > 0)
+                    out.write(b, 0, len);
+
+                out.close();
+
+                return out.toByteArray();
+            }
+
+            return null;
+        }
+        catch (IOException e)
+        {
+            throw new JclException(e);
+        }
+        finally
+        {
+            if (bis != null)
+                try
+                {
+                    bis.close();
+                }
+                catch (IOException e)
+                {
+                    throw new JclException(e);
+                }
+
+            if (in != null)
+                try
+                {
+                    in.close();
+                }
+                catch (IOException e)
+                {
+                    throw new JclException(e);
+                }
+
+            if (jf != null)
+                try
+                {
+                    jf.close();
+                }
+                catch (IOException e)
+                {
+                    throw new JclException(e);
+                }
+        }
+    }
+
+    protected void setResourceContent(String name, byte content[])
+    {
+        if (jarEntryContents.containsKey(name))
+        {
+            if (!collisionAllowed)
+                throw new JclException("Class/Resource " + name + " already loaded");
+
+            if (logger.isLoggable(Level.FINEST))
+                logger.finest("Class/Resource " + name + " already loaded; ignoring entry...");
+            return;
+        }
+
+        if (logger.isLoggable(Level.FINEST))
+            logger.finest("Entry Name: " + name + ", " + "Entry Size: " + content.length);
+
+        // add to internal resource HashMap
+        jarEntryContents.put(name, content);
     }
 
     /**
