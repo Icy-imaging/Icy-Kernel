@@ -15,6 +15,6 @@ public class PluginLocalPluginProvider extends Plugin implements PluginSearchPro
     @Override
     public Class<? extends SearchResultProducer> getSearchProviderClass()
     {
-        return LocalPluginProvider.class;
+        return LocalPluginSearchResultProducer.class;
     }
 }

@@ -23,12 +23,12 @@ import org.pushingpixels.flamingo.api.common.RichTooltip;
  * 
  * @author Stephane
  */
-public class LocalPluginProvider extends SearchResultProducer
+public class LocalPluginSearchResultProducer extends SearchResultProducer
 {
     /**
      * @author Stephane
      */
-    private class LocalPluginResult extends SearchResult
+    public class LocalPluginResult extends SearchResult
     {
         private final PluginDescriptor plugin;
         private String description;
@@ -62,6 +62,11 @@ public class LocalPluginProvider extends SearchResultProducer
                         description = StringUtil.htmlBoldSubstring(description, word, true);
                 }
             }
+        }
+
+        public PluginDescriptor getPlugin()
+        {
+            return plugin;
         }
 
         @Override
@@ -131,7 +136,7 @@ public class LocalPluginProvider extends SearchResultProducer
     }
 
     @Override
-    protected void doSearch(String[] words, SearchResultConsumer consumer)
+    public void doSearch(String[] words, SearchResultConsumer consumer)
     {
         final boolean shortSearch = getShortSearch(words);
 

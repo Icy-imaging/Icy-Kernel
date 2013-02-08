@@ -32,6 +32,7 @@ import icy.painter.Painter;
 import icy.plugin.abstract_.Plugin;
 import icy.preferences.XMLPreferences;
 import icy.roi.ROI;
+import icy.search.SearchEngine;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
 
@@ -453,5 +454,11 @@ public class MainInterfaceBatch implements MainInterface
     public void setGlobalViewSyncId(int id)
     {
 
+    }
+
+    @Override
+    public SearchEngine getSearchEngine()
+    {
+        return null;
     }
 }

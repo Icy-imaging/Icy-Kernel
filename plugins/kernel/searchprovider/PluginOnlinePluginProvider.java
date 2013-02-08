@@ -15,6 +15,6 @@ public class PluginOnlinePluginProvider extends Plugin implements PluginSearchPr
     @Override
     public Class<? extends SearchResultProducer> getSearchProviderClass()
     {
-        return OnlinePluginProvider.class;
+        return OnlinePluginSearchResultProducer.class;
     }
 }

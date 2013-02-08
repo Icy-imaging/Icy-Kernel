@@ -13,7 +13,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.media.jai.BorderExtender;
@@ -367,18 +366,15 @@ public class IcyBufferedImageUtil
     /**
      * Build a new single channel image (greyscale) from the specified source image channel.
      */
-    public static IcyBufferedImage extractChannel(IcyBufferedImage source, int channelNumber)
+    public static IcyBufferedImage extractChannel(IcyBufferedImage source, int channel)
     {
-        final ArrayList<Integer> list = new ArrayList<Integer>();
-
-        list.add(Integer.valueOf(channelNumber));
-
-        return extractChannels(source, list);
+        return extractChannels(source, channel);
     }
 
     /**
-     * Build a new image from the specified source image channels.
+     * @deprecated Uses {@link #extractChannels(IcyBufferedImage, List)} instead.
      */
+    @Deprecated
     public static IcyBufferedImage extractChannels(IcyBufferedImage source, List<Integer> channelNumbers)
     {
         if (source == null)
@@ -393,6 +389,31 @@ public class IcyBufferedImageUtil
         for (int i = 0; i < channelNumbers.size(); i++)
         {
             final int channel = channelNumbers.get(i).intValue();
+
+            if (channel < sizeC)
+                result.setDataXY(i, source.getDataXY(channel));
+        }
+
+        return result;
+    }
+
+    /**
+     * Build a new image from the specified source image channels.
+     */
+    public static IcyBufferedImage extractChannels(IcyBufferedImage source, int... channels)
+    {
+        if (source == null)
+            return null;
+
+        // create output
+        final IcyBufferedImage result = new IcyBufferedImage(source.getSizeX(), source.getSizeY(), channels.length,
+                source.getDataType_());
+        final int sizeC = source.getSizeC();
+
+        // set data from specified band
+        for (int i = 0; i < channels.length; i++)
+        {
+            final int channel = channels[i];
 
             if (channel < sizeC)
                 result.setDataXY(i, source.getDataXY(channel));
@@ -612,7 +633,7 @@ public class IcyBufferedImageUtil
     {
         if (source == null)
             return;
-        
+
         // nothing to do
         if ((dx == 0) && (dy == 0))
             return;

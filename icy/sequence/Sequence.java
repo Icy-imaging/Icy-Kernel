@@ -153,9 +153,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     private IcyColorModel colorModel;
     /**
-     * origin filename (from/to which the sequence has been loaded/saved)
-     * null --> no file attachment
-     * directory or metadata file --> multiples files attachment
+     * Origin filename (from/to which the sequence has been loaded/saved)<br>
+     * null --> no file attachment<br>
+     * directory or metadata file --> multiples files attachment<br>
      * image file --> single file attachment
      */
     private String filename;
@@ -535,7 +535,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @return the filename
+     * Origin filename (from/to which the sequence has been loaded/saved)<br>
+     * null --> no file attachment<br>
+     * directory or metadata file --> multiples files attachment<br>
+     * image file --> single file attachment
+     * 
+     * @return the filename.
      */
     public String getFilename()
     {

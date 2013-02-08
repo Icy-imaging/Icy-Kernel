@@ -113,7 +113,7 @@ public abstract class SearchResultProducer
      *        {@link SearchResultConsumer#resultsChanged(SearchResultProducer)} method.
      * @see #hasWaitingSearch()
      */
-    protected abstract void doSearch(String[] words, SearchResultConsumer consumer);
+    public abstract void doSearch(String[] words, SearchResultConsumer consumer);
 
     /**
      * Wait for the search request to complete.
@@ -149,7 +149,7 @@ public abstract class SearchResultProducer
      * @param consumer
      *        If not null then consumer is notified about result change
      */
-    protected void addResult(SearchResult result, SearchResultConsumer consumer)
+    public void addResult(SearchResult result, SearchResultConsumer consumer)
     {
         if (result != null)
         {

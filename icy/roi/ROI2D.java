@@ -243,10 +243,6 @@ public abstract class ROI2D extends ROI
             if (!isActiveFor(canvas))
                 return;
 
-            // no editable --> no action here
-            if (!editable)
-                return;
-
             ROI2D.this.beginUpdate();
             try
             {
@@ -267,12 +263,21 @@ public abstract class ROI2D extends ROI
                         // roi selected and no point selected ?
                         else if (selected && !hasSelectedPoint())
                         {
-                            // try to add point first
-                            if (addPointAt(imagePoint, EventUtil.isControlDown(e)))
-                                e.consume();
-                            // else we update selection
-                            else if (updateSelect(e, imagePoint, canvas))
-                                e.consume();
+                            if (editable)
+                            {
+                                // try to add point first
+                                if (addPointAt(imagePoint, EventUtil.isControlDown(e)))
+                                    e.consume();
+                                // else we update selection
+                                else if (updateSelect(e, imagePoint, canvas))
+                                    e.consume();
+                            }
+                            else
+                            {
+                                // just update selection
+                                if (updateSelect(e, imagePoint, canvas))
+                                    e.consume();
+                            }
                         }
                         else
                         {
@@ -281,20 +286,23 @@ public abstract class ROI2D extends ROI
                                 e.consume();
                         }
                     }
-                    else
                     // right button action
-                    if (EventUtil.isRightMouseButton(e))
+                    else if (EventUtil.isRightMouseButton(e))
                     {
+                        // no editable --> no action here
+                        if (!editable)
+                            return;
+
                         // only use delete now to remove point
-                        
-//                        // roi selected ?
-//                        if (selected)
-//                        {
-//                            // try to remove point
-//                            if (removePointAt(canvas, imagePoint))
-//                                // consume
-//                                e.consume();
-//                        }
+
+                        // // roi selected ?
+                        // if (selected)
+                        // {
+                        // // try to remove point
+                        // if (removePointAt(canvas, imagePoint))
+                        // // consume
+                        // e.consume();
+                        // }
                     }
                 }
             }
@@ -356,14 +364,14 @@ public abstract class ROI2D extends ROI
                     // right button action
                     if (EventUtil.isRightMouseButton(e))
                     {
-//                        // roi selected ?
-//                        if (selected)
-//                        {
-//                            // try to remove point
-//                            if (removePointAt(canvas, imagePoint))
-//                                // consume
-//                                e.consume();
-//                        }
+                        // // roi selected ?
+                        // if (selected)
+                        // {
+                        // // try to remove point
+                        // if (removePointAt(canvas, imagePoint))
+                        // // consume
+                        // e.consume();
+                        // }
                     }
                 }
             }
@@ -397,10 +405,6 @@ public abstract class ROI2D extends ROI
             if (!isActiveFor(canvas))
                 return;
 
-            // no editable --> no action here
-            if (!editable)
-                return;
-
             if (!e.isConsumed())
             {
                 // unselect ROI on double click
@@ -421,12 +425,9 @@ public abstract class ROI2D extends ROI
             if (!isActiveFor(canvas))
                 return;
 
-            // no editable --> no action here
-            if (!editable)
-                return;
-
             // just for the shift key state change
-            updateDrag(e, imagePoint, canvas);
+            if (editable)
+                updateDrag(e, imagePoint, canvas);
 
             if (!e.isConsumed())
             {
@@ -443,24 +444,27 @@ public abstract class ROI2D extends ROI
 
                     case KeyEvent.VK_DELETE:
                     case KeyEvent.VK_BACK_SPACE:
-                        // roi selected ?
-                        if (selected)
+                        if (editable)
                         {
-                            // remove selected control point if there is one
-                            if (removeSelectedPoint(canvas, imagePoint))
-                                e.consume();
-                            else
+                            // roi selected ?
+                            if (selected)
                             {
-                                // else simply delete ROI
+                                // remove selected control point if there is one
+                                if (removeSelectedPoint(canvas, imagePoint))
+                                    e.consume();
+                                else
+                                {
+                                    // else simply delete ROI
+                                    ROI2D.this.delete();
+                                    e.consume();
+                                }
+                            }
+                            // roi focused ? --> delete ROI
+                            else if (focused)
+                            {
                                 ROI2D.this.delete();
                                 e.consume();
                             }
-                        }
-                        // roi focused ? --> delete ROI
-                        else if (focused)
-                        {
-                            ROI2D.this.delete();
-                            e.consume();
                         }
                         break;
                 }
@@ -473,12 +477,9 @@ public abstract class ROI2D extends ROI
             if (!isActiveFor(canvas))
                 return;
 
-            // no editable --> no action here
-            if (!editable)
-                return;
-
             // just for the shift key state change
-            updateDrag(e, imagePoint, canvas);
+            if (editable)
+                updateDrag(e, imagePoint, canvas);
         }
     }
 

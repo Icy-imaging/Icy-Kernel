@@ -276,13 +276,13 @@ public class PluginLoader
 
         for (String className : classes)
         {
+            // we only want to load classes from 'plugins' package
+            if (!className.startsWith(PLUGIN_PACKAGE))
+                continue;
+
             // no need to complete loading...
             if (processor.hasWaitingTasks())
                 return;
-
-            // we only want to load plugin classes
-            if (!className.startsWith(PLUGIN_PACKAGE))
-                continue;
 
             try
             {
@@ -331,7 +331,7 @@ public class PluginLoader
 
         // release loaded resources
         if (loader instanceof JarClassLoader)
-            ((JarClassLoader) loader).close();
+            ((JarClassLoader) loader).unloadAll();
 
         loader = newLoader;
         plugins = newPlugins;
@@ -455,7 +455,7 @@ public class PluginLoader
     }
 
     /**
-     * Return all resources.
+     * Return all resources present in the Plugin class loader.
      */
     public static Map<String, URL> getAllResources()
     {
@@ -472,11 +472,8 @@ public class PluginLoader
 
     /**
      * Return content of all loaded resources.
-     * 
-     * @deprecated Only return loaded resources, uses {@link #getAllResources()} instead.
      */
-    @Deprecated
-    public static Map<String, byte[]> getAllLoadedResources()
+    public static Map<String, byte[]> getLoadedResources()
     {
         prepare();
 
@@ -490,10 +487,10 @@ public class PluginLoader
     }
 
     /**
-     * Return all loaded classes
+     * Return all loaded classes.
      */
     @SuppressWarnings("rawtypes")
-    public static Map<String, Class<?>> getAllClasses()
+    public static Map<String, Class<?>> getLoadedClasses()
     {
         prepare();
 
@@ -512,6 +509,17 @@ public class PluginLoader
         }
 
         return new HashMap<String, Class<?>>();
+    }
+
+    /**
+     * Return all classes.
+     * 
+     * @deprecated Uses {@link #getLoadedClasses()} instead as we load classes on demand.
+     */
+    @Deprecated
+    public static Map<String, Class<?>> getAllClasses()
+    {
+        return getLoadedClasses();
     }
 
     /**

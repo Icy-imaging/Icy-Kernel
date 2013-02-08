@@ -153,15 +153,30 @@ public class NetworkUtil
             while (true)
             {
                 boolean up = false;
-                int retry = 5;
 
-                while (!up && (retry > 0))
+                URLConnection urlConnection;
+
+                try
                 {
-                    URLConnection urlConnection;
+                    urlConnection = openConnection("http://www.google.com", true, false);
+                    if (urlConnection != null)
+                    {
+                        urlConnection.setConnectTimeout(3000);
+                        urlConnection.setReadTimeout(3000);
+                        urlConnection.getInputStream();
+                        up = true;
+                    }
+                }
+                catch (Throwable t)
+                {
+                    // ignore
+                }
 
+                if (!up)
+                {
                     try
                     {
-                        urlConnection = openConnection("http://www.google.com", true, false);
+                        urlConnection = openConnection("http://www.java.com", true, false);
                         if (urlConnection != null)
                         {
                             urlConnection.setConnectTimeout(3000);
@@ -174,28 +189,6 @@ public class NetworkUtil
                     {
                         // ignore
                     }
-
-                    if (!up)
-                    {
-                        try
-                        {
-                            urlConnection = openConnection("http://www.java.com", true, false);
-                            if (urlConnection != null)
-                            {
-                                urlConnection.setConnectTimeout(3000);
-                                urlConnection.setReadTimeout(3000);
-                                urlConnection.getInputStream();
-                                up = true;
-                            }
-                        }
-                        catch (Throwable t)
-                        {
-                            // ignore
-                        }
-                    }
-
-                    retry--;
-                    ThreadUtil.sleep(1000);
                 }
 
                 setInternetAccess(up);

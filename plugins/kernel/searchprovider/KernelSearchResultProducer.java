@@ -28,9 +28,9 @@ import org.pushingpixels.flamingo.api.common.RichTooltip;
  * 
  * @author Stephane
  */
-public class KernelSearchProvider extends SearchResultProducer
+public class KernelSearchResultProducer extends SearchResultProducer
 {
-    private class KernelSearchResult extends SearchResult
+    public class KernelSearchResult extends SearchResult
     {
         private final IcyAbstractAction action;
         private String description;
@@ -61,6 +61,11 @@ public class KernelSearchProvider extends SearchResultProducer
             }
             else
                 description = "";
+        }
+
+        public IcyAbstractAction getAction()
+        {
+            return action;
         }
 
         @Override
@@ -166,7 +171,7 @@ public class KernelSearchProvider extends SearchResultProducer
     }
 
     @Override
-    protected void doSearch(String[] words, SearchResultConsumer consumer)
+    public void doSearch(String[] words, SearchResultConsumer consumer)
     {
         // ensure actions has been initialized
         initActions();

@@ -1390,22 +1390,13 @@ public class SequenceUtil
      */
     public static Sequence extractChannel(Sequence source, int channel)
     {
-        final ArrayList<Integer> list = new ArrayList<Integer>();
-
-        list.add(Integer.valueOf(channel));
-
-        return extractChannels(source, list);
+        return extractChannels(source, channel);
     }
 
     /**
-     * Build a new sequence by extracting the specified channels from the source sequence.
-     * 
-     * @param source
-     *        Source sequence
-     * @param channels
-     *        Channel indexes to extract from the source sequence.
-     * @return Sequence
+     * @deprecated Uses {@link #extractChannels(Sequence, int...)} instead.
      */
+    @Deprecated
     public static Sequence extractChannels(Sequence source, List<Integer> channels)
     {
         final Sequence outSequence = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
@@ -1439,6 +1430,54 @@ public class SequenceUtil
         for (Integer i : channels)
         {
             outSequence.setChannelName(c, source.getChannelName(i.intValue()));
+            c++;
+        }
+
+        return outSequence;
+    }
+
+    /**
+     * Build a new sequence by extracting the specified channels from the source sequence.
+     * 
+     * @param source
+     *        Source sequence
+     * @param channels
+     *        Channel indexes to extract from the source sequence.
+     * @return Sequence
+     */
+    public static Sequence extractChannels(Sequence source, int... channels)
+    {
+        final Sequence outSequence = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+
+        outSequence.beginUpdate();
+        try
+        {
+            for (int t = 0; t < source.getSizeT(); t++)
+                for (int z = 0; z < source.getSizeZ(); z++)
+                    outSequence.setImage(t, z, IcyBufferedImageUtil.extractChannels(source.getImage(t, z), channels));
+        }
+        finally
+        {
+            outSequence.endUpdate();
+        }
+
+        // sequence name
+        if (channels.length > 1)
+        {
+            String s = "";
+            for (int i = 0; i < channels.length; i++)
+                s += " " + channels[i];
+
+            outSequence.setName(source.getName() + " (channels" + s + ")");
+        }
+        else if (channels.length == 1)
+            outSequence.setName(source.getName() + " (" + source.getChannelName(channels[0]) + ")");
+
+        // channel name
+        int c = 0;
+        for (int channel : channels)
+        {
+            outSequence.setChannelName(c, source.getChannelName(channel));
             c++;
         }
 

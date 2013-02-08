@@ -44,7 +44,7 @@ import java.util.logging.Logger;
  * @author Kamran Zafar
  * @author Stephane Dallongeville
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 public class JarClassLoader extends AbstractClassLoader
 {
     /**
@@ -178,13 +178,15 @@ public class JarClassLoader extends AbstractClassLoader
     }
 
     /**
-     * Release all loaded resources.
+     * Release all loaded resources and classes.
      * The ClassLoader cannot be used anymore to load any new resource.
      */
-    public void close()
+    public void unloadAll()
     {
+        // unload resources
         classpathResources.jarEntryContents.clear();
-        classpathResources.jarEntryUrls.clear();
+        // unload classes
+        loadedClasses.clear();
     }
 
     /**

@@ -93,7 +93,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.3.1.0");
+    public static Version version = new Version("1.3.2.0");
 
     /**
      * Main interface
@@ -695,7 +695,7 @@ public class Icy
 
         // load native libraries
         loadVtkLibrary(libPath, osChanged);
-        loadItkLibrary(libPath);
+        // loadItkLibrary(libPath);
 
         // disable native lib support for JAI as we don't provide them (for the moment)
         SystemUtil.setProperty("com.sun.media.jai.disableMediaLib", "true");

@@ -41,6 +41,7 @@ import icy.plugin.abstract_.Plugin;
 import icy.preferences.IcyPreferences;
 import icy.preferences.XMLPreferences;
 import icy.roi.ROI;
+import icy.search.SearchEngine;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceAdapter;
 import icy.sequence.SequenceEvent;
@@ -419,6 +420,12 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     public MainFrame getMainFrame()
     {
         return mainFrame;
+    }
+
+    @Override
+    public SearchEngine getSearchEngine()
+    {
+        return mainFrame.getSearchBar().getSearchEngine();
     }
 
     @Override
@@ -1326,4 +1333,5 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
         for (Viewer viewer : getViewers())
             viewer.setViewSyncId(id);
     }
+
 }

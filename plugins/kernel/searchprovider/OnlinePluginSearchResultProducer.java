@@ -1,6 +1,8 @@
 package plugins.kernel.searchprovider;
 
+import icy.gui.plugin.PluginDetailPanel;
 import icy.gui.plugin.PluginRichToolTip;
+import icy.main.Icy;
 import icy.network.NetworkUtil;
 import icy.network.URLUtil;
 import icy.plugin.PluginDescriptor;
@@ -8,6 +10,7 @@ import icy.plugin.PluginInstaller;
 import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginRepositoryLoader;
+import icy.search.SearchEngine;
 import icy.search.SearchResult;
 import icy.search.SearchResultConsumer;
 import icy.search.SearchResultProducer;
@@ -17,6 +20,7 @@ import icy.util.XMLUtil;
 
 import java.awt.Image;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 
@@ -24,17 +28,19 @@ import org.pushingpixels.flamingo.api.common.RichTooltip;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import plugins.kernel.searchprovider.LocalPluginSearchResultProducer.LocalPluginResult;
+
 /**
  * This class is used to provide online plugin elements to the search engine.
  * 
  * @author Thomas Provoost & Stephane
  */
-public class OnlinePluginProvider extends SearchResultProducer
+public class OnlinePluginSearchResultProducer extends SearchResultProducer
 {
     /**
      * @author Stephane
      */
-    private class OnlinePluginResult extends SearchResult
+    public class OnlinePluginResult extends SearchResult
     {
         final PluginDescriptor plugin;
         private String description;
@@ -101,6 +107,15 @@ public class OnlinePluginProvider extends SearchResultProducer
         @Override
         public String getTooltip()
         {
+            // plugin locally installed ? (result transfer to local plugin provider)
+            if (PluginLoader.isLoaded(plugin.getClassName()))
+            {
+                if (plugin.isActionable())
+                    return "Left click: Run   -   Right click: Online documentation";
+
+                return "Left click: Show detail   -   Right click: Online documentation";
+            }
+
             return "Left click: Install and Run   -   Right click: Online documentation";
         }
 
@@ -113,16 +128,36 @@ public class OnlinePluginProvider extends SearchResultProducer
                 @Override
                 public void run()
                 {
-                    // install and run the plugin (if user ok with install)
-                    PluginInstaller.install(plugin, true);
-                    // wait for installation complete
-                    PluginInstaller.waitInstall();
+                    // plugin locally installed ? (result transfer to local plugin provider)
+                    if (PluginLoader.isLoaded(plugin.getClassName()))
+                    {
+                        if (plugin.isActionable())
+                            PluginLauncher.start(plugin);
+                        else
+                        {
+                            ThreadUtil.invokeLater(new Runnable()
+                            {
+                                @Override
+                                public void run()
+                                {
+                                    new PluginDetailPanel(plugin);
+                                }
+                            });
+                        }
+                    }
+                    else
+                    {
+                        // install and run the plugin (if user ok with install)
+                        PluginInstaller.install(plugin, true);
+                        // wait for installation complete
+                        PluginInstaller.waitInstall();
 
-                    // find the new installed plugin
-                    final PluginDescriptor localPlugin = PluginLoader.getPlugin(plugin.getClassName());
-                    // plugin found ? --> launch it !
-                    if (localPlugin != null)
-                        PluginLauncher.start(localPlugin);
+                        // find the new installed plugin
+                        final PluginDescriptor localPlugin = PluginLoader.getPlugin(plugin.getClassName());
+                        // plugin found ? --> launch it !
+                        if (localPlugin != null)
+                            PluginLauncher.start(localPlugin);
+                    }
                 }
             });
         }
@@ -163,7 +198,7 @@ public class OnlinePluginProvider extends SearchResultProducer
     }
 
     @Override
-    protected void doSearch(String[] words, SearchResultConsumer consumer)
+    public void doSearch(String[] words, SearchResultConsumer consumer)
     {
         String request = SEARCH_URL;
 
@@ -228,6 +263,17 @@ public class OnlinePluginProvider extends SearchResultProducer
         if (resultElement == null)
             return;
 
+        // get the local plugin search provider from search engine
+        final SearchEngine se = Icy.getMainInterface().getSearchEngine();
+        LocalPluginSearchResultProducer lpsrp = null;
+
+        if (se != null)
+        {
+            for (SearchResultProducer srp : se.getSearchResultProducers())
+                if (srp instanceof LocalPluginSearchResultProducer)
+                    lpsrp = (LocalPluginSearchResultProducer) srp;
+        }
+
         final ArrayList<SearchResult> tmpResults = new ArrayList<SearchResult>();
 
         for (Element plugin : XMLUtil.getElements(resultElement, ID_PLUGIN))
@@ -236,7 +282,7 @@ public class OnlinePluginProvider extends SearchResultProducer
             if (hasWaitingSearch())
                 return;
 
-            final SearchResult result = getResult(onlinePlugins, plugin, words);
+            final SearchResult result = getResult(consumer, onlinePlugins, plugin, words, lpsrp);
 
             if (result != null)
                 tmpResults.add(result);
@@ -282,18 +328,53 @@ public class OnlinePluginProvider extends SearchResultProducer
         return !PluginRepositoryLoader.failed();
     }
 
-    private OnlinePluginResult getResult(ArrayList<PluginDescriptor> onlinePlugins, Element pluginNode, String words[])
+    private OnlinePluginResult getResult(SearchResultConsumer consumer, ArrayList<PluginDescriptor> onlinePlugins,
+            Element pluginNode, String words[], LocalPluginSearchResultProducer lpsrp)
     {
         final String className = XMLUtil.getElementValue(pluginNode, ID_CLASSNAME, "");
         final String text = XMLUtil.getElementValue(pluginNode, ID_TEXT, "");
 
         final PluginDescriptor localPlugin = PluginLoader.getPlugin(className);
-        final PluginDescriptor onlinePlugin = PluginDescriptor.getPlugin(onlinePlugins, className);
-
         // exists in local ?
         if (localPlugin != null)
-            return null;
+        {
+            // if we have the local search provider, we try to transfer the result
+            // TODO: maybe we can do better than this hack...
+            if (lpsrp != null)
+            {
+                final List<SearchResult> results = lpsrp.getResults();
+                boolean alreadyExists = false;
 
+                synchronized (results)
+                {
+                    for (SearchResult result : results)
+                    {
+                        if ((result instanceof LocalPluginResult)
+                                && (((LocalPluginResult) result).getPlugin() == localPlugin))
+                        {
+                            alreadyExists = true;
+                            break;
+                        }
+                        if ((result instanceof OnlinePluginResult)
+                                && (((OnlinePluginResult) result).getPlugin() == localPlugin))
+                        {
+                            alreadyExists = true;
+                            break;
+                        }
+                    }
+                }
+
+                // not already present in local result --> add it
+                // TODO: serious hack here, try to improve that later :-/
+                if (!alreadyExists)
+                    lpsrp.addResult(new OnlinePluginResult(lpsrp, localPlugin, text, words), consumer);
+            }
+
+            // don't return it for online result
+            return null;
+        }
+
+        final PluginDescriptor onlinePlugin = PluginDescriptor.getPlugin(onlinePlugins, className);
         // cannot be found in online ? --> no result
         if (onlinePlugin == null)
             return null;

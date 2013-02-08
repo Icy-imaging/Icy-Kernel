@@ -97,12 +97,13 @@ public class TaskFrameManager implements Runnable
     {
         super();
 
-        animThread = new Thread(this, "TaskFrame manager");
-        animThread.start();
         taskFrames = new ArrayList<TaskFrame>();
         framesPosition = new HashMap<TaskFrame, Point>();
         framesInfo = new HashMap<TaskFrame, FrameInformation>();
+        animThread = new Thread(this, "TaskFrame manager");
+
         lastAnimationMillisecondTime = System.currentTimeMillis();
+        animThread.start();
     }
 
     Dimension getDesktopSize()

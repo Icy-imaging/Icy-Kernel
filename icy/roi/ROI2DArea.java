@@ -25,19 +25,15 @@ import icy.common.EventHierarchicalChecker;
 import icy.image.ImageUtil;
 import icy.sequence.Sequence;
 import icy.util.EventUtil;
-import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
-import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -217,14 +213,14 @@ public class ROI2DArea extends ROI2D
             if (!isActiveFor(canvas))
                 return;
 
-            // no editable --> no action here
-            if (!editable)
-                return;
-
             ROI2DArea.this.beginUpdate();
             try
             {
                 super.keyPressed(e, imagePoint, canvas);
+
+                // no editable --> no action here
+                if (!editable)
+                    return;
 
                 if (!e.isConsumed())
                 {
@@ -256,14 +252,14 @@ public class ROI2DArea extends ROI2D
             if (!isActiveFor(canvas))
                 return;
 
-            // no editable --> no action here
-            if (!editable)
-                return;
-
             ROI2DArea.this.beginUpdate();
             try
             {
                 super.mousePressed(e, imagePoint, canvas);
+
+                // no editable --> no action here
+                if (!editable)
+                    return;
 
                 if (!e.isConsumed())
                 {
@@ -293,12 +289,8 @@ public class ROI2DArea extends ROI2D
         {
             super.mouseReleased(e, imagePoint, canvas);
 
-            // no editable --> no action here
-            if (!editable)
-                return;
-
             // update only on release as it can be long
-            if (boundsNeedUpdate)
+            if (editable && boundsNeedUpdate)
                 optimizeBounds(true);
         }
 
@@ -308,14 +300,14 @@ public class ROI2DArea extends ROI2D
             if (!isActiveFor(canvas))
                 return;
 
-            // no editable --> no action here
-            if (!editable)
-                return;
-
             ROI2DArea.this.beginUpdate();
             try
             {
                 super.mouseDrag(e, imagePoint, canvas);
+
+                // no editable --> no action here
+                if (!editable)
+                    return;
 
                 if (!e.isConsumed())
                 {
@@ -380,7 +372,7 @@ public class ROI2DArea extends ROI2D
                 g2.drawImage(imageMask, null, bounds.x, bounds.y);
 
                 // ROI selected ? draw cursor
-                if (selected && !focused)
+                if (selected && !focused && editable)
                 {
                     // draw cursor border
                     g2.setColor(Color.black);
@@ -408,37 +400,37 @@ public class ROI2DArea extends ROI2D
          */
         protected void drawInfos(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
-            if (canvas instanceof IcyCanvas2D)
-            {
-                final IcyCanvas2D cnv2d = (IcyCanvas2D) canvas;
-                final Rectangle2D bounds = getBounds2D();
-
-                if (selected)
-                {
-                    // draw position and size inside ROI
-                    final String roiPositionString = "X=" + StringUtil.toString(bounds.getX(), 1) + "  Y="
-                            + StringUtil.toString(bounds.getY(), 1);
-                    final String roiBoundingSizeString = "W=" + StringUtil.toString(bounds.getWidth(), 1) + "  H="
-                            + StringUtil.toString(bounds.getHeight(), 1);
-                    final String text = roiPositionString + "\n" + roiBoundingSizeString;
-
-                    // position = just above ROI bounds
-                    final Point pos = cnv2d.imageToCanvas(bounds.getX() + (bounds.getWidth() / 2), bounds.getY());
-                    final Font font = new Font("Arial", Font.BOLD, 12);
-
-                    final Graphics2D g2 = (Graphics2D) g.create();
-
-                    g2.transform(cnv2d.getInverseTransform());
-                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                    g2.setFont(font);
-                    g2.setColor(getDisplayColor());
-
-                    GraphicsUtil.drawCenteredString(g2, text, pos.x,
-                            pos.y - (int) (GraphicsUtil.getStringBounds(g2, text).getHeight()), true);
-
-                    g2.dispose();
-                }
-            }
+//            if (canvas instanceof IcyCanvas2D)
+//            {
+//                final IcyCanvas2D cnv2d = (IcyCanvas2D) canvas;
+//                final Rectangle2D bounds = getBounds2D();
+//
+//                if (selected)
+//                {
+//                    // draw position and size inside ROI
+//                    final String roiPositionString = "X=" + StringUtil.toString(bounds.getX(), 1) + "  Y="
+//                            + StringUtil.toString(bounds.getY(), 1);
+//                    final String roiBoundingSizeString = "W=" + StringUtil.toString(bounds.getWidth(), 1) + "  H="
+//                            + StringUtil.toString(bounds.getHeight(), 1);
+//                    final String text = roiPositionString + "\n" + roiBoundingSizeString;
+//
+//                    // position = just above ROI bounds
+//                    final Point pos = cnv2d.imageToCanvas(bounds.getX() + (bounds.getWidth() / 2), bounds.getY());
+//                    final Font font = new Font("Arial", Font.BOLD, 12);
+//
+//                    final Graphics2D g2 = (Graphics2D) g.create();
+//
+//                    g2.transform(cnv2d.getInverseTransform());
+//                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+//                    g2.setFont(font);
+//                    g2.setColor(getDisplayColor());
+//
+//                    GraphicsUtil.drawCenteredString(g2, text, pos.x,
+//                            pos.y - (int) (GraphicsUtil.getStringBounds(g2, text).getHeight()), true);
+//
+//                    g2.dispose();
+//                }
+//            }
         }
     }
 

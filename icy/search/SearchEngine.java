@@ -135,6 +135,17 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
     }
 
     /**
+     * Returns {@link SearchResultProducer} attached to the search engine.
+     */
+    public List<SearchResultProducer> getSearchResultProducers()
+    {
+        synchronized (producers)
+        {
+            return new ArrayList<SearchResultProducer>(producers);
+        }
+    }
+
+    /**
      * Returns the number of currently producer processing a search request.
      */
     public int getSearchingProducerCount()

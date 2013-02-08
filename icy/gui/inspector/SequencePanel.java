@@ -67,7 +67,7 @@ public class SequencePanel extends InspectorSubPanel
         lutPanel = lutPopupPanel.getMainPanel();
         lutPanel.setLayout(new BorderLayout());
         lutPopupPanel.expand();
-        infosPopupPanel = new PopupPanel("Sequence Informations");
+        infosPopupPanel = new PopupPanel("Sequence Properties");
         infosPanel = infosPopupPanel.getMainPanel();
         infosPanel.setLayout(new BorderLayout());
         infosPopupPanel.expand();

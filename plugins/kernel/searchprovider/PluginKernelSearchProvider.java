@@ -15,6 +15,6 @@ public class PluginKernelSearchProvider extends Plugin implements PluginSearchPr
     @Override
     public Class<? extends SearchResultProducer> getSearchProviderClass()
     {
-        return KernelSearchProvider.class;
+        return KernelSearchResultProducer.class;
     }
 }

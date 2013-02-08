@@ -32,6 +32,7 @@ import icy.painter.Painter;
 import icy.plugin.abstract_.Plugin;
 import icy.preferences.XMLPreferences;
 import icy.roi.ROI;
+import icy.search.SearchEngine;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
 
@@ -163,6 +164,11 @@ public interface MainInterface
      * Get Icy main frame
      */
     public abstract MainFrame getMainFrame();
+
+    /**
+     * Get Icy main searh engine
+     */
+    public abstract SearchEngine getSearchEngine();
 
     /**
      * Close viewers attached to specified sequence

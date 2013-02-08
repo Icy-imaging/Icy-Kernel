@@ -116,7 +116,6 @@ public class PluginLauncher implements Runnable
             return start(plugin);
 
         return null;
-
     }
 
     /**
