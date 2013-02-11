@@ -400,37 +400,41 @@ public class ROI2DArea extends ROI2D
          */
         protected void drawInfos(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
-//            if (canvas instanceof IcyCanvas2D)
-//            {
-//                final IcyCanvas2D cnv2d = (IcyCanvas2D) canvas;
-//                final Rectangle2D bounds = getBounds2D();
-//
-//                if (selected)
-//                {
-//                    // draw position and size inside ROI
-//                    final String roiPositionString = "X=" + StringUtil.toString(bounds.getX(), 1) + "  Y="
-//                            + StringUtil.toString(bounds.getY(), 1);
-//                    final String roiBoundingSizeString = "W=" + StringUtil.toString(bounds.getWidth(), 1) + "  H="
-//                            + StringUtil.toString(bounds.getHeight(), 1);
-//                    final String text = roiPositionString + "\n" + roiBoundingSizeString;
-//
-//                    // position = just above ROI bounds
-//                    final Point pos = cnv2d.imageToCanvas(bounds.getX() + (bounds.getWidth() / 2), bounds.getY());
-//                    final Font font = new Font("Arial", Font.BOLD, 12);
-//
-//                    final Graphics2D g2 = (Graphics2D) g.create();
-//
-//                    g2.transform(cnv2d.getInverseTransform());
-//                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-//                    g2.setFont(font);
-//                    g2.setColor(getDisplayColor());
-//
-//                    GraphicsUtil.drawCenteredString(g2, text, pos.x,
-//                            pos.y - (int) (GraphicsUtil.getStringBounds(g2, text).getHeight()), true);
-//
-//                    g2.dispose();
-//                }
-//            }
+            // if (canvas instanceof IcyCanvas2D)
+            // {
+            // final IcyCanvas2D cnv2d = (IcyCanvas2D) canvas;
+            // final Rectangle2D bounds = getBounds2D();
+            //
+            // if (selected)
+            // {
+            // // draw position and size inside ROI
+            // final String roiPositionString = "X=" + StringUtil.toString(bounds.getX(), 1) +
+            // "  Y="
+            // + StringUtil.toString(bounds.getY(), 1);
+            // final String roiBoundingSizeString = "W=" + StringUtil.toString(bounds.getWidth(), 1)
+            // + "  H="
+            // + StringUtil.toString(bounds.getHeight(), 1);
+            // final String text = roiPositionString + "\n" + roiBoundingSizeString;
+            //
+            // // position = just above ROI bounds
+            // final Point pos = cnv2d.imageToCanvas(bounds.getX() + (bounds.getWidth() / 2),
+            // bounds.getY());
+            // final Font font = new Font("Arial", Font.BOLD, 12);
+            //
+            // final Graphics2D g2 = (Graphics2D) g.create();
+            //
+            // g2.transform(cnv2d.getInverseTransform());
+            // g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+            // RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            // g2.setFont(font);
+            // g2.setColor(getDisplayColor());
+            //
+            // GraphicsUtil.drawCenteredString(g2, text, pos.x,
+            // pos.y - (int) (GraphicsUtil.getStringBounds(g2, text).getHeight()), true);
+            //
+            // g2.dispose();
+            // }
+            // }
         }
     }
 
@@ -1035,12 +1039,12 @@ public class ROI2DArea extends ROI2D
     }
 
     @Override
-    public boolean[] getAsBooleanMask(Rectangle r, boolean inclusive)
+    public boolean[] getBooleanMask(int x, int y, int w, int h, boolean inclusive)
     {
-        final boolean[] result = new boolean[r.width * r.height];
+        final boolean[] result = new boolean[w * h];
 
         // calculate intersection
-        final Rectangle intersect = bounds.intersection(r);
+        final Rectangle intersect = bounds.intersection(new Rectangle(x, y, w, h));
 
         // no intersection between mask and specified rectangle
         if (intersect.isEmpty())
@@ -1056,10 +1060,10 @@ public class ROI2DArea extends ROI2D
         if (intersect.y > bounds.y)
             offSrc += (intersect.y - bounds.y) * bounds.width;
         // adjust offset in destination mask
-        if (bounds.x > r.x)
-            offDst += (bounds.x - r.x);
-        if (bounds.y > r.y)
-            offDst += (bounds.y - r.y) * r.width;
+        if (bounds.x > x)
+            offDst += (bounds.x - x);
+        if (bounds.y > y)
+            offDst += (bounds.y - y) * w;
 
         for (int j = 0; j < intersect.height; j++)
         {
@@ -1067,16 +1071,10 @@ public class ROI2DArea extends ROI2D
                 result[offDst++] = (maskData[offSrc++] != 0);
 
             offSrc += bounds.width - intersect.width;
-            offDst += r.width - intersect.width;
+            offDst += w - intersect.width;
         }
 
         return result;
-    }
-
-    @Override
-    public boolean[] getAsBooleanMask(int x, int y, int w, int h, boolean inclusive)
-    {
-        return getAsBooleanMask(new Rectangle(x, y, w, h), inclusive);
     }
 
     @Override

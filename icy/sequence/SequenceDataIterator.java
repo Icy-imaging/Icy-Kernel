@@ -178,7 +178,7 @@ public class SequenceDataIterator implements DataIterator
         {
             final ROI2D roi2d = (ROI2D) roi;
 
-            maskXY = roi2d.getAsBooleanMask(inclusive);
+            maskXY = roi2d.getBooleanMask(inclusive);
 
             final Rectangle bounds = maskXY.bounds;
 

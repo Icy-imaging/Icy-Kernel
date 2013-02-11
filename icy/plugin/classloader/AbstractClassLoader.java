@@ -221,28 +221,28 @@ public abstract class AbstractClassLoader extends ClassLoader
 
         Collections.sort(loaders);
 
+        final List<URL> result = new ArrayList<URL>();
+
         Enumeration<URL> urls = null;
 
         // Check osgi boot delegation
         if (osgiBootLoader.isEnabled())
-        {
             urls = osgiBootLoader.getResources(name);
-        }
 
-        if (urls == null)
+        if (urls != null)
+            result.addAll(Collections.list(urls));
+
+        for (ProxyClassLoader l : loaders)
         {
-            for (ProxyClassLoader l : loaders)
+            if (l.isEnabled())
             {
-                if (l.isEnabled())
-                {
-                    urls = l.getResources(name);
-                    if (urls != null)
-                        break;
-                }
+                urls = l.getResources(name);
+                if (urls != null)
+                    result.addAll(Collections.list(urls));
             }
         }
 
-        return urls;
+        return Collections.enumeration(result);
     }
 
     /**

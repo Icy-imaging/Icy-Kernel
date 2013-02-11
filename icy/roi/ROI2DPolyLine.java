@@ -277,7 +277,7 @@ public class ROI2DPolyLine extends ROI2DShape
     }
 
     @Override
-    public boolean[] getAsBooleanMask(int x, int y, int w, int h, boolean inclusive)
+    public boolean[] getBooleanMask(int x, int y, int w, int h, boolean inclusive)
     {
         if ((w <= 0) || (h <= 0))
             return new boolean[0];

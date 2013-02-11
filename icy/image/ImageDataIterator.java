@@ -229,7 +229,7 @@ public class ImageDataIterator implements DataIterator
             {
                 final ROI2D roi2d = (ROI2D) roi;
 
-                maskXY = roi2d.getAsBooleanMask();
+                maskXY = roi2d.getBooleanMask();
 
                 final Rectangle bounds = maskXY.bounds.intersection(image.getBounds());
 

@@ -200,8 +200,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
 
     /**
      * Returns the the next significant edit to be undone if <code>undo</code> is invoked. This
-     * returns <code>null</code> if there are no edits
-     * to be undone.
+     * returns <code>null</code> if there are no edits to be undone.
      * 
      * @return the next significant edit to be undone
      */
@@ -222,8 +221,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
 
     /**
      * Returns the the next significant edit to be redone if <code>redo</code> is invoked. This
-     * returns <code>null</code> if there are no edits
-     * to be redone.
+     * returns <code>null</code> if there are no edits to be redone.
      * 
      * @return the next significant edit to be redone
      */
