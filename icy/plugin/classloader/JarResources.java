@@ -30,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -291,7 +292,7 @@ public class JarResources
 
         try
         {
-            final String path = url.getPath();
+            final String path = URLDecoder.decode(url.getFile(), "UTF-8");
             final int ind = path.indexOf('!');
             final String filename = path.substring(5, ind);
             final String resname = path.substring(ind + 2);
@@ -318,8 +319,9 @@ public class JarResources
 
                 loadedSize += out.size();
 
-//                System.out.println("Entry Name: " + jarEntry.getName() + ", Size: " + out.size() + " ("
-//                        + (loadedSize / 1024) + " KB)");
+                // System.out.println("Entry Name: " + jarEntry.getName() + ", Size: " + out.size()
+                // + " ("
+                // + (loadedSize / 1024) + " KB)");
 
                 return out.toByteArray();
             }

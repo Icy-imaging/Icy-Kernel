@@ -107,7 +107,8 @@ public class ImageJUtil
     }
 
     /**
-     * Convert the specified ImageJ {@link ImagePlus} object to Icy {@link Sequence}.
+     * Convert the specified ImageJ {@link ImagePlus} object to Icy {@link Sequence}.<br>
+     * Data can be shared between source and result image so modify one can impact on the other.
      */
     public static Sequence convertToIcySequence(ImagePlus image, ProgressListener progressListener)
     {
@@ -193,7 +194,8 @@ public class ImageJUtil
     }
 
     /**
-     * Convert the specified Icy {@link Sequence} object to ImageJ {@link ImagePlus}.
+     * Convert the specified Icy {@link Sequence} object to ImageJ {@link ImagePlus}.<br>
+     * Image data is shared so modifying one image impact on the other.
      */
     @SuppressWarnings("unchecked")
     public static ImagePlus convertToImageJImage(Sequence sequence, ProgressListener progressListener)
