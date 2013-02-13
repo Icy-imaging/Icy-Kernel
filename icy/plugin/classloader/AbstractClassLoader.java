@@ -237,8 +237,18 @@ public abstract class AbstractClassLoader extends ClassLoader
             if (l.isEnabled())
             {
                 urls = l.getResources(name);
+                
                 if (urls != null)
-                    result.addAll(Collections.list(urls));
+                {
+                    while (urls.hasMoreElements())
+                    {
+                        final URL url = urls.nextElement();
+
+                        // avoid duplicate
+                        if (!result.contains(url))
+                            result.add(url);
+                    }
+                }
             }
         }
 
