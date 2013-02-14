@@ -103,6 +103,11 @@ public class TaskFrameManager implements Runnable
         animThread = new Thread(this, "TaskFrame manager");
 
         lastAnimationMillisecondTime = System.currentTimeMillis();
+    }
+
+    // we have to separate init as thread call the getMainInterface() method
+    public void init()
+    {
         animThread.start();
     }
 

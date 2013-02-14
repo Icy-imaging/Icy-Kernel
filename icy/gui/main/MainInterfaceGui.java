@@ -117,7 +117,9 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     Sequence focusedSequence;
 
     /**
-     * init() should be called next to the constructor to add internal frames and windows.
+     * Take care that MainInterface constructor do not call the {@link Icy#getMainInterface()}
+     * method.<br>
+     * We use a separate {@link #init()} for that purpose.
      */
     public MainInterfaceGui()
     {
@@ -170,6 +172,8 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
                 Icy.exit(false);
             }
         });
+
+        taskFrameManager.init();
     }
 
     @Override
