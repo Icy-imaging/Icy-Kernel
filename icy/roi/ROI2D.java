@@ -360,9 +360,8 @@ public abstract class ROI2D extends ROI
                                 e.consume();
                         }
                     }
-                    else
                     // right button action
-                    if (EventUtil.isRightMouseButton(e))
+                    else if (EventUtil.isRightMouseButton(e))
                     {
                         // // roi selected ?
                         // if (selected)
@@ -392,8 +391,10 @@ public abstract class ROI2D extends ROI
 
             // update focus
             if (!e.isConsumed())
+            {
                 if (updateFocus(e, imagePoint, canvas))
                     e.consume();
+            }
 
             // update mouse position
             setMousePos(imagePoint);
@@ -425,49 +426,57 @@ public abstract class ROI2D extends ROI
             if (!isActiveFor(canvas))
                 return;
 
-            // just for the shift key state change
-            if (editable)
-                updateDrag(e, imagePoint, canvas);
-
-            if (!e.isConsumed())
+            ROI2D.this.beginUpdate();
+            try
             {
-                switch (e.getKeyCode())
-                {
-                    case KeyEvent.VK_ESCAPE:
-                        // shape selected ? --> unselect the ROI
-                        if (selected)
-                        {
-                            setSelected(false, true);
-                            e.consume();
-                        }
-                        break;
+                // just for the shift key state change
+                if (editable)
+                    updateDrag(e, imagePoint, canvas);
 
-                    case KeyEvent.VK_DELETE:
-                    case KeyEvent.VK_BACK_SPACE:
-                        if (editable)
-                        {
-                            // roi selected ?
+                if (!e.isConsumed())
+                {
+                    switch (e.getKeyCode())
+                    {
+                        case KeyEvent.VK_ESCAPE:
+                            // shape selected ? --> unselect the ROI
                             if (selected)
                             {
-                                // remove selected control point if there is one
-                                if (removeSelectedPoint(canvas, imagePoint))
-                                    e.consume();
-                                else
+                                setSelected(false, true);
+                                e.consume();
+                            }
+                            break;
+
+                        case KeyEvent.VK_DELETE:
+                        case KeyEvent.VK_BACK_SPACE:
+                            if (editable)
+                            {
+                                // roi selected ?
+                                if (selected)
                                 {
-                                    // else simply delete ROI
-                                    ROI2D.this.delete();
+                                    // remove selected control point if there is one
+                                    if (removeSelectedPoint(canvas, imagePoint))
+                                        e.consume();
+                                    else
+                                    {
+                                        // else simply delete ROI
+                                        ROI2D.this.remove();
+                                        e.consume();
+                                    }
+                                }
+                                // roi focused ? --> delete ROI
+                                else if (focused)
+                                {
+                                    ROI2D.this.remove();
                                     e.consume();
                                 }
                             }
-                            // roi focused ? --> delete ROI
-                            else if (focused)
-                            {
-                                ROI2D.this.delete();
-                                e.consume();
-                            }
-                        }
-                        break;
+                            break;
+                    }
                 }
+            }
+            finally
+            {
+                ROI2D.this.endUpdate();
             }
         }
 

@@ -82,11 +82,15 @@ public abstract class AbstractClassLoader extends ClassLoader
         loaders.add(parentLoader);
         loaders.add(currentLoader);
         loaders.add(threadLoader);
+
+        Collections.sort(loaders);
     }
 
     public void addLoader(ProxyClassLoader loader)
     {
         loaders.add(loader);
+
+        Collections.sort(loaders);
     }
 
     /*
@@ -112,8 +116,6 @@ public abstract class AbstractClassLoader extends ClassLoader
     {
         if (className == null || className.trim().equals(""))
             return null;
-
-        Collections.sort(loaders);
 
         Class clazz = null;
 
@@ -237,7 +239,7 @@ public abstract class AbstractClassLoader extends ClassLoader
             if (l.isEnabled())
             {
                 urls = l.getResources(name);
-                
+
                 if (urls != null)
                 {
                     while (urls.hasMoreElements())
@@ -260,12 +262,12 @@ public abstract class AbstractClassLoader extends ClassLoader
      */
     class SystemLoader extends ProxyClassLoader
     {
-
         private final Logger logger = Logger.getLogger(SystemLoader.class.getName());
 
         public SystemLoader()
         {
-            order = 50;
+            super(10);
+
             enabled = Configuration.isSystemLoaderEnabled();
         }
 
@@ -347,7 +349,8 @@ public abstract class AbstractClassLoader extends ClassLoader
 
         public ParentLoader()
         {
-            order = 30;
+            super(30);
+
             enabled = Configuration.isParentLoaderEnabled();
         }
 
@@ -428,7 +431,8 @@ public abstract class AbstractClassLoader extends ClassLoader
 
         public CurrentLoader()
         {
-            order = 20;
+            super(20);
+
             enabled = Configuration.isCurrentLoaderEnabled();
         }
 
@@ -511,7 +515,8 @@ public abstract class AbstractClassLoader extends ClassLoader
 
         public ThreadContextLoader()
         {
-            order = 40;
+            super(40);
+
             enabled = Configuration.isThreadContextLoaderEnabled();
         }
 
@@ -596,10 +601,11 @@ public abstract class AbstractClassLoader extends ClassLoader
 
         public OsgiBootLoader()
         {
+            super(0);
+
             enabled = Configuration.isOsgiBootDelegationEnabled();
             strictLoading = Configuration.isOsgiBootDelegationStrict();
             bootDelagation = Configuration.getOsgiBootDelegation();
-            order = 0;
         }
 
         @Override

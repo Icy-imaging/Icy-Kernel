@@ -83,10 +83,14 @@ public abstract class ROI2DRectShape extends ROI2DShape
         controlPoints.add(this.bottomRight);
         controlPoints.add(this.bottomLeft);
 
-        this.topLeft.addListener(this);
-        this.topRight.addListener(this);
-        this.bottomLeft.addListener(this);
-        this.bottomRight.addListener(this);
+        this.topLeft.addOverlayListener(this);
+        this.topLeft.addAnchorListener(this);
+        this.topRight.addOverlayListener(this);
+        this.topRight.addAnchorListener(this);
+        this.bottomLeft.addOverlayListener(this);
+        this.bottomLeft.addAnchorListener(this);
+        this.bottomRight.addOverlayListener(this);
+        this.bottomRight.addAnchorListener(this);
 
         // select the bottom right point as we use it to size the ellipse in "creation mode"
         if (cm)
@@ -120,7 +124,7 @@ public abstract class ROI2DRectShape extends ROI2DShape
         {
             endUpdate();
         }
-    }   
+    }
 
     @Override
     protected void updateShape()

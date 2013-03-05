@@ -245,14 +245,30 @@ public class StringUtil
     }
 
     /**
+     * Return true if the specified String are exactly the same.
+     * 
+     * @param trim
+     *        if true then string are trimmed before comparison
+     */
+    public static boolean equals(String s1, String s2, boolean trim)
+    {
+        if (isEmpty(s1, trim))
+            return isEmpty(s2, trim);
+        else if (isEmpty(s2, trim))
+            return false;
+
+        if (trim)
+            return s1.trim().equals(s2.trim());
+
+        return s1.equals(s2);
+    }
+
+    /**
      * Return true if the specified String are exactly the same
      */
     public static boolean equals(String s1, String s2)
     {
-        if (isEmpty(s1))
-            return isEmpty(s2);
-
-        return s1.equals(s2);
+        return equals(s1, s2, false);
     }
 
     /**
@@ -655,8 +671,8 @@ public class StringUtil
     public static String wildcardToRegex(String wildcard)
     {
         final StringBuffer s = new StringBuffer(wildcard.length());
-        
-        s.append('^');        
+
+        s.append('^');
         for (int i = 0, is = wildcard.length(); i < is; i++)
         {
             char c = wildcard.charAt(i);
@@ -688,7 +704,7 @@ public class StringUtil
             }
         }
         s.append('$');
-        
+
         return (s.toString());
     }
 }

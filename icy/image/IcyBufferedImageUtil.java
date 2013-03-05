@@ -680,15 +680,15 @@ public class IcyBufferedImageUtil
             for (int y = 0; y < hCopy; y++)
             {
                 // copy first
-                ArrayUtil.innerCopy(data, fromOffset + fromCopy, toOffset + toCopy, wCopy);
+                Array1DUtil.innerCopy(data, fromOffset + fromCopy, toOffset + toCopy, wCopy);
                 // then fill
-                ArrayUtil.fill(data, toOffset + fromFill, toOffset + toFill, 0d);
+                Array1DUtil.fill(data, toOffset + fromFill, toOffset + toFill, 0d);
                 // adjust offset
                 fromOffset += sizeX;
                 toOffset += sizeX;
             }
             // fill
-            ArrayUtil.fill(data, toOffset, fromOffset, 0d);
+            Array1DUtil.fill(data, toOffset, fromOffset, 0d);
         }
         else
         {
@@ -700,15 +700,15 @@ public class IcyBufferedImageUtil
             for (int y = 0; y < hCopy; y++)
             {
                 // copy first
-                ArrayUtil.innerCopy(data, fromOffset + fromCopy, toOffset + toCopy, wCopy);
+                Array1DUtil.innerCopy(data, fromOffset + fromCopy, toOffset + toCopy, wCopy);
                 // then fill
-                ArrayUtil.fill(data, toOffset + fromFill, toOffset + toFill, 0d);
+                Array1DUtil.fill(data, toOffset + fromFill, toOffset + toFill, 0d);
                 // adjust offset
                 fromOffset -= sizeX;
                 toOffset -= sizeX;
             }
             // fill
-            ArrayUtil.fill(data, 0, 0 + (ady * sizeX), 0d);
+            Array1DUtil.fill(data, 0, 0 + (ady * sizeX), 0d);
         }
 
         // notify data changed

@@ -24,12 +24,11 @@ import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;
 import icy.main.Icy;
-import icy.painter.AbstractPainter;
+import icy.painter.Overlay;
 import icy.plugin.interface_.PluginROI;
 import icy.roi.ROIEvent.ROIEventType;
 import icy.roi.ROIEvent.ROIPointEventType;
 import icy.sequence.Sequence;
-import icy.system.IcyExceptionHandler;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.ClassUtil;
@@ -89,6 +88,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected static final Color OVER_COLOR = Color.WHITE;
 
     public static final String PROPERTY_NAME = "name";
+    public static final String PROPERTY_EDITABLE = "editable";
 
     /**
      * Create a ROI from its tool command name
@@ -137,19 +137,32 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                     }
                     catch (NoSuchMethodException e1)
                     {
-                        // get constructor (Point2D)
-                        final Constructor<? extends ROI> constructor = roiClazz
-                                .getConstructor(new Class[] {Point2D.class});
-                        // build ROI
-                        result = constructor.newInstance(new Object[] {imagePoint});
+                        try
+                        {
+                            // get constructor (Point2D)
+                            final Constructor<? extends ROI> constructor = roiClazz
+                                    .getConstructor(new Class[] {Point2D.class});
+                            // build ROI
+                            result = constructor.newInstance(new Object[] {imagePoint});
+                        }
+                        catch (NoSuchMethodException e2)
+                        {
+                            // try default constructor as last chance...
+                            final Constructor<? extends ROI> constructor = roiClazz.getConstructor(new Class[] {});
+                            // build ROI
+                            result = constructor.newInstance();
+                        }
                     }
                 }
             }
         }
         catch (Exception e)
         {
-            System.err.println("ROI.create('" + className + "', ...) error :");
-            IcyExceptionHandler.showErrorMessage(e, false);
+            System.err.println("Cannot create ROI: " + className);
+            System.err.println("A ROI should implement at least one of following constructor:");
+            System.err.println("- ROI(Point2D point, boolean creationMode)");
+            System.err.println("- ROI(Point2D point)");
+            System.err.println("- ROI()");
         }
 
         // attach to sequence once ROI is initialized
@@ -182,6 +195,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
 
         return roi;
+    }
+
+    public static double getAdjustedStroke(IcyCanvas canvas, double stroke)
+    {
+        final double adjStrkX = canvas.canvasToImageLogDeltaX((int) stroke);
+        final double adjStrkY = canvas.canvasToImageLogDeltaY((int) stroke);
+
+        return Math.max(adjStrkX, adjStrkY);
     }
 
     /**
@@ -355,28 +376,175 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Abstract basic class for ROI painter
      */
-    protected abstract class ROIPainter extends AbstractPainter
+    public abstract class ROIPainter extends Overlay implements XMLPersistent
     {
+        protected double stroke;
+        protected Color color;
+        protected Color selectedColor;
 
+        public ROIPainter()
+        {
+            super("ROI painter", OverlayPriority.SHAPE_NORMAL);
+
+            stroke = DEFAULT_STROKE;
+            color = DEFAULT_NORMAL_COLOR;
+            selectedColor = DEFAULT_SELECTED_COLOR;
+
+            // we fix the ROI overlay
+            fixed = true;
+            readOnly = true;
+        }
+
+        /**
+         * Get adjusted stroke for the current canvas transformation
+         */
+        public double getAdjustedStroke(IcyCanvas canvas)
+        {
+            return ROI.getAdjustedStroke(canvas, stroke);
+        }
+
+        /**
+         * Set ROI painter stroke.
+         */
+        public void setStroke(double value)
+        {
+            if (stroke != value)
+            {
+                stroke = value;
+                painterChanged();
+            }
+        }
+
+        /**
+         * Returns the color used to display the ROI depending its current state.
+         */
+        public Color getDisplayColor()
+        {
+            Color result;
+
+            if (selected)
+                result = selectedColor;
+            else
+                result = color;
+
+            if (focused)
+                result = OVER_COLOR;
+
+            return result;
+        }
+
+        /**
+         * Return the ROI painter stroke.
+         */
+        public double getStroke()
+        {
+            return painter.stroke;
+        }
+
+        /**
+         * Return the ROI painter base color.
+         */
+        public Color getColor()
+        {
+            return color;
+        }
+
+        /**
+         * Set the ROI painter base color.
+         */
+        public void setColor(Color value)
+        {
+            if (color != value)
+            {
+                color = value;
+                painterChanged();
+            }
+        }
+
+        /**
+         * Return the ROI painter selected color.
+         */
+        public Color getSelectedColor()
+        {
+            return selectedColor;
+        }
+
+        /**
+         * Set the ROI painter selected color.
+         */
+        public void setSelectedColor(Color value)
+        {
+            if (selectedColor != value)
+            {
+                selectedColor = value;
+                painterChanged();
+            }
+        }
+
+        public void computePriority()
+        {
+            if (ROI.this.focused)
+                painter.setPriority(OverlayPriority.SHAPE_TOP);
+            else if (ROI.this.selected)
+                painter.setPriority(OverlayPriority.SHAPE_HIGH);
+            else
+                painter.setPriority(OverlayPriority.SHAPE_LOW);
+        }
+
+        @Override
+        public String getName()
+        {
+            // use ROI name
+            return ROI.this.getName();
+        }
+
+        @Override
+        public boolean loadFromXML(Node node)
+        {
+            if (node == null)
+                return false;
+
+            beginUpdate();
+            try
+            {
+                setColor(new Color(XMLUtil.getElementIntValue(node, ID_COLOR, DEFAULT_NORMAL_COLOR.getRGB())));
+                setSelectedColor(new Color(XMLUtil.getElementIntValue(node, ID_SELECTED_COLOR,
+                        DEFAULT_SELECTED_COLOR.getRGB())));
+                setStroke(XMLUtil.getElementDoubleValue(node, ID_STROKE, DEFAULT_STROKE));
+            }
+            finally
+            {
+                endUpdate();
+            }
+
+            return true;
+        }
+
+        @Override
+        public boolean saveToXML(Node node)
+        {
+            if (node == null)
+                return false;
+
+            XMLUtil.setElementIntValue(node, ID_COLOR, color.getRGB());
+            XMLUtil.setElementIntValue(node, ID_SELECTED_COLOR, selectedColor.getRGB());
+            XMLUtil.setElementDoubleValue(node, ID_STROKE, stroke);
+
+            return true;
+        }
     }
 
     /**
-     * unique ROI id
+     * id generator
      */
     private static int id_generator = 1;
 
     /**
-     * ROI painter
+     * associated ROI painter
      */
-    protected final AbstractPainter painter;
-    /**
-     * ROI stroke (canvas coordinates)
-     */
-    protected double stroke;
+    protected final ROIPainter painter;
 
     protected int id;
-    protected Color color;
-    protected Color selectedColor;
     protected String name;
     protected boolean creating;
     protected boolean focused;
@@ -404,9 +572,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         // ensure unique id
         id = generateId();
         painter = createPainter();
-        stroke = DEFAULT_STROKE;
-        color = DEFAULT_NORMAL_COLOR;
-        selectedColor = DEFAULT_SELECTED_COLOR;
         name = "";
         editable = true;
         creating = true;
@@ -457,22 +622,21 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Remove this ROI from all attached sequence
+     * @deprecated Uses {@link #remove(boolean)} instead.
      */
+    @Deprecated
     public void detachFromAll(boolean canUndo)
     {
-        final ArrayList<Sequence> sequences = Icy.getMainInterface().getSequencesContaining(this);
-
-        for (Sequence sequence : sequences)
-            sequence.removeROI(this, canUndo);
+        remove(canUndo);
     }
 
     /**
-     * Remove this ROI from all attached sequence
+     * @deprecated Uses {@link #remove()} instead.
      */
+    @Deprecated
     public void detachFromAll()
     {
-        detachFromAll(false);
+        remove(false);
     }
 
     /**
@@ -503,19 +667,40 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Delete this ROI (detach from all sequence)
+     * Remove this ROI (detach from all sequence)
      */
-    public void delete(boolean canUndo)
+    public void remove(boolean canUndo)
     {
-        detachFromAll(canUndo);
+        final ArrayList<Sequence> sequences = Icy.getMainInterface().getSequencesContaining(this);
+
+        for (Sequence sequence : sequences)
+            sequence.removeROI(this, canUndo);
     }
 
     /**
-     * Delete this ROI (detach from all sequence)
+     * Remove this ROI (detach from all sequence)
      */
+    public void remove()
+    {
+        remove(true);
+    }
+
+    /**
+     * @deprecated Uses {@link #remove(boolean)} instead.
+     */
+    @Deprecated
+    public void delete(boolean canUndo)
+    {
+        remove(canUndo);
+    }
+
+    /**
+     * @deprecated Uses {@link #remove()} instead.
+     */
+    @Deprecated
     public void delete()
     {
-        delete(true);
+        remove(true);
     }
 
     public String getClassName()
@@ -528,63 +713,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         return ClassUtil.getSimpleClassName(getClassName());
     }
 
-    public AbstractPainter getPainter()
-    {
-        return painter;
-    }
-
-    public double getStroke()
-    {
-        return stroke;
-    }
-
-    public double getAdjustedStroke(IcyCanvas canvas, double strk)
-    {
-        final double adjStrkX = canvas.canvasToImageLogDeltaX((int) strk);
-        final double adjStrkY = canvas.canvasToImageLogDeltaY((int) strk);
-
-        return Math.max(adjStrkX, adjStrkY);
-    }
-
     /**
-     * Get adjusted stroke for the current canvas transformation
-     */
-    public double getAdjustedStroke(IcyCanvas canvas)
-    {
-        return getAdjustedStroke(canvas, stroke);
-    }
-
-    public void setStroke(double value)
-    {
-        if (stroke != value)
-        {
-            stroke = value;
-            painter.changed();
-        }
-    }
-
-    /**
-     * @return the display color
-     */
-    public Color getDisplayColor()
-    {
-        Color result;
-
-        if (selected)
-            result = selectedColor;
-        else
-            result = color;
-
-        if (focused)
-            result = OVER_COLOR;
-        // / result = ColorUtil.mix(ColorUtil.mix(result, Color.white), Color.white);
-
-        return result;
-    }
-
-    /**
-     * @return the id
-     *         ROI IDs are in the range [1...n]
+     * ROI unique id
      */
     public int getId()
     {
@@ -592,45 +722,75 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @return the Color
+     * Returns the ROI painter (used to draw and interact with {@link ROI} on {@link IcyCanvas})
+     */
+    public ROIPainter getPainter()
+    {
+        return painter;
+    }
+
+    /**
+     * Return the ROI painter stroke.
+     */
+    public double getStroke()
+    {
+        return painter.getStroke();
+    }
+
+    /**
+     * Get adjusted stroke for the current canvas transformation
+     */
+    public double getAdjustedStroke(IcyCanvas canvas)
+    {
+        return painter.getAdjustedStroke(canvas);
+    }
+
+    /**
+     * Set ROI painter stroke.
+     */
+    public void setStroke(double value)
+    {
+        painter.setStroke(value);
+    }
+
+    /**
+     * Returns the color used to display the ROI depending its current state.
+     */
+    public Color getDisplayColor()
+    {
+        return painter.getDisplayColor();
+    }
+
+    /**
+     * Return the ROI painter base color.
      */
     public Color getColor()
     {
-        return color;
+        return painter.getColor();
     }
 
     /**
-     * @param value
-     *        the Color to set
+     * Set the ROI painter base color.
      */
     public void setColor(Color value)
     {
-        if (color != value)
-        {
-            color = value;
-            painter.changed();
-        }
+        painter.setColor(value);
     }
 
     /**
-     * @return the selectedColor
+     * Return the ROI painter selected color.
      */
     public Color getSelectedColor()
     {
-        return selectedColor;
+        return painter.getSelectedColor();
     }
 
     /**
-     * @param value
-     *        the selectedColor to set
+     * Set the ROI painter selected color.
      */
     public void setSelectedColor(Color value)
     {
-        if (selectedColor != value)
-        {
-            selectedColor = value;
-            painter.changed();
-        }
+        painter.setSelectedColor(value);
     }
 
     /**
@@ -651,6 +811,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         {
             name = value;
             propertyChanged(PROPERTY_NAME);
+            // painter name is ROI name so we notify it
+            painter.propertyChanged(Overlay.PROPERTY_NAME);
         }
     }
 
@@ -788,6 +950,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         {
             editable = value;
 
+            propertyChanged(PROPERTY_EDITABLE);
             if (!value)
                 setSelected(false, false);
         }
@@ -896,7 +1059,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         final ROI result = createFromXML(node);
 
         // then generate id and modify name
-        result.id = generateId();
+        if (result != null)
+            result.id = generateId();
 
         return result;
     }
@@ -924,11 +1088,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             // FIXME : this can make duplicate id but it is also important to preserve id
             id = XMLUtil.getElementIntValue(node, ID_ID, 0);
             setName(XMLUtil.getElementValue(node, ID_NAME, ""));
-            setColor(new Color(XMLUtil.getElementIntValue(node, ID_COLOR, DEFAULT_NORMAL_COLOR.getRGB())));
-            setSelectedColor(new Color(XMLUtil.getElementIntValue(node, ID_SELECTED_COLOR,
-                    DEFAULT_SELECTED_COLOR.getRGB())));
-            setStroke(XMLUtil.getElementDoubleValue(node, ID_STROKE, DEFAULT_STROKE));
             setSelected(XMLUtil.getElementBooleanValue(node, ID_SELECTED, false), false);
+            painter.loadFromXML(node);
         }
         finally
         {
@@ -947,10 +1108,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         XMLUtil.setElementValue(node, ID_CLASSNAME, getClassName());
         XMLUtil.setElementIntValue(node, ID_ID, id);
         XMLUtil.setElementValue(node, ID_NAME, name);
-        XMLUtil.setElementIntValue(node, ID_COLOR, color.getRGB());
-        XMLUtil.setElementIntValue(node, ID_SELECTED_COLOR, selectedColor.getRGB());
-        XMLUtil.setElementDoubleValue(node, ID_STROKE, stroke);
         XMLUtil.setElementBooleanValue(node, ID_SELECTED, selected);
+        painter.saveToXML(node);
 
         return true;
     }
@@ -1077,15 +1236,21 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     {
         final ROIEvent event = (ROIEvent) object;
 
+        // do here global process on ROI change
         switch (event.getType())
         {
-        // do here global process on ROI change
             case ROI_CHANGED:
+                painter.painterChanged();
+                break;
+
             case SELECTION_CHANGED:
+                // compute painter priority
+                painter.computePriority();
+                break;
+
             case FOCUS_CHANGED:
-                // case PAINTER_CHANGED:
-                // painter of ROI changed
-                painter.changed();
+                // compute painter priority
+                painter.computePriority();
                 break;
         }
 

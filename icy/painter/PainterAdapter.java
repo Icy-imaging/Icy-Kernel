@@ -27,8 +27,9 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 
 /**
- * @author Stephane
+ * @deprecated Uses {@link Overlay} class instead.
  */
+@Deprecated
 public abstract class PainterAdapter implements Painter
 {
     @Override

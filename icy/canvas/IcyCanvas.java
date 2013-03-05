@@ -18,9 +18,9 @@
  */
 package icy.canvas;
 
+import icy.canvas.CanvasLayerEvent.LayersEventType;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.canvas.Layer.LayerListener;
-import icy.canvas.LayersEvent.LayersEventType;
 import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
@@ -40,6 +40,7 @@ import icy.image.lut.LUTEvent;
 import icy.image.lut.LUTEvent.LUTEventType;
 import icy.image.lut.LUTListener;
 import icy.main.Icy;
+import icy.painter.Overlay;
 import icy.painter.Painter;
 import icy.plugin.interface_.PluginCanvas;
 import icy.roi.ROI;
@@ -55,6 +56,7 @@ import icy.util.OMEUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
@@ -62,7 +64,6 @@ import java.awt.image.BufferedImage;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.JPanel;
@@ -88,43 +89,23 @@ import javax.swing.event.ChangeEvent;
 public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerListener, SequenceListener, LUTListener,
         ChangeListener, LayerListener
 {
-    public static class EventLayerSorter implements Comparator<Layer>
+    protected class IcyCanvasImageOverlay extends Overlay
     {
-        public static EventLayerSorter instance = new EventLayerSorter();
+        public IcyCanvasImageOverlay()
+        {
+            super((getSequence() == null) ? "Image" : getSequence().getName(), OverlayPriority.IMAGE_NORMAL);
+
+            // we fix the image overlay
+            fixed = true;
+            readOnly = false;
+        }
 
         @Override
-        public int compare(Layer layer1, Layer layer2)
+        public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
-            final ROI roi1 = layer1.getAttachedROI();
-            final ROI roi2 = layer2.getAttachedROI();
-
-            // no attached roi ? --> eliminate
-            if (roi1 == null)
-            {
-                if (roi2 == null)
-                    return 0;
-                return 1;
-            }
-            if (roi2 == null)
-                return -1;
-
-            // focus priority
-            if (roi1.isFocused())
-                return -1;
-            if (roi2.isFocused())
-                return 1;
-
-            // selection priority
-            if (roi1.isSelected())
-            {
-                if (roi2.isSelected())
-                    return 0;
-                return -1;
-            }
-            if (roi2.isSelected())
-                return 1;
-
-            return 0;
+            // default lazy implementation (very slow)
+            if (g != null)
+                g.drawImage(getCurrentImage(), null, 0, 0);
         }
     }
 
@@ -219,15 +200,16 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     protected int syncId;
 
     /**
+     * Overlay/Layer used to display sequence image
+     */
+    protected final Overlay imageOverlay;
+    protected final Layer imageLayer;
+    /**
      * Layers attached to canvas<br>
-     * There are representing sequence's painters with some visualization properties
+     * There are representing sequence painters with some visualization properties
      */
     protected final ArrayList<Layer> layers;
 
-    /**
-     * internal layer id generator
-     */
-    protected int layerIdGen;
     /**
      * internal updater
      */
@@ -274,7 +256,6 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
         layersVisible = true;
         layers = new ArrayList<Layer>();
-        layerIdGen = 1;
         syncId = 0;
         synchHeader = false;
         updater = new UpdateEventHandler(this, false);
@@ -315,21 +296,31 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         add(zNav, BorderLayout.WEST);
         add(GuiUtil.createPageBoxPanel(tNav, mouseInfPanel), BorderLayout.SOUTH);
 
-        final Sequence sequence = getSequence();
+        // create image overlay
+        imageOverlay = createImageOverlay();
 
-        // add sequence's painters to layer list
-        if (sequence != null)
+        beginUpdate();
+        try
         {
-            beginUpdate();
-            try
+            // first add image layer
+            addLayer(getImageOverlay());
+            // save it
+            imageLayer = layers.get(0);
+
+            final Sequence sequence = getSequence();
+
+            if (sequence != null)
             {
+                // then add sequence painters to layer list
                 for (Painter painter : sequence.getPainters())
                     addLayer(painter);
             }
-            finally
-            {
-                endUpdate();
-            }
+            else
+                System.err.println("Sequence null when canvas created");
+        }
+        finally
+        {
+            endUpdate();
         }
 
         // add listeners
@@ -378,12 +369,34 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             removeCanvasListener(listener);
 
         // remove all Layers listeners
-        final LayersListener[] layersListenters = listenerList.getListeners(LayersListener.class);
-        for (LayersListener listener : layersListenters)
-            removeLayersListener(listener);
+        final CanvasLayerListener[] layersListenters = listenerList.getListeners(CanvasLayerListener.class);
+        for (CanvasLayerListener listener : layersListenters)
+            removeLayerListener(listener);
     }
 
     public abstract void refresh();
+
+    protected Overlay createImageOverlay()
+    {
+        // default image overlay
+        return new IcyCanvasImageOverlay();
+    }
+
+    /**
+     * Returns the {@link Overlay}rlay used to display the current sequence image
+     */
+    public Overlay getImageOverlay()
+    {
+        return imageOverlay;
+    }
+
+    /**
+     * Returns the {@link Layer} object used to display the current sequence image
+     */
+    public Layer getImageLayer()
+    {
+        return imageLayer;
+    }
 
     /**
      * @deprecated Uses {@link #isLayersVisible()} instead.
@@ -551,26 +564,26 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Returns the list of layers orderer for event dispatching.
      */
-    public ArrayList<Layer> getOrderedLayersForEvent()
-    {
-        final ArrayList<Layer> result = getLayers();
-
-        Collections.sort(result, EventLayerSorter.instance);
-
-        return result;
-    }
+    // public ArrayList<Layer> getOrderedLayersForEvent()
+    // {
+    // final ArrayList<Layer> result = getLayers();
+    //
+    // Collections.sort(result, EventLayerSorter.instance);
+    //
+    // return result;
+    // }
 
     /**
      * Returns the list of visible layers orderer for event dispatching.
      */
-    public ArrayList<Layer> getVisibleOrderedLayersForEvent()
-    {
-        final ArrayList<Layer> result = getVisibleLayers();
-
-        Collections.sort(result, EventLayerSorter.instance);
-
-        return result;
-    }
+    // public ArrayList<Layer> getVisibleOrderedLayersForEvent()
+    // {
+    // final ArrayList<Layer> result = getVisibleLayers();
+    //
+    // Collections.sort(result, EventLayerSorter.instance);
+    //
+    // return result;
+    // }
 
     /**
      * @return the painters of layers
@@ -2939,16 +2952,22 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         }
 
         // by default we only forward event to painters
-        for (Layer layer : getVisibleOrderedLayersForEvent())
+        for (Layer layer : getVisibleLayers())
             layer.getPainter().keyPressed(e, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()), this);
+        // for (Layer layer : getVisibleOrderedLayersForEvent())
+        // layer.getPainter().keyPressed(e, new Point2D.Double(getMouseImagePosX(),
+        // getMouseImagePosY()), this);
     }
 
     @Override
     public void keyReleased(KeyEvent e)
     {
         // by default we only forward event to painters
-        for (Layer layer : getVisibleOrderedLayersForEvent())
+        for (Layer layer : getVisibleLayers())
             layer.getPainter().keyReleased(e, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()), this);
+        // for (Layer layer : getVisibleOrderedLayersForEvent())
+        // layer.getPainter().keyReleased(e, new Point2D.Double(getMouseImagePosX(),
+        // getMouseImagePosY()), this);
     }
 
     /**
@@ -3313,9 +3332,6 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         {
             final Layer layer = new Layer(painter);
 
-            layer.setName("layer " + layerIdGen);
-            layerIdGen++;
-
             // listen layer
             layer.addListener(this);
 
@@ -3323,6 +3339,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             synchronized (layers)
             {
                 layers.add(layer);
+                if (Layer.DEFAULT_NAME.equals(layer))
+                    layer.setName("layer " + layers.size());
             }
 
             // added
@@ -3337,20 +3355,38 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     public void removeLayer(Layer layer)
     {
-        if (hasLayer(layer))
+        boolean result;
+
+        // stop listening layer
+        layer.removeListener(this);
+
+        // remove from list
+        synchronized (layers)
         {
-            // stop listening layer
-            layer.removeListener(this);
-
-            // remove from list
-            synchronized (layers)
-            {
-                layers.remove(layer);
-            }
-
-            // removed
-            layerRemoved(layer);
+            result = layers.remove(layer);
         }
+
+        // removed
+        if (result)
+            layerRemoved(layer);
+    }
+
+    /**
+     * @deprecated Uses {@link #addLayerListener(CanvasLayerListener)} instead.
+     */
+    @Deprecated
+    public void addLayersListener(CanvasLayerListener listener)
+    {
+        addLayerListener(listener);
+    }
+
+    /**
+     * @deprecated Uses {@link #removeLayerListener(CanvasLayerListener)} instead.
+     */
+    @Deprecated
+    public void removeLayersListener(CanvasLayerListener listener)
+    {
+        removeLayerListener(listener);
     }
 
     /**
@@ -3358,9 +3394,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * 
      * @param listener
      */
-    public void addLayersListener(LayersListener listener)
+    public void addLayerListener(CanvasLayerListener listener)
     {
-        listenerList.add(LayersListener.class, listener);
+        listenerList.add(CanvasLayerListener.class, listener);
     }
 
     /**
@@ -3368,15 +3404,15 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * 
      * @param listener
      */
-    public void removeLayersListener(LayersListener listener)
+    public void removeLayerListener(CanvasLayerListener listener)
     {
-        listenerList.remove(LayersListener.class, listener);
+        listenerList.remove(CanvasLayerListener.class, listener);
     }
 
-    private void fireLayersChangedEvent(LayersEvent event)
+    protected void fireLayerChangedEvent(CanvasLayerEvent event)
     {
-        for (LayersListener listener : getListeners(LayersListener.class))
-            listener.layersChanged(event);
+        for (CanvasLayerListener listener : getListeners(CanvasLayerListener.class))
+            listener.canvasLayerChanged(event);
     }
 
     /**
@@ -3399,7 +3435,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         listenerList.remove(IcyCanvasListener.class, listener);
     }
 
-    private void fireCanvasChangedEvent(IcyCanvasEvent event)
+    protected void fireCanvasChangedEvent(IcyCanvasEvent event)
     {
         for (IcyCanvasListener listener : getListeners(IcyCanvasListener.class))
             listener.canvasChanged(event);
@@ -3428,7 +3464,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     protected void layerAdded(Layer layer)
     {
         // handle with updater
-        updater.changed(new LayersEvent(layer, LayersEventType.ADDED));
+        updater.changed(new CanvasLayerEvent(layer, LayersEventType.ADDED));
     }
 
     /**
@@ -3439,19 +3475,17 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     protected void layerRemoved(Layer layer)
     {
         // handle with updater
-        updater.changed(new LayersEvent(layer, LayersEventType.REMOVED));
+        updater.changed(new CanvasLayerEvent(layer, LayersEventType.REMOVED));
     }
 
     /**
      * layer has changed
-     * 
-     * @param layer
      */
     @Override
-    public void layerChanged(Layer layer)
+    public void layerChanged(Layer layer, String propertyName)
     {
         // handle with updater
-        updater.changed(new LayersEvent(layer, LayersEventType.CHANGED));
+        updater.changed(new CanvasLayerEvent(layer, LayersEventType.CHANGED, propertyName));
     }
 
     /**
@@ -3527,12 +3561,22 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * layers has changed (packed event)
+     * layer property has changed (packed event)
      */
-    public void layersChanged(LayersEvent event)
+    protected void layerChanged(CanvasLayerEvent event)
     {
+        final String property = event.getProperty();
+
+        synchronized (layers)
+        {
+            // re order layers if needed
+            if ((event.getType() != LayersEventType.CHANGED) || (property == null)
+                    || (property == Layer.PROPERTY_PRIORITY))
+                Collections.sort(layers);
+        }
+
         // notify listeners that layers have changed
-        fireLayersChangedEvent(event);
+        fireLayerChangedEvent(event);
     }
 
     /**
@@ -3664,7 +3708,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         switch (type)
         {
             case ADDED:
-                // handle special case of multiple add
+                // handle special case of multiple adds
                 if (painter == null)
                 {
                     if (sequence != null)
@@ -3690,7 +3734,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                 break;
 
             case REMOVED:
-                // handle special case of multiple remove
+                // handle special case of multiple removes
                 if (painter == null)
                 {
                     if (sequence != null)
@@ -3702,7 +3746,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                         {
                             // remove layers which are not anymore present in sequence
                             for (Layer layer : getLayers())
-                                if (!seqPainters.contains(layer.getPainter()))
+                                if ((layer != imageLayer) && !seqPainters.contains(layer.getPainter()))
                                     removeLayer(layer);
                         }
                         finally
@@ -3716,7 +3760,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                 break;
 
             case CHANGED:
-                // handle special case of multiple remove
+                // handle special case of multiple removes or/and adds
                 if (painter == null)
                 {
                     if (sequence != null)
@@ -3733,10 +3777,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                                     addLayer(seqPainter);
                             // remove layers which are not anymore present in sequence
                             for (Layer layer : getLayers())
-                                if (!seqPainters.contains(layer.getPainter()))
+                                if ((layer != imageLayer) && !seqPainters.contains(layer.getPainter()))
                                     removeLayer(layer);
-                            // no add or remove but multiple changes
-                            layerChanged(getLayer(painter));
                         }
                         finally
                         {
@@ -3744,8 +3786,6 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                         }
                     }
                 }
-                else
-                    layerChanged(getLayer(painter));
                 break;
         }
     }
@@ -3760,20 +3800,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     protected void sequenceROIChanged(ROI roi, SequenceEventType type)
     {
-        // FIXME : why this is needed ?
+        // nothing here
 
-        // if (roi != null)
-        // {
-        // final Layer layer = getLayer(roi.getPainter());
-        //
-        // // manually launch changed event on ROI layer
-        // if ((layer != null) && (type == SequenceEventType.CHANGED))
-        // layer.changed();
-        //
-        // layerChanged(layer);
-        // }
-        // else
-        // layerChanged(null);
     }
 
     @Override
@@ -3846,8 +3874,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     @Override
     public void onChanged(EventHierarchicalChecker event)
     {
-        if (event instanceof LayersEvent)
-            layersChanged((LayersEvent) event);
+        if (event instanceof CanvasLayerEvent)
+            layerChanged((CanvasLayerEvent) event);
 
         if (event instanceof IcyCanvasEvent)
             changed((IcyCanvasEvent) event);

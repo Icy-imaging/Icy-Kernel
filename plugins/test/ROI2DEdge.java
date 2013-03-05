@@ -65,14 +65,12 @@ public class ROI2DEdge extends ROI2D
             mousePos.setLocation(imagePoint);
 
             // cause repaint
-            changed();
+            painterChanged();
         }
 
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
-            super.paint(g, sequence, canvas);
-
             g.setColor(Color.yellow);
             g.fillOval((int) mousePos.getX(), (int) mousePos.getY(), 10, 10);
             g.drawImage(edgeImage, null, 0, 0);

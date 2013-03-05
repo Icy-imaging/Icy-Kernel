@@ -37,12 +37,12 @@ import java.util.ArrayList;
  */
 public class ShapeUtil
 {
-    public interface ShapeConsumer
+    public static interface ShapeConsumer
     {
         public boolean consume(Shape shape);
     }
 
-    public enum ShapeOperation
+    public static enum ShapeOperation
     {
         OR, AND, XOR
     }

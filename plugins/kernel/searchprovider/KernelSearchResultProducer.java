@@ -30,16 +30,19 @@ import org.pushingpixels.flamingo.api.common.RichTooltip;
  */
 public class KernelSearchResultProducer extends SearchResultProducer
 {
-    public class KernelSearchResult extends SearchResult
+    public static class KernelSearchResult extends SearchResult
     {
         private final IcyAbstractAction action;
+        private final int priority;
         private String description;
 
-        public KernelSearchResult(SearchResultProducer provider, IcyAbstractAction action, String searchWords[])
+        public KernelSearchResult(SearchResultProducer provider, IcyAbstractAction action, String searchWords[],
+                int priority)
         {
             super(provider);
 
             this.action = action;
+            this.priority = priority;
 
             final String longDesc = action.getLongDescription();
 
@@ -137,6 +140,15 @@ public class KernelSearchResultProducer extends SearchResultProducer
         {
             // nothing to do here...
         }
+
+        @Override
+        public int compareTo(SearchResult o)
+        {
+            if (o instanceof KernelSearchResult)
+                return ((KernelSearchResult) o).priority - priority;
+
+            return super.compareTo(o);
+        }
     }
 
     private static List<IcyAbstractAction> actions = null;
@@ -189,55 +201,64 @@ public class KernelSearchResultProducer extends SearchResultProducer
                 return;
 
             // action match filter
-            if (searchInAction(action, words, shortSearch))
-                tmpResults.add(new KernelSearchResult(this, action, words));
+            final int prio = searchInAction(action, words, shortSearch);
+
+            if (prio > 0)
+                tmpResults.add(new KernelSearchResult(this, action, words, prio));
         }
 
         results = tmpResults;
         consumer.resultsChanged(this);
     }
 
-    private boolean searchInAction(IcyAbstractAction action, String words[], boolean startWithOnly)
+    public static int searchInAction(IcyAbstractAction action, String words[], boolean startWithOnly)
     {
+        int result = 0;
+
         // we accept action which contains all words only
         for (String word : words)
-            if (!searchInAction(action, word, startWithOnly))
-                return false;
+        {
+            final int r = searchInAction(action, word, startWithOnly);
 
-        return words.length > 0;
+            // word not found ? --> reject
+            if (r == 0)
+                return 0;
+
+            result += r;
+        }
+
+        // return mean score
+        return result / words.length;
     }
 
-    private boolean searchInAction(IcyAbstractAction action, String word, boolean startWithOnly)
+    public static int searchInAction(IcyAbstractAction action, String word, boolean startWithOnly)
     {
         final String wordlc = word.trim().toLowerCase();
         String text;
 
-        if (startWithOnly)
-        {
-            // text = action.getName();
-            // if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
-            // return true;
-            text = action.getDescription();
-            if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
-                return true;
-            text = action.getLongDescription();
-            if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
-                return true;
-        }
-        else
+        // text = action.getName();
+        // if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
+        // return 10;
+        text = action.getDescription();
+        if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
+            return 8;
+        text = action.getLongDescription();
+        if (!StringUtil.isEmpty(text) && text.toLowerCase().startsWith(wordlc))
+            return 5;
+
+        if (!startWithOnly)
         {
             // text = action.getName();
             // if (!StringUtil.isEmpty(text) && text.toLowerCase().contains(wordlc))
-            // return true;
+            // return 9;
             text = action.getDescription();
             if (!StringUtil.isEmpty(text) && text.toLowerCase().contains(wordlc))
-                return true;
+                return 7;
             text = action.getLongDescription();
             if (!StringUtil.isEmpty(text) && text.toLowerCase().contains(wordlc))
-                return true;
+                return 3;
         }
 
-        return false;
+        return 0;
     }
-
 }

@@ -12,6 +12,7 @@ import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -244,20 +245,23 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
      */
     public List<SearchResult> getResults()
     {
-        final List<SearchResult> result = new ArrayList<SearchResult>();
+        final List<SearchResult> results = new ArrayList<SearchResult>();
 
         for (SearchResultProducer producer : producers)
         {
-            final List<SearchResult> results = producer.getResults();
+            final List<SearchResult> producerResults = producer.getResults();
 
             // prevent modification of results while adding it
-            synchronized (results)
+            synchronized (producerResults)
             {
-                result.addAll(results);
+                // sort producer results
+                Collections.sort(producerResults);
+                // and add
+                results.addAll(producerResults);
             }
         }
 
-        return result;
+        return results;
     }
 
     @Override

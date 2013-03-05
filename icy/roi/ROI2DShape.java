@@ -25,6 +25,9 @@ import icy.common.EventHierarchicalChecker;
 import icy.main.Icy;
 import icy.painter.Anchor2D;
 import icy.painter.Anchor2D.Anchor2DListener;
+import icy.painter.OverlayEvent;
+import icy.painter.OverlayEvent.OverlayEventType;
+import icy.painter.OverlayListener;
 import icy.painter.PainterEvent;
 import icy.painter.PathAnchor2D;
 import icy.painter.VtkPainter;
@@ -59,7 +62,7 @@ import vtk.vtkProp;
 /**
  * @author Stephane
  */
-public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListener
+public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListener, OverlayListener
 {
     /**
      * Merge the specified array of {@link ROI2DShape} with the given {@link ShapeOperation}.<br>
@@ -491,16 +494,16 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
                 // draw border black line
                 if (selected)
-                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 2d)));
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 2d)));
                 else
-                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 1d)));
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
                 g2.setColor(Color.black);
                 g2.draw(shape);
                 // draw internal border
                 if (selected)
-                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 1d)));
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
                 else
-                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke)));
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
                 g2.setColor(getDisplayColor());
                 g2.draw(shape);
 
@@ -548,37 +551,41 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
          */
         protected void drawInfos(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
-//            if (canvas instanceof IcyCanvas2D)
-//            {
-//                final IcyCanvas2D cnv2d = (IcyCanvas2D) canvas;
-//                final Rectangle2D bounds = getBounds2D();
-//
-//                if (selected)
-//                {
-//                    // draw position and size inside ROI
-//                    final String roiPositionString = "X=" + StringUtil.toString(bounds.getX(), 1) + "  Y="
-//                            + StringUtil.toString(bounds.getY(), 1);
-//                    final String roiBoundingSizeString = "W=" + StringUtil.toString(bounds.getWidth(), 1) + "  H="
-//                            + StringUtil.toString(bounds.getHeight(), 1);
-//                    final String text = roiPositionString + "\n" + roiBoundingSizeString;
-//
-//                    // position = just above ROI bounds
-//                    final Point pos = cnv2d.imageToCanvas(bounds.getX() + (bounds.getWidth() / 2), bounds.getY());
-//                    final Font font = new Font("Arial", Font.BOLD, 12);
-//
-//                    final Graphics2D g2 = (Graphics2D) g.create();
-//
-//                    g2.transform(cnv2d.getInverseTransform());
-//                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-//                    g2.setFont(font);
-//                    g2.setColor(getDisplayColor());
-//
-//                    GraphicsUtil.drawCenteredString(g2, text, pos.x,
-//                            pos.y - (int) (GraphicsUtil.getStringBounds(g2, text).getHeight()), true);
-//
-//                    g2.dispose();
-//                }
-//            }
+            // if (canvas instanceof IcyCanvas2D)
+            // {
+            // final IcyCanvas2D cnv2d = (IcyCanvas2D) canvas;
+            // final Rectangle2D bounds = getBounds2D();
+            //
+            // if (selected)
+            // {
+            // // draw position and size inside ROI
+            // final String roiPositionString = "X=" + StringUtil.toString(bounds.getX(), 1) +
+            // "  Y="
+            // + StringUtil.toString(bounds.getY(), 1);
+            // final String roiBoundingSizeString = "W=" + StringUtil.toString(bounds.getWidth(), 1)
+            // + "  H="
+            // + StringUtil.toString(bounds.getHeight(), 1);
+            // final String text = roiPositionString + "\n" + roiBoundingSizeString;
+            //
+            // // position = just above ROI bounds
+            // final Point pos = cnv2d.imageToCanvas(bounds.getX() + (bounds.getWidth() / 2),
+            // bounds.getY());
+            // final Font font = new Font("Arial", Font.BOLD, 12);
+            //
+            // final Graphics2D g2 = (Graphics2D) g.create();
+            //
+            // g2.transform(cnv2d.getInverseTransform());
+            // g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+            // RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            // g2.setFont(font);
+            // g2.setColor(getDisplayColor());
+            //
+            // GraphicsUtil.drawCenteredString(g2, text, pos.x,
+            // pos.y - (int) (GraphicsUtil.getStringBounds(g2, text).getHeight()), true);
+            //
+            // g2.dispose();
+            // }
+            // }
         }
 
         @Override
@@ -589,6 +596,15 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
             drawROI(g, sequence, canvas);
             drawInfos(g, sequence, canvas);
+        }
+
+        @Override
+        public void setSelectedColor(Color value)
+        {
+            for (Anchor2D anchor : controlPoints)
+                anchor.setColor(value);
+
+            super.setSelectedColor(value);
         }
 
         @Override
@@ -648,7 +664,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      */
     protected Anchor2D createAnchor(Point2D pos)
     {
-        return new Anchor2D(pos, DEFAULT_SELECTED_COLOR, OVER_COLOR);
+        return new Anchor2D(pos.getX(), pos.getY(), DEFAULT_SELECTED_COLOR, OVER_COLOR);
     }
 
     /**
@@ -657,15 +673,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     final protected Anchor2D createAnchor(double x, double y)
     {
         return createAnchor(new Point2D.Double(x, y));
-    }
-
-    @Override
-    public void setSelectedColor(Color value)
-    {
-        super.setSelectedColor(value);
-
-        for (Anchor2D anchor : controlPoints)
-            anchor.setColor(value);
     }
 
     @Override
@@ -733,7 +740,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      */
     protected void addPoint(Anchor2D pt)
     {
-        pt.addListener(this);
+        pt.addAnchorListener(this);
+        pt.addOverlayListener(this);
         controlPoints.add(pt);
         roiChanged();
     }
@@ -743,7 +751,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      */
     protected void addPoint(Anchor2D pt, int index)
     {
-        pt.addListener(this);
+        pt.addAnchorListener(this);
+        pt.addOverlayListener(this);
         controlPoints.add(index, pt);
         roiChanged();
     }
@@ -789,7 +798,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     protected boolean removePoint(Anchor2D pt)
     {
         controlPoints.remove(pt);
-        pt.removeListener(this);
+        pt.removeOverlayListener(this);
+        pt.removeAnchorListener(this);
         roiChanged();
         return true;
     }
@@ -847,7 +857,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             {
                 // last control point removed --> delete ROI
                 if (controlPoints.size() == 0)
-                    delete();
+                    remove();
                 else
                 {
                     // we are using PathAnchor2D ?
@@ -872,7 +882,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                                         {
                                             // it was the last control point --> delete ROI
                                             if (controlPoints.size() == 0)
-                                                delete();
+                                                remove();
                                         }
                                     }
                                     else
@@ -899,7 +909,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                                         {
                                             // it was the last control point --> delete ROI
                                             if (controlPoints.size() == 0)
-                                                delete();
+                                                remove();
                                         }
                                     }
                                     else
@@ -1016,7 +1026,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     public boolean isOver(IcyCanvas canvas, double x, double y)
     {
         // use bigger stroke for isOver test for easier intersection
-        final double strk = getAdjustedStroke(canvas) * 3;
+        final double strk = painter.getAdjustedStroke(canvas) * 3;
         final Rectangle2D rect = new Rectangle2D.Double(x - (strk * 0.5), y - (strk * 0.5), strk, strk);
         // use flatten path, intersects on curved shape return incorrect result
         return ShapeUtil.pathIntersects(getPathIterator(null, 0.1), rect);
@@ -1134,18 +1144,31 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     /**
-     * anchor painter changed
+     * anchor overlay changed
      */
+    @Override
+    public void overlayChanged(OverlayEvent event)
+    {
+        // we only mind about painter change from anchor...
+        if (event.getType() == OverlayEventType.PAINTER_CHANGED)
+        {
+            // we have a control point selected --> remove focus on ROI
+            if (hasSelectedPoint())
+                setFocused(false);
+
+            // anchor changed --> ROI painter changed
+            getPainter().painterChanged();
+        }
+    }
+
+    /**
+     * anchor painter changed (old event for backward compatibility)
+     */
+    @SuppressWarnings("deprecation")
     @Override
     public void painterChanged(PainterEvent event)
     {
-        // we have a control point selected --> remove focus on ROI
-        if (hasSelectedPoint())
-            setFocused(false);
-
-        // anchor changed --> ROI painter changed
-        getPainter().changed();
-        // painterChanged();
+        // ignore it now
     }
 
     /**
@@ -1156,9 +1179,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     {
         final ROIEvent event = (ROIEvent) object;
 
+        // do here global process on ROI change
         switch (event.getType())
         {
-        // do here global process on ROI change
             case ROI_CHANGED:
                 // refresh shape
                 updateShape();

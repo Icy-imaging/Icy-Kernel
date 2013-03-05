@@ -18,10 +18,10 @@
  */
 package icy.gui.inspector;
 
+import icy.canvas.CanvasLayerEvent;
+import icy.canvas.CanvasLayerListener;
 import icy.canvas.IcyCanvas;
 import icy.canvas.Layer;
-import icy.canvas.LayersEvent;
-import icy.canvas.LayersListener;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.button.IcyButton;
@@ -62,7 +62,8 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public class LayersPanel extends InspectorSubPanel implements LayersListener, TextChangeListener, ListSelectionListener
+public class LayersPanel extends InspectorSubPanel implements CanvasLayerListener, TextChangeListener,
+        ListSelectionListener
 {
     private class CanvasRefresher implements Runnable
     {
@@ -82,12 +83,12 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Te
             if (canvas != c)
             {
                 if (canvas != null)
-                    canvas.removeLayersListener(LayersPanel.this);
+                    canvas.removeLayerListener(LayersPanel.this);
 
                 canvas = c;
 
                 if (canvas != null)
-                    canvas.addLayersListener(LayersPanel.this);
+                    canvas.addLayerListener(LayersPanel.this);
             }
 
             refreshLayers();
@@ -186,7 +187,8 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Te
                     {
                         // delete selected layers
                         for (Layer layer : getSelectedLayers())
-                            sequence.removePainter(layer.getPainter());
+                            if (!layer.isFixed())
+                                sequence.removePainter(layer.getPainter());
                     }
                     finally
                     {
@@ -577,6 +579,9 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Te
 
     protected void refreshControlPanel()
     {
+        while (isLayerPropertiesAdjusting)
+            ThreadUtil.sleep(10);
+        
         isLayerPropertiesAdjusting = true;
         try
         {
@@ -587,17 +592,15 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Te
                 final boolean hasSelected = (selectedLayers.size() > 0);
 
                 boolean canEdit = false;
+                boolean canRemove = false;
                 for (Layer layer : selectedLayers)
                 {
-                    if (!layer.isAttachedToRoi())
-                    {
-                        canEdit = true;
-                        break;
-                    }
+                    canEdit |= !layer.isReadOnly();
+                    canRemove |= !layer.isFixed();
                 }
 
                 nameField.setEnabled(hasSelected && canEdit);
-                deleteButton.setEnabled(hasSelected && canEdit);
+                deleteButton.setEnabled(hasSelected && canRemove);
 
                 if (hasSelected)
                 {
@@ -643,20 +646,30 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Te
                 if (isLayerPropertiesAdjusting)
                     return;
 
-                if (nameField.isEnabled())
+                isLayerPropertiesAdjusting = true;
+                try
                 {
-                    final String name = source.getText();
 
-                    canvas.beginUpdate();
-                    try
+                    if (nameField.isEnabled())
                     {
-                        for (Layer layer : getSelectedLayers())
-                            layer.setName(name);
+                        final String name = source.getText();
+
+                        canvas.beginUpdate();
+                        try
+                        {
+                            for (Layer layer : getSelectedLayers())
+                                if (!layer.isReadOnly())
+                                    layer.setName(name);
+                        }
+                        finally
+                        {
+                            canvas.endUpdate();
+                        }
                     }
-                    finally
-                    {
-                        canvas.endUpdate();
-                    }
+                }
+                finally
+                {
+                    isLayerPropertiesAdjusting = false;
                 }
             }
         }
@@ -708,7 +721,7 @@ public class LayersPanel extends InspectorSubPanel implements LayersListener, Te
     }
 
     @Override
-    public void layersChanged(LayersEvent event)
+    public void canvasLayerChanged(CanvasLayerEvent event)
     {
         // refresh layer from externals changes
         if (!isLayerEditing)

@@ -19,7 +19,7 @@ public abstract class RectAnchor2D extends Anchor2D
 {
     public RectAnchor2D(Point2D position, Color color, Color selectedColor)
     {
-        super(position, color, selectedColor);
+        super(position.getX(), position.getY(), color, selectedColor);
     }
 
     @Override

@@ -35,6 +35,8 @@ import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.Properties;
 
+import sun.java2d.SunGraphicsEnvironment;
+
 import com.sun.management.OperatingSystemMXBean;
 
 /**
@@ -147,22 +149,22 @@ public class SystemUtil
 
     public static BufferedImage createCompatibleImage(int width, int height)
     {
-        return getSystemGraphicsConfiguration().createCompatibleImage(width, height);
+        return getDefaultGraphicsConfiguration().createCompatibleImage(width, height);
     }
 
     public static BufferedImage createCompatibleImage(int width, int height, int transparency)
     {
-        return getSystemGraphicsConfiguration().createCompatibleImage(width, height, transparency);
+        return getDefaultGraphicsConfiguration().createCompatibleImage(width, height, transparency);
     }
 
     public static VolatileImage createCompatibleVolatileImage(int width, int height)
     {
-        return getSystemGraphicsConfiguration().createCompatibleVolatileImage(width, height);
+        return getDefaultGraphicsConfiguration().createCompatibleVolatileImage(width, height);
     }
 
     public static VolatileImage createCompatibleVolatileImage(int width, int height, int transparency)
     {
-        return getSystemGraphicsConfiguration().createCompatibleVolatileImage(width, height, transparency);
+        return getDefaultGraphicsConfiguration().createCompatibleVolatileImage(width, height, transparency);
     }
 
     public static Desktop getDesktop()
@@ -244,6 +246,30 @@ public class SystemUtil
     }
 
     /**
+     * Return the default graphics configuration.
+     */
+    public static GraphicsConfiguration getDefaultGraphicsConfiguration()
+    {
+        try
+        {
+            return getDefaultScreenDevice().getDefaultConfiguration();
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
+    }
+
+    /**
+     * @deprecated Uses {@link #getDefaultGraphicsConfiguration()} instead.
+     */
+    @Deprecated
+    public static GraphicsConfiguration getSystemGraphicsConfiguration()
+    {
+        return getDefaultGraphicsConfiguration();
+    }
+
+    /**
      * Return the number of screen device.
      */
     public static int getScreenDeviceCount()
@@ -271,11 +297,6 @@ public class SystemUtil
         {
             return null;
         }
-    }
-
-    public static GraphicsConfiguration getSystemGraphicsConfiguration()
-    {
-        return getDefaultScreenDevice().getDefaultConfiguration();
     }
 
     /**
@@ -325,7 +346,7 @@ public class SystemUtil
         final GraphicsDevice[] gs = getLocalGraphicsEnvironment().getScreenDevices();
 
         for (int j = 0; j < gs.length; j++)
-            result = result.union(gs[j].getDefaultConfiguration().getBounds());
+            result = result.union(SunGraphicsEnvironment.getUsableBounds(gs[j]));
 
         return result;
     }

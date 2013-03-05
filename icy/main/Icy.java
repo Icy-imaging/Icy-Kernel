@@ -93,7 +93,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.3.2.0");
+    public static Version version = new Version("1.3.3.0");
 
     /**
      * Main interface
@@ -171,7 +171,7 @@ public class Icy
                 // we always accept multi instance in headless mode
                 if (!headless)
                 {
-                    if (!ConfirmDialog.confirm("ICY is already running on this computer. Start anyway ?"))
+                    if (!ConfirmDialog.confirm("Icy is already running on this computer. Start anyway ?"))
                     {
                         System.exit(0);
                         return;
@@ -293,7 +293,7 @@ public class Icy
         DebugTools.enableLogging("ERROR");
 
         System.out.println();
-        System.out.println("ICY Version " + version + " started !");
+        System.out.println("Icy Version " + version + " started !");
         System.out.println();
 
         checkParameters();

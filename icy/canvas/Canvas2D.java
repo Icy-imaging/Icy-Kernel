@@ -3,6 +3,7 @@
  */
 package icy.canvas;
 
+import icy.canvas.CanvasLayerEvent.LayersEventType;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
@@ -22,6 +23,8 @@ import icy.math.MultiSmoothMover.MultiSmoothMoverAdapter;
 import icy.math.SmoothMover;
 import icy.math.SmoothMover.SmoothMoveType;
 import icy.math.SmoothMover.SmoothMoverAdapter;
+import icy.painter.Overlay;
+import icy.painter.Painter;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.CanvasPreferences;
 import icy.preferences.XMLPreferences;
@@ -111,6 +114,43 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     final static double[] zoomRoundedFactors = new double[] {0.01d, 0.02d, 0.0333d, 0.05d, 0.075d, 0.1d, 0.15d, 0.2d,
             0.25d, 0.333d, 0.5d, 0.66d, 0.75d, 1d, 1.25d, 1.5d, 1.75d, 2d, 2.5d, 3d, 4d, 5d, 6.6d, 7.5d, 10d, 15d, 20d,
             30d, 50d, 66d, 75d, 100d};
+
+    /**
+     * Image overlay to encapsulate image display in a canvas layer
+     */
+    protected class Canvas2DImageOverlay extends IcyCanvasImageOverlay
+    {
+        @Override
+        public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            if (g == null)
+                return;
+
+            final BufferedImage img = canvasView.imageCache.getImage();
+
+            if (img != null)
+                g.drawImage(img, null, 0, 0);
+            else
+            {
+                final Graphics2D g2 = (Graphics2D) g.create();
+
+                // set back canvas coordinate
+                g2.transform(getInverseTransform());
+
+                g2.setFont(canvasView.font);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                if (getCurrentImage() != null)
+                    // cache not yet built
+                    canvasView.drawTextCenter(g2, "Loading...", 0.8f);
+                else
+                    // no image
+                    canvasView.drawTextCenter(g2, " No image ", 0.8f);
+
+                g2.dispose();
+            }
+        }
+    }
 
     public class CanvasMap extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener
     {
@@ -694,7 +734,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         /**
          * internals
          */
-        private final Font font;
+        final Font font;
         private final Timer refreshTimer;
         private final Timer zoomInfoTimer;
         private final Timer rotationInfoTimer;
@@ -1166,7 +1206,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         public void mouseClicked(MouseEvent e)
         {
             // send mouse event to painters first
-            for (Layer layer : getVisibleOrderedLayersForEvent())
+            // for (Layer layer : getVisibleOrderedLayersForEvent())
+            for (Layer layer : getVisibleLayers())
                 layer.getPainter().mouseClick(e, getMouseImagePos(), Canvas2D.this);
 
             // process
@@ -1196,7 +1237,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             }
 
             // send mouse event to painters now
-            for (Layer layer : getVisibleOrderedLayersForEvent())
+            // for (Layer layer : getVisibleOrderedLayersForEvent())
+            for (Layer layer : getVisibleLayers())
                 layer.getPainter().mousePressed(e, getMouseImagePos(), Canvas2D.this);
 
             // not yet consumed
@@ -1229,7 +1271,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         public void mouseReleased(MouseEvent e)
         {
             // send mouse event to painters first
-            for (Layer layer : getVisibleOrderedLayersForEvent())
+            // for (Layer layer : getVisibleOrderedLayersForEvent())
+            for (Layer layer : getVisibleLayers())
                 layer.getPainter().mouseReleased(e, getMouseImagePos(), Canvas2D.this);
 
             // process
@@ -1260,7 +1303,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 e.consume();
 
             // send mouse event to painters after
-            for (Layer layer : getVisibleOrderedLayersForEvent())
+            // for (Layer layer : getVisibleOrderedLayersForEvent())
+            for (Layer layer : getVisibleLayers())
                 layer.getPainter().mouseMove(e, getMouseImagePos(), Canvas2D.this);
         }
 
@@ -1273,7 +1317,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 e.consume();
 
             // send mouse event to painters after
-            for (Layer layer : getVisibleOrderedLayersForEvent())
+            // for (Layer layer : getVisibleOrderedLayersForEvent())
+            for (Layer layer : getVisibleLayers())
                 layer.getPainter().mouseDrag(e, getMouseImagePos(), Canvas2D.this);
         }
 
@@ -1314,12 +1359,11 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             final int canvasCenterX = getCanvasSizeX() / 2;
             final int canvasCenterY = getCanvasSizeY() / 2;
 
-            final BufferedImage img = imageCache.getImage();
-
-            if (img != null)
+            // image & layers
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
 
+                // apply filtering
                 if (CanvasPreferences.getFiltering())
                 {
                     if (getScaleX() < 4d && getScaleY() < 4d)
@@ -1333,17 +1377,18 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                                 RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                     }
                 }
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+                // apply transformation
                 g2.transform(getTransform());
-                g2.drawImage(img, null, 0, 0);
+                // g2.drawImage(img, null, 0, 0);
+
+                final Sequence seq = getSequence();
 
                 if (isLayersVisible())
                 {
-                    final Sequence seq = getSequence();
-
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                    final ArrayList<Layer> layers = getVisibleOrderedLayersForEvent();
+                    // final ArrayList<Layer> layers = getVisibleOrderedLayersForEvent();
+                    final ArrayList<Layer> layers = getVisibleLayers();
 
                     // draw them in inverse order to have first painter event at top
                     for (int i = layers.size() - 1; i >= 0; i--)
@@ -1359,22 +1404,14 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                         layer.getPainter().paint(g2, seq, Canvas2D.this);
                     }
                 }
-
-                g2.dispose();
-            }
-            else
-            {
-                final Graphics2D g2 = (Graphics2D) g.create();
-
-                g2.setFont(font);
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                if (Canvas2D.this.getCurrentImage() != null)
-                    // cache not yet built
-                    drawTextCenter(g2, "Loading...", 0.8f);
                 else
-                    // no image
-                    drawTextCenter(g2, " No image ", 0.8f);
+                {
+                    final Layer imageLayer = getImageLayer();
+
+                    // display image only
+                    if (imageLayer.isVisible())
+                        getImageLayer().getPainter().paint(g2, seq, Canvas2D.this);
+                }
 
                 g2.dispose();
             }
@@ -2018,6 +2055,12 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         final ToolRibbonTask trt = Icy.getMainInterface().getToolRibbon();
         if (trt != null)
             trt.removeListener(this);
+    }
+
+    @Override
+    protected Overlay createImageOverlay()
+    {
+        return new Canvas2DImageOverlay();
     }
 
     /**
@@ -2929,7 +2972,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                final ArrayList<Layer> layers = getVisibleOrderedLayersForEvent();
+                // final ArrayList<Layer> layers = getVisibleOrderedLayersForEvent();
+                final ArrayList<Layer> layers = getVisibleLayers();
 
                 // draw them in inverse order to have first painter event at top
                 for (int i = layers.size() - 1; i >= 0; i--)
@@ -3176,7 +3220,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             mouseAbsolutePos.y, 0, false, 0);
 
                     // send mouse event to painters
-                    for (Layer layer : getVisibleOrderedLayersForEvent())
+                    // for (Layer layer : getVisibleOrderedLayersForEvent())
+                    for (Layer layer : getVisibleLayers())
                         layer.getPainter().mouseMove(mouseEvent, new Point2D.Double(mouseImagePos.x, mouseImagePos.y),
                                 this);
                 }
@@ -3205,11 +3250,28 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     }
 
     @Override
-    public void layersChanged(LayersEvent event)
+    protected void layerChanged(CanvasLayerEvent event)
     {
-        super.layersChanged(event);
+        super.layerChanged(event);
 
-        // repaint
+        // layer visibility property modified ?
+        if ((event.getType() == LayersEventType.CHANGED) && Layer.isPaintProperty(event.getProperty()))
+        {
+            // layer refresh
+            if (canvasView != null)
+            {
+                canvasView.layersChanged();
+                canvasView.refresh();
+            }
+        }
+    }
+
+    @Override
+    protected void sequencePainterChanged(Painter painter, SequenceEventType type)
+    {
+        super.sequencePainterChanged(painter, type);
+
+        // layer refresh
         if (canvasView != null)
         {
             canvasView.layersChanged();

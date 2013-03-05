@@ -20,35 +20,19 @@ package icy.gui.dialog;
 
 import icy.file.FileFormat;
 import icy.file.Loader;
-import icy.gui.component.ThumbnailComponent;
-import icy.gui.util.GuiUtil;
-import icy.image.IcyBufferedImage;
-import icy.image.IcyBufferedImageUtil;
 import icy.main.Icy;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.XMLPreferences;
-import icy.resource.ResourceUtil;
 import icy.system.thread.ThreadUtil;
-import icy.type.DataType;
 import icy.type.collection.CollectionUtil;
 
-import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.IOException;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.border.Border;
 import javax.swing.filechooser.FileFilter;
-
-import loci.formats.ImageReader;
 
 /**
  * @author Stephane
@@ -78,9 +62,7 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
     private static final String PREF_ID = "frame/imageLoader";
 
     // GUI
-    private final JCheckBox separateSeqCheck;
-    private final JPanel separateSeqPanel;
-    private final ThumbnailComponent preview;
+    private final ImageLoaderOptionPanel optionPanel;
 
     // internal
     private String fileId;
@@ -112,25 +94,11 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
         // setting GUI
-        separateSeqCheck = new JCheckBox();
-        separateSeqCheck.setSelected(false);
-        separateSeqPanel = GuiUtil.createLineBoxPanel(new JLabel("Load in separated sequence"),
-                Box.createHorizontalGlue(), separateSeqCheck);
+        optionPanel = new ImageLoaderOptionPanel(preferences.getBoolean("separate", false), preferences.getBoolean(
+                "autoOrder", true));
 
-        // preview pane
-        preview = new ThumbnailComponent(false);
-
-        final JPanel settingPanel = new JPanel();
-        settingPanel.setBorder(BorderFactory.createTitledBorder((Border) null));
-        settingPanel.setLayout(new BorderLayout());
-
-        // settingPanel.add(pp, BorderLayout.NORTH);
-        settingPanel.add(preview, BorderLayout.NORTH);
-        settingPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
-        settingPanel.add(separateSeqPanel, BorderLayout.SOUTH);
-
-        setAccessory(settingPanel);
-        updateSettingPanel();
+        setAccessory(optionPanel);
+        updateOptionPanel();
 
         fileId = null;
 
@@ -147,7 +115,9 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         {
             // store current path
             preferences.put("path", getCurrentDirectory().getAbsolutePath());
-            Loader.load(CollectionUtil.asList(getSelectedFiles()), separateSeqCheck.isSelected());
+            preferences.putBoolean("separate", optionPanel.isSeparateSequenceSelected());
+            preferences.putBoolean("autoOrder", optionPanel.isAutoOrderSelected());
+            Loader.load(CollectionUtil.asList(getSelectedFiles()), optionPanel.isSeparateSequenceSelected(), optionPanel.isAutoOrderSelected(), true);
         }
 
         // store interface option
@@ -176,58 +146,20 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         }
 
         // setting state
-        updateSettingPanel();
+        updateOptionPanel();
     }
 
-    void updateSettingPanel()
+    void updateOptionPanel()
     {
-        separateSeqCheck.setEnabled(getSelectedFiles().length > 1);
+        final boolean multi = getSelectedFiles().length > 1;
+
+        optionPanel.setSeparateSequenceEnabled(multi);
+        optionPanel.setAutoOrderEnabled(multi);
     }
 
     @Override
     public void run()
     {
-        preview.setImage(null);
-        preview.setTitle("loading...");
-        preview.setInfos("");
-        preview.setInfos2("");
-
-        final ImageReader reader = new ImageReader();
-
-        try
-        {
-            reader.setId(fileId);
-            reader.setSeries(0);
-
-            final int sizeC = reader.getSizeC();
-
-            final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader, reader.getSizeZ() / 2,
-                    reader.getSizeT() / 2);
-            preview.setImage(IcyBufferedImageUtil.getARGBImage(img));
-            preview.setTitle(reader.getFormat());
-            preview.setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - " + reader.getSizeZ() + "Z x "
-                    + reader.getSizeT() + "T");
-            preview.setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
-                    + DataType.getDataTypeFromFormatToolsType(reader.getPixelType()) + ")");
-        }
-        catch (Exception e)
-        {
-            // error image, we just totally ignore error here...
-            preview.setImage(ResourceUtil.ICON_DELETE);
-            preview.setTitle("Cannot read file");
-            preview.setInfos("");
-            preview.setInfos2("");
-        }
-        finally
-        {
-            try
-            {
-                reader.close();
-            }
-            catch (IOException e)
-            {
-                // ignore
-            }
-        }
+        optionPanel.updatePreview(fileId);
     }
 }

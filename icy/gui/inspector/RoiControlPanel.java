@@ -12,7 +12,6 @@ import icy.gui.component.button.ColorChooserButton;
 import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.menu.action.RoiActions;
-import icy.image.IntensityInfo;
 import icy.main.Icy;
 import icy.math.MathUtil;
 import icy.roi.ROI;
@@ -23,6 +22,7 @@ import icy.roi.ROI3D;
 import icy.roi.ROI4D;
 import icy.roi.ROI5D;
 import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -61,7 +61,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     private IcyTextField sizeZField;
     private IcyTextField sizeYField;
     private IcyTextField sizeTField;
-    ColorChooserButton colorButton;
+    private ColorChooserButton colorButton;
     private ColorChooserButton selectedColorButton;
     private IcyButton notButton;
     private IcyButton orButton;
@@ -69,11 +69,6 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     private IcyButton xorButton;
     private IcyButton subButton;
     private IcyButton deleteButton;
-
-    // internal
-    final RoisPanel roisPanel;
-    IntensityInfo intensityInfos[];
-    boolean isRoiPropertiesAdjusting;
     private JPanel generalPanel;
     private RoiExtraInfoPanel infosPanel;
     private PopupPanel popupPanel;
@@ -85,13 +80,18 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     private IcyButton pasteButton;
     private IcyButton clearCPButton;
 
+    // internal
+    private final RoisPanel roisPanel;
+    private boolean isRoiPropertiesAdjusting;
+    private ArrayList<ROI> modifiedROI;
+
     public RoiControlPanel(RoisPanel panel)
     {
         super();
 
         roisPanel = panel;
         isRoiPropertiesAdjusting = false;
-        intensityInfos = null;
+        modifiedROI = null;
 
         initialize();
 
@@ -477,6 +477,9 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
     public void refresh()
     {
+        while (isRoiPropertiesAdjusting)
+            ThreadUtil.sleep(10);
+
         isRoiPropertiesAdjusting = true;
         try
         {
@@ -623,6 +626,19 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 // refresh ROI infos
                 infosPanel.refresh(null, null);
             }
+
+            // so that won't send further changed event
+            // nameField.setUnchanged();
+            //
+            // posXField.setUnchanged();
+            // posYField.setUnchanged();
+            // posZField.setUnchanged();
+            // posTField.setUnchanged();
+            //
+            // sizeXField.setUnchanged();
+            // sizeYField.setUnchanged();
+            // sizeZField.setUnchanged();
+            // sizeTField.setUnchanged();
         }
         finally
         {
@@ -635,26 +651,39 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     {
         if (isRoiPropertiesAdjusting)
             return;
+
+        // keep trace of modified ROI and wait for validation
         if (!validate)
+        {
+            modifiedROI = RoiControlPanel.this.roisPanel.getSelectedRois();
+            return;
+        }
+
+        // can't edit multiple ROI at same time
+        if ((modifiedROI == null) && (modifiedROI.size() != 1))
             return;
 
-        final ArrayList<ROI> selectedROI = RoiControlPanel.this.roisPanel.getSelectedRois();
+        final ROI roi = modifiedROI.get(0);
 
-        if (selectedROI.size() == 1)
+        if (!roi.isEditable())
+            return;
+
+        isRoiPropertiesAdjusting = true;
+        try
         {
-            final ROI roi = selectedROI.get(0);
-
-            if (roi.isEditable())
+            if (source == nameField)
             {
-                if ((source == nameField) && nameField.isEnabled())
+                if (nameField.isEnabled())
                     roi.setName(source.getText());
+            }
+            else if (roi instanceof ROI2D)
+            {
+                final ROI2D roi2d = (ROI2D) roi;
+                final Rectangle2D roiBounds = roi2d.getBounds2D();
 
-                if (roi instanceof ROI2D)
+                if (source == posXField)
                 {
-                    final ROI2D roi2d = (ROI2D) roi;
-                    final Rectangle2D roiBounds = roi2d.getBounds2D();
-
-                    if ((source == posXField) && posXField.isEnabled())
+                    if (posXField.isEnabled())
                     {
                         final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
 
@@ -662,7 +691,10 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                             roi2d.setPosition(new Point2D.Double(value, roiBounds.getY()));
                         source.setText(Double.toString(roi2d.getPosition2D().getX()));
                     }
-                    if ((source == posYField) && posYField.isEnabled())
+                }
+                else if (source == posYField)
+                {
+                    if (posYField.isEnabled())
                     {
                         final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
 
@@ -670,20 +702,28 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                             roi2d.setPosition(new Point2D.Double(roiBounds.getX(), value));
                         source.setText(Double.toString(roi2d.getPosition2D().getY()));
                     }
-                    if ((source == posZField) && posZField.isEnabled())
+                }
+                else if (source == posZField)
+                {
+                    if (posZField.isEnabled())
                     {
                         roi2d.setZ(Math.max(-1, StringUtil.parseInt(source.getText(), -1)));
                         source.setText(Integer.toString(roi2d.getZ()));
                     }
-                    if ((source == posTField) && posTField.isEnabled())
+                }
+                else if (source == posTField)
+                {
+                    if (posTField.isEnabled())
                     {
                         roi2d.setT(Math.max(-1, StringUtil.parseInt(source.getText(), -1)));
                         source.setText(Integer.toString(roi2d.getT()));
                     }
-
-                    if ((roi2d instanceof ROI2DLine) || (roi2d instanceof ROI2DRectShape))
+                }
+                else if ((roi2d instanceof ROI2DLine) || (roi2d instanceof ROI2DRectShape))
+                {
+                    if ((source == sizeXField))
                     {
-                        if ((source == sizeXField) && sizeXField.isEnabled())
+                        if (sizeXField.isEnabled())
                         {
                             final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
 
@@ -703,7 +743,10 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                             else
                                 source.setText(Double.toString(((ROI2DRectShape) roi2d).getBounds2D().getWidth()));
                         }
-                        if ((source == sizeYField) && sizeYField.isEnabled())
+                    }
+                    else if (source == sizeYField)
+                    {
+                        if (sizeYField.isEnabled())
                         {
                             final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
 
@@ -725,22 +768,23 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                         }
                     }
                 }
-
-                if (roi instanceof ROI3D)
-                {
-                    // not yet supported
-                }
-
-                if (roi instanceof ROI4D)
-                {
-                    // not yet supported
-                }
-
-                if (roi instanceof ROI5D)
-                {
-                    // not yet supported
-                }
             }
+            else if (roi instanceof ROI3D)
+            {
+                // not yet supported
+            }
+            else if (roi instanceof ROI4D)
+            {
+                // not yet supported
+            }
+            else if (roi instanceof ROI5D)
+            {
+                // not yet supported
+            }
+        }
+        finally
+        {
+            isRoiPropertiesAdjusting = false;
         }
     }
 
@@ -762,10 +806,12 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 for (ROI roi : selectedROI)
                 {
                     if (roi.isEditable())
+                    {
                         if (source == colorButton)
                             roi.setColor(color);
                         else
                             roi.setSelectedColor(color);
+                    }
                 }
             }
             finally

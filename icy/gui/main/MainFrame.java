@@ -48,7 +48,6 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.HeadlessException;
 import java.awt.Insets;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
@@ -79,6 +78,18 @@ import org.pushingpixels.flamingo.api.ribbon.JRibbonFrame;
  */
 public class MainFrame extends JRibbonFrame
 {
+    private static Rectangle getDefaultBounds()
+    {
+        Rectangle r = SystemUtil.getMaximumWindowBounds();
+
+        r.width -= 100;
+        r.height -= 100;
+        r.x += 50;
+        r.y += 50;
+
+        return r;
+    }
+
     /**
 	 * 
 	 */
@@ -126,7 +137,10 @@ public class MainFrame extends JRibbonFrame
         // FIXME : remove this when Ribbon with have fixed KeyTipLayer component
         getRootPane().getLayeredPane().getComponent(0).setVisible(false);
 
-        positionSaver = new WindowPositionSaver(this, "frame/main", new Point(50, 50), new Dimension(800, 600));
+        final Rectangle defaultBounds = getDefaultBounds();
+
+        positionSaver = new WindowPositionSaver(this, "frame/main", defaultBounds.getLocation(),
+                defaultBounds.getSize());
         previousInspectorInternalized = positionSaver.getPreferences().getBoolean(ID_PREVIOUS_STATE, true);
 
         // set "always on top" state

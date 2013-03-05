@@ -9,7 +9,7 @@ import org.pushingpixels.flamingo.api.common.RichTooltip;
  * 
  * @author Thomas Provoost & Stephane Dallongeville
  */
-public abstract class SearchResult
+public abstract class SearchResult implements Comparable<SearchResult>
 {
     private final SearchResultProducer producer;
 
@@ -56,34 +56,6 @@ public abstract class SearchResult
         return true;
     }
 
-    // /**
-    // * Returns the JLabel component used to display result in result table.
-    // */
-    // public JLabel getLabel()
-    // {
-    // final JLabel result = new JLabel();
-    //
-    // final Icon icon = getIcon();
-    // final String title = getTitle();
-    // final String description = getDescription();
-    // final String tooltip = getTooltip();
-    // String text;
-    //
-    // if (icon != null)
-    // result.setIcon(icon);
-    // if (StringUtil.isEmpty(title))
-    // text = "Unknow";
-    // else
-    // text = title;
-    // if (!StringUtil.isEmpty(description))
-    // text = text + "<br>" + description;
-    // result.setText(text);
-    // if (!StringUtil.isEmpty(tooltip))
-    // result.setToolTipText(tooltip);
-    //
-    // return result;
-    // }
-
     /**
      * Executes the associated action for this result.
      */
@@ -94,26 +66,18 @@ public abstract class SearchResult
      */
     public abstract void executeAlternate();
 
-    // /**
-    // * Get the JWindow used as a Popup associated with the item.
-    // *
-    // * @return
-    // */
-    // public abstract JWindow getPopup();
     /**
      * Get the RichTooltip associated to the result.
      */
     public abstract RichTooltip getRichToolTip();
 
-    // /**
-    // * The right click will trigger the execution of
-    // * the action in the getActionB()
-    // * button. The use of a button and not a method is explained for an eventual evolution of the
-    // * system: in case a button is added in the GUI, it is already created, and does not require
-    // * more
-    // * development from Provider developers.
-    // *
-    // * @return
-    // */
-    // public abstract JButton getActionB();
+    /**
+     * Default implementation
+     */
+    @Override
+    public int compareTo(SearchResult o)
+    {
+        return getTitle().compareTo(o.getTitle());
+    }
+
 }

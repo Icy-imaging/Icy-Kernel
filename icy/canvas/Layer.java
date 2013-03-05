@@ -19,66 +19,105 @@
 package icy.canvas;
 
 import icy.main.Icy;
+import icy.painter.Overlay;
+import icy.painter.Overlay.OverlayPriority;
+import icy.painter.OverlayEvent;
+import icy.painter.OverlayEvent.OverlayEventType;
+import icy.painter.OverlayListener;
 import icy.painter.Painter;
+import icy.painter.WeakOverlayListener;
 import icy.roi.ROI;
 import icy.util.StringUtil;
 
 import java.lang.ref.WeakReference;
-import java.util.EventListener;
-
-import javax.swing.event.EventListenerList;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * @author Stephane
+ * Layer class.<br>
+ * This class encapsulate {@link Painter} and {@link Overlay} in a canvas to<br>
+ * add specific display properties (visibility, transparency...).
  */
-public class Layer
+@SuppressWarnings({"deprecation", "javadoc"})
+public class Layer implements OverlayListener, Comparable<Layer>
 {
-    public interface LayerListener extends EventListener
+    public interface LayerListener
     {
-        public void layerChanged(Layer layer);
+        public void layerChanged(Layer source, String propertyName);
     }
 
-    private final static String DEFAULT_NAME = "layer";
+    public final static String PROPERTY_NAME = Overlay.PROPERTY_NAME;
+    public final static String PROPERTY_PRIORITY = Overlay.PROPERTY_PRIORITY;
+    public final static String PROPERTY_READONLY = Overlay.PROPERTY_READONLY;
+    public final static String PROPERTY_FIXED = Overlay.PROPERTY_FIXED;
+    public final static String PROPERTY_ALPHA = "alpha";
+    public final static String PROPERTY_VISIBLE = "visible";
+
+    public final static String DEFAULT_NAME = "layer";
+
+    /**
+     * Returns true if the Layer need to be repainted when the specified property has changed.
+     */
+    public static boolean isPaintProperty(String propertyName)
+    {
+        if (propertyName == null)
+            return false;
+
+        return propertyName.equals(PROPERTY_ALPHA) || propertyName.equals(PROPERTY_PRIORITY)
+                || propertyName.equals(PROPERTY_VISIBLE);
+    }
 
     private final Painter painter;
     // cache for ROI
     private WeakReference<ROI> roi;
 
     private String name;
+    private OverlayPriority priority;
+    private boolean readOnly;
+    private boolean fixed;
     private boolean visible;
     private float alpha;
 
     /**
      * listeners
      */
-    protected final EventListenerList listeners;
+    protected final List<LayerListener> listeners;
 
-    /**
-     * @param painter
-     */
     public Layer(Painter painter, String name)
     {
         super();
 
         this.painter = painter;
-        if (name == null)
-            this.name = DEFAULT_NAME;
+
+        if (painter instanceof Overlay)
+            ((Overlay) painter).addOverlayListener(new WeakOverlayListener(this));
         else
-            this.name = name;
+        {
+            if (name == null)
+                this.name = DEFAULT_NAME;
+            else
+                this.name = name;
+            // default priority
+            priority = OverlayPriority.SHAPE_NORMAL;
+            readOnly = false;
+            fixed = false;
+        }
 
         visible = true;
         alpha = 1f;
         roi = null;
 
-        listeners = new EventListenerList();
+        listeners = new ArrayList<LayerListener>();
     }
 
-    /**
-     * @param painter
-     */
     public Layer(Painter painter)
     {
         this(painter, null);
+    }
+
+    public Layer(Overlay overlay)
+    {
+        this(overlay, null);
     }
 
     /**
@@ -90,37 +129,104 @@ public class Layer
     }
 
     /**
-     * @return the name
+     * Returns layer priority (use the {@link Overlay} priority if present)
+     */
+    public OverlayPriority getPriority()
+    {
+        if (painter instanceof Overlay)
+            return ((Overlay) painter).getPriority();
+
+        return priority;
+    }
+
+    /**
+     * Set the layer priority (modify {@link Overlay} priority if present)
+     */
+    public void setPriority(OverlayPriority priority)
+    {
+        if (painter instanceof Overlay)
+            ((Overlay) painter).setPriority(priority);
+        else if (this.priority != priority)
+        {
+            this.priority = priority;
+            changed(PROPERTY_PRIORITY);
+        }
+    }
+
+    /**
+     * Returns layer name (use the {@link Overlay} name if present)
      */
     public String getName()
     {
-        final ROI layerRoi = getAttachedROI();
-
-        if (layerRoi != null)
-            return layerRoi.getName();
+        if (painter instanceof Overlay)
+            return ((Overlay) painter).getName();
 
         return name;
     }
 
     /**
-     * @param name
-     *        the name to set
+     * Set the layer name (modify {@link Overlay} name if present)
      */
     public void setName(String name)
     {
-        if (!StringUtil.equals(this.name, name))
+        if (painter instanceof Overlay)
+            ((Overlay) painter).setName(name);
+        else if (!StringUtil.equals(this.name, name))
         {
             this.name = name;
-            changed();
+            changed(PROPERTY_NAME);
         }
     }
 
     /**
-     * @return the attachedToRoi
+     * @return the read only
      */
-    public boolean isAttachedToRoi()
+    public boolean isReadOnly()
     {
-        return (getAttachedROI() != null);
+        if (painter instanceof Overlay)
+            return ((Overlay) painter).isReadOnly();
+
+        return readOnly;
+    }
+
+    /**
+     * Set read only property.
+     */
+    public void setReadOnly(boolean readOnly)
+    {
+        if (painter instanceof Overlay)
+            ((Overlay) painter).setReadOnly(readOnly);
+        else if (this.readOnly != readOnly)
+        {
+            this.readOnly = readOnly;
+            changed(PROPERTY_READONLY);
+        }
+    }
+
+    /**
+     * @return the fixed
+     */
+    public boolean isFixed()
+    {
+        if (painter instanceof Overlay)
+            return ((Overlay) painter).isFixed();
+
+        return fixed;
+    }
+
+    /**
+     * Set fixed property.<br>
+     * Any fixed Layer cannot be removed from the Canvas.
+     */
+    public void setFixed(boolean fixed)
+    {
+        if (painter instanceof Overlay)
+            ((Overlay) painter).setFixed(fixed);
+        else if (this.fixed != fixed)
+        {
+            this.fixed = fixed;
+            changed(PROPERTY_FIXED);
+        }
     }
 
     /**
@@ -152,7 +258,7 @@ public class Layer
         if (this.visible != visible)
         {
             this.visible = visible;
-            changed();
+            changed(PROPERTY_VISIBLE);
         }
     }
 
@@ -173,17 +279,26 @@ public class Layer
         if (alpha != value)
         {
             alpha = value;
-            changed();
+            changed(PROPERTY_ALPHA);
         }
     }
 
     /**
-     * called on change
+     * Called on layer property change
      */
-    void changed()
+    protected void changed(String propertyName)
     {
         // notify listener
-        fireChangedEvent();
+        fireChangedEvent(propertyName);
+    }
+
+    /**
+     * fire event
+     */
+    private void fireChangedEvent(String propertyName)
+    {
+        for (LayerListener listener : listeners)
+            listener.layerChanged(this, propertyName);
     }
 
     /**
@@ -193,7 +308,7 @@ public class Layer
      */
     public void addListener(LayerListener listener)
     {
-        listeners.add(LayerListener.class, listener);
+        listeners.add(listener);
     }
 
     /**
@@ -203,15 +318,22 @@ public class Layer
      */
     public void removeListener(LayerListener listener)
     {
-        listeners.remove(LayerListener.class, listener);
+        listeners.remove(listener);
     }
 
-    /**
-     * fire event
-     */
-    private void fireChangedEvent()
+    @Override
+    public void overlayChanged(OverlayEvent event)
     {
-        for (LayerListener listener : listeners.getListeners(LayerListener.class))
-            listener.layerChanged(this);
+        // only interested by property change here
+        if (event.getType() == OverlayEventType.PROPERTY_CHANGED)
+            changed(event.getPropertyName());
     }
+
+    @Override
+    public int compareTo(Layer layer)
+    {
+        // highest priority first
+        return layer.getPriority().ordinal() - getPriority().ordinal();
+    }
+
 }

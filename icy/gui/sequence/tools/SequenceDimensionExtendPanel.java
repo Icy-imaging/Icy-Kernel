@@ -120,7 +120,7 @@ public class SequenceDimensionExtendPanel extends JPanel
             public void actionPerformed(ActionEvent e)
             {
                 duplicateSpinner.setEnabled(duplicateCheckBox.isSelected());
-                
+
                 previewImageChanged();
                 fireChangedEvent();
             }
@@ -281,7 +281,7 @@ public class SequenceDimensionExtendPanel extends JPanel
 
     public void setMaxDuplicate(int max)
     {
-        duplicateSpinner.setModel(new SpinnerNumberModel(1, 1, max, 1));
+        duplicateSpinner.setModel(new SpinnerNumberModel(1, 1, Math.max(max, 1), 1));
     }
 
     protected void fireChangedEvent()

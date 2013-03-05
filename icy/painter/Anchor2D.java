@@ -19,7 +19,10 @@
 package icy.painter;
 
 import icy.canvas.IcyCanvas;
+import icy.common.EventHierarchicalChecker;
 import icy.file.xml.XMLPersistent;
+import icy.painter.OverlayEvent.OverlayEventType;
+import icy.painter.PainterEvent.PainterEventType;
 import icy.sequence.Sequence;
 import icy.util.EventUtil;
 import icy.util.XMLUtil;
@@ -38,16 +41,45 @@ import org.w3c.dom.Node;
 /**
  * @author Stephane
  */
-public class Anchor2D extends AbstractPainter implements XMLPersistent
+public class Anchor2D extends Overlay implements XMLPersistent
 {
-    public interface Anchor2DListener extends PainterListener
+    public static interface Anchor2DListener extends PainterListener
     {
         public void positionChanged(Anchor2D source);
     }
 
+    public static class Anchor2DEvent implements EventHierarchicalChecker
+    {
+        private final Anchor2D source;
+
+        public Anchor2DEvent(Anchor2D source)
+        {
+            super();
+
+            this.source = source;
+        }
+
+        /**
+         * @return the source
+         */
+        public Anchor2D getSource()
+        {
+            return source;
+        }
+
+        @Override
+        public boolean isEventRedundantWith(EventHierarchicalChecker event)
+        {
+            if (event instanceof Anchor2DEvent)
+                return ((Anchor2DEvent) event).getSource() == source;
+
+            return false;
+        }
+    }
+
     protected static final String ID_COLOR = "color";
     protected static final String ID_SELECTEDCOLOR = "selected_color";
-    // private static final String ID_SELECTED = "selected";
+    protected static final String ID_SELECTED = "selected";
     protected static final String ID_POS_X = "pos_x";
     protected static final String ID_POS_Y = "pos_y";
     protected static final String ID_RAY = "ray";
@@ -78,10 +110,6 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
      * selection flag
      */
     protected boolean selected;
-    // /**
-    // * flag that indicate if anchor can be removed / deleted
-    // */
-    // private boolean canRemove;
     /**
      * flag that indicate if anchor is visible
      */
@@ -94,23 +122,15 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
     protected Point2D startDragMousePosition;
     protected Point2D startDragPainterPosition;
 
-    /**
-     * @param sequence
-     * @param x
-     * @param y
-     * @param ray
-     * @param color
-     */
-    public Anchor2D(Sequence sequence, double x, double y, int ray, Color color, Color selectedColor)
+    public Anchor2D(double x, double y, int ray, Color color, Color selectedColor)
     {
-        super(sequence);
+        super("Anchor", OverlayPriority.SHAPE_NORMAL);
 
         position = new Point2D.Double(x, y);
         this.ray = ray;
         this.color = color;
         this.selectedColor = selectedColor;
         selected = false;
-        // canRemove = true;
         visible = true;
 
         ellipse = new Ellipse2D.Double();
@@ -118,57 +138,9 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         startDragPainterPosition = null;
     }
 
-    /**
-     * @param sequence
-     * @param position
-     * @param ray
-     * @param color
-     */
-    public Anchor2D(Sequence sequence, Point2D position, int ray, Color color, Color selectedColor)
+    public Anchor2D(double x, double y, int ray, Color color)
     {
-        this(sequence, position.getX(), position.getY(), ray, color, selectedColor);
-    }
-
-    /**
-     * @param position
-     * @param ray
-     * @param color
-     */
-    public Anchor2D(Point2D position, int ray, Color color, Color selectedColor)
-    {
-        this(null, position.getX(), position.getY(), ray, color, selectedColor);
-    }
-
-    /**
-     * @param sequence
-     * @param position
-     * @param ray
-     * @param color
-     */
-    public Anchor2D(Sequence sequence, Point2D position, int ray, Color color)
-    {
-        this(sequence, position.getX(), position.getY(), ray, color, DEFAULT_SELECTED_COLOR);
-    }
-
-    /**
-     * @param position
-     * @param ray
-     * @param color
-     */
-    public Anchor2D(Point2D position, int ray, Color color)
-    {
-        this(null, position.getX(), position.getY(), ray, color, DEFAULT_SELECTED_COLOR);
-    }
-
-    /**
-     * @param sequence
-     * @param x
-     * @param y
-     * @param ray
-     */
-    public Anchor2D(Sequence sequence, double x, double y, int ray)
-    {
-        this(sequence, x, y, ray, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        this(x, y, ray, color, DEFAULT_SELECTED_COLOR);
     }
 
     /**
@@ -178,37 +150,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
      */
     public Anchor2D(double x, double y, int ray)
     {
-        this(null, x, y, ray, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
-    }
-
-    /**
-     * @param sequence
-     * @param position
-     * @param ray
-     */
-    public Anchor2D(Sequence sequence, Point2D position, int ray)
-    {
-        this(sequence, position.getX(), position.getY(), ray, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
-    }
-
-    /**
-     * @param position
-     * @param ray
-     */
-    public Anchor2D(Point2D position, int ray)
-    {
-        this(null, position.getX(), position.getY(), ray, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
-    }
-
-    /**
-     * @param sequence
-     * @param x
-     * @param y
-     * @param color
-     */
-    public Anchor2D(Sequence sequence, double x, double y, Color color, Color selectedColor)
-    {
-        this(sequence, x, y, DEFAULT_RAY, color, selectedColor);
+        this(x, y, ray, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
     }
 
     /**
@@ -218,37 +160,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
      */
     public Anchor2D(double x, double y, Color color, Color selectedColor)
     {
-        this(null, x, y, DEFAULT_RAY, color, selectedColor);
-    }
-
-    /**
-     * @param sequence
-     * @param position
-     * @param color
-     */
-    public Anchor2D(Sequence sequence, Point2D position, Color color, Color selectedColor)
-    {
-        this(sequence, position.getX(), position.getY(), DEFAULT_RAY, color, selectedColor);
-    }
-
-    /**
-     * @param position
-     * @param color
-     */
-    public Anchor2D(Point2D position, Color color, Color selectedColor)
-    {
-        this(null, position.getX(), position.getY(), DEFAULT_RAY, color, selectedColor);
-    }
-
-    /**
-     * @param sequence
-     * @param x
-     * @param y
-     * @param color
-     */
-    public Anchor2D(Sequence sequence, double x, double y, Color color)
-    {
-        this(sequence, x, y, DEFAULT_RAY, color, DEFAULT_SELECTED_COLOR);
+        this(x, y, DEFAULT_RAY, color, selectedColor);
     }
 
     /**
@@ -258,36 +170,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
      */
     public Anchor2D(double x, double y, Color color)
     {
-        this(null, x, y, DEFAULT_RAY, color, DEFAULT_SELECTED_COLOR);
-    }
-
-    /**
-     * @param sequence
-     * @param position
-     * @param color
-     */
-    public Anchor2D(Sequence sequence, Point2D position, Color color)
-    {
-        this(sequence, position.getX(), position.getY(), DEFAULT_RAY, color, DEFAULT_SELECTED_COLOR);
-    }
-
-    /**
-     * @param position
-     * @param color
-     */
-    public Anchor2D(Point2D position, Color color)
-    {
-        this(null, position.getX(), position.getY(), DEFAULT_RAY, color, DEFAULT_SELECTED_COLOR);
-    }
-
-    /**
-     * @param sequence
-     * @param x
-     * @param y
-     */
-    public Anchor2D(Sequence sequence, double x, double y)
-    {
-        this(sequence, x, y, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        this(x, y, DEFAULT_RAY, color, DEFAULT_SELECTED_COLOR);
     }
 
     /**
@@ -296,39 +179,188 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
      */
     public Anchor2D(double x, double y)
     {
-        this(null, x, y, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
-    }
-
-    /**
-     * @param sequence
-     * @param position
-     */
-    public Anchor2D(Sequence sequence, Point2D position)
-    {
-        this(sequence, position.getX(), position.getY(), DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
-    }
-
-    /**
-     * @param position
-     */
-    public Anchor2D(Point2D position)
-    {
-        this(null, position.getX(), position.getY(), DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
-    }
-
-    /**
-     * @param sequence
-     */
-    public Anchor2D(Sequence sequence)
-    {
-        this(sequence, 0d, 0d, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        this(x, y, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
     }
 
     /**
      */
     public Anchor2D()
     {
-        this(null, 0d, 0d, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        this(0d, 0d, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+    }
+
+    /**
+     * @deprecated Uses {@link #Anchor2D(double, double, int, Color, Color)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Point2D position, int ray, Color color, Color selectedColor)
+    {
+        this(position.getX(), position.getY(), ray, color, selectedColor);
+    }
+
+    /**
+     * @deprecated Uses {@link #Anchor2D(double, double, int, Color)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Point2D position, int ray, Color color)
+    {
+        this(position.getX(), position.getY(), ray, color, DEFAULT_SELECTED_COLOR);
+    }
+
+    /**
+     * @deprecated Uses {@link #Anchor2D(double, double, int)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Point2D position, int ray)
+    {
+        this(position.getX(), position.getY(), ray, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+    }
+
+    /**
+     * @deprecated Uses {@link #Anchor2D(double, double, Color, Color)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Point2D position, Color color, Color selectedColor)
+    {
+        this(position.getX(), position.getY(), DEFAULT_RAY, color, selectedColor);
+    }
+
+    /**
+     * @deprecated Uses {@link #Anchor2D(double, double, Color)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Point2D position, Color color)
+    {
+        this(position.getX(), position.getY(), DEFAULT_RAY, color, DEFAULT_SELECTED_COLOR);
+    }
+
+    /**
+     * @deprecated Uses {@link #Anchor2D(double, double)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Point2D position)
+    {
+        this(position.getX(), position.getY(), DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+    }
+
+    /**
+     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, int, Color, Color)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Sequence sequence, double x, double y, int ray, Color color, Color selectedColor)
+    {
+        this(x, y, ray, color, selectedColor);
+        sequence.addPainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, int, Color, Color)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Sequence sequence, Point2D position, int ray, Color color, Color selectedColor)
+    {
+        this(position.getX(), position.getY(), ray, color, selectedColor);
+        sequence.addPainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link Anchor2D#Anchor2D(Point2D, int, Color)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Sequence sequence, Point2D position, int ray, Color color)
+    {
+        this(position.getX(), position.getY(), ray, color, DEFAULT_SELECTED_COLOR);
+        sequence.addPainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, int)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Sequence sequence, double x, double y, int ray)
+    {
+        this(x, y, ray, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        sequence.addPainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, Color)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Sequence sequence, Point2D position, Color color)
+    {
+        this(position.getX(), position.getY(), DEFAULT_RAY, color, DEFAULT_SELECTED_COLOR);
+        sequence.addPainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, int)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Sequence sequence, Point2D position, int ray)
+    {
+        this(position.getX(), position.getY(), ray, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        sequence.addPainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, int)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Sequence sequence, double x, double y, Color color, Color selectedColor)
+    {
+        this(x, y, DEFAULT_RAY, color, selectedColor);
+        sequence.addPainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, Color, Color)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Sequence sequence, Point2D position, Color color, Color selectedColor)
+    {
+        this(position.getX(), position.getY(), DEFAULT_RAY, color, selectedColor);
+        sequence.addPainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, Color, Color)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Sequence sequence, double x, double y, Color color)
+    {
+        this(x, y, DEFAULT_RAY, color, DEFAULT_SELECTED_COLOR);
+        sequence.addPainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Sequence sequence, double x, double y)
+    {
+        this(sequence, x, y, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        sequence.addPainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double)} instead.
+     */
+    @Deprecated
+    public Anchor2D(Sequence sequence, Point2D position)
+    {
+        this(position.getX(), position.getY(), DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        sequence.addPainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link Anchor2D#Anchor2D()} instead.
+     */
+    @Deprecated
+    public Anchor2D(Sequence sequence)
+    {
+        this(0d, 0d, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        sequence.addPainter(this);
     }
 
     /**
@@ -370,6 +402,16 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         return new Point2D.Double(position.x, position.y);
     }
 
+    public double getPositionX()
+    {
+        return position.x;
+    }
+
+    public double getPositionY()
+    {
+        return position.y;
+    }
+
     public void moveTo(Point2D p)
     {
         setPosition(p.getX(), p.getY());
@@ -393,7 +435,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
             position.y = y;
 
             positionChanged();
-            changed();
+            painterChanged();
         }
     }
 
@@ -419,7 +461,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         if (ray != value)
         {
             ray = value;
-            changed();
+            painterChanged();
         }
     }
 
@@ -440,7 +482,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         if (color != value)
         {
             color = value;
-            changed();
+            painterChanged();
         }
     }
 
@@ -461,7 +503,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         if (selectedColor != value)
         {
             selectedColor = value;
-            changed();
+            painterChanged();
         }
     }
 
@@ -487,7 +529,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
             if (!value)
                 startDragMousePosition = null;
 
-            changed();
+            painterChanged();
         }
     }
 
@@ -525,7 +567,7 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
         if (visible != value)
         {
             visible = value;
-            changed();
+            painterChanged();
         }
     }
 
@@ -584,32 +626,68 @@ public class Anchor2D extends AbstractPainter implements XMLPersistent
      */
     protected void positionChanged()
     {
-        firePositionChangedEvent();
+        updater.changed(new Anchor2DEvent(this));
     }
 
-    private void firePositionChangedEvent()
-    {
-        for (Anchor2DListener listener : listeners.getListeners(Anchor2DListener.class))
-            listener.positionChanged(this);
-    }
-
+    @SuppressWarnings("deprecation")
     @Override
-    protected void fireChangedEvent(PainterEvent event)
+    public void onChanged(EventHierarchicalChecker object)
     {
-        for (Anchor2DListener listener : listeners.getListeners(Anchor2DListener.class))
-            listener.painterChanged(event);
+        if (object instanceof Anchor2DEvent)
+        {
+            firePositionChangedEvent(((Anchor2DEvent) object).getSource());
+            return;
+        }
 
-        super.fireChangedEvent(event);
+        // provide event backward compatibility
+        if (object instanceof OverlayEvent)
+        {
+            final OverlayEvent event = (OverlayEvent) object;
+
+            if (event.getType() == OverlayEventType.PAINTER_CHANGED)
+            {
+                final PainterEvent pe = new PainterEvent(this, PainterEventType.PAINTER_CHANGED);
+
+                for (Anchor2DListener listener : listeners.getListeners(Anchor2DListener.class))
+                    listener.painterChanged(pe);
+            }
+        }
+
+        super.onChanged(object);
     }
 
-    public void addListener(Anchor2DListener listener)
+    protected void firePositionChangedEvent(Anchor2D source)
+    {
+        for (Anchor2DListener listener : listeners.getListeners(Anchor2DListener.class))
+            listener.positionChanged(source);
+    }
+
+    public void addAnchorListener(Anchor2DListener listener)
     {
         listeners.add(Anchor2DListener.class, listener);
     }
 
-    public void removeListener(Anchor2DListener listener)
+    public void removeAnchorListener(Anchor2DListener listener)
     {
         listeners.remove(Anchor2DListener.class, listener);
+    }
+
+    /**
+     * @deprecated Uses {@link #addAnchorListener(Anchor2DListener)} instead.
+     */
+    @Deprecated
+    public void addListener(Anchor2DListener listener)
+    {
+        addAnchorListener(listener);
+    }
+
+    /**
+     * @deprecated Uses {@link #removeAnchorListener(Anchor2DListener)} instead.
+     */
+    @Deprecated
+    public void removeListener(Anchor2DListener listener)
+    {
+        removeAnchorListener(listener);
     }
 
     @Override

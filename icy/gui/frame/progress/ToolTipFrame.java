@@ -57,7 +57,7 @@ public class ToolTipFrame extends TaskFrame
         if (!StringUtil.isEmpty(id))
         {
             // tool tip should not be displayed ?
-            if (alreadyExist(id) || !GeneralPreferences.getPreferencesToolTips().getBoolean(id, true))
+            if (!GeneralPreferences.getPreferencesToolTips().getBoolean(id, true) || alreadyExist(id))
             {
                 // close and exit
                 close();

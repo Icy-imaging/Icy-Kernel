@@ -132,16 +132,19 @@ public class Clipboard
      */
     public static boolean put(Object obj, String id)
     {
-        final SwimmingPool sp = Icy.getMainInterface().getSwimmingPool();
-
-        if (sp != null)
+        if (obj != null)
         {
-            sp.add(new SwimmingObject(obj, id));
+            final SwimmingPool sp = Icy.getMainInterface().getSwimmingPool();
 
-            // notify change
-            fireChangedEvent();
+            if (sp != null)
+            {
+                sp.add(new SwimmingObject(obj, id));
 
-            return true;
+                // notify change
+                fireChangedEvent();
+
+                return true;
+            }
         }
 
         return false;
@@ -158,7 +161,8 @@ public class Clipboard
         if (sp != null)
         {
             for (Object obj : objects)
-                sp.add(new SwimmingObject(obj, id));
+                if (obj != null)
+                    sp.add(new SwimmingObject(obj, id));
 
             // notify change
             if (objects.size() > 0)

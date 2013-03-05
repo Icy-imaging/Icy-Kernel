@@ -103,7 +103,7 @@ public class JarClassLoader extends AbstractClassLoader
      */
     public void initialize()
     {
-        loaders.add(localLoader);
+        addLoader(localLoader);
     }
 
     /**
@@ -269,12 +269,12 @@ public class JarClassLoader extends AbstractClassLoader
      */
     class LocalLoader extends ProxyClassLoader
     {
-
         private final Logger logger = Logger.getLogger(LocalLoader.class.getName());
 
         public LocalLoader()
         {
-            order = 10;
+            super(50);
+
             enabled = Configuration.isLocalLoaderEnabled();
         }
 

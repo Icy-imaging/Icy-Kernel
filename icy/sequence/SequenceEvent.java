@@ -87,6 +87,8 @@ public class SequenceEvent implements EventHierarchicalChecker
      * source object can be null when severals images has been modified<br>
      * <code>SEQUENCE_ROI</code> --> source object is an instance of ROI<br>
      * source object can be null when severals images has been modified<br>
+     * <code>SEQUENCE_OVERLAY</code> --> source object is an instance of Overlay<br>
+     * source object can be null when severals images has been modified<br>
      * <code>SEQUENCE_PAINTER</code> --> source object is an instance of Painter<br>
      * source object can be null when severals images has been modified<br>
      * <br>
@@ -113,7 +115,7 @@ public class SequenceEvent implements EventHierarchicalChecker
      * the type can only be <code>SequenceEventType.CHANGED</code><br>
      * <br>
      * When <code>sourceType</code> is one of the following :<br>
-     * <code>SEQUENCE_DATA, SEQUENCE_ROI, SEQUENCE_PAINTER</code><br>
+     * <code>SEQUENCE_DATA, SEQUENCE_ROI, SEQUENCE_PAINTER, SEQUENCE_OVERLAY</code><br>
      * the type can also be <code>SequenceEventType.ADDED</code> or
      * <code>SequenceEventType.REMOVED</code><br>
      * That mean a specific image, roi or painter (if <code>source != null</code>) has been added or

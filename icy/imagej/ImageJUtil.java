@@ -9,6 +9,7 @@ import icy.math.ArrayMath;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.roi.ROI2DArea;
+import icy.roi.ROI2DArea.ROI2DAreaPainter;
 import icy.roi.ROI2DEllipse;
 import icy.roi.ROI2DLine;
 import icy.roi.ROI2DPath;
@@ -386,7 +387,7 @@ public class ImageJUtil
             final ROI2DArea roiArea = (ROI2DArea) roi;
             final Point p = roiArea.getPosition();
             result = new ImageRoi(p.x, p.y, roiArea.getImageMask());
-            ((ImageRoi) result).setOpacity(roiArea.getPainter().getAlphaLevel());
+            ((ImageRoi) result).setOpacity(ROI2DAreaPainter.CONTENT_ALPHA);
         }
         else
         {

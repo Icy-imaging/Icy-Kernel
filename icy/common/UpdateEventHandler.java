@@ -133,7 +133,7 @@ public class UpdateEventHandler
         return !pendingChanges.isEmpty();
     }
 
-    public void addPendingChange(EventHierarchicalChecker include)
+    protected void addPendingChange(EventHierarchicalChecker include)
     {
         synchronized (pendingChanges)
         {
@@ -158,7 +158,7 @@ public class UpdateEventHandler
             dispatchOnChanged(include);
     }
 
-    private void dispatchOnChanged(EventHierarchicalChecker include)
+    protected void dispatchOnChanged(EventHierarchicalChecker include)
     {
         final EventHierarchicalChecker event = include;
 

@@ -73,8 +73,10 @@ public class ROI2DLine extends ROI2DShape
         controlPoints.add(this.pt1);
         controlPoints.add(this.pt2);
 
-        this.pt1.addListener(this);
-        this.pt2.addListener(this);
+        this.pt1.addOverlayListener(this);
+        this.pt1.addAnchorListener(this);
+        this.pt2.addOverlayListener(this);
+        this.pt2.addAnchorListener(this);
 
         // select the pt2 to size the line in "creation mode"
         if (cm)

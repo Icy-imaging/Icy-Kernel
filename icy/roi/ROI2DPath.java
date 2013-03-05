@@ -49,7 +49,10 @@ public class ROI2DPath extends ROI2DShape
 
         // add listeners
         for (Anchor2D pt : controlPoints)
-            pt.addListener(this);
+        {
+            pt.addOverlayListener(this);
+            pt.addAnchorListener(this);
+        }
 
         setName("Path2D");
     }

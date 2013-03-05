@@ -88,9 +88,9 @@ public class ROI2DPolyLine extends ROI2DShape
 
                 // ROI selected ?
                 if (selected)
-                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 1d)));
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
                 else
-                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke)));
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
 
                 g2.draw(shape);
 
@@ -316,7 +316,7 @@ public class ROI2DPolyLine extends ROI2DShape
 
             removeAllPoint();
 
-            final ArrayList<Node> nodesPoint = XMLUtil.getSubNodes(XMLUtil.getElement(node, ID_POINTS), ID_POINT);
+            final ArrayList<Node> nodesPoint = XMLUtil.getChildren(XMLUtil.getElement(node, ID_POINTS), ID_POINT);
             if (nodesPoint != null)
             {
                 for (Node n : nodesPoint)

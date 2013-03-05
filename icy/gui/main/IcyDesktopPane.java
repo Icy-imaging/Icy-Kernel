@@ -36,6 +36,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -64,51 +65,12 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
         public void paint(Graphics g, int width, int height);
     }
 
-    public static class AbstractDesktopOverlay implements DesktopOverlay
+    public static class AbstractDesktopOverlay extends MouseAdapter implements DesktopOverlay
     {
-        @Override
-        public void mouseClicked(MouseEvent e)
-        {
-        }
-
-        @Override
-        public void mousePressed(MouseEvent e)
-        {
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e)
-        {
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e)
-        {
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e)
-        {
-        }
-
-        @Override
-        public void mouseDragged(MouseEvent e)
-        {
-        }
-
-        @Override
-        public void mouseMoved(MouseEvent e)
-        {
-        }
-
-        @Override
-        public void mouseWheelMoved(MouseWheelEvent e)
-        {
-        }
-
         @Override
         public void paint(Graphics g, int width, int height)
         {
+            // nothing by default
         }
     }
 

@@ -165,11 +165,13 @@ public class SequenceOperationTask extends RibbonTask
 
         void udpateButtonsState()
         {
-            final boolean enabled = Icy.getMainInterface().getFocusedSequence() != null;
+            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final boolean enabled = seq != null;
+            final boolean notEmpty = enabled && !seq.isEmpty();
 
             cloneButton.setEnabled(enabled);
-            convertButton.setEnabled(enabled);
-            convertButtonRaw.setEnabled(enabled);
+            convertButton.setEnabled(notEmpty);
+            convertButtonRaw.setEnabled(notEmpty);
         }
     }
 
@@ -210,7 +212,8 @@ public class SequenceOperationTask extends RibbonTask
 
         void udpateButtonsState()
         {
-            final boolean enabled = Icy.getMainInterface().getFocusedSequence() != null;
+            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final boolean enabled = (seq != null) && !seq.isEmpty();
 
             argbButton.setEnabled(enabled);
             rgbButton.setEnabled(enabled);
@@ -271,7 +274,8 @@ public class SequenceOperationTask extends RibbonTask
 
         void udpateButtonsState()
         {
-            final boolean enabled = Icy.getMainInterface().getFocusedSequence() != null;
+            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final boolean enabled = (seq != null) && !seq.isEmpty();
 
             cropButton.setEnabled(enabled);
             canvasResizeButton.setEnabled(enabled);
@@ -444,12 +448,13 @@ public class SequenceOperationTask extends RibbonTask
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
             final boolean enabled = (seq != null);
+            final boolean notEmpty = enabled && !seq.isEmpty();
             final boolean several = enabled && (seq.getSizeZ() > 1);
 
             reverseButton.setEnabled(several);
             extractButton.setEnabled(several);
             removeButton.setEnabled(several);
-            addButton.setEnabled(enabled);
+            addButton.setEnabled(notEmpty);
             mergeButton.setEnabled(enabled);
             advancedRemoveButton.setEnabled(several);
         }
@@ -512,12 +517,13 @@ public class SequenceOperationTask extends RibbonTask
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
             final boolean enabled = (seq != null);
+            final boolean notEmpty = enabled && !seq.isEmpty();
             final boolean several = enabled && (seq.getSizeT() > 1);
 
             reverseButton.setEnabled(several);
             extractButton.setEnabled(several);
             removeButton.setEnabled(several);
-            addButton.setEnabled(enabled);
+            addButton.setEnabled(notEmpty);
             mergeButton.setEnabled(enabled);
             advancedRemoveButton.setEnabled(several);
         }
@@ -736,7 +742,8 @@ public class SequenceOperationTask extends RibbonTask
 
         void udpateButtonsState()
         {
-            final boolean enabled = Icy.getMainInterface().getFocusedSequence() != null;
+            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final boolean enabled = (seq != null) && !seq.isEmpty();
 
             fillValueField.setEnabled(enabled);
             fillImage.setEnabled(enabled);

@@ -13,6 +13,9 @@ import java.awt.geom.Point2D;
 import org.w3c.dom.Node;
 
 /**
+ * Anchor for path type shape.<br>
+ * Support extra coordinate to store curve informations.
+ * 
  * @author Stephane
  */
 public class PathAnchor2D extends Anchor2D
@@ -36,10 +39,10 @@ public class PathAnchor2D extends Anchor2D
      */
     private int type;
 
-    public PathAnchor2D(Sequence sequence, double x1, double y1, double x2, double y2, double x3, double y3, int ray,
-            Color color, Color selectedColor)
+    public PathAnchor2D(double x1, double y1, double x2, double y2, double x3, double y3, int ray, Color color,
+            Color selectedColor)
     {
-        super(sequence, x3, y3, ray, color, selectedColor);
+        super(x3, y3, ray, color, selectedColor);
 
         posCExt = new Point2D.Double(x1, y1);
         posQExt = new Point2D.Double(x2, y2);
@@ -47,35 +50,42 @@ public class PathAnchor2D extends Anchor2D
         type = -1;
     }
 
-    public PathAnchor2D(double x1, double y1, double x2, double y2, double x3, double y3, int ray, Color color,
-            Color selectedColor)
+    /**
+     * @deprecated Uses
+     *             {@link #PathAnchor2D(double, double, double, double, double, double, int, Color, Color)}
+     *             instead.
+     */
+    @Deprecated
+    public PathAnchor2D(Sequence sequence, double x1, double y1, double x2, double y2, double x3, double y3, int ray,
+            Color color, Color selectedColor)
     {
-        this(null, x1, y1, x2, y2, x3, y3, ray, color, selectedColor);
+        this(x1, y1, x2, y2, x3, y3, ray, color, selectedColor);
+        sequence.addPainter(this);
     }
 
     public PathAnchor2D(double x1, double y1, double x2, double y2, double x3, double y3, int ray, Color color)
     {
-        this(null, x1, y1, x2, y2, x3, y3, ray, color, DEFAULT_SELECTED_COLOR);
+        this(x1, y1, x2, y2, x3, y3, ray, color, DEFAULT_SELECTED_COLOR);
     }
 
     public PathAnchor2D(double x1, double y1, double x2, double y2, double x3, double y3)
     {
-        this(null, x1, y1, x2, y2, x3, y3, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        this(x1, y1, x2, y2, x3, y3, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
     }
 
     public PathAnchor2D(double x1, double y1, double x2, double y2)
     {
-        this(null, 0d, 0d, x1, y1, x2, y2, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        this(0d, 0d, x1, y1, x2, y2, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
     }
 
     public PathAnchor2D(double x1, double y1, int ray, Color color, Color selectedColor)
     {
-        this(null, 0d, 0d, 0d, 0d, x1, y1, ray, color, selectedColor);
+        this(0d, 0d, 0d, 0d, x1, y1, ray, color, selectedColor);
     }
 
     public PathAnchor2D(double x1, double y1, Color color, Color selectedColor)
     {
-        this(null, 0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, color, selectedColor);
+        this(0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, color, selectedColor);
     }
 
     public PathAnchor2D(double x1, double y1)
@@ -85,7 +95,7 @@ public class PathAnchor2D extends Anchor2D
 
     public PathAnchor2D()
     {
-        this(null, 0d, 0d, 0d, 0d, 0, 0, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        this(0d, 0d, 0d, 0d, 0, 0, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
     }
 
     /**
@@ -108,7 +118,7 @@ public class PathAnchor2D extends Anchor2D
         if (type != value)
         {
             type = value;
-            changed();
+            painterChanged();
         }
     }
 
@@ -141,7 +151,7 @@ public class PathAnchor2D extends Anchor2D
             posQExt.y = y;
 
             positionChanged();
-            changed();
+            painterChanged();
         }
     }
 
@@ -158,7 +168,7 @@ public class PathAnchor2D extends Anchor2D
             posCExt.y = y;
 
             positionChanged();
-            changed();
+            painterChanged();
         }
     }
 

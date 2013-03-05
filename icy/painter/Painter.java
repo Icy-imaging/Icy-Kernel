@@ -30,8 +30,10 @@ import java.awt.geom.Point2D;
  * Painter interface used by IcyCanvas subclasses to forward mouse and key events to sequence
  * painters.
  * 
+ * @deprecated Prefer the {@link Overlay} class to this interface when possible.
  * @author Stephane
  */
+@Deprecated
 public interface Painter
 {
     /**
@@ -45,7 +47,7 @@ public interface Painter
      * @param e
      *        mouse event
      * @param imagePoint
-     *        mouse position in image coordinates
+     *        mouse position (image coordinates)
      * @param canvas
      *        icy canvas
      */
@@ -57,7 +59,7 @@ public interface Painter
      * @param e
      *        mouse event
      * @param imagePoint
-     *        mouse position in image coordinates
+     *        mouse position (image coordinates)
      * @param canvas
      *        icy canvas
      */
@@ -69,7 +71,7 @@ public interface Painter
      * @param e
      *        mouse event
      * @param imagePoint
-     *        mouse position in image coordinates
+     *        mouse position (image coordinates)
      * @param canvas
      *        icy canvas
      */
@@ -81,7 +83,7 @@ public interface Painter
      * @param e
      *        mouse event
      * @param imagePoint
-     *        mouse position in image coordinates
+     *        mouse position (image coordinates)
      * @param canvas
      *        icy canvas
      */
@@ -93,7 +95,7 @@ public interface Painter
      * @param e
      *        mouse event
      * @param imagePoint
-     *        mouse position in image coordinates
+     *        mouse position (image coordinates)
      * @param canvas
      *        icy canvas
      */
@@ -105,7 +107,7 @@ public interface Painter
      * @param e
      *        key event
      * @param imagePoint
-     *        mouse position in image coordinates
+     *        mouse position (image coordinates)
      * @param canvas
      *        icy canvas
      */
@@ -117,7 +119,7 @@ public interface Painter
      * @param e
      *        key event
      * @param imagePoint
-     *        mouse position in image coordinates
+     *        mouse position (image coordinates)
      * @param canvas
      *        icy canvas
      */

@@ -178,7 +178,7 @@ public class RoiActions
                     // add to sequence
                     for (Object roi : rois)
                         if (roi instanceof ROI)
-                            sequence.addROI(((ROI) roi).getCopy());
+                            sequence.addROI((ROI) roi);
                 }
                 finally
                 {

@@ -61,6 +61,19 @@ public class Loader
         public boolean zFixed;
         public boolean cFixed;
 
+        public FilePosition(File file, int t, int z, int c)
+        {
+            super();
+
+            this.file = file;
+            this.t = t;
+            this.z = z;
+            this.c = c;
+            tFixed = false;
+            zFixed = false;
+            cFixed = false;
+        }
+
         public FilePosition(File file)
         {
             super();
@@ -93,14 +106,15 @@ public class Loader
         final FileFrame loaderFrame;
         final List<Sequence> sequences;
         final ImageReader mainReader;
+        final boolean autoOrder;
         final boolean display;
         final boolean directory;
         IFormatReader lastUsedReader;
         List<Integer> series;
         List<Integer> selectedSeries;
 
-        public SequenceLoader(List<File> files, List<Integer> series, boolean display, boolean directory,
-                boolean showProgress)
+        public SequenceLoader(List<File> files, List<Integer> series, boolean autoOrder, boolean display,
+                boolean directory, boolean showProgress)
         {
             super();
 
@@ -125,6 +139,7 @@ public class Loader
             sequences = new ArrayList<Sequence>();
             mainReader = new ImageReader();
             lastUsedReader = null;
+            this.autoOrder = autoOrder;
             this.directory = directory;
             this.series = series;
             selectedSeries = null;
@@ -148,9 +163,17 @@ public class Loader
 
             try
             {
-                // build position list
-                for (File file : files)
-                    filePositions.add(getPositionFromFilename(file));
+                if (autoOrder)
+                {
+                    // build position list from filename
+                    for (File file : files)
+                        filePositions.add(getPositionFromFilename(file));
+                }
+                else
+                {
+                    for (int i = 0; i < files.size(); i++)
+                        filePositions.add(new FilePosition(files.get(i), i, 0, 0));
+                }
 
                 FilePosition pos = filePositions.get(0);
                 int t = pos.getT();
@@ -737,16 +760,37 @@ public class Loader
      *        Series to load (for multi serie sequence).
      * @param separate
      *        Force image to be loaded in separate sequence.
+     * @param autoOrder
+     *        Try to order image in sequence from their filename
+     * @param showProgress
+     *        Show progression of loading process.
+     */
+    public static List<Sequence> loadSequences(List<File> files, List<Integer> series, boolean separate,
+            boolean autoOrder, boolean showProgress)
+    {
+        final boolean directory = (files.size() == 1) && files.get(0).isDirectory();
+
+        // explode file list and load internally
+        return internalLoadWait(explodeAndClean(files), series, separate, autoOrder, directory, showProgress);
+    }
+
+    /**
+     * Load a list of sequence from the specified list of file and returns them.<br>
+     * As the function can take sometime you should not call it from the AWT EDT.<br>
+     * 
+     * @param files
+     *        List of image file to load.
+     * @param series
+     *        Series to load (for multi serie sequence).
+     * @param separate
+     *        Force image to be loaded in separate sequence.
      * @param showProgress
      *        Show progression of loading process.
      */
     public static List<Sequence> loadSequences(List<File> files, List<Integer> series, boolean separate,
             boolean showProgress)
     {
-        final boolean directory = (files.size() == 1) && files.get(0).isDirectory();
-
-        // explode file list and load internally
-        return internalLoadWait(explodeAndClean(files), series, separate, directory, showProgress);
+        return loadSequences(files, series, separate, true, true);
     }
 
     /**
@@ -762,7 +806,7 @@ public class Loader
      */
     public static List<Sequence> loadSequences(List<File> files, List<Integer> series, boolean separate)
     {
-        return loadSequences(files, series, separate, true);
+        return loadSequences(files, series, separate, true, true);
     }
 
     /**
@@ -776,17 +820,7 @@ public class Loader
      */
     public static List<Sequence> loadSequences(List<File> files, List<Integer> series)
     {
-        return loadSequences(files, series, false, true);
-    }
-
-    /**
-     * @deprecated Uses {@link #loadSequences(List, List, boolean)} instead.
-     */
-    @Deprecated
-    public static List<Sequence> loadSequences(List<File> files, List<Integer> series, boolean separate,
-            boolean display, boolean addToRecent)
-    {
-        return loadSequences(files, series, separate, true);
+        return loadSequences(files, series, false, true, true);
     }
 
     /**
@@ -802,7 +836,7 @@ public class Loader
      */
     public static List<Sequence> loadSequences(List<File> files, boolean separate, boolean showProgress)
     {
-        return loadSequences(files, null, separate, showProgress);
+        return loadSequences(files, null, separate, true, showProgress);
     }
 
     /**
@@ -816,7 +850,7 @@ public class Loader
      */
     public static List<Sequence> loadSequences(List<File> files, boolean separate)
     {
-        return loadSequences(files, null, separate, true);
+        return loadSequences(files, null, separate, true, true);
     }
 
     /**
@@ -825,7 +859,7 @@ public class Loader
     @Deprecated
     public static List<Sequence> loadSequences(List<File> files, boolean separate, boolean display, boolean addToRecent)
     {
-        return loadSequences(files, null, separate, true);
+        return loadSequences(files, null, separate, true, true);
     }
 
     /**
@@ -842,7 +876,7 @@ public class Loader
      */
     public static List<Sequence> loadSequences(File file, List<Integer> series, boolean showProgress)
     {
-        return loadSequences(CollectionUtil.createArrayList(file), series, false, showProgress);
+        return loadSequences(CollectionUtil.createArrayList(file), series, false, true, showProgress);
     }
 
     /**
@@ -857,7 +891,7 @@ public class Loader
      */
     public static List<Sequence> loadSequences(File file, List<Integer> series)
     {
-        return loadSequences(CollectionUtil.createArrayList(file), series, false, true);
+        return loadSequences(CollectionUtil.createArrayList(file), series, false, true, true);
     }
 
     /**
@@ -866,7 +900,7 @@ public class Loader
     @Deprecated
     public static List<Sequence> loadSequences(File file, List<Integer> series, boolean display, boolean addToRecent)
     {
-        return loadSequences(CollectionUtil.createArrayList(file), series, false, true);
+        return loadSequences(CollectionUtil.createArrayList(file), series, false, true, true);
     }
 
     /**
@@ -881,7 +915,7 @@ public class Loader
      */
     public static Sequence loadSequence(List<File> files, boolean showProgress)
     {
-        final List<Sequence> result = loadSequences(files, null, false, showProgress);
+        final List<Sequence> result = loadSequences(files, null, false, true, showProgress);
 
         if (result.size() > 0)
             return result.get(0);
@@ -968,7 +1002,7 @@ public class Loader
      */
     public static void load(List<File> files)
     {
-        load(files, false, true);
+        load(files, false, true, true);
     }
 
     /**
@@ -985,7 +1019,7 @@ public class Loader
      */
     public static void load(List<File> files, boolean separate)
     {
-        load(files, separate, true);
+        load(files, separate, true, true);
     }
 
     /**
@@ -1004,10 +1038,31 @@ public class Loader
      */
     public static void load(List<File> files, boolean separate, boolean showProgress)
     {
+        load(files, separate, true, showProgress);
+    }
+
+    /**
+     * Load the specified image files.<br>
+     * The loading process is asynchronous.<br>
+     * If 'separate' is false the loader try to set image in the same sequence.<br>
+     * If separate is true each image is loaded in a separate sequence.<br>
+     * The resulting sequences are automatically displayed when the process complete.
+     * 
+     * @param files
+     *        list of image file to load
+     * @param separate
+     *        Force image to be loaded in separate sequence
+     * @param autoOrder
+     *        Try to order image in sequence from their filename
+     * @param showProgress
+     *        Show progression in loading process
+     */
+    public static void load(List<File> files, boolean separate, boolean autoOrder, boolean showProgress)
+    {
         final boolean directory = (files.size() == 1) && files.get(0).isDirectory();
 
         // explode file list
-        internalLoad(explodeAndClean(files), separate, directory, showProgress);
+        internalLoad(explodeAndClean(files), separate, autoOrder, directory, showProgress);
     }
 
     /**
@@ -1020,13 +1075,15 @@ public class Loader
      *        list of image file to load
      * @param separate
      *        Force image to be loaded in separate sequence
+     * @param autoOrder
+     *        Try to order image in sequence from their filename
      * @param directory
      *        Specify is the source is a single complete directory
      * @param showProgress
      *        Show progression in loading process
      */
-    private static void internalLoad(final List<File> files, final boolean separate, final boolean directory,
-            final boolean showProgress)
+    private static void internalLoad(final List<File> files, final boolean separate, final boolean autoOrder,
+            final boolean directory, final boolean showProgress)
     {
         // to avoid blocking call
         ThreadUtil.bgRunWait(new Runnable()
@@ -1047,7 +1104,7 @@ public class Loader
 
                         // create sequence loader
                         final SequenceLoader loadingThread = new SequenceLoader(CollectionUtil.createArrayList(file),
-                                null, true, directory, showProgress);
+                                null, autoOrder, true, directory, showProgress);
                         // load file using background processor
                         ThreadUtil.bgRunWait(loadingThread);
                     }
@@ -1067,7 +1124,7 @@ public class Loader
                         }
 
                         // create and run sequence loader
-                        new SequenceLoader(files, null, true, directory, showProgress).run();
+                        new SequenceLoader(files, null, autoOrder, true, directory, showProgress).run();
                     }
                 }
             }
@@ -1094,7 +1151,7 @@ public class Loader
      *        Show progression in loading process
      */
     private static List<Sequence> internalLoadWait(final List<File> files, final List<Integer> series,
-            final boolean separate, final boolean directory, final boolean showProgress)
+            final boolean separate, final boolean autoOrder, final boolean directory, final boolean showProgress)
     {
         final ArrayList<Sequence> result = new ArrayList<Sequence>();
 
@@ -1104,8 +1161,8 @@ public class Loader
             for (File file : files)
             {
                 // create sequence loader
-                final SequenceLoader t = new SequenceLoader(CollectionUtil.createArrayList(file), series, false,
-                        directory, showProgress);
+                final SequenceLoader t = new SequenceLoader(CollectionUtil.createArrayList(file), series, autoOrder,
+                        false, directory, showProgress);
                 // load sequence
                 t.run();
                 // then add results
@@ -1117,7 +1174,7 @@ public class Loader
             if (files.size() > 0)
             {
                 // create and run sequence loader
-                final SequenceLoader t = new SequenceLoader(files, series, false, directory, showProgress);
+                final SequenceLoader t = new SequenceLoader(files, series, autoOrder, false, directory, showProgress);
                 // load sequence
                 t.run();
                 // then add results

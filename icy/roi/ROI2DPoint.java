@@ -51,7 +51,8 @@ public class ROI2DPoint extends ROI2DShape
         // add to the control point list
         controlPoints.add(this.position);
 
-        this.position.addListener(this);
+        this.position.addOverlayListener(this);
+        this.position.addAnchorListener(this);
 
         // select the point in "creation mode"
         if (cm)

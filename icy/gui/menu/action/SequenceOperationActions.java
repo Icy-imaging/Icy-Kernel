@@ -178,7 +178,9 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            
+            return !processing && (sequence != null) && !sequence.isEmpty();
         }
     }
 
@@ -498,7 +500,9 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            
+            return !processing && (sequence != null) && !sequence.isEmpty();
         }
     };
 
@@ -633,7 +637,9 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            
+            return !processing && (sequence != null) && !sequence.isEmpty();
         }
     };
 
@@ -752,7 +758,9 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            
+            return !processing && (sequence != null) && !sequence.isEmpty();
         }
     };
 

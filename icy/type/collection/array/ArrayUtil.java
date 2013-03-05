@@ -472,121 +472,26 @@ public class ArrayUtil
     }
 
     /**
-     * Same as Arrays.fill() but applied to Object array (1D only) from a double value
+     * Same as Arrays.fill() but applied to Object array (1D only) from a double value.<br>
+     * 
+     * @deprecated Uses {@link Array1DUtil#fill(Object, int, int, double)} instead.
      */
+    @Deprecated
     public static void fill(Object array, int from, int to, double value)
     {
-        switch (getDataType(array))
-        {
-            case BYTE:
-                Array1DUtil.fill((byte[]) array, from, to, (byte) value);
-                break;
-
-            case SHORT:
-                Array1DUtil.fill((short[]) array, from, to, (short) value);
-                break;
-
-            case INT:
-                Array1DUtil.fill((int[]) array, from, to, (int) value);
-                break;
-
-            case LONG:
-                Array1DUtil.fill((long[]) array, from, to, (long) value);
-                break;
-
-            case FLOAT:
-                Array1DUtil.fill((float[]) array, from, to, (float) value);
-                break;
-
-            case DOUBLE:
-                Array1DUtil.fill((double[]) array, from, to, value);
-                break;
-        }
+        Array1DUtil.fill(array, from, to, value);
     }
 
     /**
      * Copy 'cnt' elements from 'from' index to 'to' index in a safe manner.<br>
-     * i.e: without overriding any data
+     * i.e: without overriding any data.<br>
+     * 
+     * @deprecated Uses {@link Array1DUtil#innerCopy(Object, int, int, int)} instead.
      */
+    @Deprecated
     public static void innerCopy(Object array, int from, int to, int cnt)
     {
-        if (array == null)
-            return;
-
-        final int dim = getDim(array);
-
-        if (dim == 1)
-        {
-            switch (ArrayUtil.getDataType(array))
-            {
-                case BYTE:
-                    Array1DUtil.innerCopy((byte[]) array, from, to, cnt);
-                    return;
-
-                case SHORT:
-                    Array1DUtil.innerCopy((short[]) array, from, to, cnt);
-                    return;
-
-                case INT:
-                    Array1DUtil.innerCopy((int[]) array, from, to, cnt);
-                    return;
-
-                case LONG:
-                    Array1DUtil.innerCopy((long[]) array, from, to, cnt);
-                    return;
-
-                case FLOAT:
-                    Array1DUtil.innerCopy((float[]) array, from, to, cnt);
-                    return;
-
-                case DOUBLE:
-                    Array1DUtil.innerCopy((double[]) array, from, to, cnt);
-                    return;
-            }
-        }
-
-        // use generic code
-        final int delta = to - from;
-
-        if (delta == 0)
-            return;
-
-        final int length = Array.getLength(array);
-
-        if ((from < 0) || (to < 0) || (from >= length) || (to >= length))
-            return;
-
-        final int adjCnt;
-
-        // forward copy
-        if (delta < 0)
-        {
-            // adjust copy size
-            if ((from + cnt) >= length)
-                adjCnt = length - from;
-            else
-                adjCnt = cnt;
-
-            int to_ = to;
-            int from_ = from;
-            for (int i = 0; i < adjCnt; i++)
-                Array.set(array, to_++, Array.get(array, from_++));
-        }
-        else
-        // backward copy
-        {
-            // adjust copy size
-            if ((to + cnt) >= length)
-                adjCnt = length - to;
-            else
-                adjCnt = cnt;
-
-            int to_ = to + cnt;
-            int from_ = from + cnt;
-            for (int i = 0; i < adjCnt; i++)
-                Array.set(array, --to_, Array.get(array, --from_));
-        }
-
+        Array1DUtil.innerCopy(array, from, to, cnt);
     }
 
     /**

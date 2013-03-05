@@ -152,7 +152,7 @@ public class ExternalizablePanel extends JPanel
 
         // use window position saver with default parameters
         if (!StringUtil.isEmpty(key))
-            positionSaver = new WindowPositionSaver(this, "frame/" + key, new Point(200, 200), new Dimension(400, 300));
+            positionSaver = new WindowPositionSaver(this, "frame/" + key, defLoc, defDim);
         else
             positionSaver = null;
     }

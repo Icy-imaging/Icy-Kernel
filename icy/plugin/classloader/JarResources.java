@@ -290,14 +290,33 @@ public class JarResources
         BufferedInputStream bis = null;
         JarFile jf = null;
 
+        String path;
+        int ind;
+        String filename;
+        String resname;
+
         try
         {
-            final String path = URLDecoder.decode(url.getFile(), "UTF-8");
-            final int ind = path.indexOf('!');
-            final String filename = path.substring(5, ind);
-            final String resname = path.substring(ind + 2);
+            path = url.getFile();
+            ind = path.indexOf('!');
+            filename = path.substring(5, ind);
+            resname = path.substring(ind + 2);
 
-            jf = new JarFile(filename);
+            try
+            {
+                jf = new JarFile(filename);
+            }
+            catch (IOException e)
+            {
+                // try to decode the URL then
+                path = URLDecoder.decode(url.getFile(), "UTF-8");
+                ind = path.indexOf('!');
+                filename = path.substring(5, ind);
+                resname = path.substring(ind + 2);
+
+                jf = new JarFile(filename);
+            }
+
             final JarEntry jarEntry = jf.getJarEntry(resname);
 
             if (jarEntry != null)

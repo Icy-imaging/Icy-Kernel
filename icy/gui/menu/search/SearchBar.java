@@ -412,7 +412,16 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 
-        Insets insets = getMargin();
+        if (StringUtil.isEmpty(getText()) && !hasFocus())
+        {
+            // draw "Search" if no focus
+            Insets insets = getMargin();
+            Color fg = getForeground();
+            
+            g2.setColor(new Color(fg.getRed(), fg.getGreen(), fg.getBlue(), 100));
+            g2.drawString("Search", insets.left + 2, h - g2.getFontMetrics().getHeight() / 2 + 2);
+        }
+
         if (searchEngine.isSearching())
         {
             // draw loading icon
@@ -424,14 +433,6 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
             // draw search icon
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
             searchIcon.paintIcon(this, g2, w - h, 2);
-        }
-
-        if (StringUtil.isEmpty(getText()) && !hasFocus())
-        {
-            // draw "Search" if no focus
-            Color fg = getForeground();
-            g2.setColor(new Color(fg.getRed(), fg.getGreen(), fg.getBlue(), 100));
-            g2.drawString("Search", insets.left + 2, h - g2.getFontMetrics().getHeight() / 2 + 2);
         }
 
         g2.dispose();

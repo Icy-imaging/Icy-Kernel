@@ -126,7 +126,7 @@ public class TaskFrameManager implements Runnable
     {
         final Dimension desktopSize = getDesktopSize();
 
-        if (desktopSize != null)
+        if ((desktopSize != null) && !tFrame.canRemove())
         {
             synchronized (taskFrames)
             {

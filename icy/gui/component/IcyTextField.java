@@ -18,6 +18,8 @@
  */
 package icy.gui.component;
 
+import icy.util.StringUtil;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -146,6 +148,15 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
             listener.textChanged(this, validate);
     }
 
+    /**
+     * Force the field to pass to unchanged state (after a {@link #setText(String)} for instance)<br>
+     * so it won't generate further <code>textChanged</code> event.
+     */
+    public void setUnchanged()
+    {
+        changed = false;
+    }
+
     public void addTextChangeListener(TextChangeListener listener)
     {
         listenerList.add(TextChangeListener.class, listener);
@@ -154,6 +165,18 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
     public void removeTextChangeListener(TextChangeListener listener)
     {
         listenerList.remove(TextChangeListener.class, listener);
+    }
+
+    @Override
+    public void setText(String t)
+    {
+        if (StringUtil.equals(t, getText(), false))
+            return;
+
+        super.setText(t);
+
+        // validate change
+        internalTextChanged(true);
     }
 
     @Override

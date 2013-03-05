@@ -30,6 +30,9 @@ import java.util.ArrayList;
 import javax.swing.event.EventListenerList;
 
 /**
+ * AbstractPainter class.<br>
+ * Uses the {@link Overlay} class instead.
+ * 
  * @author Stephane
  */
 public abstract class AbstractPainter extends PainterAdapter implements ChangeListener
@@ -45,42 +48,35 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
 
     /**
      * Create an AbstractPainter and attach it to the specified sequence.
+     * 
+     * @deprecated Uses the {@link Overlay} class instead.
      */
-    public AbstractPainter(Sequence sequence)
+    @Deprecated
+    public AbstractPainter()
     {
         super();
 
         listeners = new EventListenerList();
         updater = new UpdateEventHandler(this, false);
-
-        attachTo(sequence);
     }
 
-    public AbstractPainter()
+    /**
+     * Create an AbstractPainter and attach it to the specified sequence.
+     * 
+     * @deprecated Uses the {@link Overlay} class instead.
+     */
+    @Deprecated
+    public AbstractPainter(Sequence sequence)
     {
-        this(null);
-    }
+        this();
 
-    public void attachTo(Sequence sequence)
-    {
         if (sequence != null)
             sequence.addPainter(this);
     }
 
-    public void detachFrom(Sequence sequence)
-    {
-        if (sequence != null)
-            sequence.removePainter(this);
-    }
-
-    public void detachFromAll()
-    {
-        final ArrayList<Sequence> sequences = Icy.getMainInterface().getSequencesContaining(this);
-
-        for (Sequence sequence : sequences)
-            sequence.removePainter(this);
-    }
-
+    /**
+     * Returns <code>true</code> if the overlay is attached to the specified {@link Sequence}.
+     */
     public boolean isAttached(Sequence sequence)
     {
         if (sequence != null)
@@ -89,9 +85,53 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
         return false;
     }
 
+    /**
+     * @deprecated Uses {@link Sequence#addPainter(Painter)} instead.
+     */
+    @Deprecated
+    public void attachTo(Sequence sequence)
+    {
+        if (sequence != null)
+            sequence.addPainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link Sequence#removePainter(Painter)} instead.
+     */
+    @Deprecated
+    public void detachFrom(Sequence sequence)
+    {
+        if (sequence != null)
+            sequence.removePainter(this);
+    }
+
+    /**
+     * @deprecated Uses {@link #remove()} instead.
+     */
+    @Deprecated
+    public void detachFromAll()
+    {
+        remove();
+    }
+
+    /**
+     * @deprecated Uses {@link #remove()} instead.
+     */
+    @Deprecated
     public void delete()
     {
-        detachFromAll();
+        remove();
+    }
+
+    /**
+     * Remove the Painter from all sequences where it is currently attached.
+     */
+    public void remove()
+    {
+        final ArrayList<Sequence> sequences = Icy.getMainInterface().getSequencesContaining(this);
+
+        for (Sequence sequence : sequences)
+            sequence.removePainter(this);
     }
 
     public void changed()
@@ -100,13 +140,17 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
     }
 
     /**
-     * @return sequences where painter is attached
+     * Returns all sequences where the painter/overlay is currently attached.
      */
     public ArrayList<Sequence> getSequences()
     {
         return Icy.getMainInterface().getSequencesContaining(this);
     }
 
+    /**
+     * @deprecated Uses {@link Overlay} class instead.
+     */
+    @Deprecated
     protected void fireChangedEvent(PainterEvent event)
     {
         for (PainterListener listener : listeners.getListeners(PainterListener.class))
@@ -114,20 +158,18 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
     }
 
     /**
-     * Add a listener
-     * 
-     * @param listener
+     * @deprecated Uses {@link Overlay#addOverlayListener(OverlayListener)} instead.
      */
+    @Deprecated
     public void addPainterListener(PainterListener listener)
     {
         listeners.add(PainterListener.class, listener);
     }
 
     /**
-     * Remove a listener
-     * 
-     * @param listener
+     * @deprecated Uses {@link Overlay#removeOverlayListener(OverlayListener)} instead.
      */
+    @Deprecated
     public void removePainterListener(PainterListener listener)
     {
         listeners.remove(PainterListener.class, listener);
@@ -161,5 +203,4 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
         for (Sequence sequence : sequences)
             sequence.painterChanged(this);
     }
-
 }

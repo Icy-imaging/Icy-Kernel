@@ -50,6 +50,9 @@ public class RoiExtraInfoPanel extends JPanel
         @Override
         public void run()
         {
+            if (roi == null)
+                return;
+            
             try
             {
                 final IntensityInfo intensityInfos[];

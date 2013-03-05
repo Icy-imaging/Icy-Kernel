@@ -31,24 +31,22 @@ import java.util.Enumeration;
  */
 public abstract class ProxyClassLoader implements Comparable<ProxyClassLoader>
 {
-    // Default order
-    protected int order = 5;
-    // Enabled by default
-    protected boolean enabled = true;
+    protected int order;
+    protected boolean enabled;
+
+    public ProxyClassLoader(int order)
+    {
+        super();
+
+        // Default order
+        this.order = order;
+        // Enabled by default
+        enabled = true;
+    }
 
     public int getOrder()
     {
         return order;
-    }
-
-    /**
-     * Set loading order
-     * 
-     * @param order
-     */
-    public void setOrder(int order)
-    {
-        this.order = order;
     }
 
     /**

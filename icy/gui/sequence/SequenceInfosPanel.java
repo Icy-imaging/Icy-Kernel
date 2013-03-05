@@ -414,24 +414,22 @@ public class SequenceInfosPanel extends InspectorSubPanel
     @Override
     public void focusedSequenceChanged(SequenceEvent event)
     {
-        final SequenceEvent e = event;
+        final Sequence sequence = event.getSequence();
 
-        ThreadUtil.invokeLater(new Runnable()
+        switch (event.getSourceType())
         {
-            @Override
-            public void run()
-            {
-                final Sequence sequence = e.getSequence();
-
-                switch (e.getSourceType())
+            case SEQUENCE_DATA:
+            case SEQUENCE_TYPE:
+            case SEQUENCE_META:
+                ThreadUtil.invokeLater(new Runnable()
                 {
-                    case SEQUENCE_DATA:
-                    case SEQUENCE_TYPE:
-                    case SEQUENCE_META:
+                    @Override
+                    public void run()
+                    {
                         updateInfos(sequence);
-                        break;
-                }
-            }
-        });
+                    }
+                });
+                break;
+        }
     }
 }

@@ -18,6 +18,7 @@
  */
 package icy.canvas;
 
+import icy.canvas.CanvasLayerEvent.LayersEventType;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
@@ -960,7 +961,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             setPositionC(newPosC);
     }
 
-    protected void addLayerActors(Layer layer)
+    protected vtkProp[] getLayerActors(Layer layer)
     {
         if (layer != null)
         {
@@ -968,30 +969,22 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             final Painter painter = layer.getPainter();
 
             if (painter instanceof VtkPainter)
-            {
-                final VtkPainter vp = (VtkPainter) painter;
-
-                for (vtkProp actor : vp.getProps())
-                    VtkUtil.addProp(renderer, actor);
-            }
+                return ((VtkPainter) painter).getProps();
         }
+
+        return new vtkProp[0];
+    }
+
+    protected void addLayerActors(Layer layer)
+    {
+        for (vtkProp actor : getLayerActors(layer))
+            VtkUtil.addProp(renderer, actor);
     }
 
     protected void removeLayerActors(Layer layer)
     {
-        if (layer != null)
-        {
-            // remove painter actor from the vtk render
-            final Painter painter = layer.getPainter();
-
-            if (painter instanceof VtkPainter)
-            {
-                final VtkPainter vp = (VtkPainter) painter;
-
-                for (vtkProp actor : vp.getProps())
-                    VtkUtil.removeProp(renderer, actor);
-            }
-        }
+        for (vtkProp actor : getLayerActors(layer))
+            VtkUtil.removeProp(renderer, actor);
     }
 
     @Override
@@ -1458,15 +1451,31 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
     }
 
     @Override
-    public void layersChanged(LayersEvent event)
+    protected void sequencePainterChanged(Painter painter, SequenceEventType type)
     {
-        super.layersChanged(event);
+        super.sequencePainterChanged(painter, type);
 
         if (!initialized)
             return;
 
         // refresh
         refresh();
+    }
+
+    @Override
+    protected void layerChanged(CanvasLayerEvent event)
+    {
+        super.layerChanged(event);
+
+        if (!initialized)
+            return;
+
+        // layer visibility property modified ?
+        if ((event.getType() == LayersEventType.CHANGED) && Layer.isPaintProperty(event.getProperty()))
+        {
+            // TODO: refresh actor properties from layers properties
+            // refresh();
+        }
     }
 
     @Override

@@ -21,7 +21,6 @@ package icy.roi;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvas3D;
-import icy.common.EventHierarchicalChecker;
 import icy.image.ImageUtil;
 import icy.sequence.Sequence;
 import icy.util.EventUtil;
@@ -61,7 +60,7 @@ public class ROI2DArea extends ROI2D
 
     public class ROI2DAreaPainter extends ROI2DPainter
     {
-        private static final float DEFAULT_ALPHA = 0.3f;
+        public static final float CONTENT_ALPHA = 0.3f;
         private static final float MIN_CURSOR_SIZE = 0.6f;
         private static final float MAX_CURSOR_SIZE = 500f;
 
@@ -69,7 +68,6 @@ public class ROI2DArea extends ROI2D
         private Point2D.Double cursorPosition;
         private Color cursorColor;
         private float cursorSize;
-        private float alphaLevel;
 
         /**
          * 
@@ -82,8 +80,6 @@ public class ROI2DArea extends ROI2D
             cursorPosition = new Point2D.Double();
             cursorColor = Color.red;
             cursorSize = globalCursorSize;
-            alphaLevel = DEFAULT_ALPHA;
-
         }
 
         void updateCursor()
@@ -95,7 +91,7 @@ public class ROI2DArea extends ROI2D
 
             // if roi selected (cursor displayed) --> painter changed
             if (selected)
-                changed();
+                painterChanged();
         }
 
         /**
@@ -144,29 +140,6 @@ public class ROI2DArea extends ROI2D
         }
 
         /**
-         * @return the alphaLevel
-         */
-        public float getAlphaLevel()
-        {
-            return alphaLevel;
-        }
-
-        /**
-         * @param value
-         *        the alphaLevel to set
-         */
-        public void setAlphaLevel(float value)
-        {
-            final float newValue = Math.max(0f, Math.min(1f, value));
-
-            if (alphaLevel != newValue)
-            {
-                alphaLevel = newValue;
-                changed();
-            }
-        }
-
-        /**
          * @return the cursorColor
          */
         public Color getCursorColor()
@@ -183,7 +156,7 @@ public class ROI2DArea extends ROI2D
             if (!cursorColor.equals(value))
             {
                 cursorColor = value;
-                changed();
+                painterChanged();
             }
         }
 
@@ -200,11 +173,11 @@ public class ROI2DArea extends ROI2D
         }
 
         @Override
-        public void onChanged(EventHierarchicalChecker object)
+        public void painterChanged()
         {
             updateMaskColor(true);
 
-            super.onChanged(object);
+            super.painterChanged();
         }
 
         @Override
@@ -353,21 +326,21 @@ public class ROI2DArea extends ROI2D
 
                 // draw border black line
                 if (selected)
-                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 2d)));
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 2d)));
                 else
-                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 1d)));
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
                 g2.setColor(Color.black);
                 g2.draw(bounds);
                 // draw internal border
                 g2.setColor(getDisplayColor());
                 if (selected)
-                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke + 1d)));
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
                 else
-                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke)));
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
                 g2.draw(bounds);
 
                 // set alpha
-                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaLevel));
+                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, CONTENT_ALPHA));
                 // draw mask
                 g2.drawImage(imageMask, null, bounds.x, bounds.y);
 
@@ -376,7 +349,7 @@ public class ROI2DArea extends ROI2D
                 {
                     // draw cursor border
                     g2.setColor(Color.black);
-                    g2.setStroke(new BasicStroke((float) getAdjustedStroke(canvas, stroke)));
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
                     g2.draw(cursor);
 
                     // cursor color
@@ -604,18 +577,18 @@ public class ROI2DArea extends ROI2D
         }
         // empty ? delete ROI if flag allow it
         else if (removeIfEmpty)
-            delete();
+            remove();
     }
 
     public int getMaskColor()
     {
-        final int alpha = (int) (getPainter().getAlphaLevel() * 255);
-        return (alpha << 24) | (ROI2DArea.this.getDisplayColor().getRGB() & 0x00FFFFFF);
+        final int alpha = (int) (ROI2DAreaPainter.CONTENT_ALPHA * 255);
+        return (alpha << 24) | (getPainter().getDisplayColor().getRGB() & 0x00FFFFFF);
     }
 
     void updateMaskColor(boolean rebuildImage)
     {
-        final Color color = getDisplayColor();
+        final Color color = getPainter().getDisplayColor();
 
         // roi color changed ?
         if (!previousColor.equals(color))

@@ -32,6 +32,10 @@ import icy.image.colormodel.IcyColorModelListener;
 import icy.image.lut.LUT;
 import icy.main.Icy;
 import icy.math.Scaler;
+import icy.painter.Overlay;
+import icy.painter.OverlayEvent;
+import icy.painter.OverlayEvent.OverlayEventType;
+import icy.painter.OverlayListener;
 import icy.painter.Painter;
 import icy.preferences.GeneralPreferences;
 import icy.roi.ROI;
@@ -82,7 +86,7 @@ import org.w3c.dom.Node;
  */
 
 public class Sequence implements SequenceModel, IcyColorModelListener, IcyBufferedImageListener, ChangeListener,
-        ROIListener
+        ROIListener, OverlayListener
 {
     private static final String DEFAULT_NAME = "no name";
 
@@ -333,21 +337,27 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         final boolean hadRoi = !rois.isEmpty();
         final boolean hadPainter = !painters.isEmpty();
 
+        synchronized (painters)
+        {
+            for (Painter painter : painters)
+                // remove listener for Overlay
+                if (painter instanceof Overlay)
+                    ((Overlay) painter).removeOverlayListener(this);
+
+            painters.clear();
+        }
+
         synchronized (rois)
         {
-            synchronized (painters)
-            {
-                // remove all listener on ROI
-                for (ROI roi : rois)
-                    roi.removeListener(this);
+            // remove all listener on ROI
+            for (ROI roi : rois)
+                roi.removeListener(this);
 
-                rois.clear();
-                painters.clear();
-            }
+            rois.clear();
         }
 
         // notify some painters has been removed
-        if (hadRoi || hadPainter)
+        if (hadPainter)
             painterChanged(null, SequenceEventType.REMOVED);
         // notify some ROIs has been removed
         if (hadRoi)
@@ -385,7 +395,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             });
         }
         // notify close
-        fireCloseEvent();
+        fireClosedEvent();
     }
 
     private void setColorModel(IcyColorModel cm)
@@ -1282,6 +1292,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         {
             // remove ROI painter first
             removePainter(roi.getPainter());
+
             // remove ROI
             synchronized (rois)
             {
@@ -1323,12 +1334,18 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
             synchronized (painters)
             {
-                // remove associated painters
+                // remove associated painters first
                 for (ROI roi : allROIs)
-                    painters.remove(roi.getPainter());
+                {
+                    final Painter painter = roi.getPainter();
+
+                    painters.remove(painter);
+                    if (painter instanceof Overlay)
+                        ((Overlay) painter).removeOverlayListener(this);
+                }
             }
 
-            // notify painters removed
+            // notify painters / overlays removed
             painterChanged(null, SequenceEventType.REMOVED);
 
             synchronized (rois)
@@ -1364,6 +1381,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             painters.add(painter);
         }
 
+        // add listener for Overlay
+        if (painter instanceof Overlay)
+            ((Overlay) painter).addOverlayListener(this);
         // notify painter added
         painterChanged(painter, SequenceEventType.ADDED);
 
@@ -1384,9 +1404,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             result = painters.remove(painter);
         }
 
-        // notify painter removed
         if (result)
+        {
+            // remove listener for Overlay
+            if (painter instanceof Overlay)
+                ((Overlay) painter).removeOverlayListener(this);
+            // notify painter removed
             painterChanged(painter, SequenceEventType.REMOVED);
+        }
 
         return result;
     }
@@ -1760,7 +1785,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Add an image to the VolumetricImage[t] (the volumetricImage must exist).
+     * Add an image to the VolumetricImage[t]
      * 
      * @param image
      *        image to add
@@ -4908,7 +4933,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * fire change event
      */
-    private void fireChangeEvent(SequenceEvent e)
+    private void fireChangedEvent(SequenceEvent e)
     {
         for (SequenceListener listener : listeners.getListeners(SequenceListener.class))
             listener.sequenceChanged(e);
@@ -4917,7 +4942,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * fire close event
      */
-    private void fireCloseEvent()
+    private void fireClosedEvent()
     {
         for (SequenceListener listener : listeners.getListeners(SequenceListener.class))
             listener.sequenceClosed(this);
@@ -5024,6 +5049,19 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public void painterChanged(Painter painter)
     {
         painterChanged(painter, SequenceEventType.CHANGED);
+    }
+
+    /**
+     * notify specified overlay has changed (null means all overlays)
+     */
+    @Override
+    public void overlayChanged(OverlayEvent event)
+    {
+        if (event.getType() == OverlayEventType.PAINTER_CHANGED)
+            painterChanged(event.getSource(), SequenceEventType.CHANGED);
+
+        // nothing to do about Overlay property here
+        // do that in Canvas class instead
     }
 
     /**
@@ -5164,7 +5202,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         }
 
         // notify listener we have changed
-        fireChangeEvent(event);
+        fireChangedEvent(event);
     }
 
 }
