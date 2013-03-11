@@ -57,5 +57,6 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/xuggler.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/substance-swingx.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/swingx-all.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/metakit.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>
