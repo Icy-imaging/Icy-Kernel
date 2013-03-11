@@ -7,8 +7,6 @@ import icy.gui.viewer.Viewer;
 import icy.image.IntensityInfo;
 import icy.main.Icy;
 import icy.math.MathUtil;
-import icy.math.UnitUtil;
-import icy.math.UnitUtil.UnitPrefix;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.roi.ROIUtil;
@@ -17,10 +15,12 @@ import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
+import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
+import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -50,9 +50,6 @@ public class RoiExtraInfoPanel extends JPanel
         @Override
         public void run()
         {
-            if (roi == null)
-                return;
-            
             try
             {
                 final IntensityInfo intensityInfos[];
@@ -120,16 +117,15 @@ public class RoiExtraInfoPanel extends JPanel
     /**
      * GUI
      */
-    private JLabel perimeterUnitLabel;
     private JLabel perimeterValueLabel;
     private JLabel volumeValueLabel;
-    private JLabel volumeUnitLabel;
     private JLabel lblMinIntensity;
     private JLabel lblMeanIntensity;
     private JLabel lblMaxIntensity;
     private JLabel intensityMinLabel;
     private JLabel intensityMeanLabel;
     private JLabel intensityMaxLabel;
+    private Component horizontalStrut;
 
     /**
      * Internals
@@ -154,7 +150,7 @@ public class RoiExtraInfoPanel extends JPanel
     void initialize()
     {
         GridBagLayout gbl_panel = new GridBagLayout();
-        gbl_panel.columnWidths = new int[] {80, 46, 40, 0};
+        gbl_panel.columnWidths = new int[] {80, 46, 10, 0};
         gbl_panel.rowHeights = new int[] {0, 0, 0, 0, 0, 0};
         gbl_panel.columnWeights = new double[] {0.0, 1.0, 0.0, Double.MIN_VALUE};
         gbl_panel.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
@@ -177,13 +173,12 @@ public class RoiExtraInfoPanel extends JPanel
         gbc_perimeterValueLabel.gridy = 0;
         add(perimeterValueLabel, gbc_perimeterValueLabel);
 
-        perimeterUnitLabel = new JLabel("mm");
-        GridBagConstraints gbc_perimeterUnitLabel = new GridBagConstraints();
-        gbc_perimeterUnitLabel.anchor = GridBagConstraints.WEST;
-        gbc_perimeterUnitLabel.insets = new Insets(0, 0, 5, 0);
-        gbc_perimeterUnitLabel.gridx = 2;
-        gbc_perimeterUnitLabel.gridy = 0;
-        add(perimeterUnitLabel, gbc_perimeterUnitLabel);
+        horizontalStrut = Box.createHorizontalStrut(10);
+        GridBagConstraints gbc_horizontalStrut = new GridBagConstraints();
+        gbc_horizontalStrut.insets = new Insets(0, 0, 5, 0);
+        gbc_horizontalStrut.gridx = 2;
+        gbc_horizontalStrut.gridy = 0;
+        add(horizontalStrut, gbc_horizontalStrut);
 
         JLabel lblVolume = new JLabel("Volume");
         lblVolume.setToolTipText("Volume of selected ROI");
@@ -201,14 +196,6 @@ public class RoiExtraInfoPanel extends JPanel
         gbc_volumeValueLabel.gridx = 1;
         gbc_volumeValueLabel.gridy = 1;
         add(volumeValueLabel, gbc_volumeValueLabel);
-
-        volumeUnitLabel = new JLabel("mm");
-        GridBagConstraints gbc_volumeUnitLabel = new GridBagConstraints();
-        gbc_volumeUnitLabel.insets = new Insets(0, 0, 5, 0);
-        gbc_volumeUnitLabel.anchor = GridBagConstraints.WEST;
-        gbc_volumeUnitLabel.gridx = 2;
-        gbc_volumeUnitLabel.gridy = 1;
-        add(volumeUnitLabel, gbc_volumeUnitLabel);
 
         lblMinIntensity = new JLabel("Min intensity");
         lblMinIntensity.setToolTipText("Minimum pixel intensity of selected ROI");
@@ -258,8 +245,8 @@ public class RoiExtraInfoPanel extends JPanel
         intensityMaxLabel = new JLabel();
         intensityMaxLabel.setText("0");
         GridBagConstraints gbc_label_5 = new GridBagConstraints();
-        gbc_label_5.anchor = GridBagConstraints.EAST;
         gbc_label_5.insets = new Insets(0, 0, 0, 5);
+        gbc_label_5.anchor = GridBagConstraints.EAST;
         gbc_label_5.gridx = 1;
         gbc_label_5.gridy = 4;
         add(intensityMaxLabel, gbc_label_5);
@@ -276,77 +263,26 @@ public class RoiExtraInfoPanel extends JPanel
      */
     void refreshInfos(Sequence sequence, double perimeter, double volume, int roiDim)
     {
-        final double mul2d;
-        final double mul3d;
-
-        if (sequence != null)
+        if ((sequence == null) || (perimeter == -1d))
         {
-            mul2d = sequence.getPixelSizeX() * sequence.getPixelSizeY();
-            mul3d = mul2d * sequence.getPixelSizeZ();
-        }
-        else
-        {
-            mul2d = 1d;
-            mul3d = 1d;
-        }
-
-        if (perimeter != -1d)
-        {
-            double fp;
-            String unitPostFix;
-
-            if (roiDim <= 2)
-            {
-                unitPostFix = "";
-                fp = perimeter * mul2d;
-            }
-            else
-            {
-                unitPostFix = Integer.toString(roiDim - 1);
-                fp = perimeter * mul3d;
-            }
-
-            final UnitPrefix unit = UnitUtil.getBestUnit(fp, UnitPrefix.MICRO, roiDim - 1);
-            fp = UnitUtil.getValueInUnit(fp, UnitPrefix.MICRO, unit, roiDim - 1);
-
-            perimeterUnitLabel.setText(unit.toString() + "m" + unitPostFix);
-            perimeterValueLabel.setText(StringUtil.toString(MathUtil.roundSignificant(fp, 5)));
-            perimeterValueLabel.setToolTipText(StringUtil.toString(fp));
-        }
-        else
-        {
-            perimeterUnitLabel.setText("");
             perimeterValueLabel.setText("");
             perimeterValueLabel.setToolTipText("");
         }
-
-        if (volume != -1d)
+        else
         {
-            double fv;
-            String unitPostFix;
+            perimeterValueLabel.setText(sequence.calculateSize(perimeter, roiDim - 1, 5));
+            perimeterValueLabel.setToolTipText(StringUtil.toString(perimeter) + " pixel(s)");
+        }
 
-            if (roiDim <= 1)
-                unitPostFix = "";
-            else
-                unitPostFix = Integer.toString(roiDim);
-
-            if (roiDim <= 2)
-                fv = volume * mul2d;
-            else
-                fv = volume * mul3d;
-
-            final UnitPrefix unit = UnitUtil.getBestUnit(fv, UnitPrefix.MICRO, roiDim);
-            fv = UnitUtil.getValueInUnit(fv, UnitPrefix.MICRO, unit, roiDim);
-
-            volumeUnitLabel.setText(unit.toString() + "m" + unitPostFix);
-            volumeValueLabel.setText(StringUtil.toString(MathUtil.roundSignificant(fv, 5)));
-            volumeValueLabel.setToolTipText(StringUtil.toString(fv));
+        if ((sequence == null) || (volume == -1d))
+        {
+            volumeValueLabel.setText("");
+            volumeValueLabel.setToolTipText("");
         }
         else
         {
-            volumeUnitLabel.setText("");
-            volumeValueLabel.setText("");
-            volumeValueLabel.setToolTipText("");
+            volumeValueLabel.setText(sequence.calculateSize(volume, roiDim, 5));
+            volumeValueLabel.setToolTipText(StringUtil.toString(volume) + " pixel(s)");
         }
     }
 

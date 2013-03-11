@@ -31,7 +31,10 @@ import icy.image.colormodel.IcyColorModelEvent;
 import icy.image.colormodel.IcyColorModelListener;
 import icy.image.lut.LUT;
 import icy.main.Icy;
+import icy.math.MathUtil;
 import icy.math.Scaler;
+import icy.math.UnitUtil;
+import icy.math.UnitUtil.UnitPrefix;
 import icy.painter.Overlay;
 import icy.painter.OverlayEvent;
 import icy.painter.OverlayEvent.OverlayEventType;
@@ -620,6 +623,65 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public double getTimeInterval()
     {
         return MetaDataUtil.getTimeInterval(metaData, 0, 0.1d);
+    }
+
+    /**
+     * Return the size and appropriate unit in form of String for specified amount of sample/pixel
+     * value in the specified dimension order.<br>
+     * <br>
+     * For instance if you want to retrieve the distance:<br>
+     * <code>distanceStr = calculateSize(distance, 1)</code><br>
+     * For a 2D surface:<br>
+     * <code>surfaceStr = calculateSize(surface, 2)</code><br>
+     * 
+     * @param pixelNumber
+     *        number of pixel
+     * @param dimension
+     *        dimension order<br>
+     *        dimension order = 1 --> pixel size X used for conversion<br>
+     *        dimension order = 2 --> (pixel size X * pixel size Y) used for conversion<br>
+     *        dimension order >= 3 --> (pixel size X * pixel size Y * pixel size Z) used for
+     *        conversion<br>
+     * @param significantDigit
+     *        wanted significant digit for the result (0 for all)
+     */
+    public String calculateSize(double pixelNumber, int dimension, int significantDigit)
+    {
+        final double mul;
+
+        switch (dimension)
+        {
+            case 0:
+                // incorrect
+                return null;
+
+            case 1:
+                mul = getPixelSizeX();
+                break;
+
+            case 2:
+                mul = getPixelSizeX() * getPixelSizeY();
+                break;
+
+            default:
+                mul = getPixelSizeX() * getPixelSizeY() * getPixelSizeZ();
+                break;
+        }
+
+        final String postFix;
+
+        if (dimension > 1)
+            postFix = StringUtil.toString(dimension);
+        else
+            postFix = "";
+
+        double value = pixelNumber * mul;
+        final UnitPrefix unit = UnitUtil.getBestUnit(value, UnitPrefix.MICRO, dimension);
+        value = UnitUtil.getValueInUnit(value, UnitPrefix.MICRO, unit, dimension);
+        if (significantDigit != 0)
+            value = MathUtil.roundSignificant(value, significantDigit);
+
+        return StringUtil.toString(value) + " " + unit.toString() + "m" + postFix;
     }
 
     /**

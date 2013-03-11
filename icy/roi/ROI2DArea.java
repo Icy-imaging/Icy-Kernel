@@ -284,11 +284,19 @@ public class ROI2DArea extends ROI2D
 
                 if (!e.isConsumed())
                 {
-                    // right button action
-                    if (EventUtil.isRightMouseButton(e))
+                    // roi selected ?
+                    if (selected)
                     {
-                        // roi selected ?
-                        if (ROI2DArea.this.selected)
+                        // left button action
+                        if (EventUtil.isLeftMouseButton(e))
+                        {
+                            // try to add a new point
+                            if (addPointAt(imagePoint, EventUtil.isControlDown(e)))
+                                // consume
+                                e.consume();
+                        }
+                        // right button action
+                        else if (EventUtil.isRightMouseButton(e))
                         {
                             // roi not focused ? --> remove point from mask
                             // if (!focused)

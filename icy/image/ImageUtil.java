@@ -385,8 +385,6 @@ public class ImageUtil
     {
         if (image != null)
         {
-            // getScaledInstance keep a reference on source image --> memory leak
-            // return image.getScaledInstance(width, height, Image.SCALE_FAST);
             final BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             final Graphics2D g = result.createGraphics();
 
@@ -402,21 +400,50 @@ public class ImageUtil
     }
 
     /**
-     * Scale an image with specified size
+     * Scale an image with specified size (try to keep best quality).
      */
     public static BufferedImage scaleQuality(Image image, int width, int height)
     {
         if (image != null)
         {
-            final BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            final Graphics2D g = result.createGraphics();
+            Image current = image;
+            int w = image.getWidth(null);
+            int h = image.getHeight(null);
 
-            g.setComposite(AlphaComposite.Src);
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            g.drawImage(image, 0, 0, width, height, null);
-            g.dispose();
+            do
+            {
+                if (w > width)
+                {
+                    w /= 2;
+                    if (w < width)
+                        w = width;
+                }
+                else
+                    w = width;
 
-            return result;
+                if (h > height)
+                {
+                    h /= 2;
+                    if (h < height)
+                        h = height;
+                }
+                else
+                    h = height;
+
+                final BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+                final Graphics2D g = result.createGraphics();
+
+                g.setComposite(AlphaComposite.Src);
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g.drawImage(current, 0, 0, w, h, null);
+
+                g.dispose();
+
+                current = result;
+            }
+            while (w != width || h != height);
+
+            return (BufferedImage) current;
         }
 
         return null;

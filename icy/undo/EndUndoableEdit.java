@@ -6,7 +6,7 @@ package icy.undo;
 import javax.swing.undo.UndoableEdit;
 
 /**
- * @author Stephane
+ * Use this edit to force end edition collapsing.
  */
 public class EndUndoableEdit extends IcyUndoableEdit
 {

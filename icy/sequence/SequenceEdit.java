@@ -30,15 +30,6 @@ public class SequenceEdit extends IcyUndoableEdit
 
     /**
      * @param source
-     * @param iconName
-     */
-    SequenceEdit(Object source, String iconName)
-    {
-        super(source, iconName);
-    }
-
-    /**
-     * @param source
      */
     SequenceEdit(Object source)
     {

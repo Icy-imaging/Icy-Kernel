@@ -46,6 +46,14 @@ public class LocalPluginSearchResultProducer extends SearchResultProducer
                 new PluginDetailPanel(plugin);
         }
     }
+    
+    @Override
+    public int getOrder()
+    {
+        // should be close after kernel
+        return 5;
+    }
+
 
     @Override
     public String getName()

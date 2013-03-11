@@ -83,6 +83,8 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
                         IcyExceptionHandler.handleException(plugin, t, true);
                     }
                 }
+                
+                Collections.sort(producers);
 
                 // restore last search
                 search(savedSearch);

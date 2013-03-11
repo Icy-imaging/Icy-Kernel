@@ -105,6 +105,13 @@ public class OnlinePluginSearchResultProducer extends SearchResultProducer
     private final long REQUEST_INTERVAL = 400;
 
     @Override
+    public int getOrder()
+    {
+        // should be right after local plugin
+        return 6;
+    }
+
+    @Override
     public String getName()
     {
         return "Online plugins";

@@ -88,10 +88,18 @@ public class ROI2DRectangle extends ROI2DRectShape
     {
         setBounds2D(rectangle);
     }
-    
+
     @Override
     public double getPerimeter()
     {
         return getTotalDistance(getPoints());
+    }
+
+    @Override
+    public double getVolume()
+    {
+        final Rectangle2D r = getRectangle();
+
+        return r.getWidth() * r.getHeight();
     }
 }

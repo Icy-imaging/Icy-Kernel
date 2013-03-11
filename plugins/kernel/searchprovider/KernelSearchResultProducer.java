@@ -171,6 +171,13 @@ public class KernelSearchResultProducer extends SearchResultProducer
     }
 
     @Override
+    public int getOrder()
+    {
+        // should be first
+        return 0;
+    }
+    
+    @Override
     public String getName()
     {
         return "Command";

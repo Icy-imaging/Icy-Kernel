@@ -3,9 +3,6 @@
  */
 package icy.gui.inspector;
 
-import icy.gui.main.MainAdapter;
-import icy.gui.main.MainEvent;
-import icy.main.Icy;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 import icy.undo.IcyUndoManager;
@@ -42,9 +39,9 @@ public class UndoManagerPanel extends JPanel implements ListSelectionListener, I
     protected IcyUndoManager undoManager;
 
     // GUI
-    final AbstractTableModel tableModel;
-    final ListSelectionModel tableSelectionModel;
-    final JTable table;
+    AbstractTableModel tableModel;
+    ListSelectionModel tableSelectionModel;
+    JTable table;
 
     // internals
     boolean isSelectionAdjusting;
@@ -56,21 +53,13 @@ public class UndoManagerPanel extends JPanel implements ListSelectionListener, I
         undoManager = null;
         isSelectionAdjusting = false;
 
-        // don't care about releasing the listener here
-        Icy.getMainInterface().addListener(new MainAdapter()
-        {
-            @Override
-            public void sequenceFocused(MainEvent event)
-            {
-                final Sequence seq = (Sequence) event.getSource();
+        initialize();
 
-                if (seq == null)
-                    setUndoManager(null);
-                else
-                    setUndoManager(seq.getUndoManager());
-            }
-        });
+        refreshTableData();
+    }
 
+    private void initialize()
+    {
         // build table
         tableModel = new AbstractTableModel()
         {
@@ -184,12 +173,17 @@ public class UndoManagerPanel extends JPanel implements ListSelectionListener, I
         setLayout(new BorderLayout());
 
         add(middlePanel, BorderLayout.CENTER);
+
         // if (showControl)
         // add(controlPanel, BorderLayout.SOUTH);
+    }
 
-        validate();
-
-        refreshTableData();
+    public void focusChanged(Sequence sequence)
+    {
+        if (sequence == null)
+            setUndoManager(null);
+        else
+            setUndoManager(sequence.getUndoManager());
     }
 
     public void setUndoManager(IcyUndoManager value)

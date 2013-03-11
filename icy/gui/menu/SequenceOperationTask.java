@@ -139,7 +139,7 @@ public class SequenceOperationTask extends RibbonTask
             addCommandButton(convertButtonRaw, RibbonElementPriority.MEDIUM);
 
             RibbonUtil.setRestrictiveResizePolicies(this);
-            udpateButtonsState();
+            updateButtonsState();
         }
 
         public IcyCommandToggleMenuButton getConvertButton(final Sequence sequence, final DataType dataType,
@@ -163,7 +163,7 @@ public class SequenceOperationTask extends RibbonTask
             return result;
         }
 
-        void udpateButtonsState()
+        void updateButtonsState()
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
             final boolean enabled = seq != null;
@@ -207,10 +207,10 @@ public class SequenceOperationTask extends RibbonTask
             addCommandButton(grayButton, RibbonElementPriority.MEDIUM);
 
             RibbonUtil.setRestrictiveResizePolicies(this);
-            udpateButtonsState();
+            updateButtonsState();
         }
 
-        void udpateButtonsState()
+        void updateButtonsState()
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
             final boolean enabled = (seq != null) && !seq.isEmpty();
@@ -269,10 +269,10 @@ public class SequenceOperationTask extends RibbonTask
             // addCommandButton(mergeButton, RibbonElementPriority.MEDIUM);
 
             RibbonUtil.setRestrictiveResizePolicies(this);
-            udpateButtonsState();
+            updateButtonsState();
         }
 
-        void udpateButtonsState()
+        void updateButtonsState()
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
             final boolean enabled = (seq != null) && !seq.isEmpty();
@@ -376,10 +376,10 @@ public class SequenceOperationTask extends RibbonTask
             addCommandButton(mergeButton, RibbonElementPriority.MEDIUM);
 
             RibbonUtil.setRestrictiveResizePolicies(this);
-            udpateButtonsState();
+            updateButtonsState();
         }
 
-        void udpateButtonsState()
+        void updateButtonsState()
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
             final boolean enabled = (seq != null);
@@ -441,10 +441,10 @@ public class SequenceOperationTask extends RibbonTask
             addCommandButton(advancedRemoveButton, RibbonElementPriority.MEDIUM);
 
             RibbonUtil.setRestrictiveResizePolicies(this);
-            udpateButtonsState();
+            updateButtonsState();
         }
 
-        void udpateButtonsState()
+        void updateButtonsState()
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
             final boolean enabled = (seq != null);
@@ -510,10 +510,10 @@ public class SequenceOperationTask extends RibbonTask
             addCommandButton(advancedRemoveButton, RibbonElementPriority.MEDIUM);
 
             RibbonUtil.setRestrictiveResizePolicies(this);
-            udpateButtonsState();
+            updateButtonsState();
         }
 
-        void udpateButtonsState()
+        void updateButtonsState()
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
             final boolean enabled = (seq != null);
@@ -561,10 +561,10 @@ public class SequenceOperationTask extends RibbonTask
             addCommandButton(advancedConvertButton, RibbonElementPriority.MEDIUM);
 
             RibbonUtil.setRestrictiveResizePolicies(this);
-            udpateButtonsState();
+            updateButtonsState();
         }
 
-        void udpateButtonsState()
+        void updateButtonsState()
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
             final boolean enabled = (seq != null);
@@ -658,7 +658,7 @@ public class SequenceOperationTask extends RibbonTask
             addRibbonComponent(new JRibbonComponent(GuiUtil.createLineBoxPanel(fillValueField)));
 
             RibbonUtil.setRestrictiveResizePolicies(this);
-            udpateButtonsState();
+            updateButtonsState();
         }
 
         double getFillValue(Sequence sequence)
@@ -740,7 +740,7 @@ public class SequenceOperationTask extends RibbonTask
             }
         }
 
-        void udpateButtonsState()
+        void updateButtonsState()
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
             final boolean enabled = (seq != null) && !seq.isEmpty();
@@ -782,13 +782,13 @@ public class SequenceOperationTask extends RibbonTask
      */
     public void onSequenceChange()
     {
-        copyConvertBand.udpateButtonsState();
-        colorConvertBand.udpateButtonsState();
-        channelOperationBand.udpateButtonsState();
-        planarOperationBand.udpateButtonsState();
-        stackConversionBand.udpateButtonsState();
-        zStackOperationBand.udpateButtonsState();
-        tStackOperationBand.udpateButtonsState();
-        modifyBand.udpateButtonsState();
+        copyConvertBand.updateButtonsState();
+        colorConvertBand.updateButtonsState();
+        channelOperationBand.updateButtonsState();
+        planarOperationBand.updateButtonsState();
+        stackConversionBand.updateButtonsState();
+        zStackOperationBand.updateButtonsState();
+        tStackOperationBand.updateButtonsState();
+        modifyBand.updateButtonsState();
     }
 }

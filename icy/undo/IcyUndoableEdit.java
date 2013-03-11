@@ -17,14 +17,13 @@ import javax.swing.undo.UndoableEdit;
 /**
  * @author Stephane
  */
-public class IcyUndoableEdit implements UndoableEdit
+public abstract class IcyUndoableEdit implements UndoableEdit
 {
     private static final IcyIcon DEFAULT_ICON = new IcyIcon(ResourceUtil.ICON_LIGHTING, 16);
 
     /**
-     * Source of the UndoableEdit (weak reference as it should not retain it)
+     * Source of the UndoableEdit
      */
-    // final private WeakReference<Object> source;
     private Object source;
 
     /**
@@ -39,6 +38,9 @@ public class IcyUndoableEdit implements UndoableEdit
      */
     private boolean alive;
 
+    /**
+     * Used to recognize the edit in the undo manager panel
+     */
     private IcyIcon icon;
 
     /**
@@ -64,19 +66,9 @@ public class IcyUndoableEdit implements UndoableEdit
      * Creates an <code>UndoableAction</code> which defaults <code>hasBeenDone</code> and
      * <code>alive</code> to <code>true</code>.
      */
-    public IcyUndoableEdit(Object source, String iconName)
-    {
-        this(source, ResourceUtil.getAlphaIconAsImage(iconName));
-
-    }
-
-    /**
-     * Creates an <code>UndoableAction</code> which defaults <code>hasBeenDone</code> and
-     * <code>alive</code> to <code>true</code>.
-     */
     public IcyUndoableEdit(Object source)
     {
-        this(source, (Image) null);
+        this(source, null);
     }
 
     /**
@@ -84,7 +76,6 @@ public class IcyUndoableEdit implements UndoableEdit
      */
     public Object getSource()
     {
-        // return source.get();
         return source;
     }
 
@@ -146,7 +137,7 @@ public class IcyUndoableEdit implements UndoableEdit
     @Override
     public boolean canUndo()
     {
-        checkIsAlive();
+//        checkIsAlive();
         return alive && hasBeenDone;
     }
 
@@ -182,7 +173,7 @@ public class IcyUndoableEdit implements UndoableEdit
     @Override
     public boolean canRedo()
     {
-        checkIsAlive();
+//        checkIsAlive();
         return alive && !hasBeenDone;
     }
 
@@ -309,13 +300,16 @@ public class IcyUndoableEdit implements UndoableEdit
         return super.toString() + " hasBeenDone: " + hasBeenDone + " alive: " + alive;
     }
 
-    /**
-     * Check that source of edit is still alive
-     */
-    private void checkIsAlive()
-    {
-        // no more reference on source --> die
-        if (getSource() == null)
-            die();
-    }
+    // /**
+    // * Update live state of the edit.<br>
+    // * For instance, an edit attached to a Plugin should probably die when the plugin is
+    // closed.<br>
+    // * Returns false if the edit should die, true otherwise.
+    // */
+    // public abstract boolean updateLiveState();
+    // {
+    // // no more reference on source --> die
+    // if (getSource() == null)
+    // die();
+    // }
 }

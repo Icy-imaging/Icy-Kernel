@@ -23,6 +23,7 @@ import icy.common.UpdateEventHandler;
 import icy.common.listener.AcceptListener;
 import icy.common.listener.ChangeListener;
 import icy.common.listener.weak.WeakListener;
+import icy.gui.frame.IcyFrame;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.inspector.RoisPanel;
 import icy.gui.main.MainEvent.MainEventSourceType;
@@ -113,6 +114,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
 
     MainFrame mainFrame;
 
+    Viewer previewFocusedViewer;
     Viewer focusedViewer;
     Sequence focusedSequence;
 
@@ -153,6 +155,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
 
         mainFrame = null;
 
+        previewFocusedViewer = null;
         focusedViewer = null;
         focusedSequence = null;
     }
@@ -308,6 +311,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
             }
         }
 
+        previewFocusedViewer = focusedViewer;
         focusedViewer = viewer;
 
         // add focused viewer listener
@@ -405,12 +409,24 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
 
         // no more opened viewer ?
         if (viewers.isEmpty())
-        {
             // set focus to null
             setFocusedViewer(null);
-        }
         else
-            viewers.get(viewers.size() - 1).requestFocus();
+        {
+
+            final IcyFrame frame = IcyFrame.findIcyFrame(getDesktopPane().getSelectedFrame());
+
+            if (frame instanceof Viewer)
+                ((Viewer) frame).requestFocus();
+            else
+            {
+                // so we don't steal focus from non viewer frame
+                if (previewFocusedViewer != null)
+                    setFocusedViewer(previewFocusedViewer);
+                else
+                    setFocusedViewer(viewers.get(viewers.size() - 1));
+            }
+        }
     }
 
     @Override

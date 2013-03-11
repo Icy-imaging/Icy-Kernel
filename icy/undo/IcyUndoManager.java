@@ -4,7 +4,6 @@
 package icy.undo;
 
 import java.util.ArrayList;
-import java.util.Vector;
 
 import javax.swing.UIManager;
 import javax.swing.event.EventListenerList;
@@ -17,6 +16,7 @@ import javax.swing.undo.CompoundEdit;
 /**
  * @author Stephane
  */
+// public class IcyUndoManager extends UndoManager implements IcyUndoableEditListener
 public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableEditListener
 {
     /**
@@ -31,9 +31,9 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
 
     /**
      * The collection of <code>IcyUndoableEdit</code>s
-     * undone/redone en masse by this <code>CompoundEdit</code>.
+     * undone/redone "en masse" by this <code>CompoundEdit</code>.
      */
-    protected Vector<IcyUndoableEdit> edits;
+    protected ArrayList<IcyUndoableEdit> edits;
 
     /**
      * listeners
@@ -50,7 +50,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     {
         super();
 
-        edits = new Vector<IcyUndoableEdit>();
+        edits = new ArrayList<IcyUndoableEdit>();
         this.owner = owner;
         listeners = new EventListenerList();
         indexOfNextAdd = 0;
@@ -90,7 +90,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     {
         // send die to all edits
         for (int i = edits.size(); i >= 0; i--)
-            edits.elementAt(i).die();
+            edits.get(i).die();
 
         clear();
 
@@ -166,8 +166,8 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
             {
                 for (int i = to; from <= i; i--)
                 {
-                    edits.elementAt(i).die();
-                    edits.removeElementAt(i);
+                    edits.get(i).die();
+                    edits.remove(i);
                 }
             }
 
@@ -210,7 +210,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
 
         while (i > 0)
         {
-            final IcyUndoableEdit edit = edits.elementAt(--i);
+            final IcyUndoableEdit edit = edits.get(--i);
 
             if (edit.isSignificant())
                 return edit;
@@ -232,7 +232,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
 
         while (i < count)
         {
-            final IcyUndoableEdit edit = edits.elementAt(i++);
+            final IcyUndoableEdit edit = edits.get(i++);
 
             if (edit.isSignificant())
                 return edit;
@@ -251,7 +251,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     {
         while (indexOfNextAdd > 0)
         {
-            final IcyUndoableEdit next = edits.elementAt(--indexOfNextAdd);
+            final IcyUndoableEdit next = edits.get(--indexOfNextAdd);
             next.undo();
         }
     }
@@ -269,7 +269,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
 
         while (!done)
         {
-            final IcyUndoableEdit next = edits.elementAt(--indexOfNextAdd);
+            final IcyUndoableEdit next = edits.get(--indexOfNextAdd);
             next.undo();
             done = (next == edit);
         }
@@ -327,7 +327,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
 
         while (!done)
         {
-            IcyUndoableEdit next = edits.elementAt(indexOfNextAdd++);
+            IcyUndoableEdit next = edits.get(indexOfNextAdd++);
             next.redo();
             done = (next == edit);
         }
@@ -391,13 +391,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
             while ((indexOfNextAdd - 1) > index)
             {
                 // process undo
-                final IcyUndoableEdit next = edits.elementAt(--indexOfNextAdd);
+                final IcyUndoableEdit next = edits.get(--indexOfNextAdd);
                 next.undo();
             }
             while (indexOfNextAdd <= index)
             {
                 // process undo
-                IcyUndoableEdit next = edits.elementAt(indexOfNextAdd++);
+                IcyUndoableEdit next = edits.get(indexOfNextAdd++);
                 next.redo();
             }
 
@@ -415,7 +415,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
         int count = edits.size();
 
         if (count > 0)
-            return edits.elementAt(count - 1);
+            return edits.get(count - 1);
 
         return null;
     }
@@ -442,12 +442,15 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
         // one. If it won't, give the new one a chance to absorb
         // the last one.
         if (last == null)
-            edits.addElement(anEdit);
+            edits.add(anEdit);
         else if (!last.addEdit(anEdit))
         {
+            // try to replace current edit
             if (anEdit.replaceEdit(last))
-                edits.removeElementAt(edits.size() - 1);
-            edits.addElement(anEdit);
+                edits.set(edits.size() - 1, anEdit);
+            else
+                // simply add the new edit
+                edits.add(anEdit);
         }
 
         // make sure the indexOfNextAdd is pointed at the right place
@@ -531,28 +534,6 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     {
         for (IcyUndoManagerListener listener : listeners.getListeners(IcyUndoManagerListener.class))
             listener.undoManagerChanged(this);
-    }
-
-    /**
-     * Register specified Undoable to the UndoManager
-     * 
-     * @deprecated
-     */
-    @Deprecated
-    public void register(Undoable undoable)
-    {
-        undoable.addUndoableEditListener(this);
-    }
-
-    /**
-     * Unregister specified Undoable from the UndoManager
-     * 
-     * @deprecated
-     */
-    @Deprecated
-    public void unregister(Undoable undoable)
-    {
-        undoable.removeUndoableEditListener(this);
     }
 
     /**
@@ -717,7 +698,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
 
                 // add valid edits
                 for (IcyUndoableEdit edit : validEdits)
-                    edits.addElement(edit);
+                    edits.add(edit);
 
                 // make sure the indexOfNextAdd is pointed at the right place
                 indexOfNextAdd = edits.size();

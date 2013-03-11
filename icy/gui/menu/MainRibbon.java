@@ -1079,6 +1079,7 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
     @Override
     public void focusChanged(Sequence sequence)
     {
+        toolRibbonTask.onSequenceChange();
         sequenceOperationTask.onSequenceChange();
         applicationMenu.onSequenceFocusChange();
     }

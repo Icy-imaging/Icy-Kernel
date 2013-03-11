@@ -12,7 +12,7 @@ import java.util.ArrayList;
  * 
  * @author Thomas Provoost & Stephane Dallongeville
  */
-public abstract class SearchResultProducer
+public abstract class SearchResultProducer implements Comparable<SearchResultProducer>
 {
     private class SearchRunner implements Runnable
     {
@@ -60,6 +60,13 @@ public abstract class SearchResultProducer
 
         results = new ArrayList<SearchResult>();
         processor = new SingleProcessor(true);
+    }
+
+    /** Returns the result producer order */
+    public int getOrder()
+    {
+        // default
+        return 10;
     }
 
     /** Returns the result producer name */
@@ -162,5 +169,12 @@ public abstract class SearchResultProducer
             if (consumer != null)
                 consumer.resultsChanged(this);
         }
+    }
+
+    @Override
+    public int compareTo(SearchResultProducer o)
+    {
+        // sort on order
+        return getOrder() - o.getOrder();
     }
 }

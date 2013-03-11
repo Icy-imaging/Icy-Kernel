@@ -111,7 +111,7 @@ public class ToolRibbonTask extends RibbonTask
         public void toolChanged(String command);
     }
 
-    public static class OpenFileRibbonBand extends JRibbonBand
+    public static class FileRibbonBand extends JRibbonBand
     {
         /**
          * 
@@ -120,17 +120,25 @@ public class ToolRibbonTask extends RibbonTask
 
         public static final String NAME = "File";
 
-        public OpenFileRibbonBand()
+        final IcyCommandButton openButton;
+        final IcyCommandButton saveButton;
+
+        public FileRibbonBand()
         {
             super(NAME, new IcyIcon(ResourceUtil.ICON_DOC));
-            {
-                IcyCommandButton button;
 
-                button = new IcyCommandButton(FileActions.openSequenceAction);
-                addCommandButton(button, RibbonElementPriority.TOP);
+            openButton = new IcyCommandButton(FileActions.openSequenceAction);
+            addCommandButton(openButton, RibbonElementPriority.TOP);
+            saveButton = new IcyCommandButton(FileActions.saveSequenceAction);
+            addCommandButton(saveButton, RibbonElementPriority.TOP);
 
-                RibbonUtil.setPermissiveResizePolicies(this);
-            }
+            RibbonUtil.setPermissiveResizePolicies(this);
+            updateButtonsState();
+        }
+
+        void updateButtonsState()
+        {
+            saveButton.setEnabled(Icy.getMainInterface().getFocusedSequence() != null);
         }
     }
 
@@ -188,37 +196,37 @@ public class ToolRibbonTask extends RibbonTask
             button = new IcyCommandToggleButton("Point", new IcyIcon("roi_point"));
             button.setName(ROI2DPoint.class.getName());
             button.setActionRichTooltip(new RichTooltip("ROI Point", "Create a point type (single pixel) ROI"));
-            addCommandButton(button, RibbonElementPriority.TOP);
+            addCommandButton(button, RibbonElementPriority.MEDIUM);
 
             button = new IcyCommandToggleButton("Line", new IcyIcon("roi_line"));
             button.setName(ROI2DLine.class.getName());
             button.setActionRichTooltip(new RichTooltip("ROI Line",
                     "Create a single line type ROI. Drag from start point to destination point."));
-            addCommandButton(button, RibbonElementPriority.TOP);
+            addCommandButton(button, RibbonElementPriority.MEDIUM);
 
             button = new IcyCommandToggleButton("Polyline", new IcyIcon("roi_polyline"));
             button.setName(ROI2DPolyLine.class.getName());
             button.setActionRichTooltip(new RichTooltip("ROI Polyline",
                     "Create a multi line type ROI. Add a new point with left click, end draw with right click or ESC key."));
-            addCommandButton(button, RibbonElementPriority.TOP);
+            addCommandButton(button, RibbonElementPriority.MEDIUM);
 
             button = new IcyCommandToggleButton("Rectangle", new IcyIcon("roi_rectangle"));
             button.setName(ROI2DRectangle.class.getName());
             button.setActionRichTooltip(new RichTooltip("ROI Rectangle",
                     "Create a rectangle type ROI.  Drag from start point to destination point."));
-            addCommandButton(button, RibbonElementPriority.TOP);
+            addCommandButton(button, RibbonElementPriority.MEDIUM);
 
             button = new IcyCommandToggleButton("Ellipse", new IcyIcon("roi_oval"));
             button.setName(ROI2DEllipse.class.getName());
             button.setActionRichTooltip(new RichTooltip("ROI Ellipse",
                     "Create a ellipse type ROI. Drag from start point to destination point."));
-            addCommandButton(button, RibbonElementPriority.TOP);
+            addCommandButton(button, RibbonElementPriority.MEDIUM);
 
             button = new IcyCommandToggleButton("Polygon", new IcyIcon("roi_polygon"));
             button.setName(ROI2DPolygon.class.getName());
             button.setActionRichTooltip(new RichTooltip("ROI Polygon",
                     "Create a polygon type ROI. Add a new point with left click, end draw with right click or ESC key."));
-            addCommandButton(button, RibbonElementPriority.TOP);
+            addCommandButton(button, RibbonElementPriority.MEDIUM);
 
             button = new IcyCommandToggleButton("Area", new IcyIcon("roi_area"));
             button.setName(ROI2DArea.class.getName());
@@ -240,6 +248,7 @@ public class ToolRibbonTask extends RibbonTask
         }
     }
 
+    final FileRibbonBand fileBand;
     final SelectRibbonBand selectBand;
     final ROIRibbonBand roiBand;
 
@@ -254,11 +263,12 @@ public class ToolRibbonTask extends RibbonTask
 
     public ToolRibbonTask()
     {
-        super(NAME, new OpenFileRibbonBand(), new SelectRibbonBand(), new ROIRibbonBand());
+        super(NAME, new FileRibbonBand(), new SelectRibbonBand(), new ROIRibbonBand());
 
         setResizeSequencingPolicy(new CoreRibbonResizeSequencingPolicies.CollapseFromLast(this));
 
         // get band
+        fileBand = (FileRibbonBand) RibbonUtil.getBand(this, FileRibbonBand.NAME);
         selectBand = (SelectRibbonBand) RibbonUtil.getBand(this, SelectRibbonBand.NAME);
         roiBand = (ROIRibbonBand) RibbonUtil.getBand(this, ROIRibbonBand.NAME);
 
@@ -405,5 +415,13 @@ public class ToolRibbonTask extends RibbonTask
     {
         for (ToolRibbonTaskListener listener : listeners.getListeners(ToolRibbonTaskListener.class))
             listener.toolChanged(toolName);
+    }
+
+    /**
+     * call this method on sequence change
+     */
+    public void onSequenceChange()
+    {
+        fileBand.updateButtonsState();
     }
 }

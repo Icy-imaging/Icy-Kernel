@@ -351,14 +351,6 @@ public abstract class ROI2D extends ROI
                             // consume event
                             e.consume();
                         }
-                        // roi selected ?
-                        else if (selected)
-                        {
-                            // try to add a new point
-                            if (addPointAt(imagePoint, EventUtil.isControlDown(e)))
-                                // consume
-                                e.consume();
-                        }
                     }
                     // right button action
                     else if (EventUtil.isRightMouseButton(e))
