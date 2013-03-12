@@ -77,6 +77,8 @@ public class ImageLoaderOptionPanel extends JPanel
 
         // setting GUI
         separateSeqCheck = new JCheckBox();
+        label.setLabelFor(separateSeqCheck);
+        separateSeqCheck.setSelected(separate);
         separateSeqCheck.addChangeListener(new ChangeListener()
         {
             @Override
@@ -85,8 +87,6 @@ public class ImageLoaderOptionPanel extends JPanel
                 updateAutoOrderEnableState();
             }
         });
-        label.setLabelFor(separateSeqCheck);
-        separateSeqCheck.setSelected(separate);
         GridBagConstraints gbc_separateSeqCheck = new GridBagConstraints();
         gbc_separateSeqCheck.insets = new Insets(0, 0, 0, 0);
         gbc_separateSeqCheck.anchor = GridBagConstraints.NORTHWEST;
@@ -109,6 +109,7 @@ public class ImageLoaderOptionPanel extends JPanel
         GridBagConstraints gbc_autoOrderCheck = new GridBagConstraints();
         gbc_autoOrderCheck.gridx = 1;
         gbc_autoOrderCheck.gridy = 1;
+
         separateSeqPanel.add(autoOrderCheck, gbc_autoOrderCheck);
     }
 
