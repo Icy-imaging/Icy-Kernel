@@ -428,7 +428,7 @@ public class JarResources
         }
         else
         {
-            sb.append("defalted ");
+            sb.append("deflated ");
         }
 
         sb.append(je.getName());
