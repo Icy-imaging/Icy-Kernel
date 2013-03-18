@@ -2972,22 +2972,25 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // final ArrayList<Layer> layers = getVisibleOrderedLayersForEvent();
                 final ArrayList<Layer> layers = getVisibleLayers();
+                final Layer imgLayer = getImageLayer();
 
                 // draw them in inverse order to have first painter event at top
                 for (int i = layers.size() - 1; i >= 0; i--)
                 {
                     final Layer layer = layers.get(i);
 
-                    final float alpha = layer.getAlpha();
+                    if (layer != imgLayer)
+                    {
+                        final float alpha = layer.getAlpha();
 
-                    if (alpha != 1f)
-                        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-                    else
-                        g.setComposite(AlphaComposite.SrcOver);
+                        if (alpha != 1f)
+                            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+                        else
+                            g.setComposite(AlphaComposite.SrcOver);
 
-                    layer.getPainter().paint(g, seq, this);
+                        layer.getPainter().paint(g, seq, this);
+                    }
                 }
             }
 

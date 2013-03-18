@@ -66,18 +66,18 @@ public class ImageLoaderOptionPanel extends JPanel
         gbl_separateSeqPanel.columnWeights = new double[] {1.0, 0.0, Double.MIN_VALUE};
         gbl_separateSeqPanel.rowWeights = new double[] {0.0, 0.0, Double.MIN_VALUE};
         separateSeqPanel.setLayout(gbl_separateSeqPanel);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(0, 0, 5, 5);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        JLabel label = new JLabel("Load in separated sequence");
-        label.setToolTipText("All images are opened in its own sequence");
-        separateSeqPanel.add(label, gbc);
+        GridBagConstraints gbc_lblLoadInSeparated = new GridBagConstraints();
+        gbc_lblLoadInSeparated.anchor = GridBagConstraints.WEST;
+        gbc_lblLoadInSeparated.insets = new Insets(0, 0, 5, 5);
+        gbc_lblLoadInSeparated.gridx = 0;
+        gbc_lblLoadInSeparated.gridy = 0;
+        JLabel lblLoadInSeparated = new JLabel("Load in separated sequences");
+        lblLoadInSeparated.setToolTipText("All images are opened in its own sequence");
+        separateSeqPanel.add(lblLoadInSeparated, gbc_lblLoadInSeparated);
 
         // setting GUI
         separateSeqCheck = new JCheckBox();
-        label.setLabelFor(separateSeqCheck);
+        lblLoadInSeparated.setLabelFor(separateSeqCheck);
         separateSeqCheck.setSelected(separate);
         separateSeqCheck.addChangeListener(new ChangeListener()
         {

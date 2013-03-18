@@ -466,8 +466,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         popupPanel = new PopupPanel();
         popupPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
         popupPanel.setExpanded(true);
-        popupPanel.setToolTipText("Extras informations about the current selected ROI");
-        popupPanel.setTitle("Extras informations");
+        popupPanel.setToolTipText("Extra informations about the current selected ROI");
+        popupPanel.setTitle("Extra informations");
         add(popupPanel);
 
         final JPanel panel = popupPanel.getMainPanel();

@@ -94,16 +94,18 @@ public class IcyPreferences
     }
 
     /**
-     * Get specified plugin root
+     * @deprecated Uses {@link PluginsPreferences#root(Plugin)} instead.
      */
+    @Deprecated
     public static XMLPreferences pluginRoot(Plugin plugin)
     {
         return PluginsPreferences.root(plugin);
     }
 
     /**
-     * Get plugins root
+     * @deprecated Uses {@link PluginsPreferences#getPreferences()} instead.
      */
+    @Deprecated
     public static XMLPreferences pluginsRoot()
     {
         return PluginsPreferences.getPreferences();

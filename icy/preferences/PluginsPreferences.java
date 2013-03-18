@@ -37,6 +37,23 @@ public class PluginsPreferences
     }
 
     /**
+     * Return root node for specified Plugin class.
+     */
+    public static XMLPreferences root(Class<? extends Plugin> pluginClass)
+    {
+        if (pluginClass != null)
+        {
+            final String className = pluginClass.getName();
+
+            if (className.startsWith(PluginLoader.PLUGIN_PACKAGE))
+                return preferences.node(ClassUtil.getPathFromQualifiedName(className
+                        .substring(PluginLoader.PLUGIN_PACKAGE.length() + 1)));
+        }
+
+        return null;
+    }
+
+    /**
      * Return root node for specified Plugin
      */
     public static XMLPreferences root(Plugin plugin)
