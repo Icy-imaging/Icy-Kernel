@@ -342,7 +342,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
     }
 
     /**
-     * @deprecated uses {@link #organizeTile(int)} instead.
+     * @deprecated Use {@link #organizeTile(int)} instead.
      */
     @Deprecated
     public void organizeTile()

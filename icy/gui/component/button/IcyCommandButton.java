@@ -49,7 +49,7 @@ public class IcyCommandButton extends JCommandButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyCommandButton(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyCommandButton(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyCommandButton(String title, Image icon)
@@ -58,7 +58,7 @@ public class IcyCommandButton extends JCommandButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyCommandButton(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyCommandButton(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyCommandButton(String title, String iconName)

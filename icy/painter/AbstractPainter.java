@@ -86,7 +86,7 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
     }
 
     /**
-     * @deprecated Uses {@link Sequence#addPainter(Painter)} instead.
+     * @deprecated Use {@link Sequence#addPainter(Painter)} instead.
      */
     @Deprecated
     public void attachTo(Sequence sequence)
@@ -96,7 +96,7 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
     }
 
     /**
-     * @deprecated Uses {@link Sequence#removePainter(Painter)} instead.
+     * @deprecated Use {@link Sequence#removePainter(Painter)} instead.
      */
     @Deprecated
     public void detachFrom(Sequence sequence)
@@ -106,7 +106,7 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
     }
 
     /**
-     * @deprecated Uses {@link #remove()} instead.
+     * @deprecated Use {@link #remove()} instead.
      */
     @Deprecated
     public void detachFromAll()
@@ -115,7 +115,7 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
     }
 
     /**
-     * @deprecated Uses {@link #remove()} instead.
+     * @deprecated Use {@link #remove()} instead.
      */
     @Deprecated
     public void delete()
@@ -148,7 +148,7 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
     }
 
     /**
-     * @deprecated Uses {@link Overlay} class instead.
+     * @deprecated Use {@link Overlay} class instead.
      */
     @Deprecated
     protected void fireChangedEvent(PainterEvent event)
@@ -158,7 +158,7 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
     }
 
     /**
-     * @deprecated Uses {@link Overlay#addOverlayListener(OverlayListener)} instead.
+     * @deprecated Use {@link Overlay#addOverlayListener(OverlayListener)} instead.
      */
     @Deprecated
     public void addPainterListener(PainterListener listener)
@@ -167,7 +167,7 @@ public abstract class AbstractPainter extends PainterAdapter implements ChangeLi
     }
 
     /**
-     * @deprecated Uses {@link Overlay#removeOverlayListener(OverlayListener)} instead.
+     * @deprecated Use {@link Overlay#removeOverlayListener(OverlayListener)} instead.
      */
     @Deprecated
     public void removePainterListener(PainterListener listener)

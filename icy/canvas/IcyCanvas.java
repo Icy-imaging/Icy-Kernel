@@ -26,6 +26,7 @@ import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.common.listener.ProgressListener;
 import icy.gui.main.MainFrame;
+import icy.gui.menu.action.RoiActions;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.MouseImageInfosPanel;
 import icy.gui.viewer.TNavigationPanel;
@@ -162,6 +163,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     private static final long serialVersionUID = -8461229450296203011L;
+
+    public static final String PROPERTY_LAYERS_VISIBLE = "layersVisible";
 
     /**
      * Navigations bar
@@ -399,7 +402,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * @deprecated Uses {@link #isLayersVisible()} instead.
+     * @deprecated Use {@link #isLayersVisible()} instead.
      */
     @Deprecated
     public boolean getDrawLayers()
@@ -408,7 +411,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * @deprecated Uses {@link #setLayersVisible(boolean)} instead.
+     * @deprecated Use {@link #setLayersVisible(boolean)} instead.
      */
     @Deprecated
     public void setDrawLayers(boolean value)
@@ -432,6 +435,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (layersVisible != value)
         {
             layersVisible = value;
+            firePropertyChange(PROPERTY_LAYERS_VISIBLE, !value, value);
             getViewComponent().repaint();
         }
     }
@@ -562,28 +566,22 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Returns the list of layers orderer for event dispatching.
+     * @deprecated Use {@link #getLayers()} instead (sorted on Layer priority).
      */
-    // public ArrayList<Layer> getOrderedLayersForEvent()
-    // {
-    // final ArrayList<Layer> result = getLayers();
-    //
-    // Collections.sort(result, EventLayerSorter.instance);
-    //
-    // return result;
-    // }
+    @Deprecated
+    public ArrayList<Layer> getOrderedLayersForEvent()
+    {
+        return getLayers();
+    }
 
     /**
-     * Returns the list of visible layers orderer for event dispatching.
+     * @deprecated Use {@link #getVisibleLayers()} instead (sorted on Layer priority).
      */
-    // public ArrayList<Layer> getVisibleOrderedLayersForEvent()
-    // {
-    // final ArrayList<Layer> result = getVisibleLayers();
-    //
-    // Collections.sort(result, EventLayerSorter.instance);
-    //
-    // return result;
-    // }
+    @Deprecated
+    public ArrayList<Layer> getVisibleOrderedLayersForEvent()
+    {
+        return getVisibleLayers();
+    }
 
     /**
      * @return the painters of layers
@@ -2858,6 +2856,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     @Override
     public void keyPressed(KeyEvent e)
     {
+        // forward event to painters
+        for (Layer layer : getVisibleLayers())
+            layer.getPainter().keyPressed(e, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()), this);
+
         if (!e.isConsumed())
         {
             final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
@@ -2938,6 +2940,17 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                     }
                     break;
 
+                case KeyEvent.VK_A:
+                    if (EventUtil.isControlDown(e))
+                    {
+                        if (RoiActions.selectAllAction.isEnabled())
+                        {
+                            RoiActions.selectAllAction.doAction();
+                            e.consume();
+                        }
+                    }
+                    break;
+
                 case KeyEvent.VK_V:
                     if (EventUtil.isShiftDown(e))
                     {
@@ -2947,27 +2960,37 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                             e.consume();
                         }
                     }
+                    if (EventUtil.isControlDown(e))
+                    {
+                        if (RoiActions.pasteAction.isEnabled())
+                        {
+                            RoiActions.pasteAction.doAction();
+                            e.consume();
+                        }
+                    }
+                    break;
+
+                case KeyEvent.VK_C:
+                    if (EventUtil.isControlDown(e))
+                    {
+                        if (RoiActions.copyAction.isEnabled())
+                        {
+                            RoiActions.copyAction.doAction();
+                            e.consume();
+                        }
+                    }
                     break;
             }
         }
 
-        // by default we only forward event to painters
-        for (Layer layer : getVisibleLayers())
-            layer.getPainter().keyPressed(e, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()), this);
-        // for (Layer layer : getVisibleOrderedLayersForEvent())
-        // layer.getPainter().keyPressed(e, new Point2D.Double(getMouseImagePosX(),
-        // getMouseImagePosY()), this);
     }
 
     @Override
     public void keyReleased(KeyEvent e)
     {
-        // by default we only forward event to painters
+        // forward event to painters
         for (Layer layer : getVisibleLayers())
             layer.getPainter().keyReleased(e, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()), this);
-        // for (Layer layer : getVisibleOrderedLayersForEvent())
-        // layer.getPainter().keyReleased(e, new Point2D.Double(getMouseImagePosX(),
-        // getMouseImagePosY()), this);
     }
 
     /**
@@ -3372,7 +3395,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * @deprecated Uses {@link #addLayerListener(CanvasLayerListener)} instead.
+     * @deprecated Use {@link #addLayerListener(CanvasLayerListener)} instead.
      */
     @Deprecated
     public void addLayersListener(CanvasLayerListener listener)
@@ -3381,7 +3404,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * @deprecated Uses {@link #removeLayerListener(CanvasLayerListener)} instead.
+     * @deprecated Use {@link #removeLayerListener(CanvasLayerListener)} instead.
      */
     @Deprecated
     public void removeLayersListener(CanvasLayerListener listener)

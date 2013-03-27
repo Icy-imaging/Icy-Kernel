@@ -843,6 +843,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             saveT = canvas.getPositionT();
             saveC = canvas.getPositionC();
 
+            canvas.removePropertyChangeListener(IcyCanvas.PROPERTY_LAYERS_VISIBLE, this);
             canvas.removeCanvasListener(this);
             canvas.shutDown();
             // remove from mainPanel
@@ -857,6 +858,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         if (canvas != null)
         {
             canvas.addCanvasListener(this);
+            canvas.addPropertyChangeListener(IcyCanvas.PROPERTY_LAYERS_VISIBLE, this);
             // add to mainPanel
             mainPanel.add(canvas, BorderLayout.CENTER);
 
@@ -931,7 +933,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
-     * @deprecated Uses {@link #getLutViewer()} instead
+     * @deprecated Use {@link #getLutViewer()} instead
      */
     @Deprecated
     public IcyLutViewer getLutPanel()
@@ -940,7 +942,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
-     * @deprecated Uses {@link #setLutViewer(LUTViewer)} instead.
+     * @deprecated Use {@link #setLutViewer(LUTViewer)} instead.
      */
     @Deprecated
     public void setLutPanel(IcyLutViewer lutViewer)

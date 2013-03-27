@@ -200,7 +200,7 @@ public class SystemUtil
     }
 
     /**
-     * @deprecated Uses {@link #getMenuCtrlMask()} instead.
+     * @deprecated Use {@link #getMenuCtrlMask()} instead.
      */
     @Deprecated
     public static int getCtrlMask()
@@ -217,7 +217,7 @@ public class SystemUtil
     }
 
     /**
-     * @deprecated uses {@link #getMenuCtrlMask()} instead
+     * @deprecated Use {@link #getMenuCtrlMask()} instead
      */
     @Deprecated
     public static int getSystemCtrlMask()
@@ -261,7 +261,7 @@ public class SystemUtil
     }
 
     /**
-     * @deprecated Uses {@link #getDefaultGraphicsConfiguration()} instead.
+     * @deprecated Use {@link #getDefaultGraphicsConfiguration()} instead.
      */
     @Deprecated
     public static GraphicsConfiguration getSystemGraphicsConfiguration()
@@ -437,7 +437,7 @@ public class SystemUtil
     }
 
     /**
-     * @deprecated uses {@link #getTotalMemory()} instead
+     * @deprecated Use {@link #getTotalMemory()} instead
      */
     @Deprecated
     public static long getSystemTotalMemory()
@@ -459,7 +459,7 @@ public class SystemUtil
     }
 
     /**
-     * @deprecated uses {@link #getFreeMemory()} instead
+     * @deprecated Use {@link #getFreeMemory()} instead
      */
     @Deprecated
     public static long getSystemFreeMemory()
@@ -481,7 +481,7 @@ public class SystemUtil
     }
 
     /**
-     * @deprecated uses {@link #getProcessCpuTime()} instead
+     * @deprecated Use {@link #getProcessCpuTime()} instead
      */
     @Deprecated
     public static long getSystemProcessCpuTime()
@@ -529,7 +529,7 @@ public class SystemUtil
     }
 
     /**
-     * @deprecated uses {@link #getCpuLoad()} instead
+     * @deprecated Use {@link #getCpuLoad()} instead
      */
     @Deprecated
     public static int getSystemCpuLoad()

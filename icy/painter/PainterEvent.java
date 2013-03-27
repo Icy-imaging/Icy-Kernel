@@ -21,7 +21,7 @@ package icy.painter;
 import icy.common.EventHierarchicalChecker;
 
 /**
- * @deprecated Uses {@link Overlay} classes instead.
+ * @deprecated Use {@link Overlay} classes instead.
  */
 @Deprecated
 public class PainterEvent implements EventHierarchicalChecker

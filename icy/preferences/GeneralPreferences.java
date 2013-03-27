@@ -49,7 +49,7 @@ public class GeneralPreferences
     }
 
     /**
-     * @deprecated uses {@link #getPreferences()} instead
+     * @deprecated Use {@link #getPreferences()} instead
      */
     @Deprecated
     public static XMLPreferences getPreferencesGeneral()

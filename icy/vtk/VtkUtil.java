@@ -75,7 +75,7 @@ public class VtkUtil
     }
 
     /**
-     * @deprecated Uses {@link #addProp(vtkRenderer, vtkProp)} instead.
+     * @deprecated Use {@link #addProp(vtkRenderer, vtkProp)} instead.
      */
     @Deprecated
     public static void addActor(vtkRenderer renderer, vtkActor actor)
@@ -89,7 +89,7 @@ public class VtkUtil
     }
 
     /**
-     * @deprecated Uses {@link #addProp(vtkRenderer, vtkProp)} instead.
+     * @deprecated Use {@link #addProp(vtkRenderer, vtkProp)} instead.
      */
     @Deprecated
     public static void addActor2D(vtkRenderer renderer, vtkActor2D actor)
@@ -134,7 +134,7 @@ public class VtkUtil
     }
 
     /**
-     * @deprecated Uses {@link #findProp(vtkRenderer, vtkProp)} instead.
+     * @deprecated Use {@link #findProp(vtkRenderer, vtkProp)} instead.
      */
     @Deprecated
     public static boolean findActor(vtkRenderer renderer, vtkActor actor)
@@ -162,7 +162,7 @@ public class VtkUtil
     }
 
     /**
-     * @deprecated Uses {@link #findProp(vtkRenderer, vtkProp)} instead.
+     * @deprecated Use {@link #findProp(vtkRenderer, vtkProp)} instead.
      */
     @Deprecated
     public static boolean findActor2D(vtkRenderer renderer, vtkActor2D actor)

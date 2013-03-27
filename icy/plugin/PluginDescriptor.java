@@ -691,7 +691,7 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * @deprecated uses {@link #loadDescriptor()} or {@link #loadAll()} instead
+     * @deprecated Use {@link #loadDescriptor()} or {@link #loadAll()} instead
      */
     @Deprecated
     public boolean load(boolean loadImages)
@@ -1320,7 +1320,7 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #isDescriptorLoaded()} instead
+     * @deprecated Use {@link #isDescriptorLoaded()} instead
      */
     @Deprecated
     public boolean isLoaded()

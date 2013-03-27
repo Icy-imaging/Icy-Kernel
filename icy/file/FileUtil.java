@@ -388,7 +388,7 @@ public class FileUtil
     }
 
     /**
-     * @deprecated uses {@link #rename(String, String, boolean)} instead
+     * @deprecated Use {@link #rename(String, String, boolean)} instead
      */
     @Deprecated
     public static boolean rename(String src, String dst, boolean force, boolean wantHidden)
@@ -474,7 +474,7 @@ public class FileUtil
     }
 
     /**
-     * @deprecated uses {@link #rename(File, File, boolean)} instead
+     * @deprecated Use {@link #rename(File, File, boolean)} instead
      */
     @Deprecated
     public static boolean rename(File src, File dst, boolean force, boolean wantHidden)
@@ -483,7 +483,7 @@ public class FileUtil
     }
 
     /**
-     * @deprecated uses {@link #rename(String, String, boolean)} instead
+     * @deprecated Use {@link #rename(String, String, boolean)} instead
      */
     @Deprecated
     public static boolean move(String src, String dst, boolean force)
@@ -492,7 +492,7 @@ public class FileUtil
     }
 
     /**
-     * @deprecated uses {@link #move(String, String, boolean)} instead
+     * @deprecated Use {@link #move(String, String, boolean)} instead
      */
     @Deprecated
     public static boolean move(String src, String dst, boolean force, boolean wantHidden)
@@ -501,7 +501,7 @@ public class FileUtil
     }
 
     /**
-     * @deprecated uses {@link #rename(File, File, boolean)} instead
+     * @deprecated Use {@link #rename(File, File, boolean)} instead
      */
     @Deprecated
     public static boolean move(File src, File dst, boolean force)
@@ -510,7 +510,7 @@ public class FileUtil
     }
 
     /**
-     * @deprecated uses {@link #move(File, File, boolean)} instead
+     * @deprecated Use {@link #move(File, File, boolean)} instead
      */
     @Deprecated
     public static boolean move(File src, File dst, boolean force, boolean wantHidden)
@@ -538,7 +538,7 @@ public class FileUtil
     }
 
     /**
-     * @deprecated uses {@link #copy(String, String, boolean, boolean)} instead
+     * @deprecated Use {@link #copy(String, String, boolean, boolean)} instead
      */
     @Deprecated
     public static boolean copy(String src, String dst, boolean force, boolean wantHidden, boolean recursive)
@@ -569,7 +569,7 @@ public class FileUtil
     }
 
     /**
-     * @deprecated uses {@link #copy(File, File, boolean, boolean)} instead
+     * @deprecated Use {@link #copy(File, File, boolean, boolean)} instead
      */
     @Deprecated
     public static boolean copy(File src, File dst, boolean force, boolean wantHidden, boolean recursive)

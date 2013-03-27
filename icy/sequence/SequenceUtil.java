@@ -1394,7 +1394,7 @@ public class SequenceUtil
     }
 
     /**
-     * @deprecated Uses {@link #extractChannels(Sequence, int...)} instead.
+     * @deprecated Use {@link #extractChannels(Sequence, int...)} instead.
      */
     @Deprecated
     public static Sequence extractChannels(Sequence source, List<Integer> channels)

@@ -238,7 +238,7 @@ public class UnitUtil
     }
 
     /**
-     * @deprecated Uses {@link #getBestTimeUnit(double)} instead.
+     * @deprecated Use {@link #getBestTimeUnit(double)} instead.
      */
     @Deprecated
     public static TimeUnit getBestUnit(double valueInMs)

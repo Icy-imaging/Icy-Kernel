@@ -354,7 +354,7 @@ public class NetworkUtil
     }
 
     /**
-     * @deprecated Uses {@link #hasInternetAccess()} instead.
+     * @deprecated Use {@link #hasInternetAccess()} instead.
      */
     @Deprecated
     public static boolean hasInternetConnection()
@@ -460,7 +460,7 @@ public class NetworkUtil
     }
 
     /**
-     * @deprecated Uses {@link #openBrowser(String)} instead.
+     * @deprecated Use {@link #openBrowser(String)} instead.
      */
     @Deprecated
     public static void openURL(String url)
@@ -469,7 +469,7 @@ public class NetworkUtil
     }
 
     /**
-     * @deprecated Uses {@link #openBrowser(URL)} instead.
+     * @deprecated Use {@link #openBrowser(URL)} instead.
      */
     @Deprecated
     public static void openURL(URL url)
@@ -478,7 +478,7 @@ public class NetworkUtil
     }
 
     /**
-     * @deprecated Uses {@link #openBrowser(URI)} instead.
+     * @deprecated Use {@link #openBrowser(URI)} instead.
      */
     @Deprecated
     public static void openURL(URI uri)

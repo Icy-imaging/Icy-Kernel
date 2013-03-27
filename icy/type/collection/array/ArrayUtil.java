@@ -36,7 +36,7 @@ import java.lang.reflect.Array;
 public class ArrayUtil
 {
     /**
-     * @deprecated uses {@link #getArrayType(Object)} instead
+     * @deprecated Use {@link #getArrayType(Object)} instead
      */
     @Deprecated
     public static ArrayDataType getArrayDataType(Object array)
@@ -474,7 +474,7 @@ public class ArrayUtil
     /**
      * Same as Arrays.fill() but applied to Object array (1D only) from a double value.<br>
      * 
-     * @deprecated Uses {@link Array1DUtil#fill(Object, int, int, double)} instead.
+     * @deprecated Use {@link Array1DUtil#fill(Object, int, int, double)} instead.
      */
     @Deprecated
     public static void fill(Object array, int from, int to, double value)
@@ -486,7 +486,7 @@ public class ArrayUtil
      * Copy 'cnt' elements from 'from' index to 'to' index in a safe manner.<br>
      * i.e: without overriding any data.<br>
      * 
-     * @deprecated Uses {@link Array1DUtil#innerCopy(Object, int, int, int)} instead.
+     * @deprecated Use {@link Array1DUtil#innerCopy(Object, int, int, int)} instead.
      */
     @Deprecated
     public static void innerCopy(Object array, int from, int to, int cnt)

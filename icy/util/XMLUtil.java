@@ -577,7 +577,7 @@ public class XMLUtil
     }
 
     /**
-     * @deprecated Uses {@link #getChildren(Node)} instead.
+     * @deprecated Use {@link #getChildren(Node)} instead.
      */
     @Deprecated
     public static ArrayList<Node> getSubNodes(Node node)
@@ -586,7 +586,7 @@ public class XMLUtil
     }
 
     /**
-     * @deprecated Uses {@link #getChild(Node, String)} instead.
+     * @deprecated Use {@link #getChild(Node, String)} instead.
      */
     @Deprecated
     public static Node getSubNode(Node node, String name)
@@ -595,7 +595,7 @@ public class XMLUtil
     }
 
     /**
-     * @deprecated Uses {@link #getChildren(Node, String)} instead.
+     * @deprecated Use {@link #getChildren(Node, String)} instead.
      */
     @Deprecated
     public static ArrayList<Node> getSubNodes(Node node, String name)
@@ -697,7 +697,7 @@ public class XMLUtil
     }
 
     /**
-     * @deprecated Uses {@link #getElements(Node)} instead.
+     * @deprecated Use {@link #getElements(Node)} instead.
      */
     @Deprecated
     public static ArrayList<Element> getSubElements(Node node)
@@ -706,7 +706,7 @@ public class XMLUtil
     }
 
     /**
-     * @deprecated Uses {@link #getElement(Node, String)} instead.
+     * @deprecated Use {@link #getElement(Node, String)} instead.
      */
     @Deprecated
     public static Element getSubElement(Node node, String name)
@@ -715,7 +715,7 @@ public class XMLUtil
     }
 
     /**
-     * @deprecated Uses {@link #getElements(Node, String)} instead.
+     * @deprecated Use {@link #getElements(Node, String)} instead.
      */
     @Deprecated
     public static ArrayList<Element> getSubElements(Node node, String name)
@@ -792,7 +792,7 @@ public class XMLUtil
     }
 
     /**
-     * @deprecated Uses {@link #getGenericElements(Node, String)} instead.
+     * @deprecated Use {@link #getGenericElements(Node, String)} instead.
      */
     @Deprecated
     public static ArrayList<Element> getSubGenericElements(Node node, String type)
@@ -801,7 +801,7 @@ public class XMLUtil
     }
 
     /**
-     * @deprecated Uses {@link #getGenericElements(Node, String, String)} instead.
+     * @deprecated Use {@link #getGenericElements(Node, String, String)} instead.
      */
     @Deprecated
     public static ArrayList<Element> getSubGenericElements(Node node, String type, String name)
@@ -1685,7 +1685,7 @@ public class XMLUtil
     }
 
     /**
-     * @deprecated uses {@link #removeAllChildren(Node)} instead
+     * @deprecated Use {@link #removeAllChildren(Node)} instead
      */
     @Deprecated
     public static void removeAllChilds(Node node)
@@ -1703,7 +1703,7 @@ public class XMLUtil
     }
 
     /**
-     * @deprecated uses {@link #removeChildren(Node, String)} instead
+     * @deprecated Use {@link #removeChildren(Node, String)} instead
      */
     @Deprecated
     public static void removeChilds(Node node, String name)

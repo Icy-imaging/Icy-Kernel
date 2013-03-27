@@ -33,7 +33,7 @@ import icy.math.ScalerListener;
 import javax.swing.event.EventListenerList;
 
 /**
- * @deprecated Uses {@link LUTChannel} instead.
+ * @deprecated Use {@link LUTChannel} instead.
  */
 @Deprecated
 public class LUTBand implements ScalerListener, IcyColorSpaceListener

@@ -151,7 +151,7 @@ public class WorkspaceLoader
     }
 
     /**
-     * @deprecated Uses {@link #reloadAsynch()} instead.
+     * @deprecated Use {@link #reloadAsynch()} instead.
      */
     @Deprecated
     public static void reload_asynch()

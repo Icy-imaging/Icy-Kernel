@@ -59,10 +59,7 @@ public class ROI2DLine extends ROI2DShape
     protected final Anchor2D pt1;
     protected final Anchor2D pt2;
 
-    /**
-     * 
-     */
-    public ROI2DLine(Point2D pt1, Point2D pt2, boolean cm)
+    public ROI2DLine(Point2D pt1, Point2D pt2)
     {
         super(new Line2D.Double());
 
@@ -78,9 +75,8 @@ public class ROI2DLine extends ROI2DShape
         this.pt2.addOverlayListener(this);
         this.pt2.addAnchorListener(this);
 
-        // select the pt2 to size the line in "creation mode"
-        if (cm)
-            this.pt2.setSelected(true);
+        // select the pt2 to size the line for "interactive mode"
+        this.pt2.setSelected(true);
         setMousePos(pt2);
 
         updateShape();
@@ -88,36 +84,24 @@ public class ROI2DLine extends ROI2DShape
         setName("Line2D");
     }
 
-    /**
-     * 
-     */
-    public ROI2DLine(Point2D pt1, Point2D pt2)
+    public ROI2DLine(Line2D line)
     {
-        this(pt1, pt2, false);
+        this(line.getP1(), line.getP2());
     }
 
-    /**
-     * 
-     */
-    public ROI2DLine(Point2D pt, boolean cm)
-    {
-        this(new Point2D.Double(pt.getX(), pt.getY()), pt, cm);
-    }
-
-    /**
-     * 
-     */
     public ROI2DLine(Point2D pt)
     {
-        this(new Point2D.Double(pt.getX(), pt.getY()), pt, false);
+        this(new Point2D.Double(pt.getX(), pt.getY()), pt);
     }
 
-    /**
-     * 
-     */
+    public ROI2DLine(double x1, double y1, double x2, double y2)
+    {
+        this(new Point2D.Double(x1, y1), new Point2D.Double(x2, y2));
+    }
+
     public ROI2DLine()
     {
-        this(new Point2D.Double());
+        this(new Point2D.Double(), new Point2D.Double());
     }
 
     @Override
@@ -170,7 +154,7 @@ public class ROI2DLine extends ROI2DShape
     protected boolean removePoint(Anchor2D pt)
     {
         // remove point on this ROI remove the ROI
-        delete();
+        remove();
         return true;
     }
 

@@ -19,7 +19,7 @@
 package icy.gui.menu.tools;
 
 /**
- * @deprecated Uses {@link icy.gui.sequence.tools.SequenceChannelMergeFrame} instead.
+ * @deprecated Use {@link icy.gui.sequence.tools.SequenceChannelMergeFrame} instead.
  */
 @Deprecated
 public class SequenceChannelMergeFrame extends icy.gui.sequence.tools.SequenceChannelMergeFrame

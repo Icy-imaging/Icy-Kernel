@@ -91,18 +91,117 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final String PROPERTY_EDITABLE = "editable";
 
     /**
-     * Create a ROI from its tool command name
+     * Create a ROI from its class name or {@link PluginROI} class name.
      * 
      * @param className
-     *        roi class name
-     * @param seq
-     *        sequence object
-     * @param imagePoint
-     *        position in image coordinates
-     * @param creation
-     *        specify if roi is created in "creation mode"
+     *        roi class name or {@link PluginROI} class name.
      * @return ROI (null if command is an incorrect ROI class name)
      */
+    public static ROI create(String className)
+    {
+        ROI result = null;
+
+        try
+        {
+            // search for the specified className
+            final Class<?> clazz = ClassUtil.findClass(className);
+
+            // class found
+            if (clazz != null)
+            {
+                try
+                {
+                    // we first check if we have a PluginROI class here
+                    final Class<? extends PluginROI> roiClazz = clazz.asSubclass(PluginROI.class);
+                    // create ROI
+                    result = roiClazz.newInstance().createROI();
+                }
+                catch (ClassCastException e0)
+                {
+                    // check if this is a ROI class
+                    final Class<? extends ROI> roiClazz = clazz.asSubclass(ROI.class);
+
+                    // default constructor
+                    final Constructor<? extends ROI> constructor = roiClazz.getConstructor(new Class[] {});
+                    // build ROI
+                    result = constructor.newInstance();
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            System.err.println("Cannot create ROI: " + className);
+            System.err.println("Default constructor not found, ROI have to implement the default constructor !");
+        }
+
+        return result;
+    }
+
+    /**
+     * Create a ROI from its class name or {@link PluginROI} class name (interactive mode).
+     * 
+     * @param className
+     *        roi class name or {@link PluginROI} class name.
+     * @param imagePoint
+     *        initial point position in image coordinates (interactive mode).
+     * @return ROI (null if command is an incorrect ROI class name)
+     */
+    public static ROI create(String className, Point2D imagePoint)
+    {
+        ROI result = null;
+
+        try
+        {
+            // search for the specified className
+            final Class<?> clazz = ClassUtil.findClass(className);
+
+            // class found
+            if (clazz != null)
+            {
+                try
+                {
+                    // we first check if we have a PluginROI class here
+                    final Class<? extends PluginROI> roiClazz = clazz.asSubclass(PluginROI.class);
+                    // create ROI
+                    result = roiClazz.newInstance().createROI(imagePoint);
+                }
+                catch (ClassCastException e0)
+                {
+                    // check if this is a ROI class
+                    final Class<? extends ROI> roiClazz = clazz.asSubclass(ROI.class);
+
+                    try
+                    {
+                        // get constructor (Point2D)
+                        final Constructor<? extends ROI> constructor = roiClazz
+                                .getConstructor(new Class[] {Point2D.class});
+                        // build ROI
+                        result = constructor.newInstance(new Object[] {imagePoint});
+                    }
+                    catch (NoSuchMethodException e1)
+                    {
+                        // try default constructor as last chance...
+                        final Constructor<? extends ROI> constructor = roiClazz.getConstructor(new Class[] {});
+                        // build ROI
+                        result = constructor.newInstance();
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            System.err.println("Cannot create ROI: " + className);
+            System.err.println("Default constructor not found, ROI have to implement the default constructor !");
+        }
+
+        return result;
+    }
+
+    /**
+     * @deprecated Use {@link ROI#create(String, Point2D)} instead.
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static ROI create(String className, Sequence seq, Point2D imagePoint, boolean creation)
     {
         ROI result = null;
@@ -120,7 +219,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                     // we first check if we have a PluginROI class here
                     final Class<? extends PluginROI> roiClazz = clazz.asSubclass(PluginROI.class);
                     // create ROI
-                    result = roiClazz.newInstance().createROI(imagePoint, creation);
+                    result = roiClazz.newInstance().createROI(imagePoint);
                 }
                 catch (ClassCastException e0)
                 {
@@ -129,29 +228,18 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
                     try
                     {
-                        // get constructor (Point2D, boolean)
-                        final Constructor<? extends ROI> constructor = roiClazz.getConstructor(new Class[] {
-                                Point2D.class, boolean.class});
+                        // get constructor (Point2D)
+                        final Constructor<? extends ROI> constructor = roiClazz
+                                .getConstructor(new Class[] {Point2D.class});
                         // build ROI
-                        result = constructor.newInstance(new Object[] {imagePoint, Boolean.valueOf(creation)});
+                        result = constructor.newInstance(new Object[] {imagePoint});
                     }
-                    catch (NoSuchMethodException e1)
+                    catch (NoSuchMethodException e2)
                     {
-                        try
-                        {
-                            // get constructor (Point2D)
-                            final Constructor<? extends ROI> constructor = roiClazz
-                                    .getConstructor(new Class[] {Point2D.class});
-                            // build ROI
-                            result = constructor.newInstance(new Object[] {imagePoint});
-                        }
-                        catch (NoSuchMethodException e2)
-                        {
-                            // try default constructor as last chance...
-                            final Constructor<? extends ROI> constructor = roiClazz.getConstructor(new Class[] {});
-                            // build ROI
-                            result = constructor.newInstance();
-                        }
+                        // try default constructor as last chance...
+                        final Constructor<? extends ROI> constructor = roiClazz.getConstructor(new Class[] {});
+                        // build ROI
+                        result = constructor.newInstance();
                     }
                 }
             }
@@ -159,10 +247,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         catch (Exception e)
         {
             System.err.println("Cannot create ROI: " + className);
-            System.err.println("A ROI should implement at least one of following constructor:");
-            System.err.println("- ROI(Point2D point, boolean creationMode)");
-            System.err.println("- ROI(Point2D point)");
-            System.err.println("- ROI()");
+            System.err.println("Default constructor not found, ROI have to implement the default constructor !");
         }
 
         // attach to sequence once ROI is initialized
@@ -186,7 +271,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
         final String className = XMLUtil.getElementValue(node, ID_CLASSNAME, "");
 
-        final ROI roi = create(className, null, new Point2D.Double(0, 0), false);
+        final ROI roi = create(className);
         // load properties from XML
         if (roi != null)
         {
@@ -284,7 +369,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated uses {@link IcyCanvas} methods instead
+     * @deprecated Use {@link IcyCanvas} methods instead
      */
     @Deprecated
     public static double canvasToImageDeltaX(IcyCanvas canvas, int value)
@@ -293,7 +378,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated uses {@link IcyCanvas} methods instead
+     * @deprecated Use {@link IcyCanvas} methods instead
      */
     @Deprecated
     public static double canvasToImageLogDeltaX(IcyCanvas canvas, double value, double logFactor)
@@ -302,7 +387,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated uses {@link IcyCanvas} methods instead
+     * @deprecated Use {@link IcyCanvas} methods instead
      */
     @Deprecated
     public static double canvasToImageLogDeltaX(IcyCanvas canvas, double value)
@@ -311,7 +396,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated uses {@link IcyCanvas} methods instead
+     * @deprecated Use {@link IcyCanvas} methods instead
      */
     @Deprecated
     public static double canvasToImageLogDeltaX(IcyCanvas canvas, int value, double logFactor)
@@ -320,7 +405,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated uses {@link IcyCanvas} methods instead
+     * @deprecated Use {@link IcyCanvas} methods instead
      */
     @Deprecated
     public static double canvasToImageLogDeltaX(IcyCanvas canvas, int value)
@@ -329,7 +414,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated uses {@link IcyCanvas} methods instead
+     * @deprecated Use {@link IcyCanvas} methods instead
      */
     @Deprecated
     public static double canvasToImageDeltaY(IcyCanvas canvas, int value)
@@ -338,7 +423,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated uses {@link IcyCanvas} methods instead
+     * @deprecated Use {@link IcyCanvas} methods instead
      */
     @Deprecated
     public static double canvasToImageLogDeltaY(IcyCanvas canvas, double value, double logFactor)
@@ -347,7 +432,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated uses {@link IcyCanvas} methods instead
+     * @deprecated Use {@link IcyCanvas} methods instead
      */
     @Deprecated
     public static double canvasToImageLogDeltaY(IcyCanvas canvas, double value)
@@ -356,7 +441,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated uses {@link IcyCanvas} methods instead
+     * @deprecated Use {@link IcyCanvas} methods instead
      */
     @Deprecated
     public static double canvasToImageLogDeltaY(IcyCanvas canvas, int value, double logFactor)
@@ -365,7 +450,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated uses {@link IcyCanvas} methods instead
+     * @deprecated Use {@link IcyCanvas} methods instead
      */
     @Deprecated
     public static double canvasToImageLogDeltaY(IcyCanvas canvas, int value)
@@ -622,7 +707,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #remove(boolean)} instead.
+     * @deprecated Use {@link #remove(boolean)} instead.
      */
     @Deprecated
     public void detachFromAll(boolean canUndo)
@@ -631,7 +716,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #remove()} instead.
+     * @deprecated Use {@link #remove()} instead.
      */
     @Deprecated
     public void detachFromAll()
@@ -686,7 +771,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #remove(boolean)} instead.
+     * @deprecated Use {@link #remove(boolean)} instead.
      */
     @Deprecated
     public void delete(boolean canUndo)
@@ -695,7 +780,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #remove()} instead.
+     * @deprecated Use {@link #remove()} instead.
      */
     @Deprecated
     public void delete()
@@ -959,8 +1044,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Tests if a specified 5D point is inside the ROI.
      * 
-     * @return <code>true</code> if the specified <code>Point5D</code> is inside the boundary of the
-     *         <code>ROI</code>; <code>false</code> otherwise.
+     * @return <code>true</code> if the specified <code>Point5D</code> is inside the boundary of the <code>ROI</code>;
+     *         <code>false</code> otherwise.
      */
     public abstract boolean contains(double x, double y, double z, double t, double c);
 
@@ -969,8 +1054,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * 
      * @param p
      *        the specified <code>Point5D</code> to be tested
-     * @return <code>true</code> if the specified <code>Point2D</code> is inside the boundary of the
-     *         <code>ROI</code>; <code>false</code> otherwise.
+     * @return <code>true</code> if the specified <code>Point2D</code> is inside the boundary of the <code>ROI</code>;
+     *         <code>false</code> otherwise.
      */
     public boolean contains(Point5D p)
     {
@@ -983,15 +1068,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * point is contained in both the interior of the <code>ROI</code> and the specified rectangular
      * area.
      * <p>
-     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively
-     * return {@code true} when:
+     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively return {@code true}
+     * when:
      * <ul>
-     * <li>there is a high probability that the rectangular area and the <code>ROI</code> intersect,
-     * but
+     * <li>there is a high probability that the rectangular area and the <code>ROI</code> intersect, but
      * <li>the calculations to accurately determine this intersection are prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code true} even though the
-     * rectangular area does not intersect the {@code ROI}.
+     * This means that for some {@code ROIs} this method might return {@code true} even though the rectangular area does
+     * not intersect the {@code ROI}.
      * 
      * @return <code>true</code> if the interior of the <code>ROI</code> and the interior of the
      *         rectangular area intersect, or are both highly likely to intersect and intersection
@@ -1006,15 +1090,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * point is contained in both the interior of the <code>ROI</code> and the specified rectangular
      * area.
      * <p>
-     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively
-     * return {@code true} when:
+     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively return {@code true}
+     * when:
      * <ul>
-     * <li>there is a high probability that the rectangular area and the <code>ROI</code> intersect,
-     * but
+     * <li>there is a high probability that the rectangular area and the <code>ROI</code> intersect, but
      * <li>the calculations to accurately determine this intersection are prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code true} even though the
-     * rectangular area does not intersect the {@code ROI}.
+     * This means that for some {@code ROIs} this method might return {@code true} even though the rectangular area does
+     * not intersect the {@code ROI}.
      * 
      * @return <code>true</code> if the interior of the <code>ROI</code> and the interior of the
      *         rectangular area intersect, or are both highly likely to intersect and intersection
@@ -1115,7 +1198,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #roiChanged()} instead
+     * @deprecated Use {@link #roiChanged()} instead
      */
     @Deprecated
     public void roiChanged(ROIPointEventType pointEventType, Object point)
@@ -1166,7 +1249,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Called when ROI name has changed.
      * 
-     * @deprecated Uses {@link #propertyChanged(String)} instead.
+     * @deprecated Use {@link #propertyChanged(String)} instead.
      */
     @Deprecated
     public void nameChanged()
@@ -1246,11 +1329,13 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             case SELECTION_CHANGED:
                 // compute painter priority
                 painter.computePriority();
+                painter.painterChanged();
                 break;
 
             case FOCUS_CHANGED:
                 // compute painter priority
                 painter.computePriority();
+                painter.painterChanged();
                 break;
         }
 

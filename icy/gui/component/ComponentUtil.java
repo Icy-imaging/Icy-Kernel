@@ -19,7 +19,7 @@
 package icy.gui.component;
 
 /**
- * @deprecated Uses {@link icy.gui.util.ComponentUtil} instead.
+ * @deprecated Use {@link icy.gui.util.ComponentUtil} instead.
  */
 @Deprecated
 public class ComponentUtil extends icy.gui.util.ComponentUtil

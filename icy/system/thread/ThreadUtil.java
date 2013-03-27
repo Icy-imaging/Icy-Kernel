@@ -82,7 +82,7 @@ public class ThreadUtil
     }
 
     /**
-     * @deprecated uses {@link #invokeNow(Runnable)} instead
+     * @deprecated Use {@link #invokeNow(Runnable)} instead
      */
     @Deprecated
     public static void invokeAndWait(Runnable runnable)

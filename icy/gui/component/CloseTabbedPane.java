@@ -22,7 +22,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 
 /**
- * @deprecated uses {@link CloseableTabbedPane} instead
+ * @deprecated Use {@link CloseableTabbedPane} instead
  */
 @Deprecated
 public class CloseTabbedPane extends JTabbedPane

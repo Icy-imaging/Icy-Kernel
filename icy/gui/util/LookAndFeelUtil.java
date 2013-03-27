@@ -417,7 +417,7 @@ public class LookAndFeelUtil
     }
 
     /**
-     * @deprecated Uses {@link #getActiveColorScheme(DecorationAreaType)} instead.
+     * @deprecated Use {@link #getActiveColorScheme(DecorationAreaType)} instead.
      */
     @Deprecated
     public static SubstanceColorScheme getActiveColorSheme(DecorationAreaType d)
@@ -482,7 +482,7 @@ public class LookAndFeelUtil
     }
 
     /**
-     * @deprecated Uses {@link #getActiveColorScheme(Component)} instead.
+     * @deprecated Use {@link #getActiveColorScheme(Component)} instead.
      */
     @Deprecated
     public static SubstanceColorScheme getActiveColorSheme(Component c)
@@ -491,7 +491,7 @@ public class LookAndFeelUtil
     }
 
     /**
-     * @deprecated Uses {@link #getActiveColorScheme(Component, ComponentState)} instead.
+     * @deprecated Use {@link #getActiveColorScheme(Component, ComponentState)} instead.
      */
     @Deprecated
     public static SubstanceColorScheme getActiveColorSheme(Component c, ComponentState state)

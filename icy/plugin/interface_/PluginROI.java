@@ -36,15 +36,32 @@ public interface PluginROI
      */
     public String getROIClassName();
 
+    // /**
+    // * Create and return a new ROI
+    // *
+    // * @param pt
+    // * location of the creation point
+    // * @param cm
+    // * "create mode" flag, specifying true here means the first point will be<br>
+    // * created in "selected" state (so will support direct drag operation)
+    // * @return the new created ROI
+    // */
+    // public ROI createROI(Point2D pt, boolean cm);
+
     /**
-     * Create and return a new ROI
+     * Create and return a new ROI for interactive mode.<br>
+     * The first point will be created in "selected" state so will support direct drag operation.
      * 
      * @param pt
      *        location of the creation point
-     * @param cm
-     *        "create mode" flag, specifying true here means the first point will be<br>
-     *        created in "selected" state (so will support direct drag operation)
      * @return the new created ROI
      */
-    public ROI createROI(Point2D pt, boolean cm);
+    public ROI createROI(Point2D pt);
+
+    /**
+     * Create and return a new ROI
+     * 
+     * @return the new created ROI
+     */
+    public ROI createROI();
 }

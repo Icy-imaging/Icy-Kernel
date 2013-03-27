@@ -129,7 +129,7 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
     }
 
     /**
-     * @deprecated Uses {@link #IcyAbstractAction(String, IcyIcon, String, int, int)} instead.
+     * @deprecated Use {@link #IcyAbstractAction(String, IcyIcon, String, int, int)} instead.
      */
     @Deprecated
     public IcyAbstractAction(String name, String iconName, String description, int keyCode, int modifiers)
@@ -138,7 +138,7 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
     }
 
     /**
-     * @deprecated Uses {@link #IcyAbstractAction(String, IcyIcon, String, int)} instead.
+     * @deprecated Use {@link #IcyAbstractAction(String, IcyIcon, String, int)} instead.
      */
     @Deprecated
     public IcyAbstractAction(String name, String iconName, String description, int keyCode)
@@ -147,7 +147,7 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
     }
 
     /**
-     * @deprecated Uses {@link #IcyAbstractAction(String, IcyIcon, String)} instead.
+     * @deprecated Use {@link #IcyAbstractAction(String, IcyIcon, String)} instead.
      */
     @Deprecated
     public IcyAbstractAction(String name, String iconName, String description)
@@ -156,7 +156,7 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
     }
 
     /**
-     * @deprecated Uses {@link #IcyAbstractAction(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyAbstractAction(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyAbstractAction(String name, String iconName)
@@ -352,6 +352,11 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
             if (wasEnabled != isEnabled)
                 firePropertyChange("enabled", Boolean.valueOf(wasEnabled), Boolean.valueOf(isEnabled));
         }
+    }
+
+    public void doAction()
+    {
+        doAction(new ActionEvent(this, 0, ""));
     }
 
     public abstract void doAction(ActionEvent e);

@@ -19,7 +19,7 @@
 package icy.common;
 
 /**
- * @deprecated uses {@link icy.common.listener.NotifyListener} instead
+ * @deprecated Use {@link icy.common.listener.NotifyListener} instead
  */
 @Deprecated
 public interface NotifyListener extends icy.common.listener.NotifyListener

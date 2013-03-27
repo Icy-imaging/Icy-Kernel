@@ -152,7 +152,7 @@ public class PluginLauncher implements Runnable
     }
 
     /**
-     * @deprecated Uses {@link #start(PluginDescriptor)} instead.
+     * @deprecated Use {@link #start(PluginDescriptor)} instead.
      */
     @Deprecated
     public synchronized static void launch(PluginDescriptor descriptor)

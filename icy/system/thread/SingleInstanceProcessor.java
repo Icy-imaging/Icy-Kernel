@@ -20,13 +20,13 @@ package icy.system.thread;
 
 /**
  * @author stephane
- * @deprecated uses {@link InstanceProcessor} instead
+ * @deprecated Use {@link InstanceProcessor} instead
  */
 @Deprecated
 public class SingleInstanceProcessor extends InstanceProcessor
 {
     /**
-     * @deprecated uses {@link InstanceProcessor} instead
+     * @deprecated Use {@link InstanceProcessor} instead
      */
     @Deprecated
     public SingleInstanceProcessor()

@@ -380,7 +380,7 @@ public class ShapeUtil
     }
 
     /**
-     * @deprecated uses {@link GraphicsUtil#drawPathIterator(PathIterator, Graphics2D)} instead
+     * @deprecated Use {@link GraphicsUtil#drawPathIterator(PathIterator, Graphics2D)} instead
      */
     @Deprecated
     public static void drawFromPath(PathIterator path, final Graphics2D g)

@@ -377,7 +377,7 @@ public class BooleanMask2D
     }
 
     /**
-     * @deprecated Uses {@link #getExclusiveUnionBooleanMask(ROI2D[])} instead.
+     * @deprecated Use {@link #getExclusiveUnionBooleanMask(ROI2D[])} instead.
      */
     @Deprecated
     public static BooleanMask2D getXorBooleanMask(ROI2D[] rois)
@@ -386,7 +386,7 @@ public class BooleanMask2D
     }
 
     /**
-     * @deprecated Uses {@link #getExclusiveUnionBooleanMask(ArrayList)} instead.
+     * @deprecated Use {@link #getExclusiveUnionBooleanMask(ArrayList)} instead.
      */
     @Deprecated
     public static BooleanMask2D getXorBooleanMask(ArrayList<ROI2D> rois)
@@ -395,7 +395,7 @@ public class BooleanMask2D
     }
 
     /**
-     * @deprecated Uses {@link #getExclusiveUnionBooleanMask(BooleanMask2D, BooleanMask2D)} instead.
+     * @deprecated Use {@link #getExclusiveUnionBooleanMask(BooleanMask2D, BooleanMask2D)} instead.
      */
     @Deprecated
     public static BooleanMask2D getXorBooleanMask(BooleanMask2D mask1, BooleanMask2D mask2)
@@ -1079,7 +1079,7 @@ public class BooleanMask2D
     }
 
     /**
-     * @deprecated Uses {@link #getExclusiveUnion(BooleanMask2D)} instead.
+     * @deprecated Use {@link #getExclusiveUnion(BooleanMask2D)} instead.
      */
     @Deprecated
     public BooleanMask2D getXor(BooleanMask2D booleanMask)
@@ -1088,7 +1088,7 @@ public class BooleanMask2D
     }
 
     /**
-     * @deprecated Uses {@link #getExclusiveUnion(Rectangle, boolean[])} instead.
+     * @deprecated Use {@link #getExclusiveUnion(Rectangle, boolean[])} instead.
      */
     @Deprecated
     public BooleanMask2D getXor(Rectangle bounds, boolean[] mask)
@@ -1157,7 +1157,7 @@ public class BooleanMask2D
     }
 
     /**
-     * @deprecated Uses {@link #exclusiveUnion(BooleanMask2D)} instead
+     * @deprecated Use {@link #exclusiveUnion(BooleanMask2D)} instead
      */
     @Deprecated
     public void xor(BooleanMask2D booleanMask)
@@ -1166,7 +1166,7 @@ public class BooleanMask2D
     }
 
     /**
-     * @deprecated Uses {@link #exclusiveUnion(Rectangle, boolean[])} instead
+     * @deprecated Use {@link #exclusiveUnion(Rectangle, boolean[])} instead
      */
     @Deprecated
     public void xor(Rectangle bounds, boolean[] mask)

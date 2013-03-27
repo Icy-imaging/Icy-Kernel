@@ -21,7 +21,7 @@ package icy.common;
 import icy.common.listener.ChangeListener;
 
 /**
- * @deprecated uses {@link ChangeListener} instead
+ * @deprecated Use {@link ChangeListener} instead
  */
 @Deprecated
 public interface IcyChangedListener extends ChangeListener

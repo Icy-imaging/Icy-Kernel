@@ -134,7 +134,7 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @deprecated Uses {@link ROI2D#subtract(ROI2D, ROI2D)} instead
+     * @deprecated Use {@link ROI2D#subtract(ROI2D, ROI2D)} instead
      */
     @Deprecated
     public static ROI2D substract(ROI2D roi1, ROI2D roi2)
@@ -971,7 +971,7 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @deprecated Uses {@link #getBooleanMask(boolean)} instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} instead.
      */
     @Deprecated
     public BooleanMask2D getAsBooleanMask(boolean inclusive)
@@ -980,7 +980,7 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @deprecated Uses {@link #getBooleanMask(Rectangle, boolean)} instead.
+     * @deprecated Use {@link #getBooleanMask(Rectangle, boolean)} instead.
      */
     @Deprecated
     public boolean[] getAsBooleanMask(Rectangle rect, boolean inclusive)
@@ -989,7 +989,7 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @deprecated Uses {@link #getBooleanMask(int, int, int, int, boolean)} instead.
+     * @deprecated Use {@link #getBooleanMask(int, int, int, int, boolean)} instead.
      */
     @Deprecated
     public boolean[] getAsBooleanMask(int x, int y, int w, int h, boolean inclusive)
@@ -998,7 +998,7 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @deprecated Uses {@link #getBooleanMask(boolean)} instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} instead.
      */
     @Deprecated
     public BooleanMask2D getAsBooleanMask()
@@ -1007,7 +1007,7 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @deprecated Uses {@link #getBooleanMask(boolean)} instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} instead.
      */
     @Deprecated
     public boolean[] getAsBooleanMask(Rectangle rect)
@@ -1016,7 +1016,7 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @deprecated Uses {@link #getBooleanMask(boolean)} instead.
+     * @deprecated Use {@link #getBooleanMask(boolean)} instead.
      */
     @Deprecated
     public boolean[] getAsBooleanMask(int x, int y, int w, int h)

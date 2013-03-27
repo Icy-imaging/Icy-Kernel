@@ -19,7 +19,7 @@
 package icy.common;
 
 /**
- * @deprecated uses {@link icy.common.listener.ProgressListener} instead
+ * @deprecated Use {@link icy.common.listener.ProgressListener} instead
  */
 @Deprecated
 public interface ProgressListener extends icy.common.listener.ProgressListener

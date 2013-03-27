@@ -36,6 +36,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -123,9 +124,20 @@ public class ROI2DPolyLine extends ROI2DShape
         setName("PolyLine2D");
     }
 
-    /**
-     * 
-     */
+    public ROI2DPolyLine(Polygon polygon)
+    {
+        this(new Point2D.Double());
+
+        setPolygon(polygon);
+    }
+
+    public ROI2DPolyLine(List<Point2D> points)
+    {
+        this(new Point2D.Double());
+
+        setPoints(points);
+    }
+
     public ROI2DPolyLine()
     {
         this(new Point2D.Double());
@@ -148,7 +160,7 @@ public class ROI2DPolyLine extends ROI2DShape
         return (Path2D) shape;
     }
 
-    public void setPoints(ArrayList<Point2D> pts)
+    public void setPoints(List<Point2D> pts)
     {
         beginUpdate();
         try
@@ -156,7 +168,7 @@ public class ROI2DPolyLine extends ROI2DShape
             removeAllPoint();
 
             for (Point2D pt : pts)
-                addPoint(new Anchor2D(pt));
+                addPoint(new Anchor2D(pt.getX(), pt.getY()));
         }
         finally
         {

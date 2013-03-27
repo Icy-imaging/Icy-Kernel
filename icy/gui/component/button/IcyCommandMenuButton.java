@@ -48,7 +48,7 @@ public class IcyCommandMenuButton extends JCommandMenuButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyCommandMenuButton(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyCommandMenuButton(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyCommandMenuButton(String title, String iconName)

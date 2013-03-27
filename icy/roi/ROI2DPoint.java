@@ -39,10 +39,7 @@ public class ROI2DPoint extends ROI2DShape
 
     private final Anchor2D position;
 
-    /**
-     * 
-     */
-    public ROI2DPoint(Point2D position, boolean cm)
+    public ROI2DPoint(Point2D position)
     {
         super(new Line2D.Double());
 
@@ -54,9 +51,8 @@ public class ROI2DPoint extends ROI2DShape
         this.position.addOverlayListener(this);
         this.position.addAnchorListener(this);
 
-        // select the point in "creation mode"
-        if (cm)
-            this.position.setSelected(true);
+        // select the point for "interactive" mode
+        this.position.setSelected(true);
         setMousePos(position);
 
         updateShape();
@@ -64,24 +60,18 @@ public class ROI2DPoint extends ROI2DShape
         setName("Point2D");
     }
 
-    /**
-     * 
-     */
-    public ROI2DPoint(Point2D position)
+    public ROI2DPoint(double x, double y)
     {
-        this(position, false);
+        this(new Point2D.Double(x, y));
     }
 
-    /**
-     * 
-     */
     public ROI2DPoint()
     {
-        this(new Point2D.Double(), false);
+        this(new Point2D.Double());
     }
 
     /**
-     * @deprecated Uses {@link #getLine()} instead.
+     * @deprecated Use {@link #getLine()} instead.
      */
     @Deprecated
     public Rectangle2D getRectangle()
@@ -124,7 +114,7 @@ public class ROI2DPoint extends ROI2DShape
     protected boolean removePoint(Anchor2D pt)
     {
         // remove point on this ROI remove the ROI
-        delete();
+        remove();
         return true;
     }
 

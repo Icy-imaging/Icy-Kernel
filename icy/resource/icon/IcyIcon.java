@@ -177,7 +177,7 @@ public class IcyIcon implements ResizableIcon
     }
 
     /**
-     * @deprecated Uses {@link #getAlpha()} instead
+     * @deprecated Use {@link #getAlpha()} instead
      */
     @Deprecated
     public boolean isAlpha()

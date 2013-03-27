@@ -155,7 +155,7 @@ public interface MainInterface
     // public abstract void registerStreamPlugin(PluginStreamGenerator pluginStreamGenerator);
 
     /**
-     * @deprecated uses {@link #getMainFrame()} instead
+     * @deprecated Use {@link #getMainFrame()} instead
      */
     @Deprecated
     public abstract MainFrame getFrame();

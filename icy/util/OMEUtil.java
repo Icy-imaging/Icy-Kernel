@@ -168,7 +168,7 @@ public class OMEUtil
     }
 
     /**
-     * @deprecated Uses {@link MetaDataUtil#generateMetaData(int, int, int, DataType, boolean)}
+     * @deprecated Use {@link MetaDataUtil#generateMetaData(int, int, int, DataType, boolean)}
      *             instead.
      */
     @Deprecated
@@ -179,7 +179,7 @@ public class OMEUtil
     }
 
     /**
-     * @deprecated Uses {@link MetaDataUtil#generateMetaData(IcyBufferedImage, boolean)} instead.
+     * @deprecated Use {@link MetaDataUtil#generateMetaData(IcyBufferedImage, boolean)} instead.
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(IcyBufferedImage image, boolean separateChannel)
@@ -189,7 +189,7 @@ public class OMEUtil
     }
 
     /**
-     * @deprecated Uses {@link MetaDataUtil#generateMetaData(Sequence, boolean, boolean, boolean)}
+     * @deprecated Use {@link MetaDataUtil#generateMetaData(Sequence, boolean, boolean, boolean)}
      *             instead.
      */
     @Deprecated
@@ -200,7 +200,7 @@ public class OMEUtil
     }
 
     /**
-     * @deprecated Uses {@link MetaDataUtil#generateMetaData(Sequence, int, int, boolean)} instead.
+     * @deprecated Use {@link MetaDataUtil#generateMetaData(Sequence, int, int, boolean)} instead.
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(Sequence sequence, int sizeZ, int sizeT, boolean separateChannel)
@@ -210,7 +210,7 @@ public class OMEUtil
     }
 
     /**
-     * @deprecated Uses {@link MetaDataUtil#generateMetaData(Sequence, boolean)} instead.
+     * @deprecated Use {@link MetaDataUtil#generateMetaData(Sequence, boolean)} instead.
      */
     @Deprecated
     public static OMEXMLMetadata generateMetaData(Sequence sequence, boolean separateChannel) throws ServiceException

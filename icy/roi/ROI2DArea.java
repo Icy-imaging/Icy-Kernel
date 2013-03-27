@@ -243,8 +243,8 @@ public class ROI2DArea extends ROI2D
                         if (ROI2DArea.this.selected)
                         {
                             // roi not focused ? --> remove point from mask
-                            // if (!focused)
-                            removePointAt(canvas, imagePoint);
+                            if (!focused)
+                                removePointAt(canvas, imagePoint);
 
                             e.consume();
                         }
@@ -299,8 +299,8 @@ public class ROI2DArea extends ROI2D
                         else if (EventUtil.isRightMouseButton(e))
                         {
                             // roi not focused ? --> remove point from mask
-                            // if (!focused)
-                            removePointAt(canvas, imagePoint);
+                            if (!focused)
+                                removePointAt(canvas, imagePoint);
 
                             e.consume();
                         }

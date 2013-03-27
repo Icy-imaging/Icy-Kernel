@@ -71,7 +71,7 @@ import loci.formats.gui.UnsignedIntBuffer;
 public class IcyBufferedImage extends BufferedImage implements IcyColorModelListener, ChangeListener
 {
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil.FilterType} instead.
+     * @deprecated Use {@link IcyBufferedImageUtil.FilterType} instead.
      */
     @Deprecated
     public static enum FilterType
@@ -570,7 +570,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #IcyBufferedImage(int, int, IcyColorModel)} instead.
+     * @deprecated Use {@link #IcyBufferedImage(int, int, IcyColorModel)} instead.
      */
     @Deprecated
     public static IcyBufferedImage createEmptyImage(int width, int height, IcyColorModel cm)
@@ -945,7 +945,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#getARGBImage(IcyBufferedImage, BufferedImage)}
+     * @deprecated Use {@link IcyBufferedImageUtil#getARGBImage(IcyBufferedImage, BufferedImage)}
      *             instead.
      */
     @Deprecated
@@ -955,7 +955,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#getARGBImage(IcyBufferedImage, LUT)} instead.
+     * @deprecated Use {@link IcyBufferedImageUtil#getARGBImage(IcyBufferedImage, LUT)} instead.
      */
     @Deprecated
     public BufferedImage getARGBImage(LUT lut)
@@ -964,7 +964,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#getARGBImage(IcyBufferedImage)} instead.
+     * @deprecated Use {@link IcyBufferedImageUtil#getARGBImage(IcyBufferedImage)} instead.
      */
     @Deprecated
     public BufferedImage getARGBImage()
@@ -1017,7 +1017,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)}
+     * @deprecated Use {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)}
      *             instead
      */
     @Deprecated
@@ -1027,7 +1027,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)}
+     * @deprecated Use {@link IcyBufferedImageUtil#toBufferedImage(IcyBufferedImage, int, LUT)}
      *             instead
      */
     @Deprecated
@@ -1037,7 +1037,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#getCopy(IcyBufferedImage)} instead
+     * @deprecated Use {@link IcyBufferedImageUtil#getCopy(IcyBufferedImage)} instead
      */
     @Deprecated
     public IcyBufferedImage getCopy()
@@ -1098,7 +1098,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#extractChannel(IcyBufferedImage, int)} instead.
+     * @deprecated Use {@link IcyBufferedImageUtil#extractChannel(IcyBufferedImage, int)} instead.
      */
     @Deprecated
     public IcyBufferedImage extractChannel(int channelNumber)
@@ -1107,7 +1107,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#extractChannels(IcyBufferedImage, List)}
+     * @deprecated Use {@link IcyBufferedImageUtil#extractChannels(IcyBufferedImage, List)}
      *             instead.
      */
     @Deprecated
@@ -1117,7 +1117,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#extractChannel(IcyBufferedImage, int)} instead
+     * @deprecated Use {@link IcyBufferedImageUtil#extractChannel(IcyBufferedImage, int)} instead
      */
     @Deprecated
     public IcyBufferedImage extractBand(int bandNumber)
@@ -1126,7 +1126,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#extractChannels(IcyBufferedImage, List)} instead
+     * @deprecated Use {@link IcyBufferedImageUtil#extractChannels(IcyBufferedImage, List)} instead
      */
     @Deprecated
     public IcyBufferedImage extractBands(List<Integer> bandNumbers)
@@ -1170,7 +1170,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#scale(IcyBufferedImage, int, int)} instead.
+     * @deprecated Use {@link IcyBufferedImageUtil#scale(IcyBufferedImage, int, int)} instead.
      */
     @Deprecated
     public IcyBufferedImage getScaledCopy(int width, int height)
@@ -1179,7 +1179,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#translate(IcyBufferedImage, int, int, int)}
+     * @deprecated Use {@link IcyBufferedImageUtil#translate(IcyBufferedImage, int, int, int)}
      *             instead.
      */
     @Deprecated
@@ -1189,7 +1189,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImageUtil#translate(IcyBufferedImage, int, int)} instead.
+     * @deprecated Use {@link IcyBufferedImageUtil#translate(IcyBufferedImage, int, int)} instead.
      */
     @Deprecated
     public void translate(int dx, int dy)
@@ -1344,7 +1344,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #getChannelsGlobalTypeBounds()} instead.
+     * @deprecated Use {@link #getChannelsGlobalTypeBounds()} instead.
      */
     @Deprecated
     public double[] getChannelTypeGlobalBounds()
@@ -1353,7 +1353,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #getChannelTypeGlobalBounds()} instead.
+     * @deprecated Use {@link #getChannelTypeGlobalBounds()} instead.
      */
     @Deprecated
     public double[] getGlobalChannelTypeBounds()
@@ -1362,7 +1362,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #getChannelTypeMin(int)} instead.
+     * @deprecated Use {@link #getChannelTypeMin(int)} instead.
      */
     @Deprecated
     public double getComponentAbsMinValue(int component)
@@ -1371,7 +1371,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #getChannelTypeMax(int)} instead.
+     * @deprecated Use {@link #getChannelTypeMax(int)} instead.
      */
     @Deprecated
     public double getComponentAbsMaxValue(int component)
@@ -1380,7 +1380,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #getChannelTypeBounds(int)} instead.
+     * @deprecated Use {@link #getChannelTypeBounds(int)} instead.
      */
     @Deprecated
     public double[] getComponentAbsBounds(int component)
@@ -1389,7 +1389,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #getChannelsTypeBounds()} instead.
+     * @deprecated Use {@link #getChannelsTypeBounds()} instead.
      */
     @Deprecated
     public double[][] getComponentsAbsBounds()
@@ -1398,7 +1398,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #getGlobalChannelTypeBounds()} instead.
+     * @deprecated Use {@link #getGlobalChannelTypeBounds()} instead.
      */
     @Deprecated
     public double[] getGlobalComponentAbsBounds()
@@ -1469,7 +1469,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #getChannelMin(int)} instead.
+     * @deprecated Use {@link #getChannelMin(int)} instead.
      */
     @Deprecated
     public double getComponentUserMinValue(int component)
@@ -1478,7 +1478,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #getChannelMax(int)} instead.
+     * @deprecated Use {@link #getChannelMax(int)} instead.
      */
     @Deprecated
     public double getComponentUserMaxValue(int component)
@@ -1487,7 +1487,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #getChannelBounds(int)} instead.
+     * @deprecated Use {@link #getChannelBounds(int)} instead.
      */
     @Deprecated
     public double[] getComponentUserBounds(int component)
@@ -1496,7 +1496,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #getChannelsBounds()} instead.
+     * @deprecated Use {@link #getChannelsBounds()} instead.
      */
     @Deprecated
     public double[][] getComponentsUserBounds()
@@ -1538,7 +1538,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #setChannelTypeMin(int, double)} instead.
+     * @deprecated Use {@link #setChannelTypeMin(int, double)} instead.
      */
     @Deprecated
     public void setComponentAbsMinValue(int component, double min)
@@ -1547,7 +1547,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #setChannelTypeMax(int, double)} instead.
+     * @deprecated Use {@link #setChannelTypeMax(int, double)} instead.
      */
     @Deprecated
     public void setComponentAbsMaxValue(int component, double max)
@@ -1556,7 +1556,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #setChannelTypeBounds(int, double, double)} instead.
+     * @deprecated Use {@link #setChannelTypeBounds(int, double, double)} instead.
      */
     @Deprecated
     public void setComponentAbsBounds(int component, double[] bounds)
@@ -1565,7 +1565,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #setChannelTypeBounds(int, double, double)} instead.
+     * @deprecated Use {@link #setChannelTypeBounds(int, double, double)} instead.
      */
     @Deprecated
     public void setComponentAbsBounds(int component, double min, double max)
@@ -1574,7 +1574,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #setChannelsTypeBounds(double[][])} instead.
+     * @deprecated Use {@link #setChannelsTypeBounds(double[][])} instead.
      */
     @Deprecated
     public void setComponentsAbsBounds(double[][] bounds)
@@ -1633,7 +1633,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #setChannelMin(int, double)} instead.
+     * @deprecated Use {@link #setChannelMin(int, double)} instead.
      */
     @Deprecated
     public void setComponentUserMinValue(int component, double min)
@@ -1642,7 +1642,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #setChannelMax(int, double)} instead.
+     * @deprecated Use {@link #setChannelMax(int, double)} instead.
      */
     @Deprecated
     public void setComponentUserMaxValue(int component, double max)
@@ -1651,7 +1651,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #setChannelBounds(int, double, double)} instead.
+     * @deprecated Use {@link #setChannelBounds(int, double, double)} instead.
      */
     @Deprecated
     public void setComponentUserBounds(int component, double[] bounds)
@@ -1660,7 +1660,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #setChannelBounds(int, double, double)} instead
+     * @deprecated Use {@link #setChannelBounds(int, double, double)} instead
      */
     @Deprecated
     public void setComponentUserBounds(int component, double min, double max)
@@ -1669,7 +1669,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #setChannelsBounds(double[][])} instead.
+     * @deprecated Use {@link #setChannelsBounds(double[][])} instead.
      */
     @Deprecated
     public void setComponentsUserBounds(double[][] bounds)
@@ -1706,7 +1706,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #updateChannelsBounds()} instead.
+     * @deprecated Use {@link #updateChannelsBounds()} instead.
      */
     @SuppressWarnings("unused")
     @Deprecated
@@ -1716,7 +1716,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Uses {@link #updateChannelsBounds()} instead.
+     * @deprecated Use {@link #updateChannelsBounds()} instead.
      */
     @SuppressWarnings("unused")
     @Deprecated
@@ -3690,7 +3690,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated USes {@link #channelBoundsChanged(int)} instead.
+     * @deprecated Use {@link #channelBoundsChanged(int)} instead.
      */
     @Deprecated
     public void componentBoundsChanged(int component)

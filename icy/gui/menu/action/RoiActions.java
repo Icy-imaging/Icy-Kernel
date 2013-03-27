@@ -218,6 +218,46 @@ public class RoiActions
         }
     };
 
+    public static IcyAbstractAction selectAllAction = new IcyAbstractAction("SelectAll", (IcyIcon) null,
+            "Select all ROI(s)")
+    {
+        @Override
+        public void doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+
+            if (sequence != null)
+                sequence.setSelectedROIs(sequence.getROIs());
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+
+            return !processing && (sequence != null) && (sequence.getROIs().size() > 0);
+        }
+    };
+
+    public static IcyAbstractAction unselectAction = new IcyAbstractAction("Unselect", (IcyIcon) null,
+            "Unselect ROI(s)")
+    {
+        @Override
+        public void doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+
+            if (sequence != null)
+                sequence.setSelectedROI(null, false);
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+        }
+    };
+
     public static IcyAbstractAction deleteAction = new IcyAbstractAction("Delete",
             new IcyIcon(ResourceUtil.ICON_DELETE), "Delete selected ROI(s)")
     {

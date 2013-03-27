@@ -187,7 +187,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
         }
 
         /**
-         * @deprecated Uses {@link #getChannel()} instead.
+         * @deprecated Use {@link #getChannel()} instead.
          */
         @Deprecated
         public int getComponent()
@@ -323,7 +323,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
     }
 
     /**
-     * @deprecated Uses {@link #getLutChannels()} instead.
+     * @deprecated Use {@link #getLutChannels()} instead.
      */
     @Deprecated
     public ArrayList<LUTBand> getLutBands()
@@ -337,7 +337,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
     }
 
     /**
-     * @deprecated Uses {@link #getLutChannel(int)} instead.
+     * @deprecated Use {@link #getLutChannel(int)} instead.
      */
     @Deprecated
     public LUTBand getLutBand(int band)
@@ -354,7 +354,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
     }
 
     /**
-     * @deprecated Uses {@link #getNumChannel()} instead.
+     * @deprecated Use {@link #getNumChannel()} instead.
      */
     @Deprecated
     public int getNumComponents()

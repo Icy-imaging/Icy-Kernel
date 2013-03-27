@@ -19,7 +19,7 @@
 package icy.gui.component;
 
 /**
- * @deprecated Uses {@link icy.gui.component.sequence.SequenceChooser} instead.
+ * @deprecated Use {@link icy.gui.component.sequence.SequenceChooser} instead.
  */
 @Deprecated
 public class SequenceChooser extends icy.gui.component.sequence.SequenceChooser

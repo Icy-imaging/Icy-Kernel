@@ -353,7 +353,7 @@ public class GuiUtil
     }
 
     /**
-     * @deprecated uses {@link GraphicsUtil#paintIcyBackGround(int, int, Graphics)} instead
+     * @deprecated Use {@link GraphicsUtil#paintIcyBackGround(int, int, Graphics)} instead
      */
     @Deprecated
     public static void paintBackGround(int width, int height, Graphics g)
@@ -362,7 +362,7 @@ public class GuiUtil
     }
 
     /**
-     * @deprecated uses {@link GraphicsUtil#paintIcyBackGround(Component, Graphics)} instead
+     * @deprecated Use {@link GraphicsUtil#paintIcyBackGround(Component, Graphics)} instead
      */
     @Deprecated
     public static void paintBackGround(Component component, Graphics g)
@@ -371,7 +371,7 @@ public class GuiUtil
     }
 
     /**
-     * @deprecated uses {@link GraphicsUtil#paintIcyBackGround(Component, Graphics)} instead
+     * @deprecated Use {@link GraphicsUtil#paintIcyBackGround(Component, Graphics)} instead
      */
     @Deprecated
     public static void paintBackGround(Image image)
@@ -380,7 +380,7 @@ public class GuiUtil
     }
 
     /**
-     * @deprecated uses {@link GraphicsUtil#getStringBounds(Graphics, Font, String)} instead
+     * @deprecated Use {@link GraphicsUtil#getStringBounds(Graphics, Font, String)} instead
      */
     @Deprecated
     public static Rectangle2D getStringBounds(Graphics g, Font f, String s)
@@ -389,7 +389,7 @@ public class GuiUtil
     }
 
     /**
-     * @deprecated uses {@link GraphicsUtil#getStringBounds(Component, String)} instead
+     * @deprecated Use {@link GraphicsUtil#getStringBounds(Component, String)} instead
      */
     @Deprecated
     public static Rectangle2D getStringBounds(Component c, String s)
@@ -398,7 +398,7 @@ public class GuiUtil
     }
 
     /**
-     * @deprecated uses {@link GraphicsUtil#getStringBounds(Graphics, String)} instead
+     * @deprecated Use {@link GraphicsUtil#getStringBounds(Graphics, String)} instead
      */
     @Deprecated
     public static Rectangle2D getStringBounds(Graphics g, String s)
@@ -418,7 +418,7 @@ public class GuiUtil
     }
 
     /**
-     * @deprecated uses {@link GraphicsUtil#drawCenteredString(Graphics, String, int, int, boolean)}
+     * @deprecated Use {@link GraphicsUtil#drawCenteredString(Graphics, String, int, int, boolean)}
      *             instead
      */
     @Deprecated

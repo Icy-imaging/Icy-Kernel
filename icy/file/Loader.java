@@ -854,7 +854,7 @@ public class Loader
     }
 
     /**
-     * @deprecated Uses {@link #loadSequences(List, boolean)} instead.
+     * @deprecated Use {@link #loadSequences(List, boolean)} instead.
      */
     @Deprecated
     public static List<Sequence> loadSequences(List<File> files, boolean separate, boolean display, boolean addToRecent)
@@ -895,7 +895,7 @@ public class Loader
     }
 
     /**
-     * @deprecated Uses {@link #loadSequences(File, List)} instead.
+     * @deprecated Use {@link #loadSequences(File, List)} instead.
      */
     @Deprecated
     public static List<Sequence> loadSequences(File file, List<Integer> series, boolean display, boolean addToRecent)
@@ -937,7 +937,7 @@ public class Loader
     }
 
     /**
-     * @deprecated uses {@link #loadSequence(List)} instead.
+     * @deprecated Use {@link #loadSequence(List)} instead.
      */
     @Deprecated
     public static Sequence loadSequence(List<File> files, boolean display, boolean addToRecent)

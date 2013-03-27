@@ -3,12 +3,12 @@ package plugins.kernel.searchprovider;
 import icy.gui.plugin.PluginDetailPanel;
 import icy.main.Icy;
 import icy.network.NetworkUtil;
-import icy.network.URLUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginRepositoryLoader;
+import icy.search.OnlineSearchResultProducer;
 import icy.search.SearchEngine;
 import icy.search.SearchResult;
 import icy.search.SearchResultConsumer;
@@ -16,8 +16,6 @@ import icy.search.SearchResultProducer;
 import icy.system.thread.ThreadUtil;
 import icy.util.XMLUtil;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,9 +27,9 @@ import plugins.kernel.searchprovider.LocalPluginSearchResultProducer.LocalPlugin
 /**
  * This class is used to provide online plugin elements to the search engine.
  * 
- * @author Thomas Provoost & Stephane
+ * @author Stephane
  */
-public class OnlinePluginSearchResultProducer extends SearchResultProducer
+public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
 {
     /**
      * @author Stephane
@@ -94,15 +92,11 @@ public class OnlinePluginSearchResultProducer extends SearchResultProducer
         }
     }
 
-    private static final String SEARCH_URL = "http://bioimageanalysis.org/icy/search/search.php?search=";
-
     private static final String ID_SEARCH_RESULT = "searchresult";
     private static final String ID_PLUGIN = "plugin";
     private static final String ID_CLASSNAME = "classname";
     // private static final String ID_NAME = "name";
     private static final String ID_TEXT = "string";
-
-    private final long REQUEST_INTERVAL = 400;
 
     @Override
     public int getOrder()
@@ -124,60 +118,13 @@ public class OnlinePluginSearchResultProducer extends SearchResultProducer
     }
 
     @Override
-    public void doSearch(String[] words, SearchResultConsumer consumer)
+    public void doSearch(Document doc, String[] words, SearchResultConsumer consumer)
     {
-        String request = SEARCH_URL;
-
-        try
-        {
-            if (words.length > 0)
-                request += URLEncoder.encode(words[0], "UTF-8");
-            for (int i = 1; i < words.length; i++)
-                request += "%20" + URLEncoder.encode(words[i], "UTF-8");
-        }
-        catch (UnsupportedEncodingException e)
-        {
-            // can't encode
-            return;
-        }
-
-        final long startTime = System.currentTimeMillis();
-
-        // wait interval elapsed before sending request (avoid website request spam)
-        while ((System.currentTimeMillis() - startTime) < REQUEST_INTERVAL)
-        {
-            ThreadUtil.sleep(10);
-            // abort
-            if (hasWaitingSearch())
-                return;
-        }
-
-        Document doc = null;
-        int retry = 0;
-
-        // let's 10 try to get the result
-        while ((doc == null) && (retry < 10))
-        {
-            // we use an online request as website can search in plugin documentation
-            doc = XMLUtil.loadDocument(URLUtil.getURL(request), false);
-
-            // abort
-            if (hasWaitingSearch())
-                return;
-
-            // error ? --> wait a bit before retry
-            if (doc == null)
-                ThreadUtil.sleep(50);
-        }
-
-        // can't get result from website --> exit
-        if (doc == null)
-            return;
-
         // Online plugin loader failed --> exit
         if (!ensureOnlineLoaderLoaded())
             return;
 
+        // no need to spent more time here...
         if (hasWaitingSearch())
             return;
 
@@ -269,15 +216,14 @@ public class OnlinePluginSearchResultProducer extends SearchResultProducer
             // if we have the local search provider, we try to add result if not already existing
             if (lpsrp != null)
             {
-                final List<SearchResult> results = lpsrp.getResults();
+                final List<SearchResult> localResults = lpsrp.getResults();
                 boolean alreadyExists = false;
 
-                synchronized (results)
+                synchronized (localResults)
                 {
-                    for (SearchResult result : results)
+                    for (SearchResult result : localResults)
                     {
-                        if ((result instanceof LocalPluginResult)
-                                && (((LocalPluginResult) result).getPlugin() == localPlugin))
+                        if (((LocalPluginResult) result).getPlugin() == localPlugin)
                         {
                             alreadyExists = true;
                             break;

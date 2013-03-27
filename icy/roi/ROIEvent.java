@@ -48,7 +48,7 @@ public class ROIEvent implements EventHierarchicalChecker
     private ROIPointEventType pointEventType;
 
     /**
-     * @deprecated Uses {@link #ROIEvent(ROI, ROIEventType)} constructor instead
+     * @deprecated Use {@link #ROIEvent(ROI, ROIEventType)} constructor instead
      */
     @Deprecated
     public ROIEvent(ROI source, ROIEventType type, ROIPointEventType pointEventType, Object point)

@@ -190,7 +190,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #Anchor2D(double, double, int, Color, Color)} instead.
+     * @deprecated Use {@link #Anchor2D(double, double, int, Color, Color)} instead.
      */
     @Deprecated
     public Anchor2D(Point2D position, int ray, Color color, Color selectedColor)
@@ -199,7 +199,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #Anchor2D(double, double, int, Color)} instead.
+     * @deprecated Use {@link #Anchor2D(double, double, int, Color)} instead.
      */
     @Deprecated
     public Anchor2D(Point2D position, int ray, Color color)
@@ -208,7 +208,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #Anchor2D(double, double, int)} instead.
+     * @deprecated Use {@link #Anchor2D(double, double, int)} instead.
      */
     @Deprecated
     public Anchor2D(Point2D position, int ray)
@@ -217,7 +217,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #Anchor2D(double, double, Color, Color)} instead.
+     * @deprecated Use {@link #Anchor2D(double, double, Color, Color)} instead.
      */
     @Deprecated
     public Anchor2D(Point2D position, Color color, Color selectedColor)
@@ -226,7 +226,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #Anchor2D(double, double, Color)} instead.
+     * @deprecated Use {@link #Anchor2D(double, double, Color)} instead.
      */
     @Deprecated
     public Anchor2D(Point2D position, Color color)
@@ -235,7 +235,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #Anchor2D(double, double)} instead.
+     * @deprecated Use {@link #Anchor2D(double, double)} instead.
      */
     @Deprecated
     public Anchor2D(Point2D position)
@@ -244,7 +244,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, int, Color, Color)} instead.
+     * @deprecated Use {@link Anchor2D#Anchor2D(double, double, int, Color, Color)} instead.
      */
     @Deprecated
     public Anchor2D(Sequence sequence, double x, double y, int ray, Color color, Color selectedColor)
@@ -254,7 +254,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, int, Color, Color)} instead.
+     * @deprecated Use {@link Anchor2D#Anchor2D(double, double, int, Color, Color)} instead.
      */
     @Deprecated
     public Anchor2D(Sequence sequence, Point2D position, int ray, Color color, Color selectedColor)
@@ -264,7 +264,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link Anchor2D#Anchor2D(Point2D, int, Color)} instead.
+     * @deprecated Use {@link Anchor2D#Anchor2D(Point2D, int, Color)} instead.
      */
     @Deprecated
     public Anchor2D(Sequence sequence, Point2D position, int ray, Color color)
@@ -274,7 +274,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, int)} instead.
+     * @deprecated Use {@link Anchor2D#Anchor2D(double, double, int)} instead.
      */
     @Deprecated
     public Anchor2D(Sequence sequence, double x, double y, int ray)
@@ -284,7 +284,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, Color)} instead.
+     * @deprecated Use {@link Anchor2D#Anchor2D(double, double, Color)} instead.
      */
     @Deprecated
     public Anchor2D(Sequence sequence, Point2D position, Color color)
@@ -294,7 +294,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, int)} instead.
+     * @deprecated Use {@link Anchor2D#Anchor2D(double, double, int)} instead.
      */
     @Deprecated
     public Anchor2D(Sequence sequence, Point2D position, int ray)
@@ -304,7 +304,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, int)} instead.
+     * @deprecated Use {@link Anchor2D#Anchor2D(double, double, int)} instead.
      */
     @Deprecated
     public Anchor2D(Sequence sequence, double x, double y, Color color, Color selectedColor)
@@ -314,7 +314,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, Color, Color)} instead.
+     * @deprecated Use {@link Anchor2D#Anchor2D(double, double, Color, Color)} instead.
      */
     @Deprecated
     public Anchor2D(Sequence sequence, Point2D position, Color color, Color selectedColor)
@@ -324,7 +324,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double, Color, Color)} instead.
+     * @deprecated Use {@link Anchor2D#Anchor2D(double, double, Color, Color)} instead.
      */
     @Deprecated
     public Anchor2D(Sequence sequence, double x, double y, Color color)
@@ -334,7 +334,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double)} instead.
+     * @deprecated Use {@link Anchor2D#Anchor2D(double, double)} instead.
      */
     @Deprecated
     public Anchor2D(Sequence sequence, double x, double y)
@@ -344,7 +344,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link Anchor2D#Anchor2D(double, double)} instead.
+     * @deprecated Use {@link Anchor2D#Anchor2D(double, double)} instead.
      */
     @Deprecated
     public Anchor2D(Sequence sequence, Point2D position)
@@ -354,7 +354,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link Anchor2D#Anchor2D()} instead.
+     * @deprecated Use {@link Anchor2D#Anchor2D()} instead.
      */
     @Deprecated
     public Anchor2D(Sequence sequence)
@@ -673,7 +673,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #addAnchorListener(Anchor2DListener)} instead.
+     * @deprecated Use {@link #addAnchorListener(Anchor2DListener)} instead.
      */
     @Deprecated
     public void addListener(Anchor2DListener listener)
@@ -682,7 +682,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Uses {@link #removeAnchorListener(Anchor2DListener)} instead.
+     * @deprecated Use {@link #removeAnchorListener(Anchor2DListener)} instead.
      */
     @Deprecated
     public void removeListener(Anchor2DListener listener)

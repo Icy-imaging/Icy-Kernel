@@ -41,7 +41,7 @@ public class IcyBufferedImageUtil
     private static ARGBImageBuilder argbImageBuilder = new ARGBImageBuilder();
 
     /**
-     * @deprecated Uses {@link IcyBufferedImage#createFrom(BufferedImage)} instead.
+     * @deprecated Use {@link IcyBufferedImage#createFrom(BufferedImage)} instead.
      */
     @Deprecated
     public static IcyBufferedImage toIcyBufferedImage(BufferedImage image)
@@ -50,7 +50,7 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * @deprecated Uses {@link IcyBufferedImage#createFrom(List)} instead.
+     * @deprecated Use {@link IcyBufferedImage#createFrom(List)} instead.
      */
     @Deprecated
     public static IcyBufferedImage toIcyBufferedImage(List<BufferedImage> images)
@@ -372,7 +372,7 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * @deprecated Uses {@link #extractChannels(IcyBufferedImage, List)} instead.
+     * @deprecated Use {@link #extractChannels(IcyBufferedImage, List)} instead.
      */
     @Deprecated
     public static IcyBufferedImage extractChannels(IcyBufferedImage source, List<Integer> channelNumbers)

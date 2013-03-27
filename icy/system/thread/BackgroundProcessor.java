@@ -26,7 +26,7 @@ package icy.system.thread;
 public class BackgroundProcessor
 {
     /**
-     * @deprecated uses {@link ThreadUtil#bgRun(Runnable, boolean)} instead
+     * @deprecated Use {@link ThreadUtil#bgRun(Runnable, boolean)} instead
      */
     @Deprecated
     public static boolean bgRun(Runnable runnable, boolean onEventThread)
@@ -35,7 +35,7 @@ public class BackgroundProcessor
     }
 
     /**
-     * @deprecated uses {@link ThreadUtil#bgRun(Runnable)} instead
+     * @deprecated Use {@link ThreadUtil#bgRun(Runnable)} instead
      */
     @Deprecated
     public static boolean bgRun(Runnable runnable)
@@ -44,7 +44,7 @@ public class BackgroundProcessor
     }
 
     /**
-     * @deprecated uses {@link ThreadUtil#bgRunWait(Runnable)} instead
+     * @deprecated Use {@link ThreadUtil#bgRunWait(Runnable)} instead
      */
     @Deprecated
     public static void bgRunWait(Runnable runnable)
@@ -53,7 +53,7 @@ public class BackgroundProcessor
     }
 
     /**
-     * @deprecated uses {@link ThreadUtil#getActiveBgTaskCount()} instead
+     * @deprecated Use {@link ThreadUtil#getActiveBgTaskCount()} instead
      */
     @Deprecated
     public static int getActiveCount()

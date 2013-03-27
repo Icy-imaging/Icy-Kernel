@@ -278,7 +278,7 @@ public class Array1DUtil
     /**
      * Get value as double from specified 1D array and offset.<br>
      * If signed is true then any integer primitive is considered as signed data.
-     * Uses {@link #getValue(Object, int, DataType)} we you know the DataType as it is faster.
+     * Use {@link #getValue(Object, int, DataType)} we you know the DataType as it is faster.
      */
     public static double getValue(Object array, int offset, boolean signed)
     {

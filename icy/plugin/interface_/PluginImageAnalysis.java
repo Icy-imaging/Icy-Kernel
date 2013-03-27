@@ -26,7 +26,7 @@ import icy.plugin.abstract_.PluginActionable;
  * becomes :<br>
  * <code>class MyPlugin extends PluginActionable</code>
  * 
- * @deprecated Uses {@link PluginActionable} instead.
+ * @deprecated Use {@link PluginActionable} instead.
  */
 @Deprecated
 public interface PluginImageAnalysis

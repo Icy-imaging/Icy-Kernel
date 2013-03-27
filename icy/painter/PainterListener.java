@@ -21,13 +21,13 @@ package icy.painter;
 import java.util.EventListener;
 
 /**
- * @deprecated Uses {@link Overlay} and {@link OverlayListener} classes instead.
+ * @deprecated Use {@link Overlay} and {@link OverlayListener} classes instead.
  */
 @Deprecated
 public interface PainterListener extends EventListener
 {
     /**
-     * @deprecated Uses {@link Overlay} class and
+     * @deprecated Use {@link Overlay} class and
      *             {@link OverlayListener#overlayChanged(OverlayEvent)} event instead.
      */
     @Deprecated

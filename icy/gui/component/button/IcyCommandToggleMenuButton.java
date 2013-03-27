@@ -48,7 +48,7 @@ public class IcyCommandToggleMenuButton extends JCommandToggleMenuButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyCommandToggleMenuButton(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyCommandToggleMenuButton(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyCommandToggleMenuButton(String title, String iconName)

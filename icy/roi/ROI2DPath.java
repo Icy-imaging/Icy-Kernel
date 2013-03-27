@@ -62,13 +62,14 @@ public class ROI2DPath extends ROI2DShape
         this(new Path2D.Double(shape));
     }
 
-    /**
-     * constructor for XML creation
-     */
-    public ROI2DPath(Point2D position, boolean cm)
+    public ROI2DPath(Point2D position)
     {
-        // ignore creation mode flag
         this(initPath(position));
+    }
+
+    public ROI2DPath()
+    {
+        this(new Path2D.Double());
     }
 
     @Override

@@ -68,7 +68,7 @@ public abstract class ROI2DRectShape extends ROI2DShape
     /**
      * 
      */
-    public ROI2DRectShape(RectangularShape shape, Point2D topLeft, Point2D bottomRight, boolean cm)
+    public ROI2DRectShape(RectangularShape shape, Point2D topLeft, Point2D bottomRight)
     {
         super(shape);
 
@@ -92,9 +92,8 @@ public abstract class ROI2DRectShape extends ROI2DShape
         this.bottomRight.addOverlayListener(this);
         this.bottomRight.addAnchorListener(this);
 
-        // select the bottom right point as we use it to size the ellipse in "creation mode"
-        if (cm)
-            this.bottomRight.setSelected(true);
+        // select the bottom right point by default for interactive mode
+        this.bottomRight.setSelected(true);
         setMousePos(bottomRight);
 
         updateShape();

@@ -17,7 +17,6 @@ import icy.search.SearchResultProducer;
 import icy.util.StringUtil;
 
 import java.awt.Image;
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -118,7 +117,7 @@ public class KernelSearchResultProducer extends SearchResultProducer
         @Override
         public void execute()
         {
-            action.doAction(new ActionEvent(action, 0, ""));
+            action.doAction();
         }
 
         @Override
@@ -176,7 +175,7 @@ public class KernelSearchResultProducer extends SearchResultProducer
         // should be first
         return 0;
     }
-    
+
     @Override
     public String getName()
     {

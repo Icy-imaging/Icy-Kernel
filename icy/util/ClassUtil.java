@@ -683,7 +683,7 @@ public class ClassUtil
     }
 
     /**
-     * @deprecated uses {@link ReflectionUtil#getMethod(Object, String, boolean, Class...)} instead
+     * @deprecated Use {@link ReflectionUtil#getMethod(Object, String, boolean, Class...)} instead
      */
     @Deprecated
     public static Method getMethod(Object object, String methodName, boolean forceAccess, Class<?>... parameterTypes)
@@ -693,7 +693,7 @@ public class ClassUtil
     }
 
     /**
-     * @deprecated uses {@link ReflectionUtil#invokeMethod(Object, String, boolean, Object...)}
+     * @deprecated Use {@link ReflectionUtil#invokeMethod(Object, String, boolean, Object...)}
      *             instead
      */
     @Deprecated
@@ -705,7 +705,7 @@ public class ClassUtil
     }
 
     /**
-     * @deprecated uses {@link ReflectionUtil#getField(Object, String, boolean)} instead
+     * @deprecated Use {@link ReflectionUtil#getField(Object, String, boolean)} instead
      */
     @Deprecated
     public static Field getField(Object object, String fieldName, boolean forceAccess) throws SecurityException,
@@ -715,7 +715,7 @@ public class ClassUtil
     }
 
     /**
-     * @deprecated uses {@link ReflectionUtil#getFieldObject(Object, String, boolean)} instead
+     * @deprecated Use {@link ReflectionUtil#getFieldObject(Object, String, boolean)} instead
      */
     @Deprecated
     public static Object getFieldObject(Object object, String fieldName, boolean forceAccess)

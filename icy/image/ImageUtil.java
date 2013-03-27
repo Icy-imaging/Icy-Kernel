@@ -220,7 +220,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#load(String, boolean)} instead
+     * @deprecated Use {@link ImageUtil#load(String, boolean)} instead
      */
     @Deprecated
     public static BufferedImage loadImage(String path, boolean displayError)
@@ -229,7 +229,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#load(String)} instead
+     * @deprecated Use {@link ImageUtil#load(String)} instead
      */
     @Deprecated
     public static BufferedImage loadImage(String path)
@@ -238,7 +238,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#load(URL, boolean)} instead
+     * @deprecated Use {@link ImageUtil#load(URL, boolean)} instead
      */
     @Deprecated
     public static BufferedImage loadImage(URL url, boolean displayError)
@@ -247,7 +247,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#load(URL)} instead
+     * @deprecated Use {@link ImageUtil#load(URL)} instead
      */
     @Deprecated
     public static Image loadImage(URL url)
@@ -256,7 +256,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#load(File, boolean)} instead
+     * @deprecated Use {@link ImageUtil#load(File, boolean)} instead
      */
     @Deprecated
     public static BufferedImage loadImage(File file, boolean displayError)
@@ -265,7 +265,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#load(File)} instead
+     * @deprecated Use {@link ImageUtil#load(File)} instead
      */
     @Deprecated
     public static BufferedImage loadImage(File file)
@@ -274,7 +274,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#load(InputStream, boolean)} instead
+     * @deprecated Use {@link ImageUtil#load(InputStream, boolean)} instead
      */
     @Deprecated
     public static BufferedImage loadImage(InputStream input, boolean displayError)
@@ -284,7 +284,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#load(InputStream)} instead
+     * @deprecated Use {@link ImageUtil#load(InputStream)} instead
      */
     @Deprecated
     public static BufferedImage loadImage(InputStream input)
@@ -334,7 +334,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#save(RenderedImage, String, String)} instead
+     * @deprecated Use {@link ImageUtil#save(RenderedImage, String, String)} instead
      */
     @Deprecated
     public static boolean saveImage(RenderedImage image, String format, String path)
@@ -343,7 +343,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#save(RenderedImage, String, File)} instead
+     * @deprecated Use {@link ImageUtil#save(RenderedImage, String, File)} instead
      */
     @Deprecated
     public static boolean saveImage(RenderedImage image, String format, File file)
@@ -481,7 +481,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#scale(Image, int, int)} instead.
+     * @deprecated Use {@link ImageUtil#scale(Image, int, int)} instead.
      */
     @Deprecated
     public static BufferedImage scaleImage(Image image, int width, int height)
@@ -490,7 +490,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#scaleQuality(Image, int, int)} instead.
+     * @deprecated Use {@link ImageUtil#scaleQuality(Image, int, int)} instead.
      */
     @Deprecated
     public static BufferedImage scaleImageQuality(Image image, int width, int height)
@@ -499,7 +499,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#convert(Image, BufferedImage)} instead.
+     * @deprecated Use {@link ImageUtil#convert(Image, BufferedImage)} instead.
      */
     @Deprecated
     public static BufferedImage convertImage(Image in, BufferedImage out)
@@ -508,7 +508,7 @@ public class ImageUtil
     }
 
     /**
-     * @deprecated Uses {@link ImageUtil#toGray(Image)} instead.
+     * @deprecated Use {@link ImageUtil#toGray(Image)} instead.
      */
     @Deprecated
     public static BufferedImage toGrayImage(Image image)

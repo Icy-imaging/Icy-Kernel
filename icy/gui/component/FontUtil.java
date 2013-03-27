@@ -19,7 +19,7 @@
 package icy.gui.component;
 
 /**
- * @deprecated Uses {@link icy.gui.util.FontUtil} instead.
+ * @deprecated Use {@link icy.gui.util.FontUtil} instead.
  */
 @Deprecated
 public class FontUtil extends icy.gui.util.FontUtil

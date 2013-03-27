@@ -384,7 +384,7 @@ public enum DataType
     }
 
     /**
-     * @deprecated uses {@link #getSize()} instead
+     * @deprecated Use {@link #getSize()} instead
      */
     @Deprecated
     public int sizeOf()

@@ -150,7 +150,7 @@ public class ResourceUtil
 
     public static final Image ICON_ARROW_UP = ResourceUtil.getAlphaIconAsImage("arrow_top.png");
     /**
-     * @deprecated Uses {@link #ICON_ARROW_UP} instead.
+     * @deprecated Use {@link #ICON_ARROW_UP} instead.
      */
     @Deprecated
     public static final Image ICON_ARROW_TOP = ICON_ARROW_UP;
@@ -158,7 +158,7 @@ public class ResourceUtil
     public static final Image ICON_ARROW_RIGHT = ResourceUtil.getAlphaIconAsImage("arrow_right.png");
     public static final Image ICON_ARROW_DOWN = ResourceUtil.getAlphaIconAsImage("arrow_bottom.png");
     /**
-     * @deprecated Uses {@link #ICON_ARROW_DOWN} instead.
+     * @deprecated Use {@link #ICON_ARROW_DOWN} instead.
      */
     @Deprecated
     public static final Image ICON_ARROW_BOTTOM = ICON_ARROW_DOWN;

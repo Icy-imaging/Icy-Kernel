@@ -47,7 +47,7 @@ import javax.swing.ImageIcon;
 public abstract class Plugin
 {
     /**
-     * @deprecated Uses {@link IcyExceptionHandler#report(PluginDescriptor, String)} instead.
+     * @deprecated Use {@link IcyExceptionHandler#report(PluginDescriptor, String)} instead.
      */
     @Deprecated
     public static void report(PluginDescriptor plugin, String errorLog)

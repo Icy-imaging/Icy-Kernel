@@ -72,7 +72,7 @@ public class IcyToggleButton extends JToggleButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyToggleButton(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyToggleButton(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyToggleButton(String text, Image iconImage, int iconSize)
@@ -81,7 +81,7 @@ public class IcyToggleButton extends JToggleButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyToggleButton(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyToggleButton(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyToggleButton(String text, Image iconImage)
@@ -90,7 +90,7 @@ public class IcyToggleButton extends JToggleButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyToggleButton(IcyIcon)} instead.
+     * @deprecated Use {@link #IcyToggleButton(IcyIcon)} instead.
      */
     @Deprecated
     public IcyToggleButton(Image iconImage, int iconSize)
@@ -99,7 +99,7 @@ public class IcyToggleButton extends JToggleButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyToggleButton(IcyIcon)} instead.
+     * @deprecated Use {@link #IcyToggleButton(IcyIcon)} instead.
      */
     @Deprecated
     public IcyToggleButton(Image iconImage)
@@ -108,7 +108,7 @@ public class IcyToggleButton extends JToggleButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyToggleButton(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyToggleButton(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyToggleButton(String text, String iconName, int iconSize)
@@ -117,7 +117,7 @@ public class IcyToggleButton extends JToggleButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyToggleButton(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyToggleButton(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyToggleButton(String text, String iconName)
@@ -126,7 +126,7 @@ public class IcyToggleButton extends JToggleButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyToggleButton(IcyIcon)} instead.
+     * @deprecated Use {@link #IcyToggleButton(IcyIcon)} instead.
      */
     @Deprecated
     public IcyToggleButton(String iconName, int iconSize)
@@ -135,7 +135,7 @@ public class IcyToggleButton extends JToggleButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyToggleButton(IcyIcon)} instead.
+     * @deprecated Use {@link #IcyToggleButton(IcyIcon)} instead.
      */
     @Deprecated
     public IcyToggleButton(String iconName)

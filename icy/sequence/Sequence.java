@@ -422,7 +422,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link SequenceUtil#convertToType(Sequence, DataType, boolean)} instead.
+     * @deprecated Use {@link SequenceUtil#convertToType(Sequence, DataType, boolean)} instead.
      */
     @Deprecated
     public Sequence convertToType(DataType dataType, boolean rescale)
@@ -431,7 +431,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link SequenceUtil#convertToType(Sequence, DataType, Scaler)} instead.
+     * @deprecated Use {@link SequenceUtil#convertToType(Sequence, DataType, Scaler)} instead.
      */
     @Deprecated
     public Sequence convertToType(DataType dataType, Scaler scaler)
@@ -440,7 +440,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link SequenceUtil#convertToType(Sequence, DataType, boolean)} instead
+     * @deprecated Use {@link SequenceUtil#convertToType(Sequence, DataType, boolean)} instead
      */
     @Deprecated
     public Sequence convertToType(int dataType, boolean signed, boolean rescale)
@@ -449,7 +449,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link SequenceUtil#extractChannel(Sequence, int)} instead.
+     * @deprecated Use {@link SequenceUtil#extractChannel(Sequence, int)} instead.
      */
     @Deprecated
     public Sequence extractChannel(int channelNumber)
@@ -458,7 +458,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link SequenceUtil#extractChannels(Sequence, List)} instead.
+     * @deprecated Use {@link SequenceUtil#extractChannels(Sequence, List)} instead.
      */
     @Deprecated
     public Sequence extractChannels(List<Integer> channelNumbers)
@@ -467,7 +467,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link SequenceUtil#extractChannel(Sequence, int)} instead
+     * @deprecated Use {@link SequenceUtil#extractChannel(Sequence, int)} instead
      */
     @Deprecated
     public Sequence extractBand(int bandNumber)
@@ -476,7 +476,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link SequenceUtil#extractChannels(Sequence, List)} instead
+     * @deprecated Use {@link SequenceUtil#extractChannels(Sequence, List)} instead
      */
     @Deprecated
     public Sequence extractBands(List<Integer> bandNumbers)
@@ -761,7 +761,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getAutoUpdateChannelBounds()} instead.
+     * @deprecated Use {@link #getAutoUpdateChannelBounds()} instead.
      */
     @Deprecated
     public boolean isComponentAbsBoundsAutoUpdate()
@@ -770,7 +770,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #setAutoUpdateChannelBounds(boolean)} instead.
+     * @deprecated Use {@link #setAutoUpdateChannelBounds(boolean)} instead.
      */
     @SuppressWarnings("unused")
     @Deprecated
@@ -807,7 +807,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated USes {@link #getAutoUpdateChannelBounds()} instead.
+     * @deprecated Use {@link #getAutoUpdateChannelBounds()} instead.
      */
     @Deprecated
     public boolean isComponentUserBoundsAutoUpdate()
@@ -816,7 +816,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #setAutoUpdateChannelBounds(boolean)} instead.
+     * @deprecated Use {@link #setAutoUpdateChannelBounds(boolean)} instead.
      */
     @Deprecated
     public void setComponentUserBoundsAutoUpdate(boolean value)
@@ -1911,7 +1911,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #removeAllImages(int)} instead.
+     * @deprecated Use {@link #removeAllImages(int)} instead.
      */
     @Deprecated
     public boolean removeAllImage(int t)
@@ -1920,7 +1920,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #removeAllImages()} instead.
+     * @deprecated Use {@link #removeAllImages()} instead.
      */
     @Deprecated
     public void removeAllImage()
@@ -2427,7 +2427,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #updateChannelsBounds(boolean)} instead.
+     * @deprecated Use {@link #updateChannelsBounds(boolean)} instead.
      */
     @SuppressWarnings("unused")
     @Deprecated
@@ -2437,7 +2437,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #updateChannelsBounds(boolean)} instead.
+     * @deprecated Use {@link #updateChannelsBounds(boolean)} instead.
      */
     @Deprecated
     public void updateComponentsBounds(boolean forceRecalculation)
@@ -2446,7 +2446,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #updateChannelsBounds(boolean)} instead.
+     * @deprecated Use {@link #updateChannelsBounds(boolean)} instead.
      */
     @Deprecated
     public void updateComponentsBounds()
@@ -2547,7 +2547,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getChannelsGlobalTypeBounds()} instead
+     * @deprecated Use {@link #getChannelsGlobalTypeBounds()} instead
      */
     @Deprecated
     public double[] getChannelTypeGlobalBounds()
@@ -2556,7 +2556,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getChannelTypeGlobalBounds()} instead.
+     * @deprecated Use {@link #getChannelTypeGlobalBounds()} instead.
      */
     @Deprecated
     public double[] getGlobalChannelTypeBounds()
@@ -2565,7 +2565,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getChannelTypeMin(int)} instead.
+     * @deprecated Use {@link #getChannelTypeMin(int)} instead.
      */
     @Deprecated
     public double getComponentAbsMinValue(int component)
@@ -2574,7 +2574,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getChannelTypeMax(int)} instead.
+     * @deprecated Use {@link #getChannelTypeMax(int)} instead.
      */
     @Deprecated
     public double getComponentAbsMaxValue(int component)
@@ -2583,7 +2583,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getChannelTypeBounds(int)} instead.
+     * @deprecated Use {@link #getChannelTypeBounds(int)} instead.
      */
     @Deprecated
     public double[] getComponentAbsBounds(int component)
@@ -2592,7 +2592,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getChannelsTypeBounds()} instead.
+     * @deprecated Use {@link #getChannelsTypeBounds()} instead.
      */
     @Deprecated
     public double[][] getComponentsAbsBounds()
@@ -2601,7 +2601,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getGlobalChannelTypeBounds()} instead.
+     * @deprecated Use {@link #getGlobalChannelTypeBounds()} instead.
      */
     @Deprecated
     public double[] getGlobalComponentAbsBounds()
@@ -2681,7 +2681,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getChannelMin(int)} instead.
+     * @deprecated Use {@link #getChannelMin(int)} instead.
      */
     @Deprecated
     public double getComponentUserMinValue(int component)
@@ -2690,7 +2690,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getChannelMax(int)} instead.
+     * @deprecated Use {@link #getChannelMax(int)} instead.
      */
     @Deprecated
     public double getComponentUserMaxValue(int component)
@@ -2699,7 +2699,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getChannelBounds(int)} instead.
+     * @deprecated Use {@link #getChannelBounds(int)} instead.
      */
     @Deprecated
     public double[] getComponentUserBounds(int component)
@@ -2708,7 +2708,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getChannelsBounds()} instead.
+     * @deprecated Use {@link #getChannelsBounds()} instead.
      */
     @Deprecated
     public double[][] getComponentsUserBounds()
@@ -4822,7 +4822,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link SequenceUtil#getCopy(Sequence)} instead.
+     * @deprecated Use {@link SequenceUtil#getCopy(Sequence)} instead.
      */
     @Deprecated
     public Sequence getCopy()
@@ -4902,7 +4902,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Uses {@link #getNode(String)} instead.
+     * @deprecated Use {@link #getNode(String)} instead.
      */
     @Deprecated
     public Node setNode(String name)

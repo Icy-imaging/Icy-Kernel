@@ -965,37 +965,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             if (!consumed)
             {
-                // // double click = zoom action
-                // if (clickCount == 2)
-                // {
-                // // previous scale destination values
-                // final double scaleX = transform.getDestValue(SCALE_X);
-                // final double scaleY = transform.getDestValue(SCALE_Y);
-                //
-                // double sx, sy;
-                //
-                // if (left)
-                // {
-                // sx = 2d;
-                // sy = 2d;
-                // }
-                // else
-                // {
-                // sx = 0.5d;
-                // sy = 0.5d;
-                // }
-                //
-                // // control button down --> fast zoom
-                // if (control)
-                // {
-                // sx *= sx;
-                // sy *= sy;
-                // }
-                //
-                // setScale(scaleX * sx, scaleY * sy, true, true);
-                //
-                // return true;
-                // }
+                // nothing yet
             }
 
             return false;
@@ -1206,7 +1176,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         public void mouseClicked(MouseEvent e)
         {
             // send mouse event to painters first
-            // for (Layer layer : getVisibleOrderedLayersForEvent())
             for (Layer layer : getVisibleLayers())
                 layer.getPainter().mouseClick(e, getMouseImagePos(), Canvas2D.this);
 
@@ -1221,23 +1190,32 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             final String tool = Icy.getMainInterface().getSelectedTool();
 
+            final Sequence seq = getSequence();
+
             // priority ROI creation (control key down)
             if (EventUtil.isControlDown(e) && EventUtil.isLeftMouseButton(e) && ToolRibbonTask.isROITool(tool))
             {
-                // try to create ROI from current selected tool
-                final ROI roi = ROI.create(tool, getSequence(), getMouseImagePos(), true);
-                // roi created ? --> it becomes the selected ROI
-                if (roi != null)
+                // only if sequence still live
+                if (seq != null)
                 {
-                    roi.setSelected(true, true);
-                    roi.setFocused(true);
+                    // try to create ROI from current selected tool (should correspond to ROI class name)
+                    final ROI roi = ROI.create(tool, getMouseImagePos());
+                    // roi created ? --> it becomes the selected ROI
+                    if (roi != null)
+                    {
+                        // attach to sequence
+                        seq.addROI(roi, true);
+                        // then do exclusive selection
+                        roi.setSelected(true, true);
+                        // roi.setFocused(true);
+                    }
+
+                    // consume event
+                    e.consume();
                 }
-                // consume event
-                e.consume();
             }
 
             // send mouse event to painters now
-            // for (Layer layer : getVisibleOrderedLayersForEvent())
             for (Layer layer : getVisibleLayers())
                 layer.getPainter().mousePressed(e, getMouseImagePos(), Canvas2D.this);
 
@@ -1249,15 +1227,25 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 {
                     // return to default selection tool before ROI creation
                     Icy.getMainInterface().setSelectedTool(ToolRibbonTask.SELECT);
+                    // only if sequence still live
+                    if (seq != null)
+                    {
 
-                    // try to create ROI from current selected tool
-                    final ROI roi = ROI.create(tool, getSequence(), getMouseImagePos(), true);
-                    // roi created ? --> it becomes the selected ROI
-                    if (roi != null)
-                        roi.setSelected(true, true);
+                        // try to create ROI from current selected tool (should correspond to ROI
+                        // class name)
+                        final ROI roi = ROI.create(tool, getMouseImagePos());
+                        // roi created ? --> it becomes the selected ROI
+                        if (roi != null)
+                        {
+                            // attach to sequence
+                            seq.addROI(roi, true);
+                            // then do exclusive selection
+                            roi.setSelected(true, true);
+                        }
 
-                    // consume event
-                    e.consume();
+                        // consume event
+                        e.consume();
+                    }
                 }
             }
 
@@ -1271,7 +1259,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         public void mouseReleased(MouseEvent e)
         {
             // send mouse event to painters first
-            // for (Layer layer : getVisibleOrderedLayersForEvent())
             for (Layer layer : getVisibleLayers())
                 layer.getPainter().mouseReleased(e, getMouseImagePos(), Canvas2D.this);
 
@@ -1285,6 +1272,17 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         public void mouseEntered(MouseEvent e)
         {
             hasMouseFocus = true;
+
+            // send mouse event to painters after
+            for (Layer layer : getVisibleLayers())
+            {
+                final Painter painter = layer.getPainter();
+
+                // extra event for Overlay
+                if (painter instanceof Overlay)
+                    ((Overlay) painter).mouseEntered(e, getMouseImagePos(), Canvas2D.this);
+            }
+
             refresh();
         }
 
@@ -1292,6 +1290,17 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         public void mouseExited(MouseEvent e)
         {
             hasMouseFocus = false;
+
+            // send mouse event to painters after
+            for (Layer layer : getVisibleLayers())
+            {
+                final Painter painter = layer.getPainter();
+
+                // extra event for Overlay
+                if (painter instanceof Overlay)
+                    ((Overlay) painter).mouseExited(e, getMouseImagePos(), Canvas2D.this);
+            }
+
             refresh();
         }
 
@@ -1303,7 +1312,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 e.consume();
 
             // send mouse event to painters after
-            // for (Layer layer : getVisibleOrderedLayersForEvent())
             for (Layer layer : getVisibleLayers())
                 layer.getPainter().mouseMove(e, getMouseImagePos(), Canvas2D.this);
         }
@@ -1317,7 +1325,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 e.consume();
 
             // send mouse event to painters after
-            // for (Layer layer : getVisibleOrderedLayersForEvent())
             for (Layer layer : getVisibleLayers())
                 layer.getPainter().mouseDrag(e, getMouseImagePos(), Canvas2D.this);
         }
@@ -1325,6 +1332,16 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mouseWheelMoved(MouseWheelEvent e)
         {
+            // send mouse event to painters after
+            for (Layer layer : getVisibleLayers())
+            {
+                final Painter painter = layer.getPainter();
+
+                // extra event for Overlay
+                if (painter instanceof Overlay)
+                    ((Overlay) painter).mouseWheelMoved(e, getMouseImagePos(), Canvas2D.this);
+            }
+
             // process
             if (onMouseWheelMoved(e.isConsumed(), e.getWheelRotation(), EventUtil.isLeftMouseButton(e),
                     EventUtil.isRightMouseButton(e), EventUtil.isControlDown(e), EventUtil.isShiftDown(e)))
@@ -3299,6 +3316,15 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     public void toolChanged(String command)
     {
         final Sequence seq = getSequence();
+
+        final ToolRibbonTask toolTask = Icy.getMainInterface().getToolRibbon();
+
+        if (toolTask != null)
+        {
+            // if we selected a ROI tool we force layers to be visible
+            if (ToolRibbonTask.isROITool(toolTask.getSelected()))
+                setLayersVisible(true);
+        }
 
         // unselected all ROI
         if (seq != null)

@@ -26,57 +26,32 @@ import java.awt.geom.Rectangle2D;
  */
 public class ROI2DRectangle extends ROI2DRectShape
 {
-    /**
-     * 
-     */
-    public ROI2DRectangle(Point2D topLeft, Point2D bottomRight, boolean cm)
+    public ROI2DRectangle(Point2D topLeft, Point2D bottomRight)
     {
-        super(new Rectangle2D.Double(), topLeft, bottomRight, cm);
+        super(new Rectangle2D.Double(), topLeft, bottomRight);
 
         setName("Rectangle2D");
     }
 
-    /**
-     * 
-     */
-    public ROI2DRectangle(Point2D topLeft, Point2D bottomRight)
+    public ROI2DRectangle(double xmin, double ymin, double xmax, double ymax)
     {
-        this(topLeft, bottomRight, false);
-    }
-
-    public ROI2DRectangle(Rectangle2D rectangle, boolean cm)
-    {
-        this(new Point2D.Double(rectangle.getMinX(), rectangle.getMinY()), new Point2D.Double(rectangle.getMaxX(),
-                rectangle.getMaxY()), cm);
+        this(new Point2D.Double(xmin, ymin), new Point2D.Double(xmax, ymax));
     }
 
     public ROI2DRectangle(Rectangle2D rectangle)
     {
-        this(rectangle, false);
+        this(new Point2D.Double(rectangle.getMinX(), rectangle.getMinY()), new Point2D.Double(rectangle.getMaxX(),
+                rectangle.getMaxY()));
     }
 
-    /**
-     * 
-     */
-    public ROI2DRectangle(Point2D pt, boolean cm)
-    {
-        this(new Point2D.Double(pt.getX(), pt.getY()), pt, cm);
-    }
-
-    /**
-     * 
-     */
     public ROI2DRectangle(Point2D pt)
     {
-        this(pt, false);
+        this(new Point2D.Double(pt.getX(), pt.getY()), pt);
     }
 
-    /**
-     * 
-     */
     public ROI2DRectangle()
     {
-        this(new Point2D.Double(), false);
+        this(new Point2D.Double(), new Point2D.Double());
     }
 
     public Rectangle2D getRectangle()

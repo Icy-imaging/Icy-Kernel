@@ -78,7 +78,7 @@ public class IcyButton extends JButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyButton(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyButton(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyButton(String text, Image iconImage, int iconSize)
@@ -87,7 +87,7 @@ public class IcyButton extends JButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyButton(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyButton(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyButton(String text, Image iconImage)
@@ -96,7 +96,7 @@ public class IcyButton extends JButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyButton(IcyIcon)} instead.
+     * @deprecated Use {@link #IcyButton(IcyIcon)} instead.
      */
     @Deprecated
     public IcyButton(Image iconImage, int iconSize)
@@ -105,7 +105,7 @@ public class IcyButton extends JButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyButton(IcyIcon)} instead.
+     * @deprecated Use {@link #IcyButton(IcyIcon)} instead.
      */
     @Deprecated
     public IcyButton(Image iconImage)
@@ -114,7 +114,7 @@ public class IcyButton extends JButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyButton(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyButton(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyButton(String text, String iconName, int iconSize)
@@ -123,7 +123,7 @@ public class IcyButton extends JButton
     }
 
     /**
-     * @deprecated Uses {@link #IcyButton(String, IcyIcon)} instead.
+     * @deprecated Use {@link #IcyButton(String, IcyIcon)} instead.
      */
     @Deprecated
     public IcyButton(String text, String iconName)

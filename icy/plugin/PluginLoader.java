@@ -208,7 +208,7 @@ public class PluginLoader
     }
 
     /**
-     * @deprecated Uses {@link #reload()} instead.
+     * @deprecated Use {@link #reload()} instead.
      */
     @Deprecated
     public static void reload(boolean forceNow)
@@ -514,7 +514,7 @@ public class PluginLoader
     /**
      * Return all classes.
      * 
-     * @deprecated Uses {@link #getLoadedClasses()} instead as we load classes on demand.
+     * @deprecated Use {@link #getLoadedClasses()} instead as we load classes on demand.
      */
     @Deprecated
     public static Map<String, Class<?>> getAllClasses()

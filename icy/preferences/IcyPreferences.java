@@ -94,7 +94,7 @@ public class IcyPreferences
     }
 
     /**
-     * @deprecated Uses {@link PluginsPreferences#root(Plugin)} instead.
+     * @deprecated Use {@link PluginsPreferences#root(Plugin)} instead.
      */
     @Deprecated
     public static XMLPreferences pluginRoot(Plugin plugin)
@@ -103,7 +103,7 @@ public class IcyPreferences
     }
 
     /**
-     * @deprecated Uses {@link PluginsPreferences#getPreferences()} instead.
+     * @deprecated Use {@link PluginsPreferences#getPreferences()} instead.
      */
     @Deprecated
     public static XMLPreferences pluginsRoot()

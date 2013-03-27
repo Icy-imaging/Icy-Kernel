@@ -49,7 +49,7 @@ public class ReflectionUtil
     /**
      * Return the Method object corresponding to the specified method name and parameters.
      * 
-     * @deprecated Uses {@link #getMethod(Class, String, boolean, Class...)} instead.
+     * @deprecated Use {@link #getMethod(Class, String, boolean, Class...)} instead.
      */
     @Deprecated
     public static Method getMethod(Object object, String methodName, boolean forceAccess, Class<?>... parameterTypes)
@@ -113,7 +113,7 @@ public class ReflectionUtil
     /**
      * Return the Field object corresponding to the specified field name.
      * 
-     * @deprecated Uses {@link #getField(Class, String, boolean)} instead.
+     * @deprecated Use {@link #getField(Class, String, boolean)} instead.
      */
     @Deprecated
     public static Field getField(Object object, String fieldName, boolean forceAccess) throws SecurityException,

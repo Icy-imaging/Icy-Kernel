@@ -552,7 +552,7 @@ public class Saver
     }
 
     /**
-     * @deprecated uses {@link #saveImage(byte[], int, int, int, DataType, File, boolean)} instead
+     * @deprecated Use {@link #saveImage(byte[], int, int, int, DataType, File, boolean)} instead
      */
     @Deprecated
     public static void saveImage(byte[] data, int width, int height, int numChannel, int dataType,

@@ -27,6 +27,7 @@ import java.awt.Polygon;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -68,9 +69,6 @@ public class ROI2DPolygon extends ROI2DShape
     public static final String ID_POINTS = "points";
     public static final String ID_POINT = "point";
 
-    /**
-     * 
-     */
     public ROI2DPolygon(Point2D pt)
     {
         // use Path2D shape which allow double coordinates
@@ -86,9 +84,20 @@ public class ROI2DPolygon extends ROI2DShape
         setName("Polygon2D");
     }
 
-    /**
-     * 
-     */
+    public ROI2DPolygon(List<Point2D> points)
+    {
+        this(new Point2D.Double());
+
+        setPoints(points);
+    }
+
+    public ROI2DPolygon(Polygon polygon)
+    {
+        this(new Point2D.Double());
+
+        setPolygon(polygon);
+    }
+
     public ROI2DPolygon()
     {
         this(new Point2D.Double());
@@ -105,7 +114,7 @@ public class ROI2DPolygon extends ROI2DShape
         return (Path2D) shape;
     }
 
-    public void setPoints(ArrayList<Point2D> pts)
+    public void setPoints(List<Point2D> pts)
     {
         beginUpdate();
         try
@@ -113,7 +122,7 @@ public class ROI2DPolygon extends ROI2DShape
             removeAllPoint();
 
             for (Point2D pt : pts)
-                addPoint(new Anchor2D(pt));
+                addPoint(new Anchor2D(pt.getX(), pt.getY()));
         }
         finally
         {

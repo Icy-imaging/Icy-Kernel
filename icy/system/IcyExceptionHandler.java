@@ -294,7 +294,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     }
 
     /**
-     * @deprecated Uses {@link #handleException(PluginDescriptor, Throwable, boolean)} instead.
+     * @deprecated Use {@link #handleException(PluginDescriptor, Throwable, boolean)} instead.
      */
     @Deprecated
     public static void handlePluginException(PluginDescriptor pluginDesc, Throwable t, boolean print)

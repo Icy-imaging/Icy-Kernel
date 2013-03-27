@@ -19,12 +19,12 @@
 package icy.common;
 
 /**
- * @deprecated uses {@link icy.util.Random} instead
+ * @deprecated Use {@link icy.util.Random} instead
  */
 public class Random
 {
     /**
-     * @deprecated uses {@link icy.util.Random#nextInt()} instead
+     * @deprecated Use {@link icy.util.Random#nextInt()} instead
      */
     public static int nextInt()
     {
@@ -32,7 +32,7 @@ public class Random
     }
 
     /**
-     * @deprecated uses {@link icy.util.Random#nextInt(int)} instead
+     * @deprecated Use {@link icy.util.Random#nextInt(int)} instead
      */
     public static int nextInt(int n)
     {
@@ -40,7 +40,7 @@ public class Random
     }
 
     /**
-     * @deprecated uses {@link icy.util.Random#nextBoolean()} instead
+     * @deprecated Use {@link icy.util.Random#nextBoolean()} instead
      */
     public static boolean nextBoolean()
     {
@@ -48,7 +48,7 @@ public class Random
     }
 
     /**
-     * @deprecated uses {@link icy.util.Random#nextDouble()} instead
+     * @deprecated Use {@link icy.util.Random#nextDouble()} instead
      */
     public static double nextDouble()
     {
@@ -56,7 +56,7 @@ public class Random
     }
 
     /**
-     * @deprecated uses {@link icy.util.Random#nextFloat()} instead
+     * @deprecated Use {@link icy.util.Random#nextFloat()} instead
      */
     public static float nextFloat()
     {
@@ -64,7 +64,7 @@ public class Random
     }
 
     /**
-     * @deprecated uses {@link icy.util.Random#nextLong()} instead
+     * @deprecated Use {@link icy.util.Random#nextLong()} instead
      */
     public static long nextLong()
     {

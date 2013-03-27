@@ -22,6 +22,7 @@ import icy.roi.ROI3D;
 import icy.roi.ROI4D;
 import icy.roi.ROI5D;
 import icy.sequence.Sequence;
+import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
@@ -30,13 +31,18 @@ import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
+import javax.swing.ActionMap;
 import javax.swing.BoxLayout;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -110,6 +116,25 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         sizeTField.addTextChangeListener(this);
 
         Clipboard.addListener(this);
+
+        buildActionMap();
+    }
+
+    void buildActionMap()
+    {
+        final InputMap imap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        final ActionMap amap = getActionMap();
+
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), RoiActions.unselectAction.getName());
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), RoiActions.deleteAction.getName());
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), RoiActions.deleteAction.getName());
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, SystemUtil.getMenuCtrlMask()), RoiActions.copyAction.getName());
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, SystemUtil.getMenuCtrlMask()), RoiActions.pasteAction.getName());
+
+        amap.put(RoiActions.unselectAction.getName(), RoiActions.unselectAction);
+        amap.put(RoiActions.deleteAction.getName(), RoiActions.deleteAction);
+        amap.put(RoiActions.copyAction.getName(), RoiActions.copyAction);
+        amap.put(RoiActions.pasteAction.getName(), RoiActions.pasteAction);
     }
 
     private void initialize()
@@ -465,7 +490,6 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
         popupPanel = new PopupPanel();
         popupPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-        popupPanel.setExpanded(true);
         popupPanel.setToolTipText("Extra informations about the current selected ROI");
         popupPanel.setTitle("Extra informations");
         add(popupPanel);
@@ -512,14 +536,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 for (ROI r : rois)
                     editable |= r.isEditable();
 
-                final boolean hasSelected = (rois.size() > 0);
-                final ROI roi;
-
-                if (hasSelected)
-                    roi = rois.get(0);
-                else
-                    roi = null;
-
+                final ROI roi = (rois.size() > 0) ? rois.get(0) : null;
+                final boolean hasSelected = (roi != null);
                 final boolean twoSelected = (rois.size() == 2);
                 final boolean severalsSelected = (rois.size() > 1);
                 final boolean singleSelect = hasSelected && !severalsSelected;
@@ -554,7 +572,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 xorButton.setEnabled(severalsSelected);
                 subButton.setEnabled(twoSelected);
 
-                if (hasSelected)
+                if (roi != null)
                 {
                     final String name = roi.getName();
 

@@ -117,7 +117,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     /**
-     * @deprecated Uses {@link ROI2DShape#subtract(ROI2DShape, ROI2DShape)} instead
+     * @deprecated Use {@link ROI2DShape#subtract(ROI2DShape, ROI2DShape)} instead
      */
     @Deprecated
     public static ROI2DPath substract(ROI2DShape roi1, ROI2DShape roi2)
@@ -709,7 +709,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     /**
-     * @deprecated Uses {@link #getSelectedPoint()} instead.
+     * @deprecated Use {@link #getSelectedPoint()} instead.
      */
     @Deprecated
     protected Anchor2D getSelectedControlPoint()

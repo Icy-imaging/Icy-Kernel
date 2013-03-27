@@ -173,7 +173,7 @@ public abstract class Overlay extends AbstractPainter implements Comparable<Over
     }
 
     /**
-     * @deprecated Uses {@link #painterChanged()} instead.
+     * @deprecated Use {@link #painterChanged()} instead.
      */
     @Deprecated
     @Override
@@ -253,6 +253,36 @@ public abstract class Overlay extends AbstractPainter implements Comparable<Over
 
     @Override
     public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        // no action by default
+    }
+
+    /**
+     * Mouse enter event forwarded to the overlay.
+     * 
+     * @param e
+     *        mouse event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
+    public void mouseEntered(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        // no action by default
+    }
+
+    /**
+     * Mouse exit event forwarded to the overlay.
+     * 
+     * @param e
+     *        mouse event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
+    public void mouseExited(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
         // no action by default
     }
