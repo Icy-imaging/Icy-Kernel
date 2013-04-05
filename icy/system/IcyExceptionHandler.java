@@ -24,6 +24,7 @@ import icy.main.Icy;
 import icy.math.UnitUtil;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
+import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginLoader;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
@@ -321,6 +322,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         final String osId;
         final String memory;
         final String pluginId;
+        String pluginDepsId;
         final HashMap<String, String> values = new HashMap<String, String>();
 
         values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
@@ -342,13 +344,31 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         {
             values.put(NetworkUtil.ID_PLUGINCLASSNAME, plugin.getClassName());
             values.put(NetworkUtil.ID_PLUGINVERSION, plugin.getVersion().toString());
-            pluginId = "Plugin " + plugin.toString() + "\n";
+            pluginId = "Plugin " + plugin.toString() + "\n\n";
+
+            if (plugin.getRequired().size() > 0)
+            {
+                pluginDepsId = "Dependances:\n";
+                for (PluginIdent ident : plugin.getRequired())
+                {
+                    final PluginDescriptor installed = PluginLoader.getPlugin(ident.getClassName());
+
+                    if (installed == null)
+                        pluginDepsId += "Plugin " + ident.toString() + " is not installed\n";
+                    else
+                        pluginDepsId += "Plugin " + installed.toString() + " installed\n";
+                }
+                pluginDepsId += "\n";
+            }
+            else
+                pluginDepsId = "";
         }
         else
         {
             values.put(NetworkUtil.ID_PLUGINCLASSNAME, "");
             values.put(NetworkUtil.ID_PLUGINVERSION, "");
             pluginId = "";
+            pluginDepsId = "";
         }
 
         if (StringUtil.isEmpty(devId))
@@ -356,7 +376,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         else
             values.put(NetworkUtil.ID_DEVELOPERID, "");
 
-        values.put(NetworkUtil.ID_ERRORLOG, icyId + javaId + osId + memory + "\n" + pluginId + "\n" + errorLog);
+        values.put(NetworkUtil.ID_ERRORLOG, icyId + javaId + osId + memory + "\n" + pluginId + pluginDepsId + errorLog);
 
         // send report
         NetworkUtil.report(values);

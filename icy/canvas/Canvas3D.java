@@ -34,6 +34,7 @@ import icy.image.colormap.IcyColorMapBand;
 import icy.image.lut.LUT;
 import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
+import icy.painter.Overlay;
 import icy.painter.Painter;
 import icy.painter.VtkPainter;
 import icy.sequence.Sequence;
@@ -52,6 +53,10 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -98,7 +103,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 {
     private static final long serialVersionUID = -2677870897470280726L;
 
-    private class CustomVtkPanel extends IcyVtkPanel
+    private class CustomVtkPanel extends IcyVtkPanel implements MouseWheelListener
     {
         /**
          * 
@@ -108,6 +113,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         public CustomVtkPanel()
         {
             super();
+
+            addMouseWheelListener(this);
         }
 
         @Override
@@ -127,6 +134,122 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
             // then do 3D rendering
             super.paint(g);
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e)
+        {
+            // send mouse event to painters
+            for (Layer layer : getVisibleLayers())
+            {
+                final Painter painter = layer.getPainter();
+
+                // extra event for Overlay
+                if (painter instanceof Overlay)
+                    ((Overlay) painter).mouseEntered(e, null, Canvas3D.this);
+            }
+
+            super.mouseEntered(e);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e)
+        {
+            // send mouse event to painters
+            for (Layer layer : getVisibleLayers())
+            {
+                final Painter painter = layer.getPainter();
+
+                // extra event for Overlay
+                if (painter instanceof Overlay)
+                    ((Overlay) painter).mouseExited(e, null, Canvas3D.this);
+            }
+
+            super.mouseExited(e);
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e)
+        {
+            // send mouse event to painters first
+            for (Layer layer : getVisibleLayers())
+                layer.getPainter().mouseClick(e, null, Canvas3D.this);
+
+            super.mouseClicked(e);
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e)
+        {
+            // send mouse event to painters first
+            for (Layer layer : getVisibleLayers())
+                layer.getPainter().mouseMove(e, null, Canvas3D.this);
+
+            super.mouseMoved(e);
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e)
+        {
+            // send mouse event to painters first
+            for (Layer layer : getVisibleLayers())
+                layer.getPainter().mouseDrag(e, null, Canvas3D.this);
+
+            super.mouseDragged(e);
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e)
+        {
+            // send mouse event to painters first
+            for (Layer layer : getVisibleLayers())
+                layer.getPainter().mousePressed(e, null, Canvas3D.this);
+
+            super.mousePressed(e);
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e)
+        {
+            // send mouse event to painters first
+            for (Layer layer : getVisibleLayers())
+                layer.getPainter().mouseReleased(e, null, Canvas3D.this);
+
+            super.mouseReleased(e);
+        }
+
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent e)
+        {
+            // send mouse event to painters first
+            for (Layer layer : getVisibleLayers())
+            {
+                final Painter painter = layer.getPainter();
+
+                // extra event for Overlay
+                if (painter instanceof Overlay)
+                    ((Overlay) painter).mouseWheelMoved(e, null, Canvas3D.this);
+            }
+        }
+
+        @Override
+        public void keyPressed(KeyEvent e)
+        {
+            // send mouse event to painters first
+            for (Layer layer : getVisibleLayers())
+                layer.getPainter().keyPressed(e, null, Canvas3D.this);
+
+            super.keyPressed(e);
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e)
+        {
+            // send mouse event to painters first
+            for (Layer layer : getVisibleLayers())
+                layer.getPainter().keyReleased(e, null, Canvas3D.this);
+
+            super.keyReleased(e);
         }
     }
 

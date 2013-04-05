@@ -60,7 +60,9 @@ public class PathAnchor2D extends Anchor2D
             Color color, Color selectedColor)
     {
         this(x1, y1, x2, y2, x3, y3, ray, color, selectedColor);
-        sequence.addPainter(this);
+
+        if (sequence != null)
+            sequence.addPainter(this);
     }
 
     public PathAnchor2D(double x1, double y1, double x2, double y2, double x3, double y3, int ray, Color color)
@@ -90,7 +92,7 @@ public class PathAnchor2D extends Anchor2D
 
     public PathAnchor2D(double x1, double y1)
     {
-        this(null, 0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
+        this(0d, 0d, 0d, 0d, x1, y1, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
     }
 
     public PathAnchor2D()

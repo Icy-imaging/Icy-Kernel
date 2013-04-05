@@ -18,6 +18,7 @@
  */
 package icy.vtk;
 
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 import vtk.vtkPanel;
@@ -52,7 +53,7 @@ public class IcyVtkPanel extends vtkPanel
         // have to use this to by-pass the wrong vtkPanel implementation
         resize(w, h);
     }
-    
+
     @Override
     public void mouseEntered(MouseEvent e)
     {
@@ -61,12 +62,62 @@ public class IcyVtkPanel extends vtkPanel
     }
 
     @Override
+    public void mouseExited(MouseEvent e)
+    {
+        // always do mouse exited process
+        super.mouseExited(e);
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e)
+    {
+        if (!e.isConsumed())
+            super.mouseClicked(e);
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e)
+    {
+        // always do mouse moved process
+        super.mouseMoved(e);
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e)
+    {
+        if (!e.isConsumed())
+            super.mouseDragged(e);
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e)
+    {
+        if (!e.isConsumed())
+            super.mousePressed(e);
+    }
+
+    @Override
     public void mouseReleased(MouseEvent e)
     {
+        // always do mouse release process
         super.mouseReleased(e);
 
         // so we have a fine rendering when action end
         repaint();
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e)
+    {
+        if (!e.isConsumed())
+            super.keyPressed(e);
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e)
+    {
+        if (!e.isConsumed())
+            super.keyReleased(e);
     }
 
     /**

@@ -462,8 +462,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             mouseMapPos = new Point(e.getPoint());
 
             // send to canvas view with converted canvas position
-            if (canvasView.onMouseMove(e.isConsumed(), getCanvasPosition(e.getPoint())))
-                e.consume();
+            canvasView.onMousePositionChanged(getCanvasPosition(e.getPoint()));
         }
 
         @Override
@@ -1017,26 +1016,20 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         /**
          * Internal canvas process on mouseMove event.<br>
-         * Return true if event should be consumed.
+         * Always processed, no consume here.
          */
-        boolean onMouseMove(boolean consumed, Point pos)
+        void onMousePositionChanged(Point pos)
         {
-            if (!consumed)
+            handlingMouseMoveEvent = true;
+            try
             {
-                handlingMouseMoveEvent = true;
-                try
-                {
-                    // update mouse position
-                    setMouseCanvasPos(pos);
-                }
-                finally
-                {
-                    handlingMouseMoveEvent = false;
-                }
+                // update mouse position
+                setMouseCanvasPos(pos);
             }
-
-            // don't consume this event
-            return false;
+            finally
+            {
+                handlingMouseMoveEvent = false;
+            }
         }
 
         /**
@@ -1047,53 +1040,42 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             if (!consumed)
             {
-                handlingMouseMoveEvent = true;
-                try
+                // canvas get the drag event ?
+                if (isDragging())
                 {
-                    // update mouse position
-                    setMouseCanvasPos(pos);
-
-                    // canvas get the drag event ?
-                    if (isDragging())
+                    // left mouse button action : translation
+                    if (left)
                     {
-                        // left mouse button action : translation
-                        if (left)
+                        moving = true;
+                        if (rotating)
                         {
-                            moving = true;
-                            if (rotating)
-                            {
-                                rotating = false;
-                                // force repaint so the cross is no more visible
-                                canvasView.repaint();
-                            }
-
-                            updateDrag(control, shift);
-                        }
-                        // right mouse button action : rotation
-                        else if (right)
-                        {
-                            moving = false;
-                            if (!rotating)
-                            {
-                                rotating = true;
-                                // force repaint so the cross is visible
-                                canvasView.repaint();
-                            }
-
-                            updateRot(control, shift);
+                            rotating = false;
+                            // force repaint so the cross is no more visible
+                            canvasView.repaint();
                         }
 
-                        // dragging --> consume event
-                        return true;
+                        updateDrag(control, shift);
+                    }
+                    // right mouse button action : rotation
+                    else if (right)
+                    {
+                        moving = false;
+                        if (!rotating)
+                        {
+                            rotating = true;
+                            // force repaint so the cross is visible
+                            canvasView.repaint();
+                        }
+
+                        updateRot(control, shift);
                     }
 
-                    // no dragging --> no consume
-                    return false;
+                    // dragging --> consume event
+                    return true;
                 }
-                finally
-                {
-                    handlingMouseMoveEvent = false;
-                }
+
+                // no dragging --> no consume
+                return false;
             }
 
             return false;
@@ -1188,33 +1170,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mousePressed(MouseEvent e)
         {
-            final String tool = Icy.getMainInterface().getSelectedTool();
-
-            final Sequence seq = getSequence();
-
-            // priority ROI creation (control key down)
-            if (EventUtil.isControlDown(e) && EventUtil.isLeftMouseButton(e) && ToolRibbonTask.isROITool(tool))
-            {
-                // only if sequence still live
-                if (seq != null)
-                {
-                    // try to create ROI from current selected tool (should correspond to ROI class name)
-                    final ROI roi = ROI.create(tool, getMouseImagePos());
-                    // roi created ? --> it becomes the selected ROI
-                    if (roi != null)
-                    {
-                        // attach to sequence
-                        seq.addROI(roi, true);
-                        // then do exclusive selection
-                        roi.setSelected(true, true);
-                        // roi.setFocused(true);
-                    }
-
-                    // consume event
-                    e.consume();
-                }
-            }
-
             // send mouse event to painters now
             for (Layer layer : getVisibleLayers())
                 layer.getPainter().mousePressed(e, getMouseImagePos(), Canvas2D.this);
@@ -1222,15 +1177,20 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             // not yet consumed
             if (!e.isConsumed())
             {
+                final String tool = Icy.getMainInterface().getSelectedTool();
+                final Sequence seq = getSequence();
+
                 // ROI creation
                 if (EventUtil.isLeftMouseButton(e) && ToolRibbonTask.isROITool(tool))
                 {
                     // return to default selection tool before ROI creation
-                    Icy.getMainInterface().setSelectedTool(ToolRibbonTask.SELECT);
+                    // when the multi creation modifier (control) is not used
+                    if (!EventUtil.isControlDown(e))
+                        Icy.getMainInterface().setSelectedTool(ToolRibbonTask.SELECT);
+
                     // only if sequence still live
                     if (seq != null)
                     {
-
                         // try to create ROI from current selected tool (should correspond to ROI
                         // class name)
                         final ROI roi = ROI.create(tool, getMouseImagePos());
@@ -1273,7 +1233,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             hasMouseFocus = true;
 
-            // send mouse event to painters after
+            // send mouse event to painters
             for (Layer layer : getVisibleLayers())
             {
                 final Painter painter = layer.getPainter();
@@ -1307,11 +1267,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mouseMoved(MouseEvent e)
         {
-            // process
-            if (onMouseMove(e.isConsumed(), e.getPoint()))
-                e.consume();
+            // process first without consume (update mouse canvas position)
+            onMousePositionChanged(e.getPoint());
 
-            // send mouse event to painters after
+            // send mouse event to painters
             for (Layer layer : getVisibleLayers())
                 layer.getPainter().mouseMove(e, getMouseImagePos(), Canvas2D.this);
         }
@@ -1319,14 +1278,17 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mouseDragged(MouseEvent e)
         {
-            // process
-            if (onMouseDragged(e.isConsumed(), e.getPoint(), EventUtil.isLeftMouseButton(e),
-                    EventUtil.isRightMouseButton(e), EventUtil.isControlDown(e), EventUtil.isShiftDown(e)))
-                e.consume();
+            // process first without consume (update mouse canvas position)
+            onMousePositionChanged(e.getPoint());
 
             // send mouse event to painters after
             for (Layer layer : getVisibleLayers())
                 layer.getPainter().mouseDrag(e, getMouseImagePos(), Canvas2D.this);
+
+            // process
+            if (onMouseDragged(e.isConsumed(), e.getPoint(), EventUtil.isLeftMouseButton(e),
+                    EventUtil.isRightMouseButton(e), EventUtil.isControlDown(e), EventUtil.isShiftDown(e)))
+                e.consume();
         }
 
         @Override
@@ -2797,97 +2759,102 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     @Override
     public void keyPressed(KeyEvent e)
     {
-        switch (e.getKeyCode())
+        // then send to painters
+        super.keyPressed(e);
+
+        if (!e.isConsumed())
         {
-            case KeyEvent.VK_LEFT:
-                if (EventUtil.isControlDown(e))
-                    setPositionT(Math.max(getPositionT() - 5, 0));
-                else
-                    setPositionT(Math.max(getPositionT() - 1, 0));
-                e.consume();
-                break;
-
-            case KeyEvent.VK_RIGHT:
-                if (EventUtil.isControlDown(e))
-                    setPositionT(getPositionT() + 5);
-                else
-                    setPositionT(getPositionT() + 1);
-                e.consume();
-                break;
-
-            case KeyEvent.VK_UP:
-                if (EventUtil.isControlDown(e))
-                    setPositionZ(getPositionZ() + 5);
-                else
-                    setPositionZ(getPositionZ() + 1);
-                e.consume();
-                break;
-
-            case KeyEvent.VK_DOWN:
-                if (EventUtil.isControlDown(e))
-                    setPositionZ(Math.max(getPositionZ() - 5, 0));
-                else
-                    setPositionZ(Math.max(getPositionZ() - 1, 0));
-                e.consume();
-                break;
-
-            case KeyEvent.VK_NUMPAD2:
-                if (!canvasView.moving)
-                {
-                    final Point startPos = new Point(getOffsetX(), getOffsetY());
-                    final Point delta = new Point(0, -getCanvasSizeY() / 4);
-                    canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+            switch (e.getKeyCode())
+            {
+                case KeyEvent.VK_LEFT:
+                    if (EventUtil.isControlDown(e))
+                        setPositionT(Math.max(getPositionT() - 5, 0));
+                    else
+                        setPositionT(Math.max(getPositionT() - 1, 0));
                     e.consume();
-                }
-                break;
-            case KeyEvent.VK_NUMPAD4:
-                if (!canvasView.moving)
-                {
-                    final Point startPos = new Point(getOffsetX(), getOffsetY());
-                    final Point delta = new Point(getCanvasSizeX() / 4, 0);
-                    canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
-                    e.consume();
-                }
-                break;
+                    break;
 
-            case KeyEvent.VK_NUMPAD6:
-                if (!canvasView.moving)
-                {
-                    final Point startPos = new Point(getOffsetX(), getOffsetY());
-                    final Point delta = new Point(-getCanvasSizeX() / 4, 0);
-                    canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                case KeyEvent.VK_RIGHT:
+                    if (EventUtil.isControlDown(e))
+                        setPositionT(getPositionT() + 5);
+                    else
+                        setPositionT(getPositionT() + 1);
                     e.consume();
-                }
-                break;
+                    break;
 
-            case KeyEvent.VK_NUMPAD8:
-                if (!canvasView.moving)
-                {
-                    final Point startPos = new Point(getOffsetX(), getOffsetY());
-                    final Point delta = new Point(0, getCanvasSizeY() / 4);
-                    canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                case KeyEvent.VK_UP:
+                    if (EventUtil.isControlDown(e))
+                        setPositionZ(getPositionZ() + 5);
+                    else
+                        setPositionZ(getPositionZ() + 1);
                     e.consume();
-                }
-                break;
+                    break;
+
+                case KeyEvent.VK_DOWN:
+                    if (EventUtil.isControlDown(e))
+                        setPositionZ(Math.max(getPositionZ() - 5, 0));
+                    else
+                        setPositionZ(Math.max(getPositionZ() - 1, 0));
+                    e.consume();
+                    break;
+
+                case KeyEvent.VK_NUMPAD2:
+                    if (!canvasView.moving)
+                    {
+                        final Point startPos = new Point(getOffsetX(), getOffsetY());
+                        final Point delta = new Point(0, -getCanvasSizeY() / 4);
+                        canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                        e.consume();
+                    }
+                    break;
+                case KeyEvent.VK_NUMPAD4:
+                    if (!canvasView.moving)
+                    {
+                        final Point startPos = new Point(getOffsetX(), getOffsetY());
+                        final Point delta = new Point(getCanvasSizeX() / 4, 0);
+                        canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                        e.consume();
+                    }
+                    break;
+
+                case KeyEvent.VK_NUMPAD6:
+                    if (!canvasView.moving)
+                    {
+                        final Point startPos = new Point(getOffsetX(), getOffsetY());
+                        final Point delta = new Point(-getCanvasSizeX() / 4, 0);
+                        canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                        e.consume();
+                    }
+                    break;
+
+                case KeyEvent.VK_NUMPAD8:
+                    if (!canvasView.moving)
+                    {
+                        final Point startPos = new Point(getOffsetX(), getOffsetY());
+                        final Point delta = new Point(0, getCanvasSizeY() / 4);
+                        canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                        e.consume();
+                    }
+                    break;
+            }
         }
 
         // forward to view
         canvasView.keyPressed(e);
         // forward to map
         canvasMap.keyPressed(e);
-        // then send to painters
-        super.keyPressed(e);
     }
 
     @Override
     public void keyReleased(KeyEvent e)
     {
+        // send to painters
+        super.keyReleased(e);
+
         // forward to view
         canvasView.keyReleased(e);
         // forward to map
         canvasMap.keyReleased(e);
-        // then send to painters
-        super.keyReleased(e);
     }
 
     @Override
@@ -3226,21 +3193,19 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
             case MOUSE_IMAGE_POSITION_CHANGED:
                 // mouse position changed outside mouse move event ?
-                if (!canvasView.handlingMouseMoveEvent && !canvasView.isDragging() && (!isSynchSlave()))
+                if (!canvasView.handlingMouseMoveEvent && !canvasView.isDragging() && !isSynchSlave())
                 {
                     // mouse position in canvas
                     final Point mouseAbsolutePos = new Point(mouseCanvasPos);
                     // absolute mouse position
                     SwingUtilities.convertPointToScreen(mouseAbsolutePos, canvasView);
 
-                    // simulate a mouse move event so painters can handle position
-                    // change
+                    // simulate a mouse move event so painters can handle position change
                     final MouseEvent mouseEvent = new MouseEvent(this, MouseEvent.MOUSE_MOVED,
                             System.currentTimeMillis(), 0, mouseCanvasPos.x, mouseCanvasPos.y, mouseAbsolutePos.x,
                             mouseAbsolutePos.y, 0, false, 0);
 
-                    // send mouse event to painters
-                    // for (Layer layer : getVisibleOrderedLayersForEvent())
+                    // send mouse move event to painters
                     for (Layer layer : getVisibleLayers())
                         layer.getPainter().mouseMove(mouseEvent, new Point2D.Double(mouseImagePos.x, mouseImagePos.y),
                                 this);

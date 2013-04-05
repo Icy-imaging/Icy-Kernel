@@ -124,7 +124,7 @@ public class ROI2DPath extends ROI2DShape
 
             removeAllPoint();
 
-            final ArrayList<Node> nodesPoint = XMLUtil.getSubNodes(XMLUtil.getElement(node, ID_POINTS), ID_POINT);
+            final ArrayList<Node> nodesPoint = XMLUtil.getChildren(XMLUtil.getElement(node, ID_POINTS), ID_POINT);
             if (nodesPoint != null)
             {
                 for (Node n : nodesPoint)

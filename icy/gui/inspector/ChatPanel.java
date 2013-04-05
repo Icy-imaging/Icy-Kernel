@@ -663,6 +663,7 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
     /**
      * GUI
      */
+    JPanel panelBottom;
     CloseableTabbedPane tabPane;
     JScrollPane usersScrollPane;
     JList userList;
@@ -970,7 +971,7 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
 
         usersScrollPane.setViewportView(userList);
 
-        JPanel panelBottom = new JPanel();
+        panelBottom = new JPanel();
         add(panelBottom, BorderLayout.SOUTH);
         panelBottom.setLayout(new BorderLayout(0, 0));
 
@@ -984,7 +985,7 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
             }
         });
         sendEditor.setColumns(10);
-        panelBottom.add(sendEditor, BorderLayout.CENTER);
+        panelBottom.add(sendEditor, BorderLayout.SOUTH);
 
         JPanel topPanel = new JPanel();
         topPanel.setBorder(new EmptyBorder(0, 0, 2, 0));
@@ -1397,12 +1398,13 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
 
                 // user panel visible
                 remove(usersScrollPane);
+                panelBottom.remove(usersScrollPane);
                 if (ChatPreferences.getShowUsersPanel())
                 {
                     if ((getWidth() * 1.5) > getHeight())
                         add(usersScrollPane, BorderLayout.EAST);
                     else
-                        add(usersScrollPane, BorderLayout.SOUTH);
+                        panelBottom.add(usersScrollPane, BorderLayout.CENTER);
                 }
 
                 validate();
@@ -1420,7 +1422,14 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
             final String channel = getCurrentChannel();
 
             if (!StringUtil.isEmpty(channel))
-                client.doNames(channel);
+            {
+                // private channel ?
+                if (channel.charAt(0) != '#')
+                    // display current user and channel name as users
+                    userList.setListData(new String[] {ChatPreferences.getNickname(), channel});
+                else
+                    client.doNames(channel);
+            }
         }
         else
             userList.setListData(new String[0]);

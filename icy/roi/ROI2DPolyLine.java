@@ -85,17 +85,23 @@ public class ROI2DPolyLine extends ROI2DShape
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
 
-                g2.setColor(getDisplayColor());
+                // draw border black line
+                if (selected)
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 2d)));
+                else
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                g2.setColor(Color.black);
+                g2.draw(shape);
 
-                // ROI selected ?
+                // draw internal border
                 if (selected)
                     g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
                 else
                     g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-
+                g2.setColor(getDisplayColor());
                 g2.draw(shape);
 
-                if (selected)
+                if (selected && editable)
                 {
                     // draw control point if selected
                     for (Anchor2D pt : controlPoints)
