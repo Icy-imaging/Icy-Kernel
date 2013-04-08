@@ -86,10 +86,6 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
          * band index
          */
         private final int channel;
-        /**
-         * enable flag
-         */
-        private boolean enabled;
 
         /**
          * listeners
@@ -99,9 +95,6 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
         public LUTChannel(int channel)
         {
             this.channel = channel;
-
-            // default
-            enabled = true;
 
             listeners = new EventListenerList();
         }
@@ -178,12 +171,12 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
 
         public boolean isEnabled()
         {
-            return enabled;
+            return getColorMap().isEnabled();
         }
 
-        public void setEnabled(boolean enabled)
+        public void setEnabled(boolean value)
         {
-            this.enabled = enabled;
+            getColorMap().setEnabled(value);
         }
 
         /**
@@ -490,7 +483,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
         final int channel = event.getComponent();
         final LUTChannelEventType type = (event.getType() == LUTEventType.COLORMAP_CHANGED) ? LUTChannelEventType.COLORMAP_CHANGED
                 : LUTChannelEventType.SCALER_CHANGED;
-        
+
         if (channel == -1)
         {
             for (LUTChannel lutChannel : lutChannels)

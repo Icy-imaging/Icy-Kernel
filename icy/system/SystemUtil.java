@@ -18,6 +18,9 @@
  */
 package icy.system;
 
+import icy.type.collection.CollectionUtil;
+import icy.util.ReflectionUtil;
+
 import java.awt.BufferCapabilities;
 import java.awt.Desktop;
 import java.awt.DisplayMode;
@@ -33,6 +36,8 @@ import java.awt.image.ColorModel;
 import java.awt.image.VolatileImage;
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Properties;
 
 import sun.java2d.SunGraphicsEnvironment;
@@ -664,5 +669,61 @@ public class SystemUtil
     {
         final String os = getOSName().toLowerCase();
         return (os.indexOf("nix") >= 0) || (os.indexOf("nux") >= 0);
+    }
+
+    public static boolean addToJavaLibraryPath(String directories[])
+    {
+        try
+        {
+            final String path_separator = System.getProperty("path.separator");
+
+            // patch user library paths...
+            final Field pathsField = ReflectionUtil.getField(ClassLoader.class, "usr_paths", true);
+            // get current user paths
+            final ArrayList<String> userPaths = CollectionUtil.asArrayList((String[]) pathsField.get(null));
+            // get current system paths
+            String sysPaths = System.getProperty("java.library.path");
+
+            for (String dir : directories)
+            {
+                if (!userPaths.contains(dir))
+                    userPaths.add(dir);
+                sysPaths += path_separator + dir;
+            }
+
+            // set back user library path
+            pathsField.set(null, userPaths.toArray(new String[userPaths.size()]));
+            // set back system library path
+            System.setProperty("java.library.path", sysPaths);
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            System.err.println(e.getMessage());
+            System.err.println("Cannot patch Java Library Path.");
+
+            return false;
+        }
+    }
+
+    public static void loadLibrary(String dir, String name)
+    {
+        final File libPath = new File(dir, System.mapLibraryName(name));
+
+        if (libPath.exists())
+            Runtime.getRuntime().load(libPath.getAbsolutePath());
+        else
+            System.loadLibrary(name);
+    }
+
+    public static void loadLibrary(String path)
+    {
+        final File file = new File(path);
+
+        if (file.exists())
+            Runtime.getRuntime().load(file.getAbsolutePath());
+        else
+            System.loadLibrary(path);
     }
 }

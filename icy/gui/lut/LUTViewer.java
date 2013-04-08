@@ -22,6 +22,9 @@ import icy.gui.component.CheckTabbedPane;
 import icy.gui.lut.abstract_.IcyLutViewer;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
+import icy.image.colormap.IcyColorMapEvent;
+import icy.image.colormap.IcyColorMapEvent.IcyColorMapEventType;
+import icy.image.colormap.IcyColorMapListener;
 import icy.image.lut.LUT;
 import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
@@ -50,7 +53,7 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-public class LUTViewer extends IcyLutViewer
+public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
 {
     private static final long serialVersionUID = 8385018166371243663L;
 
@@ -118,7 +121,7 @@ public class LUTViewer extends IcyLutViewer
                         b = true;
                     }
 
-                    lutChannelViewers.get(i).getLutChannel().getColorMap().setEnabled(b);
+                    lutChannelViewers.get(i).getLutChannel().setEnabled(b);
                 }
             }
         });
@@ -128,6 +131,8 @@ public class LUTViewer extends IcyLutViewer
         {
             final LUTChannel lutChannel = lut.getLutChannels().get(c);
             final LUTChannelViewer lbv = new LUTChannelViewer(viewer, lutChannel);
+
+            lutChannel.getColorMap().addListener(this);
 
             lutChannelViewers.add(lbv);
             bottomPane.addTab("ch " + c, lbv);
@@ -348,4 +353,25 @@ public class LUTViewer extends IcyLutViewer
             });
         }
     }
+
+    void refreshChannelsEnabled()
+    {
+        ThreadUtil.invokeLater(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                for (int c = 0; c < lutChannelViewers.size(); c++)
+                    bottomPane.setTabChecked(c, lutChannelViewers.get(c).lutChannel.isEnabled());
+            }
+        });
+    }
+
+    @Override
+    public void colorMapChanged(IcyColorMapEvent e)
+    {
+        if (e.getType() == IcyColorMapEventType.ENABLED_CHANGED)
+            refreshChannelsEnabled();
+    }
+
 }

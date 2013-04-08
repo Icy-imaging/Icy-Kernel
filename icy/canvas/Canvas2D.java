@@ -2759,7 +2759,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     @Override
     public void keyPressed(KeyEvent e)
     {
-        // then send to painters
+        // send to painters
         super.keyPressed(e);
 
         if (!e.isConsumed())

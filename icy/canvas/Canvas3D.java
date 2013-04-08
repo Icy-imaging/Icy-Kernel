@@ -114,6 +114,9 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         {
             super();
 
+            // key events should be forwarded from the viewer
+            removeKeyListener(this);
+            // we want mouse wheel events
             addMouseWheelListener(this);
         }
 
@@ -231,26 +234,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                     ((Overlay) painter).mouseWheelMoved(e, null, Canvas3D.this);
             }
         }
-
-        @Override
-        public void keyPressed(KeyEvent e)
-        {
-            // send mouse event to painters first
-            for (Layer layer : getVisibleLayers())
-                layer.getPainter().keyPressed(e, null, Canvas3D.this);
-
-            super.keyPressed(e);
-        }
-
-        @Override
-        public void keyReleased(KeyEvent e)
-        {
-            // send mouse event to painters first
-            for (Layer layer : getVisibleLayers())
-                layer.getPainter().keyReleased(e, null, Canvas3D.this);
-
-            super.keyReleased(e);
-        }
     }
 
     /**
@@ -281,9 +264,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
     // volume mapper choice
     final private String[] volumeMapperString = {"Raycast", "OpenGL"};
     final private JComboBox volumeMapperCombo = new JComboBox(volumeMapperString);
-    // volume component choice
-    private JPanel volumeComponentPanel;
-    private JComboBox volumeComponentCombo = new JComboBox();
     // volume interpolation choice
     final private String[] volumeInterpolationString = {"Linear", "Nearest"};
     final private JComboBox volumeInterpolationCombo = new JComboBox(volumeInterpolationString);
@@ -357,10 +337,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         volumeSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
                 GuiUtil.createFixedWidthLabel("Mapper", 100), Box.createHorizontalStrut(8), volumeMapperCombo,
                 Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
-        volumeComponentPanel = GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
-                GuiUtil.createFixedWidthLabel("Component", 100), Box.createHorizontalStrut(8), volumeComponentCombo,
-                Box.createHorizontalGlue(), Box.createHorizontalStrut(4));
-        volumeSettingsPanel.add(volumeComponentPanel);
         volumeSettingsPanel.add(GuiUtil.createLineBoxPanel(Box.createHorizontalStrut(4),
                 GuiUtil.createFixedWidthLabel("Interpolation", 100), Box.createHorizontalStrut(8),
                 volumeInterpolationCombo, Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
@@ -375,7 +351,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                 Box.createHorizontalGlue(), Box.createHorizontalStrut(4)));
 
         volumeMapperCombo.addActionListener(this);
-        volumeComponentCombo.addActionListener(this);
         volumeInterpolationCombo.addActionListener(this);
         volumeImageSampleDistanceCombo.addActionListener(this);
         volumeShadeCheckBox.addActionListener(this);
@@ -508,8 +483,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         imageData = null;
         // build volume mapper
         internalBuildVolumeMapper();
-        // rebuild component panel
-        buildComponentPanel(true);
 
         // default volume setup
         volumeProperty.IndependentComponentsOn();
@@ -537,73 +510,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         resetCamera();
 
         initialized = true;
-    }
-
-    void buildComponentPanel(boolean noEvent)
-    {
-        final Sequence seq = getSequence();
-        if (seq == null)
-            return;
-
-        final int sizeC = seq.getSizeC();
-        final int posC = getPositionC();
-
-        if (useRaycastVolumeMapper())
-        {
-            final String[] items = new String[sizeC + 1];
-
-            items[0] = "all";
-            for (int i = 1; i <= sizeC; i++)
-                items[i] = Integer.toString(i);
-
-            volumeComponentCombo = new JComboBox(items);
-            if (!noEvent)
-                volumeComponentCombo.addActionListener(this);
-
-            try
-            {
-                volumeComponentCombo.setSelectedIndex(posC + 1);
-            }
-            catch (IllegalArgumentException e)
-            {
-                volumeComponentCombo.setSelectedIndex(0);
-            }
-
-            if (noEvent)
-                volumeComponentCombo.addActionListener(this);
-        }
-        else
-        {
-            final String[] items = new String[sizeC];
-
-            for (int i = 0; i < sizeC; i++)
-                items[i] = Integer.toString(i + 1);
-
-            volumeComponentCombo = new JComboBox(items);
-            volumeComponentCombo.addActionListener(this);
-
-            try
-            {
-                if (posC == -1)
-                    volumeComponentCombo.setSelectedIndex(0);
-                else
-                    volumeComponentCombo.setSelectedIndex(posC);
-            }
-            catch (IllegalArgumentException e)
-            {
-                volumeComponentCombo.setSelectedIndex(0);
-            }
-        }
-
-        // rebuild component panel
-        volumeComponentPanel.removeAll();
-        volumeComponentPanel.add(Box.createHorizontalStrut(4));
-        volumeComponentPanel.add(GuiUtil.createFixedWidthLabel("Component", 100));
-        volumeComponentPanel.add(Box.createHorizontalStrut(8));
-        volumeComponentPanel.add(volumeComponentCombo);
-        volumeComponentPanel.add(Box.createHorizontalGlue());
-        volumeComponentPanel.add(Box.createHorizontalStrut(4));
-        volumeComponentPanel.validate();
     }
 
     private void buildVolumeMapper()
@@ -990,8 +896,16 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         // SCALAR OPACITY FUNCTION
         final vtkPiecewiseFunction pwf = new vtkPiecewiseFunction();
 
-        for (int i = 0; i < IcyColorMap.SIZE; i++)
-            pwf.AddPoint(scaler.unscale(i), colorMap.getNormalizedAlpha(i));
+        if (colorMap.isEnabled())
+        {
+            for (int i = 0; i < IcyColorMap.SIZE; i++)
+                pwf.AddPoint(scaler.unscale(i), colorMap.getNormalizedAlpha(i));
+        }
+        else
+        {
+            for (int i = 0; i < IcyColorMap.SIZE; i++)
+                pwf.AddPoint(scaler.unscale(i), 0d);
+        }
 
         volumeProperty.SetScalarOpacity(index, pwf);
     }
@@ -1057,31 +971,25 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
     {
         // update view type combo state
         if (useRaycastVolumeMapper())
+        {
             volumeImageSampleDistanceCombo.setEnabled(true);
+
+            // set C position back to -1
+            setPositionC(-1);
+
+            // re-enable all channel
+            final int maxC = getMaxC();
+            for (int c = 0; c <= maxC; c++)
+                getLut().getLutChannel(c).setEnabled(true);
+        }
         else
+        {
             volumeImageSampleDistanceCombo.setEnabled(false);
+            setPositionC(0);
+        }
 
         // rebuild volume mapper
         buildVolumeMapper();
-        // rebuild component panel
-        buildComponentPanel(false);
-    }
-
-    private void setupVolumeComponent()
-    {
-        final int newPosC;
-        final int posC = getPositionC();
-
-        // get new component value
-        if (useRaycastVolumeMapper())
-            newPosC = volumeComponentCombo.getSelectedIndex() - 1;
-        else
-            newPosC = volumeComponentCombo.getSelectedIndex();
-
-        // changed ?
-        if (posC != newPosC)
-            // set new component value
-            setPositionC(newPosC);
     }
 
     protected vtkProp[] getLayerActors(Layer layer)
@@ -1251,6 +1159,26 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         }
     }
 
+    @Override
+    public void keyPressed(KeyEvent e)
+    {
+        // send to painters
+        super.keyPressed(e);
+
+        // forward to view
+        panel3D.keyPressed(e);
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e)
+    {
+        // send to painters
+        super.keyReleased(e);
+
+        // forward to view
+        panel3D.keyReleased(e);
+    }
+
     /**
      * @deprecated
      */
@@ -1408,9 +1336,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             setupVolumeMapperType();
             refresh();
         }
-
-        if (e.getSource() == volumeComponentCombo)
-            setupVolumeComponent();
     }
 
     @Override
@@ -1548,16 +1473,6 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
         if (!initialized)
             return;
-
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                // rebuild component panel and data if needed
-                buildComponentPanel(false);
-            }
-        });
     }
 
     @Override

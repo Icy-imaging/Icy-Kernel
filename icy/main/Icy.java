@@ -52,16 +52,13 @@ import icy.system.IcySecurityManager;
 import icy.system.SingleInstanceCheck;
 import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
-import icy.type.collection.CollectionUtil;
 import icy.update.IcyUpdater;
-import icy.util.ReflectionUtil;
 import icy.util.StringUtil;
 import icy.workspace.WorkspaceInstaller;
 import icy.workspace.WorkspaceLoader;
 import ij.ImageJ;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.nio.channels.FileLock;
 import java.util.ArrayList;
 
@@ -186,7 +183,8 @@ public class Icy
 
                 // It's important to initialize AWT now (with InvokeNow(...) for instance) to avoid
                 // the JVM deadlock bug (id: 5104239). It happen when the AWT thread is initialized
-                // while others threads load some new library with ClassLoader.loadLibrary
+                // while others threads load some new library with
+                // ClassLoader.loadLibrary
 
                 // display splash NOW
                 ThreadUtil.invokeNow(new Runnable()
@@ -687,7 +685,8 @@ public class Icy
             }
         }
 
-        addToJavaLibraryPath(directories.toArray(new String[directories.size()]));
+        if (!SystemUtil.addToJavaLibraryPath(directories.toArray(new String[directories.size()])))
+            System.err.println("Native libraries won't be loaded.");
 
         // save os change
         if (osChanged)
@@ -699,44 +698,6 @@ public class Icy
 
         // disable native lib support for JAI as we don't provide them (for the moment)
         SystemUtil.setProperty("com.sun.media.jai.disableMediaLib", "true");
-    }
-
-    private static void internalLoadLibrary(String dir, String name)
-    {
-        final File libPath = new File(dir, System.mapLibraryName(name));
-
-        if (libPath.exists())
-            Runtime.getRuntime().load(libPath.getAbsolutePath());
-        else
-            System.loadLibrary(name);
-    }
-
-    private static void loadLibrary(String dir, String name, boolean mandatory, boolean showLog)
-    {
-        if (mandatory)
-            internalLoadLibrary(dir, name);
-        else
-        {
-            try
-            {
-                internalLoadLibrary(dir, name);
-            }
-            catch (Throwable e)
-            {
-                if (showLog)
-                    System.out.println("cannot load " + name + ", skipping...");
-            }
-        }
-    }
-
-    private static void loadLibrary(String dir, String name, boolean mandatory)
-    {
-        loadLibrary(dir, name, mandatory, false);
-    }
-
-    private static void loadLibrary(String dir, String name)
-    {
-        loadLibrary(dir, name, false, false);
     }
 
     private static void loadVtkLibrary(String libPath, boolean osChanged)
@@ -874,6 +835,34 @@ public class Icy
         }
     }
 
+    private static void loadLibrary(String dir, String name, boolean mandatory, boolean showLog)
+    {
+        if (mandatory)
+            SystemUtil.loadLibrary(dir, name);
+        else
+        {
+            try
+            {
+                SystemUtil.loadLibrary(dir, name);
+            }
+            catch (Throwable e)
+            {
+                if (showLog)
+                    System.out.println("cannot load " + name + ", skipping...");
+            }
+        }
+    }
+
+    private static void loadLibrary(String dir, String name, boolean mandatory)
+    {
+        loadLibrary(dir, name, mandatory, false);
+    }
+
+    private static void loadLibrary(String dir, String name)
+    {
+        loadLibrary(dir, name, false, false);
+    }
+
     static void unPrepareNativeLibraries()
     {
         // build the native local library path
@@ -889,38 +878,6 @@ public class Icy
             // invoke delete on exit if the file exists
             if (file.exists())
                 file.deleteOnExit();
-        }
-    }
-
-    private static void addToJavaLibraryPath(String directories[])
-    {
-        try
-        {
-            final String path_separator = System.getProperty("path.separator");
-
-            // patch user library paths...
-            final Field pathsField = ReflectionUtil.getField(ClassLoader.class, "usr_paths", true);
-            // get current user paths
-            final ArrayList<String> userPaths = CollectionUtil.asArrayList((String[]) pathsField.get(null));
-            // get current system paths
-            String sysPaths = System.getProperty("java.library.path");
-
-            for (String dir : directories)
-            {
-                if (!userPaths.contains(dir))
-                    userPaths.add(dir);
-                sysPaths += path_separator + dir;
-            }
-
-            // set back user library path
-            pathsField.set(null, userPaths.toArray(new String[userPaths.size()]));
-            // set back system library path
-            System.setProperty("java.library.path", sysPaths);
-        }
-        catch (Exception e)
-        {
-            System.err.println("Cannot patch Java Library Path.");
-            System.err.println("Native libraries won't be loaded.");
         }
     }
 

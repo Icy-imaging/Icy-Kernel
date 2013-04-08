@@ -3545,6 +3545,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             case POSITION_CHANGED:
                 final int curZ = getPositionZ();
                 final int curT = getPositionT();
+                final int curC = getPositionC();
 
                 switch (event.getDim())
                 {
@@ -3558,6 +3559,18 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                         // ensure T slider position
                         if (curT != -1)
                             tNav.setValue(curT);
+                        break;
+
+                    case C:
+                        // single channel mode
+                        if (curC != -1)
+                        {
+                            final int maxC = getMaxC();
+
+                            // disabled others channels
+                            for (int c = 0; c <= maxC; c++)
+                                getLut().getLutChannel(c).setEnabled(curC == c);
+                        }
                         break;
 
                     case NULL:
@@ -3617,6 +3630,21 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     @Override
     public void lutChanged(LUTEvent event)
     {
+        final int curC = getPositionC();
+
+        // single channel mode ?
+        if (curC != -1)
+        {
+            final int channel = event.getComponent();
+
+            // channel is enabled --> change C position
+            if ((channel != -1) && getLut().getLutChannel(channel).isEnabled())
+                setPositionC(channel);
+            else
+                // ensure we have 1 channel enable
+                getLut().getLutChannel(curC).setEnabled(true);
+        }
+
         lutChanged(event.getComponent());
     }
 
