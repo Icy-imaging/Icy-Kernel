@@ -32,8 +32,11 @@ import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Enumeration;
 
 import javax.swing.ImageIcon;
 
@@ -130,6 +133,31 @@ public abstract class Plugin
     public ArrayList<Sequence> getSequences()
     {
         return Icy.getMainInterface().getSequences();
+    }
+
+    /**
+     * Return the resource URL from given resource name.<br>
+     * Ex: <code>getResource("plugins/author/resources/def.xml");</code>
+     * 
+     * @param name
+     *        resource name
+     */
+    public URL getResource(String name)
+    {
+        return getClass().getClassLoader().getResource(name);
+    }
+
+    /**
+     * Return resources corresponding to given resource name.<br>
+     * Ex: <code>getResources("plugins/author/resources/def.xml");</code>
+     * 
+     * @param name
+     *        resource name
+     * @throws IOException
+     */
+    public Enumeration<URL> getResources(String name) throws IOException
+    {
+        return getClass().getClassLoader().getResources(name);
     }
 
     /**

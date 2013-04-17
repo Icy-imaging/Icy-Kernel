@@ -7,11 +7,11 @@ import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandToggleButton;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLauncher;
+import icy.plugin.PluginLoader;
 import icy.resource.icon.BasicResizableIcon;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.ref.WeakReference;
 
 import javax.swing.ImageIcon;
 
@@ -24,32 +24,10 @@ import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
  */
 public class PluginCommandButton
 {
-    // Specific action class for plugin command button
-    public static class PluginCommandAction implements ActionListener
-    {
-        final WeakReference<PluginDescriptor> pluginRef;
-
-        public PluginCommandAction(PluginDescriptor plugin)
-        {
-            super();
-
-            pluginRef = new WeakReference<PluginDescriptor>(plugin);
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e)
-        {
-            final PluginDescriptor plugin = pluginRef.get();
-
-            if (plugin != null)
-                PluginLauncher.start(plugin);
-        }
-    }
-
     /**
      * Set a plugin button with specified action
      */
-    public static void setButton(AbstractCommandButton button, PluginDescriptor plugin, PluginCommandAction action)
+    public static void setButton(AbstractCommandButton button, PluginDescriptor plugin, boolean doAction)
     {
         final String name = plugin.getName();
         final String className = plugin.getClassName();
@@ -63,14 +41,21 @@ public class PluginCommandButton
 
         button.setActionRichTooltip(new PluginRichToolTip(plugin));
 
-        // remove previous action listeners
-        final ActionListener[] listeners = button.getListeners(ActionListener.class);
-        for (ActionListener listener : listeners)
-            if (listener instanceof PluginCommandAction)
-                button.removeActionListener(listener);
+        if (doAction)
+        {
+            button.addActionListener(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    final PluginDescriptor plugin = PluginLoader.getPlugin(((AbstractCommandButton) e.getSource())
+                            .getName());
 
-        if (action != null)
-            button.addActionListener(action);
+                    if (plugin != null)
+                        PluginLauncher.start(plugin);
+                }
+            });
+        }
     }
 
     /**
@@ -78,14 +63,13 @@ public class PluginCommandButton
      */
     public static void setButton(AbstractCommandButton button, PluginDescriptor plugin)
     {
-        setButton(button, plugin, new PluginCommandAction(plugin));
+        setButton(button, plugin, true);
     }
 
     /**
      * Build a plugin button
      */
-    public static AbstractCommandButton createButton(final PluginDescriptor plugin, PluginCommandAction action,
-            boolean toggle)
+    public static AbstractCommandButton createButton(PluginDescriptor plugin, boolean toggle, boolean doAction)
     {
         final AbstractCommandButton result;
 
@@ -95,41 +79,25 @@ public class PluginCommandButton
         else
             result = new IcyCommandButton();
 
-        setButton(result, plugin, action);
+        setButton(result, plugin, doAction);
 
         return result;
     }
 
     /**
-     * Build a plugin button with specified action
-     */
-    public static IcyCommandButton createButton(final PluginDescriptor plugin, PluginCommandAction action)
-    {
-        return (IcyCommandButton) createButton(plugin, action, false);
-    }
-
-    /**
      * Build a plugin button with default action (execute plugin)
      */
-    public static IcyCommandButton createButton(final PluginDescriptor plugin)
+    public static IcyCommandButton createButton(PluginDescriptor plugin)
     {
         // build with default action listener
-        return (IcyCommandButton) createButton(plugin, new PluginCommandAction(plugin), false);
+        return (IcyCommandButton) createButton(plugin, false, true);
     }
 
     /**
-     * Build a plugin toggle button with specified action
+     * Build a plugin toggle button with default action (execute plugin) if enable.
      */
-    public static IcyCommandToggleButton createToggleButton(final PluginDescriptor plugin, PluginCommandAction action)
+    public static IcyCommandToggleButton createToggleButton(PluginDescriptor plugin, boolean doAction)
     {
-        return (IcyCommandToggleButton) createButton(plugin, action, true);
-    }
-
-    /**
-     * Build a plugin toggle button with default action (execute plugin)
-     */
-    public static IcyCommandToggleButton createToggleButton(final PluginDescriptor plugin)
-    {
-        return (IcyCommandToggleButton) createButton(plugin, new PluginCommandAction(plugin), true);
+        return (IcyCommandToggleButton) createButton(plugin, true, doAction);
     }
 }

@@ -424,7 +424,7 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
                         RibbonUtil.getBand(RibbonUtil.getTask(ribbon, item.getTaskName()), item.getBandName()),
                         item.getClassName());
 
-                // button found --> udpate it
+                // button found --> update it
                 if (button != null)
                     PluginCommandButton.setButton(button, plugin);
             }
@@ -1044,18 +1044,8 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
                         // set the className for searched element
                         keyPlugin.getIdent().setClassName(item.getClassName());
 
-                        // search it in plugins list
-                        final int index = Collections.binarySearch(plugins, keyPlugin, pluginsSorter);
-                        final boolean found;
-
-                        // detect if element was found
-                        if ((index >= 0) && (index < plugins.size()))
-                            found = pluginsSorter.compare(plugins.get(index), keyPlugin) == 0;
-                        else
-                            found = false;
-
-                        // not found --> remove item
-                        if (!found)
+                        // not found in plugin list --> remove it
+                        if (Collections.binarySearch(plugins, keyPlugin, pluginsSorter) < 0)
                             removeItem(item);
                     }
                 }

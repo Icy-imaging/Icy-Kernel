@@ -18,6 +18,9 @@
  */
 package icy.plugin.interface_;
 
+/**
+ * The Interface PluginTools.
+ */
 @Deprecated
 public interface PluginTools
 {

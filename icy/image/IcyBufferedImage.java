@@ -24,6 +24,7 @@ import icy.common.listener.ChangeListener;
 import icy.image.IcyBufferedImageEvent.IcyBufferedImageEventType;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.IcyColorMap.IcyColorMapType;
+import icy.image.colormap.LinearColorMap;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colormodel.IcyColorModelEvent;
 import icy.image.colormodel.IcyColorModelListener;
@@ -58,12 +59,17 @@ import java.util.List;
 
 import javax.swing.event.EventListenerList;
 
+import jxl.biff.drawing.PNGReader;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.gui.AWTImageTools;
 import loci.formats.gui.SignedByteBuffer;
 import loci.formats.gui.SignedShortBuffer;
 import loci.formats.gui.UnsignedIntBuffer;
+import loci.formats.in.APNGReader;
+import loci.formats.in.JPEG2000Reader;
+import loci.formats.in.TiffDelegateReader;
+import loci.formats.in.TiffJAIReader;
 
 /**
  * @author stephane
@@ -564,6 +570,19 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                     colorSpace.endUpdate();
                 }
             }
+        }
+
+        // special case of 4 channels image, try to set 4th channel colormap
+        if (sizeC == 4)
+        {
+            // assume real alpha channel depending from the reader we use
+            final boolean alpha = (reader instanceof PNGReader) || (reader instanceof APNGReader)
+                    || (reader instanceof TiffDelegateReader) || (reader instanceof TiffJAIReader)
+                    || (reader instanceof JPEG2000Reader);
+
+            // replace alpha with Cyan color
+            if (!alpha)
+                result.getIcyColorModel().getIcyColorSpace().copyColormap(3, LinearColorMap.cyan_);
         }
 
         return result;
@@ -1107,8 +1126,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link IcyBufferedImageUtil#extractChannels(IcyBufferedImage, List)}
-     *             instead.
+     * @deprecated Use {@link IcyBufferedImageUtil#extractChannels(IcyBufferedImage, List)} instead.
      */
     @Deprecated
     public IcyBufferedImage extractChannels(List<Integer> channelNumbers)

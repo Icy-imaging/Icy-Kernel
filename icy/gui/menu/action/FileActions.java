@@ -14,6 +14,7 @@ import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.util.StringUtil;
 
@@ -153,9 +154,17 @@ public class FileActions
                     new ImageSaverDialog(seq, viewer.getZ(), viewer.getT());
                 else
                 {
-                    final File file = new File(filename);
+                    // background process
+                    ThreadUtil.bgRun(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            final File file = new File(filename);
 
-                    Saver.save(seq, file, !file.exists() || file.isDirectory());
+                            Saver.save(seq, file, !file.exists() || file.isDirectory());
+                        }
+                    });
                 }
             }
         }

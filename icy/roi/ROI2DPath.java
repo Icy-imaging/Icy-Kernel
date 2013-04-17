@@ -62,6 +62,15 @@ public class ROI2DPath extends ROI2DShape
         this(new Path2D.Double(shape));
     }
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public ROI2DPath(Point2D pt, boolean cm)
+    {
+        this(pt);
+    }
+
     public ROI2DPath(Point2D position)
     {
         this(initPath(position));

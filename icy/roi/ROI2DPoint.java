@@ -39,6 +39,15 @@ public class ROI2DPoint extends ROI2DShape
 
     private final Anchor2D position;
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public ROI2DPoint(Point2D pt, boolean cm)
+    {
+        this(pt);
+    }
+
     public ROI2DPoint(Point2D position)
     {
         super(new Line2D.Double());

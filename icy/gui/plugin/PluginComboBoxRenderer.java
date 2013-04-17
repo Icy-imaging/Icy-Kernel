@@ -5,6 +5,7 @@ package icy.gui.plugin;
 
 import icy.gui.component.renderer.CustomComboBoxRenderer;
 import icy.plugin.PluginDescriptor;
+import icy.plugin.PluginLoader;
 import icy.resource.ResourceUtil;
 
 import javax.swing.JComboBox;
@@ -32,16 +33,20 @@ public class PluginComboBoxRenderer extends CustomComboBoxRenderer
     @Override
     protected void updateItem(JList list, Object value)
     {
-        if (value instanceof PluginDescriptor)
+        if (value instanceof String)
         {
-            final PluginDescriptor plugin = (PluginDescriptor) value;
+            final PluginDescriptor plugin = PluginLoader.getPlugin((String) value);
 
-            setIcon(ResourceUtil.scaleIcon(plugin.getIcon(), 20));
-            if (showLabel)
-                setText(plugin.getName());
-            else
-                setText("");
-            setToolTipText(plugin.getDescription());
+            if (plugin != null)
+            {
+                setIcon(ResourceUtil.scaleIcon(plugin.getIcon(), 20));
+                if (showLabel)
+                    setText(plugin.getName());
+                else
+                    setText("");
+                setToolTipText(plugin.getDescription());
+            }
+
             setEnabled(list.isEnabled());
             setFont(list.getFont());
         }

@@ -19,6 +19,8 @@
 package icy.plugin.interface_;
 
 /**
+ * The Interface PluginUndoable.
+ * 
  * @author Fab
  *         Means the plugin has the ability to undo.
  */

@@ -114,6 +114,15 @@ public class ROI2DPolyLine extends ROI2DShape
     }
 
     /**
+     * @deprecated
+     */
+    @Deprecated
+    public ROI2DPolyLine(Point2D pt, boolean cm)
+    {
+        this(pt);
+    }
+
+    /**
      * 
      */
     public ROI2DPolyLine(Point2D pt)

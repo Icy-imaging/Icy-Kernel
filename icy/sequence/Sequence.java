@@ -145,11 +145,11 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * painters
      */
-    private final HashSet<Painter> painters;
+    final HashSet<Painter> painters;
     /**
      * ROIs
      */
-    private final HashSet<ROI> rois;
+    final HashSet<ROI> rois;
 
     /**
      * id of sequence (uniq during an ICY session)
@@ -337,34 +337,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Override
     protected void finalize() throws Throwable
     {
-        final boolean hadRoi = !rois.isEmpty();
-        final boolean hadPainter = !painters.isEmpty();
-
-        synchronized (painters)
-        {
-            for (Painter painter : painters)
-                // remove listener for Overlay
-                if (painter instanceof Overlay)
-                    ((Overlay) painter).removeOverlayListener(this);
-
-            painters.clear();
-        }
-
-        synchronized (rois)
-        {
-            // remove all listener on ROI
-            for (ROI roi : rois)
-                roi.removeListener(this);
-
-            rois.clear();
-        }
-
-        // notify some painters has been removed
-        if (hadPainter)
-            painterChanged(null, SequenceEventType.REMOVED);
-        // notify some ROIs has been removed
-        if (hadRoi)
-            roiChanged(null, SequenceEventType.REMOVED);
 
         super.finalize();
     }
@@ -383,20 +355,37 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void closed()
     {
-        // Sequence persistence enabled ?
-        if (GeneralPreferences.getSequencePersistence())
+        // do this in background as it can take sometime
+        ThreadUtil.bgRunWait(new Runnable()
         {
-            // saving XML data can take sometime, do it in background...
-            ThreadUtil.bgRun(new Runnable()
+            @Override
+            public void run()
             {
-                @Override
-                public void run()
-                {
-                    // save XML
+                // Sequence persistence enabled --> save XML
+                if (GeneralPreferences.getSequencePersistence())
                     saveXMLData();
+
+                synchronized (painters)
+                {
+                    for (Painter painter : painters)
+                        // remove listener for Overlay
+                        if (painter instanceof Overlay)
+                            ((Overlay) painter).removeOverlayListener(Sequence.this);
+
+                    painters.clear();
                 }
-            });
-        }
+
+                synchronized (rois)
+                {
+                    // remove all listener on ROI
+                    for (ROI roi : rois)
+                        roi.removeListener(Sequence.this);
+
+                    rois.clear();
+                }
+            }
+        });
+
         // notify close
         fireClosedEvent();
     }

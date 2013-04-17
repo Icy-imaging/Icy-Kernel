@@ -21,6 +21,7 @@
 
 package icy.plugin.classloader;
 
+import icy.file.FileUtil;
 import icy.plugin.classloader.exception.JclException;
 import icy.plugin.classloader.exception.ResourceNotFoundException;
 
@@ -124,8 +125,9 @@ public class ClasspathResources extends JarResources
     {
         try
         {
+            final File file = new File(url.toURI());
             // Is Local
-            loadResource(new File(url.toURI()), "");
+            loadResource(file, FileUtil.getGenericPath(file.getAbsolutePath()));
         }
         catch (IllegalArgumentException iae)
         {
@@ -156,7 +158,7 @@ public class ClasspathResources extends JarResources
             throw new JclException("File/Path does not exist");
         }
 
-        loadResource(fp, "");
+        loadResource(fp, FileUtil.getGenericPath(path));
     }
 
     /**
@@ -168,6 +170,7 @@ public class ClasspathResources extends JarResources
      */
     protected void loadResource(File fol, String packName)
     {
+        // FILE
         if (fol.isFile())
         {
             // if (fol.getName().toLowerCase().endsWith(".class"))
@@ -182,31 +185,32 @@ public class ClasspathResources extends JarResources
             }
             else
             {
-                loadResource(fol.getAbsolutePath(), packName);
+                loadResourceInternal(fol, packName);
             }
             // }
-
-            return;
         }
-
-        if (fol.list() != null)
+        // DIRECTORY
+        else
         {
-            for (String f : fol.list())
+            if (fol.list() != null)
             {
-                File fl = new File(fol.getAbsolutePath() + "/" + f);
-
-                String pn = packName;
-
-                if (fl.isDirectory())
+                for (String f : fol.list())
                 {
+                    File fl = new File(fol.getAbsolutePath() + "/" + f);
 
-                    if (!pn.equals(""))
-                        pn = pn + "/";
+                    String pn = packName;
 
-                    pn = pn + fl.getName();
+                    if (fl.isDirectory())
+                    {
+
+                        if (!pn.equals(""))
+                            pn = pn + "/";
+
+                        pn = pn + fl.getName();
+                    }
+
+                    loadResource(fl, pn);
                 }
-
-                loadResource(fl, pn);
             }
         }
     }
@@ -214,13 +218,13 @@ public class ClasspathResources extends JarResources
     /**
      * Loads the local resource.
      */
-    protected void loadResource(String resource, String pack)
+    protected void loadResourceInternal(File file, String pack)
     {
         String entryName = "";
 
         if (pack.length() > 0)
             entryName = pack + "/";
-        entryName += resource;
+        entryName += file.getName();
 
         if (jarEntryUrls.containsKey(entryName))
         {
@@ -237,7 +241,7 @@ public class ClasspathResources extends JarResources
 
         try
         {
-            jarEntryUrls.put(entryName, new File(resource).toURI().toURL());
+            jarEntryUrls.put(entryName, file.toURI().toURL());
         }
         catch (Exception e)
         {

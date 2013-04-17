@@ -1067,20 +1067,12 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
         // listen the sequence
         sequence.addListener(sequenceListener);
 
-        beginUpdate();
-        try
-        {
-            // check if it contains new ROI
-            for (ROI roi : sequence.getROIs())
-                checkRoiAdded(roi);
-            // check if it contains new Painter
-            for (Painter painter : sequence.getPainters())
-                checkPainterAdded(painter);
-        }
-        finally
-        {
-            endUpdate();
-        }
+        // check if it contains new ROI
+        for (ROI roi : sequence.getROIs())
+            checkRoiAdded(roi);
+        // check if it contains new Painter
+        for (Painter painter : sequence.getPainters())
+            checkPainterAdded(painter);
 
         updater.changed(new MainEvent(MainEventSourceType.SEQUENCE, MainEventType.OPENED, sequence));
     }
@@ -1139,22 +1131,14 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
      */
     private void sequenceClosed(Sequence sequence)
     {
-        beginUpdate();
-        try
-        {
-            // check if it still contains Painter
-            for (Painter painter : sequence.getPainters())
-                // the sequence is already removed so the method is ok
-                checkPainterRemoved(painter);
-            // check if it still contains ROI
-            for (ROI roi : sequence.getROIs())
-                // the sequence is already removed so the method is ok
-                checkRoiRemoved(roi);
-        }
-        finally
-        {
-            endUpdate();
-        }
+        // check if it still contains Painter
+        for (Painter painter : sequence.getPainters())
+            // the sequence is already removed so the method is ok
+            checkPainterRemoved(painter);
+        // check if it still contains ROI
+        for (ROI roi : sequence.getROIs())
+            // the sequence is already removed so the method is ok
+            checkRoiRemoved(roi);
 
         // inform sequence is now closed
         sequence.closed();

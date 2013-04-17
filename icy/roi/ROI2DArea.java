@@ -493,6 +493,15 @@ public class ROI2DArea extends ROI2D
     }
 
     /**
+     * @deprecated
+     */
+    @Deprecated
+    public ROI2DArea(Point2D position, boolean cm)
+    {
+        this(position);
+    }
+
+    /**
      * Create a ROI2D Area type with a single point.
      */
     public ROI2DArea(Point2D position)

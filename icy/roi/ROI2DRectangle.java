@@ -26,6 +26,15 @@ import java.awt.geom.Rectangle2D;
  */
 public class ROI2DRectangle extends ROI2DRectShape
 {
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public ROI2DRectangle(Point2D topLeft, Point2D bottomRight, boolean cm)
+    {
+        this(topLeft, bottomRight);
+    }
+
     public ROI2DRectangle(Point2D topLeft, Point2D bottomRight)
     {
         super(new Rectangle2D.Double(), topLeft, bottomRight);
@@ -38,10 +47,28 @@ public class ROI2DRectangle extends ROI2DRectShape
         this(new Point2D.Double(xmin, ymin), new Point2D.Double(xmax, ymax));
     }
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public ROI2DRectangle(Rectangle2D rectangle, boolean cm)
+    {
+        this(rectangle);
+    }
+
     public ROI2DRectangle(Rectangle2D rectangle)
     {
         this(new Point2D.Double(rectangle.getMinX(), rectangle.getMinY()), new Point2D.Double(rectangle.getMaxX(),
                 rectangle.getMaxY()));
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public ROI2DRectangle(Point2D pt, boolean cm)
+    {
+        this(pt);
     }
 
     public ROI2DRectangle(Point2D pt)

@@ -115,34 +115,65 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
             // define default colormaps depending the number of component
             switch (numComponents)
             {
-            // Gray
                 case 1:
+                    // Gray
                     copyColormap(0, LinearColorMap.white_);
                     break;
 
-                // Red / Green
                 case 2:
+                    // Red / Green
                     copyColormap(0, LinearColorMap.red_);
                     copyColormap(1, LinearColorMap.green_);
                     break;
 
-                // RGB
                 case 3:
+                    // RGB
                     copyColormap(0, LinearColorMap.red_);
                     copyColormap(1, LinearColorMap.green_);
                     copyColormap(2, LinearColorMap.blue_);
                     break;
 
-                // ARGB
-                default:
+                case 4:
+                    // ARGB
                     copyColormap(0, LinearColorMap.red_);
                     copyColormap(1, LinearColorMap.green_);
                     copyColormap(2, LinearColorMap.blue_);
                     copyColormap(3, LinearColorMap.alpha_);
+                    break;
+
+                case 5:
+                    // RGB CM
+                    copyColormap(0, LinearColorMap.red_);
+                    copyColormap(1, LinearColorMap.green_);
+                    copyColormap(2, LinearColorMap.blue_);
+                    copyColormap(3, LinearColorMap.cyan_);
+                    copyColormap(4, LinearColorMap.magenta_);
+                    break;
+
+                case 6:
+                    // RGB CMY 
+                    copyColormap(0, LinearColorMap.red_);
+                    copyColormap(1, LinearColorMap.green_);
+                    copyColormap(2, LinearColorMap.blue_);
+                    copyColormap(3, LinearColorMap.cyan_);
+                    copyColormap(4, LinearColorMap.magenta_);
+                    copyColormap(5, LinearColorMap.yellow_);
+                    break;
+                    
+                default:
+                    // RGB CMY W
+                    copyColormap(0, LinearColorMap.red_);
+                    copyColormap(1, LinearColorMap.green_);
+                    copyColormap(2, LinearColorMap.blue_);
+                    copyColormap(3, LinearColorMap.cyan_);
+                    copyColormap(4, LinearColorMap.magenta_);
+                    copyColormap(5, LinearColorMap.yellow_);
+                    copyColormap(6, LinearColorMap.white_);
+                    break;
             }
 
             // black map for the rest
-            for (int i = 4; i < numComponents; i++)
+            for (int i = 7; i < numComponents; i++)
                 copyColormap(i, LinearColorMap.black_);
         }
         finally
@@ -152,8 +183,6 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
 
         // generate fromRGB maps
         generateFromRGBColorMaps();
-        // generate ARGB color map
-        generateARGBMap();
     }
 
     /**
@@ -208,15 +237,6 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
                 fromRGBmaps[3].setFromRGBColor(comp, intensity, toRGBmap.getNormalizedAlpha(intensity));
             }
         }
-    }
-
-    /**
-     * Generate ARGB final color map
-     */
-    private void generateARGBMap()
-    {
-        // TODO Auto-generated method stub
-
     }
 
     /**
@@ -828,8 +848,6 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
 
         // recalculate fromRGB colormaps
         generateFromRGBColorMaps();
-        // recalculate final ARGB color map
-        generateARGBMap();
 
         // notify listener we have changed
         fireEvent(event);

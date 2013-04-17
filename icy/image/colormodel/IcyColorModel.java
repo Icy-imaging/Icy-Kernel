@@ -283,9 +283,18 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     /**
      * Set the toRGB colormaps from a compatible colorModel
      */
-    public void copyColormap(ColorModel source)
+    public void copyColormaps(ColorModel source)
     {
         ((IcyColorSpace) getColorSpace()).copyColormaps(source);
+    }
+
+    /**
+     * @deprecated Use {@link #copyColormaps(ColorModel)} instead.
+     */
+    @Deprecated
+    public void copyColormap(ColorModel source)
+    {
+        copyColormaps(source);
     }
 
     /**
@@ -861,7 +870,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
         for (int c = 0; c < numComponents; c++)
             if (!getColormap(c).isLinear())
                 return false;
-        
+
         return true;
     }
 

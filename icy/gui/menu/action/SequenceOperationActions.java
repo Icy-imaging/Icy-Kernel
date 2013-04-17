@@ -406,7 +406,7 @@ public class SequenceOperationActions
 
     // Z operations
     public static IcyAbstractAction reverseSlicesAction = new IcyAbstractAction("Reverse order", new IcyIcon(
-            ResourceUtil.ICON_LAYER_REVERSE_V), "Reverse Z slices", "Reverse Z slices order", true,
+            ResourceUtil.ICON_LAYER_REVERSE_V), "Reverse Z slices", "Reverse Z slices order", false,
             "Reversing slices...")
     {
         private static final long serialVersionUID = -4731940627380446776L;
@@ -423,7 +423,7 @@ public class SequenceOperationActions
 
     public static IcyAbstractAction extractSliceAction = new IcyAbstractAction("Extract slice", new IcyIcon(
             ResourceUtil.ICON_LAYER_EXTRACT_V), "Extract current Z slice",
-            "Create a new sequence by extracting current Z slice of active sequence.", true, "Extracting slice...")
+            "Create a new sequence by extracting current Z slice of active sequence.", false, "Extracting slice...")
     {
         /**
          * 
@@ -452,7 +452,7 @@ public class SequenceOperationActions
 
     public static IcyAbstractAction removeSliceAction = new IcyAbstractAction("Remove slice", new IcyIcon(
             ResourceUtil.ICON_LAYER_REMOVE_V), "Remove current Z slice",
-            "Remove the current Z slice of active sequence.", true, "Removing slice...")
+            "Remove the current Z slice of active sequence.", false, "Removing slice...")
     {
         /**
          * 
@@ -534,7 +534,7 @@ public class SequenceOperationActions
 
     // T operations
     public static IcyAbstractAction reverseFramesAction = new IcyAbstractAction("Reverse order", new IcyIcon(
-            ResourceUtil.ICON_LAYER_REVERSE_H), "Reverse T frames", "Reverse T frames order", true,
+            ResourceUtil.ICON_LAYER_REVERSE_H), "Reverse T frames", "Reverse T frames order", false,
             "Reversing frames...")
     {
         /**
@@ -560,7 +560,7 @@ public class SequenceOperationActions
 
     public static IcyAbstractAction extractFrameAction = new IcyAbstractAction("Extract frame", new IcyIcon(
             ResourceUtil.ICON_LAYER_EXTRACT_H), "Extract current T frame",
-            "Create a new sequence by extracting current T frame of active sequence.", true, "Extracting frame...")
+            "Create a new sequence by extracting current T frame of active sequence.", false, "Extracting frame...")
     {
         /**
          * 
@@ -589,7 +589,7 @@ public class SequenceOperationActions
 
     public static IcyAbstractAction removeFrameAction = new IcyAbstractAction("Remove frame", new IcyIcon(
             ResourceUtil.ICON_LAYER_REMOVE_H), "Remove current T frame",
-            "Remove the current T frame of active sequence.", true, "Removing frame...")
+            "Remove the current T frame of active sequence.", false, "Removing frame...")
     {
         /**
          * 

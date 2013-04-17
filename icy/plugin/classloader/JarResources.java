@@ -291,16 +291,21 @@ public class JarResources
         JarFile jf = null;
 
         String path;
-        int ind;
+        int indStart, indEnd;
         String filename;
         String resname;
 
         try
         {
-            path = url.getFile();
-            ind = path.indexOf('!');
-            filename = path.substring(5, ind);
-            resname = path.substring(ind + 2);
+            path = url.getPath();
+            indStart = path.indexOf("file:");
+            if (indStart != -1)
+                indStart += 5;
+            else
+                indStart = 0;
+            indEnd = path.indexOf('!');
+            filename = path.substring(indStart, indEnd);
+            resname = path.substring(indEnd + 2);
 
             try
             {
@@ -310,9 +315,14 @@ public class JarResources
             {
                 // try to decode the URL then
                 path = URLDecoder.decode(url.getFile(), "UTF-8");
-                ind = path.indexOf('!');
-                filename = path.substring(5, ind);
-                resname = path.substring(ind + 2);
+                indStart = path.indexOf("file:");
+                if (indStart != -1)
+                    indStart += 5;
+                else
+                    indStart = 0;
+                indEnd = path.indexOf('!');
+                filename = path.substring(indStart, indEnd);
+                resname = path.substring(indEnd + 2);
 
                 jf = new JarFile(filename);
             }

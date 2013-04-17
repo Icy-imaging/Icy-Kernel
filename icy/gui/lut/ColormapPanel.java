@@ -195,6 +195,8 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
             colormaps.add(LinearColorMap.yellow_);
         if (!defaultColormap.equals(LinearColorMap.cyan_))
             colormaps.add(LinearColorMap.cyan_);
+        if (!defaultColormap.equals(LinearColorMap.alpha_))
+            colormaps.add(LinearColorMap.alpha_);
 
         colormaps.add(new IceColorMap());
         colormaps.add(new FireColorMap());

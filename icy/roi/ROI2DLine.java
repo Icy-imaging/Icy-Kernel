@@ -89,6 +89,15 @@ public class ROI2DLine extends ROI2DShape
         this(line.getP1(), line.getP2());
     }
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public ROI2DLine(Point2D pt, boolean cm)
+    {
+        this(pt);
+    }
+    
     public ROI2DLine(Point2D pt)
     {
         this(new Point2D.Double(pt.getX(), pt.getY()), pt);

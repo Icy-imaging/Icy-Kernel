@@ -43,6 +43,8 @@ import icy.image.lut.LUTListener;
 import icy.main.Icy;
 import icy.painter.Overlay;
 import icy.painter.Painter;
+import icy.plugin.PluginDescriptor;
+import icy.plugin.PluginLoader;
 import icy.plugin.interface_.PluginCanvas;
 import icy.roi.ROI;
 import icy.sequence.DimensionId;
@@ -51,6 +53,7 @@ import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.sequence.SequenceListener;
 import icy.system.IcyExceptionHandler;
+import icy.type.collection.CollectionUtil;
 import icy.util.ClassUtil;
 import icy.util.EventUtil;
 import icy.util.OMEUtil;
@@ -70,6 +73,9 @@ import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.event.ChangeEvent;
+
+import plugins.kernel.canvas.Canvas2DPlugin;
+import plugins.kernel.canvas.Canvas3DPlugin;
 
 /**
  * @author Fabrice de Chaumont & Stephane Dallongeville<br>
@@ -110,11 +116,36 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         }
     }
 
-    public static IcyCanvas create(PluginCanvas pluginCanvas, Viewer viewer)
+    /**
+     * Return the class name of all {@link PluginCanvas}.
+     */
+    public static List<String> getCanvasPlugins()
     {
-        return pluginCanvas.createCanvas(viewer);
+        // get all canvas plugins
+        final List<PluginDescriptor> plugins = PluginLoader.getPlugins(PluginCanvas.class);
+
+        // remove VTK canvas if VTK is not loaded
+        if (!Icy.isVtkLibraryLoaded())
+            PluginDescriptor.removeFromList(plugins, Canvas3DPlugin.class.getName());
+
+        final List<String> result = new ArrayList<String>();
+
+        // we want the kernel canvas to be first
+        result.add(Canvas2DPlugin.class.getName());
+        result.add(Canvas3DPlugin.class.getName());
+
+        for (PluginDescriptor plugin : plugins)
+            CollectionUtil.addUniq(result, plugin.getClassName());
+
+        return result;
     }
 
+    /**
+     * Create a {@link IcyCanvas} object from its class name or {@link PluginCanvas} class name.<br>
+     * 
+     * @param viewer
+     *        {@link Viewer} to which to canvas is attached.
+     */
     public static IcyCanvas create(String className, Viewer viewer)
     {
         IcyCanvas result = null;

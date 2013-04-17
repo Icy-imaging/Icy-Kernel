@@ -69,6 +69,15 @@ public class ROI2DPolygon extends ROI2DShape
     public static final String ID_POINTS = "points";
     public static final String ID_POINT = "point";
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public ROI2DPolygon(Point2D pt, boolean cm)
+    {
+        this(pt);
+    }
+    
     public ROI2DPolygon(Point2D pt)
     {
         // use Path2D shape which allow double coordinates

@@ -35,18 +35,29 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 
+// TODO: Auto-generated Javadoc
 /**
+ * The Class ROI2DEdge.
+ * 
  * @author Stephane
  */
 public class ROI2DEdge extends ROI2D
 {
+    
+    /**
+     * The Class ROI2DEdgePainter.
+     */
     protected class ROI2DEdgePainter extends ROI2DPainter
     {
+        
+        /** The mouse pos. */
         final Point2D mousePos;
+        
+        /** The edge image. */
         BufferedImage edgeImage;
 
         /**
-         * 
+         * Instantiates a new rO i2 d edge painter.
          */
         public ROI2DEdgePainter()
         {
@@ -56,6 +67,9 @@ public class ROI2DEdge extends ROI2D
             edgeImage = null;
         }
 
+        /* (non-Javadoc)
+         * @see icy.roi.ROI2D.ROI2DPainter#mouseMove(java.awt.event.MouseEvent, java.awt.geom.Point2D, icy.canvas.IcyCanvas)
+         */
         @Override
         public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
@@ -68,6 +82,9 @@ public class ROI2DEdge extends ROI2D
             painterChanged();
         }
 
+        /* (non-Javadoc)
+         * @see icy.painter.PainterAdapter#paint(java.awt.Graphics2D, icy.sequence.Sequence, icy.canvas.IcyCanvas)
+         */
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
@@ -76,6 +93,16 @@ public class ROI2DEdge extends ROI2D
             g.drawImage(edgeImage, null, 0, 0);
         }
 
+        /**
+         * Update edge.
+         * 
+         * @param image
+         *        the image
+         * @param lut
+         *        the lut
+         * @param pos
+         *        the pos
+         */
         private void updateEdge(IcyBufferedImage image, LUT lut, Point2D pos)
         {
             prepareImage(image);
@@ -94,6 +121,20 @@ public class ROI2DEdge extends ROI2D
             expand(x, y, color, image, lut);
         }
 
+        /**
+         * Expand.
+         * 
+         * @param x
+         *        the x
+         * @param y
+         *        the y
+         * @param color
+         *        the color
+         * @param image
+         *        the image
+         * @param lut
+         *        the lut
+         */
         private void expand(int x, int y, Color color, IcyBufferedImage image, LUT lut)
         {
             if ((x < 1) || (y < 1) || (x >= image.getWidth() - 1) || (y >= image.getHeight() - 1))
@@ -118,6 +159,21 @@ public class ROI2DEdge extends ROI2D
 
         }
 
+        /**
+         * Check pixel.
+         * 
+         * @param x
+         *        the x
+         * @param y
+         *        the y
+         * @param color
+         *        the color
+         * @param image
+         *        the image
+         * @param lut
+         *        the lut
+         * @return true, if successful
+         */
         private boolean checkPixel(int x, int y, Color color, IcyBufferedImage image, LUT lut)
         {
             if (edgeImage.getRGB(x, y) == 0)
@@ -133,6 +189,12 @@ public class ROI2DEdge extends ROI2D
             return false;
         }
 
+        /**
+         * Prepare image.
+         * 
+         * @param image
+         *        the image
+         */
         private void prepareImage(IcyBufferedImage image)
         {
             // update image
@@ -143,19 +205,25 @@ public class ROI2DEdge extends ROI2D
     }
 
     /**
-     * 
+     * Instantiates a new rO i2 d edge.
      */
     public ROI2DEdge()
     {
         super();
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI#createPainter()
+     */
     @Override
     protected ROI2DEdgePainter createPainter()
     {
         return new ROI2DEdgePainter();
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#canAddPoint()
+     */
     @Override
     public boolean canAddPoint()
     {
@@ -163,6 +231,9 @@ public class ROI2DEdge extends ROI2D
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#canRemovePoint()
+     */
     @Override
     public boolean canRemovePoint()
     {
@@ -170,6 +241,9 @@ public class ROI2DEdge extends ROI2D
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#addPointAt(java.awt.geom.Point2D, boolean)
+     */
     @Override
     public boolean addPointAt(Point2D pos, boolean ctrl)
     {
@@ -177,6 +251,9 @@ public class ROI2DEdge extends ROI2D
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#removePointAt(icy.canvas.IcyCanvas, java.awt.geom.Point2D)
+     */
     @Override
     public boolean removePointAt(IcyCanvas canvas, Point2D imagePoint)
     {
@@ -184,6 +261,9 @@ public class ROI2DEdge extends ROI2D
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#removeSelectedPoint(icy.canvas.IcyCanvas, java.awt.geom.Point2D)
+     */
     @Override
     protected boolean removeSelectedPoint(IcyCanvas canvas, Point2D imagePoint)
     {
@@ -191,6 +271,9 @@ public class ROI2DEdge extends ROI2D
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#hasSelectedPoint()
+     */
     @Override
     public boolean hasSelectedPoint()
     {
@@ -198,6 +281,9 @@ public class ROI2DEdge extends ROI2D
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#isOver(icy.canvas.IcyCanvas, double, double)
+     */
     @Override
     public boolean isOver(IcyCanvas canvas, double x, double y)
     {
@@ -205,6 +291,9 @@ public class ROI2DEdge extends ROI2D
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#isOverPoint(icy.canvas.IcyCanvas, double, double)
+     */
     @Override
     public boolean isOverPoint(IcyCanvas canvas, double x, double y)
     {
@@ -212,6 +301,9 @@ public class ROI2DEdge extends ROI2D
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#contains(double, double)
+     */
     @Override
     public boolean contains(double x, double y)
     {
@@ -219,6 +311,9 @@ public class ROI2DEdge extends ROI2D
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#contains(double, double, double, double)
+     */
     @Override
     public boolean contains(double x, double y, double w, double h)
     {
@@ -226,6 +321,9 @@ public class ROI2DEdge extends ROI2D
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#getBounds2D()
+     */
     @Override
     public Rectangle2D getBounds2D()
     {
@@ -233,6 +331,9 @@ public class ROI2DEdge extends ROI2D
         return null;
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#intersects(double, double, double, double)
+     */
     @Override
     public boolean intersects(double x, double y, double w, double h)
     {
@@ -240,6 +341,9 @@ public class ROI2DEdge extends ROI2D
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see icy.roi.ROI2D#translate(double, double)
+     */
     @Override
     public void translate(double dx, double dy)
     {

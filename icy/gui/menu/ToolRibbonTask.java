@@ -27,6 +27,8 @@ import icy.gui.util.RibbonUtil;
 import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
+import icy.plugin.PluginLoader.PluginLoaderEvent;
+import icy.plugin.PluginLoader.PluginLoaderListener;
 import icy.plugin.interface_.PluginROI;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
@@ -37,12 +39,14 @@ import icy.roi.ROI2DPoint;
 import icy.roi.ROI2DPolyLine;
 import icy.roi.ROI2DPolygon;
 import icy.roi.ROI2DRectangle;
+import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.EventListener;
+import java.util.List;
 
 import javax.swing.event.EventListenerList;
 
@@ -54,7 +58,7 @@ import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
 import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
 import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPolicies;
 
-public class ToolRibbonTask extends RibbonTask
+public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 {
     public static final String NAME = "Selection & ROI tools";
 
@@ -184,6 +188,8 @@ public class ToolRibbonTask extends RibbonTask
 
         public static final String NAME = "ROI";
 
+        final List<IcyCommandToggleButton> pluginButtons;
+
         public ROIRibbonBand()
         {
             super(NAME, new IcyIcon(ResourceUtil.ICON_DOC));
@@ -235,16 +241,41 @@ public class ToolRibbonTask extends RibbonTask
                     "Create a area type ROI. Add points with left mouse button, remove points with right mouse button. Press ESC to end draw or right click outside ROI bounds."));
             addCommandButton(button, RibbonElementPriority.TOP);
 
+            pluginButtons = new ArrayList<IcyCommandToggleButton>();
+
+            setROIFromPlugins(null, null);
+
+            RibbonUtil.setPermissiveResizePolicies(this);
+        }
+
+        void setROIFromPlugins(CommandToggleButtonGroup buttonGroup, ActionListener al)
+        {
+            // remove previous plugin buttons
+            for (IcyCommandToggleButton button : pluginButtons)
+            {
+                if (al != null)
+                    button.removeActionListener(al);
+                removeCommandButton(button);
+                if (buttonGroup != null)
+                    buttonGroup.remove(button);
+            }
+            pluginButtons.clear();
+
+            IcyCommandToggleButton button;
+
             // plugins ROI
             final ArrayList<PluginDescriptor> roiPlugins = PluginLoader.getPlugins(PluginROI.class);
 
             for (PluginDescriptor plugin : roiPlugins)
             {
-                button = PluginCommandButton.createToggleButton(plugin, null);
+                button = PluginCommandButton.createToggleButton(plugin, false);
                 addCommandButton(button, RibbonElementPriority.MEDIUM);
+                if (al != null)
+                    button.addActionListener(al);
+                if (buttonGroup != null)
+                    buttonGroup.add(button);
+                pluginButtons.add(button);
             }
-
-            RibbonUtil.setPermissiveResizePolicies(this);
         }
     }
 
@@ -253,6 +284,7 @@ public class ToolRibbonTask extends RibbonTask
     final ROIRibbonBand roiBand;
 
     final CommandToggleButtonGroup buttonGroup;
+    final ActionListener buttonActionListener;
 
     String currentTool;
 
@@ -274,7 +306,7 @@ public class ToolRibbonTask extends RibbonTask
 
         listeners = new EventListenerList();
 
-        final ActionListener buttonActionListener = new ActionListener()
+        buttonActionListener = new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -302,6 +334,8 @@ public class ToolRibbonTask extends RibbonTask
         // SELECT action by default
         currentTool = "";
         setSelected(SELECT);
+
+        PluginLoader.addListener(this);
     }
 
     private IcyCommandToggleButton getButtonFromToolName(String toolName)
@@ -424,4 +458,19 @@ public class ToolRibbonTask extends RibbonTask
     {
         fileBand.updateButtonsState();
     }
+
+    @Override
+    public void pluginLoaderChanged(PluginLoaderEvent e)
+    {
+        ThreadUtil.invokeLater(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // refresh ROI button which come from plugins
+                roiBand.setROIFromPlugins(buttonGroup, buttonActionListener);
+            }
+        });
+    }
+
 }

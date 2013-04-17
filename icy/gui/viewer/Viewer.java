@@ -80,8 +80,6 @@ import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 import javax.swing.event.EventListenerList;
 
-import plugins.kernel.canvas.Canvas3DPlugin;
-
 /**
  * Viewer send an event if the IcyCanvas change.
  * 
@@ -283,7 +281,6 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         // build tool bar
         buildToolBar();
-        refreshToolBar();
 
         mainPanel.setLayout(new BorderLayout());
 
@@ -458,18 +455,6 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         setMinimumSizeExternal(minSize);
     }
 
-    private ArrayList<PluginDescriptor> getCanvasPlugins()
-    {
-        // get all canvas plugins
-        final ArrayList<PluginDescriptor> result = PluginLoader.getPlugins(PluginCanvas.class);
-
-        // remove VTK canvas if VTK is not loaded
-        if (!Icy.isVtkLibraryLoaded())
-            PluginDescriptor.removeFromList(result, Canvas3DPlugin.class.getName());
-
-        return result;
-    }
-
     /**
      * Rebuild and return viewer menu
      */
@@ -564,7 +549,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     private void buildCanvasCombo()
     {
         // build comboBox with canvas plugins
-        canvasComboBox = new JComboBox(getCanvasPlugins().toArray());
+        canvasComboBox = new JComboBox(IcyCanvas.getCanvasPlugins().toArray());
         // specific renderer
         canvasComboBox.setRenderer(new PluginComboBoxRenderer(canvasComboBox, false));
         // limit size
@@ -581,33 +566,11 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final PluginDescriptor plugin = (PluginDescriptor) canvasComboBox.getSelectedItem();
+                final IcyCanvas newCanvas = IcyCanvas.create((String) canvasComboBox.getSelectedItem(), Viewer.this);
 
-                try
-                {
-                    final PluginCanvas pluginCanvas = (PluginCanvas) plugin.getPluginClass().newInstance();
-
-                    final String newCanvasClassName = pluginCanvas.getCanvasClassName();
-                    final String currentCanvasClassName;
-
-                    if (canvas != null)
-                        currentCanvasClassName = canvas.getClass().getName();
-                    else
-                        currentCanvasClassName = "";
-
-                    // canvas change ?
-                    if (!currentCanvasClassName.equals(newCanvasClassName))
-                    {
-                        final IcyCanvas newCanvas = IcyCanvas.create(pluginCanvas, Viewer.this);
-
-                        if (newCanvas != null)
-                            setCanvas(newCanvas);
-                    }
-                }
-                catch (Exception exc)
-                {
-                    IcyExceptionHandler.showErrorMessage(exc, true);
-                }
+                // set new canvas only if different
+                if ((canvas == null) || !canvas.getClass().equals(newCanvas.getClass()))
+                    setCanvas(newCanvas);
             }
         });
     }
@@ -725,25 +688,31 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         }
     }
 
-    private void refreshCanvasCombo()
+    void refreshCanvasCombo()
     {
         if (canvas != null)
         {
             // select current active canvas
             final String currentCanvasClassName = canvas.getClass().getName();
 
-            for (PluginDescriptor plugin : getCanvasPlugins())
+            for (String pluginName : IcyCanvas.getCanvasPlugins())
             {
                 try
                 {
-                    final PluginCanvas pluginCanvas = (PluginCanvas) plugin.getPluginClass().newInstance();
-                    final String newCanvasClassName = pluginCanvas.getCanvasClassName();
+                    final PluginDescriptor plugin = PluginLoader.getPlugin(pluginName);
 
-                    // canvas change ? --> find corresponding plugin in comboBox and select it
-                    if (currentCanvasClassName.equals(newCanvasClassName))
+                    if (plugin != null)
                     {
-                        canvasComboBox.setSelectedItem(plugin);
-                        return;
+                        final PluginCanvas pluginCanvas = (PluginCanvas) plugin.getPluginClass().newInstance();
+                        final String newCanvasClassName = pluginCanvas.getCanvasClassName();
+
+                        // canvas change ? --> find corresponding plugin in comboBox and select it
+                        if (currentCanvasClassName.equals(newCanvasClassName))
+                        {
+                            if (!canvasComboBox.getSelectedItem().equals(pluginName))
+                                canvasComboBox.setSelectedItem(pluginName);
+                            return;
+                        }
                     }
                 }
                 catch (Exception e)
@@ -1338,11 +1307,18 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     @Override
     public void pluginLoaderChanged(PluginLoaderEvent e)
     {
-        // refresh availables canvas
-        if (canvasComboBox != null)
+        ThreadUtil.invokeLater(new Runnable()
         {
-            canvasComboBox.setModel(new DefaultComboBoxModel(getCanvasPlugins().toArray()));
-            refreshCanvasCombo();
-        }
+            @Override
+            public void run()
+            {
+                // refresh availables canvas
+                if (canvasComboBox != null)
+                {
+                    canvasComboBox.setModel(new DefaultComboBoxModel(IcyCanvas.getCanvasPlugins().toArray()));
+                    refreshCanvasCombo();
+                }
+            }
+        });
     }
 }

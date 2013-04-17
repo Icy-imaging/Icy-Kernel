@@ -21,10 +21,6 @@
 
 package icy.plugin.classloader;
 
-import icy.plugin.classloader.exception.JclException;
-import icy.plugin.classloader.exception.ResourceNotFoundException;
-import icy.util.StringUtil;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -34,8 +30,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Abstract class loader that can load classes from different resources
@@ -53,7 +47,6 @@ public abstract class AbstractClassLoader extends ClassLoader
     private final ProxyClassLoader parentLoader = new ParentLoader();
     private final ProxyClassLoader currentLoader = new CurrentLoader();
     private final ProxyClassLoader threadLoader = new ThreadContextLoader();
-    private final ProxyClassLoader osgiBootLoader = new OsgiBootLoader();
 
     /**
      * Build a new instance of AbstractClassLoader.java.
@@ -67,37 +60,33 @@ public abstract class AbstractClassLoader extends ClassLoader
         addDefaultLoader();
     }
 
-    /**
-     * No arguments constructor
-     */
-    public AbstractClassLoader()
+    protected void addLoaderInternal(ProxyClassLoader loader)
     {
-        super();
-        addDefaultLoader();
-    }
+        // avoid duplicate loader
+        for (ProxyClassLoader l : loaders)
+            if (l.getLoader() == loader.getLoader())
+                return;
 
-    protected void addDefaultLoader()
-    {
-        loaders.add(systemLoader);
-        loaders.add(parentLoader);
-        loaders.add(currentLoader);
-        loaders.add(threadLoader);
-
-        Collections.sort(loaders);
+        loaders.add(loader);
     }
 
     public void addLoader(ProxyClassLoader loader)
     {
-        loaders.add(loader);
+        addLoaderInternal(loader);
 
         Collections.sort(loaders);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.ClassLoader#loadClass(java.lang.String)
-     */
+    protected void addDefaultLoader()
+    {
+        addLoaderInternal(systemLoader);
+        addLoaderInternal(parentLoader);
+        addLoaderInternal(currentLoader);
+        addLoaderInternal(threadLoader);
+
+        Collections.sort(loaders);
+    }
+
     @Override
     public Class loadClass(String className) throws ClassNotFoundException
     {
@@ -109,7 +98,7 @@ public abstract class AbstractClassLoader extends ClassLoader
      * JarClassLoader is the only subclass in this project that loads classes
      * from jar files
      * 
-     * @see java.lang.ClassLoader#loadClass(java.lang.String, boolean)
+     * @see java.lang.ClassLoader#loadClass(String, boolean)
      */
     @Override
     public Class loadClass(String className, boolean resolveIt) throws ClassNotFoundException
@@ -117,31 +106,17 @@ public abstract class AbstractClassLoader extends ClassLoader
         if (className == null || className.trim().equals(""))
             return null;
 
-        Class clazz = null;
-
-        // Check osgi boot delegation
-        if (osgiBootLoader.isEnabled())
+        for (ProxyClassLoader l : loaders)
         {
-            clazz = osgiBootLoader.loadClass(className, resolveIt);
-        }
-
-        if (clazz == null)
-        {
-            for (ProxyClassLoader l : loaders)
+            if (l.isEnabled())
             {
-                if (l.isEnabled())
-                {
-                    clazz = l.loadClass(className, resolveIt);
-                    if (clazz != null)
-                        break;
-                }
+                final Class clazz = l.loadClass(className, resolveIt);
+                if (clazz != null)
+                    return clazz;
             }
         }
 
-        if (clazz == null)
-            throw new ClassNotFoundException(className);
-
-        return clazz;
+        throw new ClassNotFoundException(className);
     }
 
     /**
@@ -157,30 +132,17 @@ public abstract class AbstractClassLoader extends ClassLoader
         if (name == null || name.trim().equals(""))
             return null;
 
-        Collections.sort(loaders);
-
-        InputStream is = null;
-
-        // Check osgi boot delegation
-        if (osgiBootLoader.isEnabled())
+        for (ProxyClassLoader l : loaders)
         {
-            is = osgiBootLoader.getResourceAsStream(name);
-        }
-
-        if (is == null)
-        {
-            for (ProxyClassLoader l : loaders)
+            if (l.isEnabled())
             {
-                if (l.isEnabled())
-                {
-                    is = l.getResourceAsStream(name);
-                    if (is != null)
-                        break;
-                }
+                final InputStream is = l.getResourceAsStream(name);
+                if (is != null)
+                    return is;
             }
         }
 
-        return is;
+        return null;
     }
 
     @Override
@@ -189,30 +151,17 @@ public abstract class AbstractClassLoader extends ClassLoader
         if (name == null || name.trim().equals(""))
             return null;
 
-        Collections.sort(loaders);
-
-        URL url = null;
-
-        // Check osgi boot delegation
-        if (osgiBootLoader.isEnabled())
+        for (ProxyClassLoader l : loaders)
         {
-            url = osgiBootLoader.getResource(name);
-        }
-
-        if (url == null)
-        {
-            for (ProxyClassLoader l : loaders)
+            if (l.isEnabled())
             {
-                if (l.isEnabled())
-                {
-                    url = l.getResource(name);
-                    if (url != null)
-                        break;
-                }
+                final URL url = l.getResource(name);
+                if (url != null)
+                    return url;
             }
         }
 
-        return url;
+        return null;
     }
 
     @Override
@@ -221,24 +170,13 @@ public abstract class AbstractClassLoader extends ClassLoader
         if (name == null || name.trim().equals(""))
             return null;
 
-        Collections.sort(loaders);
-
         final List<URL> result = new ArrayList<URL>();
-
-        Enumeration<URL> urls = null;
-
-        // Check osgi boot delegation
-        if (osgiBootLoader.isEnabled())
-            urls = osgiBootLoader.getResources(name);
-
-        if (urls != null)
-            result.addAll(Collections.list(urls));
 
         for (ProxyClassLoader l : loaders)
         {
             if (l.isEnabled())
             {
-                urls = l.getResources(name);
+                final Enumeration<URL> urls = l.getResources(name);
 
                 if (urls != null)
                 {
@@ -269,6 +207,12 @@ public abstract class AbstractClassLoader extends ClassLoader
             super(10);
 
             enabled = Configuration.isSystemLoaderEnabled();
+        }
+
+        @Override
+        public Object getLoader()
+        {
+            return getSystemClassLoader();
         }
 
         @Override
@@ -355,6 +299,12 @@ public abstract class AbstractClassLoader extends ClassLoader
         }
 
         @Override
+        public Object getLoader()
+        {
+            return getParent();
+        }
+
+        @Override
         public Class loadClass(String className, boolean resolveIt)
         {
             Class result;
@@ -434,6 +384,12 @@ public abstract class AbstractClassLoader extends ClassLoader
             super(20);
 
             enabled = Configuration.isCurrentLoaderEnabled();
+        }
+
+        @Override
+        public Object getLoader()
+        {
+            return getClass().getClassLoader();
         }
 
         @Override
@@ -521,6 +477,12 @@ public abstract class AbstractClassLoader extends ClassLoader
         }
 
         @Override
+        public Object getLoader()
+        {
+            return Thread.currentThread().getContextClassLoader();
+        }
+
+        @Override
         public Class loadClass(String className, boolean resolveIt)
         {
             Class result;
@@ -588,162 +550,6 @@ public abstract class AbstractClassLoader extends ClassLoader
         }
     }
 
-    /**
-     * Osgi boot loader
-     */
-    public final class OsgiBootLoader extends ProxyClassLoader
-    {
-        private final Logger logger = Logger.getLogger(OsgiBootLoader.class.getName());
-        private boolean strictLoading;
-        private String[] bootDelagation;
-
-        private static final String JAVA_PACKAGE = "java.";
-
-        public OsgiBootLoader()
-        {
-            super(0);
-
-            enabled = Configuration.isOsgiBootDelegationEnabled();
-            strictLoading = Configuration.isOsgiBootDelegationStrict();
-            bootDelagation = Configuration.getOsgiBootDelegation();
-        }
-
-        @Override
-        public Class loadClass(String className, boolean resolveIt)
-        {
-            Class clazz = null;
-
-            if (enabled && isPartOfOsgiBootDelegation(className))
-            {
-                clazz = getParentLoader().loadClass(className, resolveIt);
-
-                if (clazz == null && strictLoading)
-                {
-                    throw new JclException(new ClassNotFoundException("JCL OSGi Boot Delegation: Class " + className
-                            + " not found."));
-                }
-
-                if (logger.isLoggable(Level.FINEST))
-                    logger.finest("Class " + className + " loaded via OSGi boot delegation.");
-            }
-
-            return clazz;
-        }
-
-        @Override
-        public InputStream getResourceAsStream(String name)
-        {
-            InputStream is = null;
-
-            if (enabled && isPartOfOsgiBootDelegation(name))
-            {
-                is = getParentLoader().getResourceAsStream(name);
-
-                if (is == null && strictLoading)
-                {
-                    throw new ResourceNotFoundException("JCL OSGi Boot Delegation: Resource " + name + " not found.");
-                }
-
-                if (logger.isLoggable(Level.FINEST))
-                    logger.finest("Resource " + name + " loaded via OSGi boot delegation.");
-            }
-
-            return is;
-        }
-
-        @Override
-        public URL getResource(String name)
-        {
-            URL url = null;
-
-            if (enabled && isPartOfOsgiBootDelegation(name))
-            {
-                url = getParentLoader().getResource(name);
-
-                if (url == null && strictLoading)
-                {
-                    throw new ResourceNotFoundException("JCL OSGi Boot Delegation: Resource " + name + " not found.");
-                }
-
-                if (logger.isLoggable(Level.FINEST))
-                    logger.finest("Resource " + name + " loaded via OSGi boot delegation.");
-            }
-
-            return url;
-        }
-
-        @Override
-        public Enumeration<URL> getResources(String name) throws IOException
-        {
-            Enumeration<URL> urls = null;
-
-            if (enabled && isPartOfOsgiBootDelegation(name))
-            {
-                urls = getParentLoader().getResources(name);
-
-                if (((urls == null) || !urls.hasMoreElements()) && strictLoading)
-                {
-                    throw new ResourceNotFoundException("JCL OSGi Boot Delegation: Resource " + name + " not found.");
-                }
-
-                if (logger.isLoggable(Level.FINEST))
-                    logger.finest("Resources " + name + " loaded via OSGi boot delegation.");
-            }
-
-            return urls;
-        }
-
-        /**
-         * Check if the class/resource is part of OSGi boot delegation
-         * 
-         * @param resourceName
-         * @return
-         */
-        private boolean isPartOfOsgiBootDelegation(String resourceName)
-        {
-            if (resourceName.startsWith(JAVA_PACKAGE))
-                return true;
-
-            String[] bootPkgs = bootDelagation;
-
-            if (bootPkgs != null)
-            {
-                for (String bc : bootPkgs)
-                {
-                    Pattern pat = Pattern.compile(StringUtil.wildcardToRegex(bc), Pattern.CASE_INSENSITIVE);
-
-                    Matcher matcher = pat.matcher(resourceName);
-                    if (matcher.find())
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        public boolean isStrictLoading()
-        {
-            return strictLoading;
-        }
-
-        public void setStrictLoading(boolean strictLoading)
-        {
-            this.strictLoading = strictLoading;
-        }
-
-        public String[] getBootDelagation()
-        {
-            return bootDelagation;
-        }
-
-        public void setBootDelagation(String[] bootDelagation)
-        {
-            this.bootDelagation = bootDelagation;
-        }
-    }
-
     public ProxyClassLoader getSystemLoader()
     {
         return systemLoader;
@@ -762,10 +568,5 @@ public abstract class AbstractClassLoader extends ClassLoader
     public ProxyClassLoader getThreadLoader()
     {
         return threadLoader;
-    }
-
-    public ProxyClassLoader getOsgiBootLoader()
-    {
-        return osgiBootLoader;
     }
 }

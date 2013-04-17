@@ -259,7 +259,22 @@ public class ThreadUtil
     }
 
     /**
-     * Same as {@link Thread#sleep(long)} except Exception is caught.
+     * Same as {@link Thread#sleep(long)} except Exception is caught and ignored.
+     */
+    public static void sleep(long milli)
+    {
+        try
+        {
+            Thread.sleep(milli);
+        }
+        catch (InterruptedException e)
+        {
+            // ignore
+        }
+    }
+
+    /**
+     * Same as {@link Thread#sleep(long)} except Exception is caught and ignored.
      */
     public static void sleep(int milli)
     {

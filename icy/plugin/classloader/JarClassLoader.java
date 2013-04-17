@@ -58,15 +58,6 @@ public class JarClassLoader extends AbstractClassLoader
 
     private static Logger logger = Logger.getLogger(JarClassLoader.class.getName());
 
-    public JarClassLoader()
-    {
-        super();
-
-        classpathResources = new ClasspathResources();
-        loadedClasses = Collections.synchronizedMap(new HashMap<String, Class>());
-        initialize();
-    }
-
     public JarClassLoader(ClassLoader parent)
     {
         super(parent);
@@ -74,6 +65,11 @@ public class JarClassLoader extends AbstractClassLoader
         classpathResources = new ClasspathResources();
         loadedClasses = Collections.synchronizedMap(new HashMap<String, Class>());
         initialize();
+    }
+
+    public JarClassLoader()
+    {
+        this(getSystemClassLoader());
     }
 
     /**
@@ -279,6 +275,12 @@ public class JarClassLoader extends AbstractClassLoader
         }
 
         @Override
+        public Object getLoader()
+        {
+            return this;
+        }
+
+        @Override
         public Class loadClass(String className, boolean resolveIt)
         {
             Class result = null;
@@ -317,6 +319,7 @@ public class JarClassLoader extends AbstractClassLoader
             loadedClasses.put(className, result);
             if (logger.isLoggable(Level.FINEST))
                 logger.finest("Return new local loaded class " + className);
+
             return result;
         }
 

@@ -30,6 +30,15 @@ import java.util.Collection;
  */
 public class ROI2DEllipse extends ROI2DRectShape
 {
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public ROI2DEllipse(Point2D topLeft, Point2D bottomRight, boolean cm)
+    {
+        this(topLeft, bottomRight);
+    }
+
     public ROI2DEllipse(Point2D topLeft, Point2D bottomRight)
     {
         super(new Ellipse2D.Double(), topLeft, bottomRight);
@@ -45,6 +54,15 @@ public class ROI2DEllipse extends ROI2DRectShape
         this(new Point2D.Double(xmin, ymin), new Point2D.Double(xmax, ymax));
     }
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public ROI2DEllipse(Rectangle2D rectangle, boolean cm)
+    {
+        this(rectangle);
+    }
+
     public ROI2DEllipse(Rectangle2D rectangle)
     {
         this(rectangle.getMinX(), rectangle.getMinY(), rectangle.getMaxX(), rectangle.getMaxY());
@@ -54,6 +72,15 @@ public class ROI2DEllipse extends ROI2DRectShape
     {
         this(new Point2D.Double(ellipse.getMinX(), ellipse.getMinY()), new Point2D.Double(ellipse.getMaxX(),
                 ellipse.getMaxY()));
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public ROI2DEllipse(Point2D pt, boolean cm)
+    {
+        this(pt);
     }
 
     public ROI2DEllipse(Point2D pt)

@@ -46,10 +46,10 @@ public class CollectionUtil
         return result;
     }
 
-    public static boolean addUniq(List<Object> list, Object object)
+    public static <T> boolean addUniq(List<T> list, T t)
     {
-        if (!list.contains(object))
-            return list.add(object);
+        if (!list.contains(t))
+            return list.add(t);
 
         return false;
     }
