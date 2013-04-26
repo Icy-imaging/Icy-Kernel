@@ -42,6 +42,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -551,6 +552,41 @@ public class NetworkUtil
         // process authentication if needed
         if (!(StringUtil.isEmpty(login) || StringUtil.isEmpty(pass)))
             setAuthentication(uc, login, pass);
+
+        if (uc instanceof HttpURLConnection)
+        {
+            final HttpURLConnection huc = (HttpURLConnection) uc;
+
+            try
+            {
+                // not ok ?
+                if (huc.getResponseCode() != 200)
+                {
+                    if (displayError)
+                    {
+                        final String urlString = url.toString();
+
+                        System.out.println("Error while downloading from '" + urlString + "' :");
+                        System.out.println(huc.getResponseMessage());
+
+                        return null;
+                    }
+                }
+            }
+            catch (IOException e)
+            {
+                if (displayError)
+                {
+                    final String urlString = url.toString();
+
+                    System.out.println("Error while downloading from '" + urlString + "' :");
+                    IcyExceptionHandler.showErrorMessage(e, false, false);
+
+                    return null;
+                }
+            }
+        }
+
         // get input stream with coherence verification
         final InputStream ip = getInputStream(uc, displayError);
         if (ip != null)
@@ -617,6 +653,7 @@ public class NetworkUtil
         {
             int off = 0;
             int count = 0;
+
             while (count >= 0)
             {
                 count = in.read(data);
@@ -624,7 +661,7 @@ public class NetworkUtil
                 {
                     // unexpected length
                     if ((len != -1) && (off != len))
-                        throw new EOFException();
+                        throw new EOFException("Unexpected end of file at " + off + " (" + len + " expected)");
                 }
                 else
                     off += count;

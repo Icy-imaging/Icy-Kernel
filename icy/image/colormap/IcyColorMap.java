@@ -156,6 +156,16 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
         setTypeFromData(false);
     }
 
+    /**
+     * Create a copy of specified colormap.
+     */
+    public IcyColorMap(IcyColorMap colormap)
+    {
+        this(colormap.name, colormap.type);
+
+        copyFrom(colormap);
+    }
+
     public IcyColorMap()
     {
         this("");

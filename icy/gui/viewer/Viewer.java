@@ -1251,7 +1251,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 final LUT sequenceLut = sequence.createCompatibleLUT();
 
                 if (!sequenceLut.isCompatible(lut) || (lutViewer == null) || lutViewer.getAutoBounds())
-                    lut.copyScalers(sequenceLut);
+                    lut.setScalers(sequenceLut);
                 break;
 
             case SEQUENCE_PAINTER:

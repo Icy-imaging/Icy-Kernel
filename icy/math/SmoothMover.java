@@ -356,11 +356,7 @@ public class SmoothMover implements ActionListener
     }
 
     /**
-     * Value changed event
-     * 
-     * @param oldValue
-     * @param newValue
-     * @param i
+     * Value changed event.
      */
     protected void changed(double newValue, int pourcent)
     {

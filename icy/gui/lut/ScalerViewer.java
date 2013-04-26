@@ -18,8 +18,8 @@
  */
 package icy.gui.lut;
 
-import icy.gui.math.HistogramPanel;
-import icy.gui.math.HistogramPanel.HistogramPanelListener;
+import icy.gui.component.math.HistogramPanel;
+import icy.gui.component.math.HistogramPanel.HistogramPanelListener;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.gui.viewer.ViewerEvent.ViewerEventType;

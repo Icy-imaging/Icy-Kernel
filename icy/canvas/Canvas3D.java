@@ -864,14 +864,14 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
     private void restoreColormap(LUT lut)
     {
-        lut.copyScalers(lutSave);
-        lut.copyColormaps(lutSave);
+        lut.setScalers(lutSave);
+        lut.setColormaps(lutSave);
     }
 
     private void saveColormap(LUT lut)
     {
-        lutSave.copyScalers(lut);
-        lutSave.copyColormaps(lut);
+        lutSave.setScalers(lut);
+        lutSave.setColormaps(lut);
     }
 
     /**

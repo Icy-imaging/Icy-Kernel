@@ -108,8 +108,6 @@ public class ROI2DEllipse extends ROI2DRectShape
      * 
      * @param points
      *        the list of points to fit
-     * @param nbPoints
-     *        the number of points to consider
      */
     public void setToFitCircle(Collection<? extends Point2D> points)
     {

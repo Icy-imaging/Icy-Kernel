@@ -114,14 +114,21 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
             return colorSpace.getColormap(channel);
         }
 
-        public void copyColorMap(IcyColorMap colorMap, boolean copyName, boolean copyAlpha)
+        /**
+         * Set the specified colormap (do a copy).
+         */
+        public void setColorMap(IcyColorMap colorMap)
         {
-            colorSpace.copyColormap(channel, colorMap, copyName, copyAlpha);
+            colorSpace.setColormap(channel, new IcyColorMap(colorMap));
         }
 
+        /**
+         * @deprecated Use {@link #setColorMap(IcyColorMap)} instead.
+         */
+        @Deprecated
         public void copyColorMap(IcyColorMap colorMap)
         {
-            copyColorMap(colorMap, true, true);
+            setColorMap(colorMap);
         }
 
         public double getMin()
@@ -360,14 +367,14 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
      */
     public void copyFrom(LUT lut)
     {
-        copyColormaps(lut);
-        copyScalers(lut);
+        setColormaps(lut);
+        setScalers(lut);
     }
 
     /**
-     * Copy the scalers from the specified source lut
+     * Set the scalers from the specified source lut (do a copy)
      */
-    public void copyScalers(LUT lut)
+    public void setScalers(LUT lut)
     {
         final Scaler[] srcScalers = lut.getScalers();
         final int len = Math.min(scalers.length, srcScalers.length);
@@ -392,11 +399,29 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
     }
 
     /**
-     * Copy colormaps from the specified source lut
+     * @deprecated Use {@link #setScalers(LUT)} instead.
      */
+    @Deprecated
+    public void copyScalers(LUT lut)
+    {
+        setScalers(lut);
+    }
+
+    /**
+     * Set colormaps from the specified source lut (do a copy)
+     */
+    public void setColormaps(LUT lut)
+    {
+        getColorSpace().setColormaps(lut.getColorSpace());
+    }
+
+    /**
+     * @deprecated Use {@link #setColormaps(LUT)} instead.
+     */
+    @Deprecated
     public void copyColormaps(LUT lut)
     {
-        getColorSpace().copyColormaps(lut.getColorSpace());
+        setColormaps(lut);
     }
 
     /**

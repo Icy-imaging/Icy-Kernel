@@ -20,9 +20,6 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/jxl.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/log4j.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/mediaplayer.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/MMAcqEngine.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/MMCoreJ.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/MMJ_.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/multiplayer.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/phys2d.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/poi-loci.jar"/>
@@ -58,5 +55,11 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/substance-swingx.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/swingx-all.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/metakit.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/ome-io.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/poi-excelant.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/poi-ooxml-schemas.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/poi-ooxml.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/poi-scratchpad.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/poi.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

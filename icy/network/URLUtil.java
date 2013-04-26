@@ -33,6 +33,7 @@ public class URLUtil
     public static final String PROTOCOL_FTP = "ftp";
     public static final String PROTOCOL_GOPHER = "gopher";
     public static final String PROTOCOL_HTTP = "http";
+    public static final String PROTOCOL_JAR = "jar";
 
     /**
      * Convert a network path to a URL
@@ -196,7 +197,7 @@ public class URLUtil
 
     public static String getURLFileExtension(String url, boolean withDot)
     {
-        return getURLFileName(getURL(url), withDot);
+        return getURLFileExtension(getURL(url), withDot);
     }
 
     public static String getURLFileExtension(URL url, boolean withDot)

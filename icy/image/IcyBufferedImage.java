@@ -28,7 +28,6 @@ import icy.image.colormap.LinearColorMap;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colormodel.IcyColorModelEvent;
 import icy.image.colormodel.IcyColorModelListener;
-import icy.image.colorspace.IcyColorSpace;
 import icy.image.lut.LUT;
 import icy.math.ArrayMath;
 import icy.math.MathUtil;
@@ -144,9 +143,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         final DataType dataType = firstImage.getDataType_();
         final int width = firstImage.getWidth();
         final int height = firstImage.getHeight();
+        final List<Object> data = new ArrayList<Object>();
 
-        int numComponents = 0;
-        // count total number of component
+        // get data from all images
         for (IcyBufferedImage image : icyImageList)
         {
             if (dataType != image.getDataType_())
@@ -154,32 +153,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             if ((width != image.getWidth()) || (height != image.getHeight()))
                 throw new IllegalArgumentException("All images contained in imageList should have the same dimension");
 
-            numComponents += image.getNumComponents();
+            for (int c = 0; c < image.getSizeC(); c++)
+                data.add(image.getDataXY(c));
         }
 
-        final IcyBufferedImage result = new IcyBufferedImage(width, height, numComponents, dataType);
-        // final IcyColorModel dstColorModel = result.getIcyColorModel();
-
-        // copy data to result image
-        int destComp = 0;
-        for (IcyBufferedImage image : icyImageList)
-        {
-            // final IcyColorModel srcColorModel = image.getIcyColorModel();
-            final int srcNumComponents = image.getNumComponents();
-
-            for (int srcComp = 0; srcComp < srcNumComponents; srcComp++, destComp++)
-            {
-                // copy data
-                ArrayUtil.arrayToArray(image.getDataXY(srcComp), result.getDataXY(destComp), dataType.isSigned());
-                // copy colormap (not always wanted...)
-                // dstColorModel.setColormap(destComp, srcColorModel.getColormap(srcComp));
-            }
-        }
-
-        // notify data changed as we internally modified data
-        result.dataChanged();
-
-        return result;
+        // create and return the image
+        return new IcyBufferedImage(width, height, data.toArray(new Object[data.size()]), dataType.isSigned());
     }
 
     /**
@@ -266,10 +245,10 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         // copy data from the source image
         result.copyData(temp);
 
-        // in some case we want to restore colorMap from source colorModel
+        // in some case we want to restore colormaps from source image
         if ((type == BufferedImage.TYPE_BYTE_BINARY) || (type == BufferedImage.TYPE_BYTE_INDEXED)
                 || (numComponents == 2))
-            ((IcyColorSpace) result.getColorModel().getColorSpace()).copyColormaps(image.getColorModel());
+            result.setColormaps(image);
 
         return result;
     }
@@ -317,7 +296,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     public static IcyBufferedImage createCompatibleThumbnailFrom(IFormatReader reader, int z, int t)
             throws FormatException, IOException
     {
-        return createFrom(reader, z, t).getScaledCopy(reader.getThumbSizeX(), reader.getThumbSizeY());
+        return IcyBufferedImageUtil.scale(createFrom(reader, z, t), reader.getThumbSizeX(), reader.getThumbSizeY());
     }
 
     /**
@@ -417,40 +396,113 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
             final IcyBufferedImage result = new IcyBufferedImage(sizeX, sizeY, data, dataType.isSigned());
 
-            if (indexed)
+            result.beginUpdate();
+            try
             {
-                // error ! we should have same number of colormap than component
-                if (colormaps.length != sizeC)
+                if (indexed)
                 {
-                    System.err.println("Warning : " + colormaps.length + " colormap for " + sizeC + " components");
-                    System.err.println("Colormap can not be restored");
-                }
-                else
-                {
-                    final IcyColorSpace colorSpace = result.getIcyColorModel().getIcyColorSpace();
-
-                    colorSpace.beginUpdate();
-                    try
+                    // error ! we should have same number of colormap than component
+                    if (colormaps.length != sizeC)
                     {
-                        // copy colormap
+                        System.err.println("Warning : " + colormaps.length + " colormap for " + sizeC + " components");
+                        System.err.println("Colormap can not be restored");
+                    }
+                    else
+                    {
+                        // set colormaps
                         for (int comp = 0; comp < sizeC; comp++)
                             if (colormaps[comp] != null)
-                                colorSpace.copyColormap(comp, colormaps[comp]);
-                    }
-                    finally
-                    {
-                        colorSpace.endUpdate();
+                                result.setColormap(comp, colormaps[comp]);
                     }
                 }
+                // special case of 4 channels image, try to set 4th channel colormap
+                else if (sizeC == 4)
+                {
+                    // assume real alpha channel depending from the reader we use
+                    final boolean alpha = (reader instanceof PNGReader) || (reader instanceof APNGReader)
+                            || (reader instanceof TiffDelegateReader) || (reader instanceof TiffJAIReader)
+                            || (reader instanceof JPEG2000Reader);
+
+                    // replace alpha with Cyan color
+                    if (!alpha)
+                        result.setColormap(3, LinearColorMap.cyan_);
+                }
+            }
+            finally
+            {
+                result.endUpdate();
             }
 
             return result;
         }
         catch (Exception E)
         {
-            // LOCI do not support thumbnail for all iamge, try compatible version
+            // LOCI do not support thumbnail for all image, try compatible version
             return createCompatibleThumbnailFrom(reader, z, t);
         }
+    }
+
+    /**
+     * Load a single channel sub image at (Z, T) position from the specified {@link IFormatReader}<br>
+     * and returns it as an IcyBufferedImage.
+     * 
+     * @param reader
+     *        Reader used to load the image
+     * @param c
+     *        Channel index to load
+     * @param z
+     *        Z position of the image to load
+     * @param t
+     *        T position of the image to load
+     * @return {@link IcyBufferedImage}
+     */
+    public static IcyBufferedImage createFrom(IFormatReader reader, int x, int y, int w, int h, int c, int z, int t)
+            throws FormatException, IOException
+    {
+        // convert in our data type
+        final DataType dataType = DataType.getDataTypeFromFormatToolsType(reader.getPixelType());
+        // prepare informations
+        final int rgbChanCount = reader.getRGBChannelCount();
+        final boolean indexed = reader.isIndexed();
+        final boolean interleaved = reader.isInterleaved();
+        final boolean little = reader.isLittleEndian();
+
+        // allocate internal image data array
+        final Object data = Array1DUtil.createArray(dataType, w * h);
+
+        final int baseC = c / rgbChanCount;
+        final int subC = c % rgbChanCount;
+
+        // get image data
+        final byte[] byteData = reader.openBytes(reader.getIndex(z, baseC, t), x, y, w, h);
+        // current final component
+        final int componentByteLen = byteData.length / rgbChanCount;
+
+        // build data array
+        if (interleaved)
+            ByteArrayConvert.byteArrayTo(byteData, subC, rgbChanCount, data, 0, 1, componentByteLen, little);
+        else
+            ByteArrayConvert.byteArrayTo(byteData, subC * componentByteLen, 1, data, 0, 1, componentByteLen, little);
+
+        final IcyBufferedImage result = new IcyBufferedImage(w, h, data, dataType.isSigned());
+
+        // indexed color ?
+        if (indexed)
+        {
+            // only 8 bits and 16 bits lookup table supported
+            switch (dataType.getJavaType())
+            {
+                case BYTE:
+                    result.setColormap(0, new IcyColorMap("component " + c, reader.get8BitLookupTable()));
+                    break;
+
+                case SHORT:
+                    result.setColormap(0, new IcyColorMap("component " + c, reader.get16BitLookupTable()));
+                    break;
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -545,44 +597,41 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
         final IcyBufferedImage result = new IcyBufferedImage(sizeX, sizeY, data, dataType.isSigned());
 
-        if (indexed)
+        result.beginUpdate();
+        try
         {
-            // error ! we should have same number of colormap than component
-            if (colormaps.length != sizeC)
+            if (indexed)
             {
-                System.err.println("Warning : " + colormaps.length + " colormap for " + sizeC + " components");
-                System.err.println("Colormap can not be restored");
-            }
-            else
-            {
-                final IcyColorSpace colorSpace = result.getIcyColorModel().getIcyColorSpace();
-
-                colorSpace.beginUpdate();
-                try
+                // error ! we should have same number of colormap than component
+                if (colormaps.length != sizeC)
                 {
-                    // copy colormap
+                    System.err.println("Warning : " + colormaps.length + " colormap for " + sizeC + " components");
+                    System.err.println("Colormap can not be restored");
+                }
+                else
+                {
+                    // set colormaps
                     for (int comp = 0; comp < sizeC; comp++)
                         if (colormaps[comp] != null)
-                            colorSpace.copyColormap(comp, colormaps[comp]);
-                }
-                finally
-                {
-                    colorSpace.endUpdate();
+                            result.setColormap(comp, colormaps[comp]);
                 }
             }
+            // special case of 4 channels image, try to set 4th channel colormap
+            else if (sizeC == 4)
+            {
+                // assume real alpha channel depending from the reader we use
+                final boolean alpha = (reader instanceof PNGReader) || (reader instanceof APNGReader)
+                        || (reader instanceof TiffDelegateReader) || (reader instanceof TiffJAIReader)
+                        || (reader instanceof JPEG2000Reader);
+
+                // replace alpha with Cyan color
+                if (!alpha)
+                    result.setColormap(3, LinearColorMap.cyan_);
+            }
         }
-
-        // special case of 4 channels image, try to set 4th channel colormap
-        if (sizeC == 4)
+        finally
         {
-            // assume real alpha channel depending from the reader we use
-            final boolean alpha = (reader instanceof PNGReader) || (reader instanceof APNGReader)
-                    || (reader instanceof TiffDelegateReader) || (reader instanceof TiffJAIReader)
-                    || (reader instanceof JPEG2000Reader);
-
-            // replace alpha with Cyan color
-            if (!alpha)
-                result.getIcyColorModel().getIcyColorSpace().copyColormap(3, LinearColorMap.cyan_);
+            result.endUpdate();
         }
 
         return result;
@@ -1814,13 +1863,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Return the number of components
-     * 
-     * @return number of components
+     * @deprecated Use {@link #getSizeC()} instead.
      */
+    @Deprecated
     public int getNumComponents()
     {
-        return getColorModel().getNumComponents();
+        return getSizeC();
     }
 
     /**
@@ -1828,7 +1876,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public int getSizeC()
     {
-        return getNumComponents();
+        return getColorModel().getNumComponents();
     }
 
     /**
@@ -3673,14 +3721,36 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Copy colormap from an image
-     * 
-     * @param srcImage
-     *        source image
+     * @deprecated Use {@link #setColormaps(BufferedImage)} instead.
      */
+    @Deprecated
     public void copyColormap(BufferedImage srcImage)
     {
-        getIcyColorModel().copyColormap(srcImage.getColorModel());
+        setColormaps(srcImage);
+    }
+
+    /**
+     * Set colormaps from specified image.
+     */
+    public void setColormaps(BufferedImage srcImage)
+    {
+        getIcyColorModel().setColormaps(srcImage.getColorModel());
+    }
+
+    /**
+     * Set the colormap for the specified channel.
+     */
+    public void setColormap(int channel, IcyColorMap map)
+    {
+        getIcyColorModel().setColormap(channel, map);
+    }
+
+    /**
+     * Return the colormap of the specified channel.
+     */
+    public IcyColorMap getColormap(int channel)
+    {
+        return getIcyColorModel().getColormap(channel);
     }
 
     /**

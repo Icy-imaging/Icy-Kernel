@@ -251,7 +251,7 @@ public class FileDrop
             return false;
         } // end isDataFlavorSupported
 
-        /* ******** I N N E R I N T E R F A C E F E T C H E R ******** */
+        /* ******** I N N E R - I N T E R F A C E - F E T C H E R ******** */
 
         /**
          * Instead of passing your data directly to the {@link TransferableObject} constructor, you
@@ -877,7 +877,8 @@ public class FileDrop
          * 
          * @param files
          *        The array of files that were dropped
-         * @source The event source
+         * @param source
+         *        The event source
          * @since 1.1
          */
         public Event(File[] files, Object source)

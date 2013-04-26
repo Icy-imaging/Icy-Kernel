@@ -406,7 +406,7 @@ public class MultiSmoothMover implements ActionListener
     }
 
     /**
-     * Move modified event
+     * Move modified event.
      */
     protected void moveModified(int index, long time)
     {
@@ -417,7 +417,7 @@ public class MultiSmoothMover implements ActionListener
     }
 
     /**
-     * Move ended event
+     * Move ended event.
      */
     protected void moveEnded(int index)
     {
@@ -426,11 +426,7 @@ public class MultiSmoothMover implements ActionListener
     }
 
     /**
-     * Value changed event
-     * 
-     * @param oldValue
-     * @param newValue
-     * @param i
+     * Value changed event.
      */
     protected void changed(int index, double newValue, int pourcent)
     {

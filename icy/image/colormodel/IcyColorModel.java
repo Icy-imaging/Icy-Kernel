@@ -95,6 +95,10 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
         if (numComponents == 0)
             throw new IllegalArgumentException("Number of components should be > 0");
 
+        // overridden variable
+        this.numComponents = numComponents;
+        colorSpace = (IcyColorSpace) getColorSpace();
+
         listeners = new EventListenerList();
         updater = new UpdateEventHandler(this, false);
 
@@ -121,10 +125,6 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
             // add listener to the colormap scalers only
             colormapScalers[i].addListener(this);
         }
-
-        // overridden variable
-        this.numComponents = numComponents;
-        this.colorSpace = (IcyColorSpace) getColorSpace();
 
         // add the listener to colorSpace
         colorSpace.addListener(this);
@@ -216,10 +216,10 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
         {
             // copy colormaps from colorModel ?
             if (copyColormap)
-                result.copyColormap(colorModel);
+                result.setColormaps(colorModel);
             // copy bounds from colorModel ?
             if (copyBounds)
-                result.copyBounds(colorModel);
+                result.setBounds(colorModel);
         }
         finally
         {
@@ -281,26 +281,9 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-     * Set the toRGB colormaps from a compatible colorModel
+     * Set bounds from specified {@link IcyColorModel}
      */
-    public void copyColormaps(ColorModel source)
-    {
-        ((IcyColorSpace) getColorSpace()).copyColormaps(source);
-    }
-
-    /**
-     * @deprecated Use {@link #copyColormaps(ColorModel)} instead.
-     */
-    @Deprecated
-    public void copyColormap(ColorModel source)
-    {
-        copyColormaps(source);
-    }
-
-    /**
-     * Copy bounds from specified colorModel
-     */
-    public void copyBounds(IcyColorModel source)
+    public void setBounds(IcyColorModel source)
     {
         beginUpdate();
         try
@@ -345,11 +328,37 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
+     * @deprecated Use {@link #setBounds(IcyColorModel)} instead.
+     */
+    @Deprecated
+    public void copyBounds(IcyColorModel source)
+    {
+        setBounds(source);
+    }
+
+    /**
+     * Set the toRGB colormaps from a compatible colorModel
+     */
+    public void setColormaps(ColorModel source)
+    {
+        getIcyColorSpace().setColormaps(source);
+    }
+
+    /**
+     * @deprecated Use {@link #setColormaps(ColorModel)} instead.
+     */
+    @Deprecated
+    public void copyColormap(ColorModel source)
+    {
+        setColormaps(source);
+    }
+
+    /**
      * Set the toRGB colormap of specified component
      */
     public void setColormap(int component, IcyColorMap map)
     {
-        ((IcyColorSpace) getColorSpace()).copyColormap(component, map);
+        getIcyColorSpace().setColormap(component, map);
     }
 
     /**
@@ -357,7 +366,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      */
     public IcyColorMap getColormap(int component)
     {
-        return ((IcyColorSpace) getColorSpace()).getColormap(component);
+        return getIcyColorSpace().getColormap(component);
     }
 
     /**
