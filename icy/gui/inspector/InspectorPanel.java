@@ -38,7 +38,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Point;
 
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.ScrollPaneConstants;
@@ -54,13 +53,9 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
 {
     private static final long serialVersionUID = 5538230736731006318L;
 
-    public static abstract class InspectorSubPanel extends JPanel implements FocusedViewerListener,
-            FocusedSequenceListener
+    public interface FocusedViewerSequenceListener extends FocusedViewerListener, FocusedSequenceListener
     {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = -3437652648207592760L;
+
     }
 
     /**

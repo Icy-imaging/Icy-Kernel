@@ -20,7 +20,7 @@ package icy.network;
 
 import icy.common.listener.ProgressListener;
 import icy.common.listener.weak.WeakListener;
-import icy.preferences.ApplicationPreferences;
+import icy.file.FileUtil;
 import icy.preferences.NetworkPreferences;
 import icy.system.Audit;
 import icy.system.IcyExceptionHandler;
@@ -36,7 +36,6 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -164,8 +163,7 @@ public class NetworkUtil
                     {
                         urlConnection.setConnectTimeout(3000);
                         urlConnection.setReadTimeout(3000);
-                        urlConnection.getInputStream();
-                        up = true;
+                        up = connect(urlConnection, false);
                     }
                 }
                 catch (Throwable t)
@@ -182,8 +180,7 @@ public class NetworkUtil
                         {
                             urlConnection.setConnectTimeout(3000);
                             urlConnection.setReadTimeout(3000);
-                            urlConnection.getInputStream();
-                            up = true;
+                            up = connect(urlConnection, false);
                         }
                     }
                     catch (Throwable t)
@@ -502,19 +499,24 @@ public class NetworkUtil
     public static byte[] download(String path, String login, String pass, ProgressListener listener,
             boolean displayError)
     {
-        final File file = new File(path);
+        final File file = new File(FileUtil.getGenericPath(path));
+
+        // path define a file ?
         if (file.exists())
-            // authentication not supported on file download
             return download(file, listener, displayError);
 
         final URL url = URLUtil.getURL(path);
-        if (url != null)
-            return download(url, login, pass, listener, displayError);
 
-        if (displayError)
-            System.out.println("Can't download '" + path + "', incorrect path !");
+        // error while building URL ?
+        if (url == null)
+        {
+            if (displayError)
+                System.out.println("Can't download '" + path + "', incorrect path !");
 
-        return null;
+            return null;
+        }
+
+        return download(url, login, pass, listener, displayError);
     }
 
     /**
@@ -541,76 +543,43 @@ public class NetworkUtil
             catch (URISyntaxException e)
             {
                 if (displayError)
-                    System.out.println("Can't download '" + url + "', incorrect path !");
+                    System.out.println("Can't download from '" + url + "', incorrect path !");
 
                 return null;
             }
         }
 
-        // disable cache
-        final URLConnection uc = openConnection(url, true, displayError);
-        // process authentication if needed
-        if (!(StringUtil.isEmpty(login) || StringUtil.isEmpty(pass)))
-            setAuthentication(uc, login, pass);
+        // get connection object
+        final URLConnection uc = openConnection(url, login, pass, true, displayError);
 
-        if (uc instanceof HttpURLConnection)
-        {
-            final HttpURLConnection huc = (HttpURLConnection) uc;
+        // error --> exit
+        if (uc == null)
+            return null;
+        // can't connect --> exit
+        if (!connect(uc, displayError))
+            return null;
 
-            try
-            {
-                // not ok ?
-                if (huc.getResponseCode() != 200)
-                {
-                    if (displayError)
-                    {
-                        final String urlString = url.toString();
-
-                        System.out.println("Error while downloading from '" + urlString + "' :");
-                        System.out.println(huc.getResponseMessage());
-
-                        return null;
-                    }
-                }
-            }
-            catch (IOException e)
-            {
-                if (displayError)
-                {
-                    final String urlString = url.toString();
-
-                    System.out.println("Error while downloading from '" + urlString + "' :");
-                    IcyExceptionHandler.showErrorMessage(e, false, false);
-
-                    return null;
-                }
-            }
-        }
-
-        // get input stream with coherence verification
+        // get input stream
         final InputStream ip = getInputStream(uc, displayError);
-        if (ip != null)
+
+        // error --> exit
+        if (ip == null)
+            return null;
+
+        try
         {
-            try
-            {
-                return download(ip, uc.getContentLength(), listener);
-            }
-            catch (Exception e)
-            {
-                if (displayError)
-                {
-                    final String urlString = url.toString();
-
-                    // obfuscation
-                    System.out.println("Error while downloading from '" + urlString + "' :");
-                    IcyExceptionHandler.showErrorMessage(e, false, false);
-
-                    return null;
-                }
-            }
+            return download(ip, uc.getContentLength(), listener);
         }
+        catch (Exception e)
+        {
+            if (displayError)
+            {
+                System.out.println("Error while downloading from '" + uc.getURL() + "' :");
+                IcyExceptionHandler.showErrorMessage(e, false, false);
+            }
 
-        return null;
+            return null;
+        }
     }
 
     /**
@@ -620,7 +589,7 @@ public class NetworkUtil
     {
         if (!f.exists())
         {
-            System.err.println("File not found : " + f.getPath());
+            System.err.println("File not found: " + f.getPath());
             return null;
         }
 
@@ -635,6 +604,7 @@ public class NetworkUtil
                 System.out.println("NetworkUtil.download('" + f.getPath() + "',...) error :");
                 IcyExceptionHandler.showErrorMessage(e, false, false);
             }
+
             return null;
         }
     }
@@ -717,6 +687,14 @@ public class NetworkUtil
     public static URLConnection openConnection(URL url, String login, String pass, boolean disableCache,
             boolean displayError)
     {
+        if (url == null)
+        {
+            if (displayError)
+                System.out.println("NetworkUtil.openConnection(URL url, ...) error : URL is null !");
+
+            return null;
+        }
+
         try
         {
             final URLConnection uc = url.openConnection();
@@ -726,7 +704,7 @@ public class NetworkUtil
 
             // authentication
             if (!StringUtil.isEmpty(login) && !StringUtil.isEmpty(pass))
-                NetworkUtil.setAuthentication(uc, login, pass);
+                setAuthentication(uc, login, pass);
 
             return uc;
         }
@@ -737,9 +715,9 @@ public class NetworkUtil
                 System.out.println("NetworkUtil.openConnection('" + url + "',...) error :");
                 IcyExceptionHandler.showErrorMessage(e, false, false);
             }
-        }
 
-        return null;
+            return null;
+        }
     }
 
     /**
@@ -757,7 +735,7 @@ public class NetworkUtil
     public static URLConnection openConnection(URL url, AuthenticationInfo auth, boolean disableCache,
             boolean displayError)
     {
-        if ((auth != null) && (auth.isEnabled()))
+        if ((auth != null) && auth.isEnabled())
             return openConnection(url, auth.getLogin(), auth.getPassword(), disableCache, displayError);
 
         return openConnection(url, null, null, disableCache, displayError);
@@ -795,6 +773,69 @@ public class NetworkUtil
     }
 
     /**
+     * Connect the specified {@link URLConnection}.<br>
+     * Returns false if the connection failed or if response code is not ok.
+     * 
+     * @param uc
+     *        URLConnection to connect.
+     * @param displayError
+     *        Display error message in console if something wrong happen.
+     */
+    public static boolean connect(URLConnection uc, boolean displayError)
+    {
+        try
+        {
+            final URL prevUrl = uc.getURL();
+
+            // connect
+            uc.connect();
+
+            // we have to test that as sometime url are automatically modified / fixed by host!
+            if (!uc.getURL().toString().toLowerCase().equals(prevUrl.toString().toLowerCase()))
+            {
+                // TODO : do something better
+                System.out.println("Host URL change rejected : " + prevUrl + " --> " + uc.getURL());
+                return false;
+            }
+
+            // we test response code for HTTP connection
+            if (uc instanceof HttpURLConnection)
+            {
+                final HttpURLConnection huc = (HttpURLConnection) uc;
+
+                // not ok ?
+                if (huc.getResponseCode() != HttpURLConnection.HTTP_OK)
+                {
+                    if (displayError)
+                    {
+                        System.out.println("Error while connecting to '" + huc.getURL() + "':");
+                        System.out.println(huc.getResponseMessage());
+                    }
+
+                    return false;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            if (displayError)
+            {
+                if (!hasInternetAccess())
+                    System.out.println("Can't connect to '" + uc.getURL() + "' (no internet connection).");
+                else
+                {
+                    System.out.println("Error while connecting to '" + uc.getURL() + "':");
+                    IcyExceptionHandler.showErrorMessage(e, false, false);
+                }
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Returns a new {@link InputStream} from specified {@link URLConnection} (null if an error
      * occurred).
      * 
@@ -805,64 +846,36 @@ public class NetworkUtil
      */
     public static InputStream getInputStream(URLConnection uc, boolean displayError)
     {
-        if (uc != null)
+        if (uc == null)
         {
-            try
+            if (displayError)
             {
-                final URL prevUrl = uc.getURL();
-                final InputStream ip = uc.getInputStream();
-
-                // we have to test that as sometime url are automatically modified / fixed by host!
-                if (!uc.getURL().toString().toLowerCase().equals(prevUrl.toString().toLowerCase()))
-                {
-                    // TODO : do something better
-                    System.out.println("Host URL change rejected : " + prevUrl.toString() + " --> "
-                            + uc.getURL().toString());
-                    return null;
-                }
-
-                return ip;
+                System.out.print("NetworkUtil.getInputStream(URLConnection uc) error: ");
+                System.out.println("URLConnection object is null !");
             }
-            catch (IOException e)
-            {
-                if (displayError)
-                {
-                    if (!hasInternetAccess())
-                        System.out.println("You are not connected to internet.");
-                    else
-                    {
-                        String urlString = uc.getURL().toString();
 
-                        // obfuscation
-                        if (urlString.startsWith(ApplicationPreferences.getUpdateRepositoryBase()))
-                        {
-                            if (e instanceof FileNotFoundException)
-                                System.out.println("Update site URL does not exists or file '" + uc.getURL().getPath()
-                                        + "' does not exists.");
-                            else if (e.getMessage().indexOf("HTTP response code: 500 ") != -1)
-                                System.out.println("Network error : can't connect to update site");
-                            else
-                                System.out.println("Can't connect to update site...");
-                        }
-                        else
-                        {
-                            urlString = "'" + urlString + "'";
-
-                            if (e instanceof FileNotFoundException)
-                                System.out.println("Address " + urlString + " does not exists.");
-                            else if (e.getMessage().indexOf("HTTP response code: 500 ") != -1)
-                                System.out.println("Network error : can't connect to " + urlString);
-                            else
-                                System.out.println("NetworkUtil.getInputStream(" + urlString + ",...) error :");
-
-                            IcyExceptionHandler.showErrorMessage(e, false, false);
-                        }
-                    }
-                }
-            }
+            return null;
         }
 
-        return null;
+        try
+        {
+            return uc.getInputStream();
+        }
+        catch (IOException e)
+        {
+            if (displayError)
+            {
+                if (!hasInternetAccess())
+                    System.out.println("Can't connect to '" + uc.getURL() + "' (no internet connection).");
+                else
+                {
+                    System.out.println("Error while connecting to '" + uc.getURL() + "' :");
+                    IcyExceptionHandler.showErrorMessage(e, false, false);
+                }
+            }
+
+            return null;
+        }
     }
 
     /**
@@ -884,23 +897,14 @@ public class NetworkUtil
     public static InputStream getInputStream(URL url, String login, String pass, boolean disableCache,
             boolean displayError)
     {
-        if (url != null)
-        {
-            try
-            {
-                return getInputStream(openConnection(url, login, pass, disableCache, displayError), displayError);
-            }
-            catch (Exception e)
-            {
-                if (displayError)
-                {
-                    System.out.println("NetworkUtil.getInputStream(" + url + ", ...) error :");
-                    IcyExceptionHandler.showErrorMessage(e, false, false);
-                }
-            }
-        }
+        final URLConnection uc = openConnection(url, login, pass, disableCache, displayError);
+
+        if (uc != null)
+            if (connect(uc, displayError))
+                return getInputStream(uc, displayError);
 
         return null;
+
     }
 
     /**

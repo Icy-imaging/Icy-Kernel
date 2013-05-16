@@ -26,6 +26,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.Insets;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -55,6 +56,9 @@ public class ThumbnailComponent extends JToggleButton
     {
         super();
 
+        setMinimumSize(new Dimension(120, 12));
+        setPreferredSize(new Dimension(160, 160));
+
         initialize();
 
         setEnabled(selectable);
@@ -62,12 +66,12 @@ public class ThumbnailComponent extends JToggleButton
 
     private void initialize()
     {
+        setMargin(new Insets(2, 2, 2, 2));
         setLayout(new BorderLayout());
 
         imageComp = new JLabel();
         imageComp.setHorizontalAlignment(SwingConstants.CENTER);
         imageComp.setOpaque(false);
-        imageComp.setPreferredSize(new Dimension(160, 140));
 
         add(imageComp, BorderLayout.CENTER);
 
@@ -78,19 +82,19 @@ public class ThumbnailComponent extends JToggleButton
         titleLabel = new JLabel();
         southPanel.add(titleLabel);
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        titleLabel.setText("");
+        titleLabel.setText(" ");
         titleLabel.setHorizontalTextPosition(SwingConstants.LEADING);
         ComponentUtil.setFontBold(titleLabel);
         infosLabel = new JLabel();
         southPanel.add(infosLabel);
         infosLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        infosLabel.setText("");
+        infosLabel.setText(" ");
         infosLabel.setHorizontalTextPosition(SwingConstants.LEADING);
         ComponentUtil.setFontSize(infosLabel, 11);
         infos2Label = new JLabel();
         southPanel.add(infos2Label);
         infos2Label.setHorizontalAlignment(SwingConstants.CENTER);
-        infos2Label.setText("");
+        infos2Label.setText(" ");
         infos2Label.setHorizontalTextPosition(SwingConstants.LEADING);
         ComponentUtil.setFontSize(infos2Label, 11);
 
@@ -149,5 +153,4 @@ public class ThumbnailComponent extends JToggleButton
     {
         infos2Label.setText(value);
     }
-
 }

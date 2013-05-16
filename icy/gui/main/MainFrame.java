@@ -52,7 +52,6 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
@@ -68,7 +67,6 @@ import javax.swing.JComponent;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
-import javax.swing.KeyStroke;
 
 import org.pushingpixels.flamingo.api.ribbon.JRibbon;
 import org.pushingpixels.flamingo.api.ribbon.JRibbonFrame;
@@ -188,7 +186,7 @@ public class MainFrame extends JRibbonFrame
             @Override
             public void filesDropped(File[] files)
             {
-                Loader.load(CollectionUtil.asList(files));
+                Loader.load(files, false, true, true);
             }
         };
 
@@ -317,12 +315,9 @@ public class MainFrame extends JRibbonFrame
         final InputMap imap = getDesktopPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         final ActionMap amap = getDesktopPane().getActionMap();
 
-        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemUtil.getMenuCtrlMask()),
-                GeneralActions.searchAction.getName());
-        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_O, SystemUtil.getMenuCtrlMask()),
-                FileActions.openSequenceAction.getName());
-        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, SystemUtil.getMenuCtrlMask()),
-                FileActions.saveAsSequenceAction.getName());
+        imap.put(GeneralActions.searchAction.getKeyStroke(), GeneralActions.searchAction.getName());
+        imap.put(FileActions.openSequenceAction.getKeyStroke(), FileActions.openSequenceAction.getName());
+        imap.put(FileActions.saveAsSequenceAction.getKeyStroke(), FileActions.saveAsSequenceAction.getName());
 
         amap.put(GeneralActions.searchAction.getName(), GeneralActions.searchAction);
         amap.put(FileActions.openSequenceAction.getName(), FileActions.openSequenceAction);

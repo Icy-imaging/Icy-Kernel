@@ -38,6 +38,7 @@ import icy.util.StringUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -100,66 +101,45 @@ public class Loader
         }
     }
 
-    private static class SequenceLoader implements Runnable
+    /**
+     * Private class used to load sequence.<br>
+     * Create a new instance for each load process.
+     */
+    private static class SequenceLoader
     {
-        final List<File> files;
-        final FileFrame loaderFrame;
-        final List<Sequence> sequences;
-        final ImageReader mainReader;
-        final boolean autoOrder;
-        final boolean display;
-        final boolean directory;
-        IFormatReader lastUsedReader;
-        List<Integer> series;
-        List<Integer> selectedSeries;
+        final private List<Sequence> sequences;
+        final private ImageReader mainReader;
+        IFormatReader lastReader;
+        int[] selectedSeries;
+        private FileFrame frame;
 
-        public SequenceLoader(List<File> files, List<Integer> series, boolean autoOrder, boolean display,
-                boolean directory, boolean showProgress)
+        SequenceLoader()
         {
             super();
 
-            final boolean headless = Icy.isHeadLess();
-
-            this.files = files;
-
-            if (headless)
-            {
-                loaderFrame = null;
-                this.display = false;
-            }
-            else
-            {
-                if (showProgress)
-                    loaderFrame = new FileFrame("Loading", null);
-                else
-                    loaderFrame = null;
-                this.display = display;
-            }
-
             sequences = new ArrayList<Sequence>();
             mainReader = new ImageReader();
-            lastUsedReader = null;
-            this.autoOrder = autoOrder;
-            this.directory = directory;
-            this.series = series;
-            selectedSeries = null;
+            lastReader = null;
         }
 
-        @Override
-        public void run()
+        List<Sequence> load(File[] files, int[] series, boolean autoOrder, boolean directory, FileFrame loadingFrame)
         {
-            if (files.size() == 0)
+            // no file to load --> no need to go further...
+            if (files.length == 0)
             {
-                if (loaderFrame != null)
-                {
-                    loaderFrame.close();
+                if (!Icy.isHeadLess())
                     new AnnounceFrame("No image to load", 10);
-                }
-                return;
+
+                return sequences;
             }
 
-            final ArrayList<FilePosition> filePositions = new ArrayList<FilePosition>();
-            String filename = files.get(0).getAbsolutePath();
+            if (Icy.isHeadLess())
+                frame = null;
+            else
+                frame = loadingFrame;
+
+            final List<FilePosition> filePositions = new ArrayList<FilePosition>();
+            String filename = files[0].getAbsolutePath();
 
             try
             {
@@ -171,174 +151,115 @@ public class Loader
                 }
                 else
                 {
-                    for (int i = 0; i < files.size(); i++)
-                        filePositions.add(new FilePosition(files.get(i), i, 0, 0));
+                    for (int i = 0; i < files.length; i++)
+                        filePositions.add(new FilePosition(files[i], i, 0, 0));
                 }
 
-                FilePosition pos = filePositions.get(0);
-                int t = pos.getT();
-                int z = pos.getZ();
-                int c = pos.getC();
-                boolean sameT = true;
-                boolean sameZ = true;
-                boolean sameC = true;
-                boolean tNotFixed = true;
-                boolean zNotFixed = true;
-                boolean cNotFixed = true;
+                // compact positions
+                compact(filePositions);
 
-                // remove "empty" dimension
-                for (FilePosition fp : filePositions)
-                {
-                    sameT &= (t == fp.getT());
-                    sameZ &= (z == fp.getZ());
-                    sameC &= (c == fp.getC());
-                    tNotFixed &= !fp.tFixed;
-                    zNotFixed &= !fp.zFixed;
-                    cNotFixed &= !fp.cFixed;
-                }
-
-                // same T and not fixed
-                if (sameT && tNotFixed)
-                {
-                    // different C and not fixed
-                    if (!sameC && cNotFixed)
-                    {
-                        // move C to T (C becomes 0)
-                        for (FilePosition fp : filePositions)
-                            fp.set(fp.getC(), fp.getT(), 0);
-
-                        sameT = false;
-                        sameC = true;
-                    }
-                    // different Z and not fixed
-                    else if (!sameZ && zNotFixed)
-                    {
-                        // move Z to T (Z becomes 0)
-                        for (FilePosition fp : filePositions)
-                            fp.set(fp.getZ(), 0, fp.getC());
-
-                        sameT = false;
-                        sameZ = true;
-                    }
-                }
-
-                // same Z and not fixed
-                if (sameZ && zNotFixed)
-                {
-                    // different C and not fixed
-                    if (!sameC && cNotFixed)
-                    {
-                        // move C to Z (C becomes 0)
-                        for (FilePosition fp : filePositions)
-                            fp.set(fp.getT(), fp.getC(), 0);
-
-                        sameZ = false;
-                        sameC = true;
-                    }
-                }
-
-                // sort on position
-                Collections.sort(filePositions);
-
-                // then we compact the position
+                // then we iterate through them
                 final int len = filePositions.size();
 
-                final BandPosition firstPos = filePositions.get(0);
                 final BandPosition prevPos = new BandPosition();
-                final BandPosition newPos = new BandPosition(0, 0, 0);
+                final BandPosition currentPos = new BandPosition(0, 0, 0);
 
-                // get first old position
-                prevPos.copyFrom(firstPos);
+                // init previous position with first position
+                prevPos.copyFrom(filePositions.get(0));
 
                 // notify progress to loader frame
-                if (loaderFrame != null)
-                    loaderFrame.notifyProgress(0, len);
+                if (frame != null)
+                    frame.notifyProgress(0, len);
 
                 // load first image (and update position if needed)
-                load(filePositions.get(0).file, newPos);
+                internalLoadSingle(filePositions.get(0).file, currentPos, series, true);
 
                 // fix positions while loading images
                 for (int index = 1; index < len; index++)
                 {
-                    if (loaderFrame != null)
+                    if (frame != null)
                     {
-                        if (loaderFrame.isCancelRequested())
-                            return;
+                        if (frame.isCancelRequested())
+                            return new ArrayList<Sequence>();
 
                         // notify progress to loader frame
-                        loaderFrame.notifyProgress(index, len);
+                        frame.notifyProgress(index, len);
                     }
 
-                    final FilePosition filePosition = filePositions.get(index);
-                    final File file = filePosition.file;
+                    final FilePosition pos = filePositions.get(index);
+                    final File file = pos.file;
                     filename = file.getAbsolutePath();
+                    boolean forceNew = false;
 
                     // ordering as follow : C -> T -> Z
-                    if (prevPos.getC() != filePosition.getC())
+                    if (prevPos.getC() != pos.getC())
                     {
-                        newPos.setC(newPos.getC() + 1);
-                        newPos.setT(0);
-                        newPos.setZ(0);
-                        prevPos.setC(filePosition.getC());
+                        currentPos.setC(currentPos.getC() + 1);
+                        currentPos.setT(0);
+                        currentPos.setZ(0);
+                        prevPos.setC(pos.getC());
+
+                        // force creation of a new sequence
+                        forceNew = true;
 
                         // create a new sequence for this channel
-                        final Sequence seq = new Sequence(MetaDataUtil.createOMEMetadata(
-                                (IMetadata) lastUsedReader.getMetadataStore(), 0));
-
-                        // default name loaded from metadata (if available)
-                        String name;
-                        if (seq.isDefaultName())
-                            name = FileUtil.getFileName(filename, false);
-                        else
-                            name = seq.getName();
-                        // then we add channel name information if available
-                        if (seq.isDefaultChannelName(c))
-                            name += " (channel " + newPos.getC() + ")";
-                        else
-                            name += "(" + seq.getChannelName(index) + ")";
-                        seq.setName(name);
-
-                        seq.setFilename(FileUtil.setExtension(
-                                FileUtil.setExtension(filename, "") + "_C" + newPos.getC(),
-                                FileUtil.getFileExtension(filename, true)));
-                        sequences.add(seq);
+                        // final Sequence seq = new Sequence(MetaDataUtil.createOMEMetadata(
+                        // (IMetadata) lastReader.getMetadataStore(), 0));
+                        //
+                        // // default name loaded from metadata (if available)
+                        // String name;
+                        // if (seq.isDefaultName())
+                        // name = FileUtil.getFileName(filename, false);
+                        // else
+                        // name = seq.getName();
+                        // // then we add channel name information if available
+                        // if (seq.isDefaultChannelName(0))
+                        // name += " (channel " + currentPos.getC() + ")";
+                        // else
+                        // name += "(" + seq.getChannelName(0) + ")";
+                        // seq.setName(name);
+                        //
+                        // seq.setFilename(FileUtil.setExtension(
+                        // FileUtil.setExtension(filename, "") + "_C" + currentPos.getC(),
+                        // FileUtil.getFileExtension(filename, true)));
+                        // sequences.add(seq);
                     }
-                    else if (prevPos.getT() != filePosition.getT())
+                    else if (prevPos.getT() != pos.getT())
                     {
-                        newPos.setT(newPos.getT() + 1);
-                        newPos.setZ(0);
-                        prevPos.setT(filePosition.getT());
+                        currentPos.setT(currentPos.getT() + 1);
+                        currentPos.setZ(0);
+                        prevPos.setT(pos.getT());
                         prevPos.setZ(0);
                     }
-                    else if (prevPos.getZ() != filePosition.getZ())
+                    else if (prevPos.getZ() != pos.getZ())
                     {
-                        newPos.setZ(newPos.getZ() + 1);
-                        prevPos.setZ(filePosition.getZ());
+                        currentPos.setZ(currentPos.getZ() + 1);
+                        prevPos.setZ(pos.getZ());
                     }
                     else
                     {
                         // multi Z image ?
-                        if (newPos.getZ() > 0)
+                        if (currentPos.getZ() > 0)
                         {
                             // increment Z dim
-                            newPos.setZ(newPos.getZ() + 1);
+                            currentPos.setZ(currentPos.getZ() + 1);
                         }
                         else
                         {
                             // else we increment T dim by default
-                            newPos.setT(newPos.getT() + 1);
-                            newPos.setZ(0);
+                            currentPos.setT(currentPos.getT() + 1);
+                            currentPos.setZ(0);
                         }
                     }
 
                     // load image (and update position if needed)
-                    load(file, newPos);
+                    internalLoadSingle(file, currentPos, series, forceNew);
                 }
 
-                if (loaderFrame != null)
+                if (frame != null)
                 {
-                    if (loaderFrame.isCancelRequested())
-                        return;
+                    if (frame.isCancelRequested())
+                        return new ArrayList<Sequence>();
                 }
 
                 // directory load fit in a single sequence ?
@@ -346,139 +267,157 @@ public class Loader
                 {
                     final Sequence seq = sequences.get(0);
                     // get directory without last separator
-                    final String fileDir = FileUtil.getGenericPath(files.get(0).getParentFile().getAbsolutePath());
+                    final String fileDir = FileUtil.getGenericPath(files[0].getParentFile().getAbsolutePath());
 
                     // set name and filename to use directory instead
                     seq.setName(FileUtil.getFileName(fileDir, false));
                     seq.setFilename(fileDir);
-                }
-
-                for (Sequence seq : sequences)
-                {
-                    // load sequence XML data
-                    if (GeneralPreferences.getSequencePersistence())
-                        seq.loadXMLData();
-                    // then display them
-                    if (display)
-                        Icy.getMainInterface().addSequence(seq);
                 }
             }
             catch (Exception e)
             {
                 System.err.println("Error while loading image '" + filename + "' :");
                 IcyExceptionHandler.showErrorMessage(e, true);
-                new FailedAnnounceFrame("Failed to load image (see output console for detail)", 15);
+                if (frame != null)
+                    new FailedAnnounceFrame("Failed to load image (see output console for detail)", 15);
             }
-            finally
+
+            if (GeneralPreferences.getSequencePersistence())
             {
-                if (loaderFrame != null)
-                    loaderFrame.close();
+                // load sequence XML data
+                for (Sequence seq : sequences)
+                {
+                    try
+                    {
+                        seq.loadXMLData();
+                    }
+                    catch (Exception e)
+                    {
+                        System.err.println("Cannot load persistent data from sequence '" + seq.getName() + "' :");
+                        IcyExceptionHandler.showErrorMessage(e, false);
+                    }
+                }
             }
+
+            return sequences;
+        }
+
+        private Sequence createNewSequence(String path, int serie, boolean multiSerie)
+        {
+            // create a new sequence
+            final Sequence result = new Sequence(MetaDataUtil.createOMEMetadata(
+                    (IMetadata) lastReader.getMetadataStore(), serie));
+
+            // default name
+            final String name = FileUtil.getFileName(path, false);
+
+            // default name used --> use better name
+            if (result.isDefaultName())
+            {
+                // multi series image --> add serie info
+                if (multiSerie)
+                    result.setName(name + " - serie " + StringUtil.toString(serie));
+                else
+                    result.setName(name);
+            }
+            else
+            {
+                // multi series image --> adjust name to keep file name info
+                if (multiSerie)
+                    result.setName(name + " - " + result.getName());
+            }
+
+            // set final filename
+            result.setFilename(path);
+
+            return result;
         }
 
         // do the image load
-        private void load(File file, BandPosition position) throws FormatException, IOException
+        private void internalLoadSingle(File file, BandPosition position, int[] series, boolean forceNewSequence)
+                throws FormatException, IOException
         {
             final String path = file.getAbsolutePath();
-            final IFormatReader reader;
 
-            if ((lastUsedReader != null) && lastUsedReader.isThisType(path, true))
-                reader = lastUsedReader;
-            else
-                reader = mainReader.getReader(path);
-
-            // keep trace of last used reader
-            lastUsedReader = reader;
+            // use the same reader only when we want to concatenate images in same sequence
+            if (forceNewSequence || (lastReader == null) || !lastReader.isThisType(path, true))
+                lastReader = mainReader.getReader(path);
 
             // set current filename
-            if (loaderFrame != null)
-                loaderFrame.setFilename(path);
+            if (frame != null)
+                frame.setFilename(path);
 
+            // disable file grouping
+            lastReader.setGroupFiles(false);
+            // we want all metadata
+            lastReader.setOriginalMetadataPopulated(true);
             // prepare meta data store structure
-            reader.setMetadataStore(new OMEXMLMetadataImpl());
+            lastReader.setMetadataStore(new OMEXMLMetadataImpl());
             // load file with LOCI library
-            reader.setId(path);
-
-            // only if series has not yet be defined
-            if (series == null)
-            {
-                if (reader.getSeriesCount() > 1)
-                {
-                    // use invokeNow carefully !
-                    ThreadUtil.invokeNow(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            selectedSeries = new SeriesSelectionDialog(reader).getSelectedSeries();
-                        }
-                    });
-                }
-                else
-                {
-                    selectedSeries = new ArrayList<Integer>();
-                    selectedSeries.add(Integer.valueOf(0));
-                }
-            }
-            else
-                selectedSeries = series;
-
-            // no selected serie --> exit
-            if ((selectedSeries == null) || selectedSeries.isEmpty())
-            {
-                reader.close();
-                return;
-            }
-
-            boolean firstSerie = true;
+            lastReader.setId(path);
 
             try
             {
-                for (Integer s : selectedSeries)
+                selectedSeries = null;
+
+                // only if series has not yet be defined
+                if (series == null)
                 {
-                    final int serieIndex = s.intValue();
+                    if ((lastReader.getSeriesCount() > 1) && !Icy.isHeadLess())
+                    {
+                        // use invokeNow carefully !
+                        ThreadUtil.invokeNow(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                selectedSeries = new SeriesSelectionDialog(lastReader).getSelectedSeries();
+                            }
+                        });
+                    }
+                    else
+                        selectedSeries = new int[] {0};
+                }
+                else
+                    selectedSeries = series;
+
+                // no selected serie --> exit
+                if ((selectedSeries == null) || (selectedSeries.length == 0))
+                    return;
+
+                final boolean multiSerie = selectedSeries.length > 1;
+                boolean firstSerie = true;
+
+                for (int serieIndex : selectedSeries)
+                {
+                    final int numSequence = sequences.size();
                     Sequence seq;
 
-                    reader.setSeries(serieIndex);
+                    lastReader.setSeries(serieIndex);
 
                     // first serie and already have sequence(s) --> concatenate to last one
-                    if (firstSerie && (sequences.size() > 0))
-                        seq = sequences.get(sequences.size() - 1);
+                    if (firstSerie && (!forceNewSequence) && (numSequence > 0))
+                        seq = sequences.get(numSequence - 1);
                     else
                     {
-                        // create and add the first sequence
-                        seq = new Sequence(MetaDataUtil.createOMEMetadata((IMetadata) reader.getMetadataStore(),
-                                serieIndex));
-                        // default name used --> use better name
-                        if (seq.isDefaultName())
-                        {
-                            // multi series image --> add serie info
-                            if (selectedSeries.size() > 1)
-                                seq.setName(FileUtil.getFileName(path, false) + " - serie " + s);
-                            else
-                                seq.setName(FileUtil.getFileName(path, false));
-                        }
-                        // multi series image --> adjust name to keep file name info
-                        else if (selectedSeries.size() > 1)
-                            seq.setName(FileUtil.getFileName(path, false) + " - " + seq.getName());
-                        // set filename
-                        seq.setFilename(path);
+                        // create and add a new sequence
+                        seq = createNewSequence(path, serieIndex, multiSerie);
                         sequences.add(seq);
 
                         // re init position
                         position.set(0, 0, 0);
                     }
 
-                    final int frames = reader.getSizeT();
-                    final int planes = reader.getSizeZ();
+                    final int frames = lastReader.getSizeT();
+                    final int planes = lastReader.getSizeZ();
 
                     // set local length for loader frame
                     final int progressLen = frames * planes;
 
-                    if (loaderFrame != null)
+                    if (frame != null)
                     {
                         if (progressLen > 10)
-                            loaderFrame.setLength(progressLen);
+                            frame.setLength(progressLen);
                     }
 
                     int progress = 0;
@@ -498,16 +437,16 @@ public class Loader
 
                             for (int z = 0; z < planes; z++)
                             {
-                                if (loaderFrame != null)
+                                if (frame != null)
                                 {
                                     // cancel requested ?
-                                    if (loaderFrame.isCancelRequested())
+                                    if (frame.isCancelRequested())
                                         return;
 
                                     // notify progress to loader frame (only if sufficient image
                                     // loaded)
                                     if (progressLen > 10)
-                                        loaderFrame.setPosition(progress++);
+                                        frame.setPosition(progress++);
                                 }
 
                                 // no single image ? increment Z position
@@ -515,7 +454,7 @@ public class Loader
                                     position.setZ(position.getZ() + 1);
 
                                 // get composed image
-                                final IcyBufferedImage icyImage = IcyBufferedImage.createFrom(reader, z, t);
+                                final IcyBufferedImage icyImage = IcyBufferedImage.createFrom(lastReader, z, t);
 
                                 // image format is not compatible with this sequence ?
                                 if (!seq.isCompatible(icyImage))
@@ -525,21 +464,7 @@ public class Loader
                                     seq.endUpdate();
 
                                     // and add a new sequence
-                                    seq = new Sequence(MetaDataUtil.createOMEMetadata(
-                                            (IMetadata) reader.getMetadataStore(), serieIndex));
-                                    // default name used --> use better name
-                                    if (seq.isDefaultName())
-                                    {
-                                        // multi series image --> add serie info
-                                        if (selectedSeries.size() > 1)
-                                            seq.setName(FileUtil.getFileName(path, false) + " - serie " + s);
-                                        else
-                                            seq.setName(FileUtil.getFileName(path, false));
-                                    }
-                                    // multi series image --> adjust name to keep file name info
-                                    else if (selectedSeries.size() > 1)
-                                        seq.setName(FileUtil.getFileName(path, false) + " - " + seq.getName());
-                                    seq.setFilename(path);
+                                    seq = createNewSequence(path, serieIndex, multiSerie);
                                     sequences.add(seq);
                                     seq.beginUpdate();
 
@@ -564,8 +489,76 @@ public class Loader
             }
             finally
             {
-                reader.close();
+                lastReader.close();
             }
+        }
+
+        private void compact(List<FilePosition> positions)
+        {
+            FilePosition pos = positions.get(0);
+            int t = pos.getT();
+            int z = pos.getZ();
+            int c = pos.getC();
+            boolean sameT = true;
+            boolean sameZ = true;
+            boolean sameC = true;
+            boolean tNotFixed = true;
+            boolean zNotFixed = true;
+            boolean cNotFixed = true;
+
+            // remove "empty" dimension
+            for (FilePosition fp : positions)
+            {
+                sameT &= (t == fp.getT());
+                sameZ &= (z == fp.getZ());
+                sameC &= (c == fp.getC());
+                tNotFixed &= !fp.tFixed;
+                zNotFixed &= !fp.zFixed;
+                cNotFixed &= !fp.cFixed;
+            }
+
+            // same T and not fixed
+            if (sameT && tNotFixed)
+            {
+                // different C and not fixed
+                if (!sameC && cNotFixed)
+                {
+                    // move C to T (C becomes 0)
+                    for (FilePosition fp : positions)
+                        fp.set(fp.getC(), fp.getT(), 0);
+
+                    sameT = false;
+                    sameC = true;
+                }
+                // different Z and not fixed
+                else if (!sameZ && zNotFixed)
+                {
+                    // move Z to T (Z becomes 0)
+                    for (FilePosition fp : positions)
+                        fp.set(fp.getZ(), 0, fp.getC());
+
+                    sameT = false;
+                    sameZ = true;
+                }
+            }
+
+            // same Z and not fixed
+            if (sameZ && zNotFixed)
+            {
+                // different C and not fixed
+                if (!sameC && cNotFixed)
+                {
+                    // move C to Z (C becomes 0)
+                    for (FilePosition fp : positions)
+                        fp.set(fp.getT(), fp.getC(), 0);
+
+                    sameZ = false;
+                    sameC = true;
+                }
+            }
+
+            // sort on position
+            Collections.sort(positions);
         }
     }
 
@@ -707,10 +700,13 @@ public class Loader
      */
     public static IcyBufferedImage loadImage(File file, int z, int t) throws FormatException, IOException
     {
-        final ImageReader reader = new ImageReader();
+        final String filePath = file.getAbsolutePath();
+        final IFormatReader reader = getReader(filePath);
 
+        // disable file grouping
+        reader.setGroupFiles(false);
         // set file id
-        reader.setId(file.getAbsolutePath());
+        reader.setId(filePath);
         try
         {
             // return an icy image
@@ -734,10 +730,13 @@ public class Loader
      */
     public static IcyBufferedImage loadImage(File file) throws FormatException, IOException
     {
-        final ImageReader reader = new ImageReader();
+        final String filePath = file.getAbsolutePath();
+        final IFormatReader reader = getReader(filePath);
 
+        // disable file grouping
+        reader.setGroupFiles(false);
         // set file id
-        reader.setId(file.getAbsolutePath());
+        reader.setId(filePath);
         try
         {
             // return an icy image
@@ -757,7 +756,7 @@ public class Loader
      * @param files
      *        List of image file to load.
      * @param series
-     *        Series to load (for multi serie sequence).
+     *        Series to load (for multi serie sequence), set to <code>null</code> for default.
      * @param separate
      *        Force image to be loaded in separate sequence.
      * @param autoOrder
@@ -765,96 +764,82 @@ public class Loader
      * @param showProgress
      *        Show progression of loading process.
      */
+    public static Sequence[] loadSequences(File[] files, int[] series, boolean separate, boolean autoOrder,
+            boolean showProgress)
+    {
+        // detect if this is a complete folder load
+        final boolean directory = (files.length == 1) && files[0].isDirectory();
+        // explode file list
+        final File[] singleFiles = explodeAndClean(files);
+
+        // load sequences and return them
+        return loadSequences(singleFiles, series, separate, autoOrder, directory, false, showProgress);
+    }
+
+    /**
+     * @deprecated Use {@link #loadSequences(File[], int[], boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
     public static List<Sequence> loadSequences(List<File> files, List<Integer> series, boolean separate,
             boolean autoOrder, boolean showProgress)
     {
-        final boolean directory = (files.size() == 1) && files.get(0).isDirectory();
+        final int[] seriesArray = new int[series.size()];
 
-        // explode file list and load internally
-        return internalLoadWait(explodeAndClean(files), series, separate, autoOrder, directory, showProgress);
+        for (int i = 0; i < seriesArray.length; i++)
+            seriesArray[i] = series.get(i).intValue();
+
+        return Arrays.asList(loadSequences(files.toArray(new File[files.size()]), seriesArray, separate, autoOrder,
+                showProgress));
     }
 
     /**
-     * Load a list of sequence from the specified list of file and returns them.<br>
-     * As the function can take sometime you should not call it from the AWT EDT.<br>
-     * 
-     * @param files
-     *        List of image file to load.
-     * @param series
-     *        Series to load (for multi serie sequence).
-     * @param separate
-     *        Force image to be loaded in separate sequence.
-     * @param showProgress
-     *        Show progression of loading process.
+     * @deprecated Use {@link #loadSequences(File[], int[], boolean, boolean, boolean)} instead.
      */
+    @Deprecated
     public static List<Sequence> loadSequences(List<File> files, List<Integer> series, boolean separate,
             boolean showProgress)
     {
-        return loadSequences(files, series, separate, true, true);
+        return loadSequences(files, series, separate, true, showProgress);
     }
 
     /**
-     * Load a list of sequence from the specified list of file and returns them.<br>
-     * As the function can take sometime you should not call it from the AWT EDT.<br>
-     * 
-     * @param files
-     *        List of image file to load.
-     * @param series
-     *        Series to load (for multi serie sequence).
-     * @param separate
-     *        Force image to be loaded in separate sequence.
+     * @deprecated Use {@link #loadSequences(File[], int[], boolean, boolean, boolean)} instead.
      */
+    @Deprecated
     public static List<Sequence> loadSequences(List<File> files, List<Integer> series, boolean separate)
     {
         return loadSequences(files, series, separate, true, true);
     }
 
     /**
-     * Load a list of sequence from the specified list of file and returns them.<br>
-     * As the function can take sometime you should not call it from the AWT EDT.<br>
-     * 
-     * @param files
-     *        List of image file to load.
-     * @param series
-     *        Series to load (for multi serie sequence).
+     * @deprecated Use {@link #loadSequences(File[], int[], boolean, boolean, boolean)} instead.
      */
+    @Deprecated
     public static List<Sequence> loadSequences(List<File> files, List<Integer> series)
     {
         return loadSequences(files, series, false, true, true);
     }
 
     /**
-     * Load a list of sequence from the specified list of file and returns them.<br>
-     * As the function can take sometime you should not call it from the AWT EDT.<br>
-     * 
-     * @param files
-     *        List of image file to load.
-     * @param separate
-     *        Force image to be loaded in separate sequence.
-     * @param showProgress
-     *        Show progression of loading process.
+     * @deprecated Use {@link #loadSequences(File[], int[], boolean, boolean, boolean)} instead.
      */
+    @Deprecated
     public static List<Sequence> loadSequences(List<File> files, boolean separate, boolean showProgress)
     {
         return loadSequences(files, null, separate, true, showProgress);
     }
 
     /**
-     * Load a list of sequence from the specified list of file and returns them.<br>
-     * As the function can take sometime you should not call it from the AWT EDT.<br>
-     * 
-     * @param files
-     *        List of image file to load.
-     * @param separate
-     *        Force image to be loaded in separate sequence.
+     * @deprecated Use {@link #loadSequences(File[], int[], boolean, boolean, boolean)} instead.
      */
+    @Deprecated
     public static List<Sequence> loadSequences(List<File> files, boolean separate)
     {
         return loadSequences(files, null, separate, true, true);
     }
 
     /**
-     * @deprecated Use {@link #loadSequences(List, boolean)} instead.
+     * @deprecated Use {@link #loadSequences(File[], int[], boolean, boolean, boolean)} instead.
      */
     @Deprecated
     public static List<Sequence> loadSequences(List<File> files, boolean separate, boolean display, boolean addToRecent)
@@ -870,32 +855,40 @@ public class Loader
      * @param file
      *        Image file to load.
      * @param series
-     *        Series to load.
+     *        Series to load (for multi serie sequence), set to <code>null</code> for default.
      * @param showProgress
      *        Show progression of loading process.
      */
-    public static List<Sequence> loadSequences(File file, List<Integer> series, boolean showProgress)
+    public static Sequence[] loadSequences(File file, int[] series, boolean showProgress)
     {
-        return loadSequences(CollectionUtil.createArrayList(file), series, false, true, showProgress);
+        return loadSequences(new File[] {file}, series, false, true, showProgress);
     }
 
     /**
-     * Load a list of sequence from the specified multi serie image file returns it.<br>
-     * As the function can take sometime you should not call it from the AWT EDT.<br>
-     * The function can return null if no sequence can be loaded from the specified files.
-     * 
-     * @param file
-     *        Image file to load.
-     * @param series
-     *        Series to load.
+     * @deprecated Use {@link #loadSequences(File, int[], boolean)} instead.
      */
+    @Deprecated
+    public static List<Sequence> loadSequences(File file, List<Integer> series, boolean showProgress)
+    {
+        final int[] seriesArray = new int[series.size()];
+
+        for (int i = 0; i < seriesArray.length; i++)
+            seriesArray[i] = series.get(i).intValue();
+
+        return Arrays.asList(loadSequences(new File[] {file}, seriesArray, false, true, showProgress));
+    }
+
+    /**
+     * @deprecated Use {@link #loadSequences(File, int[], boolean)} instead.
+     */
+    @Deprecated
     public static List<Sequence> loadSequences(File file, List<Integer> series)
     {
         return loadSequences(CollectionUtil.createArrayList(file), series, false, true, true);
     }
 
     /**
-     * @deprecated Use {@link #loadSequences(File, List)} instead.
+     * @deprecated Use {@link #loadSequences(File, int[], boolean)} instead.
      */
     @Deprecated
     public static List<Sequence> loadSequences(File file, List<Integer> series, boolean display, boolean addToRecent)
@@ -910,34 +903,41 @@ public class Loader
      * 
      * @param files
      *        List of image file to load.
+     * @param serie
+     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
      * @param showProgress
      *        Show progression of loading process.
      */
-    public static Sequence loadSequence(List<File> files, boolean showProgress)
+    public static Sequence loadSequence(File[] files, int serie, boolean showProgress)
     {
-        final List<Sequence> result = loadSequences(files, null, false, true, showProgress);
+        final Sequence[] result = loadSequences(files, new int[] {serie}, false, true, showProgress);
 
-        if (result.size() > 0)
-            return result.get(0);
+        if (result.length > 0)
+            return result[0];
 
         return null;
     }
 
     /**
-     * Load a sequence from the specified list of file and returns it.<br>
-     * As the function can take sometime you should not call it from the AWT EDT.<br>
-     * The function can return null if no sequence can be loaded from the specified files.
-     * 
-     * @param files
-     *        List of image file to load.
+     * @deprecated Use {@link #loadSequence(File[], int, boolean)} instead.
      */
+    @Deprecated
+    public static Sequence loadSequence(List<File> files, boolean showProgress)
+    {
+        return loadSequence(files.toArray(new File[files.size()]), 0, showProgress);
+    }
+
+    /**
+     * @deprecated Use {@link #loadSequence(File[], int, boolean)} instead.
+     */
+    @Deprecated
     public static Sequence loadSequence(List<File> files)
     {
         return loadSequence(files, true);
     }
 
     /**
-     * @deprecated Use {@link #loadSequence(List)} instead.
+     * @deprecated Use {@link #loadSequence(File[], int, boolean)} instead.
      */
     @Deprecated
     public static Sequence loadSequence(List<File> files, boolean display, boolean addToRecent)
@@ -948,32 +948,111 @@ public class Loader
     /**
      * Load a sequence from the specified file.<br>
      * As the function can take sometime you should not call it from the AWT EDT.
+     * 
+     * @param file
+     *        Image file to load.
+     * @param serie
+     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
+     * @param showProgress
+     *        Show progression of loading process.
      */
-    public static Sequence loadSequence(File file, boolean showProgress)
+    public static Sequence loadSequence(File file, int serie, boolean showProgress)
     {
-        return loadSequence(CollectionUtil.createArrayList(file), showProgress);
+        return loadSequence(new File[] {file}, serie, showProgress);
     }
 
     /**
-     * Load a sequence from the specified file.<br>
-     * As the function can take sometime you should not call it from the AWT EDT.
+     * @deprecated Use {@link #loadSequence(File, int, boolean)} instead.
      */
+    @Deprecated
+    public static Sequence loadSequence(File file, boolean showProgress)
+    {
+        return loadSequence(file, showProgress);
+    }
+
+    /**
+     * @deprecated Use {@link #loadSequence(File, int, boolean)} instead.
+     */
+    @Deprecated
     public static Sequence loadSequence(File file)
     {
         return loadSequence(CollectionUtil.createArrayList(file), true);
     }
 
     /**
-     * Load the specified image file.<br>
-     * The loading process is asynchronous and the resulting sequence is automatically displayed
-     * when the process complete.
+     * Load the specified image files.<br>
+     * The loading process is asynchronous.<br>
+     * If 'separate' is false the loader try to set image in the same sequence.<br>
+     * If separate is true each image is loaded in a separate sequence.<br>
+     * The resulting sequences are automatically displayed when the process complete.
      * 
-     * @param file
-     *        image file to load
+     * @param files
+     *        list of image file to load
+     * @param separate
+     *        Force image to be loaded in separate sequence
+     * @param autoOrder
+     *        Try to order image in sequence from their filename
+     * @param showProgress
+     *        Show progression in loading process
      */
-    public static void load(File file)
+    public static void load(final File[] files, final boolean separate, final boolean autoOrder,
+            final boolean showProgress)
     {
-        load(CollectionUtil.createArrayList(file), false, true);
+        // asynchronous call
+        ThreadUtil.bgRunWait(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // detect if this is a complete folder load
+                final boolean directory = (files.length == 1) && files[0].isDirectory();
+                // explode file list
+                final File[] singleFiles = explodeAndClean(files);
+
+                // load sequence
+                final Sequence[] sequences = loadSequences(singleFiles, null, separate, autoOrder, directory, true,
+                        showProgress);
+                // and display them
+                for (Sequence seq : sequences)
+                    Icy.getMainInterface().addSequence(seq);
+            }
+        });
+    }
+
+    /**
+     * @deprecated Use {@link #load(File[], boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static void load(List<File> files)
+    {
+        load(files, false, true, true);
+    }
+
+    /**
+     * @deprecated Use {@link #load(File[], boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static void load(List<File> files, boolean separate)
+    {
+        load(files, separate, true, true);
+    }
+
+    /**
+     * @deprecated Use {@link #load(File[], boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static void load(List<File> files, boolean separate, boolean showProgress)
+    {
+        load(files, separate, true, showProgress);
+    }
+
+    /**
+     * @deprecated Use {@link #load(File[], boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static void load(List<File> files, boolean separate, boolean autoOrder, boolean showProgress)
+    {
+        load(files.toArray(new File[files.size()]), separate, autoOrder, showProgress);
     }
 
     /**
@@ -988,152 +1067,23 @@ public class Loader
      */
     public static void load(File file, boolean showProgress)
     {
-        load(CollectionUtil.createArrayList(file), false, showProgress);
+        load(new File[] {file}, false, false, showProgress);
     }
 
     /**
-     * Load the specified image files.<br>
-     * The loading process is asynchronous and by default the loader try to set image in the same
-     * sequence if they have the same type.<br>
-     * The resulting sequences are automatically displayed when the process complete.
-     * 
-     * @param files
-     *        list of image file to load
+     * @deprecated Use {@link #load(File, boolean)} instead.
      */
-    public static void load(List<File> files)
+    @Deprecated
+    public static void load(File file)
     {
-        load(files, false, true, true);
+        load(new File[] {file}, false, false, true);
     }
 
     /**
-     * Load the specified image files.<br>
-     * The loading process is asynchronous.<br>
-     * If 'separate' is false the loader try to set image in the same sequence.<br>
+     * Loads the specified image files and return them as sequences.<br>
+     * If 'separate' is false the loader try to set images in the same sequence.<br>
      * If separate is true each image is loaded in a separate sequence.<br>
-     * The resulting sequences are automatically displayed when the process complete.
-     * 
-     * @param files
-     *        list of image file to load
-     * @param separate
-     *        Force image to be loaded in separate sequence
-     */
-    public static void load(List<File> files, boolean separate)
-    {
-        load(files, separate, true, true);
-    }
-
-    /**
-     * Load the specified image files.<br>
-     * The loading process is asynchronous.<br>
-     * If 'separate' is false the loader try to set image in the same sequence.<br>
-     * If separate is true each image is loaded in a separate sequence.<br>
-     * The resulting sequences are automatically displayed when the process complete.
-     * 
-     * @param files
-     *        list of image file to load
-     * @param separate
-     *        Force image to be loaded in separate sequence
-     * @param showProgress
-     *        Show progression in loading process
-     */
-    public static void load(List<File> files, boolean separate, boolean showProgress)
-    {
-        load(files, separate, true, showProgress);
-    }
-
-    /**
-     * Load the specified image files.<br>
-     * The loading process is asynchronous.<br>
-     * If 'separate' is false the loader try to set image in the same sequence.<br>
-     * If separate is true each image is loaded in a separate sequence.<br>
-     * The resulting sequences are automatically displayed when the process complete.
-     * 
-     * @param files
-     *        list of image file to load
-     * @param separate
-     *        Force image to be loaded in separate sequence
-     * @param autoOrder
-     *        Try to order image in sequence from their filename
-     * @param showProgress
-     *        Show progression in loading process
-     */
-    public static void load(List<File> files, boolean separate, boolean autoOrder, boolean showProgress)
-    {
-        final boolean directory = (files.size() == 1) && files.get(0).isDirectory();
-
-        // explode file list
-        internalLoad(explodeAndClean(files), separate, autoOrder, directory, showProgress);
-    }
-
-    /**
-     * Load (asynchronously) the specified image files.<br>
-     * If 'separate' is false the loader try to set image in the same sequence.<br>
-     * If separate is true each image is loaded in a separate sequence.<br>
-     * The resulting sequences are automatically displayed when the process complete.
-     * 
-     * @param files
-     *        list of image file to load
-     * @param separate
-     *        Force image to be loaded in separate sequence
-     * @param autoOrder
-     *        Try to order image in sequence from their filename
-     * @param directory
-     *        Specify is the source is a single complete directory
-     * @param showProgress
-     *        Show progression in loading process
-     */
-    private static void internalLoad(final List<File> files, final boolean separate, final boolean autoOrder,
-            final boolean directory, final boolean showProgress)
-    {
-        // to avoid blocking call
-        ThreadUtil.bgRunWait(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                final ApplicationMenu mainMenu = Icy.getMainInterface().getApplicationMenu();
-
-                // loading
-                if (separate)
-                {
-                    for (File file : files)
-                    {
-                        // add as separate item to recent file list
-                        if (mainMenu != null)
-                            mainMenu.addRecentLoadedFile(file);
-
-                        // create sequence loader
-                        final SequenceLoader loadingThread = new SequenceLoader(CollectionUtil.createArrayList(file),
-                                null, autoOrder, true, directory, showProgress);
-                        // load file using background processor
-                        ThreadUtil.bgRunWait(loadingThread);
-                    }
-                }
-                else
-                {
-                    if (files.size() > 0)
-                    {
-                        // add as one item to recent file list
-                        if (mainMenu != null)
-                        {
-                            // set only the directory entry
-                            if (directory)
-                                mainMenu.addRecentLoadedFile(files.get(0).getParentFile());
-                            else
-                                mainMenu.addRecentLoadedFile(files);
-                        }
-
-                        // create and run sequence loader
-                        new SequenceLoader(files, null, autoOrder, true, directory, showProgress).run();
-                    }
-                }
-            }
-        });
-    }
-
-    /**
-     * This method load the specified files and return them as Sequence.<br>
-     * As this method can take sometime, you should not call it from the EDT.
+     * As this method can take sometime, you should not call it from the EDT.<br>
      * 
      * @param files
      *        list of image file to load
@@ -1150,57 +1100,90 @@ public class Loader
      * @param showProgress
      *        Show progression in loading process
      */
-    private static List<Sequence> internalLoadWait(final List<File> files, final List<Integer> series,
-            final boolean separate, final boolean autoOrder, final boolean directory, final boolean showProgress)
+    static Sequence[] loadSequences(File[] files, int[] series, boolean separate, boolean autoOrder, boolean directory,
+            boolean addToRecent, boolean showProgress)
     {
-        final ArrayList<Sequence> result = new ArrayList<Sequence>();
+        final List<Sequence> result = new ArrayList<Sequence>();
+        final ApplicationMenu mainMenu;
+        final FileFrame loadingFrame;
 
-        // loading
-        if (separate)
-        {
-            for (File file : files)
-            {
-                // create sequence loader
-                final SequenceLoader t = new SequenceLoader(CollectionUtil.createArrayList(file), series, autoOrder,
-                        false, directory, showProgress);
-                // load sequence
-                t.run();
-                // then add results
-                result.addAll(t.sequences);
-            }
-        }
+        if (addToRecent)
+            mainMenu = Icy.getMainInterface().getApplicationMenu();
         else
+            mainMenu = null;
+        if (showProgress)
+            loadingFrame = new FileFrame("Loading...", null);
+        else
+            loadingFrame = null;
+
+        try
         {
-            if (files.size() > 0)
+            // loading
+            if (separate)
             {
-                // create and run sequence loader
-                final SequenceLoader t = new SequenceLoader(files, series, autoOrder, false, directory, showProgress);
-                // load sequence
-                t.run();
-                // then add results
-                result.addAll(t.sequences);
+                for (File file : files)
+                {
+                    // add as separate item to recent file list
+                    if (mainMenu != null)
+                        mainMenu.addRecentLoadedFile(file);
+
+                    // create sequence loader
+                    final SequenceLoader loader = new SequenceLoader();
+                    // then load sequence
+                    final List<Sequence> sequences = loader.load(new File[] {file}, series, autoOrder, directory,
+                            loadingFrame);
+                    // and add to results
+                    result.addAll(sequences);
+                }
+            }
+            else
+            {
+                if (files.length > 0)
+                {
+                    // add as one item to recent file list
+                    if (mainMenu != null)
+                    {
+                        // set only the directory entry
+                        if (directory)
+                            mainMenu.addRecentLoadedFile(files[0].getParentFile());
+                        else
+                            mainMenu.addRecentLoadedFile(files);
+                    }
+
+                    // create sequence loader
+                    final SequenceLoader loader = new SequenceLoader();
+                    // then load sequence
+                    final List<Sequence> sequences = loader.load(files, series, autoOrder, directory, loadingFrame);
+                    // and add to results
+                    result.addAll(sequences);
+                }
             }
         }
+        finally
+        {
+            if (loadingFrame != null)
+                loadingFrame.close();
+        }
 
-        return result;
+        return result.toArray(new Sequence[result.size()]);
     }
 
-    private static List<File> explodeAndClean(List<File> files)
+    static File[] explodeAndClean(File[] files)
     {
-        final List<File> result = FileUtil.explode(files, true, false);
+        final File[] allFiles = FileUtil.explode(files, null, true, false);
+        final List<File> result = new ArrayList<File>();
 
         // extensions based exclusion
-        for (int i = result.size() - 1; i >= 0; i--)
+        for (int i = 0; i < allFiles.length; i++)
         {
-            final File file = result.get(i);
-            final String path = file.getPath();
+            final File file = allFiles[i];
 
-            // remove well known extensions we can find mixed with image
-            if (canDiscardImageFile(path))
-                result.remove(i);
+            // keep non discarded images
+            if (!canDiscardImageFile(file.getPath()))
+                result.add(file);
         }
 
-        return result;
+        return result.toArray(new File[result.size()]);
     }
 
     private static void setPositionFromNumberString(FilePosition position, String number)

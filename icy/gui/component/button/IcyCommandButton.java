@@ -43,6 +43,7 @@ public class IcyCommandButton extends JCommandButton
     /**
      * internals
      */
+    private boolean internalEnabled;
     private IcyAbstractAction action;
     private final PropertyChangeListener actionPropertyChangeListener;
 
@@ -51,6 +52,7 @@ public class IcyCommandButton extends JCommandButton
         super(title, icon);
 
         action = null;
+        internalEnabled = isEnabled();
 
         actionPropertyChangeListener = new PropertyChangeListener()
         {
@@ -58,7 +60,7 @@ public class IcyCommandButton extends JCommandButton
             public void propertyChange(PropertyChangeEvent evt)
             {
                 if (StringUtil.equals("enabled", evt.getPropertyName()))
-                    repaint();
+                    refreshEnabled();
             }
         };
     }
@@ -142,20 +144,15 @@ public class IcyCommandButton extends JCommandButton
     }
 
     @Override
-    public boolean isEnabled()
-    {
-        return super.isEnabled() && ((action == null) || action.isEnabled());
-    }
-
-    @Override
     public void setEnabled(boolean b)
     {
-        final boolean oldValue = isEnabled();
+        internalEnabled = b;
+        refreshEnabled();
+    }
 
-        super.setEnabled(b);
-
-        if ((oldValue != b) && (action != null))
-            action.setEnabled(b);
+    protected void refreshEnabled()
+    {
+        super.setEnabled(internalEnabled && ((action == null) || action.isEnabled()));
     }
 
     /**
@@ -194,6 +191,8 @@ public class IcyCommandButton extends JCommandButton
                 addActionListener(value);
                 value.addPropertyChangeListener(actionPropertyChangeListener);
             }
+            
+            refreshEnabled();
         }
     }
 

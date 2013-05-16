@@ -30,10 +30,13 @@ import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.roi.ROI2DRectangle;
 import icy.sequence.Sequence;
+import icy.system.SystemUtil;
 import icy.util.ShapeUtil.ShapeOperation;
 import icy.util.XMLUtil;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,8 +54,6 @@ public class RoiActions
     public static final String DEFAULT_ROI_DIR = "roi";
     public static final String DEFAULT_ROI_NAME = "roi.xml";
 
-    public static final String ID_ROI_COPY_CLIPBOARD = "RoiCopyClipboardCommand";
-
     public static IcyAbstractAction loadAction = new IcyAbstractAction("Load", new IcyIcon(ResourceUtil.ICON_OPEN),
             "Load ROI from file")
     {
@@ -62,7 +63,7 @@ public class RoiActions
         private static final long serialVersionUID = 2378084039864016238L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final String filename = LoadDialog.chooseFile("Load roi(s)...", DEFAULT_ROI_DIR, DEFAULT_ROI_NAME);
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
@@ -73,7 +74,7 @@ public class RoiActions
 
                 if (doc != null)
                 {
-                    final List<ROI> rois = ROI.getROIsFromXML(XMLUtil.getRootElement(doc));
+                    final List<ROI> rois = ROI.loadROIsFromXML(XMLUtil.getRootElement(doc));
 
                     sequence.beginUpdate();
                     try
@@ -86,14 +87,18 @@ public class RoiActions
                     {
                         sequence.endUpdate();
                     }
+
+                    return true;
                 }
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -106,15 +111,14 @@ public class RoiActions
         private static final long serialVersionUID = 349358870716619748L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final String filename = SaveDialog.chooseFile("Save roi(s)...", DEFAULT_ROI_DIR, DEFAULT_ROI_NAME);
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
-            final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
 
-            if ((filename != null) && (sequence != null) && (roisPanel != null))
+            if ((filename != null) && (sequence != null))
             {
-                final List<ROI> rois = roisPanel.getSelectedRois();
+                final List<ROI> rois = sequence.getSelectedROIs();
 
                 if (rois.size() > 0)
                 {
@@ -122,22 +126,25 @@ public class RoiActions
 
                     if (doc != null)
                     {
-                        ROI.setROIsToXML(XMLUtil.getRootElement(doc), rois);
+                        ROI.saveROIsToXML(XMLUtil.getRootElement(doc), rois);
                         XMLUtil.saveDocument(doc, filename);
+                        return true;
                     }
                 }
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
     public static IcyAbstractAction copyAction = new IcyAbstractAction("Copy", new IcyIcon(ResourceUtil.ICON_COPY),
-            "Copy selected ROI to clipboard")
+            "Copy selected ROI to clipboard (Ctrl+C)", KeyEvent.VK_C, SystemUtil.getMenuCtrlMask())
     {
         /**
          * 
@@ -145,33 +152,80 @@ public class RoiActions
         private static final long serialVersionUID = -4716027958152503425L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+
+            if (sequence != null)
+            {
+                final List<ROI> rois = sequence.getSelectedROIs();
+
+                if (rois.size() > 0)
+                {
+                    // need to get a copy of the ROI (as it can change meanwhile)
+                    for (int i = 0; i < rois.size(); i++)
+                        rois.set(i, rois.get(i).getCopy());
+
+                    Clipboard.put(Clipboard.TYPE_ROILIST, rois);
+
+                    pasteAction.setEnabled(true);
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            return super.isEnabled() && (sequence != null) && (sequence.getSelectedROIs().size() > 0);
+        }
+    };
+
+    public static IcyAbstractAction copyLinkAction = new IcyAbstractAction("Copy link", new IcyIcon(
+            ResourceUtil.ICON_LINK_COPY), "Copy link of selected ROI to clipboard (Alt+C)", KeyEvent.VK_C,
+            InputEvent.ALT_MASK)
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -4716027958152503425L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
         {
             final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
 
             if (roisPanel != null)
             {
-                // remove previous ROI from clipboard
-                Clipboard.remove(ID_ROI_COPY_CLIPBOARD, false);
-
                 final List<ROI> rois = roisPanel.getSelectedRois();
 
-                for (ROI roi : rois)
-                    Clipboard.put(roi.getCopy(), ID_ROI_COPY_CLIPBOARD);
+                if (rois.size() > 0)
+                {
+                    Clipboard.put(Clipboard.TYPE_ROILINKLIST, rois);
 
-                pasteAction.setEnabled(rois.size() > 0);
+                    pasteLinkAction.setEnabled(true);
+
+                    return true;
+                }
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            return super.isEnabled() && (sequence != null) && (sequence.getSelectedROIs().size() > 0);
         }
     };
 
     public static IcyAbstractAction pasteAction = new IcyAbstractAction("Paste", new IcyIcon(ResourceUtil.ICON_PASTE),
-            "Paste ROI from clipboard")
+            "Paste ROI from clipboard (Ctrl+V)", KeyEvent.VK_C, SystemUtil.getMenuCtrlMask())
     {
         /**
          * 
@@ -179,39 +233,55 @@ public class RoiActions
         private static final long serialVersionUID = 4878585451006567513L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
             {
-                final List<Object> rois = Clipboard.get(ID_ROI_COPY_CLIPBOARD, false);
+                @SuppressWarnings("unchecked")
+                final List<ROI> rois = (List<ROI>) Clipboard.get(Clipboard.TYPE_ROILIST);
 
-                sequence.beginUpdate();
-                try
+                if (rois.size() > 0)
                 {
-                    // add to sequence
-                    for (Object roi : rois)
-                        if (roi instanceof ROI)
-                            sequence.addROI((ROI) roi);
-                }
-                finally
-                {
-                    sequence.endUpdate();
+                    sequence.beginUpdate();
+                    try
+                    {
+                        // unselect all rois
+                        sequence.setSelectedROIs(null);
+
+                        // add copy to sequence (so we can do the paste operation severals time)
+                        for (ROI roi : rois)
+                        {
+                            final ROI newROI = roi.getCopy();
+                            // select the ROI
+                            newROI.setSelected(true, false);
+                            // and add it
+                            sequence.addROI(newROI);
+                        }
+                    }
+                    finally
+                    {
+                        sequence.endUpdate();
+                    }
+
+                    return true;
                 }
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null)
-                    && Clipboard.hasObjects(RoiActions.ID_ROI_COPY_CLIPBOARD, false);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null)
+                    && Clipboard.getType().equals(Clipboard.TYPE_ROILIST);
         }
     };
 
-    public static IcyAbstractAction clearClipboardAction = new IcyAbstractAction("Clear", new IcyIcon(
-            ResourceUtil.ICON_CLIPBOARD_CLEAR), "Remove ROI saved in clipboard")
+    public static IcyAbstractAction pasteLinkAction = new IcyAbstractAction("Paste link", new IcyIcon(
+            ResourceUtil.ICON_LINK_PASTE), "Paste ROI link from clipboard (Alt+V)", KeyEvent.VK_C, InputEvent.ALT_MASK)
     {
         /**
          * 
@@ -219,30 +289,88 @@ public class RoiActions
         private static final long serialVersionUID = 4878585451006567513L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
-            Clipboard.remove(ID_ROI_COPY_CLIPBOARD, false);
-            pasteAction.setEnabled(false);
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+
+            if (sequence != null)
+            {
+                @SuppressWarnings("unchecked")
+                final List<ROI> rois = (List<ROI>) Clipboard.get(Clipboard.TYPE_ROILINKLIST);
+
+                if (rois.size() > 0)
+                {
+                    sequence.beginUpdate();
+                    try
+                    {
+                        // add to sequence
+                        for (ROI roi : rois)
+                            sequence.addROI(roi);
+                    }
+                    finally
+                    {
+                        sequence.endUpdate();
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null)
-                    && Clipboard.hasObjects(RoiActions.ID_ROI_COPY_CLIPBOARD, false);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null)
+                    && Clipboard.getType().equals(Clipboard.TYPE_ROILINKLIST);
         }
     };
+
+    // public static IcyAbstractAction clearClipboardAction = new IcyAbstractAction("Clear", new
+    // IcyIcon(
+    // ResourceUtil.ICON_CLIPBOARD_CLEAR), "Remove ROI saved in clipboard")
+    // {
+    // /**
+    // *
+    // */
+    // private static final long serialVersionUID = 4878585451006567513L;
+    //
+    // @Override
+    // public boolean doAction(ActionEvent e)
+    // {
+    // Clipboard.remove(ID_ROI_COPY_CLIPBOARD, false);
+    // pasteAction.setEnabled(false);
+    // }
+    //
+    // @Override
+    // public boolean isEnabled()
+    // {
+    // return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null)
+    // && Clipboard.hasObjects(RoiActions.ID_ROI_COPY_CLIPBOARD, false);
+    // }
+    // };
 
     public static IcyAbstractAction selectAllAction = new IcyAbstractAction("SelectAll", (IcyIcon) null,
             "Select all ROI(s)")
     {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 3219000949426093919L;
+
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 sequence.setSelectedROIs(sequence.getROIs());
+                return true;
+            }
+
+            return false;
         }
 
         @Override
@@ -250,31 +378,41 @@ public class RoiActions
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
-            return !processing && (sequence != null) && (sequence.getROIs().size() > 0);
+            return super.isEnabled() && (sequence != null) && (sequence.getROIs().size() > 0);
         }
     };
 
     public static IcyAbstractAction unselectAction = new IcyAbstractAction("Unselect", (IcyIcon) null,
-            "Unselect ROI(s)")
+            "Unselect ROI(s)", KeyEvent.VK_ESCAPE)
     {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -6136680076368815566L;
+
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 sequence.setSelectedROI(null, false);
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
     public static IcyAbstractAction deleteAction = new IcyAbstractAction("Delete",
-            new IcyIcon(ResourceUtil.ICON_DELETE), "Delete selected ROI(s)")
+            new IcyIcon(ResourceUtil.ICON_DELETE), "Delete selected ROI(s)", KeyEvent.VK_DELETE)
     {
         /**
          * 
@@ -282,32 +420,42 @@ public class RoiActions
         private static final long serialVersionUID = 9079403002834893222L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
-            final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
 
-            if ((sequence != null) && (roisPanel != null))
+            if (sequence != null)
             {
-                sequence.beginUpdate();
-                try
+                final List<ROI> rois = sequence.getSelectedROIs();
+
+                if (rois.size() > 0)
                 {
-                    // delete selected rois
-                    for (ROI roi : roisPanel.getSelectedRois())
-                        if (roi.isEditable())
-                            sequence.removeROI(roi);
-                }
-                finally
-                {
-                    sequence.endUpdate();
+
+                    sequence.beginUpdate();
+                    try
+                    {
+                        // delete selected rois
+                        for (ROI roi : rois)
+                            if (roi.isEditable())
+                                sequence.removeROI(roi);
+                    }
+                    finally
+                    {
+                        sequence.endUpdate();
+                    }
+
+                    return true;
                 }
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            return super.isEnabled() && (sequence != null) && (sequence.getSelectedROIs().size() > 0);
         }
     };
 
@@ -321,7 +469,7 @@ public class RoiActions
         private static final long serialVersionUID = 6360796066188754099L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
             final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
@@ -338,7 +486,7 @@ public class RoiActions
 
                     // NOT work only on single ROI
                     if (selectedROI2D.length != 1)
-                        return;
+                        return false;
 
                     // we do the NOT operation by subtracting current ROI to sequence bounds ROI
                     final ROI mergeROI = ROI2D.subtract(new ROI2DRectangle(sequence.getBounds()), selectedROI2D[0]);
@@ -351,13 +499,17 @@ public class RoiActions
                 {
                     sequence.endUpdate();
                 }
+
+                return true;
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -370,7 +522,7 @@ public class RoiActions
         private static final long serialVersionUID = 1861052712498233441L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
             final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
@@ -394,13 +546,17 @@ public class RoiActions
                 {
                     sequence.endUpdate();
                 }
+
+                return true;
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -414,7 +570,7 @@ public class RoiActions
         private static final long serialVersionUID = -9103158044679039413L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
             final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
@@ -438,13 +594,17 @@ public class RoiActions
                 {
                     sequence.endUpdate();
                 }
+
+                return true;
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -458,7 +618,7 @@ public class RoiActions
         private static final long serialVersionUID = 1609345474914807703L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
             final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
@@ -482,13 +642,17 @@ public class RoiActions
                 {
                     sequence.endUpdate();
                 }
+
+                return true;
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -502,7 +666,7 @@ public class RoiActions
         private static final long serialVersionUID = 9094641559971542667L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
             final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
@@ -519,7 +683,7 @@ public class RoiActions
 
                     // Subtraction work only when 2 ROI are selected
                     if (selectedROI2D.length != 2)
-                        return;
+                        return false;
 
                     final ROI mergeROI = ROI2D.subtract(selectedROI2D[0], selectedROI2D[1]);
 
@@ -530,13 +694,17 @@ public class RoiActions
                 {
                     sequence.endUpdate();
                 }
+
+                return true;
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 

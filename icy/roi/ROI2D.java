@@ -450,15 +450,16 @@ public abstract class ROI2D extends ROI
                                         e.consume();
                                     else
                                     {
-                                        // else simply delete ROI
-                                        ROI2D.this.remove();
+                                        // else simply remove ROI from sequence
+                                        canvas.getSequence().removeROI(ROI2D.this);
                                         e.consume();
                                     }
                                 }
                                 // roi focused ? --> delete ROI
                                 else if (focused)
                                 {
-                                    ROI2D.this.remove();
+                                    // remove ROI from sequence
+                                    canvas.getSequence().removeROI(ROI2D.this);
                                     e.consume();
                                 }
                             }

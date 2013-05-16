@@ -28,6 +28,7 @@ public class JETColorMap extends IcyColorMap
     public JETColorMap()
     {
         super("JET");
+        
         int index;
 
         beginUpdate();

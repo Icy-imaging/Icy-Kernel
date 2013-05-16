@@ -25,7 +25,6 @@ import icy.resource.icon.IcyIcon;
 import icy.search.SearchEngine;
 import icy.search.SearchEngine.SearchEngineListener;
 import icy.search.SearchResult;
-import icy.system.SystemUtil;
 import icy.util.StringUtil;
 
 import java.awt.AWTEvent;
@@ -270,8 +269,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
         final InputMap imap2 = getInputMap(JComponent.WHEN_FOCUSED);
         final ActionMap amap = getActionMap();
 
-        imap1.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemUtil.getMenuCtrlMask()),
-                GeneralActions.searchAction.getName());
+        imap1.put(GeneralActions.searchAction.getKeyStroke(), GeneralActions.searchAction.getName());
         imap2.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "Cancel");
         imap2.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "MoveDown");
         imap2.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "MoveUp");
@@ -435,7 +433,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
             // draw "Search" if no focus
             Insets insets = getMargin();
             Color fg = getForeground();
-            
+
             g2.setColor(new Color(fg.getRed(), fg.getGreen(), fg.getBlue(), 100));
             g2.drawString("Search", insets.left + 2, h - g2.getFontMetrics().getHeight() / 2 + 2);
         }

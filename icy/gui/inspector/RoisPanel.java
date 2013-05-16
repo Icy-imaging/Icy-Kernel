@@ -20,7 +20,7 @@ package icy.gui.inspector;
 
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
-import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
+import icy.gui.inspector.InspectorPanel.FocusedViewerSequenceListener;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.main.Icy;
@@ -55,7 +55,8 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public class RoisPanel extends InspectorSubPanel implements TextChangeListener, ListSelectionListener
+public class RoisPanel extends JPanel implements FocusedViewerSequenceListener, TextChangeListener,
+        ListSelectionListener
 {
     /**
      * 

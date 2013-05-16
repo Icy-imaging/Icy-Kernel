@@ -27,10 +27,10 @@ import icy.type.DataType;
 import icy.type.collection.array.ArrayUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -221,22 +221,7 @@ public class XMLUtil
 
         // load from URL
         if ((url != null) && URLUtil.isNetworkURL(url))
-        {
-            try
-            {
-                return loadDocument(url, auth, showError);
-            }
-            catch (Exception e)
-            {
-                if (showError)
-                {
-                    System.err.println("XMLUtil.loadDocument('" + path + "') error :");
-                    IcyExceptionHandler.showErrorMessage(e, false);
-                }
-                
-                return null;
-            }
-        }
+            return loadDocument(url, auth, showError);
 
         // try to load from file instead (no authentication needed then)
         return loadDocument(new File(path), showError);
@@ -310,52 +295,37 @@ public class XMLUtil
      */
     public static Document loadDocument(URL url, AuthenticationInfo auth, boolean showError)
     {
-        if ((url == null) || (url.getPath().isEmpty()))
-        {
-            if (showError)
-                System.err.println("XMLUtil.loadDocument('" + url + "') error : empty URL !");
-
-            return null;
-        }
-
         final DocumentBuilder builder = createDocumentBuilder();
 
         if (builder != null)
         {
-            try
-            {
-                // disable cache
-                final URLConnection uc = NetworkUtil.openConnection(url, true, showError);
+            final InputStream ip = NetworkUtil.getInputStream(url, auth, true, showError);
 
-                if (uc != null)
+            if (ip != null)
+            {
+                try
                 {
-                    // set authentication if needed
-                    if ((auth != null) && auth.isEnabled())
-                        NetworkUtil.setAuthentication(uc, auth.getLogin(), auth.getPassword());
-
-                    final InputStream ip = NetworkUtil.getInputStream(uc, showError);
-
-                    if (ip != null)
-                    {
-                        try
-                        {
-                            return builder.parse(ip);
-                        }
-                        finally
-                        {
-                            ip.close();
-                        }
-                    }
+                    return builder.parse(ip);
                 }
-            }
-            catch (Exception e)
-            {
-                if (showError)
+                catch (Exception e)
                 {
                     System.err.println("XMLUtil.loadDocument('" + url + "') error :");
                     IcyExceptionHandler.showErrorMessage(e, false);
                 }
+                finally
+                {
+                    try
+                    {
+                        ip.close();
+                    }
+                    catch (IOException e)
+                    {
+                        // ignore
+                    }
+                }
             }
+            else if (showError)
+                System.err.println("XMLUtil.loadDocument('" + url + "') error :");
         }
 
         return null;

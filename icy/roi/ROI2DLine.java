@@ -18,6 +18,7 @@
  */
 package icy.roi;
 
+import icy.canvas.IcyCanvas;
 import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
 import icy.util.XMLUtil;
@@ -97,7 +98,7 @@ public class ROI2DLine extends ROI2DShape
     {
         this(pt);
     }
-    
+
     public ROI2DLine(Point2D pt)
     {
         this(new Point2D.Double(pt.getX(), pt.getY()), pt);
@@ -160,10 +161,10 @@ public class ROI2DLine extends ROI2DShape
     }
 
     @Override
-    protected boolean removePoint(Anchor2D pt)
+    protected boolean removePoint(IcyCanvas canvas, Anchor2D pt)
     {
         // remove point on this ROI remove the ROI
-        remove();
+        canvas.getSequence().removeROI(this);
         return true;
     }
 

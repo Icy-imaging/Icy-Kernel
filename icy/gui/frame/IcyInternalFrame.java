@@ -64,9 +64,10 @@ public class IcyInternalFrame extends JInternalFrame
         }
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             close(false);
+            return true;
         }
     }
 

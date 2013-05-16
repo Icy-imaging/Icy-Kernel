@@ -20,7 +20,7 @@ package icy.gui.sequence;
 
 import icy.gui.component.button.IcyButton;
 import icy.gui.frame.GenericFrame;
-import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
+import icy.gui.inspector.InspectorPanel.FocusedViewerSequenceListener;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.main.Icy;
@@ -42,12 +42,13 @@ import java.awt.event.ActionListener;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 /**
  * @author Stephane
  */
-public class SequenceInfosPanel extends InspectorSubPanel
+public class SequenceInfosPanel extends JPanel implements FocusedViewerSequenceListener
 {
     /**
      * 
@@ -145,7 +146,6 @@ public class SequenceInfosPanel extends InspectorSubPanel
         gbc_nameField.gridx = 1;
         gbc_nameField.gridy = 0;
         add(nameField, gbc_nameField);
-        nameField.setColumns(14);
 
         pathLabel = new JLabel("Path");
         pathLabel.setToolTipText("Sequence file path");
@@ -168,7 +168,6 @@ public class SequenceInfosPanel extends InspectorSubPanel
         gbc_pathField.gridx = 1;
         gbc_pathField.gridy = 1;
         add(pathField, gbc_pathField);
-        pathField.setColumns(14);
 
         JLabel lbl_dim = new JLabel("Dimension");
         lbl_dim.setToolTipText("Size of X, Y, Z and T dimension");

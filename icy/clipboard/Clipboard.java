@@ -18,15 +18,11 @@
  */
 package icy.clipboard;
 
-import icy.main.Icy;
-import icy.swimmingPool.SwimmingObject;
-import icy.swimmingPool.SwimmingPool;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clipboard facilities (internally use the {@link SwimmingPool} object.
+ * Clipboard object (used for easy internal Copy/Paste operation).
  * 
  * @author Stephane
  */
@@ -39,161 +35,84 @@ public class Clipboard
 
     private final static List<ClipboardListener> listeners = new ArrayList<Clipboard.ClipboardListener>();
 
+    public static final String TYPE_ROILIST = "RoiList";
+    public static final String TYPE_ROILINKLIST = "RoiLinkList";
+    public static final String TYPE_SEQUENCE = "Sequence";
+    // Object should be BufferedImage
+    public static final String TYPE_IMAGE = "Image";
+
+    private static String type = "";
+    private static Object object = null;
+
     /**
-     * Return true if clipboard contains an object with specified id (or id starting with specified
-     * one).
+     * Clears the clipboard.
      */
-    public static boolean hasObjects(String id, boolean startWith)
+    public static void clear()
     {
-        final SwimmingPool sp = Icy.getMainInterface().getSwimmingPool();
-
-        if (sp != null)
-            return sp.hasObjects(id, startWith);
-
-        return false;
+        type = "";
+        object = null;
     }
 
     /**
-     * Return the number of object with specified id (or id starting with specified
-     * one) in the clipboard.
+     * Returns true if the specified type match the current type stored in Clipboard
      */
-    public static int getCount(String id, boolean startWith)
+    public static boolean isType(String t)
     {
-        final SwimmingPool sp = Icy.getMainInterface().getSwimmingPool();
-
-        if (sp != null)
-            return sp.getCount(id, startWith);
-
-        return 0;
+        return type.equals(t);
     }
 
     /**
-     * Return all objects with specified id (or id starting with specified one) from the
-     * clipboard.
+     * Returns the type of stored object.
      */
-    public static List<Object> get(String id, boolean startWith)
+    public static String getType()
     {
-        final ArrayList<Object> result = new ArrayList<Object>();
-        final SwimmingPool sp = Icy.getMainInterface().getSwimmingPool();
-
-        if (sp != null)
-        {
-            final ArrayList<SwimmingObject> sos = sp.getObjects(id, startWith);
-
-            if (sos != null)
-            {
-                for (SwimmingObject so : sos)
-                {
-                    final Object o = so.getObject();
-
-                    if (o != null)
-                        result.add(o);
-                }
-            }
-        }
-
-        return result;
+        return type;
     }
 
     /**
-     * Return and remove all objects with specified id (or id starting with specified one) from the
-     * clipboard.
+     * Returns object actually stored in the clipboard.
      */
-    public static List<Object> pop(String id, boolean startWith)
+    public static Object get()
     {
-        final ArrayList<Object> result = new ArrayList<Object>();
-        final SwimmingPool sp = Icy.getMainInterface().getSwimmingPool();
-
-        if (sp != null)
-        {
-            final ArrayList<SwimmingObject> sos = sp.popObjects(id, startWith);
-
-            for (SwimmingObject so : sos)
-            {
-                final Object o = so.getObject();
-
-                if (o != null)
-                    result.add(o);
-            }
-
-            // notify change
-            if (sos.size() > 0)
-                fireChangedEvent();
-        }
-
-        return result;
+        return object;
     }
 
     /**
-     * Remove all objects with specified id (or id starting with specified one) from the
-     * clipboard.
+     * Returns object actually stored in the clipboard if it has the specified type.<br>
+     * Returns <code>null</code> otherwise.
      */
-    public static void remove(String id, boolean startWith)
+    public static Object get(String type)
     {
-        final SwimmingPool sp = Icy.getMainInterface().getSwimmingPool();
+        if (Clipboard.type.equals(type))
+            return object;
 
-        if (sp != null)
-        {
-            sp.removeAll(id, startWith);
-
-            // notify change
-            fireChangedEvent();
-        }
+        return null;
     }
 
     /**
-     * Put the specified object in the clipboard under the specified id.<br>
-     * Return true if the operation succeed.
+     * Puts an object in the clipboard.<br>
+     * 
+     * @param type
+     *        object type (should not be null).
+     * @param object
+     *        object to save in clipboard.
      */
-    public static boolean put(Object obj, String id)
+    public static void put(String type, Object object)
     {
-        if (obj != null)
-        {
-            final SwimmingPool sp = Icy.getMainInterface().getSwimmingPool();
+        if (type == null)
+            throw new IllegalArgumentException("Clipboard.put(type, object): type cannot be null !");
 
-            if (sp != null)
-            {
-                sp.add(new SwimmingObject(obj, id));
+        Clipboard.type = type;
+        Clipboard.object = object;
 
-                // notify change
-                fireChangedEvent();
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Put objects in the clipboard under the specified id.<br>
-     * Return true if the operation succeed.
-     */
-    public static boolean putAll(List<? extends Object> objects, String id)
-    {
-        final SwimmingPool sp = Icy.getMainInterface().getSwimmingPool();
-
-        if (sp != null)
-        {
-            for (Object obj : objects)
-                if (obj != null)
-                    sp.add(new SwimmingObject(obj, id));
-
-            // notify change
-            if (objects.size() > 0)
-                fireChangedEvent();
-
-            return true;
-        }
-
-        return false;
+        // notify change
+        fireChangedEvent();
     }
 
     public static void addListener(ClipboardListener listener)
     {
         if (!listeners.contains(listener))
             listeners.add(listener);
-
     }
 
     public static void removeListener(ClipboardListener listener)

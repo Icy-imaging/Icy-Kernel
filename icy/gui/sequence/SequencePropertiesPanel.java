@@ -55,7 +55,7 @@ public class SequencePropertiesPanel extends JPanel
     IcyTextField tfPxSizeY;
     private IcyTextField tfPxSizeZ;
     private JComboBox cbPxSizeX;
-    private JComboBox cbPxSizeY;
+    JComboBox cbPxSizeY;
     private JComboBox cbPxSizeZ;
     private IcyTextField tfTimeInterval;
     private JPanel panelChannels;
@@ -289,7 +289,7 @@ public class SequencePropertiesPanel extends JPanel
 
         // get timeInterval in ms
         double timeInterval = sequence.getTimeInterval() * 1000d;
-        TimeUnit unit = UnitUtil.getBestUnit(timeInterval);
+        TimeUnit unit = UnitUtil.getBestTimeUnit(timeInterval);
 
         switch (unit)
         {
@@ -361,16 +361,16 @@ public class SequencePropertiesPanel extends JPanel
     {
         if (checkLinked.isSelected())
             return StringUtil.parseDouble(tfPxSizeX.getText(), 1d);
-        else
-            return StringUtil.parseDouble(tfPxSizeY.getText(), 1d);
+
+        return StringUtil.parseDouble(tfPxSizeY.getText(), 1d);
     }
 
     public UnitPrefix getPixelSizeYUnit()
     {
         if (checkLinked.isSelected())
             return UnitPrefix.values()[cbPxSizeX.getSelectedIndex()];
-        else
-            return UnitPrefix.values()[cbPxSizeY.getSelectedIndex()];
+
+        return UnitPrefix.values()[cbPxSizeY.getSelectedIndex()];
     }
 
     public double getPixelSizeZFieldValue()

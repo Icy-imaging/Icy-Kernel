@@ -269,7 +269,7 @@ public class Updater
      */
     public static boolean hasUpdateFiles()
     {
-        final ArrayList<String> paths = FileUtil.getFileListAsString(UPDATE_DIRECTORY, true, true);
+        final String[] paths = FileUtil.getFiles(UPDATE_DIRECTORY, null, true, false, false);
 
         for (String path : paths)
         {
@@ -453,7 +453,7 @@ public class Updater
     {
         final int len = BACKUP_DIRECTORY.length();
         // get files only (no directory)
-        final ArrayList<String> paths = FileUtil.getFileListAsString(BACKUP_DIRECTORY, true, false, false);
+        final String[] paths = FileUtil.getFiles(BACKUP_DIRECTORY, null, true, false, false);
         boolean result = true;
 
         for (String backupPath : paths)

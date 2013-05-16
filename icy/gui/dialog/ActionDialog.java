@@ -25,6 +25,8 @@ import java.awt.BorderLayout;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -54,6 +56,7 @@ public class ActionDialog extends JDialog implements ActionListener
 
     private ActionListener okAction;
     private boolean closeAfterAction;
+    boolean closed;
 
     /**
      * @wbp.parser.constructor
@@ -68,6 +71,8 @@ public class ActionDialog extends JDialog implements ActionListener
         super(owner, title, true);
 
         setIconImages(ResourceUtil.getIcyIconImages());
+        // so we always pass in the closed event
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         // GUI
         mainPanel = new JPanel();
@@ -97,8 +102,33 @@ public class ActionDialog extends JDialog implements ActionListener
         okBtn.addActionListener(this);
         cancelBtn.addActionListener(this);
 
+        addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowClosed(WindowEvent e)
+            {
+                closed = true;
+
+                onClosed();
+            }
+        });
+
         okAction = null;
         closeAfterAction = true;
+        closed = false;
+    }
+
+    /**
+     * Easy "onclose" process
+     */
+    protected void onClosed()
+    {
+        //
+    }
+
+    public boolean isClosed()
+    {
+        return closed;
     }
 
     /**

@@ -18,6 +18,7 @@
  */
 package icy.roi;
 
+import icy.canvas.IcyCanvas;
 import icy.painter.Anchor2D;
 import icy.painter.RectAnchor2D;
 import icy.util.XMLUtil;
@@ -142,7 +143,7 @@ public abstract class ROI2DRectShape extends ROI2DShape
     }
 
     @Override
-    protected boolean removePoint(Anchor2D pt)
+    protected boolean removePoint(IcyCanvas canvas, Anchor2D pt)
     {
         // this ROI doesn't support point remove
         return false;

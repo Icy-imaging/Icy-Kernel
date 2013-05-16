@@ -57,9 +57,10 @@ public class PreferencesActions
         private static final long serialVersionUID = 1536708346834850905L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(GeneralPreferencePanel.NODE_NAME);
+            return true;
         }
     };
 
@@ -73,9 +74,10 @@ public class PreferencesActions
         private static final long serialVersionUID = 1536708346834850905L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(GeneralPreferencePanel.NODE_NAME);
+            return true;
         }
     };
 
@@ -89,9 +91,10 @@ public class PreferencesActions
         private static final long serialVersionUID = 5758147926869943436L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(CanvasPreferencePanel.NODE_NAME);
+            return true;
         }
     };
 
@@ -105,9 +108,10 @@ public class PreferencesActions
         private static final long serialVersionUID = 7557101963461320397L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(ChatPreferencePanel.NODE_NAME);
+            return true;
         }
     };
 
@@ -121,9 +125,10 @@ public class PreferencesActions
         private static final long serialVersionUID = -8056321522618950702L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(NetworkPreferencePanel.NODE_NAME);
+            return true;
         }
     };
 
@@ -137,9 +142,10 @@ public class PreferencesActions
         private static final long serialVersionUID = 1703582841917110419L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(PluginPreferencePanel.NODE_NAME);
+            return true;
         }
     };
 
@@ -153,9 +159,10 @@ public class PreferencesActions
         private static final long serialVersionUID = -8604088116271591026L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(PluginLocalPreferencePanel.NODE_NAME);
+            return true;
         }
     };
 
@@ -168,9 +175,10 @@ public class PreferencesActions
         private static final long serialVersionUID = -4583665324845708263L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(PluginOnlinePreferencePanel.NODE_NAME);
+            return true;
         }
     };
 
@@ -184,9 +192,10 @@ public class PreferencesActions
         private static final long serialVersionUID = 3354219389334167804L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(PluginStartupPreferencePanel.NODE_NAME);
+            return true;
         }
     };
 
@@ -200,9 +209,10 @@ public class PreferencesActions
         private static final long serialVersionUID = -8186738344041266273L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(RepositoryPreferencePanel.NODE_NAME);
+            return true;
         }
     };
 
@@ -215,9 +225,10 @@ public class PreferencesActions
         private static final long serialVersionUID = -7568519363461531069L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(WorkspacePreferencePanel.NODE_NAME);
+            return true;
         }
     };
 
@@ -231,9 +242,10 @@ public class PreferencesActions
         private static final long serialVersionUID = 5843627734779598519L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(WorkspaceLocalPreferencePanel.NODE_NAME);
+            return true;
         }
     };
     public static IcyAbstractAction onlineWorkspacePreferencesAction = new IcyAbstractAction("Online workspace",
@@ -246,9 +258,10 @@ public class PreferencesActions
         private static final long serialVersionUID = 4739347012951517215L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new PreferenceFrame(WorkspaceOnlinePreferencePanel.NODE_NAME);
+            return true;
         }
     };
 

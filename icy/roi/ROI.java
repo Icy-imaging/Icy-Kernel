@@ -319,7 +319,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      *        XML node defining the ROI list
      * @return a list of ROI
      */
-    public static List<ROI> getROIsFromXML(Node node)
+    public static List<ROI> loadROIsFromXML(Node node)
     {
         final ArrayList<ROI> result = new ArrayList<ROI>();
 
@@ -344,6 +344,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
+     * @deprecated Use {@link #loadROIsFromXML(Node)} instead.
+     */
+    @Deprecated
+    public static List<ROI> getROIsFromXML(Node node)
+    {
+        return loadROIsFromXML(node);
+    }
+
+    /**
      * Set a list of ROI to a XML node.
      * 
      * @param node
@@ -351,7 +360,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * @param rois
      *        the list of ROI to store in the XML node
      */
-    public static void setROIsToXML(Node node, List<ROI> rois)
+    public static void saveROIsToXML(Node node, List<ROI> rois)
     {
         if (node != null)
         {
@@ -366,6 +375,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 }
             }
         }
+    }
+
+    /**
+     * @deprecated Use {@link #saveROIsToXML(Node, List)} instead
+     */
+    @Deprecated
+    public static void setROIsFromXML(Node node, List<ROI> rois)
+    {
+        saveROIsToXML(node, rois);
     }
 
     /**
@@ -712,7 +730,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     @Deprecated
     public void detachFromAll(boolean canUndo)
     {
-        remove(canUndo);
+        remove(canUndo, 0);
     }
 
     /**
@@ -721,7 +739,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     @Deprecated
     public void detachFromAll()
     {
-        remove(false);
+        remove(false, 0);
     }
 
     /**
@@ -754,7 +772,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Remove this ROI (detach from all sequence)
      */
-    public void remove(boolean canUndo)
+    public void remove(boolean canUndo, int i)
     {
         final ArrayList<Sequence> sequences = Icy.getMainInterface().getSequencesContaining(this);
 
@@ -767,7 +785,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public void remove()
     {
-        remove(true);
+        remove(true, 0);
     }
 
     /**
@@ -776,7 +794,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     @Deprecated
     public void delete(boolean canUndo)
     {
-        remove(canUndo);
+        remove(canUndo, 0);
     }
 
     /**
@@ -785,7 +803,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     @Deprecated
     public void delete()
     {
-        remove(true);
+        remove(true, 0);
     }
 
     public String getClassName()
@@ -1044,8 +1062,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Tests if a specified 5D point is inside the ROI.
      * 
-     * @return <code>true</code> if the specified <code>Point5D</code> is inside the boundary of the <code>ROI</code>;
-     *         <code>false</code> otherwise.
+     * @return <code>true</code> if the specified <code>Point5D</code> is inside the boundary of the
+     *         <code>ROI</code>; <code>false</code> otherwise.
      */
     public abstract boolean contains(double x, double y, double z, double t, double c);
 
@@ -1054,8 +1072,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * 
      * @param p
      *        the specified <code>Point5D</code> to be tested
-     * @return <code>true</code> if the specified <code>Point2D</code> is inside the boundary of the <code>ROI</code>;
-     *         <code>false</code> otherwise.
+     * @return <code>true</code> if the specified <code>Point2D</code> is inside the boundary of the
+     *         <code>ROI</code>; <code>false</code> otherwise.
      */
     public boolean contains(Point5D p)
     {
@@ -1068,14 +1086,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * point is contained in both the interior of the <code>ROI</code> and the specified rectangular
      * area.
      * <p>
-     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively return {@code true}
-     * when:
+     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively
+     * return {@code true} when:
      * <ul>
-     * <li>there is a high probability that the rectangular area and the <code>ROI</code> intersect, but
+     * <li>there is a high probability that the rectangular area and the <code>ROI</code> intersect,
+     * but
      * <li>the calculations to accurately determine this intersection are prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code true} even though the rectangular area does
-     * not intersect the {@code ROI}.
+     * This means that for some {@code ROIs} this method might return {@code true} even though the
+     * rectangular area does not intersect the {@code ROI}.
      * 
      * @return <code>true</code> if the interior of the <code>ROI</code> and the interior of the
      *         rectangular area intersect, or are both highly likely to intersect and intersection
@@ -1090,14 +1109,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * point is contained in both the interior of the <code>ROI</code> and the specified rectangular
      * area.
      * <p>
-     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively return {@code true}
-     * when:
+     * The {@code ROI.intersects()} method allows a {@code ROI} implementation to conservatively
+     * return {@code true} when:
      * <ul>
-     * <li>there is a high probability that the rectangular area and the <code>ROI</code> intersect, but
+     * <li>there is a high probability that the rectangular area and the <code>ROI</code> intersect,
+     * but
      * <li>the calculations to accurately determine this intersection are prohibitively expensive.
      * </ul>
-     * This means that for some {@code ROIs} this method might return {@code true} even though the rectangular area does
-     * not intersect the {@code ROI}.
+     * This means that for some {@code ROIs} this method might return {@code true} even though the
+     * rectangular area does not intersect the {@code ROI}.
      * 
      * @return <code>true</code> if the interior of the <code>ROI</code> and the interior of the
      *         rectangular area intersect, or are both highly likely to intersect and intersection

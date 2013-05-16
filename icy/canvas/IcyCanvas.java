@@ -25,8 +25,9 @@ import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.common.listener.ProgressListener;
-import icy.gui.main.MainFrame;
+import icy.gui.menu.action.GeneralActions;
 import icy.gui.menu.action.RoiActions;
+import icy.gui.menu.action.WindowActions;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.MouseImageInfosPanel;
 import icy.gui.viewer.TNavigationPanel;
@@ -2893,12 +2894,12 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
         if (!e.isConsumed())
         {
-            final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+            final int modifiers = e.getModifiers();
 
             switch (e.getKeyCode())
             {
                 case KeyEvent.VK_0:
-                    if (EventUtil.isShiftDown(e))
+                    if (EventUtil.isShiftDown(e, true))
                         Icy.getMainInterface().setGlobalViewSyncId(0);
                     else
                         setSyncId(0);
@@ -2906,7 +2907,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                     break;
 
                 case KeyEvent.VK_1:
-                    if (EventUtil.isShiftDown(e))
+                    if (EventUtil.isShiftDown(e, true))
                         Icy.getMainInterface().setGlobalViewSyncId(1);
                     // already set, switch it off
                     else if (getSyncId() == 1)
@@ -2917,7 +2918,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                     break;
 
                 case KeyEvent.VK_2:
-                    if (EventUtil.isShiftDown(e))
+                    if (EventUtil.isShiftDown(e, true))
                         Icy.getMainInterface().setGlobalViewSyncId(2);
                     // already set, switch it off
                     else if (getSyncId() == 2)
@@ -2928,7 +2929,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                     break;
 
                 case KeyEvent.VK_3:
-                    if (EventUtil.isShiftDown(e))
+                    if (EventUtil.isShiftDown(e, true))
                         Icy.getMainInterface().setGlobalViewSyncId(3);
                     // already set, switch it off
                     else if (getSyncId() == 3)
@@ -2939,7 +2940,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                     break;
 
                 case KeyEvent.VK_4:
-                    if (EventUtil.isShiftDown(e))
+                    if (EventUtil.isShiftDown(e, true))
                         Icy.getMainInterface().setGlobalViewSyncId(4);
                     // already set, switch it off
                     else if (getSyncId() == 4)
@@ -2950,70 +2951,100 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                     break;
 
                 case KeyEvent.VK_G:
-                    if (EventUtil.isShiftDown(e))
+                    if (EventUtil.isShiftDown(e, true))
                     {
-                        if (mainFrame != null)
+                        if (WindowActions.gridTileAction.isEnabled())
                         {
-                            mainFrame.organizeTile(MainFrame.TILE_GRID);
+                            WindowActions.gridTileAction.execute();
                             e.consume();
                         }
                     }
                     break;
 
                 case KeyEvent.VK_H:
-                    if (EventUtil.isShiftDown(e))
+                    if (EventUtil.isShiftDown(e, true))
                     {
-                        if (mainFrame != null)
+                        if (WindowActions.horizontalTileAction.isEnabled())
                         {
-                            mainFrame.organizeTile(MainFrame.TILE_HORIZONTAL);
+                            WindowActions.horizontalTileAction.execute();
                             e.consume();
                         }
                     }
                     break;
 
                 case KeyEvent.VK_A:
-                    if (EventUtil.isControlDown(e))
+                    if (EventUtil.isMenuControlDown(e, true))
                     {
                         if (RoiActions.selectAllAction.isEnabled())
                         {
-                            RoiActions.selectAllAction.doAction();
+                            RoiActions.selectAllAction.execute();
                             e.consume();
                         }
                     }
                     break;
 
                 case KeyEvent.VK_V:
-                    if (EventUtil.isShiftDown(e))
+                    if (EventUtil.isShiftDown(e, true))
                     {
-                        if (mainFrame != null)
+                        if (WindowActions.verticalTileAction.isEnabled())
                         {
-                            mainFrame.organizeTile(MainFrame.TILE_VERTICAL);
+                            WindowActions.verticalTileAction.execute();
                             e.consume();
                         }
                     }
-                    if (EventUtil.isControlDown(e))
+                    else if (EventUtil.isMenuControlDown(e, true))
                     {
-                        if (RoiActions.pasteAction.isEnabled())
+                        if (GeneralActions.pasteImageAction.isEnabled())
                         {
-                            RoiActions.pasteAction.doAction();
+                            GeneralActions.pasteImageAction.execute();
+                            e.consume();
+                        }
+                        else if (RoiActions.pasteAction.isEnabled())
+                        {
+                            RoiActions.pasteAction.execute();
+                            e.consume();
+                        }
+                    }
+                    else if (EventUtil.isAltDown(e, true))
+                    {
+                        if (RoiActions.pasteLinkAction.isEnabled())
+                        {
+                            RoiActions.pasteLinkAction.execute();
                             e.consume();
                         }
                     }
                     break;
 
                 case KeyEvent.VK_C:
-                    if (EventUtil.isControlDown(e))
+                    if (EventUtil.isMenuControlDown(e, true))
                     {
                         if (RoiActions.copyAction.isEnabled())
                         {
-                            RoiActions.copyAction.doAction();
+                            // copy them to icy clipboard
+                            RoiActions.copyAction.execute();
+                            // remove content from system clipboard
+                            // clipboard.setContents(new EmptyTransferable(), this);
+                            e.consume();
+                        }
+                        else if (GeneralActions.copyImageAction.isEnabled())
+                        {
+                            // copy image to system clipboard
+                            GeneralActions.copyImageAction.execute();
+                            e.consume();
+                        }
+                    }
+                    else if (EventUtil.isAltDown(e, true))
+                    {
+                        if (RoiActions.copyLinkAction.isEnabled())
+                        {
+                            // copy link of selected ROI to clipboard
+                            RoiActions.copyLinkAction.execute();
                             e.consume();
                         }
                     }
                     break;
             }
         }
-
     }
 
     @Override

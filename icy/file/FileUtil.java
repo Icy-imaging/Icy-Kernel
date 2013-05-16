@@ -726,14 +726,34 @@ public class FileUtil
     /**
      * Transform all directory entries by their sub files list
      */
+    public static File[] explode(File[] files, FileFilter filter, boolean recursive, boolean wantHidden)
+    {
+        final List<File> result = new ArrayList<File>();
+
+        for (File file : files)
+        {
+            if (file.isDirectory())
+                getFiles(file, filter, recursive, true, false, wantHidden, result);
+            else
+                result.add(file);
+        }
+
+        return result.toArray(new File[result.size()]);
+    }
+
+    /**
+     * @deprecated Use {@link #explode(File[], FileFilter, boolean, boolean)} instead
+     */
+    @Deprecated
     public static ArrayList<File> explode(List<File> files, boolean recursive, boolean wantHidden)
     {
         return explode(files, null, recursive, wantHidden);
     }
 
     /**
-     * Transform all directory entries by their sub files list
+     * @deprecated Use {@link #explode(File[], FileFilter, boolean, boolean)} instead
      */
+    @Deprecated
     public static ArrayList<File> explode(List<File> files, FileFilter filter, boolean recursive, boolean wantHidden)
     {
         final ArrayList<File> result = new ArrayList<File>();
@@ -741,7 +761,7 @@ public class FileUtil
         for (File file : files)
         {
             if (file.isDirectory())
-                getFileList(file, filter, recursive, false, wantHidden, result);
+                getFiles(file, filter, recursive, true, false, wantHidden, result);
             else
                 result.add(file);
         }
@@ -752,75 +772,8 @@ public class FileUtil
     /**
      * Get file list from specified directory applying the specified parameters
      */
-    public static ArrayList<String> getFileListAsString(String path, boolean recursive, boolean wantDirectory,
-            boolean wantHidden)
-    {
-        return getFileListAsString(path, null, recursive, wantDirectory, wantHidden);
-    }
-
-    /**
-     * Get file list from specified directory applying the specified parameters
-     */
-    public static ArrayList<String> getFileListAsString(String path, FileFilter filter, boolean recursive,
-            boolean wantDirectory, boolean wantHidden)
-    {
-        final ArrayList<File> files = getFileList(path, filter, recursive, wantDirectory, wantHidden);
-
-        final ArrayList<String> result = new ArrayList<String>();
-
-        for (File file : files)
-            result.add(file.getPath());
-
-        return result;
-    }
-
-    /**
-     * Get file list from specified directory applying the specified parameters
-     */
-    public static ArrayList<File> getFileList(String path, boolean recursive, boolean wantDirectory, boolean wantHidden)
-    {
-        return getFileList(new File(getGenericPath(path)), null, recursive, wantDirectory, wantHidden);
-    }
-
-    /**
-     * Get file list from specified directory applying the specified parameters
-     */
-    public static ArrayList<File> getFileList(String path, FileFilter filter, boolean recursive, boolean wantDirectory,
-            boolean wantHidden)
-    {
-        final ArrayList<File> result = new ArrayList<File>();
-
-        getFileList(new File(getGenericPath(path)), filter, recursive, wantDirectory, wantHidden, result);
-
-        return result;
-    }
-
-    /**
-     * Get file list from specified directory applying the specified parameters
-     */
-    public static ArrayList<File> getFileList(File file, boolean recursive, boolean wantDirectory, boolean wantHidden)
-    {
-        return getFileList(file, null, recursive, wantDirectory, wantHidden);
-    }
-
-    /**
-     * Get file list from specified directory applying the specified parameters
-     */
-    public static ArrayList<File> getFileList(File file, FileFilter filter, boolean recursive, boolean wantDirectory,
-            boolean wantHidden)
-    {
-        final ArrayList<File> result = new ArrayList<File>();
-
-        getFileList(file, filter, recursive, wantDirectory, wantHidden, result);
-
-        return result;
-    }
-
-    /**
-     * Get file list from specified directory applying the specified parameters
-     */
-    private static void getFileList(File f, FileFilter filter, boolean recursive, boolean wantDirectory,
-            boolean wantHidden, ArrayList<File> list)
+    private static void getFiles(File f, FileFilter filter, boolean recursive, boolean wantFile, boolean wantDirectory,
+            boolean wantHidden, List<File> list)
     {
         final File[] files = f.listFiles(filter);
 
@@ -835,9 +788,9 @@ public class FileUtil
                         if (wantDirectory)
                             list.add(file);
                         if (recursive)
-                            getFileList(file, filter, true, wantDirectory, wantHidden, list);
+                            getFiles(file, filter, recursive, wantFile, wantDirectory, wantHidden, list);
                     }
-                    else
+                    else if (wantFile)
                         list.add(file);
                 }
             }
@@ -845,18 +798,157 @@ public class FileUtil
     }
 
     /**
-     * Get file list from specified directory applying the specified parameters<br>
-     * This function does not return sub directory.
+     * Get directory list from specified directory applying the specified parameters
      */
-    public static ArrayList<String> getFileListAsString(String path, boolean recursive, boolean wantHidden)
+    public static File[] getDirectories(File file, FileFilter filter, boolean recursive, boolean wantHidden)
     {
-        return getFileListAsString(path, recursive, false, wantHidden);
+        final List<File> result = new ArrayList<File>();
+
+        getFiles(file, filter, recursive, false, true, wantHidden, result);
+
+        return result.toArray(new File[result.size()]);
     }
 
     /**
-     * Get file list from specified directory applying the specified parameters<br>
-     * This function does not return sub directory.
+     * Get file list from specified directory applying the specified parameters
      */
+    public static File[] getFiles(File file, FileFilter filter, boolean recursive, boolean wantDirectory,
+            boolean wantHidden)
+    {
+        final List<File> result = new ArrayList<File>();
+
+        getFiles(file, filter, recursive, true, wantDirectory, wantHidden, result);
+
+        return result.toArray(new File[result.size()]);
+    }
+
+    /**
+     * Get file list from specified directory applying the specified parameters (String form).
+     */
+    public static String[] getFiles(String path, FileFilter filter, boolean recursive, boolean wantDirectory,
+            boolean wantHidden)
+    {
+        final File[] files = getFiles(new File(getGenericPath(path)), filter, recursive, wantDirectory, wantHidden);
+        final String[] result = new String[files.length];
+
+        for (int i = 0; i < files.length; i++)
+            result[i] = files[i].getPath();
+
+        return result;
+    }
+
+    /**
+     * @deprecated Use {@link #getFiles(File, FileFilter, boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static ArrayList<File> getFileList(String path, FileFilter filter, boolean recursive, boolean wantDirectory,
+            boolean wantHidden)
+    {
+        final ArrayList<File> result = new ArrayList<File>();
+
+        getFiles(new File(getGenericPath(path)), filter, recursive, true, wantDirectory, wantHidden, result);
+
+        return result;
+    }
+
+    /**
+     * @deprecated Use {@link #getFiles(File, FileFilter, boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static ArrayList<File> getFileList(File file, FileFilter filter, boolean recursive, boolean wantDirectory,
+            boolean wantHidden)
+    {
+        final ArrayList<File> result = new ArrayList<File>();
+
+        getFiles(file, filter, recursive, true, wantDirectory, wantHidden, result);
+
+        return result;
+    }
+
+    /**
+     * @deprecated Use {@link #getFiles(File, FileFilter, boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static ArrayList<File> getFileList(String path, FileFilter filter, boolean recursive, boolean wantHidden)
+    {
+        return getFileList(path, filter, recursive, false, wantHidden);
+    }
+
+    /**
+     * @deprecated Use {@link #getFiles(File, FileFilter, boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static ArrayList<File> getFileList(File file, FileFilter filter, boolean recursive, boolean wantHidden)
+    {
+        return getFileList(file, filter, recursive, false, wantHidden);
+    }
+
+    /**
+     * @deprecated Use {@link #getFiles(File, FileFilter, boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static ArrayList<File> getFileList(String path, boolean recursive, boolean wantDirectory, boolean wantHidden)
+    {
+        return getFileList(new File(getGenericPath(path)), null, recursive, wantDirectory, wantHidden);
+    }
+
+    /**
+     * @deprecated Use {@link #getFiles(File, FileFilter, boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static ArrayList<File> getFileList(File file, boolean recursive, boolean wantDirectory, boolean wantHidden)
+    {
+        return getFileList(file, null, recursive, wantDirectory, wantHidden);
+    }
+
+    /**
+     * @deprecated Use {@link #getFiles(File, FileFilter, boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static ArrayList<File> getFileList(File file, boolean recursive, boolean wantHidden)
+    {
+        return getFileList(file, recursive, false, wantHidden);
+    }
+
+    /**
+     * @deprecated Use {@link #getFiles(File, FileFilter, boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static ArrayList<File> getFileList(String path, boolean recursive, boolean wantHidden)
+    {
+        return getFileList(path, recursive, false, wantHidden);
+    }
+
+    /**
+     * @deprecated Use {@link #getFiles(String, FileFilter, boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static ArrayList<String> getFileListAsString(String path, FileFilter filter, boolean recursive,
+            boolean wantDirectory, boolean wantHidden)
+    {
+        final ArrayList<File> files = getFileList(path, filter, recursive, wantDirectory, wantHidden);
+        final ArrayList<String> result = new ArrayList<String>();
+
+        for (File file : files)
+            result.add(file.getPath());
+
+        return result;
+    }
+
+    /**
+     * @deprecated Use {@link #getFiles(String, FileFilter, boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static ArrayList<String> getFileListAsString(String path, boolean recursive, boolean wantDirectory,
+            boolean wantHidden)
+    {
+        return getFileListAsString(path, null, recursive, wantDirectory, wantHidden);
+    }
+
+    /**
+     * @deprecated Use {@link #getFiles(String, FileFilter, boolean, boolean, boolean)} instead.
+     */
+    @Deprecated
     public static ArrayList<String> getFileListAsString(String path, FileFilter filter, boolean recursive,
             boolean wantHidden)
     {
@@ -864,39 +956,12 @@ public class FileUtil
     }
 
     /**
-     * Get file list from specified directory applying the specified parameters.<br>
-     * This function does not return sub directory.
+     * @deprecated Use {@link #getFiles(String, FileFilter, boolean, boolean, boolean)} instead.
      */
-    public static ArrayList<File> getFileList(String path, boolean recursive, boolean wantHidden)
+    @Deprecated
+    public static ArrayList<String> getFileListAsString(String path, boolean recursive, boolean wantHidden)
     {
-        return getFileList(path, recursive, false, wantHidden);
-    }
-
-    /**
-     * Get file list from specified directory applying the specified parameters<br>
-     * This function does not return sub directory.
-     */
-    public static ArrayList<File> getFileList(String path, FileFilter filter, boolean recursive, boolean wantHidden)
-    {
-        return getFileList(path, filter, recursive, false, wantHidden);
-    }
-
-    /**
-     * Get file list from specified directory applying the specified parameters<br>
-     * This function does not return sub directory.
-     */
-    public static ArrayList<File> getFileList(File file, boolean recursive, boolean wantHidden)
-    {
-        return getFileList(file, recursive, false, wantHidden);
-    }
-
-    /**
-     * Get file list from specified directory applying the specified parameters<br>
-     * This function does not return sub directory.
-     */
-    public static ArrayList<File> getFileList(File file, FileFilter filter, boolean recursive, boolean wantHidden)
-    {
-        return getFileList(file, filter, recursive, false, wantHidden);
+        return getFileListAsString(path, recursive, false, wantHidden);
     }
 
     /**

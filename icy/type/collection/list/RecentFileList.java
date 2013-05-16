@@ -23,8 +23,7 @@ import icy.preferences.XMLPreferences;
 import icy.util.StringUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author stephane
@@ -45,54 +44,66 @@ public class RecentFileList extends RecentList
         clean();
     }
 
-    public void addEntry(List<File> files)
+    public void addEntry(File[] files)
     {
         // check we are under files limit
-        if (files.size() > NB_MAX_FILE)
+        if (files.length > NB_MAX_FILE)
             return;
 
-        final ArrayList<String> filenames = new ArrayList<String>();
+        final String[] filenames = new String[files.length];
 
-        for (File file : files)
-            filenames.add(file.getAbsolutePath());
+        for (int i = 0; i < files.length; i++)
+            filenames[i] = files[i].getAbsolutePath();
+
+        // first remove previous entry
+        final int ind = find(filenames);
+        if (ind != -1)
+            list.remove(ind);
 
         // add the list
         super.addEntry(filenames);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public ArrayList<String> getEntry(int index)
+    protected int find(String[] filenames)
     {
-        return (ArrayList<String>) super.getEntry(index);
+        for (int i = 0; i < list.size(); i++)
+            if (Arrays.equals((String[]) list.get(i), filenames))
+                return i;
+
+        return -1;
     }
 
-    public ArrayList<File> getEntryAsFiles(int index)
+    @Override
+    public String[] getEntry(int index)
     {
-        final ArrayList<String> filenames = getEntry(index);
-        final int len = filenames.size();
-        final ArrayList<File> result = new ArrayList<File>(len);
+        return (String[]) super.getEntry(index);
+    }
 
-        for (int i = 0; i < len; i++)
-            result.add(new File(filenames.get(i)));
+    public File[] getEntryAsFiles(int index)
+    {
+        final String[] filenames = getEntry(index);
+        final File[] result = new File[filenames.length];
+
+        for (int i = 0; i < filenames.length; i++)
+            result[i] = new File(filenames[i]);
 
         return result;
     }
 
     public String getEntryAsName(int index, int maxlen, boolean tailLimit)
     {
-        final ArrayList<String> filenames = getEntry(index);
+        final String[] filenames = getEntry(index);
 
-        if ((filenames == null) || (filenames.size() == 0))
+        if ((filenames == null) || (filenames.length == 0))
             return "";
 
-        if (filenames.size() == 1)
-            return StringUtil.limit(filenames.get(0), maxlen, tailLimit);
+        if (filenames.length == 1)
+            return StringUtil.limit(filenames[0], maxlen, tailLimit);
 
-        String result = filenames.get(0);
+        String result = filenames[0];
 
-        for (int i = 1; i < filenames.size(); i++)
-            result += ", " + FileUtil.getFileName(filenames.get(i));
+        for (int i = 1; i < filenames.length; i++)
+            result += ", " + FileUtil.getFileName(filenames[i]);
 
         return "[" + StringUtil.limit(result, maxlen, tailLimit) + "]";
     }
@@ -104,7 +115,7 @@ public class RecentFileList extends RecentList
     {
         for (int i = list.size() - 1; i >= 0; i--)
         {
-            final ArrayList<File> files = getEntryAsFiles(i);
+            final File[] files = getEntryAsFiles(i);
 
             boolean allExists = true;
             for (File file : files)
@@ -123,19 +134,19 @@ public class RecentFileList extends RecentList
     }
 
     @Override
-    protected ArrayList<String> loadEntry(String key)
+    protected String[] loadEntry(String key)
     {
         if (preferences.nodeExists(key))
         {
-            final ArrayList<String> result = new ArrayList<String>();
             final XMLPreferences pref = preferences.node(key);
 
             // load size
             final int numFile = pref.getInt(ID_NB_FILE, 0);
+            final String[] result = new String[numFile];
 
             // load filenames
             for (int i = 0; i < numFile; i++)
-                result.add(pref.get(ID_FILE + i, ""));
+                result[i] = pref.get(ID_FILE + i, "");
 
             return result;
         }
@@ -143,7 +154,6 @@ public class RecentFileList extends RecentList
         return null;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void saveEntry(String key, Object value)
     {
@@ -155,15 +165,15 @@ public class RecentFileList extends RecentList
         // then save
         if (value != null)
         {
-            final ArrayList<String> filenames = (ArrayList<String>) value;
-            final int numFile = filenames.size();
+            final String[] filenames = (String[]) value;
+            final int numFile = filenames.length;
 
             // save size
             pref.putInt(ID_NB_FILE, numFile);
 
             // save filenames
             for (int i = 0; i < numFile; i++)
-                pref.put(ID_FILE + i, filenames.get(i));
+                pref.put(ID_FILE + i, filenames[i]);
         }
         else
         {

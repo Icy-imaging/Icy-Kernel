@@ -18,6 +18,7 @@
  */
 package icy.gui.dialog;
 
+import icy.file.Loader;
 import icy.gui.component.ThumbnailComponent;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
@@ -38,16 +39,94 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import loci.formats.ImageReader;
+import loci.formats.IFormatReader;
 
 public class ImageLoaderOptionPanel extends JPanel
 {
+    private class PreviewUpdater extends Thread
+    {
+        final private String fileId;
+
+        public PreviewUpdater(String fileId)
+        {
+            super("Image preview");
+
+            this.fileId = fileId;
+        }
+
+        @Override
+        public void run()
+        {
+            try
+            {
+                preview.setImage(null);
+                preview.setTitle("loading...");
+                preview.setInfos("");
+                preview.setInfos2("");
+
+                try
+                {
+                    final IFormatReader reader = Loader.getReader(fileId);
+
+                    // disable file grouping
+                    reader.setGroupFiles(false);
+                    reader.setId(fileId);
+
+                    try
+                    {
+                        reader.setSeries(0);
+
+                        final int sizeC = reader.getSizeC();
+
+                        // load metadata first
+                        preview.setTitle(reader.getFormat());
+                        preview.setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - " + reader.getSizeZ()
+                                + "Z x " + reader.getSizeT() + "T");
+                        preview.setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
+                                + DataType.getDataTypeFromFormatToolsType(reader.getPixelType()) + ")");
+
+                        // then image
+                        final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader,
+                                reader.getSizeZ() / 2, reader.getSizeT() / 2);
+                        preview.setImage(IcyBufferedImageUtil.getARGBImage(img));
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            reader.close();
+                        }
+                        catch (IOException e)
+                        {
+                            // ignore
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    // error image, we just totally ignore error here...
+                    preview.setImage(ResourceUtil.ICON_DELETE);
+                    preview.setTitle("Cannot read file");
+                    preview.setInfos("");
+                    preview.setInfos2("");
+                }
+            }
+            catch (Throwable t)
+            {
+                // ignore
+            }
+        }
+    }
+
     /**
      * 
      */
     private static final long serialVersionUID = 4180367632912879286L;
 
-    private ThumbnailComponent preview;
+    /**
+     * GUI
+     */
+    ThumbnailComponent preview;
     private JPanel separateSeqPanel;
     private JCheckBox separateSeqCheck;
     private JLabel lblAutoDimension;
@@ -55,6 +134,7 @@ public class ImageLoaderOptionPanel extends JPanel
 
     // internals
     private boolean autoOrderEnable;
+    private PreviewUpdater previewThread;
 
     /**
      * Create the panel.
@@ -64,6 +144,7 @@ public class ImageLoaderOptionPanel extends JPanel
         super();
 
         autoOrderEnable = true;
+        previewThread = null;
         initialize(separate, autoOrder);
     }
 
@@ -162,46 +243,31 @@ public class ImageLoaderOptionPanel extends JPanel
         return autoOrderCheck.isSelected();
     }
 
+    /**
+     * Asynchronous preview refresh
+     */
     public void updatePreview(String fileId)
     {
-        preview.setImage(null);
-        preview.setTitle("loading...");
-        preview.setInfos("");
-        preview.setInfos2("");
+        // interrupt previous preview refresh
+        cancelPreview();
 
-        final ImageReader reader = new ImageReader();
+        previewThread = new PreviewUpdater(fileId);
+        previewThread.start();
+    }
 
-        try
-        {
-            reader.setId(fileId);
-            reader.setSeries(0);
-
-            final int sizeC = reader.getSizeC();
-
-            final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader, reader.getSizeZ() / 2,
-                    reader.getSizeT() / 2);
-            preview.setImage(IcyBufferedImageUtil.getARGBImage(img));
-            preview.setTitle(reader.getFormat());
-            preview.setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - " + reader.getSizeZ() + "Z x "
-                    + reader.getSizeT() + "T");
-            preview.setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
-                    + DataType.getDataTypeFromFormatToolsType(reader.getPixelType()) + ")");
-        }
-        catch (Exception e)
-        {
-            // error image, we just totally ignore error here...
-            preview.setImage(ResourceUtil.ICON_DELETE);
-            preview.setTitle("Cannot read file");
-            preview.setInfos("");
-            preview.setInfos2("");
-        }
-        finally
+    /**
+     * Cancel preview refresh
+     */
+    public void cancelPreview()
+    {
+        // brutal interruption of previous execution
+        if ((previewThread != null) && previewThread.isAlive())
         {
             try
             {
-                reader.close();
+                previewThread.stop();
             }
-            catch (IOException e)
+            catch (Throwable t)
             {
                 // ignore
             }

@@ -65,9 +65,10 @@ public class IcyExternalFrame extends JFrame
         }
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             close();
+            return true;
         }
     }
 

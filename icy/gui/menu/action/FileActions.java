@@ -29,11 +29,13 @@ import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
+import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.util.StringUtil;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -56,12 +58,17 @@ public class FileActions
         private static final long serialVersionUID = 4762494034660452392L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final ApplicationMenu appMenu = Icy.getMainInterface().getApplicationMenu();
 
             if (appMenu != null)
+            {
                 appMenu.getRecentFileList().clear();
+                return true;
+            }
+
+            return false;
         }
     };
 
@@ -74,10 +81,11 @@ public class FileActions
         private static final long serialVersionUID = -4799299843248624925L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             Icy.getMainInterface().addSequence(
                     new Sequence("Single channel sequence", new IcyBufferedImage(512, 512, 1, DataType.UBYTE)));
+            return true;
         }
     };
 
@@ -91,10 +99,11 @@ public class FileActions
         private static final long serialVersionUID = 797949281499261778L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             Icy.getMainInterface().addSequence(
                     new Sequence("Single channel sequence", new IcyBufferedImage(512, 512, 1, DataType.UBYTE)));
+            return true;
         }
     };
 
@@ -108,10 +117,11 @@ public class FileActions
         private static final long serialVersionUID = 5755927058175369657L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             Icy.getMainInterface().addSequence(
                     new Sequence("RGB sequence", new IcyBufferedImage(512, 512, 3, DataType.UBYTE)));
+            return true;
         }
     };
 
@@ -125,15 +135,16 @@ public class FileActions
         private static final long serialVersionUID = -142873334899977341L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             Icy.getMainInterface().addSequence(
                     new Sequence("RGB sequence", new IcyBufferedImage(512, 512, 3, DataType.UBYTE)));
+            return true;
         }
     };
 
     public static IcyAbstractAction openSequenceAction = new IcyAbstractAction("Open", new IcyIcon(
-            ResourceUtil.ICON_OPEN), "Open a sequence from file(s)")
+            ResourceUtil.ICON_OPEN), "Open a sequence from file(s)", KeyEvent.VK_O, SystemUtil.getMenuCtrlMask())
     {
         /**
          * 
@@ -141,9 +152,10 @@ public class FileActions
         private static final long serialVersionUID = 7399973037052771669L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new ImageLoaderDialog();
+            return true;
         }
     };
 
@@ -156,7 +168,7 @@ public class FileActions
         private static final long serialVersionUID = -8450533919443304021L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
             final Sequence seq = viewer.getSequence();
@@ -166,7 +178,7 @@ public class FileActions
                 final String filename = seq.getFilename();
 
                 if (StringUtil.isEmpty(filename))
-                    new ImageSaverDialog(seq, viewer.getZ(), viewer.getT());
+                    new ImageSaverDialog(seq, viewer.getPositionZ(), viewer.getPositionT());
                 else
                 {
                     // background process
@@ -181,12 +193,17 @@ public class FileActions
                         }
                     });
                 }
+
+                return true;
             }
+
+            return false;
         }
     };
 
     public static IcyAbstractAction saveAsSequenceAction = new IcyAbstractAction("Save...", new IcyIcon(
-            ResourceUtil.ICON_SAVE), "Save active sequence", "Save the active sequence under selected file name")
+            ResourceUtil.ICON_SAVE), "Save active sequence", "Save the active sequence under selected file name",
+            KeyEvent.VK_S, SystemUtil.getMenuCtrlMask())
     {
         /**
          * 
@@ -194,7 +211,7 @@ public class FileActions
         private static final long serialVersionUID = 3556923605878121275L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
 
@@ -203,8 +220,13 @@ public class FileActions
                 final Sequence seq = viewer.getSequence();
 
                 if (seq != null)
-                    new ImageSaverDialog(seq, viewer.getZ(), viewer.getT());
+                {
+                    new ImageSaverDialog(seq, viewer.getPositionZ(), viewer.getPositionT());
+                    return true;
+                }
             }
+
+            return false;
         }
     };
 
@@ -217,13 +239,17 @@ public class FileActions
         private static final long serialVersionUID = 9023064791162525318L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
 
             if (viewer != null)
+            {
                 viewer.close();
+                return true;
+            }
 
+            return false;
         }
     };
 
@@ -236,13 +262,17 @@ public class FileActions
         private static final long serialVersionUID = -1127914432836889905L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
 
             if (viewer != null)
+            {
                 viewer.close();
+                return true;
+            }
 
+            return false;
         }
     };
 
@@ -255,13 +285,15 @@ public class FileActions
         private static final long serialVersionUID = -8595244752658024122L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Viewer focusedViewer = Icy.getMainInterface().getFocusedViewer();
 
             for (Viewer viewer : Icy.getMainInterface().getViewers())
                 if (viewer != focusedViewer)
                     viewer.close();
+
+            return true;
         }
     };
 
@@ -274,9 +306,10 @@ public class FileActions
         private static final long serialVersionUID = -1343557201445697749L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             Icy.getMainInterface().closeAllViewers();
+            return true;
         }
     };
 

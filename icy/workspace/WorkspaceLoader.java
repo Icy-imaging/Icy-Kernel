@@ -175,15 +175,15 @@ public class WorkspaceLoader
     {
         final ArrayList<Workspace> newWorkspaces = new ArrayList<Workspace>();
 
-        final ArrayList<File> files = FileUtil.getFileList(WORKSPACE_PATH, new FileFilter()
+        final File[] files = FileUtil.getFiles(new File(FileUtil.getGenericPath(WORKSPACE_PATH)), new FileFilter()
         {
             @Override
-            public boolean accept(File pathname)
+            public boolean accept(File file)
             {
                 // only accept xml file
-                return FileUtil.getFileExtension(pathname.getPath(), true).toLowerCase().equals(EXT);
+                return FileUtil.getFileExtension(file.getPath(), true).toLowerCase().equals(EXT);
             }
-        }, true, false);
+        }, true, false, false);
 
         for (File file : files)
         {

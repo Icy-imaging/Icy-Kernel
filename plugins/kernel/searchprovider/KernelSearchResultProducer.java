@@ -132,7 +132,7 @@ public class KernelSearchResultProducer extends SearchResultProducer
         @Override
         public void execute()
         {
-            action.doAction();
+            action.execute();
         }
 
         @Override

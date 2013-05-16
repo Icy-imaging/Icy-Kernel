@@ -61,6 +61,7 @@ public class ResourceUtil
     public static final Image ICON_COLLAPSE = ResourceUtil.getAlphaIconAsImage("top_right_collapse.png");
     public static final Image ICON_PICTURE = ResourceUtil.getAlphaIconAsImage("picture.png");
     public static final Image ICON_PICTURE_COPY = ResourceUtil.getAlphaIconAsImage("picture_copy.png");
+    public static final Image ICON_PICTURE_PASTE = ResourceUtil.getAlphaIconAsImage("picture_paste.png");
     public static final Image ICON_WINDOW = ResourceUtil.getAlphaIconAsImage("app_window.png");
     public static final Image ICON_DETACHED_WINDOW = ResourceUtil.getAlphaIconAsImage("app_detached.png");
     public static final Image ICON_NEWDOC = ResourceUtil.getAlphaIconAsImage("doc_new.png");
@@ -76,10 +77,12 @@ public class ResourceUtil
     public static final Image ICON_LOAD = ICON_OPEN;
     public static final Image ICON_SAVE = ResourceUtil.getAlphaIconAsImage("save.png");
     public static final Image ICON_CLOSE = ResourceUtil.getAlphaIconAsImage("round_delete.png");
+    public static final Image ICON_CLIPBOARD_CLEAR = ResourceUtil.getAlphaIconAsImage("clipboard_clear.png");
     public static final Image ICON_COPY = ResourceUtil.getAlphaIconAsImage("clipboard_copy.png");
     public static final Image ICON_CUT = ResourceUtil.getAlphaIconAsImage("clipboard_cut.png");
-    public static final Image ICON_CLIPBOARD_CLEAR = ResourceUtil.getAlphaIconAsImage("clipboard_clear.png");
+    public static final Image ICON_LINK_COPY = ResourceUtil.getAlphaIconAsImage("clipboard_link_copy.png");
     public static final Image ICON_PASTE = ResourceUtil.getAlphaIconAsImage("clipboard_past.png");
+    public static final Image ICON_LINK_PASTE = ResourceUtil.getAlphaIconAsImage("clipboard_link_past.png");
 
     public static final Image ICON_HELP = ResourceUtil.getAlphaIconAsImage("help.png");
     public static final Image ICON_INFO = ResourceUtil.getAlphaIconAsImage("info.png");

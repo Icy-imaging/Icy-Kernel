@@ -74,19 +74,24 @@ public class SequenceOperationActions
         }
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 Icy.getMainInterface().addSequence(
                         SequenceUtil.convertToType(Icy.getMainInterface().getFocusedSequence(), dataType, scaled));
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     }
 
@@ -131,7 +136,7 @@ public class SequenceOperationActions
         }
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
 
@@ -186,16 +191,20 @@ public class SequenceOperationActions
                     }
 
                     Icy.getMainInterface().addSequence(out);
+
+                    return true;
                 }
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
-            
-            return !processing && (sequence != null) && !sequence.isEmpty();
+
+            return super.isEnabled() && (sequence != null) && !sequence.isEmpty();
         }
     }
 
@@ -217,7 +226,7 @@ public class SequenceOperationActions
         }
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
@@ -230,7 +239,11 @@ public class SequenceOperationActions
                 }
                 else
                     Icy.getMainInterface().addSequence(SequenceUtil.extractChannel(sequence, channel));
+
+                return true;
             }
+
+            return false;
         }
 
         @Override
@@ -238,7 +251,7 @@ public class SequenceOperationActions
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
 
-            return !processing && (seq != null) && (channel < seq.getSizeC());
+            return super.isEnabled() && (seq != null) && (channel < seq.getSizeC());
         }
     }
 
@@ -257,12 +270,17 @@ public class SequenceOperationActions
         }
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 SequenceUtil.removeChannel(sequence, channel);
+                return true;
+            }
+
+            return false;
         }
 
         @Override
@@ -270,7 +288,7 @@ public class SequenceOperationActions
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
 
-            return !processing && (seq != null) && (channel < seq.getSizeC());
+            return super.isEnabled() && (seq != null) && (channel < seq.getSizeC());
         }
     }
 
@@ -295,9 +313,10 @@ public class SequenceOperationActions
         }
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new SequenceDimensionMergeFrame(dim);
+            return true;
         }
     }
 
@@ -311,18 +330,23 @@ public class SequenceOperationActions
         private static final long serialVersionUID = 6907103082567189377L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 Icy.getMainInterface().addSequence(SequenceUtil.getCopy(sequence));
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -355,15 +379,16 @@ public class SequenceOperationActions
         private static final long serialVersionUID = 2928113834852115366L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new SequenceCropper();
+            return true;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -373,18 +398,23 @@ public class SequenceOperationActions
         private static final long serialVersionUID = 9156831541828750627L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 new SequenceCanvasResizeFrame(sequence);
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -394,18 +424,23 @@ public class SequenceOperationActions
         private static final long serialVersionUID = -4731940627380446776L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 new SequenceResizeFrame(sequence);
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -427,12 +462,17 @@ public class SequenceOperationActions
         private static final long serialVersionUID = -4731940627380446776L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 SequenceUtil.reverseZ(sequence);
+                return true;
+            }
+
+            return false;
         }
     };
 
@@ -446,22 +486,27 @@ public class SequenceOperationActions
         private static final long serialVersionUID = -3731161374656240419L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
-            final int z = (viewer == null) ? -1 : viewer.getZ();
+            final int z = (viewer == null) ? -1 : viewer.getPositionZ();
 
             if (z != -1)
+            {
                 Icy.getMainInterface().addSequence(SequenceUtil.extractSlice(viewer.getSequence(), z));
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
-            final int z = (viewer == null) ? -1 : viewer.getZ();
+            final int z = (viewer == null) ? -1 : viewer.getPositionZ();
 
-            return !processing && (z != -1);
+            return super.isEnabled() && (z != -1);
         }
     };
 
@@ -475,22 +520,27 @@ public class SequenceOperationActions
         private static final long serialVersionUID = -6588564641490390145L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
-            final int z = (viewer == null) ? -1 : viewer.getZ();
+            final int z = (viewer == null) ? -1 : viewer.getPositionZ();
 
             if (z != -1)
+            {
                 SequenceUtil.removeZAndShift(viewer.getSequence(), z);
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
-            final int z = (viewer == null) ? -1 : viewer.getZ();
+            final int z = (viewer == null) ? -1 : viewer.getPositionZ();
 
-            return !processing && (z != -1);
+            return super.isEnabled() && (z != -1);
         }
     };
 
@@ -504,20 +554,25 @@ public class SequenceOperationActions
         private static final long serialVersionUID = -1967473595758834348L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 new SequenceDimensionExtendFrame(Icy.getMainInterface().getFocusedSequence(), DimensionId.Z);
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
-            
-            return !processing && (sequence != null) && !sequence.isEmpty();
+
+            return super.isEnabled() && (sequence != null) && !sequence.isEmpty();
         }
     };
 
@@ -532,18 +587,23 @@ public class SequenceOperationActions
         private static final long serialVersionUID = -1899409406755437158L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 new SequenceDimensionAdjustFrame(sequence, DimensionId.Z);
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -558,18 +618,23 @@ public class SequenceOperationActions
         private static final long serialVersionUID = 2403122454093281595L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 SequenceUtil.reverseT(sequence);
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -583,22 +648,27 @@ public class SequenceOperationActions
         private static final long serialVersionUID = -5809053788547447661L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
-            final int t = (viewer == null) ? -1 : viewer.getT();
+            final int t = (viewer == null) ? -1 : viewer.getPositionT();
 
             if (t != -1)
+            {
                 Icy.getMainInterface().addSequence(SequenceUtil.extractFrame(viewer.getSequence(), t));
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
-            final int t = (viewer == null) ? -1 : viewer.getT();
+            final int t = (viewer == null) ? -1 : viewer.getPositionT();
 
-            return !processing && (t != -1);
+            return super.isEnabled() && (t != -1);
         }
     };
 
@@ -612,22 +682,27 @@ public class SequenceOperationActions
         private static final long serialVersionUID = -6113522706924858672L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
-            final int t = (viewer == null) ? -1 : viewer.getT();
+            final int t = (viewer == null) ? -1 : viewer.getPositionT();
 
             if (t != -1)
+            {
                 SequenceUtil.removeTAndShift(viewer.getSequence(), t);
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
-            final int t = (viewer == null) ? -1 : viewer.getT();
+            final int t = (viewer == null) ? -1 : viewer.getPositionT();
 
-            return !processing && (t != -1);
+            return super.isEnabled() && (t != -1);
         }
     };
 
@@ -641,20 +716,25 @@ public class SequenceOperationActions
         private static final long serialVersionUID = -6106326145960291510L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 new SequenceDimensionExtendFrame(Icy.getMainInterface().getFocusedSequence(), DimensionId.T);
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
-            
-            return !processing && (sequence != null) && !sequence.isEmpty();
+
+            return super.isEnabled() && (sequence != null) && !sequence.isEmpty();
         }
     };
 
@@ -669,18 +749,23 @@ public class SequenceOperationActions
         private static final long serialVersionUID = -7963804798009814712L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 new SequenceDimensionAdjustFrame(sequence, DimensionId.T);
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -695,27 +780,30 @@ public class SequenceOperationActions
         private static final long serialVersionUID = 5987495169612852524L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
 
             if (viewer != null)
             {
                 final Sequence sequence = viewer.getSequence();
-                final int t = viewer.getT();
+                final int t = viewer.getPositionT();
 
                 if (sequence != null)
                 {
                     SequenceUtil.convertToVolume(sequence);
-                    viewer.setZ(t);
+                    viewer.setPositionZ(t);
+                    return true;
                 }
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -729,27 +817,30 @@ public class SequenceOperationActions
         private static final long serialVersionUID = -6555855298812635009L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
 
             if (viewer != null)
             {
                 final Sequence sequence = viewer.getSequence();
-                final int z = viewer.getZ();
+                final int z = viewer.getPositionZ();
 
                 if (sequence != null)
                 {
                     SequenceUtil.convertToTime(sequence);
-                    viewer.setT(z);
+                    viewer.setPositionT(z);
+                    return true;
                 }
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -762,20 +853,25 @@ public class SequenceOperationActions
         private static final long serialVersionUID = 110261266295404071L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
 
             if (sequence != null)
+            {
                 new SequenceDimensionConvertFrame(sequence);
+                return true;
+            }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
             final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
-            
-            return !processing && (sequence != null) && !sequence.isEmpty();
+
+            return super.isEnabled() && (sequence != null) && !sequence.isEmpty();
         }
     };
 

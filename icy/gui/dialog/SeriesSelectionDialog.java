@@ -24,7 +24,6 @@ import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
-import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.util.OMEUtil;
 
@@ -36,7 +35,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -70,8 +70,9 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
     // internal
     protected IFormatReader reader;
     protected OMEXMLMetadataImpl metadata;
-    protected ArrayList<Integer> selectedSeries;
+    protected int[] selectedSeries;
     protected final MouseAdapter serieDoubleClickAction;
+    protected final Thread loadingThread;
 
     /**
      * Create the dialog.
@@ -98,9 +99,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
                     {
                         if (serieComponents[i] == thumb)
                         {
-                            selectedSeries = new ArrayList<Integer>();
-                            
-                            selectedSeries.add(Integer.valueOf(i));
+                            selectedSeries = new int[] {i};
                             dispose();
                         }
                     }
@@ -160,7 +159,8 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         }
 
         // load thumbnails...
-        ThreadUtil.bgRun(this);
+        loadingThread = new Thread(this, "Series thumbnail loading");
+        loadingThread.start();
 
         // action on "OK"
         setOkAction(new ActionListener()
@@ -168,11 +168,17 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                selectedSeries = new ArrayList<Integer>();
-
+                int numSelected = 0;
                 for (int i = 0; i < serieComponents.length; i++)
                     if (serieComponents[i].isSelected())
-                        selectedSeries.add(Integer.valueOf(i));
+                        numSelected++;
+
+                selectedSeries = new int[numSelected];
+
+                int ind = 0;
+                for (int i = 0; i < serieComponents.length; i++)
+                    if (serieComponents[i].isSelected())
+                        selectedSeries[ind++] = i;
             }
         });
 
@@ -207,7 +213,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
     /**
      * @return the selectedSeries
      */
-    public ArrayList<Integer> getSelectedSeries()
+    public int[] getSelectedSeries()
     {
         return selectedSeries;
     }
@@ -250,33 +256,88 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
     }
 
     @Override
+    protected void onClosed()
+    {
+        super.onClosed();
+
+        // kill loading task in 2 seconds
+        new Timer().schedule(new TimerTask()
+        {
+            @Override
+            public void run()
+            {
+                if ((loadingThread != null) && loadingThread.isAlive())
+                {
+                    try
+                    {
+                        loadingThread.stop();
+                    }
+                    catch (Throwable t)
+                    {
+                        // ignore
+                    }
+                }
+            }
+        }, 2000);
+    }
+
+    @Override
     public void run()
     {
-        for (int i = 0; i < serieComponents.length; i++)
+        try
         {
-            try
+            // start by filling metadata only...
+            for (int i = 0; i < serieComponents.length; i++)
             {
-                reader.setSeries(i);
+                // interrupt
+                if (isClosed())
+                    return;
 
-                final int sizeC = reader.getSizeC();
+                try
+                {
+                    reader.setSeries(i);
 
-                final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader, reader.getSizeZ() / 2,
-                        reader.getSizeT() / 2);
-                serieComponents[i].setImage(IcyBufferedImageUtil.getARGBImage(img));
-                serieComponents[i].setTitle(metadata.getImageName(i));
-                serieComponents[i].setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - " + reader.getSizeZ()
-                        + "Z x " + reader.getSizeT() + "T");
-                serieComponents[i].setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
-                        + DataType.getDataTypeFromFormatToolsType(reader.getPixelType()) + ")");
+                    final int sizeC = reader.getSizeC();
+
+                    serieComponents[i].setTitle(metadata.getImageName(i));
+                    serieComponents[i].setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - "
+                            + reader.getSizeZ() + "Z x " + reader.getSizeT() + "T");
+                    serieComponents[i].setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
+                            + DataType.getDataTypeFromFormatToolsType(reader.getPixelType()) + ")");
+                }
+                catch (Exception e)
+                {
+                    serieComponents[i].setTitle("Cannot read file");
+                    serieComponents[i].setInfos("");
+                    serieComponents[i].setInfos2("");
+                }
             }
-            catch (Exception e)
+
+            // then try to load thumbnail
+            for (int i = 0; i < serieComponents.length; i++)
             {
-                // error image, we just totally ignore error here...
-                serieComponents[i].setImage(ResourceUtil.ICON_DELETE);
-                serieComponents[i].setTitle("Cannot read file");
-                serieComponents[i].setInfos("");
-                serieComponents[i].setInfos2("");
+                // interrupt
+                if (isClosed())
+                    return;
+
+                try
+                {
+                    reader.setSeries(i);
+
+                    final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader, reader.getSizeZ() / 2,
+                            reader.getSizeT() / 2);
+                    serieComponents[i].setImage(IcyBufferedImageUtil.getARGBImage(img));
+                }
+                catch (Throwable e)
+                {
+                    // error image, we just totally ignore error here...
+                    serieComponents[i].setImage(ResourceUtil.ICON_DELETE);
+                }
             }
+        }
+        catch (ThreadDeath t)
+        {
+            // ignore
         }
     }
 }

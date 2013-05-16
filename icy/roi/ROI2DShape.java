@@ -795,9 +795,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     /**
      * internal use only
      */
-    protected boolean removePoint(Anchor2D pt)
+    protected boolean removePoint(@SuppressWarnings("unused") IcyCanvas canvas, Anchor2D pt)
     {
-        controlPoints.remove(pt);
         pt.removeOverlayListener(this);
         pt.removeAnchorListener(this);
         roiChanged();
@@ -809,16 +808,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      */
     protected void removeAllPoint()
     {
-        beginUpdate();
-        try
+        for (Anchor2D pt : controlPoints)
         {
-            while (controlPoints.size() > 0)
-                removePoint(controlPoints.get(0));
+            pt.removeOverlayListener(this);
+            pt.removeAnchorListener(this);
         }
-        finally
-        {
-            endUpdate();
-        }
+        controlPoints.clear();
+        roiChanged();
     }
 
     @Override
@@ -853,11 +849,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             final int index = controlPoints.indexOf(selectedPoint);
 
             // try to remove point
-            if (removePoint(selectedPoint))
+            if (removePoint(canvas,selectedPoint))
             {
                 // last control point removed --> delete ROI
                 if (controlPoints.size() == 0)
-                    remove();
+                    canvas.getSequence().removeROI(this);
                 else
                 {
                     // we are using PathAnchor2D ?
@@ -878,11 +874,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                                     if (nextPoint.getType() == PathIterator.SEG_CLOSE)
                                     {
                                         // delete it
-                                        if (removePoint(nextPoint))
+                                        if (removePoint(canvas,nextPoint))
                                         {
                                             // it was the last control point --> delete ROI
                                             if (controlPoints.size() == 0)
-                                                remove();
+                                                canvas.getSequence().removeROI(this);
                                         }
                                     }
                                     else
@@ -905,11 +901,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                                     if (prevPoint.getType() == PathIterator.SEG_MOVETO)
                                     {
                                         // delete it
-                                        if (removePoint(prevPoint))
+                                        if (removePoint(canvas,prevPoint))
                                         {
                                             // it was the last control point --> delete ROI
                                             if (controlPoints.size() == 0)
-                                                remove();
+                                                canvas.getSequence().removeROI(this);
                                         }
                                     }
                                     else

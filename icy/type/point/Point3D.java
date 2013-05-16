@@ -93,6 +93,12 @@ public abstract class Point3D
         setLocation(p.getX(), p.getY(), p.getZ());
     }
 
+    @Override
+    public String toString()
+    {
+        return "Point3D[" + getX() + ", " + getY() + ", " + getZ() + "]";
+    }
+
     public static class Double extends Point3D
     {
         public double x;
@@ -167,6 +173,12 @@ public abstract class Point3D
             this.x = x;
             this.y = y;
             this.z = z;
+        }
+
+        @Override
+        public String toString()
+        {
+            return "Point3D.Double[" + x + ", " + y + ", " + z + "]";
         }
     }
 
@@ -245,6 +257,13 @@ public abstract class Point3D
             this.y = (float) y;
             this.z = (float) z;
         }
+
+        @Override
+        public String toString()
+        {
+            return "Point3D.Float[" + x + ", " + y + ", " + z + "]";
+        }
+
     }
 
     public static class Integer extends Point3D
@@ -321,6 +340,12 @@ public abstract class Point3D
             this.x = (int) x;
             this.y = (int) y;
             this.z = (int) z;
+        }
+
+        @Override
+        public String toString()
+        {
+            return "Point3D.Integer[" + x + ", " + y + ", " + z + "]";
         }
     }
 }

@@ -19,7 +19,7 @@
 package icy.gui.inspector;
 
 import icy.gui.component.PopupPanel;
-import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
+import icy.gui.inspector.InspectorPanel.FocusedViewerSequenceListener;
 import icy.gui.sequence.SequenceInfosPanel;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
@@ -35,7 +35,7 @@ import javax.swing.JPanel;
 /**
  * @author Stephane
  */
-public class SequencePanel extends InspectorSubPanel
+public class SequencePanel extends JPanel implements FocusedViewerSequenceListener
 {
     /**
      * 
@@ -58,6 +58,10 @@ public class SequencePanel extends InspectorSubPanel
     public SequencePanel()
     {
         super();
+
+        // enable vertical scroll only
+        // setScrollableTracksViewportHeight(false);
+        // setScrollableTracksViewportWidth(true);
 
         canvasPopupPanel = new PopupPanel("Canvas");
         canvasPanel = canvasPopupPanel.getMainPanel();

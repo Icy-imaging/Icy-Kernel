@@ -27,6 +27,8 @@ import icy.resource.icon.IcyIcon;
 import icy.swimmingPool.SwimmingPoolViewer;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,7 +48,7 @@ public class WindowActions
         private static final long serialVersionUID = 389778521530821291L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final boolean value = !Icy.getMainInterface().isAlwaysOnTop();
 
@@ -54,6 +56,8 @@ public class WindowActions
             Icy.getMainInterface().setAlwaysOnTop(value);
             // and save state
             GeneralPreferences.setAlwaysOnTop(value);
+
+            return true;
         }
     };
 
@@ -66,14 +70,17 @@ public class WindowActions
         private static final long serialVersionUID = -2243906270795266643L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new SwimmingPoolViewer();
+
+            return true;
         }
     };
 
-    public static IcyAbstractAction gridTileAction = new IcyAbstractAction("Grid", new IcyIcon("2x2_grid"),
-            "Grid tile arrangement", "Reorganise all opened windows in grid tile.")
+    public static IcyAbstractAction gridTileAction = new IcyAbstractAction("Grid (Shift+G)", new IcyIcon("2x2_grid"),
+            "Grid tile arrangement", "Reorganise all opened windows in grid tile.", KeyEvent.VK_G,
+            InputEvent.SHIFT_MASK)
     {
         /**
          * 
@@ -81,16 +88,23 @@ public class WindowActions
         private static final long serialVersionUID = 5529845883985655784L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+
             if (mainFrame != null)
+            {
                 mainFrame.organizeTile(MainFrame.TILE_GRID);
+                return true;
+            }
+
+            return false;
         }
     };
 
-    public static IcyAbstractAction horizontalTileAction = new IcyAbstractAction("Horizontal tile", new IcyIcon(
-            "tile_horizontal"), "Horizontal tile arrangement", "Reorganise all opened windows in horizontal tile.")
+    public static IcyAbstractAction horizontalTileAction = new IcyAbstractAction("Horizontal (Shift+H)", new IcyIcon(
+            "tile_horizontal"), "Horizontal tile arrangement", "Reorganise all opened windows in horizontal tile.",
+            KeyEvent.VK_H, InputEvent.SHIFT_MASK)
     {
         /**
          * 
@@ -98,16 +112,23 @@ public class WindowActions
         private static final long serialVersionUID = 5752682613042198566L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+
             if (mainFrame != null)
+            {
                 mainFrame.organizeTile(MainFrame.TILE_HORIZONTAL);
+                return true;
+            }
+
+            return false;
         }
     };
 
-    public static IcyAbstractAction verticalTileAction = new IcyAbstractAction("Vertical tile", new IcyIcon(
-            "tile_vertical"), "Vertical tile arrangement", "Reorganise all opened windows in vertical tile.")
+    public static IcyAbstractAction verticalTileAction = new IcyAbstractAction("Vertical (Shift+V)", new IcyIcon(
+            "tile_vertical"), "Vertical tile arrangement", "Reorganise all opened windows in vertical tile.",
+            KeyEvent.VK_V, InputEvent.SHIFT_MASK)
     {
         /**
          * 
@@ -115,11 +136,17 @@ public class WindowActions
         private static final long serialVersionUID = -3978957277869827951L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+
             if (mainFrame != null)
+            {
                 mainFrame.organizeTile(MainFrame.TILE_VERTICAL);
+                return true;
+            }
+
+            return false;
         }
     };
 
@@ -132,11 +159,17 @@ public class WindowActions
         private static final long serialVersionUID = 5074922972421168033L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+
             if (mainFrame != null)
+            {
                 mainFrame.organizeCascade();
+                return true;
+            }
+
+            return false;
         }
     };
 

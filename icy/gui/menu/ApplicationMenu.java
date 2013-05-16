@@ -31,7 +31,6 @@ import icy.main.Icy;
 import icy.preferences.IcyPreferences;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
-import icy.type.collection.CollectionUtil;
 import icy.type.collection.list.RecentFileList;
 import icy.util.StringUtil;
 
@@ -39,7 +38,6 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JPanel;
@@ -97,23 +95,22 @@ public class ApplicationMenu extends RibbonApplicationMenu
 
                     button.setHorizontalAlignment(SwingConstants.LEFT);
 
-                    final ArrayList<File> files = recentFileList.getEntryAsFiles(i);
+                    final File[] files = recentFileList.getEntryAsFiles(i);
 
                     final RichTooltip toolTip;
-                    final int numFile = files.size();
+                    final int numFile = files.length;
 
                     if (numFile == 1)
-                        toolTip = new RichTooltip("Single file sequence", FileUtil.getFileName(files.get(0).getPath()));
+                        toolTip = new RichTooltip("Single file sequence", FileUtil.getFileName(files[0].getPath()));
                     else
-                        toolTip = new RichTooltip("Multiple files sequence", FileUtil.getFileName(files.get(0)
-                                .getPath()));
+                        toolTip = new RichTooltip("Multiple files sequence", FileUtil.getFileName(files[0].getPath()));
 
                     for (int j = 1; j < Math.min(10, numFile); j++)
-                        toolTip.addDescriptionSection(FileUtil.getFileName(files.get(j).getPath()));
+                        toolTip.addDescriptionSection(FileUtil.getFileName(files[j].getPath()));
                     if (numFile > 10)
                     {
                         toolTip.addDescriptionSection("...");
-                        toolTip.addDescriptionSection(FileUtil.getFileName(files.get(numFile - 1).getPath()));
+                        toolTip.addDescriptionSection(FileUtil.getFileName(files[numFile - 1].getPath()));
                     }
 
                     button.setActionRichTooltip(toolTip);
@@ -123,7 +120,7 @@ public class ApplicationMenu extends RibbonApplicationMenu
                         @Override
                         public void actionPerformed(ActionEvent ae)
                         {
-                            Loader.load(files);
+                            Loader.load(files, false, true, true);
                         }
                     });
 
@@ -301,14 +298,23 @@ public class ApplicationMenu extends RibbonApplicationMenu
         return recentFileList;
     }
 
+    /**
+     * @deprecated Use {@link #addRecentLoadedFile(File[])} instead.
+     */
+    @Deprecated
     public void addRecentLoadedFile(List<File> files)
+    {
+        addRecentLoadedFile(files.toArray(new File[files.size()]));
+    }
+
+    public void addRecentLoadedFile(File[] files)
     {
         recentFileList.addEntry(files);
     }
 
     public void addRecentLoadedFile(File file)
     {
-        addRecentLoadedFile(CollectionUtil.createArrayList(file));
+        addRecentLoadedFile(new File[] {file});
     }
 
     public void onSequenceFocusChange()

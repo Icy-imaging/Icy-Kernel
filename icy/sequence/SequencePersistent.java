@@ -186,7 +186,7 @@ public class SequencePersistent implements XMLPersistent
 
     private void loadROIsFromXML(Node node)
     {
-        final List<ROI> rois = ROI.getROIsFromXML(XMLUtil.getElement(node, ROOT_ROIS));
+        final List<ROI> rois = ROI.loadROIsFromXML(XMLUtil.getElement(node, ROOT_ROIS));
 
         // add to sequence
         for (ROI roi : rois)
@@ -237,7 +237,7 @@ public class SequencePersistent implements XMLPersistent
             Collections.sort(rois, ROI.idComparator);
 
             // set rois in the XML node
-            ROI.setROIsToXML(nodeROIs, rois);
+            ROI.saveROIsToXML(nodeROIs, rois);
         }
     }
 

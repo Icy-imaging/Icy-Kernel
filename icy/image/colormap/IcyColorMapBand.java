@@ -683,7 +683,7 @@ public class IcyColorMapBand implements XMLPersistent
     {
         // update float map from the modified int map
         updateFloatMapFromIntMap();
-        // udpate fixed controls points
+        // update fixed controls points
         updateFixedCP();
         // manually set a changed event as we directly modified the colormap
         colormap.changed();

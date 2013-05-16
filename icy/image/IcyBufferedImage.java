@@ -143,9 +143,16 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         final DataType dataType = firstImage.getDataType_();
         final int width = firstImage.getWidth();
         final int height = firstImage.getHeight();
-        final List<Object> data = new ArrayList<Object>();
+
+        // calculate channel number
+        int numChannel = 0;
+        for (IcyBufferedImage image : icyImageList)
+            numChannel += image.getSizeC();
+
+        final Object[] data = Array2DUtil.createArray(dataType, numChannel);
 
         // get data from all images
+        int destC = 0;
         for (IcyBufferedImage image : icyImageList)
         {
             if (dataType != image.getDataType_())
@@ -154,11 +161,11 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 throw new IllegalArgumentException("All images contained in imageList should have the same dimension");
 
             for (int c = 0; c < image.getSizeC(); c++)
-                data.add(image.getDataXY(c));
+                data[destC++] = image.getDataXY(c);
         }
 
         // create and return the image
-        return new IcyBufferedImage(width, height, data.toArray(new Object[data.size()]), dataType.isSigned());
+        return new IcyBufferedImage(width, height, data, dataType.isSigned());
     }
 
     /**
@@ -376,6 +383,12 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 // indexed color ?
                 if (indexed)
                 {
+                    // TODO : GIF transparent color support
+                    //
+                    // <<That would let you find the transparency color using the "Transparency
+                    // index" metadata value as an index into the array returned by
+                    // get8BitLookupTable().>>
+
                     // only 8 bits and 16 bits lookup table supported
                     switch (dataType.getJavaType())
                     {
@@ -388,7 +401,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                             break;
 
                         default:
-                            colormaps[effC] = new IcyColorMap("component " + effC);
+                            colormaps[effC] = null;
                             break;
                     }
                 }
@@ -411,8 +424,11 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                     {
                         // set colormaps
                         for (int comp = 0; comp < sizeC; comp++)
-                            if (colormaps[comp] != null)
+                        {
+                            // sometime loci return black colormap map and we want to avoid them...
+                            if ((colormaps[comp] != null) && !colormaps[comp].isBlack())
                                 result.setColormap(comp, colormaps[comp]);
+                        }
                     }
                 }
                 // special case of 4 channels image, try to set 4th channel colormap
@@ -489,17 +505,26 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         // indexed color ?
         if (indexed)
         {
+            IcyColorMap map;
+
             // only 8 bits and 16 bits lookup table supported
             switch (dataType.getJavaType())
             {
                 case BYTE:
-                    result.setColormap(0, new IcyColorMap("component " + c, reader.get8BitLookupTable()));
+                    map = new IcyColorMap("component " + c, reader.get8BitLookupTable());
                     break;
 
                 case SHORT:
-                    result.setColormap(0, new IcyColorMap("component " + c, reader.get16BitLookupTable()));
+                    map = new IcyColorMap("component " + c, reader.get16BitLookupTable());
                     break;
+
+                default:
+                    map = null;
             }
+
+            // sometime loci return black colormap map and we want to avoid them...
+            if ((map != null) && !map.isBlack())
+                result.setColormap(0, map);
         }
 
         return result;
@@ -589,7 +614,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                         break;
 
                     default:
-                        colormaps[effC] = new IcyColorMap("component " + effC);
+                        colormaps[effC] = null;
                         break;
                 }
             }
@@ -612,8 +637,11 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                 {
                     // set colormaps
                     for (int comp = 0; comp < sizeC; comp++)
-                        if (colormaps[comp] != null)
+                    {
+                        // sometime loci return black colormap map and we want to avoid them...
+                        if ((colormaps[comp] != null) && !colormaps[comp].isBlack())
                             result.setColormap(comp, colormaps[comp]);
+                    }
                 }
             }
             // special case of 4 channels image, try to set 4th channel colormap

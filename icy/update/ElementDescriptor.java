@@ -480,7 +480,7 @@ public class ElementDescriptor implements XMLPersistent
                 {
                     // update directory informations
                     elementFile.setDirectory(true);
-                    elementFile.setFileNumber(FileUtil.getFileList(file, true, false, false).size());
+                    elementFile.setFileNumber(FileUtil.getFiles(file, null, true, false, false).length);
                 }
             }
             else

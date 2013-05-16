@@ -116,22 +116,25 @@ public class ApplicationPreferences
 
         // no value ?
         if (result == -1)
-        {
-            final long freeMemory = SystemUtil.getFreeMemory();
-
-            // take system total memory / 2
-            long calculatedMaxMem = SystemUtil.getTotalMemory() / 2;
-            // current available memory is low ?
-            if (calculatedMaxMem > freeMemory)
-                // adjust max memory
-                calculatedMaxMem -= (calculatedMaxMem - freeMemory) / 2;
-
-            // get max memory in MB
-            result = Math.min(getMaxMemoryMBLimit(), (int) (calculatedMaxMem / (1024 * 1024)));
-        }
+            result = getDefaultMemoryMB();
 
         // arrange to get multiple of 32 MB
         return (int) MathUtil.prevMultiple(result, 32);
+    }
+
+    public static int getDefaultMemoryMB()
+    {
+        final long freeMemory = SystemUtil.getFreeMemory();
+
+        // take system total memory / 2
+        long calculatedMaxMem = SystemUtil.getTotalMemory() / 2;
+        // current available memory is low ?
+        if (calculatedMaxMem > freeMemory)
+            // adjust max memory
+            calculatedMaxMem -= (calculatedMaxMem - freeMemory) / 2;
+
+        // get max memory in MB
+        return Math.min(getMaxMemoryMBLimit(), (int) (calculatedMaxMem / (1024 * 1024)));
     }
 
     public static int getMaxMemoryMBLimit()

@@ -94,9 +94,10 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         }
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             switchState();
+            return true;
         }
 
         void refreshState()

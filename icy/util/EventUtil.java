@@ -35,14 +35,17 @@ public class EventUtil
      */
     public static boolean isShiftDown(InputEvent e)
     {
-        return e.isShiftDown();
+        return isShiftDown(e, false);
     }
 
     /**
      * Returns true if Shift key is pressed for the specified event.
      */
-    public static boolean isShiftDown(InputEvent e, boolean singleModifier)
+    public static boolean isShiftDown(InputEvent e, boolean exclusive)
     {
+        if (exclusive)
+            return (e.getModifiers() == InputEvent.SHIFT_MASK);
+
         return e.isShiftDown();
     }
 
@@ -51,6 +54,17 @@ public class EventUtil
      */
     public static boolean isAltDown(InputEvent e)
     {
+        return isAltDown(e, false);
+    }
+
+    /**
+     * Returns true if Alt key is pressed for the specified event.
+     */
+    public static boolean isAltDown(InputEvent e, boolean exclusive)
+    {
+        if (exclusive)
+            return (e.getModifiers() == InputEvent.ALT_MASK);
+
         return e.isAltDown();
     }
 
@@ -59,6 +73,17 @@ public class EventUtil
      */
     public static boolean isControlDown(InputEvent e)
     {
+        return isControlDown(e, false);
+    }
+
+    /**
+     * Returns true if Ctrl key is pressed for the specified event
+     */
+    public static boolean isControlDown(InputEvent e, boolean exclusive)
+    {
+        if (exclusive)
+            return (e.getModifiers() == InputEvent.CTRL_MASK);
+
         return e.isControlDown();
     }
 
@@ -67,6 +92,17 @@ public class EventUtil
      */
     public static boolean isMenuControlDown(InputEvent e)
     {
+        return isMenuControlDown(e, false);
+    }
+
+    /**
+     * Returns true if Ctrl/Cmd menu key is pressed for the specified event.
+     */
+    public static boolean isMenuControlDown(InputEvent e, boolean exclusive)
+    {
+        if (exclusive)
+            return (e.getModifiers() == SystemUtil.getMenuCtrlMask());
+
         // take care of OSX CMD key here
         return (e.getModifiers() & SystemUtil.getMenuCtrlMask()) != 0;
     }

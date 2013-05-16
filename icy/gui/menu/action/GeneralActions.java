@@ -18,11 +18,13 @@
  */
 package icy.gui.menu.action;
 
+import icy.clipboard.TransferableImage;
 import icy.common.IcyAbstractAction;
 import icy.gui.frame.AboutFrame;
 import icy.gui.main.MainFrame;
 import icy.gui.menu.search.SearchBar;
 import icy.gui.viewer.Viewer;
+import icy.image.ImageUtil;
 import icy.imagej.ImageJUtil;
 import icy.main.Icy;
 import icy.network.NetworkUtil;
@@ -31,14 +33,20 @@ import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
+import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
 import ij.ImagePlus;
 import ij.WindowManager;
 
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,9 +59,9 @@ import java.util.List;
  */
 public class GeneralActions
 {
-    public static IcyAbstractAction searchAction =  new IcyAbstractAction("Search", new IcyIcon(
-            ResourceUtil.ICON_SEARCH),"Application search tool", KeyEvent.VK_F, SystemUtil
-            .getMenuCtrlMask())
+    public static IcyAbstractAction searchAction = new IcyAbstractAction("Search",
+            new IcyIcon(ResourceUtil.ICON_SEARCH), "Application search tool", KeyEvent.VK_F,
+            SystemUtil.getMenuCtrlMask())
     {
         /**
          * 
@@ -61,7 +69,7 @@ public class GeneralActions
         private static final long serialVersionUID = -7457421618693984393L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final MainFrame mf = Icy.getMainInterface().getMainFrame();
 
@@ -70,8 +78,12 @@ public class GeneralActions
                 final SearchBar sb = mf.getSearchBar();
 
                 if (sb != null)
+                {
                     sb.setFocus();
+                    return true;
+                }
             }
+            return false;
         }
     };
 
@@ -84,9 +96,10 @@ public class GeneralActions
         private static final long serialVersionUID = -3238298900158332179L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             Icy.exit(false);
+            return true;
         }
     };
 
@@ -100,7 +113,7 @@ public class GeneralActions
         private static final long serialVersionUID = 6632773548066123185L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final boolean value = !Icy.getMainInterface().isDetachedMode();
 
@@ -108,6 +121,99 @@ public class GeneralActions
             Icy.getMainInterface().setDetachedMode(value);
             // and save state
             GeneralPreferences.setMultiWindowMode(value);
+
+            return true;
+        }
+    };
+
+    public static IcyAbstractAction copyImageAction = new IcyAbstractAction("Copy image", new IcyIcon(
+            ResourceUtil.ICON_PICTURE_COPY), "Copy image to clipboard",
+            "Copy the active image to the system clipboard.", KeyEvent.VK_C, SystemUtil.getMenuCtrlMask(), true,
+            "Copying image to the clipboard...")
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 8181120519734955113L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+
+            if (viewer != null)
+            {
+                final Sequence seq = viewer.getSequence();
+
+                if (seq != null)
+                {
+                    try
+                    {
+                        final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+
+                        final BufferedImage img = viewer.getRenderedImage(viewer.getPositionT(), viewer.getPositionZ(),
+                                viewer.getPositionC(), false);
+
+                        clipboard.setContents(new TransferableImage(img), null);
+
+                        return true;
+                    }
+                    catch (Exception e1)
+                    {
+                        System.err.println("Can't copy image to clipboard:");
+                        IcyExceptionHandler.showErrorMessage(e1, false);
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction pasteImageAction = new IcyAbstractAction("Paste image", new IcyIcon(
+            ResourceUtil.ICON_PICTURE_PASTE), "Paste image from clipboard",
+            "Paste image from the system clipboard in a new sequence.", KeyEvent.VK_V, SystemUtil.getMenuCtrlMask(),
+            true, "Creating new sequence from clipboard image...")
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 8181120519734955113L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+
+            if (clipboard.isDataFlavorAvailable(DataFlavor.imageFlavor))
+            {
+                try
+                {
+                    final Image img = (Image) clipboard.getData(DataFlavor.imageFlavor);
+                    Icy.getMainInterface().addSequence(new Sequence("Clipboard image", ImageUtil.toBufferedImage(img)));
+                    return true;
+                }
+                catch (Exception e1)
+                {
+                    System.err.println("Can't paste image from clipboard:");
+                    IcyExceptionHandler.showErrorMessage(e1, false);
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            return super.isEnabled() && clipboard.isDataFlavorAvailable(DataFlavor.imageFlavor);
         }
     };
 
@@ -121,13 +227,13 @@ public class GeneralActions
         private static final long serialVersionUID = -5506310360653637920L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final Sequence seq = Icy.getMainInterface().getFocusedSequence();
 
             if (seq != null)
             {
-                final ImagePlus ip = ImageJUtil.convertToImageJImage(seq, getProgressFrame());
+                final ImagePlus ip = ImageJUtil.convertToImageJImage(seq, progressFrame);
 
                 ThreadUtil.invokeLater(new Runnable()
                 {
@@ -138,13 +244,17 @@ public class GeneralActions
                         ip.show();
                     }
                 });
+
+                return true;
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
         }
     };
 
@@ -158,13 +268,13 @@ public class GeneralActions
         private static final long serialVersionUID = 5713619465058087088L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             final ImagePlus ip = WindowManager.getCurrentImage();
 
             if (ip != null)
             {
-                final Sequence seq = ImageJUtil.convertToIcySequence(ip, getProgressFrame());
+                final Sequence seq = ImageJUtil.convertToIcySequence(ip, progressFrame);
 
                 ThreadUtil.invokeLater(new Runnable()
                 {
@@ -175,13 +285,17 @@ public class GeneralActions
                         new Viewer(seq);
                     }
                 });
+
+                return true;
             }
+
+            return false;
         }
 
         @Override
         public boolean isEnabled()
         {
-            return !processing && (WindowManager.getCurrentImage() != null);
+            return super.isEnabled() && (WindowManager.getCurrentImage() != null);
         }
     };
 
@@ -194,10 +308,11 @@ public class GeneralActions
         private static final long serialVersionUID = -8702011381533907199L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             // open browser on help page
-            NetworkUtil.openURL(NetworkUtil.WEBSITE_URL + "support");
+            NetworkUtil.openBrowser(NetworkUtil.WEBSITE_URL + "support");
+            return true;
         }
     };
 
@@ -210,10 +325,11 @@ public class GeneralActions
         private static final long serialVersionUID = 4447276299627488427L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             // open browser on help page
-            NetworkUtil.openURL(NetworkUtil.WEBSITE_URL);
+            NetworkUtil.openBrowser(NetworkUtil.WEBSITE_URL);
+            return true;
         }
     };
 
@@ -227,13 +343,24 @@ public class GeneralActions
         private static final long serialVersionUID = 5070966391369409880L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             // check core update
-            IcyUpdater.checkUpdate(true, false);
+            if (!IcyUpdater.isCheckingForUpdate())
+                IcyUpdater.checkUpdate(true, false);
             // check plugin update
-            PluginUpdater.checkUpdate(true, false);
+            if (!PluginUpdater.isCheckingForUpdate())
+                PluginUpdater.checkUpdate(true, false);
+
+            return true;
         }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && !(IcyUpdater.isCheckingForUpdate() || PluginUpdater.isCheckingForUpdate());
+        }
+
     };
 
     public static IcyAbstractAction aboutAction = new IcyAbstractAction("About", new IcyIcon(ResourceUtil.ICON_INFO),
@@ -245,9 +372,10 @@ public class GeneralActions
         private static final long serialVersionUID = 2564352020620899851L;
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             new AboutFrame();
+            return true;
         }
     };
 

@@ -911,6 +911,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns true if the sequence contains at least one Painter.
+     */
+    public boolean hasPainter()
+    {
+        return painters.size() > 0;
+    }
+
+    /**
      * Returns all painters attached to this sequence
      */
     public ArrayList<Painter> getPainters()
@@ -947,6 +955,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         }
 
         return result;
+    }
+
+    /**
+     * Returns true if the sequence contains at least one ROI.
+     */
+    public boolean hasROI()
+    {
+        return rois.size() > 0;
     }
 
     /**

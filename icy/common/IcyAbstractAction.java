@@ -37,7 +37,7 @@ import org.pushingpixels.flamingo.api.common.RichTooltip;
  * 
  * @author Stephane
  */
-public abstract class IcyAbstractAction extends AbstractAction implements Runnable
+public abstract class IcyAbstractAction extends AbstractAction
 {
     /**
      * Sets the tooltip text of a component from an Action.
@@ -61,6 +61,41 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
         }
     }
 
+    private class ActionRunner implements Runnable
+    {
+        final ActionEvent event;
+
+        public ActionRunner(ActionEvent e)
+        {
+            super();
+
+            event = e;
+        }
+
+        @Override
+        public void run()
+        {
+            final String mess = getProcessMessage();
+
+            if (isBgProcess() && !StringUtil.isEmpty(mess))
+                progressFrame = new ProgressFrame(mess);
+            else
+                progressFrame = null;
+
+            try
+            {
+                doAction(event);
+            }
+            finally
+            {
+                if (progressFrame != null)
+                    progressFrame.close();
+
+                setProcessing(false);
+            }
+        }
+    }
+
     /**
      * 
      */
@@ -75,13 +110,14 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
     protected boolean processing;
     protected String processMessage;
     protected ProgressFrame progressFrame;
-    protected ActionEvent event;
 
     public IcyAbstractAction(String name, IcyIcon icon, String description, String longDescription, int keyCode,
             int modifiers, boolean bgProcess, String processMessage)
     {
         super(name, icon);
 
+        // by default we use the name as Action Command
+        putValue(ACTION_COMMAND_KEY, name);
         if (keyCode != 0)
             putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(keyCode, modifiers));
         if (!StringUtil.isEmpty(description))
@@ -93,7 +129,6 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
         this.processMessage = processMessage;
         progressFrame = null;
         processing = false;
-        event = null;
     }
 
     public IcyAbstractAction(String name, IcyIcon icon, String description, String longDescription, int keyCode,
@@ -208,16 +243,6 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
         return processMessage;
     }
 
-    /**
-     * @return the {@link ProgressFrame} (only available at process time and only if
-     *         {@link #isBgProcess()} is true.
-     * @see #isBgProcess()
-     */
-    public ProgressFrame getProgressFrame()
-    {
-        return progressFrame;
-    }
-
     public RichTooltip getRichToolTip()
     {
         final String desc = getDescription();
@@ -309,6 +334,14 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
     }
 
     /**
+     * Returns the {@link KeyStroke} for this action (can be null).
+     */
+    public KeyStroke getKeyStroke()
+    {
+        return (KeyStroke) getValue(ACCELERATOR_KEY);
+    }
+
+    /**
      * @return true if action is currently processing.<br>
      *         Meaningful only when {@link #setBgProcess(boolean)} is set to true)
      */
@@ -320,47 +353,16 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
     @Override
     public boolean isEnabled()
     {
-        return super.isEnabled() && !processing;
+        return enabled && !processing;
     }
 
     @Override
-    public void actionPerformed(ActionEvent e)
+    public void setEnabled(boolean value)
     {
-        event = e;
-
-        final boolean wasEnabled = isEnabled();
-        processing = true;
-        final boolean isEnabled = isEnabled();
-
-        // notify enabled change
-        if (wasEnabled != isEnabled)
-            firePropertyChange("enabled", Boolean.valueOf(wasEnabled), Boolean.valueOf(isEnabled));
-
-        if (bgProcess)
-            ThreadUtil.bgRun(this);
-        else
-            run();
-    }
-
-    @Override
-    public void run()
-    {
-        if (isBgProcess() && !StringUtil.isEmpty(processMessage))
-            progressFrame = new ProgressFrame(processMessage);
-        else
-            progressFrame = null;
-
-        try
+        if (enabled != value)
         {
-            doAction(event);
-        }
-        finally
-        {
-            if (progressFrame != null)
-                progressFrame.close();
-
             final boolean wasEnabled = isEnabled();
-            processing = false;
+            enabled = value;
             final boolean isEnabled = isEnabled();
 
             // notify enabled change
@@ -369,10 +371,57 @@ public abstract class IcyAbstractAction extends AbstractAction implements Runnab
         }
     }
 
-    public void doAction()
+    protected void setProcessing(boolean value)
     {
-        doAction(new ActionEvent(this, 0, ""));
+        if (processing != value)
+        {
+            final boolean wasEnabled = isEnabled();
+            processing = value;
+            final boolean isEnabled = isEnabled();
+
+            // notify enabled change
+            if (wasEnabled != isEnabled)
+                firePropertyChange("enabled", Boolean.valueOf(wasEnabled), Boolean.valueOf(isEnabled));
+        }
     }
 
-    public abstract void doAction(ActionEvent e);
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        setProcessing(true);
+
+        final ActionRunner runner = new ActionRunner(e);
+
+        if (isBgProcess())
+            ThreadUtil.bgRun(runner);
+        else
+            runner.run();
+    }
+
+    /**
+     * Execute action (delayed execution if action requires it)
+     */
+    public void execute()
+    {
+        actionPerformed(new ActionEvent(this, 0, ""));
+    }
+
+    /**
+     * @deprecated Use {@link #executeNow()} instead
+     */
+    @Deprecated
+    public boolean doAction()
+    {
+        return doAction(new ActionEvent(this, 0, ""));
+    }
+
+    /**
+     * Execute action now (wait for execution to complete)
+     */
+    public boolean executeNow()
+    {
+        return doAction(new ActionEvent(this, 0, ""));
+    }
+
+    protected abstract boolean doAction(ActionEvent e);
 }

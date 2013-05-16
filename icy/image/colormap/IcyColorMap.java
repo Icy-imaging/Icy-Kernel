@@ -852,7 +852,7 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Return true is this is a linear type colormap.<br>
+     * Return true if this is a linear type colormap.<br>
      * Linear colormap are used to display plain gray or color image.<br>
      * A non linear colormap means you usually have an indexed color image or
      * you want to enhance contrast/color in display.
@@ -867,6 +867,30 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
                 return gray.isLinear();
             case ALPHA:
                 return alpha.isLinear();
+        }
+    }
+
+    /**
+     * Return true if this is a total black colormap.
+     */
+    public boolean isBlack()
+    {
+        switch (type)
+        {
+            case RGB:
+                for (int i = 0; i < MAX_INDEX; i++)
+                    if ((red.map[i] & green.map[i] & blue.map[i]) != 0)
+                        return false;
+                return true;
+
+            case GRAY:
+                for (int i = 0; i < MAX_INDEX; i++)
+                    if (gray.map[i] != 0)
+                        return false;
+                return true;
+
+            default:
+                return false;
         }
     }
 

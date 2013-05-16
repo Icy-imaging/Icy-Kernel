@@ -66,6 +66,14 @@ public class PluginUpdater
     }
 
     /**
+     * return true if we are currently checking for update
+     */
+    public static boolean isCheckingForUpdate()
+    {
+        return processor.isProcessing();
+    }
+
+    /**
      * Do the check update process
      */
     public static void checkUpdate(boolean showProgress, boolean auto)
@@ -186,7 +194,8 @@ public class PluginUpdater
             if (auto)
             {
                 // automatically install all updates (orderer depending dependencies)
-                updatePlugins(toInstallPlugins, showProgress);
+                updatePlugins(toInstallPlugins, true);
+                // updatePlugins(toInstallPlugins, showProgress);
             }
             else
             {

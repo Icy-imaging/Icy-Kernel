@@ -871,7 +871,7 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
                 final ArrayList<Viewer> allViewers = Icy.getMainInterface().getViewers();
                 final IcyCommandMenuButton sequencesButton = new IcyCommandMenuButton("Opened sequences", new IcyIcon(
                         ResourceUtil.ICON_PICTURE));
-                sequencesButton.setPopupRichTooltip(new RichTooltip("Opened Sequences", "Show the selected sequence"));
+                sequencesButton.setPopupRichTooltip(new RichTooltip("Opened sequences", "Show the selected sequence"));
                 sequencesButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
                 sequencesButton.setPopupCallback(new PopupPanelCallback()
                 {

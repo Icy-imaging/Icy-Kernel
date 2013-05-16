@@ -28,6 +28,7 @@ import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.colormap.FireColorMap;
+import icy.image.colormap.GlowColorMap;
 import icy.image.colormap.HSVColorMap;
 import icy.image.colormap.IceColorMap;
 import icy.image.colormap.IcyColorMap;
@@ -202,6 +203,7 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         colormaps.add(new FireColorMap());
         colormaps.add(new HSVColorMap());
         colormaps.add(new JETColorMap());
+        colormaps.add(new GlowColorMap(true));
 
         // colormap models comboBox
         final JComboBox colormapComboBox = new JComboBox(colormaps.toArray());

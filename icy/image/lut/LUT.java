@@ -119,7 +119,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
          */
         public void setColorMap(IcyColorMap colorMap)
         {
-            colorSpace.setColormap(channel, new IcyColorMap(colorMap));
+            colorSpace.setColormap(channel, colorMap);
         }
 
         /**

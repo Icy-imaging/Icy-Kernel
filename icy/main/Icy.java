@@ -29,6 +29,7 @@ import icy.gui.frame.IcyExternalFrame;
 import icy.gui.frame.IcyInternalFrame;
 import icy.gui.frame.SplashScreenFrame;
 import icy.gui.frame.progress.AnnounceFrame;
+import icy.gui.frame.progress.ToolTipFrame;
 import icy.gui.main.MainFrame;
 import icy.gui.main.MainInterface;
 import icy.gui.main.MainInterfaceBatch;
@@ -90,7 +91,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.3.4.0");
+    public static Version version = new Version("1.3.5.0");
 
     /**
      * Main interface
@@ -298,7 +299,10 @@ public class Icy
 
         // handle startup arguments
         if (startupImage != null)
-            Icy.getMainInterface().addSequence(Loader.loadSequence(new File(startupImage)));
+        {
+            Icy.getMainInterface().addSequence(
+                    Loader.loadSequence(new File(FileUtil.getGenericPath(startupImage)), 0, true));
+        }
         if (startupPlugin != null)
         {
             PluginLoader.waitWhileLoading();
@@ -344,9 +348,14 @@ public class Icy
     {
         // we verify that some parameters are incorrect
         if ((ApplicationPreferences.getMaxMemoryMB() <= 128) && (ApplicationPreferences.getMaxMemoryMBLimit() > 128))
+        {
             MessageDialog.showDialog(
                     "Your maximum memory setting is low, you should increase it in preferences setting.",
                     MessageDialog.WARNING_MESSAGE);
+        }
+        else if (ApplicationPreferences.getMaxMemoryMB() < (ApplicationPreferences.getDefaultMemoryMB() / 2))
+            new ToolTipFrame("<html><b>Tip:</b> you can increase your maximum memory in preferences setting.</html>",
+                    15, "maxMemoryTip");
     }
 
     static void fatalError(Throwable t)
@@ -666,13 +675,14 @@ public class Icy
 
         // build the local native library path
         final String libPath = LIB_PATH + FileUtil.separator + os;
+        final File libFile = new File(libPath);
 
         // get all files in local native library path
-        final ArrayList<File> files = FileUtil.getFileList(libPath, true, true, false);
+        final File[] files = FileUtil.getFiles(libFile, null, true, true, false);
         final ArrayList<String> directories = new ArrayList<String>();
 
         // add base local native library path to user library paths
-        directories.add(new File(libPath).getAbsolutePath());
+        directories.add(libFile.getAbsolutePath());
 
         for (File f : files)
         {
@@ -748,7 +758,7 @@ public class Icy
             if (SystemUtil.isMac())
             {
                 // get VTK library file list (we don't want hidden files if any)
-                final ArrayList<File> libraryFiles = FileUtil.getFileList(vtkLibPath, true, false);
+                final File[] libraryFiles = FileUtil.getFiles(new File(vtkLibPath), null, true, false, false);
                 // copy to root directory
                 for (File libraryFile : libraryFiles)
                 {
@@ -868,7 +878,7 @@ public class Icy
         // build the native local library path
         final String path = LIB_PATH + FileUtil.separator + SystemUtil.getOSArchIdString();
         // get file list (we don't want hidden files if any)
-        final ArrayList<File> libraryFiles = FileUtil.getFileList(path, true, false);
+        final File[] libraryFiles = FileUtil.getFiles(new File(path), null, true, false, false);
 
         // remove previous copied files
         for (File libraryFile : libraryFiles)

@@ -42,6 +42,7 @@ public class IcyCommandToggleMenuButton extends JCommandToggleMenuButton
     /**
      * internals
      */
+    private boolean internalEnabled;
     private IcyAbstractAction action;
     private final PropertyChangeListener actionPropertyChangeListener;
 
@@ -50,6 +51,7 @@ public class IcyCommandToggleMenuButton extends JCommandToggleMenuButton
         super(title, icon);
 
         action = null;
+        internalEnabled = isEnabled();
 
         actionPropertyChangeListener = new PropertyChangeListener()
         {
@@ -57,7 +59,7 @@ public class IcyCommandToggleMenuButton extends JCommandToggleMenuButton
             public void propertyChange(PropertyChangeEvent evt)
             {
                 if (StringUtil.equals("enabled", evt.getPropertyName()))
-                    repaint();
+                    refreshEnabled();
             }
         };
     }
@@ -132,20 +134,15 @@ public class IcyCommandToggleMenuButton extends JCommandToggleMenuButton
     }
 
     @Override
-    public boolean isEnabled()
-    {
-        return super.isEnabled() && ((action == null) || action.isEnabled());
-    }
-
-    @Override
     public void setEnabled(boolean b)
     {
-        final boolean oldValue = isEnabled();
+        internalEnabled = b;
+        refreshEnabled();
+    }
 
-        super.setEnabled(b);
-
-        if ((oldValue != b) && (action != null))
-            action.setEnabled(b);
+    protected void refreshEnabled()
+    {
+        super.setEnabled(internalEnabled && ((action == null) || action.isEnabled()));
     }
 
     /**
@@ -179,6 +176,8 @@ public class IcyCommandToggleMenuButton extends JCommandToggleMenuButton
                 addActionListener(value);
                 value.addPropertyChangeListener(actionPropertyChangeListener);
             }
+
+            refreshEnabled();
         }
     }
 

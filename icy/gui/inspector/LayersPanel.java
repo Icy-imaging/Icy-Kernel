@@ -29,7 +29,7 @@ import icy.gui.component.editor.SliderCellEditor;
 import icy.gui.component.editor.VisibleCellEditor;
 import icy.gui.component.renderer.SliderCellRenderer;
 import icy.gui.component.renderer.VisibleCellRenderer;
-import icy.gui.inspector.InspectorPanel.InspectorSubPanel;
+import icy.gui.inspector.InspectorPanel.FocusedViewerSequenceListener;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.gui.viewer.ViewerEvent.ViewerEventType;
@@ -62,8 +62,8 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public class LayersPanel extends InspectorSubPanel implements CanvasLayerListener, TextChangeListener,
-        ListSelectionListener
+public class LayersPanel extends JPanel implements FocusedViewerSequenceListener, CanvasLayerListener,
+        TextChangeListener, ListSelectionListener
 {
     private class CanvasRefresher implements Runnable
     {
@@ -581,7 +581,7 @@ public class LayersPanel extends InspectorSubPanel implements CanvasLayerListene
     {
         while (isLayerPropertiesAdjusting)
             ThreadUtil.sleep(10);
-        
+
         isLayerPropertiesAdjusting = true;
         try
         {

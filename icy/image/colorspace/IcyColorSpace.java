@@ -117,64 +117,64 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
             {
                 case 1:
                     // Gray
-                    setColormap(0, new IcyColorMap(LinearColorMap.white_));
+                    setColormap(0, LinearColorMap.white_);
                     break;
 
                 case 2:
                     // Red / Green
-                    setColormap(0, new IcyColorMap(LinearColorMap.red_));
-                    setColormap(1, new IcyColorMap(LinearColorMap.green_));
+                    setColormap(0, LinearColorMap.red_);
+                    setColormap(1, LinearColorMap.green_);
                     break;
 
                 case 3:
                     // RGB
-                    setColormap(0, new IcyColorMap(LinearColorMap.red_));
-                    setColormap(1, new IcyColorMap(LinearColorMap.green_));
-                    setColormap(2, new IcyColorMap(LinearColorMap.blue_));
+                    setColormap(0, LinearColorMap.red_);
+                    setColormap(1, LinearColorMap.green_);
+                    setColormap(2, LinearColorMap.blue_);
                     break;
 
                 case 4:
                     // ARGB
-                    setColormap(0, new IcyColorMap(LinearColorMap.red_));
-                    setColormap(1, new IcyColorMap(LinearColorMap.green_));
-                    setColormap(2, new IcyColorMap(LinearColorMap.blue_));
-                    setColormap(3, new IcyColorMap(LinearColorMap.alpha_));
+                    setColormap(0, LinearColorMap.red_);
+                    setColormap(1, LinearColorMap.green_);
+                    setColormap(2, LinearColorMap.blue_);
+                    setColormap(3, LinearColorMap.alpha_);
                     break;
 
                 case 5:
                     // RGB CM
-                    setColormap(0, new IcyColorMap(LinearColorMap.red_));
-                    setColormap(1, new IcyColorMap(LinearColorMap.green_));
-                    setColormap(2, new IcyColorMap(LinearColorMap.blue_));
-                    setColormap(3, new IcyColorMap(LinearColorMap.cyan_));
-                    setColormap(4, new IcyColorMap(LinearColorMap.magenta_));
+                    setColormap(0, LinearColorMap.red_);
+                    setColormap(1, LinearColorMap.green_);
+                    setColormap(2, LinearColorMap.blue_);
+                    setColormap(3, LinearColorMap.cyan_);
+                    setColormap(4, LinearColorMap.magenta_);
                     break;
 
                 case 6:
                     // RGB CMY
-                    setColormap(0, new IcyColorMap(LinearColorMap.red_));
-                    setColormap(1, new IcyColorMap(LinearColorMap.green_));
-                    setColormap(2, new IcyColorMap(LinearColorMap.blue_));
-                    setColormap(3, new IcyColorMap(LinearColorMap.cyan_));
-                    setColormap(4, new IcyColorMap(LinearColorMap.magenta_));
-                    setColormap(5, new IcyColorMap(LinearColorMap.yellow_));
+                    setColormap(0, LinearColorMap.red_);
+                    setColormap(1, LinearColorMap.green_);
+                    setColormap(2, LinearColorMap.blue_);
+                    setColormap(3, LinearColorMap.cyan_);
+                    setColormap(4, LinearColorMap.magenta_);
+                    setColormap(5, LinearColorMap.yellow_);
                     break;
 
                 default:
                     // RGB CMY W
-                    setColormap(0, new IcyColorMap(LinearColorMap.red_));
-                    setColormap(1, new IcyColorMap(LinearColorMap.green_));
-                    setColormap(2, new IcyColorMap(LinearColorMap.blue_));
-                    setColormap(3, new IcyColorMap(LinearColorMap.cyan_));
-                    setColormap(4, new IcyColorMap(LinearColorMap.magenta_));
-                    setColormap(5, new IcyColorMap(LinearColorMap.yellow_));
-                    setColormap(6, new IcyColorMap(LinearColorMap.white_));
+                    setColormap(0, LinearColorMap.red_);
+                    setColormap(1, LinearColorMap.green_);
+                    setColormap(2, LinearColorMap.blue_);
+                    setColormap(3, LinearColorMap.cyan_);
+                    setColormap(4, LinearColorMap.magenta_);
+                    setColormap(5, LinearColorMap.yellow_);
+                    setColormap(6, LinearColorMap.white_);
                     break;
             }
 
             // black map for the rest
             for (int i = 7; i < numComponents; i++)
-                setColormap(i, new IcyColorMap(LinearColorMap.black_));
+                setColormap(i, LinearColorMap.black_);
         }
         finally
         {
@@ -508,19 +508,15 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     }
 
     /**
-     * Set the colormap for the specified component.
+     * Set the colormap for the specified component (actually copy the content of source colormap).
      */
     public void setColormap(int component, IcyColorMap colorMap)
     {
-        if (toRGBmaps[component] != colorMap)
-        {
-            toRGBmaps[component] = colorMap;
-            changed(component);
-        }
+        toRGBmaps[component].copyFrom(colorMap);
     }
 
     /**
-     * @deprecated Use <code>setColormap(channel, new IcyColorMap(map))</code> instead.
+     * @deprecated Use <code>setColormap(channel, map)</code> instead.
      */
     @Deprecated
     public void copyColormap(int component, IcyColorMap srcColorMap, boolean copyName, boolean copyAlpha)
@@ -534,7 +530,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     }
 
     /**
-     * @deprecated Use <code>setColormap(channel, new IcyColorMap(map))</code> instead.
+     * @deprecated Use <code>setColormap(channel, map)</code> instead.
      */
     @Deprecated
     public void copyColormap(int component, IcyColorMap srcColorMap, boolean copyName)
@@ -548,7 +544,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     }
 
     /**
-     * @deprecated Use <code>setColormap(channel, new IcyColorMap(map))</code> instead.
+     * @deprecated Use <code>setColormap(channel, map)</code> instead.
      */
     @Deprecated
     public void copyColormap(int component, IcyColorMap map)
@@ -772,7 +768,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
         {
             // copy colormap
             for (int comp = 0; comp < numComponents; comp++)
-                setColormap(comp, new IcyColorMap(source.getColormap(comp)));
+                setColormap(comp, source.getColormap(comp));
         }
         finally
         {

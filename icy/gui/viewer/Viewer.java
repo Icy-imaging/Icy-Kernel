@@ -25,13 +25,13 @@ import icy.canvas.IcyCanvasEvent;
 import icy.canvas.IcyCanvasListener;
 import icy.common.IcyAbstractAction;
 import icy.common.MenuCallback;
+import icy.common.listener.ProgressListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.component.renderer.LabelComboBoxRenderer;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.IcyFrameAdapter;
 import icy.gui.frame.IcyFrameEvent;
-import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.lut.LUTViewer;
 import icy.gui.lut.abstract_.IcyLutViewer;
 import icy.gui.plugin.PluginComboBoxRenderer;
@@ -65,6 +65,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 
@@ -101,7 +102,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         }
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             ThreadUtil.invokeLater(new Runnable()
             {
@@ -113,6 +114,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                     v.getLut().copyFrom(getLut());
                 }
             });
+
+            return true;
         }
     }
 
@@ -125,11 +128,11 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         public ScreenShotAction()
         {
-            super("", new IcyIcon(ResourceUtil.ICON_PHOTO), "Take a screenshot of current view");
+            super("Screeshot (view)", new IcyIcon(ResourceUtil.ICON_PHOTO), "Take a screenshot of current view", true, "Rendering...");
         }
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             // so it won't change during process
             final IcyCanvas canvas = getCanvas();
@@ -137,32 +140,20 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
             if ((seqIn != null) && (canvas != null))
             {
-                // launch in background as it can take sometime
-                ThreadUtil.bgRun(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        final ProgressFrame pf = new ProgressFrame("Rendering...");
-                        try
-                        {
-                            final Sequence seqOut = canvas.getRenderedSequence(true, pf);
+                final Sequence seqOut = canvas.getRenderedSequence(true, progressFrame);
 
-                            if (seqOut != null)
-                            {
-                                // set sequence name
-                                seqOut.setName("Screen shot of '" + seqIn.getName() + "' view");
-                                // add sequence
-                                Icy.getMainInterface().addSequence(seqOut);
-                            }
-                        }
-                        finally
-                        {
-                            pf.close();
-                        }
-                    }
-                });
+                if (seqOut != null)
+                {
+                    // set sequence name
+                    seqOut.setName("Screen shot of '" + seqIn.getName() + "' view");
+                    // add sequence
+                    Icy.getMainInterface().addSequence(seqOut);
+                    
+                    return true;
+                }
             }
+            
+            return false;
         }
     }
 
@@ -175,12 +166,12 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         public ScreenShotAlternateAction()
         {
-            super("", new IcyIcon(ResourceUtil.ICON_PHOTO_SMALL),
-                    "Take a screenshot of current view with original sequence dimensions");
+            super("Screenshot (global)", new IcyIcon(ResourceUtil.ICON_PHOTO_SMALL),
+                    "Take a screenshot of current view with original sequence dimensions", true, "Rendering...");
         }
 
         @Override
-        public void doAction(ActionEvent e)
+        public boolean doAction(ActionEvent e)
         {
             // so it won't change during process
             final IcyCanvas canvas = getCanvas();
@@ -188,32 +179,20 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
             if ((seqIn != null) && (canvas != null))
             {
-                // launch in background as it can take sometime
-                ThreadUtil.bgRun(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        final ProgressFrame pf = new ProgressFrame("Rendering...");
-                        try
-                        {
-                            final Sequence seqOut = canvas.getRenderedSequence(false, pf);
+                final Sequence seqOut = canvas.getRenderedSequence(false, progressFrame);
 
-                            if (seqOut != null)
-                            {
-                                // set sequence name
-                                seqOut.setName("Rendering of '" + seqIn.getName() + "' view");
-                                // add sequence
-                                Icy.getMainInterface().addSequence(seqOut);
-                            }
-                        }
-                        finally
-                        {
-                            pf.close();
-                        }
-                    }
-                });
+                if (seqOut != null)
+                {
+                    // set sequence name
+                    seqOut.setName("Rendering of '" + seqIn.getName() + "' view");
+                    // add sequence
+                    Icy.getMainInterface().addSequence(seqOut);
+
+                    return true;
+                }
             }
+
+            return false;
         }
     }
 
@@ -612,12 +591,12 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         screenShotButton.setFocusable(false);
         screenShotButton.setHideActionText(true);
         screenShotAlternateButton = new IcyButton(new ScreenShotAlternateAction());
-        screenShotButton.setFocusable(false);
-        screenShotButton.setHideActionText(true);
+        screenShotAlternateButton.setFocusable(false);
+        screenShotAlternateButton.setHideActionText(true);
         duplicateButton = new IcyButton(new DuplicateAction());
         duplicateButton.setFocusable(false);
         duplicateButton.setHideActionText(true);
-        duplicateButton.setToolTipText("Duplicate view (no data duplication)");
+//        duplicateButton.setToolTipText("Duplicate view (no data duplication)");
         switchStateButton = new IcyButton(getSwitchStateAction());
         switchStateButton.setFocusable(false);
         switchStateButton.setHideActionText(true);
@@ -780,7 +759,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
             // keep the color map of previous LUT if they have the same number of channels
             if ((lut != null) && (lut.getNumChannel() == newLut.getNumChannel()))
-                newLut.getColorSpace().copyColormaps(lut.getColorSpace());
+                newLut.getColorSpace().setColormaps(lut.getColorSpace());
 
             // set the new lut
             setLut(newLut);
@@ -928,9 +907,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
-     * @return current T (-1 if all selected)
+     * @return current T (-1 if all selected/displayed)
      */
-    public int getT()
+    public int getPositionT()
     {
         if (canvas != null)
             return canvas.getPositionT();
@@ -939,19 +918,18 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
-     * @param t
-     *        T position
+     * Set the current T position (for multi frame sequence).
      */
-    public void setT(int t)
+    public void setPositionT(int t)
     {
         if (canvas != null)
             canvas.setPositionT(t);
     }
 
     /**
-     * @return current Z (-1 if all selected)
+     * @return current Z (-1 if all selected/displayed)
      */
-    public int getZ()
+    public int getPositionZ()
     {
         if (canvas != null)
             return canvas.getPositionZ();
@@ -960,19 +938,18 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
-     * @param z
-     *        Z position
+     * Set the current Z position (for stack sequence).
      */
-    public void setZ(int z)
+    public void setPositionZ(int z)
     {
         if (canvas != null)
             canvas.setPositionZ(z);
     }
 
     /**
-     * @return current C (-1 if all selected)
+     * @return current C (-1 if all selected/displayed)
      */
-    public int getC()
+    public int getPositionC()
     {
         if (canvas != null)
             return canvas.getPositionC();
@@ -981,13 +958,66 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
-     * @param c
-     *        C position
+     * Set the current C (channel) position (multi channel sequence)
      */
-    public void setC(int c)
+    public void setPositionC(int c)
     {
         if (canvas != null)
             canvas.setPositionC(c);
+    }
+
+    /**
+     * @deprecated Use {@link #getPositionT()} instead.
+     */
+    @Deprecated
+    public int getT()
+    {
+        return getPositionT();
+    }
+
+    /**
+     * @deprecated Use {@link #setPositionT(int)} instead.
+     */
+    @Deprecated
+    public void setT(int t)
+    {
+        setPositionT(t);
+    }
+
+    /**
+     * @deprecated Use {@link #getPositionZ()} instead.
+     */
+    @Deprecated
+    public int getZ()
+    {
+        return getPositionZ();
+    }
+
+    /**
+     * @deprecated Use {@link #setPositionZ(int)} instead.
+     */
+    @Deprecated
+    public void setZ(int z)
+    {
+        setPositionZ(z);
+    }
+
+    /**
+     * @deprecated Use {@link #getPositionZ()} instead.
+     */
+    @Deprecated
+    public int getC()
+    {
+        return getPositionC();
+    }
+
+    /**
+     * @deprecated Use {@link #setPositionZ(int)} instead.
+     */
+    @Deprecated
+    public void setC(int c)
+    {
+        setPositionC(c);
     }
 
     /**
@@ -1106,6 +1136,22 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             return canvas.getNumSelectedSamples();
 
         return 0;
+    }
+
+    /**
+     * @see icy.canvas.IcyCanvas#getRenderedImage(int, int, int, boolean)
+     */
+    public BufferedImage getRenderedImage(int t, int z, int c, boolean canvasView)
+    {
+        return canvas.getRenderedImage(t, z, c, canvasView);
+    }
+
+    /**
+     * @see icy.canvas.IcyCanvas#getRenderedSequence(boolean, icy.common.listener.ProgressListener)
+     */
+    public Sequence getRenderedSequence(boolean canvasView, ProgressListener progressListener)
+    {
+        return canvas.getRenderedSequence(canvasView, progressListener);
     }
 
     /**

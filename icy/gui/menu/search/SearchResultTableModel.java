@@ -58,17 +58,6 @@ public class SearchResultTableModel extends AbstractTableModel
         }
     }
 
-    private int adjustIndex(int index, int size)
-    {
-        if (maxRowCount > 0)
-        {
-            if (size > maxRowCount)
-                return (index * size) / maxRowCount;
-        }
-
-        return index;
-    }
-
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex)
     {
@@ -96,17 +85,15 @@ public class SearchResultTableModel extends AbstractTableModel
     public Object getValueAt(int rowIndex, int columnIndex)
     {
         final List<SearchResult> results = searchEngine.getResults();
-        final int resultsCount = results.size();
+        int resultsCount = results.size();
+
+        // limit to maxRow
+        if (maxRowCount > 0)
+            resultsCount = Math.min(maxRowCount, resultsCount);
 
         if (rowIndex < resultsCount)
         {
-            final int adjustedRowIndex = adjustIndex(rowIndex, resultsCount);
-
-            // can happen in rare case...
-            if (adjustedRowIndex >= resultsCount)
-                return null;
-
-            final SearchResult element = results.get(adjustedRowIndex);
+            final SearchResult element = results.get(rowIndex);
 
             switch (columnIndex)
             {
@@ -114,9 +101,9 @@ public class SearchResultTableModel extends AbstractTableModel
                     final SearchResultProducer producer = element.getProducer();
 
                     // display producer on first producer result
-                    if (adjustedRowIndex == 0)
+                    if (rowIndex == 0)
                         return producer;
-                    else if (results.get(adjustIndex(rowIndex - 1, resultsCount)).getProducer() != producer)
+                    else if (results.get(rowIndex - 1).getProducer() != producer)
                         return producer;
 
                     return null;

@@ -23,8 +23,6 @@ import icy.file.Loader;
 import icy.main.Icy;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.XMLPreferences;
-import icy.system.thread.ThreadUtil;
-import icy.type.collection.CollectionUtil;
 
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
@@ -37,7 +35,7 @@ import javax.swing.filechooser.FileFilter;
 /**
  * @author Stephane
  */
-public class ImageLoaderDialog extends JFileChooser implements PropertyChangeListener, Runnable
+public class ImageLoaderDialog extends JFileChooser implements PropertyChangeListener
 {
     public static class AllImageFileFilter extends FileFilter
     {
@@ -68,9 +66,23 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
     private String fileId;
 
     /**
+     * <b>Image Loader Dialog</b><br>
+     * <br>
+     * Display a dialog to select image file(s) and load them.<br>
+     * <br>
+     * To only get selected image files from the dialog you must do:<br>
+     * <code> ImageLoaderDialog dialog = new ImageLoaderDialog(false);</code><br>
+     * <code> File[] selectedFiles = dialog.getSelectedFiles()</code><br>
+     * <br>
+     * To directly load selected image files just use:<br>
+     * <code>new ImageLoaderDialog(true);</code><br>
+     * or<br>
+     * <code>new ImageLoaderDialog();</code>
      * 
+     * @param autoLoad
+     *        If true the selected image(s) are automatically loaded.
      */
-    public ImageLoaderDialog()
+    public ImageLoaderDialog(boolean autoLoad)
     {
         super();
 
@@ -109,6 +121,9 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
 
         // display loader
         final int value = showOpenDialog(Icy.getMainInterface().getMainFrame());
+        
+        // cancel preview refresh (for big file)
+        optionPanel.cancelPreview();
 
         // action confirmed ?
         if (value == JFileChooser.APPROVE_OPTION)
@@ -117,12 +132,44 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
             preferences.put("path", getCurrentDirectory().getAbsolutePath());
             preferences.putBoolean("separate", optionPanel.isSeparateSequenceSelected());
             preferences.putBoolean("autoOrder", optionPanel.isAutoOrderSelected());
-            Loader.load(CollectionUtil.asList(getSelectedFiles()), optionPanel.isSeparateSequenceSelected(), optionPanel.isAutoOrderSelected(), true);
+
+            // load if requested
+            if (autoLoad)
+            {
+                Loader.load(getSelectedFiles(), optionPanel.isSeparateSequenceSelected(),
+                        optionPanel.isAutoOrderSelected(), true);
+            }
         }
 
         // store interface option
         preferences.putInt("width", getWidth());
         preferences.putInt("height", getHeight());
+    }
+
+    /**
+     * <b>Image Loader Dialog</b><br>
+     * <br>
+     * Display a dialog to select image file(s) and load them.
+     */
+    public ImageLoaderDialog()
+    {
+        this(true);
+    }
+
+    /**
+     * Returns true if user checked the "Separate sequence" option.
+     */
+    public boolean isSeparateSequenceSelected()
+    {
+        return optionPanel.isSeparateSequenceSelected();
+    }
+
+    /**
+     * Returns true if user checked the "Auto Ordering" option.
+     */
+    public boolean isAutoOrderSelected()
+    {
+        return optionPanel.isAutoOrderSelected();
     }
 
     @Override
@@ -134,15 +181,12 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         {
             File f = (File) evt.getNewValue();
 
-            if (f != null && (f.isDirectory() || !f.exists()))
+            if ((f != null) && (f.isDirectory() || !f.exists()))
                 f = null;
 
+            // refresh preview
             if (f != null)
-            {
-                fileId = f.getAbsolutePath();
-                // refresh preview
-                ThreadUtil.bgRunSingle(this);
-            }
+                optionPanel.updatePreview(f.getAbsolutePath());
         }
 
         // setting state
@@ -155,11 +199,5 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
 
         optionPanel.setSeparateSequenceEnabled(multi);
         optionPanel.setAutoOrderEnabled(multi);
-    }
-
-    @Override
-    public void run()
-    {
-        optionPanel.updatePreview(fileId);
     }
 }

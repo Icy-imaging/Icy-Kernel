@@ -38,6 +38,7 @@ import icy.math.MultiSmoothMover.MultiSmoothMoverAdapter;
 import icy.math.SmoothMover;
 import icy.math.SmoothMover.SmoothMoveType;
 import icy.math.SmoothMover.SmoothMoverAdapter;
+import icy.painter.ImageOverlay;
 import icy.painter.Overlay;
 import icy.painter.Painter;
 import icy.preferences.ApplicationPreferences;
@@ -1345,6 +1346,53 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             updateRot(control, shift);
         }
 
+        /**
+         * Draw specified image layer and others layers on specified {@link Graphics2D} object.
+         */
+        void drawLayer(Graphics2D g, Sequence seq, Layer layer)
+        {
+            if (layer.isVisible())
+            {
+                final float alpha = layer.getAlpha();
+
+                if (alpha != 1f)
+                    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+                else
+                    g.setComposite(AlphaComposite.SrcOver);
+
+                layer.getPainter().paint(g, seq, Canvas2D.this);
+            }
+        }
+
+        /**
+         * Draw specified image layer and others layers on specified {@link Graphics2D} object.
+         */
+        void drawImageAndLayers(Graphics2D g, Layer imageLayer)
+        {
+            final Sequence seq = getSequence();
+            final Layer defaultImageLayer = getImageLayer();
+
+            if (isLayersVisible())
+            {
+                final List<Layer> layers = getLayers();
+
+                // draw them in inverse order to have first painter event at top
+                for (int i = layers.size() - 1; i >= 0; i--)
+                {
+                    final Layer layer = layers.get(i);
+
+                    // replace the default image layer by the specified one
+                    if (layer == defaultImageLayer)
+                        drawLayer(g, seq, imageLayer);
+                    else
+                        drawLayer(g, seq, layer);
+                }
+            }
+            else
+                // display image layer only
+                drawLayer(g, seq, imageLayer);
+        }
+
         @Override
         protected void paintComponent(Graphics g)
         {
@@ -1353,7 +1401,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             final int canvasCenterX = getCanvasSizeX() / 2;
             final int canvasCenterY = getCanvasSizeY() / 2;
 
-            // image & layers
+            // layers
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
 
@@ -1375,37 +1423,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
                 // apply transformation
                 g2.transform(getTransform());
-                // g2.drawImage(img, null, 0, 0);
 
-                final Sequence seq = getSequence();
-
-                if (isLayersVisible())
-                {
-                    // final ArrayList<Layer> layers = getVisibleOrderedLayersForEvent();
-                    final ArrayList<Layer> layers = getVisibleLayers();
-
-                    // draw them in inverse order to have first painter event at top
-                    for (int i = layers.size() - 1; i >= 0; i--)
-                    {
-                        final Layer layer = layers.get(i);
-                        final float alpha = layer.getAlpha();
-
-                        if (alpha != 1f)
-                            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-                        else
-                            g2.setComposite(AlphaComposite.SrcOver);
-
-                        layer.getPainter().paint(g2, seq, Canvas2D.this);
-                    }
-                }
-                else
-                {
-                    final Layer imageLayer = getImageLayer();
-
-                    // display image only
-                    if (imageLayer.isVisible())
-                        getImageLayer().getPainter().paint(g2, seq, Canvas2D.this);
-                }
+                // draw image and layers
+                drawImageAndLayers(g2, getImageLayer());
 
                 g2.dispose();
             }
@@ -2782,7 +2802,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             switch (e.getKeyCode())
             {
                 case KeyEvent.VK_LEFT:
-                    if (EventUtil.isControlDown(e))
+                    if (EventUtil.isMenuControlDown(e, true))
                         setPositionT(Math.max(getPositionT() - 5, 0));
                     else
                         setPositionT(Math.max(getPositionT() - 1, 0));
@@ -2790,7 +2810,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     break;
 
                 case KeyEvent.VK_RIGHT:
-                    if (EventUtil.isControlDown(e))
+                    if (EventUtil.isMenuControlDown(e, true))
                         setPositionT(getPositionT() + 5);
                     else
                         setPositionT(getPositionT() + 1);
@@ -2798,7 +2818,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     break;
 
                 case KeyEvent.VK_UP:
-                    if (EventUtil.isControlDown(e))
+                    if (EventUtil.isMenuControlDown(e, true))
                         setPositionZ(getPositionZ() + 5);
                     else
                         setPositionZ(getPositionZ() + 1);
@@ -2806,7 +2826,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     break;
 
                 case KeyEvent.VK_DOWN:
-                    if (EventUtil.isControlDown(e))
+                    if (EventUtil.isMenuControlDown(e, true))
                         setPositionZ(Math.max(getPositionZ() - 5, 0));
                     else
                         setPositionZ(Math.max(getPositionZ() - 1, 0));
@@ -2881,43 +2901,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     }
 
     @Override
-    public BufferedImage getRenderedImage(int t, int z, int c, boolean canvasView)
+    public BufferedImage getRenderedImage(int t, int z, int c, boolean cv)
     {
-        if (c != -1)
-            throw new UnsupportedOperationException("getRenderedImage(..) with c != -1 not supported.");
-
-        return getRenderedImage(t, z, canvasView);
-    }
-
-    /**
-     * Return a rendered image for image at position (t, z)<br>
-     * 
-     * @param t
-     *        T position of wanted image (-1 for complete sequence)
-     * @param z
-     *        Z position of wanted image (-1 for complete stack)
-     */
-    public BufferedImage getRenderedImage(int t, int z)
-    {
-        return getRenderedImage(t, z, true);
-    }
-
-    /**
-     * Return a rendered image for image at position (t, z)<br>
-     * 
-     * @param t
-     *        T position of wanted image (-1 for complete sequence)
-     * @param z
-     *        Z position of wanted image (-1 for complete stack)
-     * @param canvasView
-     *        render with canvas view if true else use default sequence
-     *        dimension
-     */
-    public BufferedImage getRenderedImage(int t, int z, boolean canvasView)
-    {
-        final IcyBufferedImage srcImg = getImage(t, z);
-
-        if (srcImg == null)
+        final Sequence seq = getSequence();
+        if (seq == null)
             return null;
 
         // save position
@@ -2934,64 +2921,46 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         }
         try
         {
-            // FIXME : not really optimal in memory and processing
-            final BufferedImage img = IcyBufferedImageUtil
-                    .toBufferedImage(srcImg, BufferedImage.TYPE_INT_RGB, getLut());
-            final BufferedImage result;
-            final Graphics2D g;
+            final Dimension size;
 
-            if (canvasView)
-            {
-                final Dimension size = getCanvasSize();
-
-                // get result image and graphics object
-                result = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
-                g = result.createGraphics();
-
-                // apply transformation (translation + scale)
-                g.transform(getTransform());
-
-                // draw transformed image
-                g.drawImage(img, 0, 0, null);
-            }
+            if (cv)
+                size = getCanvasSize();
             else
+                size = seq.getDimension();
+
+            // get result image and graphics object
+            final BufferedImage result = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
+            final Graphics2D g = result.createGraphics();
+
+            if (cv)
             {
-                // no need to go further...
-                if (!dl)
-                    return img;
-
-                // use the image Graphics object directly
-                result = img;
-                g = result.createGraphics();
-            }
-
-            if (dl)
-            {
-                final Sequence seq = getSequence();
-
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                final ArrayList<Layer> layers = getVisibleLayers();
-                final Layer imgLayer = getImageLayer();
-
-                // draw them in inverse order to have first painter event at top
-                for (int i = layers.size() - 1; i >= 0; i--)
+                // apply filtering
+                if (CanvasPreferences.getFiltering())
                 {
-                    final Layer layer = layers.get(i);
-
-                    if (layer != imgLayer)
+                    if (getScaleX() < 4d && getScaleY() < 4d)
                     {
-                        final float alpha = layer.getAlpha();
-
-                        if (alpha != 1f)
-                            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-                        else
-                            g.setComposite(AlphaComposite.SrcOver);
-
-                        layer.getPainter().paint(g, seq, this);
+                        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                    }
+                    else
+                    {
+                        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                     }
                 }
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // apply transformation
+                g.transform(getTransform());
             }
+
+            // create temporary image, overlay and layer (not optimal for memory and performance)
+            final BufferedImage img = IcyBufferedImageUtil.getARGBImage(getImage(t, z, c), getLut());
+            final Overlay imgOverlay = new ImageOverlay("Image", img);
+            final Layer imgLayer = new Layer(imgOverlay);
+
+            // draw image and layers
+            canvasView.drawImageAndLayers(g, imgLayer);
 
             g.dispose();
 
@@ -3006,6 +2975,24 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 setPositionZ(prevZ);
             }
         }
+    }
+
+    /**
+     * @deprecated Use {@link #getRenderedImage(int, int, -1)} instead.
+     */
+    @Deprecated
+    public BufferedImage getRenderedImage(int t, int z)
+    {
+        return getRenderedImage(t, z, -1, true);
+    }
+
+    /**
+     * @deprecated Use {@link #getRenderedImage(int, int, -1, boolean)} instead.
+     */
+    @Deprecated
+    public BufferedImage getRenderedImage(int t, int z, boolean canvasView)
+    {
+        return getRenderedImage(t, z, -1, canvasView);
     }
 
     /**

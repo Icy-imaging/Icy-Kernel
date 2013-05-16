@@ -97,9 +97,29 @@ public class ImageSaverDialog extends JFileChooser
     final boolean singleImage;
 
     /**
+     * <b>Image Saver Dialog</b><br>
+     * <br>
+     * Display a dialog to select the destination file then save the specified sequence.<br>
+     * <br>
+     * To only get selected file from the dialog you must do:<br>
+     * <code> ImageSaverDialog dialog = new ImageSaverDialog(sequence, 0, 0, false);</code><br>
+     * <code> File selectedFile = dialog.getSelectedFile()</code><br>
+     * <br>
+     * To directly save specified sequence to the selected file just use:<br>
+     * <code>new ImageSaverDialog(sequence, 0, 0, true);</code><br>
+     * or<br>
+     * <code>new ImageSaverDialog(sequence, 0, 0);</code>
      * 
+     * @param sequence
+     *        The {@link Sequence} we want to save.
+     * @param defZ
+     *        default Z slice to save if output format support only single slice image.
+     * @param defT
+     *        default T frame to save if output format support only single frame image.
+     * @param autoSave
+     *        If true the sequence is automatically saved to selected file.
      */
-    public ImageSaverDialog(Sequence sequence, int defZ, int defT)
+    public ImageSaverDialog(Sequence sequence, int defZ, int defT, boolean autoSave)
     {
         super();
 
@@ -219,66 +239,75 @@ public class ImageSaverDialog extends JFileChooser
 
                 // add file filter extension to filename if not already present
                 if (!hasExtension(outfileName.toLowerCase(), extensionFilter))
-                    file = new File(outfileName + "." + extensionFilter.getExtension());
-
-                // ask for confirmation as file already exists
-                if (!file.exists() || ConfirmDialog.confirm("Overwrite existing file(s) ?"))
                 {
-                    // store current path
-                    preferences.put(ID_PATH, getCurrentDirectory().getAbsolutePath());
+                    file = new File(outfileName + "." + extensionFilter.getExtension());
+                    setSelectedFile(file);
+                }
 
-                    final Sequence s = sequence;
-                    final File f = file;
-                    final int zMin, zMax;
-                    final int tMin, tMax;
-                    final int fps;
-                    final boolean multipleFile;
-
-                    // overwrite sequence name with filename
-                    if (overwriteNameCheck.isSelected())
-                        s.setName(FileUtil.getFileName(file.getAbsolutePath(), false));
-
-                    if (zPanel.isVisible())
-                        zMin = zMax = ((Integer) zSpinner.getValue()).intValue();
-                    else if (zRangePanel.isVisible())
+                // save requested ?
+                if (autoSave)
+                {
+                    // ask for confirmation as file already exists
+                    if (!file.exists() || ConfirmDialog.confirm("Overwrite existing file(s) ?"))
                     {
-                        zMin = (int) zRange.getMin();
-                        zMax = (int) zRange.getMax();
-                    }
-                    else
-                        zMin = zMax = 0;
-                    if (tPanel.isVisible())
-                        tMin = tMax = ((Integer) tSpinner.getValue()).intValue();
-                    else if (tRangePanel.isVisible())
-                    {
-                        tMin = (int) tRange.getMin();
-                        tMax = (int) tRange.getMax();
-                    }
-                    else
-                        tMin = tMax = 0;
-                    if (fpsPanel.isVisible())
-                        fps = ((Integer) fpsSpinner.getValue()).intValue();
-                    else
-                        fps = 1;
-                    if (multiplesFilePanel.isVisible())
-                        multipleFile = multipleFileCheck.isSelected();
-                    else
-                        multipleFile = false;
+                        // store current path
+                        preferences.put(ID_PATH, getCurrentDirectory().getAbsolutePath());
 
-                    // do save in background process
-                    ThreadUtil.bgRun(new Runnable()
-                    {
-                        @Override
-                        public void run()
+                        final Sequence s = sequence;
+                        final File f = file;
+                        final int zMin, zMax;
+                        final int tMin, tMax;
+                        final int fps;
+                        final boolean multipleFile;
+
+                        // overwrite sequence name with filename
+                        if (overwriteNameCheck.isSelected())
+                            s.setName(FileUtil.getFileName(file.getAbsolutePath(), false));
+
+                        if (zPanel.isVisible())
+                            zMin = zMax = ((Integer) zSpinner.getValue()).intValue();
+                        else if (zRangePanel.isVisible())
                         {
-                            Saver.save(s, f, zMin, zMax, tMin, tMax, fps, multipleFile);
+                            zMin = (int) zRange.getMin();
+                            zMax = (int) zRange.getMax();
                         }
-                    });
+                        else
+                            zMin = zMax = 0;
+                        if (tPanel.isVisible())
+                            tMin = tMax = ((Integer) tSpinner.getValue()).intValue();
+                        else if (tRangePanel.isVisible())
+                        {
+                            tMin = (int) tRange.getMin();
+                            tMax = (int) tRange.getMax();
+                        }
+                        else
+                            tMin = tMax = 0;
+                        if (fpsPanel.isVisible())
+                            fps = ((Integer) fpsSpinner.getValue()).intValue();
+                        else
+                            fps = 1;
+                        if (multiplesFilePanel.isVisible())
+                            multipleFile = multipleFileCheck.isSelected();
+                        else
+                            multipleFile = false;
+
+                        // do save in background process
+                        ThreadUtil.bgRun(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                Saver.save(s, f, zMin, zMax, tMin, tMax, fps, multipleFile);
+                            }
+                        });
+                    }
                 }
             }
             else
+            {
                 // incompatible saver for this sequence
                 new IncompatibleImageFormatDialog();
+            }
 
             // store interface option
             preferences.putInt(ID_WIDTH, getWidth());
@@ -287,6 +316,60 @@ public class ImageSaverDialog extends JFileChooser
             preferences.putBoolean(ID_OVERWRITENAME, overwriteNameCheck.isSelected());
             preferences.putInt(ID_FILETYPE, CollectionUtil.asList(getChoosableFileFilters()).indexOf(getFileFilter()));
         }
+    }
+
+    /**
+     * <b>Image Saver Dialog</b><br>
+     * <br>
+     * Display a dialog to select the destination file then save the specified sequence.<br>
+     * 
+     * @param sequence
+     *        The {@link Sequence} we want to save.
+     * @param defZ
+     *        default Z slice to save if output format support only single slice image.
+     * @param defT
+     *        default T frame to save if output format support only single frame image.
+     */
+    public ImageSaverDialog(Sequence sequence, int defZ, int defT)
+    {
+        this(sequence, defZ, defT, true);
+    }
+
+    /**
+     * <b>Image Saver Dialog</b><br>
+     * <br>
+     * Display a dialog to select the destination file then save the specified sequence.<br>
+     * <br>
+     * To only get selected file from the dialog you must do:<br>
+     * <code> ImageSaverDialog dialog = new ImageSaverDialog(sequence, false);</code><br>
+     * <code> File selectedFile = dialog.getSelectedFile()</code><br>
+     * <br>
+     * To directly save specified sequence to the selected file just use:<br>
+     * <code>new ImageSaverDialog(sequence, true);</code><br>
+     * or<br>
+     * <code>new ImageSaverDialog(sequence);</code>
+     * 
+     * @param sequence
+     *        The {@link Sequence} we want to save.
+     * @param autoSave
+     *        If true the sequence is automatically saved to selected file.
+     */
+    public ImageSaverDialog(Sequence sequence, boolean autoSave)
+    {
+        this(sequence, 0, 0, autoSave);
+    }
+
+    /**
+     * <b>Image Saver Dialog</b><br>
+     * <br>
+     * Display a dialog to select the destination file then save the specified sequence.
+     * 
+     * @param sequence
+     *        The {@link Sequence} we want to save.
+     */
+    public ImageSaverDialog(Sequence sequence)
+    {
+        this(sequence, 0, 0, true);
     }
 
     private boolean hasExtension(String name, ExtensionFileFilter extensionFilter)
