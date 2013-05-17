@@ -420,11 +420,16 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
                 ((Viewer) frame).requestFocus();
             else
             {
-                // so we don't steal focus from non viewer frame
-                if (previewFocusedViewer != null)
-                    setFocusedViewer(previewFocusedViewer);
-                else
-                    setFocusedViewer(viewers.get(viewers.size() - 1));
+                // it was the focused viewer ?
+                if (getFocusedViewer() == viewer)
+                {
+                    // restore focus to previous focused
+                    if (previewFocusedViewer != null)
+                        setFocusedViewer(previewFocusedViewer);
+                    else
+                        // or just focus another one
+                        setFocusedViewer(viewers.get(viewers.size() - 1));
+                }
             }
         }
     }

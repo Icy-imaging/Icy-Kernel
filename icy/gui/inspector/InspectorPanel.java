@@ -97,7 +97,7 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
         // mainPane.add("Active Plugin", pluginsPanel);
         mainPane.addTab("Layer", null, layersPanel, "Show all layers details");
         mainPane.addTab("ROI", null, roisPanel, "Manage / edit your ROI");
-        mainPane.addTab("History", null, historyPanel, "Actions history");
+//        mainPane.addTab("History", null, historyPanel, "Actions history");
         mainPane.addTab("Output", null, outputConsolePanel, "Console output");
         mainPane.addTab("Chat", null, chatPanel, "Chat room");
 
