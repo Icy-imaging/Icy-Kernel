@@ -18,6 +18,12 @@
  */
 package icy.clipboard;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.ClipboardOwner;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +39,8 @@ public class Clipboard
         public void clipboardChanged();
     }
 
+    private final static java.awt.datatransfer.Clipboard systemClipboard = Toolkit.getDefaultToolkit()
+            .getSystemClipboard();
     private final static List<ClipboardListener> listeners = new ArrayList<Clipboard.ClipboardListener>();
 
     public static final String TYPE_ROILIST = "RoiList";
@@ -107,6 +115,68 @@ public class Clipboard
 
         // notify change
         fireChangedEvent();
+    }
+
+    /**
+     * Returns if current content of the system clipboard contains specified type of data.
+     * 
+     * @param type
+     *        the requested <code>DataFlavor</code> for the contents
+     * @see java.awt.datatransfer.Clipboard#isDataFlavorAvailable(DataFlavor)
+     */
+    public static boolean hasTypeSystem(DataFlavor type)
+    {
+        return systemClipboard.isDataFlavorAvailable(type);
+    }
+
+    /**
+     * Returns all type of content available in the system clipboard.
+     * 
+     * @see java.awt.datatransfer.Clipboard#getAvailableDataFlavors()
+     */
+    public static DataFlavor[] getAllTypeSystem()
+    {
+        return systemClipboard.getAvailableDataFlavors();
+    }
+
+    /**
+     * Gets an object from the system clipboard.
+     * 
+     * @param type
+     *        the requested <code>DataFlavor</code> for the contents
+     * @throws IOException
+     * @throws UnsupportedFlavorException
+     * @see java.awt.datatransfer.Clipboard#getData(DataFlavor)
+     */
+    public static Object getSystem(DataFlavor type) throws UnsupportedFlavorException, IOException
+    {
+        if (hasTypeSystem(type))
+            return systemClipboard.getData(type);
+
+        return null;
+    }
+
+    /**
+     * Clears content of system clipboard.
+     */
+    public static void clearSystem()
+    {
+        systemClipboard.setContents(new TransferableNull(), null);
+    }
+
+    /**
+     * Puts an object in the system clipboard.
+     * 
+     * @param contents
+     *        the transferable object representing the
+     *        clipboard content
+     * @param owner
+     *        the object which owns the clipboard content
+     * @see java.awt.datatransfer.Clipboard#setContents(Transferable, ClipboardOwner)
+     */
+    public static void putSystem(Transferable contents, ClipboardOwner owner)
+    {
+        systemClipboard.setContents(contents, owner);
     }
 
     public static void addListener(ClipboardListener listener)

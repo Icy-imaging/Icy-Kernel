@@ -18,6 +18,7 @@
  */
 package icy.gui.menu.action;
 
+import icy.clipboard.Clipboard;
 import icy.clipboard.TransferableImage;
 import icy.common.IcyAbstractAction;
 import icy.gui.frame.AboutFrame;
@@ -41,8 +42,6 @@ import ij.ImagePlus;
 import ij.WindowManager;
 
 import java.awt.Image;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -149,12 +148,13 @@ public class GeneralActions
                 {
                     try
                     {
-                        final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-
                         final BufferedImage img = viewer.getRenderedImage(viewer.getPositionT(), viewer.getPositionZ(),
                                 viewer.getPositionC(), false);
 
-                        clipboard.setContents(new TransferableImage(img), null);
+                        // put image in system clipboard
+                        Clipboard.putSystem(new TransferableImage(img), null);
+                        // clear content of Icy clipboard
+                        Clipboard.clear();
 
                         return true;
                     }
@@ -189,13 +189,11 @@ public class GeneralActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-
-            if (clipboard.isDataFlavorAvailable(DataFlavor.imageFlavor))
+            if (Clipboard.hasTypeSystem(DataFlavor.imageFlavor))
             {
                 try
                 {
-                    final Image img = (Image) clipboard.getData(DataFlavor.imageFlavor);
+                    final Image img = (Image) Clipboard.getSystem(DataFlavor.imageFlavor);
                     Icy.getMainInterface().addSequence(new Sequence("Clipboard image", ImageUtil.toBufferedImage(img)));
                     return true;
                 }
@@ -212,8 +210,7 @@ public class GeneralActions
         @Override
         public boolean isEnabled()
         {
-            final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            return super.isEnabled() && clipboard.isDataFlavorAvailable(DataFlavor.imageFlavor);
+            return super.isEnabled() && Clipboard.hasTypeSystem(DataFlavor.imageFlavor);
         }
     };
 

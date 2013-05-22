@@ -166,7 +166,10 @@ public class RoiActions
                     for (int i = 0; i < rois.size(); i++)
                         rois.set(i, rois.get(i).getCopy());
 
+                    // save in the Icy clipboard
                     Clipboard.put(Clipboard.TYPE_ROILIST, rois);
+                    // clear system clipboard
+                    Clipboard.clearSystem();
 
                     pasteAction.setEnabled(true);
 
@@ -205,7 +208,10 @@ public class RoiActions
 
                 if (rois.size() > 0)
                 {
+                    // save in the Icy clipboard
                     Clipboard.put(Clipboard.TYPE_ROILINKLIST, rois);
+                    // clear system clipboard
+                    Clipboard.clearSystem();
 
                     pasteLinkAction.setEnabled(true);
 

@@ -208,7 +208,7 @@ public class IcyUpdater
                 final String mess;
 
                 if (toUpdate.size() > 1)
-                    mess = "Some updates are availables...";
+                    mess = "Some updates are available...";
                 else
                     mess = "An update is available...";
 

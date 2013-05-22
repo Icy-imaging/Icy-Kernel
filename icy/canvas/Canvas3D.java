@@ -28,7 +28,6 @@ import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
-import icy.image.IcyBufferedImageUtil;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.IcyColorMapBand;
 import icy.image.lut.LUT;
@@ -42,6 +41,7 @@ import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.thread.InstanceProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
+import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
@@ -58,6 +58,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -1226,6 +1227,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         {
             final vtkRenderWindow renderWindow = renderer.GetRenderWindow();
             final int[] size = renderWindow.GetSize();
+            final int w = size[0];
+            final int h = size[1];
             final vtkUnsignedCharArray array = new vtkUnsignedCharArray();
 
             // VTK need this to be called in the EDT :-(
@@ -1240,31 +1243,32 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                     panel3D.paint(panel3D.getGraphics());
 
                     // NOTE: in vtk the [0,0] pixel is bottom left, so a vertical flip is required
-                    renderWindow.GetRGBACharPixelData(0, 0, size[0] - 1, size[1] - 1, 1, array);
+                    renderWindow.GetRGBACharPixelData(0, 0, w - 1, h - 1, 1, array);
                 }
             });
 
             // convert the vtk array into a IcyBufferedImage
-            final byte[] data = array.GetJavaArray();
-            final IcyBufferedImage image = new IcyBufferedImage(size[0], size[1], 3, DataType.UBYTE);
-            final byte[][] c_xy = image.getDataXYCAsByte();
+            final byte[] inData = array.GetJavaArray();
+            final BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            final int[] outData = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
 
-            int offset = 0;
-            // loop along y and x, without forgetting the vertical flip
-            for (int y = size[1] - 1; y >= 0; y--)
+            int inOffset = 0;
+            for (int y = h - 1; y >= 0; y--)
             {
-                int xy = y * size[0];
+                int outOffset = y * w;
 
-                for (int x = 0; x < size[0]; x++, xy++)
+                for (int x = 0; x < w; x++)
                 {
-                    c_xy[0][xy] = data[offset++]; // R
-                    c_xy[1][xy] = data[offset++]; // G
-                    c_xy[2][xy] = data[offset++]; // B
-                    offset++; // A
+                    final int r = TypeUtil.unsign(inData[inOffset++]);
+                    final int g = TypeUtil.unsign(inData[inOffset++]);
+                    final int b = TypeUtil.unsign(inData[inOffset++]);
+                    final int a = TypeUtil.unsign(inData[inOffset++]);
+
+                    outData[outOffset++] = (a << 24) | (r << 16) | (g << 8) | (b << 0);
                 }
             }
 
-            return IcyBufferedImageUtil.toBufferedImage(image, BufferedImage.TYPE_INT_RGB, null);
+            return image;
         }
         finally
         {
@@ -1278,7 +1282,10 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
     public BufferedImage getRenderedImage(int t, int z, int c, boolean canvasView)
     {
         if (z != -1)
-            throw new UnsupportedOperationException("getRenderedImage(..) with z != -1 not supported.");
+            throw new UnsupportedOperationException(
+                    "Error: getRenderedImage(..) with z != -1 not supported on Canvas3D.");
+        if (!canvasView)
+            System.out.println("Warning: getRenderedImage(..) with canvasView = false not supported on Canvas3D.");
 
         return getRenderedImage(t, c);
     }

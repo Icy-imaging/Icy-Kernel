@@ -66,6 +66,18 @@ public class ThreadUtil
     public final static int MAX_PRIORITY = Thread.MAX_PRIORITY;
 
     /**
+     * Returns true if the current thread is an AWT event dispatching thread.
+     * As of 1.3 this method is just a cover for <code>java.awt.EventQueue.isDispatchThread()</code>
+     * .
+     * 
+     * @return true if the current thread is an AWT event dispatching thread
+     */
+    public static boolean isEventDispatchThread()
+    {
+        return SwingUtilities.isEventDispatchThread();
+    }
+
+    /**
      * Invoke "runnable" on the AWT event dispatching thread<br>
      * 
      * @param runnable

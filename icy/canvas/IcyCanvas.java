@@ -3018,12 +3018,11 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                 case KeyEvent.VK_C:
                     if (EventUtil.isMenuControlDown(e, true))
                     {
+                        // do this one first else copyImage hide it
                         if (RoiActions.copyAction.isEnabled())
                         {
                             // copy them to icy clipboard
                             RoiActions.copyAction.execute();
-                            // remove content from system clipboard
-                            // clipboard.setContents(new EmptyTransferable(), this);
                             e.consume();
                         }
                         else if (GeneralActions.copyImageAction.isEnabled())
@@ -3056,9 +3055,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Get the image at position (t, z, c)
-     * 
-     * @return image[t, z, c]
+     * Gets the image at position (t, z, c).
      */
     public IcyBufferedImage getImage(int t, int z, int c)
     {
@@ -3075,22 +3072,12 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Get the image at position (t, z)
-     * 
-     * @return image[t, z]
+     * @deprecated Use {@link #getImage(int, int, int)} with C = -1 instead.
      */
+    @Deprecated
     public IcyBufferedImage getImage(int t, int z)
     {
-        if ((t == -1) || (z == -1))
-            return null;
-
-        final Sequence sequence = getSequence();
-
-        // have to test this as sequence reference can be release in viewer
-        if (sequence != null)
-            return sequence.getImage(t, z);
-
-        return null;
+        return getImage(t, z, -1);
     }
 
     /**
@@ -3122,7 +3109,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Return a RGB rendered image for image at position (t, z, c)<br>
+     * Returns a RGB or ARGB (depending base image) rendered image representing the canvas
+     * view for image at position (t, z, c).
      * Free feel to the canvas to handle or not a specific dimension.
      * 
      * @param t
@@ -3130,21 +3118,23 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * @param z
      *        Z position of wanted image (-1 for complete stack)
      * @param c
-     *        C position of wanted image (-1 for all components)
+     *        C position of wanted image (-1 for all channels)
      * @param canvasView
      *        render with canvas view if true else use default sequence dimension
      */
     public abstract BufferedImage getRenderedImage(int t, int z, int c, boolean canvasView);
 
     /**
-     * Return a RGB rendered image representing the canvas view for image at position (t, z) .
+     * Returns a RGB or ARGB (depending base image) rendered image representing the canvas
+     * view for image at position (t, z, c).
+     * Free feel to the canvas to handle or not a specific dimension.
      * 
      * @param t
      *        T position of wanted image (-1 for complete sequence)
      * @param z
      *        Z position of wanted image (-1 for complete stack)
      * @param c
-     *        C position of wanted image (-1 for all components)
+     *        C position of wanted image (-1 for all channels)
      */
     public BufferedImage getRenderedImage(int t, int z, int c)
     {

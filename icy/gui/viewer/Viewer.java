@@ -128,7 +128,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         public ScreenShotAction()
         {
-            super("Screeshot (view)", new IcyIcon(ResourceUtil.ICON_PHOTO), "Take a screenshot of current view", true, "Rendering...");
+            super("Screeshot (view)", new IcyIcon(ResourceUtil.ICON_PHOTO), "Take a screenshot of current view", true,
+                    "Rendering...");
         }
 
         @Override
@@ -148,11 +149,11 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                     seqOut.setName("Screen shot of '" + seqIn.getName() + "' view");
                     // add sequence
                     Icy.getMainInterface().addSequence(seqOut);
-                    
+
                     return true;
                 }
             }
-            
+
             return false;
         }
     }
@@ -596,7 +597,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         duplicateButton = new IcyButton(new DuplicateAction());
         duplicateButton.setFocusable(false);
         duplicateButton.setHideActionText(true);
-//        duplicateButton.setToolTipText("Duplicate view (no data duplication)");
+        // duplicateButton.setToolTipText("Duplicate view (no data duplication)");
         switchStateButton = new IcyButton(getSwitchStateAction());
         switchStateButton.setFocusable(false);
         switchStateButton.setHideActionText(true);
@@ -1102,16 +1103,23 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
-     * Get the image at position (t, z)
-     * 
-     * @return image[t, z]
+     * Delegation for {@link IcyCanvas#getImage(int, int, int)}
      */
-    public IcyBufferedImage getImage(int t, int z)
+    public IcyBufferedImage getImage(int t, int z, int c)
     {
         if (canvas != null)
-            return canvas.getImage(t, z);
+            return canvas.getImage(t, z, c);
 
         return null;
+    }
+
+    /**
+     * @deprecated Use {@link #getImage(int, int, int)} with C = -1 instead.
+     */
+    @Deprecated
+    public IcyBufferedImage getImage(int t, int z)
+    {
+        return getImage(t, z, -1);
     }
 
     /**
@@ -1358,7 +1366,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             @Override
             public void run()
             {
-                // refresh availables canvas
+                // refresh available canvas
                 if (canvasComboBox != null)
                 {
                     canvasComboBox.setModel(new DefaultComboBoxModel(IcyCanvas.getCanvasPlugins().toArray()));

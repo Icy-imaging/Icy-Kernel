@@ -377,9 +377,16 @@ public class FileUtil
     }
 
     /**
-     * Rename the specified 'src' file to 'dst' file.
+     * Rename the specified <code>src</code> file to <code>dst</code> file.
      * Return false if the method failed.
      * 
+     * @param src
+     *        the source filename we want to rename from.
+     * @param dst
+     *        the destination filename we want to rename to.
+     * @param force
+     *        If set to <code>true</code> the destination file is overwritten if it was already
+     *        existing.
      * @see File#renameTo(File)
      */
     public static boolean rename(String src, String dst, boolean force)
@@ -810,25 +817,59 @@ public class FileUtil
     }
 
     /**
-     * Get file list from specified directory applying the specified parameters
+     * Returns an array of file denoting content of specified directory and parameters.
+     * 
+     * @param directory
+     *        The directory we want to retrieve content.<br>
+     * @param filter
+     *        A file filter.<br>
+     *        If the given <code>filter</code> is <code>null</code> then all pathnames are accepted.
+     *        Otherwise, a pathname satisfies the filter if and only if the value <code>true</code>
+     *        results when the <code>{@link FileFilter#accept(java.io.File)}</code> method of the
+     *        filter is invoked on the pathname.
+     * @param recursive
+     *        If <code>true</code> then content from sub folder is also returned.
+     * @param wantDirectory
+     *        If <code>true</code> then directory entries are also returned.
+     * @param wantHidden
+     *        If <code>true</code> then file or directory with <code>hidden</code> attribute are
+     *        also returned.
+     * @see File#listFiles(FileFilter)
      */
-    public static File[] getFiles(File file, FileFilter filter, boolean recursive, boolean wantDirectory,
+    public static File[] getFiles(File directory, FileFilter filter, boolean recursive, boolean wantDirectory,
             boolean wantHidden)
     {
         final List<File> result = new ArrayList<File>();
 
-        getFiles(file, filter, recursive, true, wantDirectory, wantHidden, result);
+        getFiles(directory, filter, recursive, true, wantDirectory, wantHidden, result);
 
         return result.toArray(new File[result.size()]);
     }
 
     /**
-     * Get file list from specified directory applying the specified parameters (String form).
+     * Returns an array of file path denoting content of specified directory and parameters
+     * (String format).
+     * 
+     * @param directory
+     *        The directory we want to retrieve content.<br>
+     * @param filter
+     *        A file filter.<br>
+     *        If the given <code>filter</code> is <code>null</code> then all files are accepted.
+     *        Otherwise, a file satisfies the filter if and only if the value <code>true</code>
+     *        results when the <code>{@link FileFilter#accept(java.io.File)}</code> method of the
+     *        filter is invoked on the pathname.
+     * @param recursive
+     *        If <code>true</code> then content from sub folder is also returned.
+     * @param wantDirectory
+     *        If <code>true</code> then directory entries are also returned.
+     * @param wantHidden
+     *        If <code>true</code> then file or directory with <code>hidden</code> attribute are
+     *        also returned.
      */
-    public static String[] getFiles(String path, FileFilter filter, boolean recursive, boolean wantDirectory,
+    public static String[] getFiles(String directory, FileFilter filter, boolean recursive, boolean wantDirectory,
             boolean wantHidden)
     {
-        final File[] files = getFiles(new File(getGenericPath(path)), filter, recursive, wantDirectory, wantHidden);
+        final File[] files = getFiles(new File(getGenericPath(directory)), filter, recursive, wantDirectory, wantHidden);
         final String[] result = new String[files.length];
 
         for (int i = 0; i < files.length; i++)

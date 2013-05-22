@@ -29,6 +29,9 @@ import loci.formats.meta.MetadataRetrieve;
 import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import loci.formats.services.OMEXMLServiceImpl;
+import ome.xml.model.OME;
+import ome.xml.model.StructuredAnnotations;
+import ome.xml.model.XMLAnnotation;
 import ome.xml.model.primitives.PositiveFloat;
 import ome.xml.model.primitives.PositiveInteger;
 
@@ -113,6 +116,25 @@ public class OMEUtil
     public static OMEXMLMetadataImpl createOMEMetadata(MetadataRetrieve metadata)
     {
         final OMEXMLMetadataImpl result = createOMEMetadata();
+
+        // TODO: remove that when annotations loading will be fixed in Bio-Formats
+        if (metadata instanceof OMEXMLMetadataImpl)
+        {
+            final OME root = (OME) ((OMEXMLMetadataImpl) metadata).getRoot();
+            final StructuredAnnotations annotations = root.getStructuredAnnotations();
+
+            // clean up annotation
+            if (annotations != null)
+            {
+                for (int i = annotations.sizeOfXMLAnnotationList() - 1; i >= 0; i--)
+                {
+                    final XMLAnnotation annotation = annotations.getXMLAnnotation(i);
+
+                    if (annotation.getValue() == null)
+                        annotations.removeXMLAnnotation(annotation);
+                }
+            }
+        }
 
         OMEService.convertMetadata(metadata, result);
 

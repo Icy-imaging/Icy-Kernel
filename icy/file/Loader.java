@@ -967,7 +967,7 @@ public class Loader
     @Deprecated
     public static Sequence loadSequence(File file, boolean showProgress)
     {
-        return loadSequence(file, showProgress);
+        return loadSequence(new File[] {file}, 0, showProgress);
     }
 
     /**
@@ -976,7 +976,7 @@ public class Loader
     @Deprecated
     public static Sequence loadSequence(File file)
     {
-        return loadSequence(CollectionUtil.createArrayList(file), true);
+        return loadSequence(new File[] {file}, 0, true);
     }
 
     /**
