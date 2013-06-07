@@ -132,7 +132,7 @@ public abstract class ROI4D extends ROI
      */
     public boolean isActiveFor(int c)
     {
-        return (this.c == -1) || (this.c == c);
+        return (this.c == -1) || (c == -1) || (this.c == c);
     }
 
     @Override

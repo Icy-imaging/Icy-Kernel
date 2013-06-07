@@ -30,6 +30,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -52,7 +53,7 @@ public class PluginUpdateFrame extends ActionFrame
     JList pluginList;
     private DefaultListModel listModel;
 
-    public PluginUpdateFrame(final ArrayList<PluginDescriptor> toInstallPlugins)
+    public PluginUpdateFrame(final List<PluginDescriptor> toInstallPlugins)
     {
         super("Plugin Update", true);
 

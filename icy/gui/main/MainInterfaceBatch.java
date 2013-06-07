@@ -19,7 +19,6 @@
 
 package icy.gui.main;
 
-import icy.common.EventHierarchicalChecker;
 import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.inspector.RoisPanel;
@@ -98,6 +97,24 @@ public class MainInterfaceBatch implements MainInterface
 
     @Override
     public ArrayList<Plugin> getActivePlugins()
+    {
+        return null;
+    }
+
+    @Override
+    public Viewer getActiveViewer()
+    {
+        return null;
+    }
+
+    @Override
+    public Sequence getActiveSequence()
+    {
+        return null;
+    }
+
+    @Override
+    public IcyBufferedImage getActiveImage()
     {
         return null;
     }
@@ -221,12 +238,6 @@ public class MainInterfaceBatch implements MainInterface
     }
 
     @Override
-    public Viewer getActiveViewer()
-    {
-        return null;
-    }
-
-    @Override
     public ArrayList<Sequence> getSequences()
     {
         return new ArrayList<Sequence>();
@@ -345,25 +356,23 @@ public class MainInterfaceBatch implements MainInterface
     {
     }
 
+    @Deprecated
     @Override
     public void beginUpdate()
     {
     }
 
+    @Deprecated
     @Override
     public void endUpdate()
     {
     }
 
+    @Deprecated
     @Override
     public boolean isUpdating()
     {
         return false;
-    }
-
-    @Override
-    public void onChanged(EventHierarchicalChecker object)
-    {
     }
 
     @Deprecated
@@ -461,4 +470,5 @@ public class MainInterfaceBatch implements MainInterface
     {
         return null;
     }
+
 }

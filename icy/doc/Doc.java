@@ -32,6 +32,10 @@ Follow those link to learn how to program plugin for ICY by the example !
 
 <ul>
 
+ \example IntensityOverRoiPainter.java
+ 
+ test
+ 
 <li>\ref tuto1
 <li>\ref tuto2
 <li>\ref tuto3

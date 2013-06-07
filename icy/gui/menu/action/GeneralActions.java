@@ -296,8 +296,8 @@ public class GeneralActions
         }
     };
 
-    public static IcyAbstractAction onlineHelpAction = new IcyAbstractAction("Online help", new IcyIcon(
-            ResourceUtil.ICON_HELP))
+    public static IcyAbstractAction onlineHelpAction = new IcyAbstractAction("Online help (F1)", new IcyIcon(
+            ResourceUtil.ICON_HELP), "Open a browser and display support forum", KeyEvent.VK_F1)
     {
         /**
          * 

@@ -1588,47 +1588,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Remove volumetricImage at position t
+     * @deprecated Use {@link #removeAllImages(int)} instead.
      */
+    @Deprecated
     public boolean removeVolumetricImage(int t)
     {
-        final VolumetricImage volImg;
-
-        synchronized (volumetricImages)
-        {
-            volImg = volumetricImages.remove(Integer.valueOf(t));
-        }
-
-        // we do manual clear to dispatch events correctly
-        if (volImg != null)
-            volImg.clear();
-
-        return volImg != null;
-    }
-
-    /**
-     * Remove all volumetricImage
-     */
-    private void removeAllVolumetricImages()
-    {
-        beginUpdate();
-        try
-        {
-            synchronized (volumetricImages)
-            {
-                while (!volumetricImages.isEmpty())
-                {
-                    final VolumetricImage volImg = volumetricImages.pollFirstEntry().getValue();
-                    // we do manual clear to dispatch events correctly
-                    if (volImg != null)
-                        volImg.clear();
-                }
-            }
-        }
-        finally
-        {
-            endUpdate();
-        }
+        return removeAllImages(t);
     }
 
     /**
@@ -1802,11 +1767,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Set an image at the specified position
+     * Set an image at the specified position.
      * 
      * @param t
+     *        T position
      * @param z
+     *        Z position
      * @param image
+     *        the image to set
      */
     public void setImage(int t, int z, BufferedImage image) throws IllegalArgumentException
     {
@@ -1838,37 +1806,28 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Add an image to the last VolumetricImage (create it if needed).
-     * 
-     * @param image
-     *        image to add
+     * Add an image (image is added in Z dimension).<br>
+     * This method is equivalent to
+     * <code>setImage(max(getSizeT() - 1, 0), getSizeZ(t), image)</code>
      */
     public void addImage(BufferedImage image) throws IllegalArgumentException
     {
         final int t = Math.max(getSizeT() - 1, 0);
-        final int z = Math.max(getSizeZ(t), 0);
 
-        setImage(t, z, image);
+        setImage(t, getSizeZ(t), image);
     }
 
     /**
-     * Add an image to the VolumetricImage[t]
-     * 
-     * @param image
-     *        image to add
+     * Add an image at specified T position.<br>
+     * This method is equivalent to <code>setImage(t, getSizeZ(t), image)</code>
      */
     public void addImage(int t, BufferedImage image) throws IllegalArgumentException
     {
-        final int z = Math.max(getSizeZ(t), 0);
-
-        setImage(t, z, image);
+        setImage(t, getSizeZ(t), image);
     }
 
     /**
      * Remove the image at the specified position.
-     * 
-     * @param t
-     * @param z
      */
     public boolean removeImage(int t, int z)
     {
@@ -1900,19 +1859,47 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Remove all image at position t (same as removeVolumetricImage(t))
+     * Remove all images at position <code>t</code>
      */
     public boolean removeAllImages(int t)
     {
-        return removeVolumetricImage(t);
+        final VolumetricImage volImg;
+
+        synchronized (volumetricImages)
+        {
+            volImg = volumetricImages.remove(Integer.valueOf(t));
+        }
+
+        // we do manual clear to dispatch events correctly
+        if (volImg != null)
+            volImg.clear();
+
+        return volImg != null;
     }
 
     /**
-     * Remove all image (same as removeAllVolumetricImage)
+     * Remove all images
      */
     public void removeAllImages()
     {
-        removeAllVolumetricImages();
+        beginUpdate();
+        try
+        {
+            synchronized (volumetricImages)
+            {
+                while (!volumetricImages.isEmpty())
+                {
+                    final VolumetricImage volImg = volumetricImages.pollFirstEntry().getValue();
+                    // we do manual clear to dispatch events correctly
+                    if (volImg != null)
+                        volImg.clear();
+                }
+            }
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     /**

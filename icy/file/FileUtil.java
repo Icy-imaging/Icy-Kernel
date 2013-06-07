@@ -73,17 +73,16 @@ public class FileUtil
         final int len = finalPath.length();
         String result = finalPath;
 
-        final int dotIndex = finalPath.lastIndexOf(".");
+        final int dotIndex = result.lastIndexOf(".");
         // ensure we are modifying an extension
         if (dotIndex >= 0 && (len - dotIndex) <= 5)
         {
             // we consider that an extension starting with a digit is not an extension
-            if ((dotIndex + 1 < len) && Character.isDigit(finalPath.charAt(dotIndex + 1)))
-                result += extension;
-            else
-                result = finalPath.substring(0, dotIndex) + extension;
+            if (((dotIndex + 1) == len) || !Character.isDigit(result.charAt(dotIndex + 1)))
+                result = result.substring(0, dotIndex) + extension;
         }
-        else
+
+        if (extension != null)
             result += extension;
 
         return result;
@@ -265,6 +264,7 @@ public class FileUtil
      * <br>
      * getDirectory("/file.txt") --> "/"<br>
      * getDirectory("D:/temp/file.txt") --> "D:/temp/"<br>
+     * getDirectory("D:/temp") --> "D:/"<br>
      * getDirectory("C:file.txt") --> "C:"<br>
      * getDirectory("file.txt") --> ""<br>
      * getDirectory("file") --> ""<br>

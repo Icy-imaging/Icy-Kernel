@@ -2978,7 +2978,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     }
 
     /**
-     * @deprecated Use {@link #getRenderedImage(int, int, -1)} instead.
+     * @deprecated Use <code>getRenderedImage(t, z, -1, true)</code> instead.
      */
     @Deprecated
     public BufferedImage getRenderedImage(int t, int z)
@@ -2987,7 +2987,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     }
 
     /**
-     * @deprecated Use {@link #getRenderedImage(int, int, -1, boolean)} instead.
+     * @deprecated Use <code>getRenderedImage(t, z, -1, canvasView)</code> instead.
      */
     @Deprecated
     public BufferedImage getRenderedImage(int t, int z, boolean canvasView)

@@ -101,6 +101,7 @@ public class ResourceUtil
     public static final Image ICON_TOOLS = ResourceUtil.getAlphaIconAsImage("wrench_plus_2.png");
     public static final Image ICON_LIGHTING = ResourceUtil.getAlphaIconAsImage("lighting.png");
     public static final Image ICON_SEARCH = ResourceUtil.getAlphaIconAsImage("zoom.png");
+    public static final Image ICON_WAIT = ResourceUtil.getAlphaIconAsImage("sand.png");
     public static final Image ICON_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png");
     public static final Image ICON_NOT_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_close.png");
 

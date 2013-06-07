@@ -37,7 +37,7 @@ public class IcyVtkPanel extends vtkPanel
     public void setBounds(int x, int y, int width, int height)
     {
         super.setBounds(x, y, width, height);
-        rw.GetSize();
+
         if (windowset == 1)
         {
             Lock();

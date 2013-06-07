@@ -40,6 +40,7 @@ import ome.xml.model.primitives.PositiveInteger;
 
 /**
  * Meta data utilities class.<br>
+ * Basically provide safe access to metadata.
  * 
  * @author Stephane
  */
@@ -550,7 +551,7 @@ public class MetaDataUtil
         metadata.setPixelsPhysicalSizeX(OMEUtil.getPositiveFloat(pixelSizeX), 0);
         metadata.setPixelsPhysicalSizeY(OMEUtil.getPositiveFloat(pixelSizeY), 0);
         metadata.setPixelsPhysicalSizeZ(OMEUtil.getPositiveFloat(pixelSizeZ), 0);
-        metadata.setPixelsTimeIncrement(timeInterval, 0);
+        metadata.setPixelsTimeIncrement(Double.valueOf(timeInterval), 0);
 
         if (separateChannel)
         {

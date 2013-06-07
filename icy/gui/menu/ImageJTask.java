@@ -34,6 +34,7 @@ import icy.resource.icon.IcyIcon;
 import icy.system.SystemUtil;
 import ij.Executer;
 import ij.ImageJ;
+import ij.WindowManager;
 import ij.gui.ImageWindow;
 
 import java.awt.image.BufferedImage;
@@ -106,7 +107,6 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
         final IcyCommandButton button;
         final IcyCommandToggleButton detachedBtn;
         final CommandToggleButtonGroup detachedGrp;
-        private boolean toIJ;
 
         public ImageJToolRibbonBand()
         {
@@ -114,9 +114,6 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
 
             // convert operation
             button = new IcyCommandButton(GeneralActions.toIJAction);
-
-            toIJ = false;
-            updateAction(true);
 
             addCommandButton(button, RibbonElementPriority.TOP);
 
@@ -138,42 +135,52 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
             RibbonUtil.setPermissiveResizePolicies(this);
         }
 
-        public void updateAction(boolean ij)
+        public void setActionToIJ()
         {
-            if (toIJ != ij)
-            {
-                toIJ = ij;
-
-                if (ij)
-                    button.setAction(GeneralActions.toIJAction);
-                else
-                    button.setAction(GeneralActions.toIcyAction);
-            }
+            button.setAction(GeneralActions.toIJAction);
+            updateButtonsState();
         }
 
-        public void updateEnable(boolean value)
+        public void setActionToIcy()
         {
-            button.setEnabled(value);
+            button.setAction(GeneralActions.toIcyAction);
+            updateButtonsState();
         }
 
-        public void setDetachedBtnPressed(boolean value)
+        public void updateButtonsState()
         {
-            detachedGrp.setSelected(detachedBtn, value);
+            final boolean isDetached = Icy.getMainInterface().isDetachedMode();
+
+            detachedGrp.setSelected(detachedBtn, isDetached);
+
+            if (button.getAction() == GeneralActions.toIcyAction)
+                button.setEnabled(isDetached && (WindowManager.getCurrentImage() != null));
+            else
+                button.setEnabled(isDetached && (Icy.getMainInterface().getActiveSequence() != null));
         }
     }
 
     public static final String NAME = "ImageJ";
 
+    protected final ImageJToolRibbonBand ijToolBand;
+
     public ImageJTask()
     {
         super(NAME, new ImageJRibbonBand(), new ImageJToolRibbonBand());
+
+        ijToolBand = (ImageJToolRibbonBand) getBand(1);
 
         getImageJ().addActiveImageListener(new ImageJActiveImageListener()
         {
             @Override
             public void imageActived(ImageWindow iw)
             {
-                ((ImageJToolRibbonBand) getBand(1)).updateAction(iw == null);
+                if (iw != null)
+                    ijToolBand.setActionToIcy();
+                else if (Icy.getMainInterface().getActiveSequence() != null)
+                    ijToolBand.setActionToIJ();
+                else
+                    ijToolBand.updateButtonsState();
             }
         });
     }
@@ -208,16 +215,22 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
         new Executer("Quit", null);
     }
 
+    public void onSequenceFocusChange()
+    {
+        if (Icy.getMainInterface().getActiveSequence() != null)
+            ijToolBand.setActionToIJ();
+        else if (WindowManager.getCurrentImage() != null)
+            ijToolBand.setActionToIcy();
+        else
+            ijToolBand.updateButtonsState();
+    }
+
     /**
      * Handle {@link MainFrame#PROPERTY_DETACHEDMODE} property change here.
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt)
     {
-        final boolean isDetached = Icy.getMainInterface().isDetachedMode();
-        final ImageJToolRibbonBand band = (ImageJToolRibbonBand) getBand(1);
-
-        band.setDetachedBtnPressed(isDetached);
-        band.updateEnable(isDetached);
+        ijToolBand.updateButtonsState();
     }
 }

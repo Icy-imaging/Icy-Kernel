@@ -18,8 +18,8 @@
  */
 package icy.gui.dialog;
 
-import icy.file.FileFormat;
 import icy.file.FileUtil;
+import icy.file.ImageFileFormat;
 import icy.file.Saver;
 import icy.gui.component.RangeComponent;
 import icy.gui.util.GuiUtil;
@@ -50,6 +50,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 
+import loci.formats.IFormatWriter;
 import loci.formats.gui.ExtensionFileFilter;
 
 /**
@@ -139,14 +140,14 @@ public class ImageSaverDialog extends JFileChooser
         // remove default filter
         removeChoosableFileFilter(getAcceptAllFileFilter());
         // then add our supported save format
-        addChoosableFileFilter(FileFormat.TIFF.getExtensionFileFilter());
-        addChoosableFileFilter(FileFormat.PNG.getExtensionFileFilter());
-        addChoosableFileFilter(FileFormat.JPG.getExtensionFileFilter());
-        addChoosableFileFilter(FileFormat.AVI.getExtensionFileFilter());
+        addChoosableFileFilter(ImageFileFormat.TIFF.getExtensionFileFilter());
+        addChoosableFileFilter(ImageFileFormat.PNG.getExtensionFileFilter());
+        addChoosableFileFilter(ImageFileFormat.JPG.getExtensionFileFilter());
+        addChoosableFileFilter(ImageFileFormat.AVI.getExtensionFileFilter());
         setFileFilter(getChoosableFileFilters()[preferences.getInt(ID_FILETYPE, 0)]);
 
         setMultiSelectionEnabled(false);
-        setFileSelectionMode(JFileChooser.FILES_ONLY);
+        setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
         String filename = FileUtil.getFileName(sequence.getFilename(), true);
         // empty filename --> use sequence name as default filename
@@ -156,9 +157,10 @@ public class ImageSaverDialog extends JFileChooser
         {
             // test if filename has already a valid extension
             final String ext = getDialogExtension(filename);
-            // remove extension from filename
+            // remove file extension
             if (ext != null)
-                filename = filename.substring(0, filename.indexOf(ext) - 1);
+                FileUtil.setExtension(filename, "");
+            // set dialog filename
             setSelectedFile(new File(filename));
         }
 
@@ -229,19 +231,39 @@ public class ImageSaverDialog extends JFileChooser
         // action confirmed ?
         if (value == JFileChooser.APPROVE_OPTION)
         {
-            // Choose writer should be compatible
-            if (Saver.isCompatible(Saver.getWriter(getSelectedFileFormat()), sequence.getColorModel()))
-            {
-                // test and add extension if needed
-                final ExtensionFileFilter extensionFilter = (ExtensionFileFilter) getFileFilter();
-                File file = getSelectedFile();
-                final String outfileName = file.getAbsolutePath();
+            final IFormatWriter writer = Saver.getWriter(getSelectedFileFormat());
 
-                // add file filter extension to filename if not already present
-                if (!hasExtension(outfileName.toLowerCase(), extensionFilter))
+            // Choose writer should be compatible
+            if (Saver.isCompatible(writer, sequence.getColorModel()))
+            {
+                File file = getSelectedFile();
+                final String outFilename = file.getAbsolutePath();
+
+                // destination is a folder ?
+                if (isFolderRequired())
                 {
-                    file = new File(outfileName + "." + extensionFilter.getExtension());
-                    setSelectedFile(file);
+                    // test if filename has a image file extension
+                    final String ext = getDialogExtension(outFilename);
+                    // remove extension
+                    if (ext != null)
+                    {
+                        file = new File(FileUtil.setExtension(outFilename, ""));
+                        // set it so we can get it from getSelectedFile()
+                        setSelectedFile(file);
+                    }
+                }
+                else
+                {
+                    // test and add extension if needed
+                    final ExtensionFileFilter extensionFilter = (ExtensionFileFilter) getFileFilter();
+
+                    // add file filter extension to filename if not already present
+                    if (!hasExtension(outFilename.toLowerCase(), extensionFilter))
+                    {
+                        file = new File(outFilename + "." + extensionFilter.getExtension());
+                        // set it so we can get it from getSelectedFile()
+                        setSelectedFile(file);
+                    }
                 }
 
                 // save requested ?
@@ -253,43 +275,12 @@ public class ImageSaverDialog extends JFileChooser
                         // store current path
                         preferences.put(ID_PATH, getCurrentDirectory().getAbsolutePath());
 
+                        // overwrite sequence name with filename
+                        if (isOverwriteNameEnabled())
+                            sequence.setName(FileUtil.getFileName(file.getAbsolutePath(), false));
+
                         final Sequence s = sequence;
                         final File f = file;
-                        final int zMin, zMax;
-                        final int tMin, tMax;
-                        final int fps;
-                        final boolean multipleFile;
-
-                        // overwrite sequence name with filename
-                        if (overwriteNameCheck.isSelected())
-                            s.setName(FileUtil.getFileName(file.getAbsolutePath(), false));
-
-                        if (zPanel.isVisible())
-                            zMin = zMax = ((Integer) zSpinner.getValue()).intValue();
-                        else if (zRangePanel.isVisible())
-                        {
-                            zMin = (int) zRange.getMin();
-                            zMax = (int) zRange.getMax();
-                        }
-                        else
-                            zMin = zMax = 0;
-                        if (tPanel.isVisible())
-                            tMin = tMax = ((Integer) tSpinner.getValue()).intValue();
-                        else if (tRangePanel.isVisible())
-                        {
-                            tMin = (int) tRange.getMin();
-                            tMax = (int) tRange.getMax();
-                        }
-                        else
-                            tMin = tMax = 0;
-                        if (fpsPanel.isVisible())
-                            fps = ((Integer) fpsSpinner.getValue()).intValue();
-                        else
-                            fps = 1;
-                        if (multiplesFilePanel.isVisible())
-                            multipleFile = multipleFileCheck.isSelected();
-                        else
-                            multipleFile = false;
 
                         // do save in background process
                         ThreadUtil.bgRun(new Runnable()
@@ -297,7 +288,8 @@ public class ImageSaverDialog extends JFileChooser
                             @Override
                             public void run()
                             {
-                                Saver.save(s, f, zMin, zMax, tMin, tMax, fps, multipleFile);
+                                Saver.save(writer, s, f, getZMin(), getZMax(), getTMin(), getTMax(), getFps(),
+                                        isSaveAsMultipleFilesEnabled(), true);
                             }
                         });
                     }
@@ -399,24 +391,119 @@ public class ImageSaverDialog extends JFileChooser
         return null;
     }
 
-    private FileFormat getSelectedFileFormat()
+    public ImageFileFormat getSelectedFileFormat()
     {
         final FileFilter ff = getFileFilter();
 
         // default
-        if (ff == null)
-            return FileFormat.TIFF;
+        if ((ff == null) || !(ff instanceof ExtensionFileFilter))
+            return ImageFileFormat.TIFF;
 
-        return FileFormat.getFileFormat(((ExtensionFileFilter) ff).getExtension(), FileFormat.TIFF);
+        return ImageFileFormat.getWriteFormat(((ExtensionFileFilter) ff).getExtension(), ImageFileFormat.TIFF);
+    }
+
+    /**
+     * Returns <code>true</code> if we require a folder to save the sequence with selected options.
+     */
+    public boolean isFolderRequired()
+    {
+        final int sizeT = (getTMax() - getTMin()) + 1;
+        final int sizeZ = (getZMax() - getZMin()) + 1;
+        final int numImages = sizeT * sizeZ;
+
+        return (numImages > 1) && isSaveAsMultipleFilesEnabled();
+    }
+
+    /**
+     * Returns <code>true</code> if user chosen to save the sequence as multiple image files.
+     */
+    public boolean isSaveAsMultipleFilesEnabled()
+    {
+        return multiplesFilePanel.isVisible() && multipleFileCheck.isSelected();
+    }
+
+    /**
+     * Returns <code>true</code> if user chosen to overwrite the sequence internal name by filename.
+     */
+    public boolean isOverwriteNameEnabled()
+    {
+        return overwriteNameCheck.isSelected();
+    }
+
+    /**
+     * Returns the minimum Z of the selected Z range to save.
+     */
+    public int getZMin()
+    {
+        if (zPanel.isVisible())
+            return ((Integer) zSpinner.getValue()).intValue();
+
+        if (zRangePanel.isVisible())
+            return (int) zRange.getLow();
+
+        return 0;
+    }
+
+    /**
+     * Returns the maximum Z of the selected Z range to save.
+     */
+    public int getZMax()
+    {
+        if (zPanel.isVisible())
+            return ((Integer) zSpinner.getValue()).intValue();
+
+        if (zRangePanel.isVisible())
+            return (int) zRange.getHigh();
+
+        return 0;
+    }
+
+    /**
+     * Returns the minimum T of the selected T range to save.
+     */
+    public int getTMin()
+    {
+        if (tPanel.isVisible())
+            return ((Integer) tSpinner.getValue()).intValue();
+
+        if (tRangePanel.isVisible())
+            return (int) tRange.getLow();
+
+        return 0;
+    }
+
+    /**
+     * Returns the maximum T of the selected T range to save.
+     */
+    public int getTMax()
+    {
+        if (tPanel.isVisible())
+            return ((Integer) tSpinner.getValue()).intValue();
+
+        if (tRangePanel.isVisible())
+            return (int) tRange.getHigh();
+
+        return 0;
+    }
+
+    /**
+     * Returns the desired FPS (Frame Per Second, only for AVI file).
+     */
+    public int getFps()
+    {
+        if (fpsPanel.isVisible())
+            return ((Integer) fpsSpinner.getValue()).intValue();
+
+        return 1;
     }
 
     void updateSettingPanel()
     {
-        final FileFormat fileFormat = getSelectedFileFormat();
+        final ImageFileFormat fileFormat = getSelectedFileFormat();
 
-        final boolean tif = (fileFormat == FileFormat.TIFF);
-        final boolean jpg = (fileFormat == FileFormat.JPG);
-        final boolean avi = (fileFormat == FileFormat.AVI);
+        final boolean tif = (fileFormat == ImageFileFormat.TIFF);
+        final boolean jpg = (fileFormat == ImageFileFormat.JPG);
+        final boolean avi = (fileFormat == ImageFileFormat.AVI);
 
         if (singleImage)
         {

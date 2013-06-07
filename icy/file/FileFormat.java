@@ -21,8 +21,9 @@ package icy.file;
 import loci.formats.gui.ExtensionFileFilter;
 
 /**
- * @author Stephane
+ * @deprecated Use {@link ImageFileFormat} instead.
  */
+@Deprecated
 public enum FileFormat
 {
     TIFF
@@ -119,12 +120,18 @@ public enum FileFormat
 
     /**
      * Return true if the specified extension matches this format.<br>
-     * <code>defaultValue</code> is returned if no matching format is found.
+     * <code>defaultValue</code> is returned if no matching format is found (it can be null).
      */
     public boolean matches(String ext)
     {
+        if (ext == null)
+            return false;
+
+        // always consider lower case extension
+        final String extLC = ext.toLowerCase();
+
         for (String e : getExtensions())
-            if (e.equals(ext))
+            if (e.equals(extLC))
                 return true;
 
         return false;
@@ -144,9 +151,9 @@ public enum FileFormat
     }
 
     /**
-     * Return the FileFormat corresponding to specified filename extension.<br>
-     * <code>null</code> is returned if no matching format is found.
+     * @deprecated Use {@link #getFileFormat(String, FileFormat)} instead.
      */
+    @Deprecated
     public static FileFormat getFileFormat(String ext)
     {
         return getFileFormat(ext, null);

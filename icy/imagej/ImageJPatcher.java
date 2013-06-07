@@ -108,6 +108,7 @@ public class ImageJPatcher
         // hacker.insertMethod("ij.gui.ImageWindow", "public void show()");
         // hacker.insertBeforeMethod("ij.gui.ImageWindow", "public void close()");
         hacker.insertAfterMethod("ij.gui.ImageWindow", "public void windowActivated(java.awt.event.WindowEvent e)");
+        hacker.insertAfterMethod("ij.gui.ImageWindow", "public void windowClosed(java.awt.event.WindowEvent e)");
         hacker.loadClass("ij.gui.ImageWindow");
 
         // override behavior of MacAdapter

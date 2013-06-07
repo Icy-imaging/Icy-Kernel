@@ -40,6 +40,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -509,7 +510,7 @@ public class SequenceUtil
             // safe volume image copy (TODO : check if we can't direct set volume image internally)
             if (vi1 != null)
             {
-                final TreeMap<Integer, IcyBufferedImage> images = vi1.getImages();
+                final Map<Integer, IcyBufferedImage> images = vi1.getImages();
 
                 // copy images of volume image 1 at position t2
                 for (Entry<Integer, IcyBufferedImage> entry : images.entrySet())
@@ -517,7 +518,7 @@ public class SequenceUtil
             }
             if (vi2 != null)
             {
-                final TreeMap<Integer, IcyBufferedImage> images = vi2.getImages();
+                final Map<Integer, IcyBufferedImage> images = vi2.getImages();
 
                 // copy images of volume image 2 at position t1
                 for (Entry<Integer, IcyBufferedImage> entry : images.entrySet())
@@ -673,7 +674,7 @@ public class SequenceUtil
         sequence.beginUpdate();
         try
         {
-            sequence.removeAllImage();
+            sequence.removeAllImages();
 
             for (int t = 0; t < sizeT; t++)
                 for (int z = 0; z < sizeZ; z++)
@@ -946,7 +947,7 @@ public class SequenceUtil
         sequence.beginUpdate();
         try
         {
-            sequence.removeAllImage();
+            sequence.removeAllImages();
 
             for (int t = 0; t < sizeT; t++)
                 for (int z = 0; z < sizeZ; z++)
@@ -968,7 +969,7 @@ public class SequenceUtil
         {
             final ArrayList<IcyBufferedImage> images = sequence.getAllImage();
 
-            sequence.removeAllImage();
+            sequence.removeAllImages();
             for (int i = 0; i < images.size(); i++)
                 sequence.setImage(i, 0, images.get(i));
         }
@@ -988,7 +989,7 @@ public class SequenceUtil
         {
             final ArrayList<IcyBufferedImage> images = sequence.getAllImage();
 
-            sequence.removeAllImage();
+            sequence.removeAllImages();
             for (int i = 0; i < images.size(); i++)
                 sequence.setImage(0, i, images.get(i));
         }
@@ -1008,19 +1009,21 @@ public class SequenceUtil
      */
     public static void removeChannel(Sequence source, int channel)
     {
-        final ArrayList<Integer> channelsToKeep = new ArrayList<Integer>();
+        final int sizeC = source.getSizeC();
+        final int[] keep = new int[sizeC - 1];
 
-        for (int c = 0; c < source.getSizeC(); c++)
+        int i = 0;
+        for (int c = 0; c < sizeC; c++)
             if (c != channel)
-                channelsToKeep.add(Integer.valueOf(c));
+                keep[i++] = c;
 
-        final Sequence tmp = extractChannels(source, channelsToKeep);
+        final Sequence tmp = extractChannels(source, keep);
 
         source.beginUpdate();
         try
         {
             // we need to clear the source sequence to change its type
-            source.removeAllImage();
+            source.removeAllImages();
 
             // get back all images
             for (int t = 0; t < tmp.getSizeT(); t++)

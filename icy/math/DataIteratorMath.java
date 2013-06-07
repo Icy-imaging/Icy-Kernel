@@ -19,30 +19,22 @@
 package icy.math;
 
 import icy.type.DataIterator;
+import icy.type.DataIteratorUtil;
 
 /**
- * Math utilities for DataIterator subclasses.
+ * Math utilities for {@link DataIterator} classes.
  * 
  * @author Stephane
  */
 public class DataIteratorMath
 {
     /**
-     * Returns the number of element contained in the specified {@link DataIterator}.
+     * @deprecated Use {@link DataIteratorUtil#count(DataIterator)} instead.
      */
+    @Deprecated
     public static long count(DataIterator it)
     {
-        long result = 0;
-
-        it.reset();
-
-        while (!it.done())
-        {
-            it.next();
-            result++;
-        }
-
-        return result;
+        return DataIteratorUtil.count(it);
     }
 
     /**

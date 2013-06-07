@@ -19,6 +19,7 @@
 package icy.gui.viewer;
 
 import icy.canvas.Canvas2D;
+import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvasEvent;
@@ -110,8 +111,18 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 public void run()
                 {
                     final Viewer v = new Viewer(sequence);
+                    final LUT oldLut = getLut();
+                    final LUT newLut = v.getLut();
+
                     // copy LUT
-                    v.getLut().copyFrom(getLut());
+                    if (getCanvas() instanceof Canvas3D)
+                    {
+                        // don't copy alpha colormap
+                        newLut.setColorMaps(oldLut, false);
+                        newLut.setScalers(oldLut);
+                    }
+                    else
+                        newLut.copyFrom(oldLut);
                 }
             });
 
@@ -284,9 +295,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         // initial position in sequence
         if (sequence.isEmpty())
-            setZ(0);
+            setPositionZ(0);
         else
-            setZ(((sequence.getSizeZ() + 1) / 2) - 1);
+            setPositionZ(((sequence.getSizeZ() + 1) / 2) - 1);
 
         addFrameListener(new IcyFrameAdapter()
         {
@@ -760,7 +771,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
             // keep the color map of previous LUT if they have the same number of channels
             if ((lut != null) && (lut.getNumChannel() == newLut.getNumChannel()))
-                newLut.getColorSpace().setColormaps(lut.getColorSpace());
+                newLut.getColorSpace().setColorMaps(lut.getColorSpace(), true);
 
             // set the new lut
             setLut(newLut);
@@ -1160,6 +1171,102 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     public Sequence getRenderedSequence(boolean canvasView, ProgressListener progressListener)
     {
         return canvas.getRenderedSequence(canvasView, progressListener);
+    }
+
+    /**
+     * Returns the T navigation panel.
+     */
+    protected TNavigationPanel getTNavigationPanel()
+    {
+        return canvas.getTNavigationPanel();
+    }
+
+    /**
+     * Returns the frame rate (given in frame per second) for play command.
+     */
+    public int getFrameRate()
+    {
+        final TNavigationPanel tNav = getTNavigationPanel();
+
+        if (tNav != null)
+            return tNav.getFrameRate();
+
+        return 0;
+    }
+
+    /**
+     * Sets the frame rate (given in frame per second) for play command.
+     */
+    public void setFrameRate(int fps)
+    {
+        final TNavigationPanel tNav = getTNavigationPanel();
+
+        if (tNav != null)
+            tNav.setFrameRate(fps);
+    }
+
+    /**
+     * Returns true if <code>repeat</code> is enabled for play command.
+     */
+    public boolean isRepeat()
+    {
+        final TNavigationPanel tNav = getTNavigationPanel();
+
+        if (tNav != null)
+            return tNav.isRepeat();
+
+        return false;
+    }
+
+    /**
+     * Set <code>repeat</code> mode for play command.
+     */
+    public void setRepeat(boolean value)
+    {
+        final TNavigationPanel tNav = getTNavigationPanel();
+
+        if (tNav != null)
+            tNav.setRepeat(value);
+    }
+
+    /**
+     * Returns true if currently playing.
+     */
+    public boolean isPlaying()
+    {
+        final TNavigationPanel tNav = getTNavigationPanel();
+
+        if (tNav != null)
+            return tNav.isPlaying();
+
+        return false;
+    }
+
+    /**
+     * Start sequence play.
+     * 
+     * @see #stopPlay()
+     * @see #setRepeat(boolean)
+     */
+    public void startPlay()
+    {
+        final TNavigationPanel tNav = getTNavigationPanel();
+
+        if (tNav != null)
+            tNav.startPlay();
+    }
+
+    /**
+     * Stop sequence play.
+     * 
+     * @see #startPlay()
+     */
+    public void stopPlay()
+    {
+        final TNavigationPanel tNav = getTNavigationPanel();
+
+        if (tNav != null)
+            tNav.stopPlay();
     }
 
     /**

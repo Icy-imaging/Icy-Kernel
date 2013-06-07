@@ -527,6 +527,12 @@ public class PluginDescriptor implements XMLPersistent
         return getIndex(list, className) != -1;
     }
 
+    public static void addToList(List<PluginDescriptor> list, PluginDescriptor plugin, int position)
+    {
+        if ((plugin != null) && !existInList(list, plugin))
+            list.add(position, plugin);
+    }
+
     public static void addToList(List<PluginDescriptor> list, PluginDescriptor plugin)
     {
         if ((plugin != null) && !existInList(list, plugin))
@@ -557,9 +563,9 @@ public class PluginDescriptor implements XMLPersistent
     // return "";
     // }
 
-    public static ArrayList<PluginDescriptor> getPlugins(ArrayList<PluginDescriptor> list, String className)
+    public static List<PluginDescriptor> getPlugins(List<PluginDescriptor> list, String className)
     {
-        final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
+        final List<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
         for (PluginDescriptor plugin : list)
             if (plugin.getClassName().equals(className))
@@ -568,7 +574,7 @@ public class PluginDescriptor implements XMLPersistent
         return result;
     }
 
-    public static PluginDescriptor getPlugin(ArrayList<PluginDescriptor> list, String className)
+    public static PluginDescriptor getPlugin(List<PluginDescriptor> list, String className)
     {
         for (PluginDescriptor plugin : list)
             if (plugin.getClassName().equals(className))
@@ -577,7 +583,7 @@ public class PluginDescriptor implements XMLPersistent
         return null;
     }
 
-    public static PluginDescriptor getPlugin(ArrayList<PluginDescriptor> list, PluginIdent ident, boolean acceptNewer)
+    public static PluginDescriptor getPlugin(List<PluginDescriptor> list, PluginIdent ident, boolean acceptNewer)
     {
         if (acceptNewer)
         {

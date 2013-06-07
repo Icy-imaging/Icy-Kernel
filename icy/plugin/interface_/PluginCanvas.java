@@ -31,7 +31,7 @@ import icy.gui.viewer.Viewer;
 public interface PluginCanvas
 {
     /**
-     * Return the ROI class name
+     * Return the Canvas class name (CanvasClass.getClassName())
      */
     public String getCanvasClassName();
 

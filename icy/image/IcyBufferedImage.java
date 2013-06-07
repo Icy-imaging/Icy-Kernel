@@ -255,7 +255,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         // in some case we want to restore colormaps from source image
         if ((type == BufferedImage.TYPE_BYTE_BINARY) || (type == BufferedImage.TYPE_BYTE_INDEXED)
                 || (numComponents == 2))
-            result.setColormaps(image);
+            result.setColorMaps(image);
 
         return result;
     }
@@ -427,7 +427,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                         {
                             // sometime loci return black colormap map and we want to avoid them...
                             if ((colormaps[comp] != null) && !colormaps[comp].isBlack())
-                                result.setColormap(comp, colormaps[comp]);
+                                result.setColorMap(comp, colormaps[comp], true);
                         }
                     }
                 }
@@ -441,7 +441,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
                     // replace alpha with Cyan color
                     if (!alpha)
-                        result.setColormap(3, LinearColorMap.cyan_);
+                        result.setColorMap(3, LinearColorMap.cyan_, true);
                 }
             }
             finally
@@ -524,7 +524,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
             // sometime loci return black colormap map and we want to avoid them...
             if ((map != null) && !map.isBlack())
-                result.setColormap(0, map);
+                result.setColorMap(0, map, true);
         }
 
         return result;
@@ -640,7 +640,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
                     {
                         // sometime loci return black colormap map and we want to avoid them...
                         if ((colormaps[comp] != null) && !colormaps[comp].isBlack())
-                            result.setColormap(comp, colormaps[comp]);
+                            result.setColorMap(comp, colormaps[comp], true);
                     }
                 }
             }
@@ -654,7 +654,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
                 // replace alpha with Cyan color
                 if (!alpha)
-                    result.setColormap(3, LinearColorMap.cyan_);
+                    result.setColorMap(3, LinearColorMap.cyan_, true);
             }
         }
         finally
@@ -1791,7 +1791,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
 
             if (colorModel != null)
             {
-                final IcyColorMap colorMap = colorModel.getColormap(c);
+                final IcyColorMap colorMap = colorModel.getColorMap(c);
 
                 // we do user bounds adjustment on "non ALPHA" component only
                 if (colorMap.getType() != IcyColorMapType.ALPHA)
@@ -3749,36 +3749,70 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link #setColormaps(BufferedImage)} instead.
+     * Return the colormap of the specified channel.
+     */
+    public IcyColorMap getColorMap(int channel)
+    {
+        return getIcyColorModel().getColorMap(channel);
+    }
+
+    /**
+     * @deprecated Use {@link #getColorMap(int)} instead (different case).
+     */
+    @Deprecated
+    public IcyColorMap getColormap(int channel)
+    {
+        return getColorMap(channel);
+    }
+
+    /**
+     * @deprecated Use {@link #setColorMaps(BufferedImage)} instead.
      */
     @Deprecated
     public void copyColormap(BufferedImage srcImage)
     {
-        setColormaps(srcImage);
+        setColorMaps(srcImage);
     }
 
     /**
      * Set colormaps from specified image.
      */
+    public void setColorMaps(BufferedImage srcImage)
+    {
+        getIcyColorModel().setColorMaps(srcImage.getColorModel());
+    }
+
+    /**
+     * @deprecated Use {@link #setColorMaps(BufferedImage)} instead (different case).
+     */
+    @Deprecated
     public void setColormaps(BufferedImage srcImage)
     {
-        getIcyColorModel().setColormaps(srcImage.getColorModel());
+        setColorMaps(srcImage);
     }
 
     /**
      * Set the colormap for the specified channel.
+     * 
+     * @param channel
+     *        channel we want to set the colormap
+     * @param map
+     *        source colorspace to copy
+     * @param setAlpha
+     *        also set the alpha information
      */
-    public void setColormap(int channel, IcyColorMap map)
+    public void setColorMap(int channel, IcyColorMap map, boolean setAlpha)
     {
-        getIcyColorModel().setColormap(channel, map);
+        getIcyColorModel().setColorMap(channel, map, setAlpha);
     }
 
     /**
-     * Return the colormap of the specified channel.
+     * @deprecated Use {@link #setColorMap(int, IcyColorMap, boolean)} instead.
      */
-    public IcyColorMap getColormap(int channel)
+    @Deprecated
+    public void setColormap(int channel, IcyColorMap map)
     {
-        return getIcyColorModel().getColormap(channel);
+        setColorMap(channel, map, true);
     }
 
     /**

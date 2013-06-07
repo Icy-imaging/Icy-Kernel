@@ -35,6 +35,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.BorderFactory;
@@ -68,7 +69,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
     static final String[] columnNames = {"", "Name", "Version", "State", "Enabled"};
     static final String[] columnIds = {"Icon", "Name", "Version", "State", "Enabled"};
 
-    ArrayList<PluginDescriptor> plugins;
+    List<PluginDescriptor> plugins;
 
     /**
      * gui
@@ -195,7 +196,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
                 // open plugin web page
                 if (plugin != null)
-                    NetworkUtil.openURL(plugin.getWeb());
+                    NetworkUtil.openBrowser(plugin.getWeb());
             }
         });
         ComponentUtil.setFixedSize(documentationButton, buttonsDim);
@@ -411,9 +412,9 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         mainPanel.validate();
     }
 
-    private ArrayList<PluginDescriptor> filterList(ArrayList<PluginDescriptor> list, String filter)
+    private List<PluginDescriptor> filterList(List<PluginDescriptor> list, String filter)
     {
-        final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
+        final List<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
         final boolean empty = StringUtil.isEmpty(filter, true);
         final String filterUp;
 
@@ -456,7 +457,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected abstract String getStateValue(PluginDescriptor plugin);
 
-    protected abstract ArrayList<PluginDescriptor> getPlugins();
+    protected abstract List<PluginDescriptor> getPlugins();
 
     protected int getPluginTableIndex(int rowIndex)
     {

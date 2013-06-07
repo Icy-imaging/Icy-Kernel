@@ -29,6 +29,7 @@ import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.thread.ThreadUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Stephane
@@ -188,7 +189,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     }
 
     @Override
-    protected ArrayList<PluginDescriptor> getPlugins()
+    protected List<PluginDescriptor> getPlugins()
     {
         // loading...
         if (!PluginRepositoryLoader.isBasicLoaded())

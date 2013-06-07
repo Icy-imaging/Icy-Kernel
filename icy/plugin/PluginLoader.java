@@ -743,7 +743,7 @@ public class PluginLoader
 
     /**
      * Verify the specified plugin is valid.<br>
-     * Return the error string.
+     * Returns an empty string if the plugin is valid otherwise it returns the error string.
      */
     public static String verifyPlugin(PluginDescriptor plugin)
     {

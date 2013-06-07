@@ -454,7 +454,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
     /**
      * call this method on sequence change
      */
-    public void onSequenceChange()
+    public void onSequenceFocusChange()
     {
         fileBand.updateButtonsState();
     }

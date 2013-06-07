@@ -216,7 +216,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
         {
             // copy colormaps from colorModel ?
             if (copyColormap)
-                result.setColormaps(colorModel);
+                result.setColorMaps(colorModel);
             // copy bounds from colorModel ?
             if (copyBounds)
                 result.setBounds(colorModel);
@@ -337,36 +337,73 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     }
 
     /**
-     * Set the toRGB colormaps from a compatible colorModel
+     * Return the toRGB colormap of specified RGB component
      */
-    public void setColormaps(ColorModel source)
+    public IcyColorMap getColorMap(int component)
     {
-        getIcyColorSpace().setColormaps(source);
+        return getIcyColorSpace().getColorMap(component);
     }
 
     /**
-     * @deprecated Use {@link #setColormaps(ColorModel)} instead.
+     * @deprecated Use {@link #getColorMap(int)} instead (different case).
+     */
+    @Deprecated
+    public IcyColorMap getColormap(int component)
+    {
+        return getColorMap(component);
+    }
+
+    /**
+     * Set the toRGB colormaps from a compatible colorModel.
+     * 
+     * @param source
+     *        source ColorModel to copy colormap from
+     */
+    public void setColorMaps(ColorModel source)
+    {
+        getIcyColorSpace().setColorMaps(source);
+    }
+
+    /**
+     * @deprecated Use {@link #setColorMaps(ColorModel)} instead (different case).
+     */
+    @Deprecated
+    public void setColormaps(ColorModel source)
+    {
+        setColorMaps(source);
+    }
+
+    /**
+     * @deprecated Use {@link #setColorMaps(ColorModel)} instead.
      */
     @Deprecated
     public void copyColormap(ColorModel source)
     {
-        setColormaps(source);
+        setColorMaps(source);
     }
 
     /**
-     * Set the toRGB colormap of specified component
+     * Set the toRGB colormap of specified component (actually copy the content).
+     * 
+     * @param component
+     *        component we want to set the colormap
+     * @param map
+     *        source colorspace to copy
+     * @param setAlpha
+     *        also set the alpha information
      */
+    public void setColorMap(int component, IcyColorMap map, boolean setAlpha)
+    {
+        getIcyColorSpace().setColorMap(component, map, setAlpha);
+    }
+
+    /**
+     * @deprecated Use {@link #setColorMap(int, IcyColorMap, boolean)} instead.
+     */
+    @Deprecated
     public void setColormap(int component, IcyColorMap map)
     {
-        getIcyColorSpace().setColormap(component, map);
-    }
-
-    /**
-     * Return the toRGB colormap of specified RGB component
-     */
-    public IcyColorMap getColormap(int component)
-    {
-        return getIcyColorSpace().getColormap(component);
+        setColorMap(component, map, true);
     }
 
     /**
@@ -877,7 +914,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
     public boolean hasLinearColormaps()
     {
         for (int c = 0; c < numComponents; c++)
-            if (!getColormap(c).isLinear())
+            if (!getColorMap(c).isLinear())
                 return false;
 
         return true;

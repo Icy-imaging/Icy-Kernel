@@ -117,64 +117,64 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
             {
                 case 1:
                     // Gray
-                    setColormap(0, LinearColorMap.white_);
+                    setColorMap(0, LinearColorMap.white_, true);
                     break;
 
                 case 2:
                     // Red / Green
-                    setColormap(0, LinearColorMap.red_);
-                    setColormap(1, LinearColorMap.green_);
+                    setColorMap(0, LinearColorMap.red_, true);
+                    setColorMap(1, LinearColorMap.green_, true);
                     break;
 
                 case 3:
                     // RGB
-                    setColormap(0, LinearColorMap.red_);
-                    setColormap(1, LinearColorMap.green_);
-                    setColormap(2, LinearColorMap.blue_);
+                    setColorMap(0, LinearColorMap.red_, true);
+                    setColorMap(1, LinearColorMap.green_, true);
+                    setColorMap(2, LinearColorMap.blue_, true);
                     break;
 
                 case 4:
                     // ARGB
-                    setColormap(0, LinearColorMap.red_);
-                    setColormap(1, LinearColorMap.green_);
-                    setColormap(2, LinearColorMap.blue_);
-                    setColormap(3, LinearColorMap.alpha_);
+                    setColorMap(0, LinearColorMap.red_, true);
+                    setColorMap(1, LinearColorMap.green_, true);
+                    setColorMap(2, LinearColorMap.blue_, true);
+                    setColorMap(3, LinearColorMap.alpha_, true);
                     break;
 
                 case 5:
                     // RGB CM
-                    setColormap(0, LinearColorMap.red_);
-                    setColormap(1, LinearColorMap.green_);
-                    setColormap(2, LinearColorMap.blue_);
-                    setColormap(3, LinearColorMap.cyan_);
-                    setColormap(4, LinearColorMap.magenta_);
+                    setColorMap(0, LinearColorMap.red_, true);
+                    setColorMap(1, LinearColorMap.green_, true);
+                    setColorMap(2, LinearColorMap.blue_, true);
+                    setColorMap(3, LinearColorMap.cyan_, true);
+                    setColorMap(4, LinearColorMap.magenta_, true);
                     break;
 
                 case 6:
                     // RGB CMY
-                    setColormap(0, LinearColorMap.red_);
-                    setColormap(1, LinearColorMap.green_);
-                    setColormap(2, LinearColorMap.blue_);
-                    setColormap(3, LinearColorMap.cyan_);
-                    setColormap(4, LinearColorMap.magenta_);
-                    setColormap(5, LinearColorMap.yellow_);
+                    setColorMap(0, LinearColorMap.red_, true);
+                    setColorMap(1, LinearColorMap.green_, true);
+                    setColorMap(2, LinearColorMap.blue_, true);
+                    setColorMap(3, LinearColorMap.cyan_, true);
+                    setColorMap(4, LinearColorMap.magenta_, true);
+                    setColorMap(5, LinearColorMap.yellow_, true);
                     break;
 
                 default:
                     // RGB CMY W
-                    setColormap(0, LinearColorMap.red_);
-                    setColormap(1, LinearColorMap.green_);
-                    setColormap(2, LinearColorMap.blue_);
-                    setColormap(3, LinearColorMap.cyan_);
-                    setColormap(4, LinearColorMap.magenta_);
-                    setColormap(5, LinearColorMap.yellow_);
-                    setColormap(6, LinearColorMap.white_);
+                    setColorMap(0, LinearColorMap.red_, true);
+                    setColorMap(1, LinearColorMap.green_, true);
+                    setColorMap(2, LinearColorMap.blue_, true);
+                    setColorMap(3, LinearColorMap.cyan_, true);
+                    setColorMap(4, LinearColorMap.magenta_, true);
+                    setColorMap(5, LinearColorMap.yellow_, true);
+                    setColorMap(6, LinearColorMap.white_, true);
                     break;
             }
 
             // black map for the rest
             for (int i = 7; i < numComponents; i++)
-                setColormap(i, LinearColorMap.black_);
+                setColorMap(i, LinearColorMap.black_, true);
         }
         finally
         {
@@ -354,6 +354,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
             if (cm.isEnabled())
             {
                 final int value = colorvalue[comp];
+
                 final float alphaValue = cm.alpha.mapf[value];
 
                 // alpha channel ?
@@ -372,6 +373,16 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
 
         // final alpha = alpha component value * maximum local alpha value
         final int a = (int) (alpha * maxLocalAlpha * IcyColorMap.MAX_LEVEL);
+
+        if (a != 0)
+        {
+            final int inv = (1 << (IcyColorMap.COLORMAP_BITS + 8)) / a;
+
+            // normalize on alpha
+            b = (b * inv) >> 8;
+            g = (g * inv) >> 8;
+            r = (r * inv) >> 8;
+        }
 
         return ((b > IcyColorMap.MAX_LEVEL) ? IcyColorMap.MAX_LEVEL : b)
                 | (((g > IcyColorMap.MAX_LEVEL) ? IcyColorMap.MAX_LEVEL : g) << 8)
@@ -414,10 +425,23 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
             }
         }
 
+        // final alpha = alpha component value * maximum local alpha value
+        final float af = alpha * maxLocalAlpha;
+
+        if (af != 0f)
+        {
+            final float inv = 1f / af;
+
+            // normalize on alpha
+            bf *= inv;
+            gf *= inv;
+            rf *= inv;
+        }
+
         result[0] = (bf > 1f) ? 1f : bf;
         result[1] = (gf > 1f) ? 1f : gf;
         result[2] = (rf > 1f) ? 1f : rf;
-        result[3] = alpha * maxLocalAlpha;
+        result[3] = af;
 
         return result;
     }
@@ -428,7 +452,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
      * @param unnormSrc
      *        source buffer containing unnormalized values ([0..255] range) for each component
      * @param dest
-     *        ARGB components buffer ([4][0..size-1])
+     *        ARGB components buffer
      */
     public void fillARGBBuffer(int[][] unnormSrc, int[] dest, int offset, int length)
     {
@@ -456,7 +480,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
      * @param unnormSrc
      *        source buffer containing unnormalized values ([0..255] range) for each component
      * @param dest
-     *        ARGB components buffer ([4][0..size-1])
+     *        ARGB components buffer
      */
     public void fillARGBBuffer(int[][] unnormSrc, int[] dest)
     {
@@ -502,45 +526,66 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     /**
      * Return the colormap of the specified component.
      */
-    public IcyColorMap getColormap(int component)
+    public IcyColorMap getColorMap(int component)
     {
         return toRGBmaps[component];
     }
 
     /**
+     * @deprecated Use {@link #getColorMap(int)} instead (different case).
+     */
+    @Deprecated
+    public IcyColorMap getColormap(int component)
+    {
+        return getColorMap(component);
+    }
+
+    /**
      * Set the colormap for the specified component (actually copy the content of source colormap).
+     * 
+     * @param component
+     *        component we want to set the colormap
+     * @param colorMap
+     *        source colorMap
+     * @param setAlpha
+     *        also set the alpha information
      */
-    public void setColormap(int component, IcyColorMap colorMap)
+    public void setColorMap(int component, IcyColorMap colorMap, boolean setAlpha)
     {
-        toRGBmaps[component].copyFrom(colorMap);
+        toRGBmaps[component].copyFrom(colorMap, setAlpha);
+    }
+
+    /**
+     * @deprecated Use {@link #setColorMap(int, IcyColorMap, boolean)} instead.
+     */
+    @Deprecated
+    public void setColormap(int component, IcyColorMap map)
+    {
+        setColorMap(component, map, true);
     }
 
     /**
      * @deprecated Use <code>setColormap(channel, map)</code> instead.
      */
     @Deprecated
-    public void copyColormap(int component, IcyColorMap srcColorMap, boolean copyName, boolean copyAlpha)
+    public void copyColormap(int component, IcyColorMap map, boolean copyName, boolean copyAlpha)
     {
-        final IcyColorMap dstColormap = toRGBmaps[component];
-
-        dstColormap.copyFrom(srcColorMap, copyAlpha);
+        setColorMap(component, map, copyAlpha);
 
         if (copyName)
-            dstColormap.setName(srcColorMap.getName());
+            toRGBmaps[component].setName(map.getName());
     }
 
     /**
      * @deprecated Use <code>setColormap(channel, map)</code> instead.
      */
     @Deprecated
-    public void copyColormap(int component, IcyColorMap srcColorMap, boolean copyName)
+    public void copyColormap(int component, IcyColorMap map, boolean copyName)
     {
-        final IcyColorMap dstColormap = toRGBmaps[component];
-
-        dstColormap.copyFrom(srcColorMap);
+        setColorMap(component, map, true);
 
         if (copyName)
-            dstColormap.setName(srcColorMap.getName());
+            toRGBmaps[component].setName(map.getName());
     }
 
     /**
@@ -549,7 +594,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     @Deprecated
     public void copyColormap(int component, IcyColorMap map)
     {
-        copyColormap(component, map, false);
+        setColorMap(component, map, true);
     }
 
     /**
@@ -563,10 +608,10 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     /**
      * Set the RGB colormaps from a compatible colorModel.
      */
-    public void setColormaps(ColorModel cm)
+    public void setColorMaps(ColorModel cm)
     {
         if (cm instanceof IcyColorModel)
-            setColormaps((IcyColorSpace) cm.getColorSpace());
+            setColorMaps((IcyColorSpace) cm.getColorSpace(), true);
         else
         {
             // get datatype and numComponent of source colorModel
@@ -748,18 +793,32 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     }
 
     /**
-     * @deprecated Use {@link #setColormaps(ColorModel)} instead.
+     * @deprecated Use {@link #setColorMaps(ColorModel)} instead (different case).
+     */
+    @Deprecated
+    public void setColormaps(ColorModel cm)
+    {
+        setColorMaps(cm);
+    }
+
+    /**
+     * @deprecated Use {@link #setColorMaps(ColorModel)} instead.
      */
     @Deprecated
     public void copyColormaps(ColorModel cm)
     {
-        setColormaps(cm);
+        setColorMaps(cm);
     }
 
     /**
      * Set colormaps from specified colorSpace (do a copy).
+     * 
+     * @param source
+     *        source colorspace to copy the colormaps from
+     * @param setAlpha
+     *        also set the alpha information
      */
-    public void setColormaps(IcyColorSpace source)
+    public void setColorMaps(IcyColorSpace source, boolean setAlpha)
     {
         final int numComponents = Math.min(source.getNumComponents(), getNumComponents());
 
@@ -768,7 +827,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
         {
             // copy colormap
             for (int comp = 0; comp < numComponents; comp++)
-                setColormap(comp, source.getColormap(comp));
+                setColorMap(comp, source.getColorMap(comp), setAlpha);
         }
         finally
         {
@@ -777,12 +836,21 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     }
 
     /**
-     * @deprecated Use {@link #setColormaps(IcyColorSpace)} instead.
+     * @deprecated Use {@link #setColorMaps(IcyColorSpace, boolean)} instead.
+     */
+    @Deprecated
+    public void setColormaps(IcyColorSpace source)
+    {
+        setColorMaps(source, true);
+    }
+
+    /**
+     * @deprecated Use {@link #setColorMaps(IcyColorSpace, boolean)} instead.
      */
     @Deprecated
     public void copyColormaps(IcyColorSpace source)
     {
-        setColormaps(source);
+        setColorMaps(source, true);
     }
 
     /**
@@ -841,7 +909,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
      */
     private void changed(int component)
     {
-        final IcyColorMap colorMap = getColormap(component);
+        final IcyColorMap colorMap = getColorMap(component);
 
         // we can have only 1 alpha colormap
         if (colorMap != null)

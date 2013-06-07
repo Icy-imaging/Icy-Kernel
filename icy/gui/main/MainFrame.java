@@ -318,10 +318,12 @@ public class MainFrame extends JRibbonFrame
         imap.put(GeneralActions.searchAction.getKeyStroke(), GeneralActions.searchAction.getName());
         imap.put(FileActions.openSequenceAction.getKeyStroke(), FileActions.openSequenceAction.getName());
         imap.put(FileActions.saveAsSequenceAction.getKeyStroke(), FileActions.saveAsSequenceAction.getName());
+        imap.put(GeneralActions.onlineHelpAction.getKeyStroke(), GeneralActions.onlineHelpAction.getName());
 
         amap.put(GeneralActions.searchAction.getName(), GeneralActions.searchAction);
         amap.put(FileActions.openSequenceAction.getName(), FileActions.openSequenceAction);
         amap.put(FileActions.saveAsSequenceAction.getName(), FileActions.saveAsSequenceAction);
+        amap.put(GeneralActions.onlineHelpAction.getName(), GeneralActions.onlineHelpAction);
     }
 
     public ApplicationMenu getApplicationMenu()

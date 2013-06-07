@@ -18,7 +18,7 @@
  */
 package icy.gui.dialog;
 
-import icy.file.FileFormat;
+import icy.file.ImageFileFormat;
 import icy.file.Loader;
 import icy.main.Icy;
 import icy.preferences.ApplicationPreferences;
@@ -62,9 +62,6 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
     // GUI
     private final ImageLoaderOptionPanel optionPanel;
 
-    // internal
-    private String fileId;
-
     /**
      * <b>Image Loader Dialog</b><br>
      * <br>
@@ -94,11 +91,11 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         setPreferredSize(new Dimension(preferences.getInt("width", 600), preferences.getInt("height", 400)));
 
         removeChoosableFileFilter(getAcceptAllFileFilter());
-        addChoosableFileFilter(FileFormat.TIFF.getExtensionFileFilter());
-        addChoosableFileFilter(FileFormat.JPG.getExtensionFileFilter());
-        addChoosableFileFilter(FileFormat.PNG.getExtensionFileFilter());
-        addChoosableFileFilter(FileFormat.LSM.getExtensionFileFilter());
-        addChoosableFileFilter(FileFormat.AVI.getExtensionFileFilter());
+        addChoosableFileFilter(ImageFileFormat.TIFF.getExtensionFileFilter());
+        addChoosableFileFilter(ImageFileFormat.JPG.getExtensionFileFilter());
+        addChoosableFileFilter(ImageFileFormat.PNG.getExtensionFileFilter());
+        addChoosableFileFilter(ImageFileFormat.LSM.getExtensionFileFilter());
+        addChoosableFileFilter(ImageFileFormat.AVI.getExtensionFileFilter());
         // so we have AllFileFilter selected and in last position
         addChoosableFileFilter(new AllImageFileFilter());
 
@@ -112,8 +109,6 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         setAccessory(optionPanel);
         updateOptionPanel();
 
-        fileId = null;
-
         // listen file filter change
         addPropertyChangeListener(this);
 
@@ -121,7 +116,7 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
 
         // display loader
         final int value = showOpenDialog(Icy.getMainInterface().getMainFrame());
-        
+
         // cancel preview refresh (for big file)
         optionPanel.cancelPreview();
 

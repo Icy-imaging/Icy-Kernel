@@ -331,15 +331,16 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
 
     public void copyColorMap(IcyColorMap src)
     {
-        final boolean copyAlpha;
-
-        // 3D canvas, copy alpha component only if we have specific alpha info
+        // 3D canvas ?
         if (viewer.getCanvas() instanceof IcyCanvas3D)
-            copyAlpha = !src.alpha.isAllSame();
+        {
+            // copy alpha component only if we have specific alpha info
+//            copyAlpha = !src.alpha.isAllSame();
+            colormap.copyFrom(src, false);
+            colormap.setDefaultAlphaFor3D();
+        }
         else
-            copyAlpha = true;
-
-        colormap.copyFrom(src, copyAlpha);
+            colormap.copyFrom(src, true);
     }
 
     @Override

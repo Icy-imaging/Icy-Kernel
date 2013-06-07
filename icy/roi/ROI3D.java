@@ -159,7 +159,7 @@ public abstract class ROI3D extends ROI
      */
     public boolean isActiveFor(int t, int c)
     {
-        return ((this.t == -1) || (this.t == t)) && ((this.c == -1) || (this.c == c));
+        return ((this.t == -1) || (t == -1) || (this.t == t)) && ((this.c == -1) || (c == -1) || (this.c == c));
     }
 
     @Override

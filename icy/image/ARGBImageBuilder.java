@@ -60,7 +60,7 @@ class ARGBImageBuilder
         private int dest[];
         private int offset;
         private int length;
-        private int numComponents;
+        private int numChannel;
 
         BlockBuilder()
         {
@@ -90,11 +90,11 @@ class ARGBImageBuilder
             this.offset = offset;
             this.length = length;
 
-            numComponents = image.getNumComponents();
+            numChannel = image.getSizeC();
 
-            if (lut.getNumChannel() != numComponents)
+            if (lut.getNumChannel() != numChannel)
             {
-                System.err.println("ARGBImageBuilder.prepare(...): LUT.numComponents != IMAGE.numComponents");
+                System.err.println("ARGBImageBuilder.prepare(...): LUT.numChannel != IMAGE.numChannel");
                 return false;
             }
 
@@ -149,15 +149,15 @@ class ARGBImageBuilder
             try
             {
                 // rebuild buffer if needed
-                if (componentValues.length != numComponents)
-                    componentValues = new int[numComponents][BLOC_SIZE];
+                if (componentValues.length != numChannel)
+                    componentValues = new int[numChannel][BLOC_SIZE];
 
                 // update output image buffer
                 final Scaler[] scalers = lut.getScalers();
                 final boolean signed = image.getIcyColorModel().getDataType_().isSigned();
 
                 // scale component values
-                for (int comp = 0; comp < numComponents; comp++)
+                for (int comp = 0; comp < numChannel; comp++)
                     scalers[comp].scale(image.getDataXY(comp), offset, componentValues[comp], 0, length, signed);
 
                 // build ARGB destination buffer

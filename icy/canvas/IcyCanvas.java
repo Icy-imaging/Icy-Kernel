@@ -2894,8 +2894,6 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
         if (!e.isConsumed())
         {
-            final int modifiers = e.getModifiers();
-
             switch (e.getKeyCode())
             {
                 case KeyEvent.VK_0:
@@ -3109,8 +3107,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Returns a RGB or ARGB (depending base image) rendered image representing the canvas
-     * view for image at position (t, z, c).
+     * Returns a ARGB BufferedImage representing the canvas view for image at position (t, z, c).
      * Free feel to the canvas to handle or not a specific dimension.
      * 
      * @param t
@@ -3125,42 +3122,12 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     public abstract BufferedImage getRenderedImage(int t, int z, int c, boolean canvasView);
 
     /**
-     * Returns a RGB or ARGB (depending base image) rendered image representing the canvas
-     * view for image at position (t, z, c).
-     * Free feel to the canvas to handle or not a specific dimension.
-     * 
-     * @param t
-     *        T position of wanted image (-1 for complete sequence)
-     * @param z
-     *        Z position of wanted image (-1 for complete stack)
-     * @param c
-     *        C position of wanted image (-1 for all channels)
+     * @deprecated Use {@link #getRenderedImage(int, int, int, boolean)} instead.
      */
+    @Deprecated
     public BufferedImage getRenderedImage(int t, int z, int c)
     {
         return getRenderedImage(t, z, c, true);
-    }
-
-    /**
-     * Return a sequence which contains rendered images.<br>
-     * <br>
-     * Default implementation, override it if needed in your canvas.
-     */
-    public Sequence getRenderedSequence()
-    {
-        return getRenderedSequence(true);
-    }
-
-    /**
-     * Return a sequence which contains rendered images.<br>
-     * Default implementation, override it if needed in your canvas.
-     * 
-     * @param canvasView
-     *        render with canvas view if true else use default sequence dimension
-     */
-    public Sequence getRenderedSequence(boolean canvasView)
-    {
-        return getRenderedSequence(canvasView, null);
     }
 
     /**
@@ -3216,7 +3183,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                             {
                                 if (c != -1)
                                 {
-                                    final ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
+                                    final List<BufferedImage> images = new ArrayList<BufferedImage>();
 
                                     for (c = 0; c < sizeC; c++)
                                     {
@@ -3312,6 +3279,24 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
+     * @deprecated Use {@link #getRenderedSequence(boolean, ProgressListener)} instead.
+     */
+    @Deprecated
+    public Sequence getRenderedSequence(boolean canvasView)
+    {
+        return getRenderedSequence(canvasView, null);
+    }
+
+    /**
+     * @deprecated Use {@link #getRenderedSequence(boolean, ProgressListener)} instead.
+     */
+    @Deprecated
+    public Sequence getRenderedSequence()
+    {
+        return getRenderedSequence(true, null);
+    }
+
+    /**
      * Return the number of "selected" samples
      */
     public int getNumSelectedSamples()
@@ -3336,6 +3321,22 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             return base_len * getImageSizeZ();
 
         return base_len;
+    }
+
+    /**
+     * Returns the frame rate (given in frame per second) for play command (T navigation panel).
+     */
+    public int getFrameRate()
+    {
+        return tNav.getFrameRate();
+    }
+
+    /**
+     * Sets the frame rate (given in frame per second) for play command (T navigation panel).
+     */
+    public void setFrameRate(int fps)
+    {
+        tNav.setFrameRate(fps);
     }
 
     /**

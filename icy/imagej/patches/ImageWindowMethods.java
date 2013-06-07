@@ -53,6 +53,7 @@ package icy.imagej.patches;
 
 import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
+import ij.WindowManager;
 import ij.gui.ImageWindow;
 
 import java.awt.event.WindowEvent;
@@ -95,5 +96,14 @@ public final class ImageWindowMethods
 
         if (ij != null)
             ij.setActiveImage(obj);
+    }
+
+    /** Appends {@link ImageWindow#windowClosed(WindowEvent)}. */
+    public static void windowClosed(final ImageWindow obj, WindowEvent e)
+    {
+        final ImageJWrapper ij = Icy.getMainInterface().getImageJ();
+
+        if (ij != null)
+            ij.setActiveImage(WindowManager.getCurrentWindow());
     }
 }

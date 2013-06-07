@@ -34,6 +34,7 @@ import icy.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.EventListener;
+import java.util.List;
 
 import javax.swing.event.EventListenerList;
 
@@ -210,7 +211,7 @@ public class PluginInstaller implements Runnable
             if (showConfirm)
             {
                 // get local plugins which depend from the plugin we want to delete
-                final ArrayList<PluginDescriptor> dependants = getLocalDependenciesFrom(plugin);
+                final List<PluginDescriptor> dependants = getLocalDependenciesFrom(plugin);
 
                 String message = "<html>";
 
@@ -449,9 +450,9 @@ public class PluginInstaller implements Runnable
     /**
      * Return local plugin list which depend from specified plugin.
      */
-    public static ArrayList<PluginDescriptor> getLocalDependenciesFrom(PluginDescriptor plugin)
+    public static List<PluginDescriptor> getLocalDependenciesFrom(PluginDescriptor plugin)
     {
-        final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
+        final List<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
         for (PluginDescriptor curPlug : PluginLoader.getPlugins(false))
             // require specified plugin ?
@@ -464,7 +465,7 @@ public class PluginInstaller implements Runnable
     /**
      * Fill list with 'sources' dependencies of specified plugin
      */
-    private static void getLocalDependenciesOf(ArrayList<PluginDescriptor> result, ArrayList<PluginDescriptor> sources,
+    private static void getLocalDependenciesOf(List<PluginDescriptor> result, List<PluginDescriptor> sources,
             PluginDescriptor plugin)
     {
         // load plugin descriptor informations if not yet done
@@ -493,14 +494,14 @@ public class PluginInstaller implements Runnable
     /**
      * Reorder the list so needed dependencies comes first in list
      */
-    public static ArrayList<PluginDescriptor> getDependenciesOrderedList(ArrayList<PluginDescriptor> plugins)
+    public static List<PluginDescriptor> orderDependencies(List<PluginDescriptor> plugins)
     {
-        final ArrayList<PluginDescriptor> sources = new ArrayList<PluginDescriptor>(plugins);
-        final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
+        final List<PluginDescriptor> sources = new ArrayList<PluginDescriptor>(plugins);
+        final List<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
         while (sources.size() > 0)
         {
-            final ArrayList<PluginDescriptor> deps = new ArrayList<PluginDescriptor>();
+            final List<PluginDescriptor> deps = new ArrayList<PluginDescriptor>();
 
             getLocalDependenciesOf(result, sources, sources.get(0));
 
@@ -523,7 +524,7 @@ public class PluginInstaller implements Runnable
      * 
      * @param taskFrame
      */
-    private boolean checkDependencies(PluginDescriptor plugin, ArrayList<PluginDescriptor> pluginsToInstall,
+    private boolean checkDependencies(PluginDescriptor plugin, List<PluginDescriptor> pluginsToInstall,
             CancelableProgressFrame taskFrame)
     {
         // load plugin descriptor informations if not yet done
@@ -545,7 +546,7 @@ public class PluginInstaller implements Runnable
             final PluginDescriptor localPlugin = PluginLoader.getPlugin(className);
             final PluginDescriptor onlinePlugin = PluginRepositoryLoader.getPlugin(className);
 
-            // plugin not yet installed or out dated ?
+            // plugin not yet installed or outdated ?
             if ((localPlugin == null) || ident.getVersion().isGreater(localPlugin.getVersion()))
             {
                 // online plugin not found ?
@@ -606,7 +607,7 @@ public class PluginInstaller implements Runnable
 
         try
         {
-            final ArrayList<PluginInstallInfo> infos;
+            final List<PluginInstallInfo> infos;
             boolean showConfirm;
 
             synchronized (installFIFO)
@@ -634,9 +635,9 @@ public class PluginInstaller implements Runnable
             if (showConfirm)
                 taskFrame = new CancelableProgressFrame("initializing...");
 
-            final ArrayList<PluginDescriptor> dependencies = new ArrayList<PluginDescriptor>();
-            final ArrayList<PluginDescriptor> pluginsOk = new ArrayList<PluginDescriptor>();
-            final ArrayList<PluginDescriptor> pluginsNOk = new ArrayList<PluginDescriptor>();
+            List<PluginDescriptor> dependencies = new ArrayList<PluginDescriptor>();
+            final List<PluginDescriptor> pluginsOk = new ArrayList<PluginDescriptor>();
+            final List<PluginDescriptor> pluginsNOk = new ArrayList<PluginDescriptor>();
 
             // get dependencies
             for (int i = installingPlugins.size() - 1; i >= 0; i--)
@@ -665,12 +666,16 @@ public class PluginInstaller implements Runnable
             // nothing to install
             if (installingPlugins.isEmpty())
                 return;
-
+            
+            // order dependencies
+            dependencies = orderDependencies(dependencies);
             // add dependencies to the installing list
-            for (PluginDescriptor plugin : dependencies)
-                PluginDescriptor.addToList(installingPlugins, plugin);
+            installingPlugins.addAll(0, dependencies);
 
             String error = "";
+
+            // clear backup folder
+            FileUtil.delete(Updater.BACKUP_DIRECTORY, true);
 
             // now we can proceed the installation itself
             for (PluginDescriptor plugin : installingPlugins)
@@ -678,6 +683,17 @@ public class PluginInstaller implements Runnable
                 // already installed --> go to next one
                 if (PluginLoader.isLoaded(plugin, false))
                     continue;
+
+                for (PluginIdent ident : plugin.getRequired())
+                {
+                    // one of the dependencies was not correctly installed ?
+                    if (PluginDescriptor.existInList(pluginsNOk, ident))
+                    {
+                        // we can't install the plugin, continue with the next one
+                        pluginsNOk.add(plugin);
+                        continue;
+                    }
+                }
 
                 final String plugDesc = plugin.getName() + " " + plugin.getVersion();
 

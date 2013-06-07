@@ -111,24 +111,38 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
 
         public IcyColorMap getColorMap()
         {
-            return colorSpace.getColormap(channel);
+            return colorSpace.getColorMap(channel);
         }
 
         /**
          * Set the specified colormap (do a copy).
+         * 
+         * @param colorMap
+         *        source colorspace to copy
+         * @param setAlpha
+         *        also set the alpha information
          */
-        public void setColorMap(IcyColorMap colorMap)
+        public void setColorMap(IcyColorMap colorMap, boolean setAlpha)
         {
-            colorSpace.setColormap(channel, colorMap);
+            colorSpace.setColorMap(channel, colorMap, setAlpha);
         }
 
         /**
-         * @deprecated Use {@link #setColorMap(IcyColorMap)} instead.
+         * @deprecated Use {@link #setColorMap(IcyColorMap, boolean)} instead.
+         */
+        @Deprecated
+        public void setColorMap(IcyColorMap colorMap)
+        {
+            setColorMap(colorMap, true);
+        }
+
+        /**
+         * @deprecated Use {@link #setColorMap(IcyColorMap, boolean)} instead.
          */
         @Deprecated
         public void copyColorMap(IcyColorMap colorMap)
         {
-            setColorMap(colorMap);
+            setColorMap(colorMap, true);
         }
 
         public double getMin()
@@ -367,7 +381,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
      */
     public void copyFrom(LUT lut)
     {
-        setColormaps(lut);
+        setColorMaps(lut, true);
         setScalers(lut);
     }
 
@@ -408,20 +422,34 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
     }
 
     /**
-     * Set colormaps from the specified source lut (do a copy)
+     * Set colormaps from the specified source lut (do a copy).
+     * 
+     * @param lut
+     *        source lut to use
+     * @param setAlpha
+     *        also set the alpha information
      */
-    public void setColormaps(LUT lut)
+    public void setColorMaps(LUT lut, boolean setAlpha)
     {
-        getColorSpace().setColormaps(lut.getColorSpace());
+        getColorSpace().setColorMaps(lut.getColorSpace(), setAlpha);
     }
 
     /**
-     * @deprecated Use {@link #setColormaps(LUT)} instead.
+     * @deprecated USe {@link #setColorMaps(LUT, boolean)} instead.
+     */
+    @Deprecated
+    public void setColormaps(LUT lut)
+    {
+        setColorMaps(lut, true);
+    }
+
+    /**
+     * @deprecated Use {@link #setColorMaps(LUT, boolean)} instead.
      */
     @Deprecated
     public void copyColormaps(LUT lut)
     {
-        setColormaps(lut);
+        setColorMaps(lut, true);
     }
 
     /**

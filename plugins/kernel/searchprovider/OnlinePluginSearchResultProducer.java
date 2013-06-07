@@ -147,7 +147,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
             return;
 
         // get online plugins
-        final ArrayList<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins();
+        final List<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins();
         // get online result node
         final Element resultElement = XMLUtil.getElement(doc.getDocumentElement(), ID_SEARCH_RESULT);
 
@@ -219,7 +219,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
         return !PluginRepositoryLoader.failed();
     }
 
-    private OnlinePluginResult getResult(SearchResultConsumer consumer, ArrayList<PluginDescriptor> onlinePlugins,
+    private OnlinePluginResult getResult(SearchResultConsumer consumer, List<PluginDescriptor> onlinePlugins,
             Element pluginNode, String words[], LocalPluginSearchResultProducer lpsrp)
     {
         final String className = XMLUtil.getElementValue(pluginNode, ID_CLASSNAME, "");

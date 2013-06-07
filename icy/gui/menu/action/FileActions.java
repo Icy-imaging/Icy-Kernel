@@ -189,7 +189,7 @@ public class FileActions
                         {
                             final File file = new File(filename);
 
-                            Saver.save(seq, file, !file.exists() || file.isDirectory());
+                            Saver.save(seq, file, !file.exists() || file.isDirectory(), true);
                         }
                     });
                 }

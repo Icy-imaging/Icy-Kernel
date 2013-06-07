@@ -30,6 +30,7 @@ import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
 import icy.util.OMEUtil;
+import icy.util.StringUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,11 +39,14 @@ import java.text.DecimalFormat;
 import loci.common.services.ServiceException;
 import loci.formats.FormatException;
 import loci.formats.IFormatWriter;
+import loci.formats.UnknownFormatException;
 import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.out.APNGWriter;
 import loci.formats.out.AVIWriter;
+import loci.formats.out.JPEG2000Writer;
 import loci.formats.out.JPEGWriter;
 import loci.formats.out.OMETiffWriter;
+import loci.formats.out.TiffWriter;
 
 /**
  * Sequence / Image saver class.<br>
@@ -99,64 +103,94 @@ public class Saver
     }
 
     /**
-     * Return the writer to use for the specified FileFormat.<br>
+     * Returns the {@link ImageFileFormat} corresponding to specified {@link IFormatWriter}.<br>
+     * <code>defaultValue</code> is returned if no matching format is found.
+     */
+    public static ImageFileFormat getImageFileFormat(IFormatWriter writer, ImageFileFormat defaultValue)
+    {
+        if (writer instanceof TiffWriter)
+            return ImageFileFormat.TIFF;
+        if (writer instanceof APNGWriter)
+            return ImageFileFormat.PNG;
+        if (writer instanceof JPEGWriter)
+            return ImageFileFormat.JPG;
+        if (writer instanceof JPEG2000Writer)
+            return ImageFileFormat.JPG;
+        if (writer instanceof AVIWriter)
+            return ImageFileFormat.AVI;
+
+        return defaultValue;
+    }
+
+    /**
+     * @deprecated Use {@link #getImageFileFormat(IFormatWriter, ImageFileFormat)} instead.
+     */
+    @Deprecated
+    public static FileFormat getFileFormat(IFormatWriter writer, FileFormat defaultValue)
+    {
+        return getImageFileFormat(writer, ImageFileFormat.getFormat(defaultValue)).toFileFormat();
+    }
+
+    /**
+     * Return the writer to use for the specified ImageFileFormat.<br>
      * <br>
      * The following writer are currently supported :<br>
      * <code>OMETiffWriter</code> : TIFF image file (default)<br>
      * <code>APNGWriter</code> : PNG image file<br>
      * <code>JPEGWriter</code> : JPG image file<br>
      * <code>AVIWriter</code> : AVI video file<br>
+     * 
+     * @param format
+     *        {@link ImageFileFormat} we want to retrieve the saver.<br>
+     *        Accepted values:<br>
+     *        {@link ImageFileFormat#TIFF}<br>
+     *        {@link ImageFileFormat#PNG}<br>
+     *        {@link ImageFileFormat#JPG}<br>
+     *        {@link ImageFileFormat#AVI}<br>
+     *        null
      */
-    public static IFormatWriter getWriter(FileFormat fileFormat)
+    public static IFormatWriter getWriter(ImageFileFormat format)
     {
         final IFormatWriter result;
 
-        if (fileFormat == null)
+        switch (format)
         {
-            result = new OMETiffWriter();
+            case PNG:
+                result = new APNGWriter();
+                break;
 
-            // this way we are sure the TIF saver is always compressing
-            try
-            {
-                result.setCompression("LZW");
-            }
-            catch (FormatException e)
-            {
-                // no compression
-            }
-        }
-        else
-        {
-            switch (fileFormat)
-            {
-                case PNG:
-                    result = new APNGWriter();
-                    break;
+            case JPG:
+                result = new JPEGWriter();
+                break;
 
-                case JPG:
-                    result = new JPEGWriter();
-                    break;
+            case AVI:
+                result = new AVIWriter();
+                break;
 
-                case AVI:
-                    result = new AVIWriter();
-                    break;
-
-                default:
-                    result = new OMETiffWriter();
-                    // this way we are sure the TIF saver is always compressing
-                    try
-                    {
-                        result.setCompression("LZW");
-                    }
-                    catch (FormatException e)
-                    {
-                        // no compression
-                    }
-                    break;
-            }
+            default:
+                result = new OMETiffWriter();
+                // this way we are sure the TIF saver is always compressing
+                try
+                {
+                    result.setCompression("LZW");
+                }
+                catch (FormatException e)
+                {
+                    // no compression
+                }
+                break;
         }
 
         return result;
+    }
+
+    /**
+     * @deprecated Use {@link #getWriter(ImageFileFormat)} instead.
+     */
+    @Deprecated
+    public static IFormatWriter getWriter(FileFormat fileFormat)
+    {
+        return getWriter(ImageFileFormat.getFormat(fileFormat));
     }
 
     /**
@@ -167,10 +201,39 @@ public class Saver
      * <code>APNGWriter</code> : PNG image file<br>
      * <code>JPEGWriter</code> : JPG image file<br>
      * <code>AVIWriter</code> : AVI video file<br>
+     * 
+     * @param ext
+     *        Extension we want to retrieve the corresponding image writer.
+     * @param defaultFormat
+     *        default {@link ImageFileFormat} to use if <code>ext</code> is not recognized.<br>
+     *        Accepted values:<br>
+     *        {@link ImageFileFormat#TIFF}<br>
+     *        {@link ImageFileFormat#PNG}<br>
+     *        {@link ImageFileFormat#JPG}<br>
+     *        {@link ImageFileFormat#AVI}<br>
+     *        null
      */
+    public static IFormatWriter getWriter(String ext, ImageFileFormat defaultFormat)
+    {
+        return getWriter(ImageFileFormat.getWriteFormat(ext, defaultFormat));
+    }
+
+    /**
+     * @deprecated Use {@link #getWriter(String, ImageFileFormat)} instead.
+     */
+    @Deprecated
+    public static IFormatWriter getWriter(String ext, FileFormat defaultFormat)
+    {
+        return getWriter(ext, ImageFileFormat.getFormat(defaultFormat));
+    }
+
+    /**
+     * @deprecated Use {@link #getWriter(String, FileFormat)} instead.
+     */
+    @Deprecated
     public static IFormatWriter getWriter(String ext)
     {
-        return getWriter(FileFormat.getFileFormat(ext));
+        return getWriter(ext, ImageFileFormat.TIFF);
     }
 
     /**
@@ -181,10 +244,39 @@ public class Saver
      * <code>APNGWriter</code> : PNG image file<br>
      * <code>JPEGWriter</code> : JPG image file<br>
      * <code>AVIWriter</code> : AVI video file<br>
+     * 
+     * @param file
+     *        File we want to retrieve the corresponding image writer.
+     * @param defaultFormat
+     *        default {@link ImageFileFormat} to use if <code>file</code> is not recognized.<br>
+     *        Accepted values:<br>
+     *        {@link ImageFileFormat#TIFF}<br>
+     *        {@link ImageFileFormat#PNG}<br>
+     *        {@link ImageFileFormat#JPG}<br>
+     *        {@link ImageFileFormat#AVI}<br>
+     *        null
      */
+    public static IFormatWriter getWriter(File file, ImageFileFormat defaultFormat)
+    {
+        return getWriter(FileUtil.getFileExtension(file.getName(), false), defaultFormat);
+    }
+
+    /**
+     * @deprecated Use {@link #getWriter(File, ImageFileFormat)} instead.
+     */
+    @Deprecated
+    public static IFormatWriter getWriter(File file, FileFormat defaultFormat)
+    {
+        return getWriter(file, ImageFileFormat.getFormat(defaultFormat));
+    }
+
+    /**
+     * @deprecated Use {@link #getWriter(File, FileFormat)} instead.
+     */
+    @Deprecated
     public static IFormatWriter getWriter(File file)
     {
-        return getWriter(FileUtil.getFileExtension(file.getName(), false));
+        return getWriter(file, ImageFileFormat.TIFF);
     }
 
     /**
@@ -325,20 +417,12 @@ public class Saver
     }
 
     /**
-     * Save the specified sequence in the specified file.<br>
-     * When the sequence contains severals image the multiFile flag is used to indicate<br>
-     * if images are saved in severals files (file then specify a directory) or in a single file.
-     * 
-     * @param sequence
-     *        sequence to save
-     * @param file
-     *        file where we want to save sequence
-     * @param multipleFile
-     *        flag to indicate if images are saved in separate file
+     * @deprecated Use {@link #save(Sequence, File, boolean, boolean)} instead.
      */
-    public static void save(Sequence sequence, File file, boolean multipleFile)
+    @Deprecated
+    public static void save(Sequence sequence, File file, boolean multipleFiles)
     {
-        save(sequence, file, 0, sequence.getSizeZ() - 1, 0, sequence.getSizeT() - 1, 15, multipleFile);
+        save(sequence, file, 0, sequence.getSizeZ() - 1, 0, sequence.getSizeT() - 1, 15, multipleFiles, true);
     }
 
     /**
@@ -350,14 +434,25 @@ public class Saver
      *        sequence to save
      * @param file
      *        file where we want to save sequence
-     * @param multipleFile
+     * @param multipleFiles
      *        flag to indicate if images are saved in separate file
      * @param showProgress
      *        show progress bar
      */
-    public static void save(Sequence sequence, File file, boolean multipleFile, boolean showProgress)
+    public static void save(Sequence sequence, File file, boolean multipleFiles, boolean showProgress)
     {
-        save(sequence, file, 0, sequence.getSizeZ() - 1, 0, sequence.getSizeT() - 1, 15, multipleFile, showProgress);
+        save(sequence, file, 0, sequence.getSizeZ() - 1, 0, sequence.getSizeT() - 1, 15, multipleFiles, showProgress);
+    }
+
+    /**
+     * @deprecated Use {@link #save(Sequence, File, int, int, int, int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static void save(Sequence sequence, File file, int zMin, int zMax, int tMin, int tMax, int fps,
+            boolean multipleFiles)
+    {
+        save(sequence, file, zMin, zMax, tMin, tMax, fps, multipleFiles, true);
     }
 
     /**
@@ -380,25 +475,37 @@ public class Saver
      *        end T position to save
      * @param fps
      *        frame rate for AVI sequence save
-     * @param multipleFile
+     * @param multipleFiles
      *        flag to indicate if images are saved in separate file
+     * @param showProgress
+     *        show progress bar
      */
     public static void save(Sequence sequence, File file, int zMin, int zMax, int tMin, int tMax, int fps,
-            boolean multipleFile)
+            boolean multipleFiles, boolean showProgress)
     {
-        save(sequence, file, zMin, zMax, tMin, tMax, fps, multipleFile, true);
+        save(null, sequence, file, zMin, zMax, tMin, tMax, fps, multipleFiles, showProgress);
     }
 
     /**
      * Save the specified sequence in the specified file.<br>
-     * When the sequence contains severals image the multipleFile flag is used to indicate<br>
+     * When the sequence contains severals image the multipleFile flag is used to indicate
      * if images are saved as separate files (file then specify a directory) or not.<br>
-     * zMin - zMax and tMin - tMax define the Z and T images range to save.<br>
+     * <code>zMin</code> - <code>zMax</code> and <code>tMin</code> - <code>tMax</code> define the Z
+     * and T images range to save.<br>
      * 
+     * @param formatWriter
+     *        writer used to save sequence (define the image format).<br>
+     *        If set to <code>null</code> then writer is determined from the file extension.<br>
+     *        If destination file does not have a valid extension (for folder for instance) then you
+     *        have to specify a valid Writer to write the image file (see
+     *        {@link #getWriter(ImageFileFormat)})
      * @param sequence
      *        sequence to save
      * @param file
-     *        file where we want to save sequence
+     *        file where we want to save sequence.<br>
+     *        Depending the <code>formatWriter</code> the file extension may be modified.<br>
+     *        That is preferred as saving an image with a wrong extension may result in error on
+     *        future read (wrong reader detection).
      * @param zMin
      *        start Z position to save
      * @param zMax
@@ -414,8 +521,8 @@ public class Saver
      * @param showProgress
      *        show progress bar
      */
-    public static void save(Sequence sequence, File file, int zMin, int zMax, int tMin, int tMax, int fps,
-            boolean multipleFile, boolean showProgress)
+    public static void save(IFormatWriter formatWriter, Sequence sequence, File file, int zMin, int zMax, int tMin,
+            int tMax, int fps, boolean multipleFile, boolean showProgress)
     {
         final String filePath = file.getAbsolutePath();
         final int sizeT = (tMax - tMin) + 1;
@@ -436,17 +543,39 @@ public class Saver
                 saveFrame.setPosition(0);
             }
 
-            if ((numImages > 0) && multipleFile)
+            // need multiple files ?
+            if ((numImages > 1) && multipleFile)
             {
+                final IFormatWriter writer;
+
                 // so we won't create it for each image
-                final IFormatWriter writer = getWriter(file);
+                if (formatWriter == null)
+                    writer = getWriter(file, ImageFileFormat.TIFF);
+                else
+                    writer = formatWriter;
+
+                if (writer == null)
+                    throw new UnknownFormatException("Can't find a valid image writer for the specified file: " + file);
 
                 // save as severals images
                 final DecimalFormat decimalFormat = new DecimalFormat("0000");
                 final String fileName = FileUtil.getFileName(filePath, false);
-                final String fileBaseDirectory = FileUtil.getDirectory(filePath) + fileName;
+                String fileExt = FileUtil.getFileExtension(filePath, true);
+
+                String fileBaseDirectory = FileUtil.getDirectory(filePath);
+                if (fileBaseDirectory.endsWith("/"))
+                    fileBaseDirectory = fileBaseDirectory.substring(0, fileBaseDirectory.length() - 1);
+
+                // no extension (directory) ?
+                if (StringUtil.isEmpty(fileExt))
+                {
+                    // filename is part of directory
+                    fileBaseDirectory += FileUtil.separator + fileName;
+                    // use the default file extension for the specified writer
+                    fileExt = "." + getImageFileFormat(writer, ImageFileFormat.TIFF).getExtensions()[0];
+                }
+
                 final String filePathWithoutExt = fileBaseDirectory + FileUtil.separator + fileName;
-                final String fileDotExt = FileUtil.getFileExtension(filePath, true);
 
                 // create output directory
                 FileUtil.createDir(fileBaseDirectory);
@@ -461,7 +590,7 @@ public class Saver
                     for (int z = zMin; z <= zMax; z++)
                     {
                         final String filename = filePathWithoutExt + "_t" + decimalFormat.format(t) + "_z"
-                                + decimalFormat.format(z) + fileDotExt;
+                                + decimalFormat.format(z) + fileExt;
 
                         // save as single image file
                         save(writer, sequence, filename, z, z, t, t, fps, saveFrame);
@@ -474,17 +603,33 @@ public class Saver
             }
             else
             {
+                final String fileExt = FileUtil.getFileExtension(filePath, false);
+                final ImageFileFormat iff;
+
+                if (formatWriter != null)
+                    iff = getImageFileFormat(formatWriter, ImageFileFormat.TIFF);
+                else
+                    iff = ImageFileFormat.getWriteFormat(fileExt, ImageFileFormat.TIFF);
+
+                // force to set correct file extension
+                final String fixedFilePath;
+
+                if (iff.matches(fileExt))
+                    fixedFilePath = filePath;
+                else
+                    fixedFilePath = filePath + "." + iff.getExtensions()[0];
+
                 // default name used --> use filename
                 if (sequence.isDefaultName())
-                    sequence.setName(FileUtil.getFileName(filePath, false));
-                sequence.setFilename(filePath);
+                    sequence.setName(FileUtil.getFileName(fixedFilePath, false));
+                sequence.setFilename(fixedFilePath);
 
                 // save as multi images file
-                save(null, sequence, filePath, zMin, zMax, tMin, tMax, fps, saveFrame);
+                save(formatWriter, sequence, fixedFilePath, zMin, zMax, tMin, tMax, fps, saveFrame);
 
                 // add as one item to recent file list
                 if (mainMenu != null)
-                    mainMenu.addRecentLoadedFile(file);
+                    mainMenu.addRecentLoadedFile(new File(fixedFilePath));
             }
 
             // Sequence persistence enabled --> save XML
@@ -508,11 +653,9 @@ public class Saver
     /**
      * Save a single image from bytes buffer to the specified file.
      */
-    public static void saveImage(byte[] data, int width, int height, int numChannel, DataType dataType, File file,
-            boolean force) throws FormatException, IOException
+    private static void saveImage(IFormatWriter formatWriter, byte[] data, int width, int height, int numChannel,
+            DataType dataType, File file, boolean force) throws FormatException, IOException
     {
-        final IFormatWriter writer = getWriter(file);
-
         if (file.exists())
         {
             // forced ? first delete the file else LOCI won't save it
@@ -524,18 +667,31 @@ public class Saver
         // ensure parent directory exist
         FileUtil.ensureParentDirExist(file);
 
-        try
-        {
-            writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(width, height, numChannel, dataType,
-                    getSeparateChannelFlag(writer, numChannel, dataType)));
-        }
-        catch (ServiceException e)
-        {
-            System.err.println("Saver.saveImage(...) error :");
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
+        final IFormatWriter writer;
 
-        // needed so some image viewer can correctly read image (win XP system viewer need it)
+        if (formatWriter == null)
+        {
+            // get the writer
+            writer = getWriter(file, ImageFileFormat.TIFF);
+
+            // prepare the metadata
+            try
+            {
+                writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(width, height, numChannel, dataType,
+                        getSeparateChannelFlag(writer, numChannel, dataType)));
+            }
+            catch (ServiceException e)
+            {
+                System.err.println("Saver.saveImage(...) error :");
+                IcyExceptionHandler.showErrorMessage(e, true);
+            }
+        }
+        else
+            // ready to use writer (metadata already prepared)
+            writer = formatWriter;
+
+        // we always save in interleaved as some image viewer need it to correctly read image
+        // (ex: win XP system viewer)
         writer.setInterleaved(true);
         writer.setId(file.getAbsolutePath());
         writer.setSeries(0);
@@ -549,6 +705,15 @@ public class Saver
             IcyExceptionHandler.showErrorMessage(e, true);
         }
         writer.close();
+    }
+
+    /**
+     * Save a single image from bytes buffer to the specified file.
+     */
+    public static void saveImage(byte[] data, int width, int height, int numChannel, DataType dataType, File file,
+            boolean force) throws FormatException, IOException
+    {
+        saveImage(null, data, width, height, numChannel, dataType, file, force);
     }
 
     /**
@@ -570,18 +735,10 @@ public class Saver
      */
     public static void saveImage(IcyBufferedImage image, File file, boolean force) throws FormatException, IOException
     {
-        final IFormatWriter writer = getWriter(file);
+        final IFormatWriter writer = getWriter(file, ImageFileFormat.TIFF);
 
-        if (file.exists())
-        {
-            // forced ? first delete the file else LOCI won't save it
-            if (force)
-                file.delete();
-            else
-                throw new IOException("File already exists");
-        }
-        // ensure parent directory exist
-        FileUtil.ensureParentDirExist(file);
+        if (writer == null)
+            throw new UnknownFormatException("Can't find a valid image writer for the specified file: " + file);
 
         try
         {
@@ -594,24 +751,11 @@ public class Saver
             IcyExceptionHandler.showErrorMessage(e, true);
         }
 
-        final boolean interleaved = true;
-        // get endianess
+        // get byte order
         final boolean littleEndian = !writer.getMetadataRetrieve().getPixelsBinDataBigEndian(0, 0).booleanValue();
-
-        // needed so some image viewer can correctly read image (win XP system viewer need it)
-        writer.setInterleaved(interleaved);
-        writer.setId(file.getAbsolutePath());
-        writer.setSeries(0);
-        try
-        {
-            writer.saveBytes(0, image.getRawData(littleEndian, interleaved));
-        }
-        catch (Exception e)
-        {
-            System.err.println("Saver.saveBytes(...) error :");
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
-        writer.close();
+        // then save the image (always use interleaved data to save)
+        saveImage(writer, image.getRawData(littleEndian, true), image.getSizeX(), image.getSizeY(), image.getSizeC(),
+                image.getDataType_(), file, force);
     }
 
     /**
@@ -621,10 +765,10 @@ public class Saver
      * zMin - zMax and tMin - tMax define the Z and T images range to save.<br>
      * 
      * @param formatWriter
-     *        writer used to save sequence
+     *        writer used to save sequence (define the image format)
      * @param sequence
      *        sequence to save
-     * @param filename
+     * @param filePath
      *        file name where we want to save sequence
      * @param zMin
      *        start Z position to save
@@ -638,109 +782,105 @@ public class Saver
      *        frame rate for AVI sequence save
      * @param saveFrame
      *        progress frame for save operation (can be null)
+     * @throws ServiceException
+     * @throws IOException
+     * @throws FormatException
      */
-    private static void save(IFormatWriter formatWriter, Sequence sequence, String filename, int zMin, int zMax,
-            int tMin, int tMax, int fps, FileFrame saveFrame)
+    private static void save(IFormatWriter formatWriter, Sequence sequence, String filePath, int zMin, int zMax,
+            int tMin, int tMax, int fps, FileFrame saveFrame) throws ServiceException, FormatException, IOException
     {
-        final File file = new File(filename);
+        final File file = new File(filePath);
         final IFormatWriter writer;
 
         if (formatWriter == null)
-            writer = getWriter(file);
+            writer = getWriter(file, ImageFileFormat.TIFF);
         else
             writer = formatWriter;
 
+        if (writer == null)
+            throw new UnknownFormatException("Can't find a valid image writer for the specified file: " + filePath);
+
+        // first delete the file else LOCI won't save it
+        if (file.exists())
+            file.delete();
+        // ensure parent directory exist
+        FileUtil.ensureParentDirExist(file);
+
+        final int sizeC = sequence.getSizeC();
+
+        // Some image viewer needs interleaved channel data to correctly read image.
+        // win XP system viewer for instance
+        final boolean interleaved = true;
+        final boolean separateChannel = getSeparateChannelFlag(writer, sequence.getColorModel());
+
+        // set settings
+        writer.setFramesPerSecond(fps);
+        // generate metadata
+        writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(sequence, (zMax - zMin) + 1, (tMax - tMin) + 1,
+                separateChannel));
+        // interleaved flag
+        writer.setInterleaved(interleaved);
+        // set id
+        writer.setId(filePath);
+        // init
+        writer.setSeries(0);
+        // usually give better save performance
+        writer.setWriteSequentially(true);
+
+        // get endianess
+        final boolean littleEndian = !writer.getMetadataRetrieve().getPixelsBinDataBigEndian(0, 0).booleanValue();
+        byte[] data = null;
+
         try
         {
-            // forced ? first delete the file else LOCI won't save it
-            if (file.exists())
-                file.delete();
-            // ensure parent directory exist
-            FileUtil.ensureParentDirExist(file);
-
-            final int sizeC = sequence.getSizeC();
-
-            // Some image viewer needs interleaved channel data to correctly read image.
-            // win XP system viewer for instance
-            final boolean interleaved = true;
-            final boolean separateChannel = getSeparateChannelFlag(writer, sequence.getColorModel());
-
-            // set settings
-            writer.setFramesPerSecond(fps);
-            // generate metadata
-            writer.setMetadataRetrieve(MetaDataUtil.generateMetaData(sequence, (zMax - zMin) + 1, (tMax - tMin) + 1,
-                    separateChannel));
-            // interleaved flag
-            writer.setInterleaved(interleaved);
-            // set id
-            writer.setId(filename);
-            // init
-            writer.setSeries(0);
-            // usually give better save performance
-            writer.setWriteSequentially(true);
-
-            // get endianess
-            final boolean littleEndian = !writer.getMetadataRetrieve().getPixelsBinDataBigEndian(0, 0).booleanValue();
-            byte[] data = null;
-
-            try
+            int imageIndex = 0;
+            // XYCZT order is important here (see metadata)
+            for (int t = tMin; t <= tMax; t++)
             {
-                int imageIndex = 0;
-                // XYCZT order is important here (see metadata)
-                for (int t = tMin; t <= tMax; t++)
+                for (int z = zMin; z <= zMax; z++)
                 {
-                    for (int z = zMin; z <= zMax; z++)
+                    if ((saveFrame != null) && saveFrame.isCancelRequested())
+                        return;
+
+                    final IcyBufferedImage image = sequence.getImage(t, z);
+
+                    // separated channel data
+                    if (separateChannel)
                     {
-                        if ((saveFrame != null) && saveFrame.isCancelRequested())
-                            return;
-
-                        final IcyBufferedImage image = sequence.getImage(t, z);
-
-                        // separated channel data
-                        if (separateChannel)
-                        {
-                            for (int c = 0; c < sizeC; c++)
-                            {
-                                if (image != null)
-                                {
-                                    // avoid multiple allocation
-                                    data = image.getRawData(c, data, 0, littleEndian);
-                                    writer.saveBytes(imageIndex, data);
-                                }
-
-                                imageIndex++;
-                            }
-                        }
-                        else
+                        for (int c = 0; c < sizeC; c++)
                         {
                             if (image != null)
                             {
                                 // avoid multiple allocation
-                                data = image.getRawData(data, 0, littleEndian, interleaved);
+                                data = image.getRawData(c, data, 0, littleEndian);
                                 writer.saveBytes(imageIndex, data);
                             }
-                            // ((BufferedImageWriter) writer).saveImage(imageIndex, image);
 
                             imageIndex++;
                         }
-
-                        if (saveFrame != null)
-                            saveFrame.incPosition();
                     }
+                    else
+                    {
+                        if (image != null)
+                        {
+                            // avoid multiple allocation
+                            data = image.getRawData(data, 0, littleEndian, interleaved);
+                            writer.saveBytes(imageIndex, data);
+                        }
+                        // ((BufferedImageWriter) writer).saveImage(imageIndex, image);
+
+                        imageIndex++;
+                    }
+
+                    if (saveFrame != null)
+                        saveFrame.incPosition();
                 }
             }
-            finally
-            {
-                // always close writer
-                writer.close();
-            }
         }
-        catch (Exception e)
+        finally
         {
-            IcyExceptionHandler.showErrorMessage(e, true);
-            if (saveFrame != null)
-                new FailedAnnounceFrame("Failed to save image(s) (see output console for details)", 15);
-            return;
+            // always close writer after a file has been saved
+            writer.close();
         }
     }
 }

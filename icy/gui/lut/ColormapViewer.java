@@ -18,15 +18,17 @@
  */
 package icy.gui.lut;
 
+import icy.common.IcyAbstractAction;
 import icy.gui.component.BorderedPanel;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.IcyColorMap.IcyColorMapType;
-import icy.image.colormap.IcyColorMapBand;
-import icy.image.colormap.IcyColorMapBand.ControlPoint;
+import icy.image.colormap.IcyColorMapComponent;
+import icy.image.colormap.IcyColorMapComponent.ControlPoint;
 import icy.image.lut.LUT.LUTChannel;
 import icy.image.lut.LUT.LUTChannelEvent;
 import icy.image.lut.LUT.LUTChannelEvent.LUTChannelEventType;
 import icy.image.lut.LUT.LUTChannelListener;
+import icy.resource.icon.IcyIcon;
 import icy.util.ColorUtil;
 import icy.util.EventUtil;
 
@@ -40,6 +42,7 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -50,9 +53,13 @@ import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
 
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
 import javax.swing.event.EventListenerList;
 
 /**
@@ -116,8 +123,8 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
     private float pixToValueRatio;
     private float valueToPixRatio;
     private ActionType action;
-    private IcyColorMapBand currentColormapBand;
-    private ControlPoint currentControlPoint;
+    private IcyColorMapComponent currentComponent;
+    ControlPoint currentControlPoint;
 
     public ColormapViewer(LUTChannel lutChannel)
     {
@@ -143,15 +150,21 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         alphaEnabled = true;
 
         action = ActionType.NULL;
-        currentColormapBand = null;
+        currentComponent = null;
         currentControlPoint = null;
 
         // calculate ratios
         updateRatios();
 
+        // we can't get key events without focus and having focus here is a problem
+        // as we can have externalized windows...
+        // addKeyListener(this);
+
         // add listeners
         addMouseListener(this);
         addMouseMotionListener(this);
+
+        buildActionMap();
     }
 
     @Override
@@ -170,6 +183,36 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
 
         // remove listeners
         lutChannel.removeListener(this);
+    }
+
+    void buildActionMap()
+    {
+        final InputMap imap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        final ActionMap amap = getActionMap();
+
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
+
+        amap.put("delete", new IcyAbstractAction("delete", (IcyIcon) null, "Delete control point", KeyEvent.VK_DELETE,
+                0)
+        {
+            /**
+             * 
+             */
+            private static final long serialVersionUID = 2375566345981567387L;
+
+            @Override
+            protected boolean doAction(ActionEvent e)
+            {
+                // remove current control point
+                if (currentControlPoint != null)
+                {
+                    currentControlPoint.remove();
+                    return true;
+                }
+
+                return false;
+            }
+        });
     }
 
     /**
@@ -262,6 +305,9 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
             }
         }
 
+        if (alphaEnabled)
+            drawColormapBand(g2, colormap.alpha);
+
         switch (colormap.getType())
         {
             case RGB:
@@ -275,22 +321,19 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
                 break;
         }
 
-        if (alphaEnabled)
-            drawColormapBand(g2, colormap.alpha);
-
         g2.setColor(Color.black);
         g2.drawRect(0, 0, w - 1, h - 1);
 
         g2.dispose();
     }
 
-    private void drawColormapBand(Graphics2D g, IcyColorMapBand band)
+    private void drawColormapBand(Graphics2D g, IcyColorMapComponent band)
     {
         drawColormap(g, band);
         drawControlPoints(g, band);
     }
 
-    private void drawColormap(Graphics2D g, IcyColorMapBand cmb)
+    private void drawColormap(Graphics2D g, IcyColorMapComponent cmc)
     {
         final Graphics2D g2 = (Graphics2D) g.create();
 
@@ -300,33 +343,33 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         GeneralPath polyline = null;
 
         // the LUT is defined directly, without control points
-        if (cmb.isRawData())
+        if (cmc.isRawData())
         {
             final int x = getClientX();
             final int w = getClientWidth();
 
             polyline = new GeneralPath(Path2D.WIND_EVEN_ODD, w);
 
-            int intensity = valueToPix(cmb.map[pixToIndex(0)]);
+            int intensity = valueToPix(cmc.map[pixToIndex(0)]);
             polyline.moveTo(x, intensity);
 
             for (int i = x; i < (w + x); i++)
             {
-                intensity = valueToPix(cmb.map[pixToIndex(i)]);
+                intensity = valueToPix(cmc.map[pixToIndex(i)]);
                 polyline.lineTo(i, intensity);
             }
         }
         else
         // the LUT is defined through control points, use them.
         {
-            polyline = new GeneralPath(Path2D.WIND_EVEN_ODD, cmb.getControlPointCount());
+            polyline = new GeneralPath(Path2D.WIND_EVEN_ODD, cmc.getControlPointCount());
 
-            ArrayList<ControlPoint> controlPoints = cmb.getControlPoints();
+            ArrayList<ControlPoint> controlPoints = cmc.getControlPoints();
             int x = getPixelPosX(controlPoints.get(0));
             int y = getPixelPosY(controlPoints.get(0));
             polyline.moveTo(x, y);
 
-            for (int i = 1; i < cmb.getControlPointCount(); i++)
+            for (int i = 1; i < cmc.getControlPointCount(); i++)
             {
                 x = getPixelPosX(controlPoints.get(i));
                 y = getPixelPosY(controlPoints.get(i));
@@ -334,21 +377,21 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
             }
         }
 
-        if (isFocused(cmb))
+        if (isFocused(cmc))
             g2.setColor(Color.lightGray);
         else
             g2.setColor(Color.black);
         g2.setStroke(new BasicStroke(LINE_SIZE + 1));
         g2.draw(polyline);
 
-        g2.setColor(getColor(cmb));
+        g2.setColor(getColor(cmc));
         g2.setStroke(new BasicStroke(LINE_SIZE));
         g2.draw(polyline);
 
         g2.dispose();
     }
 
-    private void drawControlPoints(Graphics2D g, IcyColorMapBand cmb)
+    private void drawControlPoints(Graphics2D g, IcyColorMapComponent cmc)
     {
         final Graphics2D g2 = (Graphics2D) g.create();
 
@@ -358,9 +401,9 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         final int offset_oval = POINT_SIZE / 2;
 
         // define color
-        final Color color = getColor(cmb);
+        final Color color = getColor(cmc);
 
-        for (ControlPoint controlPoint : cmb.getControlPoints())
+        for (ControlPoint controlPoint : cmc.getControlPoints())
         {
             final int x = getPixelPosX(controlPoint);
             final int y = getPixelPosY(controlPoint);
@@ -417,7 +460,7 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
     /**
      * set current controller or control point
      */
-    public void setCurrentElements(IcyColorMapBand cmb, ControlPoint cp)
+    public void setCurrentElements(IcyColorMapComponent cmc, ControlPoint cp)
     {
         if (currentControlPoint != cp)
         {
@@ -425,15 +468,15 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
             repaint();
         }
 
-        if (currentColormapBand != cmb)
+        if (currentComponent != cmc)
         {
-            currentColormapBand = cmb;
+            currentComponent = cmc;
             repaint();
         }
 
         final int cursor;
 
-        if ((cmb != null) || (cp != null))
+        if ((cmc != null) || (cp != null))
             cursor = Cursor.HAND_CURSOR;
         else
             cursor = Cursor.DEFAULT_CURSOR;
@@ -443,9 +486,9 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
             setCursor(new Cursor(cursor));
     }
 
-    private boolean isFocused(IcyColorMapBand cmb)
+    private boolean isFocused(IcyColorMapComponent cmc)
     {
-        return (cmb != null) && (currentColormapBand == cmb);
+        return (cmc != null) && (currentComponent == cmc);
     }
 
     private boolean isFocused(ControlPoint cp)
@@ -464,17 +507,17 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
     /**
      * get color of specified band
      */
-    public Color getColor(IcyColorMapBand cmb)
+    public Color getColor(IcyColorMapComponent cmc)
     {
-        if (cmb == colormap.red)
+        if (cmc == colormap.red)
             return Color.red;
-        if (cmb == colormap.green)
+        if (cmc == colormap.green)
             return Color.green;
-        if (cmb == colormap.blue)
+        if (cmc == colormap.blue)
             return Color.blue;
-        if (cmb == colormap.gray)
+        if (cmc == colormap.gray)
             return Color.gray;
-        if (cmb == colormap.alpha)
+        if (cmc == colormap.alpha)
             return Color.white;
 
         return Color.black;
@@ -559,9 +602,9 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
     // * point
     // * @return boolean
     // */
-    // private boolean isOverControlPoint(IcyColorMapBand cmb, Point pos)
+    // private boolean isOverControlPoint(IcyColorMapComponent cmc, Point pos)
     // {
-    // for (ControlPoint cp : cmb.getControlPoints())
+    // for (ControlPoint cp : cmc.getControlPoints())
     // if (isOverlapped(cp, pos))
     // return true;
     //
@@ -575,13 +618,13 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
      *        point
      * @return boolean
      */
-    public boolean isOverlapped(IcyColorMapBand cmb, Point pos)
+    public boolean isOverlapped(IcyColorMapComponent cmc, Point pos)
     {
         final int index_min = Math.max(0, pixToIndex(pos.x - LINE_SIZE));
         final int index_max = Math.min(IcyColorMap.MAX_INDEX, pixToIndex(pos.x + LINE_SIZE));
 
         for (int ind = index_min; ind < index_max; ind++)
-            if (Point2D.distance(pos.x, pos.y, indexToPix(ind), valueToPix(cmb.map[ind])) <= (LINE_SIZE + 1))
+            if (Point2D.distance(pos.x, pos.y, indexToPix(ind), valueToPix(cmc.map[ind])) <= (LINE_SIZE + 1))
                 return true;
 
         return false;
@@ -649,14 +692,9 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
      *        point
      * @return ColormapController
      */
-    private IcyColorMapBand getOverlappedColormapController(Point pos)
+    private IcyColorMapComponent getOverlappedColormapController(Point pos)
     {
         final IcyColorMapType type = colormap.getType();
-
-        // check only if alpha enabled
-        if (alphaEnabled)
-            if (isOverlapped(colormap.alpha, pos))
-                return colormap.alpha;
 
         // test according to display order (ARGB)
         if (type == IcyColorMapType.RGB)
@@ -672,6 +710,11 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
             if (isOverlapped(colormap.gray, pos))
                 return colormap.gray;
 
+        // check only if alpha enabled
+        if (alphaEnabled)
+            if (isOverlapped(colormap.alpha, pos))
+                return colormap.alpha;
+
         return null;
     }
 
@@ -686,14 +729,6 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
     {
         ControlPoint point;
         final IcyColorMapType type = colormap.getType();
-
-        // check only if alpha enabled
-        if (alphaEnabled)
-        {
-            point = getClosestOverlappedControlPoint(colormap.alpha, pos);
-            if (point != null)
-                return point;
-        }
 
         // test according to display order (RGBA)
         if (type == IcyColorMapType.RGB)
@@ -715,6 +750,14 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
                 return point;
         }
 
+        // check only if alpha enabled
+        if (alphaEnabled)
+        {
+            point = getClosestOverlappedControlPoint(colormap.alpha, pos);
+            if (point != null)
+                return point;
+        }
+
         return null;
     }
 
@@ -725,12 +768,12 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
      *        point
      * @return ControlPoint
      */
-    private ControlPoint getClosestOverlappedControlPoint(IcyColorMapBand cmb, Point pos)
+    private ControlPoint getClosestOverlappedControlPoint(IcyColorMapComponent cmc, Point pos)
     {
         final List<ControlPoint> overlapped = new ArrayList<ControlPoint>();
 
         // add all overlapped control points to the list
-        for (ControlPoint point : cmb.getControlPoints())
+        for (ControlPoint point : cmc.getControlPoints())
             if (isOverlapped(point, pos))
                 overlapped.add(point);
 
@@ -767,9 +810,9 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
      * @param pos
      *        position
      */
-    ControlPoint setControlPoint(IcyColorMapBand cmb, Point pos)
+    ControlPoint setControlPoint(IcyColorMapComponent comp, Point pos)
     {
-        return cmb.setControlPoint(pixToIndex(pos.x), pixToValue(pos.y));
+        return comp.setControlPoint(pixToIndex(pos.x), pixToValue(pos.y));
     }
 
     /**
@@ -892,18 +935,18 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
      */
     private void updateCurrentElements(Point pos)
     {
-        final IcyColorMapBand cmb;
+        final IcyColorMapComponent cmc;
         // by default we search for an overlapped control point
         final ControlPoint cp = getClosestOverlappedControlPoint(pos);
 
         // if no overlapped control point we search for overlapped controller
         if (cp == null)
-            cmb = getOverlappedColormapController(pos);
+            cmc = getOverlappedColormapController(pos);
         else
-            cmb = null;
+            cmc = null;
 
         // define current elements
-        setCurrentElements(cmb, cp);
+        setCurrentElements(cmc, cp);
     }
 
     /**
@@ -990,7 +1033,13 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
     @Override
     public void mouseEntered(MouseEvent e)
     {
-        // nothing to do here
+        // // get the focus while mouse is on the component
+        // setFocusable(true);
+        // requestFocus();
+        //
+        // repaint();
+
+        // KeyboardFocusManager.getCurrentKeyboardFocusManager().downFocusCycle(this);
     }
 
     @Override
@@ -1001,6 +1050,18 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         // unfocus if no action
         if (action == ActionType.NULL)
             setCurrentElements(null, null);
+
+        // KeyboardFocusManager.getCurrentKeyboardFocusManager().focusPreviousComponent(this);
+
+        // // remove focus
+        // setFocusable(false);
+        //
+        // // set focus back to last active viewer
+        // final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+        // if (viewer != null)
+        // viewer.requestFocus();
+        //
+        // repaint();
     }
 
     @Override
@@ -1021,11 +1082,11 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
                     action = ActionType.MODIFY_CONTROLPOINT;
             }
             // we have a selected controller ?
-            else if (currentColormapBand != null)
+            else if (currentComponent != null)
             {
                 action = ActionType.MODIFY_CONTROLPOINT;
                 // add a new control point to the controller which become the active control point
-                setCurrentElements(null, setControlPoint(currentColormapBand, pos));
+                setCurrentElements(null, setControlPoint(currentComponent, pos));
             }
         }
         else if (EventUtil.isRightMouseButton(e))

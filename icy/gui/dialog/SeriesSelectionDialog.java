@@ -311,6 +311,16 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
                     serieComponents[i].setInfos("");
                     serieComponents[i].setInfos2("");
                 }
+
+                try
+                {
+                    // why does this sometime fails ???
+                    serieComponents[i].setImage(ResourceUtil.ICON_PICTURE);
+                }
+                catch (Exception e)
+                {
+                    // ignore
+                }
             }
 
             // then try to load thumbnail

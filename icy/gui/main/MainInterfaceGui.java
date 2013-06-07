@@ -18,10 +18,7 @@
  */
 package icy.gui.main;
 
-import icy.common.EventHierarchicalChecker;
-import icy.common.UpdateEventHandler;
 import icy.common.listener.AcceptListener;
-import icy.common.listener.ChangeListener;
 import icy.common.listener.weak.WeakListener;
 import icy.gui.frame.IcyFrame;
 import icy.gui.inspector.InspectorPanel;
@@ -70,7 +67,7 @@ import javax.swing.event.EventListenerList;
  * 
  * @author Fabrice de Chaumont & Stephane
  */
-public class MainInterfaceGui implements ChangeListener, MainInterface
+public class MainInterfaceGui implements MainInterface
 {
     private class WeakAcceptListener extends WeakListener<AcceptListener> implements AcceptListener
     {
@@ -98,12 +95,12 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     private final EventListenerList listeners;
-    private final UpdateEventHandler updater;
+    // private final UpdateEventHandler updater;
 
     /**
      * used to generate focused sequence & viewer events
      */
-    private final ViewerListener focusedViewerListener;
+    private final ViewerListener activeViewerListener;
     private final SequenceListener sequenceListener;
 
     private final List<Viewer> viewers;
@@ -114,9 +111,9 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
 
     MainFrame mainFrame;
 
-    Viewer previewFocusedViewer;
-    Viewer focusedViewer;
-    Sequence focusedSequence;
+    Viewer previewActiveViewer;
+    Viewer activeViewer;
+    Sequence activeSequence;
 
     /**
      * Take care that MainInterface constructor do not call the {@link Icy#getMainInterface()}
@@ -127,14 +124,14 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     {
         listeners = new EventListenerList();
         // try to not dispatch on AWT when possible !
-        updater = new UpdateEventHandler(this, false);
+        // updater = new UpdateEventHandler(this, false);
         viewers = new ArrayList<Viewer>();
         activePlugins = new ArrayList<WeakReference<Plugin>>();
         swimmingPool = new SwimmingPool();
         taskFrameManager = new TaskFrameManager();
 
-        // focused viewer listener
-        focusedViewerListener = new ViewerAdapter()
+        // active viewer listener
+        activeViewerListener = new ViewerAdapter()
         {
             @Override
             public void viewerChanged(ViewerEvent event)
@@ -143,7 +140,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
             }
         };
 
-        // global and focused sequence listener
+        // global and active sequence listener
         sequenceListener = new SequenceAdapter()
         {
             @Override
@@ -155,9 +152,9 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
 
         mainFrame = null;
 
-        previewFocusedViewer = null;
-        focusedViewer = null;
-        focusedSequence = null;
+        previewActiveViewer = null;
+        activeViewer = null;
+        activeSequence = null;
     }
 
     @Override
@@ -260,24 +257,42 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     @Override
+    public Viewer getActiveViewer()
+    {
+        return activeViewer;
+    }
+
+    @Override
+    public Sequence getActiveSequence()
+    {
+        return activeSequence;
+    }
+
+    @Override
+    public IcyBufferedImage getActiveImage()
+    {
+        if (activeViewer != null)
+            return activeViewer.getCurrentImage();
+
+        return null;
+    }
+
+    @Override
     public Viewer getFocusedViewer()
     {
-        return focusedViewer;
+        return getActiveViewer();
     }
 
     @Override
     public Sequence getFocusedSequence()
     {
-        return focusedSequence;
+        return getActiveSequence();
     }
 
     @Override
     public IcyBufferedImage getFocusedImage()
     {
-        if (focusedViewer != null)
-            return focusedViewer.getCurrentImage();
-
-        return null;
+        return getActiveImage();
     }
 
     @Override
@@ -292,18 +307,18 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     @Override
     public void setFocusedViewer(Viewer viewer)
     {
-        if (focusedViewer == viewer)
+        if (activeViewer == viewer)
             return;
 
-        if (focusedViewer != null)
+        if (activeViewer != null)
         {
-            // remove focused viewer listener
-            focusedViewer.removeListener(focusedViewerListener);
+            // remove active viewer listener
+            activeViewer.removeListener(activeViewerListener);
 
             // force previous viewer internal frame to release focus
             try
             {
-                focusedViewer.getInternalFrame().setSelected(false);
+                activeViewer.getInternalFrame().setSelected(false);
             }
             catch (PropertyVetoException e)
             {
@@ -311,12 +326,12 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
             }
         }
 
-        previewFocusedViewer = focusedViewer;
-        focusedViewer = viewer;
+        previewActiveViewer = activeViewer;
+        activeViewer = viewer;
 
-        // add focused viewer listener
-        if (focusedViewer != null)
-            focusedViewer.addListener(focusedViewerListener);
+        // add active viewer listener
+        if (activeViewer != null)
+            activeViewer.addListener(activeViewerListener);
 
         // focus changed
         viewerFocusChanged(viewer);
@@ -420,12 +435,12 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
                 ((Viewer) frame).requestFocus();
             else
             {
-                // it was the focused viewer ?
+                // it was the active viewer ?
                 if (getFocusedViewer() == viewer)
                 {
-                    // restore focus to previous focused
-                    if (previewFocusedViewer != null)
-                        setFocusedViewer(previewFocusedViewer);
+                    // restore focus to previous active
+                    if (previewActiveViewer != null)
+                        setFocusedViewer(previewActiveViewer);
                     else
                         // or just focus another one
                         setFocusedViewer(viewers.get(viewers.size() - 1));
@@ -519,16 +534,6 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
         final List<Viewer> viewers = getViewers(viewer.getSequence());
 
         return (viewers.size() == 1) && (viewers.get(0) == viewer);
-    }
-
-    @Override
-    public Viewer getActiveViewer()
-    {
-        for (Viewer v : getViewers())
-            if (v.isActive())
-                return v;
-
-        return null;
     }
 
     @Override
@@ -818,7 +823,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     /**
-     * fire viewer focused event
+     * fire viewer active event
      */
     private void fireViewerFocusedEvent(MainEvent event)
     {
@@ -827,7 +832,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     /**
-     * fire focused viewer changed event
+     * fire active viewer changed event
      */
     private void fireFocusedViewerChangedEvent(ViewerEvent event)
     {
@@ -836,7 +841,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     /**
-     * fire viewer focused event
+     * fire viewer active event
      */
     private void fireViewerClosedEvent(MainEvent event)
     {
@@ -854,7 +859,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     /**
-     * fire sequence focused event
+     * fire sequence active event
      */
     private void fireSequenceFocusedEvent(MainEvent event)
     {
@@ -863,7 +868,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     /**
-     * fire focused sequence changed event
+     * fire active sequence changed event
      */
     private void fireFocusedSequenceChangedEvent(SequenceEvent event)
     {
@@ -872,7 +877,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     /**
-     * fire sequence focused event
+     * fire sequence active event
      */
     private void fireSequenceClosedEvent(MainEvent event)
     {
@@ -917,7 +922,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     /**
-     * fire viewer focused event
+     * fire viewer active event
      */
     private void fireFocusChangedEvent(Viewer viewer)
     {
@@ -926,7 +931,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
     }
 
     /**
-     * fire sequence focused event
+     * fire sequence active event
      */
     private void fireFocusChangedEvent(Sequence sequence)
     {
@@ -944,22 +949,26 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
         return true;
     }
 
+    @Deprecated
     @Override
     public void beginUpdate()
     {
-        updater.beginUpdate();
+        // updater.beginUpdate();
     }
 
+    @Deprecated
     @Override
     public void endUpdate()
     {
-        updater.endUpdate();
+        // updater.endUpdate();
     }
 
+    @Deprecated
     @Override
     public boolean isUpdating()
     {
-        return updater.isUpdating();
+        return false;
+        // return updater.isUpdating();
     }
 
     /**
@@ -967,7 +976,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
      */
     private void pluginOpened(Plugin plugin)
     {
-        updater.changed(new MainEvent(MainEventSourceType.PLUGIN, MainEventType.OPENED, plugin));
+        firePluginOpenedEvent(new MainEvent(MainEventSourceType.PLUGIN, MainEventType.OPENED, plugin));
     }
 
     /**
@@ -975,7 +984,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
      */
     private void pluginClosed(Plugin plugin)
     {
-        updater.changed(new MainEvent(MainEventSourceType.PLUGIN, MainEventType.CLOSED, plugin));
+        firePluginClosedEvent(new MainEvent(MainEventSourceType.PLUGIN, MainEventType.CLOSED, plugin));
     }
 
     /**
@@ -1000,7 +1009,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
                 sequenceOpened(sequence);
         }
 
-        updater.changed(new MainEvent(MainEventSourceType.VIEWER, MainEventType.OPENED, viewer));
+        fireViewerOpenedEvent(new MainEvent(MainEventSourceType.VIEWER, MainEventType.OPENED, viewer));
     }
 
     /**
@@ -1008,7 +1017,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
      */
     private void viewerFocusChanged(Viewer viewer)
     {
-        // check if focused sequence has changed
+        // check if active sequence has changed
         final Sequence sequence;
 
         if (viewer != null)
@@ -1016,24 +1025,27 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
         else
             sequence = null;
 
-        // sequence focused changed ?
-        if (focusedSequence != sequence)
+        // sequence active changed ?
+        if (activeSequence != sequence)
         {
-            focusedSequence = sequence;
+            activeSequence = sequence;
 
             // focus changed
             sequenceFocusChanged(sequence);
         }
 
-        updater.changed(new MainEvent(MainEventSourceType.VIEWER, MainEventType.FOCUSED, viewer));
+        fireViewerFocusedEvent(new MainEvent(MainEventSourceType.VIEWER, MainEventType.FOCUSED, viewer));
+        fireFocusChangedEvent(viewer);
     }
 
     /**
-     * called when focused viewer changed
+     * called when active viewer changed
      */
     void focusedViewerChanged(ViewerEvent event)
     {
-        updater.changed(event);
+        // propagate event if it comes from the active viewer
+        if (event.getSource() == activeViewer)
+            fireFocusedViewerChangedEvent(event);
     }
 
     /**
@@ -1041,7 +1053,8 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
      */
     private void viewerClosed(Viewer viewer)
     {
-        updater.changed(new MainEvent(MainEventSourceType.VIEWER, MainEventType.CLOSED, viewer));
+        // fire viewer closed event
+        fireViewerClosedEvent(new MainEvent(MainEventSourceType.VIEWER, MainEventType.CLOSED, viewer));
 
         // check if a sequence has been closed
         final Sequence sequence;
@@ -1059,9 +1072,9 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
                 sequenceClosed(sequence);
         }
 
-        // remove focused viewer listener
-        if (viewer == focusedViewer)
-            viewer.removeListener(focusedViewerListener);
+        // remove active viewer listener
+        if (viewer == activeViewer)
+            viewer.removeListener(activeViewerListener);
     }
 
     /**
@@ -1079,7 +1092,8 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
         for (Painter painter : sequence.getPainters())
             checkPainterAdded(painter);
 
-        updater.changed(new MainEvent(MainEventSourceType.SEQUENCE, MainEventType.OPENED, sequence));
+        // fire sequence opened event
+        fireSequenceOpenedEvent(new MainEvent(MainEventSourceType.SEQUENCE, MainEventType.OPENED, sequence));
     }
 
     /**
@@ -1087,16 +1101,20 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
      */
     private void sequenceFocusChanged(Sequence sequence)
     {
-        updater.changed(new MainEvent(MainEventSourceType.SEQUENCE, MainEventType.FOCUSED, sequence));
+        // fire events
+        fireSequenceFocusedEvent(new MainEvent(MainEventSourceType.SEQUENCE, MainEventType.FOCUSED, sequence));
+        fireFocusChangedEvent(sequence);
     }
 
     /**
-     * called when focused sequence changed
+     * called when active sequence changed
      */
     void focusedSequenceChanged(SequenceEvent event)
     {
+        final Sequence sequence = event.getSequence();
+
         // handle event for active sequence only
-        if (isOpened(event.getSequence()))
+        if (isOpened(sequence))
         {
             switch (event.getSourceType())
             {
@@ -1128,7 +1146,9 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
             }
         }
 
-        updater.changed(event);
+        // propagate event if it comes from the active sequence
+        if (sequence == activeSequence)
+            fireFocusedSequenceChangedEvent(event);
     }
 
     /**
@@ -1151,7 +1171,8 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
         // remove from sequence listener
         sequence.removeListener(sequenceListener);
 
-        updater.changed(new MainEvent(MainEventSourceType.SEQUENCE, MainEventType.CLOSED, sequence));
+        // fire event
+        fireSequenceClosedEvent(new MainEvent(MainEventSourceType.SEQUENCE, MainEventType.CLOSED, sequence));
     }
 
     void checkRoiAdded(ROI roi)
@@ -1203,7 +1224,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
      */
     private void roiAdded(ROI roi)
     {
-        updater.changed(new MainEvent(MainEventSourceType.ROI, MainEventType.ADDED, roi));
+        fireRoiAddedEvent(new MainEvent(MainEventSourceType.ROI, MainEventType.ADDED, roi));
     }
 
     /**
@@ -1211,7 +1232,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
      */
     private void roiRemoved(ROI roi)
     {
-        updater.changed(new MainEvent(MainEventSourceType.ROI, MainEventType.REMOVED, roi));
+        fireRoiRemovedEvent(new MainEvent(MainEventSourceType.ROI, MainEventType.REMOVED, roi));
     }
 
     /**
@@ -1219,7 +1240,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
      */
     private void painterAdded(Painter painter)
     {
-        updater.changed(new MainEvent(MainEventSourceType.PAINTER, MainEventType.ADDED, painter));
+        firePainterAddedEvent(new MainEvent(MainEventSourceType.PAINTER, MainEventType.ADDED, painter));
     }
 
     /**
@@ -1227,113 +1248,7 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
      */
     private void painterRemoved(Painter painter)
     {
-        updater.changed(new MainEvent(MainEventSourceType.PAINTER, MainEventType.REMOVED, painter));
-    }
-
-    @Override
-    public void onChanged(EventHierarchicalChecker object)
-    {
-        if (object instanceof MainEvent)
-        {
-            final MainEvent event = (MainEvent) object;
-
-            switch (event.getSourceType())
-            {
-                case PLUGIN:
-                    switch (event.getType())
-                    {
-                        case OPENED:
-                            firePluginOpenedEvent(event);
-                            break;
-
-                        case CLOSED:
-                            firePluginClosedEvent(event);
-                            break;
-                    }
-                    break;
-
-                case VIEWER:
-                    switch (event.getType())
-                    {
-                        case OPENED:
-                            fireViewerOpenedEvent(event);
-                            break;
-
-                        case FOCUSED:
-                            fireViewerFocusedEvent(event);
-                            fireFocusChangedEvent((Viewer) event.getSource());
-                            break;
-
-                        case CLOSED:
-                            fireViewerClosedEvent(event);
-                            break;
-                    }
-                    break;
-
-                case SEQUENCE:
-                    switch (event.getType())
-                    {
-                        case OPENED:
-                            fireSequenceOpenedEvent(event);
-                            break;
-
-                        case FOCUSED:
-                            fireSequenceFocusedEvent(event);
-                            fireFocusChangedEvent((Sequence) event.getSource());
-                            break;
-
-                        case CLOSED:
-                            fireSequenceClosedEvent(event);
-                            break;
-                    }
-                    break;
-
-                case ROI:
-                    switch (event.getType())
-                    {
-                        case ADDED:
-                            fireRoiAddedEvent(event);
-                            break;
-
-                        case REMOVED:
-                            fireRoiRemovedEvent(event);
-                            break;
-                    }
-                    break;
-
-                case PAINTER:
-                    switch (event.getType())
-                    {
-                        case ADDED:
-                            firePainterAddedEvent(event);
-                            break;
-
-                        case REMOVED:
-                            firePainterRemovedEvent(event);
-                            break;
-                    }
-                    break;
-            }
-        }
-
-        // sequence focused event
-        if (object instanceof SequenceEvent)
-        {
-            final SequenceEvent event = (SequenceEvent) object;
-
-            // send event only if this is the focused sequence
-            if (event.getSequence() == focusedSequence)
-                fireFocusedSequenceChangedEvent((SequenceEvent) object);
-        }
-
-        // viewer focused event
-        if (object instanceof ViewerEvent)
-        {
-            final ViewerEvent event = (ViewerEvent) object;
-
-            if (event.getSource() == focusedViewer)
-                fireFocusedViewerChangedEvent((ViewerEvent) object);
-        }
+        firePainterRemovedEvent(new MainEvent(MainEventSourceType.PAINTER, MainEventType.REMOVED, painter));
     }
 
     @Override
@@ -1342,5 +1257,4 @@ public class MainInterfaceGui implements ChangeListener, MainInterface
         for (Viewer viewer : getViewers())
             viewer.setViewSyncId(id);
     }
-
 }

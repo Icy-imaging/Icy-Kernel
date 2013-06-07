@@ -604,8 +604,8 @@ public abstract class ROI2D extends ROI
      */
     public boolean isActiveFor(int z, int t, int c)
     {
-        return ((this.z == -1) || (this.z == z)) && ((this.t == -1) || (this.t == t))
-                && ((this.c == -1) || (this.c == c));
+        return ((this.z == -1) || (z == -1) || (this.z == z)) && ((this.t == -1) || (t == -1) || (this.t == t))
+                && ((this.c == -1) || (c == -1) || (this.c == c));
     }
 
     /**

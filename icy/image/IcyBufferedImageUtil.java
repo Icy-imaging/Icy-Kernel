@@ -254,7 +254,7 @@ public class IcyBufferedImageUtil
         }
 
         // copy colormap from source image
-        result.copyColormap(source);
+        result.setColorMaps(source);
         // notify we modified data
         result.dataChanged();
 

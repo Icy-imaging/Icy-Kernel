@@ -29,7 +29,6 @@ import icy.gui.util.GuiUtil;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.colormap.IcyColorMap;
-import icy.image.colormap.IcyColorMapBand;
 import icy.image.lut.LUT;
 import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
@@ -388,7 +387,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         processor = new InstanceProcessor();
         processor.setDefaultThreadName("Canvas3D renderer");
         // we want the processor to stay alive for sometime
-        processor.setKeepAliveTime(3, TimeUnit.MINUTES);
+        processor.setKeepAliveTime(3, TimeUnit.SECONDS);
 
         displayRefresher = new Runnable()
         {
@@ -829,25 +828,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
     private void setDefaultOpacity(LUT lut)
     {
         for (LUTChannel lutChannel : lut.getLutChannels())
-            setDefaultOpacity(lutChannel);
-    }
-
-    private void setDefaultOpacity(LUTChannel lutChannel)
-    {
-        final IcyColorMapBand alphaBand = lutChannel.getColorMap().alpha;
-
-        alphaBand.beginUpdate();
-        try
-        {
-            alphaBand.removeAllControlPoint();
-            alphaBand.setControlPoint(0, 0f);
-            alphaBand.setControlPoint(32, 0.02f);
-            alphaBand.setControlPoint(255, 0.4f);
-        }
-        finally
-        {
-            alphaBand.endUpdate();
-        }
+            lutChannel.getColorMap().setDefaultAlphaFor3D();
     }
 
     private void restoreOpacity(LUT srcLut, LUT dstLut)
@@ -866,13 +847,13 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
     private void restoreColormap(LUT lut)
     {
         lut.setScalers(lutSave);
-        lut.setColormaps(lutSave);
+        lut.setColorMaps(lutSave, true);
     }
 
     private void saveColormap(LUT lut)
     {
         lutSave.setScalers(lut);
-        lutSave.setColormaps(lut);
+        lutSave.setColorMaps(lut, true);
     }
 
     /**

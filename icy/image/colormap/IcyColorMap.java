@@ -77,23 +77,23 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     /**
      * RED band
      */
-    public final IcyColorMapBand red;
+    public final IcyColorMapComponent red;
     /**
      * GREEN band
      */
-    public final IcyColorMapBand green;
+    public final IcyColorMapComponent green;
     /**
      * BLUE band
      */
-    public final IcyColorMapBand blue;
+    public final IcyColorMapComponent blue;
     /**
      * GRAY band
      */
-    public final IcyColorMapBand gray;
+    public final IcyColorMapComponent gray;
     /**
      * ALPHA band
      */
-    public final IcyColorMapBand alpha;
+    public final IcyColorMapComponent alpha;
 
     /**
      * colormap type
@@ -171,9 +171,9 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
         this("");
     }
 
-    protected IcyColorMapBand createColorMapBand(short initValue)
+    protected IcyColorMapComponent createColorMapBand(short initValue)
     {
-        return new IcyColorMapBand(IcyColorMap.this, initValue);
+        return new IcyColorMapComponent(IcyColorMap.this, initValue);
     }
 
     /**
@@ -660,6 +660,25 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     public void setARGB(int index, Color value)
     {
         setARGB(index, value.getRGB());
+    }
+
+    /**
+     * Set default alpha colormap for 3D representation
+     */
+    public void setDefaultAlphaFor3D()
+    {
+        alpha.beginUpdate();
+        try
+        {
+            alpha.removeAllControlPoint();
+            alpha.setControlPoint(0, 0f);
+            alpha.setControlPoint(32, 0.02f);
+            alpha.setControlPoint(255, 0.4f);
+        }
+        finally
+        {
+            alpha.endUpdate();
+        }
     }
 
     /**

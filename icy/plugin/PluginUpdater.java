@@ -26,6 +26,7 @@ import icy.network.NetworkUtil;
 import icy.system.thread.SingleProcessor;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -92,7 +93,7 @@ public class PluginUpdater
     public static PluginDescriptor getUpdate(PluginDescriptor plugin)
     {
         // find equivalent online plugins
-        final ArrayList<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins(plugin.getClassName());
+        final List<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins(plugin.getClassName());
         final PluginDescriptor onlinePlugin;
 
         // get the last version found
@@ -120,7 +121,7 @@ public class PluginUpdater
     /**
      * Update the specified list of plugins.
      */
-    public static void updatePlugins(ArrayList<PluginDescriptor> plugins, boolean showProgress)
+    public static void updatePlugins(List<PluginDescriptor> plugins, boolean showProgress)
     {
         final boolean b = PluginLoader.getLogError();
 
@@ -128,7 +129,7 @@ public class PluginUpdater
         try
         {
             // update plugins with ordered dependencies
-            for (PluginDescriptor plugin : PluginInstaller.getDependenciesOrderedList(plugins))
+            for (PluginDescriptor plugin : PluginInstaller.orderDependencies(plugins))
                 PluginInstaller.install(plugin, showProgress);
         }
         finally
@@ -140,8 +141,8 @@ public class PluginUpdater
 
     static void processCheckUpdate(boolean showProgress, boolean auto)
     {
-        final ArrayList<PluginDescriptor> toInstallPlugins = new ArrayList<PluginDescriptor>();
-        final ArrayList<PluginDescriptor> localPlugins = PluginLoader.getPlugins(false);
+        final List<PluginDescriptor> toInstallPlugins = new ArrayList<PluginDescriptor>();
+        final List<PluginDescriptor> localPlugins = PluginLoader.getPlugins(false);
         final ProgressFrame checkingFrame;
 
         if (showProgress)

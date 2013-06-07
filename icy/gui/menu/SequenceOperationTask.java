@@ -29,17 +29,18 @@ import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
 import icy.gui.util.RibbonUtil;
 import icy.image.IcyBufferedImage;
+import icy.image.ImageDataIterator;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
-import icy.roi.BooleanMask2D;
-import icy.roi.ROI2D;
+import icy.roi.ROI;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceDataIterator;
+import icy.system.thread.ThreadUtil;
+import icy.type.DataIteratorUtil;
 import icy.type.DataType;
-import icy.type.collection.array.Array1DUtil;
 import icy.util.StringUtil;
 
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -631,7 +632,21 @@ public class SequenceOperationTask extends RibbonTask
                     final IcyBufferedImage image = Icy.getMainInterface().getFocusedImage();
 
                     if ((sequence != null) && (image != null))
-                        modifyImage(image, getBooleanMaskOfSelectedRoi(sequence), getFillValue(sequence));
+                    {
+                        ThreadUtil.bgRun(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                final double value = getFillValue(sequence);
+
+                                for (ROI roi : sequence.getSelectedROIs())
+                                    DataIteratorUtil.set(new ImageDataIterator(image, roi), value);
+
+                                image.dataChanged();
+                            }
+                        });
+                    }
                 }
             });
 
@@ -650,20 +665,19 @@ public class SequenceOperationTask extends RibbonTask
 
                     if (sequence != null)
                     {
-                        final double value = getFillValue(sequence);
-                        final BooleanMask2D mask = getBooleanMaskOfSelectedRoi(sequence);
+                        ThreadUtil.bgRun(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                final double value = getFillValue(sequence);
 
-                        sequence.beginUpdate();
-                        try
-                        {
-                            for (IcyBufferedImage image : sequence.getAllImage())
-                                if (image != null)
-                                    modifyImage(image, mask, value);
-                        }
-                        finally
-                        {
-                            sequence.endUpdate();
-                        }
+                                for (ROI roi : sequence.getSelectedROIs())
+                                    DataIteratorUtil.set(new SequenceDataIterator(sequence, roi), value);
+
+                                sequence.dataChanged();
+                            }
+                        });
                     }
                 }
             });
@@ -695,64 +709,6 @@ public class SequenceOperationTask extends RibbonTask
             fillValueField.setText(Double.toString(value));
 
             return value;
-        }
-
-        BooleanMask2D getBooleanMaskOfSelectedRoi(Sequence sequence)
-        {
-            BooleanMask2D result = null;
-            final Rectangle seqBounds = sequence.getBounds();
-
-            // compute global boolean mask of all ROI2D selected in the sequence
-            for (ROI2D roi : sequence.getROI2Ds())
-            {
-                if (roi.isSelected())
-                {
-                    // get intersection between image and roi bounds
-                    final Rectangle intersect = roi.getBounds().intersection(seqBounds);
-                    // get the boolean mask of roi (optimized from intersection bounds)
-                    final boolean[] mask = roi.getBooleanMask(intersect);
-
-                    // update global mask
-                    if (result == null)
-                        result = new BooleanMask2D(intersect, mask);
-                    else
-                        result.union(intersect, mask);
-                }
-            }
-
-            return result;
-        }
-
-        void modifyImage(IcyBufferedImage image, BooleanMask2D booleanMask, double value)
-        {
-            final Rectangle imageBounds = image.getBounds();
-
-            // process only if global mask is not empty
-            if ((booleanMask != null) && (!booleanMask.bounds.isEmpty()))
-            {
-                final Rectangle bounds = booleanMask.bounds;
-                final boolean[] mask = booleanMask.mask;
-
-                for (int c = 0; c < image.getSizeC(); c++)
-                {
-                    final Object imgData = image.getDataXY(c);
-                    // calculate offset
-                    int offMsk = 0;
-                    int offImg = (bounds.y * imageBounds.width) + bounds.x;
-
-                    for (int y = 0; y < bounds.height; y++)
-                    {
-                        for (int x = 0; x < bounds.width; x++)
-                            if (mask[offMsk + x])
-                                Array1DUtil.setValue(imgData, offImg + x, value);
-
-                        offMsk += bounds.width;
-                        offImg += imageBounds.width;
-                    }
-                }
-
-                image.dataChanged();
-            }
         }
 
         void updateButtonsState()

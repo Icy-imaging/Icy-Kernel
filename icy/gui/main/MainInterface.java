@@ -19,7 +19,6 @@
 
 package icy.gui.main;
 
-import icy.common.EventHierarchicalChecker;
 import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.inspector.RoisPanel;
@@ -65,49 +64,68 @@ public interface MainInterface
     public abstract void addSequence(Sequence sequence);
 
     /**
-     * Return all internal frames
+     * Returns all internal frames
      */
     public abstract ArrayList<JInternalFrame> getInternalFrames();
 
     /**
-     * Return all external frames
+     * Returns all external frames
      */
     public abstract ArrayList<JFrame> getExternalFrames();
 
     public abstract XMLPreferences getPreferences();
 
     /**
-     * Return the inspector object (right informations panel)
+     * Returns the inspector object (right informations panel)
      */
     public abstract InspectorPanel getInspector();
 
     /**
-     * Return the ROI manager panel
+     * Returns the ROI manager panel
      */
     public abstract RoisPanel getRoisPanel();
 
     /**
-     * Return the currently active plugins
+     * Returns the currently active plugins
      */
     public abstract ArrayList<Plugin> getActivePlugins();
 
     /**
-     * @return the current focused viewer
+     * Same as {@link #getFocusedViewer()}
+     */
+    public abstract Viewer getActiveViewer();
+
+    /**
+     * Same as {@link #getFocusedSequence()}
+     */
+    public abstract Sequence getActiveSequence();
+
+    /**
+     * Same as {@link #getFocusedImage()}
+     */
+    public abstract IcyBufferedImage getActiveImage();
+
+    /**
+     * Returns the active viewer window.
+     * Returns <code>null</code> if there is no sequence opened.
      */
     public abstract Viewer getFocusedViewer();
 
     /**
-     * @return the current focused sequence
+     * Returns the current active sequence.<br>
+     * Returns <code>null</code> if there is no sequence opened.
      */
     public abstract Sequence getFocusedSequence();
 
     /**
-     * @return the current focused image
+     * Returns the current active image.<br>
+     * It can return <code>null</code> if the active viewer is <code>null</code> or
+     * if it uses 3D display so prefer {@link #getActiveSequence()} instead.
      */
     public abstract IcyBufferedImage getFocusedImage();
 
     /**
-     * Return all active viewers
+     * Returns all active viewers
      */
     public abstract ArrayList<Viewer> getViewers();
 
@@ -181,47 +199,42 @@ public interface MainInterface
     public abstract void closeAllViewers();
 
     /**
-     * Return first viewer for the sequence containing specified ROI
+     * Returns first viewer for the sequence containing specified ROI
      */
     public abstract Viewer getFirstViewerContaining(ROI roi);
 
     /**
-     * Return first viewer for the sequence containing specified Painter
+     * Returns first viewer for the sequence containing specified Painter
      */
     public abstract Viewer getFirstViewerContaining(Painter painter);
 
     /**
-     * Return first viewer attached to specified sequence
+     * Returns first viewer attached to specified sequence
      */
     public abstract Viewer getFirstViewer(Sequence sequence);
 
     /**
-     * Return viewers attached to specified sequence
+     * Returns viewers attached to specified sequence
      */
     public abstract ArrayList<Viewer> getViewers(Sequence sequence);
 
     /**
-     * Return true if specified viewer is the unique viewer for its attached sequence
+     * Returns true if specified viewer is the unique viewer for its attached sequence
      */
     public abstract boolean isUniqueViewer(Viewer viewer);
 
     /**
-     * Return the active viewer (should be the same as focused one)
-     */
-    public abstract Viewer getActiveViewer();
-
-    /**
-     * Return list of active sequence (displayed in a viewer)
+     * Returns list of active sequence (displayed in a viewer)
      */
     public abstract ArrayList<Sequence> getSequences();
 
     /**
-     * Return list of active sequence (displayed in a viewer) matching the specified name.
+     * Returns list of active sequence (displayed in a viewer) matching the specified name.
      */
     public abstract ArrayList<Sequence> getSequences(String name);
 
     /**
-     * Return true if specified sequence is currently opened (displayed in a viewer)
+     * Returns true if specified sequence is currently opened (displayed in a viewer)
      */
     public abstract boolean isOpened(Sequence sequence);
 
@@ -242,52 +255,52 @@ public interface MainInterface
     public abstract Sequence getFirstSequencesContaining(Painter painter);
 
     /**
-     * Return the first active sequence containing the specified ROI
+     * Returns the first active sequence containing the specified ROI
      */
     public abstract Sequence getFirstSequenceContaining(ROI roi);
 
     /**
-     * Return the first active sequence containing the specified Painter
+     * Returns the first active sequence containing the specified Painter
      */
     public abstract Sequence getFirstSequenceContaining(Painter painter);
 
     /**
-     * Return all active sequence containing the specified ROI
+     * Returns all active sequence containing the specified ROI
      */
     public abstract ArrayList<Sequence> getSequencesContaining(ROI roi);
 
     /**
-     * Return all active sequence containing the specified Painter
+     * Returns all active sequence containing the specified Painter
      */
     public abstract ArrayList<Sequence> getSequencesContaining(Painter painter);
 
     /**
-     * Return all active ROI
+     * Returns all active ROI
      */
     public abstract ArrayList<ROI> getROIs();
 
     /**
-     * Return the ROI containing the specified painter (if any)
+     * Returns the ROI containing the specified painter (if any)
      */
     public abstract ROI getROI(Painter painter);
 
     /**
-     * Return all active Painter
+     * Returns all active Painter
      */
     public abstract ArrayList<Painter> getPainters();
 
     /**
-     * Return the SwimmingPool object
+     * Returns the SwimmingPool object
      */
     public abstract SwimmingPool getSwimmingPool();
 
     /**
-     * Return the ImageJ object instance
+     * Returns the ImageJ object instance
      */
     public abstract ImageJWrapper getImageJ();
 
     /**
-     * Return current selected tool (ROI / Selection)
+     * Returns current selected tool (ROI / Selection)
      */
     public abstract String getSelectedTool();
 
@@ -299,7 +312,7 @@ public interface MainInterface
     public abstract ToolRibbonTask getToolRibbon();
 
     /**
-     * Return true if the main frame is set as "always on top"
+     * Returns true if the main frame is set as "always on top"
      */
     public abstract boolean isAlwaysOnTop();
 
@@ -309,7 +322,7 @@ public interface MainInterface
     public abstract void setAlwaysOnTop(boolean value);
 
     /**
-     * Return true if the application is in "detached" mode
+     * Returns true if the application is in "detached" mode
      */
     public abstract boolean isDetachedMode();
 
@@ -366,20 +379,20 @@ public interface MainInterface
     public abstract void removeFocusedSequenceListener(FocusedSequenceListener listener);
 
     /**
-     * Start update.
+     * @deprecated
      */
+    @Deprecated
     public abstract void beginUpdate();
 
     /**
-     * End update.
+     * @deprecated
      */
+    @Deprecated
     public abstract void endUpdate();
 
     /**
-     * Return true if main interface is currently begin in update state
+     * @deprecated
      */
+    @Deprecated
     public abstract boolean isUpdating();
-
-    public abstract void onChanged(EventHierarchicalChecker object);
-
 }

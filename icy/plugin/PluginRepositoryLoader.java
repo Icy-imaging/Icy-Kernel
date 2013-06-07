@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventListener;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.event.EventListenerList;
@@ -326,7 +327,7 @@ public class PluginRepositoryLoader
                 System.out.println("You are not connected to internet.");
             else
                 System.out.println("Can't access repository '" + repos.getName() + "'");
-            
+
             return null;
         }
 
@@ -351,7 +352,7 @@ public class PluginRepositoryLoader
     /**
      * @return the pluginList
      */
-    public static ArrayList<PluginDescriptor> getPlugins()
+    public static List<PluginDescriptor> getPlugins()
     {
         synchronized (instance.plugins)
         {
@@ -367,7 +368,7 @@ public class PluginRepositoryLoader
         }
     }
 
-    public static ArrayList<PluginDescriptor> getPlugins(String className)
+    public static List<PluginDescriptor> getPlugins(String className)
     {
         synchronized (instance.plugins)
         {
@@ -378,9 +379,9 @@ public class PluginRepositoryLoader
     /**
      * Return the plugins list from the specified repository
      */
-    public static ArrayList<PluginDescriptor> getPlugins(RepositoryInfo repos)
+    public static List<PluginDescriptor> getPlugins(RepositoryInfo repos)
     {
-        final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
+        final List<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
         synchronized (instance.plugins)
         {

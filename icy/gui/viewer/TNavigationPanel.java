@@ -134,9 +134,7 @@ public class TNavigationPanel extends JPanel
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                timer.start();
-                play.setVisible(false);
-                stop.setVisible(true);
+                startPlay();
             }
         });
 
@@ -150,9 +148,7 @@ public class TNavigationPanel extends JPanel
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                timer.stop();
-                stop.setVisible(false);
-                play.setVisible(true);
+                stopPlay();
             }
         });
 
@@ -238,34 +234,99 @@ public class TNavigationPanel extends JPanel
         validate();
     }
 
-    int getTPosition()
-    {
-        return slider.getValue();
-    }
-
-    void resetTPosition()
+    protected void resetTPosition()
     {
         setTPosition(0);
     }
 
-    void setTPosition(int t)
-    {
-        slider.setValue(t);
-    }
-
-    void incTPosition()
+    protected void incTPosition()
     {
         setTPosition(getTPosition() + 1);
     }
 
-    void decTPosition()
+    protected void decTPosition()
     {
         setTPosition(Math.max(0, getTPosition() - 1));
     }
 
-    public void setTimerDelay(int delay)
+    protected void setTimerDelay(int delay)
     {
         timer.setDelay(delay);
+    }
+
+    protected int getTPosition()
+    {
+        return slider.getValue();
+    }
+
+    protected void setTPosition(int t)
+    {
+        slider.setValue(t);
+    }
+
+    /**
+     * Returns the frame rate (given in frame per second) for play command.
+     */
+    public int getFrameRate()
+    {
+        return ((Integer) frameRate.getValue()).intValue();
+    }
+
+    /**
+     * Sets the frame rate (given in frame per second) for play command.
+     */
+    public void setFrameRate(int fps)
+    {
+        frameRate.setValue(Integer.valueOf(fps));
+    }
+
+    /**
+     * Returns true if <code>repeat</code> is enabled for play command.
+     */
+    public boolean isRepeat()
+    {
+        return loop.isSelected();
+    }
+
+    /**
+     * Set <code>repeat</code> mode for play command.
+     */
+    public void setRepeat(boolean value)
+    {
+        loop.setSelected(value);
+    }
+
+    /**
+     * Returns true if currently playing.
+     */
+    public boolean isPlaying()
+    {
+        return timer.isRunning();
+    }
+
+    /**
+     * Start sequence play.
+     * 
+     * @see #stopPlay()
+     * @see #setRepeat(boolean)
+     */
+    public void startPlay()
+    {
+        timer.start();
+        play.setVisible(false);
+        stop.setVisible(true);
+    }
+
+    /**
+     * Stop sequence play.
+     * 
+     * @see #startPlay()
+     */
+    public void stopPlay()
+    {
+        timer.stop();
+        stop.setVisible(false);
+        play.setVisible(true);
     }
 
     /**
