@@ -331,27 +331,13 @@ public class ROI2DArea extends ROI2D
             if (canvas instanceof IcyCanvas2D)
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
+                final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
 
-                // draw border black line
-                if (selected)
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 2d)));
-                else
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                g2.setColor(Color.black);
-                g2.draw(bounds);
-                // draw internal border
-                g2.setColor(getDisplayColor());
-                if (selected)
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                else
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                g2.draw(bounds);
-
-                // set alpha
-                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, CONTENT_ALPHA));
+                // show content with an alpha factor
+                g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity()));
                 // draw mask
                 g2.drawImage(imageMask, null, bounds.x, bounds.y);
-
+                
                 // ROI selected ? draw cursor
                 if (selected && !focused && editable)
                 {
@@ -365,6 +351,31 @@ public class ROI2DArea extends ROI2D
                     // draw cursor
                     g2.fill(cursor);
                 }
+
+                // restore alpha
+                g2.setComposite(prevAlpha);
+
+                // draw border
+                if (selected)
+                {
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                    g2.setColor(getDisplayColor());
+                    g2.draw(bounds);
+                }
+                else
+                {
+                    // outside border
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                    g2.setColor(Color.black);
+                    g2.draw(bounds);
+                    // internal border
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
+                    g2.setColor(getDisplayColor());
+                    g2.draw(bounds);
+                }
+
+                // for (Point2D pt : getBooleanMask().getEdgePoints())
+                // g2.drawRect((int) pt.getX(), (int) pt.getY(), 1, 1);
 
                 g2.dispose();
             }

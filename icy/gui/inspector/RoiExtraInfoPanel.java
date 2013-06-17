@@ -34,6 +34,7 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.Box;
 import javax.swing.JLabel;
@@ -155,6 +156,7 @@ public class RoiExtraInfoPanel extends JPanel
 
         processor = new SingleProcessor(true, "ROI infos calculator");
         processor.setPriority(Thread.MIN_PRIORITY);
+        processor.setKeepAliveTime(5, TimeUnit.SECONDS);
 
         refreshIntensityInfos(null);
         refreshInfos(null, -1, -1, 1);

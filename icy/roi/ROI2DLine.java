@@ -23,11 +23,10 @@ import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
 import icy.util.XMLUtil;
 
-import java.awt.Color;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
+import java.util.List;
 
 import org.w3c.dom.Node;
 
@@ -40,9 +39,9 @@ public class ROI2DLine extends ROI2DShape
 {
     protected class ROI2DLineAnchor2D extends LineAnchor2D
     {
-        public ROI2DLineAnchor2D(Point2D position, Color color, Color selectedColor)
+        public ROI2DLineAnchor2D(Point2D position)
         {
-            super(position, color, selectedColor);
+            super(position, painter.getColor(), painter.getFocusedColor());
         }
 
         @Override
@@ -117,7 +116,7 @@ public class ROI2DLine extends ROI2DShape
     @Override
     protected Anchor2D createAnchor(Point2D pos)
     {
-        return new ROI2DLineAnchor2D(pos, DEFAULT_SELECTED_COLOR, OVER_COLOR);
+        return new ROI2DLineAnchor2D(pos);
     }
 
     public Line2D getLine()
@@ -143,7 +142,7 @@ public class ROI2DLine extends ROI2DShape
     {
         setBounds2D(line.getBounds2D());
     }
-
+    
     @Override
     protected void updateShape()
     {
@@ -169,8 +168,9 @@ public class ROI2DLine extends ROI2DShape
     }
 
     @Override
-    protected double getTotalDistance(ArrayList<Point2D> points)
+    protected double getTotalDistance(List<Point2D> points)
     {
+        // by default the total length don't need last point connection
         return super.getTotalDistance(points, false);
     }
 
@@ -217,5 +217,4 @@ public class ROI2DLine extends ROI2DShape
 
         return true;
     }
-
 }

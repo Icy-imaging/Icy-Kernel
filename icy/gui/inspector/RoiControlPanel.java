@@ -42,6 +42,7 @@ import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -56,15 +57,19 @@ import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  * @author Stephane
  */
-public class RoiControlPanel extends JPanel implements ColorChangeListener, TextChangeListener, ClipboardListener
+public class RoiControlPanel extends JPanel implements ColorChangeListener, TextChangeListener, ClipboardListener,
+        ChangeListener
 {
     /**
      * 
@@ -82,7 +87,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     private IcyTextField sizeYField;
     private IcyTextField sizeTField;
     private ColorChooserButton colorButton;
-    private ColorChooserButton selectedColorButton;
+    private JSlider alphaSlider;
+    private JLabel lblContentOpacity;
     private IcyButton notButton;
     private IcyButton orButton;
     private IcyButton andButton;
@@ -119,7 +125,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         nameField.addTextChangeListener(this);
 
         colorButton.addColorChangeListener(this);
-        selectedColorButton.addColorChangeListener(this);
+        alphaSlider.addChangeListener(this);
 
         posXField.addTextChangeListener(this);
         posYField.addTextChangeListener(this);
@@ -297,7 +303,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         generalPanel.setBorder(new TitledBorder(null, "General", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         add(generalPanel);
         GridBagLayout gbl_panel_1 = new GridBagLayout();
-        gbl_panel_1.columnWidths = new int[] {0, 0, 0, 0, 0, 0, 0};
+        gbl_panel_1.columnWidths = new int[] {0, 32, 0, 0, 120, 0, 0};
         gbl_panel_1.rowHeights = new int[] {0, 0, 0};
         gbl_panel_1.columnWeights = new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
         gbl_panel_1.rowWeights = new double[] {0.0, 0.0, Double.MIN_VALUE};
@@ -329,31 +335,33 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         generalPanel.add(lblColor, gbc_lblColor);
 
         colorButton = new ColorChooserButton();
+        colorButton.setToolTipText("Select the ROI color");
         GridBagConstraints gbc_colorButton = new GridBagConstraints();
-        gbc_colorButton.fill = GridBagConstraints.VERTICAL;
-        gbc_colorButton.anchor = GridBagConstraints.WEST;
         gbc_colorButton.insets = new Insets(0, 0, 0, 5);
         gbc_colorButton.gridx = 1;
         gbc_colorButton.gridy = 1;
         generalPanel.add(colorButton, gbc_colorButton);
 
-        final JLabel lblNewLabel_1 = new JLabel("Selected color");
-        GridBagConstraints gbc_lblNewLabel_1 = new GridBagConstraints();
-        gbc_lblNewLabel_1.fill = GridBagConstraints.VERTICAL;
-        gbc_lblNewLabel_1.anchor = GridBagConstraints.WEST;
-        gbc_lblNewLabel_1.insets = new Insets(0, 0, 0, 5);
-        gbc_lblNewLabel_1.gridx = 3;
-        gbc_lblNewLabel_1.gridy = 1;
-        generalPanel.add(lblNewLabel_1, gbc_lblNewLabel_1);
+        lblContentOpacity = new JLabel("Opacity");
+        GridBagConstraints gbc_lblContentOpacity = new GridBagConstraints();
+        gbc_lblContentOpacity.anchor = GridBagConstraints.WEST;
+        gbc_lblContentOpacity.insets = new Insets(0, 0, 0, 5);
+        gbc_lblContentOpacity.gridx = 3;
+        gbc_lblContentOpacity.gridy = 1;
+        generalPanel.add(lblContentOpacity, gbc_lblContentOpacity);
 
-        selectedColorButton = new ColorChooserButton();
-        GridBagConstraints gbc_selectedColorButton = new GridBagConstraints();
-        gbc_selectedColorButton.fill = GridBagConstraints.VERTICAL;
-        gbc_selectedColorButton.insets = new Insets(0, 0, 0, 5);
-        gbc_selectedColorButton.anchor = GridBagConstraints.WEST;
-        gbc_selectedColorButton.gridx = 4;
-        gbc_selectedColorButton.gridy = 1;
-        generalPanel.add(selectedColorButton, gbc_selectedColorButton);
+        alphaSlider = new JSlider();
+        alphaSlider.setPreferredSize(new Dimension(80, 20));
+        alphaSlider.setMaximumSize(new Dimension(32767, 20));
+        alphaSlider.setMinimumSize(new Dimension(36, 20));
+        alphaSlider.setFocusable(false);
+        alphaSlider.setToolTipText("Change the ROI content opacity display");
+        GridBagConstraints gbc_slider = new GridBagConstraints();
+        gbc_slider.fill = GridBagConstraints.HORIZONTAL;
+        gbc_slider.insets = new Insets(0, 0, 0, 5);
+        gbc_slider.gridx = 4;
+        gbc_slider.gridy = 1;
+        generalPanel.add(alphaSlider, gbc_slider);
 
         final JPanel positionPanel = new JPanel();
         positionPanel.setBorder(new TitledBorder(null, "Position", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -542,7 +550,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
             nameField.setText("");
 
             colorButton.setColor(Color.gray);
-            selectedColorButton.setColor(Color.gray);
+            alphaSlider.setValue(0);
 
             posXField.setText("");
             posYField.setText("");
@@ -588,7 +596,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 sizeTField.setEnabled(singleSelect && isRoi2dResizeable && editable);
 
                 colorButton.setEnabled(hasSelected && editable);
-                selectedColorButton.setEnabled(hasSelected && editable);
+                alphaSlider.setEnabled(hasSelected);// && editable);
 
                 loadButton.setEnabled(true);
                 saveButton.setEnabled(hasSelected);
@@ -613,7 +621,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                     nameField.setText(name);
 
                     colorButton.setColor(roi.getColor());
-                    selectedColorButton.setColor(roi.getSelectedColor());
+                    alphaSlider.setValue((int) (roi.getOpacity() * 100));
 
                     if (roi instanceof ROI2D)
                     {
@@ -659,7 +667,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 sizeTField.setEnabled(false);
 
                 colorButton.setEnabled(false);
-                selectedColorButton.setEnabled(false);
+                alphaSlider.setEnabled(false);
 
                 loadButton.setEnabled(false);
                 saveButton.setEnabled(false);
@@ -858,13 +866,34 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 for (ROI roi : selectedROI)
                 {
                     if (roi.isEditable())
-                    {
-                        if (source == colorButton)
-                            roi.setColor(color);
-                        else
-                            roi.setSelectedColor(color);
-                    }
+                        roi.setColor(color);
                 }
+            }
+            finally
+            {
+                sequence.endUpdate();
+            }
+        }
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e)
+    {
+        // opacity changed
+        if (isRoiPropertiesAdjusting)
+            return;
+
+        if (alphaSlider.isEnabled())
+        {
+            final float opacity = ((float) alphaSlider.getValue()) / 100f;
+            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
+
+            sequence.beginUpdate();
+            try
+            {
+                for (ROI roi : selectedROI)
+                    roi.setOpacity(opacity);
             }
             finally
             {

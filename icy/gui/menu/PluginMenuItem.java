@@ -55,6 +55,6 @@ public class PluginMenuItem extends JMenuItem implements ActionListener
     @Override
     public void actionPerformed(ActionEvent e)
     {
-        PluginLauncher.launch(pluginDescriptor);
+        PluginLauncher.start(pluginDescriptor);
     }
 }

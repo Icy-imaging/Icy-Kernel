@@ -32,6 +32,7 @@ import icy.sequence.Sequence;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.ClassUtil;
+import icy.util.ColorUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
@@ -76,16 +77,22 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final String ID_ID = "id";
     public static final String ID_NAME = "name";
     public static final String ID_COLOR = "color";
-    public static final String ID_SELECTED_COLOR = "selected_color";
+    // public static final String ID_SELECTED_COLOR = "selected_color";
     public static final String ID_STROKE = "stroke";
+    public static final String ID_OPACITY = "opacity";
     public static final String ID_SELECTED = "selected";
 
     public static final ROIIdComparator idComparator = new ROIIdComparator();
 
     protected static final int DEFAULT_STROKE = 2;
-    protected static final Color DEFAULT_NORMAL_COLOR = Color.GREEN;
-    protected static final Color DEFAULT_SELECTED_COLOR = Color.ORANGE;
-    protected static final Color OVER_COLOR = Color.WHITE;
+    protected static final Color DEFAULT_COLOR = Color.GREEN;
+    /**
+     * @deprecated Use {@link #DEFAULT_COLOR} instead.
+     */
+    protected static final Color DEFAULT_NORMAL_COLOR = DEFAULT_COLOR;
+    // protected static final Color DEFAULT_SELECTED_COLOR = Color.ORANGE;
+    // protected static final Color OVER_COLOR = Color.WHITE;
+    protected static final float DEFAULT_OPACITY = 0.3f;
 
     public static final String PROPERTY_NAME = "name";
     public static final String PROPERTY_EDITABLE = "editable";
@@ -200,7 +207,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * @deprecated Use {@link ROI#create(String, Point2D)} instead.
      */
-    @SuppressWarnings("unused")
     @Deprecated
     public static ROI create(String className, Sequence seq, Point2D imagePoint, boolean creation)
     {
@@ -483,7 +489,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     {
         protected double stroke;
         protected Color color;
-        protected Color selectedColor;
+        // protected Color selectedColor;
+        protected float opacity;
 
         public ROIPainter()
         {
@@ -491,11 +498,20 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
             stroke = DEFAULT_STROKE;
             color = DEFAULT_NORMAL_COLOR;
-            selectedColor = DEFAULT_SELECTED_COLOR;
+            // selectedColor = DEFAULT_SELECTED_COLOR;
+            opacity = DEFAULT_OPACITY;
 
             // we fix the ROI overlay
             fixed = true;
             readOnly = true;
+        }
+
+        /**
+         * Return the ROI painter stroke.
+         */
+        public double getStroke()
+        {
+            return painter.stroke;
         }
 
         /**
@@ -519,29 +535,66 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
 
         /**
+         * Returns the content opacity factor (0 = transparent while 1 means opaque).
+         */
+        public float getOpacity()
+        {
+            return opacity;
+        }
+
+        /**
+         * Sets the content opacity factor (0 = transparent while 1 means opaque).
+         */
+        public void setOpacity(float value)
+        {
+            if (opacity != value)
+            {
+                opacity = value;
+                painterChanged();
+            }
+        }
+
+        /**
+         * Returns the color for focused state
+         */
+        public Color getFocusedColor()
+        {
+            final int lum = ColorUtil.getLuminance(color);
+
+            if (lum < (256 - 32))
+                return Color.white;
+
+            return Color.gray;
+        }
+
+        /**
+         * @deprecated
+         */
+        public Color getSelectedColor()
+        {
+            return color;
+
+            // Color result = color;
+            //
+            // if (ColorUtil.getLuminance(result) < (256 - 64))
+            // result = ColorUtil.add(result, Color.darkGray);
+            // else
+            // result = ColorUtil.sub(result, Color.darkGray);
+            //
+            // return result;
+        }
+
+        /**
          * Returns the color used to display the ROI depending its current state.
          */
         public Color getDisplayColor()
         {
-            Color result;
-
-            if (selected)
-                result = selectedColor;
-            else
-                result = color;
-
             if (focused)
-                result = OVER_COLOR;
+                return getFocusedColor();
+            // if (selected)
+            // return getSelectedColor();
 
-            return result;
-        }
-
-        /**
-         * Return the ROI painter stroke.
-         */
-        public double getStroke()
-        {
-            return painter.stroke;
+            return color;
         }
 
         /**
@@ -564,24 +617,20 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             }
         }
 
+        // /**
+        // * Return the ROI painter selected color.
+        // */
+        // public Color getSelectedColor()
+        // {
+        // return selectedColor;
+        // }
+        //
         /**
-         * Return the ROI painter selected color.
-         */
-        public Color getSelectedColor()
-        {
-            return selectedColor;
-        }
-
-        /**
-         * Set the ROI painter selected color.
+         * @deprecated Selected color is now automatically calculated
          */
         public void setSelectedColor(Color value)
         {
-            if (selectedColor != value)
-            {
-                selectedColor = value;
-                painterChanged();
-            }
+
         }
 
         public void computePriority()
@@ -610,10 +659,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             beginUpdate();
             try
             {
-                setColor(new Color(XMLUtil.getElementIntValue(node, ID_COLOR, DEFAULT_NORMAL_COLOR.getRGB())));
-                setSelectedColor(new Color(XMLUtil.getElementIntValue(node, ID_SELECTED_COLOR,
-                        DEFAULT_SELECTED_COLOR.getRGB())));
+                setColor(new Color(XMLUtil.getElementIntValue(node, ID_COLOR, DEFAULT_COLOR.getRGB())));
+                // setSelectedColor(new Color(XMLUtil.getElementIntValue(node, ID_SELECTED_COLOR,
+                // getSelectedColor()
+                // .getRGB())));
                 setStroke(XMLUtil.getElementDoubleValue(node, ID_STROKE, DEFAULT_STROKE));
+                setOpacity(XMLUtil.getElementFloatValue(node, ID_OPACITY, DEFAULT_OPACITY));
             }
             finally
             {
@@ -630,8 +681,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 return false;
 
             XMLUtil.setElementIntValue(node, ID_COLOR, color.getRGB());
-            XMLUtil.setElementIntValue(node, ID_SELECTED_COLOR, selectedColor.getRGB());
+            // XMLUtil.setElementIntValue(node, ID_SELECTED_COLOR, getSelectedColor().getRGB());
             XMLUtil.setElementDoubleValue(node, ID_STROKE, stroke);
+            XMLUtil.setElementFloatValue(node, ID_OPACITY, opacity);
 
             return true;
         }
@@ -857,6 +909,38 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
+     * Returns the ROI painter opacity factor (0 = transparent while 1 means opaque).
+     */
+    public float getOpacity()
+    {
+        return painter.getOpacity();
+    }
+
+    /**
+     * Sets the ROI painter content opacity factor (0 = transparent while 1 means opaque).
+     */
+    public void setOpacity(float value)
+    {
+        painter.setOpacity(value);
+    }
+
+    /**
+     * Return the ROI painter focused color.
+     */
+    public Color getFocusedColor()
+    {
+        return painter.getFocusedColor();
+    }
+
+    /**
+     * @deprecated
+     */
+    public Color getSelectedColor()
+    {
+        return painter.getSelectedColor();
+    }
+
+    /**
      * Returns the color used to display the ROI depending its current state.
      */
     public Color getDisplayColor()
@@ -881,19 +965,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Return the ROI painter selected color.
+     * @deprecated selected color is automatically calculated.
      */
-    public Color getSelectedColor()
-    {
-        return painter.getSelectedColor();
-    }
-
-    /**
-     * Set the ROI painter selected color.
-     */
+    @Deprecated
     public void setSelectedColor(Color value)
     {
-        painter.setSelectedColor(value);
+        // painter.setSelectedColor(value);
     }
 
     /**
@@ -1356,6 +1433,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 // compute painter priority
                 painter.computePriority();
                 painter.painterChanged();
+                break;
+
+            case PROPERTY_CHANGED:
+                break;
+            default:
                 break;
         }
 

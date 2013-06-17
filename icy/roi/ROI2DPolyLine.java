@@ -85,21 +85,24 @@ public class ROI2DPolyLine extends ROI2DShape
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
 
-                // draw border black line
                 if (selected)
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 2d)));
-                else
+                {
+                    // just draw plain object shape without border
                     g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                g2.setColor(Color.black);
-                g2.draw(shape);
-
-                // draw internal border
-                if (selected)
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                    g2.setColor(getDisplayColor());
+                    g2.draw(shape);
+                }
                 else
+                {
+                    // draw border
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                    g2.setColor(Color.black);
+                    g2.draw(shape);
+                    // draw shape
                     g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                g2.setColor(getDisplayColor());
-                g2.draw(shape);
+                    g2.setColor(getDisplayColor());
+                    g2.draw(shape);
+                }
 
                 if (selected && editable)
                 {
@@ -161,7 +164,7 @@ public class ROI2DPolyLine extends ROI2DShape
     @Override
     protected Anchor2D createAnchor(Point2D pos)
     {
-        return new ROI2DPolyLineAnchor2D(pos, DEFAULT_SELECTED_COLOR, OVER_COLOR);
+        return new ROI2DPolyLineAnchor2D(pos, getColor(), getFocusedColor());
     }
 
     @Override
@@ -191,6 +194,14 @@ public class ROI2DPolyLine extends ROI2DShape
         }
     }
 
+    /**
+     * @deprecated Use {@link #setPoints(ArrayList)} instead.
+     */
+    public void setPoints(ArrayList<Point2D> pts)
+    {
+        setPoints((List<Point2D>) pts);
+    }
+
     public Polygon getPolygon()
     {
         final Polygon result = new Polygon();
@@ -208,8 +219,11 @@ public class ROI2DPolyLine extends ROI2DShape
         {
             removeAllPoint();
 
+            final Color color = getColor();
+            final Color focusedColor = getFocusedColor();
+
             for (int i = 0; i < polygon.npoints; i++)
-                addPoint(new Anchor2D(polygon.xpoints[i], polygon.ypoints[i], DEFAULT_SELECTED_COLOR, OVER_COLOR));
+                addPoint(new Anchor2D(polygon.xpoints[i], polygon.ypoints[i], color, focusedColor));
         }
         finally
         {
@@ -218,9 +232,10 @@ public class ROI2DPolyLine extends ROI2DShape
     }
 
     @Override
-    protected double getTotalDistance(ArrayList<Point2D> points)
+    protected double getTotalDistance(List<Point2D> points)
     {
-        return getTotalDistance(points, false);
+        // by default the total length don't need last point connection
+        return super.getTotalDistance(points, false);
     }
 
     @Override

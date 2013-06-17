@@ -52,6 +52,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import vtk.vtkActor;
 import vtk.vtkPointSet;
@@ -475,37 +476,40 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         {
             if (canvas instanceof IcyCanvas2D)
             {
-                final Graphics2D g2 = (Graphics2D) g.create();
-
                 // ROI selected ?
                 if (selected)
                 {
-                    final Graphics2D g3 = (Graphics2D) g2.create();
-
-                    final AlphaComposite prevAlpha = (AlphaComposite) g3.getComposite();
+                    final Graphics2D g2 = (Graphics2D) g.create();
+                    final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
 
                     // show content with an alpha factor
-                    g3.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * 0.3f));
-                    g3.setColor(getDisplayColor());
-                    g3.fill(shape);
+                    g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity()));
+                    g2.setColor(getDisplayColor());
+                    g2.fill(shape);
 
-                    g3.dispose();
+                    g2.dispose();
                 }
 
-                // draw border black line
+                final Graphics2D g2 = (Graphics2D) g.create();
+
                 if (selected)
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 2d)));
-                else
+                {
+                    // just draw plain object shape without border
                     g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                g2.setColor(Color.black);
-                g2.draw(shape);
-                // draw internal border
-                if (selected)
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                    g2.setColor(getDisplayColor());
+                    g2.draw(shape);
+                }
                 else
+                {
+                    // draw border
+                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                    g2.setColor(Color.black);
+                    g2.draw(shape);
+                    // draw shape
                     g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                g2.setColor(getDisplayColor());
-                g2.draw(shape);
+                    g2.setColor(getDisplayColor());
+                    g2.draw(shape);
+                }
 
                 // draw from flatten shape as we use it for collision detection
                 // ShapeUtil.drawFromPath(getPathIterator(null, 0.1), g);
@@ -599,12 +603,26 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         }
 
         @Override
-        public void setSelectedColor(Color value)
+        public void setColor(Color value)
         {
-            for (Anchor2D anchor : controlPoints)
-                anchor.setColor(value);
+            super.setColor(value);
 
-            super.setSelectedColor(value);
+            final Color color = getColor();
+            final Color focusedColor = getFocusedColor();
+
+            beginUpdate();
+            try
+            {
+                for (Anchor2D anchor : controlPoints)
+                {
+                    anchor.setColor(color);
+                    anchor.setSelectedColor(focusedColor);
+                }
+            }
+            finally
+            {
+                endUpdate();
+            }
         }
 
         @Override
@@ -664,7 +682,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      */
     protected Anchor2D createAnchor(Point2D pos)
     {
-        return new Anchor2D(pos.getX(), pos.getY(), DEFAULT_SELECTED_COLOR, OVER_COLOR);
+        return new Anchor2D(pos.getX(), pos.getY(), getColor(), getFocusedColor());
     }
 
     /**
@@ -799,6 +817,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     {
         pt.removeOverlayListener(this);
         pt.removeAnchorListener(this);
+        controlPoints.remove(pt);
         roiChanged();
         return true;
     }
@@ -849,7 +868,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             final int index = controlPoints.indexOf(selectedPoint);
 
             // try to remove point
-            if (removePoint(canvas,selectedPoint))
+            if (removePoint(canvas, selectedPoint))
             {
                 // last control point removed --> delete ROI
                 if (controlPoints.size() == 0)
@@ -874,7 +893,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                                     if (nextPoint.getType() == PathIterator.SEG_CLOSE)
                                     {
                                         // delete it
-                                        if (removePoint(canvas,nextPoint))
+                                        if (removePoint(canvas, nextPoint))
                                         {
                                             // it was the last control point --> delete ROI
                                             if (controlPoints.size() == 0)
@@ -901,7 +920,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                                     if (prevPoint.getType() == PathIterator.SEG_MOVETO)
                                     {
                                         // delete it
-                                        if (removePoint(canvas,prevPoint))
+                                        if (removePoint(canvas, prevPoint))
                                         {
                                             // it was the last control point --> delete ROI
                                             if (controlPoints.size() == 0)
@@ -951,7 +970,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     /**
      * Return total distance of the specified list of points.
      */
-    protected double getTotalDistance(ArrayList<Point2D> points, boolean connectLastPoint)
+    protected double getTotalDistance(List<Point2D> points, boolean connectLastPoint)
     {
         final int size = points.size();
         double result = 0d;
@@ -972,8 +991,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     /**
      * Return total distance of the specified list of points.
      */
-    protected double getTotalDistance(ArrayList<Point2D> points)
+    protected double getTotalDistance(List<Point2D> points)
     {
+        // by default the total length need last point connection
         return getTotalDistance(points, true);
     }
 

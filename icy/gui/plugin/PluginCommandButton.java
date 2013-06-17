@@ -56,6 +56,11 @@ public class PluginCommandButton
 
         button.setActionRichTooltip(new PluginRichToolTip(plugin));
 
+        // remove previous listener on button
+        final ActionListener[] listeners = button.getListeners(ActionListener.class);
+        for (ActionListener listener : listeners)
+            button.removeActionListener(listener);
+
         if (doAction)
         {
             button.addActionListener(new ActionListener()
@@ -63,8 +68,8 @@ public class PluginCommandButton
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    final PluginDescriptor plugin = PluginLoader.getPlugin(((AbstractCommandButton) e.getSource())
-                            .getName());
+                    final AbstractCommandButton button = (AbstractCommandButton) e.getSource();
+                    final PluginDescriptor plugin = PluginLoader.getPlugin(button.getName());
 
                     if (plugin != null)
                         PluginLauncher.start(plugin);

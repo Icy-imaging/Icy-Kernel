@@ -296,8 +296,8 @@ public class ImageJUtil
                         + rect.getHeight())));
                 break;
 
-            case Roi.POLYGON:
             case Roi.TRACED_ROI:
+            case Roi.POLYGON:
             case Roi.FREEROI:
                 fp = ((PolygonRoi) roi).getFloatPolygon();
                 for (int p = 0; p < fp.npoints; p++)
@@ -306,7 +306,11 @@ public class ImageJUtil
                 final ROI2DPolygon roiPolygon = new ROI2DPolygon();
                 roiPolygon.setPoints(pts);
 
-                result.add(roiPolygon);
+                // TRACED_ROI should be converted to ROI2DArea
+                if (roi.getType() == Roi.TRACED_ROI)
+                    result.add(new ROI2DArea(roiPolygon.getBooleanMask()));
+                else
+                    result.add(roiPolygon);
                 break;
 
             case Roi.FREELINE:

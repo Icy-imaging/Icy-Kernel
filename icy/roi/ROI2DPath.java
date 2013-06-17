@@ -99,7 +99,7 @@ public class ROI2DPath extends ROI2DShape
     @Override
     protected Anchor2D createAnchor(Point2D pos)
     {
-        return new PathAnchor2D(pos.getX(), pos.getY(), DEFAULT_SELECTED_COLOR, OVER_COLOR);
+        return new PathAnchor2D(pos.getX(), pos.getY(), getColor(), getFocusedColor());
     }
 
     private ArrayList<PathAnchor2D> getControlPoints()

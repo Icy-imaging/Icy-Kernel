@@ -77,7 +77,7 @@ public class ROI2DPolygon extends ROI2DShape
     {
         this(pt);
     }
-    
+
     public ROI2DPolygon(Point2D pt)
     {
         // use Path2D shape which allow double coordinates
@@ -115,7 +115,7 @@ public class ROI2DPolygon extends ROI2DShape
     @Override
     protected Anchor2D createAnchor(Point2D pos)
     {
-        return new ROI2DPolygonAnchor2D(pos, DEFAULT_SELECTED_COLOR, OVER_COLOR);
+        return new ROI2DPolygonAnchor2D(pos, getColor(), getFocusedColor());
     }
 
     protected Path2D getPath()
@@ -139,6 +139,14 @@ public class ROI2DPolygon extends ROI2DShape
         }
     }
 
+    /**
+     * @deprecated Use {@link #setPoints(List)} instead.
+     */
+    public void setPoints(ArrayList<Point2D> pts)
+    {
+        setPoints((List<Point2D>) pts);
+    }
+
     public Polygon getPolygon()
     {
         final Polygon result = new Polygon();
@@ -156,8 +164,11 @@ public class ROI2DPolygon extends ROI2DShape
         {
             removeAllPoint();
 
+            final Color color = getColor();
+            final Color focusedColor = getFocusedColor();
+
             for (int i = 0; i < polygon.npoints; i++)
-                addPoint(new Anchor2D(polygon.xpoints[i], polygon.ypoints[i], DEFAULT_SELECTED_COLOR, OVER_COLOR));
+                addPoint(new Anchor2D(polygon.xpoints[i], polygon.ypoints[i], color, focusedColor));
         }
         finally
         {

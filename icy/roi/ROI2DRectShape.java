@@ -103,7 +103,7 @@ public abstract class ROI2DRectShape extends ROI2DShape
     @Override
     protected Anchor2D createAnchor(Point2D pos)
     {
-        return new ROI2DRectAnchor2D(pos, DEFAULT_SELECTED_COLOR, OVER_COLOR);
+        return new ROI2DRectAnchor2D(pos, getColor(), getFocusedColor());
     }
 
     protected RectangularShape getRectangularShape()

@@ -37,7 +37,7 @@ import javax.swing.filechooser.FileFilter;
  */
 public class ImageLoaderDialog extends JFileChooser implements PropertyChangeListener
 {
-    public static class AllImageFileFilter extends FileFilter
+    public static class AllImagesFileFilter extends FileFilter
     {
         @Override
         public boolean accept(File file)
@@ -53,11 +53,29 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
     }
 
     /**
+     * @deprecated
+     */
+    @Deprecated
+    public static class AllImageFileFilter extends AllImagesFileFilter
+    {
+
+    }
+
+    /**
      * 
      */
     private static final long serialVersionUID = 347950414244936110L;
 
     private static final String PREF_ID = "frame/imageLoader";
+
+    private static final String ID_WIDTH = "width";
+    private static final String ID_HEIGTH = "heigth";
+    private static final String ID_PATH = "path";
+    private static final String ID_SEPARATE = "separate";
+    private static final String ID_AUTOORDER = "autoOrder";
+    private static final String ID_EXTENSION = "extension";
+
+    public static final AllImagesFileFilter allImagesFileFilter = new AllImagesFileFilter();
 
     // GUI
     private final ImageLoaderOptionPanel optionPanel;
@@ -87,24 +105,29 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
 
         // can't use WindowsPositionSaver as JFileChooser is a fake JComponent
         // only dimension is stored
-        setCurrentDirectory(new File(preferences.get("path", "")));
-        setPreferredSize(new Dimension(preferences.getInt("width", 600), preferences.getInt("height", 400)));
+        setCurrentDirectory(new File(preferences.get(ID_PATH, "")));
+        setPreferredSize(new Dimension(preferences.getInt(ID_WIDTH, 600), preferences.getInt(ID_HEIGTH, 400)));
 
-        removeChoosableFileFilter(getAcceptAllFileFilter());
+        setAcceptAllFileFilterUsed(false);
+        resetChoosableFileFilters();
+
         addChoosableFileFilter(ImageFileFormat.TIFF.getExtensionFileFilter());
         addChoosableFileFilter(ImageFileFormat.JPG.getExtensionFileFilter());
         addChoosableFileFilter(ImageFileFormat.PNG.getExtensionFileFilter());
         addChoosableFileFilter(ImageFileFormat.LSM.getExtensionFileFilter());
         addChoosableFileFilter(ImageFileFormat.AVI.getExtensionFileFilter());
-        // so we have AllFileFilter selected and in last position
-        addChoosableFileFilter(new AllImageFileFilter());
+        // so we have AllImageFileFilter selected and in last position
+        addChoosableFileFilter(allImagesFileFilter);
+
+        // set last used file filter
+        setFileFilter(getFileFilter(preferences.get(ID_EXTENSION, allImagesFileFilter.getDescription())));
 
         setMultiSelectionEnabled(true);
         setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
         // setting GUI
-        optionPanel = new ImageLoaderOptionPanel(preferences.getBoolean("separate", false), preferences.getBoolean(
-                "autoOrder", true));
+        optionPanel = new ImageLoaderOptionPanel(preferences.getBoolean(ID_SEPARATE, false), preferences.getBoolean(
+                ID_AUTOORDER, true));
 
         setAccessory(optionPanel);
         updateOptionPanel();
@@ -112,7 +135,7 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         // listen file filter change
         addPropertyChangeListener(this);
 
-        setDialogTitle("ICY - Load image file");
+        setDialogTitle("Icy - Load image file");
 
         // display loader
         final int value = showOpenDialog(Icy.getMainInterface().getMainFrame());
@@ -124,21 +147,43 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         if (value == JFileChooser.APPROVE_OPTION)
         {
             // store current path
-            preferences.put("path", getCurrentDirectory().getAbsolutePath());
-            preferences.putBoolean("separate", optionPanel.isSeparateSequenceSelected());
-            preferences.putBoolean("autoOrder", optionPanel.isAutoOrderSelected());
+            preferences.put(ID_PATH, getCurrentDirectory().getAbsolutePath());
+            preferences.putBoolean(ID_SEPARATE, isSeparateSequenceSelected());
+            preferences.putBoolean(ID_AUTOORDER, isAutoOrderSelected());
+            preferences.put(ID_EXTENSION, getFileFilter().getDescription());
 
             // load if requested
             if (autoLoad)
-            {
-                Loader.load(getSelectedFiles(), optionPanel.isSeparateSequenceSelected(),
-                        optionPanel.isAutoOrderSelected(), true);
-            }
+                Loader.load(getSelectedFiles(), isSeparateSequenceSelected(), isAutoOrderSelected(), true);
         }
 
         // store interface option
-        preferences.putInt("width", getWidth());
-        preferences.putInt("height", getHeight());
+        preferences.putInt(ID_WIDTH, getWidth());
+        preferences.putInt(ID_HEIGTH, getHeight());
+    }
+
+    protected FileFilter getFileFilter(String description)
+    {
+        FileFilter ff;
+
+        ff = ImageFileFormat.TIFF.getExtensionFileFilter();
+        if (description.equals(ff.getDescription()))
+            return ff;
+        ff = ImageFileFormat.JPG.getExtensionFileFilter();
+        if (description.equals(ff.getDescription()))
+            return ff;
+        ff = ImageFileFormat.PNG.getExtensionFileFilter();
+        if (description.equals(ff.getDescription()))
+            return ff;
+        ff = ImageFileFormat.LSM.getExtensionFileFilter();
+        if (description.equals(ff.getDescription()))
+            return ff;
+        ff = ImageFileFormat.AVI.getExtensionFileFilter();
+        if (description.equals(ff.getDescription()))
+            return ff;
+
+        // default one
+        return allImagesFileFilter;
     }
 
     /**
@@ -188,7 +233,7 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         updateOptionPanel();
     }
 
-    void updateOptionPanel()
+    protected void updateOptionPanel()
     {
         final boolean multi = getSelectedFiles().length > 1;
 
