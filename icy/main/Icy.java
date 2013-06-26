@@ -224,26 +224,34 @@ public class Icy
             fatalError(t);
         }
 
-        // do it on AWT thread NOW as this is what we want first
-        ThreadUtil.invokeNow(new Runnable()
+        if (!headless)
         {
-            @Override
-            public void run()
+            // do it on AWT thread NOW as this is what we want first
+            ThreadUtil.invokeNow(new Runnable()
             {
-                try
+                @Override
+                public void run()
                 {
-                    // init Look And Feel (need mainInterface instance)
-                    LookAndFeelUtil.init();
-                    // init need "mainInterface" variable to be initialized
-                    getMainInterface().init();
+                    try
+                    {
+                        // init Look And Feel (need mainInterface instance)
+                        LookAndFeelUtil.init();
+                        // init need "mainInterface" variable to be initialized
+                        getMainInterface().init();
+                    }
+                    catch (Throwable t)
+                    {
+                        // any error here is fatal
+                        fatalError(t);
+                    }
                 }
-                catch (Throwable t)
-                {
-                    // any error here is fatal
-                    fatalError(t);
-                }
-            }
-        });
+            });
+        }
+        else
+        {
+            // simple main interface init
+            getMainInterface().init();
+        }
 
         // splash screen initialized --> hide it
         if (splashScreen != null)
@@ -269,6 +277,8 @@ public class Icy
         System.out.println("System total memory : " + UnitUtil.getBytesString(SystemUtil.getTotalMemory()));
         System.out.println("System available memory : " + UnitUtil.getBytesString(SystemUtil.getFreeMemory()));
         System.out.println("Max java memory : " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()));
+        if (headless)
+            System.out.println("Headless mode.");
         System.out.println();
 
         // initialize OSX specific stuff

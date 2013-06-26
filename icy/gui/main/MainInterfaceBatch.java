@@ -34,6 +34,7 @@ import icy.roi.ROI;
 import icy.search.SearchEngine;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
+import icy.type.collection.CollectionUtil;
 
 import java.util.ArrayList;
 
@@ -53,6 +54,14 @@ public class MainInterfaceBatch implements MainInterface
      * Swimming Pool can be useful even in batch mode
      */
     private final SwimmingPool swimmingPool;
+    /**
+     * We keep trace of active sequence.
+     */
+    private Sequence activeSequence;
+    /**
+     * We keep trace of active plugin.
+     */
+    private Plugin activePlugin;
 
     public MainInterfaceBatch()
     {
@@ -62,7 +71,8 @@ public class MainInterfaceBatch implements MainInterface
     @Override
     public void init()
     {
-
+        activeSequence = null;
+        activePlugin = null;
     }
 
     @Override
@@ -98,7 +108,7 @@ public class MainInterfaceBatch implements MainInterface
     @Override
     public ArrayList<Plugin> getActivePlugins()
     {
-        return null;
+        return CollectionUtil.createArrayList(activePlugin, false);
     }
 
     @Override
@@ -110,7 +120,7 @@ public class MainInterfaceBatch implements MainInterface
     @Override
     public Sequence getActiveSequence()
     {
-        return null;
+        return activeSequence;
     }
 
     @Override
@@ -128,12 +138,15 @@ public class MainInterfaceBatch implements MainInterface
     @Override
     public Sequence getFocusedSequence()
     {
-        return null;
+        return activeSequence;
     }
 
     @Override
     public IcyBufferedImage getFocusedImage()
     {
+        if (activeSequence != null)
+            return activeSequence.getFirstImage();
+
         return null;
     }
 
@@ -174,11 +187,15 @@ public class MainInterfaceBatch implements MainInterface
     @Override
     public void registerPlugin(Plugin plugin)
     {
+        if (plugin != null)
+            activePlugin = plugin;
     }
 
     @Override
     public void unRegisterPlugin(Plugin plugin)
     {
+        if (plugin == activePlugin)
+            activePlugin = null;
     }
 
     @Override
@@ -210,13 +227,22 @@ public class MainInterfaceBatch implements MainInterface
     }
 
     @Override
+    public void closeSequence(Sequence sequence)
+    {
+        if (sequence == activeSequence)
+            activeSequence = null;
+    }
+
+    @Override
     public void closeViewersOfSequence(Sequence sequence)
     {
+        closeSequence(sequence);
     }
 
     @Override
     public void closeAllViewers()
     {
+        activeSequence = null;
     }
 
     @Override
@@ -390,18 +416,24 @@ public class MainInterfaceBatch implements MainInterface
     @Override
     public boolean isOpened(Sequence sequence)
     {
-        return false;
+        return (sequence == activeSequence);
     }
 
     @Override
     public Sequence getFirstSequenceContaining(ROI roi)
     {
+        if ((activeSequence != null) && activeSequence.contains(roi))
+            return activeSequence;
+
         return null;
     }
 
     @Override
     public Sequence getFirstSequenceContaining(Painter painter)
     {
+        if ((activeSequence != null) && activeSequence.contains(painter))
+            return activeSequence;
+
         return null;
     }
 
@@ -456,7 +488,8 @@ public class MainInterfaceBatch implements MainInterface
     @Override
     public void addSequence(Sequence sequence)
     {
-
+        if (sequence != null)
+            activeSequence = sequence;
     }
 
     @Override

@@ -184,13 +184,19 @@ public interface MainInterface
     public abstract MainFrame getMainFrame();
 
     /**
-     * Get Icy main searh engine
+     * Get Icy main searh engine.
      */
     public abstract SearchEngine getSearchEngine();
 
     /**
-     * Close viewers attached to specified sequence
+     * Close all viewers displaying the specified sequence.
      */
+    public abstract void closeSequence(Sequence sequence);
+
+    /**
+     * @deprecated Use {@link #closeSequence(Sequence)} instead.
+     */
+    @Deprecated
     public abstract void closeViewersOfSequence(Sequence sequence);
 
     /**

@@ -79,7 +79,7 @@ public class FileUtil
         {
             // we consider that an extension starting with a digit is not an extension
             if (((dotIndex + 1) == len) || !Character.isDigit(result.charAt(dotIndex + 1)))
-                result = result.substring(0, dotIndex) + extension;
+                result = result.substring(0, dotIndex);
         }
 
         if (extension != null)

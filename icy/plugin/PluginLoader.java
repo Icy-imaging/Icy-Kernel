@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -113,11 +114,11 @@ public class PluginLoader
     /**
      * active daemons plugins
      */
-    private ArrayList<PluginDaemon> activeDaemons;
+    private List<PluginDaemon> activeDaemons;
     /**
      * Loaded plugin list
      */
-    private ArrayList<PluginDescriptor> plugins;
+    private List<PluginDescriptor> plugins;
 
     /**
      * listeners

@@ -469,12 +469,18 @@ public class MainInterfaceGui implements MainInterface
     }
 
     @Override
-    public void closeViewersOfSequence(Sequence sequence)
+    public void closeSequence(Sequence sequence)
     {
         // use copy as this actually modify viewers list
         for (Viewer v : getViewers())
             if (v.getSequence() == sequence)
                 v.close();
+    }
+
+    @Override
+    public void closeViewersOfSequence(Sequence sequence)
+    {
+        closeSequence(sequence);
     }
 
     @Override
@@ -1257,4 +1263,5 @@ public class MainInterfaceGui implements MainInterface
         for (Viewer viewer : getViewers())
             viewer.setViewSyncId(id);
     }
+
 }

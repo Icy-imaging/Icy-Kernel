@@ -30,6 +30,7 @@ import icy.plugin.interface_.PluginImageAnalysis;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.resource.ResourceUtil;
 import icy.util.ClassUtil;
+import icy.util.JarUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
@@ -1039,11 +1040,11 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * return xml extension
+     * Returns the XML file extension.
      */
     public String getXMLExtension()
     {
-        return ".xml";
+        return XMLUtil.FILE_DOT_EXTENSION;
     }
 
     /**
@@ -1087,11 +1088,11 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * return jar extension
+     * Returns the JAR file extension.
      */
     public String getJarExtension()
     {
-        return ".jar";
+        return JarUtil.FILE_DOT_EXTENSION;
     }
 
     /**

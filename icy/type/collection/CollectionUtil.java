@@ -37,21 +37,35 @@ public class CollectionUtil
         return Arrays.asList(a);
     }
 
-    public static <T> ArrayList<T> createArrayList(T t)
+    public static <T> ArrayList<T> createArrayList(T t, boolean addIfNull)
     {
         final ArrayList<T> result = new ArrayList<T>();
 
-        result.add(t);
+        if (addIfNull || (t != null))
+            result.add(t);
 
         return result;
     }
 
-    public static <T> boolean addUniq(List<T> list, T t)
+    public static <T> ArrayList<T> createArrayList(T t)
     {
-        if (!list.contains(t))
-            return list.add(t);
+        return createArrayList(t, true);
+    }
+
+    public static <T> boolean addUniq(List<T> list, T t, boolean addIfNull)
+    {
+        if (addIfNull || (t != null))
+        {
+            if (!list.contains(t))
+                return list.add(t);
+        }
 
         return false;
+    }
+
+    public static <T> boolean addUniq(List<T> list, T t)
+    {
+        return addUniq(list, t, true);
     }
 
 }

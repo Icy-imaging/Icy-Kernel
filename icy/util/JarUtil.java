@@ -34,6 +34,9 @@ import java.util.jar.JarFile;
  */
 public class JarUtil
 {
+    public static final String FILE_EXTENSION = "jar";
+    public static final String FILE_DOT_EXTENSION = "." + FILE_EXTENSION;
+
     /**
      * Return true if specified URL is a JAR url
      */

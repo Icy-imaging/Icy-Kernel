@@ -469,13 +469,37 @@ public class ImageUtil
     }
 
     /**
-     * Convert an image to grey image.
+     * Convert an image to grey image (<code>BufferedImage.TYPE_BYTE_GRAY</code>).
      */
     public static BufferedImage toGray(Image image)
     {
         if (image != null)
-            return convertImage(image, new BufferedImage(image.getWidth(null), image.getHeight(null),
+            return convert(image, new BufferedImage(image.getWidth(null), image.getHeight(null),
                     BufferedImage.TYPE_BYTE_GRAY));
+
+        return null;
+    }
+
+    /**
+     * Convert an image to RGB image (<code>BufferedImage.TYPE_INT_RGB</code>).
+     */
+    public static BufferedImage toRGBImage(Image image)
+    {
+        if (image != null)
+            return convert(image, new BufferedImage(image.getWidth(null), image.getHeight(null),
+                    BufferedImage.TYPE_INT_RGB));
+
+        return null;
+    }
+
+    /**
+     * Convert an image to ARGB image (<code>BufferedImage.TYPE_INT_ARGB</code>).
+     */
+    public static BufferedImage toARGBImage(Image image)
+    {
+        if (image != null)
+            return convert(image, new BufferedImage(image.getWidth(null), image.getHeight(null),
+                    BufferedImage.TYPE_INT_ARGB));
 
         return null;
     }

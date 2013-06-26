@@ -18,7 +18,9 @@
  */
 package icy.gui.main;
 
+import icy.gui.frame.IcyInternalFrame;
 import icy.gui.util.ComponentUtil;
+import icy.gui.viewer.Viewer;
 import icy.main.Icy;
 import icy.math.HungarianAlgorithm;
 import icy.resource.ResourceUtil;
@@ -44,6 +46,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JInternalFrame;
@@ -215,18 +218,38 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
     }
 
     /**
-     * Organize all internal frames in cascade
+     * Returns the list of internal viewers.
+     * 
+     * @param wantNotVisible
+     *        Also return not visible viewers
+     * @param wantIconized
+     *        Also return iconized viewers
+     */
+    public Viewer[] getInternalViewers(boolean wantNotVisible, boolean wantIconized)
+    {
+        final List<Viewer> result = new ArrayList<Viewer>();
+
+        for (Viewer viewer : Icy.getMainInterface().getViewers())
+        {
+            if (viewer.isInternalized())
+            {
+                final IcyInternalFrame internalFrame = viewer.getInternalFrame();
+
+                if ((wantNotVisible || internalFrame.isVisible()) && (wantIconized || !internalFrame.isIcon()))
+                    result.add(viewer);
+            }
+        }
+
+        return result.toArray(new Viewer[result.size()]);
+    }
+
+    /**
+     * Organize all internal viewers in cascade
      */
     public void organizeCascade()
     {
-        // organize internal frames
-        final JInternalFrame[] allframes = getAllFrames();
-        final ArrayList<JInternalFrame> frames = new ArrayList<JInternalFrame>();
-
-        for (JInternalFrame f : allframes)
-            // avoid iconized and fixed size frame
-            if (!f.isIcon() && f.isResizable() && f.isVisible())
-                frames.add(f);
+        // get internal viewers
+        final Viewer[] viewers = getInternalViewers(false, false);
 
         // available space (always keep 32 available pixels at south)
         final int w = getWidth();
@@ -241,9 +264,13 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
         int x = 0 + 32;
         int y = 0 + 32;
 
-        for (JInternalFrame f : frames)
+        for (Viewer v : viewers)
         {
-            f.setBounds(x, y, fw, fh);
+            final IcyInternalFrame internalFrame = v.getInternalFrame();
+
+            internalFrame.setBounds(x, y, fw, fh);
+            internalFrame.toFront();
+
             x += 30;
             y += 20;
             if ((x + fw) > xMax)
@@ -254,7 +281,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
     }
 
     /**
-     * Organize all internal frames in tile.
+     * Organize all internal viewers in tile.
      * 
      * @param type
      *        tile type<br>
@@ -263,14 +290,10 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
      */
     public void organizeTile(int type)
     {
-        final ArrayList<JInternalFrame> frames = new ArrayList<JInternalFrame>();
+        // get internal viewers
+        final Viewer[] viewers = getInternalViewers(false, false);
 
-        for (JInternalFrame f : getAllFrames())
-            // avoid iconized and fixed size frame
-            if (!f.isIcon() && f.isResizable() && f.isVisible())
-                frames.add(f);
-
-        final int numFrames = frames.size();
+        final int numFrames = viewers.length;
 
         // nothing to do
         if (numFrames == 0)
@@ -321,7 +344,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
 
                 for (int f = 0; f < numFrames; f++)
                 {
-                    final Point2D.Double center = ComponentUtil.getCenter(frames.get(f));
+                    final Point2D.Double center = ComponentUtil.getCenter(viewers[f].getInternalFrame());
                     distances[f] = Point2D.distanceSq(center.x, center.y, x, y);
                 }
             }
@@ -335,8 +358,14 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
             for (int j = 0; j < numCol; j++, k++)
             {
                 final int f = framePos[k];
+
                 if (f < numFrames)
-                    frames.get(f).setBounds(j * dx, i * dy, dx, dy);
+                {
+                    final IcyInternalFrame internalFrame = viewers[f].getInternalFrame();
+
+                    internalFrame.setBounds(j * dx, i * dy, dx, dy);
+                    internalFrame.toFront();
+                }
             }
         }
     }

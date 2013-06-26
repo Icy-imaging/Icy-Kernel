@@ -62,10 +62,13 @@ public class SequencePersistent implements XMLPersistent
 
     private String getXMLFileName()
     {
-        final String seqFilename = sequence.getFilename();
+        String seqFilename = sequence.getFilename();
 
         if (StringUtil.isEmpty(seqFilename))
             return null;
+
+        // avoid '#' for XML file
+        seqFilename = seqFilename.replaceAll("#", "_");
 
         final File file = new File(seqFilename);
 

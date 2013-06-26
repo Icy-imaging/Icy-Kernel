@@ -764,7 +764,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             return lut;
 
         // sequence can be asynchronously modified so we have to test change on Getter
-        if (!sequence.isLutCompatible(lut))
+        if ((lut == null) || !sequence.isLutCompatible(lut))
         {
             // sequence type has changed, we need to recreate a compatible LUT
             final LUT newLut = sequence.createCompatibleLUT();

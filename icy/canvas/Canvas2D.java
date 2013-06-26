@@ -1952,9 +1952,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     {
         super(viewer);
 
-        // arrange to our dimension format
+        // set position to first Z and T
         posZ = 0;
         posT = 0;
+        // all channel visible at once
         posC = -1;
 
         // view panel
@@ -2033,15 +2034,15 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         // set view in center
         add(canvasView, BorderLayout.CENTER);
 
-        // mouse infos panel setting
+        // mouse infos panel setting: we want to see values for X/Y only (2D view)
         mouseInfPanel.setInfoXVisible(true);
         mouseInfPanel.setInfoYVisible(true);
-        // already visible in Z/T navigator
+        // Z and T values are already visible in Z/T navigator bar
         mouseInfPanel.setInfoZVisible(false);
         mouseInfPanel.setInfoTVisible(false);
-        // no C navigation with this canvas
+        // no C navigation with this canvas (all channels visible)
         mouseInfPanel.setInfoCVisible(false);
-        // data and color visible
+        // data and color information visible
         mouseInfPanel.setInfoDataVisible(true);
         mouseInfPanel.setInfoColorVisible(true);
 

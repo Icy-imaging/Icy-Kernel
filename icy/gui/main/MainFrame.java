@@ -21,15 +21,19 @@ package icy.gui.main;
 import icy.file.Loader;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.ExternalizablePanel.StateListener;
+import icy.gui.frame.IcyExternalFrame;
 import icy.gui.inspector.ChatPanel;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.MainRibbon;
 import icy.gui.menu.action.FileActions;
 import icy.gui.menu.action.GeneralActions;
+import icy.gui.menu.action.WindowActions;
 import icy.gui.menu.search.SearchBar;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.WindowPositionSaver;
+import icy.gui.viewer.Viewer;
+import icy.main.Icy;
 import icy.math.HungarianAlgorithm;
 import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
@@ -42,7 +46,6 @@ import icy.type.collection.CollectionUtil;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
@@ -59,6 +62,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
@@ -319,11 +323,17 @@ public class MainFrame extends JRibbonFrame
         imap.put(FileActions.openSequenceAction.getKeyStroke(), FileActions.openSequenceAction.getName());
         imap.put(FileActions.saveAsSequenceAction.getKeyStroke(), FileActions.saveAsSequenceAction.getName());
         imap.put(GeneralActions.onlineHelpAction.getKeyStroke(), GeneralActions.onlineHelpAction.getName());
+        imap.put(WindowActions.gridTileAction.getKeyStroke(), WindowActions.gridTileAction.getName());
+        imap.put(WindowActions.horizontalTileAction.getKeyStroke(), WindowActions.horizontalTileAction.getName());
+        imap.put(WindowActions.verticalTileAction.getKeyStroke(), WindowActions.verticalTileAction.getName());
 
         amap.put(GeneralActions.searchAction.getName(), GeneralActions.searchAction);
         amap.put(FileActions.openSequenceAction.getName(), FileActions.openSequenceAction);
         amap.put(FileActions.saveAsSequenceAction.getName(), FileActions.saveAsSequenceAction);
         amap.put(GeneralActions.onlineHelpAction.getName(), GeneralActions.onlineHelpAction);
+        amap.put(WindowActions.gridTileAction.getName(), WindowActions.gridTileAction);
+        amap.put(WindowActions.horizontalTileAction.getName(), WindowActions.horizontalTileAction);
+        amap.put(WindowActions.verticalTileAction.getName(), WindowActions.verticalTileAction);
     }
 
     public ApplicationMenu getApplicationMenu()
@@ -482,6 +492,49 @@ public class MainFrame extends JRibbonFrame
     }
 
     /**
+     * Returns the list of internal viewers.
+     * 
+     * @param bounds
+     *        If not null only viewers visible in the specified bounds are returned.
+     * @param wantNotVisible
+     *        Also return not visible viewers
+     * @param wantIconized
+     *        Also return iconized viewers
+     */
+    public Viewer[] getExternalViewers(Rectangle bounds, boolean wantNotVisible, boolean wantIconized)
+    {
+        final List<Viewer> result = new ArrayList<Viewer>();
+
+        for (Viewer viewer : Icy.getMainInterface().getViewers())
+        {
+            if (viewer.isExternalized())
+            {
+                final IcyExternalFrame externalFrame = viewer.getExternalFrame();
+
+                if ((wantNotVisible || externalFrame.isVisible())
+                        && (wantIconized || !ComponentUtil.isMinimized(externalFrame))
+                        && ((bounds == null) || bounds.contains(ComponentUtil.getCenter(externalFrame))))
+                    result.add(viewer);
+            }
+        }
+
+        return result.toArray(new Viewer[result.size()]);
+    }
+
+    /**
+     * Returns the list of internal viewers.
+     * 
+     * @param wantNotVisible
+     *        Also return not visible viewers
+     * @param wantIconized
+     *        Also return iconized viewers
+     */
+    public Viewer[] getExternalViewers(boolean wantNotVisible, boolean wantIconized)
+    {
+        return getExternalViewers(null, wantNotVisible, wantIconized);
+    }
+
+    /**
      * Organize all frames in cascade
      */
     public void organizeCascade()
@@ -531,14 +584,8 @@ public class MainFrame extends JRibbonFrame
         bounds.width -= inset.left + inset.right;
         bounds.height -= inset.top + inset.bottom;
 
-        // prepare frames to process
-        final ArrayList<Frame> frames = new ArrayList<Frame>();
-
-        for (Frame f : Frame.getFrames())
-            // add visible and resizable frame contained in this screen
-            if ((f != this) && !ComponentUtil.isMinimized(f) && f.isResizable() && f.isVisible()
-                    && bounds.contains(ComponentUtil.getCenter(f)))
-                frames.add(f);
+        // prepare viewers to process
+        final Viewer[] viewers = getExternalViewers(bounds, false, false);
 
         // this screen contains the main frame ?
         if (bounds.contains(getLocation()))
@@ -575,9 +622,13 @@ public class MainFrame extends JRibbonFrame
         int x = bounds.x + 32;
         int y = bounds.y + 32;
 
-        for (Frame f : frames)
+        for (Viewer v : viewers)
         {
-            f.setBounds(x, y, fw, fh);
+            final IcyExternalFrame externalFrame = v.getExternalFrame();
+
+            externalFrame.setBounds(x, y, fw, fh);
+            externalFrame.toFront();
+
             x += 30;
             y += 20;
             if ((x + fw) > xMax)
@@ -641,14 +692,8 @@ public class MainFrame extends JRibbonFrame
         bounds.width -= inset.left + inset.right;
         bounds.height -= inset.top + inset.bottom;
 
-        // prepare frames to process
-        final ArrayList<Frame> frames = new ArrayList<Frame>();
-
-        for (Frame f : Frame.getFrames())
-            // add visible and resizable frame contained in this screen
-            if ((f != this) && !ComponentUtil.isMinimized(f) && f.isResizable() && f.isVisible()
-                    && bounds.contains(ComponentUtil.getCenter(f)))
-                frames.add(f);
+        // prepare viewers to process
+        final Viewer[] viewers = getExternalViewers(bounds, false, false);
 
         // this screen contains the main frame ?
         if (bounds.contains(getLocation()))
@@ -672,7 +717,7 @@ public class MainFrame extends JRibbonFrame
             }
         }
 
-        final int numFrames = frames.size();
+        final int numFrames = viewers.length;
 
         // nothing to do
         if (numFrames == 0)
@@ -725,7 +770,7 @@ public class MainFrame extends JRibbonFrame
 
                 for (int f = 0; f < numFrames; f++)
                 {
-                    final Point2D.Double center = ComponentUtil.getCenter(frames.get(f));
+                    final Point2D.Double center = ComponentUtil.getCenter(viewers[f].getExternalFrame());
                     distances[f] = Point2D.distanceSq(center.x, center.y, fx, fy);
                 }
             }
@@ -739,8 +784,14 @@ public class MainFrame extends JRibbonFrame
             for (int j = 0; j < numCol; j++, k++)
             {
                 final int f = framePos[k];
+
                 if (f < numFrames)
-                    frames.get(f).setBounds(x + (j * dx), y + (i * dy), dx, dy);
+                {
+                    final IcyExternalFrame externalFrame = viewers[f].getExternalFrame();
+
+                    externalFrame.setBounds(x + (j * dx), y + (i * dy), dx, dy);
+                    externalFrame.toFront();
+                }
             }
         }
     }

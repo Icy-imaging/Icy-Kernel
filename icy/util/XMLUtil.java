@@ -54,6 +54,9 @@ import org.xml.sax.InputSource;
 
 public class XMLUtil
 {
+    public static final String FILE_EXTENSION = "xml";
+    public static final String FILE_DOT_EXTENSION = "." + FILE_EXTENSION;
+
     public static final String NODE_ROOT_NAME = "root";
 
     private static final String ATTR_NAME_NAME = "name";
