@@ -18,6 +18,7 @@
  */
 package icy.roi;
 
+import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.Layer;
 import icy.util.EventUtil;
@@ -243,6 +244,13 @@ public abstract class ROI2D extends ROI
             if (!isActiveFor(canvas))
                 return;
 
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
+                return;
+
             ROI2D.this.beginUpdate();
             try
             {
@@ -328,6 +336,13 @@ public abstract class ROI2D extends ROI
             if (!editable)
                 return;
 
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
+                return;
+
             ROI2D.this.beginUpdate();
             try
             {
@@ -381,6 +396,13 @@ public abstract class ROI2D extends ROI
             if (!isActiveFor(canvas))
                 return;
 
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
+                return;
+
             // update focus
             if (!e.isConsumed())
             {
@@ -396,6 +418,13 @@ public abstract class ROI2D extends ROI
         public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
                 return;
 
             if (!e.isConsumed())
@@ -416,6 +445,13 @@ public abstract class ROI2D extends ROI
         public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
                 return;
 
             ROI2D.this.beginUpdate();
@@ -477,6 +513,13 @@ public abstract class ROI2D extends ROI
         public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
                 return;
 
             // just for the shift key state change

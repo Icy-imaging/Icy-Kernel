@@ -133,10 +133,21 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
         // we want the kernel canvas to be first
         result.add(Canvas2DPlugin.class.getName());
-        result.add(Canvas3DPlugin.class.getName());
+        if (Icy.isVtkLibraryLoaded())
+            result.add(Canvas3DPlugin.class.getName());
 
         for (PluginDescriptor plugin : plugins)
+        {
+            final String className = plugin.getClassName();
+            
+            // ignore kernel as they have been already added
+            if (Canvas2DPlugin.class.getName().equals(className))
+                continue;
+            if (Canvas3DPlugin.class.getName().equals(className))
+                continue;
+            
             CollectionUtil.addUniq(result, plugin.getClassName());
+        }
 
         return result;
     }

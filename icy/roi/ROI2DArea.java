@@ -18,6 +18,7 @@
  */
 package icy.roi;
 
+import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvas3D;
@@ -186,6 +187,13 @@ public class ROI2DArea extends ROI2D
             if (!isActiveFor(canvas))
                 return;
 
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
+                return;
+
             ROI2DArea.this.beginUpdate();
             try
             {
@@ -225,6 +233,13 @@ public class ROI2DArea extends ROI2D
             if (!isActiveFor(canvas))
                 return;
 
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
+                return;
+
             ROI2DArea.this.beginUpdate();
             try
             {
@@ -262,6 +277,13 @@ public class ROI2DArea extends ROI2D
         {
             super.mouseReleased(e, imagePoint, canvas);
 
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
+                return;
+
             // update only on release as it can be long
             if (editable && boundsNeedUpdate)
                 optimizeBounds(true);
@@ -271,6 +293,13 @@ public class ROI2DArea extends ROI2D
         public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
                 return;
 
             ROI2DArea.this.beginUpdate();

@@ -277,6 +277,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             if (!isActiveFor(canvas))
                 return;
 
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
+                return;
+
             ROI2DShape.this.beginUpdate();
             try
             {
@@ -301,6 +308,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
                 return;
 
             ROI2DShape.this.beginUpdate();
@@ -329,6 +343,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             if (!isActiveFor(canvas))
                 return;
 
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
+                return;
+
             ROI2DShape.this.beginUpdate();
             try
             {
@@ -355,6 +376,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             if (!isActiveFor(canvas))
                 return;
 
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
+                return;
+
             ROI2DShape.this.beginUpdate();
             try
             {
@@ -379,6 +407,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
                 return;
 
             ROI2DShape.this.beginUpdate();
@@ -423,6 +458,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             if (!isActiveFor(canvas))
                 return;
 
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
+                return;
+
             ROI2DShape.this.beginUpdate();
             try
             {
@@ -447,6 +489,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
             if (!isActiveFor(canvas))
+                return;
+
+            // canvas3D not handled here
+            if (canvas instanceof Canvas3D)
+                return;
+            // no image position --> exit
+            if (imagePoint == null)
                 return;
 
             ROI2DShape.this.beginUpdate();

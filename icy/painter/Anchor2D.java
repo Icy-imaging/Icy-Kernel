@@ -18,6 +18,7 @@
  */
 package icy.painter;
 
+import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.common.EventHierarchicalChecker;
 import icy.file.xml.XMLPersistent;
@@ -721,6 +722,13 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (!visible)
             return;
 
+        // canvas3D not handled here
+        if (canvas instanceof Canvas3D)
+            return;
+        // no image position --> exit
+        if (imagePoint == null)
+            return;
+        
         // just for the shift key state change
         updateDrag(e, imagePoint);
     }
@@ -729,6 +737,13 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
         if (!visible)
+            return;
+
+        // canvas3D not handled here
+        if (canvas instanceof Canvas3D)
+            return;
+        // no image position --> exit
+        if (imagePoint == null)
             return;
 
         // just for the shift key state change
@@ -742,6 +757,13 @@ public class Anchor2D extends Overlay implements XMLPersistent
             return;
 
         if (e.isConsumed())
+            return;
+
+        // canvas3D not handled here
+        if (canvas instanceof Canvas3D)
+            return;
+        // no image position --> exit
+        if (imagePoint == null)
             return;
 
         if (EventUtil.isLeftMouseButton(e))
@@ -771,6 +793,13 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (e.isConsumed())
             return;
 
+        // canvas3D not handled here
+        if (canvas instanceof Canvas3D)
+            return;
+        // no image position --> exit
+        if (imagePoint == null)
+            return;
+
         if (EventUtil.isLeftMouseButton(e))
         {
             // if selected then move according to mouse position
@@ -794,6 +823,13 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
         if (!visible)
+            return;
+
+        // canvas3D not handled here
+        if (canvas instanceof Canvas3D)
+            return;
+        // no image position --> exit
+        if (imagePoint == null)
             return;
 
         // already consumed, no selection possible
