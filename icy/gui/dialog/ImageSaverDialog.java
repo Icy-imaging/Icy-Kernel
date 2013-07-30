@@ -272,6 +272,9 @@ public class ImageSaverDialog extends JFileChooser
                     // ask for confirmation as file already exists
                     if (!file.exists() || ConfirmDialog.confirm("Overwrite existing file(s) ?"))
                     {
+                        if (file.exists())
+                            FileUtil.delete(file, true);
+
                         // store current path
                         preferences.put(ID_PATH, getCurrentDirectory().getAbsolutePath());
 
@@ -289,7 +292,7 @@ public class ImageSaverDialog extends JFileChooser
                             public void run()
                             {
                                 Saver.save(writer, s, f, getZMin(), getZMax(), getTMin(), getTMax(), getFps(),
-                                        isSaveAsMultipleFilesEnabled(), true);
+                                        isSaveAsMultipleFilesEnabled(), true, true);
                             }
                         });
                     }

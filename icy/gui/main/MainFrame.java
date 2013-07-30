@@ -509,7 +509,7 @@ public class MainFrame extends JRibbonFrame
         {
             if (viewer.isExternalized())
             {
-                final IcyExternalFrame externalFrame = viewer.getExternalFrame();
+                final IcyExternalFrame externalFrame = viewer.getIcyExternalFrame();
 
                 if ((wantNotVisible || externalFrame.isVisible())
                         && (wantIconized || !ComponentUtil.isMinimized(externalFrame))
@@ -624,7 +624,7 @@ public class MainFrame extends JRibbonFrame
 
         for (Viewer v : viewers)
         {
-            final IcyExternalFrame externalFrame = v.getExternalFrame();
+            final IcyExternalFrame externalFrame = v.getIcyExternalFrame();
 
             externalFrame.setBounds(x, y, fw, fh);
             externalFrame.toFront();
@@ -787,7 +787,7 @@ public class MainFrame extends JRibbonFrame
 
                 if (f < numFrames)
                 {
-                    final IcyExternalFrame externalFrame = viewers[f].getExternalFrame();
+                    final IcyExternalFrame externalFrame = viewers[f].getIcyExternalFrame();
 
                     externalFrame.setBounds(x + (j * dx), y + (i * dy), dx, dy);
                     externalFrame.toFront();

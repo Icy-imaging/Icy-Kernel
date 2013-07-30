@@ -36,6 +36,7 @@ import icy.gui.util.GuiUtil;
 import icy.main.Icy;
 import icy.network.IRCClient;
 import icy.network.IRCEventListenerImpl;
+import icy.network.IRCUtil;
 import icy.network.NetworkUtil;
 import icy.network.NetworkUtil.InternetAccessListener;
 import icy.preferences.ChatPreferences;
@@ -46,7 +47,6 @@ import icy.system.thread.ThreadUtil;
 import icy.type.collection.CollectionUtil;
 import icy.util.DateUtil;
 import icy.util.GraphicsUtil;
-import icy.util.IRCUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;

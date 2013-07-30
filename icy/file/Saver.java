@@ -475,15 +475,27 @@ public class Saver
      *        end T position to save
      * @param fps
      *        frame rate for AVI sequence save
-     * @param multipleFiles
+     * @param multipleFile
      *        flag to indicate if images are saved in separate file
      * @param showProgress
      *        show progress bar
      */
     public static void save(Sequence sequence, File file, int zMin, int zMax, int tMin, int tMax, int fps,
-            boolean multipleFiles, boolean showProgress)
+            boolean multipleFile, boolean showProgress)
     {
-        save(null, sequence, file, zMin, zMax, tMin, tMax, fps, multipleFiles, showProgress);
+        save(null, sequence, file, zMin, zMax, tMin, tMax, fps, multipleFile, showProgress, true);
+    }
+
+    /**
+     * @deprecated Use
+     *             {@link #save(IFormatWriter, Sequence, File, int, int, int, int, int, boolean, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static void save(IFormatWriter formatWriter, Sequence sequence, File file, int zMin, int zMax, int tMin,
+            int tMax, int fps, boolean multipleFile, boolean showProgress)
+    {
+        save(formatWriter, sequence, file, zMin, zMax, tMin, tMax, fps, multipleFile, showProgress, true);
     }
 
     /**
@@ -520,24 +532,30 @@ public class Saver
      *        flag to indicate if images are saved in separate file
      * @param showProgress
      *        show progress bar
+     * @param addToRecent
+     *        add the saved sequence to recent opened sequence list
      */
     public static void save(IFormatWriter formatWriter, Sequence sequence, File file, int zMin, int zMax, int tMin,
-            int tMax, int fps, boolean multipleFile, boolean showProgress)
+            int tMax, int fps, boolean multipleFile, boolean showProgress, boolean addToRecent)
     {
         final String filePath = file.getAbsolutePath();
         final int sizeT = (tMax - tMin) + 1;
         final int sizeZ = (zMax - zMin) + 1;
         final int numImages = sizeT * sizeZ;
         final FileFrame saveFrame;
-        final ApplicationMenu mainMenu = Icy.getMainInterface().getApplicationMenu();
+        final ApplicationMenu mainMenu;
 
+        if (addToRecent)
+            mainMenu = Icy.getMainInterface().getApplicationMenu();
+        else
+            mainMenu = null;
         if (showProgress)
             saveFrame = new FileFrame("Saving", file.getAbsolutePath());
         else
             saveFrame = null;
         try
         {
-            if (showProgress)
+            if (saveFrame != null)
             {
                 saveFrame.setLength(numImages);
                 saveFrame.setPosition(0);
@@ -645,7 +663,7 @@ public class Saver
         }
         finally
         {
-            if (showProgress)
+            if (saveFrame != null)
                 saveFrame.close();
         }
     }
@@ -795,7 +813,20 @@ public class Saver
         if (formatWriter == null)
             writer = getWriter(file, ImageFileFormat.TIFF);
         else
-            writer = formatWriter;
+        {
+            // writer = formatWriter;
+
+            // TODO: temporary fix for the "incorrect close operation" bug in Bio-Formats
+            // with OME TIF writer, remove it when fixed.
+            try
+            {
+                writer = formatWriter.getClass().newInstance();
+            }
+            catch (Exception e)
+            {
+                throw new ServiceException("Can't create new writer instance: " + e);
+            }
+        }
 
         if (writer == null)
             throw new UnknownFormatException("Can't find a valid image writer for the specified file: " + filePath);

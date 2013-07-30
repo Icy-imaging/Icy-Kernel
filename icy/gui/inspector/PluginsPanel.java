@@ -20,9 +20,7 @@ package icy.gui.inspector;
 
 import icy.gui.component.ImageComponent;
 import icy.gui.component.button.IcyButton;
-import icy.gui.main.MainAdapter;
-import icy.gui.main.MainEvent;
-import icy.gui.main.MainListener;
+import icy.gui.main.GlobalPluginListener;
 import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
@@ -37,7 +35,6 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -50,7 +47,7 @@ import javax.swing.JScrollPane;
 /**
  * @author Stephane
  */
-public class PluginsPanel extends JPanel
+public class PluginsPanel extends JPanel implements GlobalPluginListener, Runnable
 {
     private class PluginComponent extends JPanel
     {
@@ -141,7 +138,6 @@ public class PluginsPanel extends JPanel
     private static final long serialVersionUID = 8950935360929507468L;
 
     private final JPanel pluginsPanel;
-    private final MainListener mainListener;
 
     /**
      * 
@@ -149,35 +145,6 @@ public class PluginsPanel extends JPanel
     public PluginsPanel()
     {
         super(true);
-
-        mainListener = new MainAdapter()
-        {
-            @Override
-            public void pluginOpened(MainEvent event)
-            {
-                ThreadUtil.invokeLater(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        rebuildPluginPanel();
-                    }
-                });
-            }
-
-            @Override
-            public void pluginClosed(MainEvent event)
-            {
-                ThreadUtil.invokeLater(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        rebuildPluginPanel();
-                    }
-                });
-            }
-        };
 
         pluginsPanel = new JPanel(true);
         pluginsPanel.setLayout(new BoxLayout(pluginsPanel, BoxLayout.PAGE_AXIS));
@@ -197,13 +164,13 @@ public class PluginsPanel extends JPanel
     {
         super.addNotify();
 
-        Icy.getMainInterface().addListener(mainListener);
+        Icy.getMainInterface().addGlobalPluginListener(this);
     }
 
     @Override
     public void removeNotify()
     {
-        Icy.getMainInterface().removeListener(mainListener);
+        Icy.getMainInterface().removeGlobalPluginListener(this);
 
         super.removeNotify();
     }
@@ -212,9 +179,7 @@ public class PluginsPanel extends JPanel
     {
         pluginsPanel.removeAll();
 
-        final ArrayList<Plugin> plugins = Icy.getMainInterface().getActivePlugins();
-
-        for (Plugin plugin : plugins)
+        for (Plugin plugin : Icy.getMainInterface().getActivePlugins())
             pluginsPanel.add(new PluginComponent(plugin));
         pluginsPanel.add(Box.createVerticalGlue());
 
@@ -238,5 +203,24 @@ public class PluginsPanel extends JPanel
         }
 
         return null;
+    }
+
+    @Override
+    public void run()
+    {
+        // rebuild the panel
+        rebuildPluginPanel();
+    }
+
+    @Override
+    public void pluginStarted(Plugin plugin)
+    {
+        ThreadUtil.bgRunSingle(this, true);
+    }
+
+    @Override
+    public void pluginEnded(Plugin plugin)
+    {
+        ThreadUtil.bgRunSingle(this, true);
     }
 }

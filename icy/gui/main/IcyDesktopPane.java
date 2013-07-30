@@ -233,7 +233,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
         {
             if (viewer.isInternalized())
             {
-                final IcyInternalFrame internalFrame = viewer.getInternalFrame();
+                final IcyInternalFrame internalFrame = viewer.getIcyInternalFrame();
 
                 if ((wantNotVisible || internalFrame.isVisible()) && (wantIconized || !internalFrame.isIcon()))
                     result.add(viewer);
@@ -266,7 +266,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
 
         for (Viewer v : viewers)
         {
-            final IcyInternalFrame internalFrame = v.getInternalFrame();
+            final IcyInternalFrame internalFrame = v.getIcyInternalFrame();
 
             internalFrame.setBounds(x, y, fw, fh);
             internalFrame.toFront();
@@ -361,7 +361,7 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
 
                 if (f < numFrames)
                 {
-                    final IcyInternalFrame internalFrame = viewers[f].getInternalFrame();
+                    final IcyInternalFrame internalFrame = viewers[f].getIcyInternalFrame();
 
                     internalFrame.setBounds(j * dx, i * dy, dx, dy);
                     internalFrame.toFront();

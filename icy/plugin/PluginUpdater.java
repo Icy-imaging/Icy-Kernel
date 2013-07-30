@@ -201,7 +201,7 @@ public class PluginUpdater
             else
             {
                 // show announcement for 15 seconds
-                new AnnounceFrame(toInstallPlugins.size() + " plugin update are availables", "View", new Runnable()
+                new AnnounceFrame(toInstallPlugins.size() + " plugin update are available", "View", new Runnable()
                 {
                     @Override
                     public void run()

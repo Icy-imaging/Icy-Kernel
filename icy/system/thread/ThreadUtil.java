@@ -186,9 +186,9 @@ public class ThreadUtil
      * Add background processing (low priority) of specified Runnable.<br>
      * Return false if queue is full.
      */
-    public static boolean bgRun(Runnable runnable, boolean onEventThread)
+    public static boolean bgRun(Runnable runnable, boolean onEDT)
     {
-        return bgProcessor.addTask(runnable, onEventThread);
+        return bgProcessor.addTask(runnable, onEDT);
     }
 
     /**
@@ -215,14 +215,14 @@ public class ThreadUtil
      * then nothing is done.<br>
      * Return false if queue is full.
      */
-    public static boolean bgRunSingle(Runnable runnable, boolean onEventThread)
+    public static boolean bgRunSingle(Runnable runnable, boolean onEDT)
     {
         final InstanceProcessor p = getInstanceProcessor(runnable);
 
         if (p.hasWaitingTasks(runnable))
             return false;
 
-        return p.addTask(runnable, onEventThread);
+        return p.addTask(runnable, onEDT);
     }
 
     /**
@@ -281,7 +281,8 @@ public class ThreadUtil
         }
         catch (InterruptedException e)
         {
-            // ignore
+            // have to interrupt the thread
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -296,7 +297,8 @@ public class ThreadUtil
         }
         catch (InterruptedException e)
         {
-            // ignore
+            // have to interrupt the thread
+            Thread.currentThread().interrupt();
         }
     }
 }

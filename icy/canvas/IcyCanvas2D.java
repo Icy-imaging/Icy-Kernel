@@ -21,14 +21,21 @@ package icy.canvas;
 import icy.gui.main.MainFrame;
 import icy.gui.viewer.Viewer;
 import icy.main.Icy;
+import icy.painter.Overlay;
+import icy.sequence.Sequence;
 
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+
+import javax.swing.JComponent;
 
 /**
  * @author Stephane
@@ -41,9 +48,10 @@ public abstract class IcyCanvas2D extends IcyCanvas
     private static final long serialVersionUID = 743937493919099495L;
 
     // image coordinate to canvas coordinate transform
-    private final AffineTransform transform;
+    protected final AffineTransform transform;
     // canvas coordinate to image coordinate transform
-    private final AffineTransform inverseTransform;
+    protected AffineTransform inverseTransform;
+    protected boolean transformChanged;
 
     public IcyCanvas2D(Viewer viewer)
     {
@@ -52,9 +60,28 @@ public abstract class IcyCanvas2D extends IcyCanvas
         // default for 2D canvas
         posX = -1;
         posY = -1;
+        posZ = 0;
+        posT = 0;
 
         transform = new AffineTransform();
         inverseTransform = new AffineTransform();
+        transformChanged = false;
+    }
+
+    @Override
+    public void setPositionZ(int z)
+    {
+        // position -1 not supported for Z dimension on this canvas
+        if (z != -1)
+            super.setPositionZ(z);
+    }
+
+    @Override
+    public void setPositionT(int t)
+    {
+        // position -1 not supported for T dimension on this canvas
+        if (t != -1)
+            super.setPositionT(t);
     }
 
     /**
@@ -179,7 +206,7 @@ public abstract class IcyCanvas2D extends IcyCanvas
         final Point2D.Double result = new Point2D.Double(0d, 0d);
 
         // we can directly use the transform object here
-        inverseTransform.transform(new Point2D.Double(x, y), result);
+        getInverseTransform().transform(new Point2D.Double(x, y), result);
 
         return result;
 
@@ -298,7 +325,7 @@ public abstract class IcyCanvas2D extends IcyCanvas
         final Point result = new Point();
 
         // we can directly use the transform object here
-        transform.transform(new Point2D.Double(x, y), result);
+        getTransform().transform(new Point2D.Double(x, y), result);
 
         return result;
 
@@ -387,15 +414,24 @@ public abstract class IcyCanvas2D extends IcyCanvas
     }
 
     /**
-     * Get 2D canvas visible rectangle (canvas coordinate)
+     * Get 2D canvas visible rectangle (canvas coordinate).
      */
     public Rectangle getCanvasVisibleRect()
     {
+        // try to return view component visible rectangle by default
+        final Component comp = getViewComponent();
+        if (comp instanceof JComponent)
+            return ((JComponent) comp).getVisibleRect();
+
+        // just return the canvas component visible rectangle
         return getVisibleRect();
     }
 
     /**
-     * Get 2D image visible rectangle (image coordinate)
+     * Get 2D image visible rectangle (image coordinate).<br>
+     * Prefer the {@link Graphics#getClipBounds()} method for paint operation as the image visible
+     * rectangle may return wrong information sometime (when using the
+     * {@link #getRenderedImage(int, int, int, boolean)} method for instance).
      */
     public Rectangle2D getImageVisibleRect()
     {
@@ -552,21 +588,14 @@ public abstract class IcyCanvas2D extends IcyCanvas
         transform.translate(getOffsetX(), getOffsetY());
         transform.scale(getScaleX(), getScaleY());
 
-        inverseTransform.setTransform(transform);
-
-        try
-        {
-            inverseTransform.invert();
-        }
-        catch (NoninvertibleTransformException e)
-        {
-            e.printStackTrace();
-        }
+        transformChanged = true;
     }
 
     /**
-     * Return the 2D {@link AffineTransform} object which convert from<br>
-     * image coordinate to canvas coordinate.
+     * Return the 2D {@link AffineTransform} object which convert from image coordinate to canvas
+     * coordinate.<br>
+     * {@link Overlay} should directly use the transform information from the {@link Graphics2D}
+     * object provided in their {@link Overlay#paint(Graphics2D, Sequence, IcyCanvas)} method.
      */
     public AffineTransform getTransform()
     {
@@ -574,11 +603,27 @@ public abstract class IcyCanvas2D extends IcyCanvas
     }
 
     /**
-     * Return the 2D {@link AffineTransform} object which convert from<br>
-     * canvas coordinate to image coordinate.
+     * Return the 2D {@link AffineTransform} object which convert from canvas coordinate to image
+     * coordinate.<br>
+     * {@link Overlay} should directly use the transform information from the {@link Graphics2D}
+     * object provided in their {@link Overlay#paint(Graphics2D, Sequence, IcyCanvas)} method.
      */
     public AffineTransform getInverseTransform()
     {
+        if (transformChanged)
+        {
+            try
+            {
+                inverseTransform = transform.createInverse();
+            }
+            catch (NoninvertibleTransformException e)
+            {
+                inverseTransform = new AffineTransform();
+            }
+
+            transformChanged = false;
+        }
+
         return inverseTransform;
     }
 

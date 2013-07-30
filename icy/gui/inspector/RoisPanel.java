@@ -20,9 +20,7 @@ package icy.gui.inspector;
 
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
-import icy.gui.inspector.InspectorPanel.FocusedViewerSequenceListener;
-import icy.gui.viewer.Viewer;
-import icy.gui.viewer.ViewerEvent;
+import icy.gui.main.ActiveSequenceListener;
 import icy.main.Icy;
 import icy.roi.ROI;
 import icy.sequence.Sequence;
@@ -36,6 +34,7 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -55,8 +54,7 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public class RoisPanel extends JPanel implements FocusedViewerSequenceListener, TextChangeListener,
-        ListSelectionListener
+public class RoisPanel extends JPanel implements ActiveSequenceListener, TextChangeListener, ListSelectionListener
 {
     /**
      * 
@@ -65,7 +63,7 @@ public class RoisPanel extends JPanel implements FocusedViewerSequenceListener, 
 
     static final String[] columnNames = {"Name", "Type"};
 
-    ArrayList<ROI> rois;
+    List<ROI> rois;
 
     // GUI
     final AbstractTableModel tableModel;
@@ -268,7 +266,7 @@ public class RoisPanel extends JPanel implements FocusedViewerSequenceListener, 
 
     private Sequence getSequence()
     {
-        return Icy.getMainInterface().getFocusedSequence();
+        return Icy.getMainInterface().getActiveSequence();
     }
 
     public void setTypeFilter(String type)
@@ -336,9 +334,9 @@ public class RoisPanel extends JPanel implements FocusedViewerSequenceListener, 
     /**
      * Return list of different ROI type (ROI class name) from the specified ROI list
      */
-    private ArrayList<String> getRoiTypes(ArrayList<ROI> rois)
+    private List<String> getRoiTypes(List<ROI> rois)
     {
-        final ArrayList<String> result = new ArrayList<String>();
+        final List<String> result = new ArrayList<String>();
 
         for (ROI roi : rois)
         {
@@ -373,9 +371,9 @@ public class RoisPanel extends JPanel implements FocusedViewerSequenceListener, 
     // return null;
     // }
 
-    public ArrayList<ROI> getSelectedRois()
+    public List<ROI> getSelectedRois()
     {
-        final ArrayList<ROI> result = new ArrayList<ROI>();
+        final List<ROI> result = new ArrayList<ROI>();
 
         for (int rowIndex : table.getSelectedRows())
         {
@@ -400,7 +398,7 @@ public class RoisPanel extends JPanel implements FocusedViewerSequenceListener, 
         return result;
     }
 
-    void setSelectedRoisInternal(ArrayList<ROI> newSelected)
+    void setSelectedRoisInternal(List<ROI> newSelected)
     {
         isSelectionAdjusting = true;
         try
@@ -425,7 +423,7 @@ public class RoisPanel extends JPanel implements FocusedViewerSequenceListener, 
         }
     }
 
-    void setSelectedRois(ArrayList<ROI> newSelected, ArrayList<ROI> oldSelected)
+    void setSelectedRois(List<ROI> newSelected, List<ROI> oldSelected)
     {
         final int newSelectedSize;
         final int oldSelectedSize;
@@ -453,7 +451,7 @@ public class RoisPanel extends JPanel implements FocusedViewerSequenceListener, 
         selectionChanged();
     }
 
-    public void setSelectedRois(ArrayList<ROI> values)
+    public void setSelectedRois(List<ROI> values)
     {
         setSelectedRois(values, getSelectedRois());
     }
@@ -495,9 +493,9 @@ public class RoisPanel extends JPanel implements FocusedViewerSequenceListener, 
             roiType.setSelectedIndex(0);
     }
 
-    ArrayList<ROI> filterList(ArrayList<ROI> list, String nameFilterText)
+    List<ROI> filterList(List<ROI> list, String nameFilterText)
     {
-        final ArrayList<ROI> result = new ArrayList<ROI>();
+        final List<ROI> result = new ArrayList<ROI>();
 
         final boolean typeEmpty = roiType.getSelectedIndex() == 0;
         final boolean nameEmpty = StringUtil.isEmpty(nameFilterText, true);
@@ -603,26 +601,20 @@ public class RoisPanel extends JPanel implements FocusedViewerSequenceListener, 
     }
 
     @Override
-    public void focusChanged(Viewer viewer)
-    {
-
-    }
-
-    @Override
-    public void focusedViewerChanged(ViewerEvent event)
-    {
-
-    }
-
-    @Override
-    public void focusChanged(Sequence value)
+    public void sequenceActivated(Sequence value)
     {
         // refresh ROI type list
         ThreadUtil.bgRunSingle(roiTypeListRefresher);
     }
 
     @Override
-    public void focusedSequenceChanged(SequenceEvent event)
+    public void sequenceDeactivated(Sequence sequence)
+    {
+        // nothing here
+    }
+
+    @Override
+    public void activeSequenceChanged(SequenceEvent event)
     {
         if (event.getSourceType() == SequenceEventSourceType.SEQUENCE_ROI)
         {

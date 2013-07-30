@@ -33,7 +33,6 @@ import icy.image.lut.LUT;
 import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
 import icy.painter.Overlay;
-import icy.painter.Painter;
 import icy.painter.VtkPainter;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent.SequenceEventType;
@@ -50,15 +49,16 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.Box;
@@ -103,7 +103,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 {
     private static final long serialVersionUID = -2677870897470280726L;
 
-    private class CustomVtkPanel extends IcyVtkPanel implements MouseWheelListener
+    private class CustomVtkPanel extends IcyVtkPanel
     {
         /**
          * 
@@ -116,22 +116,26 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
             // key events should be forwarded from the viewer
             removeKeyListener(this);
-            // we want mouse wheel events
-            addMouseWheelListener(this);
         }
 
         @Override
         public void paint(Graphics g)
         {
-            // call paint on painters first
+            // call paint on overlays first
             if (isLayersVisible())
             {
+                final List<Layer> layers = getLayers();
+                final Layer imageLayer = getImageLayer();
                 final Sequence seq = getSequence();
 
-                if (seq != null)
+                // call paint in inverse order to have first overlay "at top"
+                for (int i = layers.size() - 1; i >= 0; i--)
                 {
-                    for (Painter painter : seq.getPainters())
-                        painter.paint(null, seq, Canvas3D.this);
+                    final Layer layer = layers.get(i);
+
+                    // don't call paint on the image layer
+                    if (layer != imageLayer)
+                        paintLayer(seq, layer);
                 }
             }
 
@@ -139,18 +143,20 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             super.paint(g);
         }
 
+        /**
+         * Draw specified image layer and others layers on specified {@link Graphics2D} object.
+         */
+        void paintLayer(Sequence seq, Layer layer)
+        {
+            if (layer.isVisible())
+                layer.getOverlay().paint(null, seq, Canvas3D.this);
+        }
+
         @Override
         public void mouseEntered(MouseEvent e)
         {
-            // send mouse event to painters
-            for (Layer layer : getVisibleLayers())
-            {
-                final Painter painter = layer.getPainter();
-
-                // extra event for Overlay
-                if (painter instanceof Overlay)
-                    ((Overlay) painter).mouseEntered(e, null, Canvas3D.this);
-            }
+            // send mouse event to overlays
+            Canvas3D.this.mouseEntered(e, null);
 
             super.mouseEntered(e);
         }
@@ -158,15 +164,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         @Override
         public void mouseExited(MouseEvent e)
         {
-            // send mouse event to painters
-            for (Layer layer : getVisibleLayers())
-            {
-                final Painter painter = layer.getPainter();
-
-                // extra event for Overlay
-                if (painter instanceof Overlay)
-                    ((Overlay) painter).mouseExited(e, null, Canvas3D.this);
-            }
+            // send mouse event to overlays
+            Canvas3D.this.mouseExited(e, null);
 
             super.mouseExited(e);
         }
@@ -174,9 +173,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         @Override
         public void mouseClicked(MouseEvent e)
         {
-            // send mouse event to painters first
-            for (Layer layer : getVisibleLayers())
-                layer.getPainter().mouseClick(e, null, Canvas3D.this);
+            // send mouse event to overlays
+            Canvas3D.this.mouseClick(e, null);
 
             super.mouseClicked(e);
         }
@@ -184,9 +182,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         @Override
         public void mouseMoved(MouseEvent e)
         {
-            // send mouse event to painters first
-            for (Layer layer : getVisibleLayers())
-                layer.getPainter().mouseMove(e, null, Canvas3D.this);
+            // send mouse event to overlays
+            Canvas3D.this.mouseMove(e, null);
 
             super.mouseMoved(e);
         }
@@ -194,9 +191,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         @Override
         public void mouseDragged(MouseEvent e)
         {
-            // send mouse event to painters first
-            for (Layer layer : getVisibleLayers())
-                layer.getPainter().mouseDrag(e, null, Canvas3D.this);
+            // send mouse event to overlays
+            Canvas3D.this.mouseDrag(e, null);
 
             super.mouseDragged(e);
         }
@@ -204,9 +200,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         @Override
         public void mousePressed(MouseEvent e)
         {
-            // send mouse event to painters first
-            for (Layer layer : getVisibleLayers())
-                layer.getPainter().mousePressed(e, null, Canvas3D.this);
+            // send mouse event to overlays
+            Canvas3D.this.mousePressed(e, null);
 
             super.mousePressed(e);
         }
@@ -214,9 +209,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         @Override
         public void mouseReleased(MouseEvent e)
         {
-            // send mouse event to painters first
-            for (Layer layer : getVisibleLayers())
-                layer.getPainter().mouseReleased(e, null, Canvas3D.this);
+            // send mouse event to overlays
+            Canvas3D.this.mouseReleased(e, null);
 
             super.mouseReleased(e);
         }
@@ -224,15 +218,10 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         @Override
         public void mouseWheelMoved(MouseWheelEvent e)
         {
-            // send mouse event to painters first
-            for (Layer layer : getVisibleLayers())
-            {
-                final Painter painter = layer.getPainter();
+            // send mouse event to overlays
+            Canvas3D.this.mouseWheelMoved(e, null);
 
-                // extra event for Overlay
-                if (painter instanceof Overlay)
-                    ((Overlay) painter).mouseWheelMoved(e, null, Canvas3D.this);
-            }
+            super.mouseWheelMoved(e);
         }
     }
 
@@ -291,10 +280,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
         initialized = false;
 
-        // arrange to our dimension format
-        if (posT == -1)
-            posT = 0;
-        posZ = -1;
+        // all channel visible at once by default
         posC = -1;
 
         final Sequence seq = getSequence();
@@ -503,7 +489,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         setupVolumeScale();
 
         // add vtkPainter actors to the renderer
-        for (Layer l : layers)
+        for (Layer l : getLayers())
             addLayerActors(l);
 
         // reset camera
@@ -979,10 +965,10 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         if (layer != null)
         {
             // add painter actor from the vtk render
-            final Painter painter = layer.getPainter();
+            final Overlay overlay = layer.getOverlay();
 
-            if (painter instanceof VtkPainter)
-                return ((VtkPainter) painter).getProps();
+            if (overlay instanceof VtkPainter)
+                return ((VtkPainter) overlay).getProps();
         }
 
         return new vtkProp[0];
@@ -1144,7 +1130,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
     @Override
     public void keyPressed(KeyEvent e)
     {
-        // send to painters
+        // send to overlays
         super.keyPressed(e);
 
         // forward to view
@@ -1154,7 +1140,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
     @Override
     public void keyReleased(KeyEvent e)
     {
-        // send to painters
+        // send to overlays
         super.keyReleased(e);
 
         // forward to view
@@ -1477,9 +1463,9 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
     }
 
     @Override
-    protected void sequencePainterChanged(Painter painter, SequenceEventType type)
+    protected void sequenceOverlayChanged(Overlay overlay, SequenceEventType type)
     {
-        super.sequencePainterChanged(painter, type);
+        super.sequenceOverlayChanged(overlay, type);
 
         if (!initialized)
             return;
@@ -1499,7 +1485,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         // layer visibility property modified ?
         if ((event.getType() == LayersEventType.CHANGED) && Layer.isPaintProperty(event.getProperty()))
         {
-            // TODO: refresh actor properties from layers properties
+            // TODO: refresh actor properties from layers properties (alpha and visible)
             // refresh();
         }
     }

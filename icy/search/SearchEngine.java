@@ -98,7 +98,7 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
                         IcyExceptionHandler.handleException(plugin, t, true);
                     }
                 }
-                
+
                 Collections.sort(producers);
 
                 // restore last search
@@ -321,25 +321,25 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
         listeners.remove(listener);
     }
 
-    public void fireResultChangedEvent(SearchResult result)
+    protected void fireResultChangedEvent(SearchResult result)
     {
         for (SearchEngineListener listener : listeners)
             listener.resultChanged(this, result);
     }
 
-    public void fireResultsChangedEvent()
+    protected void fireResultsChangedEvent()
     {
         for (SearchEngineListener listener : listeners)
             listener.resultsChanged(this);
     }
 
-    public void fireSearchStartedEvent()
+    protected void fireSearchStartedEvent()
     {
         for (SearchEngineListener listener : listeners)
             listener.searchStarted(this);
     }
 
-    public void fireSearchCompletedEvent()
+    protected void fireSearchCompletedEvent()
     {
         for (SearchEngineListener listener : listeners)
             listener.searchCompleted(this);

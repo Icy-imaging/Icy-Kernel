@@ -215,7 +215,7 @@ public class ImageJTask extends RibbonTask implements PropertyChangeListener
         new Executer("Quit", null);
     }
 
-    public void onSequenceFocusChange()
+    public void onSequenceActivationChange()
     {
         if (Icy.getMainInterface().getActiveSequence() != null)
             ijToolBand.setActionToIJ();

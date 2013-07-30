@@ -18,6 +18,7 @@
  */
 package icy.system;
 
+import icy.file.FileUtil;
 import icy.type.collection.CollectionUtil;
 import icy.util.ReflectionUtil;
 
@@ -640,35 +641,70 @@ public class SystemUtil
         return "";
     }
 
+    /**
+     * Returns true is the operating system support link (symbolic or not).
+     */
     public static boolean isLinkSupported()
     {
         return isMac() || isUnix();
     }
 
+    /**
+     * Returns true is the JVM is 32 bits.
+     */
     public static boolean is32bits()
     {
         return getJavaArchDataModel() == 32;
     }
 
+    /**
+     * Returns true is the JVM is 64 bits.
+     */
     public static boolean is64bits()
     {
         return getJavaArchDataModel() == 64;
     }
 
+    /**
+     * Returns true is the Operating System is Windows based.
+     */
     public static boolean isWindow()
     {
         return (getOSName().toLowerCase().indexOf("win") >= 0);
     }
 
+    /**
+     * Returns true is the Operating System is Mac OS based.
+     */
     public static boolean isMac()
     {
         return (getOSName().toLowerCase().indexOf("mac") >= 0);
     }
 
+    /**
+     * Returns true is the Operating System is Unix / Linux based.
+     */
     public static boolean isUnix()
     {
         final String os = getOSName().toLowerCase();
         return (os.indexOf("nix") >= 0) || (os.indexOf("nux") >= 0);
+    }
+
+    /**
+     * Returns default temporary directory.
+     * Same as {@link FileUtil#getTempDirectory()}
+     */
+    public static String getTempDirectory()
+    {
+        return FileUtil.getTempDirectory();
+    }
+
+    /**
+     * Returns temporary native library path (used to load native libraries from plugin)
+     */
+    public static String getTempLibraryDirectory()
+    {
+        return FileUtil.getTempDirectory() + "lib";
     }
 
     public static boolean addToJavaLibraryPath(String directories[])
@@ -688,7 +724,8 @@ public class SystemUtil
             {
                 if (!userPaths.contains(dir))
                     userPaths.add(dir);
-                sysPaths += path_separator + dir;
+                if (!sysPaths.contains(dir))
+                    sysPaths += path_separator + dir;
             }
 
             // set back user library path
@@ -707,23 +744,38 @@ public class SystemUtil
         }
     }
 
+    /**
+     * Load the specified native library.
+     * 
+     * @param dir
+     *        directory from where we want to load the native library.
+     * @param name
+     *        name of the library.<br/>
+     *        The filename of the library is automatically built depending the operating system.
+     */
     public static void loadLibrary(String dir, String name)
     {
         final File libPath = new File(dir, System.mapLibraryName(name));
 
         if (libPath.exists())
-            Runtime.getRuntime().load(libPath.getAbsolutePath());
+            System.load(libPath.getAbsolutePath());
         else
             System.loadLibrary(name);
     }
 
-    public static void loadLibrary(String path)
+    /**
+     * Load the specified native library.
+     * 
+     * @param pathname
+     *        complete path or name of the library we want to load
+     */
+    public static void loadLibrary(String pathname)
     {
-        final File file = new File(path);
+        final File file = new File(pathname);
 
         if (file.exists())
-            Runtime.getRuntime().load(file.getAbsolutePath());
+            System.load(file.getAbsolutePath());
         else
-            System.loadLibrary(path);
+            System.loadLibrary(pathname);
     }
 }

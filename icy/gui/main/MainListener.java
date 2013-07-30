@@ -20,6 +20,16 @@ package icy.gui.main;
 
 import java.util.EventListener;
 
+/**
+ * @deprecated Use one of these interface instead:<br/>
+ *             {@link GlobalViewerListener}<br/>
+ *             {@link GlobalSequenceListener}<br/>
+ *             {@link GlobalROIListener}<br/>
+ *             {@link GlobalOverlayListener}<br/>
+ *             {@link GlobalPluginListener}
+ * @author Stephane
+ */
+@Deprecated
 public interface MainListener extends EventListener
 {
     /**

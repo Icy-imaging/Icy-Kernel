@@ -40,7 +40,6 @@ import icy.math.SmoothMover.SmoothMoveType;
 import icy.math.SmoothMover.SmoothMoverAdapter;
 import icy.painter.ImageOverlay;
 import icy.painter.Overlay;
-import icy.painter.Painter;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.CanvasPreferences;
 import icy.preferences.XMLPreferences;
@@ -156,7 +155,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 g2.setFont(canvasView.font);
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                if (getCurrentImage() != null)
+                if (canvasView.imageCache.isProcessing())
                     // cache not yet built
                     canvasView.drawTextCenter(g2, "Loading...", 0.8f);
                 else
@@ -729,12 +728,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 // important to set it to false at beginning
                 needRebuild = false;
 
-                final IcyBufferedImage img = Canvas2D.this.getCurrentImage();
-
-                if (img != null)
-                    imageCache = IcyBufferedImageUtil.getARGBImage(img, getLut(), imageCache);
-                else
-                    imageCache = null;
+                // build image
+                imageCache = Canvas2D.this.getARGBImage(getPositionT(), getPositionZ(), getPositionC(), imageCache);
 
                 // repaint now
                 CanvasView.this.repaint();
@@ -1173,9 +1168,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mouseClicked(MouseEvent e)
         {
-            // send mouse event to painters first
-            for (Layer layer : getVisibleLayers())
-                layer.getPainter().mouseClick(e, getMouseImagePos(), Canvas2D.this);
+            // send mouse event to overlays first
+            Canvas2D.this.mouseClick(e);
 
             // process
             if (onMouseClicked(e.isConsumed(), e.getClickCount(), EventUtil.isLeftMouseButton(e),
@@ -1186,9 +1180,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mousePressed(MouseEvent e)
         {
-            // send mouse event to painters now
-            for (Layer layer : getVisibleLayers())
-                layer.getPainter().mousePressed(e, getMouseImagePos(), Canvas2D.this);
+            // send mouse event to overlays first
+            Canvas2D.this.mousePressed(e);
 
             // not yet consumed
             if (!e.isConsumed())
@@ -1216,7 +1209,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             // attach to sequence
                             seq.addROI(roi, true);
                             // then do exclusive selection
-                            roi.setSelected(true, true);
+                            seq.setSelectedROI(roi);
                         }
 
                         // consume event
@@ -1234,9 +1227,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mouseReleased(MouseEvent e)
         {
-            // send mouse event to painters first
-            for (Layer layer : getVisibleLayers())
-                layer.getPainter().mouseReleased(e, getMouseImagePos(), Canvas2D.this);
+            // send mouse event to overlays first
+            Canvas2D.this.mouseReleased(e);
 
             // process
             if (onMouseReleased(e.isConsumed(), EventUtil.isLeftMouseButton(e), EventUtil.isRightMouseButton(e),
@@ -1249,15 +1241,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             hasMouseFocus = true;
 
-            // send mouse event to painters
-            for (Layer layer : getVisibleLayers())
-            {
-                final Painter painter = layer.getPainter();
-
-                // extra event for Overlay
-                if (painter instanceof Overlay)
-                    ((Overlay) painter).mouseEntered(e, getMouseImagePos(), Canvas2D.this);
-            }
+            // send mouse event to overlays
+            Canvas2D.this.mouseEntered(e);
 
             refresh();
         }
@@ -1267,15 +1252,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             hasMouseFocus = false;
 
-            // send mouse event to painters after
-            for (Layer layer : getVisibleLayers())
-            {
-                final Painter painter = layer.getPainter();
-
-                // extra event for Overlay
-                if (painter instanceof Overlay)
-                    ((Overlay) painter).mouseExited(e, getMouseImagePos(), Canvas2D.this);
-            }
+            // send mouse event to overlays
+            Canvas2D.this.mouseExited(e);
 
             refresh();
         }
@@ -1286,9 +1264,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             // process first without consume (update mouse canvas position)
             onMousePositionChanged(e.getPoint());
 
-            // send mouse event to painters
-            for (Layer layer : getVisibleLayers())
-                layer.getPainter().mouseMove(e, getMouseImagePos(), Canvas2D.this);
+            // send mouse event to overlays after so mouse canvas position is ok
+            Canvas2D.this.mouseMove(e);
         }
 
         @Override
@@ -1297,9 +1274,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             // process first without consume (update mouse canvas position)
             onMousePositionChanged(e.getPoint());
 
-            // send mouse event to painters after
-            for (Layer layer : getVisibleLayers())
-                layer.getPainter().mouseDrag(e, getMouseImagePos(), Canvas2D.this);
+            // send mouse event to overlays after so mouse canvas position is ok
+            Canvas2D.this.mouseDrag(e);
 
             // process
             if (onMouseDragged(e.isConsumed(), e.getPoint(), EventUtil.isLeftMouseButton(e),
@@ -1310,15 +1286,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         @Override
         public void mouseWheelMoved(MouseWheelEvent e)
         {
-            // send mouse event to painters after
-            for (Layer layer : getVisibleLayers())
-            {
-                final Painter painter = layer.getPainter();
-
-                // extra event for Overlay
-                if (painter instanceof Overlay)
-                    ((Overlay) painter).mouseWheelMoved(e, getMouseImagePos(), Canvas2D.this);
-            }
+            // send mouse event to overlays
+            Canvas2D.this.mouseWheelMoved(e);
 
             // process
             if (onMouseWheelMoved(e.isConsumed(), e.getWheelRotation(), EventUtil.isLeftMouseButton(e),
@@ -1360,7 +1329,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 else
                     g.setComposite(AlphaComposite.SrcOver);
 
-                layer.getPainter().paint(g, seq, Canvas2D.this);
+                layer.getOverlay().paint(g, seq, Canvas2D.this);
             }
         }
 
@@ -1952,9 +1921,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     {
         super(viewer);
 
-        // set position to first Z and T
-        posZ = 0;
-        posT = 0;
         // all channel visible at once
         posC = -1;
 
@@ -2302,7 +2268,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     }
 
     @Override
-    public void addViewerToolbarComponents(JToolBar toolBar)
+    public void customizeToolbar(JToolBar toolBar)
     {
         toolBar.addSeparator();
         toolBar.add(zoomFitCanvasButton);
@@ -2531,38 +2497,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     public boolean isSynchronizationSupported()
     {
         return true;
-    }
-
-    @Override
-    public int getCanvasSizeX()
-    {
-        // can be called before constructor ended
-        if (canvasView == null)
-            return 0;
-
-        // by default we use panel width
-        int res = canvasView.getWidth();
-        // preferred width if size not yet set
-        if (res == 0)
-            res = canvasView.getPreferredSize().width;
-
-        return res;
-    }
-
-    @Override
-    public int getCanvasSizeY()
-    {
-        // can be called before constructor ended
-        if (canvasView == null)
-            return 0;
-
-        // by default we use panel height
-        int res = canvasView.getHeight();
-        // preferred height if size not yet set
-        if (res == 0)
-            res = canvasView.getPreferredSize().height;
-
-        return res;
     }
 
     @Override
@@ -2795,7 +2729,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     @Override
     public void keyPressed(KeyEvent e)
     {
-        // send to painters
+        // send to overlays
         super.keyPressed(e);
 
         if (!e.isConsumed())
@@ -2884,7 +2818,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     @Override
     public void keyReleased(KeyEvent e)
     {
-        // send to painters
+        // send to overlays
         super.keyReleased(e);
 
         // forward to view
@@ -2899,6 +2833,16 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         canvasView.imageChanged();
         canvasView.layersChanged();
         canvasView.refresh();
+    }
+
+    public BufferedImage getARGBImage(int t, int z, int c, BufferedImage out)
+    {
+        final IcyBufferedImage img = Canvas2D.this.getImage(t, z, c);
+
+        if (img != null)
+            return IcyBufferedImageUtil.getARGBImage(img, getLut(), out);
+
+        return null;
     }
 
     @Override
@@ -2933,6 +2877,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             final BufferedImage result = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
             final Graphics2D g = result.createGraphics();
 
+            // set default clip region
+            g.setClip(0, 0, size.width, size.height);
+
             if (cv)
             {
                 // apply filtering
@@ -2954,9 +2901,15 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 // apply transformation
                 g.transform(getTransform());
             }
+            else
+            {
+                // default filtering
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            }
 
             // create temporary image, overlay and layer (not optimal for memory and performance)
-            final BufferedImage img = IcyBufferedImageUtil.getARGBImage(getImage(t, z, c), getLut());
+            final BufferedImage img = getARGBImage(t, z, c, null);
             final Overlay imgOverlay = new ImageOverlay("Image", img);
             final Layer imgLayer = new Layer(imgOverlay);
 
@@ -3203,15 +3156,20 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     // absolute mouse position
                     SwingUtilities.convertPointToScreen(mouseAbsolutePos, canvasView);
 
-                    // simulate a mouse move event so painters can handle position change
+                    // simulate a mouse move event so overlays can handle position change
                     final MouseEvent mouseEvent = new MouseEvent(this, MouseEvent.MOUSE_MOVED,
                             System.currentTimeMillis(), 0, mouseCanvasPos.x, mouseCanvasPos.y, mouseAbsolutePos.x,
                             mouseAbsolutePos.y, 0, false, 0);
 
-                    // send mouse move event to painters
-                    for (Layer layer : getVisibleLayers())
-                        layer.getPainter().mouseMove(mouseEvent, new Point2D.Double(mouseImagePos.x, mouseImagePos.y),
-                                this);
+                    final boolean globalVisible = isLayersVisible();
+                    final Point2D.Double pt = new Point2D.Double(mouseImagePos.x, mouseImagePos.y);
+
+                    // send mouse event to overlays
+                    for (Layer layer : getLayers())
+                    {
+                        if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
+                            layer.getOverlay().mouseMove(mouseEvent, pt, this);
+                    }
                 }
 
                 // update mouse cursor
@@ -3255,9 +3213,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     }
 
     @Override
-    protected void sequencePainterChanged(Painter painter, SequenceEventType type)
+    protected void sequenceOverlayChanged(Overlay overlay, SequenceEventType type)
     {
-        super.sequencePainterChanged(painter, type);
+        super.sequenceOverlayChanged(overlay, type);
 
         // layer refresh
         if (canvasView != null)
@@ -3296,6 +3254,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         // unselected all ROI
         if (seq != null)
-            seq.setSelectedROIs(null);
+            seq.setSelectedROI(null);
     }
 }

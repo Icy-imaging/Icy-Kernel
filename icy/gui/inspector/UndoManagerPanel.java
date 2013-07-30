@@ -18,7 +18,9 @@
  */
 package icy.gui.inspector;
 
+import icy.gui.main.ActiveSequenceListener;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceEvent;
 import icy.system.thread.ThreadUtil;
 import icy.undo.IcyUndoManager;
 import icy.undo.IcyUndoManagerListener;
@@ -42,7 +44,8 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public class UndoManagerPanel extends JPanel implements ListSelectionListener, IcyUndoManagerListener
+public class UndoManagerPanel extends JPanel implements ActiveSequenceListener, ListSelectionListener,
+        IcyUndoManagerListener
 {
     /**
      * 
@@ -193,14 +196,6 @@ public class UndoManagerPanel extends JPanel implements ListSelectionListener, I
         // add(controlPanel, BorderLayout.SOUTH);
     }
 
-    public void focusChanged(Sequence sequence)
-    {
-        if (sequence == null)
-            setUndoManager(null);
-        else
-            setUndoManager(sequence.getUndoManager());
-    }
-
     public void setUndoManager(IcyUndoManager value)
     {
         if (undoManager != value)
@@ -301,5 +296,26 @@ public class UndoManagerPanel extends JPanel implements ListSelectionListener, I
     public void undoManagerChanged(IcyUndoManager source)
     {
         refreshTableData();
+    }
+
+    @Override
+    public void sequenceActivated(Sequence sequence)
+    {
+        if (sequence == null)
+            setUndoManager(null);
+        else
+            setUndoManager(sequence.getUndoManager());
+    }
+
+    @Override
+    public void sequenceDeactivated(Sequence sequence)
+    {
+        // nothing here
+    }
+
+    @Override
+    public void activeSequenceChanged(SequenceEvent event)
+    {
+        // nothing here
     }
 }

@@ -7,13 +7,14 @@ Class-Path: resources.jar ij/ij.jar lib/arpack-combo.jar lib/bio-formats.jar
   lib/flanagan.jar lib/irclib.jar lib/j3dcore.jar lib/j3dutils.jar lib/jai_codec.jar
   lib/jai_core.jar lib/jai_imageio.jar lib/Jama.jar lib/javacl.jar lib/javassist.jar
   lib/jcommon.jar lib/jeval.jar lib/jfreechart.jar lib/jmf.jar
-  lib/jplasma.jar lib/jtransforms.jar lib/junit.jar lib/jxl.jar lib/laf-plugin.jar
-  lib/laf-widget.jar lib/loci-common.jar lib/log4j.jar lib/mediaplayer.jar lib/metakit.jar
-  lib/multiplayer.jar lib/netcdf.jar lib/netlib-java.jar lib/ome-io.jar lib/ome-xml.jar
-  lib/optimization.jar lib/parallelcolt.jar lib/poi.jar lib/poi-excelant.jar lib/poi-ooxml.jar
+  lib/jplasma.jar lib/jtransforms.jar lib/junit.jar lib/jxl.jar lib/kryo.jar
+  lib/laf-plugin.jar lib/laf-widget.jar lib/loci-common.jar lib/log4j.jar
+  lib/mediaplayer.jar lib/metakit.jar lib/multiplayer.jar lib/native-lib-loader.jar
+  lib/netcdf.jar lib/netlib-java.jar lib/ome-io.jar lib/ome-xml.jar lib/optimization.jar
+  lib/parallelcolt.jar lib/poi.jar lib/poi-excelant.jar lib/poi-ooxml.jar
   lib/poi-ooxml-schemas.jar lib/poi-scratchpad.jar lib/phys2d.jar lib/scifio.jar
   lib/simpleItk.jar lib/slf4j-api.jar lib/slf4j-log4j.jar lib/sound.jar lib/substance.jar
   lib/substance-flamingo.jar lib/substance-swingx.jar lib/swingx-all.jar lib/Tracking.jar
-  lib/trident.jar lib/vecmath.jar lib/vtk.jar lib/xuggler.jar	
+  lib/trident.jar lib/turbojpeg.jar lib/vecmath.jar lib/vtk.jar lib/xuggler.jar	
   
 Main-Class: icy.main.Icy

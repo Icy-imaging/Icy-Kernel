@@ -51,6 +51,7 @@ import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 
 import javax.swing.JDesktopPane;
+import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
@@ -800,12 +801,22 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         return externalFrame;
     }
 
-    public IcyInternalFrame getInternalFrame()
+    public IcyInternalFrame getIcyInternalFrame()
     {
         return internalFrame;
     }
 
-    public IcyExternalFrame getExternalFrame()
+    public IcyExternalFrame getIcyExternalFrame()
+    {
+        return externalFrame;
+    }
+
+    public JInternalFrame getInternalFrame()
+    {
+        return internalFrame;
+    }
+
+    public JFrame getExternalFrame()
     {
         return externalFrame;
     }

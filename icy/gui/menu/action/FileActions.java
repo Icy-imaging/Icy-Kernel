@@ -170,7 +170,7 @@ public class FileActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
             final Sequence seq = viewer.getSequence();
 
             if (seq != null)
@@ -213,7 +213,7 @@ public class FileActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
 
             if (viewer != null)
             {
@@ -241,7 +241,7 @@ public class FileActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
 
             if (viewer != null)
             {
@@ -264,7 +264,7 @@ public class FileActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
 
             if (viewer != null)
             {
@@ -287,7 +287,7 @@ public class FileActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer focusedViewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer focusedViewer = Icy.getMainInterface().getActiveViewer();
 
             for (Viewer viewer : Icy.getMainInterface().getViewers())
                 if (viewer != focusedViewer)

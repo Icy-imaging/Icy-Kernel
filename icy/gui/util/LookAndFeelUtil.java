@@ -133,7 +133,8 @@ public class LookAndFeelUtil
         // UIManager.put(SubstanceLookAndFeel.SHOW_EXTRA_WIDGETS, Boolean.TRUE);
         // UIManager.put(SubstanceLookAndFeel.WATERMARK_VISIBLE, Boolean.TRUE);
 
-        // SubstanceWidgetManager.getInstance().register(null, true,
+        // SubstanceLookAndFeel.setWidgetVisible(null, false, SubstanceWidgetType.MENU_SEARCH);
+        // SubstanceLookAndFeel.setWidgetVisible(null, false,
         // SubstanceWidgetType.TITLE_PANE_HEAP_STATUS);
 
         // enabled LAF decoration instead of native ones

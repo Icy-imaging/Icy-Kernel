@@ -49,7 +49,7 @@ import java.awt.Insets;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ActionMap;
 import javax.swing.BoxLayout;
@@ -110,7 +110,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     // internal
     private final RoisPanel roisPanel;
     private boolean isRoiPropertiesAdjusting;
-    private ArrayList<ROI> modifiedROI;
+    private List<ROI> modifiedROI;
 
     public RoiControlPanel(RoisPanel panel)
     {
@@ -565,15 +565,15 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
             sizeZField.setVisible(false);
             sizeTField.setVisible(false);
 
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
-                final ArrayList<ROI> rois = roisPanel.getSelectedRois();
+                final List<ROI> rois = roisPanel.getSelectedRois();
 
                 boolean editable = false;
                 for (ROI r : rois)
-                    editable |= r.isEditable();
+                    editable |= !r.isReadOnly();
 
                 final ROI roi = (rois.size() > 0) ? rois.get(0) : null;
                 final boolean hasSelected = (roi != null);
@@ -725,7 +725,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
         final ROI roi = modifiedROI.get(0);
 
-        if (!roi.isEditable())
+        if (roi.isReadOnly())
             return;
 
         isRoiPropertiesAdjusting = true;
@@ -857,17 +857,15 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         if (source.isEnabled())
         {
             final Color color = source.getColor();
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
-            final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+            final List<ROI> selectedROI = roisPanel.getSelectedRois();
 
             sequence.beginUpdate();
             try
             {
                 for (ROI roi : selectedROI)
-                {
-                    if (roi.isEditable())
+                    if (!roi.isReadOnly())
                         roi.setColor(color);
-                }
             }
             finally
             {
@@ -885,15 +883,16 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
         if (alphaSlider.isEnabled())
         {
-            final float opacity = ((float) alphaSlider.getValue()) / 100f;
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
-            final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
+            final float opacity = alphaSlider.getValue() / 100f;
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+            final List<ROI> selectedROI = roisPanel.getSelectedRois();
 
             sequence.beginUpdate();
             try
             {
                 for (ROI roi : selectedROI)
-                    roi.setOpacity(opacity);
+                    if (!roi.isReadOnly())
+                        roi.setOpacity(opacity);
             }
             finally
             {

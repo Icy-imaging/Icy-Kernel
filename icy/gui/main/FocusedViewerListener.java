@@ -24,8 +24,9 @@ import icy.gui.viewer.ViewerEvent;
 import java.util.EventListener;
 
 /**
- * @author Stephane
+ * @deprecated Use {@link ActiveViewerListener} instead.
  */
+@Deprecated
 public interface FocusedViewerListener extends EventListener
 {
     /**

@@ -129,6 +129,23 @@ public class GraphicsUtil
     }
 
     /**
+     * Returns true if the specified region is visible in the specified {@link Graphics} object.<br>
+     * Internally use the {@link Graphics} clip area to determine if region is visible.
+     */
+    public static boolean isVisible(Graphics g, Rectangle region)
+    {
+        if ((g == null) || (region == null))
+            return false;
+
+        final Rectangle clipArea = g.getClipBounds();
+
+        if (clipArea != null)
+            return region.intersects(clipArea);
+
+        return true;
+    }
+
+    /**
      * Returns bounds to draw specified string in the specified Graphics context
      * with specified font.<br>
      * This function handle multi lines string ('\n' character used a line separator).

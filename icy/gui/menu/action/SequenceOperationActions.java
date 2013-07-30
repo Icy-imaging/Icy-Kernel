@@ -76,12 +76,12 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
                 Icy.getMainInterface().addSequence(
-                        SequenceUtil.convertToType(Icy.getMainInterface().getFocusedSequence(), dataType, scaled));
+                        SequenceUtil.convertToType(Icy.getMainInterface().getActiveSequence(), dataType, scaled));
                 return true;
             }
 
@@ -91,7 +91,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     }
 
@@ -138,11 +138,11 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
 
             if (viewer != null)
             {
-                final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+                final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
                 if (sequence != null)
                 {
@@ -202,7 +202,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             return super.isEnabled() && (sequence != null) && !sequence.isEmpty();
         }
@@ -228,7 +228,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -249,7 +249,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
 
             return super.isEnabled() && (seq != null) && (channel < seq.getSizeC());
         }
@@ -272,7 +272,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -286,7 +286,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
 
             return super.isEnabled() && (seq != null) && (channel < seq.getSizeC());
         }
@@ -332,7 +332,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -346,7 +346,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -388,7 +388,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -400,7 +400,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -414,7 +414,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -426,7 +426,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -440,7 +440,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -464,7 +464,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -488,7 +488,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
             final int z = (viewer == null) ? -1 : viewer.getPositionZ();
 
             if (z != -1)
@@ -503,7 +503,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
             final int z = (viewer == null) ? -1 : viewer.getPositionZ();
 
             return super.isEnabled() && (z != -1);
@@ -522,7 +522,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
             final int z = (viewer == null) ? -1 : viewer.getPositionZ();
 
             if (z != -1)
@@ -537,7 +537,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
             final int z = (viewer == null) ? -1 : viewer.getPositionZ();
 
             return super.isEnabled() && (z != -1);
@@ -556,11 +556,11 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
-                new SequenceDimensionExtendFrame(Icy.getMainInterface().getFocusedSequence(), DimensionId.Z);
+                new SequenceDimensionExtendFrame(Icy.getMainInterface().getActiveSequence(), DimensionId.Z);
                 return true;
             }
 
@@ -570,7 +570,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             return super.isEnabled() && (sequence != null) && !sequence.isEmpty();
         }
@@ -589,7 +589,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -603,7 +603,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -620,7 +620,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -634,7 +634,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -650,7 +650,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
             final int t = (viewer == null) ? -1 : viewer.getPositionT();
 
             if (t != -1)
@@ -665,7 +665,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
             final int t = (viewer == null) ? -1 : viewer.getPositionT();
 
             return super.isEnabled() && (t != -1);
@@ -684,7 +684,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
             final int t = (viewer == null) ? -1 : viewer.getPositionT();
 
             if (t != -1)
@@ -699,7 +699,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
             final int t = (viewer == null) ? -1 : viewer.getPositionT();
 
             return super.isEnabled() && (t != -1);
@@ -718,11 +718,11 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
-                new SequenceDimensionExtendFrame(Icy.getMainInterface().getFocusedSequence(), DimensionId.T);
+                new SequenceDimensionExtendFrame(Icy.getMainInterface().getActiveSequence(), DimensionId.T);
                 return true;
             }
 
@@ -732,7 +732,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             return super.isEnabled() && (sequence != null) && !sequence.isEmpty();
         }
@@ -751,7 +751,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -765,7 +765,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -782,7 +782,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
 
             if (viewer != null)
             {
@@ -803,7 +803,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -819,7 +819,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
 
             if (viewer != null)
             {
@@ -840,7 +840,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -855,7 +855,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -869,7 +869,7 @@ public class SequenceOperationActions
         @Override
         public boolean isEnabled()
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             return super.isEnabled() && (sequence != null) && !sequence.isEmpty();
         }

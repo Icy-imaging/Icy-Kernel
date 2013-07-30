@@ -317,7 +317,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             @Override
             public void icyFrameActivated(IcyFrameEvent e)
             {
-                Icy.getMainInterface().setFocusedViewer(Viewer.this);
+                Icy.getMainInterface().setActiveViewer(Viewer.this);
 
                 // lost focus on ImageJ image
                 final ImageJWrapper ij = Icy.getMainInterface().getImageJ();
@@ -633,7 +633,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         toolBar.addSeparator();
         toolBar.add(layersEnabledButton);
         if (canvas != null)
-            canvas.addViewerToolbarComponents(toolBar);
+            canvas.customizeToolbar(toolBar);
         toolBar.add(Box.createHorizontalGlue());
         toolBar.addSeparator();
         toolBar.add(screenShotButton);
@@ -1413,14 +1413,6 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
                 if (!sequenceLut.isCompatible(lut) || (lutViewer == null) || lutViewer.getAutoBounds())
                     lut.setScalers(sequenceLut);
-                break;
-
-            case SEQUENCE_PAINTER:
-
-                break;
-
-            case SEQUENCE_ROI:
-
                 break;
         }
     }

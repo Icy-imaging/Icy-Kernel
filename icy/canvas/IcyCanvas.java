@@ -43,6 +43,7 @@ import icy.image.lut.LUTEvent.LUTEventType;
 import icy.image.lut.LUTListener;
 import icy.main.Icy;
 import icy.painter.Overlay;
+import icy.painter.OverlayWrapper;
 import icy.painter.Painter;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
@@ -64,12 +65,18 @@ import java.awt.Component;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
@@ -104,7 +111,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             super((getSequence() == null) ? "Image" : getSequence().getName(), OverlayPriority.IMAGE_NORMAL);
 
             // we fix the image overlay
-            fixed = true;
+            canBeRemoved = false;
             readOnly = false;
         }
 
@@ -139,13 +146,13 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         for (PluginDescriptor plugin : plugins)
         {
             final String className = plugin.getClassName();
-            
+
             // ignore kernel as they have been already added
             if (Canvas2DPlugin.class.getName().equals(className))
                 continue;
             if (Canvas3DPlugin.class.getName().equals(className))
                 continue;
-            
+
             CollectionUtil.addUniq(result, plugin.getClassName());
         }
 
@@ -250,11 +257,16 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     protected final Overlay imageOverlay;
     protected final Layer imageLayer;
+
     /**
      * Layers attached to canvas<br>
-     * There are representing sequence painters with some visualization properties
+     * There are representing sequence overlays with some visualization properties
      */
-    protected final ArrayList<Layer> layers;
+    protected final Map<Overlay, Layer> layers;
+    /**
+     * Priority ordered layers.
+     */
+    protected List<Layer> orderedLayers;
 
     /**
      * internal updater
@@ -301,7 +313,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         this.viewer = viewer;
 
         layersVisible = true;
-        layers = new ArrayList<Layer>();
+        layers = new HashMap<Overlay, Layer>();
+        orderedLayers = new ArrayList<Layer>();
         syncId = 0;
         synchHeader = false;
         updater = new UpdateEventHandler(this, false);
@@ -349,17 +362,15 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         try
         {
             // first add image layer
-            addLayer(getImageOverlay());
-            // save it
-            imageLayer = layers.get(0);
+            imageLayer = addLayer(getImageOverlay());
 
             final Sequence sequence = getSequence();
 
             if (sequence != null)
             {
-                // then add sequence painters to layer list
-                for (Painter painter : sequence.getPainters())
-                    addLayer(painter);
+                // then add sequence overlays to layer list
+                for (Overlay overlay : sequence.getOverlays())
+                    addLayer(overlay);
             }
             else
                 System.err.println("Sequence null when canvas created");
@@ -429,7 +440,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Returns the {@link Overlay}rlay used to display the current sequence image
+     * Returns the {@link Overlay} used to display the current sequence image
      */
     public Overlay getImageOverlay()
     {
@@ -562,18 +573,30 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Called by the parent viewer when building its toolbar<br>
-     * so canvas can customize it at some point.
-     * 
-     * @param toolBar
+     * @deprecated Use {@link #customizeToolbar(JToolBar)} instead.
      */
+    @SuppressWarnings("unused")
+    @Deprecated
     public void addViewerToolbarComponents(JToolBar toolBar)
     {
 
     }
 
     /**
-     * @return the infoPanel
+     * Called by the parent viewer when building the toolbar.<br>
+     * This way the canvas can customize it by adding specific command for instance.<br>
+     * 
+     * @param toolBar
+     *        the parent toolbar to customize
+     */
+    public void customizeToolbar(JToolBar toolBar)
+    {
+        addViewerToolbarComponents(toolBar);
+    }
+
+    /**
+     * Returns the setting panel of this canvas.<br>
+     * The setting panel is displayed in the inspector so user can change canvas parameters.
      */
     public JPanel getPanel()
     {
@@ -581,26 +604,29 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * @return the layers
+     * Returns all layers attached to this canvas.<br/>
+     * The list is sorted on the layer priority.
      */
-    public ArrayList<Layer> getLayers()
+    public List<Layer> getLayers()
     {
-        synchronized (layers)
+        synchronized (orderedLayers)
         {
-            return new ArrayList<Layer>(layers);
+            return new ArrayList<Layer>(orderedLayers);
         }
     }
 
     /**
-     * @return the visible layers
+     * Returns all visible layers (visible property set to <code>true</code>) attached to this
+     * canvas.<br/>
+     * The list is sorted on the layer priority.
      */
-    public ArrayList<Layer> getVisibleLayers()
+    public List<Layer> getVisibleLayers()
     {
-        final ArrayList<Layer> result = new ArrayList<Layer>();
+        final ArrayList<Layer> result = new ArrayList<Layer>(orderedLayers.size());
 
-        synchronized (layers)
+        synchronized (orderedLayers)
         {
-            for (Layer l : layers)
+            for (Layer l : orderedLayers)
                 if (l.isVisible())
                     result.add(l);
         }
@@ -612,7 +638,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * @deprecated Use {@link #getLayers()} instead (sorted on Layer priority).
      */
     @Deprecated
-    public ArrayList<Layer> getOrderedLayersForEvent()
+    public List<Layer> getOrderedLayersForEvent()
     {
         return getLayers();
     }
@@ -621,25 +647,39 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * @deprecated Use {@link #getVisibleLayers()} instead (sorted on Layer priority).
      */
     @Deprecated
-    public ArrayList<Layer> getVisibleOrderedLayersForEvent()
+    public List<Layer> getVisibleOrderedLayersForEvent()
     {
         return getVisibleLayers();
     }
 
     /**
-     * @return the painters of layers
+     * @deprecated Use {@link #getOverlays()} instead.
      */
-    public ArrayList<Painter> getLayersPainter()
+    @Deprecated
+    public List<Painter> getLayersPainter()
     {
         final ArrayList<Painter> result = new ArrayList<Painter>();
 
-        synchronized (layers)
+        for (Overlay overlay : getOverlays())
         {
-            for (Layer layer : layers)
-                result.add(layer.getPainter());
+            if (overlay instanceof OverlayWrapper)
+                result.add(((OverlayWrapper) overlay).getPainter());
+            else
+                result.add(overlay);
         }
 
         return result;
+    }
+
+    /**
+     * Directly returns a {@link Set} of all Overlay displayed by this canvas.
+     */
+    public Set<Overlay> getOverlays()
+    {
+        synchronized (layers)
+        {
+            return new HashSet<Overlay>(layers.keySet());
+        }
     }
 
     /**
@@ -1179,35 +1219,47 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * canvas view size X
+     * Returns the canvas view size X.
      */
     public int getCanvasSizeX()
     {
-        // by default we use panel width
-        int res = getWidth();
-        // preferred width if size not yet set
-        if (res == 0)
-            res = getPreferredSize().width;
+        final Component comp = getViewComponent();
+        int res = 0;
+
+        if (comp != null)
+        {
+            // by default we use view component width
+            res = comp.getWidth();
+            // preferred width if size not yet set
+            if (res == 0)
+                res = comp.getPreferredSize().width;
+        }
 
         return res;
     }
 
     /**
-     * canvas view size Y
+     * Returns the canvas view size Y.
      */
     public int getCanvasSizeY()
     {
-        // by default we use panel height
-        int res = getHeight();
-        // preferred height if size not yet set
-        if (res == 0)
-            res = getPreferredSize().height;
+        final Component comp = getViewComponent();
+        int res = 0;
+
+        if (comp != null)
+        {
+            // by default we use view component width
+            res = comp.getHeight();
+            // preferred width if size not yet set
+            if (res == 0)
+                res = comp.getPreferredSize().height;
+        }
 
         return res;
     }
 
     /**
-     * canvas view size Z
+     * Returns the canvas view size Z.
      */
     public int getCanvasSizeZ()
     {
@@ -1216,7 +1268,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * canvas view size T
+     * Returns the canvas view size T.
      */
     public int getCanvasSizeT()
     {
@@ -1225,7 +1277,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * canvas view size C
+     * Returns the canvas view size C.
      */
     public int getCanvasSizeC()
     {
@@ -1276,7 +1328,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public double getMouseImagePosZ()
     {
-        return getZ();
+        return getPositionZ();
     }
 
     /**
@@ -1284,7 +1336,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public double getMouseImagePosT()
     {
-        return getT();
+        return getPositionT();
     }
 
     /**
@@ -1292,7 +1344,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public double getMouseImagePosC()
     {
-        return getC();
+        return getPositionC();
     }
 
     /**
@@ -2890,6 +2942,254 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     // }
     // }
 
+    /**
+     * Helper to forward mouse press event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     * @param pt
+     *        mouse image position
+     */
+    public void mousePressed(MouseEvent event, Point2D.Double pt)
+    {
+        final boolean globalVisible = isLayersVisible();
+
+        // send mouse event to overlays after so mouse canvas position is ok
+        for (Layer layer : getLayers())
+        {
+            if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
+                layer.getOverlay().mousePressed(event, pt, this);
+        }
+    }
+
+    /**
+     * Helper to forward mouse press event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     */
+    public void mousePressed(MouseEvent event)
+    {
+        mousePressed(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+    }
+
+    /**
+     * Helper to forward mouse release event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     * @param pt
+     *        mouse image position
+     */
+    public void mouseReleased(MouseEvent event, Point2D.Double pt)
+    {
+        final boolean globalVisible = isLayersVisible();
+
+        // send mouse event to overlays after so mouse canvas position is ok
+        for (Layer layer : getLayers())
+        {
+            if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
+                layer.getOverlay().mouseReleased(event, pt, this);
+        }
+    }
+
+    /**
+     * Helper to forward mouse release event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     */
+    public void mouseReleased(MouseEvent event)
+    {
+        mouseReleased(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+    }
+
+    /**
+     * Helper to forward mouse click event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     * @param pt
+     *        mouse image position
+     */
+    public void mouseClick(MouseEvent event, Point2D.Double pt)
+    {
+        final boolean globalVisible = isLayersVisible();
+
+        // send mouse event to overlays after so mouse canvas position is ok
+        for (Layer layer : getLayers())
+        {
+            if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
+                layer.getOverlay().mouseClick(event, pt, this);
+        }
+    }
+
+    /**
+     * Helper to forward mouse click event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     */
+    public void mouseClick(MouseEvent event)
+    {
+        mouseClick(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+    }
+
+    /**
+     * Helper to forward mouse move event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     * @param pt
+     *        mouse image position
+     */
+    public void mouseMove(MouseEvent event, Point2D.Double pt)
+    {
+        final boolean globalVisible = isLayersVisible();
+
+        // send mouse event to overlays after so mouse canvas position is ok
+        for (Layer layer : getLayers())
+        {
+            if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
+                layer.getOverlay().mouseMove(event, pt, this);
+        }
+    }
+
+    /**
+     * Helper to forward mouse mouse event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     */
+    public void mouseMove(MouseEvent event)
+    {
+        mouseMove(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+    }
+
+    /**
+     * Helper to forward mouse drag event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     * @param pt
+     *        mouse image position
+     */
+    public void mouseDrag(MouseEvent event, Point2D.Double pt)
+    {
+        final boolean globalVisible = isLayersVisible();
+
+        // send mouse event to overlays after so mouse canvas position is ok
+        for (Layer layer : getLayers())
+        {
+            if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
+                layer.getOverlay().mouseDrag(event, pt, this);
+        }
+    }
+
+    /**
+     * Helper to forward mouse drag event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     */
+    public void mouseDrag(MouseEvent event)
+    {
+        mouseDrag(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+    }
+
+    /**
+     * Helper to forward mouse enter event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     * @param pt
+     *        mouse image position
+     */
+    public void mouseEntered(MouseEvent event, Point2D.Double pt)
+    {
+        final boolean globalVisible = isLayersVisible();
+
+        // send mouse event to overlays after so mouse canvas position is ok
+        for (Layer layer : getLayers())
+        {
+            if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
+                layer.getOverlay().mouseEntered(event, pt, this);
+        }
+    }
+
+    /**
+     * Helper to forward mouse entered event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     */
+    public void mouseEntered(MouseEvent event)
+    {
+        mouseEntered(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+    }
+
+    /**
+     * Helper to forward mouse exit event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     * @param pt
+     *        mouse image position
+     */
+    public void mouseExited(MouseEvent event, Point2D.Double pt)
+    {
+        final boolean globalVisible = isLayersVisible();
+
+        // send mouse event to overlays after so mouse canvas position is ok
+        for (Layer layer : getLayers())
+        {
+            if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
+                layer.getOverlay().mouseExited(event, pt, this);
+        }
+    }
+
+    /**
+     * Helper to forward mouse exited event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     */
+    public void mouseExited(MouseEvent event)
+    {
+        mouseExited(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+    }
+
+    /**
+     * Helper to forward mouse wheel event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     * @param pt
+     *        mouse image position
+     */
+    public void mouseWheelMoved(MouseWheelEvent event, Point2D.Double pt)
+    {
+        final boolean globalVisible = isLayersVisible();
+
+        // send mouse event to overlays after so mouse canvas position is ok
+        for (Layer layer : getLayers())
+        {
+            if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
+                layer.getOverlay().mouseWheelMoved(event, pt, this);
+        }
+    }
+
+    /**
+     * Helper to forward mouse wheel event to the overlays.
+     * 
+     * @param event
+     *        original mouse event
+     */
+    public void mouseWheelMoved(MouseWheelEvent event)
+    {
+        mouseWheelMoved(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+    }
+
     @Override
     public void keyTyped(KeyEvent e)
     {
@@ -2899,9 +3199,15 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     @Override
     public void keyPressed(KeyEvent e)
     {
-        // forward event to painters
-        for (Layer layer : getVisibleLayers())
-            layer.getPainter().keyPressed(e, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()), this);
+        final boolean globalVisible = isLayersVisible();
+        final Point2D.Double pt = new Point2D.Double(getMouseImagePosX(), getMouseImagePosY());
+
+        // forward event to overlays
+        for (Layer layer : getLayers())
+        {
+            if ((globalVisible && layer.isVisible()) || layer.getReceiveKeyEventOnHidden())
+                layer.getOverlay().keyPressed(e, pt, this);
+        }
 
         if (!e.isConsumed())
         {
@@ -3058,9 +3364,15 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     @Override
     public void keyReleased(KeyEvent e)
     {
-        // forward event to painters
-        for (Layer layer : getVisibleLayers())
-            layer.getPainter().keyReleased(e, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()), this);
+        final boolean globalVisible = isLayersVisible();
+        final Point2D.Double pt = new Point2D.Double(getMouseImagePosX(), getMouseImagePosY());
+
+        // forward event to overlays
+        for (Layer layer : getLayers())
+        {
+            if ((globalVisible && layer.isVisible()) || layer.getReceiveKeyEventOnHidden())
+                layer.getOverlay().keyReleased(e, pt, this);
+        }
     }
 
     /**
@@ -3090,9 +3402,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Get the current image
-     * 
-     * @return current image
+     * Get the current image.
      */
     public IcyBufferedImage getCurrentImage()
     {
@@ -3386,6 +3696,10 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             tNav.setVisible(false);
     }
 
+    /**
+     * @deprecated Use {@link #getLayer(Overlay)} instead.
+     */
+    @Deprecated
     public Layer getLayer(Painter painter)
     {
         for (Layer layer : getLayers())
@@ -3395,37 +3709,79 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         return null;
     }
 
-    public Layer getLayer(ROI roi)
+    /**
+     * Find the layer corresponding to the specified Overlay
+     */
+    public Layer getLayer(Overlay overlay)
     {
-        return getLayer(roi.getPainter());
+        return layers.get(overlay);
     }
 
+    /**
+     * Find the layer corresponding to the specified ROI (use the ROI overlay internally).
+     */
+    public Layer getLayer(ROI roi)
+    {
+        return getLayer(roi.getOverlay());
+    }
+
+    /**
+     * @deprecated Use {@link #hasLayer(Overlay)} instead.
+     */
+    @Deprecated
     public boolean hasLayer(Painter painter)
     {
         return getLayer(painter) != null;
+    }
+
+    /**
+     * Returns true if the canvas contains a layer for the specified {@link Overlay}.
+     */
+    public boolean hasLayer(Overlay overlay)
+    {
+        synchronized (layers)
+        {
+            return layers.containsKey(overlay);
+        }
     }
 
     public boolean hasLayer(Layer layer)
     {
         synchronized (layers)
         {
-            return layers.contains(layer);
+            return layers.containsValue(layer);
         }
     }
 
+    /**
+     * @deprecated Use {@link #addLayer(Overlay)} instead.
+     */
+    @Deprecated
     public void addLayer(Painter painter)
     {
         if (!hasLayer(painter))
-        {
-            final Layer layer = new Layer(painter);
+            addLayer(new Layer(painter));
+    }
 
+    public Layer addLayer(Overlay overlay)
+    {
+        if (!hasLayer(overlay))
+            return addLayer(new Layer(overlay));
+
+        return null;
+    }
+
+    protected Layer addLayer(Layer layer)
+    {
+        if (layer != null)
+        {
             // listen layer
             layer.addListener(this);
 
             // add to list
             synchronized (layers)
             {
-                layers.add(layer);
+                layers.put(layer.getOverlay(), layer);
                 if (Layer.DEFAULT_NAME.equals(layer))
                     layer.setName("layer " + layers.size());
             }
@@ -3433,29 +3789,52 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             // added
             layerAdded(layer);
         }
+
+        return layer;
     }
 
+    /**
+     * @deprecated Use {@link #removeLayer(Overlay)} instead.
+     */
+    @Deprecated
     public void removeLayer(Painter painter)
     {
         removeLayer(getLayer(painter));
     }
 
-    public void removeLayer(Layer layer)
+    /**
+     * Remove the layer for the specified {@link Overlay} from the canvas.<br/>
+     * Returns <code>true</code> if the method succeed.
+     */
+    public boolean removeLayer(Overlay overlay)
     {
-        boolean result;
-
-        // stop listening layer
-        layer.removeListener(this);
+        final Layer layer;
 
         // remove from list
         synchronized (layers)
         {
-            result = layers.remove(layer);
+            layer = layers.remove(overlay);
         }
 
-        // removed
-        if (result)
+        if (layer != null)
+        {
+            // stop listening layer
+            layer.removeListener(this);
+            // notify remove
             layerRemoved(layer);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Remove the specified layer from the canvas.
+     */
+    public void removeLayer(Layer layer)
+    {
+        removeLayer(layer.getOverlay());
     }
 
     /**
@@ -3669,10 +4048,14 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
         synchronized (layers)
         {
-            // re order layers if needed
+            // need to rebuild sorted layer list
             if ((event.getType() != LayersEventType.CHANGED) || (property == null)
                     || (property == Layer.PROPERTY_PRIORITY))
-                Collections.sort(layers);
+            {
+                // build and sort the list
+                orderedLayers = new ArrayList<Layer>(layers.values());
+                Collections.sort(orderedLayers);
+            }
         }
 
         // notify listeners that layers have changed
@@ -3809,14 +4192,24 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * sequence painter has changed
+     * @deprecated Use {@link #sequenceOverlayChanged(Overlay, SequenceEventType)} instead.
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
+    protected void sequencePainterChanged(Painter painter, SequenceEventType type)
+    {
+        // no more stuff here
+    }
+
+    /**
+     * Sequence overlay has changed
      * 
-     * @param painter
-     *        painter which has changed (null if global painter changed)
+     * @param overlay
+     *        overlay which has changed (null if global overlay changed)
      * @param type
      *        event type
      */
-    protected void sequencePainterChanged(Painter painter, SequenceEventType type)
+    protected void sequenceOverlayChanged(Overlay overlay, SequenceEventType type)
     {
         final Sequence sequence = getSequence();
 
@@ -3824,19 +4217,19 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         {
             case ADDED:
                 // handle special case of multiple adds
-                if (painter == null)
+                if (overlay == null)
                 {
                     if (sequence != null)
                     {
-                        final ArrayList<Painter> layersPainter = getLayersPainter();
+                        final Set<Overlay> overlays = getOverlays();
 
                         beginUpdate();
                         try
                         {
                             // add layers which are present in sequence and not in canvas
-                            for (Painter seqPainter : sequence.getPainters())
-                                if (!layersPainter.contains(seqPainter))
-                                    addLayer(seqPainter);
+                            for (Overlay seqOverlay : sequence.getOverlaySet())
+                                if (!overlays.contains(seqOverlay))
+                                    addLayer(seqOverlay);
                         }
                         finally
                         {
@@ -3845,24 +4238,24 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                     }
                 }
                 else
-                    addLayer(painter);
+                    addLayer(overlay);
                 break;
 
             case REMOVED:
                 // handle special case of multiple removes
-                if (painter == null)
+                if (overlay == null)
                 {
                     if (sequence != null)
                     {
-                        final ArrayList<Painter> seqPainters = sequence.getPainters();
+                        final Set<Overlay> seqOverlays = sequence.getOverlaySet();
 
                         beginUpdate();
                         try
                         {
                             // remove layers which are not anymore present in sequence
-                            for (Layer layer : getLayers())
-                                if ((layer != imageLayer) && !seqPainters.contains(layer.getPainter()))
-                                    removeLayer(layer);
+                            for (Overlay o : getOverlays())
+                                if ((o != imageOverlay) && !seqOverlays.contains(o))
+                                    removeLayer(o);
                         }
                         finally
                         {
@@ -3871,29 +4264,29 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                     }
                 }
                 else
-                    removeLayer(painter);
+                    removeLayer(overlay);
                 break;
 
             case CHANGED:
                 // handle special case of multiple removes or/and adds
-                if (painter == null)
+                if (overlay == null)
                 {
                     if (sequence != null)
                     {
-                        final ArrayList<Painter> layersPainter = getLayersPainter();
-                        final ArrayList<Painter> seqPainters = sequence.getPainters();
+                        final Set<Overlay> overlays = getOverlays();
+                        final Set<Overlay> seqOverlays = sequence.getOverlaySet();
 
                         beginUpdate();
                         try
                         {
-                            // add layers which are present in sequence and not in canvas
-                            for (Painter seqPainter : sequence.getPainters())
-                                if (!layersPainter.contains(seqPainter))
-                                    addLayer(seqPainter);
                             // remove layers which are not anymore present in sequence
-                            for (Layer layer : getLayers())
-                                if ((layer != imageLayer) && !seqPainters.contains(layer.getPainter()))
-                                    removeLayer(layer);
+                            for (Overlay o : getOverlays())
+                                if ((o != imageOverlay) && !seqOverlays.contains(o))
+                                    removeLayer(o);
+                            // add layers which are present in sequence and not in canvas
+                            for (Overlay seqOverlay : seqOverlays)
+                                if (!overlays.contains(seqOverlay))
+                                    addLayer(seqOverlay);
                         }
                         finally
                         {
@@ -3970,8 +4363,21 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                 sequenceDataChanged((IcyBufferedImage) event.getSource(), event.getType());
                 break;
 
-            case SEQUENCE_PAINTER:
-                sequencePainterChanged((Painter) event.getSource(), event.getType());
+            case SEQUENCE_OVERLAY:
+                final Overlay overlay = (Overlay) event.getSource();
+
+                sequenceOverlayChanged(overlay, event.getType());
+
+                // backward compatibility
+                @SuppressWarnings("deprecation")
+                final Painter painter;
+
+                if (overlay instanceof OverlayWrapper)
+                    painter = ((OverlayWrapper) overlay).getPainter();
+                else
+                    painter = overlay;
+
+                sequencePainterChanged(painter, event.getType());
                 break;
 
             case SEQUENCE_ROI:

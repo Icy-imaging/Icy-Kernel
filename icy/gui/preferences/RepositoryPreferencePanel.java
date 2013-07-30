@@ -18,6 +18,7 @@
  */
 package icy.gui.preferences;
 
+import icy.gui.component.IcyTable;
 import icy.gui.dialog.ActionDialog;
 import icy.gui.util.ComponentUtil;
 import icy.plugin.PluginRepositoryLoader;
@@ -354,30 +355,33 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
             }
         };
 
-        table = new JTable(tableModel);
+        table = new IcyTable(tableModel);
 
         final TableColumnModel colModel = table.getColumnModel();
         TableColumn col;
 
         // columns setting
         col = colModel.getColumn(0);
-        col.setPreferredWidth(120);
         col.setMinWidth(80);
+        col.setPreferredWidth(80);
+        col.setMaxWidth(120);
 
         col = colModel.getColumn(1);
-        col.setPreferredWidth(280);
-        col.setMinWidth(140);
+        col.setMinWidth(160);
+        col.setPreferredWidth(240);
+        col.setMaxWidth(500);
 
         col = colModel.getColumn(2);
-        col.setPreferredWidth(80);
         col.setMinWidth(60);
+        col.setPreferredWidth(60);
+        col.setMaxWidth(60);
 
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getSelectionModel().addListSelectionListener(this);
         table.setRowSelectionAllowed(true);
         table.setColumnSelectionAllowed(false);
         table.setAutoCreateRowSorter(true);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         final JPanel tablePanel = new JPanel();
 
@@ -409,7 +413,7 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
     {
         // save to rpeferences
         RepositoryPreferences.setRepositeries(repositories);
-        
+
         // then reload online plugins and workspace as repositories changed
         PluginRepositoryLoader.reload();
         WorkspaceRepositoryLoader.reload();

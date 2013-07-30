@@ -31,7 +31,6 @@ import icy.type.DataIterator;
  */
 public class ROIUtil
 {
-
     /**
      * Return a {@link DataIterator} object from the specified {@link ROI} and {@link Sequence}.
      */

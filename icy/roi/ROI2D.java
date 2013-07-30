@@ -20,7 +20,7 @@ package icy.roi;
 
 import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
-import icy.canvas.Layer;
+import icy.common.EventHierarchicalChecker;
 import icy.util.EventUtil;
 import icy.util.ShapeUtil.ShapeOperation;
 import icy.util.XMLUtil;
@@ -172,12 +172,12 @@ public abstract class ROI2D extends ROI
             // union selection
             if (EventUtil.isShiftDown(e))
             {
-                if (focused)
+                if (isFocused())
                 {
                     // only if not already selected
-                    if (!selected)
+                    if (!isSelected())
                     {
-                        setSelected(true, false);
+                        setSelected(true);
                         return true;
                     }
                 }
@@ -186,9 +186,9 @@ public abstract class ROI2D extends ROI
             // switch selection
             {
                 // inverse state
-                if (focused)
+                if (isFocused())
                 {
-                    setSelected(!selected, false);
+                    setSelected(!isSelected());
                     return true;
                 }
             }
@@ -196,14 +196,14 @@ public abstract class ROI2D extends ROI
             // exclusive selection
             {
                 // we stay selected when we click on control points
-                final boolean newSelected = focused || selectedPoint;
+                final boolean newSelected = isFocused() || selectedPoint;
 
                 if (newSelected)
                 {
                     // only if not already selected
-                    if (!selected)
+                    if (!isSelected())
                     {
-                        setSelected(newSelected, true);
+                        canvas.getSequence().setSelectedROI(newSelected ? ROI2D.this : null);
                         return true;
                     }
                 }
@@ -261,7 +261,7 @@ public abstract class ROI2D extends ROI
                     if (EventUtil.isLeftMouseButton(e))
                     {
                         // roi focused (mouse over ROI bounds) ?
-                        if (focused)
+                        if (isFocused())
                         {
                             // update selection
                             updateSelect(e, imagePoint, canvas);
@@ -269,9 +269,9 @@ public abstract class ROI2D extends ROI
                             e.consume();
                         }
                         // roi selected and no point selected ?
-                        else if (selected && !hasSelectedPoint())
+                        else if (isSelected() && !hasSelectedPoint())
                         {
-                            if (editable)
+                            if (!isReadOnly())
                             {
                                 // try to add point first
                                 if (addPointAt(imagePoint, EventUtil.isControlDown(e)))
@@ -298,11 +298,11 @@ public abstract class ROI2D extends ROI
                     else if (EventUtil.isRightMouseButton(e))
                     {
                         // no editable --> no action here
-                        if (!editable)
-                            return;
-
-                        // only use delete now to remove point
-
+                        // if (!editable)
+                        // return;
+                        //
+                        // // only use delete now to remove point
+                        //
                         // // roi selected ?
                         // if (selected)
                         // {
@@ -333,7 +333,7 @@ public abstract class ROI2D extends ROI
                 return;
 
             // no editable --> no action here
-            if (!editable)
+            if (isReadOnly())
                 return;
 
             // canvas3D not handled here
@@ -352,7 +352,7 @@ public abstract class ROI2D extends ROI
                     if (EventUtil.isLeftMouseButton(e))
                     {
                         // roi focused ?
-                        if (focused)
+                        if (isFocused())
                         {
                             // start drag position
                             if (startDragMousePosition == null)
@@ -393,14 +393,14 @@ public abstract class ROI2D extends ROI
         @Override
         public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
-            if (!isActiveFor(canvas))
-                return;
-
             // canvas3D not handled here
             if (canvas instanceof Canvas3D)
                 return;
             // no image position --> exit
             if (imagePoint == null)
+                return;
+
+            if (!isActiveFor(canvas))
                 return;
 
             // update focus
@@ -429,14 +429,10 @@ public abstract class ROI2D extends ROI
 
             if (!e.isConsumed())
             {
-                // unselect ROI on double click
+                // double click action
                 if (e.getClickCount() == 2)
                 {
-                    if (selected)
-                    {
-                        setSelected(false, true);
-                        e.consume();
-                    }
+                    //
                 }
             }
         }
@@ -458,7 +454,7 @@ public abstract class ROI2D extends ROI
             try
             {
                 // just for the shift key state change
-                if (editable)
+                if (!isReadOnly())
                     updateDrag(e, imagePoint, canvas);
 
                 if (!e.isConsumed())
@@ -466,33 +462,38 @@ public abstract class ROI2D extends ROI
                     switch (e.getKeyCode())
                     {
                         case KeyEvent.VK_ESCAPE:
-                            // shape selected ? --> unselect the ROI
-                            if (selected)
+                            // shape selected ? --> global unselect ROI
+                            if (isSelected())
                             {
-                                setSelected(false, true);
+                                canvas.getSequence().setSelectedROI(null);
                                 e.consume();
                             }
                             break;
 
                         case KeyEvent.VK_DELETE:
                         case KeyEvent.VK_BACK_SPACE:
-                            if (editable)
+                            if (!isReadOnly())
                             {
                                 // roi selected ?
-                                if (selected)
+                                if (isSelected())
                                 {
                                     // remove selected control point if there is one
                                     if (removeSelectedPoint(canvas, imagePoint))
                                         e.consume();
                                     else
                                     {
-                                        // else simply remove ROI from sequence
-                                        canvas.getSequence().removeROI(ROI2D.this);
+                                        if (isFocused())
+                                            // remove ROI from sequence
+                                            canvas.getSequence().removeROI(ROI2D.this);
+                                        else
+                                            // remove all selected ROI from the sequence
+                                            canvas.getSequence().removeSelectedROIs(false);
+
                                         e.consume();
                                     }
                                 }
                                 // roi focused ? --> delete ROI
-                                else if (focused)
+                                else if (isFocused())
                                 {
                                     // remove ROI from sequence
                                     canvas.getSequence().removeROI(ROI2D.this);
@@ -523,7 +524,7 @@ public abstract class ROI2D extends ROI
                 return;
 
             // just for the shift key state change
-            if (editable)
+            if (!isReadOnly())
                 updateDrag(e, imagePoint, canvas);
         }
     }
@@ -545,6 +546,11 @@ public abstract class ROI2D extends ROI
      */
     protected int c;
 
+    /**
+     * cached bounds
+     */
+    protected Rectangle2D cachedBounds;
+
     public ROI2D()
     {
         super();
@@ -553,6 +559,8 @@ public abstract class ROI2D extends ROI
         z = -1;
         t = -1;
         c = -1;
+
+        cachedBounds = new Rectangle2D.Double();
     }
 
     @Override
@@ -626,20 +634,11 @@ public abstract class ROI2D extends ROI
 
     /**
      * Return true if the ROI is active for the specified canvas.<br>
-     * It internally uses the current canvas Z, T, C coordinates and the visible state of the
-     * attached layer.
+     * It internally uses the current canvas Z, T, C coordinates.
      */
     public boolean isActiveFor(IcyCanvas canvas)
     {
-        if (!canvas.isLayersVisible())
-            return false;
-
-        final Layer layer = canvas.getLayer(painter);
-
-        if ((layer != null) && layer.isVisible())
-            return isActiveFor(canvas.getPositionZ(), canvas.getPositionT(), canvas.getPositionC());
-
-        return false;
+        return isActiveFor(canvas.getPositionZ(), canvas.getPositionT(), canvas.getPositionC());
     }
 
     /**
@@ -793,6 +792,14 @@ public abstract class ROI2D extends ROI
     public abstract boolean contains(double x, double y, double w, double h);
 
     /**
+     * Returns the bounding box of the <code>ROI</code>.<br>
+     * This method is used by {@link #getBounds2D()} which should try to cache the result as the
+     * bounding box calculation can take some computation time for complex ROI.
+     */
+    public abstract Rectangle2D computeBounds();
+
+    /**
+     * /**
      * Returns an integer {@link Rectangle} that completely encloses the <code>ROI</code>. Note that
      * there is no guarantee that the returned <code>Rectangle</code> is the smallest bounding box
      * that encloses the <code>ROI</code>, only that the <code>ROI</code> lies entirely within the
@@ -821,7 +828,10 @@ public abstract class ROI2D extends ROI
      * @return an instance of <code>Rectangle2D</code> that is a high-precision bounding box of the
      *         <code>ROI</code>.
      */
-    public abstract Rectangle2D getBounds2D();
+    public Rectangle2D getBounds2D()
+    {
+        return cachedBounds;
+    }
 
     /**
      * Returns the top left point of the ROI bounds.<br>
@@ -1171,4 +1181,20 @@ public abstract class ROI2D extends ROI
         return true;
     }
 
+    @Override
+    public void onChanged(EventHierarchicalChecker object)
+    {
+        final ROIEvent event = (ROIEvent) object;
+
+        // do here global process on ROI change
+        switch (event.getType())
+        {
+            case ROI_CHANGED:
+                // refresh bounds
+                cachedBounds = computeBounds();
+                break;
+        }
+
+        super.onChanged(object);
+    }
 }

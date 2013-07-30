@@ -20,13 +20,11 @@ import org.w3c.dom.Node;
  */
 public class IcyColorMapComponent implements XMLPersistent
 {
-
     static final String ID_INDEX = "index";
     static final String ID_VALUE = "value";
 
     public class ControlPoint implements Comparable<ControlPoint>, XMLPersistent
     {
-
         private int index;
         int value;
         private final boolean fixed;

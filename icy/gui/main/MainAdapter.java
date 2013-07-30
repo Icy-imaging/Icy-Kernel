@@ -19,11 +19,16 @@
 package icy.gui.main;
 
 /**
- * @author Stephane
+ * @deprecated Use one of these interface instead:<br/>
+ *             {@link GlobalViewerListener}<br/>
+ *             {@link GlobalSequenceListener}<br/>
+ *             {@link GlobalROIListener}<br/>
+ *             {@link GlobalOverlayListener}<br/>
+ *             {@link GlobalPluginListener}
  */
+@Deprecated
 public abstract class MainAdapter implements MainListener
 {
-
     @Override
     public void painterAdded(MainEvent event)
     {

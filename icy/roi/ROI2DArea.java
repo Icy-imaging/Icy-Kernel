@@ -91,7 +91,7 @@ public class ROI2DArea extends ROI2D
             cursor.setFrameFromDiagonal(x - cursorSize, y - cursorSize, x + cursorSize, y + cursorSize);
 
             // if roi selected (cursor displayed) --> painter changed
-            if (selected)
+            if (isSelected())
                 painterChanged();
         }
 
@@ -200,22 +200,20 @@ public class ROI2DArea extends ROI2D
                 super.keyPressed(e, imagePoint, canvas);
 
                 // no editable --> no action here
-                if (!editable)
+                if (isReadOnly())
                     return;
 
                 if (!e.isConsumed())
                 {
-                    switch (e.getKeyCode())
+                    switch (e.getKeyChar())
                     {
-                        case KeyEvent.VK_ADD:
-                        case KeyEvent.VK_PLUS:
-                            if (ROI2DArea.this.selected)
+                        case '+':
+                            if (isSelected())
                                 setCursorSize(cursorSize * 1.1f);
                             break;
 
-                        case KeyEvent.VK_MINUS:
-                        case KeyEvent.VK_SUBTRACT:
-                            if (ROI2DArea.this.selected)
+                        case '-':
+                            if (isSelected())
                                 setCursorSize(cursorSize * 0.9f);
                             break;
                     }
@@ -246,7 +244,7 @@ public class ROI2DArea extends ROI2D
                 super.mousePressed(e, imagePoint, canvas);
 
                 // no editable --> no action here
-                if (!editable)
+                if (isReadOnly())
                     return;
 
                 if (!e.isConsumed())
@@ -255,10 +253,10 @@ public class ROI2DArea extends ROI2D
                     if (EventUtil.isRightMouseButton(e))
                     {
                         // roi selected ?
-                        if (ROI2DArea.this.selected)
+                        if (isSelected())
                         {
                             // roi not focused ? --> remove point from mask
-                            if (!focused)
+                            if (!isFocused())
                                 removePointAt(canvas, imagePoint);
 
                             e.consume();
@@ -285,7 +283,7 @@ public class ROI2DArea extends ROI2D
                 return;
 
             // update only on release as it can be long
-            if (editable && boundsNeedUpdate)
+            if (!isReadOnly() && boundsNeedUpdate)
                 optimizeBounds(true);
         }
 
@@ -308,13 +306,13 @@ public class ROI2DArea extends ROI2D
                 super.mouseDrag(e, imagePoint, canvas);
 
                 // no editable --> no action here
-                if (!editable)
+                if (isReadOnly())
                     return;
 
                 if (!e.isConsumed())
                 {
                     // roi selected ?
-                    if (selected)
+                    if (isSelected())
                     {
                         // left button action
                         if (EventUtil.isLeftMouseButton(e))
@@ -328,7 +326,7 @@ public class ROI2DArea extends ROI2D
                         else if (EventUtil.isRightMouseButton(e))
                         {
                             // roi not focused ? --> remove point from mask
-                            if (!focused)
+                            if (!isFocused())
                                 removePointAt(canvas, imagePoint);
 
                             e.consume();
@@ -360,47 +358,61 @@ public class ROI2DArea extends ROI2D
             if (canvas instanceof IcyCanvas2D)
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
-                final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
 
+                final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
                 // show content with an alpha factor
                 g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity()));
-                // draw mask
-                g2.drawImage(imageMask, null, bounds.x, bounds.y);
-                
-                // ROI selected ? draw cursor
-                if (selected && !focused && editable)
-                {
-                    // draw cursor border
-                    g2.setColor(Color.black);
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                    g2.draw(cursor);
 
-                    // cursor color
-                    g2.setColor(cursorColor);
-                    // draw cursor
-                    g2.fill(cursor);
+                // trivial paint optimization
+                final boolean shapeVisible = ShapeUtil.isVisible(g, getBounds());
+
+                if (shapeVisible)
+                {
+                    // draw mask
+                    g2.drawImage(imageMask, null, bounds.x, bounds.y);
+                }
+
+                // ROI selected ? draw cursor
+                if (isSelected() && !isFocused() && !isReadOnly())
+                {
+                    // trivial paint optimization
+                    if (ShapeUtil.isVisible(g, cursor))
+                    {
+                        // draw cursor border
+                        g2.setColor(Color.black);
+                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
+                        g2.draw(cursor);
+
+                        // cursor color
+                        g2.setColor(cursorColor);
+                        // draw cursor
+                        g2.fill(cursor);
+                    }
                 }
 
                 // restore alpha
                 g2.setComposite(prevAlpha);
 
-                // draw border
-                if (selected)
+                if (shapeVisible)
                 {
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                    g2.setColor(getDisplayColor());
-                    g2.draw(bounds);
-                }
-                else
-                {
-                    // outside border
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                    g2.setColor(Color.black);
-                    g2.draw(bounds);
-                    // internal border
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                    g2.setColor(getDisplayColor());
-                    g2.draw(bounds);
+                    // draw border
+                    if (isSelected())
+                    {
+                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                        g2.setColor(getDisplayColor());
+                        g2.draw(bounds);
+                    }
+                    else
+                    {
+                        // outside border
+                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                        g2.setColor(Color.black);
+                        g2.draw(bounds);
+                        // internal border
+                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
+                        g2.setColor(getDisplayColor());
+                        g2.draw(bounds);
+                    }
                 }
 
                 // for (Point2D pt : getBooleanMask().getEdgePoints())
@@ -1013,12 +1025,27 @@ public class ROI2DArea extends ROI2D
         return true;
     }
 
+    /*
+     * already calculated
+     */
+    @Override
+    public Rectangle2D computeBounds()
+    {
+        return bounds;
+    }
+
+    /*
+     * We can override directly this method as we use our own bounds calculation method here
+     */
     @Override
     public Rectangle getBounds()
     {
         return bounds;
     }
 
+    /*
+     * We can override directly this method as we use our own bounds calculation method here
+     */
     @Override
     public Rectangle2D getBounds2D()
     {
@@ -1148,7 +1175,7 @@ public class ROI2DArea extends ROI2D
      * @param r
      * @param booleanMask
      */
-    private void setAsByteMask(Rectangle r, byte[] mask)
+    protected void setAsByteMask(Rectangle r, byte[] mask)
     {
         // reset image with new rectangle
         updateImage(r);

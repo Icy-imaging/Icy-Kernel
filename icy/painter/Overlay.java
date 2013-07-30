@@ -20,12 +20,20 @@ package icy.painter;
 
 import icy.canvas.IcyCanvas;
 import icy.common.EventHierarchicalChecker;
+import icy.common.UpdateEventHandler;
+import icy.common.listener.ChangeListener;
+import icy.main.Icy;
 import icy.painter.OverlayEvent.OverlayEventType;
+import icy.sequence.Sequence;
 
+import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
+import java.util.List;
+
+import javax.swing.event.EventListenerList;
 
 /**
  * Overlay class.<br>
@@ -36,7 +44,7 @@ import java.awt.geom.Point2D;
  * @author Stephane
  */
 @SuppressWarnings("deprecation")
-public abstract class Overlay extends AbstractPainter implements Comparable<Overlay>
+public abstract class Overlay implements Painter, ChangeListener, Comparable<Overlay>
 {
     /**
      * Define the overlay priority:
@@ -70,7 +78,9 @@ public abstract class Overlay extends AbstractPainter implements Comparable<Over
     public static final String PROPERTY_NAME = "name";
     public static final String PROPERTY_PRIORITY = "priority";
     public static final String PROPERTY_READONLY = "readOnly";
-    public static final String PROPERTY_FIXED = "fixed";
+    public static final String PROPERTY_CANBEREMOVED = "canBeRemoved";
+    public static final String PROPERTY_RECEIVEKEYEVENTONHIDDEN = "receiveKeyEventOnHidden";
+    public static final String PROPERTY_RECEIVEMOUSEEVENTONHIDDEN = "receiveMouseEventOnHidden";
 
     protected static int id_gen = 1;
 
@@ -81,7 +91,15 @@ public abstract class Overlay extends AbstractPainter implements Comparable<Over
     protected String name;
     protected OverlayPriority priority;
     protected boolean readOnly;
-    protected boolean fixed;
+    protected boolean canBeRemoved;
+    protected boolean receiveKeyEventOnHidden;
+    protected boolean receiveMouseEventOnHidden;
+
+    /**
+     * internals
+     */
+    protected final EventListenerList listeners;
+    protected final UpdateEventHandler updater;
 
     public Overlay(String name, OverlayPriority priority)
     {
@@ -94,8 +112,13 @@ public abstract class Overlay extends AbstractPainter implements Comparable<Over
 
         this.name = name;
         this.priority = priority;
-        this.readOnly = false;
-        this.fixed = false;
+        readOnly = false;
+        canBeRemoved = true;
+        receiveKeyEventOnHidden = false;
+        receiveMouseEventOnHidden = false;
+
+        listeners = new EventListenerList();
+        updater = new UpdateEventHandler(this, false);
     }
 
     public Overlay(String name)
@@ -147,28 +170,52 @@ public abstract class Overlay extends AbstractPainter implements Comparable<Over
     }
 
     /**
-     * Return fixed property.
+     * @deprecated Use {@link #getCanBeRemoved()} instead.
+     * @see #setCanBeRemoved(boolean)
      */
+    @Deprecated
     public boolean isFixed()
     {
-        return fixed;
+        return !getCanBeRemoved();
     }
 
     /**
-     * Set fixed property.<br>
-     * Any fixed Overlay cannot be removed from the Canvas where it appears.
+     * @deprecated Use {@link #setCanBeRemoved(boolean)} instead.
      */
-    public void setFixed(boolean fixed)
+    @Deprecated
+    public void setFixed(boolean value)
     {
-        if (this.fixed != fixed)
+        setCanBeRemoved(!value);
+    }
+
+    /**
+     * Returns <code>true</code> if the overlay can be freely removed from the Canvas where it
+     * appears and <code>false</code> otherwise.<br/>
+     * 
+     * @see #setCanBeRemoved(boolean)
+     */
+    public boolean getCanBeRemoved()
+    {
+        return canBeRemoved;
+    }
+
+    /**
+     * Set the <code>canBeRemoved</code> property.<br/>
+     * Set it to false if you want to prevent the overlay to be removed from the Canvas where it
+     * appears.
+     */
+    public void setCanBeRemoved(boolean value)
+    {
+        if (canBeRemoved != value)
         {
-            this.fixed = fixed;
-            propertyChanged(PROPERTY_FIXED);
+            canBeRemoved = value;
+            propertyChanged(PROPERTY_CANBEREMOVED);
         }
     }
 
     /**
-     * Return read only property.
+     * Return read only property.<br/>
+     * When set to <code>true</code> we cannot anymore modify overlay properties from the GUI.
      */
     public boolean isReadOnly()
     {
@@ -178,20 +225,95 @@ public abstract class Overlay extends AbstractPainter implements Comparable<Over
     /**
      * Set read only property.<br>
      */
-    public void setReadOnly(boolean readOnly)
+    public void setReadOnly(boolean value)
     {
-        if (this.readOnly != readOnly)
+        if (readOnly != value)
         {
-            this.readOnly = readOnly;
+            readOnly = value;
             propertyChanged(PROPERTY_READONLY);
         }
+    }
+
+    /**
+     * @return <code>true</code> is the overlay should receive {@link KeyEvent} even when it is not
+     *         visible.
+     */
+    public boolean getReceiveKeyEventOnHidden()
+    {
+        return receiveKeyEventOnHidden;
+    }
+
+    /**
+     * Set to <code>true</code> if you want to overlay to receive {@link KeyEvent} even when it is
+     * not visible.
+     */
+    public void setReceiveKeyEventOnHidden(boolean value)
+    {
+        if (receiveKeyEventOnHidden != value)
+        {
+            receiveKeyEventOnHidden = value;
+            propertyChanged(PROPERTY_RECEIVEKEYEVENTONHIDDEN);
+        }
+    }
+
+    /**
+     * @return <code>true</code> is the overlay should receive {@link MouseEvent} even when it is
+     *         not visible.
+     */
+    public boolean getReceiveMouseEventOnHidden()
+    {
+        return receiveMouseEventOnHidden;
+    }
+
+    /**
+     * Set to <code>true</code> if you want to overlay to receive {@link KeyEvent} even when it is
+     * not visible.
+     */
+    public void setReceiveMouseEventOnHidden(boolean value)
+    {
+        if (receiveMouseEventOnHidden != value)
+        {
+            receiveMouseEventOnHidden = value;
+            propertyChanged(PROPERTY_RECEIVEMOUSEEVENTONHIDDEN);
+        }
+    }
+
+    /**
+     * Remove the Overlay from all sequences where it is currently attached.
+     */
+    public void remove()
+    {
+        for (Sequence sequence : getSequences())
+            sequence.removeOverlay(this);
+    }
+
+    /**
+     * Returns all sequences where the painter/overlay is currently attached.
+     */
+    public List<Sequence> getSequences()
+    {
+        return Icy.getMainInterface().getSequencesContaining(this);
+    }
+
+    public void beginUpdate()
+    {
+        updater.beginUpdate();
+    }
+
+    public void endUpdate()
+    {
+        updater.endUpdate();
+    }
+
+    public boolean isUpdating()
+    {
+        return updater.isUpdating();
     }
 
     /**
      * @deprecated Use {@link #painterChanged()} instead.
      */
     @Deprecated
-    @Override
     public void changed()
     {
         painterChanged();
@@ -242,30 +364,89 @@ public abstract class Overlay extends AbstractPainter implements Comparable<Over
         listeners.remove(OverlayListener.class, listener);
     }
 
+    /**
+     * Paint method called to draw the painter.
+     */
+    @Override
+    public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+    {
+        // nothing by default
+    }
+
+    /**
+     * Mouse press event forwarded to the painter.
+     * 
+     * @param e
+     *        mouse event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
     @Override
     public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
         // no action by default
     }
 
+    /**
+     * Mouse release event forwarded to the painter.
+     * 
+     * @param e
+     *        mouse event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
     @Override
     public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
         // no action by default
     }
 
+    /**
+     * Mouse click event forwarded to the painter.
+     * 
+     * @param e
+     *        mouse event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
     @Override
     public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
         // no action by default
     }
 
+    /**
+     * Mouse move event forwarded to the painter.
+     * 
+     * @param e
+     *        mouse event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
     @Override
     public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
         // no action by default
     }
 
+    /**
+     * Mouse drag event forwarded to the painter.
+     * 
+     * @param e
+     *        mouse event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
     @Override
     public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
@@ -317,12 +498,32 @@ public abstract class Overlay extends AbstractPainter implements Comparable<Over
         // no action by default
     }
 
+    /**
+     * Key press event forwarded to the painter.
+     * 
+     * @param e
+     *        key event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
     @Override
     public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
         // no action by default
     }
 
+    /**
+     * Key release event forwarded to the painter.
+     * 
+     * @param e
+     *        key event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
     @Override
     public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
     {

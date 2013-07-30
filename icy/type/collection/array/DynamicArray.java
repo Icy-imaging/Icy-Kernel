@@ -22,6 +22,7 @@ import icy.type.DataType;
 import icy.type.TypeUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Stephane
@@ -307,7 +308,7 @@ public abstract class DynamicArray
         }
     }
 
-    private final ArrayList<ArrayBlock> blocks;
+    private final List<ArrayBlock> blocks;
 
     public DynamicArray()
     {

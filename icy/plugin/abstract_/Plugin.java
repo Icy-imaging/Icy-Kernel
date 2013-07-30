@@ -18,11 +18,13 @@
  */
 package icy.plugin.abstract_;
 
+import icy.file.FileUtil;
 import icy.gui.frame.IcyFrame;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.ImageUtil;
 import icy.main.Icy;
+import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
 import icy.preferences.PluginsPreferences;
@@ -30,8 +32,10 @@ import icy.preferences.XMLPreferences;
 import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -49,15 +53,6 @@ import javax.swing.ImageIcon;
  */
 public abstract class Plugin
 {
-    /**
-     * @deprecated Use {@link IcyExceptionHandler#report(PluginDescriptor, String)} instead.
-     */
-    @Deprecated
-    public static void report(PluginDescriptor plugin, String errorLog)
-    {
-        IcyExceptionHandler.report(plugin, errorLog);
-    }
-
     public static Plugin getPlugin(ArrayList<Plugin> list, String className)
     {
         for (Plugin plugin : list)
@@ -100,19 +95,46 @@ public abstract class Plugin
         return descriptor;
     }
 
+    public Viewer getActiveViewer()
+    {
+        return Icy.getMainInterface().getActiveViewer();
+    }
+
+    public Sequence getActiveSequence()
+    {
+        return Icy.getMainInterface().getActiveSequence();
+    }
+
+    public IcyBufferedImage getActiveImage()
+    {
+        return Icy.getMainInterface().getActiveImage();
+    }
+
+    /**
+     * @deprecated Use {@link #getActiveViewer()} instead
+     */
+    @Deprecated
     public Viewer getFocusedViewer()
     {
-        return Icy.getMainInterface().getFocusedViewer();
+        return getActiveViewer();
     }
 
+    /**
+     * @deprecated Use {@link #getActiveSequence()} instead
+     */
+    @Deprecated
     public Sequence getFocusedSequence()
     {
-        return Icy.getMainInterface().getFocusedSequence();
+        return getActiveSequence();
     }
 
+    /**
+     * @deprecated Use {@link #getActiveImage()} instead
+     */
+    @Deprecated
     public IcyBufferedImage getFocusedImage()
     {
-        return Icy.getMainInterface().getFocusedImage();
+        return getActiveImage();
     }
 
     public void addIcyFrame(final IcyFrame frame)
@@ -212,5 +234,141 @@ public abstract class Plugin
     public XMLPreferences getPreferences(String name)
     {
         return getPreferencesRoot().node(name);
+    }
+
+    /**
+     * Returns the base resource path for plugin native libraries.<br/>
+     * Depending the Operating System it can returns these values:
+     * <ul>
+     * <li>lib/unix32</li>
+     * <li>lib/unix64</li>
+     * <li>lib/mac32</li>
+     * <li>lib/mac64</li>
+     * <li>lib/win32</li>
+     * <li>lib/win64</li>
+     * </ul>
+     */
+    protected String getResourceLibraryPath()
+    {
+        return "lib" + ResourceUtil.separator + SystemUtil.getOSArchIdString();
+    }
+
+    /**
+     * Load a packed native library from the JAR file.<br/>
+     * Native libraries should be packaged with the following directory & file structure:
+     * 
+     * <pre>
+     * lib
+     *   unix32
+     *     libxxx.so
+     *   unix64
+     *     libxxx.so
+     *   mac32
+     *     libxxx.dylib
+     *   mac64
+     *     libxxx.dylib
+     *   win32
+     *     xxx.dll
+     *   win64
+     *     xxx.dll
+     * MyPlugin.class
+     * ....
+     * </pre>
+     * 
+     * Here "xxx" is the name of the native library.<br/>
+     * Current approach is to unpack the native library into a temporary file and load from there.
+     * 
+     * @param libName
+     * @return true if the library was correctly loaded.
+     * @see SystemUtil#loadLibrary(String)
+     */
+    public boolean loadLibrary(String libName)
+    {
+        try
+        {
+            // get mapped library name
+            String mappedlibName = System.mapLibraryName(libName);
+            // get base resource path for native library
+            final String basePath = getResourceLibraryPath() + ResourceUtil.separator;
+
+            // search for library in resource
+            URL libUrl = getResource(basePath + mappedlibName);
+
+            // not found ?
+            if (libUrl == null)
+            {
+                // jnilib extension may not work, try with "dylib" extension instead
+                if (mappedlibName.endsWith(".jnilib"))
+                {
+                    mappedlibName = mappedlibName.substring(0, mappedlibName.length() - 7) + ".dylib";
+                    libUrl = getResource(basePath + mappedlibName);
+                }
+            }
+
+            // resource not found --> error
+            if (libUrl == null)
+                throw new IOException("Couldn't find resource " + basePath + mappedlibName);
+
+            // extract resource
+            final File extractedFile = extractResource(SystemUtil.getTempLibraryDirectory() + FileUtil.separator
+                    + mappedlibName, libUrl);
+            // and load it
+            System.load(extractedFile.getPath());
+
+            return true;
+        }
+        catch (IOException e)
+        {
+            System.err.println("Error while loading packed library " + libName + ": " + e);
+        }
+
+        return false;
+    }
+
+    /**
+     * Extract a resource to the specified path
+     * 
+     * @param outputPath
+     *        the file to extract the resource to
+     * @param resource
+     *        the resource URL
+     * @return the extracted file
+     * @throws IOException
+     */
+    protected File extractResource(String outputPath, URL resource) throws IOException
+    {
+        // open resource stream
+        final InputStream in = resource.openStream();
+        // load resource
+        final byte data[] = NetworkUtil.download(in);
+        // create output file
+        final File result = new File(outputPath);
+
+        // file already exist ??
+        if (result.exists())
+        {
+            // same size --> assume it's the same
+            if (result.length() == data.length)
+                return result;
+
+            if (!FileUtil.delete(result, false))
+                throw new IOException("Cannot overwrite " + result + " file !");
+        }
+
+        // save resource to file
+        FileUtil.save(result, data, true);
+
+        return result;
+    }
+
+    /**
+     * Report an error log for this plugin (reported to Icy web site which report then to the
+     * author of the plugin).
+     * 
+     * @see IcyExceptionHandler#report(PluginDescriptor, String)
+     */
+    public void report(String errorLog)
+    {
+        IcyExceptionHandler.report(descriptor, errorLog);
     }
 }

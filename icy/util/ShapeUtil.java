@@ -20,6 +20,7 @@ package icy.util;
 
 import icy.painter.PathAnchor2D;
 
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.Area;
@@ -45,6 +46,18 @@ public class ShapeUtil
     public static enum ShapeOperation
     {
         OR, AND, XOR
+    }
+
+    /**
+     * Use the {@link Graphics} clip area and {@link Shape} bounds informations to determine if
+     * the specified {@link Shape} is visible in the specified Graphics object.
+     */
+    public static boolean isVisible(Graphics g, Shape shape)
+    {
+        if (shape == null)
+            return false;
+
+        return GraphicsUtil.isVisible(g, shape.getBounds());
     }
 
     /**

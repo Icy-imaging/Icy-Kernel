@@ -56,7 +56,7 @@ public class RoiExtraInfoPanel extends JPanel
             super();
 
             this.sequence = sequence;
-            this.viewer = Icy.getMainInterface().getFocusedViewer();
+            this.viewer = Icy.getMainInterface().getActiveViewer();
             if (roi != null)
                 this.roi = roi.getCopy();
             else

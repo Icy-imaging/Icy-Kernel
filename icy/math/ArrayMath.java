@@ -2564,6 +2564,160 @@ public class ArrayMath
     }
 
     /**
+     * Computes the sum of all values from the specified input array.
+     * 
+     * @param array
+     *        an array
+     * @param signed
+     *        signed / unsigned flag
+     * @return the sum of all values from the array
+     */
+    public static double sum(Object array, boolean signed)
+    {
+        switch (ArrayUtil.getDataType(array))
+        {
+            case BYTE:
+                return sum((byte[]) array, signed);
+            case SHORT:
+                return sum((short[]) array, signed);
+            case INT:
+                return sum((int[]) array, signed);
+            case LONG:
+                return sum((long[]) array, signed);
+            case FLOAT:
+                return sum((float[]) array);
+            case DOUBLE:
+                return sum((double[]) array);
+            default:
+                return 0d;
+        }
+    }
+
+    /**
+     * Computes the sum of all values in the input array
+     * 
+     * @param input
+     *        the array to sum up
+     * @param signed
+     *        signed / unsigned flag
+     */
+    public static double sum(byte[] input, boolean signed)
+    {
+        double sum = 0;
+
+        if (signed)
+        {
+            for (byte b : input)
+                sum += b;
+
+        }
+        else
+        {
+            for (byte b : input)
+                sum += TypeUtil.unsign(b);
+        }
+
+        return sum;
+    }
+
+    /**
+     * Computes the sum of all values in the input array
+     * 
+     * @param input
+     *        the array to sum up
+     * @param signed
+     *        signed / unsigned flag
+     */
+    public static double sum(short[] input, boolean signed)
+    {
+        double sum = 0;
+
+        if (signed)
+        {
+            for (short s : input)
+                sum += s;
+
+        }
+        else
+        {
+            for (short s : input)
+                sum += TypeUtil.unsign(s);
+        }
+
+        return sum;
+    }
+
+    /**
+     * Computes the sum of all values in the input array
+     * 
+     * @param input
+     *        the array to sum up
+     * @param signed
+     *        signed / unsigned flag
+     */
+    public static double sum(int[] input, boolean signed)
+    {
+        double sum = 0;
+
+        if (signed)
+        {
+            for (int i : input)
+                sum += i;
+
+        }
+        else
+        {
+            for (int i : input)
+                sum += TypeUtil.unsign(i);
+        }
+
+        return sum;
+    }
+
+    /**
+     * Computes the sum of all values in the input array
+     * 
+     * @param input
+     *        the array to sum up
+     * @param signed
+     *        signed / unsigned flag
+     */
+    public static double sum(long[] input, boolean signed)
+    {
+        double sum = 0;
+
+        if (signed)
+        {
+            for (long l : input)
+                sum += l;
+
+        }
+        else
+        {
+            for (long l : input)
+                sum += TypeUtil.unsign(l);
+        }
+
+        return sum;
+    }
+
+    /**
+     * Computes the sum of all values in the input array
+     * 
+     * @param input
+     *        the array to sum up
+     */
+    public static double sum(float[] input)
+    {
+        double sum = 0;
+
+        for (float f : input)
+            sum += f;
+
+        return sum;
+    }
+
+    /**
      * Computes the sum of all values in the input array
      * 
      * @param input

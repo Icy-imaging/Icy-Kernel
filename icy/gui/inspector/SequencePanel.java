@@ -19,7 +19,8 @@
 package icy.gui.inspector;
 
 import icy.gui.component.PopupPanel;
-import icy.gui.inspector.InspectorPanel.FocusedViewerSequenceListener;
+import icy.gui.main.ActiveSequenceListener;
+import icy.gui.main.ActiveViewerListener;
 import icy.gui.sequence.SequenceInfosPanel;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
@@ -35,7 +36,7 @@ import javax.swing.JPanel;
 /**
  * @author Stephane
  */
-public class SequencePanel extends JPanel implements FocusedViewerSequenceListener
+public class SequencePanel extends JPanel implements ActiveSequenceListener, ActiveViewerListener
 {
     /**
      * 
@@ -123,7 +124,7 @@ public class SequencePanel extends JPanel implements FocusedViewerSequenceListen
     }
 
     @Override
-    public void focusChanged(Viewer viewer)
+    public void viewerActivated(Viewer viewer)
     {
         if (viewer != null)
         {
@@ -135,12 +136,16 @@ public class SequencePanel extends JPanel implements FocusedViewerSequenceListen
             setLutPanel(null);
             setCanvasPanel(null);
         }
-
-        sequenceInfosPanel.focusChanged(viewer);
     }
 
     @Override
-    public void focusedViewerChanged(ViewerEvent event)
+    public void viewerDeactivated(Viewer viewer)
+    {
+        // nothing here
+    }
+
+    @Override
+    public void activeViewerChanged(ViewerEvent event)
     {
         // we receive from current focused viewer only
         switch (event.getType())
@@ -159,19 +164,24 @@ public class SequencePanel extends JPanel implements FocusedViewerSequenceListen
                 // nothing to do
                 break;
         }
-
-        sequenceInfosPanel.focusedViewerChanged(event);
     }
 
     @Override
-    public void focusChanged(Sequence sequence)
+    public void sequenceActivated(Sequence sequence)
     {
-        sequenceInfosPanel.focusChanged(sequence);
+        sequenceInfosPanel.sequenceActivated(sequence);
     }
 
     @Override
-    public void focusedSequenceChanged(SequenceEvent event)
+    public void sequenceDeactivated(Sequence sequence)
     {
-        sequenceInfosPanel.focusedSequenceChanged(event);
+        // nothing here
     }
+
+    @Override
+    public void activeSequenceChanged(SequenceEvent event)
+    {
+        sequenceInfosPanel.activeSequenceChanged(event);
+    }
+
 }

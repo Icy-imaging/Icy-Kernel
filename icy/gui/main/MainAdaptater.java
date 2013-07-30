@@ -19,14 +19,18 @@
 package icy.gui.main;
 
 /**
- * @deprecated please use MainAdapter instead.
- * This class will be completely removed by the 15 mars 2011 soon, so perform your changes quickly.
- * 
+ * @deprecated Use one of these interface instead:<br/>
+ *             {@link GlobalViewerListener}<br/>
+ *             {@link GlobalSequenceListener}<br/>
+ *             {@link GlobalROIListener}<br/>
+ *             {@link GlobalOverlayListener}<br/>
+ *             {@link GlobalPluginListener}
  * @author Stephane
  */
+@Deprecated
 public abstract class MainAdaptater implements MainListener
 {
-    /* 
+    /*
      * (non-Javadoc)
      * 
      * @see icy.gui.main.MainListener#painterAdded(icy.gui.main.MainEvent)

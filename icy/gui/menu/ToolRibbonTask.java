@@ -142,7 +142,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 
         void updateButtonsState()
         {
-            saveButton.setEnabled(Icy.getMainInterface().getFocusedSequence() != null);
+            saveButton.setEnabled(Icy.getMainInterface().getActiveSequence() != null);
         }
     }
 
@@ -391,7 +391,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
      */
     private void displayToolTip(String toolName)
     {
-        if (StringUtil.isEmpty(toolName) || (Icy.getMainInterface().getFocusedViewer() == null))
+        if (StringUtil.isEmpty(toolName) || (Icy.getMainInterface().getActiveViewer() == null))
             return;
 
         final String tips;
@@ -454,7 +454,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
     /**
      * call this method on sequence change
      */
-    public void onSequenceFocusChange()
+    public void onSequenceActivationChange()
     {
         fileBand.updateButtonsState();
     }

@@ -24,8 +24,9 @@ import icy.sequence.SequenceEvent;
 import java.util.EventListener;
 
 /**
- * @author Stephane
+ * @deprecated Use {@link ActiveSequenceListener} instead.
  */
+@Deprecated
 public interface FocusedSequenceListener extends EventListener
 {
     /**

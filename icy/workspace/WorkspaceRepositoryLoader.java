@@ -232,7 +232,7 @@ public class WorkspaceRepositoryLoader
                 System.out.println("You are not connected to internet.");
             else
                 System.out.println("Can't access repository '" + repos.getName() + "'");
-            
+
             return null;
         }
 

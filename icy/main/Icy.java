@@ -91,7 +91,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.3.6.0");
+    public static Version version = new Version("1.3.9.0");
 
     /**
      * Main interface
@@ -289,7 +289,7 @@ public class Icy
         // initialize exception handler
         IcyExceptionHandler.init();
         // prepare native library files (need preferences init)
-        prepareNativeLibraries();
+        nativeLibrariesInit();
 
         // check for core update
         if (GeneralPreferences.getAutomaticUpdate())
@@ -677,7 +677,7 @@ public class Icy
         Icy.getMainInterface().addSequence(sequence);
     }
 
-    static void prepareNativeLibraries()
+    static void nativeLibrariesInit()
     {
         final String lastOs = ApplicationPreferences.getOs();
         final String os = SystemUtil.getOSArchIdString();
@@ -693,6 +693,8 @@ public class Icy
 
         // add base local native library path to user library paths
         directories.add(libFile.getAbsolutePath());
+        // add base temporary native library path to user library paths
+        directories.add(SystemUtil.getTempLibraryDirectory());
 
         for (File f : files)
         {
@@ -883,12 +885,12 @@ public class Icy
         loadLibrary(dir, name, false, false);
     }
 
-    static void unPrepareNativeLibraries()
+    static void nativeLibrariesShutdown()
     {
         // build the native local library path
         final String path = LIB_PATH + FileUtil.separator + SystemUtil.getOSArchIdString();
         // get file list (we don't want hidden files if any)
-        final File[] libraryFiles = FileUtil.getFiles(new File(path), null, true, false, false);
+        File[] libraryFiles = FileUtil.getFiles(new File(path), null, true, false, false);
 
         // remove previous copied files
         for (File libraryFile : libraryFiles)
@@ -899,6 +901,16 @@ public class Icy
             if (file.exists())
                 file.deleteOnExit();
         }
-    }
 
+        // get file list from temporary native library path
+        libraryFiles = FileUtil.getFiles(new File(SystemUtil.getTempLibraryDirectory()), null, true, false, false);
+
+        // remove previous copied files
+        for (File libraryFile : libraryFiles)
+        {
+            // delete file
+            if (!FileUtil.delete(libraryFile, false))
+                libraryFile.deleteOnExit();
+        }
+    }
 }

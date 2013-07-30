@@ -18,6 +18,7 @@
  */
 package icy.gui.preferences;
 
+import icy.gui.component.IcyTable;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.plugin.PluginDetailPanel;
@@ -344,7 +345,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
             }
         };
 
-        table = new JTable(tableModel);
+        table = new IcyTable(tableModel);
 
         final TableColumnModel colModel = table.getColumnModel();
         TableColumn col;
@@ -352,29 +353,33 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         // columns setting
         col = colModel.getColumn(0);
         col.setIdentifier(columnIds[0]);
-        col.setPreferredWidth(32);
         col.setMinWidth(32);
-        col.setResizable(false);
+        col.setPreferredWidth(32);
+        col.setMaxWidth(32);
 
         col = colModel.getColumn(1);
         col.setIdentifier(columnIds[1]);
-        col.setPreferredWidth(200);
         col.setMinWidth(120);
+        col.setPreferredWidth(200);
+        col.setMaxWidth(500);
 
         col = colModel.getColumn(2);
         col.setIdentifier(columnIds[2]);
-        col.setPreferredWidth(70);
         col.setMinWidth(60);
+        col.setPreferredWidth(60);
+        col.setMaxWidth(60);
 
         col = colModel.getColumn(3);
         col.setIdentifier(columnIds[3]);
-        col.setPreferredWidth(90);
         col.setMinWidth(70);
+        col.setPreferredWidth(90);
+        col.setMaxWidth(120);
 
         col = colModel.getColumn(4);
         col.setIdentifier(columnIds[4]);
-        col.setPreferredWidth(70);
-        col.setMinWidth(30);
+        col.setMinWidth(60);
+        col.setPreferredWidth(60);
+        col.setMaxWidth(60);
 
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getSelectionModel().addListSelectionListener(this);
@@ -385,7 +390,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         table.setAutoCreateRowSorter(true);
         // sort on name by default
         table.getRowSorter().toggleSortOrder(1);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         final JPanel tableTopPanel = new JPanel();
 

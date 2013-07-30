@@ -66,7 +66,7 @@ public class RoiActions
         public boolean doAction(ActionEvent e)
         {
             final String filename = LoadDialog.chooseFile("Load roi(s)...", DEFAULT_ROI_DIR, DEFAULT_ROI_NAME);
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if ((filename != null) && (sequence != null))
             {
@@ -98,7 +98,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -114,7 +114,7 @@ public class RoiActions
         public boolean doAction(ActionEvent e)
         {
             final String filename = SaveDialog.chooseFile("Save roi(s)...", DEFAULT_ROI_DIR, DEFAULT_ROI_NAME);
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if ((filename != null) && (sequence != null))
             {
@@ -139,7 +139,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -154,7 +154,7 @@ public class RoiActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -183,7 +183,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
             return super.isEnabled() && (sequence != null) && (sequence.getSelectedROIs().size() > 0);
         }
     };
@@ -225,7 +225,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
             return super.isEnabled() && (sequence != null) && (sequence.getSelectedROIs().size() > 0);
         }
     };
@@ -241,7 +241,7 @@ public class RoiActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -254,14 +254,14 @@ public class RoiActions
                     try
                     {
                         // unselect all rois
-                        sequence.setSelectedROIs(null);
+                        sequence.setSelectedROI(null);
 
                         // add copy to sequence (so we can do the paste operation severals time)
                         for (ROI roi : rois)
                         {
                             final ROI newROI = roi.getCopy();
                             // select the ROI
-                            newROI.setSelected(true, false);
+                            newROI.setSelected(true);
                             // and add it
                             sequence.addROI(newROI);
                         }
@@ -281,7 +281,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null)
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null)
                     && Clipboard.getType().equals(Clipboard.TYPE_ROILIST);
         }
     };
@@ -297,7 +297,7 @@ public class RoiActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -328,7 +328,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null)
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null)
                     && Clipboard.getType().equals(Clipboard.TYPE_ROILINKLIST);
         }
     };
@@ -352,7 +352,7 @@ public class RoiActions
     // @Override
     // public boolean isEnabled()
     // {
-    // return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null)
+    // return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null)
     // && Clipboard.hasObjects(RoiActions.ID_ROI_COPY_CLIPBOARD, false);
     // }
     // };
@@ -368,11 +368,11 @@ public class RoiActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
-                sequence.setSelectedROIs(sequence.getROIs());
+                sequence.setSelectedROIs((List<ROI>) sequence.getROIs());
                 return true;
             }
 
@@ -382,7 +382,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             return super.isEnabled() && (sequence != null) && (sequence.getROIs().size() > 0);
         }
@@ -399,11 +399,11 @@ public class RoiActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
-                sequence.setSelectedROI(null, false);
+                sequence.setSelectedROI(null);
                 return true;
             }
 
@@ -413,7 +413,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -428,7 +428,7 @@ public class RoiActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if (sequence != null)
             {
@@ -442,7 +442,7 @@ public class RoiActions
                     {
                         // delete selected rois
                         for (ROI roi : rois)
-                            if (roi.isEditable())
+                            if (!roi.isReadOnly())
                                 sequence.removeROI(roi);
                     }
                     finally
@@ -460,7 +460,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
             return super.isEnabled() && (sequence != null) && (sequence.getSelectedROIs().size() > 0);
         }
     };
@@ -477,7 +477,7 @@ public class RoiActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
             final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
 
             if ((sequence != null) && (roisPanel != null))
@@ -486,7 +486,7 @@ public class RoiActions
                 sequence.beginUpdate();
                 try
                 {
-                    final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
+                    final List<ROI> selectedROI = roisPanel.getSelectedRois();
                     // only ROI2D supported now
                     final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
 
@@ -499,7 +499,7 @@ public class RoiActions
                     mergeROI.setName("Inverse");
 
                     sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
+                    sequence.setSelectedROI(mergeROI);
                 }
                 finally
                 {
@@ -515,7 +515,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -530,7 +530,7 @@ public class RoiActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
             final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
 
             if ((sequence != null) && (roisPanel != null))
@@ -539,14 +539,14 @@ public class RoiActions
                 sequence.beginUpdate();
                 try
                 {
-                    final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
+                    final List<ROI> selectedROI = roisPanel.getSelectedRois();
                     // only ROI2D supported now
                     final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
 
                     final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.OR);
 
                     sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
+                    sequence.setSelectedROI(mergeROI);
                 }
                 finally
                 {
@@ -562,7 +562,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -578,7 +578,7 @@ public class RoiActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
             final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
 
             if ((sequence != null) && (roisPanel != null))
@@ -587,14 +587,14 @@ public class RoiActions
                 sequence.beginUpdate();
                 try
                 {
-                    final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
+                    final List<ROI> selectedROI = roisPanel.getSelectedRois();
                     // only ROI2D supported now
                     final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
 
                     final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.AND);
 
                     sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
+                    sequence.setSelectedROI(mergeROI);
                 }
                 finally
                 {
@@ -610,7 +610,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -626,7 +626,7 @@ public class RoiActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
             final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
 
             if ((sequence != null) && (roisPanel != null))
@@ -635,14 +635,14 @@ public class RoiActions
                 sequence.beginUpdate();
                 try
                 {
-                    final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
+                    final List<ROI> selectedROI = roisPanel.getSelectedRois();
                     // only ROI2D supported now
                     final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
 
                     final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.XOR);
 
                     sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
+                    sequence.setSelectedROI(mergeROI);
                 }
                 finally
                 {
@@ -658,7 +658,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -674,7 +674,7 @@ public class RoiActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
             final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
 
             if ((sequence != null) && (roisPanel != null))
@@ -683,7 +683,7 @@ public class RoiActions
                 sequence.beginUpdate();
                 try
                 {
-                    final ArrayList<ROI> selectedROI = roisPanel.getSelectedRois();
+                    final List<ROI> selectedROI = roisPanel.getSelectedRois();
                     // only ROI2D supported now
                     final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
 
@@ -694,7 +694,7 @@ public class RoiActions
                     final ROI mergeROI = ROI2D.subtract(selectedROI2D[0], selectedROI2D[1]);
 
                     sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI, true);
+                    sequence.setSelectedROI(mergeROI);
                 }
                 finally
                 {
@@ -710,7 +710,7 @@ public class RoiActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 

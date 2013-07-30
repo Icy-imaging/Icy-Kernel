@@ -20,9 +20,7 @@ package icy.gui.sequence;
 
 import icy.gui.component.button.IcyButton;
 import icy.gui.frame.GenericFrame;
-import icy.gui.inspector.InspectorPanel.FocusedViewerSequenceListener;
-import icy.gui.viewer.Viewer;
-import icy.gui.viewer.ViewerEvent;
+import icy.gui.main.ActiveSequenceListener;
 import icy.main.Icy;
 import icy.math.UnitUtil;
 import icy.math.UnitUtil.UnitPrefix;
@@ -48,12 +46,13 @@ import javax.swing.JTextField;
 /**
  * @author Stephane
  */
-public class SequenceInfosPanel extends JPanel implements FocusedViewerSequenceListener
+public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
 {
     /**
      * 
      */
     private static final long serialVersionUID = -6123324347914804260L;
+
     private JLabel dimensionLabel;
     private JLabel resXLabel;
     private JLabel resYLabel;
@@ -82,7 +81,7 @@ public class SequenceInfosPanel extends JPanel implements FocusedViewerSequenceL
             public void actionPerformed(ActionEvent e)
             {
                 // it should be the current focused sequence
-                final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+                final Sequence seq = Icy.getMainInterface().getActiveSequence();
 
                 if (seq != null)
                     new SequencePropertiesDialog(seq);
@@ -95,7 +94,7 @@ public class SequenceInfosPanel extends JPanel implements FocusedViewerSequenceL
             public void actionPerformed(ActionEvent e)
             {
                 // it should be the current focused sequence
-                final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+                final Sequence seq = Icy.getMainInterface().getActiveSequence();
 
                 if (seq != null)
                 {
@@ -408,25 +407,19 @@ public class SequenceInfosPanel extends JPanel implements FocusedViewerSequenceL
     }
 
     @Override
-    public void focusChanged(Viewer viewer)
-    {
-
-    }
-
-    @Override
-    public void focusedViewerChanged(ViewerEvent event)
-    {
-
-    }
-
-    @Override
-    public void focusChanged(Sequence sequence)
+    public void sequenceActivated(Sequence sequence)
     {
         updateInfos(sequence);
     }
 
     @Override
-    public void focusedSequenceChanged(SequenceEvent event)
+    public void sequenceDeactivated(Sequence sequence)
+    {
+        // nothing to do here
+    }
+
+    @Override
+    public void activeSequenceChanged(SequenceEvent event)
     {
         final Sequence sequence = event.getSequence();
 

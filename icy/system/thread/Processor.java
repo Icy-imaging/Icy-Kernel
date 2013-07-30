@@ -61,15 +61,15 @@ public class Processor extends ThreadPoolExecutor
     protected class Runner implements Runnable
     {
         private final Runnable task;
-        private final boolean onEventThread;
+        private final boolean onEDT;
         private final int id;
 
-        public Runner(Runnable task, boolean onEventThread, int id)
+        public Runner(Runnable task, boolean onEDT, int id)
         {
             super();
 
             this.task = task;
-            this.onEventThread = onEventThread;
+            this.onEDT = onEDT;
             this.id = id;
         }
 
@@ -78,7 +78,7 @@ public class Processor extends ThreadPoolExecutor
         {
             if (task != null)
             {
-                if (onEventThread)
+                if (onEDT)
                     ThreadUtil.invokeNow(task);
                 else
                     task.run();
@@ -198,11 +198,11 @@ public class Processor extends ThreadPoolExecutor
     /**
      * Add a task to the processor.
      */
-    public boolean addTask(Runnable task, boolean onEventThread, int id)
+    public boolean addTask(Runnable task, boolean onEDT, int id)
     {
         try
         {
-            final Runner runner = new Runner(task, onEventThread, id);
+            final Runner runner = new Runner(task, onEDT, id);
             execute(runner);
             waitingExecution = runner;
         }
@@ -217,9 +217,9 @@ public class Processor extends ThreadPoolExecutor
     /**
      * Add a task to the processor.
      */
-    public boolean addTask(Runnable task, boolean onEventThread)
+    public boolean addTask(Runnable task, boolean onEDT)
     {
-        return addTask(task, onEventThread, -1);
+        return addTask(task, onEDT, -1);
     }
 
     /**

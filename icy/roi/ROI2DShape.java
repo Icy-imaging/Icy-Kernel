@@ -42,7 +42,6 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -288,7 +287,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             try
             {
                 // send first to controls points
-                if (ROI2DShape.this.selected && editable)
+                if (isSelected() && !isReadOnly())
                 {
                     // default anchor action on key pressed
                     for (Anchor2D pt : controlPoints)
@@ -321,7 +320,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             try
             {
                 // send first to controls points
-                if (ROI2DShape.this.selected && editable)
+                if (isSelected() && !isReadOnly())
                 {
                     // default anchor action on key release
                     for (Anchor2D pt : controlPoints)
@@ -354,7 +353,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             try
             {
                 // send first to controls points
-                if (ROI2DShape.this.selected && editable)
+                if (isSelected() && !isReadOnly())
                 {
                     // default anchor action on mouse pressed
                     for (Anchor2D pt : controlPoints)
@@ -387,7 +386,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             try
             {
                 // send first to controls points
-                if (ROI2DShape.this.selected && editable)
+                if (isSelected() && !isReadOnly())
                 {
                     // default anchor action on mouse release
                     for (Anchor2D pt : controlPoints)
@@ -420,7 +419,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             try
             {
                 // send first to controls points
-                if (ROI2DShape.this.selected && editable)
+                if (isSelected() && !isReadOnly())
                 {
                     // default anchor action on mouse click
                     for (Anchor2D pt : controlPoints)
@@ -440,8 +439,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                         if (EventUtil.isRightMouseButton(e))
                         {
                             // unselect (don't consume event)
-                            if (selected)
-                                ROI2DShape.this.setSelected(false, false);
+                            if (isSelected())
+                                ROI2DShape.this.setSelected(false);
                         }
                     }
                 }
@@ -469,7 +468,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             try
             {
                 // send first to controls points
-                if (ROI2DShape.this.selected && editable)
+                if (isSelected() && !isReadOnly())
                 {
                     // default anchor action on mouse drag
                     for (Anchor2D pt : controlPoints)
@@ -502,7 +501,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             try
             {
                 // send first to control points
-                if (ROI2DShape.this.selected && editable)
+                if (isSelected() && !isReadOnly())
                 {
                     // refresh control point state
                     for (Anchor2D pt : controlPoints)
@@ -525,8 +524,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         {
             if (canvas instanceof IcyCanvas2D)
             {
+                // trivial paint optimization
+                final boolean shapeVisible = ShapeUtil.isVisible(g, shape);
+
                 // ROI selected ?
-                if (selected)
+                if (shapeVisible && isSelected())
                 {
                     final Graphics2D g2 = (Graphics2D) g.create();
                     final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
@@ -541,33 +543,39 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
                 final Graphics2D g2 = (Graphics2D) g.create();
 
-                if (selected)
+                if (shapeVisible)
                 {
-                    // just draw plain object shape without border
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                    g2.setColor(getDisplayColor());
-                    g2.draw(shape);
-                }
-                else
-                {
-                    // draw border
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                    g2.setColor(Color.black);
-                    g2.draw(shape);
-                    // draw shape
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                    g2.setColor(getDisplayColor());
-                    g2.draw(shape);
+                    if (isSelected())
+                    {
+                        // just draw plain object shape without border
+                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                        g2.setColor(getDisplayColor());
+                        g2.draw(shape);
+                    }
+                    else
+                    {
+                        // draw border
+                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                        g2.setColor(Color.black);
+                        g2.draw(shape);
+                        // draw shape
+                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
+                        g2.setColor(getDisplayColor());
+                        g2.draw(shape);
+                    }
                 }
 
                 // draw from flatten shape as we use it for collision detection
                 // ShapeUtil.drawFromPath(getPathIterator(null, 0.1), g);
 
-                if (selected && editable)
+                if (isSelected() && !isReadOnly())
                 {
+
                     // draw control point if selected
                     for (Anchor2D pt : controlPoints)
                         pt.paint(g2, sequence, canvas);
+
+                    g2.dispose();
                 }
 
                 g2.dispose();
@@ -743,7 +751,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     @Override
-    public void setSelected(boolean value, boolean exclusive)
+    public void setSelected(boolean value)
     {
         // unselected ? --> unselected all control points
         if (!value)
@@ -752,7 +760,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                 pt.setSelected(false);
         }
 
-        super.setSelected(value, exclusive);
+        super.setSelected(value);
     }
 
     /**
@@ -912,91 +920,89 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
         final Anchor2D selectedPoint = getSelectedPoint();
 
-        if (selectedPoint != null)
+        if (selectedPoint == null)
+            return false;
+
+        final int index = controlPoints.indexOf(selectedPoint);
+
+        // try to remove point
+        if (!removePoint(canvas, selectedPoint))
+            return false;
+
+        // last control point removed --> delete ROI
+        if (controlPoints.size() == 0)
+            remove();
+        else
         {
-            final int index = controlPoints.indexOf(selectedPoint);
-
-            // try to remove point
-            if (removePoint(canvas, selectedPoint))
+            // we are using PathAnchor2D ?
+            if (selectedPoint instanceof PathAnchor2D)
             {
-                // last control point removed --> delete ROI
-                if (controlPoints.size() == 0)
-                    canvas.getSequence().removeROI(this);
-                else
+                final PathAnchor2D selectedPathPoint = (PathAnchor2D) selectedPoint;
+
+                switch (selectedPathPoint.getType())
                 {
-                    // we are using PathAnchor2D ?
-                    if (selectedPoint instanceof PathAnchor2D)
-                    {
-                        final PathAnchor2D selectedPathPoint = (PathAnchor2D) selectedPoint;
-
-                        switch (selectedPathPoint.getType())
+                // we removed a MOVETO point ?
+                    case PathIterator.SEG_MOVETO:
+                        // try to set next point to MOVETO state
+                        if (index < controlPoints.size())
                         {
-                        // we removed a MOVETO point ?
-                            case PathIterator.SEG_MOVETO:
-                                // try to set next point to MOVETO state
-                                if (index < controlPoints.size())
+                            final PathAnchor2D nextPoint = (PathAnchor2D) controlPoints.get(index);
+
+                            // next point is a CLOSE one ?
+                            if (nextPoint.getType() == PathIterator.SEG_CLOSE)
+                            {
+                                // delete it
+                                if (removePoint(canvas, nextPoint))
                                 {
-                                    final PathAnchor2D nextPoint = (PathAnchor2D) controlPoints.get(index);
-
-                                    // next point is a CLOSE one ?
-                                    if (nextPoint.getType() == PathIterator.SEG_CLOSE)
-                                    {
-                                        // delete it
-                                        if (removePoint(canvas, nextPoint))
-                                        {
-                                            // it was the last control point --> delete ROI
-                                            if (controlPoints.size() == 0)
-                                                canvas.getSequence().removeROI(this);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // whatever is next point, set it to MOVETO
-                                        nextPoint.setType(PathIterator.SEG_MOVETO);
-                                        nextPoint.setVisible(true);
-                                    }
+                                    // it was the last control point --> delete ROI
+                                    if (controlPoints.size() == 0)
+                                        remove();
                                 }
-                                break;
-
-                            // we removed a CLOSE point ?
-                            case PathIterator.SEG_CLOSE:
-                                // try to set previous point to CLOSE state
-                                if (index > 0)
-                                {
-                                    final PathAnchor2D prevPoint = (PathAnchor2D) controlPoints.get(index - 1);
-
-                                    // next point is a MOVETO one ?
-                                    if (prevPoint.getType() == PathIterator.SEG_MOVETO)
-                                    {
-                                        // delete it
-                                        if (removePoint(canvas, prevPoint))
-                                        {
-                                            // it was the last control point --> delete ROI
-                                            if (controlPoints.size() == 0)
-                                                canvas.getSequence().removeROI(this);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // whatever is previous point, set it to CLOSE
-                                        prevPoint.setType(PathIterator.SEG_CLOSE);
-                                        prevPoint.setVisible(false);
-                                    }
-                                }
-                                break;
+                            }
+                            else
+                            {
+                                // whatever is next point, set it to MOVETO
+                                nextPoint.setType(PathIterator.SEG_MOVETO);
+                                nextPoint.setVisible(true);
+                            }
                         }
-                    }
+                        break;
 
-                    // select a new point if possible
-                    if (controlPoints.size() > 0)
-                        selectPointAt(canvas, imagePoint);
+                    // we removed a CLOSE point ?
+                    case PathIterator.SEG_CLOSE:
+                        // try to set previous point to CLOSE state
+                        if (index > 0)
+                        {
+                            final PathAnchor2D prevPoint = (PathAnchor2D) controlPoints.get(index - 1);
+
+                            // next point is a MOVETO one ?
+                            if (prevPoint.getType() == PathIterator.SEG_MOVETO)
+                            {
+                                // delete it
+                                if (removePoint(canvas, prevPoint))
+                                {
+                                    // it was the last control point --> delete ROI
+                                    if (controlPoints.size() == 0)
+                                        remove();
+                                }
+                            }
+                            else
+                            {
+                                // whatever is previous point, set it to CLOSE
+                                prevPoint.setType(PathIterator.SEG_CLOSE);
+                                prevPoint.setVisible(false);
+                            }
+                        }
+                        break;
                 }
-
-                return true;
             }
+
+            // select a new point if possible
+            if (controlPoints.size() > 0)
+                selectPointAt(canvas, imagePoint);
         }
 
-        return false;
+        return true;
     }
 
     protected boolean selectPointAt(IcyCanvas canvas, Point2D imagePoint)
@@ -1090,6 +1096,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     @Override
     public boolean isOver(IcyCanvas canvas, double x, double y)
     {
+        if (!getBounds2D().contains(x, y))
+            return false;
+
         // use bigger stroke for isOver test for easier intersection
         final double strk = painter.getAdjustedStroke(canvas) * 3;
         final Rectangle2D rect = new Rectangle2D.Double(x - (strk * 0.5), y - (strk * 0.5), strk, strk);
@@ -1100,7 +1109,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     @Override
     public boolean isOverPoint(IcyCanvas canvas, double x, double y)
     {
-        if (selected)
+        if (isSelected())
         {
             for (Anchor2D pt : controlPoints)
                 if (pt.isOver(canvas, x, y))
@@ -1160,16 +1169,22 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     @Override
-    public Rectangle getBounds()
-    {
-        return shape.getBounds();
-    }
-
-    @Override
-    public Rectangle2D getBounds2D()
+    public Rectangle2D computeBounds()
     {
         return shape.getBounds2D();
     }
+
+//    @Override
+//    public Rectangle getBounds()
+//    {
+//        return shape.getBounds();
+//    }
+//
+//    @Override
+//    public Rectangle2D getBounds2D()
+//    {
+//        return shape.getBounds2D();
+//    }
 
     @Override
     public boolean intersects(Rectangle2D r)
@@ -1222,7 +1237,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                 setFocused(false);
 
             // anchor changed --> ROI painter changed
-            getPainter().painterChanged();
+            getOverlay().painterChanged();
         }
     }
 

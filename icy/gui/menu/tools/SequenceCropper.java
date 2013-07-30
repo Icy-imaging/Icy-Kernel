@@ -41,7 +41,7 @@ public class SequenceCropper
     {
         super();
 
-        final Viewer v = Icy.getMainInterface().getFocusedViewer();
+        final Viewer v = Icy.getMainInterface().getActiveViewer();
 
         if ((v == null) || (v.getSequence() == null))
             return;

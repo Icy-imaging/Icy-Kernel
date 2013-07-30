@@ -1,45 +1,42 @@
-<html>
 <body>
 
 <h1>Icy start guide</h1>
  
 We believe watching some examples is the better way to understand how to program plugins for Icy !<br/>
-So for each topic we try to provide some basic tutorials.<br/>
-You can find all them in the Tutorial workspaces but you can also download them separately if you prefer.<br>
+So for each topic we provide a brief description and some basic tutorials.<br/>
+You can find all these plugin tutorials in the <a href="http://icy.bioimageanalysis.org/index.php?display=startDevWithIcy#importPluginTutorial">Plugin Tutorials</a> GitHub project. You can also download them from Icy by using the <i>tutorial</i> keyword in the plugin browser or search bar.<br/>
+<br/>
+<b>Available topics</b><br/>
+&nbsp;&nbsp;<a href="#plugin">Plugin</a><br/>
+&nbsp;&nbsp;<a href="#image_struc">Image structure</a><br/>
+&nbsp;&nbsp;<a href="#roi">Region of Interest</a><br/>
+&nbsp;&nbsp;<a href="#overlay">Overlay</a><br/>
+&nbsp;&nbsp;<a href="#gui">GUI</a><br/>
+&nbsp;&nbsp;<a href="#image_rep">Image representation</a><br/>
+&nbsp;&nbsp;<a href="#event">Event</a><br/>
+&nbsp;&nbsp;<a href="#chart">Chart / Graphic</a><br/>
+&nbsp;&nbsp;<a href="#misc">Miscellaneous</a><br/>
+<br/>
 
-<li>Available topics
-<ul>Plugin</ul>
-<ul>Image structure</ul>
-<ul>Image display</ul>
-<ul>Region of Interest</ul>
-<ul>Overlay</ul>
-<ul>GUI</ul>
-<ul>Event</ul>
-<ul>Chart / Graphic</ul>
-<ul>Miscellaneous</ul>
-</li>
-
- 
-<h2>Plugin</h2>
+<h4><a name="plugin">Plugin</a></h4>
 
 Plugin is the way for developer to provide new features in the application.<br/>
 For that you have to extend the base <a href="icy/plugin/abstract_/Plugin.html">Plugin</a> class so your program could be installed and used in Icy.<br/>
-<a href="icy/plugin/abstract_/PluginActionable.html">PluginActionable</a>: base class for plugin which should be visible in the GUI interface so we can launch them from a button.  
+<a href="icy/plugin/abstract_/PluginActionable.html">PluginActionable</a> is the base class for plugin which should be visible in the GUI interface so we can launch them from a button.<br/>  
 Don't forget to check available interface for <a href="icy/plugin/abstract_/Plugin.html">Plugin</a> as <a href="icy/plugin/interface_/PluginDaemon.html">PluginDaemon</a>,
 <a href="icy/plugin/interface_/PluginSearchProvider.html">PluginSearchProvider</a> or <a href="icy/plugin/interface_/PluginROI.html">PluginROI</a> to enable specific behavior on your plugin.<br/>  
 <br/>
+<b>Documented source code examples</b><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/basics/HelloWorldPlugin.html">Hello World Plugin</a><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/basics/ListOfRegisteredPlugins.html">Getting the list of registered plugin</a><br/>
+<br/>
+<b>Others interesting classes to see</b><br/>
+&nbsp;&nbsp;<a href="icy/plugin/PluginLoader.html">PluginLoader</a> is used to detect and load all plugin classes in Icy, you can use it to request information about installed plugins.<br/>
+&nbsp;&nbsp;<a href="icy/plugin/PluginLauncher.html">PluginLauncher</a> is used to launch plugin.<br/>  
+&nbsp;&nbsp;<a href="icy/plugin/PluginInstaller.html">PluginInstaller</a> is used to install / update / remove plugin.<br/>
+<br/>
 
-<h4>Others interesting classes to see</h4>
-<a href="icy/plugin/PluginLoader.html">PluginLoader</a>: this class is used to detect and load all plugin classes in Icy. You should use it to request information about installed plugins.<br/>  
-<a href="icy/plugin/PluginLauncher.html">PluginLauncher</a>: this class is used to launch plugin.<br/>  
-<a href="icy/plugin/PluginInstaller.html">PluginInstaller</a>: this class is used to install / update / remove plugin.<br/>
-
-<h4>Documented source code examples</h4>
-<a href="plugins/tutorial/basics/HelloWorldPlugin.html">Hello World Plugin</a><br>
-<a href="plugins/tutorial/basics/ListOfRegisteredPlugins.html">Getting the list of registered plugin</a><br>
-
-
-<h2>Image structure</h2>
+<h4><a name="image_struc">Image structure</a></h4>
 
 The basic image classes of Icy are the <a href="icy/sequence/Sequence.html">Sequence</a> and the and <a href="icy/image/IcyBufferedImage.html">IcyBufferedImage</a>.<br/>
 The <a href="icy/sequence/Sequence.html">Sequence</a> class allows the definition of an image over the 5 [XYCZT] dimensions.<br/>
@@ -54,137 +51,150 @@ as <a href="http://docs.oracle.com/javase/7/docs/api/java/awt/image/BufferedImag
 Data are organized in channel (one data array per channel) so for a classical ARGB image we have 4 channels --> 4 arrays (byte data here).<br/>
 We retained this organization because almost time the image processing algorithm work on a channel basis.<br/>
 <br/>
-<a href="icy/image/IcyBufferedImage.html">IcyBufferedImage</a> internally uses <a href="icy/image/colormodel/IcyColorModel.html">IcyColorModel</a> class (which inherit from <a href="http://docs.oracle.com/javase/7/docs/api/java/awt/image/ColorModel.html">ColorModel</a>), this structure is responsible of the image data storage and can be of any type:<br/>
-- <a href="icy/type/DataType.html#UBYTE">DataType.UBYTE</a>: <a href="icy/image/colormodel/UByteColorModel.html">UByteColorModel</a> (8 bits unsigned)<br/>
-- <a href="icy/type/DataType.html#BYTE">DataType.BYTE</a>: <a href="icy/image/colormodel/ByteColorModel.html">ByteColorModel</a> (8 bits signed)<br/>
-- <a href="icy/type/DataType.html#USHORT">DataType.USHORT</a>: <a href="icy/image/colormodel/UShortColorModel.html">UShortColorModel</a> (16 bits unsigned)<br/>
-- <a href="icy/type/DataType.html#SHORT">DataType.SHORT</a>: <a href="icy/image/colormodel/ShortColorModel.html">ShortColorModel</a> (16 bits signed)<br/>
-- <a href="icy/type/DataType.html#UINT">DataType.UINT</a>: <a href="icy/image/colormodel/UIntColorModel.html">UIntColorModel</a> (32 bits unsigned)<br/>
-- <a href="icy/type/DataType.html#INT">DataType.INT</a>: <a href="icy/image/colormodel/IntColorModel.html">IntColorModel</a> (32 bits signed)<br/> 
-- <a href="icy/type/DataType.html#FLOAT">DataType.FLOAT</a>: <a href="icy/image/colormodel/FloatColorModel.html">FloatColorModel</a> (32 bits)<br/>
-- <a href="icy/type/DataType.html#DOUBLE">DataType.DOUBLE</a>: <a href="icy/image/colormodel/DoubleColorModel.html">DoubleColorModel</a> (64 bits)<br/>
+<a href="icy/image/IcyBufferedImage.html">IcyBufferedImage</a> internally uses <a href="icy/image/colormodel/IcyColorModel.html">IcyColorModel</a> class, this structure is responsible of the image data storage and can be of any type:<br/>
+- <a href="icy/type/DataType.html#UBYTE">unsigned byte</a> 8 bits [0 .. 255]<br/>
+- <a href="icy/type/DataType.html#BYTE">signed byte</a> 8 bits [-128 .. 127]<br/>
+- <a href="icy/type/DataType.html#USHORT">unsigned short</a> 16 bits [0 .. 65535]<br/>
+- <a href="icy/type/DataType.html#SHORT">signed short</a> 16 bits [-32768 .. 32767]<br/>
+- <a href="icy/type/DataType.html#UINT">unsigned int</a> 32 bits [0 .. 4294967295]<br/>
+- <a href="icy/type/DataType.html#INT">signed int</a> 32 bits [-2147483648 .. 2147483647]<br/> 
+- <a href="icy/type/DataType.html#FLOAT">float</a> 32 bits [0 .. 1] (default but can be anything else)<br/>
+- <a href="icy/type/DataType.html#DOUBLE">double</a> 64 bits [0 .. 1] (default but can be anything else)<br/>
 <br/>
 We also defined our own <a href="icy/image/colorspace/IcyColorSpace.html">IcyColorSpace</a> class (inherit from <a href="http://docs.oracle.com/javase/7/docs/api/java/awt/color/ColorSpace.html">ColorSpace</a>) which allow a versatile color representation of the image data by using ARGB <a href="icy/image/colormap/IcyColorMap.html">ColorMap</a> and value bounding (sort of threshold) per channel.<br/>
-
-<h4>Others interesting classes to see</h4>
-<a href="icy/sequence/SequenceUtil.html">SequenceUtil</a>: <a href="icy/sequence/Sequence.html">Sequence</a> utilities class.
-<a href="icy/image/IcyBufferedImageUtil.html">IcyBufferedUtil</a>: <a href="icy/image/IcyBufferedImage.html">IcyBufferedImage</a> utilities class.
-
-<h4>Documented source code examples</h4>
-<a href="plugins/tutorial/basics/GenerateImageOfDifferentType.html">How to Generate images of all type available</a><br>
-<a href="plugins/tutorial/basics/SimpleIntensify.html">How to do a very basic intensity operation on an image whatever is the data type of the image</a><br>
-<a href="plugins/tutorial/basics/TransparentlyProcessAnyImageDataType.html">Another example of generic image processing whatever is the image format</a><br>
-
-
-<h2>Image representation</h2>
-
-To display an image Icy use the IcyCanvas class which actually take an image as input and render it to the screen.<br/>
-By default we have 2 available canvas:<br/>
-Canvas2D: classic 2D image display.<br/>
-Canvas3D: real time 3D rendering for stack image (using the VTK library).<br/>
 <br/>
-We can directly provide new canvas from plugin by implementing the PluginCanvas interface so they will appears in the canvas selection of the viewer.</br>
-A canvas class should extends IcyCanvas / IcyCanvas2D / IcyCanvas3D... depending the final representation adopted but it may eventually directly extends Canvas2D and modify a bit of its behavior if that match the requirements.<br/>
+<b>Documented source code examples</b><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/basics/GenerateImageOfDifferentType.html">How to Generate images of all type available</a><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/basics/SimpleIntensify.html">How to do a very basic intensity operation on an image whatever is the data type of the image</a><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/basics/TransparentlyProcessAnyImageDataType.html">Another example of generic image processing whatever is the image format</a><br/>
 <br/>
-<h4>Example plugins (sources provided in jar file):<br/>
-<a href="http://icy.bioimageanalysis.org/plugin/Montage_2D">Montage2D</a><br/>
-<a href="http://icy.bioimageanalysis.org/plugin/Chart1DCanvas">Chart1DCanvas</a><br/>
- 
-
-<h2>Region of interest</h2>
-
-Region of interest define region which can be used as input or output for processing.<br/>
+<b>Others interesting classes to see</b><br/>
+&nbsp;&nbsp;<a href="icy/sequence/SequenceUtil.html">SequenceUtil</a> <a href="icy/sequence/Sequence.html">Sequence</a> utilities class.<br/>
+&nbsp;&nbsp;<a href="icy/image/IcyBufferedImageUtil.html">IcyBufferedUtil</a> <a href="icy/image/IcyBufferedImage.html">IcyBufferedImage</a> utilities class.<br/>
 <br/>
-<a href="icy/roi/ROI.html">ROI</a>: base roi class.<br/>
-<a href="icy/roi/ROI2D.html">ROI2D</a> / <a href="icy/roi/ROI3D.html">ROI3D</a> / <a href="icy/roi/ROI4D.html">ROI4D</a> / <a href="icy/roi/ROI5D.html">ROI5D</a>: base class for 2D / 3D / 4D / 5D roi.<br/>
-<a href="icy/roi/ROI2DShape.html">ROI2DShape</a>: base class for all shape style 2D roi (<a href="icy/roi/ROI.html">ROI2DRectangle</a>, <a href="icy/roi/ROI.html">ROI2DEllipse</a>, <a href="icy/roi/ROI.html">ROI2DPolygon</a>...)<br/>
-<a href="icy/roi/ROI2DArea.html">ROI2DArea</a>: Area 2D roi class.<br/>  
 
-<h4>Others interesting classes to see</h4>
-<a href="icy/roi/BooleanMask2D.html">BooleanMask2D</a>: 2D boolean mask class, used internally by ROI for boolean operations and others calculations.<br/> 
-<a href="icy/roi/RoiUtil.html">RoiUtil</a>: ROI utilities class which is used to compute some basic operations.<br/>
+<h4><a name="roi">Region of interest</a></h4>
 
-<h4>Documented source code examples</h4>
-<a href="plugins/tutorial/roi/ProcessingFromROI.html">Processing data from ROI: fast build of the mask</a><br>
-<a href="plugins/tutorial/roi/CreateAreaROI.html">Creating an Area ROI from code</a><br>
-<a href="plugins/tutorial/roi/IntensityOverRoiPainter.html">Creating an overlay displaying intensity chart of the pixel over ROIs</a><br>
+Region of interest define region which can be used as input or output for any processing.<br/>
+<br/>
+&nbsp;&nbsp;<a href="icy/roi/ROI.html">ROI</a> Base roi class from which every ROI derive.<br/>
+&nbsp;&nbsp;<a href="icy/roi/ROI2D.html">ROI2D</a> / <a href="icy/roi/ROI3D.html">ROI3D</a> / <a href="icy/roi/ROI4D.html">ROI4D</a> / <a href="icy/roi/ROI5D.html">ROI5D</a> Base class for 2D / 3D / 4D / 5D roi.<br/>
+&nbsp;&nbsp;<a href="icy/roi/ROI2DShape.html">ROI2DShape</a> Base class for all shape style 2D roi (<a href="icy/roi/ROI.html">ROI2DRectangle</a>, <a href="icy/roi/ROI.html">ROI2DEllipse</a>, <a href="icy/roi/ROI.html">ROI2DPolygon</a>...)<br/>
+&nbsp;&nbsp;<a href="icy/roi/ROI2DArea.html">ROI2DArea</a> Area style 2D roi class.<br/>  
+<br/>
+<b>Documented source code examples</b><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/roi/ProcessingFromROI.html">Processing data from roi: fast build of the mask</a><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/roi/CreateAreaROI.html">Creating an area roi from code</a><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/roi/IntensityOverRoiPainter.html">Creating an overlay displaying intensity chart of the pixel over roi</a><br/>
+<br/>
+<b>Others interesting classes to see</b><br/>
+&nbsp;&nbsp;<a href="icy/roi/BooleanMask2D.html">BooleanMask2D</a> 2D boolean mask class, used internally by ROI for boolean operations and others calculations.<br/> 
+&nbsp;&nbsp;<a href="icy/roi/RoiUtil.html">RoiUtil</a> Roi utilities class which is used to compute some basic operations.<br/>
+<br/>
 
-
-<h2>Overlay</h2>
+<h4><a name="overlay">Overlay</a></h4>
 
 The overlays are used to interact and draw rich information on image, the base <a href="icy/painter/Overlay.html">Overlay</a> class replaces the deprecated <a href="icy/painter/AbstractPainter.html">AbstractPainter</a> class and <a href="icy/painter/Painter.html">Painter</a> interface.<br/>
+<br/>
+<b>Documented source code examples</b><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/painter/SimpleOverlayTutorial01.html">How to create a simple overlay over an image (sequence)</a><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/painter/SimpleOverlayTutorial02.html">How to create a more advanced overlay to react on mouse events</a><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/painter/AnimatedOverlayTutorial.html">Fancy animated overlays creation</a><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/vtk/VtkPainterExamples.html">Create overlays for VTK (3D display)</a><br/>
+<br/>
+<b>Others interesting classes to see</b><br/>
+&nbsp;&nbsp;<a href="icy/painter/Anchor2D.html">Anchor2D</a> Example of overlay which can be used to move objects over the sequence.<br/>
+&nbsp;&nbsp;<a href="icy/painter/VtkPainter.html">VtkPainter</a> Interface for easier handling of overlay in a VTK Canvas (3D rendering).<br/>
+<br/>
 
-<h4>Others interesting classes to see</h4>
-<a href="icy/painter/Anchor2D.html">Anchor2D</a>: an example of overlay which can be used to move objects over the sequence.<br/>
-<a href="icy/painter/VtkPainter.html">VtkPainter</a>: interface for easier handling of overlay in a VTK Canvas (3D rendering).<br/>
-
-<h4>Documented source code examples</h4>
-<a href="plugins/tutorial/painter/SimpleOverlayTutorial01.html">How to create a simple overlay over an image (sequence)</a><br>
-<a href="plugins/tutorial/painter/SimpleOverlayTutorial02.html">How to create a more advanced overlay to react on mouse events</a><br>
-<a href="plugins/tutorial/painter/OneMarkAnimatedPainter.html">Fancy animated overlays creation</a><br>
-<a href="plugins/tutorial/vtk/VtkPainterExamples.html">Create overlays for VTK (3D display)</a><br>
-
-
-<h2>GUI</h2>
+<h4><a name="gui">GUI</a></h4>
 
 Icy uses the Swing API for the UI with a specific third library look and feel: Substance.<br/>
 This look and feel provides a consistent and nice GUI so Icy looks exactly the same whatever is the underlying Operating System.<br/>
 Icy provides some tools to help in designing Swing GUI which may be paintful when you do it yourself by hands.<br/>
 One of the most important one is the <a href="http://icy.bioimageanalysis.org/plugin/EzPlug_SDK">EzPlug</a> plugin which automatically generate the GUI depending your inputs.<br/>
 You can see it in action in the <a href="http://icy.bioimageanalysis.org/plugin/EzPlug_Tutorial">EzPlug Tutorial</a> plugin.<br/>
+<br/>
+<b>Documented source code examples</b><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/gui/SequenceActionFrameExample.html">Simple action frame example.</a><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/gui/GuiBuildExample01.html">How to use a template to have a simple plugin with an action button</a><br/>
+<br/>
+<b>Others interesting classes to see</b><br/>
+&nbsp;&nbsp;<a href="icy/gui/viewer/Viewer.html">Viewer</a> Frame used to display an image in Icy.<br/>
+&nbsp;&nbsp;<a href="icy/gui/frame/IcyFrame.html">IcyFrame</a> Base frame class in Icy, provide some facilities as the "externalization" feature.<br/>
+&nbsp;&nbsp;<a href="icy/gui/frame/ActionFrame.html">ActionFrame</a> / <a href="icy/gui/dialog/ActionDialog.html">ActionDialog</a> Simple action frame / dialog (with ok / cancel button couple).<br/> 
+&nbsp;&nbsp;<a href="icy/gui/frame/progress/AnnounceFrame.html">AnnounceFrame</a> Display an annoucement message in the bottom right of the application.<br/>
+&nbsp;&nbsp;<a href="icy/gui/frame/progress/ToolTipFrame.html">ToolTipFrame</a> Display a tooltip in the bottom right of the application.<br/>
+&nbsp;&nbsp;<a href="icy/gui/dialog/ConfirmDialog.html">ConfirmDialog</a> / <a href="icy/gui/dialog/IdConfirmDialog.html">IdConfirmDialog</a> Simple confirmation dialog.<br/>
+&nbsp;&nbsp;<a href="icy/gui/dialog/ImageLoaderDialog.html">ImageLoaderDialog</a> Dialog used to choose the image to open.<br/>
+&nbsp;&nbsp;<a href="icy/gui/dialog/ImageSaverDialog.html">ImageSaverDialog</a> Dialog used to select where save an image.<br/>
+&nbsp;&nbsp;<a href="icy/gui/util/GuiUtil.html">GuiUtil</a> Tools to generate customized label, textarea or panel easily, no used that much now.<br/>
+&nbsp;&nbsp;<a href="icy/gui/util/LookAndFeelUtil.html">LookAndFeelUtil</a> Tools related to the look and feel (Icy uses the Substance LAF library).<br/>
+&nbsp;&nbsp;<a href="icy/gui/util/ComponentUtil.html">ComponentUtil</a> Tools and helpers for Swing components (size, position, decoration...).<br/>
+&nbsp;&nbsp;<a href="icy/gui/util/WindowPositionSaver.html">WindowPositionSaver</a> Helper for window position / state saving.<br/>
+<br/>
+<b>Interesting packages to browse</b><br/>
+&nbsp;&nbsp;<a href="icy/gui/frame/package-frame.html">icy.gui.frame</a> Package containing custom Icy frames.<br/>
+&nbsp;&nbsp;<a href="icy/gui/frame/progress/package-frame.html">icy.gui.frame.progress</a> Package containing custom Icy progress frames (frame display in bottom right corner).<br/>
+&nbsp;&nbsp;<a href="icy/gui/dialog/package-frame.html">icy.gui.dialog</a> Package containing custom Icy dialog.<br/>
+&nbsp;&nbsp;<a href="icy/gui/component/package-frame.html">icy.gui.component</a> Package containing custom Icy components.<br/>
+&nbsp;&nbsp;<a href="icy/gui/util/package-frame.html">icy.gui.util</a> Package containing tools for GUI.<br/>
+<br/>
 
-<h4>Others interesting classes to see</h4>
+<h4><a name="image_rep">Image representation</a></h4>
 
-Viewer: frame used to display an image in Icy.
-IcyFrame: base frame class in Icy, provide some facilities as the "externalization" feature.
-ActionFrame / ActionDialog: simple action frame / dialog (with ok / cancel button couple). 
-AnnouceFrame: display a simple annoucement message in the bottom right of the application.
-ToolTipFrame: display a tooltip in the bottom right of the application.
-ConfirmDialog: confirmation dialog.
-ImageLoaderDialog: dialog used to choose the image to open.
-GuiUtil:
-LookAndFeelUtil:
-SwingUtil:
-ComponentUtil:
-WindowPositionSaver:
+To display an image Icy use the <a href="icy/canvas/IcyCanvas.html">IcyCanvas</a> class which actually take an image as input and render it to the screen.<br/>
+<br/>
+By default we have 2 available canvas:<br/>
+&nbsp;&nbsp;<a href="icy/canvas/Canvas2D.html">Canvas2D</a> Classic 2D image display.<br/>
+&nbsp;&nbsp;<a href="icy/canvas/Canvas3D.html">Canvas3D</a> Real time 3D rendering for stack image (using the VTK library).<br/>
+<br/>
+We can directly provide new canvas from plugin by implementing the <a href="icy/plugin/interface_/PluginCanvas.html">PluginCanvas</a> interface so they will appears in the canvas selection of the viewer.</br>
+A canvas class should extends <a href="icy/canvas/IcyCanvas.html">IcyCanvas</a> / <a href="icy/canvas/IcyCanvas2D.html">IcyCanvas2D</a> / <a href="icy/canvas/IcyCanvas3D.html">IcyCanvas3D</a>...
+depending the final representation adopted but it may eventually directly extends <a href="icy/canvas/Canvas2D.html">Canvas2D</a> and modify a bit of its behavior if that match the requirements.<br/>
+<br/>
+<b>Example plugins (sources code provided in jar file)</b><br/>
+&nbsp;&nbsp;<a href="http://icy.bioimageanalysis.org/plugin/Montage_2D">Montage2D</a><br/>
+&nbsp;&nbsp;<a href="http://icy.bioimageanalysis.org/plugin/Chart1DCanvas">Chart1DCanvas</a><br/>
+<br/>
 
-<h4>Interesting packages to browse</h4>
+<h4><a name="event">Event</a></h4>
 
-icy.gui.component: package containing custom Icy components.
-icy.gui.dialog: package containing custom Icy dialog.
-icy.gui.frame.progress: package containing custom Icy progress frames (frame display in bottom right corner).
-icy.gui.frame: package containing custom Icy frames.
+Java as many Object Oriented language relies a lot on events and same goes for Icy which use them internally.<br/>
+You may be interested in launching an action on a specific event (as "image opened" event).<br/>
+<br/>
+<b>Documented source code examples</b><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/event/MainListenerTutorial.html">How to listen major events in Icy</a><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/event/ActiveSequenceListenerTutorial.html">How to listen focused image / window events in Icy</a><br/>
+<br/>
 
+<h4><a name="chart">Chart / Graphic</a></h4>
 
-<h2>Event</h2>
+You may want to present your statistical results from your analysis in graphical format, for that Icy use the very nice and comprehensive <a href="http://www.jfree.org/jfreechart/">JFreeChart</a> library to do it.<br/>
+<br/>
+<b>Documented source code examples</b><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/chart/ChartTutorial1.html">Create a simple graph with JFreeChart in Icy</a><br/>
+&nbsp;&nbsp;<a href="plugins/tutorial/chart/ChartTutorial2.html">Create a deviation graph with JFreeChart in Icy</a><br/>
+<br/>
 
+<h4><a name="misc">Misc</a></h4>
 
-<a href="plugins/tutorial/gui/SequenceActionFrameExample.html">Creating a graphic user interface for your plugin with some components</a><br>
-<a href="plugins/tutorial/event/MainListenerTutorial.html">How to listen major events in Icy</a><br>
-<a href="plugins/tutorial/event/FocusedSequenceListenerTutorial.html">How to listen focused image / window events in Icy</a><br>
-
-
-<h2>Chart / Graphic</h2>
-
-<a href="plugins/tutorial/gui/GuiBuildExample01.html">How to use a template to have a simple plugin with an action button</a><br>
-<a href="plugins/tutorial/chart/BarChartDemo1.html">Creating a simple graph with JFreeChart within Icy</a><br>
-
-
-<h2>Miscellaneous</h2>
-
-<a href="icy/mathtutorial/gui/GuiBuildExample01.html">How to use a template to have a simple plugin with an action button</a><br>
-Math
-Network
-XML
-XLS
-ImageJ
-Preferences
-Type / Array
-Search
-Clipboard
-Utilities
-
- 
+Here are others topics which may have some interests for plugin development, be sure to check in them before reinventing the wheel !<br/>
+<br/> 
+<b>Interesting packages to browse</b><br/>
+&nbsp;&nbsp;<a href="icy/math/package-frame.html">icy.math</a> Mathematical related stuff (many tools and helper classes).<br/>
+&nbsp;&nbsp;<a href="icy/network/package-frame.html">icy.network</a> Network stuff and utilities.<br/>
+&nbsp;&nbsp;<a href="icy/ImageJ/package-frame.html">icy.ImageJ</a> ImageJ wrapper utilities.<br/>
+&nbsp;&nbsp;<a href="icy/type/package-frame.html">icy.type</a> Basic type declaration and utilities.<br/> 
+&nbsp;&nbsp;<a href="icy/type/collection/array/package-frame.html">icy.type.collection.array</a> Array type declaration and utilities.<br/>
+&nbsp;&nbsp;<a href="icy/util/package-frame.html">icy.util</a> General and misc utility classes.<br/>
+<br/> 
+<b>Interesting classes to know about</b><br/>
+&nbsp;&nbsp;<a href="icy/type/collection/array/ArrayUtil.html">ArrayUtil</a> / <a href="icy/type/collection/array/Array1DUtil.html">Array1DUtil</a> / <a href="icy/type/collection/array/Array2DUtil.html">Array2DUtil...</a> Array conversion, allocation... utilities.<br/> 
+&nbsp;&nbsp;<a href="icy/search/SearchEngine.html">SearchEngine</a> global search engine in Icy (access it through the main interface : Icy.getMainInterface().getSearchEngine())<br/> 
+&nbsp;&nbsp;<a href="icy/clipboard/Clipboard.html">Clipboard</a> system and local clipboard.<br/>
+&nbsp;&nbsp;<a href="icy/preferences/XMLPreferences.html">XMLPreferences</a> base class to store preferences in Icy.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;It uses a similar syntax than standard java Preferences object but store them in XML format instead.
+&nbsp;&nbsp;<a href="icy/util/XMLUtil.html">XMLUtil</a> General XML utilities.<br/> 
 
 </body>
-</html>

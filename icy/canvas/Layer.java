@@ -24,10 +24,10 @@ import icy.painter.Overlay.OverlayPriority;
 import icy.painter.OverlayEvent;
 import icy.painter.OverlayEvent.OverlayEventType;
 import icy.painter.OverlayListener;
+import icy.painter.OverlayWrapper;
 import icy.painter.Painter;
 import icy.painter.WeakOverlayListener;
 import icy.roi.ROI;
-import icy.util.StringUtil;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -35,10 +35,9 @@ import java.util.List;
 
 /**
  * Layer class.<br>
- * This class encapsulate {@link Painter} and {@link Overlay} in a canvas to<br>
+ * This class encapsulate {@link Overlay} in a canvas to<br>
  * add specific display properties (visibility, transparency...).
  */
-@SuppressWarnings({"deprecation", "javadoc"})
 public class Layer implements OverlayListener, Comparable<Layer>
 {
     public interface LayerListener
@@ -49,7 +48,9 @@ public class Layer implements OverlayListener, Comparable<Layer>
     public final static String PROPERTY_NAME = Overlay.PROPERTY_NAME;
     public final static String PROPERTY_PRIORITY = Overlay.PROPERTY_PRIORITY;
     public final static String PROPERTY_READONLY = Overlay.PROPERTY_READONLY;
-    public final static String PROPERTY_FIXED = Overlay.PROPERTY_FIXED;
+    public final static String PROPERTY_CANBEREMOVED = Overlay.PROPERTY_CANBEREMOVED;
+    public final static String PROPERTY_RECEIVEKEYEVENTONHIDDEN = Overlay.PROPERTY_RECEIVEKEYEVENTONHIDDEN;
+    public final static String PROPERTY_RECEIVEMOUSEEVENTONHIDDEN = Overlay.PROPERTY_RECEIVEMOUSEEVENTONHIDDEN;
     public final static String PROPERTY_ALPHA = "alpha";
     public final static String PROPERTY_VISIBLE = "visible";
 
@@ -67,14 +68,23 @@ public class Layer implements OverlayListener, Comparable<Layer>
                 || propertyName.equals(PROPERTY_VISIBLE);
     }
 
-    private final Painter painter;
+    static Overlay createOverlayWrapper(@SuppressWarnings("deprecation") Painter painter, String name)
+    {
+        final Overlay result = new OverlayWrapper(painter, name);
+
+        if (name == null)
+            result.setName(DEFAULT_NAME);
+
+        // default priority
+        result.setPriority(OverlayPriority.SHAPE_NORMAL);
+
+        return result;
+    }
+
+    private final Overlay overlay;
     // cache for ROI
     private WeakReference<ROI> roi;
 
-    private String name;
-    private OverlayPriority priority;
-    private boolean readOnly;
-    private boolean fixed;
     private boolean visible;
     private float alpha;
 
@@ -83,25 +93,11 @@ public class Layer implements OverlayListener, Comparable<Layer>
      */
     protected final List<LayerListener> listeners;
 
-    public Layer(Painter painter, String name)
+    public Layer(Overlay overlay)
     {
-        super();
+        this.overlay = overlay;
 
-        this.painter = painter;
-
-        if (painter instanceof Overlay)
-            ((Overlay) painter).addOverlayListener(new WeakOverlayListener(this));
-        else
-        {
-            if (name == null)
-                this.name = DEFAULT_NAME;
-            else
-                this.name = name;
-            // default priority
-            priority = OverlayPriority.SHAPE_NORMAL;
-            readOnly = false;
-            fixed = false;
-        }
+        overlay.addOverlayListener(new WeakOverlayListener(this));
 
         visible = true;
         alpha = 1f;
@@ -110,123 +106,179 @@ public class Layer implements OverlayListener, Comparable<Layer>
         listeners = new ArrayList<LayerListener>();
     }
 
+    /**
+     * @deprecated Use {@link #Layer(Overlay)} instead.
+     */
+    @Deprecated
+    public Layer(Painter painter, String name)
+    {
+        this(createOverlayWrapper(painter, name));
+    }
+
+    /**
+     * @deprecated Use {@link #Layer(Overlay)} instead.
+     */
+    @Deprecated
     public Layer(Painter painter)
     {
         this(painter, null);
     }
 
-    public Layer(Overlay overlay)
+    /**
+     * Returns the attached {@link Overlay}.
+     */
+    public Overlay getOverlay()
     {
-        this(overlay, null);
+        return overlay;
     }
 
     /**
-     * @return the painter
+     * @deprecated Use {@link #getOverlay()} instead.
      */
+    @Deprecated
     public Painter getPainter()
     {
-        return painter;
+        final Overlay result = getOverlay();
+
+        if (result instanceof OverlayWrapper)
+            return ((OverlayWrapper) result).getPainter();
+
+        return result;
     }
 
     /**
-     * Returns layer priority (use the {@link Overlay} priority if present)
+     * Returns layer priority (internally use the overlay priority).
+     * 
+     * @see Overlay#getPriority()
      */
     public OverlayPriority getPriority()
     {
-        if (painter instanceof Overlay)
-            return ((Overlay) painter).getPriority();
-
-        return priority;
+        return overlay.getPriority();
     }
 
     /**
-     * Set the layer priority (modify {@link Overlay} priority if present)
+     * Set the layer priority (internally set the overlay priority).
+     * 
+     * @see Overlay#setPriority(OverlayPriority)
      */
     public void setPriority(OverlayPriority priority)
     {
-        if (painter instanceof Overlay)
-            ((Overlay) painter).setPriority(priority);
-        else if (this.priority != priority)
-        {
-            this.priority = priority;
-            changed(PROPERTY_PRIORITY);
-        }
+        overlay.setPriority(priority);
     }
 
     /**
-     * Returns layer name (use the {@link Overlay} name if present)
+     * Returns layer name (internally use the overlay name).
+     * 
+     * @see Overlay#getName()
      */
     public String getName()
     {
-        if (painter instanceof Overlay)
-            return ((Overlay) painter).getName();
-
-        return name;
+        return overlay.getName();
     }
 
     /**
-     * Set the layer name (modify {@link Overlay} name if present)
+     * Set the layer name (internally set the overlay name)
+     * 
+     * @see Overlay#setName(String)
      */
     public void setName(String name)
     {
-        if (painter instanceof Overlay)
-            ((Overlay) painter).setName(name);
-        else if (!StringUtil.equals(this.name, name))
-        {
-            this.name = name;
-            changed(PROPERTY_NAME);
-        }
+        overlay.setName(name);
     }
 
     /**
-     * @return the read only
+     * Returns the read only property name (internally use the overlay read only property).
+     * 
+     * @see Overlay#isReadOnly()
      */
     public boolean isReadOnly()
     {
-        if (painter instanceof Overlay)
-            return ((Overlay) painter).isReadOnly();
-
-        return readOnly;
+        return overlay.isReadOnly();
     }
 
     /**
-     * Set read only property.
+     * Set read only property (internally set the overlay read only property).
+     * 
+     * @see Overlay#setReadOnly(boolean)
      */
     public void setReadOnly(boolean readOnly)
     {
-        if (painter instanceof Overlay)
-            ((Overlay) painter).setReadOnly(readOnly);
-        else if (this.readOnly != readOnly)
-        {
-            this.readOnly = readOnly;
-            changed(PROPERTY_READONLY);
-        }
+        overlay.setReadOnly(readOnly);
     }
 
     /**
-     * @return the fixed
+     * Returns fixed property.
+     * 
+     * @deprecated Use {@link #getCanBeRemoved()} instead.
      */
+    @Deprecated
     public boolean isFixed()
     {
-        if (painter instanceof Overlay)
-            return ((Overlay) painter).isFixed();
-
-        return fixed;
+        return !getCanBeRemoved();
     }
 
     /**
-     * Set fixed property.<br>
-     * Any fixed Layer cannot be removed from the Canvas.
+     * @deprecated Use {@link #setCanBeRemoved(boolean)} instead.
      */
-    public void setFixed(boolean fixed)
+    @Deprecated
+    public void setFixed(boolean value)
     {
-        if (painter instanceof Overlay)
-            ((Overlay) painter).setFixed(fixed);
-        else if (this.fixed != fixed)
-        {
-            this.fixed = fixed;
-            changed(PROPERTY_FIXED);
-        }
+        setCanBeRemoved(value);
+    }
+
+    /**
+     * Returns <code>true</code> if the layer can be freely removed from the Canvas where it
+     * appears and <code>false</code> otherwise.<br/>
+     * 
+     * @see Overlay#getCanBeRemoved()
+     */
+    public boolean getCanBeRemoved()
+    {
+        return overlay.getCanBeRemoved();
+    }
+
+    /**
+     * Set the <code>canBeRemoved</code> property.<br/>
+     * Set it to false if you want to prevent the layer to be removed from the Canvas where it
+     * appears.
+     * 
+     * @see Overlay#setCanBeRemoved(boolean)
+     */
+    public void setCanBeRemoved(boolean value)
+    {
+        overlay.setCanBeRemoved(value);
+    }
+
+    /**
+     * @see Overlay#getReceiveKeyEventOnHidden()
+     */
+    public boolean getReceiveKeyEventOnHidden()
+    {
+        return overlay.getReceiveKeyEventOnHidden();
+    }
+
+    /**
+     * @see Overlay#setReceiveKeyEventOnHidden(boolean)
+     */
+    public void setReceiveKeyEventOnHidden(boolean value)
+    {
+        overlay.setReceiveKeyEventOnHidden(value);
+    }
+
+    /**
+     * @see Overlay#getReceiveMouseEventOnHidden()
+     */
+    public boolean getReceiveMouseEventOnHidden()
+    {
+        return overlay.getReceiveMouseEventOnHidden();
+    }
+
+    /**
+     * @see Overlay#setReceiveMouseEventOnHidden(boolean)
+     */
+    public void setReceiveMouseEventOnHidden(boolean value)
+    {
+        overlay.setReceiveMouseEventOnHidden(value);
     }
 
     /**
@@ -236,7 +288,7 @@ public class Layer implements OverlayListener, Comparable<Layer>
     {
         if (roi == null)
             // search for attached ROI
-            roi = new WeakReference<ROI>(Icy.getMainInterface().getROI(painter));
+            roi = new WeakReference<ROI>(Icy.getMainInterface().getROI(overlay));
 
         return roi.get();
     }
@@ -332,8 +384,7 @@ public class Layer implements OverlayListener, Comparable<Layer>
     @Override
     public int compareTo(Layer layer)
     {
-        // highest priority first
-        return layer.getPriority().ordinal() - getPriority().ordinal();
+        // compare with overlay
+        return getOverlay().compareTo(layer.getOverlay());
     }
-
 }

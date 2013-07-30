@@ -337,6 +337,112 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     }
 
     /**
+     * Returns the blue component map.<br>
+     * If the color map type is {@link IcyColorMapType#GRAY} then it returns the gray map instead.
+     * If the color map type is {@link IcyColorMapType#ALPHA} then it returns <code>null</code>.
+     */
+    public short[] getBlueMap()
+    {
+        if (type == IcyColorMapType.RGB)
+            return blue.map;
+        if (type == IcyColorMapType.GRAY)
+            return gray.map;
+
+        return null;
+    }
+
+    /**
+     * Returns the green component map.<br>
+     * If the color map type is {@link IcyColorMapType#GRAY} then it returns the gray map instead.
+     * If the color map type is {@link IcyColorMapType#ALPHA} then it returns <code>null</code>.
+     */
+    public short[] getGreenMap()
+    {
+        if (type == IcyColorMapType.RGB)
+            return green.map;
+        if (type == IcyColorMapType.GRAY)
+            return gray.map;
+
+        return null;
+    }
+
+    /**
+     * Returns the red component map.<br>
+     * If the color map type is {@link IcyColorMapType#GRAY} then it returns the gray map instead.
+     * If the color map type is {@link IcyColorMapType#ALPHA} then it returns <code>null</code>.
+     */
+    public short[] getRedMap()
+    {
+        if (type == IcyColorMapType.RGB)
+            return red.map;
+        if (type == IcyColorMapType.GRAY)
+            return gray.map;
+
+        return null;
+    }
+
+    /**
+     * Returns the alpha component map.
+     */
+    public short[] getAlphaMap()
+    {
+        return alpha.map;
+    }
+
+    /**
+     * Returns the normalized blue component map.<br>
+     * If the color map type is {@link IcyColorMapType#GRAY} then it returns the gray map instead.
+     * If the color map type is {@link IcyColorMapType#ALPHA} then it returns <code>null</code>.
+     */
+    public float[] getNormalizedBlueMap()
+    {
+        if (type == IcyColorMapType.RGB)
+            return blue.mapf;
+        if (type == IcyColorMapType.GRAY)
+            return gray.mapf;
+
+        return null;
+    }
+
+    /**
+     * Returns the normalized green component map.<br>
+     * If the color map type is {@link IcyColorMapType#GRAY} then it returns the gray map instead.
+     * If the color map type is {@link IcyColorMapType#ALPHA} then it returns <code>null</code>.
+     */
+    public float[] getNormalizedGreenMap()
+    {
+        if (type == IcyColorMapType.RGB)
+            return green.mapf;
+        if (type == IcyColorMapType.GRAY)
+            return gray.mapf;
+
+        return null;
+    }
+
+    /**
+     * Returns the normalized red component map.<br>
+     * If the color map type is {@link IcyColorMapType#GRAY} then it returns the gray map instead.
+     * If the color map type is {@link IcyColorMapType#ALPHA} then it returns <code>null</code>.
+     */
+    public float[] getNormalizedRedMap()
+    {
+        if (type == IcyColorMapType.RGB)
+            return red.mapf;
+        if (type == IcyColorMapType.GRAY)
+            return gray.mapf;
+
+        return null;
+    }
+
+    /**
+     * Returns the normalized alpha component map.
+     */
+    public float[] getNormalizedAlphaMap()
+    {
+        return alpha.mapf;
+    }
+
+    /**
      * Get blue intensity from an input index
      * 
      * @param index

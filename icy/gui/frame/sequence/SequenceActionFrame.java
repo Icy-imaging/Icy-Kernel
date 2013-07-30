@@ -80,7 +80,7 @@ public class SequenceActionFrame extends ActionFrame
         // select sequence
         final JLabel sequenceSelectLabel = new JLabel("Sequence  ");
         sequenceSelector = new SequenceChooser(48);
-        sequenceSelector.setSelectedSequence(Icy.getMainInterface().getFocusedSequence());
+        sequenceSelector.setSelectedSequence(Icy.getMainInterface().getActiveSequence());
         sequenceSelector.setMinimumSize(new Dimension(100, 24));
         sequenceSelector.addListener(new SequenceChooserListener()
         {

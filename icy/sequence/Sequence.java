@@ -39,6 +39,7 @@ import icy.painter.Overlay;
 import icy.painter.OverlayEvent;
 import icy.painter.OverlayEvent.OverlayEventType;
 import icy.painter.OverlayListener;
+import icy.painter.OverlayWrapper;
 import icy.painter.Painter;
 import icy.preferences.GeneralPreferences;
 import icy.roi.ROI;
@@ -46,9 +47,9 @@ import icy.roi.ROI2D;
 import icy.roi.ROI3D;
 import icy.roi.ROIEvent;
 import icy.roi.ROIListener;
-import icy.sequence.SequenceEdit.ROIAdd;
-import icy.sequence.SequenceEdit.ROIRemove;
-import icy.sequence.SequenceEdit.ROIRemoveAll;
+import icy.sequence.SequenceEdit.ROIAddEdit;
+import icy.sequence.SequenceEdit.ROIRemoveEdit;
+import icy.sequence.SequenceEdit.ROIRemovesEdit;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.thread.ThreadUtil;
@@ -65,6 +66,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.swing.event.EventListenerList;
@@ -141,15 +143,15 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * volumetric images (4D [XYCZ])
      */
-    private final TreeMap<Integer, VolumetricImage> volumetricImages;
+    final TreeMap<Integer, VolumetricImage> volumetricImages;
     /**
      * painters
      */
-    final HashSet<Painter> painters;
+    final Set<Overlay> overlays;
     /**
      * ROIs
      */
-    final HashSet<ROI> rois;
+    final Set<ROI> rois;
 
     /**
      * id of sequence (uniq during an ICY session)
@@ -158,19 +160,19 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * colorModel of sequence
      */
-    private IcyColorModel colorModel;
+    IcyColorModel colorModel;
     /**
      * Origin filename (from/to which the sequence has been loaded/saved)<br>
      * null --> no file attachment<br>
      * directory or metadata file --> multiples files attachment<br>
      * image file --> single file attachment
      */
-    private String filename;
+    String filename;
 
     /**
      * Metadata
      */
-    private OMEXMLMetadataImpl metaData;
+    OMEXMLMetadataImpl metaData;
     // /**
     // * X, Y, Z resolution (in mm)
     // */
@@ -193,29 +195,29 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * automatic update of channel bounds
      */
-    private boolean autoUpdateChannelBounds;
+    boolean autoUpdateChannelBounds;
     /**
      * persistent object to load/save data (XML format)
      */
-    private final SequencePersistent persistent;
+    final SequencePersistent persistent;
     /**
      * undo manager
      */
-    private final IcyUndoManager undoManager;
+    final IcyUndoManager undoManager;
 
     /**
      * internal updater
      */
-    private final UpdateEventHandler updater;
+    final UpdateEventHandler updater;
     /**
      * listeners
      */
-    private final EventListenerList listeners;
+    final EventListenerList listeners;
 
     /**
      * internals
      */
-    private boolean channelBoundsInvalid;
+    boolean channelBoundsInvalid;
 
     /**
      * Creates a new empty sequence with specified meta data object and name.
@@ -259,7 +261,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             MetaDataUtil.setTimeInterval(metaData, 0, 0.1d);
 
         volumetricImages = new TreeMap<Integer, VolumetricImage>();
-        painters = new HashSet<Painter>();
+        overlays = new HashSet<Overlay>();
         rois = new HashSet<ROI>();
         persistent = new SequencePersistent(this);
         undoManager = new IcyUndoManager(this);
@@ -346,7 +348,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public void close()
     {
-        Icy.getMainInterface().closeViewersOfSequence(this);
+        Icy.getMainInterface().closeSequence(this);
     }
 
     /**
@@ -365,14 +367,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 if (GeneralPreferences.getSequencePersistence())
                     saveXMLData();
 
-                synchronized (painters)
+                synchronized (overlays)
                 {
-                    for (Painter painter : painters)
-                        // remove listener for Overlay
-                        if (painter instanceof Overlay)
-                            ((Overlay) painter).removeOverlayListener(Sequence.this);
+                    for (Overlay overlay : overlays)
+                        overlay.removeOverlayListener(Sequence.this);
 
-                    painters.clear();
+                    overlays.clear();
                 }
 
                 synchronized (rois)
@@ -889,13 +889,25 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns true if the sequence contains the specified painter
+     * @deprecated Use {@link #contains(Overlay)} instead.
      */
+    @Deprecated
     public boolean contains(Painter painter)
     {
-        synchronized (painters)
+        return getOverlay(painter) != null;
+    }
+
+    /**
+     * Returns true if the sequence contains the specified overlay
+     */
+    public boolean contains(Overlay overlay)
+    {
+        if (overlay == null)
+            return false;
+
+        synchronized (overlays)
         {
-            return painters.contains(painter);
+            return overlays.contains(overlay);
         }
     }
 
@@ -904,6 +916,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public boolean contains(ROI roi)
     {
+        if (roi == null)
+            return false;
+
         synchronized (rois)
         {
             return rois.contains(roi);
@@ -911,47 +926,128 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns true if the sequence contains at least one Painter.
+     * @deprecated Use {@link #hasOverlay()} instead.
      */
+    @Deprecated
     public boolean hasPainter()
     {
-        return painters.size() > 0;
+        return hasOverlay();
     }
 
     /**
-     * Returns all painters attached to this sequence
+     * @deprecated Use {@link #getOverlays()} instead.
      */
+    @Deprecated
     public ArrayList<Painter> getPainters()
     {
-        synchronized (painters)
+        final ArrayList<Painter> result = new ArrayList<Painter>(overlays.size());
+
+        synchronized (overlays)
         {
-            return new ArrayList<Painter>(painters);
+            for (Overlay overlay : overlays)
+            {
+                if (overlay instanceof OverlayWrapper)
+                    result.add(((OverlayWrapper) overlay).getPainter());
+                else
+                    result.add(overlay);
+            }
         }
+
+        return result;
     }
 
     /**
-     * Returns all painters attached to this sequence (HashSet form)
+     * @deprecated Use {@link #getOverlaySet()} instead.
      */
+    @Deprecated
     public HashSet<Painter> getPainterSet()
     {
-        synchronized (painters)
+        final HashSet<Painter> result = new HashSet<Painter>(overlays.size());
+
+        synchronized (overlays)
         {
-            return new HashSet<Painter>(painters);
+            for (Overlay overlay : overlays)
+            {
+                if (overlay instanceof OverlayWrapper)
+                    result.add(((OverlayWrapper) overlay).getPainter());
+                else
+                    result.add(overlay);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * @deprecated Use {@link #getOverlays(Class)} instead.
+     */
+    @Deprecated
+    public List<Painter> getPainters(Class<? extends Painter> painterClass)
+    {
+        final ArrayList<Painter> result = new ArrayList<Painter>(overlays.size());
+
+        synchronized (overlays)
+        {
+            for (Overlay overlay : overlays)
+            {
+                if (overlay instanceof OverlayWrapper)
+                {
+                    if (((OverlayWrapper) overlay).getPainter().getClass().isAssignableFrom(painterClass))
+                        result.add(overlay);
+                }
+                else
+                {
+                    if (overlay.getClass().isAssignableFrom(painterClass))
+                        result.add(overlay);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns true if the sequence contains at least one Overlay.
+     */
+    public boolean hasOverlay()
+    {
+        return overlays.size() > 0;
+    }
+
+    /**
+     * Returns all overlays attached to this sequence
+     */
+    public List<Overlay> getOverlays()
+    {
+        synchronized (overlays)
+        {
+            return new ArrayList<Overlay>(overlays);
         }
     }
 
     /**
-     * Returns painters of specified class attached to this sequence
+     * Returns all overlays attached to this sequence (HashSet form)
      */
-    public List<Painter> getPainters(Class<? extends Painter> painterClass)
+    public Set<Overlay> getOverlaySet()
     {
-        final ArrayList<Painter> result = new ArrayList<Painter>();
-
-        synchronized (painters)
+        synchronized (overlays)
         {
-            for (Painter painter : painters)
-                if (painter.getClass().isAssignableFrom(painterClass))
-                    result.add(painter);
+            return new HashSet<Overlay>(overlays);
+        }
+    }
+
+    /**
+     * Returns overlays of specified class attached to this sequence
+     */
+    public List<Overlay> getOverlays(Class<? extends Overlay> overlayClass)
+    {
+        final List<Overlay> result = new ArrayList<Overlay>(overlays.size());
+
+        synchronized (overlays)
+        {
+            for (Overlay overlay : overlays)
+                if (overlay.getClass().isAssignableFrom(overlayClass))
+                    result.add(overlay);
         }
 
         return result;
@@ -992,7 +1088,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public ArrayList<ROI2D> getROI2Ds()
     {
-        final ArrayList<ROI2D> result = new ArrayList<ROI2D>();
+        final ArrayList<ROI2D> result = new ArrayList<ROI2D>(rois.size());
 
         synchronized (rois)
         {
@@ -1009,7 +1105,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public ArrayList<ROI3D> getROI3Ds()
     {
-        final ArrayList<ROI3D> result = new ArrayList<ROI3D>();
+        final ArrayList<ROI3D> result = new ArrayList<ROI3D>(rois.size());
 
         synchronized (rois)
         {
@@ -1041,7 +1137,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public List<ROI> getROIs(Class<? extends ROI> roiClass)
     {
-        final ArrayList<ROI> result = new ArrayList<ROI>();
+        final ArrayList<ROI> result = new ArrayList<ROI>(rois.size());
 
         synchronized (rois)
         {
@@ -1120,7 +1216,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public ArrayList<ROI> getSelectedROIs()
     {
-        final ArrayList<ROI> result = new ArrayList<ROI>();
+        final ArrayList<ROI> result = new ArrayList<ROI>(rois.size());
 
         synchronized (rois)
         {
@@ -1137,7 +1233,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public ArrayList<ROI2D> getSelectedROI2Ds()
     {
-        final ArrayList<ROI2D> result = new ArrayList<ROI2D>();
+        final ArrayList<ROI2D> result = new ArrayList<ROI2D>(rois.size());
 
         synchronized (rois)
         {
@@ -1154,7 +1250,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public ArrayList<ROI3D> getSelectedROI3Ds()
     {
-        final ArrayList<ROI3D> result = new ArrayList<ROI3D>();
+        final ArrayList<ROI3D> result = new ArrayList<ROI3D>(rois.size());
 
         synchronized (rois)
         {
@@ -1182,32 +1278,30 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Set selected ROI (unselect all other if exclusive flag is true)
+     * Set the selected ROI (exclusive selection).<br>
+     * Specifying a <code>null</code> ROI here will actually clear all ROI selection.<br>
+     * Note that you can use {@link #setSelectedROIs(List)} or {@link ROI#setSelected(boolean)} for
+     * multiple ROI selection.
+     * 
+     * @param roi
+     *        the ROI to select.
+     * @returns <code>false</code> is the specified ROI is not attached to the sequence.
      */
-    public boolean setSelectedROI(ROI roi, boolean exclusive)
+    public boolean setSelectedROI(ROI roi)
     {
-        // special case for global unselect
-        if (roi == null)
-        {
-            setSelectedROIs(null);
-            return true;
-        }
-
-        final HashSet<ROI> listRoi = getROISet();
-
         beginUpdate();
         try
         {
-            if (exclusive)
+            synchronized (rois)
             {
-                for (ROI currentRoi : listRoi)
+                for (ROI currentRoi : rois)
                     if (currentRoi != roi)
-                        currentRoi.internalUnselect();
+                        currentRoi.setSelected(false);
             }
 
-            if (listRoi.contains(roi))
+            if (contains(roi))
             {
-                roi.internalSelect();
+                roi.setSelected(true);
                 return true;
             }
         }
@@ -1220,11 +1314,38 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Set selected ROI (unselected all others)
+     * @deprecated Use {@link #setSelectedROI(ROI)} instead.
      */
+    @Deprecated
+    public boolean setSelectedROI(ROI roi, boolean exclusive)
+    {
+        if (exclusive)
+            return setSelectedROI(roi);
+
+        if (contains(roi))
+        {
+            roi.setSelected(true);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @deprecated Use {@link #setSelectedROIs(List)} instead.
+     */
+    @Deprecated
     public void setSelectedROIs(ArrayList<ROI> selected)
     {
-        final ArrayList<ROI> oldSelected = getSelectedROIs();
+        setSelectedROIs((List<ROI>) selected);
+    }
+
+    /**
+     * Set selected ROI (unselected all others)
+     */
+    public void setSelectedROIs(List<ROI> selected)
+    {
+        final List<ROI> oldSelected = getSelectedROIs();
         final HashSet<ROI> newSelected;
 
         if (selected != null)
@@ -1248,13 +1369,13 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             if (newSelectedSize > 0)
             {
                 for (ROI roi : getROIs())
-                    roi.setSelected(newSelected.contains(roi), false);
+                    roi.setSelected(newSelected.contains(roi));
             }
             else
             {
                 // unselected all ROIs
                 for (ROI roi : getROIs())
-                    roi.internalUnselect();
+                    roi.setSelected(false);
             }
         }
         finally
@@ -1269,7 +1390,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public boolean setFocusedROI(ROI roi)
     {
         // faster .contain()
-        final HashSet<ROI> listRoi = getROISet();
+        final Set<ROI> listRoi = getROISet();
 
         beginUpdate();
         try
@@ -1324,11 +1445,11 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         roi.addListener(this);
         // notify roi added
         roiChanged(roi, SequenceEventType.ADDED);
-        // then add ROI painter to sequence
-        addPainter(roi.getPainter());
+        // then add ROI overlay to sequence
+        addOverlay(roi.getOverlay());
 
         if (canUndo)
-            undoManager.addEdit(new ROIAdd(this, roi));
+            undoManager.addEdit(new ROIAddEdit(this, roi));
 
         return true;
 
@@ -1352,13 +1473,15 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      *        ROI to detach from the sequence
      * @param canUndo
      *        If true the action can be canceled by the undo manager.
+     * @return <code>false</code> if the ROI was not found in the sequence.<br/>
+     *         Returns <code>true</code> otherwise.
      */
     public boolean removeROI(ROI roi, boolean canUndo)
     {
         if (contains(roi))
         {
-            // remove ROI painter first
-            removePainter(roi.getPainter());
+            // remove ROI overlay first
+            removeOverlay(roi.getOverlay());
 
             // remove ROI
             synchronized (rois)
@@ -1371,12 +1494,74 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             roiChanged(roi, SequenceEventType.REMOVED);
 
             if (canUndo)
-                undoManager.addEdit(new ROIRemove(this, roi));
+                undoManager.addEdit(new ROIRemoveEdit(this, roi));
 
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Remove all selected ROI from the sequence.
+     * 
+     * @param removeReadOnly
+     *        Specify if we should also remove <i>read only</i> ROI (see {@link ROI#isReadOnly()})
+     * @return <code>true</code> if at least one ROI was removed.<br/>
+     *         Returns <code>false</code> otherwise
+     */
+    public boolean removeSelectedROIs(boolean removeReadOnly)
+    {
+        return removeSelectedROIs(removeReadOnly, true);
+    }
+
+    /**
+     * Remove all selected ROI from the sequence.
+     * 
+     * @param removeReadOnly
+     *        Specify if we should also remove <i>read only</i> ROI (see {@link ROI#isReadOnly()})
+     * @param canUndo
+     *        If true the action can be canceled by the undo manager.
+     * @return <code>true</code> if at least one ROI was removed.<br/>
+     *         Returns <code>false</code> otherwise
+     */
+    public boolean removeSelectedROIs(boolean removeReadOnly, boolean canUndo)
+    {
+        final List<ROI> undoList = new ArrayList<ROI>();
+
+        beginUpdate();
+        try
+        {
+            synchronized (rois)
+            {
+                for (ROI roi : getROIs())
+                {
+                    if (roi.isSelected() && (removeReadOnly || !roi.isReadOnly()))
+                    {
+                        // remove ROI overlay first
+                        removeOverlay(roi.getOverlay());
+
+                        rois.remove(roi);
+                        // remove listener
+                        roi.removeListener(this);
+                        // notify roi removed
+                        roiChanged(roi, SequenceEventType.REMOVED);
+
+                        // save deleted ROI
+                        undoList.add(roi);
+                    }
+                }
+            }
+
+            if (canUndo)
+                undoManager.addEdit(new ROIRemovesEdit(this, undoList));
+        }
+        finally
+        {
+            endUpdate();
+        }
+
+        return !undoList.isEmpty();
     }
 
     /**
@@ -1397,23 +1582,24 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         if (!rois.isEmpty())
         {
-            final ArrayList<ROI> allROIs = getROIs();
+            final List<ROI> allROIs = getROIs();
 
-            synchronized (painters)
+            synchronized (overlays)
             {
                 // remove associated painters first
                 for (ROI roi : allROIs)
                 {
-                    final Painter painter = roi.getPainter();
+                    final Overlay overlay = roi.getOverlay();
 
-                    painters.remove(painter);
-                    if (painter instanceof Overlay)
-                        ((Overlay) painter).removeOverlayListener(this);
+                    // remove listener
+                    overlay.removeOverlayListener(this);
+                    // and remove from list
+                    overlays.remove(overlay);
                 }
             }
 
-            // notify painters / overlays removed
-            painterChanged(null, SequenceEventType.REMOVED);
+            // notify overlays removed
+            overlayChanged(null, SequenceEventType.REMOVED);
 
             synchronized (rois)
             {
@@ -1429,55 +1615,99 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             roiChanged(null, SequenceEventType.REMOVED);
 
             if (canUndo)
-                undoManager.addEdit(new ROIRemoveAll(this, allROIs));
+                undoManager.addEdit(new ROIRemovesEdit(this, allROIs));
         }
     }
 
     /**
-     * Add a painter to the sequence.<br>
-     * Note: The painter sequence will not be refreshed until
-     * you call the method sequence.painterChanged(...)
+     * Return the overlay associated to the specified painter.<br>
+     * Used only for backward compatibility with {@link Painter} interface.
      */
+    @SuppressWarnings("deprecation")
+    private Overlay getOverlay(Painter painter)
+    {
+        if (painter instanceof Overlay)
+            return (Overlay) painter;
+
+        synchronized (overlays)
+        {
+            for (Overlay overlay : overlays)
+                if (overlay instanceof OverlayWrapper)
+                    if (((OverlayWrapper) overlay).getPainter() == painter)
+                        return overlay;
+        }
+
+        return null;
+    }
+
+    /**
+     * @deprecated Use {@link #addOverlay(Overlay)} instead.
+     */
+    @Deprecated
     public boolean addPainter(Painter painter)
     {
+        if (painter instanceof Overlay)
+            return addOverlay((Overlay) painter);
+
         if (contains(painter))
             return false;
 
-        synchronized (painters)
-        {
-            painters.add(painter);
-        }
-
-        // add listener for Overlay
-        if (painter instanceof Overlay)
-            ((Overlay) painter).addOverlayListener(this);
-        // notify painter added
-        painterChanged(painter, SequenceEventType.ADDED);
+        addOverlay(new OverlayWrapper(painter, "Overlay wrapper"));
 
         return true;
     }
 
     /**
-     * Remove a painter from the sequence.<br>
-     * Note: The painter sequence will not be refreshed until
-     * you call the method sequence.painterChanged(...)
+     * @deprecated Use {@link #removeOverlay(Overlay)} instead.
      */
+    @Deprecated
     public boolean removePainter(Painter painter)
+    {
+        if (painter instanceof Overlay)
+            return removeOverlay((Overlay) painter);
+
+        return removeOverlay(getOverlay(painter));
+    }
+
+    /**
+     * Add an overlay to the sequence.
+     */
+    public boolean addOverlay(Overlay overlay)
+    {
+        if (contains(overlay))
+            return false;
+
+        synchronized (overlays)
+        {
+            overlays.add(overlay);
+        }
+
+        // add listener
+        overlay.addOverlayListener(this);
+        // notify overlay added
+        overlayChanged(overlay, SequenceEventType.ADDED);
+
+        return true;
+    }
+
+    /**
+     * Remove an overlay from the sequence.
+     */
+    public boolean removeOverlay(Overlay overlay)
     {
         boolean result;
 
-        synchronized (painters)
+        synchronized (overlays)
         {
-            result = painters.remove(painter);
+            result = overlays.remove(overlay);
         }
 
         if (result)
         {
-            // remove listener for Overlay
-            if (painter instanceof Overlay)
-                ((Overlay) painter).removeOverlayListener(this);
-            // notify painter removed
-            painterChanged(painter, SequenceEventType.REMOVED);
+            // remove listener
+            overlay.removeOverlayListener(this);
+            // notify overlay removed
+            overlayChanged(overlay, SequenceEventType.REMOVED);
         }
 
         return result;
@@ -4987,10 +5217,28 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * fire change event
      */
+    @SuppressWarnings("deprecation")
     private void fireChangedEvent(SequenceEvent e)
     {
         for (SequenceListener listener : listeners.getListeners(SequenceListener.class))
             listener.sequenceChanged(e);
+
+        // provide backward compatibility for painter
+        if (e.getSourceType() == SequenceEventSourceType.SEQUENCE_OVERLAY)
+        {
+            final Painter painter;
+
+            if (e.getSource() instanceof OverlayWrapper)
+                painter = ((OverlayWrapper) e.getSource()).getPainter();
+            else
+                painter = (Painter) e.getSource();
+
+            final SequenceEvent event = new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_PAINTER, painter,
+                    e.getType(), e.getParam());
+
+            for (SequenceListener listener : listeners.getListeners(SequenceListener.class))
+                listener.sequenceChanged(event);
+        }
     }
 
     /**
@@ -5089,33 +5337,52 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_COMPONENTBOUNDS, colorModel, component));
     }
 
-    /**
-     * painter has changed
-     */
-    private void painterChanged(Painter painter, SequenceEventType type)
-    {
-        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_PAINTER, painter, type));
-    }
+    // /**
+    // * @deprecated Use {@link #overlayChanged(Overlay, SequenceEventType)} instead.
+    // */
+    // @Deprecated
+    // private void painterChanged(Painter painter, SequenceEventType type)
+    // {
+    // updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_PAINTER, painter,
+    // type));
+    // }
 
     /**
-     * notify specified painter has changed (null means all painters)
+     * @deprecated Use {@link #overlayChanged(Overlay)} instead.
      */
+    @Deprecated
     public void painterChanged(Painter painter)
     {
-        painterChanged(painter, SequenceEventType.CHANGED);
+        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_PAINTER, painter,
+                SequenceEventType.CHANGED));
+        // painterChanged(painter, SequenceEventType.CHANGED);
     }
 
     /**
-     * notify specified overlay has changed (null means all overlays)
+     * overlay painter has changed (null means all overlays)
+     */
+    private void overlayChanged(Overlay overlay, SequenceEventType type)
+    {
+        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_OVERLAY, overlay, type));
+    }
+
+    /**
+     * notify specified painter of overlay has changed (null means all overlays)
+     */
+    public void overlayChanged(Overlay overlay)
+    {
+        overlayChanged(overlay, SequenceEventType.CHANGED);
+    }
+
+    /**
+     * overlay has changed (can be only overlay property here)
      */
     @Override
     public void overlayChanged(OverlayEvent event)
     {
+        // only take care about overlay painter change here (need redraw)
         if (event.getType() == OverlayEventType.PAINTER_CHANGED)
-            painterChanged(event.getSource(), SequenceEventType.CHANGED);
-
-        // nothing to do about Overlay property here
-        // do that in Canvas class instead
+            overlayChanged(event.getSource(), SequenceEventType.CHANGED);
     }
 
     /**
@@ -5246,10 +5513,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             case SEQUENCE_COMPONENTBOUNDS:
                 break;
 
-            // do here global process on sequence painter change
-            case SEQUENCE_PAINTER:
+            // do here global process on sequence overlay change
+            case SEQUENCE_OVERLAY:
                 break;
-
             // do here global process on sequence ROI change
             case SEQUENCE_ROI:
                 break;

@@ -25,7 +25,12 @@ public class SequenceEvent implements EventHierarchicalChecker
 {
     public enum SequenceEventSourceType
     {
-        SEQUENCE_TYPE, SEQUENCE_META, SEQUENCE_COLORMAP, SEQUENCE_COMPONENTBOUNDS, SEQUENCE_DATA, SEQUENCE_ROI, SEQUENCE_PAINTER
+        SEQUENCE_TYPE, SEQUENCE_META, SEQUENCE_COLORMAP, SEQUENCE_COMPONENTBOUNDS, SEQUENCE_DATA, SEQUENCE_ROI,
+        /**
+         * @deprecated
+         **/
+        @Deprecated
+        SEQUENCE_PAINTER, SEQUENCE_OVERLAY
     }
 
     public enum SequenceEventType
@@ -182,6 +187,7 @@ public class SequenceEvent implements EventHierarchicalChecker
                     return true;
 
                 case SEQUENCE_PAINTER:
+                case SEQUENCE_OVERLAY:
                 case SEQUENCE_ROI:
                     // same type ?
                     if (e.getType() == type)

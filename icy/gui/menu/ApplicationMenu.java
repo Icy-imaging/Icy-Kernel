@@ -283,7 +283,7 @@ public class ApplicationMenu extends RibbonApplicationMenu
 
     private void refreshState()
     {
-        final Sequence focusedSequence = Icy.getMainInterface().getFocusedSequence();
+        final Sequence focusedSequence = Icy.getMainInterface().getActiveSequence();
 
         amepSave.setEnabled((focusedSequence != null) && !StringUtil.isEmpty(focusedSequence.getFilename()));
         amepSaveAs.setEnabled(focusedSequence != null);
@@ -317,7 +317,7 @@ public class ApplicationMenu extends RibbonApplicationMenu
         addRecentLoadedFile(new File[] {file});
     }
 
-    public void onSequenceFocusChange()
+    public void onSequenceActivationChange()
     {
         refreshState();
     }

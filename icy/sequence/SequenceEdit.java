@@ -56,11 +56,11 @@ public class SequenceEdit extends IcyUndoableEdit
      * 
      * @author Stephane
      */
-    public static class ROIAdd extends SequenceEdit
+    public static class ROIAddEdit extends SequenceEdit
     {
         Sequence sequence;
 
-        public ROIAdd(Sequence sequence, ROI source)
+        public ROIAddEdit(Sequence sequence, ROI source)
         {
             super(source);
 
@@ -104,15 +104,86 @@ public class SequenceEdit extends IcyUndoableEdit
     }
 
     /**
+     * ROI group add Sequence edit event
+     * 
+     * @author Stephane
+     */
+    public static class ROIAddsEdit extends SequenceEdit
+    {
+        Sequence sequence;
+
+        public ROIAddsEdit(Sequence sequence, List<ROI> source)
+        {
+            super(source);
+
+            this.sequence = sequence;
+        }
+
+        @SuppressWarnings("unchecked")
+        public List<ROI> getROIs()
+        {
+            return (List<ROI>) getSource();
+        }
+
+        @Override
+        public void undo() throws CannotUndoException
+        {
+            super.undo();
+
+            sequence.beginUpdate();
+            try
+            {
+                for (ROI roi : getROIs())
+                    sequence.removeROI(roi, false);
+            }
+            finally
+            {
+                sequence.endUpdate();
+            }
+        }
+
+        @Override
+        public void redo() throws CannotRedoException
+        {
+            super.redo();
+
+            sequence.beginUpdate();
+            try
+            {
+                for (ROI roi : getROIs())
+                    sequence.addROI(roi, false);
+            }
+            finally
+            {
+                sequence.endUpdate();
+            }
+        }
+
+        @Override
+        public void die()
+        {
+            super.die();
+
+            sequence = null;
+        }
+
+        @Override
+        public String getPresentationName()
+        {
+            return "ROI added";
+        }
+    }
+
+    /**
      * ROI remove Sequence edit event
      * 
      * @author Stephane
      */
-    public static class ROIRemove extends SequenceEdit
+    public static class ROIRemoveEdit extends SequenceEdit
     {
         Sequence sequence;
 
-        public ROIRemove(Sequence sequence, ROI source)
+        public ROIRemoveEdit(Sequence sequence, ROI source)
         {
             super(source);
 
@@ -156,15 +227,15 @@ public class SequenceEdit extends IcyUndoableEdit
     }
 
     /**
-     * ROI remove Sequence edit event
+     * ROI group remove Sequence edit event
      * 
      * @author Stephane
      */
-    public static class ROIRemoveAll extends SequenceEdit
+    public static class ROIRemovesEdit extends SequenceEdit
     {
         Sequence sequence;
 
-        public ROIRemoveAll(Sequence sequence, List<ROI> source)
+        public ROIRemovesEdit(Sequence sequence, List<ROI> source)
         {
             super(source);
 
@@ -222,7 +293,7 @@ public class SequenceEdit extends IcyUndoableEdit
         @Override
         public String getPresentationName()
         {
-            return "All ROI removed";
+            return "ROI group removed";
         }
     }
 

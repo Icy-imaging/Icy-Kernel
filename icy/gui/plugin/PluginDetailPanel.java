@@ -300,6 +300,6 @@ public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
     public void hyperlinkUpdate(HyperlinkEvent e)
     {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
-            NetworkUtil.openURL(e.getURL());
+            NetworkUtil.openBrowser(e.getURL());
     }
 }

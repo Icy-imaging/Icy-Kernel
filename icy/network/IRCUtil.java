@@ -16,7 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with Icy. If not, see <http://www.gnu.org/licenses/>.
  */
-package icy.util;
+package icy.network;
+
+import icy.util.StringUtil;
 
 import java.awt.Color;
 

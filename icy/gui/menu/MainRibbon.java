@@ -24,7 +24,7 @@ import icy.gui.component.button.IcyCommandToggleButton;
 import icy.gui.component.button.IcyCommandToggleMenuButton;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.progress.TaskFrame;
-import icy.gui.main.FocusedSequenceListener;
+import icy.gui.main.ActiveSequenceListener;
 import icy.gui.main.MainFrame;
 import icy.gui.menu.action.GeneralActions;
 import icy.gui.menu.action.PreferencesActions;
@@ -89,7 +89,7 @@ import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPo
  * 
  * @author Stephane
  */
-public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
+public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
 {
     /**
      * TASK / BAND NAMES
@@ -196,7 +196,7 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
         // saveWorkspaces();
 
         PluginLoader.addListener(this);
-        Icy.getMainInterface().addFocusedSequenceListener(this);
+        Icy.getMainInterface().addActiveSequenceListener(this);
     }
 
     // some stuff which need to be initialized after ribbon creation
@@ -1067,16 +1067,22 @@ public class MainRibbon implements PluginLoaderListener, FocusedSequenceListener
     }
 
     @Override
-    public void focusChanged(Sequence sequence)
+    public void sequenceActivated(Sequence sequence)
     {
-        toolRibbonTask.onSequenceFocusChange();
-        ijTask.onSequenceFocusChange();
-        applicationMenu.onSequenceFocusChange();
+        toolRibbonTask.onSequenceActivationChange();
+        ijTask.onSequenceActivationChange();
+        applicationMenu.onSequenceActivationChange();
         sequenceOperationTask.onSequenceChange();
     }
 
     @Override
-    public void focusedSequenceChanged(SequenceEvent event)
+    public void sequenceDeactivated(Sequence sequence)
+    {
+        // nothing here
+    }
+
+    @Override
+    public void activeSequenceChanged(SequenceEvent event)
     {
         final SequenceEventSourceType type = event.getSourceType();
 

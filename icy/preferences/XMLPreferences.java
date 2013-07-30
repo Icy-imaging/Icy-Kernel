@@ -115,6 +115,11 @@ public class XMLPreferences
     private final XMLPreferencesRoot root;
     private final Element currentElement;
 
+    /**
+     * Use:<br>
+     * <code>new XMLPreferencesRoot(filename).getPreferences()</code><br>
+     * to load preferences from file.
+     */
     XMLPreferences(XMLPreferencesRoot root, Element element)
     {
         super();

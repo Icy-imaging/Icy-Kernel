@@ -38,5 +38,15 @@ public abstract class IcyCanvas3D extends IcyCanvas
         posX = -1;
         posY = -1;
         posZ = -1;
+        posT = 0;
     }
+
+    @Override
+    public void setPositionT(int t)
+    {
+        // position -1 not supported for T dimension on this canvas
+        if (t != -1)
+            super.setPositionT(t);
+    }
+
 }

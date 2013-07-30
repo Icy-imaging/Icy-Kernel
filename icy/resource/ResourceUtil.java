@@ -33,6 +33,8 @@ import javax.swing.ImageIcon;
 
 public class ResourceUtil
 {
+    public static final String separator = "/";
+
     // image and icon path
     private static final String ICON_PATH = "res/icon/";
     private static final String IMAGE_PATH = "res/image/";

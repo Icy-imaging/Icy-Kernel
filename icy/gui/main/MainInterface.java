@@ -27,6 +27,7 @@ import icy.gui.menu.ToolRibbonTask;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.imagej.ImageJWrapper;
+import icy.painter.Overlay;
 import icy.painter.Painter;
 import icy.plugin.abstract_.Plugin;
 import icy.preferences.XMLPreferences;
@@ -36,6 +37,7 @@ import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -91,37 +93,40 @@ public interface MainInterface
     public abstract ArrayList<Plugin> getActivePlugins();
 
     /**
-     * Same as {@link #getFocusedViewer()}
-     */
-    public abstract Viewer getActiveViewer();
-
-    /**
-     * Same as {@link #getFocusedSequence()}
-     */
-    public abstract Sequence getActiveSequence();
-
-    /**
-     * Same as {@link #getFocusedImage()}
-     */
-    public abstract IcyBufferedImage getActiveImage();
-
-    /**
      * Returns the active viewer window.
      * Returns <code>null</code> if there is no sequence opened.
      */
-    public abstract Viewer getFocusedViewer();
+    public abstract Viewer getActiveViewer();
 
     /**
      * Returns the current active sequence.<br>
      * Returns <code>null</code> if there is no sequence opened.
      */
-    public abstract Sequence getFocusedSequence();
+    public abstract Sequence getActiveSequence();
 
     /**
      * Returns the current active image.<br>
      * It can return <code>null</code> if the active viewer is <code>null</code> or
      * if it uses 3D display so prefer {@link #getActiveSequence()} instead.
      */
+    public abstract IcyBufferedImage getActiveImage();
+
+    /**
+     * @deprecated Use {@link #getActiveViewer()} instead.
+     */
+    @Deprecated
+    public abstract Viewer getFocusedViewer();
+
+    /**
+     * @deprecated Use {@link #getActiveSequence()} instead.
+     */
+    @Deprecated
+    public abstract Sequence getFocusedSequence();
+
+    /**
+     * @deprecated Use {@link #getActiveImage()} instead.
+     */
+    @Deprecated
     public abstract IcyBufferedImage getFocusedImage();
 
     /**
@@ -130,11 +135,17 @@ public interface MainInterface
     public abstract ArrayList<Viewer> getViewers();
 
     /**
-     * Set focus on specified viewer
+     * Set the current active viewer.
      * 
      * @param viewer
-     *        viewer which received focus
+     *        viewer which received activation
      */
+    public abstract void setActiveViewer(Viewer viewer);
+
+    /**
+     * @deprecated Use {@link #setActiveViewer(Viewer)} instead.
+     */
+    @Deprecated
     public abstract void setFocusedViewer(Viewer viewer);
 
     /**
@@ -210,9 +221,17 @@ public interface MainInterface
     public abstract Viewer getFirstViewerContaining(ROI roi);
 
     /**
-     * Returns first viewer for the sequence containing specified Painter
+     * Returns first viewer for the sequence containing specified Painter.
+     * 
+     * @deprecated use {@link #getFirstViewerContaining(Overlay)} instead.
      */
+    @Deprecated
     public abstract Viewer getFirstViewerContaining(Painter painter);
+
+    /**
+     * Returns first viewer for the sequence containing specified Overlay
+     */
+    public abstract Viewer getFirstViewerContaining(Overlay overlay);
 
     /**
      * Returns first viewer attached to specified sequence
@@ -253,7 +272,7 @@ public interface MainInterface
     public abstract Sequence getFirstSequencesContaining(ROI roi);
 
     /**
-     * Use {@link #getFirstSequenceContaining(Painter)} instead
+     * Use {@link #getFirstSequenceContaining(Overlay)} instead
      * 
      * @deprecated
      */
@@ -267,8 +286,16 @@ public interface MainInterface
 
     /**
      * Returns the first active sequence containing the specified Painter
+     * 
+     * @deprecated Use {@link #getFirstSequenceContaining(Overlay)} instead.
      */
+    @Deprecated
     public abstract Sequence getFirstSequenceContaining(Painter painter);
+
+    /**
+     * Returns the first active sequence containing the specified Overlay
+     */
+    public abstract Sequence getFirstSequenceContaining(Overlay overlay);
 
     /**
      * Returns all active sequence containing the specified ROI
@@ -277,8 +304,16 @@ public interface MainInterface
 
     /**
      * Returns all active sequence containing the specified Painter
+     * 
+     * @deprecated Use {@link #getSequencesContaining(Overlay)} instead.
      */
+    @Deprecated
     public abstract ArrayList<Sequence> getSequencesContaining(Painter painter);
+
+    /**
+     * Returns all active sequence containing the specified Overlay
+     */
+    public abstract List<Sequence> getSequencesContaining(Overlay overlay);
 
     /**
      * Returns all active ROI
@@ -286,14 +321,30 @@ public interface MainInterface
     public abstract ArrayList<ROI> getROIs();
 
     /**
-     * Returns the ROI containing the specified painter (if any)
+     * Returns the ROI containing the specified painter (if any).
+     * 
+     * @deprecated Use {@link #getROI(Overlay)} instead.
      */
+    @Deprecated
     public abstract ROI getROI(Painter painter);
 
     /**
-     * Returns all active Painter
+     * Returns the ROI containing the specified overlay (if any)
      */
+    public abstract ROI getROI(Overlay overlay);
+
+    /**
+     * Returns all active Painter.
+     * 
+     * @deprecated Use {@link #getOverlays()} instead.
+     */
+    @Deprecated
     public abstract ArrayList<Painter> getPainters();
+
+    /**
+     * Returns all active Overlay.
+     */
+    public abstract List<Overlay> getOverlays();
 
     /**
      * Returns the SwimmingPool object
@@ -315,6 +366,9 @@ public interface MainInterface
      */
     public abstract void setSelectedTool(String command);
 
+    /**
+     * Returns the tool task of the Ribbon menu.
+     */
     public abstract ToolRibbonTask getToolRibbon();
 
     /**
@@ -338,14 +392,114 @@ public interface MainInterface
     public abstract void setDetachedMode(boolean value);
 
     /**
-     * Add main listener
+     * @deprecated Use addGlobalXXXListener instead.
      */
+    @Deprecated
     public abstract void addListener(MainListener listener);
 
     /**
-     * Remove main listener
+     * @deprecated Use removeGlobalXXXListener instead.
      */
+    @Deprecated
     public abstract void removeListener(MainListener listener);
+
+    /**
+     * Add global Viewer listener
+     */
+    public abstract void addGlobalViewerListener(GlobalViewerListener listener);
+
+    /**
+     * Remove global Viewer listener
+     */
+    public abstract void removeGlobalViewerListener(GlobalViewerListener listener);
+
+    /**
+     * Add global Sequence listener
+     */
+    public abstract void addGlobalSequenceListener(GlobalSequenceListener listener);
+
+    /**
+     * Remove global Sequence listener
+     */
+    public abstract void removeGlobalSequenceListener(GlobalSequenceListener listener);
+
+    /**
+     * Add global ROI listener
+     */
+    public abstract void addGlobalROIListener(GlobalROIListener listener);
+
+    /**
+     * Remove global ROI listener
+     */
+    public abstract void removeGlobalROIListener(GlobalROIListener listener);
+
+    /**
+     * Add global Overlay listener
+     */
+    public abstract void addGlobalOverlayListener(GlobalOverlayListener listener);
+
+    /**
+     * Remove global Overlay listener
+     */
+    public abstract void removeGlobalOverlayListener(GlobalOverlayListener listener);
+
+    /**
+     * Add global Plugin listener
+     */
+    public abstract void addGlobalPluginListener(GlobalPluginListener listener);
+
+    /**
+     * Remove global Plugin listener
+     */
+    public abstract void removeGlobalPluginListener(GlobalPluginListener listener);
+
+    /**
+     * @deprecated Use {@link #addActiveViewerListener(ActiveViewerListener)} instead.
+     */
+    @Deprecated
+    public abstract void addFocusedViewerListener(FocusedViewerListener listener);
+
+    /**
+     * @deprecated Use {@link #removeActiveViewerListener(ActiveViewerListener)} instead.
+     */
+    @Deprecated
+    public abstract void removeFocusedViewerListener(FocusedViewerListener listener);
+
+    /**
+     * Add active viewer listener.<br>
+     * This permit to receive events of activated viewer only.<br>
+     * It can also be used to detect viewer activation change.
+     */
+    public abstract void addActiveViewerListener(ActiveViewerListener listener);
+
+    /**
+     * Remove active viewer listener.
+     */
+    public abstract void removeActiveViewerListener(ActiveViewerListener listener);
+
+    /**
+     * @deprecated Use {@link #addActiveSequenceListener(ActiveSequenceListener)} instead.
+     */
+    @Deprecated
+    public abstract void addFocusedSequenceListener(FocusedSequenceListener listener);
+
+    /**
+     * @deprecated Use {@link #removeActiveSequenceListener(ActiveSequenceListener)} instead.
+     */
+    @Deprecated
+    public abstract void removeFocusedSequenceListener(FocusedSequenceListener listener);
+
+    /**
+     * Add active sequence listener.<br>
+     * This permit to receive events of activated sequence only.<br>
+     * It can also be used to detect sequence activation change.
+     */
+    public abstract void addActiveSequenceListener(ActiveSequenceListener listener);
+
+    /**
+     * Remove focused sequence listener.
+     */
+    public abstract void removeActiveSequenceListener(ActiveSequenceListener listener);
 
     /**
      * Add "can exit" listener.<br>
@@ -353,36 +507,12 @@ public interface MainInterface
      * CAUTION : A weak reference is used to reference the listener for easier release<br>
      * so you should have a hard reference to your listener to keep it alive.
      */
-    public abstract void addCanExitListener(icy.common.listener.AcceptListener listener);
+    public abstract void addCanExitListener(AcceptListener listener);
 
     /**
      * Remove "can exit" listener
      */
     public abstract void removeCanExitListener(AcceptListener listener);
-
-    /**
-     * Add focused viewer listener.<br>
-     * This permit to receive events of focused viewer only.<br>
-     * It can also be used to detect viewer focus change.
-     */
-    public abstract void addFocusedViewerListener(FocusedViewerListener listener);
-
-    /**
-     * Remove focused viewer listener.
-     */
-    public abstract void removeFocusedViewerListener(FocusedViewerListener listener);
-
-    /**
-     * Add focused sequence listener.<br>
-     * This permit to receive events of focused sequence only.<br>
-     * It can also be used to detect sequence focus change.
-     */
-    public abstract void addFocusedSequenceListener(FocusedSequenceListener listener);
-
-    /**
-     * Remove focused sequence listener.
-     */
-    public abstract void removeFocusedSequenceListener(FocusedSequenceListener listener);
 
     /**
      * @deprecated

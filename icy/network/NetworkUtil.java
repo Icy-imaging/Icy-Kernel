@@ -120,7 +120,6 @@ public class NetworkUtil
     public static final String WEBSITE_URL = "http://icy.bioimageanalysis.org/";
 
     static final String REPORT_URL = WEBSITE_URL + "index.php";
-    static final String USER_INTERRUPT_MESS = "Load interrupted by user";
 
     /**
      * Parameters id
@@ -610,7 +609,8 @@ public class NetworkUtil
     }
 
     /**
-     * Download data from specified InputStream and return it as an array of byte
+     * Download data from specified InputStream and return it as an array of byte.<br>
+     * Returns <code>null</code> if load operation was interrupted by user.
      */
     public static byte[] download(InputStream in, long len, ProgressListener listener) throws IOException
     {
@@ -646,7 +646,7 @@ public class NetworkUtil
                     if (!listener.notifyProgress(off, len))
                     {
                         in.close();
-                        System.out.println(USER_INTERRUPT_MESS);
+                        System.out.println("Interrupted by user.");
                         return null;
                     }
                 }

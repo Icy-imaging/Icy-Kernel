@@ -31,10 +31,11 @@ import javax.swing.event.EventListenerList;
 
 /**
  * AbstractPainter class.<br>
- * Uses the {@link Overlay} class instead.
  * 
+ * @deprecated Uses the {@link Overlay} class instead.
  * @author Stephane
  */
+@Deprecated
 public abstract class AbstractPainter extends PainterAdapter implements ChangeListener
 {
     /**

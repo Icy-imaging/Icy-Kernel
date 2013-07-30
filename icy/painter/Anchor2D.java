@@ -20,12 +20,14 @@ package icy.painter;
 
 import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
 import icy.common.EventHierarchicalChecker;
 import icy.file.xml.XMLPersistent;
 import icy.painter.OverlayEvent.OverlayEventType;
 import icy.painter.PainterEvent.PainterEventType;
 import icy.sequence.Sequence;
 import icy.util.EventUtil;
+import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
 
 import java.awt.BasicStroke;
@@ -251,7 +253,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public Anchor2D(Sequence sequence, double x, double y, int ray, Color color, Color selectedColor)
     {
         this(x, y, ray, color, selectedColor);
-        sequence.addPainter(this);
+        sequence.addOverlay(this);
     }
 
     /**
@@ -261,7 +263,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public Anchor2D(Sequence sequence, Point2D position, int ray, Color color, Color selectedColor)
     {
         this(position.getX(), position.getY(), ray, color, selectedColor);
-        sequence.addPainter(this);
+        sequence.addOverlay(this);
     }
 
     /**
@@ -271,7 +273,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public Anchor2D(Sequence sequence, Point2D position, int ray, Color color)
     {
         this(position.getX(), position.getY(), ray, color, DEFAULT_SELECTED_COLOR);
-        sequence.addPainter(this);
+        sequence.addOverlay(this);
     }
 
     /**
@@ -281,7 +283,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public Anchor2D(Sequence sequence, double x, double y, int ray)
     {
         this(x, y, ray, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
-        sequence.addPainter(this);
+        sequence.addOverlay(this);
     }
 
     /**
@@ -291,7 +293,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public Anchor2D(Sequence sequence, Point2D position, Color color)
     {
         this(position.getX(), position.getY(), DEFAULT_RAY, color, DEFAULT_SELECTED_COLOR);
-        sequence.addPainter(this);
+        sequence.addOverlay(this);
     }
 
     /**
@@ -301,7 +303,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public Anchor2D(Sequence sequence, Point2D position, int ray)
     {
         this(position.getX(), position.getY(), ray, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
-        sequence.addPainter(this);
+        sequence.addOverlay(this);
     }
 
     /**
@@ -311,7 +313,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public Anchor2D(Sequence sequence, double x, double y, Color color, Color selectedColor)
     {
         this(x, y, DEFAULT_RAY, color, selectedColor);
-        sequence.addPainter(this);
+        sequence.addOverlay(this);
     }
 
     /**
@@ -321,7 +323,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public Anchor2D(Sequence sequence, Point2D position, Color color, Color selectedColor)
     {
         this(position.getX(), position.getY(), DEFAULT_RAY, color, selectedColor);
-        sequence.addPainter(this);
+        sequence.addOverlay(this);
     }
 
     /**
@@ -331,7 +333,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public Anchor2D(Sequence sequence, double x, double y, Color color)
     {
         this(x, y, DEFAULT_RAY, color, DEFAULT_SELECTED_COLOR);
-        sequence.addPainter(this);
+        sequence.addOverlay(this);
     }
 
     /**
@@ -341,7 +343,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public Anchor2D(Sequence sequence, double x, double y)
     {
         this(sequence, x, y, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
-        sequence.addPainter(this);
+        sequence.addOverlay(this);
     }
 
     /**
@@ -351,7 +353,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public Anchor2D(Sequence sequence, Point2D position)
     {
         this(position.getX(), position.getY(), DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
-        sequence.addPainter(this);
+        sequence.addOverlay(this);
     }
 
     /**
@@ -361,7 +363,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public Anchor2D(Sequence sequence)
     {
         this(0d, 0d, DEFAULT_RAY, DEFAULT_NORMAL_COLOR, DEFAULT_SELECTED_COLOR);
-        sequence.addPainter(this);
+        sequence.addOverlay(this);
     }
 
     /**
@@ -697,23 +699,33 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (!visible)
             return;
 
-        updateEllipse(canvas);
+        // canvas3D not handled here
+        if (canvas instanceof IcyCanvas2D)
+        {
+            updateEllipse(canvas);
 
-        final Graphics2D g2 = (Graphics2D) g.create();
+            // trivial paint optimization
+            final boolean shapeVisible = ShapeUtil.isVisible(g, ellipse);
 
-        // draw content
-        if (selected)
-            g2.setColor(selectedColor);
-        else
-            g2.setColor(color);
-        g2.fill(ellipse);
+            if (shapeVisible)
+            {
+                final Graphics2D g2 = (Graphics2D) g.create();
 
-        // draw black border
-        g2.setStroke(new BasicStroke((float) (getAdjRay(canvas) / 8f)));
-        g2.setColor(Color.black);
-        g2.draw(ellipse);
+                // draw content
+                if (selected)
+                    g2.setColor(selectedColor);
+                else
+                    g2.setColor(color);
+                g2.fill(ellipse);
 
-        g2.dispose();
+                // draw black border
+                g2.setStroke(new BasicStroke((float) (getAdjRay(canvas) / 8f)));
+                g2.setColor(Color.black);
+                g2.draw(ellipse);
+
+                g2.dispose();
+            }
+        }
     }
 
     @Override
@@ -728,7 +740,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
         // no image position --> exit
         if (imagePoint == null)
             return;
-        
+
         // just for the shift key state change
         updateDrag(e, imagePoint);
     }

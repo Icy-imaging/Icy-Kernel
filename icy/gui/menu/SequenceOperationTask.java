@@ -99,7 +99,7 @@ public class SequenceOperationTask extends RibbonTask
                 public JPopupPanel getPopupPanel(JCommandButton commandButton)
                 {
                     final JCommandPopupMenu result = new JCommandPopupMenu();
-                    final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+                    final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
                     if (sequence != null)
                     {
@@ -133,7 +133,7 @@ public class SequenceOperationTask extends RibbonTask
                 public JPopupPanel getPopupPanel(JCommandButton commandButton)
                 {
                     final JCommandPopupMenu result = new JCommandPopupMenu();
-                    final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+                    final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
                     if (sequence != null)
                     {
@@ -181,7 +181,7 @@ public class SequenceOperationTask extends RibbonTask
 
         void updateButtonsState()
         {
-            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
             final boolean enabled = seq != null;
             final boolean notEmpty = enabled && !seq.isEmpty();
 
@@ -228,7 +228,7 @@ public class SequenceOperationTask extends RibbonTask
 
         void updateButtonsState()
         {
-            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
             final boolean enabled = (seq != null) && !seq.isEmpty();
 
             argbButton.setEnabled(enabled);
@@ -290,7 +290,7 @@ public class SequenceOperationTask extends RibbonTask
 
         void updateButtonsState()
         {
-            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
             final boolean enabled = (seq != null) && !seq.isEmpty();
 
             cropButton.setEnabled(enabled);
@@ -330,7 +330,7 @@ public class SequenceOperationTask extends RibbonTask
                 public JPopupPanel getPopupPanel(JCommandButton commandButton)
                 {
                     final JCommandPopupMenu result = new JCommandPopupMenu();
-                    final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+                    final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
                     if (sequence != null)
                     {
@@ -365,7 +365,7 @@ public class SequenceOperationTask extends RibbonTask
                 public JPopupPanel getPopupPanel(JCommandButton commandButton)
                 {
                     final JCommandPopupMenu result = new JCommandPopupMenu();
-                    final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+                    final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
                     if (sequence != null)
                     {
@@ -397,7 +397,7 @@ public class SequenceOperationTask extends RibbonTask
 
         void updateButtonsState()
         {
-            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
             final boolean enabled = (seq != null);
             final boolean several = enabled && (seq.getSizeC() > 1);
 
@@ -462,7 +462,7 @@ public class SequenceOperationTask extends RibbonTask
 
         void updateButtonsState()
         {
-            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
             final boolean enabled = (seq != null);
             final boolean notEmpty = enabled && !seq.isEmpty();
             final boolean several = enabled && (seq.getSizeZ() > 1);
@@ -531,7 +531,7 @@ public class SequenceOperationTask extends RibbonTask
 
         void updateButtonsState()
         {
-            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
             final boolean enabled = (seq != null);
             final boolean notEmpty = enabled && !seq.isEmpty();
             final boolean several = enabled && (seq.getSizeT() > 1);
@@ -582,7 +582,7 @@ public class SequenceOperationTask extends RibbonTask
 
         void updateButtonsState()
         {
-            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
             final boolean enabled = (seq != null);
             final boolean severalZ = enabled && (seq.getSizeZ() > 1);
             final boolean severalT = enabled && (seq.getSizeT() > 1);
@@ -628,8 +628,8 @@ public class SequenceOperationTask extends RibbonTask
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
-                    final IcyBufferedImage image = Icy.getMainInterface().getFocusedImage();
+                    final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+                    final IcyBufferedImage image = Icy.getMainInterface().getActiveImage();
 
                     if ((sequence != null) && (image != null))
                     {
@@ -661,7 +661,7 @@ public class SequenceOperationTask extends RibbonTask
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    final Sequence sequence = Icy.getMainInterface().getFocusedSequence();
+                    final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
                     if (sequence != null)
                     {
@@ -713,7 +713,7 @@ public class SequenceOperationTask extends RibbonTask
 
         void updateButtonsState()
         {
-            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
             final boolean enabled = (seq != null) && !seq.isEmpty();
 
             fillValueField.setEnabled(enabled);

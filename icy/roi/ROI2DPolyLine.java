@@ -85,26 +85,30 @@ public class ROI2DPolyLine extends ROI2DShape
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
 
-                if (selected)
+                // trivial paint optimization
+                if (ShapeUtil.isVisible(g, shape))
                 {
-                    // just draw plain object shape without border
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                    g2.setColor(getDisplayColor());
-                    g2.draw(shape);
-                }
-                else
-                {
-                    // draw border
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                    g2.setColor(Color.black);
-                    g2.draw(shape);
-                    // draw shape
-                    g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                    g2.setColor(getDisplayColor());
-                    g2.draw(shape);
+                    if (isSelected())
+                    {
+                        // just draw plain object shape without border
+                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                        g2.setColor(getDisplayColor());
+                        g2.draw(shape);
+                    }
+                    else
+                    {
+                        // draw border
+                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                        g2.setColor(Color.black);
+                        g2.draw(shape);
+                        // draw shape
+                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
+                        g2.setColor(getDisplayColor());
+                        g2.draw(shape);
+                    }
                 }
 
-                if (selected && editable)
+                if (isSelected() && !isReadOnly())
                 {
                     // draw control point if selected
                     for (Anchor2D pt : controlPoints)

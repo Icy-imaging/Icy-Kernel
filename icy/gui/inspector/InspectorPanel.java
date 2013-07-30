@@ -20,8 +20,8 @@ package icy.gui.inspector;
 
 import icy.gui.component.ExtTabbedPanel;
 import icy.gui.component.ExternalizablePanel;
-import icy.gui.main.FocusedSequenceListener;
-import icy.gui.main.FocusedViewerListener;
+import icy.gui.main.ActiveSequenceListener;
+import icy.gui.main.ActiveViewerListener;
 import icy.gui.system.MemoryMonitorPanel;
 import icy.gui.system.OutputConsolePanel;
 import icy.gui.system.OutputConsolePanel.OutputConsoleChangeListener;
@@ -49,14 +49,9 @@ import javax.swing.event.ChangeListener;
  * 
  * @author Fabrice de Chaumont & Stephane
  */
-public class InspectorPanel extends ExternalizablePanel implements FocusedViewerListener, FocusedSequenceListener
+public class InspectorPanel extends ExternalizablePanel implements ActiveViewerListener, ActiveSequenceListener
 {
     private static final long serialVersionUID = 5538230736731006318L;
-
-    public interface FocusedViewerSequenceListener extends FocusedViewerListener, FocusedSequenceListener
-    {
-
-    }
 
     /**
      * GUI
@@ -97,7 +92,7 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
         // mainPane.add("Active Plugin", pluginsPanel);
         mainPane.addTab("Layer", null, layersPanel, "Show all layers details");
         mainPane.addTab("ROI", null, roisPanel, "Manage / edit your ROI");
-//        mainPane.addTab("History", null, historyPanel, "Actions history");
+        // mainPane.addTab("History", null, historyPanel, "Actions history");
         mainPane.addTab("Output", null, outputConsolePanel, "Console output");
         mainPane.addTab("Chat", null, chatPanel, "Chat room");
 
@@ -158,8 +153,8 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
         });
 
         // add focused sequence & viewer listener
-        Icy.getMainInterface().addFocusedViewerListener(this);
-        Icy.getMainInterface().addFocusedSequenceListener(this);
+        Icy.getMainInterface().addActiveViewerListener(this);
+        Icy.getMainInterface().addActiveSequenceListener(this);
     }
 
     /**
@@ -227,45 +222,53 @@ public class InspectorPanel extends ExternalizablePanel implements FocusedViewer
     }
 
     @Override
-    public void focusChanged(Viewer viewer)
+    public void viewerActivated(Viewer viewer)
     {
-        sequencePanel.focusChanged(viewer);
-        roisPanel.focusChanged(viewer);
-        layersPanel.focusChanged(viewer);
+        sequencePanel.viewerActivated(viewer);
+        layersPanel.viewerActivated(viewer);
 
         // FIXME : why this is needed ?
         // revalidate();
         // repaint();
     }
 
+    @Override
+    public void viewerDeactivated(Viewer viewer)
+    {
+        // nothing to do here
+    }
+
     /**
      * Called when focused viewer has changed
      */
     @Override
-    public void focusedViewerChanged(ViewerEvent event)
+    public void activeViewerChanged(ViewerEvent event)
     {
-        sequencePanel.focusedViewerChanged(event);
-        roisPanel.focusedViewerChanged(event);
-        layersPanel.focusedViewerChanged(event);
+        sequencePanel.activeViewerChanged(event);
+        layersPanel.activeViewerChanged(event);
     }
 
     @Override
-    public void focusChanged(Sequence sequence)
+    public void sequenceActivated(Sequence sequence)
     {
-        sequencePanel.focusChanged(sequence);
-        roisPanel.focusChanged(sequence);
-        layersPanel.focusChanged(sequence);
-        historyPanel.focusChanged(sequence);
+        sequencePanel.sequenceActivated(sequence);
+        roisPanel.sequenceActivated(sequence);
+        historyPanel.sequenceActivated(sequence);
+    }
+
+    @Override
+    public void sequenceDeactivated(Sequence sequence)
+    {
+        // nothing to do here
     }
 
     /**
      * Called by mainInterface when focused sequence has changed
      */
     @Override
-    public void focusedSequenceChanged(SequenceEvent event)
+    public void activeSequenceChanged(SequenceEvent event)
     {
-        sequencePanel.focusedSequenceChanged(event);
-        roisPanel.focusedSequenceChanged(event);
-        layersPanel.focusedSequenceChanged(event);
+        sequencePanel.activeSequenceChanged(event);
+        roisPanel.activeSequenceChanged(event);
     }
 }

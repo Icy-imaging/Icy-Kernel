@@ -138,7 +138,7 @@ public class GeneralActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Viewer viewer = Icy.getMainInterface().getFocusedViewer();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
 
             if (viewer != null)
             {
@@ -172,7 +172,7 @@ public class GeneralActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 
@@ -226,7 +226,7 @@ public class GeneralActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence seq = Icy.getMainInterface().getFocusedSequence();
+            final Sequence seq = Icy.getMainInterface().getActiveSequence();
 
             if (seq != null)
             {
@@ -251,7 +251,7 @@ public class GeneralActions
         @Override
         public boolean isEnabled()
         {
-            return super.isEnabled() && (Icy.getMainInterface().getFocusedSequence() != null);
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
     };
 

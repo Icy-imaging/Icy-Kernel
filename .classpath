@@ -61,5 +61,9 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/poi-ooxml.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/poi-scratchpad.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/poi.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/netcdf.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/kryo.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/native-lib-loader.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/turbojpeg.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

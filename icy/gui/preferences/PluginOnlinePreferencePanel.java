@@ -39,7 +39,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
 {
     private enum PluginOnlineState
     {
-        NULL, INSTALLING, REMOVING, HAS_INSTALL, INSTALLED, OLDER, NEWER
+        NULL, INSTALLING, REMOVING, HAS_INSTALL, INSTALLED, INSTALLED_FAULTY, OLDER, NEWER
     }
 
     /**
@@ -103,6 +103,9 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
                 if (plugin.isNewer(localPlugin))
                     return PluginOnlineState.NEWER;
             }
+
+            // local version not loaded --> faulty
+            return PluginOnlineState.INSTALLED_FAULTY;
         }
 
         return PluginOnlineState.HAS_INSTALL;
@@ -119,6 +122,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
             case NEWER:
             case OLDER:
                 final boolean doInstall;
+
                 if (state == PluginOnlineState.OLDER)
                     doInstall = ConfirmDialog
                             .confirm("You'll replace your plugin by an older version !\nAre you sure you want to continue ?");
@@ -135,6 +139,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
                 break;
 
             case INSTALLED:
+            case INSTALLED_FAULTY:
                 // desinstall plugin
                 PluginInstaller.desinstall(plugin, true);
                 // refresh state
@@ -183,6 +188,9 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
 
             case INSTALLED:
                 return "installed";
+
+            case INSTALLED_FAULTY:
+                return "faulty";
         }
 
         return "";
@@ -249,6 +257,7 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
                 break;
 
             case INSTALLED:
+            case INSTALLED_FAULTY:
                 // special case where plugin is currently begin removed
                 if (PluginInstaller.isDesinstallingPlugin(plugin))
                 {

@@ -37,8 +37,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 /**
- * @author Stephane
+ * @deprecated Use {@link ActiveSequenceActionFrame} instead.
  */
+@Deprecated
 public abstract class FocusedSequenceActionFrame extends ActionFrame implements SequenceListener
 {
     public interface SourceChangeListener
@@ -114,7 +115,7 @@ public abstract class FocusedSequenceActionFrame extends ActionFrame implements 
         mainPanel.add(sourcePanel);
 
         // set input sequence once GUI is built
-        setSeqIn(Icy.getMainInterface().getFocusedSequence());
+        setSeqIn(Icy.getMainInterface().getActiveSequence());
     }
 
     /**

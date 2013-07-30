@@ -51,6 +51,11 @@ public class DownloadFrame extends CancelableProgressFrame
         rate = 0;
     }
 
+    public void setPath(String path)
+    {
+        setMessage(StringUtil.limit("Downloading " + path, 64));
+    }
+
     /**
      * @deprecated use setMessage(..) instead
      */

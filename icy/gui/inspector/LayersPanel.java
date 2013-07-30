@@ -29,14 +29,13 @@ import icy.gui.component.editor.SliderCellEditor;
 import icy.gui.component.editor.VisibleCellEditor;
 import icy.gui.component.renderer.SliderCellRenderer;
 import icy.gui.component.renderer.VisibleCellRenderer;
-import icy.gui.inspector.InspectorPanel.FocusedViewerSequenceListener;
+import icy.gui.main.ActiveViewerListener;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.gui.viewer.ViewerEvent.ViewerEventType;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
-import icy.sequence.SequenceEvent;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
@@ -44,6 +43,7 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -62,8 +62,8 @@ import javax.swing.table.TableColumnModel;
 /**
  * @author Stephane
  */
-public class LayersPanel extends JPanel implements FocusedViewerSequenceListener, CanvasLayerListener,
-        TextChangeListener, ListSelectionListener
+public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasLayerListener, TextChangeListener,
+        ListSelectionListener
 {
     private class CanvasRefresher implements Runnable
     {
@@ -102,7 +102,7 @@ public class LayersPanel extends JPanel implements FocusedViewerSequenceListener
 
     static final String[] columnNames = {"Name", "Opacity", ""};
 
-    ArrayList<Layer> layers;
+    List<Layer> layers;
     IcyCanvas canvas;
 
     // GUI
@@ -187,8 +187,8 @@ public class LayersPanel extends JPanel implements FocusedViewerSequenceListener
                     {
                         // delete selected layers
                         for (Layer layer : getSelectedLayers())
-                            if (!layer.isFixed())
-                                sequence.removePainter(layer.getPainter());
+                            if (layer.getCanBeRemoved())
+                                sequence.removeOverlay(layer.getOverlay());
                     }
                     finally
                     {
@@ -511,9 +511,9 @@ public class LayersPanel extends JPanel implements FocusedViewerSequenceListener
         }
     }
 
-    ArrayList<Layer> filterList(ArrayList<Layer> list, String nameFilterText)
+    List<Layer> filterList(List<Layer> list, String nameFilterText)
     {
-        final ArrayList<Layer> result = new ArrayList<Layer>();
+        final List<Layer> result = new ArrayList<Layer>();
 
         final boolean nameEmpty = StringUtil.isEmpty(nameFilterText, true);
         final String nameFilterUp;
@@ -596,7 +596,7 @@ public class LayersPanel extends JPanel implements FocusedViewerSequenceListener
                 for (Layer layer : selectedLayers)
                 {
                     canEdit |= !layer.isReadOnly();
-                    canRemove |= !layer.isFixed();
+                    canRemove |= layer.getCanBeRemoved();
                 }
 
                 nameField.setEnabled(hasSelected && canEdit);
@@ -688,7 +688,7 @@ public class LayersPanel extends JPanel implements FocusedViewerSequenceListener
     }
 
     @Override
-    public void focusChanged(Viewer viewer)
+    public void viewerActivated(Viewer viewer)
     {
         if (viewer != null)
             canvasRefresher.newCanvas = viewer.getCanvas();
@@ -699,7 +699,13 @@ public class LayersPanel extends JPanel implements FocusedViewerSequenceListener
     }
 
     @Override
-    public void focusedViewerChanged(ViewerEvent event)
+    public void viewerDeactivated(Viewer viewer)
+    {
+        // nothing here
+    }
+
+    @Override
+    public void activeViewerChanged(ViewerEvent event)
     {
         if (event.getType() == ViewerEventType.CANVAS_CHANGED)
         {
@@ -709,22 +715,11 @@ public class LayersPanel extends JPanel implements FocusedViewerSequenceListener
     }
 
     @Override
-    public void focusChanged(Sequence value)
-    {
-
-    }
-
-    @Override
-    public void focusedSequenceChanged(SequenceEvent event)
-    {
-
-    }
-
-    @Override
     public void canvasLayerChanged(CanvasLayerEvent event)
     {
         // refresh layer from externals changes
         if (!isLayerEditing)
             refreshLayers();
     }
+
 }

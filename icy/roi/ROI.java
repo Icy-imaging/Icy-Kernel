@@ -89,13 +89,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * @deprecated Use {@link #DEFAULT_COLOR} instead.
      */
+    @Deprecated
     protected static final Color DEFAULT_NORMAL_COLOR = DEFAULT_COLOR;
     // protected static final Color DEFAULT_SELECTED_COLOR = Color.ORANGE;
     // protected static final Color OVER_COLOR = Color.WHITE;
     protected static final float DEFAULT_OPACITY = 0.3f;
 
     public static final String PROPERTY_NAME = "name";
-    public static final String PROPERTY_EDITABLE = "editable";
+    public static final String PROPERTY_READONLY = "readonly";
 
     /**
      * Create a ROI from its class name or {@link PluginROI} class name.
@@ -282,7 +283,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         if (roi != null)
         {
             roi.loadFromXML(node);
-            roi.setSelected(false, false);
+            roi.setSelected(false);
         }
 
         return roi;
@@ -502,8 +503,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             opacity = DEFAULT_OPACITY;
 
             // we fix the ROI overlay
-            fixed = true;
-            readOnly = true;
+            canBeRemoved = false;
         }
 
         /**
@@ -570,6 +570,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         /**
          * @deprecated
          */
+        @Deprecated
         public Color getSelectedColor()
         {
             return color;
@@ -589,7 +590,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
          */
         public Color getDisplayColor()
         {
-            if (focused)
+            if (isFocused())
                 return getFocusedColor();
             // if (selected)
             // return getSelectedColor();
@@ -628,6 +629,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         /**
          * @deprecated Selected color is now automatically calculated
          */
+        @Deprecated
         public void setSelectedColor(Color value)
         {
 
@@ -635,19 +637,33 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
         public void computePriority()
         {
-            if (ROI.this.focused)
+            if (isFocused())
                 painter.setPriority(OverlayPriority.SHAPE_TOP);
-            else if (ROI.this.selected)
+            else if (isSelected())
                 painter.setPriority(OverlayPriority.SHAPE_HIGH);
             else
                 painter.setPriority(OverlayPriority.SHAPE_LOW);
         }
 
         @Override
+        public boolean isReadOnly()
+        {
+            // use ROI read only property
+            return ROI.this.isReadOnly();
+        }
+
+        @Override
         public String getName()
         {
-            // use ROI name
+            // use ROI name property
             return ROI.this.getName();
+        }
+
+        @Override
+        public void setName(String name)
+        {
+            // modifying layer name modify ROI name
+            ROI.this.setName(name);
         }
 
         @Override
@@ -704,7 +720,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected boolean creating;
     protected boolean focused;
     protected boolean selected;
-    protected boolean editable;
+    protected boolean readOnly;
 
     /**
      * last mouse position (image coordinates)
@@ -728,7 +744,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         id = generateId();
         painter = createPainter();
         name = "";
-        editable = true;
+        readOnly = false;
         creating = true;
         focused = false;
         selected = false;
@@ -782,7 +798,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     @Deprecated
     public void detachFromAll(boolean canUndo)
     {
-        remove(canUndo, 0);
+        remove(canUndo);
     }
 
     /**
@@ -791,7 +807,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     @Deprecated
     public void detachFromAll()
     {
-        remove(false, 0);
+        remove(false);
     }
 
     /**
@@ -824,7 +840,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Remove this ROI (detach from all sequence)
      */
-    public void remove(boolean canUndo, int i)
+    public void remove(boolean canUndo)
     {
         final ArrayList<Sequence> sequences = Icy.getMainInterface().getSequencesContaining(this);
 
@@ -837,7 +853,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public void remove()
     {
-        remove(true, 0);
+        remove(true);
     }
 
     /**
@@ -846,7 +862,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     @Deprecated
     public void delete(boolean canUndo)
     {
-        remove(canUndo, 0);
+        remove(canUndo);
     }
 
     /**
@@ -855,7 +871,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     @Deprecated
     public void delete()
     {
-        remove(true, 0);
+        remove(true);
     }
 
     public String getClassName()
@@ -877,9 +893,18 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Returns the ROI painter (used to draw and interact with {@link ROI} on {@link IcyCanvas})
+     * @deprecated Use {@link #getOverlay()} instead.
      */
+    @Deprecated
     public ROIPainter getPainter()
+    {
+        return painter;
+    }
+
+    /**
+     * Returns the ROI overlay (used to draw and interact with {@link ROI} on {@link IcyCanvas})
+     */
+    public ROIPainter getOverlay()
     {
         return painter;
     }
@@ -935,6 +960,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * @deprecated
      */
+    @Deprecated
     public Color getSelectedColor()
     {
         return painter.getSelectedColor();
@@ -1065,34 +1091,48 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
+     * Set the selected state of this ROI.<br>
+     * Use {@link Sequence#setSelectedROI(ROI)} for exclusive ROI selection.
+     * 
      * @param value
      *        the selected to set
-     * @param exclusive
-     *        exclusive selection (only one selected ROI per sequence)
      */
-    public void setSelected(boolean value, boolean exclusive)
+    public void setSelected(boolean value)
     {
-        boolean done = false;
-
-        // always perform the process to perform exclusive select after no exclusive one
-        if (exclusive)
+        if (selected != value)
         {
-            // use the sequence for ROI selection with exclusive parameter
-            final ArrayList<Sequence> attachedSeqs = Icy.getMainInterface().getSequencesContaining(this);
+            selected = value;
+            // as soon ROI has been unselected, we're not in create mode anymore
+            if (!value)
+                creating = false;
 
-            for (Sequence seq : attachedSeqs)
-                done |= seq.setSelectedROI(value ? this : null, exclusive);
-        }
-
-        if (!done)
-        {
-            if (value)
-                internalSelect();
-            else
-                internalUnselect();
+            selectionChanged();
         }
     }
 
+    /**
+     * @deprecated Use {@link #setSelected(boolean)} or {@link Sequence#setSelectedROI(ROI)}
+     *             depending you want exclusive selection or not.
+     */
+    @Deprecated
+    public void setSelected(boolean value, boolean exclusive)
+    {
+        if (exclusive)
+        {
+            // use the sequence for ROI selection with exclusive parameter
+            final List<Sequence> attachedSeqs = Icy.getMainInterface().getSequencesContaining(this);
+
+            for (Sequence seq : attachedSeqs)
+                seq.setSelectedROI(value ? this : null);
+        }
+        else
+            setSelected(value);
+    }
+
+    /**
+     * @deprecated Use {@link #setSelected(boolean)} instead.
+     */
+    @Deprecated
     public void internalUnselect()
     {
         if (selected != false)
@@ -1104,6 +1144,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
     }
 
+    /**
+     * @deprecated Use {@link #setSelected(boolean)} instead.
+     */
+    @Deprecated
     public void internalSelect()
     {
         if (selected != true)
@@ -1114,25 +1158,43 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Return true if ROI is editable.
+     * @deprecated Use {@link #isReadOnly()} instead.
      */
+    @Deprecated
     public boolean isEditable()
     {
-        return editable;
+        return !isReadOnly();
     }
 
     /**
-     * Set the editable state of ROI.
+     * @deprecated Use {@link #setReadOnly(boolean)} instead.
      */
+    @Deprecated
     public void setEditable(boolean value)
     {
-        if (editable != value)
-        {
-            editable = value;
+        setReadOnly(!value);
+    }
 
-            propertyChanged(PROPERTY_EDITABLE);
-            if (!value)
-                setSelected(false, false);
+    /**
+     * Return true if ROI is in <i>read only</i> state (cannot be modified from GUI).
+     */
+    public boolean isReadOnly()
+    {
+        return readOnly;
+    }
+
+    /**
+     * Set the <i>read only</i> state of ROI.
+     */
+    public void setReadOnly(boolean value)
+    {
+        if (readOnly != value)
+        {
+            readOnly = value;
+
+            propertyChanged(PROPERTY_READONLY);
+            if (value)
+                setSelected(false);
         }
     }
 
@@ -1268,7 +1330,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             // FIXME : this can make duplicate id but it is also important to preserve id
             id = XMLUtil.getElementIntValue(node, ID_ID, 0);
             setName(XMLUtil.getElementValue(node, ID_NAME, ""));
-            setSelected(XMLUtil.getElementBooleanValue(node, ID_SELECTED, false), false);
+            setSelected(XMLUtil.getElementBooleanValue(node, ID_SELECTED, false));
             painter.loadFromXML(node);
         }
         finally
@@ -1287,8 +1349,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
         XMLUtil.setElementValue(node, ID_CLASSNAME, getClassName());
         XMLUtil.setElementIntValue(node, ID_ID, id);
-        XMLUtil.setElementValue(node, ID_NAME, name);
-        XMLUtil.setElementBooleanValue(node, ID_SELECTED, selected);
+        XMLUtil.setElementValue(node, ID_NAME, getName());
+        XMLUtil.setElementBooleanValue(node, ID_SELECTED, isSelected());
         painter.saveToXML(node);
 
         return true;

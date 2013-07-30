@@ -18,6 +18,7 @@
  */
 package icy.gui.preferences;
 
+import icy.gui.component.IcyTable;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.util.ComponentUtil;
@@ -279,30 +280,33 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
             }
         };
 
-        table = new JTable(tableModel);
+        table = new IcyTable(tableModel);
 
         final TableColumnModel colModel = table.getColumnModel();
         TableColumn col;
 
         // columns setting
         col = colModel.getColumn(0);
-        col.setPreferredWidth(100);
         col.setMinWidth(80);
+        col.setPreferredWidth(100);
+        col.setMaxWidth(120);
 
         col = colModel.getColumn(1);
+        col.setMinWidth(160);
         col.setPreferredWidth(240);
-        col.setMinWidth(140);
+        col.setMaxWidth(500);
 
         col = colModel.getColumn(2);
-        col.setPreferredWidth(80);
         col.setMinWidth(60);
+        col.setPreferredWidth(70);
+        col.setMaxWidth(80);
 
         if (colModel.getColumnCount() > 3)
         {
             col = colModel.getColumn(3);
-            col.setPreferredWidth(60);
             col.setMinWidth(60);
-            col.setResizable(false);
+            col.setPreferredWidth(60);
+            col.setMaxWidth(60);
         }
 
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -312,7 +316,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
         table.setRowHeight(24);
         table.setShowVerticalLines(false);
         table.setAutoCreateRowSorter(true);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         final JPanel tableTopPanel = new JPanel();
 

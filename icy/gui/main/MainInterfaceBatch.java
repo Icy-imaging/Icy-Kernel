@@ -27,6 +27,7 @@ import icy.gui.menu.ToolRibbonTask;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.imagej.ImageJWrapper;
+import icy.painter.Overlay;
 import icy.painter.Painter;
 import icy.plugin.abstract_.Plugin;
 import icy.preferences.XMLPreferences;
@@ -35,8 +36,10 @@ import icy.search.SearchEngine;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
 import icy.type.collection.CollectionUtil;
+import icy.util.StringUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -126,28 +129,28 @@ public class MainInterfaceBatch implements MainInterface
     @Override
     public IcyBufferedImage getActiveImage()
     {
+        if (activeSequence != null)
+            return activeSequence.getFirstImage();
+
         return null;
     }
 
     @Override
     public Viewer getFocusedViewer()
     {
-        return null;
+        return getActiveViewer();
     }
 
     @Override
     public Sequence getFocusedSequence()
     {
-        return activeSequence;
+        return getActiveSequence();
     }
 
     @Override
     public IcyBufferedImage getFocusedImage()
     {
-        if (activeSequence != null)
-            return activeSequence.getFirstImage();
-
-        return null;
+        return getActiveImage();
     }
 
     @Override
@@ -158,6 +161,11 @@ public class MainInterfaceBatch implements MainInterface
 
     @Override
     public void setFocusedViewer(Viewer viewer)
+    {
+    }
+
+    @Override
+    public void setActiveViewer(Viewer viewer)
     {
     }
 
@@ -266,55 +274,116 @@ public class MainInterfaceBatch implements MainInterface
     @Override
     public ArrayList<Sequence> getSequences()
     {
+        if (activeSequence != null)
+            return CollectionUtil.createArrayList(activeSequence);
+
         return new ArrayList<Sequence>();
     }
 
     @Override
     public ArrayList<Sequence> getSequences(String name)
     {
+        if ((activeSequence != null) && StringUtil.equals(name, activeSequence.getName()))
+            return CollectionUtil.createArrayList(activeSequence);
+
         return new ArrayList<Sequence>();
     }
 
     @Override
     public Sequence getFirstSequencesContaining(ROI roi)
     {
-        return null;
+        return getFirstSequenceContaining(roi);
     }
 
+    @Deprecated
     @Override
     public Sequence getFirstSequencesContaining(Painter painter)
     {
-        return null;
+        return getFirstSequenceContaining(painter);
     }
 
     @Override
     public ArrayList<Sequence> getSequencesContaining(ROI roi)
     {
+        if ((activeSequence != null) && activeSequence.contains(roi))
+            return CollectionUtil.createArrayList(activeSequence);
+
+        return new ArrayList<Sequence>();
+    }
+
+    @Deprecated
+    @Override
+    public ArrayList<Sequence> getSequencesContaining(Painter painter)
+    {
+        if ((activeSequence != null) && activeSequence.contains(painter))
+            return CollectionUtil.createArrayList(activeSequence);
+
         return new ArrayList<Sequence>();
     }
 
     @Override
-    public ArrayList<Sequence> getSequencesContaining(Painter painter)
+    public ArrayList<Sequence> getSequencesContaining(Overlay overlay)
     {
+        if ((activeSequence != null) && activeSequence.contains(overlay))
+            return CollectionUtil.createArrayList(activeSequence);
+
         return new ArrayList<Sequence>();
     }
 
     @Override
     public ArrayList<ROI> getROIs()
     {
+        if (activeSequence != null)
+            return activeSequence.getROIs();
+
+        // TODO: add ROI from swimming pool ?
+
         return new ArrayList<ROI>();
     }
 
     @Override
+    @Deprecated
     public ROI getROI(Painter painter)
     {
+        if (painter instanceof Overlay)
+            return getROI((Overlay) painter);
+
         return null;
     }
 
     @Override
+    public ROI getROI(Overlay overlay)
+    {
+        final List<ROI> rois = getROIs();
+
+        for (ROI roi : rois)
+            if (roi.getOverlay() == overlay)
+                return roi;
+
+        return null;
+    }
+
+    @Deprecated
+    @Override
     public ArrayList<Painter> getPainters()
     {
+        if (activeSequence != null)
+            return activeSequence.getPainters();
+
+        // TODO: add Painter from swimming pool ?
+
         return new ArrayList<Painter>();
+    }
+
+    @Override
+    public List<Overlay> getOverlays()
+    {
+        if (activeSequence != null)
+            return activeSequence.getOverlays();
+
+        // TODO: add Overlay from swimming pool ?
+
+        return new ArrayList<Overlay>();
     }
 
     @Override
@@ -362,11 +431,13 @@ public class MainInterfaceBatch implements MainInterface
     {
     }
 
+    @Deprecated
     @Override
     public void addListener(MainListener listener)
     {
     }
 
+    @Deprecated
     @Override
     public void removeListener(MainListener listener)
     {
@@ -429,9 +500,19 @@ public class MainInterfaceBatch implements MainInterface
     }
 
     @Override
+    @Deprecated
     public Sequence getFirstSequenceContaining(Painter painter)
     {
         if ((activeSequence != null) && activeSequence.contains(painter))
+            return activeSequence;
+
+        return null;
+    }
+
+    @Override
+    public Sequence getFirstSequenceContaining(Overlay overlay)
+    {
+        if ((activeSequence != null) && activeSequence.contains(overlay))
             return activeSequence;
 
         return null;
@@ -443,8 +524,15 @@ public class MainInterfaceBatch implements MainInterface
         return null;
     }
 
+    @Deprecated
     @Override
     public Viewer getFirstViewerContaining(Painter painter)
+    {
+        return null;
+    }
+
+    @Override
+    public Viewer getFirstViewerContaining(Overlay overlay)
     {
         return null;
     }
@@ -461,28 +549,98 @@ public class MainInterfaceBatch implements MainInterface
         return null;
     }
 
+    @Deprecated
     @Override
     public void addFocusedViewerListener(FocusedViewerListener listener)
     {
-
     }
 
+    @Deprecated
     @Override
     public void removeFocusedViewerListener(FocusedViewerListener listener)
     {
-
     }
 
+    @Deprecated
     @Override
     public void addFocusedSequenceListener(FocusedSequenceListener listener)
     {
-
     }
 
+    @Deprecated
     @Override
     public void removeFocusedSequenceListener(FocusedSequenceListener listener)
     {
+    }
 
+    @Override
+    public void addGlobalViewerListener(GlobalViewerListener listener)
+    {
+    }
+
+    @Override
+    public void removeGlobalViewerListener(GlobalViewerListener listener)
+    {
+    }
+
+    @Override
+    public void addGlobalSequenceListener(GlobalSequenceListener listener)
+    {
+    }
+
+    @Override
+    public void removeGlobalSequenceListener(GlobalSequenceListener listener)
+    {
+    }
+
+    @Override
+    public void addGlobalROIListener(GlobalROIListener listener)
+    {
+    }
+
+    @Override
+    public void removeGlobalROIListener(GlobalROIListener listener)
+    {
+    }
+
+    @Override
+    public void addGlobalOverlayListener(GlobalOverlayListener listener)
+    {
+    }
+
+    @Override
+    public void removeGlobalOverlayListener(GlobalOverlayListener listener)
+    {
+    }
+
+    @Override
+    public void addGlobalPluginListener(GlobalPluginListener listener)
+    {
+    }
+
+    @Override
+    public void removeGlobalPluginListener(GlobalPluginListener listener)
+    {
+    }
+
+    @Override
+    public void addActiveViewerListener(ActiveViewerListener listener)
+    {
+    }
+
+    @Override
+    public void removeActiveViewerListener(ActiveViewerListener listener)
+    {
+    }
+
+    @Override
+    public void addActiveSequenceListener(ActiveSequenceListener listener)
+    {
+    }
+
+    @Override
+    public void removeActiveSequenceListener(ActiveSequenceListener listener)
+    {
     }
 
     @Override

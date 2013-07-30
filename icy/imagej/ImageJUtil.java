@@ -274,8 +274,8 @@ public class ImageJUtil
      */
     public static ArrayList<ROI2D> convertToIcyRoi(Roi roi)
     {
-        final ArrayList<ROI2D> result = new ArrayList<ROI2D>();
-        final ArrayList<Point2D> pts = new ArrayList<Point2D>();
+        final List<ROI2D> result = new ArrayList<ROI2D>();
+        final List<Point2D> pts = new ArrayList<Point2D>();
         final FloatPolygon fp;
 
         switch (roi.getType())
@@ -349,10 +349,10 @@ public class ImageJUtil
             r.setC(roi.getCPosition() - 1);
             r.setZ(roi.getZPosition() - 1);
             r.setT(roi.getTPosition() - 1);
-            r.setSelected(false, false);
+            r.setSelected(false);
         }
 
-        return result;
+        return (ArrayList<ROI2D>) result;
     }
 
     /**

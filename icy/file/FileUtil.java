@@ -50,10 +50,15 @@ public class FileUtil
 
         return null;
     }
-
+    
+    /**
+     * Returns default temporary directory.
+     * 
+     * Same as {@link SystemUtil#getTempDirectory()}
+     */
     public static String getTempDirectory()
     {
-        return SystemUtil.getProperty("java.io.tmpdir");
+        return FileUtil.getGenericPath(SystemUtil.getProperty("java.io.tmpdir"));
     }
 
     /**
