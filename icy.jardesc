@@ -91,6 +91,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.menu.tools"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.classloader"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.itk"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.roi"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.script"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.lut.abstract_"/>
     </selectedElements>
