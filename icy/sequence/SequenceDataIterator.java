@@ -28,8 +28,11 @@ import icy.roi.ROI4D;
 import icy.roi.ROI5D;
 import icy.type.DataIterator;
 import icy.type.DataType;
+import icy.type.rectangle.Rectangle3D;
+import icy.type.rectangle.Rectangle4D;
+import icy.type.rectangle.Rectangle5D;
 
-import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 import java.util.NoSuchElementException;
 
 /**
@@ -180,8 +183,18 @@ public class SequenceDataIterator implements DataIterator
      *        ROI defining the region to iterate.
      * @param inclusive
      *        If true then all partially contained (intersected) pixels in the ROI are included.
+     * @param x
+     *        X position overriding (set to -1 to use the ROI X information).
+     * @param y
+     *        Y position overriding (set to -1 to use the ROI Y information).
+     * @param c
+     *        C position overriding (set to -1 to use the ROI C information).
+     * @param z
+     *        Z position overriding (set to -1 to use the ROI Z information).
+     * @param t
+     *        T position overriding (set to -1 to use the ROI T information).
      */
-    public SequenceDataIterator(Sequence sequence, ROI roi, boolean inclusive)
+    public SequenceDataIterator(Sequence sequence, ROI roi, boolean inclusive, int x, int y, int c, int z, int t)
     {
         super();
 
@@ -189,114 +202,197 @@ public class SequenceDataIterator implements DataIterator
         this.roi = roi;
         maskXY = null;
 
-        if (roi instanceof ROI2D)
+        if (roi instanceof ROI5D)
         {
-            final ROI2D roi2d = (ROI2D) roi;
+            final Rectangle5D b = ((ROI5D) roi).getBounds5D();
 
-            maskXY = roi2d.getBooleanMask(inclusive);
+            startX = (int) Math.floor(b.getX());
+            startY = (int) Math.floor(b.getY());
+            startC = (int) Math.floor(b.getC());
+            startZ = (int) Math.floor(b.getZ());
+            startT = (int) Math.floor(b.getT());
+            endX = startX + ((int) Math.ceil(b.getSizeX()) - 1);
+            endY = startY + ((int) Math.ceil(b.getSizeY()) - 1);
+            endC = startC + ((int) Math.ceil(b.getSizeC()) - 1);
+            endZ = startZ + ((int) Math.ceil(b.getSizeZ()) - 1);
+            endT = startT + ((int) Math.ceil(b.getSizeT()) - 1);
+        }
+        else if (roi instanceof ROI4D)
+        {
+            final ROI4D roi4d = (ROI4D) roi;
+            final Rectangle4D b = roi4d.getBounds4D();
+            final int roiC = (c == -1) ? roi4d.getC() : c;
 
-            final Rectangle bounds = maskXY.bounds;
+            startX = (int) Math.floor(b.getX());
+            startY = (int) Math.floor(b.getY());
+            startZ = (int) Math.floor(b.getZ());
+            startT = (int) Math.floor(b.getT());
+            endX = startX + ((int) Math.ceil(b.getSizeX()) - 1);
+            endY = startY + ((int) Math.ceil(b.getSizeY()) - 1);
+            endZ = startZ + ((int) Math.ceil(b.getSizeZ()) - 1);
+            endT = startT + ((int) Math.ceil(b.getSizeT()) - 1);
 
-            startX = bounds.x;
-            endX = bounds.x + (bounds.width - 1);
-            startY = bounds.y;
-            endY = bounds.y + (bounds.height - 1);
-
-            final int roiC = roi2d.getC();
-            final int roiZ = roi2d.getZ();
-            final int roiT = roi2d.getT();
-
-            if (roiC == -1)
+            if (roiC < 0)
             {
                 startC = 0;
-                endC = sequence.getSizeC() - 1;
+                endC = startC + (sequence.getSizeC() - 1);
             }
             else
             {
-                if ((roiC < 0) || (roiC >= sequence.getSizeC()))
-                {
-                    startC = 0;
-                    endC = -1;
-                }
-                else
-                {
-                    startC = roiC;
-                    endC = roiC;
-                }
-            }
-
-            if (roiZ == -1)
-            {
-                startZ = 0;
-                endZ = sequence.getSizeZ() - 1;
-            }
-            else
-            {
-                if ((roiZ < 0) || (roiZ >= sequence.getSizeZ()))
-                {
-                    startZ = 0;
-                    endZ = -1;
-                }
-                else
-                {
-                    startZ = roiZ;
-                    endZ = roiZ;
-                }
-            }
-
-            if (roiT == -1)
-            {
-                startT = 0;
-                endT = sequence.getSizeT() - 1;
-            }
-            else
-            {
-                if ((roiT < 0) || (roiT >= sequence.getSizeT()))
-                {
-                    startT = 0;
-                    endT = -1;
-                }
-                else
-                {
-                    startT = roiT;
-                    endT = roiT;
-                }
+                startC = roiC;
+                endC = roiC;
             }
         }
         else if (roi instanceof ROI3D)
         {
-            // final ROI3D roi3d = (ROI3D) roi;
-            // final int roiC = roi3d.getC();
+            final ROI3D roi3d = (ROI3D) roi;
+            final Rectangle3D b = roi3d.getBounds3D();
+            final int roiC = (c == -1) ? roi3d.getC() : c;
+            final int roiT = (t == -1) ? roi3d.getT() : t;
 
-            // not yet supported
-            startX = startY = startC = startZ = startT = 0;
-            endX = endY = endC = endZ = endT = -1;
+            startX = (int) Math.floor(b.getX());
+            startY = (int) Math.floor(b.getY());
+            startZ = (int) Math.floor(b.getZ());
+            endX = startX + ((int) Math.ceil(b.getSizeX()) - 1);
+            endY = startY + ((int) Math.ceil(b.getSizeY()) - 1);
+            endZ = startZ + ((int) Math.ceil(b.getSizeZ()) - 1);
+
+            if (roiC < 0)
+            {
+                startC = 0;
+                endC = startC + (sequence.getSizeC() - 1);
+            }
+            else
+            {
+                startC = roiC;
+                endC = roiC;
+            }
+            if (roiT < 0)
+            {
+                startT = 0;
+                endT = startT + (sequence.getSizeT() - 1);
+            }
+            else
+            {
+                startT = roiT;
+                endT = roiT;
+            }
         }
-        else if (roi instanceof ROI4D)
+        else if (roi instanceof ROI2D)
         {
-            // final ROI4D roi4d = (ROI4D) roi;
-            // final int roiC = roi4d.getC();
+            final ROI2D roi2d = (ROI2D) roi;
+            final Rectangle2D b = roi2d.getBounds2D();
+            final int roiC = (c == -1) ? roi2d.getC() : c;
+            final int roiZ = (z == -1) ? roi2d.getZ() : z;
+            final int roiT = (t == -1) ? roi2d.getT() : t;
 
-            // not yet supported
-            startX = startY = startC = startZ = startT = 0;
-            endX = endY = endC = endZ = endT = -1;
-        }
-        else if (roi instanceof ROI5D)
-        {
-            // final ROI5D roi5d = (ROI5D) roi;
+            startX = (int) Math.floor(b.getX());
+            startY = (int) Math.floor(b.getY());
+            endX = startX + ((int) Math.ceil(b.getWidth()) - 1);
+            endY = startY + ((int) Math.ceil(b.getHeight()) - 1);
 
-            // not yet supported
-            startX = startY = startC = startZ = startT = 0;
-            endX = endY = endC = endZ = endT = -1;
+            if (roiC < 0)
+            {
+                startC = 0;
+                endC = startC + (sequence.getSizeC() - 1);
+            }
+            else
+            {
+                startC = roiC;
+                endC = roiC;
+            }
+            if (roiZ < 0)
+            {
+                startZ = 0;
+                endZ = startZ + (sequence.getSizeZ() - 1);
+            }
+            else
+            {
+                startZ = roiZ;
+                endZ = roiZ;
+            }
+            if (roiT < 0)
+            {
+                startT = 0;
+                endT = startT + (sequence.getSizeT() - 1);
+            }
+            else
+            {
+                startT = roiT;
+                endT = roiT;
+            }
         }
         else
         {
-            startX = startY = startC = startZ = startT = 0;
-            endX = endY = endC = endZ = endT = -1;
+            if (x < 0)
+            {
+                startX = 0;
+                endX = startX + (sequence.getSizeX() - 1);
+            }
+            else
+            {
+                startX = x;
+                endX = x;
+            }
+            if (y < 0)
+            {
+                startY = 0;
+                endY = startY + (sequence.getSizeY() - 1);
+            }
+            else
+            {
+                startY = y;
+                endY = y;
+            }
+            if (c < 0)
+            {
+                startC = 0;
+                endC = startC + (sequence.getSizeC() - 1);
+            }
+            else
+            {
+                startC = c;
+                endC = c;
+            }
+            if (z < 0)
+            {
+                startZ = 0;
+                endZ = startZ + (sequence.getSizeZ() - 1);
+            }
+            else
+            {
+                startZ = z;
+                endZ = z;
+            }
+            if (t < 0)
+            {
+                startT = 0;
+                endT = startT + (sequence.getSizeT() - 1);
+            }
+            else
+            {
+                startT = t;
+                endT = t;
+            }
         }
 
         // start iterator
         reset();
+    }
+
+    /**
+     * Create a new SequenceData iterator to iterate data through the specified ROI.
+     * 
+     * @param sequence
+     *        Sequence we want to iterate data from.
+     * @param roi
+     *        ROI defining the region to iterate.
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels in the ROI are included.
+     */
+    public SequenceDataIterator(Sequence sequence, ROI roi, boolean inclusive)
+    {
+        this(sequence, roi, inclusive, -1, -1, -1, -1, -1);
     }
 
     /**

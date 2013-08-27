@@ -20,7 +20,6 @@ package icy.gui.menu;
 
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandToggleButton;
-import icy.gui.frame.progress.ToolTipFrame;
 import icy.gui.menu.action.FileActions;
 import icy.gui.plugin.PluginCommandButton;
 import icy.gui.util.RibbonUtil;
@@ -32,19 +31,14 @@ import icy.plugin.PluginLoader.PluginLoaderListener;
 import icy.plugin.interface_.PluginROI;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
-import icy.roi.ROI2DArea;
-import icy.roi.ROI2DEllipse;
-import icy.roi.ROI2DLine;
-import icy.roi.ROI2DPoint;
-import icy.roi.ROI2DPolyLine;
-import icy.roi.ROI2DPolygon;
-import icy.roi.ROI2DRectangle;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.EventListener;
 import java.util.List;
 
@@ -52,59 +46,43 @@ import javax.swing.event.EventListenerList;
 
 import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
 import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
-import org.pushingpixels.flamingo.api.common.RichTooltip;
+import org.pushingpixels.flamingo.api.common.JCommandToggleButton;
 import org.pushingpixels.flamingo.api.ribbon.JRibbonBand;
 import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
 import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
 import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPolicies;
 
+import plugins.kernel.roi.ROI2DAreaPlugin;
+import plugins.kernel.roi.ROI2DEllipsePlugin;
+import plugins.kernel.roi.ROI2DLinePlugin;
+import plugins.kernel.roi.ROI2DPointPlugin;
+import plugins.kernel.roi.ROI2DPolyLinePlugin;
+import plugins.kernel.roi.ROI2DPolygonPlugin;
+import plugins.kernel.roi.ROI2DRectanglePlugin;
+
 public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 {
-    public static final String NAME = "Selection & ROI tools";
+    public static final String NAME = "File & ROI tools";
 
+    /**
+     * @deprecated Use {@link #setSelected(String)} with <code>null</code> parameter instead.
+     */
+    @Deprecated
     public static final String SELECT = "Selection";
+    /**
+     * @deprecated Use {@link #setSelected(String)} with <code>null</code> parameter instead.
+     */
+    @Deprecated
     public static final String MOVE = "Move";
 
-    private static final String TOOLTIP_ROI2D_POINT = "<b>ROI Point : single point type ROI</b><br><br>"
-            + "Click on the image where you want to set your point.<br>"
-            + "Unselect the ROI with ESC key, left click or double click.<br>"
-            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
-    private static final String TOOLTIP_ROI2D_LINE = "<b>ROI Line : single line type ROI</b><br><br>"
-            + "Drag from start point to destination point.<br>"
-            + "Unselect the ROI with ESC key, left click or double click.<br>"
-            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
-    private static final String TOOLTIP_ROI2D_POLYLINE = "<b>ROI Polyline : multi line type ROI</b><br><br>"
-            + "Add a new point with left click.<br>"
-            + "Add a new point between two points with left click + CONTROL key.<br>"
-            + "Remove a point with DELETE key when the point is focused.<br>"
-            + "Unselect / end modification with ESC key or double click.<br>"
-            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
-    private static final String TOOLTIP_ROI2D_RECTANGLE = "<b>ROI Rectangle : rectangle type ROI</b><br><br>"
-            + "Drag from start point to destination point.<br>"
-            + "Unselect the ROI with ESC key, left click or double click.<br>"
-            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
-    private static final String TOOLTIP_ROI2D_ELLIPSE = "<b>ROI Ellipse : ellipse type ROI</b><br><br>"
-            + "Drag from start point to destination point.<br>"
-            + "Unselect the ROI with ESC key, left click or double click.<br>"
-            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
-    private static final String TOOLTIP_ROI2D_POLYGON = "<b>ROI Polygon : polygon type ROI</b><br><br>"
-            + "Add a new point with left click.<br>"
-            + "Add a new point between two points with left click + CONTROL key.<br>"
-            + "Remove a point with DELETE key when the point is focused.<br>"
-            + "Unselect / end modification with ESC key or double click.<br>"
-            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
-    private static final String TOOLTIP_ROI2D_AREA = "<b>ROI Area : bitmap mask area type ROI</b><br><br>"
-            + "Draw in with left mouse button and erase with right button.<br>"
-            + "Unselect / end modification with ESC key or double click.<br>"
-            + "Increase or decrease the pencil size with '+' / '-' keys<br>"
-            + "Remove the ROI with DELETE key when the ROI is selected or focused.";
-
-    private static final int TOOLTIP_LIVETIME = 60; // 60 seconds
-
+    /**
+     * @deprecated Use {@link ToolRibbonTask#isROITool()} instead.
+     */
+    @Deprecated
     public static boolean isROITool(String command)
     {
-        // assume it's a ROI command when it's not standard MOVE or SELECT command
-        return (command != null) && (!command.equals(SELECT)) && (!command.equals(MOVE));
+        // assume it's a ROI command when it's not null
+        return (command != null);
     }
 
     /**
@@ -146,39 +124,6 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
         }
     }
 
-    public static class SelectRibbonBand extends JRibbonBand
-    {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = -2677243480668715388L;
-
-        public static final String NAME = "Selection";
-
-        public SelectRibbonBand()
-        {
-            super(NAME, new IcyIcon(ResourceUtil.ICON_DOC));
-            {
-                IcyCommandToggleButton button;
-
-                startGroup();
-
-                button = new IcyCommandToggleButton("Select", new IcyIcon("cursor_arrow"));
-                button.setName(SELECT);
-                button.setActionRichTooltip(new RichTooltip("Select mode", "Select and move objects (as ROI)"));
-                addCommandButton(button, RibbonElementPriority.TOP);
-
-                button = new IcyCommandToggleButton("Move", new IcyIcon("cursor_hand"));
-                button.setName(MOVE);
-                button.setActionRichTooltip(new RichTooltip("Move mode",
-                        "Drag image while pressing the left mouse button"));
-                addCommandButton(button, RibbonElementPriority.TOP);
-
-                RibbonUtil.setPermissiveResizePolicies(this);
-            }
-        }
-    }
-
     public static class ROIRibbonBand extends JRibbonBand
     {
         /**
@@ -194,55 +139,11 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
         {
             super(NAME, new IcyIcon(ResourceUtil.ICON_DOC));
 
-            IcyCommandToggleButton button;
-
             startGroup();
-
-            // basics ROI
-            button = new IcyCommandToggleButton("Point", new IcyIcon("roi_point"));
-            button.setName(ROI2DPoint.class.getName());
-            button.setActionRichTooltip(new RichTooltip("ROI Point", "Create a point type (single pixel) ROI"));
-            addCommandButton(button, RibbonElementPriority.MEDIUM);
-
-            button = new IcyCommandToggleButton("Line", new IcyIcon("roi_line"));
-            button.setName(ROI2DLine.class.getName());
-            button.setActionRichTooltip(new RichTooltip("ROI Line",
-                    "Create a single line type ROI. Drag from start point to destination point."));
-            addCommandButton(button, RibbonElementPriority.MEDIUM);
-
-            button = new IcyCommandToggleButton("Polyline", new IcyIcon("roi_polyline"));
-            button.setName(ROI2DPolyLine.class.getName());
-            button.setActionRichTooltip(new RichTooltip("ROI Polyline",
-                    "Create a multi line type ROI. Add a new point with left click, end draw with right click or ESC key."));
-            addCommandButton(button, RibbonElementPriority.MEDIUM);
-
-            button = new IcyCommandToggleButton("Rectangle", new IcyIcon("roi_rectangle"));
-            button.setName(ROI2DRectangle.class.getName());
-            button.setActionRichTooltip(new RichTooltip("ROI Rectangle",
-                    "Create a rectangle type ROI.  Drag from start point to destination point."));
-            addCommandButton(button, RibbonElementPriority.MEDIUM);
-
-            button = new IcyCommandToggleButton("Ellipse", new IcyIcon("roi_oval"));
-            button.setName(ROI2DEllipse.class.getName());
-            button.setActionRichTooltip(new RichTooltip("ROI Ellipse",
-                    "Create a ellipse type ROI. Drag from start point to destination point."));
-            addCommandButton(button, RibbonElementPriority.MEDIUM);
-
-            button = new IcyCommandToggleButton("Polygon", new IcyIcon("roi_polygon"));
-            button.setName(ROI2DPolygon.class.getName());
-            button.setActionRichTooltip(new RichTooltip("ROI Polygon",
-                    "Create a polygon type ROI. Add a new point with left click, end draw with right click or ESC key."));
-            addCommandButton(button, RibbonElementPriority.MEDIUM);
-
-            button = new IcyCommandToggleButton("Area", new IcyIcon("roi_area"));
-            button.setName(ROI2DArea.class.getName());
-            button.setActionRichTooltip(new RichTooltip(
-                    "ROI Area",
-                    "Create a area type ROI. Add points with left mouse button, remove points with right mouse button. Press ESC to end draw or right click outside ROI bounds."));
-            addCommandButton(button, RibbonElementPriority.TOP);
 
             pluginButtons = new ArrayList<IcyCommandToggleButton>();
 
+            // we will add the action listener later
             setROIFromPlugins(null, null);
 
             RibbonUtil.setPermissiveResizePolicies(this);
@@ -261,10 +162,43 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
             }
             pluginButtons.clear();
 
+            // plugins ROI
+            final List<PluginDescriptor> roiPlugins = PluginLoader.getPlugins(PluginROI.class);
             IcyCommandToggleButton button;
 
-            // plugins ROI
-            final ArrayList<PluginDescriptor> roiPlugins = PluginLoader.getPlugins(PluginROI.class);
+            // we want kernel ROI to be sorted
+            Collections.sort(roiPlugins, new Comparator<PluginDescriptor>()
+            {
+                private Integer getOrder(PluginDescriptor plugin)
+                {
+                    final int result;
+
+                    if (plugin.getClassName().equals(ROI2DPointPlugin.class.getName()))
+                        result = -20;
+                    else if (plugin.getClassName().equals(ROI2DLinePlugin.class.getName()))
+                        result = -19;
+                    else if (plugin.getClassName().equals(ROI2DPolyLinePlugin.class.getName()))
+                        result = -18;
+                    else if (plugin.getClassName().equals(ROI2DRectanglePlugin.class.getName()))
+                        result = -17;
+                    else if (plugin.getClassName().equals(ROI2DEllipsePlugin.class.getName()))
+                        result = -16;
+                    else if (plugin.getClassName().equals(ROI2DPolygonPlugin.class.getName()))
+                        result = -15;
+                    else if (plugin.getClassName().equals(ROI2DAreaPlugin.class.getName()))
+                        result = -14;
+                    else
+                        result = 0;
+
+                    return Integer.valueOf(result);
+                }
+
+                @Override
+                public int compare(PluginDescriptor plugin1, PluginDescriptor plugin2)
+                {
+                    return getOrder(plugin1).compareTo(getOrder(plugin2));
+                }
+            });
 
             for (PluginDescriptor plugin : roiPlugins)
             {
@@ -280,7 +214,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
     }
 
     final FileRibbonBand fileBand;
-    final SelectRibbonBand selectBand;
+    // final SelectRibbonBand selectBand;
     final ROIRibbonBand roiBand;
 
     final CommandToggleButtonGroup buttonGroup;
@@ -295,13 +229,13 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 
     public ToolRibbonTask()
     {
-        super(NAME, new FileRibbonBand(), new SelectRibbonBand(), new ROIRibbonBand());
+        super(NAME, new FileRibbonBand(), new ROIRibbonBand());
 
         setResizeSequencingPolicy(new CoreRibbonResizeSequencingPolicies.CollapseFromLast(this));
 
         // get band
         fileBand = (FileRibbonBand) RibbonUtil.getBand(this, FileRibbonBand.NAME);
-        selectBand = (SelectRibbonBand) RibbonUtil.getBand(this, SelectRibbonBand.NAME);
+        // selectBand = (SelectRibbonBand) RibbonUtil.getBand(this, SelectRibbonBand.NAME);
         roiBand = (ROIRibbonBand) RibbonUtil.getBand(this, ROIRibbonBand.NAME);
 
         listeners = new EventListenerList();
@@ -311,110 +245,96 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                internalSetSelected(((IcyCommandToggleButton) e.getSource()).getName());
+                setSelectedButton((IcyCommandToggleButton) e.getSource());
             }
         };
 
         // add action listener here
-        for (AbstractCommandButton button : RibbonUtil.getButtons(selectBand))
-            button.addActionListener(buttonActionListener);
         for (AbstractCommandButton button : RibbonUtil.getButtons(roiBand))
             button.addActionListener(buttonActionListener);
 
         // create button group
         buttonGroup = new CommandToggleButtonGroup();
+        buttonGroup.setAllowsClearingSelection(true);
 
-        for (AbstractCommandButton button : RibbonUtil.getButtons(selectBand))
-            buttonGroup.add((IcyCommandToggleButton) button);
         for (AbstractCommandButton button : RibbonUtil.getButtons(roiBand))
             buttonGroup.add((IcyCommandToggleButton) button);
 
-        buttonGroup.setAllowsClearingSelection(false);
-
-        // SELECT action by default
+        // no tool action by default
         currentTool = "";
-        setSelected(SELECT);
 
         PluginLoader.addListener(this);
     }
 
-    private IcyCommandToggleButton getButtonFromToolName(String toolName)
+    protected IcyCommandToggleButton getButtonFromName(String name)
     {
-        for (AbstractCommandButton button : RibbonUtil.getButtons(selectBand))
-            if (toolName.equals(button.getName()))
-                return (IcyCommandToggleButton) button;
+        if (StringUtil.isEmpty(name))
+            return null;
 
         for (AbstractCommandButton button : RibbonUtil.getButtons(roiBand))
-            if (toolName.equals(button.getName()))
+            if (name.equals(button.getName()))
                 return (IcyCommandToggleButton) button;
 
         return null;
     }
 
+    /**
+     * Returns true if current selected tool is ROI type tool.
+     */
+    public boolean isROITool()
+    {
+        // currently we only have ROI tool
+        // so as soon selected is not null it is ROI tool
+        return getSelected() != null;
+    }
+
+    /**
+     * Returns the current selected button (can be <code>null</code>).
+     */
+    protected JCommandToggleButton getSelectedButton()
+    {
+        return buttonGroup.getSelected();
+    }
+
+    /**
+     * Sets the current selected button (can be <code>null</code>).
+     */
+    protected void setSelectedButton(JCommandToggleButton button)
+    {
+        if (getSelectedButton() != button)
+        {
+            // select the button
+            if (button != null)
+                buttonGroup.setSelected(button, true);
+            else
+                buttonGroup.clearSelection();
+
+            // notify tool change
+            toolChanged(getSelected());
+        }
+    }
+
+    /**
+     * Returns the current selected tool.<br>
+     * It can be null if no tool is currently selected.
+     */
     public String getSelected()
     {
-        return buttonGroup.getSelected().getName();
-    }
+        final JCommandToggleButton button = getSelectedButton();
 
-    public void setSelected(String toolName)
-    {
-        if (!currentTool.equals(toolName))
-        {
-            final IcyCommandToggleButton button = getButtonFromToolName(toolName);
+        if (button != null)
+            return button.getName();
 
-            if (button != null)
-            {
-                buttonGroup.setSelected(button, true);
-
-                currentTool = toolName;
-                toolChanged(toolName);
-            }
-        }
+        return null;
     }
 
     /**
-     * Called when user click on one of the tool button
+     * Sets the current selected tool.<br>
+     * If <i>toolName</i> is a invalid tool name or <code>null</code> then no tool is selected.
      */
-    void internalSetSelected(String toolName)
+    public void setSelected(String value)
     {
-        if (!currentTool.equals(toolName))
-        {
-            currentTool = toolName;
-
-            displayToolTip(toolName);
-            toolChanged(toolName);
-        }
-    }
-
-    /**
-     * Display tips for specified tool
-     */
-    private void displayToolTip(String toolName)
-    {
-        if (StringUtil.isEmpty(toolName) || (Icy.getMainInterface().getActiveViewer() == null))
-            return;
-
-        final String tips;
-
-        if (toolName.equals(ROI2DPoint.class.getName()))
-            tips = TOOLTIP_ROI2D_POINT;
-        else if (toolName.equals(ROI2DLine.class.getName()))
-            tips = TOOLTIP_ROI2D_LINE;
-        else if (toolName.equals(ROI2DPolyLine.class.getName()))
-            tips = TOOLTIP_ROI2D_POLYLINE;
-        else if (toolName.equals(ROI2DRectangle.class.getName()))
-            tips = TOOLTIP_ROI2D_RECTANGLE;
-        else if (toolName.equals(ROI2DEllipse.class.getName()))
-            tips = TOOLTIP_ROI2D_ELLIPSE;
-        else if (toolName.equals(ROI2DPolygon.class.getName()))
-            tips = TOOLTIP_ROI2D_POLYGON;
-        else if (toolName.equals(ROI2DArea.class.getName()))
-            tips = TOOLTIP_ROI2D_AREA;
-        else
-            tips = null;
-
-        if (tips != null)
-            new ToolTipFrame(tips, TOOLTIP_LIVETIME, toolName);
+        setSelectedButton(getButtonFromName(value));
     }
 
     public void toolChanged(String toolName)

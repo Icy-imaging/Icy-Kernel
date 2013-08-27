@@ -21,8 +21,6 @@ package icy.gui.lut;
 import icy.gui.viewer.Viewer;
 import icy.image.lut.LUT.LUTChannel;
 
-import java.awt.BorderLayout;
-
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
@@ -53,16 +51,11 @@ class LUTChannelViewer extends JPanel
         // colormap
         colormapPanel = new ColormapPanel(viewer, lutChannel);
 
-        final JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
+        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 
-        mainPanel.add(scalerPanel);
-        mainPanel.add(Box.createVerticalStrut(4));
-        mainPanel.add(colormapPanel);
-
-        setLayout(new BorderLayout());
-
-        add(mainPanel, BorderLayout.CENTER);
+        add(scalerPanel);
+        add(Box.createVerticalStrut(4));
+        add(colormapPanel);
 
         validate();
     }

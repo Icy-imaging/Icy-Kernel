@@ -18,6 +18,7 @@
  */
 package icy.gui.plugin;
 
+import icy.gui.frame.error.ErrorReportFrame;
 import icy.plugin.PluginDescriptor;
 import icy.system.IcyExceptionHandler;
 import icy.util.StringUtil;
@@ -41,8 +42,9 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
 /**
- * @author Stephane
+ * @deprecated Use {@link ErrorReportFrame} instead
  */
+@Deprecated
 public class PluginErrorReportPanel extends JPanel
 {
     /**

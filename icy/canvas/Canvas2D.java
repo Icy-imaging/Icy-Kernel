@@ -86,7 +86,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -1186,16 +1185,18 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             // not yet consumed
             if (!e.isConsumed())
             {
-                final String tool = Icy.getMainInterface().getSelectedTool();
+                final ToolRibbonTask toolTask = Icy.getMainInterface().getToolRibbon();
                 final Sequence seq = getSequence();
 
                 // ROI creation
-                if (EventUtil.isLeftMouseButton(e) && ToolRibbonTask.isROITool(tool))
+                if (EventUtil.isLeftMouseButton(e) && (toolTask != null) && toolTask.isROITool())
                 {
-                    // return to default selection tool before ROI creation
-                    // when the multi creation modifier (control) is not used
+                    final String tool = toolTask.getSelected();
+
+                    // unselect tool before ROI creation unless control modifier is used
+                    // for multiple ROI creation
                     if (!EventUtil.isControlDown(e))
-                        Icy.getMainInterface().setSelectedTool(ToolRibbonTask.SELECT);
+                        Icy.getMainInterface().setSelectedTool(null);
 
                     // only if sequence still live
                     if (seq != null)
@@ -1206,6 +1207,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                         // roi created ? --> it becomes the selected ROI
                         if (roi != null)
                         {
+                            roi.setCreating(true);
                             // attach to sequence
                             seq.addROI(roi, true);
                             // then do exclusive selection
@@ -1540,7 +1542,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
             if (seq != null)
             {
-                final ArrayList<ROI2D> selectedRois2D = ROI2D.getROI2DList(seq.getSelectedROIs());
+                final List<ROI2D> selectedRois2D = seq.getSelectedROI2Ds();
 
                 // search if we are overriding ROI control points
                 for (ROI2D selectedRoi : selectedRois2D)
@@ -3248,7 +3250,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         if (toolTask != null)
         {
             // if we selected a ROI tool we force layers to be visible
-            if (ToolRibbonTask.isROITool(toolTask.getSelected()))
+            if (toolTask.isROITool())
                 setLayersVisible(true);
         }
 

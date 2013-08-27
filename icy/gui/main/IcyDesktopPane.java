@@ -268,6 +268,8 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
         {
             final IcyInternalFrame internalFrame = v.getIcyInternalFrame();
 
+            if (internalFrame.isMaximized())
+                internalFrame.setMaximized(false);
             internalFrame.setBounds(x, y, fw, fh);
             internalFrame.toFront();
 
@@ -363,6 +365,8 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
                 {
                     final IcyInternalFrame internalFrame = viewers[f].getIcyInternalFrame();
 
+                    if (internalFrame.isMaximized())
+                        internalFrame.setMaximized(false);
                     internalFrame.setBounds(j * dx, i * dy, dx, dy);
                     internalFrame.toFront();
                 }

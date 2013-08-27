@@ -108,6 +108,18 @@ public abstract class Point4D
         setLocation(p.getX(), p.getY(), p.getZ(), p.getT());
     }
 
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof Point4D)
+        {
+            final Point4D pt = (Point4D) obj;
+            return (getX() == pt.getX()) && (getY() == pt.getY()) && (getZ() == pt.getZ()) && (getT() == pt.getT());
+        }
+
+        return super.equals(obj);
+    }
+
     public static class Double extends Point4D
     {
         public double x;
@@ -298,10 +310,10 @@ public abstract class Point4D
 
     public static class Integer extends Point4D
     {
-        int x;
-        int y;
-        int z;
-        int t;
+        public int x;
+        public int y;
+        public int z;
+        public int t;
 
         public Integer(int x, int y, int z, int t)
         {

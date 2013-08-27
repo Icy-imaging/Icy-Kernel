@@ -696,7 +696,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     @Override
     public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
     {
-        if (!visible)
+        if (!isVisible())
             return;
 
         // canvas3D not handled here
@@ -712,10 +712,10 @@ public class Anchor2D extends Overlay implements XMLPersistent
                 final Graphics2D g2 = (Graphics2D) g.create();
 
                 // draw content
-                if (selected)
-                    g2.setColor(selectedColor);
+                if (isSelected())
+                    g2.setColor(getSelectedColor());
                 else
-                    g2.setColor(color);
+                    g2.setColor(getColor());
                 g2.fill(ellipse);
 
                 // draw black border
@@ -731,7 +731,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     @Override
     public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
-        if (!visible)
+        if (!isVisible())
             return;
 
         // canvas3D not handled here
@@ -748,7 +748,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     @Override
     public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
-        if (!visible)
+        if (!isVisible())
             return;
 
         // canvas3D not handled here
@@ -765,7 +765,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     @Override
     public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
-        if (!visible)
+        if (!isVisible())
             return;
 
         if (e.isConsumed())
@@ -799,7 +799,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     @Override
     public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
-        if (!visible)
+        if (!isVisible())
             return;
 
         if (e.isConsumed())
@@ -834,7 +834,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     @Override
     public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
-        if (!visible)
+        if (!isVisible())
             return;
 
         // canvas3D not handled here

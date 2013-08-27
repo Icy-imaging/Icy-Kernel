@@ -18,155 +18,35 @@
  */
 package icy.roi;
 
-import icy.canvas.IcyCanvas;
-import icy.painter.Anchor2D;
-import icy.util.XMLUtil;
-
-import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-
-import org.w3c.dom.Node;
 
 /**
- * ROI 2D Point class.<br>
- * Define a single point ROI<br>
- * 
- * @author Stephane
+ * @deprecated Use {@link icy.roi.roi2d.ROI2DPoint} instead.
  */
-public class ROI2DPoint extends ROI2DShape
+@Deprecated
+public class ROI2DPoint extends icy.roi.roi2d.ROI2DPoint
 {
-    public static final String ID_POSITION = "position";
-
-    private final Anchor2D position;
-
     /**
      * @deprecated
      */
     @Deprecated
     public ROI2DPoint(Point2D pt, boolean cm)
     {
-        this(pt);
+        super(pt);
     }
 
     public ROI2DPoint(Point2D position)
     {
-        super(new Line2D.Double());
-
-        this.position = createAnchor(position);
-
-        // add to the control point list
-        controlPoints.add(this.position);
-
-        this.position.addOverlayListener(this);
-        this.position.addAnchorListener(this);
-
-        // select the point for "interactive" mode
-        this.position.setSelected(true);
-        setMousePos(position);
-
-        updateShape();
-
-        setName("Point2D");
+        super(position);
     }
 
     public ROI2DPoint(double x, double y)
     {
-        this(new Point2D.Double(x, y));
+        super(x, y);
     }
 
     public ROI2DPoint()
     {
-        this(new Point2D.Double());
-    }
-
-    /**
-     * @deprecated Use {@link #getLine()} instead.
-     */
-    @Deprecated
-    public Rectangle2D getRectangle()
-    {
-        final Point2D pt = getPoint();
-        return new Rectangle2D.Double(pt.getX(), pt.getY(), 0d, 0d);
-    }
-
-    public Line2D getLine()
-    {
-        return (Line2D) shape;
-    }
-
-    public Point2D getPoint()
-    {
-        return position.getPosition();
-    }
-
-    @Override
-    protected void updateShape()
-    {
-        final Point2D pt = getPoint();
-        final double x = pt.getX();
-        final double y = pt.getY();
-
-        getLine().setLine(x, y, x, y);
-
-        // call super method after shape has been updated
-        super.updateShape();
-    }
-
-    @Override
-    public boolean canAddPoint()
-    {
-        // this ROI doesn't support point add
-        return false;
-    }
-
-    @Override
-    protected boolean removePoint(IcyCanvas canvas, Anchor2D pt)
-    {
-        // remove point on this ROI remove the ROI
-        canvas.getSequence().removeROI(this);
-        return true;
-    }
-
-    @Override
-    public double getPerimeter()
-    {
-        return 0d;
-    }
-
-    @Override
-    public double getVolume()
-    {
-        return 0d;
-    }
-
-    @Override
-    public boolean loadFromXML(Node node)
-    {
-        beginUpdate();
-        try
-        {
-            if (!super.loadFromXML(node))
-                return false;
-
-            position.loadFromXML(XMLUtil.getElement(node, ID_POSITION));
-        }
-        finally
-        {
-            endUpdate();
-        }
-
-        return true;
-    }
-
-    @Override
-    public boolean saveToXML(Node node)
-    {
-        if (!super.saveToXML(node))
-            return false;
-
-        position.saveToXML(XMLUtil.setElement(node, ID_POSITION));
-
-        return true;
+        super();
     }
 }

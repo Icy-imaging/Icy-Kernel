@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<root>
+<name>Line</name>
+<version>1.0.0.0</version>
+<description>Single line type ROI (2D)
+Drag from start point to destination point and press ESC when you're done to unselect the ROI.
+Use the DELETE key to remove the ROI when it is selected or focused.</description>
+<classname>plugins.kernel.roi.ROI2DLinePlugin</classname>
+</root>

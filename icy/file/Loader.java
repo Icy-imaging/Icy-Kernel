@@ -19,6 +19,7 @@
 package icy.file;
 
 import icy.gui.dialog.SeriesSelectionDialog;
+import icy.gui.frame.error.ErrorReportFrame;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.FileFrame;
@@ -35,6 +36,8 @@ import icy.system.thread.ThreadUtil;
 import icy.type.collection.CollectionUtil;
 import icy.util.StringUtil;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,6 +48,8 @@ import java.util.List;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
+import loci.formats.MissingLibraryException;
+import loci.formats.UnknownFormatException;
 import loci.formats.meta.IMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
 
@@ -274,12 +279,37 @@ public class Loader
                     seq.setFilename(fileDir);
                 }
             }
-            catch (Exception e)
+            catch (UnknownFormatException e)
+            {
+                System.err.println(filename + ": unknown or unsupported image format !");
+                IcyExceptionHandler.showErrorMessage(e, true);
+
+                if (frame != null)
+                {
+                    reportLociError("Unknow or unsupported image format",
+                            "<html>The image '" + filename
+                                    + "' is not recognized or not (yet) supported by BioFormat:<br>"
+                                    + IcyExceptionHandler.getErrorMessage(e, false), filename);
+                }
+            }
+            catch (MissingLibraryException e)
             {
                 System.err.println("Error while loading image '" + filename + "' :");
                 IcyExceptionHandler.showErrorMessage(e, true);
                 if (frame != null)
                     new FailedAnnounceFrame("Failed to load image (see output console for detail)", 15);
+            }
+            catch (Exception e)
+            {
+                System.err.println("Error while loading image '" + filename + "' :");
+                IcyExceptionHandler.showErrorMessage(e, true);
+                if (frame != null)
+                {
+                    reportLociError("Unknow or unsupported image format",
+                            "<html>The image '" + filename
+                                    + "' is not recognized or not (yet) supported by BioFormat:<br>"
+                                    + IcyExceptionHandler.getErrorMessage(e, false), filename);
+                }
             }
 
             if (GeneralPreferences.getSequencePersistence())
@@ -300,6 +330,28 @@ public class Loader
             }
 
             return sequences;
+        }
+
+        void reportLociError(final String title, final String message, final String filename)
+        {
+            ThreadUtil.invokeLater(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    final ErrorReportFrame errorFrame = new ErrorReportFrame(null, title, message);
+
+                    errorFrame.setReportAction(new ActionListener()
+                    {
+                        @Override
+                        public void actionPerformed(ActionEvent e)
+                        {
+                            IssueReporter reporter = new IssueReporter();
+                            reporter.reportBug(filename, errorFrame.getReportMessage());
+                        }
+                    });
+                }
+            });
         }
 
         private Sequence createNewSequence(String path, int serie, boolean multiSerie)

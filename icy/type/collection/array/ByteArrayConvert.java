@@ -103,6 +103,172 @@ public class ByteArrayConvert
     }
 
     /**
+     * Read a byte from the input byte array at specified position.
+     */
+    public static byte readByte(byte[] array, int offset)
+    {
+        return array[offset];
+    }
+
+    /**
+     * Read a short value from the input byte array at specified position.
+     */
+    public static short readShort(byte[] array, int offset, boolean littleEndian)
+    {
+        if (littleEndian)
+            return (short) (((array[offset + 0] & 0xFF) << 0) + ((array[offset + 1] & 0xFF) << 8));
+
+        return (short) (((array[offset + 0] & 0xFF) << 8) + ((array[offset + 1] & 0xFF) << 0));
+    }
+
+    /**
+     * Read a int value from the input byte array at specified position.
+     */
+    public static int readInt(byte[] array, int offset, boolean littleEndian)
+    {
+        if (littleEndian)
+            return ((array[offset + 0] & 0xFF) << 0) + ((array[offset + 1] & 0xFF) << 8)
+                    + ((array[offset + 2] & 0xFF) << 16) + ((array[offset + 3] & 0xFF) << 24);
+
+        return ((array[offset + 0] & 0xFF) << 24) + ((array[offset + 1] & 0xFF) << 16)
+                + ((array[offset + 2] & 0xFF) << 8) + ((array[offset + 3] & 0xFF) << 0);
+    }
+
+    /**
+     * Read a long value from the input byte array at specified position.
+     */
+    public static long readLong(byte[] array, int offset, boolean littleEndian)
+    {
+        if (littleEndian)
+        {
+            final int v1 = ((array[offset + 0] & 0xFF) << 0) + ((array[offset + 1] & 0xFF) << 8)
+                    + ((array[offset + 2] & 0xFF) << 16) + ((array[offset + 3] & 0xFF) << 24);
+            final int v2 = ((array[offset + 4] & 0xFF) << 0) + ((array[offset + 5] & 0xFF) << 8)
+                    + ((array[offset + 6] & 0xFF) << 16) + ((array[offset + 7] & 0xFF) << 24);
+            return ((v1 & 0xFFFFFFFFL) << 0) + ((v2 & 0xFFFFFFFFL) << 32);
+        }
+
+        final int v1 = ((array[offset + 0] & 0xFF) << 24) + ((array[offset + 1] & 0xFF) << 16)
+                + ((array[offset + 2] & 0xFF) << 8) + ((array[offset + 3] & 0xFF) << 0);
+        final int v2 = ((array[offset + 4] & 0xFF) << 24) + ((array[offset + 5] & 0xFF) << 16)
+                + ((array[offset + 6] & 0xFF) << 8) + ((array[offset + 7] & 0xFF) << 0);
+        return ((v1 & 0xFFFFFFFFL) << 32) + ((v2 & 0xFFFFFFFFL) << 0);
+    }
+
+    /**
+     * Read a long value from the input byte array at specified position.
+     */
+    public static float readFloat(byte[] array, int offset, boolean littleEndian)
+    {
+        return Float.intBitsToFloat(readInt(array, offset, littleEndian));
+    }
+
+    /**
+     * Read a long value from the input byte array at specified position.
+     */
+    public static double readDouble(byte[] array, int offset, boolean littleEndian)
+    {
+        return Double.longBitsToDouble(readLong(array, offset, littleEndian));
+    }
+
+    /**
+     * Write a byte to the output byte array at specified position.
+     */
+    public static void writeByte(byte[] array, int offset, byte value)
+    {
+        array[offset] = value;
+    }
+
+    /**
+     * Write a short to the output byte array at specified position.
+     */
+    public static void writeShort(byte[] array, int offset, short value, boolean littleEndian)
+    {
+        if (littleEndian)
+        {
+            array[offset + 0] = (byte) (value >> 0);
+            array[offset + 1] = (byte) (value >> 8);
+        }
+        else
+        {
+            array[offset + 0] = (byte) (value >> 8);
+            array[offset + 1] = (byte) (value >> 0);
+        }
+    }
+
+    /**
+     * Write a int to the output byte array at specified position.
+     */
+    public static void writeInt(byte[] array, int offset, int value, boolean littleEndian)
+    {
+        if (littleEndian)
+        {
+            array[offset + 0] = (byte) (value >> 0);
+            array[offset + 1] = (byte) (value >> 8);
+            array[offset + 2] = (byte) (value >> 16);
+            array[offset + 3] = (byte) (value >> 24);
+        }
+        else
+        {
+            array[offset + 0] = (byte) (value >> 24);
+            array[offset + 1] = (byte) (value >> 16);
+            array[offset + 2] = (byte) (value >> 8);
+            array[offset + 3] = (byte) (value >> 0);
+        }
+    }
+
+    /**
+     * Write a long to the output byte array at specified position.
+     */
+    public static void writeLong(byte[] array, int offset, long value, boolean littleEndian)
+    {
+        int v;
+
+        if (littleEndian)
+        {
+            v = (int) (value >> 0);
+            array[offset + 0] = (byte) (v >> 0);
+            array[offset + 1] = (byte) (v >> 8);
+            array[offset + 2] = (byte) (v >> 16);
+            array[offset + 3] = (byte) (v >> 24);
+            v = (int) (value >> 32);
+            array[offset + 4] = (byte) (v >> 0);
+            array[offset + 5] = (byte) (v >> 8);
+            array[offset + 6] = (byte) (v >> 16);
+            array[offset + 7] = (byte) (v >> 24);
+        }
+        else
+        {
+            v = (int) (value >> 32);
+            array[offset + 0] = (byte) (v >> 24);
+            array[offset + 1] = (byte) (v >> 16);
+            array[offset + 2] = (byte) (v >> 8);
+            array[offset + 3] = (byte) (v >> 0);
+            v = (int) (value >> 0);
+            array[offset + 4] = (byte) (v >> 24);
+            array[offset + 5] = (byte) (v >> 16);
+            array[offset + 6] = (byte) (v >> 8);
+            array[offset + 7] = (byte) (v >> 0);
+        }
+    }
+
+    /**
+     * Write a float to the output byte array at specified position.
+     */
+    public static void writeFloat(byte[] array, int offset, float value, boolean littleEndian)
+    {
+        writeInt(array, offset, Float.floatToRawIntBits(value), littleEndian);
+    }
+
+    /**
+     * Write a double to the output byte array at specified position.
+     */
+    public static void writeDouble(byte[] array, int offset, double value, boolean littleEndian)
+    {
+        writeLong(array, offset, Double.doubleToRawLongBits(value), littleEndian);
+    }
+
+    /**
      * Bit transform and return the 'in' byte array in the specified data type array
      * 
      * @param in
@@ -136,7 +302,7 @@ public class ByteArrayConvert
 
             for (int i = 0; i < len; i++)
             {
-                result[outOff] = in[inOff];
+                writeByte(result, outOff, readByte(in, inOff));
                 inOff += inStep;
                 outOff += outStep;
             }
@@ -218,23 +384,11 @@ public class ByteArrayConvert
         int inOff = inOffset;
         int outOff = outOffset;
 
-        if (little)
+        for (int i = 0; i < len; i++)
         {
-            for (int i = 0; i < len; i++)
-            {
-                result[outOff] = (short) (((in[inOff + 0] & 0xFF) << 0) + ((in[inOff + 1] & 0xFF) << 8));
-                inOff += adjInStep;
-                outOff += outStep;
-            }
-        }
-        else
-        {
-            for (int i = 0; i < len; i++)
-            {
-                result[outOff] = (short) (((in[inOff + 0] & 0xFF) << 8) + ((in[inOff + 1] & 0xFF) << 0));
-                inOff += adjInStep;
-                outOff += outStep;
-            }
+            result[outOff] = readShort(in, inOff, little);
+            inOff += adjInStep;
+            outOff += outStep;
         }
 
         return result;
@@ -320,25 +474,11 @@ public class ByteArrayConvert
         int inOff = inOffset;
         int outOff = outOffset;
 
-        if (little)
+        for (int i = 0; i < len; i++)
         {
-            for (int i = 0; i < len; i++)
-            {
-                result[outOff] = ((in[inOff + 0] & 0xFF) << 0) + ((in[inOff + 1] & 0xFF) << 8)
-                        + ((in[inOff + 2] & 0xFF) << 16) + ((in[inOff + 3] & 0xFF) << 24);
-                inOff += adjInStep;
-                outOff += outStep;
-            }
-        }
-        else
-        {
-            for (int i = 0; i < len; i++)
-            {
-                result[outOff] = ((in[inOff + 0] & 0xFF) << 24) + ((in[inOff + 1] & 0xFF) << 16)
-                        + ((in[inOff + 2] & 0xFF) << 8) + ((in[inOff + 3] & 0xFF) << 0);
-                inOff += adjInStep;
-                outOff += outStep;
-            }
+            result[outOff] = readInt(in, inOff, little);
+            inOff += adjInStep;
+            outOff += outStep;
         }
 
         return result;
@@ -424,47 +564,11 @@ public class ByteArrayConvert
         int inOff = inOffset;
         int outOff = outOffset;
 
-        if (little)
+        for (int i = 0; i < len; i++)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final int v1 = ((in[inOff + 0] & 0xFF) << 0) + ((in[inOff + 1] & 0xFF) << 8)
-                        + ((in[inOff + 2] & 0xFF) << 16) + ((in[inOff + 3] & 0xFF) << 24);
-                inOff += 4;
-                final int v2 = ((in[inOff + 0] & 0xFF) << 0) + ((in[inOff + 1] & 0xFF) << 8)
-                        + ((in[inOff + 2] & 0xFF) << 16) + ((in[inOff + 3] & 0xFF) << 24);
-                inOff += 4;
-                result[outOff] = ((v1 & 0xFFFFFFFFL) << 0) + ((v2 & 0xFFFFFFFFL) << 32);
-                outOff += outStep;
-
-                // result[outOff] = ((in[inOff + 0] & 0xFF) << 0) + ((in[inOff + 1] & 0xFF) << 8)
-                // + ((in[inOff + 2] & 0xFF) << 16) + ((in[inOff + 3] & 0xFF) << 24)
-                // + ((in[inOff + 4] & 0xFF) << 32) + ((in[inOff + 5] & 0xFF) << 40)
-                // + ((in[inOff + 6] & 0xFF) << 48) + ((in[inOff + 7] & 0xFF) << 56);
-                // inOff += 8;
-                // outOff += outStep;
-            }
-        }
-        else
-        {
-            for (int i = 0; i < len; i++)
-            {
-                final int v1 = ((in[inOff + 0] & 0xFF) << 24) + ((in[inOff + 1] & 0xFF) << 16)
-                        + ((in[inOff + 2] & 0xFF) << 8) + ((in[inOff + 3] & 0xFF) << 0);
-                inOff += 4;
-                final int v2 = ((in[inOff + 0] & 0xFF) << 24) + ((in[inOff + 1] & 0xFF) << 16)
-                        + ((in[inOff + 2] & 0xFF) << 8) + ((in[inOff + 3] & 0xFF) << 0);
-                inOff += 4;
-                result[outOff] = ((v1 & 0xFFFFFFFFL) << 32) + ((v2 & 0xFFFFFFFFL) << 0);
-                outOff += outStep;
-
-                // result[outOff] = ((in[inOff + 0] & 0xFF) << 56) + ((in[inOff + 1] & 0xFF) << 48)
-                // + ((in[inOff + 2] & 0xFF) << 40) + ((in[inOff + 3] & 0xFF) << 32)
-                // + ((in[inOff + 4] & 0xFF) << 24) + ((in[inOff + 5] & 0xFF) << 16)
-                // + ((in[inOff + 6] & 0xFF) << 8) + ((in[inOff + 7] & 0xFF) << 0);
-                // inOff += 8;
-                // outOff += outStep;
-            }
+            result[outOff] = readLong(in, inOff, little);
+            inOff += adjInStep;
+            outOff += outStep;
         }
 
         return result;
@@ -550,27 +654,11 @@ public class ByteArrayConvert
         int inOff = inOffset;
         int outOff = outOffset;
 
-        if (little)
+        for (int i = 0; i < len; i++)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final int value = ((in[inOff + 0] & 0xFF) << 0) + ((in[inOff + 1] & 0xFF) << 8)
-                        + ((in[inOff + 2] & 0xFF) << 16) + ((in[inOff + 3] & 0xFF) << 24);
-                inOff += adjInStep;
-                result[outOff] = Float.intBitsToFloat(value);
-                outOff += outStep;
-            }
-        }
-        else
-        {
-            for (int i = 0; i < len; i++)
-            {
-                final int value = ((in[inOff + 0] & 0xFF) << 24) + ((in[inOff + 1] & 0xFF) << 16)
-                        + ((in[inOff + 2] & 0xFF) << 8) + ((in[inOff + 3] & 0xFF) << 0);
-                inOff += adjInStep;
-                result[outOff] = Float.intBitsToFloat(value);
-                outOff += outStep;
-            }
+            result[outOff] = readFloat(in, inOff, little);
+            inOff += adjInStep;
+            outOff += outStep;
         }
 
         return result;
@@ -656,49 +744,11 @@ public class ByteArrayConvert
         int inOff = inOffset;
         int outOff = outOffset;
 
-        if (little)
+        for (int i = 0; i < len; i++)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final int v1 = ((in[inOff + 0] & 0xFF) << 0) + ((in[inOff + 1] & 0xFF) << 8)
-                        + ((in[inOff + 2] & 0xFF) << 16) + ((in[inOff + 3] & 0xFF) << 24);
-                inOff += 4;
-                final int v2 = ((in[inOff + 0] & 0xFF) << 0) + ((in[inOff + 1] & 0xFF) << 8)
-                        + ((in[inOff + 2] & 0xFF) << 16) + ((in[inOff + 3] & 0xFF) << 24);
-                inOff += 4;
-                result[outOff] = Double.longBitsToDouble(((v1 & 0xFFFFFFFFL) << 0) + ((v2 & 0xFFFFFFFFL) << 32));
-                outOff += outStep;
-
-                // result[outOff] = Double.longBitsToDouble(((in[inOff + 0] & 0xFFL) << 0)
-                // + ((in[inOff + 1] & 0xFFL) << 8) + ((in[inOff + 2] & 0xFFL) << 16)
-                // + ((in[inOff + 3] & 0xFFL) << 24) + ((in[inOff + 4] & 0xFFL) << 32)
-                // + ((in[inOff + 5] & 0xFFL) << 40) + ((in[inOff + 6] & 0xFFL) << 48)
-                // + ((in[inOff + 7] & 0xFFL) << 56));
-                // inOff += 8;
-                // outOff += outStep;
-            }
-        }
-        else
-        {
-            for (int i = 0; i < len; i++)
-            {
-                final int v1 = ((in[inOff + 0] & 0xFF) << 24) + ((in[inOff + 1] & 0xFF) << 16)
-                        + ((in[inOff + 2] & 0xFF) << 8) + ((in[inOff + 3] & 0xFF) << 0);
-                inOff += 4;
-                final int v2 = ((in[inOff + 0] & 0xFF) << 24) + ((in[inOff + 1] & 0xFF) << 16)
-                        + ((in[inOff + 2] & 0xFF) << 8) + ((in[inOff + 3] & 0xFF) << 0);
-                inOff += 4;
-                result[outOff] = Double.longBitsToDouble(((v1 & 0xFFFFFFFFL) << 32) + ((v2 & 0xFFFFFFFFL) << 0));
-                outOff += outStep;
-
-                // result[outOff] = Double.longBitsToDouble(((in[inOff + 0] & 0xFFL) << 56)
-                // + ((in[inOff + 1] & 0xFFL) << 48) + ((in[inOff + 2] & 0xFFL) << 40)
-                // + ((in[inOff + 3] & 0xFFL) << 32) + ((in[inOff + 4] & 0xFFL) << 24)
-                // + ((in[inOff + 5] & 0xFFL) << 16) + ((in[inOff + 6] & 0xFFL) << 8)
-                // + ((in[inOff + 7] & 0xFFL) << 0));
-                // inOff += 8;
-                // outOff += outStep;
-            }
+            result[outOff] = readDouble(in, inOff, little);
+            inOff += adjInStep;
+            outOff += outStep;
         }
 
         return result;
@@ -784,27 +834,11 @@ public class ByteArrayConvert
         int inOff = inOffset;
         int outOff = outOffset;
 
-        if (little)
+        for (int i = 0; i < len; i++)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final short value = in[inOff];
-                inOff += inStep;
-                result[outOff + 0] = (byte) (value >> 0);
-                result[outOff + 1] = (byte) (value >> 8);
-                outOff += adjOutStep;
-            }
-        }
-        else
-        {
-            for (int i = 0; i < len; i++)
-            {
-                final short value = in[inOff];
-                inOff += inStep;
-                result[outOff + 0] = (byte) (value >> 8);
-                result[outOff + 1] = (byte) (value >> 0);
-                outOff += adjOutStep;
-            }
+            writeShort(result, outOff, in[inOff], little);
+            inOff += inStep;
+            outOff += adjOutStep;
         }
 
         return result;
@@ -840,31 +874,11 @@ public class ByteArrayConvert
         int inOff = inOffset;
         int outOff = outOffset;
 
-        if (little)
+        for (int i = 0; i < len; i++)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final int value = in[inOff];
-                inOff += inStep;
-                result[outOff + 0] = (byte) (value >> 0);
-                result[outOff + 1] = (byte) (value >> 8);
-                result[outOff + 2] = (byte) (value >> 16);
-                result[outOff + 3] = (byte) (value >> 24);
-                outOff += adjOutStep;
-            }
-        }
-        else
-        {
-            for (int i = 0; i < len; i++)
-            {
-                final int value = in[inOff];
-                inOff += inStep;
-                result[outOff + 0] = (byte) (value >> 24);
-                result[outOff + 1] = (byte) (value >> 16);
-                result[outOff + 2] = (byte) (value >> 8);
-                result[outOff + 3] = (byte) (value >> 0);
-                outOff += adjOutStep;
-            }
+            writeInt(result, outOff, in[inOff], little);
+            inOff += inStep;
+            outOff += adjOutStep;
         }
 
         return result;
@@ -900,75 +914,11 @@ public class ByteArrayConvert
         int inOff = inOffset;
         int outOff = outOffset;
 
-        if (little)
+        for (int i = 0; i < len; i++)
         {
-            for (int i = 0; i < len; i++)
-            {
-                int v;
-                final long value = in[inOff];
-                inOff += inStep;
-
-                v = (int) (value >> 0);
-                result[outOff + 0] = (byte) (v >> 0);
-                result[outOff + 1] = (byte) (v >> 8);
-                result[outOff + 2] = (byte) (v >> 16);
-                result[outOff + 3] = (byte) (v >> 24);
-                outOff += 4;
-
-                v = (int) (value >> 32);
-                result[outOff + 0] = (byte) (v >> 0);
-                result[outOff + 1] = (byte) (v >> 8);
-                result[outOff + 2] = (byte) (v >> 16);
-                result[outOff + 3] = (byte) (v >> 24);
-                outOff += 4;
-
-                // final long value = in[inOff];
-                // inOff += inStep;
-                // result[outOff + 0] = (byte) (value >> 0);
-                // result[outOff + 1] = (byte) (value >> 8);
-                // result[outOff + 2] = (byte) (value >> 16);
-                // result[outOff + 3] = (byte) (value >> 24);
-                // result[outOff + 4] = (byte) (value >> 32);
-                // result[outOff + 5] = (byte) (value >> 40);
-                // result[outOff + 6] = (byte) (value >> 48);
-                // result[outOff + 7] = (byte) (value >> 56);
-                // outOff += 8;
-            }
-        }
-        else
-        {
-            for (int i = 0; i < len; i++)
-            {
-                int v;
-                final long value = in[inOff];
-                inOff += inStep;
-
-                v = (int) (value >> 32);
-                result[outOff + 0] = (byte) (v >> 24);
-                result[outOff + 1] = (byte) (v >> 16);
-                result[outOff + 2] = (byte) (v >> 8);
-                result[outOff + 3] = (byte) (v >> 0);
-                outOff += 4;
-
-                v = (int) (value >> 0);
-                result[outOff + 0] = (byte) (v >> 24);
-                result[outOff + 1] = (byte) (v >> 16);
-                result[outOff + 2] = (byte) (v >> 8);
-                result[outOff + 3] = (byte) (v >> 0);
-                outOff += 4;
-
-                // final long value = in[inOff];
-                // inOff += inStep;
-                // result[outOff + 0] = (byte) (value >> 56);
-                // result[outOff + 1] = (byte) (value >> 48);
-                // result[outOff + 2] = (byte) (value >> 40);
-                // result[outOff + 3] = (byte) (value >> 32);
-                // result[outOff + 4] = (byte) (value >> 24);
-                // result[outOff + 5] = (byte) (value >> 16);
-                // result[outOff + 6] = (byte) (value >> 8);
-                // result[outOff + 7] = (byte) (value >> 0);
-                // outOff += 8;
-            }
+            writeLong(result, outOff, in[inOff], little);
+            inOff += inStep;
+            outOff += adjOutStep;
         }
 
         return result;
@@ -1004,31 +954,11 @@ public class ByteArrayConvert
         int inOff = inOffset;
         int outOff = outOffset;
 
-        if (little)
+        for (int i = 0; i < len; i++)
         {
-            for (int i = 0; i < len; i++)
-            {
-                final int value = Float.floatToRawIntBits(in[inOff]);
-                inOff += inStep;
-                result[outOff + 0] = (byte) (value >> 0);
-                result[outOff + 1] = (byte) (value >> 8);
-                result[outOff + 2] = (byte) (value >> 16);
-                result[outOff + 3] = (byte) (value >> 24);
-                outOff += adjOutStep;
-            }
-        }
-        else
-        {
-            for (int i = 0; i < len; i++)
-            {
-                final int value = Float.floatToRawIntBits(in[inOff]);
-                inOff += inStep;
-                result[outOff + 0] = (byte) (value >> 24);
-                result[outOff + 1] = (byte) (value >> 16);
-                result[outOff + 2] = (byte) (value >> 8);
-                result[outOff + 3] = (byte) (value >> 0);
-                outOff += adjOutStep;
-            }
+            writeFloat(result, outOff, in[inOff], little);
+            inOff += inStep;
+            outOff += adjOutStep;
         }
 
         return result;
@@ -1064,75 +994,11 @@ public class ByteArrayConvert
         int inOff = inOffset;
         int outOff = outOffset;
 
-        if (little)
+        for (int i = 0; i < len; i++)
         {
-            for (int i = 0; i < len; i++)
-            {
-                int v;
-                final long value = Double.doubleToRawLongBits(in[inOff]);
-                inOff += inStep;
-
-                v = (int) (value >> 0);
-                result[outOff + 0] = (byte) (v >> 0);
-                result[outOff + 1] = (byte) (v >> 8);
-                result[outOff + 2] = (byte) (v >> 16);
-                result[outOff + 3] = (byte) (v >> 24);
-                outOff += 4;
-
-                v = (int) (value >> 32);
-                result[outOff + 0] = (byte) (v >> 0);
-                result[outOff + 1] = (byte) (v >> 8);
-                result[outOff + 2] = (byte) (v >> 16);
-                result[outOff + 3] = (byte) (v >> 24);
-                outOff += 4;
-
-                // final long value = Double.doubleToRawLongBits(in[inOff]);
-                // inOff += inStep;
-                // result[outOff + 0] = (byte) (value >> 0);
-                // result[outOff + 1] = (byte) (value >> 8);
-                // result[outOff + 2] = (byte) (value >> 16);
-                // result[outOff + 3] = (byte) (value >> 24);
-                // result[outOff + 4] = (byte) (value >> 32);
-                // result[outOff + 5] = (byte) (value >> 40);
-                // result[outOff + 6] = (byte) (value >> 48);
-                // result[outOff + 7] = (byte) (value >> 56);
-                // outOff += 8;
-            }
-        }
-        else
-        {
-            for (int i = 0; i < len; i++)
-            {
-                int v;
-                final long value = Double.doubleToRawLongBits(in[inOff]);
-                inOff += inStep;
-
-                v = (int) (value >> 32);
-                result[outOff + 0] = (byte) (v >> 24);
-                result[outOff + 1] = (byte) (v >> 16);
-                result[outOff + 2] = (byte) (v >> 8);
-                result[outOff + 3] = (byte) (v >> 0);
-                outOff += 4;
-
-                v = (int) (value >> 0);
-                result[outOff + 0] = (byte) (v >> 24);
-                result[outOff + 1] = (byte) (v >> 16);
-                result[outOff + 2] = (byte) (v >> 8);
-                result[outOff + 3] = (byte) (v >> 0);
-                outOff += 4;
-
-                // final long value = Double.doubleToRawLongBits(in[inOff]);
-                // inOff += inStep;
-                // result[outOff + 0] = (byte) (value >> 56);
-                // result[outOff + 1] = (byte) (value >> 48);
-                // result[outOff + 2] = (byte) (value >> 40);
-                // result[outOff + 3] = (byte) (value >> 32);
-                // result[outOff + 4] = (byte) (value >> 24);
-                // result[outOff + 5] = (byte) (value >> 16);
-                // result[outOff + 6] = (byte) (value >> 8);
-                // result[outOff + 7] = (byte) (value >> 0);
-                // outOff += 8;
-            }
+            writeDouble(result, outOff, in[inOff], little);
+            inOff += inStep;
+            outOff += adjOutStep;
         }
 
         return result;

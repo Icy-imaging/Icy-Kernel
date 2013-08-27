@@ -30,6 +30,7 @@ import icy.image.colormap.LinearColorMap;
 import icy.image.colormodel.IcyColorModel;
 import icy.type.DataType;
 import icy.type.collection.array.ArrayUtil;
+import icy.util.ColorUtil;
 
 import java.awt.color.ColorSpace;
 import java.awt.image.ColorModel;
@@ -45,11 +46,6 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
 	 * 
 	 */
     private static final long serialVersionUID = 6413334779215415163L;
-
-    /**
-     * RGB colorSpace
-     */
-    private static ColorSpace sRGB = ColorSpace.getInstance(ColorSpace.CS_sRGB);
 
     /**
      * toRGB colormaps
@@ -245,7 +241,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     @Override
     public float[] fromCIEXYZ(float[] colorvalue)
     {
-        return fromRGB(sRGB.fromCIEXYZ(colorvalue));
+        return fromRGB(ColorUtil.sRGB.fromCIEXYZ(colorvalue));
     }
 
     /**
@@ -254,7 +250,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
     @Override
     public float[] toCIEXYZ(float[] colorvalue)
     {
-        return sRGB.toCIEXYZ(toRGB(colorvalue));
+        return ColorUtil.sRGB.toCIEXYZ(toRGB(colorvalue));
     }
 
     /**

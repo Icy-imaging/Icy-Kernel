@@ -27,6 +27,7 @@ import icy.roi.ROI5D;
 import icy.type.DataIterator;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
+import icy.type.rectangle.Rectangle5D;
 
 import java.awt.Rectangle;
 import java.util.NoSuchElementException;
@@ -236,11 +237,30 @@ public class ImageDataIterator implements DataIterator
         this.roi = roi;
         maskXY = null;
 
+        final Rectangle5D.Integer bounds = new Rectangle5D.Integer();
+
         if (image != null)
         {
             dataType = image.getDataType_();
 
-            if (roi instanceof ROI2D)
+            
+            --> use ROI.bounds5D
+            
+            if (roi instanceof ROI5D)
+            {
+                // not yet supported
+                startX = startY = startC = 0;
+                endX = endY = endC = -1;
+            }
+            else if (roi instanceof ROI4D)
+            {
+
+            }
+            else if (roi instanceof ROI3D)
+            {
+
+            }
+            else if (roi instanceof ROI2D)
             {
                 final ROI2D roi2d = (ROI2D) roi;
 
@@ -248,10 +268,10 @@ public class ImageDataIterator implements DataIterator
 
                 final Rectangle bounds = maskXY.bounds.intersection(image.getBounds());
 
-                startX = bounds.x;
-                endX = bounds.x + (bounds.width - 1);
-                startY = bounds.y;
-                endY = bounds.y + (bounds.height - 1);
+                startX = maskXY.bounds.x;
+                endX = startX + (maskXY.bounds.width - 1);
+                startY = maskXY.bounds.y;
+                endY = startY + (maskXY.bounds.height - 1);
 
                 final int roiC = roi2d.getC();
 
@@ -274,37 +294,10 @@ public class ImageDataIterator implements DataIterator
                     }
                 }
             }
-            else if (roi instanceof ROI3D)
-            {
-                // final ROI3D roi3d = (ROI3D) roi;
-                // final int roiC = roi3d.getC();
 
-                // not yet supported
-                startX = startY = startC = 0;
-                endX = endY = endC = -1;
-            }
-            else if (roi instanceof ROI4D)
-            {
-                // final ROI4D roi4d = (ROI4D) roi;
-                // final int roiC = roi4d.getC();
+            // intersect with image size
+            final Rectangle bounds = maskXY.bounds.intersection(image.getBounds());
 
-                // not yet supported
-                startX = startY = startC = 0;
-                endX = endY = endC = -1;
-            }
-            else if (roi instanceof ROI5D)
-            {
-                // final ROI5D roi5d = (ROI5D) roi;
-
-                // not yet supported
-                startX = startY = startC = 0;
-                endX = endY = endC = -1;
-            }
-            else
-            {
-                startX = startY = startC = 0;
-                endX = endY = endC = -1;
-            }
         }
         else
             dataType = DataType.UNDEFINED;

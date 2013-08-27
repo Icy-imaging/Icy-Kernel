@@ -170,6 +170,17 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     /**
+     * Returns <code>true</code> if the overlay is attached to the specified {@link Sequence}.
+     */
+    public boolean isAttached(Sequence sequence)
+    {
+        if (sequence != null)
+            return sequence.contains(this);
+
+        return false;
+    }
+
+    /**
      * @deprecated Use {@link #getCanBeRemoved()} instead.
      * @see #setCanBeRemoved(boolean)
      */

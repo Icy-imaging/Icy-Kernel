@@ -123,6 +123,19 @@ public abstract class Point5D
         setLocation(p.getX(), p.getY(), p.getZ(), p.getT(), p.getC());
     }
 
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof Point5D)
+        {
+            final Point5D pt = (Point5D) obj;
+            return (getX() == pt.getX()) && (getY() == pt.getY()) && (getZ() == pt.getZ()) && (getT() == pt.getT())
+                    && (getC() == pt.getC());
+        }
+
+        return super.equals(obj);
+    }
+
     public static class Double extends Point5D
     {
         public double x;
@@ -160,7 +173,7 @@ public abstract class Point5D
 
         public Double()
         {
-            this(0, 0, 0, 0, 0);
+            this(0d, 0d, 0d, 0d, 0d);
         }
 
         @Override
@@ -232,7 +245,6 @@ public abstract class Point5D
             this.t = t;
             this.c = c;
         }
-
     }
 
     public static class Float extends Point5D
@@ -249,9 +261,9 @@ public abstract class Point5D
 
             this.x = x;
             this.y = y;
+            this.c = c;
             this.z = z;
             this.t = t;
-            this.c = c;
         }
 
         public Float(float[] xyztc)
@@ -272,7 +284,7 @@ public abstract class Point5D
 
         public Float()
         {
-            this(0, 0, 0, 0, 0);
+            this(0f, 0f, 0f, 0f, 0f);
         }
 
         @Override
@@ -348,11 +360,11 @@ public abstract class Point5D
 
     public static class Integer extends Point5D
     {
-        int x;
-        int y;
-        int z;
-        int t;
-        int c;
+        public int x;
+        public int y;
+        public int z;
+        public int t;
+        public int c;
 
         public Integer(int x, int y, int z, int t, int c)
         {
@@ -456,5 +468,4 @@ public abstract class Point5D
             this.c = (int) c;
         }
     }
-
 }

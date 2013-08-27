@@ -19,6 +19,7 @@
 package icy.gui.plugin;
 
 import icy.gui.frame.TitledFrame;
+import icy.gui.frame.error.ErrorReportFrame;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.plugin.PluginDescriptor;
 import icy.system.IcyExceptionHandler;
@@ -32,6 +33,10 @@ import java.awt.event.ActionListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
+/**
+ * @deprecated Use {@link ErrorReportFrame} instead.
+ */
+@Deprecated
 public class PluginErrorReportFrame extends TitledFrame
 {
     // GUI

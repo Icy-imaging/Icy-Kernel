@@ -18,15 +18,99 @@
  */
 package icy.util;
 
+import icy.math.MathUtil;
+
 import java.awt.Color;
+import java.awt.color.ColorSpace;
 
 /**
- * Color utilities class
+ * Color utilities class.
  * 
- * @author stephane
+ * @author Stephane
  */
 public class ColorUtil
 {
+    /**
+     * RGB colorSpace
+     */
+    public final static ColorSpace sRGB = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+
+    /**
+     * Basic rainbow colors
+     */
+    private final static Color[] colors = generateRainbow(32, true, true, true);
+
+    /**
+     * Returns a random color.
+     */
+    public static Color getRandomColor()
+    {
+        return colors[Random.nextInt(20)];
+    }
+
+    /**
+     * Generates a rainbow color table (HSV ramp) of the specified size.
+     * 
+     * @param saturation
+     *        saturation factor (from 0 to 1).
+     * @param brightness
+     *        brightness factor (from 0 to 1).
+     * @param size
+     *        the size of rainbow color table.
+     * @param black
+     *        if true the table will also contains a black color entry.
+     * @param white
+     *        if true the table will also contains a white color entry.
+     * @param gray
+     *        if true the table will also contains a gray color entry.
+     */
+    public static Color[] generateRainbow(float saturation, float brightness, int size, boolean black, boolean white,
+            boolean gray)
+    {
+        final Color[] result = new Color[size];
+
+        int start = 0;
+        if (black)
+            result[start++] = Color.black;
+        if (white)
+            result[start++] = Color.white;
+        if (gray)
+            result[start++] = Color.gray;
+
+        for (int i = start; i < result.length; i++)
+            result[i] = Color.getHSBColor((float) (i - start) / (float) (size - start), saturation, brightness);
+
+        return result;
+    }
+
+    /**
+     * Generates a rainbow color table (HSV ramp) of the specified size.
+     * 
+     * @param size
+     *        the size of the rainbow color table.
+     * @param black
+     *        if true the table will also contains a black color entry.
+     * @param white
+     *        if true the table will also contains a white color entry.
+     * @param gray
+     *        if true the table will also contains a gray color entry.
+     */
+    public static Color[] generateRainbow(int size, boolean black, boolean white, boolean gray)
+    {
+        return generateRainbow(1f, 1f, size, black, white, gray);
+    }
+
+    /**
+     * Generates a rainbow color table (HSV ramp) of the specified size.
+     * 
+     * @param size
+     *        the size of the HSV color table.
+     */
+    public static Color[] generateRainbow(int size)
+    {
+        return generateRainbow(size, false, false, false);
+    }
+
     /**
      * Get String representation of the specified color.<br>
      * <br>
@@ -307,5 +391,295 @@ public class ColorUtil
     public static int getLuminance(Color c)
     {
         return (int) ((c.getRed() * 0.299) + (c.getGreen() * 0.587) + (c.getBlue() * 0.114));
+    }
+
+    /**
+     * Convert the specified color to HSV color.
+     */
+    public static float[] toHSV(Color c)
+    {
+        return toHSV(c.getRGBColorComponents(null));
+    }
+
+    /**
+     * Convert the specified RGB color to HSV color.
+     */
+    public static float[] toHSV(float[] rgb)
+    {
+        float r = rgb[0];
+        float g = rgb[1];
+        float b = rgb[2];
+        float min, max, delta;
+        float h, s, v;
+
+        min = Math.min(r, Math.min(g, b));
+        max = Math.max(r, Math.max(g, b));
+
+        // black
+        if (max == 0f)
+            return new float[] {0, 0, 0};
+
+        v = max;
+        delta = max - min;
+        s = delta / max;
+
+        // graylevel
+        if (delta == 0f)
+            return new float[] {0, s, v};
+
+        if (r == max)
+            // between yellow & magenta
+            h = (g - b) / delta;
+        else if (g == max)
+            // between cyan & yellow
+            h = 2 + (b - r) / delta;
+        else
+            // between magenta & cyan
+            h = 4 + (r - g) / delta;
+
+        // want positif hue
+        if (h < 0)
+            h += 6f;
+
+        return new float[] {h / 6f, s, v};
+    }
+
+    /**
+     * Convert the specified HSV color to RGB color.
+     */
+    public static float[] fromHSV(float[] hsv)
+    {
+        float h = hsv[0];
+        float s = hsv[0];
+        float v = hsv[0];
+        float f, p, q, t;
+        float r, g, b;
+        int i;
+
+        // no color
+        if (s == 0f)
+            return new float[] {v, v, v};
+
+        // sector 0 to 5
+        h *= 6f;
+        i = (int) Math.floor(h);
+        // factorial part of h
+        f = h - i;
+        p = v * (1f - s);
+        q = v * (1f - (s * f));
+        t = v * (1f - (s * (1 - f)));
+
+        switch (i)
+        {
+            case 0:
+                r = v;
+                g = t;
+                b = p;
+                break;
+            case 1:
+                r = q;
+                g = v;
+                b = p;
+                break;
+            case 2:
+                r = p;
+                g = v;
+                b = t;
+                break;
+            case 3:
+                r = p;
+                g = q;
+                b = v;
+                break;
+            case 4:
+                r = t;
+                g = p;
+                b = v;
+                break;
+            default:
+                r = v;
+                g = p;
+                b = q;
+                break;
+        }
+
+        return new float[] {r, g, b};
+    }
+
+    /**
+     * Convert the specified XYZ color to RGB color.
+     */
+    public static float[] fromXYZ(float[] xyz)
+    {
+        return sRGB.fromCIEXYZ(xyz);
+    }
+
+    /**
+     * Convert the specified color to XYZ color.
+     */
+    public static float[] toXYZ(Color c)
+    {
+        return toXYZ(c.getRGBColorComponents(null));
+    }
+
+    /**
+     * Convert the specified RGB color to XYZ color.
+     */
+    public static float[] toXYZ(float[] rgb)
+    {
+        return sRGB.toCIEXYZ(rgb);
+    }
+
+    /**
+     * Convert the specified color to LAB color.
+     */
+    public static float[] toLAB(Color c)
+    {
+        return toLAB(c.getRGBColorComponents(null));
+    }
+
+    /**
+     * Convert the specified RGB color to LAB color.
+     */
+    public static float[] toLAB(float[] rgb)
+    {
+        return XYZtoLAB(toXYZ(rgb));
+    }
+
+    private static float pivotXYZ(float value)
+    {
+        return (value > 0.008856f) ? (float) MathUtil.cubicRoot(value) : (7.787f * value) + 0.1379f;
+    }
+
+    /**
+     * Convert the specified XYZ color to LAB color.
+     */
+    public static float[] XYZtoLAB(float[] xyz)
+    {
+        float x = pivotXYZ(xyz[0] / 95.047f);
+        float y = pivotXYZ(xyz[1] / 100f);
+        float z = pivotXYZ(xyz[2] / 108.883f);
+
+        float l = Math.max(0, (116f * y) - 16f);
+        float a = 500f * (x - y);
+        float b = 200f * (y - z);
+
+        return new float[] {l, a, b};
+    }
+
+    /**
+     * Compute and returns the distance between the 2 colors.<br>
+     * The HSV distance returns a value between 0 and 1 where 1 is maximum distance.<br>
+     * The LAB distance returns a positive value where > 2.3 value is considered a
+     * significant distance.
+     * 
+     * @param c1
+     *        first color
+     * @param c2
+     *        second color
+     * @param hsv
+     *        If set to true we use the HSV color space to compute the color distance otherwise we
+     *        use the LAB color space.
+     */
+    public static double getDistance(Color c1, Color c2, boolean hsv)
+    {
+        if (hsv)
+        {
+            // use HSV color space
+            final float[] hsv1 = toHSV(c1);
+            final float[] hsv2 = toHSV(c2);
+
+            return getDistance(hsv1, hsv2, true);
+        }
+
+        // use LAB color space
+        final float[] lab1 = toLAB(c1);
+        final float[] lab2 = toLAB(c2);
+
+        return getDistance(lab1, lab2, true);
+    }
+
+    /**
+     * Returns the distance between 2 colors from same color space.<br>
+     */
+    static double getDistance(float[] c1, float[] c2, boolean compareThirdComponent)
+    {
+        float result = (float) (Math.pow(c1[0] - c2[0], 2d) + Math.pow(c1[1] - c2[1], 2d));
+
+        if (compareThirdComponent)
+            result += Math.pow(c1[2] - c2[2], 2d);
+
+        return result;
+    }
+
+    /**
+     * Returns the dominant color from the specified color array.<br>
+     * The dominant color is calculated by computing the color histogram from a rainbow gradient and
+     * returning the highest bin number.
+     */
+    public static Color getDominantColor(Color colors[])
+    {
+        return getDominantColor(colors, 33);
+    }
+
+    /**
+     * Returns the dominant color from the specified color array.<br>
+     * The dominant color is calculated by computing the color histogram from a rainbow gradient and
+     * returning the color corresponding to the highest bin.
+     * 
+     * @param colors
+     *        Color array we want to retrieve the dominant color from.
+     * @param binNumber
+     *        the number of bin to construct the rainbow gradient.
+     */
+    public static Color getDominantColor(Color colors[], int binNumber)
+    {
+        final Color[] baseColors = generateRainbow(1f, 1f, binNumber, false, false, true);
+
+        final float[][] colorsHSV = new float[colors.length][];
+        final float[][] baseColorsHSV = new float[binNumber][];
+
+        // convert colors to HSV float component
+        for (int i = 0; i < colors.length; i++)
+            colorsHSV[i] = toHSV(colors[i]);
+        for (int i = 0; i < baseColors.length; i++)
+            baseColorsHSV[i] = toHSV(baseColors[i]);
+
+        final int[] bins = new int[binNumber];
+
+        for (float[] colorHsv : colorsHSV)
+        {
+            double minDist = getDistance(colorHsv, baseColorsHSV[0], true);
+            int minInd = 0;
+
+            for (int ind = 1; ind < baseColorsHSV.length; ind++)
+            {
+                final double dist = getDistance(colorHsv, baseColorsHSV[ind], true);
+
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    minInd = ind;
+                }
+            }
+
+            bins[minInd]++;
+        }
+
+        int max = bins[0];
+        int maxInd = 0;
+
+        for (int i = 1; i < bins.length; i++)
+        {
+            final int v = bins[i];
+
+            if (v > max)
+            {
+                max = v;
+                maxInd = i;
+            }
+        }
+
+        return baseColors[maxInd];
     }
 }

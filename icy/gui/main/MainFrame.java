@@ -626,6 +626,8 @@ public class MainFrame extends JRibbonFrame
         {
             final IcyExternalFrame externalFrame = v.getIcyExternalFrame();
 
+            if (externalFrame.isMaximized())
+                externalFrame.setMaximized(false);
             externalFrame.setBounds(x, y, fw, fh);
             externalFrame.toFront();
 
@@ -789,6 +791,8 @@ public class MainFrame extends JRibbonFrame
                 {
                     final IcyExternalFrame externalFrame = viewers[f].getIcyExternalFrame();
 
+                    if (externalFrame.isMaximized())
+                        externalFrame.setMaximized(false);
                     externalFrame.setBounds(x + (j * dx), y + (i * dy), dx, dy);
                     externalFrame.toFront();
                 }

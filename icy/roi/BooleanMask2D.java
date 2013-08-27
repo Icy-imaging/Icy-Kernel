@@ -26,13 +26,13 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Class to define a 2D boolean mask and make basic boolean operation between masks.
- * The bounds property of this object define the area of the mask.
- * The mask contains the boolean mask itself.
+ * Class to define a 2D boolean mask and make basic boolean operation between masks.<br>
+ * The bounds property of this object define the area of the mask where the mask contains the
+ * boolean mask itself.
  * 
  * @author Stephane
  */
-public class BooleanMask2D
+public class BooleanMask2D implements Cloneable
 {
     private static class Component
     {
@@ -119,37 +119,48 @@ public class BooleanMask2D
     }
 
     /**
-     * Build global boolean mask from union of the specified list of ROI2D
+     * Build global boolean mask from union of all specified mask
      */
-    public static BooleanMask2D getUnionBooleanMask(ROI2D[] rois)
+    public static BooleanMask2D getUnionBooleanMask(List<BooleanMask2D> masks)
     {
         BooleanMask2D result = null;
 
         // compute global union boolean mask of all ROI2D
-        for (ROI2D roi : rois)
+        for (BooleanMask2D bm : masks)
         {
-            // get roi bounds
-            final Rectangle bounds = roi.getBounds();
-            // get the boolean mask of roi (optimized from intersection bounds)
-            final boolean[] mask = roi.getBooleanMask(bounds);
-
             // update global mask
             if (result == null)
-                result = new BooleanMask2D(bounds, mask);
+                result = new BooleanMask2D(bm.bounds, bm.mask);
             else
-                result.union(bounds, mask);
+                result = getUnionBooleanMask(result, bm);
         }
 
         // return an empty BooleanMask2D instead of null
         if (result == null)
-            return new BooleanMask2D();
+            result = new BooleanMask2D();
 
         return result;
     }
 
     /**
-     * Build global boolean mask from union of the specified list of ROI2D
+     * @deprecated Use {@link ROIUtil#getUnion(List)} instead.
      */
+    @Deprecated
+    public static BooleanMask2D getUnionBooleanMask(ROI2D[] rois)
+    {
+        final List<BooleanMask2D> masks = new ArrayList<BooleanMask2D>();
+
+        // compute global union boolean mask of all ROI2D
+        for (ROI2D roi : rois)
+            masks.add(roi.getBooleanMask());
+
+        return getUnionBooleanMask(masks);
+    }
+
+    /**
+     * @deprecated Use {@link ROIUtil#getUnion(List)} instead.
+     */
+    @Deprecated
     public static BooleanMask2D getUnionBooleanMask(ArrayList<ROI2D> rois)
     {
         return getUnionBooleanMask(rois.toArray(new ROI2D[rois.size()]));
@@ -164,7 +175,20 @@ public class BooleanMask2D
     }
 
     /**
-     * Build resulting mask from union of the mask1 and mask2.
+     * Build resulting mask from union of the mask1 and mask2:
+     * 
+     * <pre>
+     *        mask1          +       mask2        =      result
+     *
+     *     ################     ################     ################
+     *     ##############         ##############     ################
+     *     ############             ############     ################
+     *     ##########                 ##########     ################
+     *     ########                     ########     ################
+     *     ######                         ######     ######    ######
+     *     ####                             ####     ####        ####
+     *     ##                                 ##     ##            ##
+     * </pre>
      */
     public static BooleanMask2D getUnionBooleanMask(Rectangle bounds1, boolean[] mask1, Rectangle bounds2,
             boolean[] mask2)
@@ -207,54 +231,54 @@ public class BooleanMask2D
     }
 
     /**
-     * Build global boolean mask from intersection of the specified list of ROI2D
+     * Build global boolean mask from intersection of all specified mask
      */
-    public static BooleanMask2D getIntersectBooleanMask(ROI2D[] rois)
+    public static BooleanMask2D getIntersectionBooleanMask(List<BooleanMask2D> masks)
     {
         BooleanMask2D result = null;
 
         // compute global intersect boolean mask of all ROI2D
-        for (ROI2D roi : rois)
+        for (BooleanMask2D bm : masks)
         {
-            // get roi bounds
-            final Rectangle bounds = roi.getBounds();
-            // get the boolean mask of roi (optimized from intersection bounds)
-            final boolean[] mask = roi.getBooleanMask(bounds);
-
             // update global mask
             if (result == null)
-                result = new BooleanMask2D(bounds, mask);
+                result = new BooleanMask2D(bm.bounds, bm.mask);
             else
-                result.intersect(bounds, mask);
+                result = getIntersectionBooleanMask(result, bm);
         }
 
         // return an empty BooleanMask2D instead of null
         if (result == null)
-            return new BooleanMask2D();
+            result = new BooleanMask2D();
 
         return result;
     }
 
     /**
-     * Build global boolean mask from intersection of the specified list of ROI2D
+     * Build resulting mask from intersection of the mask1 and mask2.
      */
-    public static BooleanMask2D getIntersectBooleanMask(ArrayList<ROI2D> rois)
+    public static BooleanMask2D getIntersectionBooleanMask(BooleanMask2D mask1, BooleanMask2D mask2)
     {
-        return getIntersectBooleanMask(rois.toArray(new ROI2D[rois.size()]));
+        return getIntersectionBooleanMask(mask1.bounds, mask1.mask, mask2.bounds, mask2.mask);
     }
 
     /**
-     * Build resulting mask from intersection of the mask1 and mask2.
+     * Build resulting mask from intersection of the mask1 and mask2:
+     * 
+     * <pre>
+     *        mask1     intersect     mask2      =        result
+     *
+     *     ################     ################     ################
+     *     ##############         ##############       ############
+     *     ############             ############         ########
+     *     ##########                 ##########           ####
+     *     ########                     ########
+     *     ######                         ######
+     *     ####                             ####
+     *     ##                                 ##
+     * </pre>
      */
-    public static BooleanMask2D getIntersectBooleanMask(BooleanMask2D mask1, BooleanMask2D mask2)
-    {
-        return getIntersectBooleanMask(mask1.bounds, mask1.mask, mask2.bounds, mask2.mask);
-    }
-
-    /**
-     * Build resulting mask from intersection of the mask1 and mask2.
-     */
-    public static BooleanMask2D getIntersectBooleanMask(Rectangle bounds1, boolean[] mask1, Rectangle bounds2,
+    public static BooleanMask2D getIntersectionBooleanMask(Rectangle bounds1, boolean[] mask1, Rectangle bounds2,
             boolean[] mask2)
     {
         final Rectangle intersect = bounds1.intersection(bounds2);
@@ -284,37 +308,93 @@ public class BooleanMask2D
     }
 
     /**
-     * Build global boolean mask from exclusive union of the specified list of ROI2D
+     * @deprecated Use {@link ROIUtil#getIntersection(List)} instead.
      */
-    public static BooleanMask2D getExclusiveUnionBooleanMask(ROI2D[] rois)
+    @Deprecated
+    public static BooleanMask2D getIntersectBooleanMask(ROI2D[] rois)
     {
-        BooleanMask2D result = null;
+        final List<BooleanMask2D> masks = new ArrayList<BooleanMask2D>();
 
         // compute global union boolean mask of all ROI2D
         for (ROI2D roi : rois)
-        {
-            // get roi bounds
-            final Rectangle bounds = roi.getBounds();
-            // get the boolean mask of roi (optimized from intersection bounds)
-            final boolean[] mask = roi.getBooleanMask(bounds);
+            masks.add(roi.getBooleanMask());
 
+        return getIntersectionBooleanMask(masks);
+    }
+
+    /**
+     * @deprecated Use {@link ROIUtil#getIntersection(List)} instead.
+     */
+    @Deprecated
+    public static BooleanMask2D getIntersectBooleanMask(ArrayList<ROI2D> rois)
+    {
+        return getIntersectBooleanMask(rois.toArray(new ROI2D[rois.size()]));
+    }
+
+    /**
+     * @deprecated Use {@link #getIntersectionBooleanMask(BooleanMask2D, BooleanMask2D)} instead.
+     */
+    @Deprecated
+    public static BooleanMask2D getIntersectBooleanMask(BooleanMask2D mask1, BooleanMask2D mask2)
+    {
+        return getIntersectionBooleanMask(mask1.bounds, mask1.mask, mask2.bounds, mask2.mask);
+    }
+
+    /**
+     * @deprecated Use
+     *             {@link #getIntersectionBooleanMask(Rectangle, boolean[], Rectangle, boolean[])}
+     *             instead.
+     */
+    @Deprecated
+    public static BooleanMask2D getIntersectBooleanMask(Rectangle bounds1, boolean[] mask1, Rectangle bounds2,
+            boolean[] mask2)
+    {
+        return getIntersectionBooleanMask(bounds1, mask1, bounds2, mask2);
+    }
+
+    /**
+     * Build global boolean mask from exclusive union of all specified mask
+     */
+    public static BooleanMask2D getExclusiveUnionBooleanMask(List<BooleanMask2D> masks)
+    {
+        BooleanMask2D result = null;
+
+        // compute global exclusive union boolean mask of all ROI2D
+        for (BooleanMask2D bm : masks)
+        {
             // update global mask
             if (result == null)
-                result = new BooleanMask2D(bounds, mask);
+                result = new BooleanMask2D(bm.bounds, bm.mask);
             else
-                result.exclusiveUnion(bounds, mask);
+                result = getExclusiveUnionBooleanMask(result, bm);
         }
 
         // return an empty BooleanMask2D instead of null
         if (result == null)
-            return new BooleanMask2D();
+            result = new BooleanMask2D();
 
         return result;
     }
 
     /**
-     * Build global boolean mask from exclusive union of the specified list of ROI2D
+     * @deprecated Use {@link ROIUtil#getExclusiveUnion(List)} instead.
      */
+    @Deprecated
+    public static BooleanMask2D getExclusiveUnionBooleanMask(ROI2D[] rois)
+    {
+        final List<BooleanMask2D> masks = new ArrayList<BooleanMask2D>();
+
+        // compute global union boolean mask of all ROI2D
+        for (ROI2D roi : rois)
+            masks.add(roi.getBooleanMask());
+
+        return getExclusiveUnionBooleanMask(masks);
+    }
+
+    /**
+     * @deprecated Use {@link ROIUtil#getExclusiveUnion(List)} instead.
+     */
+    @Deprecated
     public static BooleanMask2D getExclusiveUnionBooleanMask(ArrayList<ROI2D> rois)
     {
         return getExclusiveUnionBooleanMask(rois.toArray(new ROI2D[rois.size()]));
@@ -329,7 +409,20 @@ public class BooleanMask2D
     }
 
     /**
-     * Build resulting mask from exclusive union of the mask1 and mask2.
+     * Build resulting mask from exclusive union of the mask1 and mask2:
+     * 
+     * <pre>
+     *          mask1       xor      mask2        =       result
+     *
+     *     ################     ################
+     *     ##############         ##############     ##            ##
+     *     ############             ############     ####        ####
+     *     ##########                 ##########     ######    ######
+     *     ########                     ########     ################
+     *     ######                         ######     ######    ######
+     *     ####                             ####     ####        ####
+     *     ##                                 ##     ##            ##
+     * </pre>
      */
     public static BooleanMask2D getExclusiveUnionBooleanMask(Rectangle bounds1, boolean[] mask1, Rectangle bounds2,
             boolean[] mask2)
@@ -386,7 +479,7 @@ public class BooleanMask2D
     }
 
     /**
-     * @deprecated Use {@link #getExclusiveUnionBooleanMask(ArrayList)} instead.
+     * @deprecated Use {@link #getExclusiveUnionBooleanMask(List)} instead.
      */
     @Deprecated
     public static BooleanMask2D getXorBooleanMask(ArrayList<ROI2D> rois)
@@ -423,7 +516,20 @@ public class BooleanMask2D
     }
 
     /**
-     * Build resulting mask from the subtraction of mask2 from mask1.
+     * Build resulting mask from the subtraction of mask2 from mask1:
+     * 
+     * <pre>
+     *        mask1          -        mask2       =  result
+     *
+     *     ################     ################
+     *     ##############         ##############     ##
+     *     ############             ############     ####
+     *     ##########                 ##########     ######
+     *     ########                     ########     ########
+     *     ######                         ######     ######
+     *     ####                             ####     ####
+     *     ##                                 ##     ##
+     * </pre>
      */
     public static BooleanMask2D getSubtractionMask(Rectangle bounds1, boolean[] mask1, Rectangle bounds2,
             boolean[] mask2)
@@ -467,7 +573,7 @@ public class BooleanMask2D
      * @return
      *         Edge points of specified component sorted in ascending XY order :
      * 
-     *         <pre>
+     * <pre>
      *  123 
      *  4 5
      *  6 7
@@ -746,7 +852,7 @@ public class BooleanMask2D
      * @param sorted
      *        When true points are returned in ascending XY order :
      * 
-     *        <pre>
+     * <pre>
      * Ymin  12 
      *      3456
      *       78
@@ -1033,17 +1139,35 @@ public class BooleanMask2D
     /**
      * Compute intersection with specified mask and return result in a new mask
      */
-    public BooleanMask2D getIntersect(BooleanMask2D booleanMask)
+    public BooleanMask2D getIntersection(BooleanMask2D booleanMask)
     {
-        return getIntersectBooleanMask(this, booleanMask);
+        return getIntersectionBooleanMask(this, booleanMask);
     }
 
     /**
      * Compute intersection with specified mask and return result in a new mask
      */
+    public BooleanMask2D getIntersection(Rectangle bounds, boolean[] mask)
+    {
+        return getIntersectionBooleanMask(this.bounds, this.mask, bounds, mask);
+    }
+
+    /**
+     * @deprecated Use {@link #getIntersection(BooleanMask2D)} instead.
+     */
+    @Deprecated
+    public BooleanMask2D getIntersect(BooleanMask2D booleanMask)
+    {
+        return getIntersection(booleanMask);
+    }
+
+    /**
+     * @deprecated Use {@link #getIntersection(Rectangle, boolean[])} instead.
+     */
+    @Deprecated
     public BooleanMask2D getIntersect(Rectangle bounds, boolean[] mask)
     {
-        return getIntersectBooleanMask(this.bounds, this.mask, bounds, mask);
+        return getIntersection(bounds, mask);
     }
 
     /**
@@ -1063,19 +1187,35 @@ public class BooleanMask2D
     }
 
     /**
-     * Compute exclusive or operation with specified mask and return result in a new mask
+     * Compute exclusive union operation with specified mask and return result in a new mask
      */
     public BooleanMask2D getExclusiveUnion(BooleanMask2D booleanMask)
     {
-        return getXorBooleanMask(this, booleanMask);
+        return getExclusiveUnionBooleanMask(this, booleanMask);
     }
 
     /**
-     * Compute exclusive or operation with specified mask and return result in a new mask
+     * Compute exclusive union operation with specified mask and return result in a new mask
      */
     public BooleanMask2D getExclusiveUnion(Rectangle bounds, boolean[] mask)
     {
-        return getXorBooleanMask(this.bounds, this.mask, bounds, mask);
+        return getExclusiveUnionBooleanMask(this.bounds, this.mask, bounds, mask);
+    }
+
+    /**
+     * Subtract the specified mask from current and return result in a new mask.
+     */
+    public BooleanMask2D getSubtraction(BooleanMask2D mask)
+    {
+        return getSubtractionMask(this, mask);
+    }
+
+    /**
+     * Subtract the specified mask from current and return result in a new mask.
+     */
+    public BooleanMask2D getSubtraction(Rectangle bounds, boolean[] mask)
+    {
+        return getSubtractionMask(this.bounds, this.mask, bounds, mask);
     }
 
     /**
@@ -1097,38 +1237,42 @@ public class BooleanMask2D
     }
 
     /**
-     * Compute intersection with specified mask
+     * @deprecated Use {@link #getIntersect(BooleanMask2D)} instead.
      */
+    @Deprecated
     public void intersect(BooleanMask2D booleanMask)
     {
-        final BooleanMask2D result = getIntersect(booleanMask);
+        final BooleanMask2D result = getIntersection(booleanMask);
 
         bounds = result.bounds;
         mask = result.mask;
     }
 
     /**
-     * Compute intersection with specified mask
+     * @deprecated Use {@link #getIntersection(Rectangle, boolean[])} instead.
      */
+    @Deprecated
     public void intersect(Rectangle bounds, boolean[] mask)
     {
-        final BooleanMask2D result = getIntersect(bounds, mask);
+        final BooleanMask2D result = getIntersection(bounds, mask);
 
         this.bounds = result.bounds;
         this.mask = result.mask;
     }
 
     /**
-     * Compute union with specified mask
+     * @deprecated Use {@link #getUnion(BooleanMask2D)} instead.
      */
+    @Deprecated
     public void union(BooleanMask2D booleanMask)
     {
         union(booleanMask.bounds, booleanMask.mask);
     }
 
     /**
-     * Compute union with specified mask
+     * @deprecated Use {@link #getUnion(Rectangle, boolean[])} instead.
      */
+    @Deprecated
     public void union(Rectangle bounds, boolean[] mask)
     {
         final BooleanMask2D result = getUnion(bounds, mask);
@@ -1138,16 +1282,18 @@ public class BooleanMask2D
     }
 
     /**
-     * Compute exclusive or operation with specified mask
+     * @deprecated Use {@link #getExclusiveUnion(BooleanMask2D)} instead.
      */
+    @Deprecated
     public void exclusiveUnion(BooleanMask2D booleanMask)
     {
         exclusiveUnion(booleanMask.bounds, booleanMask.mask);
     }
 
     /**
-     * Compute exclusive or operation with specified mask
+     * @deprecated Use {@link #getExclusiveUnion(Rectangle, boolean[])} instead.
      */
+    @Deprecated
     public void exclusiveUnion(Rectangle bounds, boolean[] mask)
     {
         final BooleanMask2D result = getExclusiveUnion(bounds, mask);
@@ -1175,9 +1321,9 @@ public class BooleanMask2D
     }
 
     /**
-     * Optimize mask bounds so it fit mask content.
+     * Get the smallest bounds which fit mask content.
      */
-    public void optimizeBounds()
+    public Rectangle getOptimizedBounds()
     {
         // find best bounds
         final int sizeX = bounds.width;
@@ -1209,17 +1355,34 @@ public class BooleanMask2D
         // test if empty
         if (minX == sizeX)
             // empty bounds
-            setBounds(new Rectangle(bounds.x, bounds.y, 0, 0));
-        else
-            // new calculated bounds
-            setBounds(new Rectangle(bounds.x + minX, bounds.y + minY, (maxX - minX) + 1, (maxY - minY) + 1));
+            return new Rectangle(bounds.x, bounds.y, 0, 0);
+
+        // new calculated bounds
+        return new Rectangle(bounds.x + minX, bounds.y + minY, (maxX - minX) + 1, (maxY - minY) + 1);
     }
 
     /**
-     * Modify bounds of BooleanMask.<br>
-     * Keep mask data intersecting from old bounds. 
+     * Optimize mask bounds so it fit mask content.
      */
+    public void optimizeBounds()
+    {
+        moveBounds(getOptimizedBounds());
+    }
+
+    /**
+     * @deprecated Use {@link #moveBounds(Rectangle)} instead.
+     */
+    @Deprecated
     public void setBounds(Rectangle value)
+    {
+        moveBounds(value);
+    }
+
+    /**
+     * Change the bounds of BooleanMask.<br>
+     * Keep mask data intersecting from old bounds.
+     */
+    public void moveBounds(Rectangle value)
     {
         // bounds changed ?
         if (!bounds.equals(value))
@@ -1266,5 +1429,11 @@ public class BooleanMask2D
             // set new bounds
             bounds = value;
         }
+    }
+
+    @Override
+    public Object clone()
+    {
+        return new BooleanMask2D((Rectangle) bounds.clone(), mask.clone());
     }
 }

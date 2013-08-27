@@ -29,6 +29,117 @@ import icy.type.point.Point5D;
 public abstract class Rectangle5D
 {
     /**
+     * Intersects the pair of specified source <code>Rectangle5D</code> objects and puts the result
+     * into the specified destination <code>Rectangle5D</code> object. One of the source rectangles
+     * can also be the destination to avoid creating a third Rectangle5D object, but in this case
+     * the original points of this source rectangle will be overwritten by this method.
+     * 
+     * @param src1
+     *        the first of a pair of <code>Rectangle5D</code> objects to be intersected with each
+     *        other
+     * @param src2
+     *        the second of a pair of <code>Rectangle5D</code> objects to be intersected with each
+     *        other
+     * @param dest
+     *        the <code>Rectangle5D</code> that holds the
+     *        results of the intersection of <code>src1</code> and <code>src2</code>
+     */
+    public static void intersect(Rectangle5D src1, Rectangle5D src2, Rectangle5D dest)
+    {
+        final double x1 = Math.max(src1.getMinX(), src2.getMinX());
+        final double y1 = Math.max(src1.getMinY(), src2.getMinY());
+        final double z1 = Math.max(src1.getMinZ(), src2.getMinZ());
+        final double t1 = Math.max(src1.getMinT(), src2.getMinT());
+        final double c1 = Math.max(src1.getMinC(), src2.getMinC());
+        final double x2 = Math.min(src1.getMaxX(), src2.getMaxX());
+        final double y2 = Math.min(src1.getMaxY(), src2.getMaxY());
+        final double z2 = Math.min(src1.getMaxZ(), src2.getMaxZ());
+        final double t2 = Math.min(src1.getMaxT(), src2.getMaxT());
+        final double c2 = Math.min(src1.getMaxC(), src2.getMaxC());
+        dest.setRect(x1, y1, z1, t1, c1, x2 - x1, y2 - y1, z2 - z1, t2 - t1, c2 - c1);
+    }
+
+    /**
+     * Returns a new <code>Rectangle5D</code> object representing the intersection of this
+     * <code>Rectangle5D</code> with the specified <code>Rectangle5D</code>.
+     * 
+     * @param r
+     *        the <code>Rectangle5D</code> to be intersected with this <code>Rectangle5D</code>
+     * @return the largest <code>Rectangle5D</code> contained in both the specified
+     *         <code>Rectangle5D</code> and in this <code>Rectangle5D</code>.
+     */
+    public abstract Rectangle5D createIntersection(Rectangle5D r);
+
+    /**
+     * Unions the pair of source <code>Rectangle5D</code> objects and puts the result into the
+     * specified destination <code>Rectangle5D</code> object. One of the source rectangles can also
+     * be the destination to avoid creating a third Rectangle5D object, but in this case the
+     * original points of this source rectangle will be overwritten by this method.
+     * 
+     * @param src1
+     *        the first of a pair of <code>Rectangle5D</code> objects to be combined with each other
+     * @param src2
+     *        the second of a pair of <code>Rectangle5D</code> objects to be combined with each
+     *        other
+     * @param dest
+     *        the <code>Rectangle5D</code> that holds the
+     *        results of the union of <code>src1</code> and <code>src2</code>
+     */
+    public static void union(Rectangle5D src1, Rectangle5D src2, Rectangle5D dest)
+    {
+        double x1 = Math.min(src1.getMinX(), src2.getMinX());
+        double y1 = Math.min(src1.getMinY(), src2.getMinY());
+        double z1 = Math.min(src1.getMinZ(), src2.getMinZ());
+        double t1 = Math.min(src1.getMinT(), src2.getMinT());
+        double c1 = Math.min(src1.getMinC(), src2.getMinC());
+        double x2 = Math.max(src1.getMaxX(), src2.getMaxX());
+        double y2 = Math.max(src1.getMaxY(), src2.getMaxY());
+        double z2 = Math.max(src1.getMaxZ(), src2.getMaxZ());
+        double t2 = Math.max(src1.getMaxT(), src2.getMaxT());
+        double c2 = Math.max(src1.getMaxC(), src2.getMaxC());
+        dest.setRect(x1, y1, z1, t1, c1, x2 - x1, y2 - y1, z2 - z1, t2 - t1, c2 - c1);
+    }
+
+    /**
+     * Returns a new <code>Rectangle5D</code> object representing the union of this
+     * <code>Rectangle5D</code> with the specified <code>Rectangle5D</code>.
+     * 
+     * @param r
+     *        the <code>Rectangle5D</code> to be combined with this <code>Rectangle5D</code>
+     * @return the smallest <code>Rectangle5D</code> containing both the specified
+     *         <code>Rectangle5D</code> and this <code>Rectangle5D</code>.
+     */
+    public abstract Rectangle5D createUnion(Rectangle5D r);
+
+    /**
+     * Sets the position and size of this <code>Rectangle5D</code> to the specified
+     * <code>double</code> values.
+     * 
+     * @param x
+     *        the X coordinate of the minimum corner position of this <code>Rectangle5D</code>
+     * @param y
+     *        the Y coordinate of the minimum corner position of this <code>Rectangle5D</code>
+     * @param z
+     *        the Z coordinate of the minimum corner position of this <code>Rectangle5D</code>
+     * @param t
+     *        the T coordinate of the minimum corner position of this <code>Rectangle5D</code>
+     * @param c
+     *        the C coordinate of the minimum corner position of this <code>Rectangle5D</code>
+     * @param sizeX
+     *        size for X dimension of this <code>Rectangle5D</code>
+     * @param sizeY
+     *        size for Y dimension of this <code>Rectangle5D</code>
+     * @param sizeZ
+     *        size for Z dimension of this <code>Rectangle5D</code>
+     * @param sizeT
+     *        size for T dimension of this <code>Rectangle5D</code>
+     * @param sizeC
+     *        size for C dimension of this <code>Rectangle5D</code>
+     */
+    public abstract void setRect(double x, double y, double z, double t, double c, double sizeX, double sizeY,
+            double sizeZ, double sizeT, double sizeC);
+
+    /**
      * Returns the minimum X coordinate.
      */
     public abstract double getX();
@@ -87,6 +198,62 @@ public abstract class Rectangle5D
     }
 
     /**
+     * Returns an integer {@link Rectangle5D} that completely encloses the
+     * double <code>Rectangle</code>. The returned <code>Rectangle</code> might also fail to
+     * completely enclose the original double <code>Rectangle</code> if it overflows
+     * the limited range of the integer data type.
+     * 
+     * @return an integer <code>Rectangle</code> that completely encloses
+     *         the actual double <code>Rectangle</code>.
+     */
+    public Rectangle5D.Integer getBoundsInt()
+    {
+        double sx = getSizeX();
+        double sy = getSizeY();
+        double sz = getSizeZ();
+        double st = getSizeT();
+        double sc = getSizeC();
+        double x = getX();
+        double y = getY();
+        double z = getZ();
+        double t = getT();
+        double c = getC();
+        int ix = (int) Math.floor(x);
+        int iy = (int) Math.floor(y);
+        int iz = (int) Math.floor(z);
+        int it = (int) Math.floor(t);
+        int ic = (int) Math.floor(c);
+        int isx;
+        int isy;
+        int isz;
+        int ist;
+        int isc;
+
+        if (sx < 0d)
+            isx = 0;
+        else
+            isx = ((int) Math.ceil(x + sx)) - ix;
+        if (sy < 0d)
+            isy = 0;
+        else
+            isy = ((int) Math.ceil(y + sy)) - iy;
+        if (sz < 0d)
+            isz = 0;
+        else
+            isz = ((int) Math.ceil(z + sz)) - iz;
+        if (st < 0d)
+            ist = 0;
+        else
+            ist = ((int) Math.ceil(t + st)) - it;
+        if (sc < 0d)
+            isc = 0;
+        else
+            isc = ((int) Math.ceil(c + sc)) - ic;
+
+        return new Rectangle5D.Integer(ix, iy, iz, it, ic, isx, isy, isz, ist, isc);
+    }
+
+    /**
      * Sets the minimum X coordinate.
      */
     public abstract void setX(double x);
@@ -136,25 +303,418 @@ public abstract class Rectangle5D
      */
     public abstract void setSizeC(double value);
 
+    /**
+     * Returns the smallest X coordinate of the rectangle.
+     */
+    public double getMinX()
+    {
+        return getX();
+    }
+
+    /**
+     * Returns the smallest Y coordinate of the rectangle.
+     */
+    public double getMinY()
+    {
+        return getY();
+    }
+
+    /**
+     * Returns the smallest Z coordinate of the rectangle.
+     */
+    public double getMinZ()
+    {
+        return getZ();
+    }
+
+    /**
+     * Returns the smallest T coordinate of the rectangle.
+     */
+    public double getMinT()
+    {
+        return getT();
+    }
+
+    /**
+     * Returns the smallest C coordinate of the rectangle.
+     */
+    public double getMinC()
+    {
+        return getC();
+    }
+
+    /**
+     * Returns the largest X coordinate of the rectangle.
+     */
+    public double getMaxX()
+    {
+        return getX() + getSizeX();
+    }
+
+    /**
+     * Returns the largest Y coordinate of the rectangle.
+     */
+    public double getMaxY()
+    {
+        return getY() + getSizeY();
+    }
+
+    /**
+     * Returns the largest Z coordinate of the rectangle.
+     */
+    public double getMaxZ()
+    {
+        return getZ() + getSizeZ();
+    }
+
+    /**
+     * Returns the largest T coordinate of the rectangle.
+     */
+    public double getMaxT()
+    {
+        return getT() + getSizeT();
+    }
+
+    /**
+     * Returns the largest C coordinate of the rectangle.
+     */
+    public double getMaxC()
+    {
+        return getC() + getSizeC();
+    }
+
+    /**
+     * Returns the X coordinate of the center of the rectangle.
+     */
+    public double getCenterX()
+    {
+        return getX() + getSizeX() / 2d;
+    }
+
+    /**
+     * Returns the Y coordinate of the center of the rectangle.
+     */
+    public double getCenterY()
+    {
+        return getY() + getSizeY() / 2d;
+    }
+
+    /**
+     * Returns the Z coordinate of the center of the rectangle.
+     */
+    public double getCenterZ()
+    {
+        return getY() + getSizeY() / 2d;
+    }
+
+    /**
+     * Returns the T coordinate of the center of the rectangle.
+     */
+    public double getCenterT()
+    {
+        return getT() + getSizeT() / 2d;
+    }
+
+    /**
+     * Returns the C coordinate of the center of the rectangle.
+     */
+    public double getCenterC()
+    {
+        return getC() + getSizeC() / 2d;
+    }
+
+    /**
+     * Determines whether the <code>Rectangle5D</code> is empty.
+     * 
+     * @return <code>true</code> if the <code>Rectangle5D</code> is empty; <code>false</code>
+     *         otherwise.
+     */
+    public boolean isEmpty()
+    {
+        return (getSizeX() <= 0d) || (getSizeY() <= 0d) || (getSizeZ() <= 0d) || (getSizeT() <= 0d)
+                || (getSizeC() <= 0d);
+    }
+
+    /**
+     * Tests if the specified coordinates are inside the boundary of the <code>Rectangle5D</code>.
+     * 
+     * @param x
+     *        the specified X coordinate to be tested
+     * @param y
+     *        the specified Y coordinate to be tested
+     * @param z
+     *        the specified Z coordinate to be tested
+     * @param t
+     *        the specified T coordinate to be tested
+     * @param c
+     *        the specified C coordinate to be tested
+     * @return <code>true</code> if the specified coordinates are inside
+     *         the <code>Rectangle5D</code> boundary; <code>false</code> otherwise.
+     */
+    public boolean contains(double x, double y, double z, double t, double c)
+    {
+        double x0 = getX();
+        double y0 = getY();
+        double z0 = getY();
+        double t0 = getT();
+        double c0 = getC();
+        return (x >= x0) && (y >= y0) && (z >= z0) && (t >= t0) && (c >= c0) && (x < x0 + getSizeX())
+                && (y < y0 + getSizeY()) && (z < z0 + getSizeZ()) && (t < t0 + getSizeT()) && (c < c0 + getSizeC());
+    }
+
+    /**
+     * Tests if the <code>Rectangle5D</code> entirely contains the specified 5D rectangular area.<br>
+     * All coordinates that lie inside the 5D rectangular area must lie within the
+     * <code>Rectangle5D</code>.
+     * 
+     * @param x
+     *        the X coordinate of the minimum corner position of the specified rectangular area
+     * @param y
+     *        the Y coordinate of the minimum corner position of the specified rectangular area
+     * @param z
+     *        the Z coordinate of the minimum corner position of the specified rectangular area
+     * @param t
+     *        the T coordinate of the minimum corner position of the specified rectangular area
+     * @param c
+     *        the C coordinate of the minimum corner position of the specified rectangular area
+     * @param sizeX
+     *        size for X dimension of the specified rectangular area
+     * @param sizeY
+     *        size for Y dimension of the specified rectangular area
+     * @param sizeZ
+     *        size for Z dimension of the specified rectangular area
+     * @param sizeT
+     *        size for T dimension of the specified rectangular area
+     * @param sizeC
+     *        size for C dimension of the specified rectangular area
+     * @return <code>true</code> if the <code>Rectangle5D</code> entirely contains the
+     *         specified 5D rectangular area; <code>false</code> otherwise
+     * @see #intersects
+     */
+    public boolean contains(double x, double y, double z, double t, double c, double sizeX, double sizeY, double sizeZ,
+            double sizeT, double sizeC)
+    {
+        if (isEmpty())
+            return false;
+
+        double x0 = getX();
+        double y0 = getY();
+        double z0 = getZ();
+        double t0 = getT();
+        double c0 = getC();
+        return (x >= x0) && (y >= y0) && (z >= z0) && (t >= t0) && (x + sizeX <= x0 + getSizeX())
+                && (y + sizeY <= y0 + getSizeY()) && (z + sizeZ <= z0 + getSizeZ()) && (t + sizeT <= t0 + getSizeT())
+                && (c + sizeC <= c0 + getSizeC());
+    }
+
+    /**
+     * Tests if the <code>Rectangle5D</code> entirely contains the specified
+     * <code>Rectangle5D</code>.
+     * 
+     * @see #contains(double, double, double, double, double, double, double, double, double,
+     *      double)
+     */
+    public boolean contains(Rectangle5D rect)
+    {
+        return contains(rect.getX(), rect.getY(), rect.getZ(), rect.getT(), rect.getC(), rect.getSizeX(),
+                rect.getSizeY(), rect.getSizeZ(), rect.getSizeT(), rect.getSizeC());
+    }
+
+    /**
+     * Tests if the interior of the <code>Rectangle5D</code> intersects the interior of a specified
+     * 5D rectangular area.<br>
+     * The 5D rectangular area is considered to intersect the <code>Rectangle5D</code> if any point
+     * is contained in both the interior of the <code>Rectangle5D</code> and the specified
+     * rectangular area.
+     * 
+     * @param x
+     *        the X coordinate of the minimum corner position of the specified rectangular area
+     * @param y
+     *        the Y coordinate of the minimum corner position of the specified rectangular area
+     * @param z
+     *        the Z coordinate of the minimum corner position of the specified rectangular area
+     * @param t
+     *        the T coordinate of the minimum corner position of the specified rectangular area
+     * @param c
+     *        the C coordinate of the minimum corner position of the specified rectangular area
+     * @param sizeX
+     *        size for X dimension of the specified rectangular area
+     * @param sizeY
+     *        size for Y dimension of the specified rectangular area
+     * @param sizeZ
+     *        size for Z dimension of the specified rectangular area
+     * @param sizeT
+     *        size for T dimension of the specified rectangular area
+     * @param sizeC
+     *        size for C dimension of the specified rectangular area
+     * @return <code>true</code> if the interior of the <code>Rectangle5D</code> and
+     *         the interior of the 5D rectangular area intersect.
+     */
+    public boolean intersects(double x, double y, double z, double t, double c, double sizeX, double sizeY,
+            double sizeZ, double sizeT, double sizeC)
+    {
+        double x0 = getX();
+        double y0 = getY();
+        double z0 = getZ();
+        double t0 = getT();
+        double c0 = getC();
+        return (x + sizeX > x0) && (y + sizeY > y0) && (z + sizeZ > z0) && (t + sizeT > t0) && (x < x0 + getSizeX())
+                && (y < y0 + getSizeY()) && (z < z0 + getSizeZ()) && (t < t0 + getSizeT()) && (c < c0 + getSizeC());
+    }
+
+    /**
+     * Tests if the interior of the <code>Rectangle5D</code> intersects the interior of a specified
+     * <code>Rectangle5D</code>.<br>
+     * 
+     * @see #intersects(double, double, double, double, double, double, double, double, double,
+     *      double)
+     */
+    public boolean intersects(Rectangle5D rect)
+    {
+        return intersects(rect.getX(), rect.getY(), rect.getZ(), rect.getT(), rect.getC(), rect.getSizeX(),
+                rect.getSizeY(), rect.getSizeZ(), rect.getSizeT(), rect.getSizeC());
+    }
+
+    /**
+     * Adds a 5D point, specified by the double precision coordinates arguments, to this
+     * <code>Rectangle5D</code>. The resulting <code>Rectangle5D</code> is the smallest
+     * <code>Rectangle5D</code> that contains both the original <code>Rectangle5D</code> and the
+     * specified 5D point.
+     * <p>
+     * After adding a 5D point, a call to <code>contains</code> with the added point as an argument
+     * does not necessarily return <code>true</code>. The <code>contains</code> method does not
+     * return <code>true</code> for points on the edges of a rectangle. Therefore, if the added 5D
+     * point falls on edge of the enlarged rectangle, <code>contains</code> returns
+     * <code>false</code> for that point.
+     * 
+     * @param newx
+     *        the X coordinate of the new point
+     * @param newy
+     *        the Y coordinate of the new point
+     * @param newz
+     *        the Z coordinate of the new point
+     * @param newt
+     *        the T coordinate of the new point
+     * @param newc
+     *        the C coordinate of the new point
+     */
+    public void add(double newx, double newy, double newz, double newt, double newc)
+    {
+        double x1 = Math.min(getMinX(), newx);
+        double x2 = Math.max(getMaxX(), newx);
+        double y1 = Math.min(getMinY(), newy);
+        double y2 = Math.max(getMaxY(), newy);
+        double z1 = Math.min(getMinZ(), newz);
+        double z2 = Math.max(getMaxZ(), newz);
+        double t1 = Math.min(getMinT(), newt);
+        double t2 = Math.max(getMaxT(), newt);
+        double c1 = Math.min(getMinC(), newc);
+        double c2 = Math.max(getMaxC(), newc);
+        setRect(x1, y1, z1, t1, c1, x2 - x1, y2 - y1, z2 - z1, t2 - t1, c2 - c1);
+    }
+
+    /**
+     * Adds the <code>Point5D</code> object <code>pt</code> to this <code>Rectangle5D</code>.
+     * The resulting <code>Rectangle5D</code> is the smallest <code>Rectangle5D</code> that contains
+     * both the original <code>Rectangle5D</code> and the specified <code>Point5D</code>.
+     * <p>
+     * After adding a point, a call to <code>contains</code> with the added point as an argument
+     * does not necessarily return <code>true</code>. The <code>contains</code> method does not
+     * return <code>true</code> for points on the edges of a rectangle. Therefore, if the added
+     * point falls on edge of the enlarged rectangle, <code>contains</code> returns
+     * <code>false</code> for that point.
+     * 
+     * @param pt
+     *        the new <code>Point5D</code> to add to this <code>Rectangle5D</code>.
+     */
+    public void add(Point5D pt)
+    {
+        add(pt.getX(), pt.getY(), pt.getZ(), pt.getT(), pt.getC());
+    }
+
+    /**
+     * Adds a <code>Rectangle5D</code> object to this <code>Rectangle5D</code>. The resulting
+     * <code>Rectangle5D</code> is the union of the two <code>Rectangle5D</code> objects.
+     * 
+     * @param r
+     *        the <code>Rectangle5D</code> to add to this <code>Rectangle5D</code>.
+     */
+    public void add(Rectangle5D r)
+    {
+        double x1 = Math.min(getMinX(), r.getMinX());
+        double x2 = Math.max(getMaxX(), r.getMaxX());
+        double y1 = Math.min(getMinY(), r.getMinY());
+        double y2 = Math.max(getMaxY(), r.getMaxY());
+        double z1 = Math.min(getMinZ(), r.getMinZ());
+        double z2 = Math.max(getMaxZ(), r.getMaxZ());
+        double t1 = Math.min(getMinT(), r.getMinT());
+        double t2 = Math.max(getMaxT(), r.getMaxT());
+        double c1 = Math.min(getMinC(), r.getMinC());
+        double c2 = Math.max(getMaxC(), r.getMaxC());
+        setRect(x1, y1, z1, t1, c1, x2 - x1, y2 - y1, z2 - z1, t2 - t1, c2 - c1);
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof Rectangle5D)
+        {
+            final Rectangle5D rect = (Rectangle5D) obj;
+            return (getX() == rect.getX()) && (getY() == rect.getY()) && (getC() == rect.getC())
+                    && (getZ() == rect.getZ()) && (getT() == rect.getT()) && (getSizeX() == rect.getSizeX())
+                    && (getSizeY() == rect.getSizeY()) && (getSizeC() == rect.getSizeC())
+                    && (getSizeZ() == rect.getSizeZ()) && (getSizeT() == rect.getSizeT());
+        }
+
+        return super.equals(obj);
+    }
+
     public static class Double extends Rectangle5D
     {
-        private double x;
-        private double y;
-        private double z;
-        private double t;
-        private double c;
+        public double x;
+        public double y;
+        public double z;
+        public double t;
+        public double c;
 
-        private double sizeX;
-        private double sizeY;
-        private double sizeZ;
-        private double sizeT;
-        private double sizeC;
+        public double sizeX;
+        public double sizeY;
+        public double sizeZ;
+        public double sizeT;
+        public double sizeC;
 
         public Double(double x, double y, double z, double t, double c, double sizeX, double sizeY, double sizeZ,
                 double sizeT, double sizeC)
         {
             super();
 
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.t = t;
+            this.c = c;
+            this.sizeX = sizeX;
+            this.sizeY = sizeY;
+            this.sizeZ = sizeZ;
+            this.sizeT = sizeT;
+            this.sizeC = sizeC;
+        }
+
+        public Double(Rectangle5D r)
+        {
+            this(r.getX(), r.getY(), r.getZ(), r.getT(), r.getC(), r.getSizeX(), r.getSizeY(), r.getSizeZ(), r
+                    .getSizeT(), r.getSizeC());
+        }
+
+        public Double()
+        {
+            this(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
+
+        @Override
+        public void setRect(double x, double y, double z, double t, double c, double sizeX, double sizeY, double sizeZ,
+                double sizeT, double sizeC)
+        {
             this.x = x;
             this.y = y;
             this.z = z;
@@ -286,21 +846,41 @@ public abstract class Rectangle5D
         {
             sizeC = value;
         }
+
+        @Override
+        public Rectangle5D createIntersection(Rectangle5D r)
+        {
+            final Rectangle5D.Double result = new Rectangle5D.Double();
+
+            intersect(this, r, result);
+
+            return result;
+        }
+
+        @Override
+        public Rectangle5D createUnion(Rectangle5D r)
+        {
+            final Rectangle5D.Double result = new Rectangle5D.Double();
+
+            union(this, r, result);
+
+            return result;
+        }
     }
 
     public static class Float extends Rectangle5D
     {
-        private float x;
-        private float y;
-        private float z;
-        private float t;
-        private float c;
+        public float x;
+        public float y;
+        public float z;
+        public float t;
+        public float c;
 
-        private float sizeX;
-        private float sizeY;
-        private float sizeZ;
-        private float sizeT;
-        private float sizeC;
+        public float sizeX;
+        public float sizeY;
+        public float sizeZ;
+        public float sizeT;
+        public float sizeC;
 
         public Float(float x, float y, float z, float t, float c, float sizeX, float sizeY, float sizeZ, float sizeT,
                 float sizeC)
@@ -317,6 +897,33 @@ public abstract class Rectangle5D
             this.sizeZ = sizeZ;
             this.sizeT = sizeT;
             this.sizeC = sizeC;
+        }
+
+        public Float(Rectangle5D r)
+        {
+            this((float) r.getX(), (float) r.getY(), (float) r.getZ(), (float) r.getT(), (float) r.getC(), (float) r
+                    .getSizeX(), (float) r.getSizeY(), (float) r.getSizeZ(), (float) r.getSizeT(), (float) r.getSizeC());
+        }
+
+        public Float()
+        {
+            this(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
+
+        @Override
+        public void setRect(double x, double y, double z, double t, double c, double sizeX, double sizeY, double sizeZ,
+                double sizeT, double sizeC)
+        {
+            this.x = (float) x;
+            this.y = (float) y;
+            this.z = (float) z;
+            this.t = (float) t;
+            this.c = (float) c;
+            this.sizeX = (float) sizeX;
+            this.sizeY = (float) sizeY;
+            this.sizeZ = (float) sizeZ;
+            this.sizeT = (float) sizeT;
+            this.sizeC = (float) sizeC;
         }
 
         @Override
@@ -438,26 +1045,133 @@ public abstract class Rectangle5D
         {
             sizeC = (float) value;
         }
+
+        @Override
+        public Rectangle5D createIntersection(Rectangle5D r)
+        {
+            final Rectangle5D.Float result = new Rectangle5D.Float();
+
+            intersect(this, r, result);
+
+            return result;
+        }
+
+        @Override
+        public Rectangle5D createUnion(Rectangle5D r)
+        {
+            final Rectangle5D.Float result = new Rectangle5D.Float();
+
+            union(this, r, result);
+
+            return result;
+        }
     }
 
     public static class Integer extends Rectangle5D
     {
-        private int x;
-        private int y;
-        private int z;
-        private int t;
-        private int c;
-
-        private int sizeX;
-        private int sizeY;
-        private int sizeZ;
-        private int sizeT;
-        private int sizeC;
+        public int x;
+        public int y;
+        public int z;
+        public int t;
+        public int c;
+        public int sizeX;
+        public int sizeY;
+        public int sizeZ;
+        public int sizeT;
+        public int sizeC;
 
         public Integer(int x, int y, int z, int t, int c, int sizeX, int sizeY, int sizeZ, int sizeT, int sizeC)
         {
             super();
 
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.t = t;
+            this.c = c;
+            this.sizeX = sizeX;
+            this.sizeY = sizeY;
+            this.sizeZ = sizeZ;
+            this.sizeT = sizeT;
+            this.sizeC = sizeC;
+        }
+
+        public Integer(Rectangle5D.Integer r)
+        {
+            this(r.x, r.y, r.z, r.t, r.c, r.sizeX, r.sizeY, r.sizeZ, r.sizeT, r.sizeC);
+        }
+
+        public Integer(Rectangle5D r)
+        {
+            this(r.getBoundsInt());
+        }
+
+        public Integer()
+        {
+            this(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
+
+        /**
+         * Sets the bounds of this {@code Rectangle5D} to the integer bounds
+         * which encompass the specified double bounds.
+         * 
+         * @param x
+         *        the X coordinate of the minimum corner position of this <code>Rectangle5D</code>
+         * @param y
+         *        the Y coordinate of the minimum corner position of this <code>Rectangle5D</code>
+         * @param z
+         *        the Z coordinate of the minimum corner position of this <code>Rectangle5D</code>
+         * @param t
+         *        the T coordinate of the minimum corner position of this <code>Rectangle5D</code>
+         * @param c
+         *        the C coordinate of the minimum corner position of this <code>Rectangle5D</code>
+         * @param sizeX
+         *        size for X dimension of this <code>Rectangle5D</code>
+         * @param sizeY
+         *        size for Y dimension of this <code>Rectangle5D</code>
+         * @param sizeZ
+         *        size for Z dimension of this <code>Rectangle5D</code>
+         * @param sizeT
+         *        size for T dimension of this <code>Rectangle5D</code>
+         * @param sizeC
+         *        size for C dimension of this <code>Rectangle5D</code>
+         */
+        @Override
+        public void setRect(double x, double y, double z, double t, double c, double sizeX, double sizeY, double sizeZ,
+                double sizeT, double sizeC)
+        {
+            final Rectangle5D.Integer r = new Rectangle5D.Double(x, y, z, t, c, sizeX, sizeY, sizeZ, sizeT, sizeC)
+                    .getBoundsInt();
+            setRect(r.x, r.y, r.z, r.t, r.c, r.sizeX, r.sizeY, r.sizeZ, r.sizeT, r.sizeC);
+        }
+
+        /**
+         * Sets the position and size of this <code>Rectangle5D</code> to the specified
+         * <code>integer</code> values.
+         * 
+         * @param x
+         *        the X coordinate of the minimum corner position of this <code>Rectangle5D</code>
+         * @param y
+         *        the Y coordinate of the minimum corner position of this <code>Rectangle5D</code>
+         * @param z
+         *        the Z coordinate of the minimum corner position of this <code>Rectangle5D</code>
+         * @param t
+         *        the T coordinate of the minimum corner position of this <code>Rectangle5D</code>
+         * @param c
+         *        the C coordinate of the minimum corner position of this <code>Rectangle5D</code>
+         * @param sizeX
+         *        size for X dimension of this <code>Rectangle5D</code>
+         * @param sizeY
+         *        size for Y dimension of this <code>Rectangle5D</code>
+         * @param sizeZ
+         *        size for Z dimension of this <code>Rectangle5D</code>
+         * @param sizeT
+         *        size for T dimension of this <code>Rectangle5D</code>
+         * @param sizeC
+         *        size for C dimension of this <code>Rectangle5D</code>
+         */
+        public void setRect(int x, int y, int z, int t, int c, int sizeX, int sizeY, int sizeZ, int sizeT, int sizeC)
+        {
             this.x = x;
             this.y = y;
             this.z = z;
@@ -588,6 +1302,32 @@ public abstract class Rectangle5D
         public void setSizeC(double value)
         {
             sizeC = (int) value;
+        }
+
+        @Override
+        public Rectangle5D.Integer getBoundsInt()
+        {
+            return new Rectangle5D.Integer(x, y, z, t, c, sizeX, sizeY, sizeZ, sizeT, sizeC);
+        }
+
+        @Override
+        public Rectangle5D createIntersection(Rectangle5D r)
+        {
+            final Rectangle5D.Integer result = new Rectangle5D.Integer();
+
+            intersect(this, r, result);
+
+            return result;
+        }
+
+        @Override
+        public Rectangle5D createUnion(Rectangle5D r)
+        {
+            final Rectangle5D.Integer result = new Rectangle5D.Integer();
+
+            union(this, r, result);
+
+            return result;
         }
     }
 }

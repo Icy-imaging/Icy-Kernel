@@ -130,7 +130,7 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
                 ID_AUTOORDER, true));
 
         setAccessory(optionPanel);
-        updateOptionPanel();
+        updateOptionPanel(false);
 
         // listen file filter change
         addPropertyChangeListener(this);
@@ -227,16 +227,15 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
             // refresh preview
             if (f != null)
                 optionPanel.updatePreview(f.getAbsolutePath());
-        }
 
-        // setting state
-        updateOptionPanel();
+            updateOptionPanel((f != null) && f.isDirectory());
+        }
+        else
+            updateOptionPanel(getSelectedFiles().length > 1);
     }
 
-    protected void updateOptionPanel()
+    protected void updateOptionPanel(boolean multi)
     {
-        final boolean multi = getSelectedFiles().length > 1;
-
         optionPanel.setSeparateSequenceEnabled(multi);
         optionPanel.setAutoOrderEnabled(multi);
     }

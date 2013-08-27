@@ -18,75 +18,37 @@
  */
 package icy.roi;
 
-import icy.canvas.IcyCanvas;
 import icy.painter.Anchor2D;
-import icy.painter.LineAnchor2D;
-import icy.util.XMLUtil;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.util.List;
-
-import org.w3c.dom.Node;
 
 /**
- * ROI 2D Line.
- * 
- * @author Stephane
+ * @deprecated Use {@link icy.roi.roi2d.ROI2DLine} instead.
  */
-public class ROI2DLine extends ROI2DShape
+@Deprecated
+public class ROI2DLine extends icy.roi.roi2d.ROI2DLine
 {
-    protected class ROI2DLineAnchor2D extends LineAnchor2D
+    /**
+     * @deprecated Use {@link icy.roi.roi2d.ROI2DLine.ROI2DLineAnchor2D} instead.
+     */
+    @Deprecated
+    protected class ROI2DLineAnchor2D extends icy.roi.roi2d.ROI2DLine.ROI2DLineAnchor2D
     {
         public ROI2DLineAnchor2D(Point2D position)
         {
-            super(position, painter.getColor(), painter.getFocusedColor());
-        }
-
-        @Override
-        protected Anchor2D getPreviousPoint()
-        {
-            if (this == pt1)
-                return pt2;
-            return pt1;
+            super(position);
         }
     }
 
-    public static final String ID_PT1 = "pt1";
-    public static final String ID_PT2 = "pt2";
-
-    protected final Anchor2D pt1;
-    protected final Anchor2D pt2;
-
     public ROI2DLine(Point2D pt1, Point2D pt2)
     {
-        super(new Line2D.Double());
-
-        this.pt1 = createAnchor(pt1);
-        this.pt2 = createAnchor(pt2);
-
-        // add to the control point list
-        controlPoints.add(this.pt1);
-        controlPoints.add(this.pt2);
-
-        this.pt1.addOverlayListener(this);
-        this.pt1.addAnchorListener(this);
-        this.pt2.addOverlayListener(this);
-        this.pt2.addAnchorListener(this);
-
-        // select the pt2 to size the line for "interactive mode"
-        this.pt2.setSelected(true);
-        setMousePos(pt2);
-
-        updateShape();
-
-        setName("Line2D");
+        super(pt1, pt2);
     }
 
     public ROI2DLine(Line2D line)
     {
-        this(line.getP1(), line.getP2());
+        super(line);
     }
 
     /**
@@ -95,126 +57,27 @@ public class ROI2DLine extends ROI2DShape
     @Deprecated
     public ROI2DLine(Point2D pt, boolean cm)
     {
-        this(pt);
+        super(pt);
     }
 
     public ROI2DLine(Point2D pt)
     {
-        this(new Point2D.Double(pt.getX(), pt.getY()), pt);
+        super(pt);
     }
 
     public ROI2DLine(double x1, double y1, double x2, double y2)
     {
-        this(new Point2D.Double(x1, y1), new Point2D.Double(x2, y2));
+        super(x1, y1, x2, y2);
     }
 
     public ROI2DLine()
     {
-        this(new Point2D.Double(), new Point2D.Double());
+        super();
     }
 
     @Override
     protected Anchor2D createAnchor(Point2D pos)
     {
         return new ROI2DLineAnchor2D(pos);
-    }
-
-    public Line2D getLine()
-    {
-        return (Line2D) shape;
-    }
-
-    public void setBounds2D(Rectangle2D bounds)
-    {
-        beginUpdate();
-        try
-        {
-            pt1.setPosition(bounds.getMinX(), bounds.getMinY());
-            pt2.setPosition(bounds.getMaxX(), bounds.getMaxY());
-        }
-        finally
-        {
-            endUpdate();
-        }
-    }
-
-    public void setLine(Line2D line)
-    {
-        setBounds2D(line.getBounds2D());
-    }
-    
-    @Override
-    protected void updateShape()
-    {
-        getLine().setLine(pt1.getPosition(), pt2.getPosition());
-
-        // call super method after shape has been updated
-        super.updateShape();
-    }
-
-    @Override
-    public boolean canAddPoint()
-    {
-        // this ROI doesn't support point add
-        return false;
-    }
-
-    @Override
-    protected boolean removePoint(IcyCanvas canvas, Anchor2D pt)
-    {
-        // remove point on this ROI remove the ROI
-        canvas.getSequence().removeROI(this);
-        return true;
-    }
-
-    @Override
-    protected double getTotalDistance(List<Point2D> points)
-    {
-        // by default the total length don't need last point connection
-        return super.getTotalDistance(points, false);
-    }
-
-    @Override
-    public double getPerimeter()
-    {
-        return getTotalDistance(getPoints());
-    }
-
-    @Override
-    public double getVolume()
-    {
-        return 0d;
-    }
-
-    @Override
-    public boolean loadFromXML(Node node)
-    {
-        beginUpdate();
-        try
-        {
-            if (!super.loadFromXML(node))
-                return false;
-
-            pt1.loadFromXML(XMLUtil.getElement(node, ID_PT1));
-            pt2.loadFromXML(XMLUtil.getElement(node, ID_PT2));
-        }
-        finally
-        {
-            endUpdate();
-        }
-
-        return true;
-    }
-
-    @Override
-    public boolean saveToXML(Node node)
-    {
-        if (!super.saveToXML(node))
-            return false;
-
-        pt1.saveToXML(XMLUtil.setElement(node, ID_PT1));
-        pt2.saveToXML(XMLUtil.setElement(node, ID_PT2));
-
-        return true;
     }
 }

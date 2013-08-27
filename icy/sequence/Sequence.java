@@ -2823,12 +2823,12 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @deprecated Use {@link #getGlobalChannelTypeBounds()} instead.
+     * @deprecated Use {@link #getChannelsGlobalTypeBounds()} instead.
      */
     @Deprecated
     public double[] getGlobalComponentAbsBounds()
     {
-        return getChannelTypeGlobalBounds();
+        return getChannelsGlobalTypeBounds();
     }
 
     /**

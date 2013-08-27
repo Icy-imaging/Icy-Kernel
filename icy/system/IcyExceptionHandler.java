@@ -333,7 +333,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         values.put(NetworkUtil.ID_OSVERSION, SystemUtil.getOSVersion());
         values.put(NetworkUtil.ID_OSARCH, SystemUtil.getOSArch());
 
-        icyId = "ICY Version " + Icy.version + "\n";
+        icyId = "Icy Version " + Icy.version + "\n";
         javaId = SystemUtil.getJavaName() + " " + SystemUtil.getJavaVersion() + " ("
                 + SystemUtil.getJavaArchDataModel() + " bit)\n";
         osId = "Running on " + SystemUtil.getOSName() + " " + SystemUtil.getOSVersion() + " (" + SystemUtil.getOSArch()

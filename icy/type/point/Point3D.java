@@ -94,6 +94,18 @@ public abstract class Point3D
     }
 
     @Override
+    public boolean equals(Object obj)
+    {
+        if (obj instanceof Point3D)
+        {
+            final Point3D pt = (Point3D) obj;
+            return (getX() == pt.getX()) && (getY() == pt.getY()) && (getZ() == pt.getZ());
+        }
+
+        return super.equals(obj);
+    }
+
+    @Override
     public String toString()
     {
         return "Point3D[" + getX() + ", " + getY() + ", " + getZ() + "]";
@@ -268,9 +280,9 @@ public abstract class Point3D
 
     public static class Integer extends Point3D
     {
-        int x;
-        int y;
-        int z;
+        public int x;
+        public int y;
+        public int z;
 
         public Integer(int x, int y, int z)
         {

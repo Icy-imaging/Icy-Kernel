@@ -630,4 +630,12 @@ public class MathUtil
 
         return result;
     }
+
+    /**
+     * Calculate the cubic root of the specified value.
+     */
+    public static double cubicRoot(double value)
+    {
+        return Math.pow(value, 1d / 3d);
+    }
 }

@@ -30,7 +30,7 @@ public interface ActiveViewerListener extends EventListener
     public void viewerDeactivated(Viewer viewer);
 
     /**
-     * The current active viewer has changed.
+     * A property change of current active viewer has changed.
      */
     public void activeViewerChanged(ViewerEvent event);
 }

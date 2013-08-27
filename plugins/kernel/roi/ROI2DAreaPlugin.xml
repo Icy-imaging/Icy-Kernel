@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<root>
+<name>Area</name>
+<version>1.0.0.0</version>
+<description>Area type ROI (2D)
+Draw in with left mouse button and erase with right button and press ESC when you're done to unselect the ROI.
+You can increase or decrease the pencil size with '+' and '-' keys.
+Use the DELETE key to remove the ROI when it is selected or focused.</description>
+<classname>plugins.kernel.roi.ROI2DAreaPlugin</classname>
+</root>

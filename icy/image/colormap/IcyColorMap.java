@@ -1020,6 +1020,20 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     }
 
     /**
+     * Returns the dominant color of this colormap.<br>
+     * Warning: this need sometime to compute.
+     */
+    public Color getDominantColor()
+    {
+        final Color colors[] = new Color[SIZE];
+
+        for (int i = 0; i < colors.length; i++)
+            colors[i] = getColor(i);
+
+        return ColorUtil.getDominantColor(colors);
+    }
+
+    /**
      * Update internal RGB cache
      */
     private void updateRGBCache()

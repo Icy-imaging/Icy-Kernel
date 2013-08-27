@@ -19,12 +19,10 @@
 package icy.gui.component.sequence;
 
 import icy.common.listener.AcceptListener;
-import icy.gui.main.ActiveSequenceListener;
 import icy.gui.main.GlobalSequenceListener;
 import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.sequence.Sequence;
-import icy.sequence.SequenceEvent;
 import icy.util.StringUtil;
 
 import java.awt.Component;
@@ -46,7 +44,7 @@ import javax.swing.ListCellRenderer;
  * @author Fabrice de Chaumont & Stephane<br>
  */
 
-public class SequenceChooser extends JComboBox implements GlobalSequenceListener, ActiveSequenceListener
+public class SequenceChooser extends JComboBox implements GlobalSequenceListener
 {
     public interface SequenceChooserListener
     {
@@ -78,16 +76,22 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
 
         public void updateList()
         {
+            // save selected item
             final Object selected = getSelectedItem();
+
             final int oldSize = cachedList.size();
 
             cachedList.clear();
 
             // add null entry at first position
-            if (nullEntry)
+            if (nullEntryName != null)
                 cachedList.add(null);
 
             final List<Sequence> sequences = Icy.getMainInterface().getSequences();
+
+            // add active sequence entry at second position
+            if ((sequences.size() > 0) && (activeSequence != null))
+                cachedList.add(activeSequence);
 
             // apply filter if any
             if (filter != null)
@@ -104,9 +108,14 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
             // some elements has been removed
             if (newSize < oldSize)
                 fireIntervalRemoved(this, newSize, oldSize - 1);
+            // some elements has been added
+            else if (newSize > oldSize)
+                fireIntervalAdded(this, oldSize, newSize - 1);
+
             // and some elements changed
             fireContentsChanged(this, 0, newSize - 1);
 
+            // restore selected item
             setSelectedItem(selected);
         }
 
@@ -131,27 +140,46 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
      * var
      */
     AcceptListener filter;
-    final boolean nullEntry;
-    final boolean autoSelectIfNull;
+    final String nullEntryName;
 
     /**
      * listeners
      */
-    private final List<SequenceChooserListener> listeners;
+    protected final List<SequenceChooserListener> listeners;
 
     /**
      * internals
      */
-    private Sequence previousSelectedSequence;
-    private final SequenceComboModel model;
+    protected Sequence previousSelectedSequence;
+    protected final SequenceComboModel model;
+    protected final Sequence activeSequence;
 
-    public SequenceChooser(final int sequenceNameMaxLength, final boolean nullEntry, final boolean autoSelectIfNull,
-            final String nullEntryName)
+    /**
+     * Create a new Sequence chooser component (JComboBox for sequence selection).
+     * 
+     * @param activeSequenceEntry
+     *        If true the combobox will display an <i>Active Sequence</i> entry so when we select it
+     *        the {@link #getSelectedSequence()} method returns the current active sequence.
+     * @param nullEntryName
+     *        If this parameter is not <code>null</code> the combobox will display an extra entry
+     *        with the given string to define <code>null</code> sequence selection so when this
+     *        entry will be selected the {@link #getSelectedSequence()} will return
+     *        <code>null</code>.
+     * @param nameMaxLength
+     *        Maximum authorized length for the sequence name display in the combobox (extra
+     *        characters are truncated).<br>
+     *        That prevent the combobox to be resized to very large width.
+     */
+    public SequenceChooser(final boolean activeSequenceEntry, final String nullEntryName, final int nameMaxLength)
     {
         super();
 
-        this.nullEntry = nullEntry;
-        this.autoSelectIfNull = autoSelectIfNull;
+        this.nullEntryName = nullEntryName;
+
+        if (activeSequenceEntry)
+            activeSequence = new Sequence("active sequence");
+        else
+            activeSequence = null;
 
         model = new SequenceComboModel();
         setModel(model);
@@ -167,7 +195,7 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
                 {
                     final String name = ((Sequence) value).getName();
 
-                    result.setText(StringUtil.limit(name, sequenceNameMaxLength));
+                    result.setText(StringUtil.limit(name, nameMaxLength));
                     result.setToolTipText(name);
                 }
                 else if (value == null)
@@ -189,24 +217,68 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
         ComponentUtil.setFixedHeight(this, 26);
     }
 
+    /**
+     * @deprecated Use {@link #SequenceChooser(boolean, String, int)} instead.
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public SequenceChooser(final int sequenceNameMaxLength, final boolean nullEntry, final boolean autoSelectIfNull,
+            final String nullEntryName)
+    {
+        this(false, nullEntry ? nullEntryName : null, sequenceNameMaxLength);
+    }
+
+    /**
+     * @deprecated Use {@link #SequenceChooser(boolean, String, int)} instead.
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
     public SequenceChooser(int maxLength, boolean nullEntry, boolean autoSelectIfNull)
     {
-        this(maxLength, nullEntry, autoSelectIfNull, "no sequence");
+        this(false, nullEntry ? "no sequence" : null, maxLength);
     }
 
+    /**
+     * @deprecated Use {@link #SequenceChooser(boolean, String, int)} instead.
+     */
+    @Deprecated
     public SequenceChooser(int maxLength, boolean nullEntry)
     {
-        this(maxLength, nullEntry, true);
+        this(false, nullEntry ? "no sequence" : null, maxLength);
     }
 
-    public SequenceChooser(int maxLength)
+    /**
+     * Create a new Sequence chooser component (JComboBox for sequence selection).
+     * 
+     * @param activeSequenceEntry
+     *        If true the combobox will display an <i>Active Sequence</i> entry so when we select it
+     *        the {@link #getSelectedSequence()} method returns the current active sequence.
+     * @param nullEntryName
+     *        If this parameter is not <code>null</code> the combobox will display an extra entry
+     *        with the given string to define <code>null</code> sequence selection so when this
+     *        entry will be selected the {@link #getSelectedSequence()} will return
+     *        <code>null</code>.
+     */
+    public SequenceChooser(boolean activeSequenceEntry, String nullEntryName)
     {
-        this(maxLength, true);
+        this(activeSequenceEntry, nullEntryName, 64);
     }
 
+    /**
+     * @deprecated Use {@link #SequenceChooser(boolean, String, int)} instead.
+     */
+    @Deprecated
+    public SequenceChooser(int nameMaxLength)
+    {
+        this(false, "no sequence", nameMaxLength);
+    }
+
+    /**
+     * Create a new Sequence chooser component (JComboBox for sequence selection).
+     */
     public SequenceChooser()
     {
-        this(64);
+        this(true, null, 64);
     }
 
     @Override
@@ -215,13 +287,11 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
         super.addNotify();
 
         Icy.getMainInterface().addGlobalSequenceListener(this);
-        Icy.getMainInterface().addActiveSequenceListener(this);
     }
 
     @Override
     public void removeNotify()
     {
-        Icy.getMainInterface().removeActiveSequenceListener(this);
         Icy.getMainInterface().removeGlobalSequenceListener(this);
 
         super.removeNotify();
@@ -236,8 +306,8 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
     }
 
     /**
-     * @param filter
-     *        the filter to set
+     * Set a filter for sequence display.<br>
+     * Only Sequence accepted by the filter will appear in the combobox.
      */
     public void setFilter(AcceptListener filter)
     {
@@ -249,12 +319,26 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
     }
 
     /**
-     * @return current sequence selected in combo. null if no sequence is selected or if the
-     *         sequence do not exists anymore.
+     * @return current selected sequence.
      */
     public Sequence getSelectedSequence()
     {
-        return (Sequence) getSelectedItem();
+        final Sequence result = (Sequence) getSelectedItem();
+
+        // special case for active sequence
+        if (result == activeSequence)
+            return Icy.getMainInterface().getActiveSequence();
+
+        return result;
+    }
+
+    /**
+     * Select the <i>Active sequence</i> entry if enable.
+     */
+    public void setActiveSequenceSelected()
+    {
+        if (activeSequence != null)
+            setSelectedItem(activeSequence);
     }
 
     /**
@@ -264,12 +348,7 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
     public void setSelectedSequence(Sequence sequence)
     {
         if (sequence != getSelectedSequence())
-        {
-            if (Icy.getMainInterface().getSequences().contains(sequence))
-                setSelectedItem(sequence);
-            else
-                setSelectedItem(null); // set to "no sequence" selection
-        }
+            setSelectedItem(sequence);
     }
 
     /**
@@ -321,30 +400,6 @@ public class SequenceChooser extends JComboBox implements GlobalSequenceListener
             // sequence changed
             sequenceChanged(selected);
         }
-    }
-
-    @Override
-    public void sequenceActivated(Sequence sequence)
-    {
-        // active sequence changed
-        if (sequence != null)
-        {
-            // if nothing was selected, pick the newly focused sequence
-            if ((getSelectedItem() == null) && autoSelectIfNull)
-                setSelectedItem(sequence);
-        }
-    }
-
-    @Override
-    public void sequenceDeactivated(Sequence sequence)
-    {
-        // nothing here
-    }
-
-    @Override
-    public void activeSequenceChanged(SequenceEvent event)
-    {
-        // nothing here
     }
 
     @Override

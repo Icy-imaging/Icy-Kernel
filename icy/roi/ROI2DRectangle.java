@@ -22,9 +22,10 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 /**
- * @author Stephane
+ * @deprecated Use {@link icy.roi.roi2d.ROI2DRectangle} instead.
  */
-public class ROI2DRectangle extends ROI2DRectShape
+@Deprecated
+public class ROI2DRectangle extends icy.roi.roi2d.ROI2DRectangle
 {
     /**
      * @deprecated
@@ -32,19 +33,17 @@ public class ROI2DRectangle extends ROI2DRectShape
     @Deprecated
     public ROI2DRectangle(Point2D topLeft, Point2D bottomRight, boolean cm)
     {
-        this(topLeft, bottomRight);
+        super(topLeft, bottomRight);
     }
 
     public ROI2DRectangle(Point2D topLeft, Point2D bottomRight)
     {
-        super(new Rectangle2D.Double(), topLeft, bottomRight);
-
-        setName("Rectangle2D");
+        super(topLeft, bottomRight);
     }
 
     public ROI2DRectangle(double xmin, double ymin, double xmax, double ymax)
     {
-        this(new Point2D.Double(xmin, ymin), new Point2D.Double(xmax, ymax));
+        super(xmin, ymin, xmax, ymax);
     }
 
     /**
@@ -53,13 +52,12 @@ public class ROI2DRectangle extends ROI2DRectShape
     @Deprecated
     public ROI2DRectangle(Rectangle2D rectangle, boolean cm)
     {
-        this(rectangle);
+        super(rectangle);
     }
 
     public ROI2DRectangle(Rectangle2D rectangle)
     {
-        this(new Point2D.Double(rectangle.getMinX(), rectangle.getMinY()), new Point2D.Double(rectangle.getMaxX(),
-                rectangle.getMaxY()));
+        super(rectangle);
     }
 
     /**
@@ -68,40 +66,16 @@ public class ROI2DRectangle extends ROI2DRectShape
     @Deprecated
     public ROI2DRectangle(Point2D pt, boolean cm)
     {
-        this(pt);
+        super(pt);
     }
 
     public ROI2DRectangle(Point2D pt)
     {
-        this(new Point2D.Double(pt.getX(), pt.getY()), pt);
+        super(pt);
     }
 
     public ROI2DRectangle()
     {
-        this(new Point2D.Double(), new Point2D.Double());
-    }
-
-    public Rectangle2D getRectangle()
-    {
-        return (Rectangle2D) shape;
-    }
-
-    public void setRectangle(Rectangle2D rectangle)
-    {
-        setBounds2D(rectangle);
-    }
-
-    @Override
-    public double getPerimeter()
-    {
-        return getTotalDistance(getPoints());
-    }
-
-    @Override
-    public double getVolume()
-    {
-        final Rectangle2D r = getRectangle();
-
-        return r.getWidth() * r.getHeight();
+        super();
     }
 }

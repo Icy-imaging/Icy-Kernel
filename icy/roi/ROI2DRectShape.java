@@ -18,86 +18,36 @@
  */
 package icy.roi;
 
-import icy.canvas.IcyCanvas;
 import icy.painter.Anchor2D;
-import icy.painter.RectAnchor2D;
-import icy.util.XMLUtil;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
 
-import org.w3c.dom.Node;
-
 /**
- * Base class for rectangular shape ROI.
- * 
- * @author Stephane
+ * @deprecated Use {@link icy.roi.roi2d.ROI2DRectShape} instead.
  */
-public abstract class ROI2DRectShape extends ROI2DShape
+@Deprecated
+public abstract class ROI2DRectShape extends icy.roi.roi2d.ROI2DRectShape
 {
-    protected class ROI2DRectAnchor2D extends RectAnchor2D
+    /**
+     * @deprecated Use {@link icy.roi.roi2d.ROI2DRectShape.ROI2DRectAnchor2D} instead.
+     */
+    @Deprecated
+    protected class ROI2DRectAnchor2D extends icy.roi.roi2d.ROI2DRectShape.ROI2DRectAnchor2D
     {
         public ROI2DRectAnchor2D(Point2D position, Color color, Color selectedColor)
         {
             super(position, color, selectedColor);
         }
-
-        @Override
-        protected Anchor2D getOppositePoint()
-        {
-            if (this == topLeft)
-                return bottomRight;
-            if (this == topRight)
-                return bottomLeft;
-            if (this == bottomLeft)
-                return topRight;
-
-            return topLeft;
-        };
     }
-
-    public static final String ID_TOPLEFT = "top_left";
-    public static final String ID_BOTTOMRIGHT = "bottom_right";
-
-    protected final Anchor2D topLeft;
-    protected final Anchor2D topRight;
-    protected final Anchor2D bottomLeft;
-    protected final Anchor2D bottomRight;
 
     /**
      * 
      */
     public ROI2DRectShape(RectangularShape shape, Point2D topLeft, Point2D bottomRight)
     {
-        super(shape);
-
-        this.topLeft = createAnchor(topLeft);
-        this.topRight = createAnchor(bottomRight.getX(), topLeft.getY());
-        this.bottomLeft = createAnchor(topLeft.getX(), bottomRight.getY());
-        this.bottomRight = createAnchor(bottomRight);
-
-        // add to the control point list (important to add them in clockwise order)
-        controlPoints.add(this.topLeft);
-        controlPoints.add(this.topRight);
-        controlPoints.add(this.bottomRight);
-        controlPoints.add(this.bottomLeft);
-
-        this.topLeft.addOverlayListener(this);
-        this.topLeft.addAnchorListener(this);
-        this.topRight.addOverlayListener(this);
-        this.topRight.addAnchorListener(this);
-        this.bottomLeft.addOverlayListener(this);
-        this.bottomLeft.addAnchorListener(this);
-        this.bottomRight.addOverlayListener(this);
-        this.bottomRight.addAnchorListener(this);
-
-        // select the bottom right point by default for interactive mode
-        this.bottomRight.setSelected(true);
-        setMousePos(bottomRight);
-
-        updateShape();
+        super(shape, topLeft, bottomRight);
     }
 
     @Override
@@ -105,124 +55,4 @@ public abstract class ROI2DRectShape extends ROI2DShape
     {
         return new ROI2DRectAnchor2D(pos, getColor(), getFocusedColor());
     }
-
-    protected RectangularShape getRectangularShape()
-    {
-        return (RectangularShape) shape;
-    }
-
-    public void setBounds2D(Rectangle2D bounds)
-    {
-        beginUpdate();
-        try
-        {
-            // set anchors (only 2 significants anchors need to be adjusted)
-            topLeft.setPosition(bounds.getMinX(), bounds.getMinY());
-            bottomRight.setPosition(bounds.getMaxX(), bounds.getMaxY());
-        }
-        finally
-        {
-            endUpdate();
-        }
-    }
-
-    @Override
-    protected void updateShape()
-    {
-        getRectangularShape().setFrameFromDiagonal(topLeft.getPosition(), bottomRight.getPosition());
-
-        // call super method after shape has been updated
-        super.updateShape();
-    }
-
-    @Override
-    public boolean canAddPoint()
-    {
-        // this ROI doesn't support point add
-        return false;
-    }
-
-    @Override
-    protected boolean removePoint(IcyCanvas canvas, Anchor2D pt)
-    {
-        // this ROI doesn't support point remove
-        return false;
-    }
-
-    @Override
-    public void positionChanged(Anchor2D source)
-    {
-        // adjust dependents anchors
-        if (source == topLeft)
-        {
-            bottomLeft.setX(topLeft.getX());
-            topRight.setY(topLeft.getY());
-        }
-        else if (source == topRight)
-        {
-            bottomRight.setX(topRight.getX());
-            topLeft.setY(topRight.getY());
-        }
-        else if (source == bottomLeft)
-        {
-            topLeft.setX(bottomLeft.getX());
-            bottomRight.setY(bottomLeft.getY());
-        }
-        else if (source == bottomRight)
-        {
-            topRight.setX(bottomRight.getX());
-            bottomLeft.setY(bottomRight.getY());
-        }
-
-        super.positionChanged(source);
-    }
-
-    @Override
-    public void translate(double dx, double dy)
-    {
-        beginUpdate();
-        try
-        {
-            // translate (only 2 significants anchors need to be adjusted)
-            topLeft.translate(dx, dy);
-            bottomRight.translate(dx, dy);
-        }
-        finally
-        {
-            endUpdate();
-        }
-    }
-
-    @Override
-    public boolean loadFromXML(Node node)
-    {
-        beginUpdate();
-        try
-        {
-            if (!super.loadFromXML(node))
-                return false;
-
-            topLeft.loadFromXML(XMLUtil.getElement(node, ID_TOPLEFT));
-            bottomRight.loadFromXML(XMLUtil.getElement(node, ID_BOTTOMRIGHT));
-        }
-        finally
-        {
-            endUpdate();
-        }
-
-        return true;
-    }
-
-    @Override
-    public boolean saveToXML(Node node)
-    {
-        if (!super.saveToXML(node))
-            return false;
-
-        topLeft.saveToXML(XMLUtil.setElement(node, ID_TOPLEFT));
-        bottomRight.saveToXML(XMLUtil.setElement(node, ID_BOTTOMRIGHT));
-
-        return true;
-    }
-
 }

@@ -29,9 +29,10 @@ import icy.resource.icon.IcyIcon;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.roi.ROI2DRectangle;
+import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
 import icy.system.SystemUtil;
-import icy.util.ShapeUtil.ShapeOperation;
+import icy.util.ShapeUtil.BooleanOperator;
 import icy.util.XMLUtil;
 
 import java.awt.event.ActionEvent;
@@ -539,11 +540,8 @@ public class RoiActions
                 sequence.beginUpdate();
                 try
                 {
-                    final List<ROI> selectedROI = roisPanel.getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
-
-                    final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.OR);
+                    final List<ROI> selectedROIs = roisPanel.getSelectedRois();
+                    final ROI mergeROI = ROIUtil.merge(selectedROIs, BooleanOperator.OR);
 
                     sequence.addROI(mergeROI);
                     sequence.setSelectedROI(mergeROI);
@@ -587,11 +585,8 @@ public class RoiActions
                 sequence.beginUpdate();
                 try
                 {
-                    final List<ROI> selectedROI = roisPanel.getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
-
-                    final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.AND);
+                    final List<ROI> selectedROIs = roisPanel.getSelectedRois();
+                    final ROI mergeROI = ROIUtil.merge(selectedROIs, BooleanOperator.AND);
 
                     sequence.addROI(mergeROI);
                     sequence.setSelectedROI(mergeROI);
@@ -635,11 +630,8 @@ public class RoiActions
                 sequence.beginUpdate();
                 try
                 {
-                    final List<ROI> selectedROI = roisPanel.getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
-
-                    final ROI mergeROI = ROI2D.merge(selectedROI2D, ShapeOperation.XOR);
+                    final List<ROI> selectedROIs = roisPanel.getSelectedRois();
+                    final ROI mergeROI = ROIUtil.merge(selectedROIs, BooleanOperator.XOR);
 
                     sequence.addROI(mergeROI);
                     sequence.setSelectedROI(mergeROI);

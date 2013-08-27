@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<root>
+<name>Point</name>
+<version>1.0.0.0</version>
+<description>Single point type ROI (2D)
+Click where you want to set your point and press ESC to unselect the ROI.
+Use the DELETE key to remove the ROI when it is selected or focused.</description>
+<classname>plugins.kernel.roi.ROI2DPointPlugin</classname>
+</root>

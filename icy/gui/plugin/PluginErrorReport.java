@@ -18,15 +18,23 @@
  */
 package icy.gui.plugin;
 
-import icy.gui.frame.IcyFrame;
+import icy.gui.frame.error.ErrorReportFrame;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.CancelableProgressFrame;
+import icy.gui.frame.progress.ProgressFrame;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginRepositoryLoader;
 import icy.plugin.PluginUpdater;
+import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.Icon;
+import javax.swing.text.BadLocationException;
 
 /**
  * This class create a report from a plugin crash and ask the
@@ -55,7 +63,7 @@ public class PluginErrorReport
         if ((plugin == null) && StringUtil.isEmpty(devId))
             return;
 
-        if (reportFrameAlreadyExist(plugin, devId))
+        if (ErrorReportFrame.hasErrorFrameOpened())
             return;
 
         // always do that in background process
@@ -103,7 +111,7 @@ public class PluginErrorReport
                                 @Override
                                 public void run()
                                 {
-                                    new PluginErrorReportFrame(plugin, null, title, message);
+                                    doReport(plugin, null, title, message);
                                 }
                             });
                         }
@@ -117,7 +125,7 @@ public class PluginErrorReport
                         @Override
                         public void run()
                         {
-                            new PluginErrorReportFrame(null, devId, title, message);
+                            doReport(null, devId, title, message);
                         }
                     });
                 }
@@ -153,27 +161,55 @@ public class PluginErrorReport
         report(plugin, null, null, message);
     }
 
-    /**
-     * This function test if we already have an active report for the specified plugin
-     */
-    private static boolean reportFrameAlreadyExist(PluginDescriptor plugin, String devId)
+    // internal use only
+    static void doReport(final PluginDescriptor plugin, final String devId, String title, String message)
     {
-        for (IcyFrame frame : IcyFrame.getAllFrames(PluginErrorReportFrame.class))
-        {
-            final PluginErrorReportFrame f = (PluginErrorReportFrame) frame;
+        String str;
+        Icon icon;
 
-            if (plugin != null)
-            {
-                if (StringUtil.equals(f.getPlugin().getName(), plugin.getName()))
-                    return true;
-            }
-            else
-            {
-                if (StringUtil.equals(f.getDevId(), devId))
-                    return true;
-            }
+        // build title
+        if (plugin != null)
+        {
+            str = "<html><br>The plugin named <b>" + plugin.getName() + "</b> has encountered a problem";
+            icon = plugin.getIcon();
+        }
+        else
+        {
+            str = "<html><br>The plugin from the developer <b>" + devId + "</b> has encountered a problem";
+            icon = null;
         }
 
-        return false;
+        if (StringUtil.isEmpty(title))
+            str += ".<br><br>";
+        else
+            str += " :<br><i>" + title + "</i><br><br>";
+
+        str += "Reporting this problem is anonymous and will help improving this plugin.<br><br></html>";
+
+        final ErrorReportFrame frame = new ErrorReportFrame(icon, str, message);
+
+        // set specific report action here
+        frame.setReportAction(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final ProgressFrame progressFrame = new ProgressFrame("Sending report...");
+
+                try
+                {
+                    IcyExceptionHandler.report(plugin, devId, frame.getReportMessage());
+                }
+                catch (BadLocationException ex)
+                {
+                    System.err.println("Error while reporting error :");
+                    IcyExceptionHandler.showErrorMessage(ex, true);
+                }
+                finally
+                {
+                    progressFrame.close();
+                }
+            }
+        });
     }
 }

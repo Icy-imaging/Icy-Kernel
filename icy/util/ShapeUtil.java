@@ -32,6 +32,8 @@ import java.awt.geom.QuadCurve2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Stephane
@@ -43,9 +45,44 @@ public class ShapeUtil
         public boolean consume(Shape shape);
     }
 
-    public static enum ShapeOperation
+    public static enum BooleanOperator
     {
         OR, AND, XOR
+    }
+
+    /**
+     * @deprecated Use {@link BooleanOperator} instead.
+     */
+    @Deprecated
+    public static enum ShapeOperation
+    {
+        OR
+        {
+
+            @Override
+            public BooleanOperator getBooleanOperator()
+            {
+                return BooleanOperator.OR;
+            }
+        },
+        AND
+        {
+            @Override
+            public BooleanOperator getBooleanOperator()
+            {
+                return BooleanOperator.AND;
+            }
+        },
+        XOR
+        {
+            @Override
+            public BooleanOperator getBooleanOperator()
+            {
+                return BooleanOperator.XOR;
+            }
+        };
+
+        public abstract BooleanOperator getBooleanOperator();
     }
 
     /**
@@ -61,27 +98,22 @@ public class ShapeUtil
     }
 
     /**
-     * Merge the specified array of {@link Shape} with the given {@link ShapeOperation}.<br>
+     * Merge the specified list of {@link Shape} with the given {@link BooleanOperator}.<br>
      * 
      * @param shapes
      *        Shapes we want to merge.
-     * @param operation
-     *        {@link ShapeOperation} to apply.
+     * @param operator
+     *        {@link BooleanOperator} to apply.
      * @return {@link Area} shape representing the result of the merge operation.
      */
-    public static Area merge(Shape[] shapes, ShapeOperation operation)
+    public static Area merge(List<Shape> shapes, BooleanOperator operator)
     {
-        if (shapes.length == 0)
-            return new Area();
+        final Area result = new Area();
 
-        final Area result = new Area(shapes[0]);
-
-        // merge rois
-        for (int s = 1; s < shapes.length; s++)
+        // merge shapes
+        for (Shape shape : shapes)
         {
-            final Shape shape = shapes[s];
-
-            switch (operation)
+            switch (operator)
             {
                 case OR:
                     result.add(new Area(shape));
@@ -98,6 +130,15 @@ public class ShapeUtil
         }
 
         return result;
+    }
+
+    /**
+     * @deprecated Use {@link #merge(List, BooleanOperator)} instead.
+     */
+    @Deprecated
+    public static Area merge(Shape[] shapes, ShapeOperation operation)
+    {
+        return merge(Arrays.asList(shapes), operation.getBooleanOperator());
     }
 
     /**
