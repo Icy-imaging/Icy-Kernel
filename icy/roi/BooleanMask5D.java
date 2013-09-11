@@ -3,12 +3,15 @@
  */
 package icy.roi;
 
+import icy.type.point.Point4D;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -37,7 +40,7 @@ public class BooleanMask5D
             return (BooleanMask4D) m1.clone();
 
         // process union of 3D mask
-        return BooleanMask4D.getUnionBooleanMask(m1, m2);
+        return BooleanMask4D.getUnion(m1, m2);
     }
 
     // Internal use only
@@ -47,7 +50,7 @@ public class BooleanMask5D
             return null;
 
         // process intersection of 3D mask
-        return BooleanMask4D.getIntersectionBooleanMask(m1, m2);
+        return BooleanMask4D.getIntersection(m1, m2);
     }
 
     // Internal use only
@@ -66,7 +69,7 @@ public class BooleanMask5D
             return (BooleanMask4D) m1.clone();
 
         // process exclusive union of 3D mask
-        return BooleanMask4D.getExclusiveUnionBooleanMask(m1, m2);
+        return BooleanMask4D.getExclusiveUnion(m1, m2);
     }
 
     // Internal use only
@@ -79,7 +82,7 @@ public class BooleanMask5D
             return (BooleanMask4D) m1.clone();
 
         // process subtraction of 3D mask
-        return BooleanMask4D.getSubtractionMask(m1, m2);
+        return BooleanMask4D.getSubtraction(m1, m2);
     }
 
     /**
@@ -98,7 +101,7 @@ public class BooleanMask5D
      *     ##                                 ##     ##            ##
      * </pre>
      */
-    public static BooleanMask5D getUnionBooleanMask(BooleanMask5D mask1, BooleanMask5D mask2)
+    public static BooleanMask5D getUnion(BooleanMask5D mask1, BooleanMask5D mask2)
     {
         final Rectangle5D.Integer bounds = (Rectangle5D.Integer) mask1.bounds.createUnion(mask2.bounds);
 
@@ -156,7 +159,7 @@ public class BooleanMask5D
      *     ##                                 ##
      * </pre>
      */
-    public static BooleanMask5D getIntersectionBooleanMask(BooleanMask5D mask1, BooleanMask5D mask2)
+    public static BooleanMask5D getIntersection(BooleanMask5D mask1, BooleanMask5D mask2)
     {
         final Rectangle5D.Integer bounds = (Rectangle5D.Integer) mask1.bounds.createIntersection(mask2.bounds);
 
@@ -214,7 +217,7 @@ public class BooleanMask5D
      *     ##                                 ##     ##            ##
      * </pre>
      */
-    public static BooleanMask5D getExclusiveUnionBooleanMask(BooleanMask5D mask1, BooleanMask5D mask2)
+    public static BooleanMask5D getExclusiveUnion(BooleanMask5D mask1, BooleanMask5D mask2)
     {
         final Rectangle5D.Integer bounds = (Rectangle5D.Integer) mask1.bounds.createUnion(mask2.bounds);
 
@@ -272,7 +275,7 @@ public class BooleanMask5D
      *     ##                                 ##     ##
      * </pre>
      */
-    public static BooleanMask5D getSubtractionMask(BooleanMask5D mask1, BooleanMask5D mask2)
+    public static BooleanMask5D getSubtraction(BooleanMask5D mask1, BooleanMask5D mask2)
     {
         final Rectangle5D.Integer bounds = (Rectangle5D.Integer) mask1.bounds.createIntersection(mask2.bounds);
 
@@ -337,7 +340,7 @@ public class BooleanMask5D
 
         // special case of infinite C dim
         if (bounds.sizeC == Integer.MAX_VALUE)
-            this.mask.put(Integer.valueOf(bounds.c), mask[0]);
+            this.mask.put(Integer.valueOf(-1), mask[0]);
         else
         {
             for (int c = 0; c < bounds.sizeC; c++)
@@ -564,15 +567,9 @@ public class BooleanMask5D
      */
     public BooleanMask4D getMask4D(int c)
     {
+        // special case of infinite C dimension
         if (bounds.sizeC == Integer.MAX_VALUE)
-        {
-            final Entry<Integer, BooleanMask4D> entry = mask.firstEntry();
-
-            if (entry != null)
-                return entry.getValue();
-
-            return null;
-        }
+            return mask.firstEntry().getValue();
 
         return mask.get(Integer.valueOf(c));
     }
@@ -630,7 +627,7 @@ public class BooleanMask5D
     /**
      * Optimize mask bounds so it fits mask content.
      */
-    public Rectangle5D.Integer getOptimizedBounds(boolean compute3DBounds)
+    public Rectangle5D.Integer getOptimizedBounds(boolean compute4DBounds)
     {
         final Rectangle5D.Integer result = new Rectangle5D.Integer();
 
@@ -644,7 +641,7 @@ public class BooleanMask5D
             // get optimized 4D bounds for each C
             final Rectangle4D.Integer optB4d;
 
-            if (compute3DBounds)
+            if (compute4DBounds)
                 optB4d = m4d.getOptimizedBounds();
             else
                 optB4d = m4d.bounds;
@@ -672,7 +669,7 @@ public class BooleanMask5D
         // single C --> check for special MAX_INTEGER case
         if ((minC == maxC) && (bounds.sizeT == Integer.MAX_VALUE))
         {
-            result.setC(minC);
+            result.setC(-1);
             result.setSizeC(Integer.MAX_VALUE);
         }
         else
@@ -756,7 +753,7 @@ public class BooleanMask5D
                 // set new mask
                 mask.clear();
                 if (mask4D != null)
-                    mask.put(Integer.valueOf(0), mask4D);
+                    mask.put(Integer.valueOf(-1), mask4D);
             }
             else
             {
@@ -782,6 +779,46 @@ public class BooleanMask5D
 
             bounds = value;
         }
+    }
+
+    /**
+     * Return an array of {@link icy.type.point.Point5D.Integer} containing the edge/surface points
+     * of the 5D mask.<br>
+     * Points are returned in ascending XYZTC order.
+     */
+    public Point5D.Integer[] getEdgePoints()
+    {
+        final List<Point5D.Integer> points = new ArrayList<Point5D.Integer>(1024);
+
+        for (Entry<Integer, BooleanMask4D> entry : mask.entrySet())
+        {
+            final int c = entry.getKey().intValue();
+
+            for (Point4D.Integer pt : entry.getValue().getEdgePoints())
+                points.add(new Point5D.Integer(pt.x, pt.y, pt.z, pt.t, c));
+        }
+
+        return points.toArray(new Point5D.Integer[points.size()]);
+    }
+
+    /**
+     * Return an array of {@link icy.type.point.Point5D.Integer} representing all points of the
+     * current 5D mask.<br>
+     * Points are returned in ascending XYZTC order.
+     */
+    public Point5D.Integer[] getPoints()
+    {
+        final List<Point5D.Integer> points = new ArrayList<Point5D.Integer>(1024);
+
+        for (Entry<Integer, BooleanMask4D> entry : mask.entrySet())
+        {
+            final int c = entry.getKey().intValue();
+
+            for (Point4D.Integer pt : entry.getValue().getPoints())
+                points.add(new Point5D.Integer(pt.x, pt.y, pt.z, pt.t, c));
+        }
+
+        return points.toArray(new Point5D.Integer[points.size()]);
     }
 
     @Override

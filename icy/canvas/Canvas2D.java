@@ -46,7 +46,6 @@ import icy.preferences.XMLPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.roi.ROI;
-import icy.roi.ROI2D;
 import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent.SequenceEventType;
@@ -1191,19 +1190,19 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 // ROI creation
                 if (EventUtil.isLeftMouseButton(e) && (toolTask != null) && toolTask.isROITool())
                 {
-                    final String tool = toolTask.getSelected();
+                    // get the ROI plugin class name
+                    final String roiClassName = toolTask.getSelected();
 
-                    // unselect tool before ROI creation unless control modifier is used
-                    // for multiple ROI creation
+                    // unselect tool before ROI creation unless
+                    // control modifier is used for multiple ROI creation
                     if (!EventUtil.isControlDown(e))
                         Icy.getMainInterface().setSelectedTool(null);
 
                     // only if sequence still live
                     if (seq != null)
                     {
-                        // try to create ROI from current selected tool (should correspond to ROI
-                        // class name)
-                        final ROI roi = ROI.create(tool, getMouseImagePos());
+                        // try to create ROI from current selected ROI tool
+                        final ROI roi = ROI.create(roiClassName, getMouseImagePos5D());
                         // roi created ? --> it becomes the selected ROI
                         if (roi != null)
                         {
@@ -1542,20 +1541,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
             if (seq != null)
             {
-                final List<ROI2D> selectedRois2D = seq.getSelectedROI2Ds();
-
-                // search if we are overriding ROI control points
-                for (ROI2D selectedRoi : selectedRois2D)
-                {
-                    final Layer layer = getLayer(selectedRoi);
-
-                    if ((layer != null) && layer.isVisible() && selectedRoi.hasSelectedPoint())
-                    {
-                        GuiUtil.setCursor(this, Cursor.HAND_CURSOR);
-                        return;
-                    }
-                }
-
                 final ROI overlappedRoi = seq.getFocusedROI();
 
                 // overlapping an ROI ?
@@ -1564,6 +1549,20 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     final Layer layer = getLayer(overlappedRoi);
 
                     if ((layer != null) && layer.isVisible())
+                    {
+                        GuiUtil.setCursor(this, Cursor.HAND_CURSOR);
+                        return;
+                    }
+                }
+
+                final List<ROI> selectedRois = seq.getSelectedROIs();
+
+                // search if we are overriding ROI control points
+                for (ROI selectedRoi : selectedRois)
+                {
+                    final Layer layer = getLayer(selectedRoi);
+
+                    if ((layer != null) && layer.isVisible() && selectedRoi.hasSelectedPoint())
                     {
                         GuiUtil.setCursor(this, Cursor.HAND_CURSOR);
                         return;

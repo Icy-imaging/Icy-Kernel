@@ -20,6 +20,9 @@ package icy.type.rectangle;
 
 import icy.type.point.Point4D;
 
+import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
+
 /**
  * Rectangle4D class.<br>
  * Incomplete implementation (work in progress...)
@@ -44,8 +47,15 @@ public abstract class Rectangle4D
      *        the <code>Rectangle4D</code> that holds the
      *        results of the intersection of <code>src1</code> and <code>src2</code>
      */
-    public static void intersect(Rectangle4D src1, Rectangle4D src2, Rectangle4D dest)
+    public static Rectangle4D intersect(Rectangle4D src1, Rectangle4D src2, Rectangle4D dest)
     {
+        final Rectangle4D result;
+
+        if (dest == null)
+            result = new Rectangle4D.Double();
+        else
+            result = dest;
+
         final double x1 = Math.max(src1.getMinX(), src2.getMinX());
         final double y1 = Math.max(src1.getMinY(), src2.getMinY());
         final double z1 = Math.max(src1.getMinZ(), src2.getMinZ());
@@ -54,7 +64,10 @@ public abstract class Rectangle4D
         final double y2 = Math.min(src1.getMaxY(), src2.getMaxY());
         final double z2 = Math.min(src1.getMaxZ(), src2.getMaxZ());
         final double t2 = Math.min(src1.getMaxT(), src2.getMaxT());
-        dest.setRect(x1, y1, z1, t1, x2 - x1, y2 - y1, z2 - z1, t2 - t1);
+
+        result.setRect(x1, y1, z1, t1, x2 - x1, y2 - y1, z2 - z1, t2 - t1);
+
+        return result;
     }
 
     /**
@@ -83,8 +96,15 @@ public abstract class Rectangle4D
      *        the <code>Rectangle4D</code> that holds the
      *        results of the union of <code>src1</code> and <code>src2</code>
      */
-    public static void union(Rectangle4D src1, Rectangle4D src2, Rectangle4D dest)
+    public static Rectangle4D union(Rectangle4D src1, Rectangle4D src2, Rectangle4D dest)
     {
+        final Rectangle4D result;
+
+        if (dest == null)
+            result = new Rectangle4D.Double();
+        else
+            result = dest;
+
         double x1 = Math.min(src1.getMinX(), src2.getMinX());
         double y1 = Math.min(src1.getMinY(), src2.getMinY());
         double z1 = Math.min(src1.getMinZ(), src2.getMinZ());
@@ -93,7 +113,10 @@ public abstract class Rectangle4D
         double y2 = Math.max(src1.getMaxY(), src2.getMaxY());
         double z2 = Math.max(src1.getMaxZ(), src2.getMaxZ());
         double t2 = Math.max(src1.getMaxT(), src2.getMaxT());
-        dest.setRect(x1, y1, z1, t1, x2 - x1, y2 - y1, z2 - z1, t2 - t1);
+
+        result.setRect(x1, y1, z1, t1, x2 - x1, y2 - y1, z2 - z1, t2 - t1);
+
+        return result;
     }
 
     /**
@@ -209,18 +232,26 @@ public abstract class Rectangle4D
 
         if (sx < 0d)
             isx = 0;
+        else if (sx >= java.lang.Integer.MAX_VALUE)
+            isx = java.lang.Integer.MAX_VALUE;
         else
             isx = ((int) Math.ceil(x + sx)) - ix;
         if (sy < 0d)
             isy = 0;
+        else if (sy >= java.lang.Integer.MAX_VALUE)
+            isy = java.lang.Integer.MAX_VALUE;
         else
             isy = ((int) Math.ceil(y + sy)) - iy;
         if (sz < 0d)
             isz = 0;
+        else if (sz >= java.lang.Integer.MAX_VALUE)
+            isz = java.lang.Integer.MAX_VALUE;
         else
             isz = ((int) Math.ceil(z + sz)) - iz;
         if (st < 0d)
             ist = 0;
+        else if (st >= java.lang.Integer.MAX_VALUE)
+            ist = java.lang.Integer.MAX_VALUE;
         else
             ist = ((int) Math.ceil(t + st)) - it;
 
@@ -571,6 +602,16 @@ public abstract class Rectangle4D
         setRect(x1, y1, z1, t1, x2 - x1, y2 - y1, z2 - z1, t2 - t1);
     }
 
+    /**
+     * Convert to 2D rectangle
+     */
+    public abstract Rectangle2D toRectangle2D();
+
+    /**
+     * Convert to 3D rectangle
+     */
+    public abstract Rectangle3D toRectangle3D();
+
     @Override
     public boolean equals(Object obj)
     {
@@ -750,6 +791,18 @@ public abstract class Rectangle4D
 
             return result;
         }
+
+        @Override
+        public Rectangle2D toRectangle2D()
+        {
+            return new Rectangle2D.Double(x, y, sizeX, sizeY);
+        }
+
+        @Override
+        public Rectangle3D toRectangle3D()
+        {
+            return new Rectangle3D.Double(x, y, z, sizeX, sizeY, sizeZ);
+        }
     }
 
     public static class Float extends Rectangle4D
@@ -919,6 +972,17 @@ public abstract class Rectangle4D
             return result;
         }
 
+        @Override
+        public Rectangle2D toRectangle2D()
+        {
+            return new Rectangle2D.Float(x, y, sizeX, sizeY);
+        }
+
+        @Override
+        public Rectangle3D toRectangle3D()
+        {
+            return new Rectangle3D.Float(x, y, z, sizeX, sizeY, sizeZ);
+        }
     }
 
     public static class Integer extends Rectangle4D
@@ -1144,6 +1208,18 @@ public abstract class Rectangle4D
             union(this, r, result);
 
             return result;
+        }
+
+        @Override
+        public Rectangle2D toRectangle2D()
+        {
+            return new Rectangle(x, y, sizeX, sizeY);
+        }
+
+        @Override
+        public Rectangle3D toRectangle3D()
+        {
+            return new Rectangle3D.Integer(x, y, z, sizeX, sizeY, sizeZ);
         }
     }
 }

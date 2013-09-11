@@ -3,11 +3,14 @@
  */
 package icy.roi;
 
+import icy.type.point.Point3D;
 import icy.type.point.Point4D;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -36,7 +39,7 @@ public class BooleanMask4D
             return (BooleanMask3D) m1.clone();
 
         // process union of 3D mask
-        return BooleanMask3D.getUnionBooleanMask(m1, m2);
+        return BooleanMask3D.getUnion(m1, m2);
     }
 
     // Internal use only
@@ -46,7 +49,7 @@ public class BooleanMask4D
             return null;
 
         // process intersection of 3D mask
-        return BooleanMask3D.getIntersectionBooleanMask(m1, m2);
+        return BooleanMask3D.getIntersection(m1, m2);
     }
 
     // Internal use only
@@ -65,7 +68,7 @@ public class BooleanMask4D
             return (BooleanMask3D) m1.clone();
 
         // process exclusive union of 3D mask
-        return BooleanMask3D.getExclusiveUnionBooleanMask(m1, m2);
+        return BooleanMask3D.getExclusiveUnion(m1, m2);
     }
 
     // Internal use only
@@ -78,7 +81,7 @@ public class BooleanMask4D
             return (BooleanMask3D) m1.clone();
 
         // process subtraction of 3D mask
-        return BooleanMask3D.getSubtractionMask(m1, m2);
+        return BooleanMask3D.getSubtraction(m1, m2);
     }
 
     /**
@@ -97,7 +100,7 @@ public class BooleanMask4D
      *     ##                                 ##     ##            ##
      * </pre>
      */
-    public static BooleanMask4D getUnionBooleanMask(BooleanMask4D mask1, BooleanMask4D mask2)
+    public static BooleanMask4D getUnion(BooleanMask4D mask1, BooleanMask4D mask2)
     {
         final Rectangle4D.Integer bounds = (Rectangle4D.Integer) mask1.bounds.createUnion(mask2.bounds);
 
@@ -155,7 +158,7 @@ public class BooleanMask4D
      *     ##                                 ##
      * </pre>
      */
-    public static BooleanMask4D getIntersectionBooleanMask(BooleanMask4D mask1, BooleanMask4D mask2)
+    public static BooleanMask4D getIntersection(BooleanMask4D mask1, BooleanMask4D mask2)
     {
         final Rectangle4D.Integer bounds = (Rectangle4D.Integer) mask1.bounds.createIntersection(mask2.bounds);
 
@@ -213,7 +216,7 @@ public class BooleanMask4D
      *     ##                                 ##     ##            ##
      * </pre>
      */
-    public static BooleanMask4D getExclusiveUnionBooleanMask(BooleanMask4D mask1, BooleanMask4D mask2)
+    public static BooleanMask4D getExclusiveUnion(BooleanMask4D mask1, BooleanMask4D mask2)
     {
         final Rectangle4D.Integer bounds = (Rectangle4D.Integer) mask1.bounds.createUnion(mask2.bounds);
 
@@ -271,7 +274,7 @@ public class BooleanMask4D
      *     ##                                 ##     ##
      * </pre>
      */
-    public static BooleanMask4D getSubtractionMask(BooleanMask4D mask1, BooleanMask4D mask2)
+    public static BooleanMask4D getSubtraction(BooleanMask4D mask1, BooleanMask4D mask2)
     {
         final Rectangle4D.Integer bounds = (Rectangle4D.Integer) mask1.bounds.createIntersection(mask2.bounds);
 
@@ -336,7 +339,7 @@ public class BooleanMask4D
 
         // special case of infinite T dim
         if (bounds.sizeT == Integer.MAX_VALUE)
-            this.mask.put(Integer.valueOf(bounds.t), mask[0]);
+            this.mask.put(Integer.valueOf(-1), mask[0]);
         else
         {
             for (int t = 0; t < bounds.sizeT; t++)
@@ -527,15 +530,9 @@ public class BooleanMask4D
      */
     public BooleanMask3D getMask3D(int t)
     {
+        // special case of infinite T dimension
         if (bounds.sizeT == Integer.MAX_VALUE)
-        {
-            final Entry<Integer, BooleanMask3D> entry = mask.firstEntry();
-
-            if (entry != null)
-                return entry.getValue();
-
-            return null;
-        }
+            return mask.firstEntry().getValue();
 
         return mask.get(Integer.valueOf(t));
     }
@@ -620,7 +617,7 @@ public class BooleanMask4D
         // single T --> check for special MAX_INTEGER case
         if ((minT == maxT) && (bounds.sizeT == Integer.MAX_VALUE))
         {
-            result.setT(minT);
+            result.setT(-1);
             result.setSizeT(Integer.MAX_VALUE);
         }
         else
@@ -704,7 +701,7 @@ public class BooleanMask4D
                 // set new mask
                 mask.clear();
                 if (mask3D != null)
-                    mask.put(Integer.valueOf(0), mask3D);
+                    mask.put(Integer.valueOf(-1), mask3D);
             }
             else
             {
@@ -730,6 +727,46 @@ public class BooleanMask4D
 
             bounds = value;
         }
+    }
+
+    /**
+     * Return an array of {@link icy.type.point.Point4D.Integer} containing the edge/surface points
+     * of the 4D mask.<br>
+     * Points are returned in ascending XYZT order.
+     */
+    public Point4D.Integer[] getEdgePoints()
+    {
+        final List<Point4D.Integer> points = new ArrayList<Point4D.Integer>(1024);
+
+        for (Entry<Integer, BooleanMask3D> entry : mask.entrySet())
+        {
+            final int t = entry.getKey().intValue();
+
+            for (Point3D.Integer pt : entry.getValue().getEdgePoints())
+                points.add(new Point4D.Integer(pt.x, pt.y, pt.z, t));
+        }
+
+        return points.toArray(new Point4D.Integer[points.size()]);
+    }
+
+    /**
+     * Return an array of {@link icy.type.point.Point4D.Integer} representing all points of the
+     * current 4D mask.<br>
+     * Points are returned in ascending XYZT order.
+     */
+    public Point4D.Integer[] getPoints()
+    {
+        final List<Point4D.Integer> points = new ArrayList<Point4D.Integer>(1024);
+
+        for (Entry<Integer, BooleanMask3D> entry : mask.entrySet())
+        {
+            final int t = entry.getKey().intValue();
+
+            for (Point3D.Integer pt : entry.getValue().getPoints())
+                points.add(new Point4D.Integer(pt.x, pt.y, pt.z, t));
+        }
+
+        return points.toArray(new Point4D.Integer[points.size()]);
     }
 
     @Override

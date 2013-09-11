@@ -56,6 +56,7 @@ import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.sequence.SequenceListener;
 import icy.system.IcyExceptionHandler;
 import icy.type.collection.CollectionUtil;
+import icy.type.point.Point5D;
 import icy.util.ClassUtil;
 import icy.util.EventUtil;
 import icy.util.OMEUtil;
@@ -1074,6 +1075,14 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
+     * Returns the 5D canvas position (-1 mean that the complete dimension is selected)
+     */
+    public Point5D.Integer getPosition5D()
+    {
+        return new Point5D.Integer(getPositionX(), getPositionY(), getPositionZ(), getPositionT(), getPositionC());
+    }
+
+    /**
      * @return current Z (-1 if all selected)
      * @deprecated uses getPositionZ() instead
      */
@@ -1106,7 +1115,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Get maximum position for specified dimension
      */
-    public double getMax(DimensionId dim)
+    public double getMaxPosition(DimensionId dim)
     {
         switch (dim)
         {
@@ -1128,7 +1137,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Get maximum X value
      */
-    public int getMaxX()
+    public int getMaxPositionX()
     {
         final Sequence sequence = getSequence();
 
@@ -1142,7 +1151,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Get maximum Y value
      */
-    public int getMaxY()
+    public int getMaxPositionY()
     {
         final Sequence sequence = getSequence();
 
@@ -1156,7 +1165,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Get maximum Z value
      */
-    public int getMaxZ()
+    public int getMaxPositionZ()
     {
         final Sequence sequence = getSequence();
 
@@ -1170,7 +1179,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Get maximum T value
      */
-    public int getMaxT()
+    public int getMaxPositionT()
     {
         final Sequence sequence = getSequence();
 
@@ -1184,7 +1193,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Get maximum C value
      */
-    public int getMaxC()
+    public int getMaxPositionC()
     {
         final Sequence sequence = getSequence();
 
@@ -1193,6 +1202,71 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             return 0;
 
         return Math.max(0, getImageSizeC() - 1);
+    }
+
+    /**
+     * Get the maximum 5D position for the canvas.
+     * 
+     * @see #getPosition()
+     */
+    public Point5D.Integer getMaxPosition5D()
+    {
+        return new Point5D.Integer(getMaxPositionX(), getMaxPositionY(), getMaxPositionZ(), getMaxPositionT(),
+                getMaxPositionC());
+    }
+
+    /**
+     * @deprecated Use {@link #getMaxPosition(DimensionId)} instead
+     */
+    @Deprecated
+    public double getMax(DimensionId dim)
+    {
+        return getMaxPosition(dim);
+    }
+
+    /**
+     * @deprecated Use {@link #getMaxPositionX()} instead
+     */
+    @Deprecated
+    public int getMaxX()
+    {
+        return getMaxPositionX();
+    }
+
+    /**
+     * @deprecated Use {@link #getMaxPositionY()} instead
+     */
+    @Deprecated
+    public int getMaxY()
+    {
+        return getMaxPositionY();
+    }
+
+    /**
+     * @deprecated Use {@link #getMaxPositionZ()} instead
+     */
+    @Deprecated
+    public int getMaxZ()
+    {
+        return getMaxPositionZ();
+    }
+
+    /**
+     * @deprecated Use {@link #getMaxPositionT()} instead
+     */
+    @Deprecated
+    public int getMaxT()
+    {
+        return getMaxPositionT();
+    }
+
+    /**
+     * @deprecated Use {@link #getMaxPositionC()} instead
+     */
+    @Deprecated
+    public int getMaxC()
+    {
+        return getMaxPositionC();
     }
 
     /**
@@ -1312,7 +1386,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public double getMouseImagePosX()
     {
-        return 0;
+        // default implementation
+        return getPositionX();
     }
 
     /**
@@ -1320,7 +1395,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public double getMouseImagePosY()
     {
-        return 0;
+        // default implementation
+        return getPositionY();
     }
 
     /**
@@ -1328,6 +1404,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public double getMouseImagePosZ()
     {
+        // default implementation
         return getPositionZ();
     }
 
@@ -1336,6 +1413,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public double getMouseImagePosT()
     {
+        // default implementation
         return getPositionT();
     }
 
@@ -1344,7 +1422,17 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public double getMouseImagePosC()
     {
+        // default implementation
         return getPositionC();
+    }
+
+    /**
+     * Returns the 5D mouse image position
+     */
+    public Point5D.Double getMouseImagePos5D()
+    {
+        return new Point5D.Double(getMouseImagePosX(), getMouseImagePosY(), getMouseImagePosZ(), getMouseImagePosT(),
+                getMouseImagePosC());
     }
 
     /**
@@ -1407,6 +1495,14 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     public int getOffsetC()
     {
         return 0;
+    }
+
+    /**
+     * Returns the 5D offset.
+     */
+    public Point5D.Integer getOffset5D()
+    {
+        return new Point5D.Integer(getOffsetX(), getOffsetY(), getOffsetZ(), getOffsetT(), getOffsetC());
     }
 
     /**

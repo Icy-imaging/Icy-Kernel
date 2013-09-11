@@ -19,6 +19,7 @@
 package icy.roi.roi2d;
 
 import icy.math.ArrayMath;
+import icy.type.point.Point5D;
 
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
@@ -86,6 +87,14 @@ public class ROI2DEllipse extends ROI2DRectShape
     public ROI2DEllipse(Point2D pt)
     {
         this(new Point2D.Double(pt.getX(), pt.getY()), pt);
+    }
+
+    /**
+     * Generic constructor for interactive mode
+     */
+    public ROI2DEllipse(Point5D pt)
+    {
+        this(pt.toPoint2D());
     }
 
     public ROI2DEllipse()

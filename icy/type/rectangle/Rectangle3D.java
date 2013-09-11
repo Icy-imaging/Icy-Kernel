@@ -20,6 +20,9 @@ package icy.type.rectangle;
 
 import icy.type.point.Point3D;
 
+import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
+
 /**
  * Rectangle3D class.<br>
  * Incomplete implementation (work in progress...)
@@ -44,15 +47,25 @@ public abstract class Rectangle3D
      *        the <code>Rectangle3D</code> that holds the
      *        results of the intersection of <code>src1</code> and <code>src2</code>
      */
-    public static void intersect(Rectangle3D src1, Rectangle3D src2, Rectangle3D dest)
+    public static Rectangle3D intersect(Rectangle3D src1, Rectangle3D src2, Rectangle3D dest)
     {
+        final Rectangle3D result;
+
+        if (dest == null)
+            result = new Rectangle3D.Double();
+        else
+            result = dest;
+
         final double x1 = Math.max(src1.getMinX(), src2.getMinX());
         final double y1 = Math.max(src1.getMinY(), src2.getMinY());
         final double z1 = Math.max(src1.getMinZ(), src2.getMinZ());
         final double x2 = Math.min(src1.getMaxX(), src2.getMaxX());
         final double y2 = Math.min(src1.getMaxY(), src2.getMaxY());
         final double z2 = Math.min(src1.getMaxZ(), src2.getMaxZ());
-        dest.setRect(x1, y1, z1, x2 - x1, y2 - y1, z2 - z1);
+
+        result.setRect(x1, y1, z1, x2 - x1, y2 - y1, z2 - z1);
+
+        return result;
     }
 
     /**
@@ -81,15 +94,25 @@ public abstract class Rectangle3D
      *        the <code>Rectangle3D</code> that holds the
      *        results of the union of <code>src1</code> and <code>src2</code>
      */
-    public static void union(Rectangle3D src1, Rectangle3D src2, Rectangle3D dest)
+    public static Rectangle3D union(Rectangle3D src1, Rectangle3D src2, Rectangle3D dest)
     {
+        final Rectangle3D result;
+
+        if (dest == null)
+            result = new Rectangle3D.Double();
+        else
+            result = dest;
+
         double x1 = Math.min(src1.getMinX(), src2.getMinX());
         double y1 = Math.min(src1.getMinY(), src2.getMinY());
         double z1 = Math.min(src1.getMinZ(), src2.getMinZ());
         double x2 = Math.max(src1.getMaxX(), src2.getMaxX());
         double y2 = Math.max(src1.getMaxY(), src2.getMaxY());
         double z2 = Math.max(src1.getMaxZ(), src2.getMaxZ());
-        dest.setRect(x1, y1, z1, x2 - x1, y2 - y1, z2 - z1);
+
+        result.setRect(x1, y1, z1, x2 - x1, y2 - y1, z2 - z1);
+
+        return result;
     }
 
     /**
@@ -186,14 +209,20 @@ public abstract class Rectangle3D
 
         if (sx < 0d)
             isx = 0;
+        else if (sx >= java.lang.Integer.MAX_VALUE)
+            isx = java.lang.Integer.MAX_VALUE;
         else
             isx = ((int) Math.ceil(x + sx)) - ix;
         if (sy < 0d)
             isy = 0;
+        else if (sy >= java.lang.Integer.MAX_VALUE)
+            isy = java.lang.Integer.MAX_VALUE;
         else
             isy = ((int) Math.ceil(y + sy)) - iy;
         if (sz < 0d)
             isz = 0;
+        else if (sz >= java.lang.Integer.MAX_VALUE)
+            isz = java.lang.Integer.MAX_VALUE;
         else
             isz = ((int) Math.ceil(z + sz)) - iz;
 
@@ -487,6 +516,11 @@ public abstract class Rectangle3D
         setRect(x1, y1, z1, x2 - x1, y2 - y1, z2 - z1);
     }
 
+    /**
+     * Convert to 2D rectangle
+     */
+    public abstract Rectangle2D toRectangle2D();
+
     @Override
     public boolean equals(Object obj)
     {
@@ -635,6 +669,12 @@ public abstract class Rectangle3D
 
             return result;
         }
+
+        @Override
+        public Rectangle2D toRectangle2D()
+        {
+            return new Rectangle2D.Double(x, y, sizeX, sizeY);
+        }
     }
 
     public static class Float extends Rectangle3D
@@ -771,6 +811,12 @@ public abstract class Rectangle3D
             union(this, r, result);
 
             return result;
+        }
+
+        @Override
+        public Rectangle2D toRectangle2D()
+        {
+            return new Rectangle2D.Float(x, y, sizeX, sizeY);
         }
     }
 
@@ -958,6 +1004,12 @@ public abstract class Rectangle3D
             union(this, r, result);
 
             return result;
+        }
+
+        @Override
+        public Rectangle2D toRectangle2D()
+        {
+            return new Rectangle(x, y, sizeX, sizeY);
         }
     }
 }

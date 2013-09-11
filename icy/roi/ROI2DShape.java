@@ -36,7 +36,7 @@ import java.util.List;
 public abstract class ROI2DShape extends icy.roi.roi2d.ROI2DShape
 {
     /**
-     * @deprecated Use {@link #merge(List, BooleanOperator)} instead.
+     * @deprecated Use {@link ROIUtil#merge(List, BooleanOperator)} instead.
      */
     @Deprecated
     public static ROI2DPath merge(ROI2DShape[] rois, ShapeOperation operation)
@@ -77,11 +77,9 @@ public abstract class ROI2DShape extends icy.roi.roi2d.ROI2DShape
     }
 
     /**
-     * Subtract the content of the roi2 from the roi1 and return the result as a new
-     * {@link ROI2DPath}.
-     * 
-     * @return {@link ROI2DPath} representing the result of subtraction.
+     * @deprecated Use {@link ROI#getSubtraction(ROI)} instead.
      */
+    @Deprecated
     public static ROI2DPath subtract(ROI2DShape roi1, ROI2DShape roi2)
     {
         final ROI2DPath result = new ROI2DPath(ShapeUtil.subtract(roi1, roi2));
@@ -92,7 +90,7 @@ public abstract class ROI2DShape extends icy.roi.roi2d.ROI2DShape
     }
 
     /**
-     * @deprecated Use {@link ROI2DShape#subtract(ROI2DShape, ROI2DShape)} instead
+     * @deprecated Use {@link ROI#getSubtraction(ROI)} instead.
      */
     @Deprecated
     public static ROI2DPath substract(ROI2DShape roi1, ROI2DShape roi2)

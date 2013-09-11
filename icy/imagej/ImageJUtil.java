@@ -23,16 +23,15 @@ import icy.image.IcyBufferedImage;
 import icy.math.ArrayMath;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
-import icy.roi.ROI2DArea;
-import icy.roi.ROI2DArea.ROI2DAreaPainter;
-import icy.roi.ROI2DEllipse;
-import icy.roi.ROI2DLine;
-import icy.roi.ROI2DPath;
-import icy.roi.ROI2DPoint;
-import icy.roi.ROI2DPolyLine;
-import icy.roi.ROI2DPolygon;
-import icy.roi.ROI2DRectangle;
-import icy.roi.ROI2DShape;
+import icy.roi.roi2d.ROI2DArea;
+import icy.roi.roi2d.ROI2DEllipse;
+import icy.roi.roi2d.ROI2DLine;
+import icy.roi.roi2d.ROI2DPath;
+import icy.roi.roi2d.ROI2DPoint;
+import icy.roi.roi2d.ROI2DPolyLine;
+import icy.roi.roi2d.ROI2DPolygon;
+import icy.roi.roi2d.ROI2DRectangle;
+import icy.roi.roi2d.ROI2DShape;
 import icy.sequence.Sequence;
 import icy.type.DataType;
 import icy.type.collection.array.Array2DUtil;
@@ -308,7 +307,7 @@ public class ImageJUtil
 
                 // TRACED_ROI should be converted to ROI2DArea
                 if (roi.getType() == Roi.TRACED_ROI)
-                    result.add(new ROI2DArea(roiPolygon.getBooleanMask()));
+                    result.add(new ROI2DArea(roiPolygon.getBooleanMask(true)));
                 else
                     result.add(roiPolygon);
                 break;
@@ -406,7 +405,7 @@ public class ImageJUtil
             final ROI2DArea roiArea = (ROI2DArea) roi;
             final Point p = roiArea.getPosition();
             result = new ImageRoi(p.x, p.y, roiArea.getImageMask());
-            ((ImageRoi) result).setOpacity(ROI2DAreaPainter.CONTENT_ALPHA);
+            ((ImageRoi) result).setOpacity(ROI.DEFAULT_OPACITY);
         }
         else
         {

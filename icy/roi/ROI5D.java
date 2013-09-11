@@ -20,6 +20,8 @@ package icy.roi;
 
 import icy.canvas.IcyCanvas;
 import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle3D;
+import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
 
 import java.util.ArrayList;
@@ -102,5 +104,59 @@ public abstract class ROI5D extends ROI
     {
         final Rectangle5D.Integer bounds = getBounds();
         return new Point5D.Integer(bounds.x, bounds.y, bounds.z, bounds.t, bounds.c);
+    }
+
+    /**
+     * Get the {@link BooleanMask3D} object representing the roi for specified T,C position.<br>
+     * It contains the 3D rectangle mask bounds and the associated boolean array mask.<br>
+     * 
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask3D getBooleanMask3D(int t, int c, boolean inclusive)
+    {
+        final Rectangle3D.Integer bounds = getBounds5D().toRectangle3D().getBoundsInt();
+        final BooleanMask2D masks[] = new BooleanMask2D[bounds.sizeZ];
+
+        for (int z = 0; z < masks.length; z++)
+            masks[z] = getBooleanMask2D(z, t, c, inclusive);
+
+        return new BooleanMask3D(bounds, masks);
+    }
+
+    /**
+     * Get the {@link BooleanMask4D} object representing the roi for specified C position.<br>
+     * It contains the 4D rectangle mask bounds and the associated boolean array mask.<br>
+     * 
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask4D getBooleanMask4D(int c, boolean inclusive)
+    {
+        final Rectangle4D.Integer bounds = getBounds5D().toRectangle4D().getBoundsInt();
+        final BooleanMask3D masks[] = new BooleanMask3D[bounds.sizeT];
+
+        for (int t = 0; t < masks.length; t++)
+            masks[t] = getBooleanMask3D(t, c, inclusive);
+
+        return new BooleanMask4D(bounds, masks);
+    }
+
+    /**
+     * Get the {@link BooleanMask5D} object representing the roi.<br>
+     * It contains the 5D rectangle mask bounds and the associated boolean array mask.<br>
+     * 
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask5D getBooleanMask(boolean inclusive)
+    {
+        final Rectangle5D.Integer bounds = getBounds();
+        final BooleanMask4D masks[] = new BooleanMask4D[bounds.sizeC];
+
+        for (int c = 0; c < masks.length; c++)
+            masks[c] = getBooleanMask4D(c, inclusive);
+
+        return new BooleanMask5D(bounds, masks);
     }
 }

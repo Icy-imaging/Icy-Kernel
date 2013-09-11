@@ -18,6 +18,9 @@
  */
 package icy.type.point;
 
+import java.awt.Point;
+import java.awt.geom.Point2D;
+
 /**
  * Point3D class.<br>
  * Incomplete implementation (work in progress...)
@@ -92,6 +95,11 @@ public abstract class Point3D
     {
         setLocation(p.getX(), p.getY(), p.getZ());
     }
+
+    /**
+     * Convert to 2D point
+     */
+    public abstract Point2D toPoint2D();
 
     @Override
     public boolean equals(Object obj)
@@ -192,6 +200,12 @@ public abstract class Point3D
         {
             return "Point3D.Double[" + x + ", " + y + ", " + z + "]";
         }
+
+        @Override
+        public Point2D toPoint2D()
+        {
+            return new Point2D.Double(x, y);
+        }
     }
 
     public static class Float extends Point3D
@@ -276,6 +290,11 @@ public abstract class Point3D
             return "Point3D.Float[" + x + ", " + y + ", " + z + "]";
         }
 
+        @Override
+        public Point2D toPoint2D()
+        {
+            return new Point2D.Float(x, y);
+        }
     }
 
     public static class Integer extends Point3D
@@ -358,6 +377,12 @@ public abstract class Point3D
         public String toString()
         {
             return "Point3D.Integer[" + x + ", " + y + ", " + z + "]";
+        }
+
+        @Override
+        public Point2D toPoint2D()
+        {
+            return new Point(x, y);
         }
     }
 }

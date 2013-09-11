@@ -23,7 +23,6 @@ import icy.math.DataIteratorMath;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceDataIterator;
 import icy.type.DataIteratorUtil;
-import icy.type.rectangle.Rectangle5D;
 import icy.util.ShapeUtil.BooleanOperator;
 
 import java.util.List;
@@ -112,19 +111,19 @@ public class ROIUtil
      */
     public static IntensityInfo getIntensityInfo(Sequence sequence, ROI roi)
     {
-        if (roi instanceof icy.roi.roi2d.ROI2D)
+        if (roi instanceof ROI2D)
         {
-            final icy.roi.roi2d.ROI2D roi2d = (icy.roi.roi2d.ROI2D) roi;
+            final ROI2D roi2d = (ROI2D) roi;
             return getIntensityInfo(sequence, roi, roi2d.getZ(), roi2d.getT(), roi2d.getC());
         }
-        if (roi instanceof icy.roi.roi3d.ROI3D)
+        if (roi instanceof ROI3D)
         {
-            final icy.roi.roi3d.ROI3D roi3d = (icy.roi.roi3d.ROI3D) roi;
+            final ROI3D roi3d = (ROI3D) roi;
             return getIntensityInfo(sequence, roi, -1, roi3d.getT(), roi3d.getC());
         }
-        if (roi instanceof icy.roi.roi4d.ROI4D)
+        if (roi instanceof ROI4D)
         {
-            final icy.roi.roi4d.ROI4D roi4d = (icy.roi.roi4d.ROI4D) roi;
+            final ROI4D roi4d = (ROI4D) roi;
             return getIntensityInfo(sequence, roi, -1, -1, roi4d.getC());
         }
 
@@ -171,51 +170,6 @@ public class ROIUtil
         return DataIteratorMath.sum(new SequenceDataIterator(sequence, roi));
     }
 
-    /**
-     * Builds and returns a ROI corresponding to the exclusive union operation of the specified ROI
-     * list.
-     */
-    public static ROI getUnion(List<ROI> rois)
-    {
-        return getUnionBooleanMask(rois.toArray(new ROI[rois.size()]));
-    }
-
-    /**
-     * Builds and returns a ROI corresponding to the exclusive union operation of the specified ROI
-     * list.
-     */
-    public static ROI getExclusiveUnion(List<ROI> rois)
-    {
-        return getExclusiveUnionBooleanMask(rois.toArray(new ROI[rois.size()]));
-    }
-
-    /**
-     * Build global boolean mask from intersection of the specified list of ROI2D
-     */
-    public static ROI getIntersection(List<ROI> rois)
-    {
-        BooleanMask2D result = null;
-    }
-
-    // /**
-    // * Subtract the content of the roi2 from the roi1 and return the result as a new {@link ROI}.
-    // *
-    // * @return {@link ROI} representing the result of subtraction.
-    // */
-    // public static ROI subtract(ROI roi1, ROI roi2)
-    // {
-    // if ((roi1 instanceof ROI2DShape) && (roi2 instanceof ROI2DShape))
-    // return ROI2DShape.subtract((ROI2DShape) roi1, (ROI2DShape) roi2);
-    //
-    // // use ROI2DArea
-    // final ROI2DArea result = new
-    // ROI2DArea(BooleanMask2D.getSubtractionMask(roi1.getBooleanMask(),
-    // roi2.getBooleanMask()));
-    //
-    // result.setName("Substraction");
-    //
-    // return result;
-    // }
     //
     // /**
     // * Merge the specified array of {@link icy.roi.roi2d.ROI2DShape} with the given
@@ -306,72 +260,66 @@ public class ROIUtil
      *        {@link BooleanOperator} to apply.
      * @return {@link ROI} representing the result of the merge operation.
      */
-    @SuppressWarnings("unchecked")
-    public static ROI merge(List<? extends ROI> rois, BooleanOperator operator)
+    public static ROI merge(List<ROI> rois, BooleanOperator operator)
     {
-        // test if we only have ROI2DShape
-        if (ROI.getROIList(rois, icy.roi.roi2d.ROI2DShape.class).size() == rois.size())
-            return mergeROI2DShape((List<icy.roi.roi2d.ROI2DShape>) rois, operator);
+        if (rois.size() == 0)
+            return null;
 
-        final Rectangle5D bounds = new Rectangle5D.Double();
-        // find global bounds of all ROI
-        for (ROI roi : rois)
-            bounds.add(roi.getBounds5D());
+        ROI result = rois.get(0);
 
-        int dim = 5;
-        // test if dimension C can be discarded
-        if ((bounds.getSizeC() == Double.POSITIVE_INFINITY) || (bounds.getSizeC() == 1d))
+        for (int i = 1; i < rois.size(); i++)
         {
-            dim = 4;
-            // test if dimension T can be discarded
-            if ((bounds.getSizeT() == Double.POSITIVE_INFINITY) || (bounds.getSizeT() == 1d))
+            final ROI roi = rois.get(i);
+
+            switch (operator)
             {
-                dim = 3;
-                // test if dimension Z can be discarded
-                if ((bounds.getSizeZ() == Double.POSITIVE_INFINITY) || (bounds.getSizeZ() == 1d))
-                    dim = 2;
+                case AND:
+                    result = result.getIntersection(roi);
+                    break;
+                case OR:
+                    result = result.getUnion(roi);
+                    break;
+                case XOR:
+                    result = result.getExclusiveUnion(roi);
+                    break;
             }
         }
 
-        switch (dim)
-        {
-            case 2:
-            {
-                // 2D boolean mask
-                // we use a boolean mask
-                final ROI2DArea result = new ROI2DArea();
+        return result;
+    }
 
-                switch (operator)
-                {
-                    case OR:
-                        result.setAsBooleanMask(BooleanMask2D.getUnionBooleanMask(rois));
-                        result.setName("Union");
-                        break;
-                    case AND:
-                        result.setAsBooleanMask(BooleanMask2D.getIntersectBooleanMask(rois));
-                        result.setName("Intersection");
-                        break;
-                    case XOR:
-                        result.setAsBooleanMask(BooleanMask2D.getExclusiveUnionBooleanMask(rois));
-                        result.setName("Exclusive union");
-                        break;
-                    default:
-                        result.setName("Merge");
-                }
+    /**
+     * Builds and returns a ROI corresponding to the union of the specified ROI list.
+     */
+    public static ROI getUnion(List<ROI> rois)
+    {
+        return merge(rois, BooleanOperator.OR);
+    }
 
-                return result;
-            }
+    /**
+     * Builds and returns a ROI corresponding to the exclusive union of the specified ROI list.
+     */
+    public static ROI getExclusiveUnion(List<ROI> rois)
+    {
+        return merge(rois, BooleanOperator.XOR);
+    }
 
-            case 3:
-                break;
+    /**
+     * Builds and returns a ROI corresponding to the intersection of the specified ROI list.
+     */
+    public static ROI getIntersection(List<ROI> rois)
+    {
+        return merge(rois, BooleanOperator.AND);
+    }
 
-            case 4:
-                break;
-
-            case 5:
-                break;
-        }
-
-        return null;
+    /**
+     * Subtract the content of the roi2 from the roi1 and return the result as a new {@link ROI}.<br>
+     * This is equivalent to: <code>roi1.getSubtraction(roi2)</code>
+     * 
+     * @return {@link ROI} representing the result of subtraction.
+     */
+    public static ROI subtract(ROI roi1, ROI roi2)
+    {
+        return roi1.getSubtraction(roi2);
     }
 }

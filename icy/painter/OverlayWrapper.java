@@ -5,11 +5,11 @@ package icy.painter;
 
 import icy.canvas.IcyCanvas;
 import icy.sequence.Sequence;
+import icy.type.point.Point5D;
 
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
 
 /**
  * This class is used to provide backward compatibility with the {@link Painter} interface.
@@ -27,16 +27,10 @@ public class OverlayWrapper extends Overlay
 
         this.painter = painter;
     }
-    
+
     public Painter getPainter()
     {
         return painter;
-    }
-
-    @Override
-    public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
-    {
-        painter.mouseClick(e, imagePoint, canvas);
     }
 
     @Override
@@ -46,38 +40,44 @@ public class OverlayWrapper extends Overlay
     }
 
     @Override
-    public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.mousePressed(e, imagePoint, canvas);
+        painter.mouseClick(e, imagePoint.toPoint2D(), canvas);
     }
 
     @Override
-    public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.mouseReleased(e, imagePoint, canvas);
+        painter.mousePressed(e, imagePoint.toPoint2D(), canvas);
     }
 
     @Override
-    public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.mouseMove(e, imagePoint, canvas);
+        painter.mouseReleased(e, imagePoint.toPoint2D(), canvas);
     }
 
     @Override
-    public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.mouseDrag(e, imagePoint, canvas);
+        painter.mouseMove(e, imagePoint.toPoint2D(), canvas);
     }
 
     @Override
-    public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.keyPressed(e, imagePoint, canvas);
+        painter.mouseDrag(e, imagePoint.toPoint2D(), canvas);
     }
 
     @Override
-    public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.keyReleased(e, imagePoint, canvas);
+        painter.keyPressed(e, imagePoint.toPoint2D(), canvas);
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+    {
+        painter.keyReleased(e, imagePoint.toPoint2D(), canvas);
     }
 }

@@ -24,6 +24,7 @@ import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
 import icy.roi.ROI;
 import icy.sequence.Sequence;
+import icy.type.point.Point5D;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
 
@@ -149,6 +150,14 @@ public class ROI2DPolyLine extends ROI2DShape
         updateShape();
 
         setName("PolyLine2D");
+    }
+
+    /**
+     * Generic constructor for interactive mode
+     */
+    public ROI2DPolyLine(Point5D pt)
+    {
+        this(pt.toPoint2D());
     }
 
     public ROI2DPolyLine(Polygon polygon)

@@ -19,7 +19,6 @@
 package icy.file;
 
 import icy.gui.dialog.SeriesSelectionDialog;
-import icy.gui.frame.error.ErrorReportFrame;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.FileFrame;
@@ -36,8 +35,6 @@ import icy.system.thread.ThreadUtil;
 import icy.type.collection.CollectionUtil;
 import icy.util.StringUtil;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -303,6 +300,7 @@ public class Loader
             {
                 System.err.println("Error while loading image '" + filename + "' :");
                 IcyExceptionHandler.showErrorMessage(e, true);
+
                 if (frame != null)
                 {
                     reportLociError("Unknow or unsupported image format",
@@ -334,24 +332,32 @@ public class Loader
 
         void reportLociError(final String title, final String message, final String filename)
         {
-            ThreadUtil.invokeLater(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    final ErrorReportFrame errorFrame = new ErrorReportFrame(null, title, message);
-
-                    errorFrame.setReportAction(new ActionListener()
-                    {
-                        @Override
-                        public void actionPerformed(ActionEvent e)
-                        {
-                            IssueReporter reporter = new IssueReporter();
-                            reporter.reportBug(filename, errorFrame.getReportMessage());
-                        }
-                    });
-                }
-            });
+            // TODO: enable that when LOCI will be ready
+            // ThreadUtil.invokeLater(new Runnable()
+            // {
+            // @Override
+            // public void run()
+            // {
+            // final ErrorReportFrame errorFrame = new ErrorReportFrame(null, title, message);
+            //
+            // errorFrame.setReportAction(new ActionListener()
+            // {
+            // @Override
+            // public void actionPerformed(ActionEvent e)
+            // {
+            // try
+            // {
+            // OMEUtil.reportLociError(filename, errorFrame.getReportMessage());
+            // }
+            // catch (BadLocationException e1)
+            // {
+            // System.err.println("Error while sending report:");
+            // IcyExceptionHandler.showErrorMessage(e1, false, true);
+            // }
+            // }
+            // });
+            // }
+            // });
         }
 
         private Sequence createNewSequence(String path, int serie, boolean multiSerie)

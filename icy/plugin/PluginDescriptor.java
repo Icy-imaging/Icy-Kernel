@@ -564,9 +564,9 @@ public class PluginDescriptor implements XMLPersistent
     // return "";
     // }
 
-    public static List<PluginDescriptor> getPlugins(List<PluginDescriptor> list, String className)
+    public static ArrayList<PluginDescriptor> getPlugins(List<PluginDescriptor> list, String className)
     {
-        final List<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
+        final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
         for (PluginDescriptor plugin : list)
             if (plugin.getClassName().equals(className))

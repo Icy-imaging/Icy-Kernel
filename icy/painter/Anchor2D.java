@@ -26,6 +26,7 @@ import icy.file.xml.XMLPersistent;
 import icy.painter.OverlayEvent.OverlayEventType;
 import icy.painter.PainterEvent.PainterEventType;
 import icy.sequence.Sequence;
+import icy.type.point.Point5D;
 import icy.util.EventUtil;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
@@ -46,6 +47,7 @@ import org.w3c.dom.Node;
  */
 public class Anchor2D extends Overlay implements XMLPersistent
 {
+    @SuppressWarnings("deprecation")
     public static interface Anchor2DListener extends PainterListener
     {
         public void positionChanged(Anchor2D source);
@@ -598,14 +600,14 @@ public class Anchor2D extends Overlay implements XMLPersistent
         ellipse.setFrame(position.x - adjRayX, position.y - adjRayY, adjRayX * 2, adjRayY * 2);
     }
 
-    protected boolean updateDrag(InputEvent e, Point2D imagePoint)
+    protected boolean updateDrag(InputEvent e, double x, double y)
     {
         // not dragging --> exit
         if (startDragMousePosition == null)
             return false;
 
-        double dx = imagePoint.getX() - startDragMousePosition.getX();
-        double dy = imagePoint.getY() - startDragMousePosition.getY();
+        double dx = x - startDragMousePosition.getX();
+        double dy = y - startDragMousePosition.getY();
 
         // shift action --> limit to one direction
         if (EventUtil.isShiftDown(e))
@@ -622,6 +624,11 @@ public class Anchor2D extends Overlay implements XMLPersistent
         setPosition(new Point2D.Double(startDragPainterPosition.getX() + dx, startDragPainterPosition.getY() + dy));
 
         return true;
+    }
+
+    protected boolean updateDrag(InputEvent e, Point2D pt)
+    {
+        return updateDrag(e, pt.getX(), pt.getY());
     }
 
     /**
@@ -729,7 +736,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     @Override
-    public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         if (!isVisible())
             return;
@@ -742,11 +749,11 @@ public class Anchor2D extends Overlay implements XMLPersistent
             return;
 
         // just for the shift key state change
-        updateDrag(e, imagePoint);
+        updateDrag(e, imagePoint.x, imagePoint.y);
     }
 
     @Override
-    public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         if (!isVisible())
             return;
@@ -759,11 +766,11 @@ public class Anchor2D extends Overlay implements XMLPersistent
             return;
 
         // just for the shift key state change
-        updateDrag(e, imagePoint);
+        updateDrag(e, imagePoint.x, imagePoint.y);
     }
 
     @Override
-    public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         if (!isVisible())
             return;
@@ -783,7 +790,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
             // consume event to activate drag
             if (isSelected())
             {
-                startDragMousePosition = imagePoint;
+                startDragMousePosition = imagePoint.toPoint2D();
                 startDragPainterPosition = getPosition();
                 e.consume();
             }
@@ -791,13 +798,13 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     @Override
-    public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         startDragMousePosition = null;
     }
 
     @Override
-    public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         if (!isVisible())
             return;
@@ -824,7 +831,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
                     startDragPainterPosition = getPosition();
                 }
 
-                updateDrag(e, imagePoint);
+                updateDrag(e, imagePoint.x, imagePoint.y);
 
                 e.consume();
             }
@@ -832,7 +839,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     @Override
-    public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         if (!isVisible())
             return;
@@ -849,7 +856,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
             setSelected(false);
         else
         {
-            final boolean overlapped = isOver(canvas, imagePoint);
+            final boolean overlapped = isOver(canvas, imagePoint.x, imagePoint.y);
 
             setSelected(overlapped);
 

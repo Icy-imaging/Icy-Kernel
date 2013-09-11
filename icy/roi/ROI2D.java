@@ -20,9 +20,8 @@ package icy.roi;
 
 import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
-import icy.common.EventHierarchicalChecker;
 import icy.roi.roi2d.ROI2DArea;
-import icy.roi.roi2d.ROI2DShape;
+import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.EventUtil;
 import icy.util.ShapeUtil.ShapeOperation;
@@ -101,7 +100,7 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @deprecated Use {@link ROI2D#subtract(ROI2D, ROI2D)} instead
+     * @deprecated Use {@link ROI#getSubtraction(ROI)} instead.
      */
     @Deprecated
     public static ROI2D substract(ROI2D roi1, ROI2D roi2)
@@ -110,22 +109,22 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * Subtract the content of the roi2 from the roi1 and return the result as a new {@link ROI2D}.
-     * 
-     * @return {@link ROI2D} representing the result of subtraction.
+     * @deprecated Use {@link ROI#getSubtraction(ROI)} instead.
      */
+    @Deprecated
     public static ROI2D subtract(ROI2D roi1, ROI2D roi2)
     {
-        if ((roi1 instanceof ROI2DShape) && (roi2 instanceof ROI2DShape))
-            return ROI2DShape.subtract((ROI2DShape) roi1, (ROI2DShape) roi2);
+        ROI result = roi1.getSubtraction(roi2);
 
-        // use ROI2DArea
-        final ROI2DArea result = new ROI2DArea(BooleanMask2D.getSubtractionMask(roi1.getBooleanMask(),
-                roi2.getBooleanMask()));
+        if (result instanceof ROI2D)
+            return (ROI2D) result;
 
-        result.setName("Substraction");
+        // use ROI2DArea then...
+        result = new ROI2DArea(BooleanMask2D.getSubtraction(roi1.getBooleanMask(true), roi2.getBooleanMask(true)));
 
-        return result;
+        result.setName("Subtraction");
+
+        return (ROI2D) result;
     }
 
     public abstract class ROI2DPainter extends ROIPainter
@@ -143,7 +142,7 @@ public abstract class ROI2D extends ROI
 
         protected boolean updateFocus(InputEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
-            final boolean focused = isOver(canvas, imagePoint);
+            final boolean focused = isOverEdge(canvas, imagePoint);
 
             setFocused(focused);
 
@@ -152,45 +151,35 @@ public abstract class ROI2D extends ROI
 
         protected boolean updateSelect(InputEvent e, Point2D imagePoint, IcyCanvas canvas)
         {
-            final boolean selectedPoint = hasSelectedPoint();
+            // nothing to do if the ROI does not have focus
+            if (!isFocused())
+                return false;
 
             // union selection
             if (EventUtil.isShiftDown(e))
             {
-                if (isFocused())
+                // not already selected --> add ROI to selection
+                if (!isSelected())
                 {
-                    // only if not already selected
-                    if (!isSelected())
-                    {
-                        setSelected(true);
-                        return true;
-                    }
+                    setSelected(true);
+                    return true;
                 }
             }
             else if (EventUtil.isControlDown(e))
             // switch selection
             {
                 // inverse state
-                if (isFocused())
-                {
-                    setSelected(!isSelected());
-                    return true;
-                }
+                setSelected(!isSelected());
+                return true;
             }
             else
             // exclusive selection
             {
-                // we stay selected when we click on control points
-                final boolean newSelected = isFocused() || selectedPoint;
-
-                if (newSelected)
+                // not selected --> exclusive ROI selection
+                if (!isSelected())
                 {
-                    // only if not already selected
-                    if (!isSelected())
-                    {
-                        canvas.getSequence().setSelectedROI(newSelected ? ROI2D.this : null);
-                        return true;
-                    }
+                    canvas.getSequence().setSelectedROI(ROI2D.this);
+                    return true;
                 }
             }
 
@@ -224,7 +213,7 @@ public abstract class ROI2D extends ROI
         }
 
         @Override
-        public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // do parent stuff
             super.keyReleased(e, imagePoint, canvas);
@@ -236,13 +225,13 @@ public abstract class ROI2D extends ROI
                 {
                     // just for the shift key state change
                     if (!isReadOnly())
-                        updateDrag(e, imagePoint, canvas);
+                        updateDrag(e, imagePoint.toPoint2D(), canvas);
                 }
             }
         }
 
         @Override
-        public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // do parent stuff
             super.mousePressed(e, imagePoint, canvas);
@@ -261,39 +250,12 @@ public abstract class ROI2D extends ROI
                             // left button action
                             if (EventUtil.isLeftMouseButton(e))
                             {
-                                // roi focused (mouse over ROI bounds) ?
-                                if (isFocused())
-                                {
-                                    // update selection
-                                    updateSelect(e, imagePoint, canvas);
-                                    // always consume (to enable dragging)
+                                // update selection
+                                if (updateSelect(e, imagePoint.toPoint2D(), canvas))
                                     e.consume();
-                                }
-                                // roi selected and no point selected ?
-                                else if (isSelected() && !hasSelectedPoint())
-                                {
-                                    if (!isReadOnly())
-                                    {
-                                        // try to add point first
-                                        if (addPointAt(imagePoint, EventUtil.isControlDown(e)))
-                                            e.consume();
-                                        // else we update selection
-                                        else if (updateSelect(e, imagePoint, canvas))
-                                            e.consume();
-                                    }
-                                    else
-                                    {
-                                        // just update selection
-                                        if (updateSelect(e, imagePoint, canvas))
-                                            e.consume();
-                                    }
-                                }
-                                else
-                                {
-                                    // update selection
-                                    if (updateSelect(e, imagePoint, canvas))
-                                        e.consume();
-                                }
+                                // always consume when focused to enable dragging
+                                else if (isFocused())
+                                    e.consume();
                             }
                         }
                         finally
@@ -306,7 +268,7 @@ public abstract class ROI2D extends ROI
         }
 
         @Override
-        public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // do parent stuff
             super.mouseReleased(e, imagePoint, canvas);
@@ -315,7 +277,7 @@ public abstract class ROI2D extends ROI
         }
 
         @Override
-        public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // do parent stuff
             super.mouseDrag(e, imagePoint, canvas);
@@ -340,11 +302,11 @@ public abstract class ROI2D extends ROI
                                     // start drag position
                                     if (startDragMousePosition == null)
                                     {
-                                        startDragMousePosition = imagePoint;
+                                        startDragMousePosition = imagePoint.toPoint2D();
                                         startDragROIPosition = getPosition2D();
                                     }
 
-                                    updateDrag(e, imagePoint, canvas);
+                                    updateDrag(e, imagePoint.toPoint2D(), canvas);
 
                                     // consume event
                                     e.consume();
@@ -361,7 +323,7 @@ public abstract class ROI2D extends ROI
         }
 
         @Override
-        public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // do parent stuff
             super.mouseMove(e, imagePoint, canvas);
@@ -374,7 +336,7 @@ public abstract class ROI2D extends ROI
                     // update focus
                     if (!e.isConsumed())
                     {
-                        if (updateFocus(e, imagePoint, canvas))
+                        if (updateFocus(e, imagePoint.toPoint2D(), canvas))
                             e.consume();
                     }
                 }
@@ -493,65 +455,82 @@ public abstract class ROI2D extends ROI
                 && ((getC() == -1) || (c == -1) || (getC() == c));
     }
 
-    /**
-     * Return true if this ROI support adding new point
-     */
-    public abstract boolean canAddPoint();
+    // public abstract boolean canAddPoint();
+    //
+    // /**
+    // * Return true if this ROI support removing point
+    // */
+    // public abstract boolean canRemovePoint();
+    //
+    // /**
+    // * Add a new point at specified position (used to build ROI)
+    // */
+    // public abstract boolean addPointAt(Point2D pos, boolean ctrl);
+    //
+    // /**
+    // * Remove point at specified position (used to build ROI)
+    // */
+    // public abstract boolean removePointAt(IcyCanvas canvas, Point2D imagePoint);
+    //
+    // /**
+    // * Remove selected point at specified position (used to build ROI)
+    // */
+    // protected abstract boolean removeSelectedPoint(IcyCanvas canvas, Point2D imagePoint);
 
     /**
-     * Return true if this ROI support removing point
+     * @deprecated Use {@link #isOverEdge(IcyCanvas, Point2D)} instead.
      */
-    public abstract boolean canRemovePoint();
-
-    /**
-     * Add a new point at specified position (used to build ROI)
-     */
-    public abstract boolean addPointAt(Point2D pos, boolean ctrl);
-
-    /**
-     * Remove point at specified position (used to build ROI)
-     */
-    public abstract boolean removePointAt(IcyCanvas canvas, Point2D imagePoint);
-
-    /**
-     * Remove selected point at specified position (used to build ROI)
-     */
-    protected abstract boolean removeSelectedPoint(IcyCanvas canvas, Point2D imagePoint);
-
-    /**
-     * Return true if the ROI has a current selected point
-     */
-    public abstract boolean hasSelectedPoint();
-
-    /**
-     * return true if specified point coordinates overlap the ROI<br>
-     * Edge overlap only, used for roi manipulation
-     */
+    @Deprecated
     public boolean isOver(IcyCanvas canvas, Point2D p)
     {
-        return isOver(canvas, p.getX(), p.getY());
+        return isOverEdge(canvas, p.getX(), p.getY());
     }
 
     /**
-     * return true if specified point coordinates overlap the ROI<br>
-     * Edge overlap only, used for roi manipulation
+     * @deprecated Use {@link #isOverEdge(IcyCanvas, double, double)} instead.
      */
-    public abstract boolean isOver(IcyCanvas canvas, double x, double y);
-
-    /**
-     * return true if specified point coordinates overlap a ROI (control) point<br>
-     * used for roi manipulation
-     */
-    public boolean isOverPoint(IcyCanvas canvas, Point2D p)
+    @Deprecated
+    public boolean isOver(IcyCanvas canvas, double x, double y)
     {
-        return isOverPoint(canvas, p.getX(), p.getY());
+        return isOverEdge(canvas, x, y);
     }
 
     /**
-     * Return true if specified point coordinates overlap a ROI control point (used for roi
-     * manipulation).
+     * Returns true if specified point coordinates overlap the ROI edge.<br>
+     * Use {@link #contains(Point2D)} to test for content overlap instead.
      */
-    public abstract boolean isOverPoint(IcyCanvas canvas, double x, double y);
+    public boolean isOverEdge(IcyCanvas canvas, Point2D p)
+    {
+        return isOverEdge(canvas, p.getX(), p.getY());
+    }
+
+    /**
+     * Returns true if specified point coordinates overlap the ROI edge.<br>
+     * Use {@link #contains(double, double)} to test for content overlap instead.
+     */
+    public abstract boolean isOverEdge(IcyCanvas canvas, double x, double y);
+
+    /**
+     * Returns true if specified point coordinates overlap the ROI edge.<br>
+     * Use {@link #contains(Point5D)} to test for content overlap instead.
+     */
+    public boolean isOverEdge(IcyCanvas canvas, Point5D p)
+    {
+        return isOverEdge(canvas, p.getX(), p.getY());
+    }
+
+    /**
+     * Returns true if specified point coordinates overlap the ROI edge.<br>
+     * Use {@link #contains(double, double, double, double, double)} to test for content overlap
+     * instead.
+     */
+    public boolean isOverEdge(IcyCanvas canvas, double x, double y, double z, double t, double c)
+    {
+        if (isActiveFor((int) z, (int) t, (int) c))
+            return isOverEdge(canvas, x, y);
+
+        return false;
+    }
 
     /**
      * Tests if a specified {@link Point2D} is inside the ROI.
@@ -872,14 +851,10 @@ public abstract class ROI2D extends ROI
     }
 
     @Override
-    public boolean[] getBooleanMask(int x, int y, int width, int height, int z, int t, int c, boolean inclusive)
+    public boolean[] getBooleanMask2D(int x, int y, int width, int height, int z, int t, int c, boolean inclusive)
     {
-        // not on the correct C, Z, T position
-        if ((getC() != -1) && (getC() != c))
-            return null;
-        if ((getZ() != -1) && (getZ() != z))
-            return null;
-        if ((getT() != -1) && (getT() != t))
+        // not on the correct Z, T, C position
+        if (!isActiveFor(z, t, c))
             return null;
 
         return getBooleanMask(x, y, width, height, inclusive);
@@ -887,34 +862,35 @@ public abstract class ROI2D extends ROI
 
     /**
      * Get the boolean bitmap mask for the specified rectangular area of the roi.<br>
-     * if the pixel (x,y) is contained in the roi then result[(y * w) + x] = true<br>
-     * if the pixel (x,y) is not contained in the roi then result[(y * w) + x] = false
+     * if the pixel (x,y) is contained in the roi then result[(y * width) + x] = true<br>
+     * if the pixel (x,y) is not contained in the roi then result[(y * width) + x] = false
      * 
      * @param x
      *        the X coordinate of the upper-left corner of the specified rectangular area
      * @param y
      *        the Y coordinate of the upper-left corner of the specified rectangular area
-     * @param w
+     * @param width
      *        the width of the specified rectangular area
-     * @param h
+     * @param height
      *        the height of the specified rectangular area
      * @param inclusive
      *        If true then all partially contained (intersected) pixels are included in the mask.
      * @return the boolean bitmap mask
      */
-    public boolean[] getBooleanMask(int x, int y, int w, int h, boolean inclusive)
+    public boolean[] getBooleanMask(int x, int y, int width, int height, boolean inclusive)
     {
-        final boolean[] result = new boolean[w * h];
+        final boolean[] result = new boolean[width * height];
 
         // simple and basic implementation, override it to have better performance
         int offset = 0;
-        for (int j = 0; j < h; j++)
+        for (int j = 0; j < height; j++)
         {
-            for (int i = 0; i < w; i++)
+            for (int i = 0; i < width; i++)
             {
-                result[offset] = contains(x + i, y + j, 1, 1);
                 if (inclusive)
-                    result[offset] |= intersects(x + i, y + j, 1, 1);
+                    result[offset] = intersects(x + i, y + j, 1d, 1d);
+                else
+                    result[offset] = contains(x + i, y + j, 1d, 1d);
                 offset++;
             }
         }
@@ -923,23 +899,12 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * Get the boolean bitmap mask for the specified rectangular area of the roi.<br>
-     * if the pixel (x,y) is contained in the roi then result[(y * w) + x] = true<br>
-     * if the pixel (x,y) is not contained in the roi then result[(y * w) + x] = false
-     * 
-     * @param x
-     *        the X coordinate of the upper-left corner of the specified rectangular area
-     * @param y
-     *        the Y coordinate of the upper-left corner of the specified rectangular area
-     * @param w
-     *        the width of the specified rectangular area
-     * @param h
-     *        the height of the specified rectangular area
-     * @return the bitmap mask
+     * @deprecated Use {@link #getBooleanMask(int, int, int, int, boolean)} instead
      */
-    public boolean[] getBooleanMask(int x, int y, int w, int h)
+    @Deprecated
+    public boolean[] getBooleanMask(int x, int y, int width, int height)
     {
-        return getBooleanMask(x, y, w, h, false);
+        return getBooleanMask(x, y, width, height, false);
     }
 
     /**
@@ -958,24 +923,22 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * Get the boolean bitmap mask for the specified rectangular area of the roi.<br>
-     * if the pixel (x,y) is contained in the roi then result[(y * w) + x] = true<br>
-     * if the pixel (x,y) is not contained in the roi then result[(y * w) + x] = false
-     * 
-     * @param rect
-     *        area we want to retrieve the boolean mask
+     * @deprecated Use {@link #getBooleanMask(Rectangle, boolean)} instead
      */
+    @Deprecated
     public boolean[] getBooleanMask(Rectangle rect)
     {
         return getBooleanMask(rect, false);
     }
 
     @Override
-    public BooleanMask2D getBooleanMask(int z, int t, int c, boolean inclusive)
+    public BooleanMask2D getBooleanMask2D(int z, int t, int c, boolean inclusive)
     {
-        final Rectangle bounds = getBounds2D().getBounds();
-        return new BooleanMask2D(bounds, getBooleanMask(bounds.x, bounds.y, bounds.width, bounds.height, z, t, c,
-                inclusive));
+        // not on the correct Z, T, C position
+        if (!isActiveFor(z, t, c))
+            return null;
+
+        return getBooleanMask(inclusive);
     }
 
     /**
@@ -989,16 +952,19 @@ public abstract class ROI2D extends ROI
      */
     public BooleanMask2D getBooleanMask(boolean inclusive)
     {
-        final Rectangle bounds = getBounds2D().getBounds();
+        final Rectangle bounds = getBounds();
+
+        // no mask
+        if (bounds.isEmpty())
+            return null;
+
         return new BooleanMask2D(bounds, getBooleanMask(bounds, inclusive));
     }
 
     /**
-     * Get the {@link BooleanMask2D} object representing the roi.<br>
-     * It contains the rectangle mask bounds and the associated boolean array mask.<br>
-     * if the pixel (x,y) is contained in the roi then result.mask[(y * w) + x] = true<br>
-     * if the pixel (x,y) is not contained in the roi then result.mask[(y * w) + x] = false
+     * @deprecated Use {@link #getBooleanMask(boolean)} instead.
      */
+    @Deprecated
     public BooleanMask2D getBooleanMask()
     {
         return getBooleanMask(false);
@@ -1131,22 +1097,5 @@ public abstract class ROI2D extends ROI
         XMLUtil.setElementIntValue(node, ID_C, getC());
 
         return true;
-    }
-
-    @Override
-    public void onChanged(EventHierarchicalChecker object)
-    {
-        final ROIEvent event = (ROIEvent) object;
-
-        // do here global process on ROI change
-        switch (event.getType())
-        {
-            case ROI_CHANGED:
-                // refresh bounds
-                cachedBounds = computeBounds5D();
-                break;
-        }
-
-        super.onChanged(object);
     }
 }

@@ -254,4 +254,16 @@ public class OMEUtil
     {
         return MetaDataUtil.generateMetaData(sequence, separateChannel);
     }
+
+    /**
+     * Report and upload the specified filename to LOCI team.
+     */
+    public static boolean reportLociError(String fileName, String errorMessage)
+    {
+        // TODO: implement this when done in LOCI
+        // final IssueReporter reporter = new IssueReporter();
+        // return reporter.reportBug(fileName, errorMessage);
+        
+        return false;
+    }
 }

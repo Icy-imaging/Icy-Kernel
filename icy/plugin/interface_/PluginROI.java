@@ -19,8 +19,7 @@
 package icy.plugin.interface_;
 
 import icy.roi.ROI;
-
-import java.awt.geom.Point2D;
+import icy.type.point.Point5D;
 
 /**
  * Plugin ROI interface.<br>
@@ -49,17 +48,19 @@ public interface PluginROI
     // public ROI createROI(Point2D pt, boolean cm);
 
     /**
-     * Create and return a new ROI for interactive mode.<br>
-     * The first point will be created in "selected" state so will support direct drag operation.
+     * Create and return a new ROI for <i>interactive</i> mode.<br>
+     * The first point will be created in <i>selected</i> state so will support direct drag
+     * operation.
      * 
      * @param pt
      *        location of the creation point
      * @return the new created ROI
      */
-    public ROI createROI(Point2D pt);
+    public ROI createROI(Point5D pt);
 
     /**
-     * Create and return a new ROI
+     * Create and return a new ROI.<br>
+     * Default constructor.
      * 
      * @return the new created ROI
      */

@@ -20,6 +20,7 @@ package icy.roi.roi2d;
 
 import icy.canvas.IcyCanvas;
 import icy.painter.Anchor2D;
+import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
 import java.awt.geom.Line2D;
@@ -68,6 +69,14 @@ public class ROI2DPoint extends ROI2DShape
         updateShape();
 
         setName("Point2D");
+    }
+
+    /**
+     * Generic constructor for interactive mode
+     */
+    public ROI2DPoint(Point5D pt)
+    {
+        this(pt.toPoint2D());
     }
 
     public ROI2DPoint(double x, double y)

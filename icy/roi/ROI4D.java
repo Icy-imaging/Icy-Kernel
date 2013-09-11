@@ -20,10 +20,12 @@ package icy.roi;
 
 import icy.canvas.IcyCanvas;
 import icy.type.point.Point4D;
+import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.XMLUtil;
 
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -369,6 +371,154 @@ public abstract class ROI4D extends ROI
     public Point4D getPosition4D()
     {
         return getBounds4D().getPosition();
+    }
+
+    @Override
+    public boolean[] getBooleanMask2D(int x, int y, int width, int height, int z, int t, int c, boolean inclusive)
+    {
+        // not on the correct C position
+        if (!isActiveFor(c))
+            return null;
+
+        return getBooleanMask2D(x, y, width, height, z, t, inclusive);
+    }
+
+    /**
+     * Get the boolean bitmap mask for the specified rectangular area of the roi and for the
+     * specified Z,T position.<br>
+     * if the pixel (x,y) is contained in the roi Z,T position then result[(y * width) + x] = true<br>
+     * if the pixel (x,y) is not contained in the roi Z,T position then result[(y * width) + x] =
+     * 
+     * @param x
+     *        the X coordinate of the upper-left corner of the specified rectangular area
+     * @param y
+     *        the Y coordinate of the upper-left corner of the specified rectangular area
+     * @param width
+     *        the width of the specified rectangular area
+     * @param height
+     *        the height of the specified rectangular area
+     * @param z
+     *        Z position we want to retrieve the boolean mask
+     * @param t
+     *        T position we want to retrieve the boolean mask
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     * @return the boolean bitmap mask
+     */
+    public boolean[] getBooleanMask2D(int x, int y, int width, int height, int z, int t, boolean inclusive)
+    {
+        final boolean[] result = new boolean[width * height];
+
+        // simple and basic implementation, override it to have better performance
+        int offset = 0;
+        for (int j = 0; j < height; j++)
+        {
+            for (int i = 0; i < width; i++)
+            {
+                if (inclusive)
+                    result[offset] = intersects(x + i, y + j, z, t, 1d, 1d, 1d, 1d);
+                else
+                    result[offset] = contains(x + i, y + j, z, t, 1d, 1d, 1d, 1d);
+                offset++;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Get the boolean bitmap mask for the specified rectangular area of the roi and for the
+     * specified Z,T position.<br>
+     * if the pixel (x,y) is contained in the roi Z,T position then result[(y * width) + x] = true<br>
+     * if the pixel (x,y) is not contained in the roi Z,T position then result[(y * width) + x] =
+     * false
+     * 
+     * @param rect
+     *        2D rectangular area we want to retrieve the boolean mask
+     * @param z
+     *        Z position we want to retrieve the boolean mask
+     * @param t
+     *        T position we want to retrieve the boolean mask
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public boolean[] getBooleanMask2D(Rectangle rect, int z, int t, boolean inclusive)
+    {
+        return getBooleanMask2D(rect.x, rect.y, rect.width, rect.height, z, t, inclusive);
+    }
+
+    @Override
+    public BooleanMask2D getBooleanMask2D(int z, int t, int c, boolean inclusive)
+    {
+        // not on the correct C position
+        if (!isActiveFor(c))
+            return null;
+
+        return getBooleanMask2D(z, t, inclusive);
+    }
+
+    /**
+     * Get the {@link BooleanMask2D} object representing the roi for the specified Z,T position.<br>
+     * It contains the rectangle mask bounds and the associated boolean array mask.<br>
+     * if the pixel (x,y) is contained in the roi Z,T position then result.mask[(y * w) + x] = true<br>
+     * if the pixel (x,y) is not contained in the roi Z,T position then result.mask[(y * w) + x] =
+     * false
+     * 
+     * @param z
+     *        Z position we want to retrieve the boolean mask
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask2D getBooleanMask2D(int z, int t, boolean inclusive)
+    {
+        final Rectangle bounds = getBounds4D().toRectangle2D().getBounds();
+
+        // no mask
+        if (bounds.isEmpty())
+            return null;
+
+        final BooleanMask2D result = new BooleanMask2D(bounds, getBooleanMask2D(bounds, z, t, inclusive));
+
+        // optimized bounds to optimize memory usage for this specific Z slice mask
+        result.optimizeBounds();
+
+        return result;
+    }
+
+    /**
+     * Get the {@link BooleanMask3D} object representing the roi for specified T position.<br>
+     * It contains the 3D rectangle mask bounds and the associated boolean array mask.<br>
+     * 
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask3D getBooleanMask3D(int t, boolean inclusive)
+    {
+        final Rectangle3D.Integer bounds = getBounds4D().toRectangle3D().getBoundsInt();
+        final BooleanMask2D masks[] = new BooleanMask2D[bounds.sizeZ];
+
+        for (int z = 0; z < masks.length; z++)
+            masks[z] = getBooleanMask2D(z, t, inclusive);
+
+        return new BooleanMask3D(bounds, masks);
+    }
+
+    /**
+     * Get the {@link BooleanMask4D} object representing the roi.<br>
+     * It contains the 4D rectangle mask bounds and the associated boolean array mask.<br>
+     * 
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask4D getBooleanMask(boolean inclusive)
+    {
+        final Rectangle4D.Integer bounds = getBounds();
+        final BooleanMask3D masks[] = new BooleanMask3D[bounds.sizeT];
+
+        for (int t = 0; t < masks.length; t++)
+            masks[t] = getBooleanMask3D(t, inclusive);
+
+        return new BooleanMask4D(bounds, masks);
     }
 
     /**

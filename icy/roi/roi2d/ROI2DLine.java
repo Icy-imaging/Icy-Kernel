@@ -21,6 +21,7 @@ package icy.roi.roi2d;
 import icy.canvas.IcyCanvas;
 import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
+import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
 import java.awt.geom.Line2D;
@@ -103,6 +104,14 @@ public class ROI2DLine extends ROI2DShape
         this(new Point2D.Double(pt.getX(), pt.getY()), pt);
     }
 
+    /**
+     * Generic constructor for interactive mode
+     */
+    public ROI2DLine(Point5D pt)
+    {
+        this(pt.toPoint2D());
+    }
+
     public ROI2DLine(double x1, double y1, double x2, double y2)
     {
         this(new Point2D.Double(x1, y1), new Point2D.Double(x2, y2));
@@ -162,9 +171,8 @@ public class ROI2DLine extends ROI2DShape
     @Override
     protected boolean removePoint(IcyCanvas canvas, Anchor2D pt)
     {
-        // remove point on this ROI remove the ROI
-        canvas.getSequence().removeROI(this);
-        return true;
+        // this ROI doesn't support point remove
+        return false;
     }
 
     @Override

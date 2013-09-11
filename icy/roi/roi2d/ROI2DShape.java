@@ -36,8 +36,10 @@ import icy.roi.ROI2D;
 import icy.roi.ROIEvent;
 import icy.sequence.Sequence;
 import icy.type.point.Point3D;
+import icy.type.point.Point5D;
 import icy.util.EventUtil;
 import icy.util.ShapeUtil;
+import icy.util.ShapeUtil.BooleanOperator;
 import icy.vtk.VtkUtil;
 
 import java.awt.AlphaComposite;
@@ -66,21 +68,6 @@ import vtk.vtkProp;
  */
 public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListener, OverlayListener
 {
-    /**
-     * Subtract the content of the roi2 from the roi1 and return the result as a new
-     * {@link ROI2DPath}.
-     * 
-     * @return {@link ROI2DPath} representing the result of subtraction.
-     */
-    public static ROI2DPath subtract(ROI2DShape roi1, ROI2DShape roi2)
-    {
-        final ROI2DPath result = new ROI2DPath(ShapeUtil.subtract(roi1, roi2));
-
-        result.setName("Substraction");
-
-        return result;
-    }
-
     public class ROI2DShapePainter extends ROI2DPainter implements VtkPainter
     {
         // VTK 3D objects, we use Object to prevent UnsatisfiedLinkError
@@ -227,7 +214,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         }
 
         @Override
-        public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to controls points first
             if (isActiveFor(canvas))
@@ -257,7 +244,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         }
 
         @Override
-        public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to controls points first
             if (isActiveFor(canvas))
@@ -287,7 +274,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         }
 
         @Override
-        public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to controls points first
             if (isActiveFor(canvas))
@@ -303,6 +290,22 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                             // default anchor action on mouse pressed
                             for (Anchor2D pt : controlPoints)
                                 pt.mousePressed(e, imagePoint, canvas);
+
+                            // specific action for this ROI
+                            if (!e.isConsumed())
+                            {
+                                // left button action
+                                if (EventUtil.isLeftMouseButton(e))
+                                {
+                                    // ROI should not be focused to add point (for multi selection)
+                                    if (!isFocused())
+                                    {
+                                        // try to add point first
+                                        if (addPoint(imagePoint.toPoint2D(), EventUtil.isControlDown(e)))
+                                            e.consume();
+                                    }
+                                }
+                            }
                         }
                         finally
                         {
@@ -317,7 +320,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         }
 
         @Override
-        public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to controls points first
             if (isActiveFor(canvas))
@@ -347,7 +350,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         }
 
         @Override
-        public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to controls points first
             if (isActiveFor(canvas))
@@ -401,7 +404,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         }
 
         @Override
-        public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to controls points first
             if (isActiveFor(canvas))
@@ -431,7 +434,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         }
 
         @Override
-        public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to controls points first
             if (isActiveFor(canvas))
@@ -608,7 +611,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     /**
      * control points
      */
-    protected final ArrayList<Anchor2D> controlPoints;
+    protected final List<Anchor2D> controlPoints;
 
     public ROI2DShape(Shape shape)
     {
@@ -696,13 +699,17 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         return (getSelectedPoint() != null);
     }
 
-    @Override
+    /**
+     * Return true if this ROI support adding new point
+     */
     public boolean canAddPoint()
     {
         return true;
     }
 
-    @Override
+    /**
+     * Return true if this ROI support removing point
+     */
     public boolean canRemovePoint()
     {
         return true;
@@ -713,10 +720,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      */
     protected void addPoint(Anchor2D pt)
     {
-        pt.addAnchorListener(this);
-        pt.addOverlayListener(this);
-        controlPoints.add(pt);
-        roiChanged();
+        addPoint(pt, -1);
     }
 
     /**
@@ -726,18 +730,22 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     {
         pt.addAnchorListener(this);
         pt.addOverlayListener(this);
-        controlPoints.add(index, pt);
+
+        if (index == -1)
+            controlPoints.add(pt);
+        else
+            controlPoints.add(index, pt);
+
         roiChanged();
     }
 
-    @Override
-    public boolean addPointAt(Point2D pos, boolean ctrl)
+    public boolean addPoint(Point2D pos, boolean insert)
     {
         if (!canAddPoint())
             return false;
 
         // insertion mode
-        if (ctrl)
+        if (insert)
         {
             final Anchor2D pt = createAnchor(pos);
 
@@ -750,7 +758,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         }
 
         // creation mode
-        if (creating)
+        if (isCreating())
         {
             final Anchor2D pt = createAnchor(pos);
 
@@ -766,19 +774,35 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     /**
+     * @deprecated Use {@link #addPoint(Point2D, boolean)} instead.
+     */
+    @Deprecated
+    public boolean addPointAt(Point2D pos, boolean insert)
+    {
+        return addPoint(pos, insert);
+    }
+
+    /**
      * internal use only
      */
     protected boolean removePoint(@SuppressWarnings("unused") IcyCanvas canvas, Anchor2D pt)
     {
         pt.removeOverlayListener(this);
         pt.removeAnchorListener(this);
+
         controlPoints.remove(pt);
-        roiChanged();
+
+        // empty ROI ? --> remove from all sequence
+        if (controlPoints.size() == 0)
+            remove();
+        else
+            roiChanged();
+
         return true;
     }
 
     /**
-     * internal use only
+     * internal use only (used for fast clear)
      */
     protected void removeAllPoint()
     {
@@ -788,21 +812,23 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             pt.removeAnchorListener(this);
         }
         controlPoints.clear();
-        roiChanged();
     }
 
-    @Override
+    /**
+     * @deprecated Use {@link #removeSelectedPoint(IcyCanvas)} instead.
+     */
+    @Deprecated
     public boolean removePointAt(IcyCanvas canvas, Point2D imagePoint)
     {
         if (!canRemovePoint())
             return false;
 
         // first we try to remove selected point
-        if (!removeSelectedPoint(canvas, imagePoint))
+        if (!removeSelectedPoint(canvas))
         {
             // if no point selected, try to select and remove a point at specified position
             if (selectPointAt(canvas, imagePoint))
-                return removeSelectedPoint(canvas, imagePoint);
+                return removeSelectedPoint(canvas);
 
             return false;
         }
@@ -810,8 +836,16 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         return true;
     }
 
-    @Override
+    /**
+     * @deprecated Use {@link #removeSelectedPoint(IcyCanvas)} instead.
+     */
+    @Deprecated
     protected boolean removeSelectedPoint(IcyCanvas canvas, Point2D imagePoint)
+    {
+        return removeSelectedPoint(canvas);
+    }
+
+    public boolean removeSelectedPoint(IcyCanvas canvas)
     {
         if (!canRemovePoint())
             return false;
@@ -832,6 +866,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             remove();
         else
         {
+            // save the point position
+            final Point2D imagePoint = selectedPoint.getPosition();
+
             // we are using PathAnchor2D ?
             if (selectedPoint instanceof PathAnchor2D)
             {
@@ -955,7 +992,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      */
     protected int getInsertPointPosition(Point2D pos)
     {
-        final ArrayList<Point2D> points = new ArrayList<Point2D>();
+        final List<Point2D> points = new ArrayList<Point2D>();
 
         for (Anchor2D pt : controlPoints)
             points.add(pt.getPosition());
@@ -989,11 +1026,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     /**
-     * return true if specified point coordinates overlap the ROI (without control point)
+     * Returns true if specified point coordinates overlap the ROI edge.
      */
     @Override
-    public boolean isOver(IcyCanvas canvas, double x, double y)
+    public boolean isOverEdge(IcyCanvas canvas, double x, double y)
     {
+        // easy discard
         if (!getBounds2D().contains(x, y))
             return false;
 
@@ -1004,18 +1042,18 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         return ShapeUtil.pathIntersects(getPathIterator(null, 0.1), rect);
     }
 
-    @Override
-    public boolean isOverPoint(IcyCanvas canvas, double x, double y)
-    {
-        if (isSelected())
-        {
-            for (Anchor2D pt : controlPoints)
-                if (pt.isOver(canvas, x, y))
-                    return true;
-        }
-
-        return false;
-    }
+    // @Override
+    // public boolean isOverPoint(IcyCanvas canvas, double x, double y)
+    // {
+    // if (isSelected())
+    // {
+    // for (Anchor2D pt : controlPoints)
+    // if (pt.isOver(canvas, x, y))
+    // return true;
+    // }
+    //
+    // return false;
+    // }
 
     /**
      * Return the list of (control) points for this ROI.
@@ -1084,17 +1122,28 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         return shape.getBounds2D();
     }
 
-    // @Override
-    // public Rectangle getBounds()
-    // {
-    // return shape.getBounds();
-    // }
-    //
-    // @Override
-    // public Rectangle2D getBounds2D()
-    // {
-    // return shape.getBounds2D();
-    // } @Override
+    @Override
+    protected ROI computeOperation(ROI roi, BooleanOperator op) throws UnsupportedOperationException
+    {
+        if (roi instanceof ROI2DShape)
+        {
+            final ROI2DShape roiShape = (ROI2DShape) roi;
+
+            // special case for subtraction
+            if (op == null)
+                return new ROI2DPath(ShapeUtil.subtract(this, roiShape));
+            else if (op == BooleanOperator.AND)
+                return new ROI2DPath(ShapeUtil.intersect(this, roiShape));
+            else if (op == BooleanOperator.OR)
+                return new ROI2DPath(ShapeUtil.union(this, roiShape));
+            else if (op == BooleanOperator.XOR)
+                return new ROI2DPath(ShapeUtil.exclusiveUnion(this, roiShape));
+        }
+
+        return super.computeOperation(roi, op);
+    }
+
+    @Override
     public void translate(double dx, double dy)
     {
         beginUpdate();
@@ -1110,7 +1159,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     /**
-     * anchor position changed
+     * Called when anchor position changed
      */
     @Override
     public void positionChanged(Anchor2D source)
@@ -1120,7 +1169,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     /**
-     * anchor overlay changed
+     * Called when anchor overlay changed
      */
     @Override
     public void overlayChanged(OverlayEvent event)
@@ -1138,7 +1187,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     }
 
     /**
-     * anchor painter changed (old event for backward compatibility)
+     * Called when anchor painter changed, provided only for backward compatibility.<br>
+     * Don't use it.
      */
     @SuppressWarnings("deprecation")
     @Override

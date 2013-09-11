@@ -142,15 +142,24 @@ public class ShapeUtil
     }
 
     /**
-     * Add 2 shapes and return result in an {@link Area} type shape.
+     * Do union between the 2 shapes and return result in an {@link Area} type shape.
      */
-    public static Area add(Shape shape1, Shape shape2)
+    public static Area union(Shape shape1, Shape shape2)
     {
         final Area result = new Area(shape1);
 
         result.add(new Area(shape2));
 
         return result;
+    }
+
+    /**
+     * @deprecated Use {@link #union(Shape, Shape)} instead
+     */
+    @Deprecated
+    public static Area add(Shape shape1, Shape shape2)
+    {
+        return union(shape1, shape2);
     }
 
     /**
@@ -166,15 +175,24 @@ public class ShapeUtil
     }
 
     /**
-     * Exclusive Or 2 shapes and return result in an {@link Area} type shape.
+     * Do exclusive union between the 2 shapes and return result in an {@link Area} type shape.
      */
-    public static Area xor(Shape shape1, Shape shape2)
+    public static Area exclusiveUnion(Shape shape1, Shape shape2)
     {
         final Area result = new Area(shape1);
 
         result.exclusiveOr(new Area(shape2));
 
         return result;
+    }
+
+    /**
+     * @deprecated Use {@link #exclusiveUnion(Shape, Shape)} instead.
+     */
+    @Deprecated
+    public static Area xor(Shape shape1, Shape shape2)
+    {
+        return exclusiveUnion(shape1, shape2);
     }
 
     /**

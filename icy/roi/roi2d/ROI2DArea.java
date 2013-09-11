@@ -27,6 +27,7 @@ import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.sequence.Sequence;
+import icy.type.point.Point5D;
 import icy.util.EventUtil;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
@@ -174,7 +175,7 @@ public class ROI2DArea extends ROI2D
         }
 
         @Override
-        public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to parent first
             super.keyPressed(e, imagePoint, canvas);
@@ -214,7 +215,7 @@ public class ROI2DArea extends ROI2D
         }
 
         @Override
-        public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to parent first
             super.mousePressed(e, imagePoint, canvas);
@@ -231,16 +232,21 @@ public class ROI2DArea extends ROI2D
                         ROI2DArea.this.beginUpdate();
                         try
                         {
-                            // right button action
-                            if (EventUtil.isRightMouseButton(e))
+                            // ROI selected and not focused
+                            if (isSelected() && !isFocused())
                             {
-                                // roi selected ?
-                                if (isSelected())
+                                // left button action
+                                if (EventUtil.isLeftMouseButton(e))
                                 {
-                                    // roi not focused ? --> remove point from mask
-                                    if (!isFocused())
-                                        removePointAt(canvas, imagePoint);
-
+                                    // add point first
+                                    addToMask(imagePoint.toPoint2D());
+                                    e.consume();
+                                }
+                                // right button action
+                                else if (EventUtil.isRightMouseButton(e))
+                                {
+                                    // remove point
+                                    removeFromMask(imagePoint.toPoint2D());
                                     e.consume();
                                 }
                             }
@@ -255,18 +261,23 @@ public class ROI2DArea extends ROI2D
         }
 
         @Override
-        public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to parent first
             super.mouseReleased(e, imagePoint, canvas);
 
             // update only on release as it can be long
             if (!isReadOnly() && boundsNeedUpdate)
-                optimizeBounds(true);
+            {
+                optimizeBounds();
+                // empty ? delete ROI
+                if (bounds.isEmpty())
+                    ROI2DArea.this.remove();
+            }
         }
 
         @Override
-        public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to parent first
             super.mouseDrag(e, imagePoint, canvas);
@@ -289,18 +300,15 @@ public class ROI2DArea extends ROI2D
                                 // left button action
                                 if (EventUtil.isLeftMouseButton(e))
                                 {
-                                    // try to add a new point
-                                    if (addPointAt(imagePoint, EventUtil.isControlDown(e)))
-                                        // consume
-                                        e.consume();
+                                    // add point first
+                                    addToMask(imagePoint.toPoint2D());
+                                    e.consume();
                                 }
                                 // right button action
                                 else if (EventUtil.isRightMouseButton(e))
                                 {
-                                    // roi not focused ? --> remove point from mask
-                                    if (!isFocused())
-                                        removePointAt(canvas, imagePoint);
-
+                                    // remove point
+                                    removeFromMask(imagePoint.toPoint2D());
                                     e.consume();
                                 }
                             }
@@ -504,17 +512,7 @@ public class ROI2DArea extends ROI2D
     }
 
     /**
-     * Create a ROI2D Area type from the specified {@link BooleanMask2D}.
-     */
-    public ROI2DArea(BooleanMask2D mask)
-    {
-        this();
-
-        setAsBooleanMask(mask);
-    }
-
-    /**
-     * @deprecated
+     * @deprecated Use {@link #ROI2DArea(Point5D)} instead
      */
     @Deprecated
     public ROI2DArea(Point2D position, boolean cm)
@@ -529,17 +527,32 @@ public class ROI2DArea extends ROI2D
     {
         this();
 
-        if (position != null)
-        {
-            // init mouse position
-            setMousePos(position);
-            // add current point to mask
-            addPointAt(position, false);
-        }
+        // init mouse position
+        setMousePos(position);
+        // add current point to mask
+        addBrush(position);
     }
 
     /**
-     * Create a new ROI2D Area type which is a copy of the specified ROI2D Area
+     * Generic constructor for interactive mode.
+     */
+    public ROI2DArea(Point5D position)
+    {
+        this(position.toPoint2D());
+    }
+
+    /**
+     * Create a ROI2D Area type from the specified {@link BooleanMask2D}.
+     */
+    public ROI2DArea(BooleanMask2D mask)
+    {
+        this();
+
+        setAsBooleanMask(mask);
+    }
+
+    /**
+     * Create a copy of the specified 2D Area ROI
      */
     public ROI2DArea(ROI2DArea area)
     {
@@ -581,10 +594,36 @@ public class ROI2DArea extends ROI2D
     }
 
     /**
+     * @deprecated Use {@link #optimizeBounds()} instead.
+     */
+    @Deprecated
+    public void optimizeBounds(boolean removeIfEmpty)
+    {
+        optimizeBounds();
+        if (removeIfEmpty && bounds.isEmpty())
+            remove();
+    }
+
+    /**
+     * Returns true if the ROI is empty (the mask does not contains any point).
+     */
+    public boolean isEmpty()
+    {
+        if (bounds.isEmpty())
+            return true;
+
+        for (byte b : maskData)
+            if (b != 0)
+                return false;
+
+        return true;
+    }
+
+    /**
      * Optimize the bounds size to the minimum surface which still include all mask<br>
      * You should call it after consecutive remove operations.
      */
-    public void optimizeBounds(boolean removeIfEmpty)
+    public void optimizeBounds()
     {
         // bounds are being updated
         boundsNeedUpdate = false;
@@ -631,9 +670,13 @@ public class ROI2DArea extends ROI2D
             // notify changed
             roiChanged();
         }
-        // empty ? delete ROI if flag allow it
-        else if (removeIfEmpty)
-            remove();
+        else
+        {
+            // update to empty bounds
+            updateImage(new Rectangle(bounds.x, bounds.y, 0, 0));
+            // notify changed
+            roiChanged();
+        }
     }
 
     /**
@@ -730,25 +773,41 @@ public class ROI2DArea extends ROI2D
     }
 
     /**
-     * Add or remove a point in the mask.
+     * Set the value of the specified point.<br>
+     * Don't forget to call optimizeBounds() after consecutive remove operation to refresh the mask
+     * bounds.
      */
-    public void updateMask(int x, int y, boolean remove)
+    public void setPoint(int x, int y, boolean value)
     {
-        if (remove)
-            // mark that bounds need to be updated
-            boundsNeedUpdate = true;
-        else
-            // update bounds (this update the image dimension if needed)
-            addToBounds(new Rectangle(x, y, 1, 1));
-
         final int adjX = x - bounds.x;
         final int adjY = y - bounds.y;
 
-        // set color depending remove or adding to mask
-        maskData[adjX + (adjY * bounds.width)] = (byte) (remove ? 0 : 1);
+        if (value)
+        {
+            // set point in mask
+            addToBounds(new Rectangle(x, y, 1, 1));
+            // set color depending remove or adding to mask
+            maskData[adjX + (adjY * bounds.width)] = 1;
+        }
+        else
+        {
+            // remove point from mask
+            maskData[adjX + (adjY * bounds.width)] = 0;
+            // mark that bounds need to be updated
+            boundsNeedUpdate = true;
+        }
 
         // notify roi changed
         roiChanged();
+    }
+
+    /**
+     * @deprecated Use {@link #setPoint(int, int, boolean)} instead.
+     */
+    @Deprecated
+    public void updateMask(int x, int y, boolean remove)
+    {
+        setPoint(x, y, !remove);
     }
 
     /**
@@ -758,8 +817,7 @@ public class ROI2DArea extends ROI2D
     {
         if (remove)
         {
-            // outside bounds ? --> nothing to remove...
-            // nothing to do
+            // outside bounds ? --> nothing to remove so nothing to do...
             if (!bounds.intersects(shape.getBounds2D()))
                 return;
 
@@ -818,37 +876,70 @@ public class ROI2DArea extends ROI2D
         return false;
     }
 
-    @Override
+    /**
+     * @deprecated useless method.
+     */
+    @Deprecated
     public boolean canAddPoint()
     {
         return true;
     }
 
-    @Override
+    /**
+     * @deprecated useless method.
+     */
+    @Deprecated
     public boolean canRemovePoint()
     {
         return true;
     }
 
-    @Override
+    /**
+     * @deprecated Use {@link #addBrush(Point2D)} instead.
+     */
+    @Deprecated
     public boolean addPointAt(Point2D pos, boolean ctrl)
     {
-        getPainter().addToMask(pos);
+        addBrush(pos);
         return true;
     }
 
-    @Override
+    /**
+     * @deprecated Use {@link #removeBrush(Point2D)} instead.
+     */
+    @Deprecated
     public boolean removePointAt(IcyCanvas canvas, Point2D pos)
     {
-        getPainter().removeFromMask(pos);
+        removeBrush(pos);
         return true;
     }
 
-    @Override
+    /**
+     * @deprecated Useless method.
+     */
+    @Deprecated
     protected boolean removeSelectedPoint(IcyCanvas canvas, Point2D imagePoint)
     {
         // no selected point for this ROI
         return false;
+    }
+
+    /**
+     * Add brush point at specified position.
+     */
+    public void addBrush(Point2D pos)
+    {
+        getPainter().addToMask(pos);
+    }
+
+    /**
+     * Remove brush point from the mask at specified position.<br>
+     * Don't forget to call optimizeBounds() after consecutive remove operation
+     * to refresh the mask bounds.
+     */
+    public void removeBrush(Point2D pos)
+    {
+        getPainter().removeFromMask(pos);
     }
 
     /**
@@ -864,12 +955,12 @@ public class ROI2DArea extends ROI2D
      */
     public void addPoint(int x, int y)
     {
-        updateMask(x, y, false);
+        setPoint(x, y, true);
     }
 
     /**
-     * Remove a point to the mask.<br>
-     * Don't forget to call optimizeBounds() after consecutive remove operation<br>
+     * Remove a point from the mask.<br>
+     * Don't forget to call optimizeBounds() after consecutive remove operation
      * to refresh the mask bounds.
      */
     public void removePoint(Point pos)
@@ -879,12 +970,12 @@ public class ROI2DArea extends ROI2D
 
     /**
      * Remove a point to the mask.<br>
-     * Don't forget to call optimizeBounds() after consecutive remove operation<br>
+     * Don't forget to call optimizeBounds() after consecutive remove operation
      * to refresh the mask bounds.
      */
     public void removePoint(int x, int y)
     {
-        updateMask(x, y, true);
+        setPoint(x, y, false);
     }
 
     /**
@@ -959,19 +1050,13 @@ public class ROI2DArea extends ROI2D
     }
 
     @Override
-    public boolean isOver(IcyCanvas canvas, double x, double y)
+    public boolean isOverEdge(IcyCanvas canvas, double x, double y)
     {
         // use bigger stroke for isOver test for easier intersection
         final double strk = getAdjustedStroke(canvas) * 3;
         final Rectangle2D rect = new Rectangle2D.Double(x - (strk * 0.5), y - (strk * 0.5), strk, strk);
         // use flatten path, intersects on curved shape return incorrect result
         return ShapeUtil.pathIntersects(bounds.getPathIterator(null, 0.1), rect);
-    }
-
-    @Override
-    public boolean isOverPoint(IcyCanvas canvas, double x, double y)
-    {
-        return false;
     }
 
     @Override
@@ -1166,7 +1251,7 @@ public class ROI2DArea extends ROI2D
         for (int i = 0; i < len; i++)
             maskData[i] = mask[i];
 
-        optimizeBounds(false);
+        optimizeBounds();
     }
 
     /**
@@ -1186,7 +1271,7 @@ public class ROI2DArea extends ROI2D
         for (int i = 0; i < len; i++)
             maskData[i] = (byte) (booleanMask[i] ? 1 : 0);
 
-        optimizeBounds(false);
+        optimizeBounds();
     }
 
     public void setAsBooleanMask(int x, int y, int w, int h, boolean[] booleanMask)

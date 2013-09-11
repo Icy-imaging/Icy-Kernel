@@ -18,6 +18,9 @@
  */
 package icy.type.point;
 
+import java.awt.Point;
+import java.awt.geom.Point2D;
+
 /**
  * Point4D class.<br>
  * Incomplete implementation (work in progress...)
@@ -107,6 +110,16 @@ public abstract class Point4D
     {
         setLocation(p.getX(), p.getY(), p.getZ(), p.getT());
     }
+
+    /**
+     * Convert to 2D point
+     */
+    public abstract Point2D toPoint2D();
+
+    /**
+     * Convert to 3D point
+     */
+    public abstract Point3D toPoint3D();
 
     @Override
     public boolean equals(Object obj)
@@ -212,6 +225,19 @@ public abstract class Point4D
             this.z = z;
             this.t = t;
         }
+
+        @Override
+        public Point2D toPoint2D()
+        {
+            return new Point2D.Double(x, y);
+        }
+
+        @Override
+        public Point3D toPoint3D()
+        {
+            return new Point3D.Double(x, y, z);
+        }
+
     }
 
     public static class Float extends Point4D
@@ -306,6 +332,19 @@ public abstract class Point4D
             this.z = (float) z;
             this.t = (float) t;
         }
+
+        @Override
+        public Point2D toPoint2D()
+        {
+            return new Point2D.Float(x, y);
+        }
+
+        @Override
+        public Point3D toPoint3D()
+        {
+            return new Point3D.Float(x, y, z);
+        }
+
     }
 
     public static class Integer extends Point4D
@@ -399,6 +438,18 @@ public abstract class Point4D
             this.y = (int) y;
             this.z = (int) z;
             this.t = (int) t;
+        }
+
+        @Override
+        public Point2D toPoint2D()
+        {
+            return new Point(x, y);
+        }
+
+        @Override
+        public Point3D toPoint3D()
+        {
+            return new Point3D.Integer(x, y, z);
         }
     }
 }

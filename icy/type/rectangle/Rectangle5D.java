@@ -20,6 +20,9 @@ package icy.type.rectangle;
 
 import icy.type.point.Point5D;
 
+import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
+
 /**
  * Rectangle5D class.<br>
  * Incomplete implementation (work in progress...)
@@ -42,10 +45,19 @@ public abstract class Rectangle5D
      *        other
      * @param dest
      *        the <code>Rectangle5D</code> that holds the
-     *        results of the intersection of <code>src1</code> and <code>src2</code>
+     *        results of the intersection of <code>src1</code> and <code>src2</code>.<br>
+     *        If set to <code>null</code> then a new Rectangle5D is created.
+     * @return resulting <code>Rectangle5D</code> from the intersect process.
      */
-    public static void intersect(Rectangle5D src1, Rectangle5D src2, Rectangle5D dest)
+    public static Rectangle5D intersect(Rectangle5D src1, Rectangle5D src2, Rectangle5D dest)
     {
+        final Rectangle5D result;
+
+        if (dest == null)
+            result = new Rectangle5D.Double();
+        else
+            result = dest;
+
         final double x1 = Math.max(src1.getMinX(), src2.getMinX());
         final double y1 = Math.max(src1.getMinY(), src2.getMinY());
         final double z1 = Math.max(src1.getMinZ(), src2.getMinZ());
@@ -56,7 +68,10 @@ public abstract class Rectangle5D
         final double z2 = Math.min(src1.getMaxZ(), src2.getMaxZ());
         final double t2 = Math.min(src1.getMaxT(), src2.getMaxT());
         final double c2 = Math.min(src1.getMaxC(), src2.getMaxC());
-        dest.setRect(x1, y1, z1, t1, c1, x2 - x1, y2 - y1, z2 - z1, t2 - t1, c2 - c1);
+
+        result.setRect(x1, y1, z1, t1, c1, x2 - x1, y2 - y1, z2 - z1, t2 - t1, c2 - c1);
+
+        return result;
     }
 
     /**
@@ -83,10 +98,19 @@ public abstract class Rectangle5D
      *        other
      * @param dest
      *        the <code>Rectangle5D</code> that holds the
-     *        results of the union of <code>src1</code> and <code>src2</code>
+     *        results of the union of <code>src1</code> and <code>src2</code>.<br>
+     *        If set to <code>null</code> then a new Rectangle5D is created.
+     * @return resulting <code>Rectangle5D</code> from the intersect process.
      */
-    public static void union(Rectangle5D src1, Rectangle5D src2, Rectangle5D dest)
+    public static Rectangle5D union(Rectangle5D src1, Rectangle5D src2, Rectangle5D dest)
     {
+        final Rectangle5D result;
+
+        if (dest == null)
+            result = new Rectangle5D.Double();
+        else
+            result = dest;
+
         double x1 = Math.min(src1.getMinX(), src2.getMinX());
         double y1 = Math.min(src1.getMinY(), src2.getMinY());
         double z1 = Math.min(src1.getMinZ(), src2.getMinZ());
@@ -97,7 +121,10 @@ public abstract class Rectangle5D
         double z2 = Math.max(src1.getMaxZ(), src2.getMaxZ());
         double t2 = Math.max(src1.getMaxT(), src2.getMaxT());
         double c2 = Math.max(src1.getMaxC(), src2.getMaxC());
-        dest.setRect(x1, y1, z1, t1, c1, x2 - x1, y2 - y1, z2 - z1, t2 - t1, c2 - c1);
+
+        result.setRect(x1, y1, z1, t1, c1, x2 - x1, y2 - y1, z2 - z1, t2 - t1, c2 - c1);
+
+        return result;
     }
 
     /**
@@ -231,22 +258,32 @@ public abstract class Rectangle5D
 
         if (sx < 0d)
             isx = 0;
+        else if (sx >= java.lang.Integer.MAX_VALUE)
+            isx = java.lang.Integer.MAX_VALUE;
         else
             isx = ((int) Math.ceil(x + sx)) - ix;
         if (sy < 0d)
             isy = 0;
+        else if (sy >= java.lang.Integer.MAX_VALUE)
+            isy = java.lang.Integer.MAX_VALUE;
         else
             isy = ((int) Math.ceil(y + sy)) - iy;
         if (sz < 0d)
             isz = 0;
+        else if (sz >= java.lang.Integer.MAX_VALUE)
+            isz = java.lang.Integer.MAX_VALUE;
         else
             isz = ((int) Math.ceil(z + sz)) - iz;
         if (st < 0d)
             ist = 0;
+        else if (st >= java.lang.Integer.MAX_VALUE)
+            ist = java.lang.Integer.MAX_VALUE;
         else
             ist = ((int) Math.ceil(t + st)) - it;
         if (sc < 0d)
             isc = 0;
+        else if (sc >= java.lang.Integer.MAX_VALUE)
+            isc = java.lang.Integer.MAX_VALUE;
         else
             isc = ((int) Math.ceil(c + sc)) - ic;
 
@@ -654,6 +691,21 @@ public abstract class Rectangle5D
         setRect(x1, y1, z1, t1, c1, x2 - x1, y2 - y1, z2 - z1, t2 - t1, c2 - c1);
     }
 
+    /**
+     * Convert to 2D rectangle
+     */
+    public abstract Rectangle2D toRectangle2D();
+
+    /**
+     * Convert to 3D rectangle
+     */
+    public abstract Rectangle3D toRectangle3D();
+
+    /**
+     * Convert to 4D rectangle
+     */
+    public abstract Rectangle4D toRectangle4D();
+
     @Override
     public boolean equals(Object obj)
     {
@@ -866,6 +918,24 @@ public abstract class Rectangle5D
 
             return result;
         }
+
+        @Override
+        public Rectangle2D toRectangle2D()
+        {
+            return new Rectangle2D.Double(x, y, sizeX, sizeY);
+        }
+
+        @Override
+        public Rectangle3D toRectangle3D()
+        {
+            return new Rectangle3D.Double(x, y, z, sizeX, sizeY, sizeZ);
+        }
+
+        @Override
+        public Rectangle4D toRectangle4D()
+        {
+            return new Rectangle4D.Double(x, y, z, t, sizeX, sizeY, sizeZ, sizeT);
+        }
     }
 
     public static class Float extends Rectangle5D
@@ -1064,6 +1134,24 @@ public abstract class Rectangle5D
             union(this, r, result);
 
             return result;
+        }
+
+        @Override
+        public Rectangle2D toRectangle2D()
+        {
+            return new Rectangle2D.Float(x, y, sizeX, sizeY);
+        }
+
+        @Override
+        public Rectangle3D toRectangle3D()
+        {
+            return new Rectangle3D.Float(x, y, z, sizeX, sizeY, sizeZ);
+        }
+
+        @Override
+        public Rectangle4D toRectangle4D()
+        {
+            return new Rectangle4D.Float(x, y, z, t, sizeX, sizeY, sizeZ, sizeT);
         }
     }
 
@@ -1328,6 +1416,24 @@ public abstract class Rectangle5D
             union(this, r, result);
 
             return result;
+        }
+
+        @Override
+        public Rectangle2D toRectangle2D()
+        {
+            return new Rectangle(x, y, sizeX, sizeY);
+        }
+
+        @Override
+        public Rectangle3D toRectangle3D()
+        {
+            return new Rectangle3D.Integer(x, y, z, sizeX, sizeY, sizeZ);
+        }
+
+        @Override
+        public Rectangle4D toRectangle4D()
+        {
+            return new Rectangle4D.Integer(x, y, z, t, sizeX, sizeY, sizeZ, sizeT);
         }
     }
 }

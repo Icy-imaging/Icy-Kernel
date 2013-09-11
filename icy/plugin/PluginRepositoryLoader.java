@@ -352,7 +352,7 @@ public class PluginRepositoryLoader
     /**
      * @return the pluginList
      */
-    public static List<PluginDescriptor> getPlugins()
+    public static ArrayList<PluginDescriptor> getPlugins()
     {
         synchronized (instance.plugins)
         {

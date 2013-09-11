@@ -20,6 +20,7 @@ package icy.roi.roi2d;
 
 import icy.painter.Anchor2D;
 import icy.painter.PathAnchor2D;
+import icy.type.point.Point5D;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
 
@@ -89,6 +90,14 @@ public class ROI2DPath extends ROI2DShape
     public ROI2DPath(Point2D position)
     {
         this(initPath(position));
+    }
+
+    /**
+     * Generic constructor for interactive mode
+     */
+    public ROI2DPath(Point5D pt)
+    {
+        this(pt.toPoint2D());
     }
 
     public ROI2DPath()

@@ -3,7 +3,10 @@ package icy.roi;
 import icy.type.point.Point3D;
 import icy.type.rectangle.Rectangle3D;
 
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -32,7 +35,7 @@ public class BooleanMask3D implements Cloneable
             return (BooleanMask2D) m1.clone();
 
         // process union of 2D mask
-        return BooleanMask2D.getUnionBooleanMask(m1, m2);
+        return BooleanMask2D.getUnion(m1, m2);
     }
 
     // Internal use only
@@ -42,7 +45,7 @@ public class BooleanMask3D implements Cloneable
             return null;
 
         // process intersection of 2D mask
-        return BooleanMask2D.getIntersectionBooleanMask(m1, m2);
+        return BooleanMask2D.getIntersection(m1, m2);
     }
 
     // Internal use only
@@ -61,7 +64,7 @@ public class BooleanMask3D implements Cloneable
             return (BooleanMask2D) m1.clone();
 
         // process exclusive union of 2D mask
-        return BooleanMask2D.getExclusiveUnionBooleanMask(m1, m2);
+        return BooleanMask2D.getExclusiveUnion(m1, m2);
     }
 
     // Internal use only
@@ -74,7 +77,7 @@ public class BooleanMask3D implements Cloneable
             return (BooleanMask2D) m1.clone();
 
         // process subtraction of 2D mask
-        return BooleanMask2D.getSubtractionMask(m1, m2);
+        return BooleanMask2D.getSubtraction(m1, m2);
     }
 
     /**
@@ -93,7 +96,7 @@ public class BooleanMask3D implements Cloneable
      *     ##                                 ##     ##            ##
      * </pre>
      */
-    public static BooleanMask3D getUnionBooleanMask(BooleanMask3D mask1, BooleanMask3D mask2)
+    public static BooleanMask3D getUnion(BooleanMask3D mask1, BooleanMask3D mask2)
     {
         final Rectangle3D.Integer bounds = (Rectangle3D.Integer) mask1.bounds.createUnion(mask2.bounds);
 
@@ -107,7 +110,7 @@ public class BooleanMask3D implements Cloneable
                 // we can allow merge ROI only if they both has infinite Z dimension
                 if ((mask1.bounds.sizeZ != Integer.MAX_VALUE) || (mask2.bounds.sizeZ != Integer.MAX_VALUE))
                     throw new UnsupportedOperationException(
-                            "Cannot merge an infinite Z dimension ROI with  a finite Z dimension ROI");
+                            "Cannot merge an infinite Z dimension ROI with a finite Z dimension ROI");
 
                 mask = new BooleanMask2D[1];
 
@@ -151,7 +154,7 @@ public class BooleanMask3D implements Cloneable
      *     ##                                 ##
      * </pre>
      */
-    public static BooleanMask3D getIntersectionBooleanMask(BooleanMask3D mask1, BooleanMask3D mask2)
+    public static BooleanMask3D getIntersection(BooleanMask3D mask1, BooleanMask3D mask2)
     {
         final Rectangle3D.Integer bounds = (Rectangle3D.Integer) mask1.bounds.createIntersection(mask2.bounds);
 
@@ -209,7 +212,7 @@ public class BooleanMask3D implements Cloneable
      *     ##                                 ##     ##            ##
      * </pre>
      */
-    public static BooleanMask3D getExclusiveUnionBooleanMask(BooleanMask3D mask1, BooleanMask3D mask2)
+    public static BooleanMask3D getExclusiveUnion(BooleanMask3D mask1, BooleanMask3D mask2)
     {
         final Rectangle3D.Integer bounds = (Rectangle3D.Integer) mask1.bounds.createUnion(mask2.bounds);
 
@@ -267,7 +270,7 @@ public class BooleanMask3D implements Cloneable
      *     ##                                 ##     ##
      * </pre>
      */
-    public static BooleanMask3D getSubtractionMask(BooleanMask3D mask1, BooleanMask3D mask2)
+    public static BooleanMask3D getSubtraction(BooleanMask3D mask1, BooleanMask3D mask2)
     {
         final Rectangle3D.Integer bounds = (Rectangle3D.Integer) mask1.bounds.createIntersection(mask2.bounds);
 
@@ -332,7 +335,7 @@ public class BooleanMask3D implements Cloneable
 
         // special case of infinite Z dim
         if (bounds.sizeZ == Integer.MAX_VALUE)
-            this.mask.put(Integer.valueOf(bounds.z), mask[0]);
+            this.mask.put(Integer.valueOf(-1), mask[0]);
         else
         {
             for (int z = 0; z < bounds.sizeZ; z++)
@@ -485,15 +488,9 @@ public class BooleanMask3D implements Cloneable
      */
     public BooleanMask2D getMask2D(int z)
     {
+        // special case of infinite Z dimension
         if (bounds.sizeZ == Integer.MAX_VALUE)
-        {
-            final Entry<Integer, BooleanMask2D> entry = mask.firstEntry();
-        
-            if (entry != null)
-                return entry.getValue();
-            
-            return null;
-        }
+            return mask.firstEntry().getValue();
 
         return mask.get(Integer.valueOf(z));
     }
@@ -563,7 +560,7 @@ public class BooleanMask3D implements Cloneable
         // single Z --> check for special MAX_INTEGER case
         if ((minZ == maxZ) && (bounds.sizeZ == Integer.MAX_VALUE))
         {
-            result.setZ(minZ);
+            result.setZ(-1);
             result.setSizeZ(Integer.MAX_VALUE);
         }
         else
@@ -646,7 +643,7 @@ public class BooleanMask3D implements Cloneable
                 // set new mask
                 mask.clear();
                 if (mask2D != null)
-                    mask.put(Integer.valueOf(0), mask2D);
+                    mask.put(Integer.valueOf(-1), mask2D);
             }
             else
             {
@@ -672,6 +669,46 @@ public class BooleanMask3D implements Cloneable
 
             bounds = value;
         }
+    }
+
+    /**
+     * Return an array of {@link icy.type.point.Point3D.Integer} containing the edge/surface points
+     * of the 3D mask.<br>
+     * Points are returned in ascending XYZ order.
+     */
+    public Point3D.Integer[] getEdgePoints()
+    {
+        final List<Point3D.Integer> points = new ArrayList<Point3D.Integer>(1024);
+
+        for (Entry<Integer, BooleanMask2D> entry : mask.entrySet())
+        {
+            final int z = entry.getKey().intValue();
+
+            for (Point pt : entry.getValue().getEdgePoints())
+                points.add(new Point3D.Integer(pt.x, pt.y, z));
+        }
+
+        return points.toArray(new Point3D.Integer[points.size()]);
+    }
+
+    /**
+     * Return an array of {@link icy.type.point.Point3D.Integer} representing all points of the
+     * current 3D mask.<br>
+     * Points are returned in ascending XYZ order.
+     */
+    public Point3D.Integer[] getPoints()
+    {
+        final List<Point3D.Integer> points = new ArrayList<Point3D.Integer>(1024);
+
+        for (Entry<Integer, BooleanMask2D> entry : mask.entrySet())
+        {
+            final int z = entry.getKey().intValue();
+
+            for (Point pt : entry.getValue().getPoints())
+                points.add(new Point3D.Integer(pt.x, pt.y, z));
+        }
+
+        return points.toArray(new Point3D.Integer[points.size()]);
     }
 
     @Override

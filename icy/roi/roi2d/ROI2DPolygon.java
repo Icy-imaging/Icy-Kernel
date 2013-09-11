@@ -20,6 +20,7 @@ package icy.roi.roi2d;
 
 import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
+import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
@@ -95,6 +96,14 @@ public class ROI2DPolygon extends ROI2DShape
         updateShape();
 
         setName("Polygon2D");
+    }
+
+    /**
+     * Generic constructor for interactive mode
+     */
+    public ROI2DPolygon(Point5D pt)
+    {
+        this(pt.toPoint2D());
     }
 
     public ROI2DPolygon(List<Point2D> points)

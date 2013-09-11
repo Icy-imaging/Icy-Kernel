@@ -18,6 +18,8 @@
  */
 package icy.roi.roi2d;
 
+import icy.type.point.Point5D;
+
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
@@ -74,6 +76,14 @@ public class ROI2DRectangle extends ROI2DRectShape
     public ROI2DRectangle(Point2D pt)
     {
         this(new Point2D.Double(pt.getX(), pt.getY()), pt);
+    }
+
+    /**
+     * Generic constructor for interactive mode
+     */
+    public ROI2DRectangle(Point5D pt)
+    {
+        this(pt.toPoint2D());
     }
 
     public ROI2DRectangle()

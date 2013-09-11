@@ -25,6 +25,7 @@ import icy.common.listener.ChangeListener;
 import icy.main.Icy;
 import icy.painter.OverlayEvent.OverlayEventType;
 import icy.sequence.Sequence;
+import icy.type.point.Point5D;
 
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
@@ -299,7 +300,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     /**
-     * Returns all sequences where the painter/overlay is currently attached.
+     * Returns all sequences where the overlay is currently attached.
      */
     public List<Sequence> getSequences()
     {
@@ -376,7 +377,7 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     /**
-     * Paint method called to draw the painter.
+     * Paint method called to draw the overlay.
      */
     @Override
     public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
@@ -385,15 +386,9 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     /**
-     * Mouse press event forwarded to the painter.
-     * 
-     * @param e
-     *        mouse event
-     * @param imagePoint
-     *        mouse position (image coordinates)
-     * @param canvas
-     *        icy canvas
+     * @deprecated Use {@link #mousePressed(MouseEvent, Point5D.Double, IcyCanvas)} instead
      */
+    @Deprecated
     @Override
     public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
@@ -401,15 +396,9 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     /**
-     * Mouse release event forwarded to the painter.
-     * 
-     * @param e
-     *        mouse event
-     * @param imagePoint
-     *        mouse position (image coordinates)
-     * @param canvas
-     *        icy canvas
+     * @deprecated Use {@link #mouseReleased(MouseEvent, Point5D.Double, IcyCanvas)} instead
      */
+    @Deprecated
     @Override
     public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
@@ -417,15 +406,9 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     /**
-     * Mouse click event forwarded to the painter.
-     * 
-     * @param e
-     *        mouse event
-     * @param imagePoint
-     *        mouse position (image coordinates)
-     * @param canvas
-     *        icy canvas
+     * @deprecated Use {@link #mouseClick(MouseEvent, Point5D.Double, IcyCanvas)} instead
      */
+    @Deprecated
     @Override
     public void mouseClick(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
@@ -433,15 +416,9 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     /**
-     * Mouse move event forwarded to the painter.
-     * 
-     * @param e
-     *        mouse event
-     * @param imagePoint
-     *        mouse position (image coordinates)
-     * @param canvas
-     *        icy canvas
+     * @deprecated Use {@link #mouseMove(MouseEvent, Point5D.Double, IcyCanvas)} instead
      */
+    @Deprecated
     @Override
     public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
     {
@@ -449,7 +426,64 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     /**
-     * Mouse drag event forwarded to the painter.
+     * @deprecated Use {@link #mouseDrag(MouseEvent, Point5D.Double, IcyCanvas)} instead
+     */
+    @Deprecated
+    @Override
+    public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        // no action by default
+    }
+
+    /**
+     * @deprecated Use {@link #mouseEntered(MouseEvent, Point5D.Double, IcyCanvas)} instead
+     */
+    @Deprecated
+    public void mouseEntered(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        // no action by default
+    }
+
+    /**
+     * @deprecated Use {@link #mouseExited(MouseEvent, Point5D.Double, IcyCanvas)} instead
+     */
+    @Deprecated
+    public void mouseExited(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        // no action by default
+    }
+
+    /**
+     * @deprecated Use {@link #mouseWheelMoved(MouseWheelEvent, Point5D.Double, IcyCanvas)} instead
+     */
+    @Deprecated
+    public void mouseWheelMoved(MouseWheelEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        // no action by default
+    }
+
+    /**
+     * @deprecated Use {@link #keyPressed(KeyEvent, Point5D.Double, IcyCanvas)} instead
+     */
+    @Deprecated
+    @Override
+    public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        // no action by default
+    }
+
+    /**
+     * @deprecated Use {@link #keyReleased(KeyEvent, Point5D.Double, IcyCanvas)} instead
+     */
+    @Deprecated
+    @Override
+    public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        // no action by default
+    }
+
+    /**
+     * Mouse press event forwarded to the overlay.
      * 
      * @param e
      *        mouse event
@@ -458,10 +492,74 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
      * @param canvas
      *        icy canvas
      */
-    @Override
-    public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        // no action by default
+        // provide backward compatibility
+        mousePressed(e, imagePoint.toPoint2D(), canvas);
+    }
+
+    /**
+     * Mouse release event forwarded to the overlay.
+     * 
+     * @param e
+     *        mouse event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
+    public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+    {
+        // provide backward compatibility
+        mouseReleased(e, imagePoint.toPoint2D(), canvas);
+    }
+
+    /**
+     * Mouse click event forwarded to the overlay.
+     * 
+     * @param e
+     *        mouse event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
+    public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+    {
+        // provide backward compatibility
+        mouseClick(e, imagePoint.toPoint2D(), canvas);
+    }
+
+    /**
+     * Mouse move event forwarded to the overlay.
+     * 
+     * @param e
+     *        mouse event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
+    public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+    {
+        // provide backward compatibility
+        mouseMove(e, imagePoint.toPoint2D(), canvas);
+    }
+
+    /**
+     * Mouse drag event forwarded to the overlay.
+     * 
+     * @param e
+     *        mouse event
+     * @param imagePoint
+     *        mouse position (image coordinates)
+     * @param canvas
+     *        icy canvas
+     */
+    public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
+    {
+        // provide backward compatibility
+        mouseDrag(e, imagePoint.toPoint2D(), canvas);
     }
 
     /**
@@ -474,9 +572,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
      * @param canvas
      *        icy canvas
      */
-    public void mouseEntered(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mouseEntered(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        // no action by default
+        // provide backward compatibility
+        mouseEntered(e, imagePoint.toPoint2D(), canvas);
     }
 
     /**
@@ -489,9 +588,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
      * @param canvas
      *        icy canvas
      */
-    public void mouseExited(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mouseExited(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        // no action by default
+        // provide backward compatibility
+        mouseExited(e, imagePoint.toPoint2D(), canvas);
     }
 
     /**
@@ -504,13 +604,14 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
      * @param canvas
      *        icy canvas
      */
-    public void mouseWheelMoved(MouseWheelEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void mouseWheelMoved(MouseWheelEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        // no action by default
+        // provide backward compatibility
+        mouseWheelMoved(e, imagePoint.toPoint2D(), canvas);
     }
 
     /**
-     * Key press event forwarded to the painter.
+     * Key press event forwarded to the overlay.
      * 
      * @param e
      *        key event
@@ -519,14 +620,14 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
      * @param canvas
      *        icy canvas
      */
-    @Override
-    public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        // no action by default
+        // provide backward compatibility
+        keyPressed(e, imagePoint.toPoint2D(), canvas);
     }
 
     /**
-     * Key release event forwarded to the painter.
+     * Key release event forwarded to the overlay.
      * 
      * @param e
      *        key event
@@ -535,10 +636,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
      * @param canvas
      *        icy canvas
      */
-    @Override
-    public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+    public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        // no action by default
+        // provide backward compatibility
+        keyReleased(e, imagePoint.toPoint2D(), canvas);
     }
 
     @Override
