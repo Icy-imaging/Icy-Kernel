@@ -63,6 +63,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -220,6 +221,11 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
         return toolRibbonTask;
     }
 
+    public SequenceOperationTask getSequenceOperationTask()
+    {
+        return sequenceOperationTask;
+    }
+
     public ImageJWrapper getImageJ()
     {
         return ijTask.getImageJ();
@@ -303,9 +309,9 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
     /**
      * get all tasks from actives workspace
      */
-    private ArrayList<TaskDefinition> getTasks()
+    private List<TaskDefinition> getTasks()
     {
-        final ArrayList<TaskDefinition> result = new ArrayList<TaskDefinition>();
+        final List<TaskDefinition> result = new ArrayList<TaskDefinition>();
 
         for (Workspace ws : workspaces)
             for (TaskDefinition task : ws.getTasks())
@@ -318,9 +324,9 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
     /**
      * get all bands for a task from actives workspace
      */
-    private ArrayList<BandDefinition> getBands(String taskName)
+    private List<BandDefinition> getBands(String taskName)
     {
-        final ArrayList<BandDefinition> result = new ArrayList<BandDefinition>();
+        final List<BandDefinition> result = new ArrayList<BandDefinition>();
 
         for (Workspace ws : workspaces)
             for (TaskDefinition task : ws.getTasks())
@@ -491,7 +497,7 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
 
     private JRibbonBand[] createRibbonBands(TaskDefinition task)
     {
-        final ArrayList<BandDefinition> bands = getBands(task.getName());
+        final List<BandDefinition> bands = getBands(task.getName());
         final int size = bands.size();
         final JRibbonBand[] result = new JRibbonBand[size];
 

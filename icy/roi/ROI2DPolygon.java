@@ -26,12 +26,12 @@ import java.awt.geom.Point2D;
 import java.util.List;
 
 /**
- * @deprecated Use {@link icy.roi.roi2d.ROI2DPolygon} instead.
+ * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DPolygon} instead.
  */
 @Deprecated
-public class ROI2DPolygon extends icy.roi.roi2d.ROI2DPolygon
+public class ROI2DPolygon extends plugins.kernel.roi.roi2d.ROI2DPolygon
 {
-    protected class ROI2DPolygonAnchor2D extends icy.roi.roi2d.ROI2DPolygon.ROI2DPolygonAnchor2D
+    protected class ROI2DPolygonAnchor2D extends plugins.kernel.roi.roi2d.ROI2DPolygon.ROI2DPolygonAnchor2D
     {
         public ROI2DPolygonAnchor2D(Point2D position, Color color, Color selectedColor)
         {

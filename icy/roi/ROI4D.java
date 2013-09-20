@@ -20,6 +20,7 @@ package icy.roi;
 
 import icy.canvas.IcyCanvas;
 import icy.type.point.Point4D;
+import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
@@ -207,6 +208,27 @@ public abstract class ROI4D extends ROI
         return contains(x, y, z, t, sizeX, sizeY, sizeZ, sizeT) && cok;
     }
 
+    /*
+     * Generic implementation using the BooleanMask which is not accurate and slow.
+     * Override this for specific ROI type.
+     */
+    @Override
+    public boolean contains(ROI roi)
+    {
+        if (roi instanceof ROI4D)
+        {
+            final ROI4D roi4d = (ROI4D) roi;
+
+            if (isActiveFor(roi4d.getC()))
+                return getBooleanMask(false).contains(roi4d.getBooleanMask(false));
+
+            return false;
+        }
+
+        // do it the other way
+        return roi.intersects(this);
+    }
+
     /**
      * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
      * <code>Rectangle4D</code>. The {@code ROI.intersects()} method allows a {@code ROI}
@@ -290,6 +312,27 @@ public abstract class ROI4D extends ROI
         return intersects(x, y, z, t, sizeX, sizeY, sizeZ, sizeT) && cok;
     }
 
+    /*
+     * Generic implementation using the BooleanMask which is not accurate and slow.
+     * Override this for specific ROI type.
+     */
+    @Override
+    public boolean intersects(ROI roi)
+    {
+        if (roi instanceof ROI4D)
+        {
+            final ROI4D roi4d = (ROI4D) roi;
+
+            if (isActiveFor(roi4d.getC()))
+                return getBooleanMask(true).intersects(roi4d.getBooleanMask(true));
+
+            return false;
+        }
+
+        // do it the other way
+        return roi.intersects(this);
+    }
+
     /**
      * Calculate and returns the 4D bounding box of the <code>ROI</code>.<br>
      * This method is used by {@link #getBounds4D()} which should try to cache the result as the
@@ -332,7 +375,7 @@ public abstract class ROI4D extends ROI
      */
     public Rectangle4D.Integer getBounds()
     {
-        return getBounds4D().getBoundsInt();
+        return getBounds4D().toInteger();
     }
 
     /**
@@ -345,9 +388,7 @@ public abstract class ROI4D extends ROI
      */
     public Rectangle4D getBounds4D()
     {
-        final Rectangle5D bounds = getBounds5D();
-        return new Rectangle4D.Double(bounds.getX(), bounds.getY(), bounds.getZ(), bounds.getT(), bounds.getSizeX(),
-                bounds.getSizeY(), bounds.getSizeZ(), bounds.getSizeT());
+        return getBounds5D().toRectangle4D();
     }
 
     /**
@@ -371,6 +412,71 @@ public abstract class ROI4D extends ROI
     public Point4D getPosition4D()
     {
         return getBounds4D().getPosition();
+    }
+    
+    @Override
+    public boolean canSetBounds()
+    {
+        // default
+        return false;
+    }
+
+    @Override
+    public boolean canSetPosition()
+    {
+        // default
+        return false;
+    }
+
+
+    /**
+     * Set the <code>ROI</code> 4D bounds.<br>
+     * Note that not all ROI supports bounds modification and you should call
+     * {@link #canSetBounds()} first to test if the operation is supported.<br>
+     * 
+     * @param bounds
+     *        new ROI 4D bounds
+     */
+    public void setBounds4D(Rectangle4D bounds)
+    {
+        // do nothing by default (not supported)
+    }
+
+    @Override
+    public void setBounds5D(Rectangle5D bounds)
+    {
+        // infinite C dim ?
+        if (bounds.getSizeC() == Double.POSITIVE_INFINITY)
+            setC(-1);
+        else
+            setC((int) bounds.getC());
+
+        setBounds4D(bounds.toRectangle4D());
+    }
+
+    /**
+     * Set the <code>ROI</code> 4D position.<br>
+     * Note that not all ROI supports position modification and you should call
+     * {@link #canSetPosition()} first to test if the operation is supported.<br>
+     * 
+     * @param position
+     *        new ROI 4D position
+     */
+    public void setPosition4D(Point4D position)
+    {
+        // do nothing by default (not supported)
+    }
+
+    @Override
+    public void setPosition5D(Point5D position)
+    {
+        // infinite C dim ?
+        if (position.getC() == Double.NEGATIVE_INFINITY)
+            setC(-1);
+        else
+            setC((int) position.getC());
+
+        setPosition4D(position.toPoint4D());
     }
 
     @Override
@@ -494,7 +600,7 @@ public abstract class ROI4D extends ROI
      */
     public BooleanMask3D getBooleanMask3D(int t, boolean inclusive)
     {
-        final Rectangle3D.Integer bounds = getBounds4D().toRectangle3D().getBoundsInt();
+        final Rectangle3D.Integer bounds = getBounds4D().toRectangle3D().toInteger();
         final BooleanMask2D masks[] = new BooleanMask2D[bounds.sizeZ];
 
         for (int z = 0; z < masks.length; z++)

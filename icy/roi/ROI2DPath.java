@@ -23,10 +23,10 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 
 /**
- * @deprecated Use {@link icy.roi.roi2d.ROI2DPath} instead.
+ * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DPath} instead.
  */
 @Deprecated
-public class ROI2DPath extends icy.roi.roi2d.ROI2DPath
+public class ROI2DPath extends plugins.kernel.roi.roi2d.ROI2DPath
 {
     public ROI2DPath(Path2D path)
     {

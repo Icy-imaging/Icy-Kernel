@@ -91,7 +91,7 @@ public abstract class ROI5D extends ROI
      */
     public Rectangle5D.Integer getBounds()
     {
-        return getBounds5D().getBoundsInt();
+        return getBounds5D().toInteger();
     }
 
     /**
@@ -106,6 +106,60 @@ public abstract class ROI5D extends ROI
         return new Point5D.Integer(bounds.x, bounds.y, bounds.z, bounds.t, bounds.c);
     }
 
+    @Override
+    public boolean canSetBounds()
+    {
+        // default
+        return false;
+    }
+
+    @Override
+    public boolean canSetPosition()
+    {
+        // default
+        return false;
+    }
+
+    @Override
+    public void setBounds5D(Rectangle5D bounds)
+    {
+        // do nothing by default (not supported)
+    }
+
+    @Override
+    public void setPosition5D(Point5D position)
+    {
+        // do nothing by default (not supported)
+    }
+
+    /*
+     * Generic implementation using the BooleanMask which is not accurate and slow.
+     * Override this for specific ROI type.
+     */
+    @Override
+    public boolean contains(ROI roi)
+    {
+        if (roi instanceof ROI5D)
+            return getBooleanMask(false).contains(((ROI5D) roi).getBooleanMask(false));
+
+        // do it the other way
+        return roi.intersects(this);
+    }
+
+    /*
+     * Generic implementation using the BooleanMask which is not accurate and slow.
+     * Override this for specific ROI type.
+     */
+    @Override
+    public boolean intersects(ROI roi)
+    {
+        if (roi instanceof ROI5D)
+            return getBooleanMask(true).intersects(((ROI5D) roi).getBooleanMask(true));
+
+        // do it the other way
+        return roi.intersects(this);
+    }
+
     /**
      * Get the {@link BooleanMask3D} object representing the roi for specified T,C position.<br>
      * It contains the 3D rectangle mask bounds and the associated boolean array mask.<br>
@@ -115,7 +169,7 @@ public abstract class ROI5D extends ROI
      */
     public BooleanMask3D getBooleanMask3D(int t, int c, boolean inclusive)
     {
-        final Rectangle3D.Integer bounds = getBounds5D().toRectangle3D().getBoundsInt();
+        final Rectangle3D.Integer bounds = getBounds5D().toRectangle3D().toInteger();
         final BooleanMask2D masks[] = new BooleanMask2D[bounds.sizeZ];
 
         for (int z = 0; z < masks.length; z++)
@@ -133,7 +187,7 @@ public abstract class ROI5D extends ROI
      */
     public BooleanMask4D getBooleanMask4D(int c, boolean inclusive)
     {
-        final Rectangle4D.Integer bounds = getBounds5D().toRectangle4D().getBoundsInt();
+        final Rectangle4D.Integer bounds = getBounds5D().toRectangle4D().toInteger();
         final BooleanMask3D masks[] = new BooleanMask3D[bounds.sizeT];
 
         for (int t = 0; t < masks.length; t++)

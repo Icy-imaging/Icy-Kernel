@@ -823,6 +823,79 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
+     * Return true if mask contains the specified 2Dmask.
+     */
+    public boolean contains(BooleanMask2D booleanMask)
+    {
+        return contains(booleanMask.bounds, booleanMask.mask);
+    }
+
+    /**
+     * Return true if mask contains the specified 2D mask.
+     */
+    public boolean contains(Rectangle rect, boolean[] bmask)
+    {
+        final Rectangle intersect = bounds.union(rect);
+
+        // intersection should be equal to rect
+        if (intersect.equals(rect))
+        {
+            // calculate offsets
+            int off1 = ((intersect.y - bounds.y) * bounds.width) + (intersect.x - bounds.x);
+            int off2 = ((intersect.y - rect.y) * rect.width) + (intersect.x - rect.x);
+
+            for (int y = 0; y < intersect.height; y++)
+            {
+                for (int x = 0; x < intersect.width; x++)
+                    if (bmask[off2 + x] && !mask[off1 + x])
+                        return false;
+
+                off1 += bounds.width;
+                off2 += rect.width;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Return true if mask intersects (contains at least one point) the specified 2D mask.
+     */
+    public boolean intersects(BooleanMask2D booleanMask)
+    {
+        return intersects(booleanMask.bounds, booleanMask.mask);
+    }
+
+    /**
+     * Return true if mask intersects (contains at least one point) the specified 2D mask region.
+     */
+    public boolean intersects(Rectangle rect, boolean[] bmask)
+    {
+        final Rectangle intersect = bounds.intersection(rect);
+
+        if (!intersect.isEmpty())
+        {
+            // calculate offsets
+            int off1 = ((intersect.y - bounds.y) * bounds.width) + (intersect.x - bounds.x);
+            int off2 = ((intersect.y - rect.y) * rect.width) + (intersect.x - rect.x);
+
+            for (int y = 0; y < intersect.height; y++)
+            {
+                for (int x = 0; x < intersect.width; x++)
+                    if (mask[off1 + x] && bmask[off2 + x])
+                        return true;
+
+                off1 += bounds.width;
+                off2 += rect.width;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Return an array of {@link Point} representing all points of the current mask.<br>
      * Points are returned in ascending XY order :
      * 
@@ -1354,7 +1427,7 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * @deprecated Use {@link #getIntersect(BooleanMask2D)} instead.
+     * @deprecated Use {@link #getIntersection(BooleanMask2D)} instead.
      */
     @Deprecated
     public void intersect(BooleanMask2D booleanMask)
@@ -1553,4 +1626,5 @@ public class BooleanMask2D implements Cloneable
     {
         return new BooleanMask2D((Rectangle) bounds.clone(), mask.clone());
     }
+
 }

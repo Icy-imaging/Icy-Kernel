@@ -20,19 +20,13 @@ package icy.sequence;
 
 import icy.image.IcyBufferedImage;
 import icy.image.ImageDataIterator;
-import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
-import icy.roi.ROI2D;
-import icy.roi.ROI3D;
-import icy.roi.ROI4D;
-import icy.roi.ROI5D;
 import icy.type.DataIterator;
 import icy.type.DataType;
-import icy.type.rectangle.Rectangle3D;
-import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
+import icy.type.rectangle.Rectangle5D.Integer;
 
-import java.awt.geom.Rectangle2D;
+import java.awt.Rectangle;
 import java.util.NoSuchElementException;
 
 /**
@@ -50,69 +44,59 @@ public class SequenceDataIterator implements DataIterator
     protected final Sequence sequence;
     protected final ROI roi;
 
-    protected int startX, endX;
-    protected int startY, endY;
-    protected int startC, endC;
-    protected int startZ, endZ;
-    protected int startT, endT;
+    protected final Rectangle XYBounds;
+    protected final int startC, endC;
+    protected final int startZ, endZ;
+    protected final int startT, endT;
+    protected final boolean inclusive;
 
     /**
      * internals
      */
-    protected int z, t;
+    protected int c, z, t;
     protected boolean done;
-    protected BooleanMask2D maskXY;
     protected ImageDataIterator imageIterator;
 
     /**
-     * Create a new SequenceData iterator to iterate data through the specified dimensions
+     * Create a new SequenceData iterator to iterate data through the specified 5D region
      * (inclusive).
      * 
      * @param sequence
      *        Sequence we want to iterate data from
-     * @param startX
-     *        start X position
-     * @param endX
-     *        end X position
-     * @param startY
-     *        start Y position
-     * @param endY
-     *        end Y position
-     * @param startC
-     *        start C position
-     * @param endC
-     *        end C position
-     * @param startZ
-     *        start Z position
-     * @param endZ
-     *        end Z position
-     * @param startT
-     *        start T position
-     * @param endT
-     *        end T position
+     * @param bounds5D
+     *        the 5D rectangular region we want to iterate
      */
-    public SequenceDataIterator(Sequence sequence, int startX, int endX, int startY, int endY, int startC, int endC,
-            int startZ, int endZ, int startT, int endT)
+    public SequenceDataIterator(Sequence sequence, Rectangle5D.Integer bounds5D)
     {
         super();
 
         this.sequence = sequence;
-        this.roi = null;
-        maskXY = null;
+        roi = null;
         imageIterator = null;
+        inclusive = true;
 
         if (sequence != null)
         {
-            this.startX = Math.max(startX, 0);
-            this.endX = Math.min(endX, sequence.getSizeX() - 1);
-            this.startY = Math.max(startY, 0);
-            this.endY = Math.min(endY, sequence.getSizeY() - 1);
-            this.startC = Math.max(startC, 0);
-            this.endC = Math.min(endC, sequence.getSizeC() - 1);
-            this.startZ = Math.max(startZ, 0);
-            this.endZ = Math.min(endZ, sequence.getSizeZ() - 1);
-            this.startT = Math.max(startT, 0);
-            this.endT = Math.min(endT, sequence.getSizeT() - 1);
+            final Rectangle5D.Integer bounds = (Integer) bounds5D.createIntersection(sequence.getBounds5D());
+
+            XYBounds = (Rectangle) bounds.toRectangle2D();
+
+            startZ = bounds.z;
+            endZ = (bounds.z + bounds.sizeZ) - 1;
+            startT = bounds.t;
+            endT = (bounds.t + bounds.sizeT) - 1;
+            startC = bounds.c;
+            endC = (bounds.c + bounds.sizeC) - 1;
+        }
+        else
+        {
+            XYBounds = null;
+            startZ = 0;
+            endZ = 0;
+            startT = 0;
+            endT = 0;
+            startC = 0;
+            endC = 0;
         }
 
         // start iterator
@@ -125,24 +109,40 @@ public class SequenceDataIterator implements DataIterator
      * 
      * @param sequence
      *        Sequence we want to iterate data from
-     * @param startX
-     *        start X position
-     * @param endX
-     *        end X position
-     * @param startY
-     *        start Y position
-     * @param endY
-     *        end Y position
-     * @param c
-     *        C position (channel) we want to iterate data
+     * @param XYBounds
+     *        XY region to iterate
      * @param z
      *        Z position (stack) we want to iterate data
      * @param t
      *        T position (time) we want to iterate data
+     * @param c
+     *        C position (channel) we want to iterate data
      */
+    public SequenceDataIterator(Sequence sequence, Rectangle XYBounds, int z, int t, int c)
+    {
+        this(sequence, new Rectangle5D.Integer(XYBounds.x, XYBounds.y, z, t, c, (XYBounds.x + XYBounds.width) - 1,
+                (XYBounds.y + XYBounds.height) - 1, 1, 1, 1));
+    }
+
+    /**
+     * @deprecated Use {@link #SequenceDataIterator(Sequence, Rectangle5D.Integer)} instead
+     */
+    @Deprecated
+    public SequenceDataIterator(Sequence sequence, int startX, int endX, int startY, int endY, int startC, int endC,
+            int startZ, int endZ, int startT, int endT)
+    {
+        this(sequence, new Rectangle5D.Integer(startX, startY, startZ, startT, startC, (endX - startX) + 1,
+                (endY - startY) + 1, (endZ - startZ) + 1, (endT - startT) + 1, (endC - startC) + 1));
+    }
+
+    /**
+     * @deprecated Use {@link #SequenceDataIterator(Sequence, Rectangle, int, int, int)} instead
+     */
+    @Deprecated
     public SequenceDataIterator(Sequence sequence, int startX, int endX, int startY, int endY, int c, int z, int t)
     {
-        this(sequence, startX, endX, startY, endY, c, c, z, z, t, t);
+        this(sequence, new Rectangle5D.Integer(startX, startY, z, t, c, (endX - startX) + 1, (endY - startY) + 1, 1, 1,
+                1));
     }
 
     /**
@@ -150,16 +150,16 @@ public class SequenceDataIterator implements DataIterator
      * 
      * @param sequence
      *        Sequence we want to iterate data from
-     * @param c
-     *        C position (channel) we want to iterate data
      * @param z
      *        Z position (stack) we want to iterate data
      * @param t
      *        T position (time) we want to iterate data
+     * @param c
+     *        C position (channel) we want to iterate data
      */
-    public SequenceDataIterator(Sequence sequence, int c, int z, int t)
+    public SequenceDataIterator(Sequence sequence, int z, int t, int c)
     {
-        this(sequence, 0, sequence.getSizeX() - 1, 0, sequence.getSizeY() - 1, c, c, z, z, t, t);
+        this(sequence, new Rectangle5D.Integer(0, 0, z, t, c, sequence.getSizeX(), sequence.getSizeY(), 1, 1, 1));
     }
 
     /**
@@ -170,8 +170,8 @@ public class SequenceDataIterator implements DataIterator
      */
     public SequenceDataIterator(Sequence sequence)
     {
-        this(sequence, 0, sequence.getSizeX() - 1, 0, sequence.getSizeY() - 1, 0, sequence.getSizeC() - 1, 0, sequence
-                .getSizeZ() - 1, 0, sequence.getSizeT() - 1);
+        this(sequence, new Rectangle5D.Integer(0, 0, 0, 0, 0, sequence.getSizeX(), sequence.getSizeY(),
+                sequence.getSizeZ(), sequence.getSizeT(), sequence.getSizeC()));
     }
 
     /**
@@ -183,197 +183,63 @@ public class SequenceDataIterator implements DataIterator
      *        ROI defining the region to iterate.
      * @param inclusive
      *        If true then all partially contained (intersected) pixels in the ROI are included.
-     * @param x
-     *        X position overriding (set to -1 to use the ROI X information).
-     * @param y
-     *        Y position overriding (set to -1 to use the ROI Y information).
-     * @param c
-     *        C position overriding (set to -1 to use the ROI C information).
      * @param z
      *        Z position overriding (set to -1 to use the ROI Z information).
      * @param t
      *        T position overriding (set to -1 to use the ROI T information).
+     * @param c
+     *        C position overriding (set to -1 to use the ROI C information).
      */
-    public SequenceDataIterator(Sequence sequence, ROI roi, boolean inclusive, int x, int y, int c, int z, int t)
+    public SequenceDataIterator(Sequence sequence, ROI roi, boolean inclusive, int z, int t, int c)
     {
         super();
 
         this.sequence = sequence;
         this.roi = roi;
-        maskXY = null;
+        this.inclusive = inclusive;
+        XYBounds = null;
 
-        if (roi instanceof ROI5D)
+        if ((sequence != null) && (roi != null))
         {
-            final Rectangle5D b = ((ROI5D) roi).getBounds5D();
+            Rectangle5D bounds5D = roi.getBounds5D();
 
-            startX = (int) Math.floor(b.getX());
-            startY = (int) Math.floor(b.getY());
-            startC = (int) Math.floor(b.getC());
-            startZ = (int) Math.floor(b.getZ());
-            startT = (int) Math.floor(b.getT());
-            endX = startX + ((int) Math.ceil(b.getSizeX()) - 1);
-            endY = startY + ((int) Math.ceil(b.getSizeY()) - 1);
-            endC = startC + ((int) Math.ceil(b.getSizeC()) - 1);
-            endZ = startZ + ((int) Math.ceil(b.getSizeZ()) - 1);
-            endT = startT + ((int) Math.ceil(b.getSizeT()) - 1);
-        }
-        else if (roi instanceof ROI4D)
-        {
-            final ROI4D roi4d = (ROI4D) roi;
-            final Rectangle4D b = roi4d.getBounds4D();
-            final int roiC = (c == -1) ? roi4d.getC() : c;
+            // force Z position
+            if (z != -1)
+            {
+                bounds5D.setZ(z);
+                bounds5D.setSizeZ(1d);
+            }
+            // force T position
+            if (t != -1)
+            {
+                bounds5D.setT(t);
+                bounds5D.setSizeT(1d);
+            }
+            // force C position
+            if (c != -1)
+            {
+                bounds5D.setC(c);
+                bounds5D.setSizeC(1d);
+            }
 
-            startX = (int) Math.floor(b.getX());
-            startY = (int) Math.floor(b.getY());
-            startZ = (int) Math.floor(b.getZ());
-            startT = (int) Math.floor(b.getT());
-            endX = startX + ((int) Math.ceil(b.getSizeX()) - 1);
-            endY = startY + ((int) Math.ceil(b.getSizeY()) - 1);
-            endZ = startZ + ((int) Math.ceil(b.getSizeZ()) - 1);
-            endT = startT + ((int) Math.ceil(b.getSizeT()) - 1);
+            // get final bounds
+            final Rectangle5D.Integer bounds = (Integer) sequence.getBounds5D().createIntersection(bounds5D);
 
-            if (roiC < 0)
-            {
-                startC = 0;
-                endC = startC + (sequence.getSizeC() - 1);
-            }
-            else
-            {
-                startC = roiC;
-                endC = roiC;
-            }
-        }
-        else if (roi instanceof ROI3D)
-        {
-            final ROI3D roi3d = (ROI3D) roi;
-            final Rectangle3D b = roi3d.getBounds3D();
-            final int roiC = (c == -1) ? roi3d.getC() : c;
-            final int roiT = (t == -1) ? roi3d.getT() : t;
-
-            startX = (int) Math.floor(b.getX());
-            startY = (int) Math.floor(b.getY());
-            startZ = (int) Math.floor(b.getZ());
-            endX = startX + ((int) Math.ceil(b.getSizeX()) - 1);
-            endY = startY + ((int) Math.ceil(b.getSizeY()) - 1);
-            endZ = startZ + ((int) Math.ceil(b.getSizeZ()) - 1);
-
-            if (roiC < 0)
-            {
-                startC = 0;
-                endC = startC + (sequence.getSizeC() - 1);
-            }
-            else
-            {
-                startC = roiC;
-                endC = roiC;
-            }
-            if (roiT < 0)
-            {
-                startT = 0;
-                endT = startT + (sequence.getSizeT() - 1);
-            }
-            else
-            {
-                startT = roiT;
-                endT = roiT;
-            }
-        }
-        else if (roi instanceof ROI2D)
-        {
-            final ROI2D roi2d = (ROI2D) roi;
-            final Rectangle2D b = roi2d.getBounds2D();
-            final int roiC = (c == -1) ? roi2d.getC() : c;
-            final int roiZ = (z == -1) ? roi2d.getZ() : z;
-            final int roiT = (t == -1) ? roi2d.getT() : t;
-
-            startX = (int) Math.floor(b.getX());
-            startY = (int) Math.floor(b.getY());
-            endX = startX + ((int) Math.ceil(b.getWidth()) - 1);
-            endY = startY + ((int) Math.ceil(b.getHeight()) - 1);
-
-            if (roiC < 0)
-            {
-                startC = 0;
-                endC = startC + (sequence.getSizeC() - 1);
-            }
-            else
-            {
-                startC = roiC;
-                endC = roiC;
-            }
-            if (roiZ < 0)
-            {
-                startZ = 0;
-                endZ = startZ + (sequence.getSizeZ() - 1);
-            }
-            else
-            {
-                startZ = roiZ;
-                endZ = roiZ;
-            }
-            if (roiT < 0)
-            {
-                startT = 0;
-                endT = startT + (sequence.getSizeT() - 1);
-            }
-            else
-            {
-                startT = roiT;
-                endT = roiT;
-            }
+            startZ = bounds.z;
+            endZ = (bounds.z + bounds.sizeZ) - 1;
+            startT = bounds.t;
+            endT = (bounds.t + bounds.sizeT) - 1;
+            startC = bounds.c;
+            endC = (bounds.c + bounds.sizeC) - 1;
         }
         else
         {
-            if (x < 0)
-            {
-                startX = 0;
-                endX = startX + (sequence.getSizeX() - 1);
-            }
-            else
-            {
-                startX = x;
-                endX = x;
-            }
-            if (y < 0)
-            {
-                startY = 0;
-                endY = startY + (sequence.getSizeY() - 1);
-            }
-            else
-            {
-                startY = y;
-                endY = y;
-            }
-            if (c < 0)
-            {
-                startC = 0;
-                endC = startC + (sequence.getSizeC() - 1);
-            }
-            else
-            {
-                startC = c;
-                endC = c;
-            }
-            if (z < 0)
-            {
-                startZ = 0;
-                endZ = startZ + (sequence.getSizeZ() - 1);
-            }
-            else
-            {
-                startZ = z;
-                endZ = z;
-            }
-            if (t < 0)
-            {
-                startT = 0;
-                endT = startT + (sequence.getSizeT() - 1);
-            }
-            else
-            {
-                startT = t;
-                endT = t;
-            }
+            startZ = 0;
+            endZ = 0;
+            startT = 0;
+            endT = 0;
+            startC = 0;
+            endC = 0;
         }
 
         // start iterator
@@ -392,7 +258,7 @@ public class SequenceDataIterator implements DataIterator
      */
     public SequenceDataIterator(Sequence sequence, ROI roi, boolean inclusive)
     {
-        this(sequence, roi, inclusive, -1, -1, -1, -1, -1);
+        this(sequence, roi, inclusive, -1, -1, -1);
     }
 
     /**
@@ -411,54 +277,36 @@ public class SequenceDataIterator implements DataIterator
     @Override
     public void reset()
     {
-        done = (sequence == null) || (startT > endT) || (startZ > endZ);
+        done = (sequence == null) || (startT > endT) || (startZ > endZ) || (startC > endC);
 
         if (!done)
         {
             t = startT;
             z = startZ;
+            c = startC;
 
-            // prepare XYC data
-            prepareDataXYC();
+            // prepare XY data
+            prepareDataXY();
             nextImageifNeeded();
         }
     }
 
     /**
-     * Prepare data for Z iteration.
+     * Prepare data for XY iteration.
      */
-    protected boolean prepareDataXYC()
+    protected void prepareDataXY()
     {
         final IcyBufferedImage img = sequence.getImage(t, z);
 
-        if (maskXY != null)
-            imageIterator = new ImageDataIterator(img, maskXY, startC, endC);
-        else if (roi != null)
-            imageIterator = new ImageDataIterator(img, roi);
+        // get the 2D mask for specified C
+        if (roi != null)
+            imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(z, t, c, inclusive), c);
         else
-            imageIterator = new ImageDataIterator(img, startX, endX, startY, endY, startC, endC);
-
-        return imageIterator.done();
+            imageIterator = new ImageDataIterator(img, XYBounds, c);
     }
 
     @Override
     public void next()
-    {
-        if (roi != null)
-        {
-            // advance while ROI do not contains current point
-            internalNext();
-            // while (!roiMask.contains(z, t) && !done)
-            // internalNext();
-        }
-        else
-            internalNext();
-    }
-
-    /**
-     * Advance one position.
-     */
-    protected void internalNext()
     {
         imageIterator.next();
         nextImageifNeeded();
@@ -471,16 +319,23 @@ public class SequenceDataIterator implements DataIterator
     {
         while (imageIterator.done() && !done)
         {
-            if (++z > endZ)
+            if (++c > endC)
             {
-                z = startZ;
+                c = startC;
 
-                if (++t > endT)
-                    done = true;
+                if (++z > endZ)
+                {
+                    z = startZ;
+
+                    if (++t > endT)
+                    {
+                        done = true;
+                        return;
+                    }
+                }
             }
 
-            if (!done)
-                prepareDataXYC();
+            prepareDataXY();
         }
     }
 
@@ -535,10 +390,7 @@ public class SequenceDataIterator implements DataIterator
      */
     public int getPositionC()
     {
-        if (imageIterator != null)
-            return imageIterator.getPositionC();
-
-        return 0;
+        return c;
     }
 
     /**

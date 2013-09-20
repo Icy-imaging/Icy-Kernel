@@ -113,6 +113,8 @@ public class ResourceUtil
     public static final Image ICON_FIT_CANVAS = ResourceUtil.getAlphaIconAsImage("fit_out.png");
 
     public static final Image ICON_TARGET = ResourceUtil.getAlphaIconAsImage("simple_target.png");
+    public static final Image ICON_PENCIL = ResourceUtil.getAlphaIconAsImage("pencil.png");
+    public static final Image ICON_BRUSH = ResourceUtil.getAlphaIconAsImage("brush.png");
 
     public static final Image ICON_LAYER_H1 = ResourceUtil.getAlphaIconAsImage("layers_h1.png");
     public static final Image ICON_LAYER_H2 = ResourceUtil.getAlphaIconAsImage("layers_h2.png");

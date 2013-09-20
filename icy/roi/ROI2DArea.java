@@ -21,16 +21,16 @@ package icy.roi;
 import java.awt.geom.Point2D;
 
 /**
- * @deprecated Use {@link icy.roi.roi2d.ROI2DArea} instead.
+ * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DArea} instead.
  */
 @Deprecated
-public class ROI2DArea extends icy.roi.roi2d.ROI2DArea
+public class ROI2DArea extends plugins.kernel.roi.roi2d.ROI2DArea
 {
     /**
-     * @deprecated Use {@link icy.roi.roi2d.ROI2DArea.ROI2DAreaPainter} instead.
+     * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DArea.ROI2DAreaPainter} instead.
      */
     @Deprecated
-    public class ROI2DAreaPainter extends icy.roi.roi2d.ROI2DArea.ROI2DAreaPainter
+    public class ROI2DAreaPainter extends plugins.kernel.roi.roi2d.ROI2DArea.ROI2DAreaPainter
     {
     }
 

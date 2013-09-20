@@ -27,7 +27,7 @@ import java.awt.geom.Point2D;
  * 
  * @author Stephane
  */
-public abstract class Point3D
+public abstract class Point3D implements Cloneable
 {
     /**
      * Returns the X coordinate of this <code>Point3D</code> in <code>double</code> precision.
@@ -113,10 +113,32 @@ public abstract class Point3D
         return super.equals(obj);
     }
 
+    /**
+     * Creates a new object of the same class as this object.
+     * 
+     * @return a clone of this instance.
+     * @exception OutOfMemoryError
+     *            if there is not enough memory.
+     * @see java.lang.Cloneable
+     */
+    @Override
+    public Object clone()
+    {
+        try
+        {
+            return super.clone();
+        }
+        catch (CloneNotSupportedException e)
+        {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError();
+        }
+    }
+
     @Override
     public String toString()
     {
-        return "Point3D[" + getX() + ", " + getY() + ", " + getZ() + "]";
+        return getClass().getName() + "[" + getX() + "," + getY() + "," + getZ() + "]";
     }
 
     public static class Double extends Point3D
@@ -198,7 +220,7 @@ public abstract class Point3D
         @Override
         public String toString()
         {
-            return "Point3D.Double[" + x + ", " + y + ", " + z + "]";
+            return "Point3D.Double[" + x + "," + y + "," + z + "]";
         }
 
         @Override
@@ -287,7 +309,7 @@ public abstract class Point3D
         @Override
         public String toString()
         {
-            return "Point3D.Float[" + x + ", " + y + ", " + z + "]";
+            return "Point3D.Float[" + x + "," + y + "," + z + "]";
         }
 
         @Override
@@ -376,7 +398,7 @@ public abstract class Point3D
         @Override
         public String toString()
         {
-            return "Point3D.Integer[" + x + ", " + y + ", " + z + "]";
+            return "Point3D.Integer[" + x + "," + y + "," + z + "]";
         }
 
         @Override

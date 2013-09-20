@@ -56,6 +56,8 @@ import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
+import icy.type.dimension.Dimension5D;
+import icy.type.rectangle.Rectangle5D;
 import icy.undo.IcyUndoManager;
 import icy.util.StringUtil;
 
@@ -1346,22 +1348,29 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public void setSelectedROIs(List<ROI> selected)
     {
         final List<ROI> oldSelected = getSelectedROIs();
-        final HashSet<ROI> newSelected;
 
-        if (selected != null)
-            newSelected = new HashSet<ROI>(selected);
-        else
-            newSelected = new HashSet<ROI>();
-
-        final int newSelectedSize = newSelected.size();
+        final int newSelectedSize = (selected == null)?0:selected.size();
         final int oldSelectedSize = oldSelected.size();
 
         // easy optimization
         if ((newSelectedSize == 0) && (oldSelectedSize == 0))
             return;
-        // same selection, don't need to update it (use HashSet for fast .contains())
-        if ((newSelectedSize == oldSelectedSize) && newSelected.containsAll(oldSelected))
-            return;
+
+        final HashSet<ROI> newSelected;
+
+        // use HashSet for fast .contains() !
+        if (selected != null)
+            newSelected = new HashSet<ROI>(selected);
+        else
+            newSelected = new HashSet<ROI>();
+
+        // same selection size ?
+        if (newSelectedSize == oldSelectedSize)
+        {
+            // same selection, don't need to update it 
+            if (newSelected.containsAll(oldSelected))
+                return;
+        }
 
         beginUpdate();
         try
@@ -2401,17 +2410,55 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Returns 2D dimension of sequence {sizeX, sizeY}
      */
-    public Dimension getDimension()
+    public Dimension getDimension2D()
     {
         return new Dimension(getSizeX(), getSizeY());
     }
 
     /**
-     * Returns 2D bounds of sequence {0, 0, sizeX, sizeY}
+     * Returns 5D dimension of sequence {sizeX, sizeY, sizeZ, sizeT, sizeC}
      */
-    public Rectangle getBounds()
+    public Dimension5D.Integer getDimension5D()
+    {
+        return new Dimension5D.Integer(getSizeX(), getSizeY(), getSizeZ(), getSizeT(), getSizeC());
+    }
+
+    /**
+     * @deprecated Use {@link #getDimension2D()} instead.
+     */
+    @Deprecated
+    public Dimension getDimension()
+    {
+        return getDimension2D();
+    }
+
+    /**
+     * Returns 2D bounds of sequence {0, 0, sizeX, sizeY}
+     * 
+     * @see #getDimension2D()
+     */
+    public Rectangle getBounds2D()
     {
         return new Rectangle(getSizeX(), getSizeY());
+    }
+
+    /**
+     * Returns 5D bounds of sequence {0, 0, 0, 0, 0, sizeX, sizeY, sizeZ, sizeT, sizeC}
+     * 
+     * @see #getDimension5D()
+     */
+    public Rectangle5D.Integer getBounds5D()
+    {
+        return new Rectangle5D.Integer(0, 0, 0, 0, 0, getSizeX(), getSizeY(), getSizeZ(), getSizeT(), getSizeC());
+    }
+
+    /**
+     * @deprecated Use {@link #getBounds2D()} instead
+     */
+    @Deprecated
+    public Rectangle getBounds()
+    {
+        return getBounds2D();
     }
 
     /**

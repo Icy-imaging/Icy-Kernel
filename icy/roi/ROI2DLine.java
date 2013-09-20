@@ -24,16 +24,16 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
 /**
- * @deprecated Use {@link icy.roi.roi2d.ROI2DLine} instead.
+ * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DLine} instead.
  */
 @Deprecated
-public class ROI2DLine extends icy.roi.roi2d.ROI2DLine
+public class ROI2DLine extends plugins.kernel.roi.roi2d.ROI2DLine
 {
     /**
-     * @deprecated Use {@link icy.roi.roi2d.ROI2DLine.ROI2DLineAnchor2D} instead.
+     * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DLine.ROI2DLineAnchor2D} instead.
      */
     @Deprecated
-    protected class ROI2DLineAnchor2D extends icy.roi.roi2d.ROI2DLine.ROI2DLineAnchor2D
+    protected class ROI2DLineAnchor2D extends plugins.kernel.roi.roi2d.ROI2DLine.ROI2DLineAnchor2D
     {
         public ROI2DLineAnchor2D(Point2D position)
         {

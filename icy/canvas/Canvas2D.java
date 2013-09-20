@@ -51,6 +51,7 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
+import icy.type.point.Point5D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.StringUtil;
@@ -2872,7 +2873,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             if (cv)
                 size = getCanvasSize();
             else
-                size = seq.getDimension();
+                size = seq.getDimension2D();
 
             // get result image and graphics object
             final BufferedImage result = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
@@ -3163,7 +3164,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             mouseAbsolutePos.y, 0, false, 0);
 
                     final boolean globalVisible = isLayersVisible();
-                    final Point2D.Double pt = new Point2D.Double(mouseImagePos.x, mouseImagePos.y);
+                    final Point5D.Double pt = getMouseImagePos5D();
 
                     // send mouse event to overlays
                     for (Layer layer : getLayers())

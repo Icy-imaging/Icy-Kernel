@@ -25,16 +25,16 @@ import java.awt.geom.Point2D;
 import java.awt.geom.RectangularShape;
 
 /**
- * @deprecated Use {@link icy.roi.roi2d.ROI2DRectShape} instead.
+ * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DRectShape} instead.
  */
 @Deprecated
-public abstract class ROI2DRectShape extends icy.roi.roi2d.ROI2DRectShape
+public abstract class ROI2DRectShape extends plugins.kernel.roi.roi2d.ROI2DRectShape
 {
     /**
-     * @deprecated Use {@link icy.roi.roi2d.ROI2DRectShape.ROI2DRectAnchor2D} instead.
+     * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DRectShape.ROI2DRectAnchor2D} instead.
      */
     @Deprecated
-    protected class ROI2DRectAnchor2D extends icy.roi.roi2d.ROI2DRectShape.ROI2DRectAnchor2D
+    protected class ROI2DRectAnchor2D extends plugins.kernel.roi.roi2d.ROI2DRectShape.ROI2DRectAnchor2D
     {
         public ROI2DRectAnchor2D(Point2D position, Color color, Color selectedColor)
         {

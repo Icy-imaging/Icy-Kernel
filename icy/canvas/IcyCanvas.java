@@ -68,7 +68,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -1120,15 +1119,15 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         switch (dim)
         {
             case X:
-                return getMaxX();
+                return getMaxPositionX();
             case Y:
-                return getMaxY();
+                return getMaxPositionY();
             case Z:
-                return getMaxZ();
+                return getMaxPositionZ();
             case T:
-                return getMaxT();
+                return getMaxPositionT();
             case C:
-                return getMaxC();
+                return getMaxPositionC();
         }
 
         return 0;
@@ -1207,7 +1206,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Get the maximum 5D position for the canvas.
      * 
-     * @see #getPosition()
+     * @see #getPosition5D()
      */
     public Point5D.Integer getMaxPosition5D()
     {
@@ -2030,7 +2029,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void setPositionX(int x)
     {
-        final int adjX = Math.max(-1, Math.min(x, getMaxX()));
+        final int adjX = Math.max(-1, Math.min(x, getMaxPositionX()));
 
         if (getPositionX() != adjX)
             setPositionXInternal(adjX);
@@ -2041,7 +2040,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void setPositionY(int y)
     {
-        final int adjY = Math.max(-1, Math.min(y, getMaxY()));
+        final int adjY = Math.max(-1, Math.min(y, getMaxPositionY()));
 
         if (getPositionY() != adjY)
             setPositionYInternal(adjY);
@@ -2052,7 +2051,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void setPositionZ(int z)
     {
-        final int adjZ = Math.max(-1, Math.min(z, getMaxZ()));
+        final int adjZ = Math.max(-1, Math.min(z, getMaxPositionZ()));
 
         if (getPositionZ() != adjZ)
             setPositionZInternal(adjZ);
@@ -2063,7 +2062,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void setPositionT(int t)
     {
-        final int adjT = Math.max(-1, Math.min(t, getMaxT()));
+        final int adjT = Math.max(-1, Math.min(t, getMaxPositionT()));
 
         if (getPositionT() != adjT)
             setPositionTInternal(adjT);
@@ -2074,7 +2073,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void setPositionC(int c)
     {
-        final int adjC = Math.max(-1, Math.min(c, getMaxC()));
+        final int adjC = Math.max(-1, Math.min(c, getMaxPositionC()));
 
         if (getPositionC() != adjC)
             setPositionCInternal(adjC);
@@ -2914,130 +2913,6 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         return imageToCanvasDeltaC(value) + getOffsetC();
     }
 
-    // /**
-    // * Center on specified image X position
-    // */
-    // public void centerOnImageX(double value)
-    // {
-    // final Sequence seq = getSequence();
-    //
-    // if (seq != null)
-    // {
-    // // get canvas size
-    // final int sizeX = getCanvasSizeX();
-    //
-    // // X dimension supported ?
-    // if (sizeX > 1)
-    // setOffsetX(sizeX - ((getImageCanvasSizeX() / 2) + imageToCanvasDeltaX(value)));
-    // }
-    // }
-    //
-    // /**
-    // * Center on specified image Y position
-    // */
-    // public void centerOnImageY(double value)
-    // {
-    // final Sequence seq = getSequence();
-    //
-    // if (seq != null)
-    // {
-    // // get canvas size
-    // final int sizeY = getCanvasSizeY();
-    //
-    // // Y dimension supported ?
-    // if (sizeY > 1)
-    // setOffsetY(sizeY - ((getImageCanvasSizeY() / 2) + imageToCanvasDeltaY(value)));
-    // }
-    // }
-    //
-    // /**
-    // * Center on specified image Z position
-    // */
-    // public void centerOnImageZ(double value)
-    // {
-    // final Sequence seq = getSequence();
-    //
-    // if (seq != null)
-    // {
-    // // get canvas size
-    // final int sizeZ = getCanvasSizeZ();
-    //
-    // // Z dimension supported ?
-    // if (sizeZ > 1)
-    // setOffsetZ(sizeZ - ((getImageCanvasSizeZ() / 2) + imageToCanvasDeltaZ(value)));
-    // }
-    // }
-    //
-    // /**
-    // * Center on specified image T position
-    // */
-    // public void centerOnImageT(double value)
-    // {
-    // final Sequence seq = getSequence();
-    //
-    // if (seq != null)
-    // {
-    // // get canvas size
-    // final int sizeT = getCanvasSizeT();
-    //
-    // // T dimension supported ?
-    // if (sizeT > 1)
-    // setOffsetY(sizeT - ((getImageCanvasSizeT() / 2) + imageToCanvasDeltaT(value)));
-    // }
-    // }
-    //
-    // /**
-    // * Center on specified image C position
-    // */
-    // public void centerOnImageC(double value)
-    // {
-    // final Sequence seq = getSequence();
-    //
-    // if (seq != null)
-    // {
-    // // get canvas size
-    // final int sizeC = getCanvasSizeC();
-    //
-    // // C dimension supported ?
-    // if (sizeC > 1)
-    // setOffsetC(sizeC - ((getImageCanvasSizeC() / 2) + imageToCanvasDeltaC(value)));
-    // }
-    // }
-    //
-    // /**
-    // * Center image in canvas
-    // */
-    // public void centerImage()
-    // {
-    // final Sequence seq = getSequence();
-    //
-    // if (seq != null)
-    // {
-    // // get canvas size
-    // final int sizeX = getCanvasSizeX();
-    // final int sizeY = getCanvasSizeY();
-    // final int sizeZ = getCanvasSizeZ();
-    // final int sizeT = getCanvasSizeT();
-    // final int sizeC = getCanvasSizeC();
-    //
-    // // X dimension supported ?
-    // if (sizeX > 1)
-    // setOffsetX((sizeX - getImageCanvasSizeX()) / 2);
-    // // Y dimension supported ?
-    // if (sizeY > 1)
-    // setOffsetY((sizeY - getImageCanvasSizeY()) / 2);
-    // // Z dimension supported ?
-    // if (sizeZ > 1)
-    // setOffsetZ((sizeZ - getImageCanvasSizeZ()) / 2);
-    // // R dimension supported ?
-    // if (sizeT > 1)
-    // setOffsetT((sizeT - getImageCanvasSizeT()) / 2);
-    // // C dimension supported ?
-    // if (sizeC > 1)
-    // setOffsetC((sizeC - getImageCanvasSizeC()) / 2);
-    // }
-    // }
-
     /**
      * Helper to forward mouse press event to the overlays.
      * 
@@ -3046,7 +2921,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * @param pt
      *        mouse image position
      */
-    public void mousePressed(MouseEvent event, Point2D.Double pt)
+    public void mousePressed(MouseEvent event, Point5D.Double pt)
     {
         final boolean globalVisible = isLayersVisible();
 
@@ -3066,7 +2941,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void mousePressed(MouseEvent event)
     {
-        mousePressed(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+        mousePressed(event, getMouseImagePos5D());
     }
 
     /**
@@ -3077,7 +2952,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * @param pt
      *        mouse image position
      */
-    public void mouseReleased(MouseEvent event, Point2D.Double pt)
+    public void mouseReleased(MouseEvent event, Point5D.Double pt)
     {
         final boolean globalVisible = isLayersVisible();
 
@@ -3097,7 +2972,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void mouseReleased(MouseEvent event)
     {
-        mouseReleased(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+        mouseReleased(event, getMouseImagePos5D());
     }
 
     /**
@@ -3108,7 +2983,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * @param pt
      *        mouse image position
      */
-    public void mouseClick(MouseEvent event, Point2D.Double pt)
+    public void mouseClick(MouseEvent event, Point5D.Double pt)
     {
         final boolean globalVisible = isLayersVisible();
 
@@ -3128,7 +3003,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void mouseClick(MouseEvent event)
     {
-        mouseClick(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+        mouseClick(event, getMouseImagePos5D());
     }
 
     /**
@@ -3139,7 +3014,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * @param pt
      *        mouse image position
      */
-    public void mouseMove(MouseEvent event, Point2D.Double pt)
+    public void mouseMove(MouseEvent event, Point5D.Double pt)
     {
         final boolean globalVisible = isLayersVisible();
 
@@ -3159,7 +3034,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void mouseMove(MouseEvent event)
     {
-        mouseMove(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+        mouseMove(event, getMouseImagePos5D());
     }
 
     /**
@@ -3170,7 +3045,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * @param pt
      *        mouse image position
      */
-    public void mouseDrag(MouseEvent event, Point2D.Double pt)
+    public void mouseDrag(MouseEvent event, Point5D.Double pt)
     {
         final boolean globalVisible = isLayersVisible();
 
@@ -3190,7 +3065,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void mouseDrag(MouseEvent event)
     {
-        mouseDrag(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+        mouseDrag(event, getMouseImagePos5D());
     }
 
     /**
@@ -3201,7 +3076,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * @param pt
      *        mouse image position
      */
-    public void mouseEntered(MouseEvent event, Point2D.Double pt)
+    public void mouseEntered(MouseEvent event, Point5D.Double pt)
     {
         final boolean globalVisible = isLayersVisible();
 
@@ -3221,7 +3096,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void mouseEntered(MouseEvent event)
     {
-        mouseEntered(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+        mouseEntered(event, getMouseImagePos5D());
     }
 
     /**
@@ -3232,7 +3107,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * @param pt
      *        mouse image position
      */
-    public void mouseExited(MouseEvent event, Point2D.Double pt)
+    public void mouseExited(MouseEvent event, Point5D.Double pt)
     {
         final boolean globalVisible = isLayersVisible();
 
@@ -3252,7 +3127,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void mouseExited(MouseEvent event)
     {
-        mouseExited(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+        mouseExited(event, getMouseImagePos5D());
     }
 
     /**
@@ -3263,7 +3138,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * @param pt
      *        mouse image position
      */
-    public void mouseWheelMoved(MouseWheelEvent event, Point2D.Double pt)
+    public void mouseWheelMoved(MouseWheelEvent event, Point5D.Double pt)
     {
         final boolean globalVisible = isLayersVisible();
 
@@ -3283,7 +3158,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public void mouseWheelMoved(MouseWheelEvent event)
     {
-        mouseWheelMoved(event, new Point2D.Double(getMouseImagePosX(), getMouseImagePosY()));
+        mouseWheelMoved(event, getMouseImagePos5D());
     }
 
     @Override
@@ -3296,7 +3171,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     public void keyPressed(KeyEvent e)
     {
         final boolean globalVisible = isLayersVisible();
-        final Point2D.Double pt = new Point2D.Double(getMouseImagePosX(), getMouseImagePosY());
+        final Point5D.Double pt = getMouseImagePos5D();
 
         // forward event to overlays
         for (Layer layer : getLayers())
@@ -3461,7 +3336,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     public void keyReleased(KeyEvent e)
     {
         final boolean globalVisible = isLayersVisible();
-        final Point2D.Double pt = new Point2D.Double(getMouseImagePosX(), getMouseImagePosY());
+        final Point5D.Double pt = getMouseImagePos5D();
 
         // forward event to overlays
         for (Layer layer : getLayers())
@@ -3761,7 +3636,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     protected void updateZNav()
     {
-        final int maxZ = getMaxZ();
+        final int maxZ = getMaxPositionZ();
         final int z = getPositionZ();
 
         zNav.setMaximum(maxZ);
@@ -3779,7 +3654,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     protected void updateTNav()
     {
-        final int maxT = getMaxT();
+        final int maxT = getMaxPositionT();
         final int t = getPositionT();
 
         tNav.setMaximum(maxT);
@@ -4104,7 +3979,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                         // single channel mode
                         if (curC != -1)
                         {
-                            final int maxC = getMaxC();
+                            final int maxC = getMaxPositionC();
 
                             // disabled others channels
                             for (int c = 0; c <= maxC; c++)
@@ -4254,31 +4129,31 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         updateTNav();
 
         // adjust X position if needed
-        final int maxX = getMaxX();
+        final int maxX = getMaxPositionX();
         final int curX = getPositionX();
         if ((curX != -1) && (curX > maxX))
             setPositionX(maxX);
 
         // adjust Y position if needed
-        final int maxY = getMaxY();
+        final int maxY = getMaxPositionY();
         final int curY = getPositionY();
         if ((curY != -1) && (curY > maxY))
             setPositionY(maxY);
 
         // adjust C position if needed
-        final int maxC = getMaxC();
+        final int maxC = getMaxPositionC();
         final int curC = getPositionC();
         if ((curC != -1) && (curC > maxC))
             setPositionC(maxC);
 
         // adjust Z position if needed
-        final int maxZ = getMaxZ();
+        final int maxZ = getMaxPositionZ();
         final int curZ = getPositionZ();
         if ((curZ != -1) && (curZ > maxZ))
             setPositionZ(maxZ);
 
         // adjust T position if needed
-        final int maxT = getMaxT();
+        final int maxT = getMaxPositionT();
         final int curT = getPositionT();
         if ((curT != -1) && (curT > maxT))
             setPositionT(maxT);

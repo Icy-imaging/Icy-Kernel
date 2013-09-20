@@ -28,7 +28,6 @@ import icy.painter.Overlay;
 import icy.plugin.interface_.PluginROI;
 import icy.roi.ROIEvent.ROIEventType;
 import icy.roi.ROIEvent.ROIPointEventType;
-import icy.roi.roi3d.ROI3DArea;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
@@ -53,6 +52,10 @@ import java.util.List;
 import javax.swing.event.EventListenerList;
 
 import org.w3c.dom.Node;
+
+import plugins.kernel.roi.roi3d.ROI3DArea;
+import plugins.kernel.roi.roi4d.ROI4DArea;
+import plugins.kernel.roi.roi5d.ROI5DArea;
 
 public abstract class ROI implements ChangeListener, XMLPersistent
 {
@@ -1307,12 +1310,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             boundsInvalid = false;
         }
 
-        return cachedBounds;
+        return (Rectangle5D) cachedBounds.clone();
     }
 
     /**
      * Returns the ROI position which normally correspond to the <i>minimum</i> point of the ROI
-     * bounds.
+     * bounds.<br>
      * 
      * @see #getBounds5D()
      */
@@ -1320,6 +1323,38 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     {
         return getBounds5D().getPosition();
     }
+
+    /**
+     * Returns <code>true</code> if this ROI accepts bounds change through the
+     * {@link #setBounds5D(Rectangle5D)} method.
+     */
+    public abstract boolean canSetBounds();
+
+    /**
+     * Returns <code>true</code> if this ROI accepts position change through the
+     * {@link #setPosition5D(Point5D)} method.
+     */
+    public abstract boolean canSetPosition();
+
+    /**
+     * Set the <code>ROI</code> bounds.<br>
+     * Note that not all ROI supports bounds modification and you should call
+     * {@link #canSetBounds()} first to test if the operation is supported.<br>
+     * 
+     * @param bounds
+     *        new ROI bounds
+     */
+    public abstract void setBounds5D(Rectangle5D bounds);
+
+    /**
+     * Set the <code>ROI</code> position.<br>
+     * Note that not all ROI supports position modification and you should call
+     * {@link #canSetPosition()} first to test if the operation is supported.<br>
+     * 
+     * @param position
+     *        new ROI position
+     */
+    public abstract void setPosition5D(Point5D position);
 
     /**
      * Tests if a specified 5D point is inside the ROI.
@@ -1413,6 +1448,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
+     * Tests if the <code>ROI</code> entirely contains the specified <code>ROI</code>.
+     * 
+     * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the
+     *         specified <code>ROI</code>; <code>false</code> otherwise.
+     */
+    public abstract boolean contains(ROI roi);
+
+    /**
      * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
      * rectangular area. The rectangular area is considered to intersect the <code>ROI</code> if any
      * point is contained in both the interior of the <code>ROI</code> and the specified rectangular
@@ -1460,6 +1503,15 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         return intersects(r.getX(), r.getY(), r.getZ(), r.getT(), r.getC(), r.getSizeX(), r.getSizeY(), r.getSizeZ(),
                 r.getSizeT(), r.getSizeC());
     }
+
+    /**
+     * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
+     * <code>ROI</code>
+     * 
+     * @return <code>true</code> if the interior of both <code>ROI</code> intersect;
+     *         <code>false</code> otherwise.
+     */
+    public abstract boolean intersects(ROI roi);
 
     /**
      * Returns the boolean array mask for the specified rectangular region at specified C, Z, T
@@ -1689,12 +1741,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     protected ROI computeOperation(ROI roi, BooleanOperator op) throws UnsupportedOperationException
     {
-        if ((roi == null) || (op == null))
+        if (roi == null)
             return this;
 
         final Rectangle5D bounds5D;
 
-        if (op == BooleanOperator.AND)
+        if (op == null)
+            bounds5D = getBounds5D();
+        else if (op == BooleanOperator.AND)
             bounds5D = getIntersectionBounds(roi, true);
         else
             bounds5D = getUnionBounds(roi, true);
@@ -1702,7 +1756,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         final int dim = getEffectiveDimension(bounds5D);
 
         // we want integer bounds now
-        final Rectangle5D.Integer bounds = bounds5D.getBoundsInt();
+        final Rectangle5D.Integer bounds = bounds5D.toInteger();
 
         final int sizeZ;
         final int sizeT;
@@ -1756,8 +1810,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                     if (op == null)
                     {
                         mask3D[z] = BooleanMask2D.getSubtraction(
-                                roi.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true),
-                                getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
+                                getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true),
+                                roi.getBooleanMask2D(bounds.z + z, bounds.t + t, bounds.c + c, true));
                     }
                     else if (op == BooleanOperator.AND)
                     {
@@ -1796,15 +1850,20 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         switch (dim)
         {
             case 2: // XY ROI with fixed ZTC
-                result = new icy.roi.roi2d.ROI2DArea(mask.getMask2D(bounds.z, bounds.t, bounds.c));
+                result = new plugins.kernel.roi.roi2d.ROI2DArea(mask.getMask2D(bounds.z, bounds.t, bounds.c));
+                break;
             case 3: // XYZ ROI with fixed TC
                 result = new ROI3DArea(mask.getMask3D(bounds.t, bounds.c));
+                break;
             case 4: // XYZT ROI with fixed C
                 result = new ROI4DArea(mask.getMask4D(bounds.c));
+                break;
             case 5: // XYZTC ROI
                 result = new ROI5DArea(mask);
+                break;
             default:
                 result = null;
+                break;
         }
 
         if (op == null)

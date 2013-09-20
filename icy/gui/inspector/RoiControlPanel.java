@@ -30,14 +30,12 @@ import icy.gui.menu.action.RoiActions;
 import icy.main.Icy;
 import icy.math.MathUtil;
 import icy.roi.ROI;
-import icy.roi.ROI2D;
-import icy.roi.ROI2DLine;
-import icy.roi.ROI2DRectShape;
-import icy.roi.ROI3D;
-import icy.roi.ROI4D;
-import icy.roi.ROI5D;
+import icy.roi.ROIEvent;
+import icy.roi.ROIListener;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
+import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle5D;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -47,9 +45,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.KeyEvent;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import javax.swing.ActionMap;
 import javax.swing.BoxLayout;
@@ -69,7 +68,7 @@ import javax.swing.event.ChangeListener;
  * @author Stephane
  */
 public class RoiControlPanel extends JPanel implements ColorChangeListener, TextChangeListener, ClipboardListener,
-        ChangeListener
+        ChangeListener, ROIListener
 {
     /**
      * 
@@ -86,6 +85,10 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     private IcyTextField sizeZField;
     private IcyTextField sizeYField;
     private IcyTextField sizeTField;
+    private IcyTextField posCField;
+    private IcyTextField sizeCField;
+    private JLabel lblPosC;
+    private JLabel lblSizeC;
     private ColorChooserButton colorButton;
     private JSlider alphaSlider;
     private JLabel lblContentOpacity;
@@ -107,18 +110,40 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     private IcyButton copyLinkButton;
     private IcyButton pasteLinkButton;
 
-    // internal
+    // internals
     private final RoisPanel roisPanel;
-    private boolean isRoiPropertiesAdjusting;
-    private List<ROI> modifiedROI;
+    private final Semaphore modifyingRoi;
+    private List<ROI> modifiedRois;
+    private List<ROI> selectedRois;
+    final Runnable roiActionsRefresher;
+    final Runnable roiPropertiesRefresher;
 
     public RoiControlPanel(RoisPanel panel)
     {
         super();
 
         roisPanel = panel;
-        isRoiPropertiesAdjusting = false;
-        modifiedROI = null;
+
+        modifyingRoi = new Semaphore(1);
+        modifiedRois = null;
+        selectedRois = new ArrayList<ROI>();
+
+        roiActionsRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshROIActionsInternal();
+            }
+        };
+        roiPropertiesRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshROIPropertiesInternal();
+            }
+        };
 
         initialize();
 
@@ -364,16 +389,17 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         generalPanel.add(alphaSlider, gbc_slider);
 
         final JPanel positionPanel = new JPanel();
-        positionPanel.setBorder(new TitledBorder(null, "Position", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        positionPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Position and Size",
+                TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
         add(positionPanel);
         GridBagLayout gbl_positionPanel = new GridBagLayout();
         gbl_positionPanel.columnWidths = new int[] {20, 0, 20, 0, 0};
-        gbl_positionPanel.rowHeights = new int[] {0, 0, 0};
+        gbl_positionPanel.rowHeights = new int[] {0, 0, 0, 0, 0, 0};
         gbl_positionPanel.columnWeights = new double[] {0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
-        gbl_positionPanel.rowWeights = new double[] {0.0, 0.0, Double.MIN_VALUE};
+        gbl_positionPanel.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
         positionPanel.setLayout(gbl_positionPanel);
 
-        final JLabel lblX = new JLabel("X");
+        final JLabel lblX = new JLabel("Pos X");
         GridBagConstraints gbc_lblX = new GridBagConstraints();
         gbc_lblX.insets = new Insets(0, 0, 5, 5);
         gbc_lblX.anchor = GridBagConstraints.EAST;
@@ -382,7 +408,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         positionPanel.add(lblX, gbc_lblX);
 
         posXField = new IcyTextField();
-        posXField.setToolTipText("");
+        posXField.setToolTipText("X position of the ROI");
         GridBagConstraints gbc_posXField = new GridBagConstraints();
         gbc_posXField.insets = new Insets(0, 0, 5, 5);
         gbc_posXField.fill = GridBagConstraints.HORIZONTAL;
@@ -391,139 +417,166 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         positionPanel.add(posXField, gbc_posXField);
         posXField.setColumns(10);
 
-        final JLabel lblY = new JLabel("Y");
+        final JLabel lblNewLabel_2 = new JLabel("Size X");
+        GridBagConstraints gbc_lblNewLabel_2 = new GridBagConstraints();
+        gbc_lblNewLabel_2.anchor = GridBagConstraints.EAST;
+        gbc_lblNewLabel_2.insets = new Insets(0, 0, 5, 5);
+        gbc_lblNewLabel_2.gridx = 2;
+        gbc_lblNewLabel_2.gridy = 0;
+        positionPanel.add(lblNewLabel_2, gbc_lblNewLabel_2);
+
+        sizeXField = new IcyTextField();
+        sizeXField.setToolTipText("Size of dimension X for the ROI");
+        GridBagConstraints gbc_sizeXField = new GridBagConstraints();
+        gbc_sizeXField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_sizeXField.insets = new Insets(0, 0, 5, 0);
+        gbc_sizeXField.gridx = 3;
+        gbc_sizeXField.gridy = 0;
+        positionPanel.add(sizeXField, gbc_sizeXField);
+        sizeXField.setColumns(10);
+
+        final JLabel lblY = new JLabel("Pos Y");
         GridBagConstraints gbc_lblY = new GridBagConstraints();
         gbc_lblY.anchor = GridBagConstraints.EAST;
         gbc_lblY.insets = new Insets(0, 0, 5, 5);
-        gbc_lblY.gridx = 2;
-        gbc_lblY.gridy = 0;
+        gbc_lblY.gridx = 0;
+        gbc_lblY.gridy = 1;
         positionPanel.add(lblY, gbc_lblY);
 
         posYField = new IcyTextField();
-        posYField.setToolTipText("");
+        posYField.setToolTipText("Y position of the ROI");
         GridBagConstraints gbc_posYField = new GridBagConstraints();
-        gbc_posYField.insets = new Insets(0, 0, 5, 0);
+        gbc_posYField.insets = new Insets(0, 0, 5, 5);
         gbc_posYField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_posYField.gridx = 3;
-        gbc_posYField.gridy = 0;
+        gbc_posYField.gridx = 1;
+        gbc_posYField.gridy = 1;
         positionPanel.add(posYField, gbc_posYField);
         posYField.setColumns(10);
 
-        final JLabel lblZ = new JLabel("Z");
+        final JLabel lblY_1 = new JLabel("Size Y");
+        GridBagConstraints gbc_lblY_1 = new GridBagConstraints();
+        gbc_lblY_1.anchor = GridBagConstraints.EAST;
+        gbc_lblY_1.insets = new Insets(0, 0, 5, 5);
+        gbc_lblY_1.gridx = 2;
+        gbc_lblY_1.gridy = 1;
+        positionPanel.add(lblY_1, gbc_lblY_1);
+
+        sizeYField = new IcyTextField();
+        sizeYField.setToolTipText("Size of dimension Y for the ROI");
+        GridBagConstraints gbc_sizeYField = new GridBagConstraints();
+        gbc_sizeYField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_sizeYField.insets = new Insets(0, 0, 5, 0);
+        gbc_sizeYField.gridx = 3;
+        gbc_sizeYField.gridy = 1;
+        positionPanel.add(sizeYField, gbc_sizeYField);
+        sizeYField.setColumns(10);
+
+        final JLabel lblZ = new JLabel("Pos Z");
         GridBagConstraints gbc_lblZ = new GridBagConstraints();
         gbc_lblZ.anchor = GridBagConstraints.EAST;
-        gbc_lblZ.insets = new Insets(0, 0, 0, 5);
+        gbc_lblZ.insets = new Insets(0, 0, 5, 5);
         gbc_lblZ.gridx = 0;
-        gbc_lblZ.gridy = 1;
+        gbc_lblZ.gridy = 2;
         positionPanel.add(lblZ, gbc_lblZ);
 
         posZField = new IcyTextField();
         posZField.setToolTipText("Attach the ROI to a specific Z slice (-1 = all)");
         GridBagConstraints gbc_posZField = new GridBagConstraints();
-        gbc_posZField.insets = new Insets(0, 0, 0, 5);
+        gbc_posZField.insets = new Insets(0, 0, 5, 5);
         gbc_posZField.fill = GridBagConstraints.HORIZONTAL;
         gbc_posZField.gridx = 1;
-        gbc_posZField.gridy = 1;
+        gbc_posZField.gridy = 2;
         positionPanel.add(posZField, gbc_posZField);
         posZField.setColumns(10);
 
-        final JLabel lblT = new JLabel("T");
+        final JLabel lblZ_1 = new JLabel("Size Z");
+        GridBagConstraints gbc_lblZ_1 = new GridBagConstraints();
+        gbc_lblZ_1.anchor = GridBagConstraints.EAST;
+        gbc_lblZ_1.insets = new Insets(0, 0, 5, 5);
+        gbc_lblZ_1.gridx = 2;
+        gbc_lblZ_1.gridy = 2;
+        positionPanel.add(lblZ_1, gbc_lblZ_1);
+
+        sizeZField = new IcyTextField();
+        sizeZField.setToolTipText("Size of dimension Z for the ROI");
+        GridBagConstraints gbc_sizeZField = new GridBagConstraints();
+        gbc_sizeZField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_sizeZField.insets = new Insets(0, 0, 5, 0);
+        gbc_sizeZField.gridx = 3;
+        gbc_sizeZField.gridy = 2;
+        positionPanel.add(sizeZField, gbc_sizeZField);
+        sizeZField.setColumns(10);
+
+        final JLabel lblT = new JLabel("Pos T");
         GridBagConstraints gbc_lblT = new GridBagConstraints();
         gbc_lblT.anchor = GridBagConstraints.EAST;
-        gbc_lblT.insets = new Insets(0, 0, 0, 5);
-        gbc_lblT.gridx = 2;
-        gbc_lblT.gridy = 1;
+        gbc_lblT.insets = new Insets(0, 0, 5, 5);
+        gbc_lblT.gridx = 0;
+        gbc_lblT.gridy = 3;
         positionPanel.add(lblT, gbc_lblT);
 
         posTField = new IcyTextField();
         posTField.setToolTipText("Attach the ROI to a specific T frame (-1 = all)");
         GridBagConstraints gbc_posTField = new GridBagConstraints();
+        gbc_posTField.insets = new Insets(0, 0, 5, 5);
         gbc_posTField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_posTField.gridx = 3;
-        gbc_posTField.gridy = 1;
+        gbc_posTField.gridx = 1;
+        gbc_posTField.gridy = 3;
         positionPanel.add(posTField, gbc_posTField);
         posTField.setColumns(10);
 
-        final JPanel sizePanel = new JPanel();
-        sizePanel.setBorder(new TitledBorder(null, "Size", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-        add(sizePanel);
-        GridBagLayout gbl_sizePanel = new GridBagLayout();
-        gbl_sizePanel.columnWidths = new int[] {20, 0, 20, 0, 0};
-        gbl_sizePanel.rowHeights = new int[] {0, 0, 0};
-        gbl_sizePanel.columnWeights = new double[] {0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
-        gbl_sizePanel.rowWeights = new double[] {0.0, 0.0, Double.MIN_VALUE};
-        sizePanel.setLayout(gbl_sizePanel);
-
-        final JLabel lblNewLabel_2 = new JLabel("X");
-        GridBagConstraints gbc_lblNewLabel_2 = new GridBagConstraints();
-        gbc_lblNewLabel_2.anchor = GridBagConstraints.EAST;
-        gbc_lblNewLabel_2.insets = new Insets(0, 0, 5, 5);
-        gbc_lblNewLabel_2.gridx = 0;
-        gbc_lblNewLabel_2.gridy = 0;
-        sizePanel.add(lblNewLabel_2, gbc_lblNewLabel_2);
-
-        sizeXField = new IcyTextField();
-        GridBagConstraints gbc_sizeXField = new GridBagConstraints();
-        gbc_sizeXField.insets = new Insets(0, 0, 5, 5);
-        gbc_sizeXField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_sizeXField.gridx = 1;
-        gbc_sizeXField.gridy = 0;
-        sizePanel.add(sizeXField, gbc_sizeXField);
-        sizeXField.setColumns(10);
-
-        final JLabel lblY_1 = new JLabel("Y");
-        GridBagConstraints gbc_lblY_1 = new GridBagConstraints();
-        gbc_lblY_1.anchor = GridBagConstraints.EAST;
-        gbc_lblY_1.insets = new Insets(0, 0, 5, 5);
-        gbc_lblY_1.gridx = 2;
-        gbc_lblY_1.gridy = 0;
-        sizePanel.add(lblY_1, gbc_lblY_1);
-
-        sizeYField = new IcyTextField();
-        GridBagConstraints gbc_sizeYField = new GridBagConstraints();
-        gbc_sizeYField.insets = new Insets(0, 0, 5, 0);
-        gbc_sizeYField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_sizeYField.gridx = 3;
-        gbc_sizeYField.gridy = 0;
-        sizePanel.add(sizeYField, gbc_sizeYField);
-        sizeYField.setColumns(10);
-
-        final JLabel lblZ_1 = new JLabel("Z");
-        lblZ_1.setVisible(false);
-        GridBagConstraints gbc_lblZ_1 = new GridBagConstraints();
-        gbc_lblZ_1.anchor = GridBagConstraints.EAST;
-        gbc_lblZ_1.insets = new Insets(0, 0, 0, 5);
-        gbc_lblZ_1.gridx = 0;
-        gbc_lblZ_1.gridy = 1;
-        sizePanel.add(lblZ_1, gbc_lblZ_1);
-
-        sizeZField = new IcyTextField();
-        sizeZField.setVisible(false);
-        GridBagConstraints gbc_sizeZField = new GridBagConstraints();
-        gbc_sizeZField.insets = new Insets(0, 0, 0, 5);
-        gbc_sizeZField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_sizeZField.gridx = 1;
-        gbc_sizeZField.gridy = 1;
-        sizePanel.add(sizeZField, gbc_sizeZField);
-        sizeZField.setColumns(10);
-
-        final JLabel lblT_1 = new JLabel("T");
-        lblT_1.setVisible(false);
+        final JLabel lblT_1 = new JLabel("Size T");
         GridBagConstraints gbc_lblT_1 = new GridBagConstraints();
         gbc_lblT_1.anchor = GridBagConstraints.EAST;
-        gbc_lblT_1.insets = new Insets(0, 0, 0, 5);
+        gbc_lblT_1.insets = new Insets(0, 0, 5, 5);
         gbc_lblT_1.gridx = 2;
-        gbc_lblT_1.gridy = 1;
-        sizePanel.add(lblT_1, gbc_lblT_1);
+        gbc_lblT_1.gridy = 3;
+        positionPanel.add(lblT_1, gbc_lblT_1);
 
         sizeTField = new IcyTextField();
-        sizeTField.setVisible(false);
+        sizeTField.setToolTipText("Size of dimension T for the ROI");
         GridBagConstraints gbc_sizeTField = new GridBagConstraints();
         gbc_sizeTField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_sizeTField.insets = new Insets(0, 0, 5, 0);
         gbc_sizeTField.gridx = 3;
-        gbc_sizeTField.gridy = 1;
-        sizePanel.add(sizeTField, gbc_sizeTField);
+        gbc_sizeTField.gridy = 3;
+        positionPanel.add(sizeTField, gbc_sizeTField);
         sizeTField.setColumns(10);
+
+        lblPosC = new JLabel("Pos C");
+        GridBagConstraints gbc_lblPosC = new GridBagConstraints();
+        gbc_lblPosC.insets = new Insets(0, 0, 0, 5);
+        gbc_lblPosC.anchor = GridBagConstraints.EAST;
+        gbc_lblPosC.gridx = 0;
+        gbc_lblPosC.gridy = 4;
+        positionPanel.add(lblPosC, gbc_lblPosC);
+
+        posCField = new IcyTextField();
+        posCField.setToolTipText("Attach the ROI to a specific C channel (-1 = all)");
+        GridBagConstraints gbc_posCField = new GridBagConstraints();
+        gbc_posCField.insets = new Insets(0, 0, 0, 5);
+        gbc_posCField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_posCField.gridx = 1;
+        gbc_posCField.gridy = 4;
+        positionPanel.add(posCField, gbc_posCField);
+        posCField.setColumns(10);
+
+        lblSizeC = new JLabel("Size C");
+        GridBagConstraints gbc_lblSizeC = new GridBagConstraints();
+        gbc_lblSizeC.insets = new Insets(0, 0, 0, 5);
+        gbc_lblSizeC.anchor = GridBagConstraints.EAST;
+        gbc_lblSizeC.gridx = 2;
+        gbc_lblSizeC.gridy = 4;
+        positionPanel.add(lblSizeC, gbc_lblSizeC);
+
+        sizeCField = new IcyTextField();
+        sizeCField.setToolTipText("Size of dimension C for the ROI");
+        GridBagConstraints gbc_sizeCField = new GridBagConstraints();
+        gbc_sizeCField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_sizeCField.gridx = 3;
+        gbc_sizeCField.gridy = 4;
+        positionPanel.add(sizeCField, gbc_sizeCField);
+        sizeCField.setColumns(10);
 
         infosPanel = new RoiExtraInfoPanel();
 
@@ -538,372 +591,506 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         panel.add(infosPanel);
     }
 
-    public void refresh()
+    /**
+     * Get the selected ROI in the ROI control panel.<br>
+     * This actually returns selected ROI from the ROI table in ROI panel (cached).
+     */
+    public List<ROI> getSelectedROI()
     {
-        while (isRoiPropertiesAdjusting)
-            ThreadUtil.sleep(10);
+        return new ArrayList<ROI>(selectedRois);
+    }
 
-        isRoiPropertiesAdjusting = true;
+    /**
+     * Set the selected ROI in the ROI control panel.<br>
+     * This actually refresh the GUI to reflect informations about the new selected ROI(s).
+     */
+    public void setSelectedRois(List<ROI> rois)
+    {
+        final int newSelectedSize = rois.size();
+        final int oldSelectedSize = selectedRois.size();
+
+        // easy optimization
+        if ((newSelectedSize == 0) && (oldSelectedSize == 0))
+            return;
+
+        // same selection size ?
+        if (newSelectedSize == oldSelectedSize)
+        {
+            // same selection, don't need to update it
+            if (new HashSet<ROI>(rois).containsAll(selectedRois))
+                return;
+        }
+
+        // remove listener
+        for (ROI roi : selectedRois)
+            roi.removeListener(this);
+
+        selectedRois = rois;
+
+        // add listener
+        for (ROI roi : rois)
+            roi.addListener(this);
+
+        // refresh all
+        refreshROIActionsAndProperties();
+    }
+
+    /**
+     * Refresh the ROI actions state.
+     */
+    public void refreshROIActions()
+    {
+        ThreadUtil.bgRun(roiActionsRefresher, true);
+    }
+
+    void refreshPosToolTip(int dim)
+    {
+        if (dim > 1)
+            posYField.setToolTipText("Y position of the ROI");
+        else
+            posYField.setToolTipText("Attach the ROI to a specific Y line (set to -1 for all lines)");
+        if (dim > 2)
+            posZField.setToolTipText("Z position of the ROI");
+        else
+            posZField.setToolTipText("Attach the ROI to a specific Z slice (set to -1 for all slices)");
+        if (dim > 3)
+            posTField.setToolTipText("T position of the ROI");
+        else
+            posTField.setToolTipText("Attach the ROI to a specific T frame (set to -1 for all frames)");
+        if (dim > 4)
+            posCField.setToolTipText("C position of the ROI");
+        else
+            posCField.setToolTipText("Attach the ROI to a specific C channel (set to -1 for all channels)");
+    }
+
+    /**
+     * Refresh the ROI actions state (internal)
+     */
+    void refreshROIActionsInternal()
+    {
+        final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+        final List<ROI> rois = roisPanel.getSelectedRois();
+        final ROI roi = (rois.size() > 0) ? rois.get(0) : null;
+
+        boolean readOnly = true;
+        // set read only flag
+        for (ROI r : rois)
+            readOnly &= r.isReadOnly();
+
+        final boolean hasSequence = (sequence != null);
+        final boolean hasSelected = (roi != null);
+        final boolean twoSelected = (rois.size() == 2);
+        final boolean multiSelect = (rois.size() > 1);
+        final boolean singleSelect = hasSelected && !multiSelect;
+        final boolean canSetBounds = hasSelected ? roi.canSetBounds() : false;
+        final boolean canSetPosition = hasSelected ? roi.canSetPosition() : false;
+        final boolean hasROIinClipboard = Clipboard.isType(Clipboard.TYPE_ROILIST);
+        final boolean hasROILinkinClipboard = Clipboard.isType(Clipboard.TYPE_ROILINKLIST);
+        final boolean editable = !readOnly;
+        final int dim = hasSelected ? roi.getDimension() : 0;
+
+        nameField.setEnabled(singleSelect && editable);
+        posXField.setEnabled(singleSelect && canSetPosition && editable);
+        posYField.setEnabled(singleSelect && canSetPosition && editable);
+        posZField.setEnabled(singleSelect && canSetPosition && editable);
+        posTField.setEnabled(singleSelect && canSetPosition && editable);
+        posCField.setEnabled(singleSelect && canSetPosition && editable);
+        sizeXField.setEnabled(singleSelect && canSetBounds && editable);
+        sizeYField.setEnabled(singleSelect && canSetBounds && editable && (dim > 1));
+        sizeZField.setEnabled(singleSelect && canSetBounds && editable && (dim > 2));
+        sizeTField.setEnabled(singleSelect && canSetBounds && editable && (dim > 3));
+        sizeCField.setEnabled(singleSelect && canSetBounds && editable && (dim > 4));
+
+        colorButton.setEnabled(hasSelected && editable);
+        alphaSlider.setEnabled(hasSelected);
+
+        loadButton.setEnabled(hasSequence);
+        saveButton.setEnabled(hasSelected);
+        copyButton.setEnabled(hasSelected);
+        pasteButton.setEnabled(hasROIinClipboard);
+        copyLinkButton.setEnabled(hasSelected);
+        pasteLinkButton.setEnabled(hasROILinkinClipboard);
+
+        deleteButton.setEnabled(hasSelected && editable);
+
+        notButton.setEnabled(singleSelect);
+        orButton.setEnabled(multiSelect);
+        andButton.setEnabled(multiSelect);
+        xorButton.setEnabled(multiSelect);
+        subButton.setEnabled(twoSelected);
+
+        refreshPosToolTip(dim);
+    }
+
+    /**
+     * Refresh ROI properties
+     */
+    public void refreshROIProperties()
+    {
+        ThreadUtil.bgRunSingle(roiPropertiesRefresher, true);
+    }
+
+    /**
+     * Refresh ROI properties (internal)
+     */
+    void refreshROIPropertiesInternal()
+    {
+        final List<ROI> rois = roisPanel.getSelectedRois();
+        final ROI roi = (rois.size() > 0) ? rois.get(0) : null;
+
+        modifyingRoi.acquireUninterruptibly();
         try
         {
-            // default
-            nameField.setText("");
-
-            colorButton.setColor(Color.gray);
-            alphaSlider.setValue(0);
-
-            posXField.setText("");
-            posYField.setText("");
-            posZField.setText("");
-            posTField.setText("");
-
-            sizeXField.setText("");
-            sizeYField.setText("");
-            sizeZField.setText("");
-            sizeTField.setText("");
-
-            sizeZField.setVisible(false);
-            sizeTField.setVisible(false);
-
-            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
-
-            if (sequence != null)
+            if (roi != null)
             {
-                final List<ROI> rois = roisPanel.getSelectedRois();
+                final String name = roi.getName();
 
-                boolean editable = false;
-                for (ROI r : rois)
-                    editable |= !r.isReadOnly();
+                nameField.setText(name);
+                colorButton.setColor(roi.getColor());
+                alphaSlider.setValue((int) (roi.getOpacity() * 100));
 
-                final ROI roi = (rois.size() > 0) ? rois.get(0) : null;
-                final boolean hasSelected = (roi != null);
-                final boolean twoSelected = (rois.size() == 2);
-                final boolean severalsSelected = (rois.size() > 1);
-                final boolean singleSelect = hasSelected && !severalsSelected;
-                final boolean isRoi2d = roi instanceof ROI2D;
-                final boolean isRoi2dResizeable = (roi instanceof ROI2DLine) || (roi instanceof ROI2DRectShape);
-                final boolean hasROIinClipboard = Clipboard.isType(Clipboard.TYPE_ROILIST);
-                final boolean hasROILinkinClipboard = Clipboard.isType(Clipboard.TYPE_ROILINKLIST);
+                final Rectangle5D bounds = roi.getBounds5D();
 
-                nameField.setEnabled(singleSelect && editable);
-                posXField.setEnabled(singleSelect && isRoi2d && editable);
-                posYField.setEnabled(singleSelect && isRoi2d && editable);
-                posZField.setEnabled(singleSelect && isRoi2d && editable);
-                posTField.setEnabled(singleSelect && isRoi2d && editable);
-                sizeXField.setEnabled(singleSelect && isRoi2dResizeable && editable);
-                sizeYField.setEnabled(singleSelect && isRoi2dResizeable && editable);
-                sizeZField.setEnabled(singleSelect && isRoi2dResizeable && editable);
-                sizeTField.setEnabled(singleSelect && isRoi2dResizeable && editable);
+                final double x = bounds.getX();
+                final double y = bounds.getY();
+                final double z = bounds.getZ();
+                final double t = bounds.getT();
+                final double c = bounds.getC();
+                final double sx = bounds.getSizeX();
+                final double sy = bounds.getSizeY();
+                final double sz = bounds.getSizeZ();
+                final double st = bounds.getSizeT();
+                final double sc = bounds.getSizeC();
 
-                colorButton.setEnabled(hasSelected && editable);
-                alphaSlider.setEnabled(hasSelected);// && editable);
-
-                loadButton.setEnabled(true);
-                saveButton.setEnabled(hasSelected);
-                copyButton.setEnabled(hasSelected);
-                pasteButton.setEnabled(hasROIinClipboard);
-                copyLinkButton.setEnabled(hasSelected);
-                pasteLinkButton.setEnabled(hasROILinkinClipboard);
-
-                deleteButton.setEnabled(hasSelected && editable);
-
-                notButton.setEnabled(singleSelect);
-                orButton.setEnabled(severalsSelected);
-                andButton.setEnabled(severalsSelected);
-                xorButton.setEnabled(severalsSelected);
-                subButton.setEnabled(twoSelected);
-
-                if (roi != null)
+                // special case of infinite X dimension
+                if (sx == Double.POSITIVE_INFINITY)
                 {
-                    final String name = roi.getName();
-
-                    // handle it manually as setText doesn't check for equality
-                    nameField.setText(name);
-
-                    colorButton.setColor(roi.getColor());
-                    alphaSlider.setValue((int) (roi.getOpacity() * 100));
-
-                    if (roi instanceof ROI2D)
-                    {
-                        final ROI2D roi2d = (ROI2D) roi;
-                        final Rectangle2D bounds = roi2d.getBounds2D();
-
-                        final String posX = StringUtil.toString(MathUtil.roundSignificant(bounds.getX(), 5, true));
-                        final String posY = StringUtil.toString(MathUtil.roundSignificant(bounds.getY(), 5, true));
-                        final String posZ = StringUtil.toString(roi2d.getZ());
-                        final String posT = StringUtil.toString(roi2d.getT());
-
-                        final String sizeX = StringUtil.toString(MathUtil.roundSignificant(bounds.getWidth(), 5, true));
-                        final String sizeY = StringUtil
-                                .toString(MathUtil.roundSignificant(bounds.getHeight(), 5, true));
-
-                        posXField.setText(posX);
-                        posYField.setText(posY);
-                        posZField.setText(posZ);
-                        posTField.setText(posT);
-
-                        sizeXField.setText(sizeX);
-                        sizeYField.setText(sizeY);
-                    }
-                    else
-                    {
-                        // not supported yet
-                    }
+                    posXField.setText("-1");
+                    sizeXField.setText("infinite");
                 }
-
-                // refresh ROI infos
-                infosPanel.refresh(sequence, roi);
+                else
+                {
+                    posXField.setText(StringUtil.toString(MathUtil.roundSignificant(x, 5, true)));
+                    sizeXField.setText(StringUtil.toString(MathUtil.roundSignificant(sx, 5, true)));
+                }
+                // special case of infinite Y dimension
+                if (sy == Double.POSITIVE_INFINITY)
+                {
+                    posYField.setText("-1");
+                    sizeYField.setText("infinite");
+                }
+                else
+                {
+                    posYField.setText(StringUtil.toString(MathUtil.roundSignificant(y, 5, true)));
+                    sizeYField.setText(StringUtil.toString(MathUtil.roundSignificant(sy, 5, true)));
+                }
+                // special case of infinite Z dimension
+                if (sz == Double.POSITIVE_INFINITY)
+                {
+                    posZField.setText("-1");
+                    sizeZField.setText("infinite");
+                }
+                else
+                {
+                    posZField.setText(StringUtil.toString(MathUtil.roundSignificant(z, 5, true)));
+                    sizeZField.setText(StringUtil.toString(MathUtil.roundSignificant(sz, 5, true)));
+                }
+                // special case of infinite T dimension
+                if (st == Double.POSITIVE_INFINITY)
+                {
+                    posTField.setText("-1");
+                    sizeTField.setText("infinite");
+                }
+                else
+                {
+                    posTField.setText(StringUtil.toString(MathUtil.roundSignificant(t, 5, true)));
+                    sizeTField.setText(StringUtil.toString(MathUtil.roundSignificant(st, 5, true)));
+                }
+                // special case of infinite C dimension
+                if (sc == Double.POSITIVE_INFINITY)
+                {
+                    posCField.setText("-1");
+                    sizeCField.setText("infinite");
+                }
+                else
+                {
+                    posCField.setText(StringUtil.toString(MathUtil.roundSignificant(c, 5, true)));
+                    sizeCField.setText(StringUtil.toString(MathUtil.roundSignificant(sc, 5, true)));
+                }
             }
             else
             {
-                nameField.setEnabled(false);
-                posXField.setEnabled(false);
-                posYField.setEnabled(false);
-                posZField.setEnabled(false);
-                posTField.setEnabled(false);
-                sizeXField.setEnabled(false);
-                sizeYField.setEnabled(false);
-                sizeZField.setEnabled(false);
-                sizeTField.setEnabled(false);
+                // no ROI selected
+                nameField.setText("");
 
-                colorButton.setEnabled(false);
-                alphaSlider.setEnabled(false);
+                colorButton.setColor(Color.gray);
+                alphaSlider.setValue(0);
 
-                loadButton.setEnabled(false);
-                saveButton.setEnabled(false);
-                copyButton.setEnabled(false);
-                pasteButton.setEnabled(false);
-                copyLinkButton.setEnabled(false);
-                pasteLinkButton.setEnabled(false);
-                deleteButton.setEnabled(false);
+                posXField.setText("");
+                posYField.setText("");
+                posZField.setText("");
+                posTField.setText("");
 
-                notButton.setEnabled(false);
-                orButton.setEnabled(false);
-                andButton.setEnabled(false);
-                xorButton.setEnabled(false);
-                subButton.setEnabled(false);
-
-                // refresh ROI infos
-                infosPanel.refresh(null, null);
+                sizeXField.setText("");
+                sizeYField.setText("");
+                sizeZField.setText("");
+                sizeTField.setText("");
             }
 
-            // so that won't send further changed event
-            // nameField.setUnchanged();
-            //
-            // posXField.setUnchanged();
-            // posYField.setUnchanged();
-            // posZField.setUnchanged();
-            // posTField.setUnchanged();
-            //
-            // sizeXField.setUnchanged();
-            // sizeYField.setUnchanged();
-            // sizeZField.setUnchanged();
-            // sizeTField.setUnchanged();
+            // refresh ROI infos
+            infosPanel.refresh(Icy.getMainInterface().getActiveViewer(), rois);
         }
         finally
         {
-            isRoiPropertiesAdjusting = false;
+            modifyingRoi.release();
         }
+    }
+
+    /**
+     * Refresh ROI actions and properties
+     */
+    public void refreshROIActionsAndProperties()
+    {
+        ThreadUtil.bgRunSingle(roiActionsRefresher, true);
+        ThreadUtil.bgRunSingle(roiPropertiesRefresher, true);
     }
 
     @Override
     public void textChanged(IcyTextField source, boolean validate)
     {
-        if (isRoiPropertiesAdjusting)
+        // source not anymore enable --> cancel validation
+        if (!source.isEnabled())
             return;
 
         // keep trace of modified ROI and wait for validation
         if (!validate)
         {
-            modifiedROI = RoiControlPanel.this.roisPanel.getSelectedRois();
+            modifiedRois = RoiControlPanel.this.roisPanel.getSelectedRois();
             return;
         }
 
-        // can't edit multiple ROI at same time
-        if ((modifiedROI == null) && (modifiedROI.size() != 1))
+        // at this point the text is validated...
+
+        // can't edit multiple ROI at same time (should not arrive)
+        if ((modifiedRois == null) || (modifiedRois.size() != 1))
             return;
 
-        final ROI roi = modifiedROI.get(0);
+        // get the ROI we were modifying
+        final ROI roi = modifiedRois.get(0);
 
+        // can't edit read only ROI (should not arrive)
         if (roi.isReadOnly())
             return;
 
-        isRoiPropertiesAdjusting = true;
+        if (!modifyingRoi.tryAcquire())
+            return;
+
         try
         {
+            // simple name change
             if (source == nameField)
+                roi.setName(source.getText());
+            // position fields ?
+            else if ((source == posXField) || (source == posYField) || (source == posZField) || (source == posTField)
+                    || (source == posCField))
             {
-                if (nameField.isEnabled())
-                    roi.setName(source.getText());
-            }
-            else if (roi instanceof ROI2D)
-            {
-                final ROI2D roi2d = (ROI2D) roi;
-                final Rectangle2D roiBounds = roi2d.getBounds2D();
+                // get current ROI position
+                Point5D position = roi.getPosition5D();
 
+                // roi support position change ?
+                if (roi.canSetPosition())
+                {
+                    final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
+
+                    if (!Double.isNaN(value))
+                    {
+                        if (source == posXField)
+                            position.setX(value);
+                        else if (source == posYField)
+                            position.setY(value);
+                        else if (source == posZField)
+                            position.setZ(value);
+                        else if (source == posTField)
+                            position.setT(value);
+                        else
+                            position.setC(value);
+
+                        roi.setPosition5D(position);
+                        // update position with ROI accepted values
+                        position = roi.getPosition5D();
+                    }
+                }
+
+                double p;
+
+                // fix field value if needed
                 if (source == posXField)
-                {
-                    if (posXField.isEnabled())
-                    {
-                        final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
-
-                        if (!Double.isNaN(value))
-                            roi2d.setPosition(new Point2D.Double(value, roiBounds.getY()));
-                        source.setText(Double.toString(roi2d.getPosition2D().getX()));
-                    }
-                }
+                    p = position.getX();
                 else if (source == posYField)
-                {
-                    if (posYField.isEnabled())
-                    {
-                        final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
-
-                        if (!Double.isNaN(value))
-                            roi2d.setPosition(new Point2D.Double(roiBounds.getX(), value));
-                        source.setText(Double.toString(roi2d.getPosition2D().getY()));
-                    }
-                }
+                    p = position.getY();
                 else if (source == posZField)
-                {
-                    if (posZField.isEnabled())
-                    {
-                        roi2d.setZ(Math.max(-1, StringUtil.parseInt(source.getText(), -1)));
-                        source.setText(Integer.toString(roi2d.getZ()));
-                    }
-                }
+                    p = position.getZ();
                 else if (source == posTField)
+                    p = position.getT();
+                else
+                    p = position.getC();
+
+                // change infinite by -1
+                if (p == Double.NEGATIVE_INFINITY)
+                    p = -1d;
+
+                source.setText(Double.toString(p));
+            }
+            // size fields ?
+            else if ((source == sizeXField) || (source == sizeYField) || (source == sizeZField)
+                    || (source == sizeTField) || (source == sizeCField))
+            {
+                // get current ROI size
+                Rectangle5D bounds = roi.getBounds5D();
+
+                // roi support size change ?
+                if (roi.canSetBounds())
                 {
-                    if (posTField.isEnabled())
+                    final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
+
+                    if (!Double.isNaN(value))
                     {
-                        roi2d.setT(Math.max(-1, StringUtil.parseInt(source.getText(), -1)));
-                        source.setText(Integer.toString(roi2d.getT()));
+                        if (source == sizeXField)
+                            bounds.setSizeX(value);
+                        else if (source == sizeYField)
+                            bounds.setSizeY(value);
+                        else if (source == sizeZField)
+                            bounds.setSizeZ(value);
+                        else if (source == sizeTField)
+                            bounds.setSizeT(value);
+                        else
+                            bounds.setSizeC(value);
+
+                        roi.setBounds5D(bounds);
+                        // update bounds with ROI accepted values
+                        bounds = roi.getBounds5D();
                     }
                 }
-                else if ((roi2d instanceof ROI2DLine) || (roi2d instanceof ROI2DRectShape))
-                {
-                    if ((source == sizeXField))
-                    {
-                        if (sizeXField.isEnabled())
-                        {
-                            final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
 
-                            if (!Double.isNaN(value))
-                            {
-                                final Rectangle2D r = new Rectangle2D.Double(roiBounds.getX(), roiBounds.getY(), value,
-                                        roiBounds.getHeight());
+                final double p;
 
-                                if (roi2d instanceof ROI2DLine)
-                                    ((ROI2DLine) roi2d).setBounds2D(r);
-                                else
-                                    ((ROI2DRectShape) roi2d).setBounds2D(r);
-                            }
+                // fix field value if needed
+                if (source == sizeXField)
+                    p = bounds.getSizeX();
+                else if (source == sizeYField)
+                    p = bounds.getSizeY();
+                else if (source == sizeZField)
+                    p = bounds.getSizeZ();
+                else if (source == sizeTField)
+                    p = bounds.getSizeT();
+                else
+                    p = bounds.getSizeC();
 
-                            if (roi2d instanceof ROI2DLine)
-                                source.setText(Double.toString(((ROI2DLine) roi2d).getBounds2D().getWidth()));
-                            else
-                                source.setText(Double.toString(((ROI2DRectShape) roi2d).getBounds2D().getWidth()));
-                        }
-                    }
-                    else if (source == sizeYField)
-                    {
-                        if (sizeYField.isEnabled())
-                        {
-                            final double value = StringUtil.parseDouble(source.getText(), Double.NaN);
-
-                            if (!Double.isNaN(value))
-                            {
-                                final Rectangle2D r = new Rectangle2D.Double(roiBounds.getX(), roiBounds.getY(),
-                                        roiBounds.getWidth(), value);
-
-                                if (roi2d instanceof ROI2DLine)
-                                    ((ROI2DLine) roi2d).setBounds2D(r);
-                                else
-                                    ((ROI2DRectShape) roi2d).setBounds2D(r);
-                            }
-
-                            if (roi2d instanceof ROI2DLine)
-                                source.setText(Double.toString(((ROI2DLine) roi2d).getBounds2D().getHeight()));
-                            else
-                                source.setText(Double.toString(((ROI2DRectShape) roi2d).getBounds2D().getHeight()));
-                        }
-                    }
-                }
-            }
-            else if (roi instanceof ROI3D)
-            {
-                // not yet supported
-            }
-            else if (roi instanceof ROI4D)
-            {
-                // not yet supported
-            }
-            else if (roi instanceof ROI5D)
-            {
-                // not yet supported
+                source.setText(Double.toString(p));
             }
         }
         finally
         {
-            isRoiPropertiesAdjusting = false;
+            modifyingRoi.release();
         }
     }
 
     @Override
     public void colorChanged(ColorChooserButton source)
     {
-        if (isRoiPropertiesAdjusting)
+        // source not anymore enable --> cancel change
+        if (!source.isEnabled())
             return;
 
-        if (source.isEnabled())
+        final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+        if (sequence == null)
+            return;
+
+        if (!modifyingRoi.tryAcquire())
+            return;
+
+        sequence.beginUpdate();
+        try
         {
+            // color changed
             final Color color = source.getColor();
-            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
             final List<ROI> selectedROI = roisPanel.getSelectedRois();
 
-            sequence.beginUpdate();
-            try
-            {
-                for (ROI roi : selectedROI)
-                    if (!roi.isReadOnly())
-                        roi.setColor(color);
-            }
-            finally
-            {
-                sequence.endUpdate();
-            }
+            for (ROI roi : selectedROI)
+                if (!roi.isReadOnly())
+                    roi.setColor(color);
+        }
+        finally
+        {
+            sequence.endUpdate();
+            modifyingRoi.release();
         }
     }
 
     @Override
     public void stateChanged(ChangeEvent e)
     {
-        // opacity changed
-        if (isRoiPropertiesAdjusting)
+        // alpha slider not anymore enable --> cancel change
+        if (!alphaSlider.isEnabled())
             return;
 
-        if (alphaSlider.isEnabled())
+        final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+        if (sequence == null)
+            return;
+
+        if (!modifyingRoi.tryAcquire())
+            return;
+
+        sequence.beginUpdate();
+        try
         {
             final float opacity = alphaSlider.getValue() / 100f;
-            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
-            final List<ROI> selectedROI = roisPanel.getSelectedRois();
+            final List<ROI> selectedRois = roisPanel.getSelectedRois();
 
-            sequence.beginUpdate();
-            try
-            {
-                for (ROI roi : selectedROI)
-                    if (!roi.isReadOnly())
-                        roi.setOpacity(opacity);
-            }
-            finally
-            {
-                sequence.endUpdate();
-            }
+            for (ROI roi : selectedRois)
+                if (!roi.isReadOnly())
+                    roi.setOpacity(opacity);
+        }
+        finally
+        {
+            sequence.endUpdate();
+            modifyingRoi.release();
         }
     }
 
     @Override
     public void clipboardChanged()
     {
-        refresh();
+        refreshROIActions();
+    }
+
+    // one of the selected ROI changed
+    @Override
+    public void roiChanged(ROIEvent event)
+    {
+        switch (event.getType())
+        {
+            case ROI_CHANGED:
+                // refresh the properties
+                refreshROIProperties();
+                break;
+
+            case FOCUS_CHANGED:
+                // nothing to do here
+                break;
+
+            case PROPERTY_CHANGED:
+                final String propertyName = event.getPropertyName();
+
+                if (ROI.PROPERTY_READONLY.equals(propertyName))
+                    refreshROIActions();
+                else if (ROI.PROPERTY_NAME.equals(propertyName))
+                    ThreadUtil.bgRunSingle(roiPropertiesRefresher, true);
+                break;
+
+            case SELECTION_CHANGED:
+                // handle externally with the setSelectedROI() method
+                break;
+        }
     }
 }

@@ -20,6 +20,7 @@ package icy.roi;
 
 import icy.canvas.IcyCanvas;
 import icy.type.point.Point3D;
+import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.XMLUtil;
@@ -215,6 +216,27 @@ public abstract class ROI3D extends ROI
         return contains(x, y, z, sizeX, sizeY, sizeZ) && tok && cok;
     }
 
+    /*
+     * Generic implementation using the BooleanMask which is not accurate and slow.
+     * Override this for specific ROI type.
+     */
+    @Override
+    public boolean contains(ROI roi)
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            if (isActiveFor(roi3d.getT(), roi3d.getC()))
+                return getBooleanMask(false).contains(roi3d.getBooleanMask(false));
+
+            return false;
+        }
+
+        // do it the other way
+        return roi.intersects(this);
+    }
+
     /**
      * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
      * <code>Rectangle3D</code>. The {@code ROI.intersects()} method allows a {@code ROI}
@@ -297,6 +319,27 @@ public abstract class ROI3D extends ROI
         return intersects(x, y, z, sizeX, sizeY, sizeZ) && tok && cok;
     }
 
+    /*
+     * Generic implementation using the BooleanMask which is not accurate and slow.
+     * Override this for specific ROI type.
+     */
+    @Override
+    public boolean intersects(ROI roi)
+    {
+        if (roi instanceof ROI3D)
+        {
+            final ROI3D roi3d = (ROI3D) roi;
+
+            if (isActiveFor(roi3d.getT(), roi3d.getC()))
+                return getBooleanMask(true).intersects(roi3d.getBooleanMask(true));
+
+            return false;
+        }
+
+        // do it the other way
+        return roi.intersects(this);
+    }
+
     /**
      * Calculate and returns the 3D bounding box of the <code>ROI</code>.<br>
      * This method is used by {@link #getBounds3D()} which should try to cache the result as the
@@ -348,7 +391,7 @@ public abstract class ROI3D extends ROI
      */
     public Rectangle3D.Integer getBounds()
     {
-        return getBounds3D().getBoundsInt();
+        return getBounds3D().toInteger();
     }
 
     /**
@@ -361,9 +404,7 @@ public abstract class ROI3D extends ROI
      */
     public Rectangle3D getBounds3D()
     {
-        final Rectangle5D bounds = getBounds5D();
-        return new Rectangle3D.Double(bounds.getX(), bounds.getY(), bounds.getZ(), bounds.getSizeX(),
-                bounds.getSizeY(), bounds.getSizeZ());
+        return getBounds5D().toRectangle3D();
     }
 
     /**
@@ -388,6 +429,80 @@ public abstract class ROI3D extends ROI
     public Point3D getPosition3D()
     {
         return getBounds3D().getPosition();
+    }
+
+    @Override
+    public boolean canSetBounds()
+    {
+        // default
+        return false;
+    }
+
+    @Override
+    public boolean canSetPosition()
+    {
+        // default
+        return false;
+    }
+
+    /**
+     * Set the <code>ROI</code> 3D bounds.<br>
+     * Note that not all ROI supports bounds modification and you should call
+     * {@link #canSetBounds()} first to test if the operation is supported.<br>
+     * 
+     * @param bounds
+     *        new ROI 3D bounds
+     */
+    public void setBounds3D(Rectangle3D bounds)
+    {
+        // do nothing by default (not supported)
+    }
+
+    @Override
+    public void setBounds5D(Rectangle5D bounds)
+    {
+        // infinite T dim ?
+        if (bounds.getSizeT() == Double.POSITIVE_INFINITY)
+            setT(-1);
+        else
+            setT((int) bounds.getT());
+        // infinite C dim ?
+        if (bounds.getSizeC() == Double.POSITIVE_INFINITY)
+            setC(-1);
+        else
+            setC((int) bounds.getC());
+
+        setBounds3D(bounds.toRectangle3D());
+    }
+
+    /**
+     * Set the <code>ROI</code> 3D position.<br>
+     * Note that not all ROI supports position modification and you should call
+     * {@link #canSetPosition()} first to test if the operation is supported.<br>
+     * 
+     * @param position
+     *        new ROI 3D position
+     */
+    public void setPosition3D(Point3D position)
+    {
+        // do nothing by default (not supported)
+    }
+
+    @Override
+    public void setPosition5D(Point5D position)
+    {
+        // infinite T dim ?
+        if (position.getT() == Double.NEGATIVE_INFINITY)
+            setT(-1);
+        else
+            setT((int) position.getT());
+        // infinite C dim ?
+        if (position.getC() == Double.NEGATIVE_INFINITY)
+            setC(-1);
+        else
+            setC((int) position.getC());
+
+        setPosition3D(position.toPoint3D());
     }
 
     @Override

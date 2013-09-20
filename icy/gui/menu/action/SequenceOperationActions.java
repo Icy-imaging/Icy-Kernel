@@ -19,6 +19,7 @@
 package icy.gui.menu.action;
 
 import icy.common.IcyAbstractAction;
+import icy.gui.main.MainFrame;
 import icy.gui.menu.tools.SequenceCropper;
 import icy.gui.sequence.tools.SequenceCanvasResizeFrame;
 import icy.gui.sequence.tools.SequenceDimensionAdjustFrame;
@@ -32,9 +33,12 @@ import icy.image.lut.LUT;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
+import icy.roi.ROI;
 import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceDataIterator;
 import icy.sequence.SequenceUtil;
+import icy.type.DataIteratorUtil;
 import icy.type.DataType;
 import icy.util.OMEUtil;
 
@@ -861,6 +865,49 @@ public class SequenceOperationActions
             {
                 new SequenceDimensionConvertFrame(sequence);
                 return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            return super.isEnabled() && (sequence != null) && !sequence.isEmpty();
+        }
+    };
+
+    public static IcyAbstractAction fillSequenceAction = new IcyAbstractAction("Fill", new IcyIcon(
+            ResourceUtil.ICON_BRUSH), "Fill ROI content",
+            "Fill the selected ROI content with specified value on whole sequence", true, "Filling content")
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 110261266295404071L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+
+            if (sequence != null)
+            {
+                final MainFrame mainFrame = Icy.getMainInterface().getMainFrame();
+
+                if (mainFrame != null)
+                {
+                    final double value = mainFrame.getMainRibbon().getSequenceOperationTask().getFillValue();
+
+                    for (ROI roi : sequence.getSelectedROIs())
+                        DataIteratorUtil.set(new SequenceDataIterator(sequence, roi), value);
+
+                    sequence.dataChanged();
+
+                    return true;
+                }
             }
 
             return false;

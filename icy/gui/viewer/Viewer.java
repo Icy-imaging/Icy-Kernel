@@ -1038,7 +1038,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     public int getMaxT()
     {
         if (canvas != null)
-            return canvas.getMaxT();
+            return canvas.getMaxPositionT();
 
         return 0;
     }
@@ -1049,7 +1049,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     public int getMaxZ()
     {
         if (canvas != null)
-            return canvas.getMaxZ();
+            return canvas.getMaxPositionZ();
 
         return 0;
     }
@@ -1060,7 +1060,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     public int getMaxC()
     {
         if (canvas != null)
-            return canvas.getMaxC();
+            return canvas.getMaxPositionC();
 
         return 0;
     }

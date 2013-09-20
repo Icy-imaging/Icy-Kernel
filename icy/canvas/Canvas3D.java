@@ -946,7 +946,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             setPositionC(-1);
 
             // re-enable all channel
-            final int maxC = getMaxC();
+            final int maxC = getMaxPositionC();
             for (int c = 0; c <= maxC; c++)
                 getLut().getLutChannel(c).setEnabled(true);
         }
@@ -1059,6 +1059,41 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
     public double getZScaling()
     {
         return getVolumeScaleZ();
+    }
+
+    @Override
+    public double getMouseImagePosX()
+    {
+        // not supported
+        return 0d;
+    }
+
+    @Override
+    public double getMouseImagePosY()
+    {
+        // not supported
+        return 0d;
+    }
+
+    @Override
+    public double getMouseImagePosZ()
+    {
+        // not supported
+        return 0d;
+    }
+
+    @Override
+    public double getMouseImagePosT()
+    {
+        // not supported
+        return 0d;
+    }
+
+    @Override
+    public double getMouseImagePosC()
+    {
+        // not supported
+        return 0d;
     }
 
     /**

@@ -20,10 +20,8 @@ package icy.gui.inspector;
 
 import icy.gui.viewer.Viewer;
 import icy.image.IntensityInfo;
-import icy.main.Icy;
 import icy.math.MathUtil;
 import icy.roi.ROI;
-import icy.roi.ROI2D;
 import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
 import icy.system.thread.SingleProcessor;
@@ -34,6 +32,7 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.Box;
@@ -47,20 +46,15 @@ public class RoiExtraInfoPanel extends JPanel
 {
     private class RoiInfosCalculator implements Runnable
     {
-        final Sequence sequence;
         final Viewer viewer;
-        final ROI roi;
+        final List<ROI> rois;
 
-        public RoiInfosCalculator(Sequence sequence, ROI roi)
+        public RoiInfosCalculator(Viewer viewer, List<ROI> rois)
         {
             super();
 
-            this.sequence = sequence;
-            this.viewer = Icy.getMainInterface().getActiveViewer();
-            if (roi != null)
-                this.roi = roi.getCopy();
-            else
-                this.roi = null;
+            this.viewer = viewer;
+            this.rois = rois;
         }
 
         @Override
@@ -68,40 +62,61 @@ public class RoiExtraInfoPanel extends JPanel
         {
             try
             {
+                final Sequence sequence = (viewer != null) ? viewer.getSequence() : null;
                 final IntensityInfo intensityInfos[];
                 final double perimeter;
                 final double volume;
                 final int dim;
 
-                if ((viewer != null) && (viewer.getSequence() == sequence) && (sequence != null)
-                        && (roi instanceof ROI2D))
+                if ((sequence != null) && (rois != null) && (rois.size() > 0))
                 {
-                    final ROI2D roi2d = (ROI2D) roi;
-
-                    // better to use ROI position ?
-                    // roi2d.setZ(viewer.getZ());
-                    // roi2d.setT(viewer.getT());
-
                     final int sizeC = sequence.getSizeC();
+
                     intensityInfos = new IntensityInfo[sizeC];
-
                     for (int c = 0; c < sizeC; c++)
-                    {
-                        roi2d.setC(c);
-                        intensityInfos[c] = ROIUtil.getIntensityInfo(sequence, roi2d);
-                    }
-                }
-                else
-                    intensityInfos = null;
+                        intensityInfos[c] = new IntensityInfo();
 
-                if ((sequence != null) && (roi != null))
-                {
-                    perimeter = roi.getPerimeter();
-                    volume = roi.getVolume();
-                    dim = roi.getDimension();
+                    // calculate sum of intensity infos
+                    for (ROI roi : rois)
+                    {
+                        // better to use canvas position ?
+                        // viewer.getZ();
+                        // viewer.getT();
+
+                        for (int c = 0; c < sizeC; c++)
+                        {
+                            final IntensityInfo inf = ROIUtil.getIntensityInfo(sequence, roi, -1, -1, c);
+                            final IntensityInfo sum = intensityInfos[c];
+
+                            sum.minIntensity += inf.minIntensity;
+                            sum.meanIntensity += inf.meanIntensity;
+                            sum.maxIntensity += inf.maxIntensity;
+                        }
+                    }
+
+                    // calculate sum of perimeter and volume
+                    dim = rois.get(0).getDimension();
+                    double p = 0d;
+                    double v = 0d;
+                    for (ROI roi : rois)
+                    {
+                        if (roi.getDimension() != dim)
+                        {
+                            p = -1d;
+                            v = -1d;
+                            break;
+                        }
+
+                        p += roi.getPerimeter();
+                        v += roi.getVolume();
+                    }
+
+                    perimeter = p;
+                    volume = v;
                 }
                 else
                 {
+                    intensityInfos = null;
                     perimeter = -1;
                     volume = -1;
                     dim = 1;
@@ -269,9 +284,9 @@ public class RoiExtraInfoPanel extends JPanel
         add(intensityMaxLabel, gbc_label_5);
     }
 
-    public void refresh(Sequence sequence, ROI roi)
+    public void refresh(Viewer viewer, List<ROI> roi)
     {
-        processor.addTask(new RoiInfosCalculator(sequence, roi));
+        processor.addTask(new RoiInfosCalculator(viewer, roi));
     }
 
     /**

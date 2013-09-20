@@ -52,13 +52,13 @@ import org.pushingpixels.flamingo.api.ribbon.RibbonElementPriority;
 import org.pushingpixels.flamingo.api.ribbon.RibbonTask;
 import org.pushingpixels.flamingo.api.ribbon.resize.CoreRibbonResizeSequencingPolicies;
 
-import plugins.kernel.roi.ROI2DAreaPlugin;
-import plugins.kernel.roi.ROI2DEllipsePlugin;
-import plugins.kernel.roi.ROI2DLinePlugin;
-import plugins.kernel.roi.ROI2DPointPlugin;
-import plugins.kernel.roi.ROI2DPolyLinePlugin;
-import plugins.kernel.roi.ROI2DPolygonPlugin;
-import plugins.kernel.roi.ROI2DRectanglePlugin;
+import plugins.kernel.roi.roi2d.plugin.ROI2DAreaPlugin;
+import plugins.kernel.roi.roi2d.plugin.ROI2DEllipsePlugin;
+import plugins.kernel.roi.roi2d.plugin.ROI2DLinePlugin;
+import plugins.kernel.roi.roi2d.plugin.ROI2DPointPlugin;
+import plugins.kernel.roi.roi2d.plugin.ROI2DPolyLinePlugin;
+import plugins.kernel.roi.roi2d.plugin.ROI2DPolygonPlugin;
+import plugins.kernel.roi.roi2d.plugin.ROI2DRectanglePlugin;
 
 public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 {

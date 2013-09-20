@@ -41,22 +41,22 @@ public class ROIUtil
      *        The sequence we want to get the intensity informations.
      * @param roi
      *        The ROI define the region where we want to compute intensity information.
-     * @param c
-     *        The C position where we want to compute intensity information.<br>
-     *        If set to -1 we use the ROI C information instead.
      * @param z
      *        The Z position where we want to compute intensity information.<br>
      *        If set to -1 we use the ROI Z information instead.
      * @param t
      *        The T position where we want to compute intensity information.<br>
      *        If set to -1 we use the ROI T information instead.
+     * @param c
+     *        The C position where we want to compute intensity information.<br>
+     *        If set to -1 we use the ROI C information instead.
      */
     public static IntensityInfo getIntensityInfo(Sequence sequence, ROI roi, int z, int t, int c)
     {
         try
         {
             final IntensityInfo result = new IntensityInfo();
-            final SequenceDataIterator it = new SequenceDataIterator(sequence, roi, false, -1, -1, c, z, t);
+            final SequenceDataIterator it = new SequenceDataIterator(sequence, roi, false, z, t, c);
 
             long numPixels = 0;
             double min = Double.MAX_VALUE;
@@ -102,6 +102,116 @@ public class ROIUtil
     }
 
     /**
+     * Returns the number of pixel contained in the ROI of specified sequence.
+     * 
+     * @param sequence
+     *        The sequence we want to get the number of pixel.
+     * @param roi
+     *        The ROI define the region where we want to compute the number of pixel.
+     * @param z
+     *        The Z position where we want to compute the number of pixel.<br>
+     *        If set to -1 we use the ROI Z information instead.
+     * @param t
+     *        The T position where we want to compute the number of pixel.<br>
+     *        If set to -1 we use the ROI T information instead.
+     * @param c
+     *        The C position where we want to compute the number of pixel.<br>
+     *        If set to -1 we use the ROI C information instead.
+     */
+    public static long getNumPixel(Sequence sequence, ROI roi, int z, int t, int c)
+    {
+        return DataIteratorUtil.count(new SequenceDataIterator(sequence, roi, false, z, t, c));
+    }
+
+    /**
+     * Returns the minimum pixel intensity contained in the ROI of specified sequence.
+     * 
+     * @param sequence
+     *        The sequence we want to get the min intensity information.
+     * @param roi
+     *        The ROI define the region where we want to compute min intensity.
+     * @param z
+     *        The Z position where we want to compute min intensity.<br>
+     *        If set to -1 we use the ROI Z information instead.
+     * @param t
+     *        The T position where we want to compute min intensity.<br>
+     *        If set to -1 we use the ROI T information instead.
+     * @param c
+     *        The C position where we want to compute min intensity.<br>
+     *        If set to -1 we use the ROI C information instead.
+     */
+    public static double getMinIntensity(Sequence sequence, ROI roi, int z, int t, int c)
+    {
+        return DataIteratorMath.min(new SequenceDataIterator(sequence, roi, false, z, t, c));
+    }
+
+    /**
+     * Returns the maximum pixel intensity contained in the ROI of specified sequence.
+     * 
+     * @param sequence
+     *        The sequence we want to get the max intensity information.
+     * @param roi
+     *        The ROI define the region where we want to compute max intensity.
+     * @param z
+     *        The Z position where we want to compute max intensity.<br>
+     *        If set to -1 we use the ROI Z information instead.
+     * @param t
+     *        The T position where we want to compute max intensity.<br>
+     *        If set to -1 we use the ROI T information instead.
+     * @param c
+     *        The C position where we want to compute max intensity.<br>
+     *        If set to -1 we use the ROI C information instead.
+     */
+    public static double getMaxIntensity(Sequence sequence, ROI roi, int z, int t, int c)
+    {
+        return DataIteratorMath.max(new SequenceDataIterator(sequence, roi, false, z, t, c));
+    }
+
+    /**
+     * Returns the mean pixel intensity contained in the ROI of specified sequence.
+     * 
+     * @param sequence
+     *        The sequence we want to get the mean intensity.
+     * @param roi
+     *        The ROI define the region where we want to compute mean intensity.
+     * @param z
+     *        The Z position where we want to compute mean intensity.<br>
+     *        If set to -1 we use the ROI Z information instead.
+     * @param t
+     *        The T position where we want to compute mean intensity.<br>
+     *        If set to -1 we use the ROI T information instead.
+     * @param c
+     *        The C position where we want to compute mean intensity.<br>
+     *        If set to -1 we use the ROI C information instead.
+     */
+    public static double getMeanIntensity(Sequence sequence, ROI roi, int z, int t, int c)
+    {
+        return DataIteratorMath.mean(new SequenceDataIterator(sequence, roi, false, z, t, c));
+    }
+
+    /**
+     * Returns the sum of all pixel intensity contained in the ROI of specified sequence.
+     * 
+     * @param sequence
+     *        The sequence we want to get the intensity sum.
+     * @param roi
+     *        The ROI define the region where we want to compute intensity sum.
+     * @param z
+     *        The Z position where we want to compute intensity sum.<br>
+     *        If set to -1 we use the ROI Z information instead.
+     * @param t
+     *        The T position where we want to compute intensity sum.<br>
+     *        If set to -1 we use the ROI T information instead.
+     * @param c
+     *        The C position where we want to compute intensity sum.<br>
+     *        If set to -1 we use the ROI C information instead.
+     */
+    public static double getSumIntensity(Sequence sequence, ROI roi, int z, int t, int c)
+    {
+        return DataIteratorMath.sum(new SequenceDataIterator(sequence, roi, false, z, t, c));
+    }
+
+    /**
      * Returns the min, max, mean intensity for the specified sequence region.
      * 
      * @param sequence
@@ -111,22 +221,6 @@ public class ROIUtil
      */
     public static IntensityInfo getIntensityInfo(Sequence sequence, ROI roi)
     {
-        if (roi instanceof ROI2D)
-        {
-            final ROI2D roi2d = (ROI2D) roi;
-            return getIntensityInfo(sequence, roi, roi2d.getZ(), roi2d.getT(), roi2d.getC());
-        }
-        if (roi instanceof ROI3D)
-        {
-            final ROI3D roi3d = (ROI3D) roi;
-            return getIntensityInfo(sequence, roi, -1, roi3d.getT(), roi3d.getC());
-        }
-        if (roi instanceof ROI4D)
-        {
-            final ROI4D roi4d = (ROI4D) roi;
-            return getIntensityInfo(sequence, roi, -1, -1, roi4d.getC());
-        }
-
         return getIntensityInfo(sequence, roi, -1, -1, -1);
     }
 
@@ -135,7 +229,7 @@ public class ROIUtil
      */
     public static long getNumPixel(Sequence sequence, ROI roi)
     {
-        return DataIteratorUtil.count(new SequenceDataIterator(sequence, roi));
+        return getNumPixel(sequence, roi, -1, -1, -1);
     }
 
     /**
@@ -143,7 +237,7 @@ public class ROIUtil
      */
     public static double getMinIntensity(Sequence sequence, ROI roi)
     {
-        return DataIteratorMath.min(new SequenceDataIterator(sequence, roi));
+        return getMinIntensity(sequence, roi, -1, -1, -1);
     }
 
     /**
@@ -151,7 +245,7 @@ public class ROIUtil
      */
     public static double getMaxIntensity(Sequence sequence, ROI roi)
     {
-        return DataIteratorMath.max(new SequenceDataIterator(sequence, roi));
+        return getMaxIntensity(sequence, roi, -1, -1, -1);
     }
 
     /**
@@ -159,7 +253,7 @@ public class ROIUtil
      */
     public static double getMeanIntensity(Sequence sequence, ROI roi)
     {
-        return DataIteratorMath.mean(new SequenceDataIterator(sequence, roi));
+        return getMeanIntensity(sequence, roi, -1, -1, -1);
     }
 
     /**
@@ -167,7 +261,7 @@ public class ROIUtil
      */
     public static double getSumIntensity(Sequence sequence, ROI roi)
     {
-        return DataIteratorMath.sum(new SequenceDataIterator(sequence, roi));
+        return getSumIntensity(sequence, roi, -1, -1, -1);
     }
 
     //

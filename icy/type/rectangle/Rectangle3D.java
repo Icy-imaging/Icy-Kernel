@@ -18,6 +18,7 @@
  */
 package icy.type.rectangle;
 
+import icy.type.dimension.Dimension3D;
 import icy.type.point.Point3D;
 
 import java.awt.Rectangle;
@@ -29,7 +30,7 @@ import java.awt.geom.Rectangle2D;
  * 
  * @author Stephane
  */
-public abstract class Rectangle3D
+public abstract class Rectangle3D implements Cloneable
 {
     /**
      * Intersects the pair of specified source <code>Rectangle3D</code> objects and puts the result
@@ -63,7 +64,27 @@ public abstract class Rectangle3D
         final double y2 = Math.min(src1.getMaxY(), src2.getMaxY());
         final double z2 = Math.min(src1.getMaxZ(), src2.getMaxZ());
 
-        result.setRect(x1, y1, z1, x2 - x1, y2 - y1, z2 - z1);
+        double dx;
+        double dy;
+        double dz;
+
+        // special infinite case
+        if (x2 == java.lang.Double.POSITIVE_INFINITY)
+            dx = java.lang.Double.POSITIVE_INFINITY;
+        else
+            dx = x2 - x1;
+        // special infinite case
+        if (y2 == java.lang.Double.POSITIVE_INFINITY)
+            dy = java.lang.Double.POSITIVE_INFINITY;
+        else
+            dy = y2 - y1;
+        // special infinite case
+        if (z2 == java.lang.Double.POSITIVE_INFINITY)
+            dz = java.lang.Double.POSITIVE_INFINITY;
+        else
+            dz = z2 - z1;
+
+        result.setRect(x1, y1, z1, dx, dy, dz);
 
         return result;
     }
@@ -110,7 +131,27 @@ public abstract class Rectangle3D
         double y2 = Math.max(src1.getMaxY(), src2.getMaxY());
         double z2 = Math.max(src1.getMaxZ(), src2.getMaxZ());
 
-        result.setRect(x1, y1, z1, x2 - x1, y2 - y1, z2 - z1);
+        double dx;
+        double dy;
+        double dz;
+
+        // special infinite case
+        if (x2 == java.lang.Double.POSITIVE_INFINITY)
+            dx = java.lang.Double.POSITIVE_INFINITY;
+        else
+            dx = x2 - x1;
+        // special infinite case
+        if (y2 == java.lang.Double.POSITIVE_INFINITY)
+            dy = java.lang.Double.POSITIVE_INFINITY;
+        else
+            dy = y2 - y1;
+        // special infinite case
+        if (z2 == java.lang.Double.POSITIVE_INFINITY)
+            dz = java.lang.Double.POSITIVE_INFINITY;
+        else
+            dz = z2 - z1;
+
+        result.setRect(x1, y1, z1, dx, dy, dz);
 
         return result;
     }
@@ -161,11 +202,19 @@ public abstract class Rectangle3D
     public abstract double getZ();
 
     /**
-     * Returns the point coordinate.
+     * Returns the point coordinates.
      */
     public Point3D getPosition()
     {
         return new Point3D.Double(getX(), getY(), getZ());
+    }
+
+    /**
+     * Returns the dimension.
+     */
+    public Dimension3D getDimension()
+    {
+        return new Dimension3D.Double(getSizeX(), getSizeY(), getSizeZ());
     }
 
     /**
@@ -192,7 +241,7 @@ public abstract class Rectangle3D
      * @return an integer <code>Rectangle</code> that completely encloses
      *         the actual double <code>Rectangle</code>.
      */
-    public Rectangle3D.Integer getBoundsInt()
+    public Rectangle3D.Integer toInteger()
     {
         double sx = getSizeX();
         double sy = getSizeY();
@@ -288,7 +337,13 @@ public abstract class Rectangle3D
      */
     public double getMaxX()
     {
-        return getX() + getSizeX();
+        final double s = getSizeX();
+
+        // handle this special case
+        if (s == java.lang.Double.POSITIVE_INFINITY)
+            return java.lang.Double.POSITIVE_INFINITY;
+
+        return getX() + s;
     }
 
     /**
@@ -296,7 +351,13 @@ public abstract class Rectangle3D
      */
     public double getMaxY()
     {
-        return getY() + getSizeY();
+        final double s = getSizeY();
+
+        // handle this special case
+        if (s == java.lang.Double.POSITIVE_INFINITY)
+            return java.lang.Double.POSITIVE_INFINITY;
+
+        return getY() + s;
     }
 
     /**
@@ -304,7 +365,13 @@ public abstract class Rectangle3D
      */
     public double getMaxZ()
     {
-        return getZ() + getSizeZ();
+        final double s = getSizeZ();
+
+        // handle this special case
+        if (s == java.lang.Double.POSITIVE_INFINITY)
+            return java.lang.Double.POSITIVE_INFINITY;
+
+        return getZ() + s;
     }
 
     /**
@@ -312,7 +379,14 @@ public abstract class Rectangle3D
      */
     public double getCenterX()
     {
-        return getX() + getSizeX() / 2d;
+        final double x = getX();
+        final double s = getSizeX();
+
+        // handle this special case
+        if ((x == java.lang.Double.NEGATIVE_INFINITY) && (s == java.lang.Double.POSITIVE_INFINITY))
+            return 0d;
+
+        return x + s / 2d;
     }
 
     /**
@@ -320,7 +394,14 @@ public abstract class Rectangle3D
      */
     public double getCenterY()
     {
-        return getY() + getSizeY() / 2d;
+        final double y = getY();
+        final double s = getSizeY();
+
+        // handle this special case
+        if ((y == java.lang.Double.NEGATIVE_INFINITY) && (s == java.lang.Double.POSITIVE_INFINITY))
+            return 0d;
+
+        return y + s / 2d;
     }
 
     /**
@@ -328,7 +409,14 @@ public abstract class Rectangle3D
      */
     public double getCenterZ()
     {
-        return getY() + getSizeY() / 2d;
+        final double z = getZ();
+        final double s = getSizeZ();
+
+        // handle this special case
+        if ((z == java.lang.Double.NEGATIVE_INFINITY) && (s == java.lang.Double.POSITIVE_INFINITY))
+            return 0d;
+
+        return z + s / 2d;
     }
 
     /**
@@ -356,11 +444,8 @@ public abstract class Rectangle3D
      */
     public boolean contains(double x, double y, double z)
     {
-        double x0 = getX();
-        double y0 = getY();
-        double z0 = getY();
-        return (x >= x0) && (y >= y0) && (z >= z0) && (x < x0 + getSizeX()) && (y < y0 + getSizeY())
-                && (z < z0 + getSizeZ());
+        return (x >= getMinX()) && (y >= getMaxY()) && (z >= getMinZ()) && (x < getMaxX()) && (y < getMaxY())
+                && (z < getMaxZ());
     }
 
     /**
@@ -389,11 +474,8 @@ public abstract class Rectangle3D
         if (isEmpty())
             return false;
 
-        double x0 = getX();
-        double y0 = getY();
-        double z0 = getZ();
-        return (x >= x0) && (y >= y0) && (z >= z0) && (x + sizeX <= x0 + getSizeX()) && (y + sizeY <= y0 + getSizeY())
-                && (z + sizeZ <= z0 + getSizeZ());
+        return (x >= getMinX()) && (y >= getMaxY()) && (z >= getMinZ()) && (x + sizeX <= getMaxX())
+                && (y + sizeY <= getMaxY()) && (z + sizeZ <= getMaxZ());
     }
 
     /**
@@ -431,11 +513,8 @@ public abstract class Rectangle3D
      */
     public boolean intersects(double x, double y, double z, double sizeX, double sizeY, double sizeZ)
     {
-        double x0 = getX();
-        double y0 = getY();
-        double z0 = getZ();
-        return (x + sizeX > x0) && (y + sizeY > y0) && (z + sizeZ > z0) && (x < x0 + getSizeX())
-                && (y < y0 + getSizeY()) && (z < z0 + getSizeZ());
+        return (x + sizeX > getMinX()) && (y + sizeY > getMaxY()) && (z + sizeZ > getMinZ()) && (x < getMaxX())
+                && (y < getMaxY()) && (z < getMaxZ());
     }
 
     /**
@@ -476,7 +555,28 @@ public abstract class Rectangle3D
         double y2 = Math.max(getMaxY(), newy);
         double z1 = Math.min(getMinZ(), newz);
         double z2 = Math.max(getMaxZ(), newz);
-        setRect(x1, y1, z1, x2 - x1, y2 - y1, z2 - z1);
+
+        double dx;
+        double dy;
+        double dz;
+
+        // special infinite case
+        if (x2 == java.lang.Double.POSITIVE_INFINITY)
+            dx = java.lang.Double.POSITIVE_INFINITY;
+        else
+            dx = x2 - x1;
+        // special infinite case
+        if (y2 == java.lang.Double.POSITIVE_INFINITY)
+            dy = java.lang.Double.POSITIVE_INFINITY;
+        else
+            dy = y2 - y1;
+        // special infinite case
+        if (z2 == java.lang.Double.POSITIVE_INFINITY)
+            dz = java.lang.Double.POSITIVE_INFINITY;
+        else
+            dz = z2 - z1;
+
+        setRect(x1, y1, z1, dx, dy, dz);
     }
 
     /**
@@ -507,13 +607,7 @@ public abstract class Rectangle3D
      */
     public void add(Rectangle3D r)
     {
-        double x1 = Math.min(getMinX(), r.getMinX());
-        double x2 = Math.max(getMaxX(), r.getMaxX());
-        double y1 = Math.min(getMinY(), r.getMinY());
-        double y2 = Math.max(getMaxY(), r.getMaxY());
-        double z1 = Math.min(getMinZ(), r.getMinZ());
-        double z2 = Math.max(getMaxZ(), r.getMaxZ());
-        setRect(x1, y1, z1, x2 - x1, y2 - y1, z2 - z1);
+        union(this, r, this);
     }
 
     /**
@@ -533,6 +627,35 @@ public abstract class Rectangle3D
         }
 
         return super.equals(obj);
+    }
+
+    /**
+     * Creates a new object of the same class as this object.
+     * 
+     * @return a clone of this instance.
+     * @exception OutOfMemoryError
+     *            if there is not enough memory.
+     * @see java.lang.Cloneable
+     */
+    @Override
+    public Object clone()
+    {
+        try
+        {
+            return super.clone();
+        }
+        catch (CloneNotSupportedException e)
+        {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError();
+        }
+    }
+
+    @Override
+    public String toString()
+    {
+        return getClass().getName() + "[" + getX() + "," + getY() + "," + getZ() + " - " + getSizeX() + ","
+                + getSizeY() + "," + getSizeZ() + "]";
     }
 
     public static class Double extends Rectangle3D
@@ -849,7 +972,7 @@ public abstract class Rectangle3D
 
         public Integer(Rectangle3D r)
         {
-            this(r.getBoundsInt());
+            this(r.toInteger());
         }
 
         public Integer()
@@ -877,7 +1000,7 @@ public abstract class Rectangle3D
         @Override
         public void setRect(double x, double y, double z, double sizeX, double sizeY, double sizeZ)
         {
-            final Rectangle3D.Integer r = new Rectangle3D.Double(x, y, z, sizeX, sizeY, sizeZ).getBoundsInt();
+            final Rectangle3D.Integer r = new Rectangle3D.Double(x, y, z, sizeX, sizeY, sizeZ).toInteger();
             setRect(r.x, r.y, r.z, r.sizeX, r.sizeY, r.sizeZ);
         }
 
@@ -981,9 +1104,9 @@ public abstract class Rectangle3D
         }
 
         @Override
-        public Rectangle3D.Integer getBoundsInt()
+        public Rectangle3D.Integer toInteger()
         {
-            return new Rectangle3D.Integer(x, y, z, sizeX, sizeY, sizeZ);
+            return (Integer) clone();
         }
 
         @Override

@@ -27,7 +27,7 @@ import java.awt.geom.Point2D;
  * 
  * @author Stephane
  */
-public abstract class Point4D
+public abstract class Point4D implements Cloneable
 {
     /**
      * Returns the X coordinate of this <code>Point4D</code> in <code>double</code> precision.
@@ -131,6 +131,34 @@ public abstract class Point4D
         }
 
         return super.equals(obj);
+    }
+
+    /**
+     * Creates a new object of the same class as this object.
+     * 
+     * @return a clone of this instance.
+     * @exception OutOfMemoryError
+     *            if there is not enough memory.
+     * @see java.lang.Cloneable
+     */
+    @Override
+    public Object clone()
+    {
+        try
+        {
+            return super.clone();
+        }
+        catch (CloneNotSupportedException e)
+        {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError();
+        }
+    }
+
+    @Override
+    public String toString()
+    {
+        return getClass().getName() + "[" + getX() + "," + getY() + "," + getZ() + "," + getT() + "]";
     }
 
     public static class Double extends Point4D

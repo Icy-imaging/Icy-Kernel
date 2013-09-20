@@ -20,7 +20,6 @@ package icy.roi;
 
 import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
-import icy.roi.roi2d.ROI2DArea;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.EventUtil;
@@ -38,6 +37,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.w3c.dom.Node;
+
+import plugins.kernel.roi.roi2d.ROI2DArea;
 
 public abstract class ROI2D extends ROI
 {
@@ -207,7 +208,7 @@ public abstract class ROI2D extends ROI
             }
 
             // set new position
-            setPosition(new Point2D.Double(startDragROIPosition.getX() + dx, startDragROIPosition.getY() + dy));
+            setPosition2D(new Point2D.Double(startDragROIPosition.getX() + dx, startDragROIPosition.getY() + dy));
 
             return true;
         }
@@ -659,6 +660,27 @@ public abstract class ROI2D extends ROI
         return contains(x, y, sizeX, sizeY) && zok && tok && cok;
     }
 
+    /*
+     * Generic implementation using the BooleanMask which is not accurate and slow.
+     * Override this for specific ROI type.
+     */
+    @Override
+    public boolean contains(ROI roi)
+    {
+        if (roi instanceof ROI2D)
+        {
+            final ROI2D roi2d = (ROI2D) roi;
+
+            if (isActiveFor(roi2d.getZ(), roi2d.getT(), roi2d.getC()))
+                return getBooleanMask(false).contains(roi2d.getBooleanMask(false));
+
+            return false;
+        }
+
+        // do it the other way
+        return roi.intersects(this);
+    }
+
     /**
      * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
      * <code>Rectangle2D</code>. The {@code ROI.intersects()} method allows a {@code ROI}
@@ -742,6 +764,27 @@ public abstract class ROI2D extends ROI
         return intersects(x, y, sizeX, sizeY) && zok && tok && cok;
     }
 
+    /*
+     * Generic implementation using the BooleanMask which is not accurate and slow.
+     * Override this for specific ROI type.
+     */
+    @Override
+    public boolean intersects(ROI roi)
+    {
+        if (roi instanceof ROI2D)
+        {
+            final ROI2D roi2d = (ROI2D) roi;
+
+            if (isActiveFor(roi2d.getZ(), roi2d.getT(), roi2d.getC()))
+                return getBooleanMask(true).intersects(roi2d.getBooleanMask(true));
+
+            return false;
+        }
+
+        // do it the other way
+        return roi.intersects(this);
+    }
+
     /**
      * Calculate and returns the 2D bounding box of the <code>ROI</code>.<br>
      * This method is used by {@link #getBounds2D()} which should try to cache the result as the
@@ -821,8 +864,7 @@ public abstract class ROI2D extends ROI
      */
     public Rectangle2D getBounds2D()
     {
-        final Rectangle5D bounds = getBounds5D();
-        return new Rectangle2D.Double(bounds.getX(), bounds.getY(), bounds.getSizeX(), bounds.getSizeY());
+        return getBounds5D().toRectangle2D();
     }
 
     /**
@@ -849,6 +891,125 @@ public abstract class ROI2D extends ROI
         final Rectangle2D r = getBounds2D();
         return new Point2D.Double(r.getX(), r.getY());
     }
+
+    @Override
+    public boolean canSetBounds()
+    {
+        // default
+        return false;
+    }
+
+    @Override
+    public boolean canSetPosition()
+    {
+        return canTranslate();
+    }
+
+    /**
+     * Set the <code>ROI</code> 2D bounds.<br>
+     * Note that not all ROI supports bounds modification and you should call
+     * {@link #canSetBounds()} first to test if the operation is supported.<br>
+     * 
+     * @param bounds
+     *        new ROI 2D bounds
+     */
+    public void setBounds2D(Rectangle2D bounds)
+    {
+        // do nothing by default (not supported)
+    }
+
+    @Override
+    public void setBounds5D(Rectangle5D bounds)
+    {
+        // infinite Z dim ?
+        if (bounds.getSizeZ() == Double.POSITIVE_INFINITY)
+            setZ(-1);
+        else
+            setZ((int) bounds.getZ());
+        // infinite T dim ?
+        if (bounds.getSizeT() == Double.POSITIVE_INFINITY)
+            setT(-1);
+        else
+            setT((int) bounds.getT());
+        // infinite C dim ?
+        if (bounds.getSizeC() == Double.POSITIVE_INFINITY)
+            setC(-1);
+        else
+            setC((int) bounds.getC());
+
+        setBounds2D(bounds.toRectangle2D());
+    }
+
+    /**
+     * @deprecated Use {@link #setPosition2D(Point2D)} instead.
+     */
+    @Deprecated
+    public void setPosition(Point2D position)
+    {
+        setPosition2D(position);
+    }
+
+    /**
+     * Set the <code>ROI</code> 2D position.<br>
+     * Note that not all ROI supports position modification and you should call
+     * {@link #canSetPosition()} first to test if the operation is supported.<br>
+     * 
+     * @param position
+     *        new ROI 2D position
+     */
+    public void setPosition2D(Point2D position)
+    {
+        // use translation operation by default if supported
+        if (canTranslate())
+        {
+            final Point2D oldPos = getPosition2D();
+            translate(position.getX() - oldPos.getX(), position.getY() - oldPos.getY());
+        }
+    }
+
+    @Override
+    public void setPosition5D(Point5D position)
+    {
+        // infinite Z dim ?
+        if (position.getZ() == Double.NEGATIVE_INFINITY)
+            setZ(-1);
+        else
+            setZ((int) position.getZ());
+        // infinite T dim ?
+        if (position.getT() == Double.NEGATIVE_INFINITY)
+            setT(-1);
+        else
+            setT((int) position.getT());
+        // infinite C dim ?
+        if (position.getC() == Double.NEGATIVE_INFINITY)
+            setC(-1);
+        else
+            setC((int) position.getC());
+
+        setPosition2D(position.toPoint2D());
+    }
+
+    /**
+     * Returns <code>true</code> if the ROI support translate operation.
+     * 
+     * @see #translate(double, double)
+     */
+    public boolean canTranslate()
+    {
+        // by default
+        return false;
+    }
+
+    /**
+     * Translate the ROI position by the specified delta X <code>dx</code> and Delta Y
+     * <code>dy</code>.<br>
+     * Note that not all ROI support this operation so you should test it by calling
+     * {@link #canTranslate()} first.
+     * 
+     * @see #canTranslate()
+     * @see #setPosition2D(Point2D)
+     */
+    public abstract void translate(double dx, double dy);
 
     @Override
     public boolean[] getBooleanMask2D(int x, int y, int width, int height, int z, int t, int c, boolean inclusive)
@@ -1022,23 +1183,6 @@ public abstract class ROI2D extends ROI
     public boolean[] getAsBooleanMask(int x, int y, int w, int h)
     {
         return getBooleanMask(x, y, w, h);
-    }
-
-    /**
-     * Translate the ROI position by the specified delta X <code>dx</code> and Delta Y
-     * <code>dy</code>
-     */
-    public abstract void translate(double dx, double dy);
-
-    /**
-     * Set the ROI position.<br>
-     * This is equivalent to :<br>
-     * <code>translate(newPosition - getPosition2D())</code>
-     */
-    public void setPosition(Point2D newPosition)
-    {
-        final Point2D oldPos = getPosition2D();
-        translate(newPosition.getX() - oldPos.getX(), newPosition.getY() - oldPos.getY());
     }
 
     /*

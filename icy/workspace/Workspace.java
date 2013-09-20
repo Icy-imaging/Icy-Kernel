@@ -36,6 +36,7 @@ import icy.workspace.Workspace.TaskDefinition.BandDefinition.ItemDefinition;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
 import org.pushingpixels.flamingo.api.ribbon.AbstractRibbonBand;
@@ -51,7 +52,7 @@ import org.w3c.dom.Node;
  */
 public class Workspace implements XMLPersistent, Comparable<Workspace>
 {
-    public static boolean contains(ArrayList<TaskDefinition> tasks, TaskDefinition task)
+    public static boolean contains(List<TaskDefinition> tasks, TaskDefinition task)
     {
         for (TaskDefinition t : tasks)
             if (task.getName().equals(t.getName()))
@@ -60,7 +61,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
         return false;
     }
 
-    public static boolean contains(ArrayList<BandDefinition> bands, BandDefinition band)
+    public static boolean contains(List<BandDefinition> bands, BandDefinition band)
     {
         for (BandDefinition b : bands)
             if (band.getName().equals(b.getName()))
@@ -69,7 +70,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
         return false;
     }
 
-    public static Workspace getWorkspace(ArrayList<Workspace> list, String name)
+    public static Workspace getWorkspace(List<Workspace> list, String name)
     {
         for (Workspace workspace : list)
             if (workspace.getName().equals(name))
@@ -78,7 +79,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
         return null;
     }
 
-    public static boolean addWorkspace(ArrayList<Workspace> list, Workspace workspace)
+    public static boolean addWorkspace(List<Workspace> list, Workspace workspace)
     {
         if (!list.contains(workspace))
         {
@@ -89,7 +90,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
         return false;
     }
 
-    public static boolean removeWorkspace(ArrayList<Workspace> list, String name)
+    public static boolean removeWorkspace(List<Workspace> list, String name)
     {
         return list.remove(getWorkspace(list, name));
     }

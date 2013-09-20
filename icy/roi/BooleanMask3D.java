@@ -520,6 +520,114 @@ public class BooleanMask3D implements Cloneable
     }
 
     /**
+     * Return true if mask contains the specified 2D mask at position Z.
+     */
+    public boolean contains(BooleanMask2D booleanMask, int z)
+    {
+        if (isEmpty())
+            return false;
+
+        final BooleanMask2D mask2d = getMask2D(z);
+
+        if (mask2d != null)
+            return mask2d.contains(booleanMask);
+
+        return false;
+    }
+
+    /**
+     * Return true if mask contains the specified 3D mask.
+     */
+    public boolean contains(BooleanMask3D booleanMask)
+    {
+        if (isEmpty())
+            return false;
+
+        final int sizeZ = booleanMask.bounds.sizeZ;
+
+        // check for special MAX_INTEGER case (infinite Z dim)
+        if (sizeZ == Integer.MAX_VALUE)
+        {
+            // we cannot contains it if we are not on infinite Z dim too
+            if (bounds.sizeZ != Integer.MAX_VALUE)
+                return false;
+
+            return booleanMask.mask.firstEntry().getValue().contains(mask.firstEntry().getValue());
+        }
+
+        final int offZ = booleanMask.bounds.z;
+
+        for (int z = offZ; z < offZ + sizeZ; z++)
+            if (!contains(booleanMask.getMask2D(z), z))
+                return false;
+
+        return true;
+    }
+
+    /**
+     * Return true if mask intersects (contains at least one point) the specified 2D mask at position Z.
+     */
+    public boolean intersects(BooleanMask2D booleanMask, int z)
+    {
+        if (isEmpty())
+            return false;
+
+        final BooleanMask2D mask2d = getMask2D(z);
+
+        if (mask2d != null)
+            return mask2d.intersects(booleanMask);
+
+        return false;
+    }
+
+    /**
+     * Return true if mask intersects (contains at least one point) the specified 3D mask region.
+     */
+    public boolean intersects(BooleanMask3D booleanMask)
+    {
+        if (isEmpty())
+            return false;
+
+        final int sizeZ = booleanMask.bounds.sizeZ;
+
+        // check for special MAX_INTEGER case (infinite Z dim)
+        if (sizeZ == Integer.MAX_VALUE)
+        {
+            // get the single Z slice
+            final BooleanMask2D mask2d = booleanMask.mask.firstEntry().getValue();
+
+            // test with every slice
+            for (BooleanMask2D m : mask.values())
+                if (m.intersects(mask2d))
+                    return true;
+
+            return false;
+        }
+
+        // check for special MAX_INTEGER case (infinite Z dim)
+        if (bounds.sizeZ == Integer.MAX_VALUE)
+        {
+            // get the single Z slice
+            final BooleanMask2D mask2d = mask.firstEntry().getValue();
+
+            // test with every slice
+            for (BooleanMask2D m : booleanMask.mask.values())
+                if (m.intersects(mask2d))
+                    return true;
+
+            return false;
+        }
+
+        final int offZ = booleanMask.bounds.z;
+
+        for (int z = offZ; z < offZ + sizeZ; z++)
+            if (intersects(booleanMask.getMask2D(z), z))
+                return true;
+
+        return false;
+    }
+
+    /**
      * Optimize mask bounds so it fits mask content.
      */
     public Rectangle3D.Integer getOptimizedBounds(boolean compute2DBounds)

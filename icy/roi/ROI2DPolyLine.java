@@ -26,16 +26,16 @@ import java.awt.geom.Point2D;
 import java.util.List;
 
 /**
- * @deprecated Use {@link icy.roi.roi2d.ROI2DPolyLine} instead.
+ * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DPolyLine} instead.
  */
 @Deprecated
-public class ROI2DPolyLine extends icy.roi.roi2d.ROI2DPolyLine
+public class ROI2DPolyLine extends plugins.kernel.roi.roi2d.ROI2DPolyLine
 {
     /**
-     * @deprecated Use {@link icy.roi.roi2d.ROI2DPolyLine.ROI2DPolyLineAnchor2D} instead.
+     * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DPolyLine.ROI2DPolyLineAnchor2D} instead.
      */
     @Deprecated
-    protected class ROI2DPolyLineAnchor2D extends icy.roi.roi2d.ROI2DPolyLine.ROI2DPolyLineAnchor2D
+    protected class ROI2DPolyLineAnchor2D extends plugins.kernel.roi.roi2d.ROI2DPolyLine.ROI2DPolyLineAnchor2D
     {
         public ROI2DPolyLineAnchor2D(Point2D position, Color color, Color selectedColor)
         {
@@ -44,10 +44,10 @@ public class ROI2DPolyLine extends icy.roi.roi2d.ROI2DPolyLine
     }
 
     /**
-     * @deprecated Use {@link icy.roi.roi2d.ROI2DPolyLine.ROI2DPolyLinePainter} instead.
+     * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DPolyLine.ROI2DPolyLinePainter} instead.
      */
     @Deprecated
-    protected class ROI2DPolyLinePainter extends icy.roi.roi2d.ROI2DPolyLine.ROI2DPolyLinePainter
+    protected class ROI2DPolyLinePainter extends plugins.kernel.roi.roi2d.ROI2DPolyLine.ROI2DPolyLinePainter
     {
 
     }

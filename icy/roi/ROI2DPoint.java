@@ -21,10 +21,10 @@ package icy.roi;
 import java.awt.geom.Point2D;
 
 /**
- * @deprecated Use {@link icy.roi.roi2d.ROI2DPoint} instead.
+ * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DPoint} instead.
  */
 @Deprecated
-public class ROI2DPoint extends icy.roi.roi2d.ROI2DPoint
+public class ROI2DPoint extends plugins.kernel.roi.roi2d.ROI2DPoint
 {
     /**
      * @deprecated

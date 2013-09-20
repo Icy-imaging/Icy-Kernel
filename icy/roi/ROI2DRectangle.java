@@ -22,10 +22,10 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 /**
- * @deprecated Use {@link icy.roi.roi2d.ROI2DRectangle} instead.
+ * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DRectangle} instead.
  */
 @Deprecated
-public class ROI2DRectangle extends icy.roi.roi2d.ROI2DRectangle
+public class ROI2DRectangle extends plugins.kernel.roi.roi2d.ROI2DRectangle
 {
     /**
      * @deprecated

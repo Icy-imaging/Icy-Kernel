@@ -23,15 +23,6 @@ import icy.image.IcyBufferedImage;
 import icy.math.ArrayMath;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
-import icy.roi.roi2d.ROI2DArea;
-import icy.roi.roi2d.ROI2DEllipse;
-import icy.roi.roi2d.ROI2DLine;
-import icy.roi.roi2d.ROI2DPath;
-import icy.roi.roi2d.ROI2DPoint;
-import icy.roi.roi2d.ROI2DPolyLine;
-import icy.roi.roi2d.ROI2DPolygon;
-import icy.roi.roi2d.ROI2DRectangle;
-import icy.roi.roi2d.ROI2DShape;
 import icy.sequence.Sequence;
 import icy.type.DataType;
 import icy.type.collection.array.Array2DUtil;
@@ -56,6 +47,16 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+
+import plugins.kernel.roi.roi2d.ROI2DArea;
+import plugins.kernel.roi.roi2d.ROI2DEllipse;
+import plugins.kernel.roi.roi2d.ROI2DLine;
+import plugins.kernel.roi.roi2d.ROI2DPath;
+import plugins.kernel.roi.roi2d.ROI2DPoint;
+import plugins.kernel.roi.roi2d.ROI2DPolyLine;
+import plugins.kernel.roi.roi2d.ROI2DPolygon;
+import plugins.kernel.roi.roi2d.ROI2DRectangle;
+import plugins.kernel.roi.roi2d.ROI2DShape;
 
 /**
  * ImageJ utilities class.
@@ -329,7 +330,7 @@ public class ImageJUtil
                 final ROI2DPath roiPath = new ROI2DPath(((ShapeRoi) roi).getShape());
                 final Rectangle2D.Double roiBounds = roi.getFloatBounds();
                 // we have to adjust position as Shape do not contains it
-                roiPath.setPosition(new Point2D.Double(roiBounds.x, roiBounds.y));
+                roiPath.setPosition2D(new Point2D.Double(roiBounds.x, roiBounds.y));
                 result.add(roiPath);
                 break;
 

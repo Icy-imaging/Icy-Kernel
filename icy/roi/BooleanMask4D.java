@@ -575,6 +575,148 @@ public class BooleanMask4D
     }
 
     /**
+     * Return true if mask contains the specified 2D mask at position Z, T.
+     */
+    public boolean contains(BooleanMask2D booleanMask, int z, int t)
+    {
+        if (isEmpty())
+            return false;
+
+        final BooleanMask2D mask2d = getMask2D(z, t);
+
+        if (mask2d != null)
+            return mask2d.contains(booleanMask);
+
+        return false;
+    }
+
+    /**
+     * Return true if mask contains the specified 3D mask at position t.
+     */
+    public boolean contains(BooleanMask3D booleanMask, int t)
+    {
+        if (isEmpty())
+            return false;
+
+        final BooleanMask3D mask3d = getMask3D(t);
+
+        if (mask3d != null)
+            return mask3d.contains(booleanMask);
+
+        return false;
+    }
+
+    /**
+     * Return true if mask contains the specified 4D mask.
+     */
+    public boolean contains(BooleanMask4D booleanMask)
+    {
+        if (isEmpty())
+            return false;
+
+        final int sizeT = booleanMask.bounds.sizeT;
+
+        // check for special MAX_INTEGER case (infinite T dim)
+        if (sizeT == Integer.MAX_VALUE)
+        {
+            // we cannot contains it if we are not on infinite T dim too
+            if (bounds.sizeT != Integer.MAX_VALUE)
+                return false;
+
+            return booleanMask.mask.firstEntry().getValue().contains(mask.firstEntry().getValue());
+        }
+
+        final int offT = booleanMask.bounds.t;
+
+        for (int t = offT; t < offT + sizeT; t++)
+            if (!contains(booleanMask.getMask3D(t), t))
+                return false;
+
+        return true;
+    }
+
+    /**
+     * Return true if mask intersects (contains at least one point) the specified 2D mask at
+     * position Z, T
+     */
+    public boolean intersects(BooleanMask2D booleanMask, int z, int t)
+    {
+        if (isEmpty())
+            return false;
+
+        final BooleanMask2D mask2d = getMask2D(z, t);
+
+        if (mask2d != null)
+            return mask2d.intersects(booleanMask);
+
+        return false;
+    }
+
+    /**
+     * Return true if mask intersects (contains at least one point) the specified 3D mask at
+     * position T
+     */
+    public boolean intersects(BooleanMask3D booleanMask, int t)
+    {
+        if (isEmpty())
+            return false;
+
+        final BooleanMask3D mask3d = getMask3D(t);
+
+        if (mask3d != null)
+            return mask3d.intersects(booleanMask);
+
+        return false;
+    }
+
+    /**
+     * Return true if mask intersects (contains at least one point) the specified 4D mask region
+     */
+    public boolean intersects(BooleanMask4D booleanMask)
+    {
+        if (isEmpty())
+            return false;
+
+        final int sizeT = booleanMask.bounds.sizeT;
+
+        // check for special MAX_INTEGER case (infinite T dim)
+        if (sizeT == Integer.MAX_VALUE)
+        {
+            // get the single T slice
+            final BooleanMask3D mask3d = booleanMask.mask.firstEntry().getValue();
+
+            // test with every slice
+            for (BooleanMask3D m : mask.values())
+                if (m.intersects(mask3d))
+                    return true;
+
+            return false;
+        }
+
+        // check for special MAX_INTEGER case (infinite T dim)
+        if (bounds.sizeT == Integer.MAX_VALUE)
+        {
+            // get the single T slice
+            final BooleanMask3D mask3d = mask.firstEntry().getValue();
+
+            // test with every slice
+            for (BooleanMask3D m : booleanMask.mask.values())
+                if (m.intersects(mask3d))
+                    return true;
+
+            return false;
+        }
+
+        final int offT = booleanMask.bounds.t;
+
+        for (int t = offT; t < offT + sizeT; t++)
+            if (intersects(booleanMask.getMask3D(t), t))
+                return true;
+
+        return false;
+    }
+
+    /**
      * Optimize mask bounds so it fits mask content.
      */
     public Rectangle4D.Integer getOptimizedBounds(boolean compute3DBounds)

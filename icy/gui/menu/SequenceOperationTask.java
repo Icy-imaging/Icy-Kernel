@@ -26,27 +26,15 @@ import icy.gui.menu.action.SequenceOperationActions;
 import icy.gui.menu.action.SequenceOperationActions.ExtractChannelAction;
 import icy.gui.menu.action.SequenceOperationActions.RemoveChannelAction;
 import icy.gui.util.ComponentUtil;
-import icy.gui.util.GuiUtil;
 import icy.gui.util.RibbonUtil;
-import icy.image.IcyBufferedImage;
-import icy.image.ImageDataIterator;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
-import icy.roi.ROI;
 import icy.sequence.Sequence;
-import icy.sequence.SequenceDataIterator;
-import icy.system.thread.ThreadUtil;
-import icy.type.DataIteratorUtil;
 import icy.type.DataType;
 import icy.util.StringUtil;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.BorderFactory;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 
 import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
 import org.pushingpixels.flamingo.api.common.JCommandButton;
@@ -603,7 +591,7 @@ public class SequenceOperationTask extends RibbonTask
         public static final String NAME = "Fill operation";
 
         final JTextField fillValueField;
-        final IcyButton fillImage;
+        // final IcyButton fillImage;
         final IcyButton fillSequence;
 
         public ModifyRibbonBand()
@@ -617,82 +605,27 @@ public class SequenceOperationTask extends RibbonTask
             fillValueField.setToolTipText("Value used for filling");
             fillValueField.setText("0");
 
-            fillImage = new IcyButton("Image", new IcyIcon("brush", 16));
-            fillImage.setFlat(true);
-            fillImage.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
-            ComponentUtil.setFixedWidth(fillImage, 90);
-            fillImage.setHorizontalAlignment(SwingConstants.LEADING);
-            fillImage.setToolTipText("Fill the content of selected ROI with specified value on current image.");
-            fillImage.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    final Sequence sequence = Icy.getMainInterface().getActiveSequence();
-                    final IcyBufferedImage image = Icy.getMainInterface().getActiveImage();
-
-                    if ((sequence != null) && (image != null))
-                    {
-                        ThreadUtil.bgRun(new Runnable()
-                        {
-                            @Override
-                            public void run()
-                            {
-                                final double value = getFillValue(sequence);
-
-                                for (ROI roi : sequence.getSelectedROIs())
-                                    DataIteratorUtil.set(new ImageDataIterator(image, roi), value);
-
-                                image.dataChanged();
-                            }
-                        });
-                    }
-                }
-            });
-
-            fillSequence = new IcyButton("Sequence", new IcyIcon("brush", 16));
+            fillSequence = new IcyButton(SequenceOperationActions.fillSequenceAction);
             fillSequence.setFlat(true);
-            fillSequence.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
-            ComponentUtil.setFixedWidth(fillSequence, 90);
-            fillSequence.setHorizontalAlignment(SwingConstants.LEADING);
-            fillSequence.setToolTipText("Fill the content of selected ROI with specified value on whole sequence.");
-            fillSequence.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
-                    if (sequence != null)
-                    {
-                        ThreadUtil.bgRun(new Runnable()
-                        {
-                            @Override
-                            public void run()
-                            {
-                                final double value = getFillValue(sequence);
+            JRibbonComponent comp;
 
-                                for (ROI roi : sequence.getSelectedROIs())
-                                    DataIteratorUtil.set(new SequenceDataIterator(sequence, roi), value);
-
-                                sequence.dataChanged();
-                            }
-                        });
-                    }
-                }
-            });
-
-            addRibbonComponent(new JRibbonComponent(fillImage));
-            addRibbonComponent(new JRibbonComponent(fillSequence));
-            addRibbonComponent(new JRibbonComponent(GuiUtil.createLineBoxPanel(fillValueField)));
+            comp = new JRibbonComponent(fillSequence);
+            comp.setResizingAware(true);
+            addRibbonComponent(comp);
+            comp = new JRibbonComponent(fillValueField);
+            comp.setResizingAware(true);
+            addRibbonComponent(comp);
 
             RibbonUtil.setRestrictiveResizePolicies(this);
             updateButtonsState();
         }
 
-        double getFillValue(Sequence sequence)
+        public double getFillValue()
         {
             double value = StringUtil.parseDouble(fillValueField.getText(), 0);
+
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if ((sequence != null) && (!sequence.isFloatDataType()))
             {
@@ -717,7 +650,6 @@ public class SequenceOperationTask extends RibbonTask
             final boolean enabled = (seq != null) && !seq.isEmpty();
 
             fillValueField.setEnabled(enabled);
-            fillImage.setEnabled(enabled);
             fillSequence.setEnabled(enabled);
         }
     }
@@ -746,6 +678,11 @@ public class SequenceOperationTask extends RibbonTask
         stackConversionBand = (ZTConversionBand) getBand(5);
         colorConvertBand = (RenderingBand) getBand(6);
         modifyBand = (ModifyRibbonBand) getBand(7);
+    }
+
+    public double getFillValue()
+    {
+        return modifyBand.getFillValue();
     }
 
     /**

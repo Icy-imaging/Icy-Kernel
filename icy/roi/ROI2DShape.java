@@ -30,10 +30,10 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @deprecated Use {@link icy.roi.roi2d.ROI2DShape} instead.
+ * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DShape} instead.
  */
 @Deprecated
-public abstract class ROI2DShape extends icy.roi.roi2d.ROI2DShape
+public abstract class ROI2DShape extends plugins.kernel.roi.roi2d.ROI2DShape
 {
     /**
      * @deprecated Use {@link ROIUtil#merge(List, BooleanOperator)} instead.
@@ -99,10 +99,10 @@ public abstract class ROI2DShape extends icy.roi.roi2d.ROI2DShape
     }
 
     /**
-     * @deprecated Use {@link icy.roi.roi2d.ROI2DShape.ROI2DShapePainter} instead.
+     * @deprecated Use {@link plugins.kernel.roi.roi2d.ROI2DShape.ROI2DShapePainter} instead.
      */
     @Deprecated
-    protected class ROI2DShapePainter extends icy.roi.roi2d.ROI2DShape.ROI2DShapePainter
+    protected class ROI2DShapePainter extends plugins.kernel.roi.roi2d.ROI2DShape.ROI2DShapePainter
     {
         public ROI2DShapePainter()
         {

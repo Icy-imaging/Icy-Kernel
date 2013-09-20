@@ -625,6 +625,181 @@ public class BooleanMask5D
     }
 
     /**
+     * Return true if mask contains the specified 2D mask at position Z, T, C
+     */
+    public boolean contains(BooleanMask2D booleanMask, int z, int t, int c)
+    {
+        if (isEmpty())
+            return false;
+
+        final BooleanMask2D mask2d = getMask2D(z, t, c);
+
+        if (mask2d != null)
+            return mask2d.contains(booleanMask);
+
+        return false;
+    }
+
+    /**
+     * Return true if mask contains the specified 3D mask at position T, C
+     */
+    public boolean contains(BooleanMask3D booleanMask, int t, int c)
+    {
+        if (isEmpty())
+            return false;
+
+        final BooleanMask3D mask3d = getMask3D(t, c);
+
+        if (mask3d != null)
+            return mask3d.contains(booleanMask);
+
+        return false;
+    }
+
+    /**
+     * Return true if mask contains the specified 4D mask at position C
+     */
+    public boolean contains(BooleanMask4D booleanMask, int c)
+    {
+        if (isEmpty())
+            return false;
+
+        final BooleanMask4D mask4d = getMask4D(c);
+
+        if (mask4d != null)
+            return mask4d.contains(booleanMask);
+
+        return false;
+    }
+
+    /**
+     * Return true if mask contains the specified 5D mask.
+     */
+    public boolean contains(BooleanMask5D booleanMask)
+    {
+        if (isEmpty())
+            return false;
+
+        final int sizeC = booleanMask.bounds.sizeC;
+
+        // check for special MAX_INTEGER case (infinite C dim)
+        if (sizeC == Integer.MAX_VALUE)
+        {
+            // we cannot contains it if we are not on infinite C dim too
+            if (bounds.sizeC != Integer.MAX_VALUE)
+                return false;
+
+            return booleanMask.mask.firstEntry().getValue().contains(mask.firstEntry().getValue());
+        }
+
+        final int offC = booleanMask.bounds.c;
+
+        for (int c = offC; c < offC + sizeC; c++)
+            if (!contains(booleanMask.getMask4D(c), c))
+                return false;
+
+        return true;
+    }
+
+    /**
+     * Return true if mask intersects (contains at least one point) the specified 2D mask at
+     * position Z, T, C
+     */
+    public boolean intersects(BooleanMask2D booleanMask, int z, int t, int c)
+    {
+        if (isEmpty())
+            return false;
+
+        final BooleanMask2D mask2d = getMask2D(z, t, c);
+
+        if (mask2d != null)
+            return mask2d.intersects(booleanMask);
+
+        return false;
+    }
+
+    /**
+     * Return true if mask intersects (contains at least one point) the specified 3D mask at
+     * position T, C
+     */
+    public boolean intersects(BooleanMask3D booleanMask, int t, int c)
+    {
+        if (isEmpty())
+            return false;
+
+        final BooleanMask3D mask3d = getMask3D(t, c);
+
+        if (mask3d != null)
+            return mask3d.intersects(booleanMask);
+
+        return false;
+    }
+
+    /**
+     * Return true if mask intersects (contains at least one point) the specified 4D mask at
+     * position C
+     */
+    public boolean intersects(BooleanMask4D booleanMask, int c)
+    {
+        if (isEmpty())
+            return false;
+
+        final BooleanMask4D mask4d = getMask4D(c);
+
+        if (mask4d != null)
+            return mask4d.intersects(booleanMask);
+
+        return false;
+    }
+
+    /**
+     * Return true if mask intersects (contains at least one point) the specified 5D mask region
+     */
+    public boolean intersects(BooleanMask5D booleanMask)
+    {
+        if (isEmpty())
+            return false;
+
+        final int sizeC = booleanMask.bounds.sizeC;
+
+        // check for special MAX_INTEGER case (infinite C dim)
+        if (sizeC == Integer.MAX_VALUE)
+        {
+            // get the single T slice
+            final BooleanMask4D mask4d = booleanMask.mask.firstEntry().getValue();
+
+            // test with every slice
+            for (BooleanMask4D m : mask.values())
+                if (m.intersects(mask4d))
+                    return true;
+
+            return false;
+        }
+
+        // check for special MAX_INTEGER case (infinite C dim)
+        if (bounds.sizeC == Integer.MAX_VALUE)
+        {
+            // get the single T slice
+            final BooleanMask4D mask4d = mask.firstEntry().getValue();
+
+            // test with every slice
+            for (BooleanMask4D m : booleanMask.mask.values())
+                if (m.intersects(mask4d))
+                    return true;
+
+            return false;
+        }
+
+        final int offC = booleanMask.bounds.c;
+
+        for (int c = offC; c < offC + sizeC; c++)
+            if (intersects(booleanMask.getMask4D(c), c))
+                return true;
+
+        return false;
+    }
+
+    /**
      * Optimize mask bounds so it fits mask content.
      */
     public Rectangle5D.Integer getOptimizedBounds(boolean compute4DBounds)

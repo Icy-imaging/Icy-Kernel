@@ -20,14 +20,9 @@ package icy.image;
 
 import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
-import icy.roi.ROI2D;
-import icy.roi.ROI3D;
-import icy.roi.ROI4D;
-import icy.roi.ROI5D;
 import icy.type.DataIterator;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
-import icy.type.rectangle.Rectangle5D;
 
 import java.awt.Rectangle;
 import java.util.NoSuchElementException;
@@ -46,83 +41,79 @@ public class ImageDataIterator implements DataIterator
 {
     protected final IcyBufferedImage image;
     protected final DataType dataType;
-    protected final ROI roi;
 
     protected int startX, endX;
     protected int startY, endY;
-    protected int startC, endC;
+
+    protected final int fixedC, fixedZ, fixedT;
+    protected final boolean inclusive;
 
     /**
      * internals
      */
     protected BooleanMask2D maskXY;
-    protected int x, y, c;
+    protected int x, y;
     protected boolean done;
     protected Object data;
 
     /**
-     * Create a new ImageData iterator to iterate data through the specified dimensions (inclusive).
+     * Create a new ImageData iterator to iterate data through the specified XY region and channel.
      * 
      * @param image
      *        Image we want to iterate data from
-     * @param startX
-     *        start X position
-     * @param endX
-     *        end X position
-     * @param startY
-     *        start Y position
-     * @param endY
-     *        end Y position
-     * @param startC
-     *        start C position
-     * @param endC
-     *        end C position
+     * @param XYBounds
+     *        XY region to iterate (inclusive).
+     * @param channel
+     *        channel (C position) we want to iterate data
      */
-    public ImageDataIterator(IcyBufferedImage image, int startX, int endX, int startY, int endY, int startC, int endC)
+    public ImageDataIterator(IcyBufferedImage image, Rectangle XYBounds, int channel)
     {
         super();
 
         this.image = image;
-        this.roi = null;
-        this.maskXY = null;
+        maskXY = null;
+        fixedZ = 0;
+        fixedT = 0;
+        inclusive = false;
 
         if (image != null)
         {
             dataType = image.getDataType_();
 
-            this.startX = Math.max(startX, 0);
-            this.endX = Math.min(endX, image.getSizeX() - 1);
-            this.startY = Math.max(startY, 0);
-            this.endY = Math.min(endY, image.getSizeY() - 1);
-            this.startC = Math.max(startC, 0);
-            this.endC = Math.min(endC, image.getSizeC() - 1);
+            final Rectangle bounds = XYBounds.intersection(image.getBounds());
+
+            startX = bounds.x;
+            endX = (bounds.x + bounds.width) - 1;
+            startY = bounds.y;
+            endY = (bounds.y + bounds.height) - 1;
+            fixedC = channel;
         }
         else
+        {
             dataType = DataType.UNDEFINED;
+            fixedC = 0;
+        }
 
         // start iterator
         reset();
     }
 
     /**
-     * Create a new ImageData iterator to iterate data through the specified dimensions (inclusive).
-     * 
-     * @param image
-     *        Image we want to iterate data from
-     * @param startX
-     *        start X position
-     * @param endX
-     *        end X position
-     * @param startY
-     *        start Y position
-     * @param endY
-     *        end Y position
-     * @param c
-     *        C position (channel) we want to iterate data
+     * @deprecated Use {@link #ImageDataIterator(IcyBufferedImage, Rectangle, int)} instead.
      */
+    @Deprecated
+    public ImageDataIterator(IcyBufferedImage image, int startX, int endX, int startY, int endY, int startC, int endC)
+    {
+        this(image, new Rectangle(startX, startY, (endX - startX) + 1, (endY - startY) + 1), startC);
+    }
+
+    /**
+     * @deprecated Use {@link #ImageDataIterator(IcyBufferedImage, Rectangle, int)} instead.
+     */
+    @Deprecated
     public ImageDataIterator(IcyBufferedImage image, int startX, int endX, int startY, int endY, int c)
     {
-        this(image, startX, endX, startY, endY, c, c);
+        this(image, new Rectangle(startX, startY, (endX - startX) + 1, (endY - startY) + 1), c);
     }
 
     /**
@@ -135,18 +126,17 @@ public class ImageDataIterator implements DataIterator
      */
     public ImageDataIterator(IcyBufferedImage image, int c)
     {
-        this(image, 0, image.getSizeX() - 1, 0, image.getSizeY() - 1, c, c);
+        this(image, image.getBounds(), c);
     }
 
     /**
-     * Create a new ImageData iterator to iterate all data.
-     * 
-     * @param image
-     *        Image we want to iterate data from
+     * @deprecated Use {@link #ImageDataIterator(IcyBufferedImage, int)} instead.<br>
+     *             The <code>ImageDataIterator</code> iterate only on single channel data.
      */
+    @Deprecated
     public ImageDataIterator(IcyBufferedImage image)
     {
-        this(image, 0, image.getSizeX() - 1, 0, image.getSizeY() - 1, 0, image.getSizeC() - 1);
+        this(image, image.getBounds(), 0);
     }
 
     /**
@@ -157,18 +147,18 @@ public class ImageDataIterator implements DataIterator
      *        Image we want to iterate data from
      * @param maskXY
      *        BooleanMask2D defining the XY region to iterate
-     * @param startC
-     *        start C position
-     * @param endC
-     *        end C position
+     * @param channel
+     *        channel (C position) we want to iterate data
      */
-    public ImageDataIterator(IcyBufferedImage image, BooleanMask2D maskXY, int startC, int endC)
+    public ImageDataIterator(IcyBufferedImage image, BooleanMask2D maskXY, int channel)
     {
         super();
 
         this.image = image;
-        this.roi = null;
         this.maskXY = maskXY;
+        fixedZ = 0;
+        fixedT = 0;
+        inclusive = false;
 
         if (image != null)
         {
@@ -177,166 +167,60 @@ public class ImageDataIterator implements DataIterator
             final Rectangle bounds = maskXY.bounds.intersection(image.getBounds());
 
             startX = bounds.x;
-            endX = bounds.x + (bounds.width - 1);
+            endX = (bounds.x + bounds.width) - 1;
             startY = bounds.y;
-            endY = bounds.y + (bounds.height - 1);
-
-            this.startC = Math.max(startC, 0);
-            this.endC = Math.min(endC, image.getSizeC() - 1);
+            endY = (bounds.y + bounds.height) - 1;
+            fixedC = channel;
         }
         else
+        {
             dataType = DataType.UNDEFINED;
+            fixedC = 0;
+        }
 
         // start iterator
         reset();
     }
 
     /**
-     * Create a new ImageData iterator to iterate data through the specified
-     * <code>BooleanMask2D</code> and channel.
-     * 
-     * @param image
-     *        Image we want to iterate data from
-     * @param maskXY
-     *        BooleanMask2D defining the XY region to iterate
-     * @param c
-     *        C position (channel) we want to iterate data
+     * @deprecated Use {@link #ImageDataIterator(IcyBufferedImage, BooleanMask2D, int)} instead
      */
-    public ImageDataIterator(IcyBufferedImage image, BooleanMask2D maskXY, int c)
-    {
-        this(image, maskXY, c, c);
-    }
-
-    /**
-     * Create a new ImageData iterator to iterate data through the specified
-     * <code>BooleanMask2D</code> and channel.
-     * 
-     * @param image
-     *        Image we want to iterate data from
-     * @param maskXY
-     *        BooleanMask2D defining the XY region to iterate
-     */
+    @Deprecated
     public ImageDataIterator(IcyBufferedImage image, BooleanMask2D maskXY)
     {
-        this(image, maskXY, 0, image.getSizeC() - 1);
+        this(image, maskXY, 0);
     }
 
     /**
-     * Create a new ImageData iterator to iterate data through the specified ROI.
-     * 
-     * @param image
-     *        Image we want to iterate data from
-     * @param roi
-     *        ROI defining the region to iterate
+     * @deprecated Use {@link #ImageDataIterator(IcyBufferedImage, BooleanMask2D, int)} instead.
+     *             You can use the {@link ROI#getBooleanMask2D(int, int, int, boolean)} method to
+     *             retrieve the boolean mask from the ROI.
      */
+    @Deprecated
     public ImageDataIterator(IcyBufferedImage image, ROI roi)
     {
-        super();
-
-        this.image = image;
-        this.roi = roi;
-        maskXY = null;
-
-        final Rectangle5D.Integer bounds = new Rectangle5D.Integer();
-
-        if (image != null)
-        {
-            dataType = image.getDataType_();
-
-            
-            --> use ROI.bounds5D
-            
-            if (roi instanceof ROI5D)
-            {
-                // not yet supported
-                startX = startY = startC = 0;
-                endX = endY = endC = -1;
-            }
-            else if (roi instanceof ROI4D)
-            {
-
-            }
-            else if (roi instanceof ROI3D)
-            {
-
-            }
-            else if (roi instanceof ROI2D)
-            {
-                final ROI2D roi2d = (ROI2D) roi;
-
-                maskXY = roi2d.getBooleanMask();
-
-                final Rectangle bounds = maskXY.bounds.intersection(image.getBounds());
-
-                startX = maskXY.bounds.x;
-                endX = startX + (maskXY.bounds.width - 1);
-                startY = maskXY.bounds.y;
-                endY = startY + (maskXY.bounds.height - 1);
-
-                final int roiC = roi2d.getC();
-
-                if (roiC == -1)
-                {
-                    startC = 0;
-                    endC = image.getSizeC() - 1;
-                }
-                else
-                {
-                    if ((roiC < 0) || (roiC >= image.getSizeC()))
-                    {
-                        startC = 0;
-                        endC = -1;
-                    }
-                    else
-                    {
-                        startC = roiC;
-                        endC = roiC;
-                    }
-                }
-            }
-
-            // intersect with image size
-            final Rectangle bounds = maskXY.bounds.intersection(image.getBounds());
-
-        }
-        else
-            dataType = DataType.UNDEFINED;
-
-        // start iterator
-        reset();
+        this(image, roi.getBooleanMask2D(0, 0, 0, false));
     }
 
     @Override
     public void reset()
     {
-        done = (image == null) || (startC > endC) || (startY > endY) || (startX > endX);
+        done = (image == null) || (fixedC < 0) || (fixedC >= image.getSizeC()) || (startY > endY) || (startX > endX);
 
         if (!done)
         {
-            c = startC;
+            // get data
+            data = image.getDataXY(fixedC);
+
+            // and set start XY position
             y = startY;
             x = startX - 1;
-
-            // prepare XY data
-            prepareDataXY();
-            // set start position
+            // allow to correctly set the XY position with boolean mask
             next();
         }
     }
 
-    /**
-     * Prepare data for XY iteration.
-     */
-    protected void prepareDataXY()
-    {
-        // if (roi instanceof ROI3D) {
-        //
-        // }
-
-        data = image.getDataXY(c);
-    }
-
-    private boolean maskContains()
+    protected boolean maskContains()
     {
         return maskXY.mask[(x - maskXY.bounds.x) + ((y - maskXY.bounds.y) * maskXY.bounds.width)];
     }
@@ -344,15 +228,14 @@ public class ImageDataIterator implements DataIterator
     @Override
     public void next()
     {
+        internalNext();
+
+        // advance while ROI do not contains current point
         if (maskXY != null)
         {
-            // advance while ROI do not contains current point
-            internalNext();
-            while (!maskContains() && !done)
+            while (!done && !maskContains())
                 internalNext();
         }
-        else
-            internalNext();
     }
 
     /**
@@ -365,14 +248,7 @@ public class ImageDataIterator implements DataIterator
             x = startX;
 
             if (++y > endY)
-            {
-                y = startY;
-
-                if (++c > endC)
-                    done = true;
-                else
-                    prepareDataXY();
-            }
+                done = true;
         }
     }
 
@@ -417,10 +293,11 @@ public class ImageDataIterator implements DataIterator
     }
 
     /**
-     * Return current C position.
+     * @deprecated fixed C position, not useful
      */
+    @Deprecated
     public int getPositionC()
     {
-        return c;
+        return fixedC;
     }
 }

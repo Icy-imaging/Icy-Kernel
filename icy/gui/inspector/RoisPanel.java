@@ -31,15 +31,13 @@ import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -70,82 +68,35 @@ public class RoisPanel extends JPanel implements ActiveSequenceListener, TextCha
     final ListSelectionModel tableSelectionModel;
     final JTable table;
 
-    final JComboBox roiType;
     final IcyTextField nameFilter;
-    private final JPanel filtersPanel;
 
     final RoiControlPanel roiControlPanel;
 
     // internals
-    boolean isSelectionAdjusting;
-    boolean isRoiTypeAdjusting;
-
+    final Semaphore modifySelection;
+    // complete refresh of the table
     final Runnable tableDataRefresher;
-    final Runnable roiTypeListRefresher;
-    final Runnable controlPanelRefresher;
 
     public RoisPanel(boolean showFilters, boolean showControl)
     {
         super();
 
         rois = new ArrayList<ROI>();
-        isSelectionAdjusting = false;
-        isRoiTypeAdjusting = false;
+        modifySelection = new Semaphore(1);
 
         tableDataRefresher = new Runnable()
         {
             @Override
             public void run()
             {
-                refreshTableData();
+                refreshTableDataInternal();
             }
         };
-        roiTypeListRefresher = new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                refreshRoiTypeList();
-            }
-        };
-        controlPanelRefresher = new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                roiControlPanel.refresh();
-            }
-        };
-
-        roiType = new JComboBox(new DefaultComboBoxModel());
-        roiType.setToolTipText("Select ROI type to display");
-        roiType.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (isRoiTypeAdjusting)
-                    return;
-
-                if (roiType.getSelectedItem() != null)
-                {
-                    refreshRois();
-                }
-            }
-        });
 
         // need filter before load()
         nameFilter = new IcyTextField();
         nameFilter.setToolTipText("Enter a string sequence to filter ROI on name");
         nameFilter.addTextChangeListener(this);
-
-        filtersPanel = new JPanel();
-        filtersPanel.setLayout(new BoxLayout(filtersPanel, BoxLayout.LINE_AXIS));
-        filtersPanel.setVisible(showFilters);
-
-        filtersPanel.add(roiType);
-        filtersPanel.add(Box.createHorizontalStrut(4));
-        filtersPanel.add(nameFilter);
 
         // build control panel
         roiControlPanel = new RoiControlPanel(this);
@@ -240,7 +191,7 @@ public class RoisPanel extends JPanel implements ActiveSequenceListener, TextCha
 
         if (showFilters)
         {
-            topPanel.add(filtersPanel);
+            topPanel.add(nameFilter);
             topPanel.add(Box.createVerticalStrut(4));
         }
 
@@ -261,17 +212,12 @@ public class RoisPanel extends JPanel implements ActiveSequenceListener, TextCha
 
         validate();
 
-        refreshRoiTypeList();
+        refreshRois();
     }
 
     private Sequence getSequence()
     {
         return Icy.getMainInterface().getActiveSequence();
-    }
-
-    public void setTypeFilter(String type)
-    {
-        roiType.setSelectedItem(type);
     }
 
     public void setNameFilter(String name)
@@ -287,12 +233,39 @@ public class RoisPanel extends JPanel implements ActiveSequenceListener, TextCha
         final Sequence sequence = getSequence();
 
         if (sequence != null)
-            rois = filterList(sequence.getROIs(), nameFilter.getText());
-        else
-            rois.clear();
+        {
+            final List<ROI> newRois = filterList(sequence.getROIs(), nameFilter.getText());
 
-        // refresh table data
-        ThreadUtil.bgRunSingle(tableDataRefresher, true);
+            final int newSize = newRois.size();
+            final int oldSize = rois.size();
+
+            // easy optimization
+            if ((newSize == 0) && (oldSize == 0))
+                return;
+
+            // same size
+            if (newSize == oldSize)
+            {
+                // same values, don't need to update it
+                if (new HashSet<ROI>(newRois).containsAll(rois))
+                    return;
+            }
+
+            // update ROI list
+            rois = newRois;
+        }
+        else
+        {
+            // no change --> exit
+            if (rois.isEmpty())
+                return;
+
+            // clear ROI list
+            rois.clear();
+        }
+
+        // refresh whole table
+        refreshTableData();
     }
 
     /**
@@ -331,24 +304,6 @@ public class RoisPanel extends JPanel implements ActiveSequenceListener, TextCha
         }
     }
 
-    /**
-     * Return list of different ROI type (ROI class name) from the specified ROI list
-     */
-    private List<String> getRoiTypes(List<ROI> rois)
-    {
-        final List<String> result = new ArrayList<String>();
-
-        for (ROI roi : rois)
-        {
-            final String type = roi.getSimpleClassName();
-
-            if (!result.contains(type))
-                result.add(type);
-        }
-
-        return result;
-    }
-
     // public ROI getFirstSelectedRoi()
     // {
     // int index = table.getSelectedRow();
@@ -372,6 +327,12 @@ public class RoisPanel extends JPanel implements ActiveSequenceListener, TextCha
     // }
 
     public List<ROI> getSelectedRois()
+    {
+        // selected ROI are stored in the control panel
+        return roiControlPanel.getSelectedROI();
+    }
+
+    protected List<ROI> getInternalSelectedRois()
     {
         final List<ROI> result = new ArrayList<ROI>();
 
@@ -398,152 +359,100 @@ public class RoisPanel extends JPanel implements ActiveSequenceListener, TextCha
         return result;
     }
 
-    void setSelectedRoisInternal(List<ROI> newSelected)
+    protected void setSelectedRoisInternal(List<ROI> newSelected)
     {
-        isSelectionAdjusting = true;
+        tableSelectionModel.setValueIsAdjusting(true);
+        modifySelection.acquireUninterruptibly();
         try
         {
-            table.clearSelection();
+            tableSelectionModel.clearSelection();
 
-            if (newSelected != null)
+            for (ROI roi : newSelected)
             {
-                for (ROI roi : newSelected)
-                {
-                    final int index = getRoiTableIndex(roi);
-                    // final int index = getRoiModelIndex(roi);
+                final int index = getRoiTableIndex(roi);
+                // final int index = getRoiModelIndex(roi);
 
-                    if (index > -1)
-                        tableSelectionModel.addSelectionInterval(index, index);
-                }
+                if (index > -1)
+                    tableSelectionModel.addSelectionInterval(index, index);
             }
         }
         finally
         {
-            isSelectionAdjusting = false;
+            modifySelection.release();
+            tableSelectionModel.setValueIsAdjusting(false);
         }
     }
 
-    void setSelectedRois(List<ROI> newSelected, List<ROI> oldSelected)
+    public void setSelectedRois(List<ROI> newSelected)
     {
-        final int newSelectedSize;
-        final int oldSelectedSize;
+        setSelectedRois((newSelected == null) ? new ArrayList<ROI>() : newSelected, getSelectedRois());
+    }
 
-        if (newSelected == null)
-            newSelectedSize = 0;
-        else
-            newSelectedSize = newSelected.size();
-        if (oldSelected == null)
-            oldSelectedSize = 0;
-        else
-            oldSelectedSize = oldSelected.size();
+    protected void setSelectedRois(List<ROI> newSelected, List<ROI> oldSelected)
+    {
+        final int newSelectedSize = newSelected.size();
+        final int oldSelectedSize = oldSelected.size();
 
-        // easy optimisation
+        // easy optimization
         if ((newSelectedSize == 0) && (oldSelectedSize == 0))
             return;
 
-        // same selection, don't need to udpate it
-        if ((newSelectedSize == oldSelectedSize) && newSelected.containsAll(oldSelected))
-            return;
+        // same selection size ?
+        if (newSelectedSize == oldSelectedSize)
+        {
+            // same selection, don't need to update it
+            if (new HashSet<ROI>(newSelected).containsAll(oldSelected))
+                return;
+        }
 
-        // at this point selection has changed !
+        // at this point selection has changed
         setSelectedRoisInternal(newSelected);
         // selection changed
-        selectionChanged();
+        selectionChanged(newSelected);
     }
 
-    public void setSelectedRois(List<ROI> values)
-    {
-        setSelectedRois(values, getSelectedRois());
-    }
-
-    protected void refreshRoiTypeList()
-    {
-        final DefaultComboBoxModel model = (DefaultComboBoxModel) roiType.getModel();
-        final Object savedItem = model.getSelectedItem();
-
-        isRoiTypeAdjusting = true;
-        try
-        {
-            model.removeAllElements();
-            model.addElement("ALL");
-
-            final Sequence sequence = getSequence();
-
-            if (sequence != null)
-            {
-                for (String type : getRoiTypes(sequence.getROIs()))
-                    model.addElement(type);
-            }
-        }
-        finally
-        {
-            isRoiTypeAdjusting = false;
-        }
-
-        final int index;
-
-        if (savedItem != null)
-            index = model.getIndexOf(savedItem);
-        else
-            index = -1;
-
-        if (index != -1)
-            roiType.setSelectedItem(savedItem);
-        else
-            roiType.setSelectedIndex(0);
-    }
-
-    List<ROI> filterList(List<ROI> list, String nameFilterText)
+    protected List<ROI> filterList(List<ROI> list, String filter)
     {
         final List<ROI> result = new ArrayList<ROI>();
 
-        final boolean typeEmpty = roiType.getSelectedIndex() == 0;
-        final boolean nameEmpty = StringUtil.isEmpty(nameFilterText, true);
-        final String typeFilter;
-        final String nameFilterUp;
-
-        if (!typeEmpty)
-            typeFilter = roiType.getSelectedItem().toString();
+        if (StringUtil.isEmpty(filter, true))
+            result.addAll(list);
         else
-            typeFilter = "";
-        if (!nameEmpty)
-            nameFilterUp = nameFilterText.trim().toLowerCase();
-        else
-            nameFilterUp = "";
-
-        for (ROI roi : list)
         {
-            // search in name and type
-            if ((typeEmpty || roi.getSimpleClassName().equals(typeFilter))
-                    && (nameEmpty || (roi.getName().toLowerCase().indexOf(nameFilterUp) != -1)))
-                result.add(roi);
+            final String text = filter.trim().toLowerCase();
+
+            // filter on name
+            for (ROI roi : list)
+                if (roi.getName().toLowerCase().indexOf(text) != -1)
+                    result.add(roi);
         }
 
         return result;
     }
 
-    protected void refreshTableData()
+    public void refreshTableData()
     {
-        isSelectionAdjusting = true;
+        ThreadUtil.bgRunSingle(tableDataRefresher, true);
+    }
+
+    void refreshTableDataInternal()
+    {
+        // this actually clear the table selection
+        modifySelection.acquireUninterruptibly();
         try
         {
             tableModel.fireTableDataChanged();
         }
         finally
         {
-            isSelectionAdjusting = false;
+            modifySelection.release();
         }
 
-        final Sequence sequence = getSequence();
+        Sequence sequence = getSequence();
 
-        // restore selected roi
+        // set selection from sequence
         if (sequence != null)
-            setSelectedRoisInternal(sequence.getSelectedROIs());
-        else
-            setSelectedRoisInternal(null);
-
-        // refresh control panel
-        ThreadUtil.bgRunSingle(controlPanelRefresher, true);
+            setSelectedRois(sequence.getSelectedROIs(), new ArrayList<ROI>());
     }
 
     // protected void refreshTableRow(final ROI roi)
@@ -573,15 +482,26 @@ public class RoisPanel extends JPanel implements ActiveSequenceListener, TextCha
     /**
      * called when selection has changed
      */
-    protected void selectionChanged()
+    protected void selectionChanged(List<ROI> selectedRois)
     {
         final Sequence sequence = getSequence();
 
+        // update selected ROI in sequence
         if (sequence != null)
-            sequence.setSelectedROIs(getSelectedRois());
+        {
+            modifySelection.acquireUninterruptibly();
+            try
+            {
+                sequence.setSelectedROIs(selectedRois);
+            }
+            finally
+            {
+                modifySelection.release();
+            }
+        }
 
-        // refresh control panel
-        ThreadUtil.bgRunSingle(controlPanelRefresher, true);
+        // notify the ROI control panel that selection changed
+        roiControlPanel.setSelectedRois(selectedRois);
     }
 
     @Override
@@ -591,20 +511,24 @@ public class RoisPanel extends JPanel implements ActiveSequenceListener, TextCha
             refreshRois();
     }
 
+    // called when selection changed in the ROI table
     @Override
     public void valueChanged(ListSelectionEvent e)
     {
-        if (isSelectionAdjusting || e.getValueIsAdjusting())
+        if (e.getValueIsAdjusting())
+            return;
+        // we are modifying elsewhere
+        if (modifySelection.availablePermits() == 0)
             return;
 
-        selectionChanged();
+        selectionChanged(getInternalSelectedRois());
     }
 
     @Override
     public void sequenceActivated(Sequence value)
     {
-        // refresh ROI type list
-        ThreadUtil.bgRunSingle(roiTypeListRefresher);
+        // refresh ROI list
+        refreshRois();
     }
 
     @Override
@@ -616,12 +540,18 @@ public class RoisPanel extends JPanel implements ActiveSequenceListener, TextCha
     @Override
     public void activeSequenceChanged(SequenceEvent event)
     {
+        // we are modifying externally
+        if (modifySelection.availablePermits() == 0)
+            return;
+
         if (event.getSourceType() == SequenceEventSourceType.SEQUENCE_ROI)
         {
             if (event.getType() == SequenceEventType.CHANGED)
-                ThreadUtil.bgRunSingle(tableDataRefresher, true);
+                // refresh table data
+                refreshTableData();
             else
-                ThreadUtil.bgRunSingle(roiTypeListRefresher);
+                // refresh the ROI list
+                refreshRois();
         }
     }
 }
