@@ -779,20 +779,17 @@ public class ROI2DArea extends ROI2D
      */
     public void setPoint(int x, int y, boolean value)
     {
-        final int adjX = x - bounds.x;
-        final int adjY = y - bounds.y;
-
         if (value)
         {
             // set point in mask
             addToBounds(new Rectangle(x, y, 1, 1));
             // set color depending remove or adding to mask
-            maskData[adjX + (adjY * bounds.width)] = 1;
+            maskData[(x - bounds.x) + ((y - bounds.y) * bounds.width)] = 1;
         }
         else
         {
             // remove point from mask
-            maskData[adjX + (adjY * bounds.width)] = 0;
+            maskData[(x - bounds.x) + ((y - bounds.y) * bounds.width)] = 0;
             // mark that bounds need to be updated
             boundsNeedUpdate = true;
         }
