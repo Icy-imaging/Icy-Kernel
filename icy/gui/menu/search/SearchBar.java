@@ -103,11 +103,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
 
         // modify margin so we have space for icon
         final Insets margin = getMargin();
-
-        margin.right += 26;
-        margin.left += 2;
-        margin.bottom -= 2;
-        margin.top -= 2;
+        setMargin(new Insets(margin.top, margin.left, margin.bottom, margin.right + 20));
 
         // focusable only when hit Ctrl + F or clicked at the beginning
         setFocusable(false);

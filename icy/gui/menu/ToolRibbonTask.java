@@ -245,7 +245,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                setSelectedButton((IcyCommandToggleButton) e.getSource());
+                setSelectedButton((IcyCommandToggleButton) e.getSource(), true);
             }
         };
 
@@ -299,9 +299,9 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
     /**
      * Sets the current selected button (can be <code>null</code>).
      */
-    protected void setSelectedButton(JCommandToggleButton button)
+    protected void setSelectedButton(JCommandToggleButton button, boolean force)
     {
-        if (getSelectedButton() != button)
+        if (force || (getSelectedButton() != button))
         {
             // select the button
             if (button != null)
@@ -334,7 +334,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
      */
     public void setSelected(String value)
     {
-        setSelectedButton(getButtonFromName(value));
+        setSelectedButton(getButtonFromName(value), false);
     }
 
     public void toolChanged(String toolName)

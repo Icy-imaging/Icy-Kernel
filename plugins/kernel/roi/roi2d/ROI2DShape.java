@@ -217,7 +217,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         @Override
         public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to controls points first
             if (isActiveFor(canvas))
             {
                 // check we can do the action
@@ -228,9 +227,23 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                         ROI2DShape.this.beginUpdate();
                         try
                         {
-                            // default anchor action on key pressed
+                            // send event to controls points first
                             for (Anchor2D pt : controlPoints)
                                 pt.keyPressed(e, imagePoint, canvas);
+                            
+                            // specific action for ROI2DShape
+                            if (!e.isConsumed())
+                            {
+                                switch (e.getKeyCode())
+                                {
+                                    case KeyEvent.VK_DELETE:
+                                    case KeyEvent.VK_BACK_SPACE:
+                                        // try to remove selected point
+                                        if (removeSelectedPoint(canvas))
+                                            e.consume();
+                                        break;
+                                }
+                            }
                         }
                         finally
                         {
@@ -238,6 +251,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                         }
                     }
                 }
+
             }
 
             // then send event to parent
@@ -247,7 +261,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         @Override
         public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to controls points first
             if (isActiveFor(canvas))
             {
                 // check we can do the action
@@ -258,7 +271,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                         ROI2DShape.this.beginUpdate();
                         try
                         {
-                            // default anchor action on key release
+                            // send event to controls points first
                             for (Anchor2D pt : controlPoints)
                                 pt.keyReleased(e, imagePoint, canvas);
                         }
@@ -1032,10 +1045,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     @Override
     public boolean isOverEdge(IcyCanvas canvas, double x, double y)
     {
-        // easy discard
-        if (!getBounds2D().contains(x, y))
-            return false;
-
         // use bigger stroke for isOver test for easier intersection
         final double strk = painter.getAdjustedStroke(canvas) * 3;
         final Rectangle2D rect = new Rectangle2D.Double(x - (strk * 0.5), y - (strk * 0.5), strk, strk);

@@ -299,6 +299,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     protected LUT lut;
     protected boolean synchHeader;
+    protected boolean orderedLayersOutdated;
 
     /**
      * Constructor
@@ -317,6 +318,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         orderedLayers = new ArrayList<Layer>();
         syncId = 0;
         synchHeader = false;
+        orderedLayersOutdated = false;
         updater = new UpdateEventHandler(this, false);
 
         // GUI stuff
@@ -431,6 +433,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             removeLayerListener(listener);
     }
 
+    /**
+     * Force canvas refresh
+     */
     public abstract void refresh();
 
     protected Overlay createImageOverlay()
@@ -605,14 +610,25 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Returns all layers attached to this canvas.<br/>
-     * The list is sorted on the layer priority.
+     * The returned list is sorted on the layer priority.<br>
+     * Sort operation is cached so the method could take sometime when cache need to be rebuild.
      */
     public List<Layer> getLayers()
     {
-        synchronized (orderedLayers)
+        // need to rebuild sorted layer list ?
+        if (orderedLayersOutdated)
         {
-            return new ArrayList<Layer>(orderedLayers);
+            // build and sort the list
+            synchronized (layers)
+            {
+                orderedLayers = new ArrayList<Layer>(layers.values());
+            }
+            Collections.sort(orderedLayers);
+
+            orderedLayersOutdated = false;
         }
+
+        return new ArrayList<Layer>(orderedLayers);
     }
 
     /**
@@ -622,14 +638,12 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public List<Layer> getVisibleLayers()
     {
-        final ArrayList<Layer> result = new ArrayList<Layer>(orderedLayers.size());
+        final List<Layer> olayers = getLayers();
+        final List<Layer> result = new ArrayList<Layer>(olayers.size());
 
-        synchronized (orderedLayers)
-        {
-            for (Layer l : orderedLayers)
-                if (l.isVisible())
-                    result.add(l);
-        }
+        for (Layer l : olayers)
+            if (l.isVisible())
+                result.add(l);
 
         return result;
     }
@@ -4017,17 +4031,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     {
         final String property = event.getProperty();
 
-        synchronized (layers)
-        {
-            // need to rebuild sorted layer list
-            if ((event.getType() != LayersEventType.CHANGED) || (property == null)
-                    || (property == Layer.PROPERTY_PRIORITY))
-            {
-                // build and sort the list
-                orderedLayers = new ArrayList<Layer>(layers.values());
-                Collections.sort(orderedLayers);
-            }
-        }
+        // we need to rebuild sorted layer list
+        if ((event.getType() != LayersEventType.CHANGED) || (property == null) || (property == Layer.PROPERTY_PRIORITY))
+            orderedLayersOutdated = true;
 
         // notify listeners that layers have changed
         fireLayerChangedEvent(event);

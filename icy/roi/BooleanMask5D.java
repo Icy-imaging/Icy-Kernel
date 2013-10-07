@@ -3,15 +3,13 @@
  */
 package icy.roi;
 
-import icy.type.point.Point4D;
+import icy.type.collection.array.DynamicArray;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
 
 import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -956,24 +954,82 @@ public class BooleanMask5D
         }
     }
 
+    int[] toInt5D(int[] source4D, int c)
+    {
+        final int[] result = new int[(source4D.length * 5) / 4];
+
+        int pt = 0;
+        for (int i = 0; i < source4D.length; i += 4)
+        {
+            result[pt++] = source4D[i + 0];
+            result[pt++] = source4D[i + 1];
+            result[pt++] = source4D[i + 2];
+            result[pt++] = source4D[i + 3];
+            result[pt++] = c;
+        }
+
+        return result;
+    }
+
     /**
      * Return an array of {@link icy.type.point.Point5D.Integer} containing the edge/surface points
      * of the 5D mask.<br>
-     * Points are returned in ascending XYZTC order.
+     * Points are returned in ascending XYZTC order. <br>
+     * <br>
+     * WARNING: The basic implementation is not totally accurate.<br>
+     * It returns all points from the first and the last C slices + edge points for intermediate C
+     * slices.
+     * 
+     * @see #getEdgePointsAsIntArray()
      */
     public Point5D.Integer[] getEdgePoints()
     {
-        final List<Point5D.Integer> points = new ArrayList<Point5D.Integer>(1024);
+        return Point5D.Integer.toPoint5D(getEdgePointsAsIntArray());
+    }
 
-        for (Entry<Integer, BooleanMask4D> entry : mask.entrySet())
+    /**
+     * Return an array of integer containing the edge/surface points of the 5D mask.<br>
+     * <code>result.length</code> = number of point * 4<br>
+     * <code>result[(pt * 4) + 0]</code> = X coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 4) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 4) + 2]</code> = Z coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 4) + 3]</code> = T coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 5) + 4]</code> = C coordinate for point <i>pt</i>.<br>
+     * Points are returned in ascending XYZTC order.<br>
+     * <br>
+     * WARNING: The basic implementation is not totally accurate.<br>
+     * It returns all points from the first and the last C slices + edge points for intermediate C
+     * slices.
+     * 
+     * @see #getEdgePoints()
+     */
+    public int[] getEdgePointsAsIntArray()
+    {
+        final DynamicArray.Int result = new DynamicArray.Int(8);
+
+        // perimeter = first slice volume + inter slices perimeter + last slice volume
+        // TODO: fix this method and use real 5D edge point
+        if (mask.size() <= 2)
         {
-            final int c = entry.getKey().intValue();
+            for (Entry<Integer, BooleanMask4D> entry : mask.entrySet())
+                result.add(toInt5D(entry.getValue().getPointsAsIntArray(), entry.getKey().intValue()));
+        }
+        else
+        {
+            final Entry<Integer, BooleanMask4D> firstEntry = mask.firstEntry();
+            final Entry<Integer, BooleanMask4D> lastEntry = mask.lastEntry();
+            final Integer firstKey = firstEntry.getKey();
+            final Integer lastKey = lastEntry.getKey();
 
-            for (Point4D.Integer pt : entry.getValue().getEdgePoints())
-                points.add(new Point5D.Integer(pt.x, pt.y, pt.z, pt.t, c));
+            result.add(toInt5D(firstEntry.getValue().getPointsAsIntArray(), firstKey.intValue()));
+
+            for (Entry<Integer, BooleanMask4D> entry : mask.subMap(firstKey, false, lastKey, false).entrySet())
+                result.add(toInt5D(entry.getValue().getEdgePointsAsIntArray(), entry.getKey().intValue()));
+
+            result.add(toInt5D(lastEntry.getValue().getPointsAsIntArray(), lastKey.intValue()));
         }
 
-        return points.toArray(new Point5D.Integer[points.size()]);
+        return result.asArray();
     }
 
     /**
@@ -983,17 +1039,27 @@ public class BooleanMask5D
      */
     public Point5D.Integer[] getPoints()
     {
-        final List<Point5D.Integer> points = new ArrayList<Point5D.Integer>(1024);
+        return Point5D.Integer.toPoint5D(getPointsAsIntArray());
+    }
+
+    /**
+     * Return an array of integer representing all points of the current 5D mask.<br>
+     * <code>result.length</code> = number of point * 5<br>
+     * <code>result[(pt * 5) + 0]</code> = X coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 5) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 5) + 2]</code> = Z coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 5) + 3]</code> = T coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 5) + 4]</code> = C coordinate for point <i>pt</i>.<br>
+     * Points are returned in ascending XYZTC order.
+     */
+    public int[] getPointsAsIntArray()
+    {
+        final DynamicArray.Int result = new DynamicArray.Int(8);
 
         for (Entry<Integer, BooleanMask4D> entry : mask.entrySet())
-        {
-            final int c = entry.getKey().intValue();
+            result.add(toInt5D(entry.getValue().getPointsAsIntArray(), entry.getKey().intValue()));
 
-            for (Point4D.Integer pt : entry.getValue().getPoints())
-                points.add(new Point5D.Integer(pt.x, pt.y, pt.z, pt.t, c));
-        }
-
-        return points.toArray(new Point5D.Integer[points.size()]);
+        return result.asArray();
     }
 
     @Override

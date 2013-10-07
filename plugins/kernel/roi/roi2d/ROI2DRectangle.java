@@ -18,6 +18,7 @@
  */
 package plugins.kernel.roi.roi2d;
 
+import icy.resource.ResourceUtil;
 import icy.type.point.Point5D;
 
 import java.awt.geom.Point2D;
@@ -41,7 +42,9 @@ public class ROI2DRectangle extends ROI2DRectShape
     {
         super(new Rectangle2D.Double(), topLeft, bottomRight);
 
+        // set name and icon
         setName("Rectangle2D");
+        setIcon(ResourceUtil.ICON_ROI_RECTANGLE);
     }
 
     public ROI2DRectangle(double xmin, double ymin, double xmax, double ymax)
@@ -84,6 +87,7 @@ public class ROI2DRectangle extends ROI2DRectShape
     public ROI2DRectangle(Point5D pt)
     {
         this(pt.toPoint2D());
+        getOverlay().setMousePos(pt);
     }
 
     public ROI2DRectangle()
@@ -102,13 +106,13 @@ public class ROI2DRectangle extends ROI2DRectShape
     }
 
     @Override
-    public double getPerimeter()
+    public double computeNumberOfEdgePoints()
     {
         return getTotalDistance(getPoints());
     }
 
     @Override
-    public double getVolume()
+    public double computeNumberOfPoints()
     {
         final Rectangle2D r = getRectangle();
 

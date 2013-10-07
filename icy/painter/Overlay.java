@@ -495,7 +495,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         // provide backward compatibility
-        mousePressed(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            mousePressed(e, imagePoint.toPoint2D(), canvas);
+        else
+            mousePressed(e, (Point2D) null, canvas);
     }
 
     /**
@@ -511,7 +514,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         // provide backward compatibility
-        mouseReleased(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            mouseReleased(e, imagePoint.toPoint2D(), canvas);
+        else
+            mouseReleased(e, (Point2D) null, canvas);
     }
 
     /**
@@ -527,7 +533,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         // provide backward compatibility
-        mouseClick(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            mouseClick(e, imagePoint.toPoint2D(), canvas);
+        else
+            mouseClick(e, (Point2D) null, canvas);
     }
 
     /**
@@ -543,7 +552,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         // provide backward compatibility
-        mouseMove(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            mouseMove(e, imagePoint.toPoint2D(), canvas);
+        else
+            mouseMove(e, (Point2D) null, canvas);
     }
 
     /**
@@ -559,7 +571,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         // provide backward compatibility
-        mouseDrag(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            mouseDrag(e, imagePoint.toPoint2D(), canvas);
+        else
+            mouseDrag(e, (Point2D) null, canvas);
     }
 
     /**
@@ -575,7 +590,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     public void mouseEntered(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         // provide backward compatibility
-        mouseEntered(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            mouseEntered(e, imagePoint.toPoint2D(), canvas);
+        else
+            mouseEntered(e, (Point2D) null, canvas);
     }
 
     /**
@@ -591,7 +609,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     public void mouseExited(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         // provide backward compatibility
-        mouseExited(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            mouseExited(e, imagePoint.toPoint2D(), canvas);
+        else
+            mouseExited(e, (Point2D) null, canvas);
     }
 
     /**
@@ -607,7 +628,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     public void mouseWheelMoved(MouseWheelEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         // provide backward compatibility
-        mouseWheelMoved(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            mouseWheelMoved(e, imagePoint.toPoint2D(), canvas);
+        else
+            mouseWheelMoved(e, (Point2D) null, canvas);
     }
 
     /**
@@ -623,7 +647,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         // provide backward compatibility
-        keyPressed(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            keyPressed(e, imagePoint.toPoint2D(), canvas);
+        else
+            keyPressed(e, (Point2D) null, canvas);
     }
 
     /**
@@ -639,7 +666,10 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
         // provide backward compatibility
-        keyReleased(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            keyReleased(e, imagePoint.toPoint2D(), canvas);
+        else
+            keyReleased(e, (Point2D) null, canvas);
     }
 
     @Override

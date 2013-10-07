@@ -435,7 +435,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, I
         return new Rectangle3D.Double(xyBounds.getX(), xyBounds.getY(), z, xyBounds.getWidth(), xyBounds.getHeight(),
                 sizeZ);
     }
-    
+
     @Override
     public boolean contains(double x, double y, double z)
     {
@@ -493,15 +493,16 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, I
     }
 
     @Override
-    public double getPerimeter()
+    public double computeNumberOfEdgePoints()
     {
-        // perimeter = first slice volume + inter slices perimeter + last slice volume
+        // 3D edge points = first slice points + inter slices edge points + last slice points
+        // TODO: only approximation, fix this to use real 3D edge point
         double perimeter = 0;
 
         if (slices.size() <= 2)
         {
             for (R slice : slices.values())
-                perimeter += slice.getVolume();
+                perimeter += slice.getNumberOfPoints();
         }
         else
         {
@@ -510,24 +511,24 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, I
             final Integer firstKey = firstEntry.getKey();
             final Integer lastKey = lastEntry.getKey();
 
-            perimeter = firstEntry.getValue().getVolume();
+            perimeter = firstEntry.getValue().getNumberOfPoints();
 
             for (R slice : slices.subMap(firstKey, false, lastKey, false).values())
-                perimeter += slice.getPerimeter();
+                perimeter += slice.getNumberOfEdgePoints();
 
-            perimeter += lastEntry.getValue().getVolume();
+            perimeter += lastEntry.getValue().getNumberOfPoints();
         }
 
         return perimeter;
     }
 
     @Override
-    public double getVolume()
+    public double computeNumberOfPoints()
     {
         double volume = 0;
 
         for (R slice : slices.values())
-            volume += slice.getVolume();
+            volume += slice.getNumberOfPoints();
 
         return volume;
     }

@@ -578,6 +578,9 @@ public class Anchor2D extends Overlay implements XMLPersistent
 
     public boolean isOver(IcyCanvas canvas, Point2D p)
     {
+        if (p == null)
+            return false;
+        
         return isOver(canvas, p.getX(), p.getY());
     }
 

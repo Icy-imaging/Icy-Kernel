@@ -213,4 +213,29 @@ public abstract class ROI5D extends ROI
 
         return new BooleanMask5D(bounds, masks);
     }
+
+    /*
+     * Generic implementation for ROI5D using the BooleanMask object so
+     * the result is just an approximation.
+     * Override to optimize for specific ROI.
+     */
+    @Override
+    public double computeNumberOfEdgePoints()
+    {
+        // approximation by using number of point of the edge of boolean mask
+        return getBooleanMask(true).getEdgePointsAsIntArray().length / getDimension();
+    }
+
+    /*
+     * Generic implementation for ROI5D using the BooleanMask object so
+     * the result is just an approximation.
+     * Override to optimize for specific ROI.
+     */
+    @Override
+    public double computeNumberOfPoints()
+    {
+        // approximation by using number of point of boolean mask
+        return getBooleanMask(true).getPointsAsIntArray().length / getDimension();
+    }
+
 }

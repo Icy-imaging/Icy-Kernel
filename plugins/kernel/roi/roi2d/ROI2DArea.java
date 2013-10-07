@@ -23,6 +23,7 @@ import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvas3D;
 import icy.image.ImageUtil;
+import icy.resource.ResourceUtil;
 import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
@@ -60,11 +61,11 @@ public class ROI2DArea extends ROI2D
 {
     protected static final float DEFAULT_CURSOR_SIZE = 15f;
 
-    // we want to keep a static cursor
-    protected static final Ellipse2D cursor = new Ellipse2D.Double();;
-    protected static final Point2D.Double cursorPosition = new Point2D.Double();
-    protected static Color cursorColor = Color.red;
-    protected static float cursorSize = DEFAULT_CURSOR_SIZE;
+    // we want to keep a static brush
+    protected static final Ellipse2D brush = new Ellipse2D.Double();
+    // protected static final Point2D.Double cursorPosition = new Point2D.Double();
+    protected static Color brushColor = Color.red;
+    protected static float brushSize = DEFAULT_CURSOR_SIZE;
 
     public class ROI2DAreaPainter extends ROI2DPainter
     {
@@ -79,10 +80,9 @@ public class ROI2DArea extends ROI2D
 
         void updateCursor()
         {
-            final double x = cursorPosition.getX();
-            final double y = cursorPosition.getY();
+            final Point5D.Double pos = getMousePos();
 
-            cursor.setFrameFromDiagonal(x - cursorSize, y - cursorSize, x + cursorSize, y + cursorSize);
+            brush.setFrameFromDiagonal(pos.x - brushSize, pos.y - brushSize, pos.x + brushSize, pos.y + brushSize);
 
             // if roi selected (cursor displayed) --> painter changed
             if (isSelected())
@@ -90,80 +90,141 @@ public class ROI2DArea extends ROI2D
         }
 
         /**
-         * @return the cursor position
+         * Returns the brush position.
+         * 
+         * @see #getMousePos()
          */
-        public Point2D getCursorPosition()
+        public Point2D getBrushPosition()
         {
-            return cursorPosition;
+            return getMousePos().toPoint2D();
         }
 
         /**
-         * @param position
-         *        the cursor position to set
+         * Set the brush position.
+         * 
+         * @see #setMousePos(Point5D)
          */
+        public void setBrushPosition(Point2D position)
+        {
+            setMousePos(new Point5D.Double(position.getX(), position.getY(), -1d, -1d, -1d));
+        }
+
+        /**
+         * @deprecated Use {@link #getBrushPosition()} instead.
+         */
+        @Deprecated
+        public Point2D getCursorPosition()
+        {
+            return getBrushPosition();
+        }
+
+        /**
+         * @deprecated Use {@link #setBrushPosition(Point2D)} instead.
+         */
+        @Deprecated
         public void setCursorPosition(Point2D position)
         {
-            if (!cursorPosition.equals(position))
+            setBrushPosition(position);
+        }
+
+        @Override
+        public void setMousePos(Point5D pos)
+        {
+            if ((pos != null) && !getMousePos().equals(pos))
             {
-                cursorPosition.setLocation(position);
+                super.setMousePos(pos);
                 updateCursor();
             }
         }
 
         /**
-         * @return the cursorSize
+         * Returns the brush size.
          */
-        public float getCursorSize()
+        public float getBrushSize()
         {
-            return cursorSize;
+            return brushSize;
         }
 
         /**
-         * @param value
-         *        the cursorSize to set
+         * Sets the brush size.
          */
-        public void setCursorSize(float value)
+        public void setBrushSize(float value)
         {
             final float adjValue = Math.max(Math.min(value, MAX_CURSOR_SIZE), MIN_CURSOR_SIZE);
 
-            if (cursorSize != adjValue)
+            if (brushSize != adjValue)
             {
-                cursorSize = adjValue;
+                brushSize = adjValue;
                 updateCursor();
             }
         }
 
         /**
-         * @return the cursorColor
+         * @deprecated Use {@link #getBrushSize()} instead
          */
-        public Color getCursorColor()
+        @Deprecated
+        public float getCursorSize()
         {
-            return cursorColor;
+            return getBrushSize();
         }
 
         /**
-         * @param value
-         *        the cursorColor to set
+         * @deprecated Use {@link #setBrushSize(float)} instead
          */
-        public void setCursorColor(Color value)
+        @Deprecated
+        public void setCursorSize(float value)
         {
-            if (!cursorColor.equals(value))
+            setBrushSize(value);
+        }
+
+        /**
+         * Returns the brush color
+         */
+        public Color getBrushColor()
+        {
+            return brushColor;
+        }
+
+        /**
+         * Sets the brush color
+         */
+        public void setBrushColor(Color value)
+        {
+            if (!brushColor.equals(value))
             {
-                cursorColor = value;
+                brushColor = value;
                 painterChanged();
             }
         }
 
+        /**
+         * @deprecated Use {@link #getBrushColor()} instead
+         */
+        @Deprecated
+        public Color getCursorColor()
+        {
+            return getBrushColor();
+        }
+
+        /**
+         * @deprecated Use {@link #setBrushColor(Color)} instead
+         */
+        @Deprecated
+        public void setCursorColor(Color value)
+        {
+            setBrushColor(value);
+        }
+
         public void addToMask(Point2D pos)
         {
-            setCursorPosition(pos);
-            updateMask(cursor, false);
+            setBrushPosition(pos);
+            updateMask(brush, false);
         }
 
         public void removeFromMask(Point2D pos)
         {
-            setCursorPosition(pos);
-            updateMask(cursor, true);
+            setBrushPosition(pos);
+            updateMask(brush, true);
         }
 
         @Override
@@ -196,12 +257,12 @@ public class ROI2DArea extends ROI2D
                             {
                                 case '+':
                                     if (isSelected())
-                                        setCursorSize(cursorSize * 1.1f);
+                                        setBrushSize(getBrushSize() * 1.1f);
                                     break;
 
                                 case '-':
                                     if (isSelected())
-                                        setCursorSize(cursorSize * 0.9f);
+                                        setBrushSize(getBrushSize() * 0.9f);
                                     break;
                             }
                         }
@@ -356,17 +417,17 @@ public class ROI2DArea extends ROI2D
                 if (isSelected() && !isFocused() && !isReadOnly())
                 {
                     // trivial paint optimization
-                    if (ShapeUtil.isVisible(g, cursor))
+                    if (ShapeUtil.isVisible(g, brush))
                     {
                         // draw cursor border
                         g2.setColor(Color.black);
                         g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                        g2.draw(cursor);
+                        g2.draw(brush);
 
                         // cursor color
-                        g2.setColor(cursorColor);
+                        g2.setColor(brushColor);
                         // draw cursor
-                        g2.fill(cursor);
+                        g2.fill(brush);
                     }
                 }
 
@@ -419,7 +480,7 @@ public class ROI2DArea extends ROI2D
                 if (isSelected() && !isFocused() && !isReadOnly())
                 {
                     // trivial paint optimization
-                    if (ShapeUtil.isVisible(g, cursor))
+                    if (ShapeUtil.isVisible(g, brush))
                     {
                         final Graphics2D g2 = (Graphics2D) g.create();
 
@@ -430,10 +491,10 @@ public class ROI2DArea extends ROI2D
                         // draw cursor border
                         g2.setColor(Color.black);
                         g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                        g2.draw(cursor);
+                        g2.draw(brush);
                         // draw cursor
-                        g2.setColor(cursorColor);
-                        g2.fill(cursor);
+                        g2.setColor(brushColor);
+                        g2.fill(brush);
 
                         g2.dispose();
                     }
@@ -508,7 +569,9 @@ public class ROI2DArea extends ROI2D
         // get data pointer
         maskData = ((DataBufferByte) imageMask.getRaster().getDataBuffer()).getData();
 
+        // set name and icon
         setName("Area2D");
+        setIcon(ResourceUtil.ICON_ROI_AREA);
     }
 
     /**
@@ -733,41 +796,52 @@ public class ROI2DArea extends ROI2D
         // dimension changed ?
         if ((oldBounds.width != newBounds.width) || (oldBounds.height != newBounds.height))
         {
-            final BufferedImage newImageMask = new BufferedImage(newBounds.width, newBounds.height,
-                    BufferedImage.TYPE_BYTE_INDEXED, colorModel);
-            final byte[] newMaskData = ((DataBufferByte) newImageMask.getRaster().getDataBuffer()).getData();
-
-            final Rectangle intersect = newBounds.intersection(oldBounds);
-
-            if (!intersect.isEmpty())
+            if (!newBounds.isEmpty())
             {
-                int offSrc = 0;
-                int offDst = 0;
+                // new bounds not empty
+                final BufferedImage newImageMask = new BufferedImage(newBounds.width, newBounds.height,
+                        BufferedImage.TYPE_BYTE_INDEXED, colorModel);
+                final byte[] newMaskData = ((DataBufferByte) newImageMask.getRaster().getDataBuffer()).getData();
 
-                // adjust offset in source mask
-                if (intersect.x > 0)
-                    offSrc += intersect.x;
-                if (intersect.y > 0)
-                    offSrc += intersect.y * oldBounds.width;
-                // adjust offset in destination mask
-                if (newBounds.x < 0)
-                    offDst += -newBounds.x;
-                if (newBounds.y < 0)
-                    offDst += -newBounds.y * newBounds.width;
+                final Rectangle intersect = newBounds.intersection(oldBounds);
 
-                // preserve data
-                for (int j = 0; j < intersect.height; j++)
+                if (!intersect.isEmpty())
                 {
-                    System.arraycopy(maskData, offSrc, newMaskData, offDst, intersect.width);
+                    int offSrc = 0;
+                    int offDst = 0;
 
-                    offSrc += oldBounds.width;
-                    offDst += newBounds.width;
+                    // adjust offset in source mask
+                    if (intersect.x > 0)
+                        offSrc += intersect.x;
+                    if (intersect.y > 0)
+                        offSrc += intersect.y * oldBounds.width;
+                    // adjust offset in destination mask
+                    if (newBounds.x < 0)
+                        offDst += -newBounds.x;
+                    if (newBounds.y < 0)
+                        offDst += -newBounds.y * newBounds.width;
+
+                    // preserve data
+                    for (int j = 0; j < intersect.height; j++)
+                    {
+                        System.arraycopy(maskData, offSrc, newMaskData, offDst, intersect.width);
+
+                        offSrc += oldBounds.width;
+                        offDst += newBounds.width;
+                    }
                 }
+
+                // set new image and maskData
+                imageMask = newImageMask;
+                maskData = newMaskData;
+            }
+            else
+            {
+                // new bounds empty
+                imageMask = null;
+                maskData = new byte[0];
             }
 
-            // set new image and maskData
-            imageMask = newImageMask;
-            maskData = newMaskData;
             bounds.setBounds(newBnd);
         }
     }
@@ -843,16 +917,6 @@ public class ROI2DArea extends ROI2D
 
         // notify roi changed
         roiChanged();
-    }
-
-    @Override
-    public void setMousePos(Point2D pos)
-    {
-        if ((pos != null) && !mousePos.equals(pos))
-        {
-            mousePos.setLocation(pos);
-            getPainter().setCursorPosition(pos);
-        }
     }
 
     @Override
@@ -1049,7 +1113,7 @@ public class ROI2DArea extends ROI2D
     @Override
     public boolean isOverEdge(IcyCanvas canvas, double x, double y)
     {
-        // use bigger stroke for isOver test for easier intersection
+        // use bigger stroke for isOverEdge test for easier intersection
         final double strk = getAdjustedStroke(canvas) * 3;
         final Rectangle2D rect = new Rectangle2D.Double(x - (strk * 0.5), y - (strk * 0.5), strk, strk);
         // use flatten path, intersects on curved shape return incorrect result
@@ -1193,6 +1257,19 @@ public class ROI2DArea extends ROI2D
             offSrc += bounds.width - intersect.width;
             offDst += w - intersect.width;
         }
+
+        return result;
+    }
+
+    @Override
+    public double computeNumberOfPoints()
+    {
+        // just count the number of point contained in the mask
+        double result = 0d;
+
+        for (byte b : maskData)
+            if (b != 0)
+                result += 1d;
 
         return result;
     }

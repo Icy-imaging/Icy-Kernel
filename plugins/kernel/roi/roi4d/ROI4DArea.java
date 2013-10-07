@@ -78,8 +78,6 @@ public class ROI4DArea extends ROI4DStack<ROI3DArea>
         // copy the source 4D area ROI
         for (Entry<Integer, ROI3DArea> entry : area.slices.entrySet())
             slices.put(entry.getKey(), new ROI3DArea(entry.getValue()));
-
-        boundsInvalid = true;
     }
 
     /**

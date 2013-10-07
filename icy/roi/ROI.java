@@ -25,7 +25,9 @@ import icy.common.listener.ChangeListener;
 import icy.file.xml.XMLPersistent;
 import icy.main.Icy;
 import icy.painter.Overlay;
+import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginROI;
+import icy.resource.ResourceUtil;
 import icy.roi.ROIEvent.ROIEventType;
 import icy.roi.ROIEvent.ROIPointEventType;
 import icy.sequence.Sequence;
@@ -40,6 +42,7 @@ import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
+import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -106,6 +109,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final float DEFAULT_OPACITY = 0.3f;
 
     public static final String PROPERTY_NAME = "name";
+    public static final String PROPERTY_ICON = "icon";
     public static final String PROPERTY_CREATING = "creating";
     public static final String PROPERTY_READONLY = "readonly";
 
@@ -136,6 +140,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                     final PluginROI plugin = roiClazz.newInstance();
                     // create ROI
                     result = plugin.createROI();
+                    // set ROI icon from plugin icon
+                    final Image icon = ((Plugin) plugin).getDescriptor().getIconAsImage();
+                    if (icon != null)
+                        result.setIcon(icon);
                 }
                 catch (ClassCastException e0)
                 {
@@ -194,6 +202,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                     // not supported --> use default constructor
                     if (result == null)
                         result = plugin.createROI();
+
+                    // set ROI icon from plugin icon
+                    final Image icon = ((Plugin) plugin).getDescriptor().getIconAsImage();
+                    if (icon != null)
+                        result.setIcon(icon);
                 }
                 catch (ClassCastException e0)
                 {
@@ -493,13 +506,22 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Abstract basic class for ROI painter
+     * Abstract basic class for ROI overlay
      */
     public abstract class ROIPainter extends Overlay implements XMLPersistent
     {
+        /**
+         * Overlay properties
+         */
         protected double stroke;
         protected Color color;
         protected float opacity;
+
+        /**
+         * Last mouse position (image coordinates).
+         * Needed for some internals operation
+         */
+        protected final Point5D.Double mousePos;
 
         public ROIPainter()
         {
@@ -508,6 +530,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             stroke = DEFAULT_STROKE;
             color = DEFAULT_COLOR;
             opacity = DEFAULT_OPACITY;
+
+            mousePos = new Point5D.Double();
 
             // we fix the ROI overlay
             canBeRemoved = false;
@@ -623,6 +647,23 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
         }
 
+        /**
+         * Returns the overlay internals mouse position (image coordinates)
+         */
+        public Point5D.Double getMousePos()
+        {
+            return mousePos;
+        }
+
+        /**
+         * Set the overlay internals mouse position (image coordinates)
+         */
+        public void setMousePos(Point5D pos)
+        {
+            if ((pos != null) && !mousePos.equals(pos))
+                mousePos.setLocation(pos);
+        }
+
         public void computePriority()
         {
             if (isFocused())
@@ -655,7 +696,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
 
         @Override
-        public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             if (isActiveFor(canvas))
             {
@@ -706,7 +747,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
 
         @Override
-        public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             if (isActiveFor(canvas))
             {
@@ -717,7 +758,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
 
         @Override
-        public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+        public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             if (isActiveFor(canvas))
             {
@@ -779,15 +820,18 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected boolean selected;
     protected boolean readOnly;
 
+    // attached ROI icon
+    protected Image icon;
+
     /**
-     * last mouse position (image coordinates)
-     */
-    protected final Point2D.Double mousePos;
-    /**
-     * cached bounds
+     * cached calculated properties
      */
     protected Rectangle5D cachedBounds;
+    protected double cachedNumberOfPoints;
+    protected double cachedNumberOfEdgePoints;
     protected boolean boundsInvalid;
+    protected boolean numberOfEdgePointsInvalid;
+    protected boolean numberOfPointsInvalid;
 
     /**
      * listeners
@@ -811,12 +855,18 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         focused = false;
         selected = false;
 
-        mousePos = new Point2D.Double();
         cachedBounds = new Rectangle5D.Double();
-        boundsInvalid = false;
+        cachedNumberOfPoints = 0d;
+        cachedNumberOfEdgePoints = 0d;
+        boundsInvalid = true;
+        numberOfPointsInvalid = true;
+        numberOfEdgePointsInvalid = true;
 
         listeners = new EventListenerList();
         updater = new UpdateEventHandler(this, false);
+
+        // default icon
+        icon = ResourceUtil.ICON_ROI;
     }
 
     protected abstract ROIPainter createPainter();
@@ -1064,6 +1114,27 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
+     * @return the icon
+     */
+    public Image getIcon()
+    {
+        return icon;
+    }
+
+    /**
+     * @param value
+     *        the icon to set
+     */
+    public void setIcon(Image value)
+    {
+        if (icon != value)
+        {
+            icon = value;
+            propertyChanged(PROPERTY_ICON);
+        }
+    }
+
+    /**
      * @return the name
      */
     public String getName()
@@ -1300,8 +1371,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * 
      * @return an instance of <code>Rectangle5D</code> that is a bounding box of the
      *         <code>ROI</code>.
+     * @see #computeBounds5D()
      */
-    public Rectangle5D getBounds5D()
+    public final Rectangle5D getBounds5D()
     {
         // we need to recompute bounds
         if (boundsInvalid)
@@ -1739,6 +1811,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * in a new <code>ROI</code>.<br>
      * If <code>op</code> is <code>null</code> then we process subtraction operation.
      */
+    /*
+     * Generic implementation for ROI using the BooleanMask object so the result is just an
+     * approximation. Override to optimize for specific ROI.
+     */
     protected ROI computeOperation(ROI roi, BooleanOperator op) throws UnsupportedOperationException
     {
         if (roi == null)
@@ -1882,10 +1958,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * Compute the boolean operation with specified <code>ROI</code> and return result in a new
      * <code>ROI</code>.
      */
-    /*
-     * Generic implementation for ROI using the BooleanMask object so the result is just an
-     * approximation. Override to optimize for specific ROI.
-     */
     public ROI merge(ROI roi, BooleanOperator op) throws UnsupportedOperationException
     {
         if (op == null)
@@ -1903,7 +1975,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public ROI getUnion(ROI roi) throws UnsupportedOperationException
     {
-        return merge(roi, BooleanOperator.OR);
+        return computeOperation(roi, BooleanOperator.OR);
     }
 
     /**
@@ -1916,7 +1988,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public ROI getIntersection(ROI roi) throws UnsupportedOperationException
     {
-        return merge(roi, BooleanOperator.AND);
+        return computeOperation(roi, BooleanOperator.AND);
     }
 
     /**
@@ -1929,7 +2001,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public ROI getExclusiveUnion(ROI roi) throws UnsupportedOperationException
     {
-        return merge(roi, BooleanOperator.XOR);
+        return computeOperation(roi, BooleanOperator.XOR);
     }
 
     /**
@@ -1941,31 +2013,86 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public ROI getSubtraction(ROI roi) throws UnsupportedOperationException
     {
-        return merge(roi, null);
+        return computeOperation(roi, null);
     }
 
     /**
-     * Return perimeter of ROI in pixels.<br>
-     * This is basically the number of pixel representing ROI edges.<br>
+     * Compute and returns the number of point (pixel) composing the ROI edges.
      */
     /*
      * Override this method to adapt and optimize for a specific ROI.
      */
-    public abstract double getPerimeter();
+    public abstract double computeNumberOfEdgePoints();
 
     /**
-     * Return volume of ROI in pixels.<br>
-     * For a 2D ROI, volume is equivalent to the area.<br>
+     * Returns the number of point (pixel) composing the ROI edges.<br>
+     * It is used to calculate the perimeter (2D) or surface area (3D) of the ROI.
+     * 
+     * @see #computeNumberOfEdgePoints()
+     */
+    public final double getNumberOfEdgePoints()
+    {
+        // we need to recompute the number of edge point
+        if (numberOfEdgePointsInvalid)
+        {
+            cachedNumberOfEdgePoints = computeNumberOfEdgePoints();
+            numberOfEdgePointsInvalid = false;
+        }
+
+        return cachedNumberOfEdgePoints;
+    }
+
+    /**
+     * Compute and returns the number of point (pixel) contained in the ROI.
      */
     /*
      * Override this method to adapt and optimize for a specific ROI.
      */
-    public abstract double getVolume();
+    public abstract double computeNumberOfPoints();
 
+    /**
+     * Returns the number of point (pixel) contained in the ROI.<br>
+     * It is used to calculate the area (2D) or volume (3D) of the ROI.
+     */
+    public final double getNumberOfPoints()
+    {
+        // we need to recompute the number of point
+        if (numberOfPointsInvalid)
+        {
+            cachedNumberOfPoints = computeNumberOfPoints();
+            numberOfPointsInvalid = false;
+        }
+
+        return cachedNumberOfPoints;
+    }
+
+    /**
+     * @deprecated Only for ROI2D object, Use {@link #getNumberOfEdgePoints()} instead.
+     */
+    @Deprecated
+    public double getPerimeter()
+    {
+        return getNumberOfEdgePoints();
+    }
+
+    /**
+     * @deprecated Only for ROI3D object, use {@link #getNumberOfPoints()} instead for other type of
+     *             ROI.
+     */
+    @Deprecated
+    public double getVolume()
+    {
+        return getNumberOfPoints();
+    }
+
+    /**
+     * @deprecated Use <code>getOverlay().setMousePos(..)</code> instead.
+     */
+    @Deprecated
     public void setMousePos(Point2D pos)
     {
-        if ((pos != null) && !mousePos.equals(pos))
-            mousePos.setLocation(pos);
+        if (pos != null)
+            getOverlay().setMousePos(new Point5D.Double(pos.getX(), pos.getY(), -1, -1, -1));
     }
 
     public ROI getCopy()
@@ -2158,8 +2285,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         switch (event.getType())
         {
             case ROI_CHANGED:
-                // bounds need to be recomputed
+                // cached properties need to be recomputed
                 boundsInvalid = true;
+                numberOfEdgePointsInvalid = true;
+                numberOfPointsInvalid = true;
                 painter.painterChanged();
                 break;
 

@@ -163,6 +163,53 @@ public abstract class Point4D implements Cloneable
 
     public static class Double extends Point4D
     {
+        /**
+         * Create an array of Point4D.Double from the input double array.<br>
+         * <br>
+         * The format of the input array should be as follow:<br>
+         * <code>input.lenght</code> = number of point * 4.<br>
+         * <code>input[(pt * 4) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 4) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 4) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 4) + 3]</code> = T coordinate for point <i>pt</i><br>
+         */
+        public static Point4D.Double[] toPoint4D(double[] input)
+        {
+            final Point4D.Double[] result = new Point4D.Double[input.length / 4];
+
+            int pt = 0;
+            for (int i = 0; i < input.length; i += 4)
+                result[pt++] = new Point4D.Double(input[i + 0], input[i + 1], input[i + 2], input[i + 3]);
+
+            return result;
+        }
+
+        /**
+         * Create an array of double from the input Point4D.Double array.<br>
+         * <br>
+         * The format of the output array is as follow:<br>
+         * <code>result.lenght</code> = number of point * 4.<br>
+         * <code>result[(pt * 4) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 4) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 4) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 4) + 3]</code> = T coordinate for point <i>pt</i><br>
+         */
+        public static double[] toDoubleArray(Point4D.Double[] input)
+        {
+            final double[] result = new double[input.length * 4];
+
+            int off = 0;
+            for (Point4D.Double pt : input)
+            {
+                result[off++] = pt.x;
+                result[off++] = pt.y;
+                result[off++] = pt.z;
+                result[off++] = pt.t;
+            }
+
+            return result;
+        }
+
         public double x;
         public double y;
         public double z;
@@ -270,6 +317,53 @@ public abstract class Point4D implements Cloneable
 
     public static class Float extends Point4D
     {
+        /**
+         * Create an array of Point4D.Float from the input float array.<br>
+         * <br>
+         * The format of the input array should be as follow:<br>
+         * <code>input.lenght</code> = number of point * 4.<br>
+         * <code>input[(pt * 4) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 4) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 4) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 4) + 3]</code> = T coordinate for point <i>pt</i><br>
+         */
+        public static Point4D.Float[] toPoint4D(float[] input)
+        {
+            final Point4D.Float[] result = new Point4D.Float[input.length / 4];
+
+            int pt = 0;
+            for (int i = 0; i < input.length; i += 4)
+                result[pt++] = new Point4D.Float(input[i + 0], input[i + 1], input[i + 2], input[i + 3]);
+
+            return result;
+        }
+
+        /**
+         * Create an array of float from the input Point4D.Float array.<br>
+         * <br>
+         * The format of the output array is as follow:<br>
+         * <code>result.lenght</code> = number of point * 4.<br>
+         * <code>result[(pt * 4) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 4) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 4) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 4) + 3]</code> = T coordinate for point <i>pt</i><br>
+         */
+        public static float[] toFloatArray(Point4D.Float[] input)
+        {
+            final float[] result = new float[input.length * 4];
+
+            int off = 0;
+            for (Point4D.Float pt : input)
+            {
+                result[off++] = pt.x;
+                result[off++] = pt.y;
+                result[off++] = pt.z;
+                result[off++] = pt.t;
+            }
+
+            return result;
+        }
+
         public float x;
         public float y;
         public float z;
@@ -377,6 +471,53 @@ public abstract class Point4D implements Cloneable
 
     public static class Integer extends Point4D
     {
+        /**
+         * Create an array of Point4D.Integer from the input integer array.<br>
+         * <br>
+         * The format of the input array should be as follow:<br>
+         * <code>input.lenght</code> = number of point * 4.<br>
+         * <code>input[(pt * 4) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 4) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 4) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 4) + 3]</code> = T coordinate for point <i>pt</i><br>
+         */
+        public static Point4D.Integer[] toPoint4D(int[] input)
+        {
+            final Point4D.Integer[] result = new Point4D.Integer[input.length / 4];
+
+            int pt = 0;
+            for (int i = 0; i < input.length; i += 4)
+                result[pt++] = new Point4D.Integer(input[i + 0], input[i + 1], input[i + 2], input[i + 3]);
+
+            return result;
+        }
+
+        /**
+         * Create an array of integer from the input Point4D.Integer array.<br>
+         * <br>
+         * The format of the output array is as follow:<br>
+         * <code>result.lenght</code> = number of point * 4.<br>
+         * <code>result[(pt * 4) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 4) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 4) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 4) + 3]</code> = T coordinate for point <i>pt</i><br>
+         */
+        public static int[] toIntegerArray(Point4D.Integer[] input)
+        {
+            final int[] result = new int[input.length * 4];
+
+            int off = 0;
+            for (Point4D.Integer pt : input)
+            {
+                result[off++] = pt.x;
+                result[off++] = pt.y;
+                result[off++] = pt.z;
+                result[off++] = pt.t;
+            }
+
+            return result;
+        }
+
         public int x;
         public int y;
         public int z;

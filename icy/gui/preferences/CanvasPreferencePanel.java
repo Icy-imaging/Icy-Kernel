@@ -54,8 +54,8 @@ public class CanvasPreferencePanel extends PreferencePanel
     {
         super(parent, NODE_NAME, PreferenceFrame.NODE_NAME);
 
-        filteringCheckBox = new JCheckBox("Enable filtering");
-        filteringCheckBox.setToolTipText("Enable image filtering to improve image quality");
+        filteringCheckBox = new JCheckBox("Enable image filtering");
+        filteringCheckBox.setToolTipText("Enable image filtering to improve rendering quality");
         invertWheelAxisCheckBox = new JCheckBox("Invert mouse wheel axis");
         invertWheelAxisCheckBox.setToolTipText("Invert the mouse wheel axis for canvas operation");
         wheelAxisSensitivity = new JSpinner(new SpinnerNumberModel(5d, 1d, 10d, 0.5d));

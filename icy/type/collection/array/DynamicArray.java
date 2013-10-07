@@ -29,18 +29,22 @@ import java.util.List;
  */
 public abstract class DynamicArray
 {
-    // MUST BE A POWER OF 2
-    public static final int BLOCK_SIZE = 1 << 16;
-
     /**
-     * Create a DynamicArray with specified type
+     * Create a DynamicArray with specified type.<br>
+     * 
+     * @param type
+     *        DataType of the dynamic array object.
+     * @param granularity
+     *        Accepted values go from 0 to 8 where lower value mean less memory used but more
+     *        allocation time where higher mean more memory used but less allocation time (default =
+     *        4).
      */
-    public static DynamicArray create(DataType type)
+    public static DynamicArray create(DataType type, int granularity)
     {
         switch (type.getJavaType())
         {
             case BYTE:
-                return new DynamicArray.Byte();
+                return new DynamicArray.Byte(granularity);
             case SHORT:
                 return new DynamicArray.Short();
             case INT:
@@ -54,6 +58,14 @@ public abstract class DynamicArray
             default:
                 return null;
         }
+    }
+
+    /**
+     * Create a DynamicArray with specified type
+     */
+    public static DynamicArray create(DataType type)
+    {
+        return create(type, 4);
     }
 
     /**
@@ -96,6 +108,28 @@ public abstract class DynamicArray
 
     public static class Byte extends DynamicArray
     {
+        /**
+         * Create a Byte DynamicArray.<br>
+         * 
+         * @param granularity
+         *        Accepted values go from 0 to 8 where lower value mean less memory used but more
+         *        allocation time where higher mean more memory used but less allocation time
+         *        (default =
+         *        4).
+         */
+        public Byte(int granularity)
+        {
+            super(granularity);
+        }
+
+        /**
+         * Create a Byte DynamicArray.
+         */
+        public Byte()
+        {
+            super();
+        }
+
         public void addSingle(byte value)
         {
             final ArrayBlock block = getAvailableBlock(true);
@@ -123,6 +157,28 @@ public abstract class DynamicArray
 
     public static class Short extends DynamicArray
     {
+        /**
+         * Create a Short DynamicArray.<br>
+         * 
+         * @param granularity
+         *        Accepted values go from 0 to 8 where lower value mean less memory used but more
+         *        allocation time where higher mean more memory used but less allocation time
+         *        (default =
+         *        4).
+         */
+        public Short(int granularity)
+        {
+            super(granularity);
+        }
+
+        /**
+         * Create a Short DynamicArray.
+         */
+        public Short()
+        {
+            super();
+        }
+
         public void addSingle(short value)
         {
             final ArrayBlock block = getAvailableBlock(true);
@@ -150,6 +206,28 @@ public abstract class DynamicArray
 
     public static class Int extends DynamicArray
     {
+        /**
+         * Create a Integer DynamicArray.<br>
+         * 
+         * @param granularity
+         *        Accepted values go from 0 to 8 where lower value mean less memory used but more
+         *        allocation time where higher mean more memory used but less allocation time
+         *        (default =
+         *        4).
+         */
+        public Int(int granularity)
+        {
+            super(granularity);
+        }
+
+        /**
+         * Create a Integer DynamicArray.
+         */
+        public Int()
+        {
+            super();
+        }
+
         public void addSingle(int value)
         {
             final ArrayBlock block = getAvailableBlock(true);
@@ -177,6 +255,28 @@ public abstract class DynamicArray
 
     public static class Long extends DynamicArray
     {
+        /**
+         * Create a Long DynamicArray.<br>
+         * 
+         * @param granularity
+         *        Accepted values go from 0 to 8 where lower value mean less memory used but more
+         *        allocation time where higher mean more memory used but less allocation time
+         *        (default =
+         *        4).
+         */
+        public Long(int granularity)
+        {
+            super(granularity);
+        }
+
+        /**
+         * Create a Long DynamicArray.
+         */
+        public Long()
+        {
+            super();
+        }
+
         public void addSingle(long value)
         {
             final ArrayBlock block = getAvailableBlock(true);
@@ -204,6 +304,28 @@ public abstract class DynamicArray
 
     public static class Float extends DynamicArray
     {
+        /**
+         * Create a Float DynamicArray.<br>
+         * 
+         * @param granularity
+         *        Accepted values go from 0 to 8 where lower value mean less memory used but more
+         *        allocation time where higher mean more memory used but less allocation time
+         *        (default =
+         *        4).
+         */
+        public Float(int granularity)
+        {
+            super(granularity);
+        }
+
+        /**
+         * Create a Float DynamicArray.
+         */
+        public Float()
+        {
+            super();
+        }
+
         public void addSingle(float value)
         {
             final ArrayBlock block = getAvailableBlock(true);
@@ -231,6 +353,28 @@ public abstract class DynamicArray
 
     public static class Double extends DynamicArray
     {
+        /**
+         * Create a Double DynamicArray.<br>
+         * 
+         * @param granularity
+         *        Accepted values go from 0 to 8 where lower value mean less memory used but more
+         *        allocation time where higher mean more memory used but less allocation time
+         *        (default =
+         *        4).
+         */
+        public Double(int granularity)
+        {
+            super(granularity);
+        }
+
+        /**
+         * Create a Double DynamicArray.
+         */
+        public Double()
+        {
+            super();
+        }
+
         public void addSingle(double value)
         {
             final ArrayBlock block = getAvailableBlock(true);
@@ -265,7 +409,7 @@ public abstract class DynamicArray
         {
             super();
 
-            array = createArray(BLOCK_SIZE);
+            array = createArray(blockSize);
             size = 0;
         }
 
@@ -283,11 +427,20 @@ public abstract class DynamicArray
         }
 
         /**
-         * @return the free space
+         * @deprecated USe {@link #getAvailable()} instead.
          */
+        @Deprecated
         public int getFreeSpace()
         {
-            return BLOCK_SIZE - getSize();
+            return getAvailable();
+        }
+
+        /**
+         * @return the available space
+         */
+        public int getAvailable()
+        {
+            return blockSize - getSize();
         }
 
         protected void get(Object out, int inOffset, int outOffset, int len)
@@ -308,13 +461,21 @@ public abstract class DynamicArray
         }
     }
 
+    // blockSize is a power of 2
+    final int blockSize;
     private final List<ArrayBlock> blocks;
 
-    public DynamicArray()
+    DynamicArray(int granularity)
     {
         super();
 
+        blockSize = 1 << (8 + Math.min(Math.max(granularity, 0), 8));
         blocks = new ArrayList<ArrayBlock>();
+    }
+
+    DynamicArray()
+    {
+        this(4);
     }
 
     protected abstract Object createArray(int size);
@@ -357,7 +518,7 @@ public abstract class DynamicArray
 
     public int getCapacity()
     {
-        return blocks.size() * BLOCK_SIZE;
+        return blocks.size() * blockSize;
     }
 
     public int getSize()
@@ -367,7 +528,7 @@ public abstract class DynamicArray
         if (lastBlockIndex < 0)
             return 0;
 
-        return (BLOCK_SIZE * lastBlockIndex) + blocks.get(lastBlockIndex).getSize();
+        return (blockSize * lastBlockIndex) + blocks.get(lastBlockIndex).getSize();
     }
 
     protected int getLastBlockIndex()
@@ -387,7 +548,7 @@ public abstract class DynamicArray
 
     protected ArrayBlock getBlockFromOffset(int offset)
     {
-        final int blockIndex = offset / BLOCK_SIZE;
+        final int blockIndex = offset / blockSize;
 
         if (blockIndex < blocks.size())
             return blocks.get(blockIndex);
@@ -400,7 +561,7 @@ public abstract class DynamicArray
         final ArrayBlock lastBlock = getLastBlock();
 
         // last block exist and has free space ? --> return it
-        if ((lastBlock != null) && (lastBlock.getFreeSpace() > 0))
+        if ((lastBlock != null) && (lastBlock.getAvailable() > 0))
             return lastBlock;
 
         if (create)
@@ -423,10 +584,10 @@ public abstract class DynamicArray
         {
             final ArrayBlock block = addBlock();
             // set block size
-            block.size = BLOCK_SIZE;
+            block.size = blockSize;
         }
         // remove blocks if needed
-        while ((getCapacity() - BLOCK_SIZE) > size)
+        while ((getCapacity() - blockSize) > size)
             removeBlock();
 
         // adjust last block size if needed
@@ -454,8 +615,8 @@ public abstract class DynamicArray
         while (cnt > 0)
         {
             final ArrayBlock block = getBlockFromOffset(srcOffset);
-            final int subSrcOffset = srcOffset & (BLOCK_SIZE - 1);
-            final int subLen = Math.min(BLOCK_SIZE - subSrcOffset, cnt);
+            final int subSrcOffset = srcOffset & (blockSize - 1);
+            final int subLen = Math.min(blockSize - subSrcOffset, cnt);
 
             block.get(out, subSrcOffset, dstOffset, subLen);
             srcOffset += subLen;
@@ -471,7 +632,7 @@ public abstract class DynamicArray
         while (cnt > 0)
         {
             final ArrayBlock block = getAvailableBlock(true);
-            final int blockSpace = block.getFreeSpace();
+            final int blockSpace = block.getAvailable();
             final int toCopy = Math.min(blockSpace, cnt);
 
             block.add(in, offset, toCopy);
@@ -490,8 +651,8 @@ public abstract class DynamicArray
         while (cnt > 0)
         {
             final ArrayBlock block = getBlockFromOffset(dstOffset);
-            final int subDstOffset = dstOffset & (BLOCK_SIZE - 1);
-            final int subLen = Math.min(BLOCK_SIZE - subDstOffset, cnt);
+            final int subDstOffset = dstOffset & (blockSize - 1);
+            final int subLen = Math.min(blockSize - subDstOffset, cnt);
 
             block.put(in, srcOffset, subDstOffset, subLen);
             srcOffset += subLen;

@@ -1,12 +1,10 @@
 package icy.roi;
 
+import icy.type.collection.array.DynamicArray;
 import icy.type.point.Point3D;
 import icy.type.rectangle.Rectangle3D;
 
-import java.awt.Point;
 import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -565,7 +563,8 @@ public class BooleanMask3D implements Cloneable
     }
 
     /**
-     * Return true if mask intersects (contains at least one point) the specified 2D mask at position Z.
+     * Return true if mask intersects (contains at least one point) the specified 2D mask at
+     * position Z.
      */
     public boolean intersects(BooleanMask2D booleanMask, int z)
     {
@@ -779,24 +778,79 @@ public class BooleanMask3D implements Cloneable
         }
     }
 
+    int[] toInt3D(int[] source2D, int z)
+    {
+        final int[] result = new int[(source2D.length * 3) / 2];
+
+        int pt = 0;
+        for (int i = 0; i < source2D.length; i += 2)
+        {
+            result[pt++] = source2D[i + 0];
+            result[pt++] = source2D[i + 1];
+            result[pt++] = z;
+        }
+
+        return result;
+    }
+
+ 
     /**
      * Return an array of {@link icy.type.point.Point3D.Integer} containing the edge/surface points
      * of the 3D mask.<br>
-     * Points are returned in ascending XYZ order.
+     * Points are returned in ascending XYZ order. <br>
+     * <br>
+     * WARNING: The basic implementation is not totally accurate.<br>
+     * It returns all points from the first and the last Z slices + edge points for intermediate Z
+     * slices.
+     * 
+     * @see #getEdgePointsAsIntArray()
      */
     public Point3D.Integer[] getEdgePoints()
     {
-        final List<Point3D.Integer> points = new ArrayList<Point3D.Integer>(1024);
+        return Point3D.Integer.toPoint3D(getEdgePointsAsIntArray());
+    }
 
-        for (Entry<Integer, BooleanMask2D> entry : mask.entrySet())
+    /**
+     * Return an array of integer containing the edge/surface points of the 3D mask.<br>
+     * <code>result.length</code> = number of point * 3<br>
+     * <code>result[(pt * 3) + 0]</code> = X coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 3) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 3) + 2]</code> = Z coordinate for point <i>pt</i>.<br>
+     * Points are returned in ascending XYZ order.<br>
+     * <br>
+     * WARNING: The basic implementation is not totally accurate.<br>
+     * It returns all points from the first and the last Z slices + edge points for intermediate Z
+     * slices.
+     * 
+     * @see #getEdgePoints()
+     */
+    public int[] getEdgePointsAsIntArray()
+    {
+        final DynamicArray.Int result = new DynamicArray.Int(8);
+
+        // perimeter = first slice volume + inter slices perimeter + last slice volume
+        // TODO: fix this method and use real 3D edge point
+        if (mask.size() <= 2)
         {
-            final int z = entry.getKey().intValue();
+            for (Entry<Integer, BooleanMask2D> entry : mask.entrySet())
+                result.add(toInt3D(entry.getValue().getPointsAsIntArray(), entry.getKey().intValue()));
+        }
+        else
+        {
+            final Entry<Integer, BooleanMask2D> firstEntry = mask.firstEntry();
+            final Entry<Integer, BooleanMask2D> lastEntry = mask.lastEntry();
+            final Integer firstKey = firstEntry.getKey();
+            final Integer lastKey = lastEntry.getKey();
 
-            for (Point pt : entry.getValue().getEdgePoints())
-                points.add(new Point3D.Integer(pt.x, pt.y, z));
+            result.add(toInt3D(firstEntry.getValue().getPointsAsIntArray(), firstKey.intValue()));
+
+            for (Entry<Integer, BooleanMask2D> entry : mask.subMap(firstKey, false, lastKey, false).entrySet())
+                result.add(toInt3D(entry.getValue().getEdgePointsAsIntArray(), entry.getKey().intValue()));
+
+            result.add(toInt3D(lastEntry.getValue().getPointsAsIntArray(), lastKey.intValue()));
         }
 
-        return points.toArray(new Point3D.Integer[points.size()]);
+        return result.asArray();
     }
 
     /**
@@ -806,17 +860,25 @@ public class BooleanMask3D implements Cloneable
      */
     public Point3D.Integer[] getPoints()
     {
-        final List<Point3D.Integer> points = new ArrayList<Point3D.Integer>(1024);
+        return Point3D.Integer.toPoint3D(getPointsAsIntArray());
+    }
+
+    /**
+     * Return an array of integer representing all points of the current 3D mask.<br>
+     * <code>result.length</code> = number of point * 3<br>
+     * <code>result[(pt * 3) + 0]</code> = X coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 3) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 3) + 2]</code> = Z coordinate for point <i>pt</i>.<br>
+     * Points are returned in ascending XYZ order.
+     */
+    public int[] getPointsAsIntArray()
+    {
+        final DynamicArray.Int result = new DynamicArray.Int(8);
 
         for (Entry<Integer, BooleanMask2D> entry : mask.entrySet())
-        {
-            final int z = entry.getKey().intValue();
+            result.add(toInt3D(entry.getValue().getPointsAsIntArray(), entry.getKey().intValue()));
 
-            for (Point pt : entry.getValue().getPoints())
-                points.add(new Point3D.Integer(pt.x, pt.y, z));
-        }
-
-        return points.toArray(new Point3D.Integer[points.size()]);
+        return result.asArray();
     }
 
     @Override

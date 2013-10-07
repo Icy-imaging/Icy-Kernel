@@ -27,8 +27,6 @@ import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.roi.ROI;
-import icy.roi.ROI2D;
-import icy.roi.ROI2DRectangle;
 import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
 import icy.system.SystemUtil;
@@ -44,6 +42,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.w3c.dom.Document;
+
+import plugins.kernel.roi.roi2d.ROI2DRectangle;
 
 /**
  * Roi actions (open / save / copy / paste / merge...)
@@ -488,15 +488,14 @@ public class RoiActions
                 try
                 {
                     final List<ROI> selectedROI = roisPanel.getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
 
                     // NOT work only on single ROI
-                    if (selectedROI2D.length != 1)
+                    if (selectedROI.size() != 1)
                         return false;
 
                     // we do the NOT operation by subtracting current ROI to sequence bounds ROI
-                    final ROI mergeROI = ROI2D.subtract(new ROI2DRectangle(sequence.getBounds()), selectedROI2D[0]);
+                    final ROI mergeROI = ROIUtil.subtract(new ROI2DRectangle(sequence.getBounds2D()),
+                            selectedROI.get(0));
                     mergeROI.setName("Inverse");
 
                     sequence.addROI(mergeROI);
@@ -676,14 +675,12 @@ public class RoiActions
                 try
                 {
                     final List<ROI> selectedROI = roisPanel.getSelectedRois();
-                    // only ROI2D supported now
-                    final ROI2D[] selectedROI2D = ROI2D.getROI2DList(selectedROI.toArray(new ROI[selectedROI.size()]));
 
                     // Subtraction work only when 2 ROI are selected
-                    if (selectedROI2D.length != 2)
+                    if (selectedROI.size() != 2)
                         return false;
 
-                    final ROI mergeROI = ROI2D.subtract(selectedROI2D[0], selectedROI2D[1]);
+                    final ROI mergeROI = ROIUtil.subtract(selectedROI.get(0), selectedROI.get(1));
 
                     sequence.addROI(mergeROI);
                     sequence.setSelectedROI(mergeROI);

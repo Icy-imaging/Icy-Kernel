@@ -20,6 +20,7 @@
 package icy.plugin.classloader;
 
 import icy.plugin.classloader.exception.JclException;
+import icy.system.IcyExceptionHandler;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -108,12 +109,20 @@ public class JarResources
         // only support JAR resource here
         if (url.getProtocol().equalsIgnoreCase(("jar")))
         {
-            final byte content[] = loadJarContent(url);
-
-            if (content != null)
+            try
             {
-                setResourceContent(name, content);
-                return true;
+                final byte[] content = loadJarContent(url);
+
+                if (content != null)
+                {
+                    setResourceContent(name, content);
+                    return true;
+                }
+            }
+            catch (IOException e)
+            {
+                System.err.print("JarResources.loadJarContent(" + url + ") error:");
+                IcyExceptionHandler.showErrorMessage(e, false, true);
             }
         }
 
@@ -146,8 +155,10 @@ public class JarResources
 
     /**
      * Reads the specified jar file
+     * 
+     * @throws IOException
      */
-    public void loadJar(String jarFile)
+    public void loadJar(String jarFile) throws IOException
     {
         if (logger.isLoggable(Level.FINEST))
             logger.finest("Loading jar: " + jarFile);
@@ -158,10 +169,6 @@ public class JarResources
             fis = new FileInputStream(jarFile);
             loadJar(new File(jarFile).toURI().toURL(), fis);
         }
-        catch (IOException e)
-        {
-            throw new JclException(e);
-        }
         finally
         {
             if (fis != null)
@@ -171,15 +178,19 @@ public class JarResources
                 }
                 catch (IOException e)
                 {
-                    throw new JclException(e);
+                    // not important
+                    System.err.print("JarResources.loadJar(" + jarFile + ") error:");
+                    IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
         }
     }
 
     /**
      * Reads the jar file from a specified URL
+     * 
+     * @throws IOException
      */
-    public void loadJar(URL url)
+    public void loadJar(URL url) throws IOException
     {
         if (logger.isLoggable(Level.FINEST))
             logger.finest("Loading jar: " + url.toString());
@@ -190,10 +201,6 @@ public class JarResources
             in = url.openStream();
             loadJar(url, in);
         }
-        catch (IOException e)
-        {
-            throw new JclException(e);
-        }
         finally
         {
             if (in != null)
@@ -203,15 +210,19 @@ public class JarResources
                 }
                 catch (IOException e)
                 {
-                    throw new JclException(e);
+                    // not important
+                    System.err.print("JarResources.loadJar(" + url + ") error:");
+                    IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
         }
     }
 
     /**
      * Load the jar from InputStream
+     * 
+     * @throws IOException
      */
-    public void loadJar(URL baseUrl, InputStream jarStream)
+    public void loadJar(URL baseUrl, InputStream jarStream) throws IOException
     {
         BufferedInputStream bis = null;
         JarInputStream jis = null;
@@ -246,10 +257,6 @@ public class JarResources
                 jarEntryUrls.put(jarEntry.getName(), new URL("jar:" + baseUrl.toString() + "!/" + jarEntry.getName()));
             }
         }
-        catch (IOException e)
-        {
-            throw new JclException(e);
-        }
         catch (NullPointerException e)
         {
             if (logger.isLoggable(Level.FINEST))
@@ -264,7 +271,9 @@ public class JarResources
                 }
                 catch (IOException e)
                 {
-                    throw new JclException(e);
+                    // not important
+                    System.err.print("JarResources.loadJar(" + baseUrl + "," + jarStream + ") error:");
+                    IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
 
             if (bis != null)
@@ -274,15 +283,19 @@ public class JarResources
                 }
                 catch (IOException e)
                 {
-                    throw new JclException(e);
+                    // not important
+                    System.err.print("JarResources.loadJar(" + baseUrl + "," + jarStream + ") error:");
+                    IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
         }
     }
 
     /**
      * Load the jar contents from InputStream
+     * 
+     * @throws IOException
      */
-    protected byte[] loadJarContent(URL url)
+    protected byte[] loadJarContent(URL url) throws IOException
     {
         InputStream in = null;
         BufferedInputStream bis = null;
@@ -353,11 +366,10 @@ public class JarResources
                 return out.toByteArray();
             }
 
+            System.err.print("JarResources.loadJarContent(" + url.toString() + ") error: Can't find '" + resname
+                    + "' in JAR file");
+
             return null;
-        }
-        catch (IOException e)
-        {
-            throw new JclException(e);
         }
         finally
         {
@@ -368,7 +380,9 @@ public class JarResources
                 }
                 catch (IOException e)
                 {
-                    throw new JclException(e);
+                    // file close error is not that much important
+                    System.err.print("JarResources.loadJarContent(" + url.toString() + ") error:");
+                    IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
 
             if (in != null)
@@ -378,7 +392,9 @@ public class JarResources
                 }
                 catch (IOException e)
                 {
-                    throw new JclException(e);
+                    // file close error is not that much important
+                    System.err.print("JarResources.loadJarContent(" + url.toString() + ") error:");
+                    IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
 
             if (jf != null)
@@ -388,7 +404,9 @@ public class JarResources
                 }
                 catch (IOException e)
                 {
-                    throw new JclException(e);
+                    // file close error is not that much important
+                    System.err.print("JarResources.loadJarContent(" + url.toString() + ") error:");
+                    IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
         }
     }

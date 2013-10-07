@@ -19,6 +19,7 @@
 package plugins.kernel.roi.roi2d;
 
 import icy.math.ArrayMath;
+import icy.resource.ResourceUtil;
 import icy.type.point.Point5D;
 
 import java.awt.geom.Ellipse2D;
@@ -44,7 +45,9 @@ public class ROI2DEllipse extends ROI2DRectShape
     {
         super(new Ellipse2D.Double(), topLeft, bottomRight);
 
+        // set name and icon
         setName("Ellipse2D");
+        setIcon(ResourceUtil.ICON_ROI_OVAL);
     }
 
     /**
@@ -95,6 +98,7 @@ public class ROI2DEllipse extends ROI2DRectShape
     public ROI2DEllipse(Point5D pt)
     {
         this(pt.toPoint2D());
+        getOverlay().setMousePos(pt);
     }
 
     public ROI2DEllipse()

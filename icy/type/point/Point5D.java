@@ -179,12 +179,61 @@ public abstract class Point5D implements Cloneable
     @Override
     public String toString()
     {
-        return getClass().getName() + "[" + getX() + "," + getY() + "," + getZ() + ", " + getT() + "," + getC()
-                + "]";
+        return getClass().getName() + "[" + getX() + "," + getY() + "," + getZ() + ", " + getT() + "," + getC() + "]";
     }
 
     public static class Double extends Point5D
     {
+        /**
+         * Create an array of Point5D.Double from the input double array.<br>
+         * <br>
+         * The format of the input array should be as follow:<br>
+         * <code>input.lenght</code> = number of point * 5.<br>
+         * <code>input[(pt * 5) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 5) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 5) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 5) + 3]</code> = T coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 5) + 4]</code> = C coordinate for point <i>pt</i><br>
+         */
+        public static Point5D.Double[] toPoint5D(double[] input)
+        {
+            final Point5D.Double[] result = new Point5D.Double[input.length / 5];
+
+            int pt = 0;
+            for (int i = 0; i < input.length; i += 5)
+                result[pt++] = new Point5D.Double(input[i + 0], input[i + 1], input[i + 2], input[i + 3], input[i + 4]);
+
+            return result;
+        }
+
+        /**
+         * Create an array of double from the input Point5D.Double array.<br>
+         * <br>
+         * The format of the output array is as follow:<br>
+         * <code>result.lenght</code> = number of point * 5.<br>
+         * <code>result[(pt * 5) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 5) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 5) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 5) + 3]</code> = T coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 5) + 4]</code> = C coordinate for point <i>pt</i><br>
+         */
+        public static double[] toDoubleArray(Point5D.Double[] input)
+        {
+            final double[] result = new double[input.length * 5];
+
+            int off = 0;
+            for (Point5D.Double pt : input)
+            {
+                result[off++] = pt.x;
+                result[off++] = pt.y;
+                result[off++] = pt.z;
+                result[off++] = pt.t;
+                result[off++] = pt.c;
+            }
+
+            return result;
+        }
+
         public double x;
         public double y;
         public double z;
@@ -314,6 +363,56 @@ public abstract class Point5D implements Cloneable
 
     public static class Float extends Point5D
     {
+        /**
+         * Create an array of Point5D.Float from the input float array.<br>
+         * <br>
+         * The format of the input array should be as follow:<br>
+         * <code>input.lenght</code> = number of point * 5.<br>
+         * <code>input[(pt * 5) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 5) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 5) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 5) + 3]</code> = T coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 5) + 4]</code> = C coordinate for point <i>pt</i><br>
+         */
+        public static Point5D.Float[] toPoint5D(float[] input)
+        {
+            final Point5D.Float[] result = new Point5D.Float[input.length / 5];
+
+            int pt = 0;
+            for (int i = 0; i < input.length; i += 5)
+                result[pt++] = new Point5D.Float(input[i + 0], input[i + 1], input[i + 2], input[i + 3], input[i + 4]);
+
+            return result;
+        }
+
+        /**
+         * Create an array of float from the input Point5D.Float array.<br>
+         * <br>
+         * The format of the output array is as follow:<br>
+         * <code>result.lenght</code> = number of point * 5.<br>
+         * <code>result[(pt * 5) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 5) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 5) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 5) + 3]</code> = T coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 5) + 4]</code> = C coordinate for point <i>pt</i><br>
+         */
+        public static float[] toFloatArray(Point5D.Float[] input)
+        {
+            final float[] result = new float[input.length * 5];
+
+            int off = 0;
+            for (Point5D.Float pt : input)
+            {
+                result[off++] = pt.x;
+                result[off++] = pt.y;
+                result[off++] = pt.z;
+                result[off++] = pt.t;
+                result[off++] = pt.c;
+            }
+
+            return result;
+        }
+
         public float x;
         public float y;
         public float z;
@@ -443,6 +542,56 @@ public abstract class Point5D implements Cloneable
 
     public static class Integer extends Point5D
     {
+        /**
+         * Create an array of Point5D.Integer from the input integer array.<br>
+         * <br>
+         * The format of the input array should be as follow:<br>
+         * <code>input.lenght</code> = number of point * 5.<br>
+         * <code>input[(pt * 5) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 5) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 5) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 5) + 3]</code> = T coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 5) + 4]</code> = C coordinate for point <i>pt</i><br>
+         */
+        public static Point5D.Integer[] toPoint5D(int[] input)
+        {
+            final Point5D.Integer[] result = new Point5D.Integer[input.length / 5];
+
+            int pt = 0;
+            for (int i = 0; i < input.length; i += 5)
+                result[pt++] = new Point5D.Integer(input[i + 0], input[i + 1], input[i + 2], input[i + 3], input[i + 4]);
+
+            return result;
+        }
+
+        /**
+         * Create an array of integer from the input Point5D.Integer array.<br>
+         * <br>
+         * The format of the output array is as follow:<br>
+         * <code>result.lenght</code> = number of point * 5.<br>
+         * <code>result[(pt * 5) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 5) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 5) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 5) + 3]</code> = T coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 5) + 4]</code> = C coordinate for point <i>pt</i><br>
+         */
+        public static int[] toIntegerArray(Point5D.Integer[] input)
+        {
+            final int[] result = new int[input.length * 5];
+
+            int off = 0;
+            for (Point5D.Integer pt : input)
+            {
+                result[off++] = pt.x;
+                result[off++] = pt.y;
+                result[off++] = pt.z;
+                result[off++] = pt.t;
+                result[off++] = pt.c;
+            }
+
+            return result;
+        }
+
         public int x;
         public int y;
         public int z;

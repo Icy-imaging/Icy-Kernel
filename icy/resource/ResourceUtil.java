@@ -134,6 +134,15 @@ public class ResourceUtil
     public static final Image ICON_LAYER_REMOVE_ADV_V = ResourceUtil.getAlphaIconAsImage("layers_remove_adv_v.png");
     public static final Image ICON_LAYER_ADJUST_HV = ResourceUtil.getAlphaIconAsImage("layers_adjust_hv.png");
 
+    public static final Image ICON_ROI = ResourceUtil.getAlphaIconAsImage("roi.png");
+    public static final Image ICON_ROI_POINT = ResourceUtil.getAlphaIconAsImage("roi_point.png");
+    public static final Image ICON_ROI_LINE = ResourceUtil.getAlphaIconAsImage("roi_line.png");
+    public static final Image ICON_ROI_OVAL = ResourceUtil.getAlphaIconAsImage("roi_oval.png");
+    public static final Image ICON_ROI_POLYLINE = ResourceUtil.getAlphaIconAsImage("roi_polyline.png");
+    public static final Image ICON_ROI_POLYGON = ResourceUtil.getAlphaIconAsImage("roi_polygon.png");
+    public static final Image ICON_ROI_RECTANGLE = ResourceUtil.getAlphaIconAsImage("roi_rectangle.png");
+    public static final Image ICON_ROI_AREA = ResourceUtil.getAlphaIconAsImage("roi_area.png");
+
     public static final Image ICON_ROI_NOT = ResourceUtil.getAlphaIconAsImage("roi_not.png");
     public static final Image ICON_ROI_OR = ResourceUtil.getAlphaIconAsImage("roi_or.png");
     public static final Image ICON_ROI_AND = ResourceUtil.getAlphaIconAsImage("roi_and.png");

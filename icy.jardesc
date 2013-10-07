@@ -96,9 +96,9 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.classloader"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.itk"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.roi"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.roi.roi2d"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.script"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.lut.abstract_"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.roi.roi2d"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.roi.roi2d.plugin"/>
     </selectedElements>
 </jardesc>

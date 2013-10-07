@@ -79,8 +79,8 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
         // main panels
         sequencePanel = new SequencePanel();
         // final JPanel pluginsPanel = new PluginsPanel();
-        roisPanel = new RoisPanel(true, true);
-        layersPanel = new LayersPanel(true, true);
+        roisPanel = new RoisPanel();
+        layersPanel = new LayersPanel();
         historyPanel = new UndoManagerPanel();
         outputConsolePanel = new OutputConsolePanel();
         chatPanel = new ChatPanel();

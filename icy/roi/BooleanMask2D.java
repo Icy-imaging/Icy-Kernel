@@ -18,6 +18,9 @@
  */
 package icy.roi;
 
+import icy.type.TypeUtil;
+import icy.type.collection.array.DynamicArray;
+
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -36,23 +39,24 @@ public class BooleanMask2D implements Cloneable
 {
     private static class Component
     {
-        public List<Point> pixels;
+        public DynamicArray.Int points;
         public List<Component> children;
         private Component root;
 
         public Component()
         {
-            pixels = new ArrayList<Point>(256);
+            points = new DynamicArray.Int(0);
             children = new ArrayList<Component>();
             root = this;
         }
 
-        public void add(Point p)
+        public void addPoint(int x, int y)
         {
-            pixels.add(p);
+            points.addSingle(x);
+            points.addSingle(y);
         }
 
-        public void add(Component c)
+        public void addComponent(Component c)
         {
             final Component croot = c.root;
 
@@ -79,7 +83,7 @@ public class BooleanMask2D implements Cloneable
 
         public int getTotalSize()
         {
-            int result = pixels.size();
+            int result = points.getSize();
 
             final int size = children.size();
             for (int c = 0; c < size; c++)
@@ -88,28 +92,23 @@ public class BooleanMask2D implements Cloneable
             return result;
         }
 
-        public Point[] getAllPoints(Comparator<Point> comparator)
+        public int[] getAllPoints()
         {
-            final Point[] result = new Point[getTotalSize()];
+            final int[] result = new int[getTotalSize()];
 
             // get all point
             getAllPoints(result, 0);
 
-            // sort points
-            if (comparator != null)
-                Arrays.sort(result, comparator);
-
             return result;
         }
 
-        private int getAllPoints(Point[] result, int offset)
+        private int getAllPoints(int[] result, int offset)
         {
-            int size = pixels.size();
-            int off = offset;
+            final int[] intPoints = points.asArray();
 
-            for (int ind = 0; ind < size; ind++)
-                result[off++] = pixels.get(ind);
+            System.arraycopy(intPoints, 0, result, offset, intPoints.length);
 
+            int off = offset + intPoints.length;
             final int csize = children.size();
             for (int c = 0; c < csize; c++)
                 off = children.get(c).getAllPoints(result, off);
@@ -798,6 +797,58 @@ public class BooleanMask2D implements Cloneable
         }
     }
 
+    /**
+     * Build a new boolean mask from the specified array of integer representing points.<br>
+     * <br>
+     * The array should contains point coordinates defined as follow:<br>
+     * <code>result.length</code> = number of point * 2<br>
+     * <code>result[(pt * 2) + 0]</code> = X coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 2) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
+     */
+    public BooleanMask2D(int[] points)
+    {
+        super();
+
+        if ((points == null) || (points.length == 0))
+        {
+            bounds = new Rectangle();
+            mask = new boolean[0];
+        }
+        else
+        {
+            int minX = Integer.MAX_VALUE;
+            int minY = Integer.MAX_VALUE;
+            int maxX = Integer.MIN_VALUE;
+            int maxY = Integer.MIN_VALUE;
+
+            for (int i = 0; i < points.length; i += 2)
+            {
+                final int x = points[i + 0];
+                final int y = points[i + 1];
+
+                if (x < minX)
+                    minX = x;
+                if (x > maxX)
+                    maxX = x;
+                if (y < minY)
+                    minY = y;
+                if (y > maxY)
+                    maxY = y;
+            }
+
+            bounds = new Rectangle(minX, minY, (maxX - minX) + 1, (maxY - minY) + 1);
+            mask = new boolean[bounds.width * bounds.height];
+
+            for (int i = 0; i < points.length; i += 2)
+            {
+                final int x = points[i + 0];
+                final int y = points[i + 1];
+
+                mask[((y - minY) * bounds.width) + (x - minX)] = true;
+            }
+        }
+    }
+
     public BooleanMask2D()
     {
         this(new Rectangle(), new boolean[0]);
@@ -905,13 +956,34 @@ public class BooleanMask2D implements Cloneable
      *       78
      * Ymax   9
      * </pre>
+     * 
+     * @see #getPointsAsIntArray()
      */
     public Point[] getPoints()
     {
-        if (bounds.isEmpty())
-            return new Point[0];
+        return TypeUtil.toPoint(getPointsAsIntArray());
+    }
 
-        Point[] points = new Point[mask.length];
+    /**
+     * Return an array of integer representing all points of the current mask.<br>
+     * <code>result.length</code> = number of point * 2<br>
+     * <code>result[(pt * 2) + 0]</code> = X coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 2) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
+     * Points are returned in ascending XY order :
+     * 
+     * <pre>
+     * Ymin  12 
+     *      3456
+     *       78
+     * Ymax   9
+     * </pre>
+     */
+    public int[] getPointsAsIntArray()
+    {
+        if (bounds.isEmpty())
+            return new int[0];
+
+        int[] points = new int[mask.length * 2];
         final int maxx = bounds.x + bounds.width;
         final int maxy = bounds.y + bounds.height;
 
@@ -923,11 +995,14 @@ public class BooleanMask2D implements Cloneable
             {
                 // we have a component pixel
                 if (mask[off++])
-                    points[pt++] = new Point(x, y);
+                {
+                    points[pt++] = x;
+                    points[pt++] = y;
+                }
             }
         }
 
-        final Point[] result = new Point[pt];
+        final int[] result = new int[pt];
 
         System.arraycopy(points, 0, result, 0, pt);
 
@@ -978,7 +1053,7 @@ public class BooleanMask2D implements Cloneable
                     {
                         // mix component
                         if ((left != null) && (left != topleft))
-                            topleft.add(left);
+                            topleft.addComponent(left);
 
                         left = topleft;
                     }
@@ -986,7 +1061,7 @@ public class BooleanMask2D implements Cloneable
                     {
                         // mix component
                         if ((left != null) && (left != top))
-                            top.add(left);
+                            top.addComponent(left);
 
                         left = top;
                     }
@@ -998,13 +1073,13 @@ public class BooleanMask2D implements Cloneable
                     }
 
                     // add pixel to component
-                    left.add(new Point(x + minx, y + miny));
+                    left.addPoint(x + minx, y + miny);
                 }
                 else
                 {
                     // mix component
                     if ((left != null) && (top != null) && (left != top))
-                        top.add(left);
+                        top.addComponent(left);
 
                     left = null;
                 }
@@ -1019,7 +1094,7 @@ public class BooleanMask2D implements Cloneable
             currLine = pl;
         }
 
-        final ArrayList<Component> result = new ArrayList<Component>();
+        final List<Component> result = new ArrayList<Component>();
 
         // remove partial components
         for (Component component : components)
@@ -1032,7 +1107,7 @@ public class BooleanMask2D implements Cloneable
     /**
      * Compute and return a 2D array of {@link Point} representing points of each component of the
      * current mask.<br>
-     * A component is basically an isolated object which do not touch any other objects.<br>
+     * A component is basically an isolated object which do not touch any other object.<br>
      * <br>
      * The array is returned in the following format :<br>
      * <code>result.lenght</code> = number of component.<br>
@@ -1048,6 +1123,7 @@ public class BooleanMask2D implements Cloneable
      *       78
      * Ymax   9
      * </pre>
+     * @see #getComponentsPointsAsIntArray()
      */
     public Point[][] getComponentsPoints(boolean sorted)
     {
@@ -1075,12 +1151,49 @@ public class BooleanMask2D implements Cloneable
         else
             pointComparator = null;
 
+        final int[][] cPoints = getComponentsPointsAsIntArray();
+        final Point[][] cResult = new Point[cPoints.length][];
+
+        for (int i = 0; i < cPoints.length; i++)
+        {
+            final Point[] result = TypeUtil.toPoint(cPoints[i]);
+
+            // sort points
+            if (pointComparator != null)
+                Arrays.sort(result, pointComparator);
+
+            cResult[i] = result;
+        }
+
+        return cResult;
+    }
+
+    /**
+     * Compute and return a 2D array of integer representing points of each component of the
+     * current mask.<br>
+     * A component is basically an isolated object which do not touch any other object.<br>
+     * <br>
+     * The array is returned in the following format :<br>
+     * <code>result.lenght</code> = number of component.<br>
+     * <code>result[c].length</code> = number of point * 2 for component c.<br>
+     * <code>result[c][(pt * 2) + 0]</code> = X coordinate for point <i>pt</i> of component
+     * <i>c</i>.<br>
+     * <code>result[c][(pt * 2) + 1]</code> = Y coordinate for point <i>pt</i> of component
+     * <i>c</i>.<br>
+     * 
+     * @see #getComponentsPoints(boolean)
+     */
+    public int[][] getComponentsPointsAsIntArray()
+    {
+        if (bounds.isEmpty())
+            return new int[0][0];
+
         final List<Component> components = getComponentsPointsInternal();
-        final Point[][] result = new Point[components.size()][];
+        final int[][] result = new int[components.size()][];
 
         // convert list of point to Point array
         for (int i = 0; i < result.length; i++)
-            result[i] = components.get(i).getAllPoints(pointComparator);
+            result[i] = components.get(i).getAllPoints();
 
         return result;
     }
@@ -1095,11 +1208,11 @@ public class BooleanMask2D implements Cloneable
         if (bounds.isEmpty())
             return new BooleanMask2D[0];
 
-        final Point[][] componentsPoints = getComponentsPoints(false);
+        final int[][] componentsPoints = getComponentsPointsAsIntArray();
         final List<BooleanMask2D> result = new ArrayList<BooleanMask2D>();
 
         // convert array of point to boolean mask
-        for (Point[] componentPoints : componentsPoints)
+        for (int[] componentPoints : componentsPoints)
             result.add(new BooleanMask2D(componentPoints));
 
         return result.toArray(new BooleanMask2D[result.size()]);
@@ -1115,13 +1228,34 @@ public class BooleanMask2D implements Cloneable
      *  6 7
      *   89
      * </pre>
+     * 
+     * @see #getEdgePointsAsIntArray()
      */
     public Point[] getEdgePoints()
     {
-        if (isEmpty())
-            return new Point[0];
+        return TypeUtil.toPoint(getEdgePointsAsIntArray());
+    }
 
-        final List<Point> points = new ArrayList<Point>(1024);
+    /**
+     * Return an array of integer containing the edge points of the mask.<br>
+     * <code>result.length</code> = number of point * 2<br>
+     * <code>result[(pt * 2) + 0]</code> = X coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 2) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
+     * Points are returned in ascending XY order:
+     * 
+     * <pre>
+     *  123 
+     *  4 5
+     *  6 7
+     *   89
+     * </pre>
+     */
+    public int[] getEdgePointsAsIntArray()
+    {
+        if (isEmpty())
+            return new int[0];
+
+        final int[] points = new int[mask.length * 2];
         final int h = bounds.height;
         final int w = bounds.width;
         final int maxx = bounds.x + (w - 1);
@@ -1135,12 +1269,16 @@ public class BooleanMask2D implements Cloneable
         boolean current;
 
         int offset = 0;
+        int pt = 0;
 
         // special case
         if ((w == 1) && (h == 1))
         {
             if (mask[0])
-                points.add(new Point(bounds.x, bounds.y));
+            {
+                points[pt++] = bounds.x;
+                points[pt++] = bounds.y;
+            }
         }
         else if (w == 1)
         {
@@ -1151,7 +1289,10 @@ public class BooleanMask2D implements Cloneable
 
             // current pixel is a border ?
             if (current && !(top && bottom))
-                points.add(new Point(bounds.x, bounds.y));
+            {
+                points[pt++] = bounds.x;
+                points[pt++] = bounds.y;
+            }
 
             // row
             for (int y = bounds.y + 1; y < maxy; y++)
@@ -1163,7 +1304,10 @@ public class BooleanMask2D implements Cloneable
 
                 // current pixel is a border ?
                 if (current && !(top && bottom))
-                    points.add(new Point(bounds.x, y));
+                {
+                    points[pt++] = bounds.x;
+                    points[pt++] = y;
+                }
             }
 
             // cache
@@ -1173,7 +1317,10 @@ public class BooleanMask2D implements Cloneable
 
             // current pixel is a border ?
             if (current && !(top && bottom))
-                points.add(new Point(bounds.x, maxy));
+            {
+                points[pt++] = bounds.x;
+                points[pt++] = maxy;
+            }
         }
         // special case
         else if (h == 1)
@@ -1185,7 +1332,10 @@ public class BooleanMask2D implements Cloneable
 
             // current pixel is a border ?
             if (current && !(left && right))
-                points.add(new Point(bounds.x, bounds.y));
+            {
+                points[pt++] = bounds.x;
+                points[pt++] = bounds.y;
+            }
 
             // line
             for (int x = bounds.x + 1; x < maxx; x++)
@@ -1197,7 +1347,10 @@ public class BooleanMask2D implements Cloneable
 
                 // current pixel is a border ?
                 if (current && !(left && right))
-                    points.add(new Point(x, bounds.y));
+                {
+                    points[pt++] = x;
+                    points[pt++] = bounds.y;
+                }
             }
 
             // last pixel of first line
@@ -1207,7 +1360,10 @@ public class BooleanMask2D implements Cloneable
 
             // current pixel is a border ?
             if (current && !(left && right))
-                points.add(new Point(maxx, bounds.y));
+            {
+                points[pt++] = maxx;
+                points[pt++] = bounds.y;
+            }
         }
         else
         {
@@ -1220,7 +1376,10 @@ public class BooleanMask2D implements Cloneable
 
             // current pixel is a border ?
             if (current && !(top && left && right && bottom))
-                points.add(new Point(bounds.x, bounds.y));
+            {
+                points[pt++] = bounds.x;
+                points[pt++] = bounds.y;
+            }
 
             // first line
             for (int x = bounds.x + 1; x < maxx; x++)
@@ -1233,7 +1392,10 @@ public class BooleanMask2D implements Cloneable
 
                 // current pixel is a border ?
                 if (current && !(top && left && right && bottom))
-                    points.add(new Point(x, bounds.y));
+                {
+                    points[pt++] = x;
+                    points[pt++] = bounds.y;
+                }
             }
 
             // last pixel of first line
@@ -1245,7 +1407,10 @@ public class BooleanMask2D implements Cloneable
 
             // current pixel is a border ?
             if (current && !(top && left && right && bottom))
-                points.add(new Point(maxx, bounds.y));
+            {
+                points[pt++] = maxx;
+                points[pt++] = bounds.y;
+            }
 
             for (int y = bounds.y + 1; y < maxy; y++)
             {
@@ -1258,7 +1423,10 @@ public class BooleanMask2D implements Cloneable
 
                 // current pixel is a border ?
                 if (current && !(top && left && right && bottom))
-                    points.add(new Point(bounds.x, y));
+                {
+                    points[pt++] = bounds.x;
+                    points[pt++] = y;
+                }
 
                 for (int x = bounds.x + 1; x < maxx; x++)
                 {
@@ -1271,7 +1439,10 @@ public class BooleanMask2D implements Cloneable
 
                     // current pixel is a border ?
                     if (current && !(top && left && right && bottom))
-                        points.add(new Point(x, y));
+                    {
+                        points[pt++] = x;
+                        points[pt++] = y;
+                    }
                 }
 
                 // last pixel of line
@@ -1284,7 +1455,10 @@ public class BooleanMask2D implements Cloneable
 
                 // current pixel is a border ?
                 if (current && !(top && left && right && bottom))
-                    points.add(new Point(maxx, y));
+                {
+                    points[pt++] = maxx;
+                    points[pt++] = y;
+                }
             }
 
             // first pixel of last line
@@ -1296,7 +1470,10 @@ public class BooleanMask2D implements Cloneable
 
             // current pixel is a border ?
             if (current && !(top && left && right && bottom))
-                points.add(new Point(bounds.x, maxy));
+            {
+                points[pt++] = bounds.x;
+                points[pt++] = maxy;
+            }
 
             // last line
             for (int x = bounds.x + 1; x < maxx; x++)
@@ -1309,7 +1486,10 @@ public class BooleanMask2D implements Cloneable
 
                 // current pixel is a border ?
                 if (current && !(top && left && right && bottom))
-                    points.add(new Point(x, maxy));
+                {
+                    points[pt++] = x;
+                    points[pt++] = maxy;
+                }
             }
 
             // last pixel of last line
@@ -1320,10 +1500,17 @@ public class BooleanMask2D implements Cloneable
 
             // current pixel is a border ?
             if (current && !(top && left && right && bottom))
-                points.add(new Point(maxx, maxy));
+            {
+                points[pt++] = maxx;
+                points[pt++] = maxy;
+            }
         }
 
-        return points.toArray(new Point[points.size()]);
+        final int[] result = new int[pt];
+
+        System.arraycopy(points, 0, result, 0, pt);
+
+        return result;
     }
 
     /**

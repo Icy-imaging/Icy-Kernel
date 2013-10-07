@@ -22,6 +22,7 @@ import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
+import icy.resource.ResourceUtil;
 import icy.roi.ROI;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
@@ -145,11 +146,13 @@ public class ROI2DPolyLine extends ROI2DShape
         // always select
         anchor.setSelected(true);
 
-        setMousePos(pt);
+        getOverlay().setMousePos(new Point5D.Double(pt.getX(), pt.getY(), -1d, -1d, -1d));
 
         updateShape();
 
+        // set name and icon
         setName("PolyLine2D");
+        setIcon(ResourceUtil.ICON_ROI_POLYLINE);
     }
 
     /**
@@ -158,6 +161,7 @@ public class ROI2DPolyLine extends ROI2DShape
     public ROI2DPolyLine(Point5D pt)
     {
         this(pt.toPoint2D());
+        getOverlay().setMousePos(pt);
     }
 
     public ROI2DPolyLine(Polygon polygon)
@@ -257,9 +261,15 @@ public class ROI2DPolyLine extends ROI2DShape
     }
 
     @Override
-    public double getPerimeter()
+    public double computeNumberOfEdgePoints()
     {
         return getTotalDistance(getPoints());
+    }
+
+    @Override
+    public double computeNumberOfPoints()
+    {
+        return 0d;
     }
 
     @Override
@@ -363,12 +373,6 @@ public class ROI2DPolyLine extends ROI2DShape
             result[i] = (maskData[i] != 0);
 
         return result;
-    }
-
-    @Override
-    public double getVolume()
-    {
-        return 0d;
     }
 
     @Override

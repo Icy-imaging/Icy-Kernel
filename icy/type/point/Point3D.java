@@ -143,6 +143,50 @@ public abstract class Point3D implements Cloneable
 
     public static class Double extends Point3D
     {
+        /**
+         * Create an array of Point3D.Double from the input double array.<br>
+         * <br>
+         * The format of the input array should be as follow:<br>
+         * <code>input.lenght</code> = number of point * 3.<br>
+         * <code>input[(pt * 3) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 3) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 3) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         */
+        public static Point3D.Double[] toPoint3D(double[] input)
+        {
+            final Point3D.Double[] result = new Point3D.Double[input.length / 3];
+
+            int pt = 0;
+            for (int i = 0; i < input.length; i += 3)
+                result[pt++] = new Point3D.Double(input[i + 0], input[i + 1], input[i + 2]);
+
+            return result;
+        }
+
+        /**
+         * Create an array of double from the input Point3D.Double array.<br>
+         * <br>
+         * The format of the output array is as follow:<br>
+         * <code>result.lenght</code> = number of point * 3.<br>
+         * <code>result[(pt * 3) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 3) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 3) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         */
+        public static double[] toDoubleArray(Point3D.Double[] input)
+        {
+            final double[] result = new double[input.length * 3];
+
+            int off = 0;
+            for (Point3D.Double pt : input)
+            {
+                result[off++] = pt.x;
+                result[off++] = pt.y;
+                result[off++] = pt.z;
+            }
+
+            return result;
+        }
+
         public double x;
         public double y;
         public double z;
@@ -232,6 +276,50 @@ public abstract class Point3D implements Cloneable
 
     public static class Float extends Point3D
     {
+        /**
+         * Create an array of Point3D.Float from the input float array.<br>
+         * <br>
+         * The format of the input array should be as follow:<br>
+         * <code>input.lenght</code> = number of point * 3.<br>
+         * <code>input[(pt * 3) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 3) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 3) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         */
+        public static Point3D.Float[] toPoint3D(float[] input)
+        {
+            final Point3D.Float[] result = new Point3D.Float[input.length / 3];
+
+            int pt = 0;
+            for (int i = 0; i < input.length; i += 3)
+                result[pt++] = new Point3D.Float(input[i + 0], input[i + 1], input[i + 2]);
+
+            return result;
+        }
+
+        /**
+         * Create an array of float from the input Point3D.Float array.<br>
+         * <br>
+         * The format of the output array is as follow:<br>
+         * <code>result.lenght</code> = number of point * 3.<br>
+         * <code>result[(pt * 3) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 3) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 3) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         */
+        public static float[] toFloatArray(Point3D.Float[] input)
+        {
+            final float[] result = new float[input.length * 3];
+
+            int off = 0;
+            for (Point3D.Float pt : input)
+            {
+                result[off++] = pt.x;
+                result[off++] = pt.y;
+                result[off++] = pt.z;
+            }
+
+            return result;
+        }
+
         public float x;
         public float y;
         public float z;
@@ -321,6 +409,50 @@ public abstract class Point3D implements Cloneable
 
     public static class Integer extends Point3D
     {
+        /**
+         * Create an array of Point3D.Integer from the input integer array.<br>
+         * <br>
+         * The format of the input array should be as follow:<br>
+         * <code>input.lenght</code> = number of point * 3.<br>
+         * <code>input[(pt * 3) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 3) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>input[(pt * 3) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         */
+        public static Point3D.Integer[] toPoint3D(int[] input)
+        {
+            final Point3D.Integer[] result = new Point3D.Integer[input.length / 3];
+
+            int pt = 0;
+            for (int i = 0; i < input.length; i += 3)
+                result[pt++] = new Point3D.Integer(input[i + 0], input[i + 1], input[i + 2]);
+
+            return result;
+        }
+
+        /**
+         * Create an array of integer from the input Point3D.Integer array.<br>
+         * <br>
+         * The format of the output array is as follow:<br>
+         * <code>result.lenght</code> = number of point * 3.<br>
+         * <code>result[(pt * 3) + 0]</code> = X coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 3) + 1]</code> = Y coordinate for point <i>pt</i><br>
+         * <code>result[(pt * 3) + 2]</code> = Z coordinate for point <i>pt</i><br>
+         */
+        public static int[] toIntegerArray(Point3D.Integer[] input)
+        {
+            final int[] result = new int[input.length * 3];
+
+            int off = 0;
+            for (Point3D.Integer pt : input)
+            {
+                result[off++] = pt.x;
+                result[off++] = pt.y;
+                result[off++] = pt.z;
+            }
+
+            return result;
+        }
+
         public int x;
         public int y;
         public int z;

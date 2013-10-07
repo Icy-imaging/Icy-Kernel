@@ -26,16 +26,15 @@ import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
+import icy.type.rectangle.Rectangle5D;
 import icy.util.StringUtil;
 
-import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -79,11 +78,12 @@ public class RoiExtraInfoPanel extends JPanel
                     // calculate sum of intensity infos
                     for (ROI roi : rois)
                     {
+                        final Rectangle5D bounds = roi.getBounds5D().createIntersection(sequence.getBounds5D());
                         // better to use canvas position ?
                         // viewer.getZ();
                         // viewer.getT();
 
-                        for (int c = 0; c < sizeC; c++)
+                        for (int c = (int) bounds.getMinC(); c < bounds.getMaxC(); c++)
                         {
                             final IntensityInfo inf = ROIUtil.getIntensityInfo(sequence, roi, -1, -1, c);
                             final IntensityInfo sum = intensityInfos[c];
@@ -107,8 +107,8 @@ public class RoiExtraInfoPanel extends JPanel
                             break;
                         }
 
-                        p += roi.getPerimeter();
-                        v += roi.getVolume();
+                        p += roi.getNumberOfEdgePoints();
+                        v += roi.getNumberOfPoints();
                     }
 
                     perimeter = p;
@@ -132,10 +132,24 @@ public class RoiExtraInfoPanel extends JPanel
                     }
                 });
             }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 // we can have some exception here as this is an asynch process (just ignore)
+                if (e instanceof OutOfMemoryError)
+                {
+                    System.err.println("Cannot compute ROI infos: Not enought memory !");
 
+                    // clear ROI infos to not give wrong values...
+                    ThreadUtil.invokeNow(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            refreshIntensityInfos(null);
+                            refreshInfos(null, -1, -1, 0);
+                        }
+                    });
+                }
             }
         }
     }
@@ -148,15 +162,16 @@ public class RoiExtraInfoPanel extends JPanel
     /**
      * GUI
      */
+    private JLabel perimeterLabel;
+    private JLabel areaLabel;
     private JLabel perimeterValueLabel;
-    private JLabel volumeValueLabel;
+    private JLabel areaValueLabel;
     private JLabel lblMinIntensity;
     private JLabel lblMeanIntensity;
     private JLabel lblMaxIntensity;
     private JLabel intensityMinLabel;
     private JLabel intensityMeanLabel;
     private JLabel intensityMaxLabel;
-    private Component horizontalStrut;
 
     /**
      * Internals
@@ -174,7 +189,7 @@ public class RoiExtraInfoPanel extends JPanel
         processor.setKeepAliveTime(5, TimeUnit.SECONDS);
 
         refreshIntensityInfos(null);
-        refreshInfos(null, -1, -1, 1);
+        refreshInfos(null, -1, -1, 0);
 
         validate();
     }
@@ -182,55 +197,48 @@ public class RoiExtraInfoPanel extends JPanel
     void initialize()
     {
         GridBagLayout gbl_panel = new GridBagLayout();
-        gbl_panel.columnWidths = new int[] {80, 46, 10, 0};
+        gbl_panel.columnWidths = new int[] {80, 46, 0};
         gbl_panel.rowHeights = new int[] {0, 0, 0, 0, 0, 0};
-        gbl_panel.columnWeights = new double[] {0.0, 1.0, 0.0, Double.MIN_VALUE};
+        gbl_panel.columnWeights = new double[] {0.0, 1.0, Double.MIN_VALUE};
         gbl_panel.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
         setLayout(gbl_panel);
 
-        JLabel lblPerimeter = new JLabel("Perimeter");
-        lblPerimeter.setToolTipText("Perimeter of selected ROI");
-        GridBagConstraints gbc_lblPerimeter = new GridBagConstraints();
-        gbc_lblPerimeter.anchor = GridBagConstraints.EAST;
-        gbc_lblPerimeter.insets = new Insets(0, 0, 5, 5);
-        gbc_lblPerimeter.gridx = 0;
-        gbc_lblPerimeter.gridy = 0;
-        add(lblPerimeter, gbc_lblPerimeter);
+        perimeterLabel = new JLabel("Perimeter");
+        perimeterLabel.setToolTipText("Total perimeter of selected ROI");
+        GridBagConstraints gbc_perimeterLabel = new GridBagConstraints();
+        gbc_perimeterLabel.anchor = GridBagConstraints.EAST;
+        gbc_perimeterLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_perimeterLabel.gridx = 0;
+        gbc_perimeterLabel.gridy = 0;
+        add(perimeterLabel, gbc_perimeterLabel);
 
         perimeterValueLabel = new JLabel("0");
         GridBagConstraints gbc_perimeterValueLabel = new GridBagConstraints();
         gbc_perimeterValueLabel.anchor = GridBagConstraints.EAST;
-        gbc_perimeterValueLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_perimeterValueLabel.insets = new Insets(0, 0, 5, 0);
         gbc_perimeterValueLabel.gridx = 1;
         gbc_perimeterValueLabel.gridy = 0;
         add(perimeterValueLabel, gbc_perimeterValueLabel);
 
-        horizontalStrut = Box.createHorizontalStrut(10);
-        GridBagConstraints gbc_horizontalStrut = new GridBagConstraints();
-        gbc_horizontalStrut.insets = new Insets(0, 0, 5, 0);
-        gbc_horizontalStrut.gridx = 2;
-        gbc_horizontalStrut.gridy = 0;
-        add(horizontalStrut, gbc_horizontalStrut);
+        areaLabel = new JLabel("Area");
+        areaLabel.setToolTipText("Total area of selected ROI");
+        GridBagConstraints gbc_areaLabel = new GridBagConstraints();
+        gbc_areaLabel.anchor = GridBagConstraints.EAST;
+        gbc_areaLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_areaLabel.gridx = 0;
+        gbc_areaLabel.gridy = 1;
+        add(areaLabel, gbc_areaLabel);
 
-        JLabel lblVolume = new JLabel("Volume");
-        lblVolume.setToolTipText("Volume of selected ROI");
-        GridBagConstraints gbc_lblVolume = new GridBagConstraints();
-        gbc_lblVolume.anchor = GridBagConstraints.EAST;
-        gbc_lblVolume.insets = new Insets(0, 0, 5, 5);
-        gbc_lblVolume.gridx = 0;
-        gbc_lblVolume.gridy = 1;
-        add(lblVolume, gbc_lblVolume);
-
-        volumeValueLabel = new JLabel("0");
-        GridBagConstraints gbc_volumeValueLabel = new GridBagConstraints();
-        gbc_volumeValueLabel.anchor = GridBagConstraints.EAST;
-        gbc_volumeValueLabel.insets = new Insets(0, 0, 5, 5);
-        gbc_volumeValueLabel.gridx = 1;
-        gbc_volumeValueLabel.gridy = 1;
-        add(volumeValueLabel, gbc_volumeValueLabel);
+        areaValueLabel = new JLabel("0");
+        GridBagConstraints gbc_areaValueLabel = new GridBagConstraints();
+        gbc_areaValueLabel.anchor = GridBagConstraints.EAST;
+        gbc_areaValueLabel.insets = new Insets(0, 0, 5, 0);
+        gbc_areaValueLabel.gridx = 1;
+        gbc_areaValueLabel.gridy = 1;
+        add(areaValueLabel, gbc_areaValueLabel);
 
         lblMinIntensity = new JLabel("Min intensity");
-        lblMinIntensity.setToolTipText("Minimum pixel intensity of selected ROI");
+        lblMinIntensity.setToolTipText("Minimum pixel intensity of selected ROI(s)");
         GridBagConstraints gbc_lblMinIntensity = new GridBagConstraints();
         gbc_lblMinIntensity.anchor = GridBagConstraints.EAST;
         gbc_lblMinIntensity.insets = new Insets(0, 0, 5, 5);
@@ -242,13 +250,13 @@ public class RoiExtraInfoPanel extends JPanel
         intensityMinLabel.setText("0");
         GridBagConstraints gbc_label_3 = new GridBagConstraints();
         gbc_label_3.anchor = GridBagConstraints.EAST;
-        gbc_label_3.insets = new Insets(0, 0, 5, 5);
+        gbc_label_3.insets = new Insets(0, 0, 5, 0);
         gbc_label_3.gridx = 1;
         gbc_label_3.gridy = 2;
         add(intensityMinLabel, gbc_label_3);
 
         lblMeanIntensity = new JLabel("Mean intensity");
-        lblMeanIntensity.setToolTipText("Mean pixel intensity of selected ROI");
+        lblMeanIntensity.setToolTipText("Mean pixel intensity of selected ROI(s)");
         GridBagConstraints gbc_lblMeanIntensity = new GridBagConstraints();
         gbc_lblMeanIntensity.anchor = GridBagConstraints.EAST;
         gbc_lblMeanIntensity.insets = new Insets(0, 0, 5, 5);
@@ -260,13 +268,13 @@ public class RoiExtraInfoPanel extends JPanel
         intensityMeanLabel.setText("0");
         GridBagConstraints gbc_label_4 = new GridBagConstraints();
         gbc_label_4.anchor = GridBagConstraints.EAST;
-        gbc_label_4.insets = new Insets(0, 0, 5, 5);
+        gbc_label_4.insets = new Insets(0, 0, 5, 0);
         gbc_label_4.gridx = 1;
         gbc_label_4.gridy = 3;
         add(intensityMeanLabel, gbc_label_4);
 
         lblMaxIntensity = new JLabel("Max intensity");
-        lblMaxIntensity.setToolTipText("Maximum pixel intensity of selected ROI");
+        lblMaxIntensity.setToolTipText("Maximum pixel intensity of selected ROI(s)");
         GridBagConstraints gbc_lblMaxIntensity = new GridBagConstraints();
         gbc_lblMaxIntensity.anchor = GridBagConstraints.EAST;
         gbc_lblMaxIntensity.insets = new Insets(0, 0, 0, 5);
@@ -277,7 +285,6 @@ public class RoiExtraInfoPanel extends JPanel
         intensityMaxLabel = new JLabel();
         intensityMaxLabel.setText("0");
         GridBagConstraints gbc_label_5 = new GridBagConstraints();
-        gbc_label_5.insets = new Insets(0, 0, 0, 5);
         gbc_label_5.anchor = GridBagConstraints.EAST;
         gbc_label_5.gridx = 1;
         gbc_label_5.gridy = 4;
@@ -295,6 +302,28 @@ public class RoiExtraInfoPanel extends JPanel
      */
     void refreshInfos(Sequence sequence, double perimeter, double volume, int roiDim)
     {
+        switch (roiDim)
+        {
+            case 1:
+                perimeterLabel.setText("Length");
+                perimeterLabel.setToolTipText("Total length of selected ROI(s)");
+                areaLabel.setText("Perimeter");
+                areaLabel.setToolTipText("Total perimeter of selected ROI(s)");
+                break;
+            case 3:
+                perimeterLabel.setText("Surface area");
+                perimeterLabel.setToolTipText("Total surface area of selected ROI(s)");
+                areaLabel.setText("Volume");
+                areaLabel.setToolTipText("Total volume of selected ROI(s)");
+                break;
+            default:
+                perimeterLabel.setText("Perimeter");
+                perimeterLabel.setToolTipText("Total perimeter of selected ROI(s)");
+                areaLabel.setText("Area");
+                areaLabel.setToolTipText("Total area of selected ROI(s)");
+                break;
+        }
+
         if ((sequence == null) || (perimeter == -1d))
         {
             perimeterValueLabel.setText("");
@@ -308,13 +337,13 @@ public class RoiExtraInfoPanel extends JPanel
 
         if ((sequence == null) || (volume == -1d))
         {
-            volumeValueLabel.setText("");
-            volumeValueLabel.setToolTipText("");
+            areaValueLabel.setText("");
+            areaValueLabel.setToolTipText("");
         }
         else
         {
-            volumeValueLabel.setText(sequence.calculateSize(volume, roiDim, 5));
-            volumeValueLabel.setToolTipText(StringUtil.toString(volume) + " pixel(s)");
+            areaValueLabel.setText(sequence.calculateSize(volume, roiDim, 5));
+            areaValueLabel.setToolTipText(StringUtil.toString(volume) + " pixel(s)");
         }
     }
 

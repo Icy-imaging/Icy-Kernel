@@ -20,6 +20,7 @@ package plugins.kernel.roi.roi2d;
 
 import icy.canvas.IcyCanvas;
 import icy.painter.Anchor2D;
+import icy.resource.ResourceUtil;
 import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
@@ -64,11 +65,13 @@ public class ROI2DPoint extends ROI2DShape
 
         // select the point for "interactive" mode
         this.position.setSelected(true);
-        setMousePos(position);
+        getOverlay().setMousePos(new Point5D.Double(position.getX(), position.getY(), -1d, -1d, -1d));
 
         updateShape();
 
+        // set name and icon
         setName("Point2D");
+        setIcon(ResourceUtil.ICON_ROI_POINT);
     }
 
     /**
@@ -77,6 +80,7 @@ public class ROI2DPoint extends ROI2DShape
     public ROI2DPoint(Point5D pt)
     {
         this(pt.toPoint2D());
+        getOverlay().setMousePos(pt);
     }
 
     public ROI2DPoint(double x, double y)
@@ -137,17 +141,19 @@ public class ROI2DPoint extends ROI2DShape
         return true;
     }
 
+    
     @Override
-    public double getPerimeter()
+    public double computeNumberOfEdgePoints()
     {
         return 0d;
     }
-
+    
     @Override
-    public double getVolume()
+    public double computeNumberOfPoints()
     {
         return 0d;
     }
+   
 
     @Override
     public boolean loadFromXML(Node node)

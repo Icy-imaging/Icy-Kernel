@@ -22,6 +22,7 @@ package icy.plugin.classloader;
 import icy.file.FileUtil;
 import icy.plugin.classloader.exception.JclException;
 import icy.plugin.classloader.exception.ResourceNotFoundException;
+import icy.system.IcyExceptionHandler;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -64,7 +65,15 @@ public class ClasspathResources extends JarResources
 
         if (url.toString().toLowerCase().endsWith(".jar"))
         {
-            loadJar(url);
+            try
+            {
+                loadJar(url);
+            }
+            catch (IOException e)
+            {
+                System.err.print("JarResources.loadJar(" + url + ") error:");
+                IcyExceptionHandler.showErrorMessage(e, false, true);
+            }
             return;
         }
 
@@ -179,12 +188,18 @@ public class ClasspathResources extends JarResources
             // {
             if (fol.getName().toLowerCase().endsWith(".jar"))
             {
-                loadJar(fol.getAbsolutePath());
+                try
+                {
+                    loadJar(fol.getAbsolutePath());
+                }
+                catch (IOException e)
+                {
+                    System.err.print("JarResources.loadJar(" + fol.getAbsolutePath() + ") error:");
+                    IcyExceptionHandler.showErrorMessage(e, false, true);
+                }
             }
             else
-            {
                 loadResourceInternal(fol, packName);
-            }
             // }
         }
         // DIRECTORY
@@ -251,7 +266,7 @@ public class ClasspathResources extends JarResources
     @Override
     protected boolean loadContent(String name, URL url)
     {
-        // not load by parent ?
+        // not loaded by parent ?
         if (!super.loadContent(name, url))
         {
             if (url.getProtocol().equalsIgnoreCase(("file")))

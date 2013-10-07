@@ -141,7 +141,7 @@ public abstract class ROI2D extends ROI
             startDragROIPosition = null;
         }
 
-        protected boolean updateFocus(InputEvent e, Point2D imagePoint, IcyCanvas canvas)
+        protected boolean updateFocus(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
         {
             final boolean focused = isOverEdge(canvas, imagePoint);
 
@@ -150,7 +150,7 @@ public abstract class ROI2D extends ROI
             return focused;
         }
 
-        protected boolean updateSelect(InputEvent e, Point2D imagePoint, IcyCanvas canvas)
+        protected boolean updateSelect(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
         {
             // nothing to do if the ROI does not have focus
             if (!isFocused())
@@ -187,7 +187,7 @@ public abstract class ROI2D extends ROI
             return false;
         }
 
-        protected boolean updateDrag(InputEvent e, Point2D imagePoint, IcyCanvas canvas)
+        protected boolean updateDrag(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
         {
             // not dragging --> exit
             if (startDragMousePosition == null)
@@ -226,7 +226,7 @@ public abstract class ROI2D extends ROI
                 {
                     // just for the shift key state change
                     if (!isReadOnly())
-                        updateDrag(e, imagePoint.toPoint2D(), canvas);
+                        updateDrag(e, imagePoint, canvas);
                 }
             }
         }
@@ -252,7 +252,7 @@ public abstract class ROI2D extends ROI
                             if (EventUtil.isLeftMouseButton(e))
                             {
                                 // update selection
-                                if (updateSelect(e, imagePoint.toPoint2D(), canvas))
+                                if (updateSelect(e, imagePoint, canvas))
                                     e.consume();
                                 // always consume when focused to enable dragging
                                 else if (isFocused())
@@ -307,7 +307,7 @@ public abstract class ROI2D extends ROI
                                         startDragROIPosition = getPosition2D();
                                     }
 
-                                    updateDrag(e, imagePoint.toPoint2D(), canvas);
+                                    updateDrag(e, imagePoint, canvas);
 
                                     // consume event
                                     e.consume();
@@ -337,7 +337,7 @@ public abstract class ROI2D extends ROI
                     // update focus
                     if (!e.isConsumed())
                     {
-                        if (updateFocus(e, imagePoint.toPoint2D(), canvas))
+                        if (updateFocus(e, imagePoint, canvas))
                             e.consume();
                     }
                 }
@@ -517,7 +517,7 @@ public abstract class ROI2D extends ROI
      */
     public boolean isOverEdge(IcyCanvas canvas, Point5D p)
     {
-        return isOverEdge(canvas, p.getX(), p.getY());
+        return isOverEdge(canvas, p.getX(), p.getY(), p.getZ(), p.getT(), p.getC());
     }
 
     /**
@@ -1191,10 +1191,10 @@ public abstract class ROI2D extends ROI
      * Override to optimize for specific ROI.
      */
     @Override
-    public double getPerimeter()
+    public double computeNumberOfEdgePoints()
     {
         // approximation by using number of point of the edge of boolean mask
-        return getBooleanMask(true).getEdgePoints().length;
+        return getBooleanMask(true).getEdgePointsAsIntArray().length / getDimension();
     }
 
     /*
@@ -1203,10 +1203,35 @@ public abstract class ROI2D extends ROI
      * Override to optimize for specific ROI.
      */
     @Override
-    public double getVolume()
+    public double computeNumberOfPoints()
     {
         // approximation by using number of point of boolean mask
-        return getBooleanMask(true).getPoints().length;
+        return getBooleanMask(true).getPointsAsIntArray().length / getDimension();
+    }
+
+    /**
+     * Return perimeter of the 2D ROI in pixels.<br>
+     * This is basically the number of pixel representing ROI edges.<br>
+     * 
+     * @see #getNumberOfEdgePoints()
+     * @see #computeNumberOfEdgePoints()
+     */
+    @Override
+    public final double getPerimeter()
+    {
+        return getNumberOfEdgePoints();
+    }
+
+    /**
+     * Return area of the 2D ROI in pixels.<br>
+     * This is basically the number of pixel contained in the ROI.<br>
+     * 
+     * @see #getNumberOfPoints()
+     * @see #computeNumberOfPoints()
+     */
+    public final double getArea()
+    {
+        return getNumberOfPoints();
     }
 
     @Override

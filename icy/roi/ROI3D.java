@@ -632,6 +632,55 @@ public abstract class ROI3D extends ROI
         return new BooleanMask3D(bounds, masks);
     }
 
+    /*
+     * Generic implementation for ROI3D using the BooleanMask object so
+     * the result is just an approximation.
+     * Override to optimize for specific ROI.
+     */
+    @Override
+    public double computeNumberOfEdgePoints()
+    {
+        // approximation by using number of point of the edge of boolean mask
+        return getBooleanMask(true).getEdgePointsAsIntArray().length / getDimension();
+    }
+
+    /*
+     * Generic implementation for ROI3D using the BooleanMask object so
+     * the result is just an approximation.
+     * Override to optimize for specific ROI.
+     */
+    @Override
+    public double computeNumberOfPoints()
+    {
+        // approximation by using number of point of boolean mask
+        return getBooleanMask(true).getPointsAsIntArray().length / getDimension();
+    }
+
+    /**
+     * Return surface area of the 3D ROI in pixels.<br>
+     * This is basically the number of pixel representing ROI edges.<br>
+     * 
+     * @see #getNumberOfEdgePoints()
+     * @see #computeNumberOfEdgePoints()
+     */
+    public final double getSurfaceArea()
+    {
+        return getNumberOfEdgePoints();
+    }
+
+    /**
+     * Return volume of the 3D ROI in pixels.<br>
+     * This is basically the number of pixel contained in the ROI.<br>
+     * 
+     * @see #getNumberOfPoints()
+     * @see #computeNumberOfPoints()
+     */
+    @Override
+    public final double getVolume()
+    {
+        return getNumberOfPoints();
+    }
+
     /**
      * @return the t
      */

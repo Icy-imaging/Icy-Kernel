@@ -119,6 +119,8 @@ public class PreferenceFrame extends IcyFrame implements TreeSelectionListener
         // select first node
         tree.setSelectionRow(0);
         ComponentUtil.expandAllTree(tree);
+        // disable double click expansion/reduction
+        tree.setToggleClickCount(0);
         tree.addTreeSelectionListener(this);
 
         final JScrollPane treeScrollPane = new JScrollPane(tree);

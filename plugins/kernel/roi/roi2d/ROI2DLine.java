@@ -21,6 +21,7 @@ package plugins.kernel.roi.roi2d;
 import icy.canvas.IcyCanvas;
 import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
+import icy.resource.ResourceUtil;
 import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
@@ -78,11 +79,13 @@ public class ROI2DLine extends ROI2DShape
 
         // select the pt2 to size the line for "interactive mode"
         this.pt2.setSelected(true);
-        setMousePos(pt2);
+        getOverlay().setMousePos(new Point5D.Double(pt2.getX(), pt2.getY(), -1d, -1d, -1d));
 
         updateShape();
 
+        // set name and icon
         setName("Line2D");
+        setIcon(ResourceUtil.ICON_ROI_LINE);
     }
 
     public ROI2DLine(Line2D line)
@@ -110,6 +113,7 @@ public class ROI2DLine extends ROI2DShape
     public ROI2DLine(Point5D pt)
     {
         this(pt.toPoint2D());
+        getOverlay().setMousePos(pt);
     }
 
     public ROI2DLine(double x1, double y1, double x2, double y2)
@@ -188,15 +192,15 @@ public class ROI2DLine extends ROI2DShape
         // by default the total length don't need last point connection
         return super.getTotalDistance(points, false);
     }
-
+    
     @Override
-    public double getPerimeter()
+    public double computeNumberOfEdgePoints()
     {
         return getTotalDistance(getPoints());
     }
-
+    
     @Override
-    public double getVolume()
+    public double computeNumberOfPoints()
     {
         return 0d;
     }

@@ -185,8 +185,6 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         // copy the source 3D area ROI
         for (Entry<Integer, ROI2DArea> entry : area.slices.entrySet())
             slices.put(entry.getKey(), new ROI2DArea(entry.getValue()));
-
-        boundsInvalid = true;
     }
 
     @Override
@@ -320,7 +318,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     @Deprecated
     public Point3D[] getPoints()
     {
-        return getBooleanMask(true).getEdgePoints();
+        return getBooleanMask(true).getPoints();
     }
 
     /**

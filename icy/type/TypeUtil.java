@@ -912,6 +912,25 @@ public class TypeUtil
     }
 
     /**
+     * Create an array of Point from the input integer array.<br>
+     * <br>
+     * The format of the input array should be as follow:<br>
+     * <code>input.lenght</code> = number of point * 2.<br>
+     * <code>input[(pt * 2) + 0]</code> = X coordinate for point <i>pt</i><br>
+     * <code>input[(pt * 2) + 1]</code> = Y coordinate for point <i>pt</i><br>
+     */
+    public static Point[] toPoint(int[] input)
+    {
+        final Point[] result = new Point[input.length / 2];
+
+        int pt = 0;
+        for (int i = 0; i < input.length; i += 2)
+            result[pt++] = new Point(input[i + 0], input[i + 1]);
+
+        return result;
+    }
+
+    /**
      * Return the minimum value for the specified dataType
      * 
      * @deprecated use {@link DataType#getMinValue()} instead

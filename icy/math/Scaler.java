@@ -138,31 +138,34 @@ public class Scaler implements ChangeListener, XMLPersistent
      */
     private void updateLookup()
     {
-        final boolean rangeOk;
+        scaleLK = null;
 
-        if (crossed)
-            rangeOk = (absLeftIn <= 65535) && (absRightIn >= 0);
-        else
-            rangeOk = (absLeftIn >= 0) && (absRightIn <= 65535);
-
-        // use lookup table only for integer scalar value in [0..65535] range
-        if (integerData && rangeOk)
+        if (integerData)
         {
-            final int len;
+            final boolean rangeOk;
 
             if (crossed)
-                len = (int) absRightIn;
+                rangeOk = (absLeftIn <= 65535) && (absRightIn >= 0);
             else
-                len = (int) absLeftIn;
+                rangeOk = (absLeftIn >= 0) && (absRightIn <= 65535);
 
-            scaleLK = new double[len];
+            // use lookup table only for integer scalar value in [0..65535] range
+            if (rangeOk)
+            {
+                final int len;
 
-            // refresh lookup table data
-            for (int i = 0; i < len; i++)
-                scaleLK[i] = scale(i);
+                if (crossed)
+                    len = (int) absRightIn;
+                else
+                    len = (int) absLeftIn;
+
+                scaleLK = new double[len];
+
+                // refresh lookup table data
+                for (int i = 0; i < len; i++)
+                    scaleLK[i] = scale(i);
+            }
         }
-        else
-            scaleLK = null;
     }
 
     /**

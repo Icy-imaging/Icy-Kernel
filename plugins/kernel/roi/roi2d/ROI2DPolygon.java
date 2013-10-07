@@ -20,6 +20,7 @@ package plugins.kernel.roi.roi2d;
 
 import icy.painter.Anchor2D;
 import icy.painter.LineAnchor2D;
+import icy.resource.ResourceUtil;
 import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
@@ -91,11 +92,13 @@ public class ROI2DPolygon extends ROI2DShape
         // always select
         anchor.setSelected(true);
 
-        setMousePos(pt);
+        getOverlay().setMousePos(new Point5D.Double(pt.getX(), pt.getY(), -1d, -1d, -1d));
 
         updateShape();
 
+        // set name and icon
         setName("Polygon2D");
+        setIcon(ResourceUtil.ICON_ROI_POLYGON);
     }
 
     /**
@@ -104,6 +107,7 @@ public class ROI2DPolygon extends ROI2DShape
     public ROI2DPolygon(Point5D pt)
     {
         this(pt.toPoint2D());
+        getOverlay().setMousePos(pt);
     }
 
     public ROI2DPolygon(List<Point2D> points)
@@ -227,7 +231,7 @@ public class ROI2DPolygon extends ROI2DShape
     }
 
     @Override
-    public double getPerimeter()
+    public double computeNumberOfEdgePoints()
     {
         return getTotalDistance(getPoints());
     }

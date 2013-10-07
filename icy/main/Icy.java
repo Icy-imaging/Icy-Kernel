@@ -264,6 +264,7 @@ public class Icy
                 {
                     // we can now hide splash as we have interface
                     splashScreen.dispose();
+                    splashScreen = null;
                 }
             });
         }

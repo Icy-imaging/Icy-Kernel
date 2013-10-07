@@ -241,21 +241,16 @@ public class JarClassLoader extends AbstractClassLoader
      */
     protected String formatClassName(String className)
     {
-        className = className.replace('/', '~');
+        String cname = className.replace('/', '~');
 
         if (classNameReplacementChar == '\u0000')
-        {
             // '/' is used to map the package to the path
-            className = className.replace('.', '/') + ".class";
-        }
+            cname = cname.replace('.', '/') + ".class";
         else
-        {
             // Replace '.' with custom char, such as '_'
-            className = className.replace('.', classNameReplacementChar) + ".class";
-        }
+            cname = cname.replace('.', classNameReplacementChar) + ".class";
 
-        className = className.replace('~', '/');
-        return className;
+        return cname.replace('~', '/');
     }
 
     /**

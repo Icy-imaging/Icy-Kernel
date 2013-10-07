@@ -184,11 +184,14 @@ public class SequenceDataIterator implements DataIterator
      * @param inclusive
      *        If true then all partially contained (intersected) pixels in the ROI are included.
      * @param z
-     *        Z position overriding (set to -1 to use the ROI Z information).
+     *        The specific Z position (contained in the ROI) we want to iterate.<br>
+     *        Set to -1 to use the whole ROI Z information instead.
      * @param t
-     *        T position overriding (set to -1 to use the ROI T information).
+     *        The specific T position (contained in the ROI) we want to iterate.<br>
+     *        Set to -1 to use the whole ROI T information instead.
      * @param c
-     *        C position overriding (set to -1 to use the ROI C information).
+     *        The specific C position (contained in the ROI) we want to iterate.<br>
+     *        Set to -1 to use the whole ROI C information instead.
      */
     public SequenceDataIterator(Sequence sequence, ROI roi, boolean inclusive, int z, int t, int c)
     {

@@ -413,7 +413,7 @@ public abstract class ROI4D extends ROI
     {
         return getBounds4D().getPosition();
     }
-    
+
     @Override
     public boolean canSetBounds()
     {
@@ -427,7 +427,6 @@ public abstract class ROI4D extends ROI
         // default
         return false;
     }
-
 
     /**
      * Set the <code>ROI</code> 4D bounds.<br>
@@ -626,6 +625,33 @@ public abstract class ROI4D extends ROI
 
         return new BooleanMask4D(bounds, masks);
     }
+
+    
+    /*
+     * Generic implementation for ROI4D using the BooleanMask object so
+     * the result is just an approximation.
+     * Override to optimize for specific ROI.
+     */
+    @Override
+    public double computeNumberOfEdgePoints()
+    {
+        // approximation by using number of point of the edge of boolean mask
+        return getBooleanMask(true).getEdgePointsAsIntArray().length / getDimension();
+    }
+
+    /*
+     * Generic implementation for ROI4D using the BooleanMask object so
+     * the result is just an approximation.
+     * Override to optimize for specific ROI.
+     */
+    @Override
+    public double computeNumberOfPoints()
+    {
+        // approximation by using number of point of boolean mask
+        return getBooleanMask(true).getPointsAsIntArray().length / getDimension();
+    }
+    
+   
 
     /**
      * @return the c

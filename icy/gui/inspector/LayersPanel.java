@@ -40,24 +40,26 @@ import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+
+import org.jdesktop.swingx.JXTable;
+import org.jdesktop.swingx.decorator.HighlighterFactory;
+import org.jdesktop.swingx.table.TableColumnExt;
 
 /**
  * @author Stephane
@@ -91,7 +93,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
                     canvas.addLayerListener(LayersPanel.this);
             }
 
-            refreshLayers();
+            refreshLayersInternal();
         }
     }
 
@@ -106,27 +108,24 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
     IcyCanvas canvas;
 
     // GUI
-    final AbstractTableModel tableModel;
-    final ListSelectionModel tableSelectionModel;
-    final JTable table;
-
-    final IcyTextField nameFilter;
-    private final JPanel filtersPanel;
-
-    final IcyTextField nameField;
-    final IcyButton deleteButton;
-    final JPanel controlPanel;
+    AbstractTableModel tableModel;
+    ListSelectionModel tableSelectionModel;
+    JXTable table;
+    IcyTextField nameFilter;
+    IcyTextField nameField;
+    IcyButton deleteButton;
 
     // internals
     boolean isSelectionAdjusting;
     boolean isLayerEditing;
     boolean isLayerPropertiesAdjusting;
 
+    final Runnable layersRefresher;
     final Runnable tableDataRefresher;
     final Runnable controlPanelRefresher;
     final CanvasRefresher canvasRefresher;
 
-    public LayersPanel(boolean showFilters, boolean showControl)
+    public LayersPanel()
     {
         super();
 
@@ -136,6 +135,14 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         isLayerEditing = false;
         isLayerPropertiesAdjusting = false;
 
+        layersRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshLayersInternal();
+            }
+        };
         tableDataRefresher = new Runnable()
         {
             @Override
@@ -154,60 +161,8 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         };
         canvasRefresher = new CanvasRefresher();
 
-        // need filter before load()
-        nameFilter = new IcyTextField();
-        nameFilter.setToolTipText("Enter a string sequence to filter Layer on name");
-        nameFilter.addTextChangeListener(this);
-
-        filtersPanel = new JPanel();
-        filtersPanel.setLayout(new BoxLayout(filtersPanel, BoxLayout.LINE_AXIS));
-        filtersPanel.setVisible(showFilters);
-
-        filtersPanel.add(nameFilter);
-
-        // build control panel
-        nameField = new IcyTextField();
-        nameField.setToolTipText("Edit name of selected Layer(s)");
-        nameField.addTextChangeListener(this);
-
-        deleteButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE));
-        deleteButton.setFlat(true);
-        deleteButton.setToolTipText("Delete selected Layer(s)");
-        deleteButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final Sequence sequence = canvas.getSequence();
-
-                if (sequence != null)
-                {
-                    sequence.beginUpdate();
-                    try
-                    {
-                        // delete selected layers
-                        for (Layer layer : getSelectedLayers())
-                            if (layer.getCanBeRemoved())
-                                sequence.removeOverlay(layer.getOverlay());
-                    }
-                    finally
-                    {
-                        sequence.endUpdate();
-                    }
-                }
-            }
-        });
-
-        controlPanel = new JPanel();
-        controlPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
-        controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.LINE_AXIS));
-
-        controlPanel.add(nameField);
-        controlPanel.add(Box.createHorizontalStrut(8));
-        controlPanel.add(deleteButton);
-        controlPanel.add(Box.createHorizontalGlue());
-
-        controlPanel.setVisible(showControl);
+        // build GUI
+        initialize();
 
         // build table
         tableModel = new AbstractTableModel()
@@ -260,23 +215,27 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
             }
 
             @Override
-            public void setValueAt(Object aValue, int rowIndex, int columnIndex)
+            public void setValueAt(Object value, int row, int column)
             {
                 isLayerEditing = true;
                 try
                 {
-                    final Layer layer = layers.get(rowIndex);
+                    final Layer layer = layers.get(row);
 
-                    switch (columnIndex)
+                    switch (column)
                     {
+                        case 0:
+                            layer.setName((String) value);
+                            break;
+
                         case 1:
                             // layer transparency
-                            layer.setAlpha(((Integer) aValue).intValue() / 1000f);
+                            layer.setAlpha(((Integer) value).intValue() / 1000f);
                             break;
 
                         case 2:
                             // layer visibility
-                            layer.setVisible(((Boolean) aValue).booleanValue());
+                            layer.setVisible(((Boolean) value).booleanValue());
                             break;
                     }
                 }
@@ -289,7 +248,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
             @Override
             public boolean isCellEditable(int row, int column)
             {
-                return column > 0;
+                return true;
             }
 
             @Override
@@ -297,6 +256,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
             {
                 switch (columnIndex)
                 {
+                    default:
                     case 0:
                         // layer name
                         return String.class;
@@ -308,59 +268,63 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
                     case 2:
                         // layer visibility
                         return Boolean.class;
-
-                    default:
-                        return String.class;
                 }
             }
         };
+        // set table model
+        table.setModel(tableModel);
+        // alternate highlight
+        table.addHighlighter(HighlighterFactory.createSimpleStriping());
 
-        table = new JTable(tableModel);
-
-        final TableColumnModel colModel = table.getColumnModel();
-        TableColumn col;
+        TableColumnExt col;
 
         // columns setting - name
-        col = colModel.getColumn(0);
+        col = table.getColumnExt(0);
         col.setPreferredWidth(140);
         col.setMinWidth(60);
+        col.setToolTipText("Layer name (double click to edit)");
 
         // columns setting - transparency
-        col = colModel.getColumn(1);
+        col = table.getColumnExt(1);
         // slider doesn't like to be resized when they are used as CellRenderer
         col.setPreferredWidth(100);
         col.setMinWidth(100);
         col.setMaxWidth(100);
         col.setCellEditor(new SliderCellEditor(true));
         col.setCellRenderer(new SliderCellRenderer());
+        col.setToolTipText("Change the layer opacity");
 
         // columns setting - visible
-        col = colModel.getColumn(2);
+        col = table.getColumnExt(2);
         col.setPreferredWidth(20);
         col.setMinWidth(20);
         col.setMaxWidth(20);
         col.setCellEditor(new VisibleCellEditor(18));
         col.setCellRenderer(new VisibleCellRenderer(18));
+        col.setToolTipText("Make the layer visible or not");
 
-        table.setRowHeight(24);
-        table.setColumnSelectionAllowed(false);
-        table.setRowSelectionAllowed(true);
-        table.setShowVerticalLines(false);
-        table.setAutoCreateRowSorter(true);
-        // table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-
+        // table selection model
         tableSelectionModel = table.getSelectionModel();
         tableSelectionModel.addListSelectionListener(this);
         tableSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-        final JPanel topPanel = new JPanel();
-        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.PAGE_AXIS));
+        refreshLayers();
+    }
 
-        if (showFilters)
-        {
-            topPanel.add(filtersPanel);
-            topPanel.add(Box.createVerticalStrut(4));
-        }
+    private void initialize()
+    {
+        // need filter before load()
+        nameFilter = new IcyTextField();
+        nameFilter.setToolTipText("Enter a string sequence to filter Layer on name");
+        nameFilter.addTextChangeListener(this);
+
+        table = new JXTable();
+        table.setRowHeight(24);
+        table.setShowVerticalLines(false);
+        table.setColumnControlVisible(true);
+        table.setColumnSelectionAllowed(false);
+        table.setRowSelectionAllowed(true);
+        table.setAutoCreateRowSorter(true);
 
         final JPanel middlePanel = new JPanel();
         middlePanel.setLayout(new BoxLayout(middlePanel, BoxLayout.PAGE_AXIS));
@@ -370,16 +334,66 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         middlePanel.add(sc);
 
+        JPanel controlPanel = new JPanel();
+        GridBagLayout gbl_controlPanel = new GridBagLayout();
+        gbl_controlPanel.columnWidths = new int[] {140, 0, 0};
+        gbl_controlPanel.rowHeights = new int[] {20, 0};
+        gbl_controlPanel.columnWeights = new double[] {1.0, 0.0, Double.MIN_VALUE};
+        gbl_controlPanel.rowWeights = new double[] {0.0, Double.MIN_VALUE};
+        controlPanel.setLayout(gbl_controlPanel);
+
+        // build control panel
+        nameField = new IcyTextField();
+        nameField.setToolTipText("Edit name of selected Layer(s)");
+        nameField.addTextChangeListener(this);
+
+        GridBagConstraints gbc_nameField = new GridBagConstraints();
+        gbc_nameField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_nameField.insets = new Insets(0, 0, 0, 5);
+        gbc_nameField.gridx = 0;
+        gbc_nameField.gridy = 0;
+        controlPanel.add(nameField, gbc_nameField);
+
         setLayout(new BorderLayout());
 
-        add(topPanel, BorderLayout.NORTH);
+        add(nameFilter, BorderLayout.NORTH);
         add(middlePanel, BorderLayout.CENTER);
-        if (showControl)
-            add(controlPanel, BorderLayout.SOUTH);
+        add(controlPanel, BorderLayout.SOUTH);
+
+        deleteButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE));
+        deleteButton.setFlat(true);
+        deleteButton.setToolTipText("Delete selected Layer(s)");
+        deleteButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final Sequence sequence = canvas.getSequence();
+
+                if (sequence != null)
+                {
+                    sequence.beginUpdate();
+                    try
+                    {
+                        // delete selected layers
+                        for (Layer layer : getSelectedLayers())
+                            if (layer.getCanBeRemoved())
+                                sequence.removeOverlay(layer.getOverlay());
+                    }
+                    finally
+                    {
+                        sequence.endUpdate();
+                    }
+                }
+            }
+        });
+        GridBagConstraints gbc_deleteButton = new GridBagConstraints();
+        gbc_deleteButton.fill = GridBagConstraints.BOTH;
+        gbc_deleteButton.gridx = 1;
+        gbc_deleteButton.gridy = 0;
+        controlPanel.add(deleteButton, gbc_deleteButton);
 
         validate();
-
-        refreshLayers();
     }
 
     public void setNameFilter(String name)
@@ -391,6 +405,14 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
      * refresh Layer list (and refresh table data according)
      */
     protected void refreshLayers()
+    {
+        ThreadUtil.bgRunSingle(layersRefresher);
+    }
+
+    /**
+     * refresh layer list (internal)
+     */
+    void refreshLayersInternal()
     {
         if (canvas != null)
             layers = filterList(canvas.getLayers(), nameFilter.getText());

@@ -42,14 +42,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute intensity information.
      * @param z
-     *        The Z position where we want to compute intensity information.<br>
-     *        If set to -1 we use the ROI Z information instead.
+     *        The specific Z position (contained in the ROI) where we want to compute intensity information.<br>
+     *        Set to -1 to use the whole ROI Z information instead.
      * @param t
-     *        The T position where we want to compute intensity information.<br>
-     *        If set to -1 we use the ROI T information instead.
+     *        The specific T position (contained in the ROI) where we want to compute intensity information.<br>
+     *        Set to -1 to use the whole ROI T information instead.
      * @param c
-     *        The C position where we want to compute intensity information.<br>
-     *        If set to -1 we use the ROI C information instead.
+     *        The specific C position (contained in the ROI) where we want to compute intensity information.<br>
+     *        Set to -1 to use the whole ROI C information instead.
      */
     public static IntensityInfo getIntensityInfo(Sequence sequence, ROI roi, int z, int t, int c)
     {
@@ -109,14 +109,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute the number of pixel.
      * @param z
-     *        The Z position where we want to compute the number of pixel.<br>
-     *        If set to -1 we use the ROI Z information instead.
+     *        The specific Z position (contained in the ROI) where we want to compute the number of pixel.<br>
+     *        Set to -1 to use the whole ROI Z information instead.
      * @param t
-     *        The T position where we want to compute the number of pixel.<br>
-     *        If set to -1 we use the ROI T information instead.
+     *        The specific T position (contained in the ROI) where we want to compute the number of pixel.<br>
+     *        Set to -1 to use the whole ROI T information instead.
      * @param c
-     *        The C position where we want to compute the number of pixel.<br>
-     *        If set to -1 we use the ROI C information instead.
+     *        The specific C position (contained in the ROI) where we want to compute the number of pixel.<br>
+     *        Set to -1 to use the whole ROI C information instead.
      */
     public static long getNumPixel(Sequence sequence, ROI roi, int z, int t, int c)
     {
@@ -131,14 +131,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute min intensity.
      * @param z
-     *        The Z position where we want to compute min intensity.<br>
-     *        If set to -1 we use the ROI Z information instead.
+     *        The specific Z position (contained in the ROI) where we want to compute min intensity.<br>
+     *        Set to -1 to use the whole ROI Z information instead.
      * @param t
-     *        The T position where we want to compute min intensity.<br>
-     *        If set to -1 we use the ROI T information instead.
+     *        The specific T position (contained in the ROI) where we want to compute min intensity.<br>
+     *        Set to -1 to use the whole ROI T information instead.
      * @param c
-     *        The C position where we want to compute min intensity.<br>
-     *        If set to -1 we use the ROI C information instead.
+     *        The specific C position (contained in the ROI) where we want to compute min intensity.<br>
+     *        Set to -1 to use the whole ROI C information instead.
      */
     public static double getMinIntensity(Sequence sequence, ROI roi, int z, int t, int c)
     {
@@ -153,14 +153,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute max intensity.
      * @param z
-     *        The Z position where we want to compute max intensity.<br>
-     *        If set to -1 we use the ROI Z information instead.
+     *        The specific Z position (contained in the ROI) where we want to compute max intensity.<br>
+     *        Set to -1 to use the whole ROI Z information instead.
      * @param t
-     *        The T position where we want to compute max intensity.<br>
-     *        If set to -1 we use the ROI T information instead.
+     *        The specific T position (contained in the ROI) where we want to compute max intensity.<br>
+     *        Set to -1 to use the whole ROI T information instead.
      * @param c
-     *        The C position where we want to compute max intensity.<br>
-     *        If set to -1 we use the ROI C information instead.
+     *        The specific C position (contained in the ROI) where we want to compute max intensity.<br>
+     *        Set to -1 to use the whole ROI C information instead.
      */
     public static double getMaxIntensity(Sequence sequence, ROI roi, int z, int t, int c)
     {
@@ -175,14 +175,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute mean intensity.
      * @param z
-     *        The Z position where we want to compute mean intensity.<br>
-     *        If set to -1 we use the ROI Z information instead.
+     *        The specific Z position (contained in the ROI) where we want to compute mean intensity.<br>
+     *        Set to -1 to use the whole ROI Z information instead.
      * @param t
-     *        The T position where we want to compute mean intensity.<br>
-     *        If set to -1 we use the ROI T information instead.
+     *        The specific T position (contained in the ROI) where we want to compute mean intensity.<br>
+     *        Set to -1 to use the whole ROI T information instead.
      * @param c
-     *        The C position where we want to compute mean intensity.<br>
-     *        If set to -1 we use the ROI C information instead.
+     *        The specific C position (contained in the ROI) where we want to compute mean intensity.<br>
+     *        Set to -1 to use the whole ROI C information instead.
      */
     public static double getMeanIntensity(Sequence sequence, ROI roi, int z, int t, int c)
     {
@@ -197,14 +197,14 @@ public class ROIUtil
      * @param roi
      *        The ROI define the region where we want to compute intensity sum.
      * @param z
-     *        The Z position where we want to compute intensity sum.<br>
-     *        If set to -1 we use the ROI Z information instead.
+     *        The specific Z position (contained in the ROI) where we want to compute intensity sum.<br>
+     *        Set to -1 to use the whole ROI Z information instead.
      * @param t
-     *        The T position where we want to compute intensity sum.<br>
-     *        If set to -1 we use the ROI T information instead.
+     *        The specific T position (contained in the ROI) where we want to compute intensity sum.<br>
+     *        Set to -1 to use the whole ROI T information instead.
      * @param c
-     *        The C position where we want to compute intensity sum.<br>
-     *        If set to -1 we use the ROI C information instead.
+     *        The specific C position (contained in the ROI) where we want to compute intensity sum.<br>
+     *        Set to -1 to use the whole ROI C information instead.
      */
     public static double getSumIntensity(Sequence sequence, ROI roi, int z, int t, int c)
     {

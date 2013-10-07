@@ -3,14 +3,12 @@
  */
 package icy.roi;
 
-import icy.type.point.Point3D;
+import icy.type.collection.array.DynamicArray;
 import icy.type.point.Point4D;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
 
 import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -871,24 +869,80 @@ public class BooleanMask4D
         }
     }
 
+    int[] toInt4D(int[] source3D, int t)
+    {
+        final int[] result = new int[(source3D.length * 4) / 3];
+
+        int pt = 0;
+        for (int i = 0; i < source3D.length; i += 3)
+        {
+            result[pt++] = source3D[i + 0];
+            result[pt++] = source3D[i + 1];
+            result[pt++] = source3D[i + 2];
+            result[pt++] = t;
+        }
+
+        return result;
+    }
+
     /**
      * Return an array of {@link icy.type.point.Point4D.Integer} containing the edge/surface points
      * of the 4D mask.<br>
-     * Points are returned in ascending XYZT order.
+     * Points are returned in ascending XYZT order. <br>
+     * <br>
+     * WARNING: The basic implementation is not totally accurate.<br>
+     * It returns all points from the first and the last T slices + edge points for intermediate T
+     * slices.
+     * 
+     * @see #getEdgePointsAsIntArray()
      */
     public Point4D.Integer[] getEdgePoints()
     {
-        final List<Point4D.Integer> points = new ArrayList<Point4D.Integer>(1024);
+        return Point4D.Integer.toPoint4D(getEdgePointsAsIntArray());
+    }
 
-        for (Entry<Integer, BooleanMask3D> entry : mask.entrySet())
+    /**
+     * Return an array of integer containing the edge/surface points of the 4D mask.<br>
+     * <code>result.length</code> = number of point * 4<br>
+     * <code>result[(pt * 4) + 0]</code> = X coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 4) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 4) + 2]</code> = Z coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 4) + 3]</code> = T coordinate for point <i>pt</i>.<br>
+     * Points are returned in ascending XYZT order.<br>
+     * <br>
+     * WARNING: The basic implementation is not totally accurate.<br>
+     * It returns all points from the first and the last T slices + edge points for intermediate T
+     * slices.
+     * 
+     * @see #getEdgePoints()
+     */
+    public int[] getEdgePointsAsIntArray()
+    {
+        final DynamicArray.Int result = new DynamicArray.Int(8);
+
+        // perimeter = first slice volume + inter slices perimeter + last slice volume
+        // TODO: fix this method and use real 4D edge point
+        if (mask.size() <= 2)
         {
-            final int t = entry.getKey().intValue();
+            for (Entry<Integer, BooleanMask3D> entry : mask.entrySet())
+                result.add(toInt4D(entry.getValue().getPointsAsIntArray(), entry.getKey().intValue()));
+        }
+        else
+        {
+            final Entry<Integer, BooleanMask3D> firstEntry = mask.firstEntry();
+            final Entry<Integer, BooleanMask3D> lastEntry = mask.lastEntry();
+            final Integer firstKey = firstEntry.getKey();
+            final Integer lastKey = lastEntry.getKey();
 
-            for (Point3D.Integer pt : entry.getValue().getEdgePoints())
-                points.add(new Point4D.Integer(pt.x, pt.y, pt.z, t));
+            result.add(toInt4D(firstEntry.getValue().getPointsAsIntArray(), firstKey.intValue()));
+
+            for (Entry<Integer, BooleanMask3D> entry : mask.subMap(firstKey, false, lastKey, false).entrySet())
+                result.add(toInt4D(entry.getValue().getEdgePointsAsIntArray(), entry.getKey().intValue()));
+
+            result.add(toInt4D(lastEntry.getValue().getPointsAsIntArray(), lastKey.intValue()));
         }
 
-        return points.toArray(new Point4D.Integer[points.size()]);
+        return result.asArray();
     }
 
     /**
@@ -898,17 +952,26 @@ public class BooleanMask4D
      */
     public Point4D.Integer[] getPoints()
     {
-        final List<Point4D.Integer> points = new ArrayList<Point4D.Integer>(1024);
+        return Point4D.Integer.toPoint4D(getPointsAsIntArray());
+    }
+
+    /**
+     * Return an array of integer representing all points of the current 4D mask.<br>
+     * <code>result.length</code> = number of point * 4<br>
+     * <code>result[(pt * 4) + 0]</code> = X coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 4) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 4) + 2]</code> = Z coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 4) + 3]</code> = T coordinate for point <i>pt</i>.<br>
+     * Points are returned in ascending XYZT order.
+     */
+    public int[] getPointsAsIntArray()
+    {
+        final DynamicArray.Int result = new DynamicArray.Int(8);
 
         for (Entry<Integer, BooleanMask3D> entry : mask.entrySet())
-        {
-            final int t = entry.getKey().intValue();
+            result.add(toInt4D(entry.getValue().getPointsAsIntArray(), entry.getKey().intValue()));
 
-            for (Point3D.Integer pt : entry.getValue().getPoints())
-                points.add(new Point4D.Integer(pt.x, pt.y, pt.z, t));
-        }
-
-        return points.toArray(new Point4D.Integer[points.size()]);
+        return result.asArray();
     }
 
     @Override
