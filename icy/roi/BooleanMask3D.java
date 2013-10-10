@@ -793,25 +793,26 @@ public class BooleanMask3D implements Cloneable
         return result;
     }
 
- 
     /**
-     * Return an array of {@link icy.type.point.Point3D.Integer} containing the edge/surface points
+     * Return an array of {@link icy.type.point.Point3D.Integer} containing the contour/surface
+     * points
      * of the 3D mask.<br>
      * Points are returned in ascending XYZ order. <br>
      * <br>
      * WARNING: The basic implementation is not totally accurate.<br>
-     * It returns all points from the first and the last Z slices + edge points for intermediate Z
+     * It returns all points from the first and the last Z slices + contour points for intermediate
+     * Z
      * slices.
      * 
-     * @see #getEdgePointsAsIntArray()
+     * @see #getContourPointsAsIntArray()
      */
-    public Point3D.Integer[] getEdgePoints()
+    public Point3D.Integer[] getContourPoints()
     {
-        return Point3D.Integer.toPoint3D(getEdgePointsAsIntArray());
+        return Point3D.Integer.toPoint3D(getContourPointsAsIntArray());
     }
 
     /**
-     * Return an array of integer containing the edge/surface points of the 3D mask.<br>
+     * Return an array of integer containing the contour/surface points of the 3D mask.<br>
      * <code>result.length</code> = number of point * 3<br>
      * <code>result[(pt * 3) + 0]</code> = X coordinate for point <i>pt</i>.<br>
      * <code>result[(pt * 3) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
@@ -819,17 +820,18 @@ public class BooleanMask3D implements Cloneable
      * Points are returned in ascending XYZ order.<br>
      * <br>
      * WARNING: The basic implementation is not totally accurate.<br>
-     * It returns all points from the first and the last Z slices + edge points for intermediate Z
+     * It returns all points from the first and the last Z slices + contour points for intermediate
+     * Z
      * slices.
      * 
-     * @see #getEdgePoints()
+     * @see #getContourPoints()
      */
-    public int[] getEdgePointsAsIntArray()
+    public int[] getContourPointsAsIntArray()
     {
         final DynamicArray.Int result = new DynamicArray.Int(8);
 
         // perimeter = first slice volume + inter slices perimeter + last slice volume
-        // TODO: fix this method and use real 3D edge point
+        // TODO: fix this method and use real 3D contour point
         if (mask.size() <= 2)
         {
             for (Entry<Integer, BooleanMask2D> entry : mask.entrySet())
@@ -845,7 +847,7 @@ public class BooleanMask3D implements Cloneable
             result.add(toInt3D(firstEntry.getValue().getPointsAsIntArray(), firstKey.intValue()));
 
             for (Entry<Integer, BooleanMask2D> entry : mask.subMap(firstKey, false, lastKey, false).entrySet())
-                result.add(toInt3D(entry.getValue().getEdgePointsAsIntArray(), entry.getKey().intValue()));
+                result.add(toInt3D(entry.getValue().getContourPointsAsIntArray(), entry.getKey().intValue()));
 
             result.add(toInt3D(lastEntry.getValue().getPointsAsIntArray(), lastKey.intValue()));
         }

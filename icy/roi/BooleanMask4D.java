@@ -886,23 +886,23 @@ public class BooleanMask4D
     }
 
     /**
-     * Return an array of {@link icy.type.point.Point4D.Integer} containing the edge/surface points
+     * Return an array of {@link icy.type.point.Point4D.Integer} containing the contour/surface points
      * of the 4D mask.<br>
      * Points are returned in ascending XYZT order. <br>
      * <br>
      * WARNING: The basic implementation is not totally accurate.<br>
-     * It returns all points from the first and the last T slices + edge points for intermediate T
+     * It returns all points from the first and the last T slices + contour points for intermediate T
      * slices.
      * 
-     * @see #getEdgePointsAsIntArray()
+     * @see #getContourPointsAsIntArray()
      */
-    public Point4D.Integer[] getEdgePoints()
+    public Point4D.Integer[] getContourPoints()
     {
-        return Point4D.Integer.toPoint4D(getEdgePointsAsIntArray());
+        return Point4D.Integer.toPoint4D(getContourPointsAsIntArray());
     }
 
     /**
-     * Return an array of integer containing the edge/surface points of the 4D mask.<br>
+     * Return an array of integer containing the contour/surface points of the 4D mask.<br>
      * <code>result.length</code> = number of point * 4<br>
      * <code>result[(pt * 4) + 0]</code> = X coordinate for point <i>pt</i>.<br>
      * <code>result[(pt * 4) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
@@ -911,17 +911,17 @@ public class BooleanMask4D
      * Points are returned in ascending XYZT order.<br>
      * <br>
      * WARNING: The basic implementation is not totally accurate.<br>
-     * It returns all points from the first and the last T slices + edge points for intermediate T
+     * It returns all points from the first and the last T slices + contour points for intermediate T
      * slices.
      * 
-     * @see #getEdgePoints()
+     * @see #getContourPoints()
      */
-    public int[] getEdgePointsAsIntArray()
+    public int[] getContourPointsAsIntArray()
     {
         final DynamicArray.Int result = new DynamicArray.Int(8);
 
         // perimeter = first slice volume + inter slices perimeter + last slice volume
-        // TODO: fix this method and use real 4D edge point
+        // TODO: fix this method and use real 4D contour point
         if (mask.size() <= 2)
         {
             for (Entry<Integer, BooleanMask3D> entry : mask.entrySet())
@@ -937,7 +937,7 @@ public class BooleanMask4D
             result.add(toInt4D(firstEntry.getValue().getPointsAsIntArray(), firstKey.intValue()));
 
             for (Entry<Integer, BooleanMask3D> entry : mask.subMap(firstKey, false, lastKey, false).entrySet())
-                result.add(toInt4D(entry.getValue().getEdgePointsAsIntArray(), entry.getKey().intValue()));
+                result.add(toInt4D(entry.getValue().getContourPointsAsIntArray(), entry.getKey().intValue()));
 
             result.add(toInt4D(lastEntry.getValue().getPointsAsIntArray(), lastKey.intValue()));
         }

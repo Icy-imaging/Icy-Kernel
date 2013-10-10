@@ -681,60 +681,6 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * Return edge points of specified component.<br>
-     * A component is basically an isolated object which does not touch any other objects.<br>
-     * 
-     * @param sortedComponentPoints
-     *        Component points sorted in ascending XY order.<br>
-     * @return
-     *         Edge points of specified component sorted in ascending XY order :
-     * 
-     * <pre>
-     *  123 
-     *  4 5
-     *  6 7
-     *   89
-     * </pre>
-     */
-    public static Point[] getComponentEdge(Point[] sortedComponentPoints)
-    {
-        final Point[] edgePoints = new Point[sortedComponentPoints.length];
-
-        Point last = new Point(sortedComponentPoints[0]);
-        int startX = last.x;
-
-        edgePoints[0] = new Point(last);
-
-        int edgePt = 1;
-        for (int i = 1; i < sortedComponentPoints.length;)
-        {
-            final Point pt = sortedComponentPoints[i];
-            final int x = pt.x;
-            final int y = pt.y;
-
-            // new line
-            if (y != last.y)
-            {
-                // end line point != start line point --> add it
-                if (last.x != startX)
-                    edgePoints[edgePt++] = new Point(last);
-
-                edgePoints[edgePt++] = new Point(x, y);
-
-                startX = x;
-                last.y = y;
-            }
-
-            last.x = x;
-        }
-
-        final Point[] result = new Point[edgePt];
-        System.arraycopy(edgePoints, 0, result, 0, result.length);
-
-        return result;
-    }
-
-    /**
      * Region represented by the mask.
      */
     public Rectangle bounds;
@@ -1219,7 +1165,7 @@ public class BooleanMask2D implements Cloneable
     }
 
     /**
-     * Return an array of {@link Point} containing the edge points of the mask.<br>
+     * Return an array of {@link Point} containing the contour points of the mask.<br>
      * Points are returned in ascending XY order:
      * 
      * <pre>
@@ -1229,15 +1175,15 @@ public class BooleanMask2D implements Cloneable
      *   89
      * </pre>
      * 
-     * @see #getEdgePointsAsIntArray()
+     * @see #getContourPointsAsIntArray()
      */
-    public Point[] getEdgePoints()
+    public Point[] getContourPoints()
     {
-        return TypeUtil.toPoint(getEdgePointsAsIntArray());
+        return TypeUtil.toPoint(getContourPointsAsIntArray());
     }
 
     /**
-     * Return an array of integer containing the edge points of the mask.<br>
+     * Return an array of integer containing the contour points of the mask.<br>
      * <code>result.length</code> = number of point * 2<br>
      * <code>result[(pt * 2) + 0]</code> = X coordinate for point <i>pt</i>.<br>
      * <code>result[(pt * 2) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
@@ -1250,7 +1196,7 @@ public class BooleanMask2D implements Cloneable
      *   89
      * </pre>
      */
-    public int[] getEdgePointsAsIntArray()
+    public int[] getContourPointsAsIntArray()
     {
         if (isEmpty())
             return new int[0];
@@ -1511,6 +1457,15 @@ public class BooleanMask2D implements Cloneable
         System.arraycopy(points, 0, result, 0, pt);
 
         return result;
+    }
+
+    /**
+     * @deprecated Use {@link #getContourPoints()} instead.
+     */
+    @Deprecated
+    public Point[] getEdgePoints()
+    {
+        return TypeUtil.toPoint(getContourPointsAsIntArray());
     }
 
     /**

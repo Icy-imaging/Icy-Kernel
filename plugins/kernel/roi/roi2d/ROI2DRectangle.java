@@ -106,7 +106,7 @@ public class ROI2DRectangle extends ROI2DRectShape
     }
 
     @Override
-    public double computeNumberOfEdgePoints()
+    public double computeNumberOfContourPoints()
     {
         return getTotalDistance(getPoints());
     }

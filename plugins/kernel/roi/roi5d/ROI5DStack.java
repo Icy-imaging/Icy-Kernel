@@ -459,7 +459,7 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, I
     }
 
     @Override
-    public double computeNumberOfEdgePoints()
+    public double computeNumberOfContourPoints()
     {
         // 3D edge points = first slice points + inter slices edge points + last slice points
         // TODO: only approximation, fix this to use real 5D edge point
@@ -480,7 +480,7 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, I
             perimeter = firstEntry.getValue().getNumberOfPoints();
 
             for (R slice : slices.subMap(firstKey, false, lastKey, false).values())
-                perimeter += slice.getNumberOfEdgePoints();
+                perimeter += slice.getNumberOfContourPoints();
 
             perimeter += lastEntry.getValue().getNumberOfPoints();
         }

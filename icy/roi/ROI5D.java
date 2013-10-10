@@ -220,10 +220,10 @@ public abstract class ROI5D extends ROI
      * Override to optimize for specific ROI.
      */
     @Override
-    public double computeNumberOfEdgePoints()
+    public double computeNumberOfContourPoints()
     {
         // approximation by using number of point of the edge of boolean mask
-        return getBooleanMask(true).getEdgePointsAsIntArray().length / getDimension();
+        return getBooleanMask(true).getContourPointsAsIntArray().length / getDimension();
     }
 
     /*

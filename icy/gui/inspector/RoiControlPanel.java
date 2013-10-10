@@ -172,7 +172,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         sizeCField.addTextChangeListener(this);
 
         buildActionMap();
-        
+
         refreshROIActionsInternal();
         refreshROIPropertiesInternal();
     }

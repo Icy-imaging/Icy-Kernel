@@ -972,23 +972,25 @@ public class BooleanMask5D
     }
 
     /**
-     * Return an array of {@link icy.type.point.Point5D.Integer} containing the edge/surface points
+     * Return an array of {@link icy.type.point.Point5D.Integer} containing the contour/surface
+     * points
      * of the 5D mask.<br>
      * Points are returned in ascending XYZTC order. <br>
      * <br>
      * WARNING: The basic implementation is not totally accurate.<br>
-     * It returns all points from the first and the last C slices + edge points for intermediate C
+     * It returns all points from the first and the last C slices + contour points for intermediate
+     * C
      * slices.
      * 
-     * @see #getEdgePointsAsIntArray()
+     * @see #getContourPointsAsIntArray()
      */
-    public Point5D.Integer[] getEdgePoints()
+    public Point5D.Integer[] getContourPoints()
     {
-        return Point5D.Integer.toPoint5D(getEdgePointsAsIntArray());
+        return Point5D.Integer.toPoint5D(getContourPointsAsIntArray());
     }
 
     /**
-     * Return an array of integer containing the edge/surface points of the 5D mask.<br>
+     * Return an array of integer containing the contour/surface points of the 5D mask.<br>
      * <code>result.length</code> = number of point * 4<br>
      * <code>result[(pt * 4) + 0]</code> = X coordinate for point <i>pt</i>.<br>
      * <code>result[(pt * 4) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
@@ -998,17 +1000,18 @@ public class BooleanMask5D
      * Points are returned in ascending XYZTC order.<br>
      * <br>
      * WARNING: The basic implementation is not totally accurate.<br>
-     * It returns all points from the first and the last C slices + edge points for intermediate C
+     * It returns all points from the first and the last C slices + contour points for intermediate
+     * C
      * slices.
      * 
-     * @see #getEdgePoints()
+     * @see #getContourPoints()
      */
-    public int[] getEdgePointsAsIntArray()
+    public int[] getContourPointsAsIntArray()
     {
         final DynamicArray.Int result = new DynamicArray.Int(8);
 
         // perimeter = first slice volume + inter slices perimeter + last slice volume
-        // TODO: fix this method and use real 5D edge point
+        // TODO: fix this method and use real 5D contour point
         if (mask.size() <= 2)
         {
             for (Entry<Integer, BooleanMask4D> entry : mask.entrySet())
@@ -1024,7 +1027,7 @@ public class BooleanMask5D
             result.add(toInt5D(firstEntry.getValue().getPointsAsIntArray(), firstKey.intValue()));
 
             for (Entry<Integer, BooleanMask4D> entry : mask.subMap(firstKey, false, lastKey, false).entrySet())
-                result.add(toInt5D(entry.getValue().getEdgePointsAsIntArray(), entry.getKey().intValue()));
+                result.add(toInt5D(entry.getValue().getContourPointsAsIntArray(), entry.getKey().intValue()));
 
             result.add(toInt5D(lastEntry.getValue().getPointsAsIntArray(), lastKey.intValue()));
         }

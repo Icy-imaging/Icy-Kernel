@@ -638,10 +638,10 @@ public abstract class ROI3D extends ROI
      * Override to optimize for specific ROI.
      */
     @Override
-    public double computeNumberOfEdgePoints()
+    public double computeNumberOfContourPoints()
     {
         // approximation by using number of point of the edge of boolean mask
-        return getBooleanMask(true).getEdgePointsAsIntArray().length / getDimension();
+        return getBooleanMask(true).getContourPointsAsIntArray().length / getDimension();
     }
 
     /*
@@ -660,12 +660,12 @@ public abstract class ROI3D extends ROI
      * Return surface area of the 3D ROI in pixels.<br>
      * This is basically the number of pixel representing ROI edges.<br>
      * 
-     * @see #getNumberOfEdgePoints()
-     * @see #computeNumberOfEdgePoints()
+     * @see #getNumberOfContourPoints()
+     * @see #computeNumberOfContourPoints()
      */
     public final double getSurfaceArea()
     {
-        return getNumberOfEdgePoints();
+        return getNumberOfContourPoints();
     }
 
     /**

@@ -231,7 +231,7 @@ public class ROI2DPolygon extends ROI2DShape
     }
 
     @Override
-    public double computeNumberOfEdgePoints()
+    public double computeNumberOfContourPoints()
     {
         return getTotalDistance(getPoints());
     }

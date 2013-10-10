@@ -59,6 +59,7 @@ import javax.swing.table.AbstractTableModel;
 
 import org.jdesktop.swingx.JXTable;
 import org.jdesktop.swingx.decorator.HighlighterFactory;
+import org.jdesktop.swingx.table.ColumnControlButton;
 import org.jdesktop.swingx.table.TableColumnExt;
 
 /**
@@ -102,7 +103,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
      */
     private static final long serialVersionUID = 4550426171735455449L;
 
-    static final String[] columnNames = {"Name", "Opacity", ""};
+    static final String[] columnNames = {"Name", "Opacity", "Visible"};
 
     List<Layer> layers;
     IcyCanvas canvas;
@@ -193,6 +194,10 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
             @Override
             public Object getValueAt(int row, int column)
             {
+                // substance occasionally do not check size before getting value
+                if (row >= layers.size())
+                    return "";
+
                 final Layer layer = layers.get(row);
 
                 switch (column)
@@ -275,13 +280,14 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         table.setModel(tableModel);
         // alternate highlight
         table.addHighlighter(HighlighterFactory.createSimpleStriping());
+        // disable extra actions from column control
+        ((ColumnControlButton) table.getColumnControl()).setAdditionalActionsVisible(false);
 
         TableColumnExt col;
 
         // columns setting - name
         col = table.getColumnExt(0);
         col.setPreferredWidth(140);
-        col.setMinWidth(60);
         col.setToolTipText("Layer name (double click to edit)");
 
         // columns setting - transparency
@@ -293,6 +299,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         col.setCellEditor(new SliderCellEditor(true));
         col.setCellRenderer(new SliderCellRenderer());
         col.setToolTipText("Change the layer opacity");
+        col.setResizable(false);
 
         // columns setting - visible
         col = table.getColumnExt(2);
@@ -302,6 +309,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         col.setCellEditor(new VisibleCellEditor(18));
         col.setCellRenderer(new VisibleCellRenderer(18));
         col.setToolTipText("Make the layer visible or not");
+        col.setResizable(false);
 
         // table selection model
         tableSelectionModel = table.getSelectionModel();
@@ -319,6 +327,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         nameFilter.addTextChangeListener(this);
 
         table = new JXTable();
+        table.setAutoStartEditOnKeyStroke(false);
         table.setRowHeight(24);
         table.setShowVerticalLines(false);
         table.setColumnControlVisible(true);

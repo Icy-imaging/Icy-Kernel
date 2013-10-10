@@ -302,13 +302,13 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getEdgePoints()}
+     * @deprecated Use {@link #getBooleanMask(boolean)} and {@link BooleanMask3D#getContourPoints()}
      *             instead.
      */
     @Deprecated
     public Point3D[] getEdgePoints()
     {
-        return getBooleanMask(true).getEdgePoints();
+        return getBooleanMask(true).getContourPoints();
     }
 
     /**

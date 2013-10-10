@@ -107,7 +107,7 @@ public class RoiExtraInfoPanel extends JPanel
                             break;
                         }
 
-                        p += roi.getNumberOfEdgePoints();
+                        p += roi.getNumberOfContourPoints();
                         v += roi.getNumberOfPoints();
                     }
 

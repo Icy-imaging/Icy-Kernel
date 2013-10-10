@@ -143,7 +143,7 @@ public class ROI2DPoint extends ROI2DShape
 
     
     @Override
-    public double computeNumberOfEdgePoints()
+    public double computeNumberOfContourPoints()
     {
         return 0d;
     }

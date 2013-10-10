@@ -828,9 +828,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     protected Rectangle5D cachedBounds;
     protected double cachedNumberOfPoints;
-    protected double cachedNumberOfEdgePoints;
+    protected double cachedNumberOfContourPoints;
     protected boolean boundsInvalid;
-    protected boolean numberOfEdgePointsInvalid;
+    protected boolean numberOfContourPointsInvalid;
     protected boolean numberOfPointsInvalid;
 
     /**
@@ -857,10 +857,10 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
         cachedBounds = new Rectangle5D.Double();
         cachedNumberOfPoints = 0d;
-        cachedNumberOfEdgePoints = 0d;
+        cachedNumberOfContourPoints = 0d;
         boundsInvalid = true;
         numberOfPointsInvalid = true;
-        numberOfEdgePointsInvalid = true;
+        numberOfContourPointsInvalid = true;
 
         listeners = new EventListenerList();
         updater = new UpdateEventHandler(this, false);
@@ -2017,29 +2017,29 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Compute and returns the number of point (pixel) composing the ROI edges.
+     * Compute and returns the number of point (pixel) composing the ROI contour.
      */
     /*
      * Override this method to adapt and optimize for a specific ROI.
      */
-    public abstract double computeNumberOfEdgePoints();
+    public abstract double computeNumberOfContourPoints();
 
     /**
-     * Returns the number of point (pixel) composing the ROI edges.<br>
+     * Returns the number of point (pixel) composing the ROI contour.<br>
      * It is used to calculate the perimeter (2D) or surface area (3D) of the ROI.
      * 
-     * @see #computeNumberOfEdgePoints()
+     * @see #computeNumberOfContourPoints()
      */
-    public final double getNumberOfEdgePoints()
+    public final double getNumberOfContourPoints()
     {
         // we need to recompute the number of edge point
-        if (numberOfEdgePointsInvalid)
+        if (numberOfContourPointsInvalid)
         {
-            cachedNumberOfEdgePoints = computeNumberOfEdgePoints();
-            numberOfEdgePointsInvalid = false;
+            cachedNumberOfContourPoints = computeNumberOfContourPoints();
+            numberOfContourPointsInvalid = false;
         }
 
-        return cachedNumberOfEdgePoints;
+        return cachedNumberOfContourPoints;
     }
 
     /**
@@ -2067,12 +2067,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * @deprecated Only for ROI2D object, Use {@link #getNumberOfEdgePoints()} instead.
+     * @deprecated Only for ROI2D object, Use {@link #getNumberOfContourPoints()} instead.
      */
     @Deprecated
     public double getPerimeter()
     {
-        return getNumberOfEdgePoints();
+        return getNumberOfContourPoints();
     }
 
     /**
@@ -2287,7 +2287,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             case ROI_CHANGED:
                 // cached properties need to be recomputed
                 boundsInvalid = true;
-                numberOfEdgePointsInvalid = true;
+                numberOfContourPointsInvalid = true;
                 numberOfPointsInvalid = true;
                 painter.painterChanged();
                 break;

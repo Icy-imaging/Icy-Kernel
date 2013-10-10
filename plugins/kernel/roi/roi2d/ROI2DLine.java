@@ -194,7 +194,7 @@ public class ROI2DLine extends ROI2DShape
     }
     
     @Override
-    public double computeNumberOfEdgePoints()
+    public double computeNumberOfContourPoints()
     {
         return getTotalDistance(getPoints());
     }
