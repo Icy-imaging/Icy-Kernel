@@ -18,7 +18,7 @@
  */
 package icy.gui.component.button;
 
-import icy.common.IcyAbstractAction;
+import icy.action.IcyAbstractAction;
 import icy.resource.icon.IcyIcon;
 import icy.util.StringUtil;
 
@@ -90,6 +90,17 @@ public class IcyCommandToggleButton extends JCommandToggleButton
         setAction(action);
     }
 
+    /**
+     * @deprecated User {@link #IcyCommandToggleButton(IcyAbstractAction)} instead.
+     */
+    @Deprecated
+    public IcyCommandToggleButton(icy.common.IcyAbstractAction action)
+    {
+        this(null, (IcyIcon) null);
+
+        setAction(action);
+    }
+    
     public IcyCommandToggleButton()
     {
         this(null, (IcyIcon) null);

@@ -18,13 +18,13 @@
  */
 package icy.gui.menu;
 
+import icy.action.SequenceOperationActions;
+import icy.action.SequenceOperationActions.ExtractChannelAction;
+import icy.action.SequenceOperationActions.RemoveChannelAction;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandMenuButton;
 import icy.gui.component.button.IcyCommandToggleMenuButton;
-import icy.gui.menu.action.SequenceOperationActions;
-import icy.gui.menu.action.SequenceOperationActions.ExtractChannelAction;
-import icy.gui.menu.action.SequenceOperationActions.RemoveChannelAction;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.RibbonUtil;
 import icy.main.Icy;

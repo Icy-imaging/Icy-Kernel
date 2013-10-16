@@ -53,12 +53,15 @@ public class VisibleCellRenderer extends JLabel implements TableCellRenderer, Tr
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
             int row, int column)
     {
-        final boolean b = ((Boolean) value).booleanValue();
+        if (value instanceof Boolean)
+        {
+            final boolean b = ((Boolean) value).booleanValue();
 
-        if (b)
-            setIcon(new IcyIcon(ResourceUtil.ICON_VISIBLE, iconSize));
-        else
-            setIcon(new IcyIcon(ResourceUtil.ICON_NOT_VISIBLE, iconSize));
+            if (b)
+                setIcon(new IcyIcon(ResourceUtil.ICON_VISIBLE, iconSize));
+            else
+                setIcon(new IcyIcon(ResourceUtil.ICON_NOT_VISIBLE, iconSize));
+        }
 
         return this;
     }
@@ -67,12 +70,15 @@ public class VisibleCellRenderer extends JLabel implements TableCellRenderer, Tr
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
             boolean leaf, int row, boolean hasFocus)
     {
-        final boolean b = ((Boolean) value).booleanValue();
+        if (value instanceof Boolean)
+        {
+            final boolean b = ((Boolean) value).booleanValue();
 
-        if (b)
-            setIcon(new IcyIcon(ResourceUtil.ICON_VISIBLE, iconSize));
-        else
-            setIcon(new IcyIcon(ResourceUtil.ICON_NOT_VISIBLE, iconSize));
+            if (b)
+                setIcon(new IcyIcon(ResourceUtil.ICON_VISIBLE, iconSize));
+            else
+                setIcon(new IcyIcon(ResourceUtil.ICON_NOT_VISIBLE, iconSize));
+        }
 
         return this;
     }

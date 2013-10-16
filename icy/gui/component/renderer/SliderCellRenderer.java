@@ -46,10 +46,13 @@ public class SliderCellRenderer extends JSlider implements TableCellRenderer, Tr
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
             int row, int column)
     {
-        final int intValue = ((Integer) value).intValue();
+        if (value instanceof Integer)
+        {
+            final int intValue = ((Integer) value).intValue();
 
-        if (getValue() != intValue)
-            setValue(intValue);
+            if (getValue() != intValue)
+                setValue(intValue);
+        }
 
         return this;
     }
@@ -58,10 +61,13 @@ public class SliderCellRenderer extends JSlider implements TableCellRenderer, Tr
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
             boolean leaf, int row, boolean hasFocus)
     {
-        final int intValue = ((Integer) value).intValue();
+        if (value instanceof Integer)
+        {
+            final int intValue = ((Integer) value).intValue();
 
-        if (getValue() != intValue)
-            setValue(intValue);
+            if (getValue() != intValue)
+                setValue(intValue);
+        }
 
         return this;
     }

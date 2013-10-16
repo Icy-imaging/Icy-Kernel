@@ -16,9 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Icy. If not, see <http://www.gnu.org/licenses/>.
  */
-package icy.gui.menu.action;
+package icy.action;
 
-import icy.common.IcyAbstractAction;
 import icy.gui.main.MainFrame;
 import icy.main.Icy;
 import icy.preferences.GeneralPreferences;

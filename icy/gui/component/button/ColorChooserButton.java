@@ -20,13 +20,11 @@ package icy.gui.component.button;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 import java.util.EventListener;
 
-import javax.swing.ImageIcon;
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 
@@ -45,7 +43,6 @@ public class ColorChooserButton extends JButton implements ActionListener
      */
     private static final long serialVersionUID = -5130821224410911737L;
 
-    private Color color;
     private String colorChooseText;
 
     /**
@@ -63,38 +60,17 @@ public class ColorChooserButton extends JButton implements ActionListener
     {
         super();
 
-        setBorderPainted(false);
+        // setBorderPainted(false);
+        setFocusPainted(false);
 
-        this.color = color;
+        final Dimension dim = new Dimension(24, 18);
+        add(new Box.Filler(dim, dim, dim));
+
+        // save color information in background color
+        setBackground(color);
         colorChooseText = "Choose color";
 
-        // default size
-        setPreferredSize(new Dimension(32, 20));
-        setSize(new Dimension(32, 20));
-
         addActionListener(this);
-
-        updateIcon();
-    }
-
-    private void updateIcon()
-    {
-        final Dimension d = getSize();
-        final int w = d.width - 2;
-        final int h = d.height - 2;
-
-        if ((w <= 0) || (h <= 0))
-            return;
-
-        final BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-        final Graphics2D g = img.createGraphics();
-
-        g.setColor(color);
-        g.fillRect(1, 1, w - 2, h - 2);
-        g.setColor(Color.black);
-        g.drawRect(0, 0, w, h);
-
-        setIcon(new ImageIcon(img));
     }
 
     /**
@@ -102,7 +78,7 @@ public class ColorChooserButton extends JButton implements ActionListener
      */
     public Color getColor()
     {
-        return color;
+        return getBackground();
     }
 
     /**
@@ -111,10 +87,11 @@ public class ColorChooserButton extends JButton implements ActionListener
      */
     public void setColor(Color color)
     {
-        if (this.color != color)
+        if (getColor() != color)
         {
-            this.color = color;
-            colorChanged();
+            setBackground(color);
+            // notify about color change
+            fireColorChanged();
         }
     }
 
@@ -133,27 +110,6 @@ public class ColorChooserButton extends JButton implements ActionListener
     public void setColorChooseText(String colorChooseText)
     {
         this.colorChooseText = colorChooseText;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.awt.Component#setBounds(int, int, int, int)
-     */
-    @Override
-    public void setBounds(int x, int y, int width, int height)
-    {
-        super.setBounds(x, y, width, height);
-
-        updateIcon();
-    }
-
-    private void colorChanged()
-    {
-        // udpate icon
-        updateIcon();
-        // and notify about color change
-        fireColorChanged();
     }
 
     protected void fireColorChanged()
@@ -184,10 +140,19 @@ public class ColorChooserButton extends JButton implements ActionListener
         listenerList.remove(ColorChangeListener.class, l);
     }
 
+    // @Override
+    // protected void paintComponent(Graphics g)
+    // {
+    // super.paintComponent(g);
+    //
+    // g.setColor(color);
+    // g.fillRect(1, 1, getWidth() - 2, getHeight() - 2);
+    // }
+
     @Override
     public void actionPerformed(ActionEvent e)
     {
-        final Color c = JColorChooser.showDialog(this, colorChooseText, color);
+        final Color c = JColorChooser.showDialog(this, colorChooseText, getColor());
 
         if (c != null)
             setColor(c);

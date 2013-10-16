@@ -18,10 +18,10 @@
  */
 package icy.gui.menu;
 
+import icy.action.GeneralActions;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandToggleButton;
 import icy.gui.main.MainFrame;
-import icy.gui.menu.action.GeneralActions;
 import icy.gui.util.LookAndFeelUtil;
 import icy.gui.util.RibbonUtil;
 import icy.image.ImageUtil;

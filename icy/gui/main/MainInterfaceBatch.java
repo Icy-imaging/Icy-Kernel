@@ -21,6 +21,7 @@ package icy.gui.main;
 
 import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
+import icy.gui.inspector.LayersPanel;
 import icy.gui.inspector.RoisPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.ToolRibbonTask;
@@ -104,6 +105,12 @@ public class MainInterfaceBatch implements MainInterface
 
     @Override
     public RoisPanel getRoisPanel()
+    {
+        return null;
+    }
+    
+    @Override
+    public LayersPanel getLayersPanel()
     {
         return null;
     }

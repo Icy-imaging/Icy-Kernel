@@ -18,7 +18,7 @@
  */
 package icy.gui.component.button;
 
-import icy.common.IcyAbstractAction;
+import icy.action.IcyAbstractAction;
 import icy.gui.util.ComponentUtil;
 import icy.resource.icon.IcyIcon;
 import icy.util.StringUtil;
@@ -70,6 +70,18 @@ public class IcyButton extends JButton
      * Create a button with specified action.
      */
     public IcyButton(IcyAbstractAction action)
+    {
+        super(action);
+
+        flat = false;
+        init();
+    }
+
+    /**
+     * @deprecated User {@link #IcyButton(IcyAbstractAction)} instead.
+     */
+    @Deprecated
+    public IcyButton(icy.common.IcyAbstractAction action)
     {
         super(action);
 
@@ -136,27 +148,24 @@ public class IcyButton extends JButton
         setHorizontalAlignment(SwingConstants.CENTER);
         setVerticalAlignment(SwingConstants.CENTER);
 
+        if (flat)
+        {
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setFocusable(false);
+        }
+
         // manual change notify
         updateSize();
     }
-    
+
     @Override
     public void setAction(Action a)
     {
         super.setAction(a);
-        
+
         // override tooltip set from action
         IcyAbstractAction.setToolTipTextFromAction(this, a);
-    }
-
-    @Override
-    protected void actionPropertyChanged(Action action, String propertyName)
-    {
-        // override tooltip set from action
-        if ((propertyName == Action.LONG_DESCRIPTION) || (propertyName == Action.SHORT_DESCRIPTION))
-            IcyAbstractAction.setToolTipTextFromAction(this, action);
-        else
-            super.actionPropertyChanged(action, propertyName);
     }
 
     /**
@@ -271,5 +280,15 @@ public class IcyButton extends JButton
         // adjust size to icon size if no text
         if (flat && (icon != null) && noText)
             ComponentUtil.setFixedSize(this, icon.getDimension());
+    }
+
+    @Override
+    protected void actionPropertyChanged(Action action, String propertyName)
+    {
+        // override tooltip set from action
+        if ((propertyName == Action.LONG_DESCRIPTION) || (propertyName == Action.SHORT_DESCRIPTION))
+            IcyAbstractAction.setToolTipTextFromAction(this, action);
+        else
+            super.actionPropertyChanged(action, propertyName);
     }
 }

@@ -22,6 +22,7 @@ import icy.common.listener.AcceptListener;
 import icy.common.listener.weak.WeakListener;
 import icy.gui.frame.IcyFrame;
 import icy.gui.inspector.InspectorPanel;
+import icy.gui.inspector.LayersPanel;
 import icy.gui.inspector.RoisPanel;
 import icy.gui.main.MainEvent.MainEventSourceType;
 import icy.gui.main.MainEvent.MainEventType;
@@ -238,6 +239,17 @@ public class MainInterfaceGui implements MainInterface
 
         if (inspector != null)
             return inspector.getRoisPanel();
+
+        return null;
+    }
+
+    @Override
+    public LayersPanel getLayersPanel()
+    {
+        final InspectorPanel inspector = mainFrame.getInspector();
+
+        if (inspector != null)
+            return inspector.getLayersPanel();
 
         return null;
     }

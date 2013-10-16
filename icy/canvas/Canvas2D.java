@@ -51,7 +51,6 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
-import icy.type.point.Point5D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.StringUtil;
@@ -1345,7 +1344,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
             if (isLayersVisible())
             {
-                final List<Layer> layers = getLayers();
+                final List<Layer> layers = getLayers(true);
 
                 // draw them in inverse order to have first painter event at top
                 for (int i = layers.size() - 1; i >= 0; i--)
@@ -3163,15 +3162,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                             System.currentTimeMillis(), 0, mouseCanvasPos.x, mouseCanvasPos.y, mouseAbsolutePos.x,
                             mouseAbsolutePos.y, 0, false, 0);
 
-                    final boolean globalVisible = isLayersVisible();
-                    final Point5D.Double pt = getMouseImagePos5D();
-
-                    // send mouse event to overlays
-                    for (Layer layer : getLayers())
-                    {
-                        if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
-                            layer.getOverlay().mouseMove(mouseEvent, pt, this);
-                    }
+                    // send mouse move event to overlays
+                    mouseMove(mouseEvent, getMouseImagePos5D());
                 }
 
                 // update mouse cursor

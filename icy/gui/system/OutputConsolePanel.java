@@ -122,8 +122,8 @@ public class OutputConsolePanel extends ExternalizablePanel implements Clipboard
         StyleConstants.setForeground(normalAttributes, Color.black);
 
         clearLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE));
-        copyLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOCCOPY));
-        reportLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOCEXPORT));
+        copyLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOC_COPY));
+        reportLogButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DOC_EXPORT));
         scrollLockButton = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_LOCK_OPEN));
 
         // ComponentUtil.setFontSize(textPane, 10);

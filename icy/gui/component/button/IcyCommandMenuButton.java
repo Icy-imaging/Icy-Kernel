@@ -18,7 +18,7 @@
  */
 package icy.gui.component.button;
 
-import icy.common.IcyAbstractAction;
+import icy.action.IcyAbstractAction;
 import icy.resource.icon.IcyIcon;
 import icy.util.StringUtil;
 
@@ -84,6 +84,17 @@ public class IcyCommandMenuButton extends JCommandMenuButton
     }
 
     public IcyCommandMenuButton(IcyAbstractAction action)
+    {
+        this(null, (IcyIcon) null);
+
+        setAction(action);
+    }
+    
+    /**
+     * @deprecated User {@link #IcyCommandMenuButton(IcyAbstractAction)} instead.
+     */
+    @Deprecated
+    public IcyCommandMenuButton(icy.common.IcyAbstractAction action)
     {
         this(null, (IcyIcon) null);
 

@@ -18,13 +18,13 @@
  */
 package icy.gui.inspector;
 
+import icy.action.CanvasActions;
 import icy.canvas.CanvasLayerEvent;
 import icy.canvas.CanvasLayerListener;
 import icy.canvas.IcyCanvas;
 import icy.canvas.Layer;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
-import icy.gui.component.button.IcyButton;
 import icy.gui.component.editor.SliderCellEditor;
 import icy.gui.component.editor.VisibleCellEditor;
 import icy.gui.component.renderer.SliderCellRenderer;
@@ -33,24 +33,20 @@ import icy.gui.main.ActiveViewerListener;
 import icy.gui.viewer.Viewer;
 import icy.gui.viewer.ViewerEvent;
 import icy.gui.viewer.ViewerEvent.ViewerEventType;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
-import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.BoxLayout;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ListSelectionEvent;
@@ -103,7 +99,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
      */
     private static final long serialVersionUID = 4550426171735455449L;
 
-    static final String[] columnNames = {"Name", "Opacity", "Visible"};
+    static final String[] columnNames = {"Name", "Opacity", ""};
 
     List<Layer> layers;
     IcyCanvas canvas;
@@ -113,8 +109,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
     ListSelectionModel tableSelectionModel;
     JXTable table;
     IcyTextField nameFilter;
-    IcyTextField nameField;
-    IcyButton deleteButton;
+    LayerControlPanel controlPanel;
 
     // internals
     boolean isSelectionAdjusting;
@@ -196,7 +191,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
             {
                 // substance occasionally do not check size before getting value
                 if (row >= layers.size())
-                    return "";
+                    return null;
 
                 final Layer layer = layers.get(row);
 
@@ -253,7 +248,18 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
             @Override
             public boolean isCellEditable(int row, int column)
             {
-                return true;
+                final boolean editable;
+
+                // name or opacity field ?
+                if ((column == 0) || (column == 1))
+                {
+                    final Layer layer = layers.get(row);
+                    editable = (layer != null) ? !layer.isReadOnly() : false;
+                }
+                else
+                    editable = true;
+
+                return editable;
             }
 
             @Override
@@ -282,13 +288,15 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         table.addHighlighter(HighlighterFactory.createSimpleStriping());
         // disable extra actions from column control
         ((ColumnControlButton) table.getColumnControl()).setAdditionalActionsVisible(false);
+        // remove the internal find command (we have our own filter)
+        table.getActionMap().remove("find");
 
         TableColumnExt col;
 
         // columns setting - name
         col = table.getColumnExt(0);
         col.setPreferredWidth(140);
-        col.setToolTipText("Layer name (double click to edit)");
+        col.setToolTipText("Layer name (double click in a cell to edit)");
 
         // columns setting - transparency
         col = table.getColumnExt(1);
@@ -316,12 +324,15 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         tableSelectionModel.addListSelectionListener(this);
         tableSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
+        // create shortcuts
+        buildActionMap();
+
+        // and refresh layers
         refreshLayers();
     }
 
     private void initialize()
     {
-        // need filter before load()
         nameFilter = new IcyTextField();
         nameFilter.setToolTipText("Enter a string sequence to filter Layer on name");
         nameFilter.addTextChangeListener(this);
@@ -335,74 +346,31 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         table.setRowSelectionAllowed(true);
         table.setAutoCreateRowSorter(true);
 
-        final JPanel middlePanel = new JPanel();
-        middlePanel.setLayout(new BoxLayout(middlePanel, BoxLayout.PAGE_AXIS));
+        controlPanel = new LayerControlPanel(this);
 
-        middlePanel.add(table.getTableHeader());
-        final JScrollPane sc = new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        middlePanel.add(sc);
-
-        JPanel controlPanel = new JPanel();
-        GridBagLayout gbl_controlPanel = new GridBagLayout();
-        gbl_controlPanel.columnWidths = new int[] {140, 0, 0};
-        gbl_controlPanel.rowHeights = new int[] {20, 0};
-        gbl_controlPanel.columnWeights = new double[] {1.0, 0.0, Double.MIN_VALUE};
-        gbl_controlPanel.rowWeights = new double[] {0.0, Double.MIN_VALUE};
-        controlPanel.setLayout(gbl_controlPanel);
-
-        // build control panel
-        nameField = new IcyTextField();
-        nameField.setToolTipText("Edit name of selected Layer(s)");
-        nameField.addTextChangeListener(this);
-
-        GridBagConstraints gbc_nameField = new GridBagConstraints();
-        gbc_nameField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_nameField.insets = new Insets(0, 0, 0, 5);
-        gbc_nameField.gridx = 0;
-        gbc_nameField.gridy = 0;
-        controlPanel.add(nameField, gbc_nameField);
-
-        setLayout(new BorderLayout());
-
+        setLayout(new BorderLayout(0, 0));
         add(nameFilter, BorderLayout.NORTH);
-        add(middlePanel, BorderLayout.CENTER);
+        add(new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
         add(controlPanel, BorderLayout.SOUTH);
 
-        deleteButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_DELETE));
-        deleteButton.setFlat(true);
-        deleteButton.setToolTipText("Delete selected Layer(s)");
-        deleteButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final Sequence sequence = canvas.getSequence();
-
-                if (sequence != null)
-                {
-                    sequence.beginUpdate();
-                    try
-                    {
-                        // delete selected layers
-                        for (Layer layer : getSelectedLayers())
-                            if (layer.getCanBeRemoved())
-                                sequence.removeOverlay(layer.getOverlay());
-                    }
-                    finally
-                    {
-                        sequence.endUpdate();
-                    }
-                }
-            }
-        });
-        GridBagConstraints gbc_deleteButton = new GridBagConstraints();
-        gbc_deleteButton.fill = GridBagConstraints.BOTH;
-        gbc_deleteButton.gridx = 1;
-        gbc_deleteButton.gridy = 0;
-        controlPanel.add(deleteButton, gbc_deleteButton);
-
         validate();
+    }
+
+    void buildActionMap()
+    {
+        final InputMap imap = table.getInputMap(JComponent.WHEN_FOCUSED);
+        final ActionMap amap = table.getActionMap();
+
+        imap.put(CanvasActions.unselectAction.getKeyStroke(), CanvasActions.unselectAction.getName());
+        imap.put(CanvasActions.deleteLayersAction.getKeyStroke(), CanvasActions.deleteLayersAction.getName());
+        // also allow backspace key for delete operation here
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), CanvasActions.deleteLayersAction.getName());
+
+        // disable search feature (we have our own filter)
+        amap.remove("find");
+        amap.put(CanvasActions.unselectAction.getName(), CanvasActions.unselectAction);
+        amap.put(CanvasActions.deleteLayersAction.getName(), CanvasActions.deleteLayersAction);
     }
 
     public void setNameFilter(String name)
@@ -424,7 +392,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
     void refreshLayersInternal()
     {
         if (canvas != null)
-            layers = filterList(canvas.getLayers(), nameFilter.getText());
+            layers = filterList(canvas.getLayers(false), nameFilter.getText());
         else
             layers.clear();
 
@@ -517,6 +485,13 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         return result;
     }
 
+    public void clearSelected()
+    {
+        setSelectedLayersInternal(new ArrayList<Layer>());
+        // refresh control panel
+        ThreadUtil.bgRunSingle(controlPanelRefresher, true);
+    }
+
     void setSelectedLayersInternal(ArrayList<Layer> newSelected)
     {
         isSelectionAdjusting = true;
@@ -579,7 +554,6 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         }
 
         setSelectedLayersInternal(save);
-
         // refresh control panel
         ThreadUtil.bgRunSingle(controlPanelRefresher, true);
     }
@@ -616,41 +590,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         isLayerPropertiesAdjusting = true;
         try
         {
-            if (canvas != null)
-            {
-                final ArrayList<Layer> selectedLayers = getSelectedLayers();
-                // final boolean singleSelect = (selectedRois.size() == 1);
-                final boolean hasSelected = (selectedLayers.size() > 0);
-
-                boolean canEdit = false;
-                boolean canRemove = false;
-                for (Layer layer : selectedLayers)
-                {
-                    canEdit |= !layer.isReadOnly();
-                    canRemove |= layer.getCanBeRemoved();
-                }
-
-                nameField.setEnabled(hasSelected && canEdit);
-                deleteButton.setEnabled(hasSelected && canRemove);
-
-                if (hasSelected)
-                {
-                    final Layer layer = selectedLayers.get(0);
-                    final String name = layer.getName();
-
-                    // handle it manually as setText doesn't check for equality
-                    if (!name.equals(nameField.getText()))
-                        nameField.setText(name);
-                }
-                else
-                    nameField.setText("");
-            }
-            else
-            {
-                nameField.setEnabled(false);
-                deleteButton.setEnabled(false);
-                nameField.setText("");
-            }
+            controlPanel.refresh();
         }
         finally
         {
@@ -670,41 +610,6 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
     @Override
     public void textChanged(IcyTextField source, boolean validate)
     {
-        if (validate)
-        {
-            if (source == nameField)
-            {
-                if (isLayerPropertiesAdjusting)
-                    return;
-
-                isLayerPropertiesAdjusting = true;
-                try
-                {
-
-                    if (nameField.isEnabled())
-                    {
-                        final String name = source.getText();
-
-                        canvas.beginUpdate();
-                        try
-                        {
-                            for (Layer layer : getSelectedLayers())
-                                if (!layer.isReadOnly())
-                                    layer.setName(name);
-                        }
-                        finally
-                        {
-                            canvas.endUpdate();
-                        }
-                    }
-                }
-                finally
-                {
-                    isLayerPropertiesAdjusting = false;
-                }
-            }
-        }
-
         if (source == nameFilter)
             refreshLayers();
     }
@@ -749,8 +654,24 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
     public void canvasLayerChanged(CanvasLayerEvent event)
     {
         // refresh layer from externals changes
-        if (!isLayerEditing)
-            refreshLayers();
+        if (isLayerEditing)
+            return;
+
+        switch (event.getType())
+        {
+            case ADDED:
+            case REMOVED:
+                refreshLayers();
+                break;
+
+            case CHANGED:
+                final String property = event.getProperty();
+
+                if (Layer.PROPERTY_NAME.equals(property) || Layer.PROPERTY_ALPHA.equals(property)
+                        || Layer.PROPERTY_VISIBLE.equals(property))
+                    refreshTableData();
+                break;
+        }
     }
 
 }

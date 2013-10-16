@@ -18,6 +18,7 @@
  */
 package icy.main;
 
+import icy.action.ActionManager;
 import icy.common.Version;
 import icy.file.FileUtil;
 import icy.file.Loader;
@@ -91,7 +92,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.3.9.2");
+    public static Version version = new Version("1.3.9.3");
 
     /**
      * Main interface
@@ -289,6 +290,8 @@ public class Icy
         IcySecurityManager.init();
         // initialize exception handler
         IcyExceptionHandler.init();
+        // initialize action manager
+        ActionManager.init();
         // prepare native library files (need preferences init)
         nativeLibrariesInit();
 

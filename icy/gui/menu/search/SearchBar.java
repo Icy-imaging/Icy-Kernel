@@ -18,8 +18,8 @@
  */
 package icy.gui.menu.search;
 
+import icy.action.GeneralActions;
 import icy.gui.component.IcyTextField;
-import icy.gui.menu.action.GeneralActions;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.search.SearchEngine;
@@ -154,38 +154,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
                 setFocus();
             }
         });
-        // addKeyListener(new KeyAdapter()
-        // {
-        // @Override
-        // public void keyPressed(KeyEvent e)
-        // {
-        // if (initialized)
-        // {
-        // switch (e.getKeyCode())
-        // {
-        // case KeyEvent.VK_ESCAPE:
-        // cancelSearch();
-        // break;
-        //
-        // case KeyEvent.VK_DOWN:
-        // resultsPanel.moveSelection(1);
-        // break;
-        //
-        // case KeyEvent.VK_UP:
-        // resultsPanel.moveSelection(-1);
-        // break;
-        //
-        // case KeyEvent.VK_ENTER:
-        // // result displayed --> launch selected result
-        // if (resultsPanel.isShowing())
-        // resultsPanel.executeSelected();
-        // else
-        // search(getText());
-        // break;
-        // }
-        // }
-        // }
-        // });
+      
         addFocusListener(new FocusListener()
         {
             @Override

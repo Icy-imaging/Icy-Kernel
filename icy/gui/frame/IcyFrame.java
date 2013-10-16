@@ -18,7 +18,7 @@
  */
 package icy.gui.frame;
 
-import icy.common.IcyAbstractAction;
+import icy.action.IcyAbstractAction;
 import icy.common.MenuCallback;
 import icy.gui.main.MainFrame;
 import icy.gui.util.ComponentUtil;

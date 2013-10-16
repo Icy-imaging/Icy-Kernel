@@ -50,10 +50,9 @@ public class FileUtil
 
         return null;
     }
-    
+
     /**
      * Returns default temporary directory.
-     * 
      * Same as {@link SystemUtil#getTempDirectory()}
      */
     public static String getTempDirectory()
@@ -225,9 +224,10 @@ public class FileUtil
     }
 
     /**
-     * Return path of current directory.
+     * Returns the path where the application is located (current directory).<br>
+     * Ex: "D:/Apps/Icy"
      */
-    public static String getCurrentDirectory()
+    public static String getApplicationDirectory()
     {
         String directory;
 
@@ -261,7 +261,16 @@ public class FileUtil
             // ignore
         }
 
-        return directory;
+        return getGenericPath(directory);
+    }
+
+    /**
+     * @deprecated USe {@link #getApplicationDirectory()} instead.
+     */
+    @Deprecated
+    public static String getCurrentDirectory()
+    {
+        return getApplicationDirectory();
     }
 
     /**

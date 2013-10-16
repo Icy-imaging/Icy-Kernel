@@ -16,14 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with Icy. If not, see <http://www.gnu.org/licenses/>.
  */
-package icy.gui.menu.action;
+package icy.action;
 
 import icy.clipboard.Clipboard;
-import icy.common.IcyAbstractAction;
+import icy.file.FileUtil;
 import icy.gui.dialog.LoadDialog;
+import icy.gui.dialog.MessageDialog;
 import icy.gui.dialog.SaveDialog;
 import icy.gui.inspector.RoisPanel;
 import icy.main.Icy;
+import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.roi.ROI;
@@ -31,15 +33,24 @@ import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
 import icy.system.SystemUtil;
 import icy.util.ShapeUtil.BooleanOperator;
+import icy.util.StringUtil;
+import icy.util.XLSUtil;
 import icy.util.XMLUtil;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
 
 import org.w3c.dom.Document;
 
@@ -232,7 +243,7 @@ public class RoiActions
     };
 
     public static IcyAbstractAction pasteAction = new IcyAbstractAction("Paste", new IcyIcon(ResourceUtil.ICON_PASTE),
-            "Paste ROI from clipboard (Ctrl+V)", KeyEvent.VK_C, SystemUtil.getMenuCtrlMask())
+            "Paste ROI from clipboard (Ctrl+V)", KeyEvent.VK_V, SystemUtil.getMenuCtrlMask())
     {
         /**
          * 
@@ -288,7 +299,7 @@ public class RoiActions
     };
 
     public static IcyAbstractAction pasteLinkAction = new IcyAbstractAction("Paste link", new IcyIcon(
-            ResourceUtil.ICON_LINK_PASTE), "Paste ROI link from clipboard (Alt+V)", KeyEvent.VK_C, InputEvent.ALT_MASK)
+            ResourceUtil.ICON_LINK_PASTE), "Paste ROI link from clipboard (Alt+V)", KeyEvent.VK_V, InputEvent.ALT_MASK)
     {
         /**
          * 
@@ -688,6 +699,101 @@ public class RoiActions
                 finally
                 {
                     sequence.endUpdate();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction xlsExportAction = new IcyAbstractAction("Export", new IcyIcon(
+            ResourceUtil.ICON_XLS_EXPORT), "ROI Excel export", "Export selected ROI informations in XLS file")
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 9094641559971542667L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+            final RoisPanel roisPanel = Icy.getMainInterface().getRoisPanel();
+
+            if ((sequence != null) && (roisPanel != null))
+            {
+                final String content = roisPanel.getCSVFormattedInfosOfSelectedRois();
+
+                if (StringUtil.isEmpty(content))
+                {
+                    MessageDialog.showDialog("Nothing to export !", MessageDialog.INFORMATION_MESSAGE);
+                    return true;
+                }
+
+                // get the global result folder
+                final String dir = GeneralPreferences.getResultFolder();
+                // create it if needed.
+                FileUtil.createDir(dir);
+
+                final String filename = SaveDialog.chooseFile("Export selected ROI(s)...", dir, "result", ".xls");
+
+                if (filename != null)
+                {
+                    // CSV format wanted ?
+                    if (FileUtil.getFileExtension(filename, false).equalsIgnoreCase("csv"))
+                    {
+                        try
+                        {
+                            // just write CSV content
+                            final PrintWriter out = new PrintWriter(filename);
+                            out.println(content);
+                            out.close();
+                        }
+                        catch (FileNotFoundException e1)
+                        {
+                            MessageDialog.showDialog("Error", e1.getMessage(), MessageDialog.ERROR_MESSAGE);
+                        }
+                    }
+                    // XLS export
+                    else
+                    {
+                        try
+                        {
+                            final WritableWorkbook workbook = XLSUtil.createWorkbook(filename);
+                            final WritableSheet sheet = XLSUtil.createNewPage(workbook, "ROIS");
+                            final BufferedReader br = new BufferedReader(new StringReader(content));
+
+                            String line;
+                            int y = 0;
+                            while ((line = br.readLine()) != null)
+                            {
+                                int x = 0;
+
+                                // use tab as separator
+                                for (String col : line.split("\t"))
+                                {
+                                    XLSUtil.setCellString(sheet, x, y, col);
+                                    x++;
+                                }
+
+                                y++;
+                            }
+
+                            XLSUtil.saveAndClose(workbook);
+                        }
+                        catch (Exception e1)
+                        {
+                            MessageDialog.showDialog("Error", e1.getMessage(), MessageDialog.ERROR_MESSAGE);
+                        }
+                    }
                 }
 
                 return true;

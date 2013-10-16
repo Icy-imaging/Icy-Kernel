@@ -18,13 +18,14 @@
  */
 package icy.gui.viewer;
 
+import icy.action.CanvasActions;
+import icy.action.ViewerActions;
+import icy.action.CanvasActions.ToggleLayersAction;
 import icy.canvas.Canvas2D;
-import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvasEvent;
 import icy.canvas.IcyCanvasListener;
-import icy.common.IcyAbstractAction;
 import icy.common.MenuCallback;
 import icy.common.listener.ProgressListener;
 import icy.gui.component.button.IcyButton;
@@ -79,7 +80,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
 import javax.swing.event.EventListenerList;
 
 /**
@@ -89,125 +89,6 @@ import javax.swing.event.EventListenerList;
  */
 public class Viewer extends IcyFrame implements KeyListener, SequenceListener, IcyCanvasListener, PluginLoaderListener
 {
-    private class DuplicateAction extends IcyAbstractAction
-    {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = 6394551300296675713L;
-
-        public DuplicateAction()
-        {
-            super("Duplicate view", new IcyIcon(ResourceUtil.ICON_DUPLICATE), "Duplicate view (no data duplication)",
-                    KeyEvent.VK_F2);
-        }
-
-        @Override
-        public boolean doAction(ActionEvent e)
-        {
-            ThreadUtil.invokeLater(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    final Viewer v = new Viewer(sequence);
-                    final LUT oldLut = getLut();
-                    final LUT newLut = v.getLut();
-
-                    // copy LUT
-                    if (getCanvas() instanceof Canvas3D)
-                    {
-                        // don't copy alpha colormap
-                        newLut.setColorMaps(oldLut, false);
-                        newLut.setScalers(oldLut);
-                    }
-                    else
-                        newLut.copyFrom(oldLut);
-                }
-            });
-
-            return true;
-        }
-    }
-
-    private class ScreenShotAction extends IcyAbstractAction
-    {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = 4213236521854007422L;
-
-        public ScreenShotAction()
-        {
-            super("Screeshot (view)", new IcyIcon(ResourceUtil.ICON_PHOTO), "Take a screenshot of current view", true,
-                    "Rendering...");
-        }
-
-        @Override
-        public boolean doAction(ActionEvent e)
-        {
-            // so it won't change during process
-            final IcyCanvas canvas = getCanvas();
-            final Sequence seqIn = getSequence();
-
-            if ((seqIn != null) && (canvas != null))
-            {
-                final Sequence seqOut = canvas.getRenderedSequence(true, progressFrame);
-
-                if (seqOut != null)
-                {
-                    // set sequence name
-                    seqOut.setName("Screen shot of '" + seqIn.getName() + "' view");
-                    // add sequence
-                    Icy.getMainInterface().addSequence(seqOut);
-
-                    return true;
-                }
-            }
-
-            return false;
-        }
-    }
-
-    private class ScreenShotAlternateAction extends IcyAbstractAction
-    {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = 4213236521854007422L;
-
-        public ScreenShotAlternateAction()
-        {
-            super("Screenshot (global)", new IcyIcon(ResourceUtil.ICON_PHOTO_SMALL),
-                    "Take a screenshot of current view with original sequence dimensions", true, "Rendering...");
-        }
-
-        @Override
-        public boolean doAction(ActionEvent e)
-        {
-            // so it won't change during process
-            final IcyCanvas canvas = getCanvas();
-            final Sequence seqIn = getSequence();
-
-            if ((seqIn != null) && (canvas != null))
-            {
-                final Sequence seqOut = canvas.getRenderedSequence(false, progressFrame);
-
-                if (seqOut != null)
-                {
-                    // set sequence name
-                    seqOut.setName("Rendering of '" + seqIn.getName() + "' view");
-                    // add sequence
-                    Icy.getMainInterface().addSequence(seqOut);
-
-                    return true;
-                }
-            }
-
-            return false;
-        }
-    }
-
     /**
      * associated LUT
      */
@@ -453,29 +334,12 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     {
         final JMenu result = getDefaultSystemMenu();
 
-        final JMenuItem overlayItem = new JMenuItem("Display layers");
-        overlayItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, 0));
-        overlayItem.setIcon(new IcyIcon(ResourceUtil.ICON_LAYER_H2));
+        final JMenuItem overlayItem = new JMenuItem(CanvasActions.toggleLayersAction);
         if ((canvas != null) && canvas.isLayersVisible())
             overlayItem.setText("Hide layers");
         else
             overlayItem.setText("Show layers");
-
-        overlayItem.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (canvas != null)
-                {
-                    canvas.setLayersVisible(!canvas.isLayersVisible());
-                    updateSystemMenu();
-                    refreshToolBar();
-                }
-            }
-        });
-
-        final JMenuItem duplicateItem = new JMenuItem(new DuplicateAction());
+        final JMenuItem duplicateItem = new JMenuItem(ViewerActions.duplicateAction);
 
         // set menu
         result.insert(overlayItem, 0);
@@ -576,36 +440,17 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         buildCanvasCombo();
 
         // build buttons
-        layersEnabledButton = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_LAYER_H2));
-        layersEnabledButton.setToolTipText("Hide layers");
+        layersEnabledButton = new IcyToggleButton(new ToggleLayersAction(true));
+        layersEnabledButton.setHideActionText(true);
         layersEnabledButton.setFocusable(false);
         layersEnabledButton.setSelected(true);
-        layersEnabledButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final IcyCanvas canvas = getCanvas();
-
-                if (canvas != null)
-                    canvas.setLayersVisible(layersEnabledButton.isSelected());
-
-                if (layersEnabledButton.isSelected())
-                    layersEnabledButton.setToolTipText("Hide layers");
-                else
-                    layersEnabledButton.setToolTipText("Show layers");
-
-                updateSystemMenu();
-            }
-        });
-
-        screenShotButton = new IcyButton(new ScreenShotAction());
+        screenShotButton = new IcyButton(CanvasActions.screenShotAction);
         screenShotButton.setFocusable(false);
         screenShotButton.setHideActionText(true);
-        screenShotAlternateButton = new IcyButton(new ScreenShotAlternateAction());
+        screenShotAlternateButton = new IcyButton(CanvasActions.screenShotAlternateAction);
         screenShotAlternateButton.setFocusable(false);
         screenShotAlternateButton.setHideActionText(true);
-        duplicateButton = new IcyButton(new DuplicateAction());
+        duplicateButton = new IcyButton(ViewerActions.duplicateAction);
         duplicateButton.setFocusable(false);
         duplicateButton.setHideActionText(true);
         // duplicateButton.setToolTipText("Duplicate view (no data duplication)");
@@ -718,10 +563,10 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     {
         // FIXME : switchStateButton stay selected after action
 
-        if (canvas != null)
-            layersEnabledButton.setSelected(canvas.isLayersVisible());
+        final boolean layersVisible = (canvas != null) ? canvas.isLayersVisible() : false;
 
-        if (layersEnabledButton.isSelected())
+        layersEnabledButton.setSelected(layersVisible);
+        if (layersVisible)
             layersEnabledButton.setToolTipText("Hide layers");
         else
             layersEnabledButton.setToolTipText("Show layers");
@@ -729,8 +574,6 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         // refresh combos
         refreshLockCombo();
         refreshCanvasCombo();
-
-        // switchStateButtonif (!canBeInternalized())
     }
 
     /**
@@ -1447,7 +1290,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
-     * called when "detached" mode changed
+     * called when Canvas property "layer visible" changed
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt)
@@ -1455,6 +1298,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         super.propertyChange(evt);
 
         refreshToolBar();
+        updateSystemMenu();
     }
 
     @Override

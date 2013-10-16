@@ -18,14 +18,14 @@
  */
 package icy.gui.menu;
 
+import icy.action.FileActions;
+import icy.action.GeneralActions;
+import icy.action.PreferencesActions;
 import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.menu.IcyRibbonApplicationMenuEntryPrimary;
 import icy.gui.component.menu.IcyRibbonApplicationMenuEntrySecondary;
-import icy.gui.menu.action.FileActions;
-import icy.gui.menu.action.GeneralActions;
-import icy.gui.menu.action.PreferencesActions;
 import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.preferences.IcyPreferences;

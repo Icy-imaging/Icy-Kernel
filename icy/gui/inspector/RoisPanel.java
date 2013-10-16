@@ -18,7 +18,8 @@
  */
 package icy.gui.inspector;
 
-import icy.clipboard.Clipboard;
+import icy.action.RoiActions;
+import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.renderer.ImageTableCellRenderer;
@@ -30,24 +31,23 @@ import icy.math.ArrayMath;
 import icy.math.MathUtil;
 import icy.preferences.GeneralPreferences;
 import icy.preferences.XMLPreferences;
+import icy.resource.ResourceUtil;
 import icy.roi.ROI;
 import icy.roi.ROIEvent;
+import icy.roi.ROIEvent.ROIEventType;
 import icy.roi.ROIListener;
 import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.sequence.SequenceEvent.SequenceEventType;
-import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
-import java.awt.Image;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -58,6 +58,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
+import javax.swing.ActionMap;
+import javax.swing.Icon;
+import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -77,7 +80,7 @@ import org.jdesktop.swingx.table.TableColumnExt;
 /**
  * @author Stephane
  */
-public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceListener, TextChangeListener,
+public class RoisPanel extends ExternalizablePanel implements ActiveSequenceListener, TextChangeListener,
         ListSelectionListener, Runnable, PropertyChangeListener
 {
     /**
@@ -134,7 +137,7 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
 
     public RoisPanel()
     {
-        super();
+        super("ROI", "roiPanel", new Point(100, 100), new Dimension(400, 600));
 
         rois = new ArrayList<ROIInfo>();
         filteredRois = new ArrayList<ROIInfo>();
@@ -182,16 +185,15 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
             {
                 // substance occasionally do not check size before getting value
                 if (row >= filteredRois.size())
-                    return "";
+                    return null;
 
                 final ROIInfo roiInfo = filteredRois.get(row);
                 final ROI roi = roiInfo.getROI();
-                double d;
 
                 switch (column)
                 {
                     case 0: // icon
-                        return roi.getIcon();
+                        return ResourceUtil.getImageIcon(roi.getIcon(), 24);
                     case 1: // name
                         return roi.getName();
                     case 2: // type
@@ -271,7 +273,7 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
                     default:
                         return String.class;
                     case 0: // icon
-                        return Image.class;
+                        return Icon.class;
                     case 3: // contour points
                     case 4: // points
                         return Double.class;
@@ -289,8 +291,9 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
         // disable extra actions from column control
         ((ColumnControlButton) table.getColumnControl()).setAdditionalActionsVisible(false);
         // // use custom copy command
-        table.registerKeyboardAction(this, "Copy",
-                KeyStroke.getKeyStroke(KeyEvent.VK_C, SystemUtil.getMenuCtrlMask(), false), JComponent.WHEN_FOCUSED);
+        // table.registerKeyboardAction(this, "Copy",
+        // KeyStroke.getKeyStroke(KeyEvent.VK_C, SystemUtil.getMenuCtrlMask(), false),
+        // JComponent.WHEN_FOCUSED);
 
         // modify column properties
         TableColumnExt col;
@@ -319,7 +322,7 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
         col.setIdentifier(ID_COLUMN_NAME);
         col.setPreferredWidth(100);
         col.setMinWidth(60);
-        col.setToolTipText("ROI name (double click to edit)");
+        col.setToolTipText("ROI name (double click in a cell to edit)");
         col.addPropertyChangeListener(this);
         // type
         col = table.getColumnExt(2);
@@ -481,6 +484,9 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
         // load panel preferences
         loadPreferences();
 
+        // set shortcuts
+        buildActionMap();
+
         refreshRois();
     }
 
@@ -508,13 +514,38 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
 
         // build control panel
-        roiControlPanel = new RoiControlPanel();
+        roiControlPanel = new RoiControlPanel(this);
 
         setLayout(new BorderLayout());
         add(nameFilter, BorderLayout.NORTH);
         add(middlePanel, BorderLayout.CENTER);
         add(roiControlPanel, BorderLayout.SOUTH);
+
         validate();
+    }
+
+    void buildActionMap()
+    {
+        final InputMap imap = table.getInputMap(JComponent.WHEN_FOCUSED);
+        final ActionMap amap = table.getActionMap();
+
+        imap.put(RoiActions.unselectAction.getKeyStroke(), RoiActions.unselectAction.getName());
+        imap.put(RoiActions.deleteAction.getKeyStroke(), RoiActions.deleteAction.getName());
+        // also allow backspace key for delete operation here
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), RoiActions.deleteAction.getName());
+        imap.put(RoiActions.copyAction.getKeyStroke(), RoiActions.copyAction.getName());
+        imap.put(RoiActions.pasteAction.getKeyStroke(), RoiActions.pasteAction.getName());
+        imap.put(RoiActions.copyLinkAction.getKeyStroke(), RoiActions.copyLinkAction.getName());
+        imap.put(RoiActions.pasteLinkAction.getKeyStroke(), RoiActions.pasteLinkAction.getName());
+
+        // disable search feature (we have our own filter)
+        amap.remove("find");
+        amap.put(RoiActions.unselectAction.getName(), RoiActions.unselectAction);
+        amap.put(RoiActions.deleteAction.getName(), RoiActions.deleteAction);
+        amap.put(RoiActions.copyAction.getName(), RoiActions.copyAction);
+        amap.put(RoiActions.pasteAction.getName(), RoiActions.pasteAction);
+        amap.put(RoiActions.copyLinkAction.getName(), RoiActions.copyLinkAction);
+        amap.put(RoiActions.pasteLinkAction.getName(), RoiActions.pasteLinkAction);
     }
 
     private XMLPreferences getPreferences()
@@ -710,37 +741,39 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
         }
     }
 
-    // public ROI getFirstSelectedRoi()
-    // {
-    // int index = table.getSelectedRow();
-    //
-    // if (index != -1)
-    // {
-    // try
-    // {
-    // index = table.convertRowIndexToModel(index);
-    // }
-    // catch (IndexOutOfBoundsException e)
-    // {
-    // // ignore
-    // }
-    //
-    // if ((index >= 0) || (index < rois.size()))
-    // return rois.get(index);
-    // }
-    //
-    // return null;
-    // }
-
-    public List<ROI> getSelectedRois()
+    /**
+     * Returns the visible ROI in the ROI control panel.
+     */
+    public List<ROI> getVisibleRois()
     {
-        // selected ROI are stored in the control panel
-        return roiControlPanel.getSelectedRois();
+        final List<ROIInfo> roisInfo = filteredRois;
+        final List<ROI> result = new ArrayList<ROI>(roisInfo.size());
+
+        for (ROIInfo roiInfo : roisInfo)
+            result.add(roiInfo.getROI());
+
+        return result;
     }
 
-    protected List<ROI> getSelectedRoisInternal()
+    /**
+     * Returns the ROI informations for the specified ROI.
+     */
+    public ROIInfo getROIInfo(ROI roi)
     {
-        final List<ROI> result = new ArrayList<ROI>();
+        final int index = getRoiIndex(roi);
+
+        if (index != -1)
+            return filteredRois.get(index);
+
+        return null;
+    }
+
+    /**
+     * Returns the selected ROI in the ROI control panel.
+     */
+    public List<ROIInfo> getSelectedRoisInfo()
+    {
+        final List<ROIInfo> result = new ArrayList<ROIInfo>(table.getRowCount());
 
         for (int rowIndex : table.getSelectedRows())
         {
@@ -759,8 +792,23 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
             }
 
             if ((index >= 0) && (index < filteredRois.size()))
-                result.add(filteredRois.get(index).getROI());
+                result.add(filteredRois.get(index));
         }
+
+        return result;
+    }
+
+    /**
+     * Get the selected ROI in the ROI control panel.<br>
+     * This actually returns selected ROI from the ROI table in ROI panel (cached).
+     */
+    public List<ROI> getSelectedRois()
+    {
+        final List<ROIInfo> roisInfo = getSelectedRoisInfo();
+        final List<ROI> result = new ArrayList<ROI>(roisInfo.size());
+
+        for (ROIInfo roiInfo : roisInfo)
+            result.add(roiInfo.getROI());
 
         return result;
     }
@@ -776,7 +824,6 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
             for (ROI roi : newSelected)
             {
                 final int index = getRoiTableIndex(roi);
-                // final int index = getRoiModelIndex(roi);
 
                 if (index > -1)
                     tableSelectionModel.addSelectionInterval(index, index);
@@ -789,35 +836,30 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
         }
     }
 
-    public void setSelectedRois(List<ROI> newSelected)
-    {
-        setSelectedRois((newSelected == null) ? new ArrayList<ROI>() : newSelected, getSelectedRois());
-    }
-
-    protected boolean setSelectedRois(List<ROI> newSelected, List<ROI> oldSelected)
-    {
-        final int newSelectedSize = newSelected.size();
-        final int oldSelectedSize = oldSelected.size();
-
-        // easy optimization
-        if ((newSelectedSize == 0) && (oldSelectedSize == 0))
-            return false;
-
-        // same selection size ?
-        if (newSelectedSize == oldSelectedSize)
-        {
-            // same selection, don't need to update it
-            if (new HashSet<ROI>(newSelected).containsAll(oldSelected))
-                return false;
-        }
-
-        // at this point selection has changed
-        setSelectedRoisInternal(newSelected);
-        // selection changed
-        selectionChanged(newSelected);
-
-        return true;
-    }
+    // protected boolean setSelectedRois(List<ROI> newSelected, List<ROI> oldSelected)
+    // {
+    // final int newSelectedSize = newSelected.size();
+    // final int oldSelectedSize = oldSelected.size();
+    //
+    // // easy optimization
+    // if ((newSelectedSize == 0) && (oldSelectedSize == 0))
+    // return false;
+    //
+    // // same selection size ?
+    // if (newSelectedSize == oldSelectedSize)
+    // {
+    // // same selection, don't need to update it
+    // if (new HashSet<ROI>(newSelected).containsAll(oldSelected))
+    // return false;
+    // }
+    //
+    // // at this point selection has changed
+    // setSelectedRoisInternal(newSelected);
+    // // notify selection changed
+    // selectionChanged();
+    //
+    // return true;
+    // }
 
     protected List<ROIInfo> getFilteredList(String filter)
     {
@@ -848,54 +890,37 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
 
     void refreshTableDataInternal()
     {
-        final List<ROI> oldSelected = getSelectedRoisInternal();
+        final Sequence sequence = getSequence();
 
-        // this actually clear the table selection
+        tableSelectionModel.setValueIsAdjusting(true);
         modifySelection.acquireUninterruptibly();
         try
         {
+            // clear selection
+            tableSelectionModel.clearSelection();
+            // notify table data changed
             tableModel.fireTableDataChanged();
+
+            // restore selection from sequence
+            if (sequence != null)
+            {
+                for (ROI roi : sequence.getSelectedROIs())
+                {
+                    final int index = getRoiTableIndex(roi);
+
+                    if (index > -1)
+                        tableSelectionModel.addSelectionInterval(index, index);
+                }
+            }
         }
         finally
         {
             modifySelection.release();
-        }
-
-        Sequence sequence = getSequence();
-
-        // set selection from sequence
-        if (sequence != null)
-        {
-            // no change in ROI selection ?
-            if (!setSelectedRois(sequence.getSelectedROIs(), oldSelected))
-                // do internal selection as the TableDataChanged event cleared the selection
-                setSelectedRoisInternal(oldSelected);
-        }
-    }
-
-    /**
-     * called when selection has changed
-     */
-    protected void selectionChanged(List<ROI> selectedRois)
-    {
-        final Sequence sequence = getSequence();
-
-        // update selected ROI in sequence
-        if (sequence != null)
-        {
-            modifySelection.acquireUninterruptibly();
-            try
-            {
-                sequence.setSelectedROIs(selectedRois);
-            }
-            finally
-            {
-                modifySelection.release();
-            }
+            tableSelectionModel.setValueIsAdjusting(false);
         }
 
         // notify the ROI control panel that selection changed
-        roiControlPanel.setSelectedRois(selectedRois);
+        roiControlPanel.selectionChanged();
     }
 
     void roiSelectionChanged(ROIInfo roiInfo)
@@ -907,21 +932,29 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
         // check selection change
         if (index != -1)
         {
-            // change selection if needed
-            if (roi.isSelected() ^ tableSelectionModel.isSelectedIndex(index))
+            // change selection
+            ThreadUtil.invokeLater(new Runnable()
             {
-                ThreadUtil.invokeLater(new Runnable()
+                @Override
+                public void run()
                 {
-                    @Override
-                    public void run()
+                    modifySelection.acquireUninterruptibly();
+                    try
                     {
                         if (roi.isSelected())
                             tableSelectionModel.addSelectionInterval(index, index);
                         else
                             tableSelectionModel.removeSelectionInterval(index, index);
                     }
-                });
-            }
+                    finally
+                    {
+                        modifySelection.release();
+                    }
+
+                    // notify control panel that ROI selection changed
+                    roiControlPanel.selectionChanged();
+                }
+            });
         }
     }
 
@@ -929,7 +962,7 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
     {
         // refresh informations for this ROI
         final ROI roi = roiInfo.getROI();
-        final int index = getRoiModelIndex(roi);
+        final int index = getRoiModelIndex(roiInfo.getROI());
 
         // notify row changed
         if (index != -1)
@@ -944,23 +977,39 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
             });
         }
 
-        // also handle selection change
-        roiSelectionChanged(roiInfo);
+        // notify control panel that ROI changed
+        if (roi.isSelected())
+            roiControlPanel.roiChanged(new ROIEvent(roi, ROIEventType.ROI_CHANGED));
     }
 
-    private void doCustomeCopy()
+    public String getCSVFormattedInfosOfSelectedRois()
     {
-        final StringBuffer sbf = new StringBuffer();
         // Check to ensure we have selected only a contiguous block of cells
-        final int numcols = table.getColumnCount();
+        final int numcols = columnNames.length;
         final int numrows = table.getSelectedRowCount();
+
+        // table is empty --> returns empty string
+        if (numrows == 0)
+            return "";
+
+        final StringBuffer sbf = new StringBuffer();
         final int[] rowsselected = table.getSelectedRows();
 
+        // column name
+        for (int j = 1; j < numcols; j++)
+        {
+            sbf.append(table.getModel().getColumnName(j));
+            if (j < numcols - 1)
+                sbf.append("\t");
+        }
+        sbf.append("\r\n");
+
+        // then content
         for (int i = 0; i < numrows; i++)
         {
             for (int j = 1; j < numcols; j++)
             {
-                final Object value = table.getValueAt(rowsselected[i], j);
+                final Object value = table.getModel().getValueAt(table.convertRowIndexToModel(rowsselected[i]), j);
 
                 // special case of double array
                 if (value instanceof double[])
@@ -980,12 +1029,17 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
                 if (j < numcols - 1)
                     sbf.append("\t");
             }
-            sbf.append("\n");
+            sbf.append("\r\n");
         }
 
-        final StringSelection stsel = new StringSelection(sbf.toString());
-        Clipboard.putSystem(stsel, stsel);
+        return sbf.toString();
     }
+
+    // private void doCustomeCopy()
+    // {
+    // final StringSelection stsel = new StringSelection(getROITableContent());
+    // Clipboard.putSystem(stsel, stsel);
+    // }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt)
@@ -999,11 +1053,11 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
         }
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e)
-    {
-        doCustomeCopy();
-    }
+    // @Override
+    // public void actionPerformed(ActionEvent e)
+    // {
+    // doCustomeCopy();
+    // }
 
     @Override
     public void textChanged(IcyTextField source, boolean validate)
@@ -1016,13 +1070,26 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
     @Override
     public void valueChanged(ListSelectionEvent e)
     {
-        if (e.getValueIsAdjusting())
-            return;
-        // we are modifying elsewhere
-        if (modifySelection.availablePermits() == 0)
-            return;
+        // not in internal selection change ?
+        if (modifySelection.tryAcquire())
+        {
+            try
+            {
+                final List<ROI> selectedRois = getSelectedRois();
+                final Sequence sequence = getSequence();
 
-        selectionChanged(getSelectedRoisInternal());
+                // update selected ROI in sequence
+                if (sequence != null)
+                    sequence.setSelectedROIs(selectedRois);
+
+                // notify the ROI control panel that selection changed
+                roiControlPanel.selectionChanged();
+            }
+            finally
+            {
+                modifySelection.release();
+            }
+        }
     }
 
     @Override
@@ -1114,19 +1181,26 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
                         final int minC = (int) bounds.getC();
                         final int sizeC = (int) bounds.getSizeC();
 
-                        intensityInfos = new IntensityInfo[sizeC];
+                        final IntensityInfo[] result = new IntensityInfo[sizeC];
 
                         for (int c = 0; c < sizeC; c++)
                         {
                             final IntensityInfo ii = ROIUtil.getIntensityInfo(sequence, roi, -1, -1, minC + c);
 
-                            // round values
-                            ii.minIntensity = MathUtil.roundSignificant(ii.minIntensity, 5, true);
-                            ii.meanIntensity = MathUtil.roundSignificant(ii.meanIntensity, 5, true);
-                            ii.maxIntensity = MathUtil.roundSignificant(ii.maxIntensity, 5, true);
+                            if (ii != null)
+                            {
+                                // round values
+                                ii.minIntensity = MathUtil.roundSignificant(ii.minIntensity, 5, true);
+                                ii.meanIntensity = MathUtil.roundSignificant(ii.meanIntensity, 5, true);
+                                ii.maxIntensity = MathUtil.roundSignificant(ii.maxIntensity, 5, true);
 
-                            intensityInfos[c] = ii;
+                                result[c] = ii;
+                            }
+                            else
+                                result[c] = new IntensityInfo();
                         }
+
+                        intensityInfos = result;
                     }
                     else
                         intensityInfos = new IntensityInfo[0];
@@ -1249,10 +1323,11 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
             if (intensityInvalid)
                 requestCompute();
 
-            final double[] result = new double[intensityInfos.length];
+            final IntensityInfo[] infos = intensityInfos;
+            final double[] result = new double[infos.length];
 
-            for (int i = 0; i < intensityInfos.length; i++)
-                result[i] = intensityInfos[i].minIntensity;
+            for (int i = 0; i < infos.length; i++)
+                result[i] = infos[i].minIntensity;
 
             return result;
         }
@@ -1263,10 +1338,11 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
             if (intensityInvalid)
                 requestCompute();
 
-            final double[] result = new double[intensityInfos.length];
+            final IntensityInfo[] infos = intensityInfos;
+            final double[] result = new double[infos.length];
 
-            for (int i = 0; i < intensityInfos.length; i++)
-                result[i] = intensityInfos[i].meanIntensity;
+            for (int i = 0; i < infos.length; i++)
+                result[i] = infos[i].meanIntensity;
 
             return result;
         }
@@ -1277,10 +1353,11 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
             if (intensityInvalid)
                 requestCompute();
 
-            final double[] result = new double[intensityInfos.length];
+            final IntensityInfo[] infos = intensityInfos;
+            final double[] result = new double[infos.length];
 
-            for (int i = 0; i < intensityInfos.length; i++)
-                result[i] = intensityInfos[i].maxIntensity;
+            for (int i = 0; i < infos.length; i++)
+                result[i] = infos[i].maxIntensity;
 
             return result;
         }
@@ -1465,7 +1542,7 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
 
             // special case of infinite dimension
             if (v == Double.POSITIVE_INFINITY)
-                return "inf.";
+                return MathUtil.INFINITE_STRING;
 
             return StringUtil.toString(MathUtil.roundSignificant(v, 5, true));
         }
@@ -1476,7 +1553,7 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
 
             // special case of infinite dimension
             if (v == Double.POSITIVE_INFINITY)
-                return "inf.";
+                return MathUtil.INFINITE_STRING;
 
             return StringUtil.toString(MathUtil.roundSignificant(v, 5, true));
         }
@@ -1487,7 +1564,7 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
 
             // special case of infinite dimension
             if (v == Double.POSITIVE_INFINITY)
-                return "inf.";
+                return MathUtil.INFINITE_STRING;
 
             return StringUtil.toString(MathUtil.roundSignificant(v, 5, true));
         }
@@ -1498,7 +1575,7 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
 
             // special case of infinite dimension
             if (v == Double.POSITIVE_INFINITY)
-                return "inf.";
+                return MathUtil.INFINITE_STRING;
 
             return StringUtil.toString(MathUtil.roundSignificant(v, 5, true));
         }
@@ -1509,7 +1586,7 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
 
             // special case of infinite dimension
             if (v == Double.POSITIVE_INFINITY)
-                return "inf.";
+                return MathUtil.INFINITE_STRING;
 
             return StringUtil.toString(MathUtil.roundSignificant(v, 5, true));
         }
@@ -1519,15 +1596,22 @@ public class RoisPanel extends JPanel implements ActionListener, ActiveSequenceL
         {
             switch (event.getType())
             {
+                default:
+                    // ROI selected ? --> propagate event control panel
+                    if (roi.isSelected())
+                        roiControlPanel.roiChanged(event);
+                    break;
+
                 case ROI_CHANGED:
                     intensityInvalid = true;
                     othersInvalid = true;
-                    compute();
+                    requestCompute();
                     break;
 
                 case SELECTION_CHANGED:
-                    // refresh selection only
-                    roiSelectionChanged(this);
+                    // update ROI selection if not in internal selection change
+                    if (modifySelection.availablePermits() > 0)
+                        roiSelectionChanged(this);
                     break;
             }
         }

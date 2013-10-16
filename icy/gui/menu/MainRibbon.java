@@ -18,6 +18,9 @@
  */
 package icy.gui.menu;
 
+import icy.action.GeneralActions;
+import icy.action.PreferencesActions;
+import icy.action.WindowActions;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandMenuButton;
 import icy.gui.component.button.IcyCommandToggleButton;
@@ -26,9 +29,6 @@ import icy.gui.frame.IcyFrame;
 import icy.gui.frame.progress.TaskFrame;
 import icy.gui.main.ActiveSequenceListener;
 import icy.gui.main.MainFrame;
-import icy.gui.menu.action.GeneralActions;
-import icy.gui.menu.action.PreferencesActions;
-import icy.gui.menu.action.WindowActions;
 import icy.gui.menu.search.SearchBar;
 import icy.gui.plugin.PluginCommandButton;
 import icy.gui.util.LookAndFeelUtil;

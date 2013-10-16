@@ -18,7 +18,7 @@
  */
 package icy.gui.lut;
 
-import icy.common.IcyAbstractAction;
+import icy.action.IcyAbstractAction;
 import icy.gui.component.BorderedPanel;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.IcyColorMap.IcyColorMapType;

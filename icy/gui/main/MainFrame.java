@@ -18,6 +18,9 @@
  */
 package icy.gui.main;
 
+import icy.action.FileActions;
+import icy.action.GeneralActions;
+import icy.action.WindowActions;
 import icy.file.Loader;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.ExternalizablePanel.StateListener;
@@ -26,9 +29,6 @@ import icy.gui.inspector.ChatPanel;
 import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.MainRibbon;
-import icy.gui.menu.action.FileActions;
-import icy.gui.menu.action.GeneralActions;
-import icy.gui.menu.action.WindowActions;
 import icy.gui.menu.search.SearchBar;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.WindowPositionSaver;

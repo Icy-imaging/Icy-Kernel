@@ -21,6 +21,7 @@ package icy.gui.main;
 
 import icy.common.listener.AcceptListener;
 import icy.gui.inspector.InspectorPanel;
+import icy.gui.inspector.LayersPanel;
 import icy.gui.inspector.RoisPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.ToolRibbonTask;
@@ -86,6 +87,11 @@ public interface MainInterface
      * Returns the ROI manager panel
      */
     public abstract RoisPanel getRoisPanel();
+
+    /**
+     * Returns the Layer manager panel
+     */
+    public abstract LayersPanel getLayersPanel();
 
     /**
      * Returns the currently active plugins

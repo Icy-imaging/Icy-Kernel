@@ -31,6 +31,7 @@ import icy.resource.ResourceUtil;
 import icy.roi.ROIEvent.ROIEventType;
 import icy.roi.ROIEvent.ROIPointEventType;
 import icy.sequence.Sequence;
+import icy.system.IcyExceptionHandler;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.type.rectangle.Rectangle4D;
@@ -159,8 +160,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
         catch (Exception e)
         {
-            System.err.println("Cannot create ROI: " + className);
-            System.err.println("Default constructor not found, ROI have to implement the default constructor !");
+            IcyExceptionHandler.handleException(new NoSuchMethodException("Default constructor not found in class '"
+                    + className + "', cannot create the ROI."), true);
         }
 
         return result;
@@ -233,8 +234,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
         catch (Exception e)
         {
-            System.err.println("Cannot create ROI: " + className);
-            System.err.println("Default constructor not found, ROI have to implement the default constructor !");
+            IcyExceptionHandler.handleException(new NoSuchMethodException("Default constructor not found in class '"
+                    + className + "', cannot create the ROI."), true);
         }
 
         return result;

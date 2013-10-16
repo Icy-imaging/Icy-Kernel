@@ -18,13 +18,8 @@
  */
 package plugins.kernel.searchprovider;
 
-import icy.common.IcyAbstractAction;
-import icy.gui.menu.action.FileActions;
-import icy.gui.menu.action.GeneralActions;
-import icy.gui.menu.action.PreferencesActions;
-import icy.gui.menu.action.RoiActions;
-import icy.gui.menu.action.SequenceOperationActions;
-import icy.gui.menu.action.WindowActions;
+import icy.action.ActionManager;
+import icy.action.IcyAbstractAction;
 import icy.resource.icon.IcyIcon;
 import icy.search.SearchResult;
 import icy.search.SearchResultConsumer;
@@ -33,7 +28,6 @@ import icy.util.StringUtil;
 
 import java.awt.Image;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.pushingpixels.flamingo.api.common.RichTooltip;
 
@@ -165,25 +159,6 @@ public class KernelSearchResultProducer extends SearchResultProducer
         }
     }
 
-    private static List<IcyAbstractAction> actions = null;
-
-    private static synchronized void initActions()
-    {
-        // init actions
-        if (actions == null)
-        {
-            actions = new ArrayList<IcyAbstractAction>();
-
-            // add all kernels actions
-            actions.addAll(FileActions.getAllActions());
-            actions.addAll(GeneralActions.getAllActions());
-            actions.addAll(PreferencesActions.getAllActions());
-            actions.addAll(SequenceOperationActions.getAllActions());
-            actions.addAll(RoiActions.getAllActions());
-            actions.addAll(WindowActions.getAllActions());
-        }
-    }
-
     @Override
     public int getOrder()
     {
@@ -206,16 +181,13 @@ public class KernelSearchResultProducer extends SearchResultProducer
     @Override
     public void doSearch(String[] words, SearchResultConsumer consumer)
     {
-        // ensure actions has been initialized
-        initActions();
-
         if (hasWaitingSearch())
             return;
 
         final ArrayList<SearchResult> tmpResults = new ArrayList<SearchResult>();
         final boolean shortSearch = (words.length == 1) && (words[0].length() <= 2);
 
-        for (IcyAbstractAction action : actions)
+        for (IcyAbstractAction action : ActionManager.actions)
         {
             // abort
             if (hasWaitingSearch())

@@ -18,13 +18,14 @@
  */
 package icy.gui.component.button;
 
-import icy.common.IcyAbstractAction;
+import icy.action.IcyAbstractAction;
 import icy.gui.util.ComponentUtil;
 import icy.resource.icon.IcyIcon;
 import icy.util.StringUtil;
 
 import java.awt.Image;
 
+import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
@@ -45,6 +46,18 @@ public class IcyToggleButton extends JToggleButton
      * Create a toggle button with specified action
      */
     public IcyToggleButton(IcyAbstractAction action)
+    {
+        super(action);
+
+        flat = false;
+        init();
+    }
+
+    /**
+     * @deprecated User {@link #IcyToggleButton(IcyAbstractAction)} instead.
+     */
+    @Deprecated
+    public IcyToggleButton(icy.common.IcyAbstractAction action)
     {
         super(action);
 
@@ -157,6 +170,15 @@ public class IcyToggleButton extends JToggleButton
 
         // manual change notify
         updateSize();
+    }
+
+    @Override
+    public void setAction(Action a)
+    {
+        super.setAction(a);
+
+        // override tooltip set from action
+        IcyAbstractAction.setToolTipTextFromAction(this, a);
     }
 
     /**
@@ -342,5 +364,15 @@ public class IcyToggleButton extends JToggleButton
         // adjust size to icon size if no text
         if (flat && (icon != null) && noText)
             ComponentUtil.setFixedSize(this, icon.getDimension());
+    }
+
+    @Override
+    protected void actionPropertyChanged(Action action, String propertyName)
+    {
+        // override tooltip set from action
+        if ((propertyName == Action.LONG_DESCRIPTION) || (propertyName == Action.SHORT_DESCRIPTION))
+            IcyAbstractAction.setToolTipTextFromAction(this, action);
+        else
+            super.actionPropertyChanged(action, propertyName);
     }
 }

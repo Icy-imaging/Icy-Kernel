@@ -18,6 +18,8 @@
  */
 package icy.file.xls;
 
+import icy.util.XLSUtil;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -33,13 +35,11 @@ import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
 
 /**
- * Simple manager of excel data
- * 
- * @author fab
+ * @deprecated Use {@link XLSUtil} instead.
  */
+@Deprecated
 public class XlsManager
 {
-
     WritableSheet excelPage = null;
     WritableWorkbook excelWorkbook;
 

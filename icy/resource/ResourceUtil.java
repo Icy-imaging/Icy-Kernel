@@ -66,11 +66,12 @@ public class ResourceUtil
     public static final Image ICON_PICTURE_PASTE = ResourceUtil.getAlphaIconAsImage("picture_paste.png");
     public static final Image ICON_WINDOW = ResourceUtil.getAlphaIconAsImage("app_window.png");
     public static final Image ICON_DETACHED_WINDOW = ResourceUtil.getAlphaIconAsImage("app_detached.png");
-    public static final Image ICON_NEWDOC = ResourceUtil.getAlphaIconAsImage("doc_new.png");
     public static final Image ICON_DOC = ResourceUtil.getAlphaIconAsImage("document.png");
-    public static final Image ICON_DOCCOPY = ResourceUtil.getAlphaIconAsImage("doc_copy.png");
-    public static final Image ICON_DOCIMPORT = ResourceUtil.getAlphaIconAsImage("doc_import.png");
-    public static final Image ICON_DOCEXPORT = ResourceUtil.getAlphaIconAsImage("doc_export.png");
+    public static final Image ICON_DOC_NEW = ResourceUtil.getAlphaIconAsImage("doc_new.png");
+    public static final Image ICON_DOC_COPY = ResourceUtil.getAlphaIconAsImage("doc_copy.png");
+    public static final Image ICON_DOC_IMPORT = ResourceUtil.getAlphaIconAsImage("doc_import.png");
+    public static final Image ICON_DOC_EXPORT = ResourceUtil.getAlphaIconAsImage("doc_export.png");
+    public static final Image ICON_XLS_EXPORT = ResourceUtil.getAlphaIconAsImage("xls_export.png");
     public static final Image ICON_DOCEDIT = ResourceUtil.getAlphaIconAsImage("doc_edit.png");
     public static final Image ICON_DOCTEXT1 = ResourceUtil.getAlphaIconAsImage("doc_lines.png");
     public static final Image ICON_DOCTEXT2 = ResourceUtil.getAlphaIconAsImage("doc_lines_stright.png");
@@ -85,6 +86,27 @@ public class ResourceUtil
     public static final Image ICON_LINK_COPY = ResourceUtil.getAlphaIconAsImage("clipboard_link_copy.png");
     public static final Image ICON_PASTE = ResourceUtil.getAlphaIconAsImage("clipboard_past.png");
     public static final Image ICON_LINK_PASTE = ResourceUtil.getAlphaIconAsImage("clipboard_link_past.png");
+
+    /**
+     * @deprecated Use {@link #ICON_DOC_NEW} instead.
+     */
+    @Deprecated
+    public static final Image ICON_NEWDOC = ICON_DOC_NEW;
+    /**
+     * @deprecated Use {@link #ICON_DOC_COPY} instead.
+     */
+    @Deprecated
+    public static final Image ICON_DOCCOPY = ICON_DOC_COPY;
+    /**
+     * @deprecated Use {@link #ICON_DOC_IMPORT} instead.
+     */
+    @Deprecated
+    public static final Image ICON_DOCIMPORT = ICON_DOC_IMPORT;
+    /**
+     * @deprecated Use {@link #ICON_DOC_EXPORT} instead.
+     */
+    @Deprecated
+    public static final Image ICON_DOCEXPORT = ICON_DOC_EXPORT;
 
     public static final Image ICON_HELP = ResourceUtil.getAlphaIconAsImage("help.png");
     public static final Image ICON_INFO = ResourceUtil.getAlphaIconAsImage("info.png");

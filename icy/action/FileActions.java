@@ -16,9 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Icy. If not, see <http://www.gnu.org/licenses/>.
  */
-package icy.gui.menu.action;
+package icy.action;
 
-import icy.common.IcyAbstractAction;
 import icy.file.Saver;
 import icy.gui.dialog.ImageLoaderDialog;
 import icy.gui.dialog.ImageSaverDialog;
@@ -50,7 +49,7 @@ import java.util.List;
 public class FileActions
 {
     public static IcyAbstractAction clearRecentFilesAction = new IcyAbstractAction("Clear recent files", new IcyIcon(
-            ResourceUtil.ICON_DOCCOPY), "Clear recent files", "Clear the list of last opened files")
+            ResourceUtil.ICON_DOC_COPY), "Clear recent files", "Clear the list of last opened files")
     {
         /**
          * 
@@ -73,7 +72,7 @@ public class FileActions
     };
 
     public static IcyAbstractAction newSequenceAction = new IcyAbstractAction("New", new IcyIcon(
-            ResourceUtil.ICON_NEWDOC), "Create a new sequence")
+            ResourceUtil.ICON_DOC_NEW), "Create a new sequence")
     {
         /**
          * 
@@ -90,7 +89,7 @@ public class FileActions
     };
 
     public static IcyAbstractAction newGraySequenceAction = new IcyAbstractAction("Create gray sequence", new IcyIcon(
-            ResourceUtil.ICON_NEWDOC), "Create a new gray sequence",
+            ResourceUtil.ICON_DOC_NEW), "Create a new gray sequence",
             "Create a new single channel (gray level) sequence.")
     {
         /**
@@ -108,7 +107,7 @@ public class FileActions
     };
 
     public static IcyAbstractAction newRGBSequenceAction = new IcyAbstractAction("Create RGB sequence", new IcyIcon(
-            ResourceUtil.ICON_NEWDOC), "Create a new RGB color sequence",
+            ResourceUtil.ICON_DOC_NEW), "Create a new RGB color sequence",
             "Create a 3 channels sequence (red, green, blue).")
     {
         /**
@@ -126,7 +125,7 @@ public class FileActions
     };
 
     public static IcyAbstractAction newARGBSequenceAction = new IcyAbstractAction("Create RGBA sequence", new IcyIcon(
-            ResourceUtil.ICON_NEWDOC), "Create a new RGBA color sequence",
+            ResourceUtil.ICON_DOC_NEW), "Create a new RGBA color sequence",
             "Create a 4 channels sequence (red, green, blue, alpha).")
     {
         /**

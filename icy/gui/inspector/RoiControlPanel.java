@@ -18,6 +18,7 @@
  */
 package icy.gui.inspector;
 
+import icy.action.RoiActions;
 import icy.clipboard.Clipboard;
 import icy.clipboard.Clipboard.ClipboardListener;
 import icy.gui.component.IcyTextField;
@@ -27,12 +28,10 @@ import icy.gui.component.button.ColorChooserButton.ColorChangeListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.model.SpecialValueSpinnerModel;
 import icy.gui.component.swing.SpecialValueSpinner;
-import icy.gui.menu.action.RoiActions;
+import icy.gui.inspector.RoisPanel.ROIInfo;
 import icy.main.Icy;
-import icy.math.MathUtil;
 import icy.roi.ROI;
 import icy.roi.ROIEvent;
-import icy.roi.ROIListener;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 import icy.type.point.Point5D;
@@ -40,25 +39,23 @@ import icy.type.rectangle.Rectangle5D;
 import icy.util.StringUtil;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
-import javax.swing.ActionMap;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JSlider;
-import javax.swing.KeyStroke;
-import javax.swing.UIManager;
+import javax.swing.JToolBar;
+import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -67,7 +64,7 @@ import javax.swing.event.ChangeListener;
  * @author Stephane
  */
 public class RoiControlPanel extends JPanel implements ColorChangeListener, TextChangeListener, ClipboardListener,
-        ChangeListener, ROIListener
+        ChangeListener
 {
     /**
      * 
@@ -75,60 +72,61 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     private static final long serialVersionUID = 7403770406075917063L;
 
     // GUI
-    private JLabel sizeZFieldLabel;
-    private JLabel sizeTFieldLabel;
-    private JLabel sizeCFieldLabel;
-    private JLabel posCFieldLabel;
-    private JLabel posTFieldLabel;
-    private JLabel posZFieldLabel;
-    private IcyTextField nameField;
-    private IcyTextField posXField;
-    private IcyTextField posYField;
-    private IcyTextField posTField;
-    private IcyTextField posZField;
-    private IcyTextField sizeXField;
-    private IcyTextField sizeZField;
-    private IcyTextField sizeYField;
-    private IcyTextField sizeTField;
-    private IcyTextField posCField;
-    private IcyTextField sizeCField;
-    private SpecialValueSpinner posZSpinner;
-    private SpecialValueSpinner posTSpinner;
-    private SpecialValueSpinner posCSpinner;
-    private ColorChooserButton colorButton;
-    private JSlider alphaSlider;
-    private JLabel lblContentOpacity;
-    private IcyButton notButton;
-    private IcyButton orButton;
-    private IcyButton andButton;
-    private IcyButton xorButton;
-    private IcyButton subButton;
-    private IcyButton deleteButton;
-    private JPanel generalPanel;
-    private RoiExtraInfoPanel infosPanel;
-    private JLabel lblBoolean;
-    private JLabel lblGeneral;
-    private IcyButton loadButton;
-    private IcyButton saveButton;
-    private IcyButton copyButton;
-    private IcyButton pasteButton;
-    private IcyButton copyLinkButton;
-    private IcyButton pasteLinkButton;
+    JLabel posCFieldLabel;
+    JLabel posTFieldLabel;
+    JLabel posZFieldLabel;
+    JLabel posZSpinnerLabel;
+    JLabel posTSpinnerLabel;
+    JLabel posCSpinnerLabel;
+    IcyTextField posXField;
+    IcyTextField posYField;
+    IcyTextField posTField;
+    IcyTextField posZField;
+    IcyTextField sizeXField;
+    IcyTextField sizeZField;
+    IcyTextField sizeYField;
+    IcyTextField sizeTField;
+    IcyTextField posCField;
+    IcyTextField sizeCField;
+    JSeparator separator;
+    JSeparator separator_1;
+    JSeparator separator_2;
+    Component horizontalGlue;
+    Component horizontalGlue_1;
+    SpecialValueSpinner posZSpinner;
+    SpecialValueSpinner posTSpinner;
+    SpecialValueSpinner posCSpinner;
+    ColorChooserButton colorButton;
+    JSlider alphaSlider;
+    IcyButton notButton;
+    IcyButton orButton;
+    IcyButton andButton;
+    IcyButton xorButton;
+    IcyButton subButton;
+    IcyButton deleteButton;
+    IcyButton loadButton;
+    IcyButton saveButton;
+    IcyButton copyButton;
+    IcyButton pasteButton;
+    IcyButton copyLinkButton;
+    IcyButton pasteLinkButton;
+    IcyButton xlsExportButton;
 
     // internals
-    private final Semaphore modifyingRoi;
+    private final RoisPanel roisPanel;
+    final Semaphore modifyingRoi;
     private List<ROI> modifiedRois;
-    private List<ROI> selectedRois;
     final Runnable roiActionsRefresher;
     final Runnable roiPropertiesRefresher;
 
-    public RoiControlPanel()
+    public RoiControlPanel(RoisPanel roisPanel)
     {
         super();
 
+        this.roisPanel = roisPanel;
+
         modifyingRoi = new Semaphore(1);
         modifiedRois = null;
-        selectedRois = new ArrayList<ROI>();
 
         roiActionsRefresher = new Runnable()
         {
@@ -149,12 +147,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
         initialize();
 
-        nameField.addTextChangeListener(this);
-
         colorButton.addColorChangeListener(this);
         alphaSlider.addChangeListener(this);
-
-        Clipboard.addListener(this);
 
         posXField.addTextChangeListener(this);
         posYField.addTextChangeListener(this);
@@ -164,244 +158,174 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         posTSpinner.addChangeListener(this);
         posCField.addTextChangeListener(this);
         posCSpinner.addChangeListener(this);
-
         sizeXField.addTextChangeListener(this);
         sizeYField.addTextChangeListener(this);
         sizeZField.addTextChangeListener(this);
         sizeTField.addTextChangeListener(this);
         sizeCField.addTextChangeListener(this);
 
-        buildActionMap();
+        Clipboard.addListener(this);
 
         refreshROIActionsInternal();
         refreshROIPropertiesInternal();
-    }
-
-    void buildActionMap()
-    {
-        final InputMap imap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        final ActionMap amap = getActionMap();
-
-        imap.put(RoiActions.unselectAction.getKeyStroke(), RoiActions.unselectAction.getName());
-        imap.put(RoiActions.deleteAction.getKeyStroke(), RoiActions.deleteAction.getName());
-        // also allow backspace key for delete operation here
-        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), RoiActions.deleteAction.getName());
-        imap.put(RoiActions.copyAction.getKeyStroke(), RoiActions.copyAction.getName());
-        imap.put(RoiActions.pasteAction.getKeyStroke(), RoiActions.pasteAction.getName());
-        imap.put(RoiActions.copyLinkAction.getKeyStroke(), RoiActions.copyLinkAction.getName());
-        imap.put(RoiActions.pasteLinkAction.getKeyStroke(), RoiActions.pasteLinkAction.getName());
-
-        amap.put(RoiActions.unselectAction.getName(), RoiActions.unselectAction);
-        amap.put(RoiActions.deleteAction.getName(), RoiActions.deleteAction);
-        amap.put(RoiActions.copyAction.getName(), RoiActions.copyAction);
-        amap.put(RoiActions.pasteAction.getName(), RoiActions.pasteAction);
-        amap.put(RoiActions.copyLinkAction.getName(), RoiActions.copyLinkAction);
-        amap.put(RoiActions.pasteLinkAction.getName(), RoiActions.pasteLinkAction);
     }
 
     private void initialize()
     {
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 
-        final JPanel booleanOpPanel = new JPanel();
-        booleanOpPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Operation",
-                TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
-        add(booleanOpPanel);
-        GridBagLayout gbl_booleanOpPanel = new GridBagLayout();
-        gbl_booleanOpPanel.columnWidths = new int[] {0, 0, 0, 0, 0, 0, 0, 0};
-        gbl_booleanOpPanel.rowHeights = new int[] {0, 0, 0};
-        gbl_booleanOpPanel.columnWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
-        gbl_booleanOpPanel.rowWeights = new double[] {0.0, 0.0, Double.MIN_VALUE};
-        booleanOpPanel.setLayout(gbl_booleanOpPanel);
+        JPanel actionPanel = new JPanel();
+        actionPanel.setBorder(new TitledBorder(null, "Action", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        add(actionPanel);
+        GridBagLayout gbl_actionPanel = new GridBagLayout();
+        gbl_actionPanel.columnWidths = new int[] {0, 0, 0, 0, 0};
+        gbl_actionPanel.rowHeights = new int[] {0, 0, 0, 0};
+        gbl_actionPanel.columnWeights = new double[] {0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
+        gbl_actionPanel.rowWeights = new double[] {0.0, 0.0, 0.0, Double.MIN_VALUE};
+        actionPanel.setLayout(gbl_actionPanel);
 
-        lblGeneral = new JLabel("General");
-        GridBagConstraints gbc_lblGeneral = new GridBagConstraints();
-        gbc_lblGeneral.anchor = GridBagConstraints.EAST;
-        gbc_lblGeneral.insets = new Insets(0, 0, 5, 5);
-        gbc_lblGeneral.gridx = 0;
-        gbc_lblGeneral.gridy = 0;
-        booleanOpPanel.add(lblGeneral, gbc_lblGeneral);
+        JToolBar toolBar = new JToolBar();
+        toolBar.setRollover(true);
+        GridBagConstraints gbc_toolBar = new GridBagConstraints();
+        gbc_toolBar.fill = GridBagConstraints.HORIZONTAL;
+        gbc_toolBar.gridwidth = 4;
+        gbc_toolBar.insets = new Insets(0, 0, 5, 0);
+        gbc_toolBar.gridx = 0;
+        gbc_toolBar.gridy = 0;
+        actionPanel.add(toolBar, gbc_toolBar);
+        toolBar.setFloatable(false);
 
         loadButton = new IcyButton(RoiActions.loadAction);
-        loadButton.setText(null);
-        GridBagConstraints gbc_loadRoiButton = new GridBagConstraints();
-        gbc_loadRoiButton.insets = new Insets(0, 0, 5, 5);
-        gbc_loadRoiButton.gridx = 1;
-        gbc_loadRoiButton.gridy = 0;
-        booleanOpPanel.add(loadButton, gbc_loadRoiButton);
-
+        loadButton.setHideActionText(true);
+        toolBar.add(loadButton);
         saveButton = new IcyButton(RoiActions.saveAction);
-        saveButton.setText(null);
-        GridBagConstraints gbc_saveRoiButton = new GridBagConstraints();
-        gbc_saveRoiButton.insets = new Insets(0, 0, 5, 5);
-        gbc_saveRoiButton.gridx = 2;
-        gbc_saveRoiButton.gridy = 0;
-        booleanOpPanel.add(saveButton, gbc_saveRoiButton);
-
+        saveButton.setHideActionText(true);
+        toolBar.add(saveButton);
+        separator = new JSeparator();
+        separator.setMaximumSize(new Dimension(2, 32767));
+        separator.setOrientation(SwingConstants.VERTICAL);
+        toolBar.add(separator);
         copyButton = new IcyButton(RoiActions.copyAction);
-        copyButton.setText(null);
-        GridBagConstraints gbc_copyButton = new GridBagConstraints();
-        gbc_copyButton.insets = new Insets(0, 0, 5, 5);
-        gbc_copyButton.gridx = 3;
-        gbc_copyButton.gridy = 0;
-        booleanOpPanel.add(copyButton, gbc_copyButton);
-
+        copyButton.setHideActionText(true);
+        toolBar.add(copyButton);
         pasteButton = new IcyButton(RoiActions.pasteAction);
-        pasteButton.setText(null);
-        GridBagConstraints gbc_pasteButton = new GridBagConstraints();
-        gbc_pasteButton.insets = new Insets(0, 0, 5, 5);
-        gbc_pasteButton.gridx = 4;
-        gbc_pasteButton.gridy = 0;
-        booleanOpPanel.add(pasteButton, gbc_pasteButton);
-
+        pasteButton.setHideActionText(true);
+        toolBar.add(pasteButton);
         copyLinkButton = new IcyButton(RoiActions.copyLinkAction);
-        copyLinkButton.setText(null);
-        GridBagConstraints gbc_copyLinkButton = new GridBagConstraints();
-        gbc_copyLinkButton.insets = new Insets(0, 0, 5, 5);
-        gbc_copyLinkButton.gridx = 5;
-        gbc_copyLinkButton.gridy = 0;
-        booleanOpPanel.add(copyLinkButton, gbc_copyLinkButton);
-
+        copyLinkButton.setHideActionText(true);
+        toolBar.add(copyLinkButton);
         pasteLinkButton = new IcyButton(RoiActions.pasteLinkAction);
-        pasteLinkButton.setText(null);
-        GridBagConstraints gbc_pasteLinkButton = new GridBagConstraints();
-        gbc_pasteLinkButton.anchor = GridBagConstraints.WEST;
-        gbc_pasteLinkButton.insets = new Insets(0, 0, 5, 0);
-        gbc_pasteLinkButton.gridx = 6;
-        gbc_pasteLinkButton.gridy = 0;
-        booleanOpPanel.add(pasteLinkButton, gbc_pasteLinkButton);
+        pasteLinkButton.setHideActionText(true);
+        toolBar.add(pasteLinkButton);
+        separator_1 = new JSeparator();
+        separator_1.setMaximumSize(new Dimension(2, 32767));
+        separator_1.setOrientation(SwingConstants.VERTICAL);
+        toolBar.add(separator_1);
 
-        lblBoolean = new JLabel("Boolean");
-        GridBagConstraints gbc_lblBoolean = new GridBagConstraints();
-        gbc_lblBoolean.anchor = GridBagConstraints.EAST;
-        gbc_lblBoolean.insets = new Insets(0, 0, 0, 5);
-        gbc_lblBoolean.gridx = 0;
-        gbc_lblBoolean.gridy = 1;
-        booleanOpPanel.add(lblBoolean, gbc_lblBoolean);
+        xlsExportButton = new IcyButton(RoiActions.xlsExportAction);
+        toolBar.add(xlsExportButton);
+
+        horizontalGlue_1 = Box.createHorizontalGlue();
+        toolBar.add(horizontalGlue_1);
+
+        JToolBar toolBar_1 = new JToolBar();
+        toolBar_1.setRollover(true);
+        GridBagConstraints gbc_toolBar_1 = new GridBagConstraints();
+        gbc_toolBar_1.insets = new Insets(0, 0, 5, 0);
+        gbc_toolBar_1.fill = GridBagConstraints.HORIZONTAL;
+        gbc_toolBar_1.gridwidth = 4;
+        gbc_toolBar_1.gridx = 0;
+        gbc_toolBar_1.gridy = 1;
+        actionPanel.add(toolBar_1, gbc_toolBar_1);
+        toolBar_1.setFloatable(false);
 
         notButton = new IcyButton(RoiActions.boolNotAction);
-        notButton.setText(null);
-        GridBagConstraints gbc_notButton = new GridBagConstraints();
-        gbc_notButton.insets = new Insets(0, 0, 0, 5);
-        gbc_notButton.gridx = 1;
-        gbc_notButton.gridy = 1;
-        booleanOpPanel.add(notButton, gbc_notButton);
-
+        notButton.setHideActionText(true);
+        toolBar_1.add(notButton);
         orButton = new IcyButton(RoiActions.boolOrAction);
-        orButton.setText(null);
-        GridBagConstraints gbc_orButton = new GridBagConstraints();
-        gbc_orButton.insets = new Insets(0, 0, 0, 5);
-        gbc_orButton.gridx = 2;
-        gbc_orButton.gridy = 1;
-        booleanOpPanel.add(orButton, gbc_orButton);
-
+        orButton.setHideActionText(true);
+        toolBar_1.add(orButton);
         andButton = new IcyButton(RoiActions.boolAndAction);
-        andButton.setText(null);
-        GridBagConstraints gbc_andButton = new GridBagConstraints();
-        gbc_andButton.insets = new Insets(0, 0, 0, 5);
-        gbc_andButton.gridx = 3;
-        gbc_andButton.gridy = 1;
-        booleanOpPanel.add(andButton, gbc_andButton);
-
+        andButton.setHideActionText(true);
+        toolBar_1.add(andButton);
         xorButton = new IcyButton(RoiActions.boolXorAction);
-        xorButton.setText(null);
-        GridBagConstraints gbc_xorButton = new GridBagConstraints();
-        gbc_xorButton.insets = new Insets(0, 0, 0, 5);
-        gbc_xorButton.gridx = 4;
-        gbc_xorButton.gridy = 1;
-        booleanOpPanel.add(xorButton, gbc_xorButton);
-
+        xorButton.setHideActionText(true);
+        toolBar_1.add(xorButton);
         subButton = new IcyButton(RoiActions.boolSubtractAction);
-        subButton.setText(null);
-        GridBagConstraints gbc_subButton = new GridBagConstraints();
-        gbc_subButton.insets = new Insets(0, 0, 0, 5);
-        gbc_subButton.gridx = 5;
-        gbc_subButton.gridy = 1;
-        booleanOpPanel.add(subButton, gbc_subButton);
+        subButton.setHideActionText(true);
+        toolBar_1.add(subButton);
 
+        separator_2 = new JSeparator();
+        separator_2.setPreferredSize(new Dimension(8, 2));
+        separator_2.setMaximumSize(new Dimension(8, 32767));
+        separator_2.setOrientation(SwingConstants.VERTICAL);
+        toolBar_1.add(separator_2);
         deleteButton = new IcyButton(RoiActions.deleteAction);
-        deleteButton.setText(null);
-        GridBagConstraints gbc_deleteButton = new GridBagConstraints();
-        gbc_deleteButton.anchor = GridBagConstraints.WEST;
-        gbc_deleteButton.gridx = 6;
-        gbc_deleteButton.gridy = 1;
-        booleanOpPanel.add(deleteButton, gbc_deleteButton);
+        toolBar_1.add(deleteButton);
 
-        generalPanel = new JPanel();
-        generalPanel.setBorder(new TitledBorder(null, "General", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-        add(generalPanel);
-        GridBagLayout gbl_panel_1 = new GridBagLayout();
-        gbl_panel_1.columnWidths = new int[] {0, 32, 0, 0, 120, 0, 0};
-        gbl_panel_1.rowHeights = new int[] {0, 0, 0};
-        gbl_panel_1.columnWeights = new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
-        gbl_panel_1.rowWeights = new double[] {0.0, 0.0, Double.MIN_VALUE};
-        generalPanel.setLayout(gbl_panel_1);
+        horizontalGlue = Box.createHorizontalGlue();
+        toolBar_1.add(horizontalGlue);
 
-        final JLabel lblNewLabel = new JLabel("Name");
-        GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
-        gbc_lblNewLabel.anchor = GridBagConstraints.EAST;
-        gbc_lblNewLabel.insets = new Insets(0, 0, 5, 5);
-        gbc_lblNewLabel.gridx = 0;
-        gbc_lblNewLabel.gridy = 0;
-        generalPanel.add(lblNewLabel, gbc_lblNewLabel);
-
-        nameField = new IcyTextField();
-        GridBagConstraints gbc_nameField = new GridBagConstraints();
-        gbc_nameField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_nameField.gridwidth = 5;
-        gbc_nameField.insets = new Insets(0, 0, 5, 0);
-        gbc_nameField.gridx = 1;
-        gbc_nameField.gridy = 0;
-        generalPanel.add(nameField, gbc_nameField);
-        nameField.setColumns(10);
-
-        final JLabel lblColor = new JLabel("Color");
+        final JLabel lblColor = new JLabel("ROI color");
         GridBagConstraints gbc_lblColor = new GridBagConstraints();
         gbc_lblColor.anchor = GridBagConstraints.EAST;
         gbc_lblColor.insets = new Insets(0, 0, 0, 5);
         gbc_lblColor.gridx = 0;
-        gbc_lblColor.gridy = 1;
-        generalPanel.add(lblColor, gbc_lblColor);
+        gbc_lblColor.gridy = 2;
+        actionPanel.add(lblColor, gbc_lblColor);
 
         colorButton = new ColorChooserButton();
-        colorButton.setToolTipText("Select the ROI color");
         GridBagConstraints gbc_colorButton = new GridBagConstraints();
+        gbc_colorButton.anchor = GridBagConstraints.WEST;
         gbc_colorButton.insets = new Insets(0, 0, 0, 5);
         gbc_colorButton.gridx = 1;
-        gbc_colorButton.gridy = 1;
-        generalPanel.add(colorButton, gbc_colorButton);
+        gbc_colorButton.gridy = 2;
+        actionPanel.add(colorButton, gbc_colorButton);
+        colorButton.setToolTipText("Select the ROI color");
 
-        lblContentOpacity = new JLabel("Opacity");
+        JLabel lblContentOpacity = new JLabel("Content opacity");
         GridBagConstraints gbc_lblContentOpacity = new GridBagConstraints();
-        gbc_lblContentOpacity.anchor = GridBagConstraints.EAST;
+        gbc_lblContentOpacity.fill = GridBagConstraints.HORIZONTAL;
         gbc_lblContentOpacity.insets = new Insets(0, 0, 0, 5);
-        gbc_lblContentOpacity.gridx = 3;
-        gbc_lblContentOpacity.gridy = 1;
-        generalPanel.add(lblContentOpacity, gbc_lblContentOpacity);
+        gbc_lblContentOpacity.gridx = 2;
+        gbc_lblContentOpacity.gridy = 2;
+        actionPanel.add(lblContentOpacity, gbc_lblContentOpacity);
 
         alphaSlider = new JSlider();
+        GridBagConstraints gbc_alphaSlider = new GridBagConstraints();
+        gbc_alphaSlider.fill = GridBagConstraints.HORIZONTAL;
+        gbc_alphaSlider.gridx = 3;
+        gbc_alphaSlider.gridy = 2;
+        actionPanel.add(alphaSlider, gbc_alphaSlider);
         alphaSlider.setPreferredSize(new Dimension(80, 20));
         alphaSlider.setMaximumSize(new Dimension(32767, 20));
         alphaSlider.setMinimumSize(new Dimension(36, 20));
         alphaSlider.setFocusable(false);
-        alphaSlider.setToolTipText("Change the ROI content opacity display");
-        GridBagConstraints gbc_slider = new GridBagConstraints();
-        gbc_slider.fill = GridBagConstraints.HORIZONTAL;
-        gbc_slider.insets = new Insets(0, 0, 0, 5);
-        gbc_slider.gridx = 4;
-        gbc_slider.gridy = 1;
-        generalPanel.add(alphaSlider, gbc_slider);
+        alphaSlider.setToolTipText("Change the ROI content opacity");
 
-        final JPanel positionPanel = new JPanel();
-        add(positionPanel);
-        positionPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Position",
-                TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+        JPanel positionAndSizePanel = new JPanel();
+        add(positionAndSizePanel);
+        GridBagLayout gbl_positionAndSizePanel = new GridBagLayout();
+        gbl_positionAndSizePanel.columnWidths = new int[] {0, 0, 0};
+        gbl_positionAndSizePanel.rowHeights = new int[] {0, 0};
+        gbl_positionAndSizePanel.columnWeights = new double[] {1.0, 1.0, Double.MIN_VALUE};
+        gbl_positionAndSizePanel.rowWeights = new double[] {0.0, Double.MIN_VALUE};
+        positionAndSizePanel.setLayout(gbl_positionAndSizePanel);
+
+        JPanel positionPanel = new JPanel();
+        positionPanel.setBorder(new TitledBorder(null, "Position", TitledBorder.CENTER, TitledBorder.TOP, null, null));
+        GridBagConstraints gbc_positionPanel = new GridBagConstraints();
+        gbc_positionPanel.anchor = GridBagConstraints.NORTH;
+        gbc_positionPanel.insets = new Insets(0, 0, 0, 5);
+        gbc_positionPanel.fill = GridBagConstraints.HORIZONTAL;
+        gbc_positionPanel.gridx = 0;
+        gbc_positionPanel.gridy = 0;
+        positionAndSizePanel.add(positionPanel, gbc_positionPanel);
         GridBagLayout gbl_positionPanel = new GridBagLayout();
-        gbl_positionPanel.columnWidths = new int[] {20, 0, 20, 0, 20, 0, 20, 0, 20, 0, 20, 0, 0};
-        gbl_positionPanel.rowHeights = new int[] {0, 0, 0};
-        gbl_positionPanel.columnWeights = new double[] {0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0,
-                Double.MIN_VALUE};
-        gbl_positionPanel.rowWeights = new double[] {0.0, 0.0, Double.MIN_VALUE};
+        gbl_positionPanel.columnWidths = new int[] {20, 0, 0};
+        gbl_positionPanel.rowHeights = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0};
+        gbl_positionPanel.columnWeights = new double[] {0.0, 1.0, Double.MIN_VALUE};
+        gbl_positionPanel.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
         positionPanel.setLayout(gbl_positionPanel);
 
         final JLabel lblX = new JLabel("X");
@@ -412,126 +336,147 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         positionPanel.add(lblX, gbc_lblX);
 
         posXField = new IcyTextField();
-        posXField.setToolTipText("X position of the ROI");
         GridBagConstraints gbc_posXField = new GridBagConstraints();
-        gbc_posXField.gridwidth = 5;
-        gbc_posXField.insets = new Insets(0, 0, 5, 5);
+        gbc_posXField.insets = new Insets(0, 0, 5, 0);
         gbc_posXField.fill = GridBagConstraints.HORIZONTAL;
         gbc_posXField.gridx = 1;
         gbc_posXField.gridy = 0;
         positionPanel.add(posXField, gbc_posXField);
-        posXField.setColumns(10);
-
-        posZFieldLabel = new JLabel("Z");
+        posXField.setToolTipText("X position of the ROI");
+        posXField.setColumns(8);
 
         final JLabel lblY = new JLabel("Y");
         GridBagConstraints gbc_lblY = new GridBagConstraints();
         gbc_lblY.insets = new Insets(0, 0, 5, 5);
-        gbc_lblY.gridx = 6;
-        gbc_lblY.gridy = 0;
+        gbc_lblY.gridx = 0;
+        gbc_lblY.gridy = 1;
         positionPanel.add(lblY, gbc_lblY);
 
         posYField = new IcyTextField();
-        posYField.setToolTipText("Y position of the ROI");
         GridBagConstraints gbc_posYField = new GridBagConstraints();
-        gbc_posYField.gridwidth = 5;
-        gbc_posYField.insets = new Insets(0, 0, 5, 0);
         gbc_posYField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_posYField.gridx = 7;
-        gbc_posYField.gridy = 0;
+        gbc_posYField.insets = new Insets(0, 0, 5, 0);
+        gbc_posYField.gridx = 1;
+        gbc_posYField.gridy = 1;
         positionPanel.add(posYField, gbc_posYField);
-        posYField.setColumns(10);
+        posYField.setToolTipText("Y position of the ROI");
+        posYField.setColumns(8);
+
+        posZFieldLabel = new JLabel("Z");
         GridBagConstraints gbc_posZFieldLabel = new GridBagConstraints();
-        gbc_posZFieldLabel.insets = new Insets(0, 0, 0, 5);
+        gbc_posZFieldLabel.insets = new Insets(0, 0, 5, 5);
         gbc_posZFieldLabel.gridx = 0;
-        gbc_posZFieldLabel.gridy = 1;
+        gbc_posZFieldLabel.gridy = 2;
         positionPanel.add(posZFieldLabel, gbc_posZFieldLabel);
 
-        posCFieldLabel = new JLabel("C");
-
-        posTFieldLabel = new JLabel("T");
-
-        JPanel panelPosZ = new JPanel();
-        panelPosZ.setBorder(null);
-        GridBagConstraints gbc_panelPosZ = new GridBagConstraints();
-        gbc_panelPosZ.fill = GridBagConstraints.HORIZONTAL;
-        gbc_panelPosZ.gridwidth = 3;
-        gbc_panelPosZ.insets = new Insets(0, 0, 0, 5);
-        gbc_panelPosZ.gridx = 1;
-        gbc_panelPosZ.gridy = 1;
-        positionPanel.add(panelPosZ, gbc_panelPosZ);
-        panelPosZ.setLayout(new BoxLayout(panelPosZ, BoxLayout.LINE_AXIS));
-
         posZField = new IcyTextField();
-        panelPosZ.add(posZField);
+        GridBagConstraints gbc_posZField = new GridBagConstraints();
+        gbc_posZField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_posZField.insets = new Insets(0, 0, 5, 0);
+        gbc_posZField.gridx = 1;
+        gbc_posZField.gridy = 2;
+        positionPanel.add(posZField, gbc_posZField);
         posZField.setVisible(false);
         posZField.setToolTipText("Z position of the ROI");
-        posZField.setColumns(10);
+        posZField.setColumns(8);
+
+        posZSpinnerLabel = new JLabel("Z");
+        GridBagConstraints gbc_posZSpinnerLabel = new GridBagConstraints();
+        gbc_posZSpinnerLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_posZSpinnerLabel.gridx = 0;
+        gbc_posZSpinnerLabel.gridy = 3;
+        positionPanel.add(posZSpinnerLabel, gbc_posZSpinnerLabel);
 
         posZSpinner = new SpecialValueSpinner(new SpecialValueSpinnerModel(-1, -1, 0, 1, -1, "ALL"));
-        panelPosZ.add(posZSpinner);
+        GridBagConstraints gbc_posZSpinner = new GridBagConstraints();
+        gbc_posZSpinner.fill = GridBagConstraints.HORIZONTAL;
+        gbc_posZSpinner.insets = new Insets(0, 0, 5, 0);
+        gbc_posZSpinner.gridx = 1;
+        gbc_posZSpinner.gridy = 3;
+        positionPanel.add(posZSpinner, gbc_posZSpinner);
         posZSpinner.setToolTipText("Attach the ROI to a specific Z slice (set to -1 for ALL)");
+
+        posTFieldLabel = new JLabel("T");
         GridBagConstraints gbc_posTFieldLabel = new GridBagConstraints();
-        gbc_posTFieldLabel.insets = new Insets(0, 0, 0, 5);
-        gbc_posTFieldLabel.gridx = 4;
-        gbc_posTFieldLabel.gridy = 1;
+        gbc_posTFieldLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_posTFieldLabel.gridx = 0;
+        gbc_posTFieldLabel.gridy = 4;
         positionPanel.add(posTFieldLabel, gbc_posTFieldLabel);
 
-        JPanel panelPosT = new JPanel();
-        panelPosT.setBorder(null);
-        GridBagConstraints gbc_panelPosT = new GridBagConstraints();
-        gbc_panelPosT.gridwidth = 3;
-        gbc_panelPosT.fill = GridBagConstraints.HORIZONTAL;
-        gbc_panelPosT.insets = new Insets(0, 0, 0, 5);
-        gbc_panelPosT.gridx = 5;
-        gbc_panelPosT.gridy = 1;
-        positionPanel.add(panelPosT, gbc_panelPosT);
-        panelPosT.setLayout(new BoxLayout(panelPosT, BoxLayout.LINE_AXIS));
-
         posTField = new IcyTextField();
-        panelPosT.add(posTField);
+        GridBagConstraints gbc_posTField = new GridBagConstraints();
+        gbc_posTField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_posTField.insets = new Insets(0, 0, 5, 0);
+        gbc_posTField.gridx = 1;
+        gbc_posTField.gridy = 4;
+        positionPanel.add(posTField, gbc_posTField);
         posTField.setVisible(false);
         posTField.setToolTipText("T position of the ROI");
-        posTField.setColumns(10);
+        posTField.setColumns(8);
+
+        posTSpinnerLabel = new JLabel("T");
+        GridBagConstraints gbc_posTSpinnerLabel = new GridBagConstraints();
+        gbc_posTSpinnerLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_posTSpinnerLabel.gridx = 0;
+        gbc_posTSpinnerLabel.gridy = 5;
+        positionPanel.add(posTSpinnerLabel, gbc_posTSpinnerLabel);
 
         posTSpinner = new SpecialValueSpinner(new SpecialValueSpinnerModel(-1, -1, 0, 1, -1, "ALL"));
-        panelPosT.add(posTSpinner);
+        GridBagConstraints gbc_posTSpinner = new GridBagConstraints();
+        gbc_posTSpinner.fill = GridBagConstraints.HORIZONTAL;
+        gbc_posTSpinner.insets = new Insets(0, 0, 5, 0);
+        gbc_posTSpinner.gridx = 1;
+        gbc_posTSpinner.gridy = 5;
+        positionPanel.add(posTSpinner, gbc_posTSpinner);
         posTSpinner.setToolTipText("Attach the ROI to a specific T frame (set to -1 for ALL)");
+
+        posCFieldLabel = new JLabel("C");
         GridBagConstraints gbc_posCFieldLabel = new GridBagConstraints();
-        gbc_posCFieldLabel.insets = new Insets(0, 0, 0, 5);
-        gbc_posCFieldLabel.gridx = 8;
-        gbc_posCFieldLabel.gridy = 1;
+        gbc_posCFieldLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_posCFieldLabel.gridx = 0;
+        gbc_posCFieldLabel.gridy = 6;
         positionPanel.add(posCFieldLabel, gbc_posCFieldLabel);
 
-        JPanel panelPosC = new JPanel();
-        panelPosC.setBorder(null);
-        GridBagConstraints gbc_panelPosC = new GridBagConstraints();
-        gbc_panelPosC.gridwidth = 3;
-        gbc_panelPosC.fill = GridBagConstraints.HORIZONTAL;
-        gbc_panelPosC.gridx = 9;
-        gbc_panelPosC.gridy = 1;
-        positionPanel.add(panelPosC, gbc_panelPosC);
-        panelPosC.setLayout(new BoxLayout(panelPosC, BoxLayout.LINE_AXIS));
-
         posCField = new IcyTextField();
-        panelPosC.add(posCField);
+        GridBagConstraints gbc_posCField = new GridBagConstraints();
+        gbc_posCField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_posCField.insets = new Insets(0, 0, 5, 0);
+        gbc_posCField.gridx = 1;
+        gbc_posCField.gridy = 6;
+        positionPanel.add(posCField, gbc_posCField);
         posCField.setVisible(false);
         posCField.setToolTipText("C position of the ROI");
-        posCField.setColumns(10);
+        posCField.setColumns(8);
+
+        posCSpinnerLabel = new JLabel("C");
+        GridBagConstraints gbc_posCSpinnerLabel = new GridBagConstraints();
+        gbc_posCSpinnerLabel.insets = new Insets(0, 0, 0, 5);
+        gbc_posCSpinnerLabel.gridx = 0;
+        gbc_posCSpinnerLabel.gridy = 7;
+        positionPanel.add(posCSpinnerLabel, gbc_posCSpinnerLabel);
 
         posCSpinner = new SpecialValueSpinner(new SpecialValueSpinnerModel(-1, -1, 0, 1, -1, "ALL"));
-        panelPosC.add(posCSpinner);
+        GridBagConstraints gbc_posCSpinner = new GridBagConstraints();
+        gbc_posCSpinner.fill = GridBagConstraints.HORIZONTAL;
+        gbc_posCSpinner.gridx = 1;
+        gbc_posCSpinner.gridy = 7;
+        positionPanel.add(posCSpinner, gbc_posCSpinner);
         posCSpinner.setToolTipText("Attach the ROI to a specific C channel (set to -1 for ALL)");
 
         JPanel sizePanel = new JPanel();
-        add(sizePanel);
-        sizePanel.setBorder(new TitledBorder(null, "Size", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        sizePanel.setBorder(new TitledBorder(null, "Dimension", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        GridBagConstraints gbc_sizePanel = new GridBagConstraints();
+        gbc_sizePanel.anchor = GridBagConstraints.NORTH;
+        gbc_sizePanel.fill = GridBagConstraints.HORIZONTAL;
+        gbc_sizePanel.gridx = 1;
+        gbc_sizePanel.gridy = 0;
+        positionAndSizePanel.add(sizePanel, gbc_sizePanel);
+
         GridBagLayout gbl_sizePanel = new GridBagLayout();
-        gbl_sizePanel.columnWidths = new int[] {20, 0, 20, 0, 20, 0, 20, 0, 20, 0, 20, 0, 0};
-        gbl_sizePanel.rowHeights = new int[] {0, 0, 0};
-        gbl_sizePanel.columnWeights = new double[] {0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0,
-                Double.MIN_VALUE};
-        gbl_sizePanel.rowWeights = new double[] {0.0, 0.0, Double.MIN_VALUE};
+        gbl_sizePanel.columnWidths = new int[] {20, 0, 0};
+        gbl_sizePanel.rowHeights = new int[] {0, 0, 0, 0, 0, 0};
+        gbl_sizePanel.columnWeights = new double[] {0.0, 1.0, Double.MIN_VALUE};
+        gbl_sizePanel.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
         sizePanel.setLayout(gbl_sizePanel);
 
         final JLabel lblNewLabel_2 = new JLabel("X");
@@ -543,134 +488,101 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
         sizeXField = new IcyTextField();
         GridBagConstraints gbc_sizeXField = new GridBagConstraints();
-        gbc_sizeXField.gridwidth = 5;
+        gbc_sizeXField.insets = new Insets(0, 0, 5, 0);
         gbc_sizeXField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_sizeXField.insets = new Insets(0, 0, 5, 5);
         gbc_sizeXField.gridx = 1;
         gbc_sizeXField.gridy = 0;
         sizePanel.add(sizeXField, gbc_sizeXField);
         sizeXField.setToolTipText("Size of dimension X for the ROI");
-        sizeXField.setColumns(10);
+        sizeXField.setColumns(8);
 
         final JLabel lblY_1 = new JLabel("Y");
         GridBagConstraints gbc_lblY_1 = new GridBagConstraints();
         gbc_lblY_1.insets = new Insets(0, 0, 5, 5);
-        gbc_lblY_1.gridx = 6;
-        gbc_lblY_1.gridy = 0;
+        gbc_lblY_1.gridx = 0;
+        gbc_lblY_1.gridy = 1;
         sizePanel.add(lblY_1, gbc_lblY_1);
 
         sizeYField = new IcyTextField();
         GridBagConstraints gbc_sizeYField = new GridBagConstraints();
-        gbc_sizeYField.gridwidth = 5;
         gbc_sizeYField.fill = GridBagConstraints.HORIZONTAL;
         gbc_sizeYField.insets = new Insets(0, 0, 5, 0);
-        gbc_sizeYField.gridx = 7;
-        gbc_sizeYField.gridy = 0;
+        gbc_sizeYField.gridx = 1;
+        gbc_sizeYField.gridy = 1;
         sizePanel.add(sizeYField, gbc_sizeYField);
         sizeYField.setToolTipText("Size of dimension Y for the ROI");
-        sizeYField.setColumns(10);
+        sizeYField.setColumns(8);
 
-        sizeZFieldLabel = new JLabel("Z");
+        JLabel sizeZFieldLabel = new JLabel("Z");
         GridBagConstraints gbc_sizeZFieldLabel = new GridBagConstraints();
-        gbc_sizeZFieldLabel.insets = new Insets(0, 0, 0, 5);
+        gbc_sizeZFieldLabel.insets = new Insets(0, 0, 5, 5);
         gbc_sizeZFieldLabel.gridx = 0;
-        gbc_sizeZFieldLabel.gridy = 1;
+        gbc_sizeZFieldLabel.gridy = 2;
         sizePanel.add(sizeZFieldLabel, gbc_sizeZFieldLabel);
 
         sizeZField = new IcyTextField();
         GridBagConstraints gbc_sizeZField = new GridBagConstraints();
-        gbc_sizeZField.gridwidth = 3;
         gbc_sizeZField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_sizeZField.insets = new Insets(0, 0, 0, 5);
+        gbc_sizeZField.insets = new Insets(0, 0, 5, 0);
         gbc_sizeZField.gridx = 1;
-        gbc_sizeZField.gridy = 1;
+        gbc_sizeZField.gridy = 2;
         sizePanel.add(sizeZField, gbc_sizeZField);
         sizeZField.setToolTipText("Size of dimension Z for the ROI");
-        sizeZField.setColumns(10);
+        sizeZField.setColumns(8);
 
-        sizeTFieldLabel = new JLabel("T");
+        JLabel sizeTFieldLabel = new JLabel("T");
         GridBagConstraints gbc_sizeTFieldLabel = new GridBagConstraints();
-        gbc_sizeTFieldLabel.insets = new Insets(0, 0, 0, 5);
-        gbc_sizeTFieldLabel.gridx = 4;
-        gbc_sizeTFieldLabel.gridy = 1;
+        gbc_sizeTFieldLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_sizeTFieldLabel.gridx = 0;
+        gbc_sizeTFieldLabel.gridy = 3;
         sizePanel.add(sizeTFieldLabel, gbc_sizeTFieldLabel);
 
         sizeTField = new IcyTextField();
         GridBagConstraints gbc_sizeTField = new GridBagConstraints();
-        gbc_sizeTField.gridwidth = 3;
         gbc_sizeTField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_sizeTField.insets = new Insets(0, 0, 0, 5);
-        gbc_sizeTField.gridx = 5;
-        gbc_sizeTField.gridy = 1;
+        gbc_sizeTField.insets = new Insets(0, 0, 5, 0);
+        gbc_sizeTField.gridx = 1;
+        gbc_sizeTField.gridy = 3;
         sizePanel.add(sizeTField, gbc_sizeTField);
         sizeTField.setToolTipText("Size of dimension T for the ROI");
-        sizeTField.setColumns(10);
+        sizeTField.setColumns(8);
 
-        sizeCFieldLabel = new JLabel("C");
+        JLabel sizeCFieldLabel = new JLabel("C");
         GridBagConstraints gbc_sizeCFieldLabel = new GridBagConstraints();
         gbc_sizeCFieldLabel.insets = new Insets(0, 0, 0, 5);
-        gbc_sizeCFieldLabel.gridx = 8;
-        gbc_sizeCFieldLabel.gridy = 1;
+        gbc_sizeCFieldLabel.gridx = 0;
+        gbc_sizeCFieldLabel.gridy = 4;
         sizePanel.add(sizeCFieldLabel, gbc_sizeCFieldLabel);
 
         sizeCField = new IcyTextField();
         GridBagConstraints gbc_sizeCField = new GridBagConstraints();
-        gbc_sizeCField.gridwidth = 3;
         gbc_sizeCField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_sizeCField.gridx = 9;
-        gbc_sizeCField.gridy = 1;
+        gbc_sizeCField.gridx = 1;
+        gbc_sizeCField.gridy = 4;
         sizePanel.add(sizeCField, gbc_sizeCField);
         sizeCField.setToolTipText("Size of dimension C for the ROI");
-        sizeCField.setColumns(10);
-
-        infosPanel = new RoiExtraInfoPanel();
-        infosPanel.setBorder(new TitledBorder(null, "Extra informations", TitledBorder.LEADING, TitledBorder.TOP, null,
-                null));
-        add(infosPanel);
+        sizeCField.setColumns(8);
     }
 
-    /**
-     * Get the selected ROI in the ROI control panel.<br>
-     * This actually returns selected ROI from the ROI table in ROI panel (cached).
-     */
-    public List<ROI> getSelectedRois()
+    public void selectionChanged()
     {
-        return new ArrayList<ROI>(selectedRois);
-    }
-
-    /**
-     * Set the selected ROI in the ROI control panel.<br>
-     * This actually refresh the GUI to reflect informations about the new selected ROI(s).
-     */
-    public void setSelectedRois(List<ROI> rois)
-    {
-        final int newSelectedSize = rois.size();
-        final int oldSelectedSize = selectedRois.size();
-
-        // easy optimization
-        if ((newSelectedSize == 0) && (oldSelectedSize == 0))
-            return;
-
-        // same selection size ?
-        if (newSelectedSize == oldSelectedSize)
-        {
-            // same selection, don't need to update it
-            if (new HashSet<ROI>(rois).containsAll(selectedRois))
-                return;
-        }
-
-        // remove listener
-        for (ROI roi : selectedRois)
-            roi.removeListener(this);
-
-        selectedRois = rois;
-
-        // add listener
-        for (ROI roi : rois)
-            roi.addListener(this);
-
-        // refresh all
         refreshROIActionsAndProperties();
+    }
+
+    /**
+     * Get the visible ROI in the ROI control panel
+     */
+    List<ROI> getVisibleRois()
+    {
+        return roisPanel.getVisibleRois();
+    }
+
+    /**
+     * Get the selected ROI in the ROI control panel
+     */
+    List<ROI> getSelectedRois()
+    {
+        return roisPanel.getSelectedRois();
     }
 
     /**
@@ -678,27 +590,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
      */
     public void refreshROIActions()
     {
-        ThreadUtil.bgRun(roiActionsRefresher, true);
-    }
-
-    void refreshPosToolTip(int dim)
-    {
-        if (dim > 1)
-            posYField.setToolTipText("Y position of the ROI");
-        else
-            posYField.setToolTipText("Attach the ROI to a specific Y line (set to -1 for all lines)");
-        if (dim > 2)
-            posZField.setToolTipText("Z position of the ROI");
-        else
-            posZField.setToolTipText("Attach the ROI to a specific Z slice (set to -1 for all slices)");
-        if (dim > 3)
-            posTField.setToolTipText("T position of the ROI");
-        else
-            posTField.setToolTipText("Attach the ROI to a specific T frame (set to -1 for all frames)");
-        if (dim > 4)
-            posCField.setToolTipText("C position of the ROI");
-        else
-            posCField.setToolTipText("Attach the ROI to a specific C channel (set to -1 for all channels)");
+        ThreadUtil.bgRun(roiActionsRefresher, false);
     }
 
     /**
@@ -707,18 +599,18 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     void refreshROIActionsInternal()
     {
         final Sequence sequence = Icy.getMainInterface().getActiveSequence();
-        final List<ROI> rois = getSelectedRois();
-        final ROI roi = (rois.size() > 0) ? rois.get(0) : null;
+        final List<ROI> selectedRois = getSelectedRois();
+        final ROI roi = (selectedRois.size() > 0) ? selectedRois.get(0) : null;
 
         boolean readOnly = true;
         // set read only flag
-        for (ROI r : rois)
+        for (ROI r : selectedRois)
             readOnly &= r.isReadOnly();
 
         final boolean hasSequence = (sequence != null);
         final boolean hasSelected = (roi != null);
-        final boolean twoSelected = (rois.size() == 2);
-        final boolean multiSelect = (rois.size() > 1);
+        final boolean twoSelected = (selectedRois.size() == 2);
+        final boolean multiSelect = (selectedRois.size() > 1);
         final boolean singleSelect = hasSelected && !multiSelect;
         final boolean canSetBounds = hasSelected ? roi.canSetBounds() : false;
         final boolean canSetPosition = hasSelected ? roi.canSetPosition() : false;
@@ -727,86 +619,118 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         final boolean editable = !readOnly;
         final int dim = hasSelected ? roi.getDimension() : 0;
 
-        nameField.setEnabled(singleSelect && editable);
-        posXField.setEnabled(singleSelect && canSetPosition && editable);
-        posYField.setEnabled(singleSelect && canSetPosition && editable);
-        posZField.setEnabled(singleSelect && canSetPosition && editable);
-        posTField.setEnabled(singleSelect && canSetPosition && editable);
-        posCField.setEnabled(singleSelect && canSetPosition && editable);
-        posZSpinner.setEnabled(singleSelect && canSetPosition && editable);
-        posTSpinner.setEnabled(singleSelect && canSetPosition && editable);
-        posCSpinner.setEnabled(singleSelect && canSetPosition && editable);
-        sizeXField.setEnabled(singleSelect && canSetBounds && editable);
-        sizeYField.setEnabled(singleSelect && canSetBounds && editable && (dim > 1));
-        sizeZField.setEnabled(singleSelect && canSetBounds && editable && (dim > 2));
-        sizeTField.setEnabled(singleSelect && canSetBounds && editable && (dim > 3));
-        sizeCField.setEnabled(singleSelect && canSetBounds && editable && (dim > 4));
+        // wait a bit to avoid eating too much time with refresh
+        ThreadUtil.sleep(10);
 
-        if (hasSequence)
+        ThreadUtil.invokeNow(new Runnable()
         {
-            ((SpecialValueSpinnerModel) posZSpinner.getModel()).setMaximum(Integer.valueOf(sequence.getSizeZ() - 1));
-            ((SpecialValueSpinnerModel) posTSpinner.getModel()).setMaximum(Integer.valueOf(sequence.getSizeT() - 1));
-            ((SpecialValueSpinnerModel) posCSpinner.getModel()).setMaximum(Integer.valueOf(sequence.getSizeC() - 1));
-        }
-        else
-        {
-            ((SpecialValueSpinnerModel) posZSpinner.getModel()).setMaximum(Integer.valueOf(0));
-            ((SpecialValueSpinnerModel) posTSpinner.getModel()).setMaximum(Integer.valueOf(0));
-            ((SpecialValueSpinnerModel) posCSpinner.getModel()).setMaximum(Integer.valueOf(0));
-        }
+            @Override
+            public void run()
+            {
+                modifyingRoi.acquireUninterruptibly();
+                try
+                {
+                    if (hasSequence)
+                    {
+                        ((SpecialValueSpinnerModel) posZSpinner.getModel()).setMaximum(Integer.valueOf(sequence
+                                .getSizeZ() - 1));
+                        ((SpecialValueSpinnerModel) posTSpinner.getModel()).setMaximum(Integer.valueOf(sequence
+                                .getSizeT() - 1));
+                        ((SpecialValueSpinnerModel) posCSpinner.getModel()).setMaximum(Integer.valueOf(sequence
+                                .getSizeC() - 1));
+                    }
+                    else
+                    {
+                        ((SpecialValueSpinnerModel) posZSpinner.getModel()).setMaximum(Integer.valueOf(0));
+                        ((SpecialValueSpinnerModel) posTSpinner.getModel()).setMaximum(Integer.valueOf(0));
+                        ((SpecialValueSpinnerModel) posCSpinner.getModel()).setMaximum(Integer.valueOf(0));
+                    }
+                }
+                finally
+                {
+                    modifyingRoi.release();
+                }
 
-        if (dim > 2)
-        {
-            posZField.setVisible(true);
-            posZSpinner.setVisible(false);
-        }
-        else
-        {
-            posZField.setVisible(false);
-            posZSpinner.setVisible(true);
-        }
+                posXField.setEnabled(singleSelect && canSetPosition && editable);
+                posYField.setEnabled(singleSelect && canSetPosition && editable);
+                posZField.setEnabled(singleSelect && canSetPosition && editable);
+                posTField.setEnabled(singleSelect && canSetPosition && editable);
+                posCField.setEnabled(singleSelect && canSetPosition && editable);
+                posZSpinner.setEnabled(singleSelect && canSetPosition && editable);
+                posTSpinner.setEnabled(singleSelect && canSetPosition && editable);
+                posCSpinner.setEnabled(singleSelect && canSetPosition && editable);
+                sizeXField.setEnabled(singleSelect && canSetBounds && editable);
+                sizeYField.setEnabled(singleSelect && canSetBounds && editable && (dim > 1));
+                sizeZField.setEnabled(singleSelect && canSetBounds && editable && (dim > 2));
+                sizeTField.setEnabled(singleSelect && canSetBounds && editable && (dim > 3));
+                sizeCField.setEnabled(singleSelect && canSetBounds && editable && (dim > 4));
 
-        if (dim > 3)
-        {
-            posTField.setVisible(true);
-            posTSpinner.setVisible(false);
-        }
-        else
-        {
-            posTField.setVisible(false);
-            posTSpinner.setVisible(true);
-        }
+                if (dim > 2)
+                {
+                    posZField.setVisible(true);
+                    posZFieldLabel.setVisible(true);
+                    posZSpinner.setVisible(false);
+                    posZSpinnerLabel.setVisible(false);
+                }
+                else
+                {
+                    posZField.setVisible(false);
+                    posZFieldLabel.setVisible(false);
+                    posZSpinner.setVisible(true);
+                    posZSpinnerLabel.setVisible(true);
+                }
 
-        if (dim > 4)
-        {
-            posCField.setVisible(true);
-            posCSpinner.setVisible(false);
-        }
-        else
-        {
-            posCField.setVisible(false);
-            posCSpinner.setVisible(true);
-        }
+                if (dim > 3)
+                {
+                    posTField.setVisible(true);
+                    posTFieldLabel.setVisible(true);
+                    posTSpinner.setVisible(false);
+                    posTSpinnerLabel.setVisible(false);
+                }
+                else
+                {
+                    posTField.setVisible(false);
+                    posTFieldLabel.setVisible(false);
+                    posTSpinner.setVisible(true);
+                    posTSpinnerLabel.setVisible(true);
+                }
 
-        colorButton.setEnabled(hasSelected && editable);
-        alphaSlider.setEnabled(hasSelected);
+                if (dim > 4)
+                {
+                    posCField.setVisible(true);
+                    posCFieldLabel.setVisible(true);
+                    posCSpinner.setVisible(false);
+                    posCSpinnerLabel.setVisible(false);
+                }
+                else
+                {
+                    posCField.setVisible(false);
+                    posCFieldLabel.setVisible(false);
+                    posCSpinner.setVisible(true);
+                    posCSpinnerLabel.setVisible(true);
+                }
 
-        loadButton.setEnabled(hasSequence);
-        saveButton.setEnabled(hasSelected);
-        copyButton.setEnabled(hasSelected);
-        pasteButton.setEnabled(hasROIinClipboard);
-        copyLinkButton.setEnabled(hasSelected);
-        pasteLinkButton.setEnabled(hasROILinkinClipboard);
+                colorButton.setEnabled(hasSelected && editable);
+                alphaSlider.setEnabled(hasSelected);
 
-        deleteButton.setEnabled(hasSelected && editable);
+                loadButton.setEnabled(hasSequence);
+                saveButton.setEnabled(hasSelected);
+                copyButton.setEnabled(hasSelected);
+                pasteButton.setEnabled(hasROIinClipboard);
+                copyLinkButton.setEnabled(hasSelected);
+                pasteLinkButton.setEnabled(hasROILinkinClipboard);
 
-        notButton.setEnabled(singleSelect);
-        orButton.setEnabled(multiSelect);
-        andButton.setEnabled(multiSelect);
-        xorButton.setEnabled(multiSelect);
-        subButton.setEnabled(twoSelected);
+                deleteButton.setEnabled(hasSelected && editable);
 
-        refreshPosToolTip(dim);
+                notButton.setEnabled(singleSelect);
+                orButton.setEnabled(multiSelect);
+                andButton.setEnabled(multiSelect);
+                xorButton.setEnabled(multiSelect);
+                subButton.setEnabled(twoSelected);
+
+                xlsExportButton.setEnabled(hasSelected);
+            }
+        });
     }
 
     /**
@@ -814,7 +738,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
      */
     public void refreshROIProperties()
     {
-        ThreadUtil.bgRunSingle(roiPropertiesRefresher, true);
+        ThreadUtil.bgRunSingle(roiPropertiesRefresher, false);
     }
 
     /**
@@ -824,119 +748,72 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     {
         final List<ROI> rois = getSelectedRois();
         final ROI roi = (rois.size() > 0) ? rois.get(0) : null;
+        final ROIInfo roiInfo = (roi != null) ? roisPanel.getROIInfo(roi) : null;
 
-        modifyingRoi.acquireUninterruptibly();
-        try
+        // wait a bit to avoid eating too much time with refresh
+        ThreadUtil.sleep(10);
+
+        ThreadUtil.invokeNow(new Runnable()
         {
-            if (roi != null)
+            @Override
+            public void run()
             {
-                final String name = roi.getName();
+                modifyingRoi.acquireUninterruptibly();
+                try
+                {
+                    if (roiInfo != null)
+                    {
+                        double value;
 
-                nameField.setText(name);
-                colorButton.setColor(roi.getColor());
-                alphaSlider.setValue((int) (roi.getOpacity() * 100));
+                        colorButton.setColor(roi.getColor());
+                        alphaSlider.setValue((int) (roi.getOpacity() * 100));
 
-                final Rectangle5D bounds = roi.getBounds5D();
+                        posXField.setText(StringUtil.toString(roiInfo.getPositionX()));
+                        posYField.setText(StringUtil.toString(roiInfo.getPositionY()));
+                        value = roiInfo.getPositionZ();
+                        posZSpinner.setValue(Integer.valueOf((int) value));
+                        posZField.setText(StringUtil.toString(value));
+                        value = roiInfo.getPositionT();
+                        posTSpinner.setValue(Integer.valueOf((int) value));
+                        posTField.setText(StringUtil.toString(value));
+                        value = roiInfo.getPositionC();
+                        posCSpinner.setValue(Integer.valueOf((int) value));
+                        posCField.setText(StringUtil.toString(value));
 
-                final double x = bounds.getX();
-                final double y = bounds.getY();
-                final double z = bounds.getZ();
-                final double t = bounds.getT();
-                final double c = bounds.getC();
-                final double sx = bounds.getSizeX();
-                final double sy = bounds.getSizeY();
-                final double sz = bounds.getSizeZ();
-                final double st = bounds.getSizeT();
-                final double sc = bounds.getSizeC();
+                        sizeXField.setText(roiInfo.getSizeXAsString());
+                        sizeYField.setText(roiInfo.getSizeYAsString());
+                        sizeZField.setText(roiInfo.getSizeZAsString());
+                        sizeTField.setText(roiInfo.getSizeTAsString());
+                        sizeCField.setText(roiInfo.getSizeCAsString());
+                    }
+                    else
+                    {
+                        // no ROI selected
+                        colorButton.setColor(Color.gray);
+                        alphaSlider.setValue(0);
 
-                // special case of infinite X dimension
-                if (sx == Double.POSITIVE_INFINITY)
-                {
-                    posXField.setText("-1");
-                    sizeXField.setText("infinite");
+                        posXField.setText("");
+                        posYField.setText("");
+                        posZField.setText("");
+                        posTField.setText("");
+                        posCField.setText("");
+                        posZSpinner.setValue(Integer.valueOf(0));
+                        posTSpinner.setValue(Integer.valueOf(0));
+                        posCSpinner.setValue(Integer.valueOf(0));
+
+                        sizeXField.setText("");
+                        sizeYField.setText("");
+                        sizeZField.setText("");
+                        sizeTField.setText("");
+                        sizeCField.setText("");
+                    }
                 }
-                else
+                finally
                 {
-                    posXField.setText(StringUtil.toString(MathUtil.roundSignificant(x, 5, true)));
-                    sizeXField.setText(StringUtil.toString(MathUtil.roundSignificant(sx, 5, true)));
-                }
-                // special case of infinite Y dimension
-                if (sy == Double.POSITIVE_INFINITY)
-                {
-                    posYField.setText("-1");
-                    sizeYField.setText("infinite");
-                }
-                else
-                {
-                    posYField.setText(StringUtil.toString(MathUtil.roundSignificant(y, 5, true)));
-                    sizeYField.setText(StringUtil.toString(MathUtil.roundSignificant(sy, 5, true)));
-                }
-                // special case of infinite Z dimension
-                if (sz == Double.POSITIVE_INFINITY)
-                {
-                    posZField.setText("-1");
-                    posZSpinner.setValue(Integer.valueOf(-1));
-                    sizeZField.setText("infinite");
-                }
-                else
-                {
-                    posZField.setText(StringUtil.toString(MathUtil.roundSignificant(z, 5, true)));
-                    posZSpinner.setValue(Integer.valueOf((int) z));
-                    sizeZField.setText(StringUtil.toString(MathUtil.roundSignificant(sz, 5, true)));
-                }
-                // special case of infinite T dimension
-                if (st == Double.POSITIVE_INFINITY)
-                {
-                    posTField.setText("-1");
-                    posTSpinner.setValue(Integer.valueOf(-1));
-                    sizeTField.setText("infinite");
-                }
-                else
-                {
-                    posTField.setText(StringUtil.toString(MathUtil.roundSignificant(t, 5, true)));
-                    posTSpinner.setValue(Integer.valueOf((int) t));
-                    sizeTField.setText(StringUtil.toString(MathUtil.roundSignificant(st, 5, true)));
-                }
-                // special case of infinite C dimension
-                if (sc == Double.POSITIVE_INFINITY)
-                {
-                    posCField.setText("-1");
-                    posCSpinner.setValue(Integer.valueOf(-1));
-                    sizeCField.setText("infinite");
-                }
-                else
-                {
-                    posCField.setText(StringUtil.toString(MathUtil.roundSignificant(c, 5, true)));
-                    posCSpinner.setValue(Integer.valueOf((int) c));
-                    sizeCField.setText(StringUtil.toString(MathUtil.roundSignificant(sc, 5, true)));
+                    modifyingRoi.release();
                 }
             }
-            else
-            {
-                // no ROI selected
-                nameField.setText("");
-
-                colorButton.setColor(Color.gray);
-                alphaSlider.setValue(0);
-
-                posXField.setText("");
-                posYField.setText("");
-                posZField.setText("");
-                posTField.setText("");
-
-                sizeXField.setText("");
-                sizeYField.setText("");
-                sizeZField.setText("");
-                sizeTField.setText("");
-            }
-
-            // refresh ROI infos
-            infosPanel.refresh(Icy.getMainInterface().getActiveViewer(), rois);
-        }
-        finally
-        {
-            modifyingRoi.release();
-        }
+        });
     }
 
     /**
@@ -944,8 +821,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
      */
     public void refreshROIActionsAndProperties()
     {
-        ThreadUtil.bgRunSingle(roiActionsRefresher, true);
-        ThreadUtil.bgRunSingle(roiPropertiesRefresher, true);
+        ThreadUtil.bgRunSingle(roiActionsRefresher, false);
+        ThreadUtil.bgRunSingle(roiPropertiesRefresher, false);
     }
 
     @Override
@@ -980,11 +857,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
         try
         {
-            // simple name change
-            if (source == nameField)
-                roi.setName(source.getText());
             // position fields ?
-            else if ((source == posXField) || (source == posYField) || (source == posZField) || (source == posTField)
+            if ((source == posXField) || (source == posYField) || (source == posZField) || (source == posTField)
                     || (source == posCField))
             {
                 // get current ROI position
@@ -1223,7 +1097,6 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     }
 
     // one of the selected ROI changed
-    @Override
     public void roiChanged(ROIEvent event)
     {
         switch (event.getType())
@@ -1243,7 +1116,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 if (ROI.PROPERTY_READONLY.equals(propertyName))
                     refreshROIActions();
                 else if (ROI.PROPERTY_NAME.equals(propertyName))
-                    ThreadUtil.bgRunSingle(roiPropertiesRefresher, true);
+                    refreshROIProperties();
                 break;
 
             case SELECTION_CHANGED:

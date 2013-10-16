@@ -124,7 +124,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             // call paint on overlays first
             if (isLayersVisible())
             {
-                final List<Layer> layers = getLayers();
+                final List<Layer> layers = getLayers(true);
                 final Layer imageLayer = getImageLayer();
                 final Sequence seq = getSequence();
 
@@ -489,7 +489,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         setupVolumeScale();
 
         // add vtkPainter actors to the renderer
-        for (Layer l : getLayers())
+        for (Layer l : getLayers(false))
             addLayerActors(l);
 
         // reset camera

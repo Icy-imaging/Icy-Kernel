@@ -25,6 +25,8 @@ package icy.math;
  */
 public class MathUtil
 {
+    public static final String INFINITE_STRING = "\u221E";
+    
     public static final double POW2_8_DOUBLE = Math.pow(2, 8);
     public static final float POW2_8_FLOAT = (float) POW2_8_DOUBLE;
     public static final double POW2_16_DOUBLE = Math.pow(2, 16);

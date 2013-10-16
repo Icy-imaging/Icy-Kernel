@@ -18,6 +18,9 @@
  */
 package icy.canvas;
 
+import icy.action.GeneralActions;
+import icy.action.RoiActions;
+import icy.action.WindowActions;
 import icy.canvas.CanvasLayerEvent.LayersEventType;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.canvas.Layer.LayerListener;
@@ -25,9 +28,6 @@ import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.common.listener.ProgressListener;
-import icy.gui.menu.action.GeneralActions;
-import icy.gui.menu.action.RoiActions;
-import icy.gui.menu.action.WindowActions;
 import icy.gui.util.GuiUtil;
 import icy.gui.viewer.MouseImageInfosPanel;
 import icy.gui.viewer.TNavigationPanel;
@@ -610,25 +610,67 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Returns all layers attached to this canvas.<br/>
+     * 
+     * @param sorted
+     *        If <code>true</code> the returned list is sorted on the layer priority.<br>
+     *        Sort operation is cached so the method could take sometime when sort cache need to be
+     *        rebuild.
+     */
+    public List<Layer> getLayers(boolean sorted)
+    {
+        if (sorted)
+        {
+            // need to rebuild sorted layer list ?
+            if (orderedLayersOutdated)
+            {
+                // build and sort the list
+                synchronized (layers)
+                {
+                    orderedLayers = new ArrayList<Layer>(layers.values());
+                }
+                Collections.sort(orderedLayers);
+
+                orderedLayersOutdated = false;
+            }
+
+            return new ArrayList<Layer>(orderedLayers);
+        }
+
+        synchronized (layers)
+        {
+            return new ArrayList<Layer>(layers.values());
+        }
+    }
+
+    /**
+     * Returns all layers attached to this canvas.<br/>
      * The returned list is sorted on the layer priority.<br>
      * Sort operation is cached so the method could take sometime when cache need to be rebuild.
      */
     public List<Layer> getLayers()
     {
-        // need to rebuild sorted layer list ?
-        if (orderedLayersOutdated)
-        {
-            // build and sort the list
-            synchronized (layers)
-            {
-                orderedLayers = new ArrayList<Layer>(layers.values());
-            }
-            Collections.sort(orderedLayers);
+        return getLayers(true);
+    }
 
-            orderedLayersOutdated = false;
-        }
+    /**
+     * Returns all visible layers (visible property set to <code>true</code>) attached to this
+     * canvas.
+     * 
+     * @param sorted
+     *        If <code>true</code> the returned list is sorted on the layer priority.<br>
+     *        Sort operation is cached so the method could take sometime when sort cache need to be
+     *        rebuild.
+     */
+    public List<Layer> getVisibleLayers(boolean sorted)
+    {
+        final List<Layer> olayers = getLayers(sorted);
+        final List<Layer> result = new ArrayList<Layer>(olayers.size());
 
-        return new ArrayList<Layer>(orderedLayers);
+        for (Layer l : olayers)
+            if (l.isVisible())
+                result.add(l);
+
+        return result;
     }
 
     /**
@@ -638,14 +680,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     public List<Layer> getVisibleLayers()
     {
-        final List<Layer> olayers = getLayers();
-        final List<Layer> result = new ArrayList<Layer>(olayers.size());
-
-        for (Layer l : olayers)
-            if (l.isVisible())
-                result.add(l);
-
-        return result;
+        return getVisibleLayers(true);
     }
 
     /**
@@ -2940,7 +2975,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         final boolean globalVisible = isLayersVisible();
 
         // send mouse event to overlays after so mouse canvas position is ok
-        for (Layer layer : getLayers())
+        for (Layer layer : getLayers(true))
         {
             if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
                 layer.getOverlay().mousePressed(event, pt, this);
@@ -2971,7 +3006,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         final boolean globalVisible = isLayersVisible();
 
         // send mouse event to overlays after so mouse canvas position is ok
-        for (Layer layer : getLayers())
+        for (Layer layer : getLayers(true))
         {
             if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
                 layer.getOverlay().mouseReleased(event, pt, this);
@@ -3002,7 +3037,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         final boolean globalVisible = isLayersVisible();
 
         // send mouse event to overlays after so mouse canvas position is ok
-        for (Layer layer : getLayers())
+        for (Layer layer : getLayers(true))
         {
             if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
                 layer.getOverlay().mouseClick(event, pt, this);
@@ -3033,7 +3068,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         final boolean globalVisible = isLayersVisible();
 
         // send mouse event to overlays after so mouse canvas position is ok
-        for (Layer layer : getLayers())
+        for (Layer layer : getLayers(true))
         {
             if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
                 layer.getOverlay().mouseMove(event, pt, this);
@@ -3064,7 +3099,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         final boolean globalVisible = isLayersVisible();
 
         // send mouse event to overlays after so mouse canvas position is ok
-        for (Layer layer : getLayers())
+        for (Layer layer : getLayers(true))
         {
             if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
                 layer.getOverlay().mouseDrag(event, pt, this);
@@ -3095,7 +3130,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         final boolean globalVisible = isLayersVisible();
 
         // send mouse event to overlays after so mouse canvas position is ok
-        for (Layer layer : getLayers())
+        for (Layer layer : getLayers(true))
         {
             if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
                 layer.getOverlay().mouseEntered(event, pt, this);
@@ -3126,7 +3161,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         final boolean globalVisible = isLayersVisible();
 
         // send mouse event to overlays after so mouse canvas position is ok
-        for (Layer layer : getLayers())
+        for (Layer layer : getLayers(true))
         {
             if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
                 layer.getOverlay().mouseExited(event, pt, this);
@@ -3157,7 +3192,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         final boolean globalVisible = isLayersVisible();
 
         // send mouse event to overlays after so mouse canvas position is ok
-        for (Layer layer : getLayers())
+        for (Layer layer : getLayers(true))
         {
             if ((globalVisible && layer.isVisible()) || layer.getReceiveMouseEventOnHidden())
                 layer.getOverlay().mouseWheelMoved(event, pt, this);
@@ -3188,7 +3223,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         final Point5D.Double pt = getMouseImagePos5D();
 
         // forward event to overlays
-        for (Layer layer : getLayers())
+        for (Layer layer : getLayers(true))
         {
             if ((globalVisible && layer.isVisible()) || layer.getReceiveKeyEventOnHidden())
                 layer.getOverlay().keyPressed(e, pt, this);
@@ -3353,7 +3388,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         final Point5D.Double pt = getMouseImagePos5D();
 
         // forward event to overlays
-        for (Layer layer : getLayers())
+        for (Layer layer : getLayers(true))
         {
             if ((globalVisible && layer.isVisible()) || layer.getReceiveKeyEventOnHidden())
                 layer.getOverlay().keyReleased(e, pt, this);
@@ -3687,7 +3722,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     @Deprecated
     public Layer getLayer(Painter painter)
     {
-        for (Layer layer : getLayers())
+        for (Layer layer : getLayers(false))
             if (layer.getPainter() == painter)
                 return layer;
 

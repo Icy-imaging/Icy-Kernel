@@ -33,6 +33,7 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -59,7 +60,7 @@ public class PreferenceFrame extends IcyFrame implements TreeSelectionListener
     private static PreferenceFrame instance = null;
 
     // needed to keep trace of non singleton frame
-    ArrayList<PreferencePanel> preferencePanels = null;
+    List<PreferencePanel> preferencePanels;
 
     private JTree tree;
     private JSplitPane mainPanel;

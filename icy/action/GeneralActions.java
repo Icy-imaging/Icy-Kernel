@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with Icy. If not, see <http://www.gnu.org/licenses/>.
  */
-package icy.gui.menu.action;
+package icy.action;
 
 import icy.clipboard.Clipboard;
 import icy.clipboard.TransferableImage;
-import icy.common.IcyAbstractAction;
 import icy.gui.frame.AboutFrame;
 import icy.gui.main.MainFrame;
 import icy.gui.menu.search.SearchBar;
@@ -50,6 +49,8 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.pushingpixels.flamingo.api.common.RichTooltip;
 
 /**
  * General actions.
@@ -249,10 +250,21 @@ public class GeneralActions
         }
 
         @Override
+        public RichTooltip getRichToolTip()
+        {
+            final RichTooltip result = super.getRichToolTip();
+
+            result.addFooterSection("Icy needs to be in detached mode to enabled this feature.");
+
+            return result;
+        };
+
+        @Override
         public boolean isEnabled()
         {
             return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
         }
+
     };
 
     public static IcyAbstractAction toIcyAction = new IcyAbstractAction("Convert to Icy", new IcyIcon(
@@ -288,6 +300,16 @@ public class GeneralActions
 
             return false;
         }
+
+        @Override
+        public RichTooltip getRichToolTip()
+        {
+            final RichTooltip result = super.getRichToolTip();
+
+            result.addFooterSection("Icy needs to be in detached mode to enabled this feature.");
+
+            return result;
+        };
 
         @Override
         public boolean isEnabled()
@@ -375,12 +397,6 @@ public class GeneralActions
             return true;
         }
     };
-
-    static
-    {
-        toIJAction.getRichToolTip().addFooterSection("Icy needs to be in detached mode to enabled this feature.");
-        toIcyAction.getRichToolTip().addFooterSection("Icy needs to be in detached mode to enabled this feature.");
-    }
 
     /**
      * Return all actions of this class

@@ -18,6 +18,7 @@
  */
 package icy.preferences;
 
+import icy.file.FileUtil;
 import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.frame.progress.ToolTipFrame;
 import icy.gui.util.LookAndFeelUtil;
@@ -45,6 +46,7 @@ public class GeneralPreferences
     public static final String ID_GUI_SKIN = "guiSkin";
     public static final String ID_GUI_FONT_SIZE = "guiFontSize";
     public static final String ID_STARTUP_TOOLTIP = "startupTooltip";
+    public static final String ID_RESULT_FOLDER = "resultFolder";
 
     /**
      * id confirm
@@ -134,6 +136,11 @@ public class GeneralPreferences
         return prefGeneral.getBoolean(ID_STARTUP_TOOLTIP, true);
     }
 
+    public static String getResultFolder()
+    {
+        return prefGeneral.get(ID_RESULT_FOLDER, FileUtil.getApplicationDirectory() + FileUtil.separator + "result");
+    }
+
     public static int getGuiFontSize()
     {
         return prefGeneral.getInt(ID_GUI_FONT_SIZE, LookAndFeelUtil.getDefaultFontSize());
@@ -177,6 +184,11 @@ public class GeneralPreferences
     public static void setStatupTooltip(boolean value)
     {
         prefGeneral.putBoolean(ID_STARTUP_TOOLTIP, value);
+    }
+
+    public static void setResultFolder(String value)
+    {
+        prefGeneral.put(ID_RESULT_FOLDER, value);
     }
 
     public static void setGuiFontSize(int value)

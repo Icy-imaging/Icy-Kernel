@@ -18,9 +18,9 @@
  */
 package icy.gui.menu;
 
+import icy.action.FileActions;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandToggleButton;
-import icy.gui.menu.action.FileActions;
 import icy.gui.plugin.PluginCommandButton;
 import icy.gui.util.RibbonUtil;
 import icy.main.Icy;

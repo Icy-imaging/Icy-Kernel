@@ -18,7 +18,7 @@
  */
 package icy.gui.component.menu;
 
-import icy.common.IcyAbstractAction;
+import icy.action.IcyAbstractAction;
 import icy.resource.icon.IcyIcon;
 
 import java.awt.event.ActionListener;

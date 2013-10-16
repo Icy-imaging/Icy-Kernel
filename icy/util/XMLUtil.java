@@ -52,6 +52,11 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+/**
+ * XML helper class.
+ * 
+ * @author Stephane
+ */
 public class XMLUtil
 {
     public static final String FILE_EXTENSION = "xml";
