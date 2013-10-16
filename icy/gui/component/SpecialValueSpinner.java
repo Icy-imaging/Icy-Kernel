@@ -1,4 +1,4 @@
-package icy.gui.component.swing;
+package icy.gui.component;
 
 import icy.gui.component.editor.SpecialValueSpinnerEditor;
 import icy.gui.component.model.SpecialValueSpinnerModel;

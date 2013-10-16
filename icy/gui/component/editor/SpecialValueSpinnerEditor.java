@@ -3,8 +3,8 @@
  */
 package icy.gui.component.editor;
 
+import icy.gui.component.SpecialValueSpinner;
 import icy.gui.component.model.SpecialValueSpinnerModel;
-import icy.gui.component.swing.SpecialValueSpinner;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
