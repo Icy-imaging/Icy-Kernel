@@ -559,7 +559,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected final void refreshPlugins()
     {
-        processor.addTask(pluginsListRefresher);
+        processor.submit(pluginsListRefresher);
     }
 
     protected void updateButtonsStateInternal()
@@ -573,7 +573,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected final void updateButtonsState()
     {
-        processor.addTask(buttonsStateUpdater, true);
+        processor.submit(buttonsStateUpdater, true);
     }
 
     protected void updateRepositoriesInternal()
@@ -628,7 +628,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected final void updateRepositories()
     {
-        processor.addTask(repositoriesUpdater, true);
+        processor.submit(repositoriesUpdater, true);
     }
 
     protected void refreshTableDataInternal()
@@ -643,7 +643,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected final void refreshTableData()
     {
-        processor.addTask(tableDataRefresher, true);
+        processor.submit(tableDataRefresher, true);
     }
 
     protected void pluginsChanged()

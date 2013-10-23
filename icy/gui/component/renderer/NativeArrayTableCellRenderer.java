@@ -40,7 +40,7 @@ public class NativeArrayTableCellRenderer extends SubstanceDefaultTableCellRende
     @Override
     protected void setValue(Object value)
     {
-        if (ArrayUtil.getDim(value) == 1)
+        if ((value != null) && (ArrayUtil.getDim(value) == 1))
         {
             final int len = ArrayUtil.getLength(value);
 

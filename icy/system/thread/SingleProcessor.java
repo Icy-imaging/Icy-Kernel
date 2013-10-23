@@ -18,6 +18,7 @@
  */
 package icy.system.thread;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -58,39 +59,37 @@ public class SingleProcessor extends Processor
         this(enableQueue, "SingleProcessor");
     }
 
-    /**
-     * Add a task to the processor.<br>
-     */
     @Override
-    public boolean addTask(Runnable task, boolean onEventThread, int id)
+    protected synchronized <T> Future<T> submit(FutureTaskAdapter<T> task)
     {
         if (queue || (!isProcessing()))
         {
             // remove current task if any
             removeAllWaitingTasks();
-            // add task
-            return super.addTask(task, onEventThread, id);
+            // then add task
+            return super.submit(task);
         }
 
-        return false;
+        // return null mean the task was ignored
+        return null;
     }
 
     /**
-     * @deprecated use {@link #addTask(Runnable)} instead
+     * @deprecated use {@link #submit(Runnable)} instead.
      */
     @Deprecated
     public synchronized boolean requestProcess(Runnable task)
     {
-        return addTask(task);
+        return submit(task) != null;
     }
 
     /**
-     * @deprecated use {@link #addTask(Runnable, boolean)} instead
+     * @deprecated use {@link #submit(Runnable, boolean)} instead
      */
     @Deprecated
     public synchronized boolean requestProcess(Runnable task, boolean onAWTEventThread)
     {
-        return addTask(task, onAWTEventThread);
+        return submit(task, onAWTEventThread) != null;
     }
 
 }

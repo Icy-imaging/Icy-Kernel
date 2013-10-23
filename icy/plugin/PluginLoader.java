@@ -195,7 +195,7 @@ public class PluginLoader
      */
     public static void reloadAsynch()
     {
-        instance.processor.addTask(instance.reloader);
+        instance.processor.submit(instance.reloader);
     }
 
     /**
@@ -203,7 +203,7 @@ public class PluginLoader
      */
     public static void reload()
     {
-        instance.processor.addTask(instance.reloader);
+        instance.processor.submit(instance.reloader);
         ThreadUtil.sleep(10);
         waitWhileLoading();
     }
@@ -211,6 +211,7 @@ public class PluginLoader
     /**
      * @deprecated Use {@link #reload()} instead.
      */
+    @SuppressWarnings("unused")
     @Deprecated
     public static void reload(boolean forceNow)
     {
@@ -861,6 +862,7 @@ public class PluginLoader
     /**
      * @deprecated
      */
+    @SuppressWarnings("unused")
     @Deprecated
     public static void setLogError(boolean value)
     {

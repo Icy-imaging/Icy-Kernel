@@ -28,6 +28,7 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.KeyStroke;
 
 import org.pushingpixels.flamingo.api.common.RichTooltip;
@@ -423,6 +424,36 @@ public abstract class IcyAbstractAction extends AbstractAction
 
         // notify enabled change
         firePropertyChange(ENABLED_KEY, Boolean.valueOf(!enabledState), Boolean.valueOf(enabledState));
+    }
+
+    /**
+     * Returns a {@link JLabel} component representing the action.
+     */
+    public JLabel getLabelComponent(boolean wantIcon, boolean wantText)
+    {
+        final JLabel result = new JLabel();
+
+        if (wantIcon)
+            result.setIcon(getIcon());
+        if (wantText)
+            result.setText(getName());
+
+        final String desc = getDescription();
+
+        if (StringUtil.isEmpty(desc))
+            result.setToolTipText(getLongDescription());
+        else
+            result.setToolTipText(getDescription());
+
+        return result;
+    }
+
+    /**
+     * Returns a {@link JLabel} component representing the action.
+     */
+    public JLabel getLabelComponent()
+    {
+        return getLabelComponent(true, true);
     }
 
     @Override

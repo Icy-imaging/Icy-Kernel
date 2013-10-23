@@ -19,8 +19,8 @@
 package icy.gui.viewer;
 
 import icy.action.CanvasActions;
-import icy.action.ViewerActions;
 import icy.action.CanvasActions.ToggleLayersAction;
+import icy.action.ViewerActions;
 import icy.canvas.Canvas2D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
@@ -48,8 +48,6 @@ import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
 import icy.plugin.PluginLoader.PluginLoaderListener;
 import icy.plugin.interface_.PluginCanvas;
-import icy.resource.ResourceUtil;
-import icy.resource.icon.IcyIcon;
 import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
@@ -352,30 +350,13 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     private void buildLockCombo()
     {
         final ArrayList<JLabel> labels = new ArrayList<JLabel>();
-        JLabel label;
 
-        // no synchro
-        label = new JLabel(new IcyIcon(ResourceUtil.ICON_LOCK_CLOSE));
-        label.setToolTipText("Synchronization disabled");
-        labels.add(label);
-
-        // complete synchro
-        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(1)));
-        label.setToolTipText("Full synchronization group 1 (view and Z/T position)");
-        labels.add(label);
-        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(2)));
-        label.setToolTipText("Full synchronization group 2 (view and Z/T position)");
-        labels.add(label);
-
-        // view synchro
-        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(3)));
-        label.setToolTipText("View synchronization group (view synched but not Z/T position)");
-        labels.add(label);
-
-        // position synchro
-        label = new JLabel(new IcyIcon(ResourceUtil.getLockedImage(4)));
-        label.setToolTipText("Slice synchronization group (Z/T position synched but not view)");
-        labels.add(label);
+        // get sync action labels
+        labels.add(CanvasActions.disableSyncAction.getLabelComponent(true, false));
+        labels.add(CanvasActions.syncGroup1Action.getLabelComponent(true, false));
+        labels.add(CanvasActions.syncGroup2Action.getLabelComponent(true, false));
+        labels.add(CanvasActions.syncGroup3Action.getLabelComponent(true, false));
+        labels.add(CanvasActions.syncGroup4Action.getLabelComponent(true, false));
 
         // build comboBox with lock id
         lockComboBox = new JComboBox(labels.toArray());

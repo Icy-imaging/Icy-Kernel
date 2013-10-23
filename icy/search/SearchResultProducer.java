@@ -121,7 +121,7 @@ public abstract class SearchResultProducer implements Comparable<SearchResultPro
      */
     public void search(String[] words, SearchResultConsumer consumer)
     {
-        processor.addTask(new SearchRunner(words, consumer));
+        processor.submit(new SearchRunner(words, consumer));
     }
 
     /**

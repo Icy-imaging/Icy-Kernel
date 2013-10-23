@@ -310,7 +310,7 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
 
     public void updateInfos(final Sequence sequence)
     {
-        processor.addTask(new Runnable()
+        processor.submit(new Runnable()
         {
             @Override
             public void run()
@@ -350,7 +350,7 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
                 pathField.setText(StringUtil.limit(path, 28, true));
             }
             dimensionLabel.setText(sizeX + " x " + sizeY + " x " + sizeZ + " x " + sizeT);
-            channelLabel.setText(sizeC + " - " + sequence.getDataType_());
+            channelLabel.setText(sizeC + " - " + sequence.getDataType_().toLongString());
             sizeLabel.setText(UnitUtil.getBytesString((double) sizeX * (double) sizeY * sizeZ * sizeT * sizeC
                     * sequence.getDataType_().getSize()));
             resXLabel.setText(UnitUtil.getBestUnitInMeters(pxSizeX, 2, UnitPrefix.MICRO));

@@ -687,7 +687,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 imageCache = null;
                 needRebuild = true;
                 // build cache
-                processor.addTask(this);
+                processor.submit(this);
             }
 
             public void invalidCache()
@@ -709,7 +709,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             {
                 if (needRebuild)
                     // rebuild cache
-                    processor.addTask(this);
+                    processor.submit(this);
 
                 // just repaint
                 CanvasView.this.repaint();
@@ -2875,7 +2875,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 size = seq.getDimension2D();
 
             // get result image and graphics object
-            final BufferedImage result = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
+            final BufferedImage result = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
             final Graphics2D g = result.createGraphics();
 
             // set default clip region
@@ -2909,10 +2909,15 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             }
 
-            // create temporary image, overlay and layer (not optimal for memory and performance)
+            // create temporary image, overlay and layer so we can choose the correct image
+            // (not optimal for memory and performance)
             final BufferedImage img = getARGBImage(t, z, c, null);
             final Overlay imgOverlay = new ImageOverlay("Image", img);
             final Layer imgLayer = new Layer(imgOverlay);
+
+            // keep visibility and priority information
+            imgLayer.setVisible(getImageLayer().isVisible());
+            imgLayer.setPriority(getImageLayer().getPriority());
 
             // draw image and layers
             canvasView.drawImageAndLayers(g, imgLayer);

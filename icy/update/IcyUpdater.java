@@ -120,7 +120,7 @@ public class IcyUpdater
     public static void checkUpdate(boolean showProgress, boolean auto)
     {
         if (!isUpdating())
-            processor.addTask(new Checker(showProgress, auto));
+            processor.submit(new Checker(showProgress, auto));
     }
 
     /**

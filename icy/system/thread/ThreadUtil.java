@@ -20,6 +20,11 @@ package icy.system.thread;
 
 import icy.system.IcyExceptionHandler;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
@@ -31,6 +36,34 @@ import javax.swing.SwingUtilities;
  */
 public class ThreadUtil
 {
+    /**
+     * This class is used to catch exception in the EDT.
+     */
+    public static class CaughtRunnable implements Runnable
+    {
+        private final Runnable runnable;
+
+        public CaughtRunnable(Runnable runnable)
+        {
+            super();
+
+            this.runnable = runnable;
+        }
+
+        @Override
+        public void run()
+        {
+            try
+            {
+                runnable.run();
+            }
+            catch (Throwable t)
+            {
+                IcyExceptionHandler.handleException(t, true);
+            }
+        }
+    }
+
     private static final Processor bgProcessor = new Processor(Processor.DEFAULT_MAX_WAITING,
             Processor.DEFAULT_MAX_PROCESSING, Processor.MIN_PRIORITY);
     private static final InstanceProcessor[] instanceProcessors = new InstanceProcessor[Processor.DEFAULT_MAX_PROCESSING];
@@ -43,7 +76,7 @@ public class ThreadUtil
         // instance processors initialization
         for (int i = 0; i < instanceProcessors.length; i++)
         {
-            instanceProcessors[i] = new InstanceProcessor();
+            instanceProcessors[i] = new InstanceProcessor(Processor.DEFAULT_MAX_WAITING, Processor.NORM_PRIORITY);
             instanceProcessors[i].setDefaultThreadName("Background single processor " + (i + 1));
             // we want the processor to stay alive
             instanceProcessors[i].setKeepAliveTime(1, TimeUnit.DAYS);
@@ -78,13 +111,9 @@ public class ThreadUtil
     }
 
     /**
-     * Invoke "runnable" on the AWT event dispatching thread<br>
-     * 
-     * @param runnable
-     *        the runnable to invoke on AWT event dispatching thread
-     * @param wait
-     *        wait for invocation before returning, be careful, this can cause dead lock !
+     * @deprecated Use {@link #invokeLater(Runnable)} or {@link #invokeNow(Runnable)} instead.
      */
+    @Deprecated
     public static void invoke(Runnable runnable, boolean wait)
     {
         if (wait)
@@ -99,65 +128,71 @@ public class ThreadUtil
     @Deprecated
     public static void invokeAndWait(Runnable runnable)
     {
-        try
-        {
-            SwingUtilities.invokeAndWait(runnable);
-        }
-        catch (Exception e)
-        {
-            System.err.println("ThreadUtil.invokeAndWait(...) error :");
-            IcyExceptionHandler.showErrorMessage(e, true);
-            e.printStackTrace();
-        }
+        invokeNow(runnable);
     }
 
     /**
-     * Invoke "runnable" on the AWT event dispatching thread now<br>
-     * Wait until all events completion. Be careful, this can cause dead lock !
+     * Invoke the specified <code>Runnable</code> on the AWT event dispatching thread now.<br>
+     * Wait until completion. Any exception is automatically caught by Icy exception handler.<br>
+     * Be careful, using this method may lead to dead lock !
      */
     public static void invokeNow(Runnable runnable)
     {
         if (SwingUtilities.isEventDispatchThread())
-            runnable.run();
+        {
+            try
+            {
+                runnable.run();
+            }
+            catch (Throwable t)
+            {
+                // the runnable thrown an exception
+                IcyExceptionHandler.handleException(t, true);
+            }
+        }
         else
         {
             try
             {
                 SwingUtilities.invokeAndWait(runnable);
             }
+            catch (InvocationTargetException e)
+            {
+                // the runnable thrown an exception
+                IcyExceptionHandler.handleException(e, true);
+            }
             catch (Exception e)
             {
-                System.err.println("ThreadUtil.invokeAndWait(...) error :");
+                // probably an interrupt exception here
+                System.err.println("ThreadUtil.invokeNow(...) error :");
                 IcyExceptionHandler.showErrorMessage(e, true);
-                e.printStackTrace();
             }
         }
     }
 
     /**
-     * Invoke "runnable" on the AWT event dispatching thread.<br>
-     * If you are in the AWT event dispatching thread the runnable is executed immediately.
+     * Invoke the specified <code>Runnable</code> on the AWT event dispatching thread.<br>
+     * If we already are on the EDT the <code>Runnable</code> is executed immediately else it will
+     * be executed later.
      */
     public static void invokeLater(Runnable runnable)
     {
-        invokeLater(runnable, false);
+        final Runnable r = new CaughtRunnable(runnable);
+
+        if (isEventDispatchThread())
+            r.run();
+        else
+            SwingUtilities.invokeLater(r);
     }
 
     /**
-     * Invoke "runnable" on the AWT event dispatching thread.<br>
-     * If you are in the AWT event dispatching thread the runnable can be executed immediately<br>
-     * depending the value of <code>forceLater</code> parameter.
-     * 
-     * @param forceLater
-     *        Force execution of runnable to be delayed<br>
-     *        even if we are on the AWT event dispatching thread
+     * @deprecated Use {@link #invokeLater(Runnable)} instead.
      */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static void invokeLater(Runnable runnable, boolean forceLater)
     {
-        if (SwingUtilities.isEventDispatchThread() && !forceLater)
-            runnable.run();
-        else
-            SwingUtilities.invokeLater(runnable);
+        invokeLater(runnable);
     }
 
     /**
@@ -184,16 +219,16 @@ public class ThreadUtil
 
     /**
      * Add background processing (low priority) of specified Runnable.<br>
-     * Return false if queue is full.
+     * Return <code>false</code> if background process queue is full.
      */
     public static boolean bgRun(Runnable runnable, boolean onEDT)
     {
-        return bgProcessor.addTask(runnable, onEDT);
+        return (bgProcessor.submit(runnable, onEDT) != null);
     }
 
     /**
      * Add background processing (low priority) of specified Runnable.<br>
-     * Return false if queue is full.
+     * Return <code>false</code> if background process queue is full.
      */
     public static boolean bgRun(Runnable runnable)
     {
@@ -201,8 +236,9 @@ public class ThreadUtil
     }
 
     /**
-     * Same as bgRun except it waits until it accepts the specified task.
+     * @deprecated Use {@link #bgRun(Runnable)} instead and check for acceptance.
      */
+    @Deprecated
     public static void bgRunWait(Runnable runnable)
     {
         while (!bgRun(runnable, false))
@@ -213,7 +249,7 @@ public class ThreadUtil
      * Add single background processing (normal priority) of specified Runnable.<br>
      * If this <code>runnable</code> instance is already pending in waiting background process<br>
      * then nothing is done.<br>
-     * Return false if queue is full.
+     * Return <code>false</code> if background process queue is full.
      */
     public static boolean bgRunSingle(Runnable runnable, boolean onEDT)
     {
@@ -222,18 +258,99 @@ public class ThreadUtil
         if (p.hasWaitingTasks(runnable))
             return false;
 
-        return p.addTask(runnable, onEDT);
+        return (p.submit(runnable, onEDT) != null);
     }
 
     /**
      * Add single background processing (normal priority) of specified Runnable.<br>
      * If this <code>runnable</code> instance is already pending in waiting background process<br>
      * then nothing is done.<br>
-     * Return false if queue is full.
+     * Return <code>false</code> if background process queue is full.
      */
     public static boolean bgRunSingle(Runnable runnable)
     {
         return bgRunSingle(runnable, false);
+    }
+
+    /**
+     * Invoke the specified <code>Runnable</code> on the AWT event dispatching thread now.<br>
+     * Wait until completion. Be careful, using this method may lead to dead lock !
+     * 
+     * @throws ExecutionException
+     *         if the computation threw an exception
+     * @throws InterruptedException
+     *         if the current thread was interrupted while waiting
+     * @throws Exception
+     *         if the computation threw an exception and the calling thread is the EDT
+     */
+    public static <T> T invokeNow(Callable<T> callable) throws Exception
+    {
+        if (SwingUtilities.isEventDispatchThread())
+            return callable.call();
+
+        final FutureTask<T> task = new FutureTask<T>(callable);
+        SwingUtilities.invokeAndWait(task);
+        return task.get();
+    }
+
+    /**
+     * Invoke "runnable" on the AWT event dispatching thread.<br>
+     * If you are in the AWT event dispatching thread the runnable is executed immediately.
+     */
+    public static <T> Future<T> invokeLater(Callable<T> callable) throws Exception
+    {
+        final FutureTask<T> task = new FutureTask<T>(callable);
+        SwingUtilities.invokeLater(task);
+        return task;
+    }
+
+    /**
+     * Add background processing (low priority) of specified Callable task.<br>
+     * Return a Future representing the pending result of the task or <code>null</code> if
+     * background process queue is full.
+     */
+    public static <T> Future<T> bgRun(Callable<T> callable, boolean onEDT)
+    {
+        return bgProcessor.submit(callable, onEDT);
+    }
+
+    /**
+     * Add background processing (low priority) of specified Callable task.<br>
+     * Return a Future representing the pending result of the task or <code>null</code> if
+     * background process queue is full.
+     */
+    public static <T> Future<T> bgRun(Callable<T> callable)
+    {
+        return bgRun(callable, false);
+    }
+
+    /**
+     * Add single background processing (normal priority) of specified Callable task.<br>
+     * If this <code>Callable</code> instance is already pending in waiting background process<br>
+     * then nothing is done.<br>
+     * Return a Future representing the pending result of the task or <code>null</code> if
+     * background process queue is full.
+     */
+    public static <T> Future<T> bgRunSingle(Callable<T> callable, boolean onEDT)
+    {
+        final InstanceProcessor p = getInstanceProcessor(callable);
+
+        if (p.hasWaitingTasks(callable))
+            return null;
+
+        return p.submit(callable, onEDT);
+    }
+
+    /**
+     * Add single background processing (normal priority) of specified Callable task.<br>
+     * If this <code>Callable</code> instance is already pending in waiting background process<br>
+     * then nothing is done.<br>
+     * Return a Future representing the pending result of the task or <code>null</code> if
+     * background process queue is full.
+     */
+    public static <T> Future<T> bgRunSingle(Callable<T> callable)
+    {
+        return bgRunSingle(callable, false);
     }
 
     /**
@@ -246,11 +363,28 @@ public class ThreadUtil
     }
 
     /**
+     * Retrieve the instance processor to use for specified callable.
+     */
+    private static InstanceProcessor getInstanceProcessor(Callable<?> callable)
+    {
+        // get processor index from the hash code
+        return instanceProcessors[callable.hashCode() % instanceProcessors.length];
+    }
+
+    /**
      * Return true if the specified runnable is waiting to be processed in background processing.
      */
     public static boolean hasWaitingBgTask(Runnable runnable)
     {
         return bgProcessor.getWaitingTasksCount(runnable) > 0;
+    }
+
+    /**
+     * Return true if the specified callable is waiting to be processed in background processing.
+     */
+    public static boolean hasWaitingBgTask(Callable<?> callable)
+    {
+        return bgProcessor.getWaitingTasksCount(callable) > 0;
     }
 
     /**
@@ -260,6 +394,15 @@ public class ThreadUtil
     public static boolean hasWaitingBgSingleTask(Runnable runnable)
     {
         return getInstanceProcessor(runnable).hasWaitingTasks(runnable);
+    }
+
+    /**
+     * Return true if the specified callable is waiting to be processed<br>
+     * in single scheme background processing.
+     */
+    public static boolean hasWaitingBgSingleTask(Callable<?> callable)
+    {
+        return getInstanceProcessor(callable).hasWaitingTasks(callable);
     }
 
     /**

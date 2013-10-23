@@ -663,7 +663,7 @@ public abstract class ROI3D extends ROI
      * @see #getNumberOfContourPoints()
      * @see #computeNumberOfContourPoints()
      */
-    public final double getSurfaceArea()
+    public double getSurfaceArea()
     {
         return getNumberOfContourPoints();
     }
@@ -676,7 +676,7 @@ public abstract class ROI3D extends ROI
      * @see #computeNumberOfPoints()
      */
     @Override
-    public final double getVolume()
+    public double getVolume()
     {
         return getNumberOfPoints();
     }

@@ -16,6 +16,7 @@ import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -266,6 +267,299 @@ public class CanvasActions
     };
 
     public static IcyAbstractAction toggleLayersAction = new ToggleLayersAction();
+
+    public static IcyAbstractAction globalDisableSyncAction = new IcyAbstractAction("Disabled (all)", new IcyIcon(
+            ResourceUtil.ICON_LOCK_OPEN), "Synchronization disabled on all viewers", KeyEvent.VK_0,
+            InputEvent.SHIFT_MASK)
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -8167090991290743018L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            Icy.getMainInterface().setGlobalViewSyncId(0);
+
+            return true;
+        }
+    };
+
+    public static IcyAbstractAction globalSyncGroup1Action = new IcyAbstractAction("Group 1 (all)", new IcyIcon(
+            ResourceUtil.getLockedImage(1)), "All viewers set to full synchronization group 1 (view and Z/T position)",
+            KeyEvent.VK_1, InputEvent.SHIFT_MASK)
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -2303919386920010513L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            Icy.getMainInterface().setGlobalViewSyncId(1);
+
+            return true;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            return super.isEnabled() && (viewer != null);
+        }
+    };
+
+    public static IcyAbstractAction globalSyncGroup2Action = new IcyAbstractAction("Group 2 (all)", new IcyIcon(
+            ResourceUtil.getLockedImage(2)), "All viewers set to full synchronization group 2 (view and Z/T position)",
+            KeyEvent.VK_2, InputEvent.SHIFT_MASK)
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 3238069599592469829L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            Icy.getMainInterface().setGlobalViewSyncId(2);
+
+            return true;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            return super.isEnabled() && (viewer != null);
+        }
+    };
+
+    public static IcyAbstractAction globalSyncGroup3Action = new IcyAbstractAction("Group 3 (all)", new IcyIcon(
+            ResourceUtil.getLockedImage(3)),
+            "All viewers set to view synchronization group (view synched but not Z/T position)", KeyEvent.VK_3,
+            InputEvent.SHIFT_MASK)
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -6943970700811154609L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            Icy.getMainInterface().setGlobalViewSyncId(3);
+
+            return true;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            return super.isEnabled() && (viewer != null);
+        }
+    };
+
+    public static IcyAbstractAction globalSyncGroup4Action = new IcyAbstractAction("Group 4 (all)", new IcyIcon(
+            ResourceUtil.getLockedImage(4)),
+            "All viewers set to navigation synchronization group (Z/T position synched but not view)", KeyEvent.VK_4,
+            InputEvent.SHIFT_MASK)
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 4861151153688280102L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            Icy.getMainInterface().setGlobalViewSyncId(4);
+
+            return true;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            return super.isEnabled() && (viewer != null);
+        }
+    };
+
+    public static IcyAbstractAction disableSyncAction = new IcyAbstractAction("disabled", new IcyIcon(
+            ResourceUtil.ICON_LOCK_OPEN), "Synchronization disabled (global)", KeyEvent.VK_0)
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -5275762712812447215L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            final IcyCanvas canvas = (viewer != null) ? viewer.getCanvas() : null;
+
+            if (canvas != null)
+            {
+                canvas.setSyncId(0);
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            return super.isEnabled() && (viewer != null);
+        }
+    };
+
+    public static IcyAbstractAction syncGroup1Action = new IcyAbstractAction("Group 1", new IcyIcon(
+            ResourceUtil.getLockedImage(1)), "Full synchronization group 1 (view and Z/T position)", KeyEvent.VK_1)
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 5469991474868966986L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            final IcyCanvas canvas = (viewer != null) ? viewer.getCanvas() : null;
+
+            if (canvas != null)
+            {
+                // already set --> remove it
+                if (canvas.getSyncId() == 1)
+                    canvas.setSyncId(0);
+                else
+                    canvas.setSyncId(1);
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            return super.isEnabled() && (viewer != null);
+        }
+    };
+
+    public static IcyAbstractAction syncGroup2Action = new IcyAbstractAction("Group 2", new IcyIcon(
+            ResourceUtil.getLockedImage(2)), "Full synchronization group 2 (view and Z/T position)", KeyEvent.VK_2)
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -8000162851973321503L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            final IcyCanvas canvas = (viewer != null) ? viewer.getCanvas() : null;
+
+            if (canvas != null)
+            {
+                // already set --> remove it
+                if (canvas.getSyncId() == 2)
+                    canvas.setSyncId(0);
+                else
+                    canvas.setSyncId(2);
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            return super.isEnabled() && (viewer != null);
+        }
+    };
+
+    public static IcyAbstractAction syncGroup3Action = new IcyAbstractAction("Group 3", new IcyIcon(
+            ResourceUtil.getLockedImage(3)), "View synchronization group (view synched but not Z/T position)",
+            KeyEvent.VK_3)
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 2131076522855333994L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            final IcyCanvas canvas = (viewer != null) ? viewer.getCanvas() : null;
+
+            if (canvas != null)
+            {
+                // already set --> remove it
+                if (canvas.getSyncId() == 3)
+                    canvas.setSyncId(0);
+                else
+                    canvas.setSyncId(3);
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            return super.isEnabled() && (viewer != null);
+        }
+    };
+
+    public static IcyAbstractAction syncGroup4Action = new IcyAbstractAction("Group 4", new IcyIcon(
+            ResourceUtil.getLockedImage(4)), "Navigation synchronization group (Z/T position synched but not view)",
+            KeyEvent.VK_4)
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -7921163331144086906L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            final IcyCanvas canvas = (viewer != null) ? viewer.getCanvas() : null;
+
+            if (canvas != null)
+            {
+                // already set --> remove it
+                if (canvas.getSyncId() == 4)
+                    canvas.setSyncId(0);
+                else
+                    canvas.setSyncId(4);
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            return super.isEnabled() && (viewer != null);
+        }
+    };
 
     /**
      * Return all actions of this class

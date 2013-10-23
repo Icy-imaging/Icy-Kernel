@@ -6,6 +6,9 @@ import icy.util.StringUtil;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -14,6 +17,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
@@ -32,21 +36,14 @@ public class ErrorReportPanel extends JPanel
     // GUI
     JTextPane errorMessageTextPane;
     JTextPane commentTextPane;
+    JTextField emailTextField;
     JButton reportButton;
     JButton closeButton;
-    JPanel bottomPanel;
-    JScrollPane messageScrollPane;
-    JPanel commentPanel;
-    JPanel messagePanel;
     JLabel label;
-
-    final String message;
 
     public ErrorReportPanel(Icon icon, String title, String message)
     {
         super();
-
-        this.message = message;
 
         initialize();
 
@@ -129,25 +126,16 @@ public class ErrorReportPanel extends JPanel
         errorMessageTextPane.setEditable(false);
         errorMessageTextPane.setContentType("text/html");
 
-        messageScrollPane = new JScrollPane(errorMessageTextPane);
+        JScrollPane messageScrollPane = new JScrollPane(errorMessageTextPane);
 
-        messagePanel = new JPanel();
+        JPanel messagePanel = new JPanel();
         messagePanel.setBorder(new TitledBorder(null, "Message", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         messagePanel.setLayout(new BorderLayout(0, 0));
         messagePanel.add(messageScrollPane, BorderLayout.CENTER);
 
-        // comment pane
-        commentTextPane = new JTextPane();
-        commentTextPane.setEditable(true);
-
-        final JScrollPane scComment = new JScrollPane(commentTextPane);
-        scComment.setPreferredSize(new Dimension(23, 60));
-        scComment.setMinimumSize(new Dimension(23, 60));
-
-        commentPanel = new JPanel();
-        commentPanel.setBorder(new TitledBorder(null, "Comment", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-        commentPanel.setLayout(new BorderLayout(0, 0));
-        commentPanel.add(scComment, BorderLayout.CENTER);
+        JPanel userPanel = new JPanel();
+        userPanel.setBorder(new TitledBorder(null, "Comment", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        userPanel.setLayout(new BorderLayout(0, 0));
 
         // buttons panel
         reportButton = new JButton("Report");
@@ -158,10 +146,48 @@ public class ErrorReportPanel extends JPanel
         buttonsPanel.add(closeButton);
 
         // bottom
-        bottomPanel = new JPanel();
+        JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new BorderLayout(0, 0));
 
-        bottomPanel.add(commentPanel, BorderLayout.CENTER);
+        bottomPanel.add(userPanel, BorderLayout.CENTER);
+
+        JPanel commentPanel = new JPanel();
+        userPanel.add(commentPanel, BorderLayout.CENTER);
+        commentPanel.setLayout(new BorderLayout(0, 0));
+
+        // comment pane
+        commentTextPane = new JTextPane();
+        commentTextPane.setEditable(true);
+
+        final JScrollPane scComment = new JScrollPane(commentTextPane);
+        commentPanel.add(scComment, BorderLayout.NORTH);
+        scComment.setPreferredSize(new Dimension(23, 60));
+        scComment.setMinimumSize(new Dimension(23, 60));
+
+        JPanel emailPanel = new JPanel();
+        userPanel.add(emailPanel, BorderLayout.SOUTH);
+        GridBagLayout gbl_emailPanel = new GridBagLayout();
+        gbl_emailPanel.columnWidths = new int[] {0, 0, 0};
+        gbl_emailPanel.rowHeights = new int[] {0, 0};
+        gbl_emailPanel.columnWeights = new double[] {0.0, 1.0, Double.MIN_VALUE};
+        gbl_emailPanel.rowWeights = new double[] {0.0, Double.MIN_VALUE};
+        emailPanel.setLayout(gbl_emailPanel);
+
+        JLabel lblEmail = new JLabel("Email:");
+        GridBagConstraints gbc_lblEmail = new GridBagConstraints();
+        gbc_lblEmail.insets = new Insets(0, 0, 0, 5);
+        gbc_lblEmail.anchor = GridBagConstraints.WEST;
+        gbc_lblEmail.gridx = 0;
+        gbc_lblEmail.gridy = 0;
+        emailPanel.add(lblEmail, gbc_lblEmail);
+
+        emailTextField = new JTextField();
+        GridBagConstraints gbc_emailTextField = new GridBagConstraints();
+        gbc_emailTextField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_emailTextField.gridx = 1;
+        gbc_emailTextField.gridy = 0;
+        emailPanel.add(emailTextField, gbc_emailTextField);
+        emailTextField.setColumns(10);
         bottomPanel.add(buttonsPanel, BorderLayout.SOUTH);
 
         setLayout(new BorderLayout(0, 0));
@@ -178,19 +204,20 @@ public class ErrorReportPanel extends JPanel
      */
     public String getReportMessage() throws BadLocationException
     {
+        final String email = "";
+        final Document commentDoc = commentTextPane.getDocument();
+        final Document errorDoc = errorMessageTextPane.getDocument();
+        String comment = commentDoc.getText(0, commentDoc.getLength());
         String result = "";
 
-        final Document commentDoc = commentTextPane.getDocument();
-        String comment = commentDoc.getText(0, commentDoc.getLength());
-
+        if (!StringUtil.isEmpty(email))
+            result += "Email: " + email + "\n";
         if (!StringUtil.isEmpty(comment))
-            result = "Comment:\n" + comment;
-        else
-            result = "";
+            result += "Comment:\n" + comment + "\n\n";
 
-        final Document errorDoc = errorMessageTextPane.getDocument();
-        result = result + "\n\n" + errorDoc.getText(0, errorDoc.getLength());
+        result += errorDoc.getText(0, errorDoc.getLength());
 
         return result;
     }
+
 }

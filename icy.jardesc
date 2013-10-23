@@ -32,7 +32,6 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.abstract_"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.search"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.colormap"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.menu.action"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.classloader.exception"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.common.listener.weak"/>
@@ -76,6 +75,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.renderer"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.model"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.action"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.frame"/>
@@ -84,6 +84,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.button"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.sequence"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.frame.error"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.pool"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.util"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.swimmingPool"/>

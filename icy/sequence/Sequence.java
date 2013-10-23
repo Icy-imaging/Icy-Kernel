@@ -360,7 +360,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public void closed()
     {
         // do this in background as it can take sometime
-        ThreadUtil.bgRunWait(new Runnable()
+        while (!ThreadUtil.bgRun(new Runnable()
         {
             @Override
             public void run()
@@ -386,7 +386,11 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                     rois.clear();
                 }
             }
-        });
+        }))
+        {
+            // wait until the process execute
+            ThreadUtil.sleep(10L);
+        }
 
         // notify close
         fireClosedEvent();
@@ -1349,7 +1353,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     {
         final List<ROI> oldSelected = getSelectedROIs();
 
-        final int newSelectedSize = (selected == null)?0:selected.size();
+        final int newSelectedSize = (selected == null) ? 0 : selected.size();
         final int oldSelectedSize = oldSelected.size();
 
         // easy optimization
@@ -1367,7 +1371,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         // same selection size ?
         if (newSelectedSize == oldSelectedSize)
         {
-            // same selection, don't need to update it 
+            // same selection, don't need to update it
             if (newSelected.containsAll(oldSelected))
                 return;
         }

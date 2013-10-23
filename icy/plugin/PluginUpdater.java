@@ -79,7 +79,7 @@ public class PluginUpdater
      */
     public static void checkUpdate(boolean showProgress, boolean auto)
     {
-        processor.addTask(new Checker(showProgress, auto));
+        processor.submit(new Checker(showProgress, auto));
     }
 
     /**
@@ -123,9 +123,6 @@ public class PluginUpdater
      */
     public static void updatePlugins(List<PluginDescriptor> plugins, boolean showProgress)
     {
-        final boolean b = PluginLoader.getLogError();
-
-        PluginLoader.setLogError(false);
         try
         {
             // update plugins with ordered dependencies
@@ -134,7 +131,6 @@ public class PluginUpdater
         }
         finally
         {
-            PluginLoader.setLogError(b);
             PluginLoader.reloadAsynch();
         }
     }

@@ -180,25 +180,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     {
         final long current = System.currentTimeMillis();
 
-        if (t instanceof OutOfMemoryError)
-        {
-            if ((current - lastErrorDialog) > ERROR_ANTISPAM_TIME)
-            {
-                // handle out of memory error differently
-                MessageDialog.showDialog("Out of memory error !",
-                        "You're running out of memory !\nTry to increase the Maximum Memory parameter in Preferences.",
-                        MessageDialog.ERROR_MESSAGE);
-                // update last error dialog time
-                lastErrorDialog = System.currentTimeMillis();
-            }
-            else
-            {
-                // spam --> write it in the console output instead
-                System.err.println("You're running out of memory !");
-                System.err.println("Try to increase the Maximum Memory parameter in Preferences.");
-            }
-        }
-        else if (t instanceof IcyHandledException)
+        if (t instanceof IcyHandledException)
         {
             final String message = t.getMessage() + ((t.getCause() == null) ? "" : "\n" + t.getCause());
 
@@ -215,6 +197,33 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         }
         else
         {
+            if (t instanceof OutOfMemoryError)
+            {
+                if ((current - lastErrorDialog) > ERROR_ANTISPAM_TIME)
+                {
+                    // handle out of memory error differently
+                    MessageDialog
+                            .showDialog(
+                                    "Out of memory error !",
+                                    "You're running out of memory !\nTry to increase the Maximum Memory parameter in Preferences.",
+                                    MessageDialog.ERROR_MESSAGE);
+                    // update last error dialog time
+                    lastErrorDialog = System.currentTimeMillis();
+                }
+
+                // always keep trace in console
+                showErrorMessage(t, print);
+            }
+
+            String message = getErrorMessage(t, true);
+
+            if (t instanceof OutOfMemoryError)
+            {
+                message = "Not enough memory or resource !\n"
+                        + "Try to increase the Maximum Memory parameter in Preferences.\n"
+                        + "You can also report the error if you think it is not due to a memory problem:\n" + message;
+            }
+
             // write message in console if wanted or if spam error message
             if (print || ((current - lastErrorDialog) < ERROR_ANTISPAM_TIME))
             {
@@ -222,21 +231,22 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                     System.err.println("An error occured while plugin '" + plugin.getName() + "' was running :");
                 else if (!StringUtil.isEmpty(devId))
                     System.err.println("An error occured while a plugin was running :");
-                IcyExceptionHandler.showErrorMessage(t, true);
+
+                System.err.println(message);
             }
 
             // NOTE : why only for plugin ??
             // do report only for plugin error
             // if ((plugin != null) || !StringUtil.isEmpty(devId))
             // {
-            String title = t.getMessage();
-
-            if (StringUtil.isEmpty(title))
-                title = t.toString();
-
             if ((current - lastErrorDialog) > ERROR_ANTISPAM_TIME)
             {
-                PluginErrorReport.report(plugin, devId, title, IcyExceptionHandler.getErrorMessage(t, true));
+                String title = t.getMessage();
+
+                if (StringUtil.isEmpty(title))
+                    title = t.toString();
+
+                PluginErrorReport.report(plugin, devId, title, message);
                 // update last error dialog time
                 lastErrorDialog = System.currentTimeMillis();
             }

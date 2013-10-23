@@ -1057,7 +1057,7 @@ public class Loader
             final boolean showProgress)
     {
         // asynchronous call
-        ThreadUtil.bgRunWait(new Runnable()
+        ThreadUtil.bgRun(new Runnable()
         {
             @Override
             public void run()

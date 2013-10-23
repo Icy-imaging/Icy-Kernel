@@ -1374,7 +1374,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      *         <code>ROI</code>.
      * @see #computeBounds5D()
      */
-    public final Rectangle5D getBounds5D()
+    public Rectangle5D getBounds5D()
     {
         // we need to recompute bounds
         if (boundsInvalid)
@@ -2031,7 +2031,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * 
      * @see #computeNumberOfContourPoints()
      */
-    public final double getNumberOfContourPoints()
+    public double getNumberOfContourPoints()
     {
         // we need to recompute the number of edge point
         if (numberOfContourPointsInvalid)
@@ -2055,7 +2055,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * Returns the number of point (pixel) contained in the ROI.<br>
      * It is used to calculate the area (2D) or volume (3D) of the ROI.
      */
-    public final double getNumberOfPoints()
+    public double getNumberOfPoints()
     {
         // we need to recompute the number of point
         if (numberOfPointsInvalid)

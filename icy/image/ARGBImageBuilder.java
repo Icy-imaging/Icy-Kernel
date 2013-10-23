@@ -122,7 +122,7 @@ class ARGBImageBuilder
             if (prepare(image, lut, dest, offset, length))
             {
                 // add task
-                if (processor.addTask(this, false))
+                if (processor.submit(this) != null)
                     return true;
 
                 synchronized (this)

@@ -560,7 +560,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
     private void refreshHistoData()
     {
         // send refresh operation
-        processor.addTask(histoUpdater);
+        processor.submit(histoUpdater);
     }
 
     // this method is called by processor, we don't mind about exception here

@@ -26,7 +26,7 @@ package icy.math;
 public class MathUtil
 {
     public static final String INFINITE_STRING = "\u221E";
-    
+
     public static final double POW2_8_DOUBLE = Math.pow(2, 8);
     public static final float POW2_8_FLOAT = (float) POW2_8_DOUBLE;
     public static final double POW2_16_DOUBLE = Math.pow(2, 16);
@@ -363,16 +363,19 @@ public class MathUtil
 
     /**
      * Round specified value to specified number of significant digit.<br>
-     * If keepInteger is true then integer part of number is entirely conserved.
+     * If keepInteger is true then integer part of number is entirely conserved.<br>
+     * If <i>numDigit</i> is <= 0 then the value stay unchanged.
      */
     public static double roundSignificant(double d, int numDigit, boolean keepInteger)
     {
+        if (numDigit <= 0)
+            return d;
+
         final double digit = Math.ceil(Math.log10(Math.abs(d)));
         if ((digit >= numDigit) && keepInteger)
             return Math.round(d);
 
-        final double pow = Math.pow(10, numDigit - digit);
-        return Math.round(d * pow) / pow;
+        return round(d, numDigit - (int) digit);
     }
 
     /**

@@ -18,6 +18,7 @@
  */
 package icy.system.thread;
 
+import icy.main.Icy;
 import icy.system.SystemUtil;
 
 import java.util.ArrayList;
@@ -25,6 +26,10 @@ import java.util.EventListener;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -58,19 +63,17 @@ public class Processor extends ThreadPoolExecutor
         }
     }
 
-    protected class Runner implements Runnable
+    protected class RunnableAdapter implements Runnable
     {
         private final Runnable task;
         private final boolean onEDT;
-        private final int id;
 
-        public Runner(Runnable task, boolean onEDT, int id)
+        public RunnableAdapter(Runnable runnable, boolean onEDT)
         {
             super();
 
-            this.task = task;
+            task = runnable;
             this.onEDT = onEDT;
-            this.id = id;
         }
 
         @Override
@@ -86,19 +89,84 @@ public class Processor extends ThreadPoolExecutor
         }
 
         /**
-         * @return the id
-         */
-        public int getId()
-        {
-            return id;
-        }
-
-        /**
          * @return the task
          */
         public Runnable getTask()
         {
             return task;
+        }
+    }
+
+    protected class CallableAdapter<T> implements Callable<T>
+    {
+        private final Callable<T> task;
+        private final boolean onEDT;
+
+        public CallableAdapter(Callable<T> task, boolean onEDT)
+        {
+            super();
+
+            this.task = task;
+            this.onEDT = onEDT;
+        }
+
+        /**
+         * @return the task
+         */
+        public Callable<T> getTask()
+        {
+            return task;
+        }
+
+        @Override
+        public T call() throws Exception
+        {
+            if (task != null)
+            {
+                if (onEDT)
+                    return ThreadUtil.invokeNow(task);
+
+                return task.call();
+            }
+
+            return null;
+        }
+    }
+
+    protected class FutureTaskAdapter<T> extends FutureTask<T>
+    {
+        private final Runnable runnable;
+        private final Callable<T> callable;
+
+        public FutureTaskAdapter(Runnable runnable, T result, boolean onEDT)
+        {
+            super(new RunnableAdapter(runnable, onEDT), result);
+
+            this.runnable = runnable;
+            this.callable = null;
+        }
+
+        public FutureTaskAdapter(Runnable runnable, boolean onEDT)
+        {
+            this(runnable, null, onEDT);
+        }
+
+        public FutureTaskAdapter(Callable<T> callable, boolean onEDT)
+        {
+            super(new CallableAdapter<T>(callable, onEDT));
+
+            this.runnable = null;
+            this.callable = callable;
+        }
+
+        public Runnable getRunnable()
+        {
+            return runnable;
+        }
+
+        public Callable<T> getCallable()
+        {
+            return callable;
         }
     }
 
@@ -131,8 +199,8 @@ public class Processor extends ThreadPoolExecutor
     /**
      * internal
      */
-    private Runner waitingExecution;
-    private long lastAdd;
+    protected Runnable waitingExecution;
+    protected long lastAdd;
 
     /**
      * Create a new Processor with specified number of maximum waiting and processing tasks.<br>
@@ -175,36 +243,33 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Retrieve Runner from Runnable
+     * @deprecated Use {@link #removeFirstWaitingTask(Runnable)} instead.
      */
-    private Runner getRunner(Runnable runnable)
-    {
-        for (Runner runner : getWaitingTasks())
-            if (runner.getTask() == runnable)
-                return runner;
-
-        return null;
-    }
-
-    /**
-     * Remove the current task from the waiting queue if possible.<br>
-     * Return true if the operation succeed
-     */
+    @Deprecated
     public boolean removeTask(Runnable task)
     {
-        return remove(getRunner(task));
+        return removeFirstWaitingTask(task);
     }
 
     /**
-     * Add a task to the processor.
+     * @deprecated Use {@link #submit(Runnable, boolean)} instead.
      */
+    @SuppressWarnings("unused")
+    @Deprecated
     public boolean addTask(Runnable task, boolean onEDT, int id)
+    {
+        return addTask(task, onEDT);
+    }
+
+    /**
+     * @deprecated Use {@link #submit(Runnable, boolean)} instead.
+     */
+    @Deprecated
+    public boolean addTask(Runnable task, boolean onEDT)
     {
         try
         {
-            final Runner runner = new Runner(task, onEDT, id);
-            execute(runner);
-            waitingExecution = runner;
+            submit(task, onEDT);
         }
         catch (RejectedExecutionException E)
         {
@@ -215,19 +280,12 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Add a task to the processor.
+     * @deprecated Use {@link #submit(Runnable)} instead.
      */
-    public boolean addTask(Runnable task, boolean onEDT)
-    {
-        return addTask(task, onEDT, -1);
-    }
-
-    /**
-     * Add a task to the processor.
-     */
+    @Deprecated
     public boolean addTask(Runnable task)
     {
-        return addTask(task, false, -1);
+        return addTask(task, false);
     }
 
     @Override
@@ -238,6 +296,178 @@ public class Processor extends ThreadPoolExecutor
             waitingExecution = null;
 
         return super.remove(task);
+    }
+
+    /**
+     * Returns a <tt>RunnableFuture</tt> for the given runnable and default
+     * value.
+     * 
+     * @param runnable
+     *        the runnable task being wrapped
+     * @param value
+     *        the default value for the returned future
+     * @param onEDT
+     *        if set to <code>true</code> then the <tt>RunnableFuture</tt> will be executed on the
+     *        Swing EDT.
+     * @return a <tt>RunnableFuture</tt> which when run will run the underlying runnable and which,
+     *         as a <tt>Future</tt>, will yield the given value as its result and provide for
+     *         cancellation of the underlying task.
+     */
+    protected <T> FutureTaskAdapter<T> newTaskFor(Runnable runnable, T value, boolean onEDT)
+    {
+        return new FutureTaskAdapter<T>(runnable, value, onEDT);
+    };
+
+    /**
+     * Returns a <tt>RunnableFuture</tt> for the given callable task.
+     * 
+     * @param callable
+     *        the callable task being wrapped
+     * @param onEDT
+     *        if set to <code>true</code> then the <tt>RunnableFuture</tt> will be executed on the
+     *        Swing EDT.
+     * @return a <tt>RunnableFuture</tt> which when run will call the
+     *         underlying callable and which, as a <tt>Future</tt>, will yield
+     *         the callable's result as its result and provide for
+     *         cancellation of the underlying task.
+     * @since 1.6
+     */
+    protected <T> FutureTaskAdapter<T> newTaskFor(Callable<T> callable, boolean onEDT)
+    {
+        return new FutureTaskAdapter<T>(callable, onEDT);
+    }
+
+    /**
+     * Submits a task for execution and returns a Future representing that task. The
+     * Future's <tt>get</tt> method will return the given result upon successful completion.
+     * 
+     * @param task
+     *        the task to submit
+     * @return a Future representing pending completion of the task
+     * @throws RejectedExecutionException
+     *         if the task cannot be scheduled for execution
+     * @throws NullPointerException
+     *         if the task is null
+     */
+    protected synchronized <T> Future<T> submit(FutureTaskAdapter<T> task)
+    {
+        if (task == null)
+            throw new NullPointerException();
+
+        try
+        {
+            execute(task);
+        }
+        catch (RejectedExecutionException e)
+        {
+            if (!Icy.isExiting())
+            {
+                // error while adding task
+                System.err.println("Cannot add new task, ignore execution : " + task);
+                // TODO: may be better to throw the RejectedExecutionException exception
+                return null;
+            }
+        }
+
+        waitingExecution = task;
+        return task;
+    }
+
+    /**
+     * Submits a Runnable task for execution and returns a Future representing that task. The
+     * Future's <tt>get</tt> method will return <tt>null</tt> upon <em>successful</em> completion.
+     * 
+     * @param task
+     *        the task to submit
+     * @param onEDT
+     *        if set to <code>true</code> then the <tt>RunnableFuture</tt> will be executed on the
+     *        Swing EDT.
+     * @return a Future representing pending completion of the task
+     * @throws RejectedExecutionException
+     *         if the task cannot be scheduled for execution
+     * @throws NullPointerException
+     *         if the task is null
+     */
+    public Future<?> submit(Runnable task, boolean onEDT)
+    {
+        if (task == null)
+            throw new NullPointerException();
+
+        return submit(newTaskFor(task, null, onEDT));
+    }
+
+    /**
+     * Submits a Runnable task for execution and returns a Future representing that task. The
+     * Future's <tt>get</tt> method will return the given result upon successful completion.
+     * 
+     * @param task
+     *        the task to submit
+     * @param result
+     *        the result to return
+     * @param onEDT
+     *        if set to <code>true</code> then the <tt>RunnableFuture</tt> will be executed on the
+     *        Swing EDT.
+     * @return a Future representing pending completion of the task
+     * @throws RejectedExecutionException
+     *         if the task cannot be scheduled for execution
+     * @throws NullPointerException
+     *         if the task is null
+     */
+    public <T> Future<T> submit(Runnable task, T result, boolean onEDT)
+    {
+        if (task == null)
+            throw new NullPointerException();
+
+        return submit(newTaskFor(task, result, onEDT));
+    }
+
+    /**
+     * Submits a value-returning task for execution and returns a Future representing the pending
+     * results of the task. The Future's <tt>get</tt> method will return the task's result upon
+     * successful completion.
+     * <p>
+     * If you would like to immediately block waiting for a task, you can use constructions of the
+     * form <tt>result = exec.submit(aCallable).get();</tt>
+     * <p>
+     * Note: The {@link Executors} class includes a set of methods that can convert some other
+     * common closure-like objects, for example, {@link java.security.PrivilegedAction} to
+     * {@link Callable} form so they can be submitted.
+     * 
+     * @param task
+     *        the task to submit
+     * @param onEDT
+     *        if set to <code>true</code> then the <tt>RunnableFuture</tt> will be executed on the
+     *        Swing EDT.
+     * @return a Future representing pending completion of the task
+     * @throws RejectedExecutionException
+     *         if the task cannot be scheduled for execution
+     * @throws NullPointerException
+     *         if the task is null
+     */
+    public <T> Future<T> submit(Callable<T> task, boolean onEDT)
+    {
+        if (task == null)
+            throw new NullPointerException();
+
+        return submit(newTaskFor(task, onEDT));
+    }
+
+    @Override
+    public Future<?> submit(Runnable task)
+    {
+        return submit(task, false);
+    }
+
+    @Override
+    public <T> Future<T> submit(Runnable task, T result)
+    {
+        return submit(task, result, false);
+    }
+
+    @Override
+    public <T> Future<T> submit(Callable<T> task)
+    {
+        return submit(task, false);
     }
 
     /**
@@ -313,42 +543,47 @@ public class Processor extends ThreadPoolExecutor
     /**
      * Return waiting tasks
      */
-    public Runner[] getWaitingTasks()
+    protected List<FutureTaskAdapter<?>> getWaitingTasks()
     {
         final BlockingQueue<Runnable> q = getQueue();
+        final List<FutureTaskAdapter<?>> result = new ArrayList<Processor.FutureTaskAdapter<?>>();
 
         synchronized (q)
         {
-            return q.toArray(new Runner[0]);
+            for (Runnable r : q)
+                if (r instanceof FutureTaskAdapter<?>)
+                    result.add((FutureTaskAdapter<?>) r);
         }
-    }
-
-    /**
-     * Return waiting tasks with specified id
-     */
-    public List<Runner> getWaitingTasks(int id)
-    {
-        final ArrayList<Runner> result = new ArrayList<Runner>();
-
-        // scan all tasks
-        for (Runner task : getWaitingTasks())
-            if (task.getId() == id)
-                result.add(task);
 
         return result;
     }
 
     /**
-     * Return waiting tasks from specified instance
+     * Return waiting tasks for the specified Runnable instance
      */
-    public List<Runner> getWaitingTasks(Runnable task)
+    protected List<FutureTaskAdapter<?>> getWaitingTasks(Runnable task)
     {
-        final ArrayList<Runner> result = new ArrayList<Runner>();
+        final List<FutureTaskAdapter<?>> result = new ArrayList<Processor.FutureTaskAdapter<?>>();
 
         // scan all tasks
-        for (Runner runner : getWaitingTasks())
-            if (runner.getTask() == task)
-                result.add(runner);
+        for (FutureTaskAdapter<?> f : getWaitingTasks())
+            if (f.getRunnable() == task)
+                result.add(f);
+
+        return result;
+    }
+
+    /**
+     * Return waiting tasks for the specified Callable instance
+     */
+    protected List<FutureTaskAdapter<?>> getWaitingTasks(Callable<?> task)
+    {
+        final List<FutureTaskAdapter<?>> result = new ArrayList<Processor.FutureTaskAdapter<?>>();
+
+        // scan all tasks
+        for (FutureTaskAdapter<?> f : getWaitingTasks())
+            if (f.getCallable() == task)
+                result.add(f);
 
         return result;
     }
@@ -371,28 +606,40 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Return the number of task with specified id waiting in queue
+     * @deprecated Not anymore supported.<br>
+     *             Use {@link #getWaitingTasksCount(Callable)} or
+     *             {@link #getWaitingTasksCount(Runnable)} instead.
      */
+    @SuppressWarnings("unused")
+    @Deprecated
     public int getWaitingTasksCount(int id)
     {
+        return 0;
+    }
+
+    /**
+     * Return the number of task waiting in queue for the specified <tt>Runnable</tt> instance.
+     */
+    public int getWaitingTasksCount(Runnable task)
+    {
         int result = 0;
-        // scan all tasks
-        for (Runner task : getWaitingTasks())
-            if (task.getId() == id)
+
+        for (FutureTaskAdapter<?> f : getWaitingTasks())
+            if (f.getRunnable() == task)
                 result++;
 
         return result;
     }
 
     /**
-     * Return the number of task from specified instance waiting in queue
+     * Return the number of task waiting in queue for the specified <tt>Callable</tt> instance.
      */
-    public int getWaitingTasksCount(Runnable task)
+    public int getWaitingTasksCount(Callable<?> task)
     {
         int result = 0;
-        // scan all tasks
-        for (Runner runner : getWaitingTasks())
-            if (runner.getTask() == task)
+
+        for (FutureTaskAdapter<?> f : getWaitingTasks())
+            if (f.getCallable() == task)
                 result++;
 
         return result;
@@ -407,82 +654,119 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Return true if we have at least one task with specified id waiting in queue
+     * @deprecated Not anymore supported.<br>
+     *             Use {@link #hasWaitingTasks(Callable)} or {@link #hasWaitingTasks(Runnable)}
+     *             instead.
      */
+    @SuppressWarnings("unused")
+    @Deprecated
     public boolean hasWaitingTasks(int id)
     {
-        // scan all tasks
-        for (Runner task : getWaitingTasks())
-            if (task.getId() == id)
-                return true;
-
         return false;
     }
 
     /**
-     * Return true if we have at least one task from specified instance waiting in queue
+     * Return true if we have at least one task in queue for the specified <tt>Runnable</tt>
+     * instance.
      */
     public boolean hasWaitingTasks(Runnable task)
     {
         // scan all tasks
-        for (Runner runner : getWaitingTasks())
-            if (runner.getTask() == task)
+        for (FutureTaskAdapter<?> f : getWaitingTasks())
+            if (f.getRunnable() == task)
                 return true;
 
         return false;
     }
 
     /**
-     * Remove first waiting task with specified id
+     * Return true if we have at least one task in queue for the specified <tt>Callable</tt>
+     * instance.
      */
-    public boolean removeFirstWaitingTask(int id)
+    public boolean hasWaitingTasks(Callable<?> task)
     {
-        synchronized (getQueue())
-        {
-            // remove first task with specified id
-            for (Runner runner : getWaitingTasks())
-                if (runner.getId() == id)
-                    return remove(runner);
-        }
+        // scan all tasks
+        for (FutureTaskAdapter<?> f : getWaitingTasks())
+            if (f.getCallable() == task)
+                return true;
 
         return false;
     }
 
     /**
-     * Remove first waiting task from specified instance
+     * @deprecated Not anymore supported.<br>
+     *             USe {@link #removeFirstWaitingTask(Runnable)} or
+     *             {@link #removeFirstWaitingTask(Callable)} instead.
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public boolean removeFirstWaitingTask(int id)
+    {
+        return false;
+    }
+
+    /**
+     * Remove first waiting task for the specified <tt>Runnable</tt> instance.
+     */
+    public boolean removeFirstWaitingTask(FutureTaskAdapter<?> task)
+    {
+        if (task == null)
+            return false;
+
+        if (task.getCallable() != null)
+            return removeFirstWaitingTask(task.getCallable());
+        if (task.getRunnable() != null)
+            return removeFirstWaitingTask(task.getRunnable());
+
+        return false;
+    }
+
+    /**
+     * Remove first waiting task for the specified <tt>Runnable</tt> instance.
      */
     public boolean removeFirstWaitingTask(Runnable task)
     {
         synchronized (getQueue())
         {
             // remove first task of specified instance
-            for (Runner runner : getWaitingTasks())
-                if (runner.getTask() == task)
-                    return remove(runner);
+            for (FutureTaskAdapter<?> f : getWaitingTasks())
+                if (f.getRunnable() == task)
+                    return remove(f);
         }
 
         return false;
     }
 
     /**
-     * Remove all waiting tasks with specified id
+     * Remove first waiting task for the specified <tt>Callable</tt> instance.
      */
-    public boolean removeWaitingTasks(int id)
+    public boolean removeFirstWaitingTask(Callable<?> task)
     {
-        boolean result = false;
-
         synchronized (getQueue())
         {
-            // remove all tasks with specified id
-            for (Runner task : getWaitingTasks(id))
-                result |= remove(task);
+            // remove first task of specified instance
+            for (FutureTaskAdapter<?> f : getWaitingTasks())
+                if (f.getCallable() == task)
+                    return remove(f);
         }
 
-        return result;
+        return false;
     }
 
     /**
-     * Remove all waiting tasks from specified instance
+     * @deprecated Not anymore supported.<br>
+     *             USe {@link #removeWaitingTasks(Runnable)} or
+     *             {@link #removeWaitingTasks(Callable)} instead.
+     */
+    @Deprecated
+    @SuppressWarnings("unused")
+    public boolean removeWaitingTasks(int id)
+    {
+        return false;
+    }
+
+    /**
+     * Remove all waiting tasks for the specified <tt>Runnable</tt> instance.
      */
     public boolean removeWaitingTasks(Runnable task)
     {
@@ -491,8 +775,25 @@ public class Processor extends ThreadPoolExecutor
         synchronized (getQueue())
         {
             // remove all tasks of specified instance
-            for (Runner runner : getWaitingTasks(task))
-                result |= remove(runner);
+            for (FutureTaskAdapter<?> f : getWaitingTasks(task))
+                result |= remove(f);
+        }
+
+        return result;
+    }
+
+    /**
+     * Remove all waiting tasks for the specified <tt>Callable</tt> instance.
+     */
+    public boolean removeWaitingTasks(Callable<?> task)
+    {
+        boolean result = false;
+
+        synchronized (getQueue())
+        {
+            // remove all tasks of specified instance
+            for (FutureTaskAdapter<?> f : getWaitingTasks(task))
+                result |= remove(f);
         }
 
         return result;
@@ -513,13 +814,14 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Limit number of waiting task of specified instance to specified value
+     * @deprecated This method is useless.
      */
+    @Deprecated
     public void limitWaitingTask(Runnable task, int value)
     {
         synchronized (getQueue())
         {
-            final List<Runner> tasks = getWaitingTasks(task);
+            final List<FutureTaskAdapter<?>> tasks = getWaitingTasks(task);
             final int numToRemove = tasks.size() - value;
 
             for (int i = 0; i < numToRemove; i++)
@@ -528,32 +830,28 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Limit number of waiting task of specified id to specified value
+     * @deprecated Not anymore supported !
      */
+    @SuppressWarnings("unused")
+    @Deprecated
     public void limitWaitingTask(int id, int value)
     {
-        synchronized (getQueue())
-        {
-            final List<Runner> tasks = getWaitingTasks(id);
-            final int numToRemove = tasks.size() - value;
-
-            for (int i = 0; i < numToRemove; i++)
-                remove(tasks.get(i));
-        }
+        // not anymore supported
     }
 
     /**
-     * Limit number of waiting task to specified value
+     * @deprecated This method is useless.
      */
+    @Deprecated
     public boolean limitWaitingTask(int value)
     {
         synchronized (getQueue())
         {
-            final Runner[] tasks = getWaitingTasks();
-            final int numToRemove = tasks.length - value;
+            final List<FutureTaskAdapter<?>> tasks = getWaitingTasks();
+            final int numToRemove = tasks.size() - value;
 
             for (int i = 0; i < numToRemove; i++)
-                remove(tasks[i]);
+                remove(tasks.get(i));
         }
 
         return false;
@@ -584,7 +882,7 @@ public class Processor extends ThreadPoolExecutor
      * 
      * @param task
      */
-    public void fireDoneEvent(Runnable task)
+    public void fireDoneEvent(FutureTaskAdapter<?> task)
     {
         for (ProcessorEventListener listener : listeners.getListeners(ProcessorEventListener.class))
             listener.processDone(this, task);
@@ -596,7 +894,7 @@ public class Processor extends ThreadPoolExecutor
         super.afterExecute(r, t);
 
         // notify we just achieved a process
-        fireDoneEvent(((Runner) r).getTask());
+        fireDoneEvent((FutureTaskAdapter<?>) r);
     }
 
     @Override

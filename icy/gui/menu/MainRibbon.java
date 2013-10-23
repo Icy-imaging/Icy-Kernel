@@ -909,7 +909,7 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
                                             v.requestFocus();
                                             v.toFront();
                                         }
-                                    }, true);
+                                    });
                                 }
                             });
                             result.addMenuButton(seqButton);
@@ -960,7 +960,7 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
                                             f.requestFocus();
                                             f.toFront();
                                         }
-                                    }, true);
+                                    });
                                 }
                             });
                             result.addMenuButton(frameButton);

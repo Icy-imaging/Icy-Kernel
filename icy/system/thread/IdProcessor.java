@@ -21,12 +21,9 @@ package icy.system.thread;
 import icy.main.Icy;
 
 /**
- * Single Id Processor<br>
- * Provide facilities to process tasks in background.<br>
- * Only one waiting process per id.
- * 
- * @author Stephane
+ * @deprecated Use {@link InstanceProcessor} instead.
  */
+@Deprecated
 public class IdProcessor extends Processor
 {
 
@@ -35,6 +32,7 @@ public class IdProcessor extends Processor
      * 
      * @deprecated uses default constructor instead
      */
+    @SuppressWarnings("unused")
     @Deprecated
     public IdProcessor(int maxProcess, int maxProcessPerId)
     {

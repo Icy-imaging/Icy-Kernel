@@ -384,7 +384,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
     protected final void updateButtonsState()
     {
-        processor.addTask(buttonsStateUpdater, true);
+        processor.submit(buttonsStateUpdater, true);
     }
 
     protected void updateRepositoriesInternal()
@@ -440,7 +440,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
     protected final void updateRepositories()
     {
-        processor.addTask(repositoriesUpdater, true);
+        processor.submit(repositoriesUpdater, true);
     }
 
     protected Boolean isWorkspaceEnable(Workspace workspace)
@@ -460,7 +460,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
     protected final void refreshWorkspaces()
     {
-        processor.addTask(workspaceListRefresher, false);
+        processor.submit(workspaceListRefresher, false);
     }
 
     protected int getWorkspaceIndex(Workspace workspace)
@@ -550,7 +550,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
     protected final void refreshTableData()
     {
-        processor.addTask(tableDataRefresher, true);
+        processor.submit(tableDataRefresher, true);
     }
 
     protected void workspacesChanged()

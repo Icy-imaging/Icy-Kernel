@@ -18,7 +18,7 @@
  */
 package icy.system.thread;
 
-import icy.main.Icy;
+import java.util.concurrent.Future;
 
 /**
  * @author Stephane
@@ -27,13 +27,12 @@ public class InstanceProcessor extends Processor
 {
     /**
      * Create an InstanceProcessor
-     * 
-     * @deprecated uses default constructor instead
      */
-    @Deprecated
-    public InstanceProcessor(int maxProcess, int maxProcessPerInstance)
+    public InstanceProcessor(int maxWaiting, int priority)
     {
-        this();
+        super(maxWaiting, 1, priority);
+
+        setDefaultThreadName("InstanceProcessor");
     }
 
     /**
@@ -41,9 +40,7 @@ public class InstanceProcessor extends Processor
      */
     public InstanceProcessor(int priority)
     {
-        super(Processor.DEFAULT_MAX_WAITING, 1, priority);
-
-        setDefaultThreadName("InstanceProcessor");
+        this(Processor.DEFAULT_MAX_WAITING, priority);
     }
 
     /**
@@ -54,29 +51,12 @@ public class InstanceProcessor extends Processor
         this(Processor.NORM_PRIORITY);
     }
 
-    /**
-     * Add a task to the processor.<br>
-     */
     @Override
-    public synchronized boolean addTask(Runnable task, boolean onAWTEventThread, int id)
+    protected synchronized <T> Future<T> submit(FutureTaskAdapter<T> task)
     {
-        if (task == null)
-            return false;
-
         // we remove pending task if any
         removeFirstWaitingTask(task);
 
-        if (!super.addTask(task, onAWTEventThread, id))
-        {
-            if (!Icy.isExiting())
-            {
-                // error while adding task
-                System.err.println("Cannot add task, ignore execution : " + task);
-                return false;
-            }
-        }
-
-        return true;
+        return super.submit(task);
     }
-
 }

@@ -108,6 +108,14 @@ public class EventUtil
     }
 
     /**
+     * Returns true if there is no any modifiers in the specified input event.
+     */
+    public static boolean isNoModifier(InputEvent e)
+    {
+        return e.getModifiers() == 0;
+    }
+
+    /**
      * Returns true if the mouse event specifies the left mouse button.
      * 
      * @param e
@@ -142,4 +150,5 @@ public class EventUtil
     {
         return ((e.getModifiers() & InputEvent.BUTTON3_MASK) == InputEvent.BUTTON3_MASK);
     }
+
 }

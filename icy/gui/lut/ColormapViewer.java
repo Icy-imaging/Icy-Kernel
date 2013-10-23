@@ -138,6 +138,8 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
         setOpaque(true);
         // set border
         setBorder(BorderFactory.createEmptyBorder(BORDER_HEIGHT, BORDER_WIDTH, BORDER_HEIGHT, BORDER_WIDTH));
+        // for the input map
+        setFocusable(true);
 
         this.lutChannel = lutChannel;
         colormap = lutChannel.getColorMap();
@@ -187,7 +189,7 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
 
     void buildActionMap()
     {
-        final InputMap imap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        final InputMap imap = getInputMap(JComponent.WHEN_FOCUSED);
         final ActionMap amap = getActionMap();
 
         imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");

@@ -18,7 +18,6 @@
  */
 package icy.gui.menu.search;
 
-import icy.action.GeneralActions;
 import icy.gui.component.IcyTextField;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
@@ -154,7 +153,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
                 setFocus();
             }
         });
-      
+
         addFocusListener(new FocusListener()
         {
             @Override
@@ -230,17 +229,14 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
 
     void buildActionMap()
     {
-        final InputMap imap1 = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        final InputMap imap2 = getInputMap(JComponent.WHEN_FOCUSED);
+        final InputMap imap = getInputMap(JComponent.WHEN_FOCUSED);
         final ActionMap amap = getActionMap();
 
-        imap1.put(GeneralActions.searchAction.getKeyStroke(), GeneralActions.searchAction.getName());
-        imap2.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "Cancel");
-        imap2.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "MoveDown");
-        imap2.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "MoveUp");
-        imap2.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Execute");
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "Cancel");
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "MoveDown");
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "MoveUp");
+        imap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Execute");
 
-        amap.put(GeneralActions.searchAction.getName(), GeneralActions.searchAction);
         amap.put("Cancel", new AbstractAction()
         {
             /**

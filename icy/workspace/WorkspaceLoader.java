@@ -147,7 +147,7 @@ public class WorkspaceLoader
      */
     public static void reloadAsynch()
     {
-        instance.processor.addTask(instance.reloader);
+        instance.processor.submit(instance.reloader);
     }
 
     /**

@@ -284,7 +284,7 @@ public class PluginRepositoryLoader
         imagesLoaded = false;
         failed = false;
 
-        processor.addTask(loader);
+        processor.submit(loader);
     }
 
     /**

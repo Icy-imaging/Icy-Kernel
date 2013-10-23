@@ -24,6 +24,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
 import java.text.Format;
 import java.util.EventListener;
 
@@ -48,8 +49,9 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
         public void textChanged(IcyTextField source, boolean validate);
     }
 
-    // internal
-    private boolean changed;
+    // internals
+    protected boolean consumeCharKeyPressEvent;
+    protected boolean changed;
 
     /**
      * Creates a <code>IcyTextField</code> with no <code>AbstractFormatterFactory</code>. Use
@@ -111,6 +113,7 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
     protected void init()
     {
         changed = false;
+        consumeCharKeyPressEvent = true;
 
         getDocument().addDocumentListener(this);
         addActionListener(this);
@@ -165,6 +168,41 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
     public void removeTextChangeListener(TextChangeListener listener)
     {
         listenerList.remove(TextChangeListener.class, listener);
+    }
+
+    /**
+     * Set to true if the TextField should consume any <i>Character</i> KEY_PRESSED event.<br>
+     * This allows the event to not be dispatched on others components (Key Bindings) when the
+     * TextField "use" it.
+     */
+    public void setConsumeCharKeyPressEvent(boolean consumeCharKeyPressEvent)
+    {
+        this.consumeCharKeyPressEvent = consumeCharKeyPressEvent;
+    }
+
+    /**
+     * Returns the <i>consumeCharKeyPressEvent</i> property.
+     * 
+     * @see #setConsumeCharKeyPressEvent(boolean)
+     */
+    public boolean getConsumeCharKeyPressEvent()
+    {
+        return consumeCharKeyPressEvent;
+    }
+
+    @Override
+    protected void processComponentKeyEvent(KeyEvent e)
+    {
+        super.processComponentKeyEvent(e);
+
+        if (consumeCharKeyPressEvent)
+        {
+            final char c = e.getKeyChar();
+            
+            // consume KEY_PRESSED character event
+            if ((e.getID() == KeyEvent.KEY_PRESSED) && Character.isDefined(c) && !Character.isISOControl(c))
+                e.consume();
+        }
     }
 
     @Override

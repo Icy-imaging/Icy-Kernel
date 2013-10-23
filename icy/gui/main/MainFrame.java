@@ -18,6 +18,7 @@
  */
 package icy.gui.main;
 
+import icy.action.CanvasActions;
 import icy.action.FileActions;
 import icy.action.GeneralActions;
 import icy.action.WindowActions;
@@ -316,9 +317,12 @@ public class MainFrame extends JRibbonFrame
 
     void buildActionMap()
     {
-        final InputMap imap = getDesktopPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        final ActionMap amap = getDesktopPane().getActionMap();
+        // global input map
+        buildActionMap(mainPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW), mainPane.getActionMap());
+    }
 
+    private void buildActionMap(InputMap imap, ActionMap amap)
+    {
         imap.put(GeneralActions.searchAction.getKeyStroke(), GeneralActions.searchAction.getName());
         imap.put(FileActions.openSequenceAction.getKeyStroke(), FileActions.openSequenceAction.getName());
         imap.put(FileActions.saveAsSequenceAction.getKeyStroke(), FileActions.saveAsSequenceAction.getName());
@@ -326,6 +330,11 @@ public class MainFrame extends JRibbonFrame
         imap.put(WindowActions.gridTileAction.getKeyStroke(), WindowActions.gridTileAction.getName());
         imap.put(WindowActions.horizontalTileAction.getKeyStroke(), WindowActions.horizontalTileAction.getName());
         imap.put(WindowActions.verticalTileAction.getKeyStroke(), WindowActions.verticalTileAction.getName());
+        imap.put(CanvasActions.globalDisableSyncAction.getKeyStroke(), CanvasActions.globalDisableSyncAction.getName());
+        imap.put(CanvasActions.globalSyncGroup1Action.getKeyStroke(), CanvasActions.globalSyncGroup1Action.getName());
+        imap.put(CanvasActions.globalSyncGroup2Action.getKeyStroke(), CanvasActions.globalSyncGroup2Action.getName());
+        imap.put(CanvasActions.globalSyncGroup3Action.getKeyStroke(), CanvasActions.globalSyncGroup3Action.getName());
+        imap.put(CanvasActions.globalSyncGroup4Action.getKeyStroke(), CanvasActions.globalSyncGroup4Action.getName());
 
         amap.put(GeneralActions.searchAction.getName(), GeneralActions.searchAction);
         amap.put(FileActions.openSequenceAction.getName(), FileActions.openSequenceAction);
@@ -334,6 +343,11 @@ public class MainFrame extends JRibbonFrame
         amap.put(WindowActions.gridTileAction.getName(), WindowActions.gridTileAction);
         amap.put(WindowActions.horizontalTileAction.getName(), WindowActions.horizontalTileAction);
         amap.put(WindowActions.verticalTileAction.getName(), WindowActions.verticalTileAction);
+        amap.put(CanvasActions.globalDisableSyncAction.getName(), CanvasActions.globalDisableSyncAction);
+        amap.put(CanvasActions.globalSyncGroup1Action.getName(), CanvasActions.globalSyncGroup1Action);
+        amap.put(CanvasActions.globalSyncGroup2Action.getName(), CanvasActions.globalSyncGroup2Action);
+        amap.put(CanvasActions.globalSyncGroup3Action.getName(), CanvasActions.globalSyncGroup3Action);
+        amap.put(CanvasActions.globalSyncGroup4Action.getName(), CanvasActions.globalSyncGroup4Action);
     }
 
     public ApplicationMenu getApplicationMenu()

@@ -285,7 +285,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         // set table model
         table.setModel(tableModel);
         // alternate highlight
-        table.addHighlighter(HighlighterFactory.createSimpleStriping());
+        table.setHighlighters(HighlighterFactory.createSimpleStriping());
         // disable extra actions from column control
         ((ColumnControlButton) table.getColumnControl()).setAdditionalActionsVisible(false);
         // remove the internal find command (we have our own filter)

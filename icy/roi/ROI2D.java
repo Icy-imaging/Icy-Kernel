@@ -1217,7 +1217,7 @@ public abstract class ROI2D extends ROI
      * @see #computeNumberOfContourPoints()
      */
     @Override
-    public final double getPerimeter()
+    public double getPerimeter()
     {
         return getNumberOfContourPoints();
     }
@@ -1229,7 +1229,7 @@ public abstract class ROI2D extends ROI
      * @see #getNumberOfPoints()
      * @see #computeNumberOfPoints()
      */
-    public final double getArea()
+    public double getArea()
     {
         return getNumberOfPoints();
     }

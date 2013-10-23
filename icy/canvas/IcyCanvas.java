@@ -18,6 +18,7 @@
  */
 package icy.canvas;
 
+import icy.action.CanvasActions;
 import icy.action.GeneralActions;
 import icy.action.RoiActions;
 import icy.action.WindowActions;
@@ -3235,54 +3236,97 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             {
                 case KeyEvent.VK_0:
                     if (EventUtil.isShiftDown(e, true))
-                        Icy.getMainInterface().setGlobalViewSyncId(0);
-                    else
-                        setSyncId(0);
-                    e.consume();
+                    {
+                        if (CanvasActions.globalDisableSyncAction.isEnabled())
+                        {
+                            CanvasActions.globalDisableSyncAction.execute();
+                            e.consume();
+                        }
+                    }
+                    else if (EventUtil.isNoModifier(e))
+                    {
+                        if (CanvasActions.disableSyncAction.isEnabled())
+                        {
+                            CanvasActions.disableSyncAction.execute();
+                            e.consume();
+                        }
+                    }
                     break;
 
                 case KeyEvent.VK_1:
                     if (EventUtil.isShiftDown(e, true))
-                        Icy.getMainInterface().setGlobalViewSyncId(1);
-                    // already set, switch it off
-                    else if (getSyncId() == 1)
-                        setSyncId(0);
-                    else
-                        setSyncId(1);
-                    e.consume();
+                    {
+                        if (CanvasActions.globalSyncGroup1Action.isEnabled())
+                        {
+                            CanvasActions.globalSyncGroup1Action.execute();
+                            e.consume();
+                        }
+                    }
+                    else if (EventUtil.isNoModifier(e))
+                    {
+                        if (CanvasActions.syncGroup1Action.isEnabled())
+                        {
+                            CanvasActions.syncGroup1Action.execute();
+                            e.consume();
+                        }
+                    }
                     break;
 
                 case KeyEvent.VK_2:
                     if (EventUtil.isShiftDown(e, true))
-                        Icy.getMainInterface().setGlobalViewSyncId(2);
-                    // already set, switch it off
-                    else if (getSyncId() == 2)
-                        setSyncId(0);
-                    else
-                        setSyncId(2);
-                    e.consume();
+                    {
+                        if (CanvasActions.globalSyncGroup2Action.isEnabled())
+                        {
+                            CanvasActions.globalSyncGroup2Action.execute();
+                            e.consume();
+                        }
+                    }
+                    else if (EventUtil.isNoModifier(e))
+                    {
+                        if (CanvasActions.syncGroup2Action.isEnabled())
+                        {
+                            CanvasActions.syncGroup2Action.execute();
+                            e.consume();
+                        }
+                    }
                     break;
 
                 case KeyEvent.VK_3:
                     if (EventUtil.isShiftDown(e, true))
-                        Icy.getMainInterface().setGlobalViewSyncId(3);
-                    // already set, switch it off
-                    else if (getSyncId() == 3)
-                        setSyncId(0);
-                    else
-                        setSyncId(3);
-                    e.consume();
+                    {
+                        if (CanvasActions.globalSyncGroup3Action.isEnabled())
+                        {
+                            CanvasActions.globalSyncGroup3Action.execute();
+                            e.consume();
+                        }
+                    }
+                    else if (EventUtil.isNoModifier(e))
+                    {
+                        if (CanvasActions.syncGroup3Action.isEnabled())
+                        {
+                            CanvasActions.syncGroup3Action.execute();
+                            e.consume();
+                        }
+                    }
                     break;
 
                 case KeyEvent.VK_4:
                     if (EventUtil.isShiftDown(e, true))
-                        Icy.getMainInterface().setGlobalViewSyncId(4);
-                    // already set, switch it off
-                    else if (getSyncId() == 4)
-                        setSyncId(0);
-                    else
-                        setSyncId(4);
-                    e.consume();
+                    {
+                        if (CanvasActions.globalSyncGroup4Action.isEnabled())
+                        {
+                            CanvasActions.globalSyncGroup4Action.execute();
+                            e.consume();
+                        }
+                    }
+                    else if (EventUtil.isNoModifier(e))
+                    {
+                        if (CanvasActions.syncGroup4Action.isEnabled())
+                        {
+                            CanvasActions.syncGroup4Action.execute();
+                            e.consume();
+                        }
+                    }
                     break;
 
                 case KeyEvent.VK_G:

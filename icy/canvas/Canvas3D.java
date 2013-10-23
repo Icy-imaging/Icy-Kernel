@@ -500,7 +500,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
     private void buildVolumeMapper()
     {
-        processor.addTask(volumeMapperBuilder);
+        processor.submit(volumeMapperBuilder);
     }
 
     void internalBuildVolumeMapper()
@@ -564,7 +564,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
     private void buildImageData()
     {
-        processor.addTask(imageDataBuilder);
+        processor.submit(imageDataBuilder);
     }
 
     void internalBuildImageData()
@@ -1316,7 +1316,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             return;
 
         // then refresh 3D display in background processing
-        processor.addTask(displayRefresher);
+        processor.submit(displayRefresher);
     }
 
     @Override
