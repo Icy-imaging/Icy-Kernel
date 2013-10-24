@@ -111,9 +111,15 @@ public class ThreadUtil
     }
 
     /**
-     * @deprecated Use {@link #invokeLater(Runnable)} or {@link #invokeNow(Runnable)} instead.
+     * Invoke the specified <code>Runnable</code> on the AWT event dispatching thread.<br>
+     * Any exception is automatically caught by Icy exception handler.
+     * 
+     * @param wait
+     *        If set to true, the method wait until completion, in this case you have to take
+     *        attention to not cause any dead lock.
+     * @see #invokeLater(Runnable)
+     * @see #invokeNow(Runnable)
      */
-    @Deprecated
     public static void invoke(Runnable runnable, boolean wait)
     {
         if (wait)

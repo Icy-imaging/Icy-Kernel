@@ -95,7 +95,7 @@ public abstract class TaskFrame extends IcyFrame
      */
     public TaskFrame(String title, boolean resizable, boolean closable, boolean maximizable, boolean iconifiable)
     {
-        super(title, resizable, closable, maximizable, iconifiable);
+        super(title, resizable, closable, maximizable, iconifiable, true);
 
         ThreadUtil.invokeLater(new Runnable()
         {

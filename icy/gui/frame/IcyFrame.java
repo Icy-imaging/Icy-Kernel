@@ -185,7 +185,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     /**
      * sync flag for AWT thread process
      */
-    // boolean syncProcess;
+    boolean syncProcess;
 
     /**
      * listeners
@@ -202,31 +202,37 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
 
     public IcyFrame()
     {
-        this("", false, true, false, false, false);
+        this("", false, true, false, false, true);
     }
 
     public IcyFrame(String title)
     {
-        this(title, false, true, false, false, false);
+        this(title, false, true, false, false, true);
     }
 
     public IcyFrame(String title, boolean resizable)
     {
-        this(title, resizable, true, false, false, false);
+        this(title, resizable, true, false, false, true);
     }
 
     public IcyFrame(String title, boolean resizable, boolean closable)
     {
-        this(title, resizable, closable, false, false, false);
+        this(title, resizable, closable, false, false, true);
     }
 
     public IcyFrame(String title, boolean resizable, boolean closable, boolean maximizable)
     {
-        this(title, resizable, closable, maximizable, false, false);
+        this(title, resizable, closable, maximizable, false, true);
     }
 
     public IcyFrame(final String title, final boolean resizable, final boolean closable, final boolean maximizable,
             final boolean iconifiable)
+    {
+        this(title, resizable, closable, maximizable, iconifiable, true);
+    }
+
+    public IcyFrame(final String title, final boolean resizable, final boolean closable, final boolean maximizable,
+            final boolean iconifiable, final boolean waitCreate)
     {
         super();
 
@@ -245,7 +251,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             }
         };
 
-        // syncProcess = false;
+        syncProcess = false;
 
         // set default state
         if (canBeInternalized())
@@ -261,7 +267,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         switchStateAction = new SwitchStateAction();
         switchStateAction.setEnabled(canBeInternalized());
 
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -291,18 +297,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                     frames.add(IcyFrame.this);
                 }
             }
-        });
-    }
-
-    /**
-     * @deprecated Use {@link #IcyFrame(String, boolean, boolean, boolean, boolean)} instead.
-     */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public IcyFrame(final String title, final boolean resizable, final boolean closable, final boolean maximizable,
-            final boolean iconifiable, final boolean waitCreate)
-    {
-        this(title, resizable, closable, maximizable, iconifiable);
+        }, waitCreate);
     }
 
     /**
@@ -342,7 +337,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void updateSystemMenu()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -352,7 +347,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.updateSystemMenu();
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -361,7 +356,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void close()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -369,7 +364,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 internalFrame.close(true);
                 externalFrame.close();
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -378,7 +373,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void dispose()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -388,7 +383,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.dispose();
             }
-        });
+        }, syncProcess);
     }
 
     /** go from detached to attached and opposite */
@@ -421,7 +416,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             return;
 
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -464,7 +459,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 // notify state change
                 stateChanged();
             }
-        });
+        }, syncProcess);
     }
 
     /** Set the frame to be detached in an independent frame */
@@ -474,7 +469,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             return;
 
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -515,7 +510,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 // notify state change
                 stateChanged();
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -540,7 +535,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void center()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -551,7 +546,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                     ComponentUtil.center(externalFrame);
 
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -562,14 +557,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         if (isInternalized())
         {
             // AWT safe
-            ThreadUtil.invokeNow(new Runnable()
+            ThreadUtil.invoke(new Runnable()
             {
                 @Override
                 public void run()
                 {
                     c.add(internalFrame);
                 }
-            });
+            }, syncProcess);
         }
     }
 
@@ -581,14 +576,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         if (isInternalized())
         {
             // AWT safe
-            ThreadUtil.invokeNow(new Runnable()
+            ThreadUtil.invoke(new Runnable()
             {
                 @Override
                 public void run()
                 {
                     c.add(internalFrame, index);
                 }
-            });
+            }, syncProcess);
         }
     }
 
@@ -598,14 +593,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void addTo(final Container c, final Object constraints)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 c.add(internalFrame, constraints);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -625,7 +620,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void add(final Component comp)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -635,7 +630,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.add(comp);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -644,7 +639,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void add(final Component comp, final Object constraints)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -654,7 +649,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.add(comp, constraints);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -663,7 +658,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void add(final String name, final Component comp)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -673,7 +668,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.add(name, comp);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -684,14 +679,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         if (isInternalized())
         {
             // AWT safe
-            ThreadUtil.invokeNow(new Runnable()
+            ThreadUtil.invoke(new Runnable()
             {
                 @Override
                 public void run()
                 {
                     c.remove(internalFrame);
                 }
-            });
+            }, syncProcess);
         }
     }
 
@@ -701,7 +696,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void removeAll()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -711,7 +706,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.removeAll();
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -720,7 +715,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void remove(final Component comp)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -730,7 +725,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.remove(comp);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -747,7 +742,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void toFront()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -757,7 +752,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.toFront();
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -766,7 +761,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void toBack()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -776,7 +771,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.toBack();
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -785,7 +780,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void pack()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -795,7 +790,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.pack();
             }
-        });
+        }, syncProcess);
     }
 
     public Container getFrame()
@@ -1425,7 +1420,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setTitle(final String title)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1433,7 +1428,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 internalFrame.setTitle(title);
                 externalFrame.setTitle(title);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1442,7 +1437,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setToolTipText(final String text)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1451,7 +1446,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 internalFrame.setToolTipText(text);
                 // externalFrame.setToolTipText(text);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1460,7 +1455,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setBackground(final Color value)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1468,7 +1463,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 internalFrame.setBackground(value);
                 externalFrame.setBackground(value);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1477,7 +1472,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setForeground(final Color value)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1485,7 +1480,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 internalFrame.setForeground(value);
                 externalFrame.setForeground(value);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1494,7 +1489,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setResizable(final boolean value)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1502,7 +1497,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 internalFrame.setResizable(value);
                 externalFrame.setResizable(value);
             }
-        });
+        }, syncProcess);
 
     }
 
@@ -1512,7 +1507,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setLocation(final Point p)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1522,7 +1517,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.setLocation(p);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1531,7 +1526,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setLocation(final int x, final int y)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1541,7 +1536,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.setLocation(x, y);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1550,14 +1545,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setLocationInternal(final Point p)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 internalFrame.setLocation(p);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1566,14 +1561,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setLocationInternal(final int x, final int y)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 internalFrame.setLocation(x, y);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1582,14 +1577,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setLocationExternal(final Point p)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 externalFrame.setLocation(p);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1598,14 +1593,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setLocationExternal(final int x, final int y)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 externalFrame.setLocation(x, y);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1614,7 +1609,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setSize(final Dimension d)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1624,7 +1619,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.setSize(d);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1633,7 +1628,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setSize(final int width, final int height)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1643,7 +1638,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.setSize(width, height);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1652,14 +1647,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setSizeInternal(final Dimension d)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 internalFrame.setSize(d);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1668,14 +1663,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setSizeInternal(final int width, final int height)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 internalFrame.setSize(width, height);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1684,14 +1679,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setSizeExternal(final Dimension d)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 externalFrame.setSize(d);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1700,14 +1695,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setSizeExternal(final int width, final int height)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 externalFrame.setSize(width, height);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1716,7 +1711,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setPreferredSize(final Dimension d)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1726,7 +1721,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.setPreferredSize(d);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1735,14 +1730,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setPreferredSizeInternal(final Dimension d)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 internalFrame.setPreferredSize(d);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1751,14 +1746,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setPreferredSizeExternal(final Dimension d)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 externalFrame.setPreferredSize(d);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1767,7 +1762,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setMinimumSize(final Dimension d)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1777,7 +1772,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.setMinimumSize(d);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1786,7 +1781,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setMaximumSize(final Dimension d)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1796,7 +1791,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.setMaximumSize(d);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1805,14 +1800,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setMinimumSizeInternal(final Dimension d)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 internalFrame.setMinimumSize(d);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1821,14 +1816,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setMaximumSizeInternal(final Dimension d)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 internalFrame.setMaximumSize(d);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1837,14 +1832,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setMinimumSizeExternal(final Dimension d)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 externalFrame.setMinimumSize(d);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1853,14 +1848,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setMaximumSizeExternal(final Dimension d)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 externalFrame.setMaximumSize(d);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1869,7 +1864,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setBounds(final Rectangle r)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1879,7 +1874,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.setBounds(r);
             }
-        });
+        }, syncProcess);
 
     }
 
@@ -1889,7 +1884,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setMaximisable(final boolean value)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -1897,7 +1892,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 // only for internal frame
                 internalFrame.setMaximizable(value);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -1909,7 +1904,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         if (isMinimized() ^ value)
         {
             // AWT safe
-            ThreadUtil.invokeNow(new Runnable()
+            ThreadUtil.invoke(new Runnable()
             {
                 @Override
                 public void run()
@@ -1919,7 +1914,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                     else
                         externalFrame.setMinimized(value);
                 }
-            });
+            }, syncProcess);
         }
     }
 
@@ -1932,14 +1927,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         if (internalFrame.isMinimized() ^ value)
         {
             // AWT safe
-            ThreadUtil.invokeNow(new Runnable()
+            ThreadUtil.invoke(new Runnable()
             {
                 @Override
                 public void run()
                 {
                     internalFrame.setMinimized(value);
                 }
-            });
+            }, syncProcess);
         }
     }
 
@@ -1952,14 +1947,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         if (externalFrame.isMinimized() ^ value)
         {
             // AWT safe
-            ThreadUtil.invokeNow(new Runnable()
+            ThreadUtil.invoke(new Runnable()
             {
                 @Override
                 public void run()
                 {
                     externalFrame.setMinimized(value);
                 }
-            });
+            }, syncProcess);
         }
     }
 
@@ -1972,7 +1967,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         if (isMaximized() ^ value)
         {
             // AWT safe
-            ThreadUtil.invokeNow(new Runnable()
+            ThreadUtil.invoke(new Runnable()
             {
                 @Override
                 public void run()
@@ -1982,7 +1977,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                     else
                         externalFrame.setMaximized(value);
                 }
-            });
+            }, syncProcess);
         }
     }
 
@@ -1995,14 +1990,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         if (internalFrame.isMaximized() ^ value)
         {
             // AWT safe
-            ThreadUtil.invokeNow(new Runnable()
+            ThreadUtil.invoke(new Runnable()
             {
                 @Override
                 public void run()
                 {
                     internalFrame.setMaximized(value);
                 }
-            });
+            }, syncProcess);
         }
     }
 
@@ -2015,14 +2010,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         if (externalFrame.isMaximized() ^ value)
         {
             // AWT safe
-            ThreadUtil.invokeNow(new Runnable()
+            ThreadUtil.invoke(new Runnable()
             {
                 @Override
                 public void run()
                 {
                     externalFrame.setMaximized(value);
                 }
-            });
+            }, syncProcess);
         }
     }
 
@@ -2032,14 +2027,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setClosable(final boolean value)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 internalFrame.setClosable(value);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2048,7 +2043,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setDefaultCloseOperation(final int operation)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -2056,7 +2051,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 internalFrame.setDefaultCloseOperation(operation);
                 externalFrame.setDefaultCloseOperation(operation);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2065,7 +2060,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setFocusable(final boolean value)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -2073,7 +2068,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 internalFrame.setFocusable(value);
                 externalFrame.setFocusable(value);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2082,7 +2077,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setVisible(final boolean value)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -2092,7 +2087,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.setVisible(value);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2101,14 +2096,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setAlwaysOnTop(final boolean alwaysOnTop)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 externalFrame.setAlwaysOnTop(alwaysOnTop);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2117,7 +2112,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setJMenuBar(final JMenuBar m)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -2127,7 +2122,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.setJMenuBar(m);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2136,7 +2131,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setTitleBarVisible(final boolean value)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -2144,7 +2139,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 internalFrame.setTitleBarVisible(value);
                 externalFrame.setTitleBarVisible(value);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2153,7 +2148,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setLayout(final LayoutManager layout)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -2163,7 +2158,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.setLayout(layout);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2172,14 +2167,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setBorder(final Border border)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 internalFrame.setBorder(border);
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2188,7 +2183,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void setContentPane(final Container value)
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -2198,25 +2193,27 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.setContentPane(value);
             }
-        });
+        }, syncProcess);
     }
 
     /**
-     * @deprecated Always synchronized now.
+     * @return the syncProcess
      */
-    @Deprecated
     public boolean isSyncProcess()
     {
-        return true;
+        return syncProcess;
     }
 
     /**
-     * @deprecated Always synchronized now.
+     * By default IcyFrame does asych processing, you can force sync processing<br>
+     * with this property
+     * 
+     * @param syncProcess
+     *        the syncProcess to set
      */
-    @SuppressWarnings("unused")
-    @Deprecated
     public void setSyncProcess(boolean syncProcess)
     {
+        this.syncProcess = syncProcess;
     }
 
     /**
@@ -2225,7 +2222,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void requestFocus()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -2244,7 +2241,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.requestFocus();
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2253,7 +2250,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void validate()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -2263,7 +2260,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.validate();
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2272,7 +2269,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void revalidate()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -2285,7 +2282,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                     externalFrame.repaint();
                 }
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2294,7 +2291,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void repaint()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
@@ -2304,7 +2301,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 else
                     externalFrame.repaint();
             }
-        });
+        }, syncProcess);
     }
 
     /**
@@ -2313,14 +2310,14 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     public void updateUI()
     {
         // AWT safe
-        ThreadUtil.invokeNow(new Runnable()
+        ThreadUtil.invoke(new Runnable()
         {
             @Override
             public void run()
             {
                 internalFrame.updateUI();
             }
-        });
+        }, syncProcess);
     }
 
     /**

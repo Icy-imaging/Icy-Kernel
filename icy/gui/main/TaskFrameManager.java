@@ -27,6 +27,9 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Manage the TaskFrame to display them on right of the window.
@@ -35,60 +38,40 @@ import java.util.HashMap;
  */
 public class TaskFrameManager implements Runnable
 {
-    final Thread animThread;
-    final ArrayList<TaskFrame> taskFrames;
-    final HashMap<TaskFrame, Point> framesPosition;
-    final HashMap<TaskFrame, FrameInformation> framesInfo;
-    long lastAnimationMillisecondTime;
-
-    class FrameInformation
+    private static class FrameInformation
     {
-        long msBeforeDisplay = 0;
-        private long msBeforeClose = 0;
-        boolean canBeRemoved = false;
+        Point position;
+        long msBeforeDisplay;
+        long msBeforeClose;
+        boolean canBeRemoved;
 
-        public FrameInformation(long msBeforeDisplay, long msBeforeClose)
+        public FrameInformation(Point pos, long msBeforeDisplay, long msBeforeClose)
         {
+            super();
+
+            position = pos;
             this.msBeforeDisplay = msBeforeDisplay;
             this.msBeforeClose = msBeforeClose;
+            canBeRemoved = false;
         }
 
-        public long getMsBeforeClose()
+        public void setMsBeforeClose(long value)
         {
-            return msBeforeClose;
-        }
+            msBeforeClose = value;
 
-        public long getMsBeforeDisplay()
-        {
-            return msBeforeDisplay;
-        }
-
-        public void setMsBeforeClose(long msBeforeClose)
-        {
-            this.msBeforeClose = msBeforeClose;
-            if (this.msBeforeClose <= 0)
-            {
+            if (value <= 0)
                 canBeRemoved = true;
-            }
         }
 
-        public void setCanBeRemoved(boolean canBeRemoved)
+        public boolean isVisible()
         {
-            this.canBeRemoved = canBeRemoved;
-        }
-
-        public boolean isCanBeRemoved()
-        {
-            return canBeRemoved;
-        }
-
-        public boolean displayOn()
-        {
-            if (msBeforeDisplay > 0)
-                return false;
-            return true;
+            return (msBeforeDisplay <= 0);
         }
     }
+
+    final Thread animThread;
+    Map<TaskFrame, FrameInformation> taskFrameInfos;
+    long lastAnimationMillisecondTime;
 
     /**
      * 
@@ -97,9 +80,7 @@ public class TaskFrameManager implements Runnable
     {
         super();
 
-        taskFrames = new ArrayList<TaskFrame>();
-        framesPosition = new HashMap<TaskFrame, Point>();
-        framesInfo = new HashMap<TaskFrame, FrameInformation>();
+        taskFrameInfos = new HashMap<TaskFrame, FrameInformation>();
         animThread = new Thread(this, "TaskFrame manager");
 
         lastAnimationMillisecondTime = System.currentTimeMillis();
@@ -128,24 +109,19 @@ public class TaskFrameManager implements Runnable
 
         if ((desktopSize != null) && !tFrame.canRemove())
         {
-            synchronized (taskFrames)
-            {
-                // get bottom right border location
-                FrameInformation frameInformation = new FrameInformation(msBeforeDisplay, msAfterCloseRequest);
-                framesInfo.put(tFrame, frameInformation);
+            // get bottom right border location
+            final Point pos = new Point(desktopSize.width + 10, 0);
+            final FrameInformation frameInformation = new FrameInformation(pos, msBeforeDisplay, msAfterCloseRequest);
 
-                taskFrames.add(tFrame);
+            synchronized (taskFrameInfos)
+            {
+                taskFrameInfos.put(tFrame, frameInformation);
             }
 
             tFrame.addToMainDesktopPane();
-            tFrame.setLocation(desktopSize.width + 10, 0);
+            tFrame.setLocation(pos);
             tFrame.toFront();
         }
-    }
-
-    public void addTaskWindow(final TaskFrame tFrame, long msBeforeDisplay)
-    {
-        addTaskWindow(tFrame, msBeforeDisplay, 0);
     }
 
     public void addTaskWindow(final TaskFrame tFrame)
@@ -157,25 +133,38 @@ public class TaskFrameManager implements Runnable
             addTaskWindow(tFrame, 0, 0);
     }
 
-    private void animate()
+    @Override
+    public void run()
     {
-        long currentMillisecondTime = System.currentTimeMillis();
-        long delayBetween2Animation = currentMillisecondTime - lastAnimationMillisecondTime;
-        lastAnimationMillisecondTime = currentMillisecondTime;
-
-        synchronized (taskFrames)
+        while (true)
         {
-            for (TaskFrame frame : framesInfo.keySet())
-            {
-                FrameInformation frameInformation = framesInfo.get(frame);
-                frameInformation.msBeforeDisplay -= delayBetween2Animation;
+            long currentMillisecondTime = System.currentTimeMillis();
+            long delayBetween2Animation = currentMillisecondTime - lastAnimationMillisecondTime;
+            lastAnimationMillisecondTime = currentMillisecondTime;
 
-                if (frameInformation.msBeforeDisplay <= 0)
+            HashMap<TaskFrame, FrameInformation> frameInfos;
+
+            synchronized (taskFrameInfos)
+            {
+                frameInfos = new HashMap<TaskFrame, FrameInformation>(taskFrameInfos);
+            }
+
+            // process frame which become visible and the one which will be closed
+            for (Entry<TaskFrame, FrameInformation> finfo : frameInfos.entrySet())
+            {
+                final TaskFrame frame = finfo.getKey();
+                final FrameInformation info = finfo.getValue();
+
+                info.msBeforeDisplay -= delayBetween2Animation;
+
+                if (info.isVisible())
+                {
                     if (!frame.isVisible())
                         frame.setVisible(true);
+                }
 
                 if (frame.canRemove())
-                    frameInformation.setMsBeforeClose(frameInformation.getMsBeforeClose() - delayBetween2Animation);
+                    info.setMsBeforeClose(info.msBeforeClose - delayBetween2Animation);
             }
 
             // get bottom right border location
@@ -184,50 +173,58 @@ public class TaskFrameManager implements Runnable
             if (desktopSize == null)
                 return;
 
-            // build target position.
-            framesPosition.clear();
+            final List<TaskFrame> toRemove = new ArrayList<TaskFrame>();
 
-            for (int i = taskFrames.size() - 1; i >= 0; i--)
+            for (Entry<TaskFrame, FrameInformation> finfo : frameInfos.entrySet())
             {
-                final TaskFrame frame = taskFrames.get(i);
-                FrameInformation frameInformation = framesInfo.get(frame);
-
-                // get frame position
-                final Point location = frame.getLocation();
+                final TaskFrame frame = finfo.getKey();
+                final FrameInformation info = finfo.getValue();
 
                 // frame need to be removed ?
-                if (frameInformation.canBeRemoved)
+                if ((info != null) && info.canBeRemoved)
                 {
+                    // get frame position
+                    final Point location = frame.getLocation();
+
+                    // frame already hidden ?
                     if ((!frame.isVisible()) || ((location.x > desktopSize.width)))
                     {
                         // remove it from list
-                        taskFrames.remove(i);
-                        framesInfo.remove(frame);
+                        toRemove.add(frame);
                         // and close it definitely
                         frame.internalClose();
                     }
                 }
             }
 
+            // remove frame which are complete from the list
+            for (TaskFrame frame : toRemove)
+                frameInfos.remove(frame);
+
+            // update global list
+            taskFrameInfos = new HashMap<TaskFrame, FrameInformation>(frameInfos);
+
             // calculate current Y position
             float currentY = desktopSize.height;
-            for (TaskFrame frame : taskFrames)
+            for (Entry<TaskFrame, FrameInformation> finfo : frameInfos.entrySet())
             {
-                FrameInformation frameInformation = framesInfo.get(frame);
+                final FrameInformation info = finfo.getValue();
 
-                if (frameInformation != null && frameInformation.displayOn())
-                    currentY -= frame.getHeight();
+                if ((info != null) && info.isVisible())
+                    currentY -= finfo.getKey().getHeight();
             }
 
-            for (TaskFrame frame : taskFrames)
+            // calculate all frames position
+            for (Entry<TaskFrame, FrameInformation> finfo : frameInfos.entrySet())
             {
-                FrameInformation frameInformation = framesInfo.get(frame);
+                final TaskFrame frame = finfo.getKey();
+                final FrameInformation info = finfo.getValue();
 
-                if (frameInformation != null && frameInformation.displayOn())
+                if ((info != null) && info.isVisible())
                 {
                     int xTarget = desktopSize.width - frame.getWidth();
 
-                    if (frameInformation.canBeRemoved)
+                    if (info.canBeRemoved)
                         xTarget = desktopSize.width + 20;
 
                     final Point positionTarget = new Point(xTarget, (int) currentY);
@@ -264,7 +261,8 @@ public class TaskFrameManager implements Runnable
                     if (positionCurrent.x > desktopSize.width)
                         positionNew.y = positionTarget.y;
 
-                    framesPosition.put(frame, positionNew);
+                    // update position
+                    info.position = positionNew;
 
                     // no enough space to display frame, close it
                     if (positionNew.y < 0)
@@ -274,28 +272,23 @@ public class TaskFrameManager implements Runnable
                 }
             }
 
-            for (TaskFrame frame : taskFrames)
+            // update frame position
+            for (Entry<TaskFrame, FrameInformation> finfo : frameInfos.entrySet())
             {
-                final Point location = framesPosition.get(frame);
+                final TaskFrame frame = finfo.getKey();
+                final FrameInformation info = finfo.getValue();
 
-                if (location != null)
+                if (info.position != null)
                 {
                     // avoid repaint on JDesktopPane if position did not changed
-                    if (!frame.getLocationInternal().equals(location))
-                        frame.setLocationInternal(location);
-                    if (!frame.getLocationExternal().equals(location))
-                        frame.setLocationExternal(location);
+                    if (!frame.getLocationInternal().equals(info.position))
+                        frame.setLocationInternal(info.position);
+                    if (!frame.getLocationExternal().equals(info.position))
+                        frame.setLocationExternal(info.position);
                 }
             }
-        }
-    }
 
-    @Override
-    public void run()
-    {
-        while (true)
-        {
-            animate();
+            // sleep a bit
             ThreadUtil.sleep(20);
         }
     }
