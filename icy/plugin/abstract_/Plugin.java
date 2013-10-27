@@ -20,6 +20,8 @@ package icy.plugin.abstract_;
 
 import icy.file.FileUtil;
 import icy.gui.frame.IcyFrame;
+import icy.gui.frame.IcyFrameAdapter;
+import icy.gui.frame.IcyFrameEvent;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.ImageUtil;
@@ -41,6 +43,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 
 import javax.swing.ImageIcon;
 
@@ -53,6 +56,7 @@ import javax.swing.ImageIcon;
  */
 public abstract class Plugin
 {
+	
     public static Plugin getPlugin(ArrayList<Plugin> list, String className)
     {
         for (Plugin plugin : list)
@@ -62,6 +66,7 @@ public abstract class Plugin
         return null;
     }
 
+    public static HashMap<PluginDescriptor, ArrayList<IcyFrame>> openedFramesMap = new HashMap<PluginDescriptor, ArrayList<IcyFrame>>();
     private final PluginDescriptor descriptor;
 
     public Plugin()
@@ -139,6 +144,31 @@ public abstract class Plugin
 
     public void addIcyFrame(final IcyFrame frame)
     {
+    	//Add the frame to openedFrameMap for popup menu generation
+    	//FIXME: Not all plugin add frame use this function
+    	if(openedFramesMap.containsKey(descriptor)){
+    		openedFramesMap.get(descriptor).add(frame);
+    	}
+    	else{
+    		ArrayList<IcyFrame> fl = new ArrayList<IcyFrame>();
+    		fl.add(frame);
+    		openedFramesMap.put(descriptor, fl);
+    	}	
+    	frame.addFrameListener(new IcyFrameAdapter()
+        {
+            // called when frame is closed
+            @Override
+            public void icyFrameClosed(IcyFrameEvent e)
+            {
+    	    	if(openedFramesMap.containsKey(descriptor)){
+		    		openedFramesMap.get(descriptor).remove(frame);
+		    		//remove the empty item
+		    		if(openedFramesMap.get(descriptor).size()<=0)
+		    			openedFramesMap.remove(descriptor);
+		    	}
+            }
+        });
+    	
         frame.addToMainDesktopPane();
     }
 
