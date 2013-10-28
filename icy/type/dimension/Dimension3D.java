@@ -75,6 +75,21 @@ public abstract class Dimension3D implements Cloneable
     }
 
     /**
+     * Returns <code>true</code> if the X dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteX();
+
+    /**
+     * Returns <code>true</code> if the Y dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteY();
+
+    /**
+     * Returns <code>true</code> if the Z dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteZ();
+
+    /**
      * Convert to 2D dimension.
      */
     public abstract java.awt.geom.Dimension2D toDimension2D();
@@ -212,6 +227,24 @@ public abstract class Dimension3D implements Cloneable
         }
 
         @Override
+        public boolean isInfiniteX()
+        {
+            return (getSizeX() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteY()
+        {
+            return (getSizeY() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteZ()
+        {
+            return (getSizeZ() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
         public java.awt.geom.Dimension2D toDimension2D()
         {
             return new Dimension2D.Double(sizeX, sizeY);
@@ -295,6 +328,24 @@ public abstract class Dimension3D implements Cloneable
         }
 
         @Override
+        public boolean isInfiniteX()
+        {
+            return (getSizeX() == java.lang.Float.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteY()
+        {
+            return (getSizeY() == java.lang.Float.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteZ()
+        {
+            return (getSizeZ() == java.lang.Float.POSITIVE_INFINITY);
+        }
+
+        @Override
         public java.awt.geom.Dimension2D toDimension2D()
         {
             return new Dimension2D.Float(sizeX, sizeY);
@@ -375,6 +426,24 @@ public abstract class Dimension3D implements Cloneable
             this.sizeX = (int) Math.ceil(sizeX);
             this.sizeY = (int) Math.ceil(sizeY);
             this.sizeZ = (int) Math.ceil(sizeZ);
+        }
+
+        @Override
+        public boolean isInfiniteX()
+        {
+            return (getSizeX() == java.lang.Integer.MAX_VALUE);
+        }
+
+        @Override
+        public boolean isInfiniteY()
+        {
+            return (getSizeY() == java.lang.Integer.MAX_VALUE);
+        }
+
+        @Override
+        public boolean isInfiniteZ()
+        {
+            return (getSizeZ() == java.lang.Integer.MAX_VALUE);
         }
 
         @Override

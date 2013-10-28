@@ -18,6 +18,7 @@
  */
 package icy.gui.preferences;
 
+import icy.gui.component.IcyTextField;
 import icy.gui.main.MainFrame;
 import icy.main.Icy;
 import icy.preferences.ChatPreferences;
@@ -32,7 +33,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPasswordField;
-import javax.swing.JTextField;
 
 public class ChatPreferencePanel extends PreferencePanel
 {
@@ -43,12 +43,12 @@ public class ChatPreferencePanel extends PreferencePanel
 
     public static final String NODE_NAME = "Chat";
 
-    private JTextField realNameField;
+    private IcyTextField realNameField;
     private JPasswordField passwordField;
-    JTextField extraChannelsField;
+    IcyTextField extraChannelsField;
     private JCheckBox connectAtStartCheckBox;
     private JCheckBox enableDesktopOverlayCheckBox;
-    JTextField desktopChannelsField;
+    IcyTextField desktopChannelsField;
     private JCheckBox statusMessageCheckBox;
 
     /**
@@ -103,7 +103,7 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_enableDesktopOverlayCheckBox.gridy = 2;
         mainPanel.add(enableDesktopOverlayCheckBox, gbc_enableDesktopOverlayCheckBox);
 
-        desktopChannelsField = new JTextField();
+        desktopChannelsField = new IcyTextField();
         desktopChannelsField
                 .setToolTipText("Channel(s) to display on dekstop chat. You can enter severals channels (ex : \"icy;icy-support\")");
         desktopChannelsField.setText("icy");
@@ -140,7 +140,7 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_lblNewLabel_2.gridy = 3;
         mainPanel.add(lblNewLabel_2, gbc_lblNewLabel_2);
 
-        realNameField = new JTextField();
+        realNameField = new IcyTextField();
         realNameField.setToolTipText("Real name (give more information about user)");
         GridBagConstraints gbc_realNameField = new GridBagConstraints();
         gbc_realNameField.fill = GridBagConstraints.HORIZONTAL;
@@ -181,7 +181,7 @@ public class ChatPreferencePanel extends PreferencePanel
         gbc_lblChannels.gridy = 5;
         mainPanel.add(lblChannels, gbc_lblChannels);
 
-        extraChannelsField = new JTextField();
+        extraChannelsField = new IcyTextField();
         extraChannelsField
                 .setToolTipText("Extra channel(s) to join at start up. You can enter severals channels (ex : \"icy-news;icy-support;...\")");
         GridBagConstraints gbc_channelsField = new GridBagConstraints();

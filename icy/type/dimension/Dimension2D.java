@@ -73,6 +73,16 @@ public abstract class Dimension2D extends java.awt.geom.Dimension2D
         return new Dimension((int) Math.ceil(getSizeX()), (int) Math.ceil(getSizeY()));
     }
 
+    /**
+     * Returns <code>true</code> if the X dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteX();
+
+    /**
+     * Returns <code>true</code> if the Y dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteY();
+
     @Override
     public boolean equals(Object obj)
     {
@@ -149,6 +159,18 @@ public abstract class Dimension2D extends java.awt.geom.Dimension2D
         {
             sizeY = value;
         }
+
+        @Override
+        public boolean isInfiniteX()
+        {
+            return (getSizeX() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteY()
+        {
+            return (getSizeY() == java.lang.Double.POSITIVE_INFINITY);
+        }
     }
 
     public static class Float extends Dimension2D
@@ -208,6 +230,18 @@ public abstract class Dimension2D extends java.awt.geom.Dimension2D
         public void setSizeY(double value)
         {
             sizeY = (float) value;
+        }
+
+        @Override
+        public boolean isInfiniteX()
+        {
+            return (getSizeX() == java.lang.Float.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteY()
+        {
+            return (getSizeY() == java.lang.Float.POSITIVE_INFINITY);
         }
     }
 }

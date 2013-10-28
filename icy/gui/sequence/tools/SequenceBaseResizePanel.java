@@ -18,6 +18,7 @@
  */
 package icy.gui.sequence.tools;
 
+import icy.gui.component.IcyTextField;
 import icy.gui.component.sequence.SequencePreviewPanel;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
@@ -46,7 +47,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JSpinner.DefaultEditor;
-import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
@@ -191,9 +191,9 @@ public abstract class SequenceBaseResizePanel extends JPanel
     protected SequencePreviewPanel originalPreview;
     protected SequencePreviewPanel resultPreview;
     protected JPanel infoPanel;
-    protected JTextField widthField;
-    protected JTextField heightField;
-    protected JTextField sizeField;
+    protected IcyTextField widthField;
+    protected IcyTextField heightField;
+    protected IcyTextField sizeField;
     protected JComboBox sizeUnitComboBox;
     protected JComboBox resolutionUnitComboBox;
     protected JSpinner resolutionField;
@@ -333,7 +333,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
         infoPanel.add(lblNewLabel_2, gbc_lblNewLabel_2);
         lblNewLabel_2.setToolTipText("");
 
-        widthField = new JTextField();
+        widthField = new IcyTextField();
         widthField.setToolTipText("Width in pixel");
         widthField.setText("0000");
         widthField.setEditable(false);
@@ -345,7 +345,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
         infoPanel.add(widthField, gbc_widthField);
         widthField.setColumns(5);
 
-        heightField = new JTextField();
+        heightField = new IcyTextField();
         heightField.setToolTipText("Height in pixel");
         heightField.setText("0");
         heightField.setEditable(false);
@@ -357,7 +357,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
         infoPanel.add(heightField, gbc_heightField);
         heightField.setColumns(5);
 
-        sizeField = new JTextField();
+        sizeField = new IcyTextField();
         sizeField.setToolTipText("Memory size");
         sizeField.setText("0.0B");
         sizeField.setEditable(false);
@@ -605,7 +605,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
      */
     public double getResolution()
     {
-        final double value = ((Double)resolutionField.getValue()).doubleValue();
+        final double value = ((Double) resolutionField.getValue()).doubleValue();
 
         switch (getResolutionUnit())
         {
@@ -626,7 +626,7 @@ public abstract class SequenceBaseResizePanel extends JPanel
 
     void updateResolution()
     {
-        double resol = ((Double)resolutionField.getValue()).doubleValue();
+        double resol = ((Double) resolutionField.getValue()).doubleValue();
 
         // convert to mm / pixel
         switch (previousResolutionUnit)

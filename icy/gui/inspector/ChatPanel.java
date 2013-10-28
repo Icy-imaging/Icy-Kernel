@@ -21,6 +21,7 @@ package icy.gui.inspector;
 import icy.gui.component.CloseableTabbedPane;
 import icy.gui.component.CloseableTabbedPane.CloseableTabbedPaneListener;
 import icy.gui.component.ExternalizablePanel;
+import icy.gui.component.IcyTextField;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.frame.progress.AnnounceFrame;
@@ -685,8 +686,8 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
     CloseableTabbedPane tabPane;
     JScrollPane usersScrollPane;
     JList userList;
-    JTextField sendEditor;
-    JTextField txtNickName;
+    IcyTextField sendEditor;
+    IcyTextField txtNickName;
     IcyToggleButton connectButton;
     IcyToggleButton showUserPaneButton;
     IcyToggleButton desktopOverlayButton;
@@ -696,7 +697,7 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
      * Desktop GUI
      */
     final JPanel desktopPanel;
-    final JTextField sendEditorDesktop;
+    final IcyTextField sendEditorDesktop;
     final IcyButton hideDesktopChatButton;
     final DesktopOverlay desktopOverlay;
 
@@ -733,13 +734,13 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
         addChannelPane(DEFAULT_CHANNEL);
 
         // build desktop GUI
-        sendEditorDesktop = new JTextField();
+        sendEditorDesktop = new IcyTextField();
         sendEditorDesktop.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                sendEditContent((JTextField) e.getSource());
+                sendEditContent((IcyTextField) e.getSource());
             }
         });
         sendEditorDesktop.addKeyListener(new KeyAdapter()
@@ -993,13 +994,13 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
         add(panelBottom, BorderLayout.SOUTH);
         panelBottom.setLayout(new BorderLayout(0, 0));
 
-        sendEditor = new JTextField();
+        sendEditor = new IcyTextField();
         sendEditor.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                sendEditContent((JTextField) e.getSource());
+                sendEditContent((IcyTextField) e.getSource());
             }
         });
         sendEditor.setColumns(10);
@@ -1011,7 +1012,7 @@ public class ChatPanel extends ExternalizablePanel implements InternetAccessList
 
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
 
-        txtNickName = new JTextField();
+        txtNickName = new IcyTextField();
         txtNickName.setMaximumSize(new Dimension(2147483647, 24));
         txtNickName.setText(ChatPreferences.getNickname());
         txtNickName.setToolTipText("Nick name");

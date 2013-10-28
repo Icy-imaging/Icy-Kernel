@@ -21,6 +21,7 @@ package icy.gui.menu;
 import icy.action.SequenceOperationActions;
 import icy.action.SequenceOperationActions.ExtractChannelAction;
 import icy.action.SequenceOperationActions.RemoveChannelAction;
+import icy.gui.component.IcyTextField;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandMenuButton;
@@ -33,8 +34,6 @@ import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
 import icy.type.DataType;
 import icy.util.StringUtil;
-
-import javax.swing.JTextField;
 
 import org.pushingpixels.flamingo.api.common.CommandToggleButtonGroup;
 import org.pushingpixels.flamingo.api.common.JCommandButton;
@@ -590,7 +589,7 @@ public class SequenceOperationTask extends RibbonTask
 
         public static final String NAME = "Fill operation";
 
-        final JTextField fillValueField;
+        final IcyTextField fillValueField;
         // final IcyButton fillImage;
         final IcyButton fillSequence;
 
@@ -600,7 +599,7 @@ public class SequenceOperationTask extends RibbonTask
 
             setToolTipText("Fill operation");
 
-            fillValueField = new JTextField();
+            fillValueField = new IcyTextField();
             ComponentUtil.setFixedWidth(fillValueField, 90);
             fillValueField.setToolTipText("Value used for filling");
             fillValueField.setText("0");

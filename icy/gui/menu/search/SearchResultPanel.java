@@ -487,7 +487,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     public void valueChanged(ListSelectionEvent e)
     {
         // selection changed --> update tooltip
-        updateToolTip();
+        ThreadUtil.bgRunSingle(toolTipRefresher, true);
     }
 
     public void searchStarted()

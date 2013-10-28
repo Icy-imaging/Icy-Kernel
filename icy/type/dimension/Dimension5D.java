@@ -105,6 +105,31 @@ public abstract class Dimension5D implements Cloneable
     }
 
     /**
+     * Returns <code>true</code> if the X dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteX();
+
+    /**
+     * Returns <code>true</code> if the Y dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteY();
+
+    /**
+     * Returns <code>true</code> if the Z dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteZ();
+
+    /**
+     * Returns <code>true</code> if the T dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteT();
+
+    /**
+     * Returns <code>true</code> if the C dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteC();
+
+    /**
      * Convert to 2D dimension.
      */
     public abstract java.awt.geom.Dimension2D toDimension2D();
@@ -278,6 +303,36 @@ public abstract class Dimension5D implements Cloneable
         }
 
         @Override
+        public boolean isInfiniteX()
+        {
+            return (getSizeX() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteY()
+        {
+            return (getSizeY() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteZ()
+        {
+            return (getSizeZ() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteT()
+        {
+            return (getSizeT() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteC()
+        {
+            return (getSizeC() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
         public void setSize(double sizeX, double sizeY, double sizeZ, double sizeT, double sizeC)
         {
             this.sizeX = sizeX;
@@ -404,6 +459,36 @@ public abstract class Dimension5D implements Cloneable
         public void setSizeC(double value)
         {
             sizeC = (float) value;
+        }
+
+        @Override
+        public boolean isInfiniteX()
+        {
+            return (getSizeX() == java.lang.Float.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteY()
+        {
+            return (getSizeY() == java.lang.Float.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteZ()
+        {
+            return (getSizeZ() == java.lang.Float.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteT()
+        {
+            return (getSizeT() == java.lang.Float.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteC()
+        {
+            return (getSizeC() == java.lang.Float.POSITIVE_INFINITY);
         }
 
         @Override
@@ -534,6 +619,36 @@ public abstract class Dimension5D implements Cloneable
         public void setSizeC(double value)
         {
             sizeC = (int) Math.ceil(value);
+        }
+
+        @Override
+        public boolean isInfiniteX()
+        {
+            return (getSizeX() == java.lang.Integer.MAX_VALUE);
+        }
+
+        @Override
+        public boolean isInfiniteY()
+        {
+            return (getSizeY() == java.lang.Integer.MAX_VALUE);
+        }
+
+        @Override
+        public boolean isInfiniteZ()
+        {
+            return (getSizeZ() == java.lang.Integer.MAX_VALUE);
+        }
+
+        @Override
+        public boolean isInfiniteT()
+        {
+            return (getSizeT() == java.lang.Integer.MAX_VALUE);
+        }
+
+        @Override
+        public boolean isInfiniteC()
+        {
+            return (getSizeC() == java.lang.Integer.MAX_VALUE);
         }
 
         @Override

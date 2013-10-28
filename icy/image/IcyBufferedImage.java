@@ -124,7 +124,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      *        list of {@link BufferedImage}
      * @return {@link IcyBufferedImage}
      */
-    public static IcyBufferedImage createFrom(List<BufferedImage> imageList)
+    public static IcyBufferedImage createFrom(List<? extends BufferedImage> imageList)
     {
         if (imageList.size() == 0)
             throw new IllegalArgumentException("imageList should contains at least 1 image");

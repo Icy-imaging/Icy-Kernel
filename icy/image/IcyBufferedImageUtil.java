@@ -327,40 +327,82 @@ public class IcyBufferedImageUtil
     }
 
     /**
-     * Creates a new image which is a sub part of the source image from the specified
-     * coordinates and dimensions.
+     * Creates a new image from the specified region of the source image.
      */
-    public static IcyBufferedImage getSubImage(IcyBufferedImage source, int x, int y, int c, int sizeX, int sizeY,
-            int sizeC)
+    public static IcyBufferedImage getSubImage(IcyBufferedImage source, Rectangle region, int c, int sizeC)
     {
         if (source == null)
             return null;
 
-        // adjust rectangle
-        final Rectangle r = new Rectangle(x, y, sizeX, sizeY).intersection(source.getBounds());
+        final int startX;
+        final int endX;
+        final int startY;
+        final int endY;
+        final int startC;
+        final int endC;
 
+        // infinite X dimension ?
+        if ((region.x == Integer.MIN_VALUE) && (region.width == Integer.MAX_VALUE))
+        {
+            startX = 0;
+            endX = source.getSizeX();
+        }
+        else
+        {
+            startX = Math.max(0, region.x);
+            endX = Math.min(source.getSizeX(), region.x + region.width);
+        }
+        // infinite Y dimension ?
+        if ((region.y == Integer.MIN_VALUE) && (region.height == Integer.MAX_VALUE))
+        {
+            startY = 0;
+            endY = source.getSizeY();
+        }
+        else
+        {
+            startY = Math.max(0, region.y);
+            endY = Math.min(source.getSizeY(), region.y + region.height);
+        }
+        // infinite C dimension ?
+        if ((c == Integer.MIN_VALUE) && (sizeC == Integer.MAX_VALUE))
+        {
+            startC = 0;
+            endC = source.getSizeC();
+        }
+        else
+        {
+            startC = Math.max(0, c);
+            endC = Math.min(source.getSizeC(), c + sizeC);
+        }
+
+        final int sizeX = endX - startX;
+        final int sizeY = endY - startY;
+        final int adjSizeC = endC - startC;
+
+        if ((sizeX <= 0) || (sizeY <= 0) || (adjSizeC <= 0))
+            return null;
+
+        // adjust rectangle
         final DataType dataType = source.getDataType_();
         final boolean signed = dataType.isSigned();
-        final int dstSizeX = r.width;
-        final int dstSizeY = r.height;
 
-        final IcyBufferedImage result = new IcyBufferedImage(dstSizeX, dstSizeY, sizeC, dataType);
+        final IcyBufferedImage result = new IcyBufferedImage(sizeX, sizeY, adjSizeC, dataType);
 
         final int srcSizeX = source.getSizeX();
 
-        for (int ch = 0; ch < sizeC; ch++)
+        for (int ch = startC; ch < endC; ch++)
         {
-            final Object src = source.getDataXY(ch + c);
-            final Object dst = result.getDataXY(ch);
+            final Object src = source.getDataXY(ch);
+            final Object dst = result.getDataXY(ch - startC);
 
-            int srcOffset = source.getOffset(r.x, r.y);
+            int srcOffset = source.getOffset(startX, startY);
             int dstOffset = 0;
 
-            for (int curY = 0; curY < dstSizeY; curY++)
+            for (int curY = 0; curY < sizeY; curY++)
             {
-                Array1DUtil.arrayToArray(src, srcOffset, dst, dstOffset, dstSizeX, signed);
+                Array1DUtil.arrayToArray(src, srcOffset, dst, dstOffset, sizeX, signed);
                 srcOffset += srcSizeX;
-                dstOffset += dstSizeX;
+                dstOffset += sizeX;
             }
         }
 
@@ -370,12 +412,22 @@ public class IcyBufferedImageUtil
     }
 
     /**
+     * @deprecated Use {@link #getSubImage(IcyBufferedImage, Rectangle, int, int)} instead.
+     */
+    @Deprecated
+    public static IcyBufferedImage getSubImage(IcyBufferedImage source, int x, int y, int c, int sizeX, int sizeY,
+            int sizeC)
+    {
+        return getSubImage(source, new Rectangle(x, y, sizeX, sizeY), c, sizeC);
+    }
+
+    /**
      * Creates a new image which is a sub part of the source image from the specified
      * coordinates and dimensions.
      */
     public static IcyBufferedImage getSubImage(IcyBufferedImage source, int x, int y, int w, int h)
     {
-        return getSubImage(source, x, y, 0, w, h, source.getSizeC());
+        return getSubImage(source, new Rectangle(x, y, w, h), 0, source.getSizeC());
     }
 
     /**
