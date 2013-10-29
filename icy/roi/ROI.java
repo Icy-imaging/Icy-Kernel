@@ -343,6 +343,25 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
+     * Return the number of ROI defined in the specified XML node.
+     * 
+     * @param node
+     *        XML node defining the ROI list
+     * @return the number of ROI defined in the XML node.
+     */
+    public static int getROICount(Node node)
+    {
+        if (node != null)
+        {
+            final List<Node> nodesROI = XMLUtil.getChildren(node, ID_ROI);
+            if (nodesROI != null)
+                return nodesROI.size();
+        }
+
+        return 0;
+    }
+
+    /**
      * Return a list of ROI from a XML node.
      * 
      * @param node
@@ -355,7 +374,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
         if (node != null)
         {
-            final ArrayList<Node> nodesROI = XMLUtil.getChildren(node, ID_ROI);
+            final List<Node> nodesROI = XMLUtil.getChildren(node, ID_ROI);
 
             if (nodesROI != null)
             {

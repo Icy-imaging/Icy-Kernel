@@ -413,7 +413,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
 
                 // use integer index with integer data type
                 if (isIntegerType())
-                    index = Math.floor(index);
+                    index = Math.round(index);
 
                 final String valueText = "value : " + MathUtil.roundSignificant(index, 5, true);
                 final String pixelText = "pixel number : " + value;

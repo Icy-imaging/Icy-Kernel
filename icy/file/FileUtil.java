@@ -745,6 +745,32 @@ public class FileUtil
     }
 
     /**
+     * Backup the specified file.<br>
+     * Basically create a .bak version of the file. If the backup file already exist a postfix
+     * number is automatically added.
+     * 
+     * @param filename
+     *        file to backup
+     * @return the backup filename is the operation success else return <code>null</code>
+     */
+    public static String backup(String filename)
+    {
+        int postfix = 0;
+        String backupName = filename + ".bak";
+
+        while (exists(backupName))
+        {
+            backupName = filename + "_" + StringUtil.toString(postfix, 3) + ".bak";
+            postfix++;
+        }
+
+        if (FileUtil.copy(filename, backupName, true, false))
+            return backupName;
+
+        return null;
+    }
+
+    /**
      * Transform all directory entries by their sub files list
      */
     public static File[] explode(File[] files, FileFilter filter, boolean recursive, boolean wantHidden)

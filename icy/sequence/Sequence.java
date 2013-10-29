@@ -5404,7 +5404,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     @Deprecated
     public void painterChanged(Painter painter)
     {
-        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_PAINTER, painter,
+        updater.changed(new SequenceEvent(this, SequenceEventSourceType.SEQUENCE_OVERLAY, getOverlay(painter),
                 SequenceEventType.CHANGED));
         // painterChanged(painter, SequenceEventType.CHANGED);
     }

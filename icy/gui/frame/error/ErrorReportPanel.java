@@ -173,7 +173,7 @@ public class ErrorReportPanel extends JPanel
         gbl_emailPanel.rowWeights = new double[] {0.0, Double.MIN_VALUE};
         emailPanel.setLayout(gbl_emailPanel);
 
-        JLabel lblEmail = new JLabel("Email:");
+        JLabel lblEmail = new JLabel("Your email");
         GridBagConstraints gbc_lblEmail = new GridBagConstraints();
         gbc_lblEmail.insets = new Insets(0, 0, 0, 5);
         gbc_lblEmail.anchor = GridBagConstraints.WEST;
@@ -182,6 +182,7 @@ public class ErrorReportPanel extends JPanel
         emailPanel.add(lblEmail, gbc_lblEmail);
 
         emailTextField = new IcyTextField();
+        emailTextField.setToolTipText("You can enter your email so the developer can contact you if you wish");
         GridBagConstraints gbc_emailTextField = new GridBagConstraints();
         gbc_emailTextField.fill = GridBagConstraints.HORIZONTAL;
         gbc_emailTextField.gridx = 1;
@@ -204,7 +205,7 @@ public class ErrorReportPanel extends JPanel
      */
     public String getReportMessage() throws BadLocationException
     {
-        final String email = "";
+        final String email = emailTextField.getText();
         final Document commentDoc = commentTextPane.getDocument();
         final Document errorDoc = errorMessageTextPane.getDocument();
         String comment = commentDoc.getText(0, commentDoc.getLength());
