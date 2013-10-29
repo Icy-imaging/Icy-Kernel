@@ -143,6 +143,9 @@ public abstract class ROI2D extends ROI
 
         protected boolean updateFocus(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
         {
+            if (imagePoint == null)
+                return false;
+
             final boolean focused = isOverEdge(canvas, imagePoint);
 
             setFocused(focused);
@@ -191,6 +194,8 @@ public abstract class ROI2D extends ROI
         {
             // not dragging --> exit
             if (startDragMousePosition == null)
+                return false;
+            if (imagePoint == null)
                 return false;
 
             double dx = imagePoint.getX() - startDragMousePosition.getX();

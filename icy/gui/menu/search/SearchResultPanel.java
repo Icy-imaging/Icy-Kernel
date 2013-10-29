@@ -74,6 +74,8 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     /** PopupMenu */
     JRichTooltipPanel tooltipPanel;
     Popup tooltip;
+    SearchResult toolTipResult;
+    boolean toolTipForceRefresh;
 
     /** GUI */
     private final SearchResultTableModel tableModel;
@@ -96,6 +98,8 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
 
         tooltipPanel = null;
         tooltip = null;
+        toolTipResult = null;
+        toolTipForceRefresh = false;
         firstResultsDisplay = true;
 
         refresher = new Runnable()
@@ -324,36 +328,45 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
      */
     void updateToolTip()
     {
-        hideToolTip();
-
-        if (!isVisible())
-            return;
-
         final SearchResult searchResult = getSelectedResult();
 
-        if (searchResult != null)
+        if (!isVisible() || (searchResult == null))
         {
-            final RichTooltip rtp = searchResult.getRichToolTip();
+            hideToolTip();
+            return;
+        }
 
-            if (rtp != null)
-            {
-                final Rectangle bounds = getBounds();
+        final RichTooltip rtp = searchResult.getRichToolTip();
 
-                tooltipPanel = new JRichTooltipPanel(rtp);
+        if (rtp == null)
+        {
+            hideToolTip();
+            return;
+        }
 
-                int x = bounds.x + bounds.width;
-                int y = bounds.y + (ROW_HEIGHT * table.getSelectedRow());
+        // tool tip is not yet visible or result changed --> refresh the tool tip
+        if ((tooltip == null) || (searchResult != toolTipResult) || toolTipForceRefresh)
+        {
+            // hide out dated tool tip
+            hideToolTip();
+            
+            final Rectangle bounds = getBounds();
 
-                // adjust vertical position
-                y -= scrollPane.getVerticalScrollBar().getValue();
+            tooltipPanel = new JRichTooltipPanel(rtp);
 
-                // show tooltip
-                tooltip = PopupFactory.getSharedInstance().getPopup(Icy.getMainInterface().getMainFrame(),
-                        tooltipPanel, x, y);
-                tooltip.show();
-            }
-            else
-                tooltipPanel = null;
+            int x = bounds.x + bounds.width;
+            int y = bounds.y + (ROW_HEIGHT * table.getSelectedRow());
+
+            // adjust vertical position
+            y -= scrollPane.getVerticalScrollBar().getValue();
+
+            // show tooltip
+            tooltip = PopupFactory.getSharedInstance().getPopup(Icy.getMainInterface().getMainFrame(), tooltipPanel, x,
+                    y);
+            tooltip.show();
+
+            toolTipResult = searchResult;
+            toolTipForceRefresh = false;
         }
     }
 
@@ -450,6 +463,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
 
         // show the result list
         setVisible(true);
+
         // update tooltip
         updateToolTip();
     }
@@ -506,7 +520,10 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
                 tableModel.fireTableRowsUpdated(rowIndex, rowIndex);
             // refresh toolTip if needed
             if (result == getSelectedResult())
+            {
+                toolTipForceRefresh = true;
                 ThreadUtil.bgRunSingle(toolTipRefresher, true);
+            }
         }
     }
 

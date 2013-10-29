@@ -42,42 +42,63 @@ public class OverlayWrapper extends Overlay
     @Override
     public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.mouseClick(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            painter.mouseClick(e, imagePoint.toPoint2D(), canvas);
+        else
+            painter.mouseClick(e, null, canvas);
     }
 
     @Override
     public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.mousePressed(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            painter.mousePressed(e, imagePoint.toPoint2D(), canvas);
+        else
+            painter.mousePressed(e, null, canvas);
     }
 
     @Override
     public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.mouseReleased(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            painter.mouseReleased(e, imagePoint.toPoint2D(), canvas);
+        else
+            painter.mouseReleased(e, null, canvas);
     }
 
     @Override
     public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.mouseMove(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            painter.mouseMove(e, imagePoint.toPoint2D(), canvas);
+        else
+            painter.mouseMove(e, null, canvas);
     }
 
     @Override
     public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.mouseDrag(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            painter.mouseDrag(e, imagePoint.toPoint2D(), canvas);
+        else
+            painter.mouseDrag(e, null, canvas);
     }
 
     @Override
     public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.keyPressed(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            painter.keyPressed(e, imagePoint.toPoint2D(), canvas);
+        else
+            painter.keyPressed(e, null, canvas);
     }
 
     @Override
     public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
     {
-        painter.keyReleased(e, imagePoint.toPoint2D(), canvas);
+        if (imagePoint != null)
+            painter.keyReleased(e, imagePoint.toPoint2D(), canvas);
+        else
+            painter.keyReleased(e, null, canvas);
     }
 }
