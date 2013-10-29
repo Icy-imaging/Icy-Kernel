@@ -32,6 +32,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 import javax.swing.JMenu;
@@ -40,7 +41,6 @@ import javax.swing.JPopupMenu;
 
 import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
 import org.pushingpixels.flamingo.api.common.JCommandButton;
-import org.pushingpixels.flamingo.api.common.RichTooltip;
 import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
 import org.pushingpixels.flamingo.api.common.popup.JPopupPanel;
 import org.pushingpixels.flamingo.api.common.popup.PopupPanelCallback;
@@ -128,7 +128,7 @@ public class PluginCommandButton
      */
     public static void updateSubmenu(final IcyCommandButton btn, final PluginDescriptor plugin)
     {
-    	if(Plugin.openedFramesMap.containsKey(plugin))
+    	if(Plugin.openedFramesMap.containsKey(plugin.getClassName()))
 		{
 	        btn.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
 	        btn.setPopupRichTooltip(new PluginRichToolTip(plugin));
@@ -148,30 +148,35 @@ public class PluginCommandButton
             		});
 	            	framesOfPluginMenu.add(newInstanceItem);
 	            	framesOfPluginMenu.addSeparator();
-	            	for(final IcyFrame f : Plugin.openedFramesMap.get(plugin)){
-	            		final JMenuItem frameItem = new JMenuItem(f.getTitle());
-	            		frameItem.addActionListener(new ActionListener()
-	                    {
-	            			 @Override
-                             public void actionPerformed(ActionEvent e)
-                             {
-                                 ThreadUtil.invokeLater(new Runnable()
-                                 {
-                                     @Override
-                                     public void run()
-                                     {
-                                         // remove minimized state
-                                         if (f.isMinimized())
-                                             f.setMinimized(false);
-                                         // then grab focus
-                                         f.requestFocus();
-                                         f.toFront();
-                                     }
-                                 });
-                             }
-	                    });
-	                    framesOfPluginMenu.add(frameItem);
-	            	}
+	            	ArrayList<IcyFrame> fl = Plugin.openedFramesMap.get(plugin.getClassName());
+	            	synchronized (fl)
+            		{
+	            		for(final IcyFrame f : fl){
+		            		final JMenuItem frameItem = new JMenuItem(f.getTitle());
+		            		frameItem.addActionListener(new ActionListener()
+		                    {
+		            			 @Override
+	                             public void actionPerformed(ActionEvent e)
+	                             {
+	                                 ThreadUtil.invokeLater(new Runnable()
+	                                 {
+	                                     @Override
+	                                     public void run()
+	                                     {
+	                                         // remove minimized state
+	                                         if (f.isMinimized())
+	                                             f.setMinimized(false);
+	                                         // then grab focus
+	                                         f.requestFocus();
+	                                         f.toFront();
+	                                     }
+	                                 });
+	                             }
+		                    });
+		                    framesOfPluginMenu.add(frameItem);
+	            		}
+            		}
+	            	
 	            	framesOfPluginMenu.addSeparator();
 	            	// close all menu item
 	            	final JMenuItem closeAllItem = new JMenuItem("Close All");
@@ -179,9 +184,13 @@ public class PluginCommandButton
             			 @Override
                          public void actionPerformed(ActionEvent e)
                          {
+            				 
             				 while(true){
-            					 if(Plugin.openedFramesMap.containsKey(plugin)){
-	            					 Plugin.openedFramesMap.get(plugin).get(0).close(); 
+            					 if(Plugin.openedFramesMap.containsKey(plugin.getClassName())){
+            						 synchronized (Plugin.openedFramesMap.get(plugin.getClassName()))
+            						 {
+            							 Plugin.openedFramesMap.get(plugin.getClassName()).get(0).close();
+            						 }
             					 }	
             					 else
             						 break;

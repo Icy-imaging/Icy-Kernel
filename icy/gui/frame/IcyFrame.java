@@ -23,6 +23,8 @@ import icy.common.MenuCallback;
 import icy.gui.main.MainFrame;
 import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
+import icy.plugin.PluginLoader;
+import icy.plugin.abstract_.Plugin;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.system.thread.ThreadUtil;
@@ -199,7 +201,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     SwitchStateAction switchStateAction;
     boolean switchStateItemVisible;
     IcyFrameState previousState;
-
+    String createByPluginClass = null;
     public IcyFrame()
     {
         this("", false, true, false, false, true);
@@ -290,7 +292,26 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 // default system menu callback
                 externalFrame.setSystemMenuCallback(defaultSystemMenuCallback);
                 internalFrame.setSystemMenuCallback(defaultSystemMenuCallback);
-
+                
+                //get the thread name and try to match a plugin
+                if(PluginLoader.getPlugin(Thread.currentThread().getName()) !=null){
+                	createByPluginClass = Thread.currentThread().getName();
+                	if(Plugin.openedFramesMap.containsKey(createByPluginClass)){
+                		synchronized (Plugin.openedFramesMap.get(createByPluginClass))
+                		{
+                			Plugin.openedFramesMap.get(createByPluginClass).add(IcyFrame.this);
+                		}
+                	}
+                	else{
+                		ArrayList<IcyFrame> fl = new ArrayList<IcyFrame>();
+                		synchronized (fl)
+                		{
+	                		fl.add(IcyFrame.this);
+	                		Plugin.openedFramesMap.put(createByPluginClass, fl);
+                		}
+                	}	 
+                }
+                
                 // register to the list
                 synchronized (frames)
                 {
@@ -2493,7 +2514,18 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         {
             frames.remove(this);
         }
-
+        if (createByPluginClass != null){
+        	 if(Plugin.openedFramesMap.containsKey(createByPluginClass)){
+         		synchronized (Plugin.openedFramesMap.get(createByPluginClass))
+         		{
+         			Plugin.openedFramesMap.get(createByPluginClass).remove(IcyFrame.this);
+         		}
+         		//remove the empty item
+         		if(Plugin.openedFramesMap.get(createByPluginClass).size()<=0)
+         			Plugin.openedFramesMap.remove(createByPluginClass);
+         	}
+        }
+       
         // release some stuff else we have cycling reference
         externalFrame.systemMenuCallback = null;
         internalFrame.systemMenuCallback = null;

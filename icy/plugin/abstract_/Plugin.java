@@ -20,8 +20,6 @@ package icy.plugin.abstract_;
 
 import icy.file.FileUtil;
 import icy.gui.frame.IcyFrame;
-import icy.gui.frame.IcyFrameAdapter;
-import icy.gui.frame.IcyFrameEvent;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.ImageUtil;
@@ -62,11 +60,11 @@ public abstract class Plugin
         for (Plugin plugin : list)
             if (plugin.getClass().getName().equals(className))
                 return plugin;
-
         return null;
     }
 
-    public static HashMap<PluginDescriptor, ArrayList<IcyFrame>> openedFramesMap = new HashMap<PluginDescriptor, ArrayList<IcyFrame>>();
+    //set to final field enables safely read through non-synchronized methods
+    public final static HashMap<String, ArrayList<IcyFrame>> openedFramesMap = new HashMap<String, ArrayList<IcyFrame>>();
     private final PluginDescriptor descriptor;
 
     public Plugin()
@@ -145,30 +143,6 @@ public abstract class Plugin
     public void addIcyFrame(final IcyFrame frame)
     {
     	//Add the frame to openedFrameMap for popup menu generation
-    	//FIXME: Not all plugin add frame use this function
-    	if(openedFramesMap.containsKey(descriptor)){
-    		openedFramesMap.get(descriptor).add(frame);
-    	}
-    	else{
-    		ArrayList<IcyFrame> fl = new ArrayList<IcyFrame>();
-    		fl.add(frame);
-    		openedFramesMap.put(descriptor, fl);
-    	}	
-    	frame.addFrameListener(new IcyFrameAdapter()
-        {
-            // called when frame is closed
-            @Override
-            public void icyFrameClosed(IcyFrameEvent e)
-            {
-    	    	if(openedFramesMap.containsKey(descriptor)){
-		    		openedFramesMap.get(descriptor).remove(frame);
-		    		//remove the empty item
-		    		if(openedFramesMap.get(descriptor).size()<=0)
-		    			openedFramesMap.remove(descriptor);
-		    	}
-            }
-        });
-    	
         frame.addToMainDesktopPane();
     }
 
