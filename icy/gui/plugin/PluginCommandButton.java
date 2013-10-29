@@ -188,10 +188,10 @@ public class PluginCommandButton
             				 {
             					 synchronized (Plugin.openedFramesMap.get(plugin.getClassName()))
             					 {
-            						 for(int i=0;i<Plugin.openedFramesMap.get(plugin.getClassName()).size();i++)
+            						 int count = Plugin.openedFramesMap.get(plugin.getClassName()).size();
+            						 for(int i=0;i<count;i++)
             						 {
-	            					 
-	            						Plugin.openedFramesMap.get(plugin.getClassName()).get(i).close();
+	            						Plugin.openedFramesMap.get(plugin.getClassName()).get(0).close();
 	            					 }
 	            				 }
             				 }
