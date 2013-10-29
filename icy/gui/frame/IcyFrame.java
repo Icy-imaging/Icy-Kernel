@@ -201,7 +201,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     SwitchStateAction switchStateAction;
     boolean switchStateItemVisible;
     IcyFrameState previousState;
-    String createByPluginClass = null;
+    
     public IcyFrame()
     {
         this("", false, true, false, false, true);
@@ -295,7 +295,7 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
                 
                 //get the thread name and try to match a plugin
                 if(PluginLoader.getPlugin(Thread.currentThread().getName()) !=null){
-                	createByPluginClass = Thread.currentThread().getName();
+                	final String createByPluginClass = Thread.currentThread().getName();
                 	if(Plugin.openedFramesMap.containsKey(createByPluginClass)){
                 		synchronized (Plugin.openedFramesMap.get(createByPluginClass))
                 		{
@@ -309,7 +309,26 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
 	                		fl.add(IcyFrame.this);
 	                		Plugin.openedFramesMap.put(createByPluginClass, fl);
                 		}
-                	}	 
+                	}
+                	IcyFrame.this.addFrameListener(new IcyFrameAdapter()
+                    {
+                        // called when frame is closed
+                        @Override
+                        public void icyFrameClosed(IcyFrameEvent e)
+                        {
+                            if (createByPluginClass != null){
+                           	 if(Plugin.openedFramesMap.containsKey(createByPluginClass)){
+                            		synchronized (Plugin.openedFramesMap.get(createByPluginClass))
+                            		{
+                            			Plugin.openedFramesMap.get(createByPluginClass).remove(IcyFrame.this);
+                            		}
+                            		//remove the empty item
+                            		if(Plugin.openedFramesMap.get(createByPluginClass).size()<=0)
+                            			Plugin.openedFramesMap.remove(createByPluginClass);
+                            	}
+                           }
+                        }
+                    });
                 }
                 
                 // register to the list
@@ -2513,17 +2532,6 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         synchronized (frames)
         {
             frames.remove(this);
-        }
-        if (createByPluginClass != null){
-        	 if(Plugin.openedFramesMap.containsKey(createByPluginClass)){
-         		synchronized (Plugin.openedFramesMap.get(createByPluginClass))
-         		{
-         			Plugin.openedFramesMap.get(createByPluginClass).remove(IcyFrame.this);
-         		}
-         		//remove the empty item
-         		if(Plugin.openedFramesMap.get(createByPluginClass).size()<=0)
-         			Plugin.openedFramesMap.remove(createByPluginClass);
-         	}
         }
        
         // release some stuff else we have cycling reference

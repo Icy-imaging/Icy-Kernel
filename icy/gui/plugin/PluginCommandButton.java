@@ -184,16 +184,16 @@ public class PluginCommandButton
             			 @Override
                          public void actionPerformed(ActionEvent e)
                          {
-            				 
-            				 while(true){
-            					 if(Plugin.openedFramesMap.containsKey(plugin.getClassName())){
-            						 synchronized (Plugin.openedFramesMap.get(plugin.getClassName()))
+            				 if(Plugin.openedFramesMap.containsKey(plugin.getClassName()))
+            				 {
+            					 synchronized (Plugin.openedFramesMap.get(plugin.getClassName()))
+            					 {
+            						 for(int i=0;i<Plugin.openedFramesMap.get(plugin.getClassName()).size();i++)
             						 {
-            							 Plugin.openedFramesMap.get(plugin.getClassName()).get(0).close();
-            						 }
-            					 }	
-            					 else
-            						 break;
+	            					 
+	            						Plugin.openedFramesMap.get(plugin.getClassName()).get(i).close();
+	            					 }
+	            				 }
             				 }
                          }
             		});
