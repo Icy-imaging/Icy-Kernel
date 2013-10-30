@@ -39,7 +39,7 @@ import plugins.kernel.roi.roi3d.ROI3DArea;
  */
 public class ROI4DArea extends ROI4DStack<ROI3DArea>
 {
-    protected ROI4DArea()
+    public ROI4DArea()
     {
         super(ROI3DArea.class);
 

@@ -38,7 +38,7 @@ import plugins.kernel.roi.roi4d.ROI4DArea;
  */
 public class ROI5DArea extends ROI5DStack<ROI4DArea>
 {
-    protected ROI5DArea()
+    public ROI5DArea()
     {
         super(ROI4DArea.class);
 

@@ -146,7 +146,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         }
     }
 
-    protected ROI3DArea()
+    public ROI3DArea()
     {
         super(ROI2DArea.class);
 
