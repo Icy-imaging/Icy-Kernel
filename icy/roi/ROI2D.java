@@ -182,7 +182,10 @@ public abstract class ROI2D extends ROI
                 // not selected --> exclusive ROI selection
                 if (!isSelected())
                 {
-                    canvas.getSequence().setSelectedROI(ROI2D.this);
+                    // exclusive selection can fail if we use embedded ROI (as ROIStack)
+                    if (!canvas.getSequence().setSelectedROI(ROI2D.this))
+                        ROI2D.this.setSelected(true);
+
                     return true;
                 }
             }

@@ -21,6 +21,8 @@ package plugins.kernel.roi.roi4d;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvas3D;
+import icy.painter.OverlayEvent;
+import icy.painter.OverlayListener;
 import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.roi.ROI3D;
@@ -42,6 +44,7 @@ import java.awt.event.MouseWheelEvent;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.concurrent.Semaphore;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -56,7 +59,7 @@ import org.w3c.dom.Node;
  * @param <R>
  *        the type of 3D ROI for each slice of this 4D ROI
  */
-public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, Iterable<R>
+public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, OverlayListener, Iterable<R>
 {
     public static final String PROPERTY_USECHILDCOLOR = "useChildColor";
 
@@ -64,6 +67,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
 
     protected final Class<R> roiClass;
     protected boolean useChildColor;
+    protected Semaphore modifyingSlice;
 
     /**
      * Creates a new 4D ROI based on the given 3D ROI type.
@@ -74,6 +78,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
 
         this.roiClass = roiClass;
         useChildColor = false;
+        modifyingSlice = new Semaphore(1);
     }
 
     @Override
@@ -133,8 +138,16 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
     {
         final ROI3D slice = getSlice(t);
 
-        if (slice != null)
-            slice.setColor(value);
+        modifyingSlice.acquireUninterruptibly();
+        try
+        {
+            if (slice != null)
+                slice.setColor(value);
+        }
+        finally
+        {
+            modifyingSlice.release();
+        }
     }
 
     @Override
@@ -147,8 +160,16 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
 
             if (!getUseChildColor())
             {
-                for (R slice : slices.values())
-                    slice.setColor(value);
+                modifyingSlice.acquireUninterruptibly();
+                try
+                {
+                    for (R slice : slices.values())
+                        slice.setColor(value);
+                }
+                finally
+                {
+                    modifyingSlice.release();
+                }
             }
         }
         finally
@@ -165,8 +186,16 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
         {
             super.setOpacity(value);
 
-            for (R slice : slices.values())
-                slice.setOpacity(value);
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.setOpacity(value);
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
         }
         finally
         {
@@ -182,8 +211,16 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
         {
             super.setStroke(value);
 
-            for (R slice : slices.values())
-                slice.setStroke(value);
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.setStroke(value);
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
         }
         finally
         {
@@ -199,8 +236,16 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
         {
             super.setCreating(value);
 
-            for (R slice : slices.values())
-                slice.setCreating(value);
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.setCreating(value);
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
         }
         finally
         {
@@ -216,8 +261,16 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
         {
             super.setReadOnly(value);
 
-            for (R slice : slices.values())
-                slice.setReadOnly(value);
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.setReadOnly(value);
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
         }
         finally
         {
@@ -233,8 +286,16 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
         {
             super.setFocused(value);
 
-            for (R slice : slices.values())
-                slice.setFocused(value);
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.setFocused(value);
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
         }
         finally
         {
@@ -250,8 +311,16 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
         {
             super.setSelected(value);
 
-            for (R slice : slices.values())
-                slice.setSelected(value);
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.setSelected(value);
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
         }
         finally
         {
@@ -267,8 +336,16 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
         {
             super.setC(value);
 
-            for (R slice : slices.values())
-                slice.setC(value);
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.setC(value);
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
         }
         finally
         {
@@ -323,8 +400,9 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
         // set T and C position
         roi3d.setT(t);
         roi3d.setC(getC());
-        // listen events from this ROI
+        // listen events from this ROI and its overlay
         roi3d.addListener(this);
+        roi3d.getOverlay().addOverlayListener(this);
 
         slices.put(Integer.valueOf(t), roi3d);
 
@@ -340,8 +418,12 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
         // remove the current slice (if any)
         final R result = slices.remove(Integer.valueOf(t));
 
+        // remove listeners
         if (result != null)
+        {
             result.removeListener(this);
+            result.getOverlay().removeOverlayListener(this);
+        }
 
         // notify ROI changed
         roiChanged();
@@ -355,7 +437,10 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
     protected void clear()
     {
         for (R slice : slices.values())
+        {
             slice.removeListener(this);
+            slice.getOverlay().removeOverlayListener(this);
+        }
 
         slices.clear();
     }
@@ -365,6 +450,9 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
      */
     protected void sliceChanged(ROIEvent event)
     {
+        if (modifyingSlice.availablePermits() <= 0)
+            return;
+
         final ROI source = event.getSource();
 
         switch (event.getType())
@@ -388,6 +476,25 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
                     setReadOnly(source.isReadOnly());
                 if ((propertyName == null) || propertyName.equals(PROPERTY_CREATING))
                     setCreating(source.isCreating());
+                break;
+        }
+    }
+
+    /**
+     * Called when a ROI slice overlay has changed.
+     */
+    protected void sliceOverlayChanged(OverlayEvent event)
+    {
+        switch (event.getType())
+        {
+            case PAINTER_CHANGED:
+                // forward the event to ROI stack overlay
+                getOverlay().painterChanged();
+                break;
+
+            case PROPERTY_CHANGED:
+                // forward the event to ROI stack overlay
+                getOverlay().propertyChanged(event.getPropertyName());
                 break;
         }
     }
@@ -545,6 +652,15 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, I
     {
         // propagate children change event
         sliceChanged(event);
+    }
+    
+
+    // called when one of the slice ROI overlay changed
+    @Override
+    public void overlayChanged(OverlayEvent event)
+    {
+        // propagate children overlay change event
+        sliceOverlayChanged(event);
     }
 
     @Override

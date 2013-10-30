@@ -764,6 +764,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                     }
                 }
             }
+
+            // this allow to keep the backward compatibility
+            super.keyPressed(e, imagePoint, canvas);
         }
 
         @Override
@@ -775,6 +778,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 if (imagePoint != null)
                     setMousePos(imagePoint);
             }
+
+            // this allow to keep the backward compatibility
+            super.mouseDrag(e, imagePoint, canvas);
         }
 
         @Override
@@ -786,6 +792,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 if (imagePoint != null)
                     setMousePos(imagePoint);
             }
+
+            // this allow to keep the backward compatibility
+            super.mouseMove(e, imagePoint, canvas);
         }
 
         @Override
@@ -1223,7 +1232,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         if (value)
         {
             // only one ROI focused per sequence
-            final ArrayList<Sequence> attachedSeqs = Icy.getMainInterface().getSequencesContaining(this);
+            final List<Sequence> attachedSeqs = Icy.getMainInterface().getSequencesContaining(this);
 
             for (Sequence seq : attachedSeqs)
                 done |= seq.setFocusedROI(this);
