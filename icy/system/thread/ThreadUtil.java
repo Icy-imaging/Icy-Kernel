@@ -180,25 +180,31 @@ public class ThreadUtil
      * Invoke the specified <code>Runnable</code> on the AWT event dispatching thread.<br>
      * If we already are on the EDT the <code>Runnable</code> is executed immediately else it will
      * be executed later.
+     * 
+     * @see #invokeLater(Runnable, boolean)
      */
     public static void invokeLater(Runnable runnable)
     {
-        final Runnable r = new CaughtRunnable(runnable);
-
-        if (isEventDispatchThread())
-            r.run();
-        else
-            SwingUtilities.invokeLater(r);
+        invokeLater(runnable, false);
     }
 
     /**
-     * @deprecated Use {@link #invokeLater(Runnable)} instead.
+     * Invoke the specified <code>Runnable</code> on the AWT event dispatching thread.<br>
+     * Depending the <code>forceLater</code> parameter the <code>Runnable</code> can be executed
+     * immediately if we are on the EDT.
+     * 
+     * @param forceLater
+     *        If <code>true</code> the <code>Runnable</code> is forced to execute later even if we
+     *        are on the Swing EDT.
      */
-    @SuppressWarnings("unused")
-    @Deprecated
     public static void invokeLater(Runnable runnable, boolean forceLater)
     {
-        invokeLater(runnable);
+        final Runnable r = new CaughtRunnable(runnable);
+
+        if ((!forceLater) && isEventDispatchThread())
+            r.run();
+        else
+            SwingUtilities.invokeLater(r);
     }
 
     /**
@@ -295,18 +301,23 @@ public class ThreadUtil
             return callable.call();
 
         final FutureTask<T> task = new FutureTask<T>(callable);
-        SwingUtilities.invokeAndWait(task);
+        invokeNow(task);
         return task.get();
     }
 
     /**
      * Invoke "runnable" on the AWT event dispatching thread.<br>
-     * If you are in the AWT event dispatching thread the runnable is executed immediately.
+     * Depending the <code>forceLater</code> parameter the <code>Callable</code> can be executed
+     * immediately if we are on the EDT.
+     * 
+     * @param forceLater
+     *        If <code>true</code> the <code>Callable</code> is forced to execute later even if we
+     *        are on the Swing EDT.
      */
-    public static <T> Future<T> invokeLater(Callable<T> callable) throws Exception
+    public static <T> Future<T> invokeLater(Callable<T> callable, boolean forceLater) throws Exception
     {
         final FutureTask<T> task = new FutureTask<T>(callable);
-        SwingUtilities.invokeLater(task);
+        invokeLater(task, forceLater);
         return task;
     }
 

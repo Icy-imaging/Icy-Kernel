@@ -184,16 +184,22 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         {
             final String message = t.getMessage() + ((t.getCause() == null) ? "" : "\n" + t.getCause());
 
-            if ((current - lastErrorDialog) > ERROR_ANTISPAM_TIME)
-            {
-                // handle HandledException differently
-                MessageDialog.showDialog(message, MessageDialog.ERROR_MESSAGE);
-                // update last error dialog time
-                lastErrorDialog = System.currentTimeMillis();
-            }
-            else
-                // spam --> write it in the console output instead
-                System.err.println(message + " (spam protection)");
+            // handle HandledException differently
+            MessageDialog.showDialog(message, MessageDialog.ERROR_MESSAGE);
+            // update last error dialog time
+            lastErrorDialog = System.currentTimeMillis();
+
+            // don't need the antispam for the IcyHandledException
+            // if ((current - lastErrorDialog) > ERROR_ANTISPAM_TIME)
+            // {
+            // // handle HandledException differently
+            // MessageDialog.showDialog(message, MessageDialog.ERROR_MESSAGE);
+            // // update last error dialog time
+            // lastErrorDialog = System.currentTimeMillis();
+            // }
+            // else
+            // // spam --> write it in the console output instead
+            // System.err.println(message + " (spam protection)");
         }
         else
         {

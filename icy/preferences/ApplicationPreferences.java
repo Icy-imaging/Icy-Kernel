@@ -18,6 +18,7 @@
  */
 package icy.preferences;
 
+import icy.common.Version;
 import icy.math.MathUtil;
 import icy.network.NetworkUtil;
 import icy.system.SystemUtil;
@@ -41,6 +42,7 @@ public class ApplicationPreferences
     public static final String ID_EXTRA_VMPARAMS = "extraVMParams";
     public static final String ID_OS_EXTRA_VMPARAMS = "osExtraVMParams";
     public static final String ID_APP_PARAMS = "appParams";
+    public static final String ID_VERSION = "version";
 
     private final static String DEFAULT_UPDATE_REPOSITORY_BASE = NetworkUtil.WEBSITE_URL + "update/";
     private final static String DEFAULT_UPDATE_REPOSITORY_FILE = "update.php";
@@ -192,6 +194,14 @@ public class ApplicationPreferences
     }
 
     /**
+     * Get the stored version number (used to detect new installed version).
+     */
+    public static Version getVersion()
+    {
+        return new Version(preferences.get(ID_VERSION, "1.0.0.0"));
+    }
+
+    /**
      * Set max memory (in MB)
      */
     public static void setMaxMemoryMB(int value)
@@ -230,4 +240,13 @@ public class ApplicationPreferences
     {
         preferences.put(ID_APP_PARAMS, value);
     }
+
+    /**
+     * Set the stored version number (used to detect new installed version)
+     */
+    public static void setVersion(Version value)
+    {
+        preferences.put(ID_VERSION, value.toString());
+    }
+
 }

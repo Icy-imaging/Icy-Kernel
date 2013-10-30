@@ -33,6 +33,7 @@ import org.w3c.dom.Node;
 
 public class Updater
 {
+    public static final String ICYKERNEL_NAME = "ICY Kernel";
     public static final String ICYUPDATER_NAME = "ICY Updater";
 
     public static final String UPDATE_DIRECTORY = "update";

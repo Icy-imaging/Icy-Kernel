@@ -31,18 +31,23 @@ import icy.gui.inspector.InspectorPanel;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.MainRibbon;
 import icy.gui.menu.search.SearchBar;
+import icy.gui.system.NewVersionFrame;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.WindowPositionSaver;
 import icy.gui.viewer.Viewer;
 import icy.main.Icy;
 import icy.math.HungarianAlgorithm;
+import icy.preferences.ApplicationPreferences;
 import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyApplicationIcon;
 import icy.system.FileDrop;
 import icy.system.FileDrop.FileDropListener;
 import icy.system.SystemUtil;
+import icy.system.thread.ThreadUtil;
 import icy.type.collection.CollectionUtil;
+import icy.update.ElementDescriptor;
+import icy.update.Updater;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -308,6 +313,46 @@ public class MainFrame extends JRibbonFrame
 
         // initialize now some stuff that need main frame to be initialized
         mainRibbon.init();
+
+        // not the same version ?
+        if (!ApplicationPreferences.getVersion().equals(Icy.version))
+        {
+            ThreadUtil.bgRun(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    ElementDescriptor icyElement = null;
+
+                    for (ElementDescriptor element : Updater.getOnlineElements())
+                    {
+                        if (element.getName().equals(Updater.ICYKERNEL_NAME))
+                        {
+                            icyElement = element;
+                            break;
+                        }
+                    }
+
+                    // show the new version frame
+                    if (icyElement != null)
+                    {
+                        final String text = icyElement.getChangelog();
+
+                        ThreadUtil.invokeNow(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                new NewVersionFrame(text);
+                            }
+                        });
+                    }
+
+                    // update version info
+                    ApplicationPreferences.setVersion(Icy.version);
+                }
+            });
+        }
 
         setVisible(true);
 

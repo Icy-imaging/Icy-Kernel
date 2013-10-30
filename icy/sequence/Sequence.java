@@ -1349,7 +1349,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Set selected ROI (unselected all others)
      */
-    public void setSelectedROIs(List<ROI> selected)
+    public void setSelectedROIs(List<? extends ROI> selected)
     {
         final List<ROI> oldSelected = getSelectedROIs();
 
