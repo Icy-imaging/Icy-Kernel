@@ -129,20 +129,6 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
 
         if (EventUtil.isRightMouseButton(e) || (EventUtil.isLeftMouseButton(e) && EventUtil.isShiftDown(e)))
         {
-            // rotation mode
-            cam.Azimuth(deltaX);
-            cam.Elevation(-deltaY);
-            cam.OrthogonalizeViewUp();
-            resetCameraClippingRange();
-
-            if (LightFollowCamera == 1)
-            {
-                lgt.SetPosition(cam.GetPosition());
-                lgt.SetFocalPoint(cam.GetFocalPoint());
-            }
-        }
-        else if (EventUtil.isLeftMouseButton(e))
-        {
             // translation mode
             double FPoint[];
             double PPoint[];
@@ -181,6 +167,20 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
             cam.SetPosition((FPoint[0] - RPoint[0]) / 2.0 + PPoint[0], (FPoint[1] - RPoint[1]) / 2.0 + PPoint[1],
                     (FPoint[2] - RPoint[2]) / 2.0 + PPoint[2]);
             resetCameraClippingRange();
+        }
+        else if (EventUtil.isLeftMouseButton(e))
+        {
+            // rotation mode
+            cam.Azimuth(deltaX);
+            cam.Elevation(-deltaY);
+            cam.OrthogonalizeViewUp();
+            resetCameraClippingRange();
+
+            if (LightFollowCamera == 1)
+            {
+                lgt.SetPosition(cam.GetPosition());
+                lgt.SetFocalPoint(cam.GetFocalPoint());
+            }
         }
         else
         {
