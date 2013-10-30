@@ -47,6 +47,7 @@ import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.type.collection.CollectionUtil;
 import icy.update.ElementDescriptor;
+import icy.update.IcyUpdater;
 import icy.update.Updater;
 
 import java.awt.BorderLayout;
@@ -324,12 +325,22 @@ public class MainFrame extends JRibbonFrame
                 {
                     ElementDescriptor icyElement = null;
 
-                    for (ElementDescriptor element : Updater.getOnlineElements())
+                    final String params = IcyUpdater.PARAM_ARCH + "=" + SystemUtil.getOSArchIdString() + "&"
+                            + IcyUpdater.PARAM_VERSION + "=" + Icy.version;
+
+                    // get the update.xml file
+                    if (IcyUpdater.downloadAndSaveForUpdate(ApplicationPreferences.getUpdateRepositoryBase()
+                            + ApplicationPreferences.getUpdateRepositoryFile() + "?" + params, Updater.UPDATE_NAME,
+                            null, false))
                     {
-                        if (element.getName().equals(Updater.ICYKERNEL_NAME))
+                        // retrieve the Icy Kernel element
+                        for (ElementDescriptor element : Updater.getOnlineElements())
                         {
-                            icyElement = element;
-                            break;
+                            if (element.getName().equals(Updater.ICYKERNEL_NAME))
+                            {
+                                icyElement = element;
+                                break;
+                            }
                         }
                     }
 
