@@ -21,6 +21,7 @@ package icy.plugin;
 import icy.main.Icy;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginImageAnalysis;
+import icy.plugin.interface_.PluginScriptEngine;
 import icy.plugin.interface_.PluginStartAsThread;
 import icy.plugin.interface_.PluginThreaded;
 import icy.system.IcyExceptionHandler;
@@ -81,8 +82,15 @@ public class PluginLauncher implements Runnable
     	Thread.currentThread().setName(descriptor.getClassName());
         try
         {
+        	if(descriptor.isScriptPlugin())
+        	{
+	            if(plugin instanceof PluginScriptEngine && descriptor.getStartupScript()!=null)
+	            {
+	            	((PluginScriptEngine)plugin).evalFile(descriptor.getStartupScript());
+	            }
+        	}
             // keep backward compatibility
-            if (plugin instanceof PluginImageAnalysis)
+            else if (plugin instanceof PluginImageAnalysis)
                 ((PluginImageAnalysis) plugin).compute();
         }
         catch (Throwable t)

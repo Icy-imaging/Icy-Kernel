@@ -35,6 +35,7 @@ import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Image;
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -101,6 +102,7 @@ public class PluginDescriptor implements XMLPersistent
     static final String ID_URL = "url";
     static final String ID_NAME = "name";
     static final String ID_REQUIRED_KERNEL_VERSION = "required_kernel_version";
+    static final String ID_SCRIPT_ENGINE_CLASSNAME = "script_engine_classname";
 
     public static class PluginIdent implements XMLPersistent
     {
@@ -409,7 +411,10 @@ public class PluginDescriptor implements XMLPersistent
     private String email;
     private String desc;
     private String changesLog;
+    private String script_engine_classname;
+    private File startupScript;
 
+    private boolean scriptPlugin;
     private boolean enabled;
     private boolean descriptorLoaded;
     private boolean imagesLoaded;
@@ -622,14 +627,61 @@ public class PluginDescriptor implements XMLPersistent
         email = "";
         desc = "";
         changesLog = "";
+        script_engine_classname = "";
+        startupScript = null;
 
         required = new ArrayList<PluginIdent>();
         repository = null;
 
         // default
+        scriptPlugin = false;
         enabled = true;
         descriptorLoaded = true;
         imagesLoaded = true;
+    }
+    
+    public PluginDescriptor(File pluginRootDirectory)
+    {
+    	this();
+    	//search the pluginRoot for valid xml file and startupScript
+		for(File file: FileUtil.getFiles(pluginRootDirectory, null, false, false, false))
+		{
+    		if(FileUtil.getFileExtension(file.getName(), true).equals(XMLUtil.FILE_DOT_EXTENSION))
+    		{
+    			  // retrieve document
+    	        final Document document = XMLUtil.loadDocument(file);
+
+    	        if (document != null)
+    	        {
+    	            // load xml
+    	            if (!loadFromXML(document.getDocumentElement()))
+    	            {
+    	                System.err.println("Can't find valid XML file from '" + xmlUrl + "' for plugin class '"
+    	                        + ident.getClassName() + "'");
+    	                descriptorLoaded = false;
+    	            }
+    	            else
+    	            	descriptorLoaded = true;
+    	        }
+    			
+    		}
+    		else if(FileUtil.getFileName(file.getPath(),false).equals("__init__"))
+        	{
+    			//if more than one init file found, then give the js file the priority
+    			if(startupScript == null || (startupScript != null && FileUtil.getFileExtension(startupScript.getName(), true).equals(".js")))
+    				startupScript = file;
+        	}
+		}
+    	
+		if(startupScript != null)
+		{
+			//set js as default engine
+			if(StringUtil.isEmpty(script_engine_classname) && FileUtil.getFileExtension(startupScript.getName(), true).equals(".js"))
+				script_engine_classname = "plugin.kernel.scriptengine.JavascriptEngine";
+		}
+		if(startupScript != null && !StringUtil.isEmpty(script_engine_classname))
+			scriptPlugin = true;
+		  
     }
 
     /**
@@ -904,7 +956,8 @@ public class PluginDescriptor implements XMLPersistent
         email = XMLUtil.getElementValue(node, ID_EMAIL, "");
         desc = XMLUtil.getElementValue(node, ID_DESCRIPTION, "");
         changesLog = XMLUtil.getElementValue(node, ID_CHANGELOG, "");
-
+        script_engine_classname = XMLUtil.getElementValue(node, ID_SCRIPT_ENGINE_CLASSNAME, "");
+        
         final Node nodeDependances = XMLUtil.getElement(node, ID_DEPENDENCIES);
         if (nodeDependances != null)
         {
@@ -946,7 +999,7 @@ public class PluginDescriptor implements XMLPersistent
         XMLUtil.setElementValue(node, ID_EMAIL, email);
         XMLUtil.setElementValue(node, ID_DESCRIPTION, desc);
         XMLUtil.setElementValue(node, ID_CHANGELOG, changesLog);
-
+        XMLUtil.setElementValue(node, ID_SCRIPT_ENGINE_CLASSNAME, script_engine_classname);
         // synchronized (dateFormatter)
         // {
         // XMLUtil.addChildElement(root, ID_INSTALL_DATE, dateFormatter.format(installed));
@@ -995,7 +1048,7 @@ public class PluginDescriptor implements XMLPersistent
     {
         return ident.getPackageName();
     }
-
+ 
     /**
      * return the minimum package name (remove "icy" or/and "plugin" header)<br>
      */
@@ -1029,6 +1082,14 @@ public class PluginDescriptor implements XMLPersistent
     public Class<? extends Plugin> getPluginClass()
     {
         return pluginClass;
+    }
+    
+    /**
+     * set the pluginClass
+     */
+    public void setPluginClass(Class<? extends Plugin> clazz)
+    {
+        pluginClass = clazz;
     }
 
     /**
@@ -1309,7 +1370,22 @@ public class PluginDescriptor implements XMLPersistent
     {
         return changesLog;
     }
-
+    
+    /**
+     * @return the startupScript
+     */
+    public File getStartupScript()
+    {
+        return startupScript;
+    }
+    /**
+     * @return the script engine classname
+     */
+    public String getScriptEngineClassname()
+    {
+        return script_engine_classname;
+    }
+    
     /**
      * @return the requiredKernelVersion
      */
@@ -1364,6 +1440,14 @@ public class PluginDescriptor implements XMLPersistent
         return repository;
     }
 
+    /**
+     * @return the scriptPlugin
+     */
+    public boolean isScriptPlugin()
+    {
+        return scriptPlugin;
+    }
+    
     /**
      * @return the enabled
      */
