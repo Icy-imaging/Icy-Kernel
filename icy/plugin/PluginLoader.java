@@ -331,6 +331,7 @@ public class PluginLoader
             }
         }
         
+        //load plugin write in script
 	    File pluginsDir = new File(PLUGIN_PATH);
 	    for(File anyfile:FileUtil.getFiles(pluginsDir, null, true, false, true))
 	    {
