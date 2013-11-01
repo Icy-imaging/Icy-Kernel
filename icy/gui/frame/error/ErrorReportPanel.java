@@ -1,5 +1,6 @@
 package icy.gui.frame.error;
 
+import icy.gui.component.IcyTextField;
 import icy.system.IcyExceptionHandler;
 import icy.util.StringUtil;
 
@@ -17,7 +18,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
@@ -36,7 +36,7 @@ public class ErrorReportPanel extends JPanel
     // GUI
     JTextPane errorMessageTextPane;
     JTextPane commentTextPane;
-    JTextField emailTextField;
+    IcyTextField emailTextField;
     JButton reportButton;
     JButton closeButton;
     JLabel label;
@@ -173,7 +173,7 @@ public class ErrorReportPanel extends JPanel
         gbl_emailPanel.rowWeights = new double[] {0.0, Double.MIN_VALUE};
         emailPanel.setLayout(gbl_emailPanel);
 
-        JLabel lblEmail = new JLabel("Email:");
+        JLabel lblEmail = new JLabel("Your email");
         GridBagConstraints gbc_lblEmail = new GridBagConstraints();
         gbc_lblEmail.insets = new Insets(0, 0, 0, 5);
         gbc_lblEmail.anchor = GridBagConstraints.WEST;
@@ -181,7 +181,8 @@ public class ErrorReportPanel extends JPanel
         gbc_lblEmail.gridy = 0;
         emailPanel.add(lblEmail, gbc_lblEmail);
 
-        emailTextField = new JTextField();
+        emailTextField = new IcyTextField();
+        emailTextField.setToolTipText("You can enter your email so the developer can contact you if you wish");
         GridBagConstraints gbc_emailTextField = new GridBagConstraints();
         gbc_emailTextField.fill = GridBagConstraints.HORIZONTAL;
         gbc_emailTextField.gridx = 1;
@@ -204,7 +205,7 @@ public class ErrorReportPanel extends JPanel
      */
     public String getReportMessage() throws BadLocationException
     {
-        final String email = "";
+        final String email = emailTextField.getText();
         final Document commentDoc = commentTextPane.getDocument();
         final Document errorDoc = errorMessageTextPane.getDocument();
         String comment = commentDoc.getText(0, commentDoc.getLength());

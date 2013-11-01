@@ -18,6 +18,7 @@
  */
 package icy.gui.sequence;
 
+import icy.gui.component.IcyTextField;
 import icy.gui.component.button.IcyButton;
 import icy.gui.frame.GenericFrame;
 import icy.gui.main.ActiveSequenceListener;
@@ -41,7 +42,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 /**
  * @author Stephane
@@ -66,8 +66,8 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
 
     final SingleProcessor processor;
     private JLabel pathLabel;
-    private JTextField pathField;
-    private JTextField nameField;
+    private IcyTextField pathField;
+    private IcyTextField nameField;
 
     public SequenceInfosPanel()
     {
@@ -134,7 +134,7 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
         gbc_lbl_name.gridy = 0;
         add(lbl_name, gbc_lbl_name);
 
-        nameField = new JTextField();
+        nameField = new IcyTextField();
         nameField.setOpaque(false);
         nameField.setBorder(null);
         nameField.setEditable(false);
@@ -156,7 +156,7 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
         gbc_pathLabel.gridy = 1;
         add(pathLabel, gbc_pathLabel);
 
-        pathField = new JTextField();
+        pathField = new IcyTextField();
         pathField.setOpaque(false);
         pathField.setBorder(null);
         pathField.setEditable(false);

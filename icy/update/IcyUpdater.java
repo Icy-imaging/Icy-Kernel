@@ -81,8 +81,8 @@ public class IcyUpdater
 
     private final static int ANNOUNCE_SHOWTIME = 15;
 
-    private final static String PARAM_ARCH = "arch";
-    private final static String PARAM_VERSION = "version";
+    public final static String PARAM_ARCH = "arch";
+    public final static String PARAM_VERSION = "version";
 
     static boolean wantUpdate = false;
     static boolean updating = false;
@@ -406,7 +406,7 @@ public class IcyUpdater
         return true;
     }
 
-    private static boolean downloadAndSaveForUpdate(String downloadPath, String savePath, ProgressFrame frame,
+    public static boolean downloadAndSaveForUpdate(String downloadPath, String savePath, ProgressFrame frame,
             boolean displayError)
     {
         // get data

@@ -384,8 +384,7 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            new SequenceCropper();
-            return true;
+            return SequenceCropper.doRoiCrop();
         }
 
         @Override

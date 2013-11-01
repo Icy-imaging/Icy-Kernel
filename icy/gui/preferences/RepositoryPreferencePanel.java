@@ -19,6 +19,7 @@
 package icy.gui.preferences;
 
 import icy.gui.component.IcyTable;
+import icy.gui.component.IcyTextField;
 import icy.gui.dialog.ActionDialog;
 import icy.gui.util.ComponentUtil;
 import icy.plugin.PluginRepositoryLoader;
@@ -42,7 +43,6 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -65,10 +65,10 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
         private static final long serialVersionUID = -6474402466638414723L;
 
         // GUI
-        final JTextField nameField;
-        final JTextField locationField;
+        final IcyTextField nameField;
+        final IcyTextField locationField;
         final JCheckBox authCheckBox;
-        final JTextField loginField;
+        final IcyTextField loginField;
         final JPasswordField passwordField;
 
         final JLabel nameLabel;
@@ -89,13 +89,13 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
 
             canceled = true;
 
-            nameField = new JTextField(reposInf.getName());
+            nameField = new IcyTextField(reposInf.getName());
             ComponentUtil.setFixedHeight(nameField, 24);
-            locationField = new JTextField(reposInf.getLocation());
+            locationField = new IcyTextField(reposInf.getLocation());
             ComponentUtil.setFixedHeight(locationField, 24);
             authCheckBox = new JCheckBox("", reposInf.isAuthenticationEnabled());
             ComponentUtil.setFixedHeight(authCheckBox, 24);
-            loginField = new JTextField(reposInf.getLogin());
+            loginField = new IcyTextField(reposInf.getLogin());
             ComponentUtil.setFixedHeight(loginField, 24);
             passwordField = new JPasswordField(reposInf.getPassword());
             ComponentUtil.setFixedHeight(passwordField, 24);

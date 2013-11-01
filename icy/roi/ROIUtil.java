@@ -36,7 +36,6 @@ import java.util.List;
  */
 public class ROIUtil
 {
-
     /**
      * Computes and returns the standard deviation for the specified sequence region.
      * 
@@ -346,7 +345,7 @@ public class ROIUtil
      *        {@link BooleanOperator} to apply.
      * @return {@link ROI} representing the result of the merge operation.
      */
-    public static ROI merge(List<ROI> rois, BooleanOperator operator)
+    public static ROI merge(List<? extends ROI> rois, BooleanOperator operator)
     {
         if (rois.size() == 0)
             return null;
@@ -377,7 +376,7 @@ public class ROIUtil
     /**
      * Builds and returns a ROI corresponding to the union of the specified ROI list.
      */
-    public static ROI getUnion(List<ROI> rois)
+    public static ROI getUnion(List<? extends ROI> rois)
     {
         return merge(rois, BooleanOperator.OR);
     }
@@ -385,7 +384,7 @@ public class ROIUtil
     /**
      * Builds and returns a ROI corresponding to the exclusive union of the specified ROI list.
      */
-    public static ROI getExclusiveUnion(List<ROI> rois)
+    public static ROI getExclusiveUnion(List<? extends ROI> rois)
     {
         return merge(rois, BooleanOperator.XOR);
     }
@@ -393,7 +392,7 @@ public class ROIUtil
     /**
      * Builds and returns a ROI corresponding to the intersection of the specified ROI list.
      */
-    public static ROI getIntersection(List<ROI> rois)
+    public static ROI getIntersection(List<? extends ROI> rois)
     {
         return merge(rois, BooleanOperator.AND);
     }

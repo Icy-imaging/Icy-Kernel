@@ -23,6 +23,7 @@ import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The SearchResultProducer create {@link SearchResult} objects from given search keywords.<br>
@@ -70,7 +71,7 @@ public abstract class SearchResultProducer implements Comparable<SearchResultPro
     }
 
     /** Result list */
-    protected ArrayList<SearchResult> results;
+    protected List<SearchResult> results;
 
     /** Internals */
     protected final SingleProcessor processor;
@@ -102,7 +103,7 @@ public abstract class SearchResultProducer implements Comparable<SearchResultPro
     }
 
     /** Returns the result list */
-    public ArrayList<SearchResult> getResults()
+    public List<SearchResult> getResults()
     {
         return results;
     }

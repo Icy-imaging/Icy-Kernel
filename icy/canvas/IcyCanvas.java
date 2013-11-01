@@ -679,9 +679,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * canvas.<br/>
      * The list is sorted on the layer priority.
      */
-    public List<Layer> getVisibleLayers()
+    public ArrayList<Layer> getVisibleLayers()
     {
-        return getVisibleLayers(true);
+        return (ArrayList<Layer>) getVisibleLayers(true);
     }
 
     /**

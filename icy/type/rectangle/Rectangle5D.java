@@ -611,6 +611,31 @@ public abstract class Rectangle5D implements Cloneable
     }
 
     /**
+     * Returns <code>true</code> if the X dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteX();
+
+    /**
+     * Returns <code>true</code> if the Y dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteY();
+
+    /**
+     * Returns <code>true</code> if the Z dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteZ();
+
+    /**
+     * Returns <code>true</code> if the T dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteT();
+
+    /**
+     * Returns <code>true</code> if the C dimension should be considered as infinite.
+     */
+    public abstract boolean isInfiniteC();
+
+    /**
      * Tests if the specified coordinates are inside the boundary of the <code>Rectangle5D</code>.
      * 
      * @param x
@@ -1076,6 +1101,36 @@ public abstract class Rectangle5D implements Cloneable
         }
 
         @Override
+        public boolean isInfiniteX()
+        {
+            return (getX() == java.lang.Double.NEGATIVE_INFINITY) && (getSizeX() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteY()
+        {
+            return (getY() == java.lang.Double.NEGATIVE_INFINITY) && (getSizeY() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteZ()
+        {
+            return (getZ() == java.lang.Double.NEGATIVE_INFINITY) && (getSizeZ() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteT()
+        {
+            return (getT() == java.lang.Double.NEGATIVE_INFINITY) && (getSizeT() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteC()
+        {
+            return (getC() == java.lang.Double.NEGATIVE_INFINITY) && (getSizeC() == java.lang.Double.POSITIVE_INFINITY);
+        }
+
+        @Override
         public Rectangle5D createIntersection(Rectangle5D r)
         {
             final Rectangle5D.Double result = new Rectangle5D.Double();
@@ -1290,6 +1345,36 @@ public abstract class Rectangle5D implements Cloneable
         public void setSizeC(double value)
         {
             sizeC = (float) value;
+        }
+
+        @Override
+        public boolean isInfiniteX()
+        {
+            return (getX() == java.lang.Float.NEGATIVE_INFINITY) && (getSizeX() == java.lang.Float.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteY()
+        {
+            return (getY() == java.lang.Float.NEGATIVE_INFINITY) && (getSizeY() == java.lang.Float.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteZ()
+        {
+            return (getZ() == java.lang.Float.NEGATIVE_INFINITY) && (getSizeZ() == java.lang.Float.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteT()
+        {
+            return (getT() == java.lang.Float.NEGATIVE_INFINITY) && (getSizeT() == java.lang.Float.POSITIVE_INFINITY);
+        }
+
+        @Override
+        public boolean isInfiniteC()
+        {
+            return (getC() == java.lang.Float.NEGATIVE_INFINITY) && (getSizeC() == java.lang.Float.POSITIVE_INFINITY);
         }
 
         @Override
@@ -1566,6 +1651,36 @@ public abstract class Rectangle5D implements Cloneable
         public void setSizeC(double value)
         {
             sizeC = (int) value;
+        }
+
+        @Override
+        public boolean isInfiniteX()
+        {
+            return (getX() == java.lang.Integer.MIN_VALUE) && (getSizeX() == java.lang.Integer.MAX_VALUE);
+        }
+
+        @Override
+        public boolean isInfiniteY()
+        {
+            return (getY() == java.lang.Integer.MIN_VALUE) && (getSizeY() == java.lang.Integer.MAX_VALUE);
+        }
+
+        @Override
+        public boolean isInfiniteZ()
+        {
+            return (getZ() == java.lang.Integer.MIN_VALUE) && (getSizeZ() == java.lang.Integer.MAX_VALUE);
+        }
+
+        @Override
+        public boolean isInfiniteT()
+        {
+            return (getT() == java.lang.Integer.MIN_VALUE) && (getSizeT() == java.lang.Integer.MAX_VALUE);
+        }
+
+        @Override
+        public boolean isInfiniteC()
+        {
+            return (getC() == java.lang.Integer.MIN_VALUE) && (getSizeC() == java.lang.Integer.MAX_VALUE);
         }
 
         @Override

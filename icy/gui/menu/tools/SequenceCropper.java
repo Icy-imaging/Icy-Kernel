@@ -21,14 +21,12 @@ package icy.gui.menu.tools;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.viewer.Viewer;
 import icy.main.Icy;
-import icy.roi.ROI2D;
+import icy.roi.ROI;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceUtil;
 import icy.system.thread.ThreadUtil;
 
-import java.awt.Rectangle;
-import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Helper to do crop operation on focused sequence
@@ -37,67 +35,66 @@ import java.util.ArrayList;
  */
 public class SequenceCropper
 {
-    public SequenceCropper()
+    private SequenceCropper()
     {
         super();
+    }
 
-        final Viewer v = Icy.getMainInterface().getActiveViewer();
+    public static boolean doRoiCrop()
+    {
+        final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+        if (viewer == null)
+            return false;
 
-        if ((v == null) || (v.getSequence() == null))
-            return;
+        final Sequence seq = viewer.getSequence();
+        if (seq == null)
+            return false;
 
-        final Sequence seq = v.getSequence();
-
-        ArrayList<ROI2D> rois = seq.getROI2Ds();
+        List<ROI> rois = seq.getROIs();
         int size = rois.size();
 
         if (size == 0)
         {
             MessageDialog.showDialog("There is no ROI in the current sequence.\nCrop operation need a ROI.",
                     MessageDialog.INFORMATION_MESSAGE);
-            return;
+            return false;
         }
         else if (size > 1)
         {
-            rois = seq.getSelectedROI2Ds();
+            rois = seq.getSelectedROIs();
             size = rois.size();
 
             if (size == 0)
             {
                 MessageDialog.showDialog("You need to select a ROI to do the crop operation.",
                         MessageDialog.INFORMATION_MESSAGE);
-                return;
+                return false;
             }
             else if (size > 1)
             {
                 MessageDialog.showDialog("You must have only one selected ROI to do the crop operation.",
                         MessageDialog.INFORMATION_MESSAGE);
-                return;
+                return false;
             }
         }
 
-        crop(v, rois.get(0).getBounds());
+        return doRoiCrop(viewer, rois.get(0));
     }
 
-    public static void crop(final Viewer viewer, final Rectangle rect)
+    public static boolean doRoiCrop(final Viewer viewer, final ROI roi)
     {
-        if ((viewer == null) || (viewer.getSequence() == null))
-            return;
-
-        final Sequence in = viewer.getSequence();
-
-        // get intersect rectangle
-        final Rectangle2D adjustedRect = in.getBounds().createIntersection(rect);
+        final Sequence seq = viewer.getSequence();
+        if (seq == null)
+            return false;
 
         ThreadUtil.bgRun(new Runnable()
         {
             @Override
             public void run()
             {
+
                 // create output sequence
-                final Sequence out = SequenceUtil.getSubSequence(in, (int) adjustedRect.getMinX(),
-                        (int) adjustedRect.getMinY(), 0, 0, (int) adjustedRect.getWidth(),
-                        (int) adjustedRect.getHeight(), in.getSizeZ(), in.getSizeT());
+                final Sequence out = SequenceUtil.getSubSequence(seq, roi);
 
                 ThreadUtil.invokeLater(new Runnable()
                 {
@@ -112,5 +109,7 @@ public class SequenceCropper
                 });
             }
         });
+
+        return true;
     }
 }

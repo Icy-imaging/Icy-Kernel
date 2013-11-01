@@ -406,7 +406,7 @@ public class ShapeUtil
     /**
      * Update specified path from the specified list of PathAnchor2D
      */
-    public static Path2D buildPathFromAnchors(Path2D path, ArrayList<PathAnchor2D> points)
+    public static Path2D buildPathFromAnchors(Path2D path, List<PathAnchor2D> points)
     {
         path.reset();
 
@@ -437,7 +437,7 @@ public class ShapeUtil
             }
         }
 
-        if (points.size() > 0)
+        if (points.size() > 1)
             path.closePath();
 
         return path;
@@ -446,7 +446,7 @@ public class ShapeUtil
     /**
      * Create and return a path from the specified list of PathAnchor2D
      */
-    public static Path2D getPathFromAnchors(ArrayList<PathAnchor2D> points)
+    public static Path2D getPathFromAnchors(List<PathAnchor2D> points)
     {
         return buildPathFromAnchors(new Path2D.Double(), points);
     }

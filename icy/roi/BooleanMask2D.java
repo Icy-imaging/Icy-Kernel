@@ -447,7 +447,7 @@ public class BooleanMask2D implements Cloneable
             for (int y = 0; y < intersection.height; y++)
             {
                 for (int x = 0; x < intersection.width; x++)
-                    mask[offDst + x] ^= mask2[offSrc + x];
+                    mask[offDst + x] &= !mask2[offSrc + x];
 
                 offDst += subtract.width;
                 offSrc += bounds2.width;

@@ -92,23 +92,29 @@ public class SequencePersistent implements XMLPersistent
             // load xml file into document
             if ((xmlFilename != null) && FileUtil.exists(xmlFilename))
             {
+                boolean result;
+
                 document = XMLUtil.loadDocument(xmlFilename, true);
 
-                if (document == null)
+                // load data from XML document
+                if (document != null)
+                    result = loadFromXML(document.getDocumentElement());
+                else
                 {
-                    // rename problematic file
-                    FileUtil.copy(xmlFilename, xmlFilename + ".bak", true, false);
-
-                    System.err.println("Error while loading Sequence XML persistent data.");
-                    System.err.println("The faulty file '" + xmlFilename + "' has been saved as '" + xmlFilename
-                            + ".bak'");
-
                     document = XMLUtil.createDocument(true);
-                    return false;
+                    result = false;
                 }
 
-                // load data from XML document
-                return loadFromXML(document.getDocumentElement());
+                if (!result)
+                {
+                    // backup the problematic file
+                    String backupName = FileUtil.backup(xmlFilename);
+
+                    System.err.println("Error while loading Sequence XML persistent data.");
+                    System.err.println("The faulty file '" + xmlFilename + "' has been backuped as '" + backupName);
+                }
+
+                return result;
             }
         }
         catch (Exception e)
@@ -158,19 +164,22 @@ public class SequencePersistent implements XMLPersistent
         if (node == null)
             return false;
 
+        boolean result = true;
         final String name = XMLUtil.getElementValue(node, ID_NAME, "");
 
         // set name only if not empty
         if (!StringUtil.isEmpty(name))
             sequence.setName(name);
 
-        loadMetaDataFromXML(node);
-        loadROIsFromXML(node);
+        if (!loadMetaDataFromXML(node))
+            result = false;
+        if (!loadROIsFromXML(node))
+            result = false;
 
-        return true;
+        return result;
     }
 
-    private void loadMetaDataFromXML(Node node)
+    private boolean loadMetaDataFromXML(Node node)
     {
         final Node nodeMeta = XMLUtil.getElement(node, ROOT_META);
 
@@ -184,16 +193,26 @@ public class SequencePersistent implements XMLPersistent
             for (int c = 0; c < sequence.getSizeC(); c++)
                 sequence.setChannelName(c, XMLUtil.getElementValue(nodeMeta, Sequence.ID_CHANNEL_NAME + c,
                         MetaDataUtil.DEFAULT_CHANNEL_NAME + c));
+
+            return true;
         }
+
+        return false;
     }
 
-    private void loadROIsFromXML(Node node)
+    private boolean loadROIsFromXML(Node node)
     {
-        final List<ROI> rois = ROI.loadROIsFromXML(XMLUtil.getElement(node, ROOT_ROIS));
+        final Node roisNode = XMLUtil.getElement(node, ROOT_ROIS);
+
+        final int roiCount = ROI.getROICount(roisNode);
+        final List<ROI> rois = ROI.loadROIsFromXML(roisNode);
 
         // add to sequence
         for (ROI roi : rois)
             sequence.addROI(roi);
+
+        // return true if we got the expected number of ROI
+        return (roiCount == rois.size());
     }
 
     @Override

@@ -179,7 +179,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
                 tmpResults.add(result);
         }
 
-        results = tmpResults;
+        results = new ArrayList<SearchResult>(tmpResults);
         consumer.resultsChanged(this);
 
         // load descriptions

@@ -368,7 +368,7 @@ public class MathUtil
      */
     public static double roundSignificant(double d, int numDigit, boolean keepInteger)
     {
-        if (numDigit <= 0)
+        if ((numDigit <= 0) ||(d == 0d)) 
             return d;
 
         final double digit = Math.ceil(Math.log10(Math.abs(d)));

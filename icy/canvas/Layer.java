@@ -70,6 +70,9 @@ public class Layer implements OverlayListener, Comparable<Layer>
 
     static Overlay createOverlayWrapper(@SuppressWarnings("deprecation") Painter painter, String name)
     {
+        if (painter instanceof Overlay)
+            return (Overlay) painter;
+
         final Overlay result = new OverlayWrapper(painter, name);
 
         if (name == null)

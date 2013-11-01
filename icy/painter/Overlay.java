@@ -291,6 +291,26 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     }
 
     /**
+     * @deprecated Use {@link Sequence#addOverlay(Overlay)} instead.
+     */
+    @Deprecated
+    public void attachTo(Sequence sequence)
+    {
+        if (sequence != null)
+            sequence.addOverlay(this);
+    }
+
+    /**
+     * @deprecated Use {@link Sequence#removeOverlay(Overlay)} instead.
+     */
+    @Deprecated
+    public void detachFrom(Sequence sequence)
+    {
+        if (sequence != null)
+            sequence.removeOverlay(this);
+    }
+
+    /**
      * Remove the Overlay from all sequences where it is currently attached.
      */
     public void remove()
