@@ -5426,7 +5426,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * overlay has changed (can be only overlay property here)
+     * Called when an overlay has changed (internal method).<br>
+     * Use {@link #overlayChanged(Overlay)} instead. 
      */
     @Override
     public void overlayChanged(OverlayEvent event)
@@ -5567,6 +5568,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             // do here global process on sequence overlay change
             case SEQUENCE_OVERLAY:
                 break;
+                
             // do here global process on sequence ROI change
             case SEQUENCE_ROI:
                 break;
