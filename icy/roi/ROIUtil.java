@@ -409,7 +409,7 @@ public class ROIUtil
     }
 
     /**
-     * Calculate the multiplier depending the wanted dimension information.
+     * Calculate the multiplier factor depending the wanted dimension information.
      */
     private static double getMultiplier(Sequence sequence, ROI roi, int dim)
     {

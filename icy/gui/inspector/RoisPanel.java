@@ -1149,8 +1149,8 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                 if (roiInfInvalid)
                 {
                     // refresh points number calculation
-                    numberContourPoints = MathUtil.roundSignificant(roi.getNumberOfContourPoints(), 5);
-                    numberPoints = MathUtil.roundSignificant(roi.getNumberOfPoints(), 5);
+                    numberContourPoints = MathUtil.roundSignificant(roi.getNumberOfContourPoints(), 5, true);
+                    numberPoints = MathUtil.roundSignificant(roi.getNumberOfPoints(), 5, true);
 
                     roiInfInvalid = false;
                 }
@@ -1266,7 +1266,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
         public String getArea()
         {
-            return ROIUtil.getContourSize(Icy.getMainInterface().getActiveSequence(), getNumberOfPoints(), roi, 2, 5);
+            return ROIUtil.getInteriorSize(Icy.getMainInterface().getActiveSequence(), getNumberOfPoints(), roi, 2, 5);
         }
 
         public String getSurfaceArea()
@@ -1277,7 +1277,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
         public String getVolume()
         {
-            return ROIUtil.getContourSize(Icy.getMainInterface().getActiveSequence(), getNumberOfPoints(), roi, 3, 5);
+            return ROIUtil.getInteriorSize(Icy.getMainInterface().getActiveSequence(), getNumberOfPoints(), roi, 3, 5);
         }
 
         public double[] getMinIntensities()
