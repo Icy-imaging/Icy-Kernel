@@ -740,13 +740,16 @@ public class RoiActions
 
                 // get the global result folder
                 final String dir = GeneralPreferences.getResultFolder();
-                // create it if needed.
+                // create it if needed
                 FileUtil.createDir(dir);
 
                 final String filename = SaveDialog.chooseFile("Export selected ROI(s)...", dir, "result", ".xls");
 
                 if (filename != null)
                 {
+                    // update result folder
+                    GeneralPreferences.setResultFolder(FileUtil.getDirectory(filename));
+                    
                     // CSV format wanted ?
                     if (FileUtil.getFileExtension(filename, false).equalsIgnoreCase("csv"))
                     {
