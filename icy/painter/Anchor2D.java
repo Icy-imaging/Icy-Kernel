@@ -580,7 +580,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
     {
         if (p == null)
             return false;
-        
+
         return isOver(canvas, p.getX(), p.getY());
     }
 
@@ -735,6 +735,155 @@ public class Anchor2D extends Overlay implements XMLPersistent
 
                 g2.dispose();
             }
+        }
+    }
+
+    /*
+     * only for backward compatibility
+     */
+    @Override
+    public void keyPressed(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        if (!isVisible())
+            return;
+
+        // canvas3D not handled here
+        if (canvas instanceof Canvas3D)
+            return;
+        // no image position --> exit
+        if (imagePoint == null)
+            return;
+
+        // just for the shift key state change
+        updateDrag(e, imagePoint.getX(), imagePoint.getY());
+    }
+
+    /*
+     * only for backward compatibility
+     */
+    @Override
+    public void keyReleased(KeyEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        if (!isVisible())
+            return;
+
+        // canvas3D not handled here
+        if (canvas instanceof Canvas3D)
+            return;
+        // no image position --> exit
+        if (imagePoint == null)
+            return;
+
+        // just for the shift key state change
+        updateDrag(e, imagePoint.getX(), imagePoint.getY());
+    }
+
+    /*
+     * only for backward compatibility
+     */
+    @Override
+    public void mousePressed(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        if (!isVisible())
+            return;
+
+        if (e.isConsumed())
+            return;
+
+        // canvas3D not handled here
+        if (canvas instanceof Canvas3D)
+            return;
+        // no image position --> exit
+        if (imagePoint == null)
+            return;
+
+        if (EventUtil.isLeftMouseButton(e))
+        {
+            // consume event to activate drag
+            if (isSelected())
+            {
+                startDragMousePosition = imagePoint;
+                startDragPainterPosition = getPosition();
+                e.consume();
+            }
+        }
+    }
+
+    /*
+     * only for backward compatibility
+     */
+    @Override
+    public void mouseReleased(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        startDragMousePosition = null;
+    }
+
+    /*
+     * only for backward compatibility
+     */
+    @Override
+    public void mouseDrag(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        if (!isVisible())
+            return;
+
+        if (e.isConsumed())
+            return;
+
+        // canvas3D not handled here
+        if (canvas instanceof Canvas3D)
+            return;
+        // no image position --> exit
+        if (imagePoint == null)
+            return;
+
+        if (EventUtil.isLeftMouseButton(e))
+        {
+            // if selected then move according to mouse position
+            if (isSelected())
+            {
+                // force start drag if not already the case
+                if (startDragMousePosition == null)
+                {
+                    startDragMousePosition = getPosition();
+                    startDragPainterPosition = getPosition();
+                }
+
+                updateDrag(e, imagePoint.getX(), imagePoint.getY());
+
+                e.consume();
+            }
+        }
+    }
+
+    /*
+     * only for backward compatibility
+     */
+    @Override
+    public void mouseMove(MouseEvent e, Point2D imagePoint, IcyCanvas canvas)
+    {
+        if (!isVisible())
+            return;
+
+        // canvas3D not handled here
+        if (canvas instanceof Canvas3D)
+            return;
+        // no image position --> exit
+        if (imagePoint == null)
+            return;
+
+        // already consumed, no selection possible
+        if (e.isConsumed())
+            setSelected(false);
+        else
+        {
+            final boolean overlapped = isOver(canvas, imagePoint.getX(), imagePoint.getY());
+
+            setSelected(overlapped);
+
+            // so we can only have one selected at once
+            if (overlapped)
+                e.consume();
         }
     }
 
