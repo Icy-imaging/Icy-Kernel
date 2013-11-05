@@ -120,7 +120,7 @@ public class ApplicationMenu extends RibbonApplicationMenu
                         @Override
                         public void actionPerformed(ActionEvent ae)
                         {
-                            Loader.load(files, false, true, true);
+                            Loader.load(files, false, false, true);
                         }
                     });
 
