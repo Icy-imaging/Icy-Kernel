@@ -1735,6 +1735,8 @@ public class SequenceUtil
         final int endZ;
         final int startT;
         final int endT;
+        final int startC;
+        final int endC;
 
         if (region.isInfiniteZ())
         {
@@ -1746,7 +1748,7 @@ public class SequenceUtil
             startZ = Math.max(0, region.z);
             endZ = Math.min(source.getSizeZ(), region.z + region.sizeZ);
         }
-        if (region.isInfiniteZ())
+        if (region.isInfiniteT())
         {
             startT = 0;
             endT = source.getSizeT();
@@ -1754,7 +1756,17 @@ public class SequenceUtil
         else
         {
             startT = Math.max(0, region.t);
-            endT = (int) Math.min(source.getSizeT(), (long) region.t + (long) region.sizeT);
+            endT = Math.min(source.getSizeT(), region.t + region.sizeT);
+        }
+        if (region.isInfiniteC())
+        {
+            startC = 0;
+            endC = source.getSizeC();
+        }
+        else
+        {
+            startC = Math.max(0, region.c);
+            endC = Math.min(source.getSizeC(), region.c + region.sizeC);
         }
 
         result.beginUpdate();
@@ -1768,7 +1780,7 @@ public class SequenceUtil
 
                     if (img != null)
                         result.setImage(t - startT, z - startZ,
-                                IcyBufferedImageUtil.getSubImage(img, region2d, region.c, region.sizeC));
+                                IcyBufferedImageUtil.getSubImage(img, region2d, startC, endC - startC));
                     else
                         result.setImage(t - startT, z - startZ, null);
                 }
