@@ -30,8 +30,12 @@ public class FailedAnnounceFrame extends AnnounceFrame
     private static final int DEFAULT_LIVETIME = 0;
 
     /**
+     * Show a <i>failed</i> announcement with specified parameters.
+     * 
      * @param message
+     *        message to display in announcement
      * @param liveTime
+     *        life time in second (0 = infinite)
      */
     public FailedAnnounceFrame(String message, int liveTime)
     {
@@ -49,7 +53,10 @@ public class FailedAnnounceFrame extends AnnounceFrame
     }
 
     /**
+     * Show a <i>failed</i> announcement with specified parameters.
+     * 
      * @param message
+     *        message to display in announcement
      */
     public FailedAnnounceFrame(String message)
     {
