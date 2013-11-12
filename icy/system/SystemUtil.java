@@ -704,7 +704,7 @@ public class SystemUtil
      */
     public static String getTempLibraryDirectory()
     {
-        return FileUtil.getTempDirectory() + "lib";
+        return FileUtil.getTempDirectory() + "/lib";
     }
 
     public static boolean addToJavaLibraryPath(String directories[])

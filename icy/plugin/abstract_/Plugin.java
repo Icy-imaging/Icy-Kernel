@@ -258,21 +258,21 @@ public abstract class Plugin
      * Native libraries should be packaged with the following directory & file structure:
      * 
      * <pre>
-     * lib
-     *   unix32
-     *     libxxx.so
-     *   unix64
-     *     libxxx.so
-     *   mac32
-     *     libxxx.dylib
-     *   mac64
-     *     libxxx.dylib
-     *   win32
-     *     xxx.dll
-     *   win64
-     *     xxx.dll
-     * MyPlugin.class
-     * ....
+     * /lib/unix32
+     *   libxxx.so
+     * /lib/unix64
+     *   libxxx.so
+     * /lib/mac32
+     *   libxxx.dylib
+     * /lib/mac64
+     *   libxxx.dylib
+     * /lib/win32
+     *   xxx.dll
+     * /lib/win64
+     *   xxx.dll
+     * /plugins/myname/mypackage    
+     *   MyPlugin.class
+     *   ....
      * </pre>
      * 
      * Here "xxx" is the name of the native library.<br/>
