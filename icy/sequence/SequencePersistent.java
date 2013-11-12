@@ -26,7 +26,6 @@ import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -253,7 +252,7 @@ public class SequencePersistent implements XMLPersistent
         {
             XMLUtil.removeAllChildren(nodeROIs);
 
-            final ArrayList<ROI> rois = sequence.getROIs();
+            final List<ROI> rois = sequence.getROIs();
 
             // sort on id
             Collections.sort(rois, ROI.idComparator);
