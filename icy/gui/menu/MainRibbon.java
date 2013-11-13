@@ -1010,12 +1010,10 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
                 result.addMenuButton(new IcyCommandMenuButton(GeneralActions.onlineHelpAction));
                 // WEB SITE
                 result.addMenuButton(new IcyCommandMenuButton(GeneralActions.websiteAction));
-                // // FAQ
-                // final IcyCommandMenuButton faqButton = new Help("faq")
-                // .getIcyCommandMenuButton("Help (online)");
-                // result.addMenuButton(faqButton);
                 // CHECK FOR UPDATE
                 result.addMenuButton(new IcyCommandMenuButton(GeneralActions.checkUpdateAction));
+                // CHANGELOG
+                result.addMenuButton(new IcyCommandMenuButton(GeneralActions.changeLogAction));
                 // ABOUT
                 result.addMenuButton(new IcyCommandMenuButton(GeneralActions.aboutAction));
 

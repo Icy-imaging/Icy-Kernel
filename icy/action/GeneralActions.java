@@ -393,7 +393,23 @@ public class GeneralActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            new AboutFrame();
+            new AboutFrame(0);
+            return true;
+        }
+    };
+
+    public static IcyAbstractAction changeLogAction = new IcyAbstractAction("ChangeLog", new IcyIcon("notepad_2.png"),
+            "ChangeLog", "See the changelog informations.")
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 2564352020620899851L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            new AboutFrame(1);
             return true;
         }
     };

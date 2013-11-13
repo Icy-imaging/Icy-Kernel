@@ -26,6 +26,9 @@ public class ErrorReportFrame extends TitledFrame implements ActionListener
     // GUI
     protected ErrorReportPanel panel;
 
+    // internals
+    protected ActionListener reportAction;
+
     /**
      * Create the frame.
      */
@@ -37,6 +40,30 @@ public class ErrorReportFrame extends TitledFrame implements ActionListener
 
         panel.reportButton.addActionListener(this);
         panel.closeButton.addActionListener(this);
+
+        // default report action
+        reportAction = new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final ProgressFrame progressFrame = new ProgressFrame("Sending report...");
+
+                try
+                {
+                    IcyExceptionHandler.report(panel.getReportMessage());
+                }
+                catch (BadLocationException ex)
+                {
+                    System.err.println("Error while reporting error :");
+                    IcyExceptionHandler.showErrorMessage(ex, true);
+                }
+                finally
+                {
+                    progressFrame.close();
+                }
+            }
+        };
 
         mainPanel.add(panel, BorderLayout.CENTER);
 
@@ -62,31 +89,14 @@ public class ErrorReportFrame extends TitledFrame implements ActionListener
      */
     public void setReportAction(ActionListener action)
     {
-        panel.reportButton.removeActionListener(this);
-        panel.reportButton.addActionListener(action);
+        reportAction = action;
     }
 
     @Override
     public void actionPerformed(ActionEvent e)
     {
-        if (e.getSource() == panel.reportButton)
-        {
-            final ProgressFrame progressFrame = new ProgressFrame("Sending report...");
-
-            try
-            {
-                IcyExceptionHandler.report(panel.getReportMessage());
-            }
-            catch (BadLocationException ex)
-            {
-                System.err.println("Error while reporting error :");
-                IcyExceptionHandler.showErrorMessage(ex, true);
-            }
-            finally
-            {
-                progressFrame.close();
-            }
-        }
+        if ((e.getSource() == panel.reportButton) && (reportAction != null))
+            reportAction.actionPerformed(e);
 
         close();
     }

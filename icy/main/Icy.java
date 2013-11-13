@@ -35,6 +35,7 @@ import icy.gui.main.MainFrame;
 import icy.gui.main.MainInterface;
 import icy.gui.main.MainInterfaceBatch;
 import icy.gui.main.MainInterfaceGui;
+import icy.gui.system.NewVersionFrame;
 import icy.gui.util.LookAndFeelUtil;
 import icy.imagej.ImageJPatcher;
 import icy.math.UnitUtil;
@@ -92,7 +93,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.4.1.0");
+    public static Version version = new Version("1.4.2.0");
 
     /**
      * Main interface
@@ -304,6 +305,32 @@ public class Icy
 
         // set LOCI debug level
         DebugTools.enableLogging("ERROR");
+
+        // changed version ?
+        if (!ApplicationPreferences.getVersion().equals(Icy.version))
+        {
+            // display the new version information
+            if (!headless)
+            {
+                final String changeLog = Icy.getChangeLog();
+
+                // show the new version frame
+                if (!StringUtil.isEmpty(changeLog))
+                {
+                    ThreadUtil.invokeNow(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            new NewVersionFrame(Icy.getChangeLog());
+                        }
+                    });
+                }
+            }
+
+            // update version info
+            ApplicationPreferences.setVersion(Icy.version);
+        }
 
         System.out.println();
         System.out.println("Icy Version " + version + " started !");
@@ -663,6 +690,9 @@ public class Icy
         return exiting;
     }
 
+    /**
+     * Return the main Icy interface.
+     */
     public static MainInterface getMainInterface()
     {
         // batch mode
@@ -670,6 +700,39 @@ public class Icy
             mainInterface = new MainInterfaceBatch();
 
         return mainInterface;
+    }
+
+    /**
+     * Return content of the <code>CHANGELOG.txt</code> file
+     */
+    public static String getChangeLog()
+    {
+        if (FileUtil.exists("CHANGELOG.txt"))
+            return new String(FileUtil.load("CHANGELOG.txt", false));
+
+        return "";
+    }
+
+    /**
+     * Return content of the <code>COPYING.txt</code> file
+     */
+    public static String getLicense()
+    {
+        if (FileUtil.exists("COPYING.txt"))
+            return new String(FileUtil.load("COPYING.txt", false));
+
+        return "";
+    }
+
+    /**
+     * Return content of the <code>README.txt</code> file
+     */
+    public static String getReadMe()
+    {
+        if (FileUtil.exists("README.txt"))
+            return new String(FileUtil.load("README.txt", false));
+
+        return "";
     }
 
     /**
