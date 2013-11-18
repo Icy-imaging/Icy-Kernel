@@ -58,7 +58,6 @@ public class ShapeUtil
     {
         OR
         {
-
             @Override
             public BooleanOperator getBooleanOperator()
             {

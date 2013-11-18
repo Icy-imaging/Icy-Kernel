@@ -173,7 +173,7 @@ public abstract class ROI5D extends ROI
         final BooleanMask2D masks[] = new BooleanMask2D[bounds.sizeZ];
 
         for (int z = 0; z < masks.length; z++)
-            masks[z] = getBooleanMask2D(z, t, c, inclusive);
+            masks[z] = getBooleanMask2D(bounds.z + z, t, c, inclusive);
 
         return new BooleanMask3D(bounds, masks);
     }
@@ -191,7 +191,7 @@ public abstract class ROI5D extends ROI
         final BooleanMask3D masks[] = new BooleanMask3D[bounds.sizeT];
 
         for (int t = 0; t < masks.length; t++)
-            masks[t] = getBooleanMask3D(t, c, inclusive);
+            masks[t] = getBooleanMask3D(bounds.t + t, c, inclusive);
 
         return new BooleanMask4D(bounds, masks);
     }
@@ -209,7 +209,7 @@ public abstract class ROI5D extends ROI
         final BooleanMask4D masks[] = new BooleanMask4D[bounds.sizeC];
 
         for (int c = 0; c < masks.length; c++)
-            masks[c] = getBooleanMask4D(c, inclusive);
+            masks[c] = getBooleanMask4D(bounds.c + c, inclusive);
 
         return new BooleanMask5D(bounds, masks);
     }

@@ -37,6 +37,7 @@ import icy.util.XMLUtil;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -656,7 +657,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         if (roi2d != null)
             return roi2d.getBooleanMask(x, y, width, height, inclusive);
 
-        return null;
+        return new boolean[width * height];
     }
 
     @Override
@@ -667,7 +668,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         if (roi2d != null)
             return roi2d.getBooleanMask(inclusive);
 
-        return null;
+        return new BooleanMask2D(new Rectangle(), new boolean[0]);
     }
 
     // called when one of the slice ROI changed

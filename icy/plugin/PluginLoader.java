@@ -306,6 +306,11 @@ public class PluginLoader
                 IcyExceptionHandler.showErrorMessage(e, false);
                 System.err.println("Class '" + className + "' is discarded");
             }
+            catch (UnsupportedClassVersionError e)
+            {
+                // java version error
+                System.err.println("Unsupported java version for class '" + className + "' (discarded)");
+            }
             catch (Error e)
             {
                 // fatal error

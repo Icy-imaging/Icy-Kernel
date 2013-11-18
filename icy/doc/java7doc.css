@@ -239,7 +239,12 @@ ul.blockList li.blockList h2 {
 /*
 Page layout container styles
 */
-.contentContainer, .sourceContainer, .classUseContainer, .serializedFormContainer, .constantValuesContainer {
+.contentContainer, .classUseContainer, .serializedFormContainer, .constantValuesContainer {
+    clear:both;
+    padding:10px 20px;
+    position:relative;
+}
+.sourceContainer {
     clear:both;
     padding:10px 20px;
     position:relative;
@@ -495,10 +500,18 @@ table.overviewSummary td.colFirst code {
 table.overviewSummary a {
      color: #D28B31;
 }
-*/
 
 table.overviewSummary .block {
      padding-left: 3em;
+}
+
+table.overviewSummary td.block {
+     padding-left: 0em;
+}
+*/
+
+table.overviewSummary .block {
+     padding-left: 0em;
 }
 
 table.overviewSummary .block .block {

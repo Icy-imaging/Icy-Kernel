@@ -93,10 +93,11 @@ public class AboutFrame extends IcyFrame
             @Override
             public void run()
             {
-                final String about = "<html><center>" + "<br>" + "<br><b>ICY</b>" + "<br><br><b><i>" + Icy.version
-                        + "</i></b><br>" + "<br>Quantitative Image Analysis Unit" + "<br>Institut Pasteur"
+                final String about = "<html><center>" + "<br>" + "<br><h2>Icy " + Icy.version + "</h2>"
+                        + "<br>Quantitative Image Analysis Unit" + "<br>Institut Pasteur"
                         + "<br>Unite d'analyse d images quantitative" + "<br>25,28 Rue du Docteur Roux\n"
-                        + "<br>75015 Paris - France" + "<br>" + "<br><i>http://www.bioimageanalysis.com/icy</i>"
+                        + "<br>75015 Paris - France" + "<br>"
+                        + "<br><a href=\"http://icy.bioimageanalysis.com\">http://icy.bioimageanalysis.com</a>"
                         + "</html>";
 
                 final String author = "<html><center><br>" + "<br>" + "<br><font size=3><u>The AIQ Team:</u></font>"

@@ -357,7 +357,7 @@ public class RibbonUtil
      */
     public static void removeButton(JRibbonBand band, String name)
     {
-        // find the button in the band
-        band.removeCommandButton(findButton(band, name));
+        if (band.getControlPanel() != null)
+            band.removeCommandButton(findButton(band, name));
     }
 }

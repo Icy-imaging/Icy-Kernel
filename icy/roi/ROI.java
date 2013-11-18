@@ -1475,6 +1475,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public boolean contains(Point5D p)
     {
+        if (p == null)
+            return false;
+
         return contains(p.getX(), p.getY(), p.getZ(), p.getT(), p.getC());
     }
 
@@ -1544,6 +1547,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public boolean contains(Rectangle5D r)
     {
+        if (r == null)
+            return false;
+
         return contains(r.getX(), r.getY(), r.getZ(), r.getT(), r.getC(), r.getSizeX(), r.getSizeY(), r.getSizeZ(),
                 r.getSizeT(), r.getSizeC());
     }
@@ -1601,6 +1607,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     public boolean intersects(Rectangle5D r)
     {
+        if (r == null)
+            return false;
+
         return intersects(r.getX(), r.getY(), r.getZ(), r.getT(), r.getC(), r.getSizeX(), r.getSizeY(), r.getSizeZ(),
                 r.getSizeT(), r.getSizeC());
     }
@@ -1707,9 +1716,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     {
         final Rectangle bounds2D = getBounds5D().toRectangle2D().getBounds();
 
-        // no mask
+        // empty ROI --> return empty mask
         if (bounds2D.isEmpty())
-            return null;
+            return new BooleanMask2D(new Rectangle(), new boolean[0]);
 
         return new BooleanMask2D(bounds2D, getBooleanMask2D(bounds2D.x, bounds2D.y, bounds2D.width, bounds2D.height, z,
                 t, c, inclusive));

@@ -64,8 +64,8 @@ import ij.ImageJ;
  */
 public class ImageJMethods
 {
-    /** Appends {@link ImageJ#showStatus(String)}. */
-    @SuppressWarnings({"javadoc", "unused"})
+    /** Appends <code>ImageJ.showStatus(String)</code> method */
+    @SuppressWarnings({"unused"})
     public static void showStatus(final ImageJ obj, final String s)
     {
         final ImageJWrapper ijw = Icy.getMainInterface().getImageJ();
@@ -73,12 +73,11 @@ public class ImageJMethods
         if (ijw != null)
             ijw.showSwingStatus(s);
     }
-    
-    
-    /** Replaces {@link ImageJ#configureProxy(String)}. */
-    @SuppressWarnings({"javadoc", "unused"})
+
+    /** Replaces <code>ImageJ.configureProxy(String)</code> method */
+    @SuppressWarnings({"unused"})
     public static void configureProxy(final ImageJ obj)
     {
-        // do nothing as proxy setting are set in Icy 
+        // do nothing as proxy setting are set in Icy
     }
 }

@@ -1,12 +1,10 @@
 <body>
 
-<h1>Icy start guide</h1>
- 
 We believe watching some examples is the better way to understand how to program plugins for Icy !<br/>
 So for each topic we provide a brief description and some basic tutorials.<br/>
 You can find all these plugin tutorials in the <a href="http://icy.bioimageanalysis.org/index.php?display=startDevWithIcy#importPluginTutorial">Plugin Tutorials</a> GitHub project. You can also download them from Icy by using the <i>tutorial</i> keyword in the plugin browser or search bar.<br/>
 <br/>
-<b>Available topics</b><br/>
+<h3>Available topics</h3>
 &nbsp;&nbsp;<a href="#plugin">Plugin</a><br/>
 &nbsp;&nbsp;<a href="#image_struc">Image structure</a><br/>
 &nbsp;&nbsp;<a href="#roi">Region of Interest</a><br/>
@@ -64,9 +62,9 @@ We retained this organization because almost time the image processing algorithm
 We also defined our own <a href="icy/image/colorspace/IcyColorSpace.html">IcyColorSpace</a> class (inherit from <a href="http://docs.oracle.com/javase/7/docs/api/java/awt/color/ColorSpace.html">ColorSpace</a>) which allow a versatile color representation of the image data by using ARGB <a href="icy/image/colormap/IcyColorMap.html">ColorMap</a> and value bounding (sort of threshold) per channel.<br/>
 <br/>
 <b>Documented source code examples</b><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/basics/GenerateImageOfDifferentType.html">How to Generate images of all type available</a><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/basics/SimpleIntensify.html">How to do a very basic intensity operation on an image whatever is the data type of the image</a><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/basics/TransparentlyProcessAnyImageDataType.html">Another example of generic image processing whatever is the image format</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/basics/GenerateImageOfDifferentType.html">How to Generate images of all type available</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/basics/SimpleIntensify.html">How to do a very basic intensity operation on an image whatever is the data type of the image</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/basics/TransparentlyProcessAnyImageDataType.html">Another example of generic image processing whatever is the image format</a><br/>
 <br/>
 <b>Others interesting classes to see</b><br/>
 &nbsp;&nbsp;<a href="icy/sequence/SequenceUtil.html">SequenceUtil</a> <a href="icy/sequence/Sequence.html">Sequence</a> utilities class.<br/>
@@ -83,9 +81,9 @@ Region of interest define region which can be used as input or output for any pr
 &nbsp;&nbsp;<a href="icy/roi/ROI2DArea.html">ROI2DArea</a> Area style 2D roi class.<br/>  
 <br/>
 <b>Documented source code examples</b><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/roi/ProcessingFromROI.html">Processing data from roi: fast build of the mask</a><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/roi/CreateAreaROI.html">Creating an area roi from code</a><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/roi/IntensityOverRoiPainter.html">Creating an overlay displaying intensity chart of the pixel over roi</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/roi/ProcessingFromROI.html">Processing data from roi: fast build of the mask</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/roi/CreateAreaROI.html">Creating an area roi from code</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/roi/IntensityOverRoiPainter.html">Creating an overlay displaying intensity chart of the pixel over roi</a><br/>
 <br/>
 <b>Others interesting classes to see</b><br/>
 &nbsp;&nbsp;<a href="icy/roi/BooleanMask2D.html">BooleanMask2D</a> 2D boolean mask class, used internally by ROI for boolean operations and others calculations.<br/> 
@@ -97,10 +95,10 @@ Region of interest define region which can be used as input or output for any pr
 The overlays are used to interact and draw rich information on image, the base <a href="icy/painter/Overlay.html">Overlay</a> class replaces the deprecated <a href="icy/painter/AbstractPainter.html">AbstractPainter</a> class and <a href="icy/painter/Painter.html">Painter</a> interface.<br/>
 <br/>
 <b>Documented source code examples</b><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/painter/SimpleOverlayTutorial01.html">How to create a simple overlay over an image (sequence)</a><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/painter/SimpleOverlayTutorial02.html">How to create a more advanced overlay to react on mouse events</a><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/painter/AnimatedOverlayTutorial.html">Fancy animated overlays creation</a><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/vtk/VtkPainterExamples.html">Create overlays for VTK (3D display)</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/painter/SimpleOverlayTutorial01.html">How to create a simple overlay over an image (sequence)</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/painter/SimpleOverlayTutorial02.html">How to create a more advanced overlay to react on mouse events</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/painter/AnimatedOverlayTutorial.html">Fancy animated overlays creation</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/vtk/VtkPainterExamples.html">Create overlays for VTK (3D display)</a><br/>
 <br/>
 <b>Others interesting classes to see</b><br/>
 &nbsp;&nbsp;<a href="icy/painter/Anchor2D.html">Anchor2D</a> Example of overlay which can be used to move objects over the sequence.<br/>
@@ -116,8 +114,8 @@ One of the most important one is the <a href="http://icy.bioimageanalysis.org/pl
 You can see it in action in the <a href="http://icy.bioimageanalysis.org/plugin/EzPlug_Tutorial">EzPlug Tutorial</a> plugin.<br/>
 <br/>
 <b>Documented source code examples</b><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/gui/SequenceActionFrameExample.html">Simple action frame example.</a><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/gui/GuiBuildExample01.html">How to use a template to have a simple plugin with an action button</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/gui/SequenceActionFrameExample.html">Simple action frame example.</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/gui/GuiBuildExample01.html">How to use a template to have a simple plugin with an action button</a><br/>
 <br/>
 <b>Others interesting classes to see</b><br/>
 &nbsp;&nbsp;<a href="icy/gui/viewer/Viewer.html">Viewer</a> Frame used to display an image in Icy.<br/>
@@ -164,8 +162,8 @@ Java as many Object Oriented language relies a lot on events and same goes for I
 You may be interested in launching an action on a specific event (as "image opened" event).<br/>
 <br/>
 <b>Documented source code examples</b><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/event/MainListenerTutorial.html">How to listen major events in Icy</a><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/event/ActiveSequenceListenerTutorial.html">How to listen focused image / window events in Icy</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/event/MainListenerTutorial.html">How to listen major events in Icy</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/event/ActiveSequenceListenerTutorial.html">How to listen focused image / window events in Icy</a><br/>
 <br/>
 
 <h4><a name="chart">Chart / Graphic</a></h4>
@@ -173,8 +171,8 @@ You may be interested in launching an action on a specific event (as "image open
 You may want to present your statistical results from your analysis in graphical format, for that Icy use the very nice and comprehensive <a href="http://www.jfree.org/jfreechart/">JFreeChart</a> library to do it.<br/>
 <br/>
 <b>Documented source code examples</b><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/chart/ChartTutorial1.html">Create a simple graph with JFreeChart in Icy</a><br/>
-&nbsp;&nbsp;<a href="plugins/tutorial/chart/ChartTutorial2.html">Create a deviation graph with JFreeChart in Icy</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/chart/ChartTutorial1.html">Create a simple graph with JFreeChart in Icy</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/chart/ChartTutorial2.html">Create a deviation graph with JFreeChart in Icy</a><br/>
 <br/>
 
 <h4><a name="misc">Misc</a></h4>
@@ -194,7 +192,11 @@ Here are others topics which may have some interests for plugin development, be 
 &nbsp;&nbsp;<a href="icy/search/SearchEngine.html">SearchEngine</a> global search engine in Icy (access it through the main interface : Icy.getMainInterface().getSearchEngine())<br/> 
 &nbsp;&nbsp;<a href="icy/clipboard/Clipboard.html">Clipboard</a> system and local clipboard.<br/>
 &nbsp;&nbsp;<a href="icy/preferences/XMLPreferences.html">XMLPreferences</a> base class to store preferences in Icy.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;It uses a similar syntax than standard java Preferences object but store them in XML format instead.
-&nbsp;&nbsp;<a href="icy/util/XMLUtil.html">XMLUtil</a> General XML utilities.<br/> 
+&nbsp;&nbsp;It uses a similar syntax than standard java Preferences object but store them in XML format instead.<br/>
+&nbsp;&nbsp;<a href="icy/util/XMLUtil.html">XMLUtil</a> General XML utilities to build or read XML files.<br/> 
+&nbsp;&nbsp;<a href="icy/util/XLSUtil.html">XLSUtil</a> General XLS utilities to build or read excel documents.<br/> 
+<br/>
+<br/>
+<br/>
 
 </body>

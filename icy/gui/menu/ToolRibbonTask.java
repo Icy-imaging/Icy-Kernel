@@ -111,7 +111,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
 
             openButton = new IcyCommandButton(FileActions.openSequenceAction);
             addCommandButton(openButton, RibbonElementPriority.TOP);
-            saveButton = new IcyCommandButton(FileActions.saveSequenceAction);
+            saveButton = new IcyCommandButton(FileActions.saveAsSequenceAction);
             addCommandButton(saveButton, RibbonElementPriority.TOP);
 
             RibbonUtil.setPermissiveResizePolicies(this);
@@ -156,7 +156,8 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
             {
                 if (al != null)
                     button.removeActionListener(al);
-                removeCommandButton(button);
+                if (getControlPanel() != null)
+                    removeCommandButton(button);
                 if (buttonGroup != null)
                     buttonGroup.remove(button);
             }

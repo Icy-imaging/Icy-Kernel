@@ -1291,7 +1291,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * 
      * @param roi
      *        the ROI to select.
-     * @returns <code>false</code> is the specified ROI is not attached to the sequence.
+     * @return <code>false</code> is the specified ROI is not attached to the sequence.
      */
     public boolean setSelectedROI(ROI roi)
     {

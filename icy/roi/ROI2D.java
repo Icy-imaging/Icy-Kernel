@@ -1022,9 +1022,9 @@ public abstract class ROI2D extends ROI
     @Override
     public boolean[] getBooleanMask2D(int x, int y, int width, int height, int z, int t, int c, boolean inclusive)
     {
-        // not on the correct Z, T, C position
+        // not on the correct Z, T, C position --> return empty mask
         if (!isActiveFor(z, t, c))
-            return null;
+            return new boolean[width * height];
 
         return getBooleanMask(x, y, width, height, inclusive);
     }
@@ -1103,9 +1103,9 @@ public abstract class ROI2D extends ROI
     @Override
     public BooleanMask2D getBooleanMask2D(int z, int t, int c, boolean inclusive)
     {
-        // not on the correct Z, T, C position
+        // not on the correct Z, T, C position --> return empty mask
         if (!isActiveFor(z, t, c))
-            return null;
+            return new BooleanMask2D(new Rectangle(), new boolean[0]);
 
         return getBooleanMask(inclusive);
     }
@@ -1123,9 +1123,9 @@ public abstract class ROI2D extends ROI
     {
         final Rectangle bounds = getBounds();
 
-        // no mask
+        // empty ROI --> return empty mask
         if (bounds.isEmpty())
-            return null;
+            return new BooleanMask2D(new Rectangle(), new boolean[0]);
 
         return new BooleanMask2D(bounds, getBooleanMask(bounds, inclusive));
     }

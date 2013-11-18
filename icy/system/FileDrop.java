@@ -262,7 +262,6 @@ public class FileDrop
          * method will be called.
          * 
          * @author Robert Harder
-         * @copyright 2001
          * @version 1.1
          * @since 1.1
          */
