@@ -35,7 +35,7 @@ import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
 
 /**
- * XLS (excel) helper class.
+ * XLS (excel) utilities class (create and write XLS documents).
  * 
  * @author Stephane
  */

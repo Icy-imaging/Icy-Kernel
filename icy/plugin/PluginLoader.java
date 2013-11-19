@@ -101,7 +101,6 @@ public class PluginLoader
 
     public final static String PLUGIN_PACKAGE = "plugins";
     public final static String PLUGIN_PATH = "plugins";
-    public final static String JYTHON_CLASSES_SUFFIX = "$py";
 
     /**
      * static class
@@ -282,10 +281,9 @@ public class PluginLoader
             // we only want to load classes from 'plugins' package
             if (!className.startsWith(PLUGIN_PACKAGE))
                 continue;
-            
-            // we do not want to reload Jython classes, that ends with "$py"
-            if (className.endsWith(JYTHON_CLASSES_SUFFIX))
-            	continue;
+            // filter incorrect named classes (Jython classes for instances)
+            if (className.contains("$"))
+                continue;
 
             // no need to complete loading...
             if (processor.hasWaitingTasks())

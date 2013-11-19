@@ -1,10 +1,14 @@
 <body>
 
-We believe watching some examples is the better way to understand how to program plugins for Icy !<br/>
-So for each topic we provide a brief description and some basic tutorials.<br/>
-You can find all these plugin tutorials in the <a href="http://icy.bioimageanalysis.org/index.php?display=startDevWithIcy#importPluginTutorial">Plugin Tutorials</a> GitHub project. You can also download them from Icy by using the <i>tutorial</i> keyword in the plugin browser or search bar.<br/>
+First thing first: if not already done, set up your Icy Development Environment by following this step-by-step tutorial:<br/>
+<a href="http://icy.bioimageanalysis.org/index.php?display=startDevWithIcy">Developing your plugin for Icy</a><br/>
 <br/>
-<h3>Available topics</h3>
+We believe watching some examples is the better way to understand how to program plugins for Icy !<br/>
+So for each topic we provide a brief description and basic tutorials.<br/>
+<br/>
+All examples described here are available in the <a href="http://icy.bioimageanalysis.org/index.php?display=startDevWithIcy#importPluginTutorial">Plugin Tutorials</a> GitHub project and you can also download and test them in Icy by using the <i>tutorial</i> keyword in the plugin browser or search bar.<br/>
+<br/>
+<h3>Aborded topics</h3>
 &nbsp;&nbsp;<a href="#plugin">Plugin</a><br/>
 &nbsp;&nbsp;<a href="#image_struc">Image structure</a><br/>
 &nbsp;&nbsp;<a href="#roi">Region of Interest</a><br/>
@@ -14,6 +18,7 @@ You can find all these plugin tutorials in the <a href="http://icy.bioimageanaly
 &nbsp;&nbsp;<a href="#event">Event</a><br/>
 &nbsp;&nbsp;<a href="#chart">Chart / Graphic</a><br/>
 &nbsp;&nbsp;<a href="#misc">Miscellaneous</a><br/>
+&nbsp;&nbsp;<a href="#javadoc">Javadoc (package representation)</a><br/>
 <br/>
 
 <h4><a name="plugin">Plugin</a></h4>
@@ -95,8 +100,8 @@ Region of interest define region which can be used as input or output for any pr
 The overlays are used to interact and draw rich information on image, the base <a href="icy/painter/Overlay.html">Overlay</a> class replaces the deprecated <a href="icy/painter/AbstractPainter.html">AbstractPainter</a> class and <a href="icy/painter/Painter.html">Painter</a> interface.<br/>
 <br/>
 <b>Documented source code examples</b><br/>
-&nbsp;&nbsp;<a href="src-html/plugins/tutorial/painter/SimpleOverlayTutorial01.html">How to create a simple overlay over an image (sequence)</a><br/>
-&nbsp;&nbsp;<a href="src-html/plugins/tutorial/painter/SimpleOverlayTutorial02.html">How to create a more advanced overlay to react on mouse events</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/painter/SimpleOverlayTutorial1.html">How to create a simple overlay over an image (sequence)</a><br/>
+&nbsp;&nbsp;<a href="src-html/plugins/tutorial/painter/SimpleOverlayTutorial2.html">How to create a more advanced overlay to react on mouse events</a><br/>
 &nbsp;&nbsp;<a href="src-html/plugins/tutorial/painter/AnimatedOverlayTutorial.html">Fancy animated overlays creation</a><br/>
 &nbsp;&nbsp;<a href="src-html/plugins/tutorial/vtk/VtkPainterExamples.html">Create overlays for VTK (3D display)</a><br/>
 <br/>
@@ -196,7 +201,6 @@ Here are others topics which may have some interests for plugin development, be 
 &nbsp;&nbsp;<a href="icy/util/XMLUtil.html">XMLUtil</a> General XML utilities to build or read XML files.<br/> 
 &nbsp;&nbsp;<a href="icy/util/XLSUtil.html">XLSUtil</a> General XLS utilities to build or read excel documents.<br/> 
 <br/>
-<br/>
-<br/>
 
+<h4><a name="javadoc">Javadoc</a></h4>
 </body>

@@ -53,7 +53,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 /**
- * XML helper class.
+ * XML utilities class (parse, read, create and write XML documents).
  * 
  * @author Stephane
  */
