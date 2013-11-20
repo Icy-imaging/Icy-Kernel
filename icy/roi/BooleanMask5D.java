@@ -807,7 +807,7 @@ public class BooleanMask5D
         if (mask.isEmpty())
             return result;
 
-        final Rectangle4D.Integer bounds4D = new Rectangle4D.Integer();
+        Rectangle4D.Integer bounds4D = null;
 
         for (BooleanMask4D m4d : mask.values())
         {
@@ -819,11 +819,18 @@ public class BooleanMask5D
             else
                 optB4d = m4d.bounds;
 
-            bounds4D.add(optB4d);
+            // only add non empty bounds
+            if (!optB4d.isEmpty())
+            {
+                if (bounds4D == null)
+                    bounds4D = optB4d;
+                else
+                    bounds4D.add(optB4d);
+            }
         }
 
         // empty ?
-        if (bounds4D.isEmpty())
+        if ((bounds4D == null) || bounds4D.isEmpty())
             return result;
 
         int minC = mask.firstKey().intValue();

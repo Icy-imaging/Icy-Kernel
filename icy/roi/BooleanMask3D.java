@@ -636,7 +636,7 @@ public class BooleanMask3D implements Cloneable
         if (mask.isEmpty())
             return result;
 
-        final Rectangle bounds2D = new Rectangle();
+        Rectangle bounds2D = null;
 
         for (BooleanMask2D m2d : mask.values())
         {
@@ -648,11 +648,18 @@ public class BooleanMask3D implements Cloneable
             else
                 optB2d = m2d.bounds;
 
-            bounds2D.add(optB2d);
+            // only add non empty bounds
+            if (!optB2d.isEmpty())
+            {
+                if (bounds2D == null)
+                    bounds2D = optB2d;
+                else
+                    bounds2D.add(optB2d);
+            }
         }
 
         // empty ?
-        if (bounds2D.isEmpty())
+        if ((bounds2D == null) || bounds2D.isEmpty())
             return result;
 
         int minZ = mask.firstKey().intValue();

@@ -724,7 +724,7 @@ public class BooleanMask4D
         if (mask.isEmpty())
             return result;
 
-        final Rectangle3D.Integer bounds3D = new Rectangle3D.Integer();
+        Rectangle3D.Integer bounds3D = null;//new Rectangle3D.Integer();
 
         for (BooleanMask3D m3d : mask.values())
         {
@@ -736,11 +736,18 @@ public class BooleanMask4D
             else
                 optB3d = m3d.bounds;
 
-            bounds3D.add(optB3d);
+            // only add non empty bounds
+            if (!optB3d.isEmpty())
+            {
+                if (bounds3D == null)
+                    bounds3D = optB3d;
+                else
+                    bounds3D.add(optB3d);
+            }
         }
 
         // empty ?
-        if (bounds3D.isEmpty())
+        if ((bounds3D == null) || bounds3D.isEmpty())
             return result;
 
         int minT = mask.firstKey().intValue();

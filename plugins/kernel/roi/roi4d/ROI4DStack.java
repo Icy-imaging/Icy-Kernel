@@ -503,10 +503,25 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     @Override
     public Rectangle4D computeBounds4D()
     {
-        final Rectangle3D xyzBounds = new Rectangle3D.Double();
+        Rectangle3D xyzBounds = null;
 
         for (R slice : slices.values())
-            xyzBounds.add(slice.getBounds3D());
+        {
+            final Rectangle3D bnd3d = slice.getBounds3D();
+
+            // only add non empty bounds
+            if (!bnd3d.isEmpty())
+            {
+                if (xyzBounds == null)
+                    xyzBounds = bnd3d;
+                else
+                    xyzBounds.add(bnd3d);
+            }
+        }
+
+        // create empty 3D bounds
+        if (xyzBounds == null)
+            xyzBounds = new Rectangle3D.Double();
 
         final int t;
         final int sizeT;
@@ -654,7 +669,6 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         // propagate children change event
         sliceChanged(event);
     }
-    
 
     // called when one of the slice ROI overlay changed
     @Override

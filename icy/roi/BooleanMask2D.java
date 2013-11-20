@@ -1684,9 +1684,8 @@ public class BooleanMask2D implements Cloneable
             }
         }
 
-        // test if empty
+        // empty --> return empty bounds  
         if (minX == sizeX)
-            // empty bounds
             return new Rectangle(bounds.x, bounds.y, 0, 0);
 
         // new calculated bounds

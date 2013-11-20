@@ -477,10 +477,25 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     @Override
     public Rectangle5D computeBounds5D()
     {
-        final Rectangle4D xyztBounds = new Rectangle4D.Double();
+        Rectangle4D xyztBounds = null;
 
         for (R slice : slices.values())
-            xyztBounds.add(slice.getBounds4D());
+        {
+            final Rectangle4D bnd4d = slice.getBounds4D();
+
+            // only add non empty bounds
+            if (!bnd4d.isEmpty())
+            {
+                if (xyztBounds == null)
+                    xyztBounds = bnd4d;
+                else
+                    xyztBounds.add(bnd4d);
+            }
+        }
+
+        // create empty 4D bounds
+        if (xyztBounds == null)
+            xyztBounds = new Rectangle4D.Double();
 
         final int c;
         final int sizeC;

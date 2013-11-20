@@ -529,10 +529,25 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     @Override
     public Rectangle3D computeBounds3D()
     {
-        final Rectangle2D xyBounds = new Rectangle2D.Double();
+        Rectangle2D xyBounds = null;
 
         for (R slice : slices.values())
-            xyBounds.add(slice.getBounds2D());
+        {
+            final Rectangle2D bnd2d = slice.getBounds2D();
+
+            // only add non empty bounds
+            if (!bnd2d.isEmpty())
+            {
+                if (xyBounds == null)
+                    xyBounds = bnd2d;
+                else
+                    xyBounds.add(bnd2d);
+            }
+        }
+
+        // create empty 2D bounds
+        if (xyBounds == null)
+            xyBounds = new Rectangle2D.Double();
 
         final int z;
         final int sizeZ;
