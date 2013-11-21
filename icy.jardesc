@@ -20,6 +20,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.math"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.colorspace"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.network"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.vtk"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.inspector"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.resource"/>

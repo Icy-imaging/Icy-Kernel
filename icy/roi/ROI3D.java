@@ -461,18 +461,26 @@ public abstract class ROI3D extends ROI
     @Override
     public void setBounds5D(Rectangle5D bounds)
     {
-        // infinite T dim ?
-        if (bounds.getSizeT() == Double.POSITIVE_INFINITY)
-            setT(-1);
-        else
-            setT((int) bounds.getT());
-        // infinite C dim ?
-        if (bounds.getSizeC() == Double.POSITIVE_INFINITY)
-            setC(-1);
-        else
-            setC((int) bounds.getC());
+        beginUpdate();
+        try
+        {
+            // infinite T dim ?
+            if (bounds.getSizeT() == Double.POSITIVE_INFINITY)
+                setT(-1);
+            else
+                setT((int) bounds.getT());
+            // infinite C dim ?
+            if (bounds.getSizeC() == Double.POSITIVE_INFINITY)
+                setC(-1);
+            else
+                setC((int) bounds.getC());
 
-        setBounds3D(bounds.toRectangle3D());
+            setBounds3D(bounds.toRectangle3D());
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     /**
@@ -491,18 +499,17 @@ public abstract class ROI3D extends ROI
     @Override
     public void setPosition5D(Point5D position)
     {
-        // infinite T dim ?
-        if (position.getT() == Double.NEGATIVE_INFINITY)
-            setT(-1);
-        else
+        beginUpdate();
+        try
+        {
             setT((int) position.getT());
-        // infinite C dim ?
-        if (position.getC() == Double.NEGATIVE_INFINITY)
-            setC(-1);
-        else
             setC((int) position.getC());
-
-        setPosition3D(position.toPoint3D());
+            setPosition3D(position.toPoint3D());
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     @Override
@@ -695,9 +702,17 @@ public abstract class ROI3D extends ROI
      */
     public void setT(int value)
     {
-        if (t != value)
+        final int v;
+
+        // special value for infinite dimension --> change to -1
+        if (value == Integer.MIN_VALUE)
+            v = -1;
+        else
+            v = value;
+
+        if (t != v)
         {
-            t = value;
+            t = v;
             roiChanged();
         }
     }
@@ -716,9 +731,17 @@ public abstract class ROI3D extends ROI
      */
     public void setC(int value)
     {
-        if (c != value)
+        final int v;
+
+        // special value for infinite dimension --> change to -1
+        if (value == Integer.MIN_VALUE)
+            v = -1;
+        else
+            v = value;
+
+        if (c != v)
         {
-            c = value;
+            c = v;
             roiChanged();
         }
     }

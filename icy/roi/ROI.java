@@ -1739,12 +1739,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         final Rectangle5D bounds2 = roi.getBounds5D();
 
         // init infinite dim infos
-        final boolean ic1 = bounds1.getSizeC() == Double.POSITIVE_INFINITY;
-        final boolean ic2 = bounds2.getSizeC() == Double.POSITIVE_INFINITY;
-        final boolean it1 = bounds1.getSizeT() == Double.POSITIVE_INFINITY;
-        final boolean it2 = bounds2.getSizeT() == Double.POSITIVE_INFINITY;
-        final boolean iz1 = bounds1.getSizeZ() == Double.POSITIVE_INFINITY;
-        final boolean iz2 = bounds2.getSizeZ() == Double.POSITIVE_INFINITY;
+        final boolean ic1 = bounds1.isInfiniteC();
+        final boolean ic2 = bounds2.isInfiniteC();
+        final boolean it1 = bounds1.isInfiniteT();
+        final boolean it2 = bounds2.isInfiniteT();
+        final boolean iz1 = bounds1.isInfiniteZ();
+        final boolean iz2 = bounds2.isInfiniteZ();
 
         // cannot process union when we have an infinite dimension with a finite one
         if ((ic1 ^ ic2) || (it1 ^ it2) || (iz1 ^ iz2))
@@ -1753,8 +1753,17 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 throw new UnsupportedOperationException("Can't process union on ROI with different finite dimension");
             return null;
         }
+
+        // do union
+        Rectangle5D.union(bounds1, bounds2, bounds1);
+
+        // init infinite dim infos on result
+        final boolean ic = bounds1.isInfiniteC() || (bounds1.getSizeC() <= 1d);
+        final boolean it = bounds1.isInfiniteT() || (bounds1.getSizeT() <= 1d);
+        final boolean iz = bounds1.isInfiniteZ() || (bounds1.getSizeZ() <= 1d);
+
         // cannot process union if C dimension is finite but T or Z is infinite
-        if (!ic1 && (it1 || iz1))
+        if (!ic && (it || iz))
         {
             if (throwException)
                 throw new UnsupportedOperationException(
@@ -1762,7 +1771,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             return null;
         }
         // cannot process union if T dimension is finite but Z is infinite
-        if (!it1 && iz1)
+        if (!it && iz)
         {
             if (throwException)
                 throw new UnsupportedOperationException(
@@ -1779,8 +1788,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Compute the resulting bounds for <i>intersection</i> operation with the specified ROI.<br>
      * It returns <code>null</code> or throw an exception if the <i>intersection</i> operation
-     * cannot be
-     * done (incompatible dimension).
+     * cannot be done (incompatible dimension).
      */
     protected Rectangle5D getIntersectionBounds(ROI roi, boolean throwException) throws UnsupportedOperationException
     {
@@ -1795,9 +1803,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         Rectangle5D.intersect(bounds1, bounds2, bounds1);
 
         // init infinite dim infos
-        final boolean ic = bounds1.getSizeC() == Double.POSITIVE_INFINITY;
-        final boolean it = bounds1.getSizeT() == Double.POSITIVE_INFINITY;
-        final boolean iz = bounds1.getSizeZ() == Double.POSITIVE_INFINITY;
+        final boolean ic = bounds1.isInfiniteC() || (bounds1.getSizeC() <= 1d);
+        final boolean it = bounds1.isInfiniteT() || (bounds1.getSizeT() <= 1d);
+        final boolean iz = bounds1.isInfiniteZ() || (bounds1.getSizeZ() <= 1d);
 
         // cannot process intersection if C dimension is finite but T or Z is infinite
         if (!ic && (it || iz))
@@ -1825,18 +1833,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected int getEffectiveDimension(Rectangle5D bounds)
     {
         int result = 5;
-        double size;
 
-        size = bounds.getSizeC();
-        if ((size == Double.POSITIVE_INFINITY) || (size <= 1d))
+        if (bounds.isInfiniteC() || (bounds.getSizeC() <= 1d))
         {
             result--;
-            size = bounds.getSizeT();
-            if ((size == Double.POSITIVE_INFINITY) || (size <= 1d))
+            if (bounds.isInfiniteT() || (bounds.getSizeT() <= 1d))
             {
                 result--;
-                size = bounds.getSizeZ();
-                if ((size == Double.POSITIVE_INFINITY) || (size <= 1d))
+                if (bounds.isInfiniteZ() || (bounds.getSizeZ() <= 1d))
                     result--;
             }
         }
@@ -1965,16 +1969,47 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         {
             case 2: // XY ROI with fixed ZTC
                 result = new plugins.kernel.roi.roi2d.ROI2DArea(mask.getMask2D(bounds.z, bounds.t, bounds.c));
+
+                // set ZTC position
+                result.beginUpdate();
+                try
+                {
+                    ((ROI2D) result).setZ(bounds.z);
+                    ((ROI2D) result).setT(bounds.t);
+                    ((ROI2D) result).setC(bounds.c);
+                }
+                finally
+                {
+                    result.endUpdate();
+                }
                 break;
+
             case 3: // XYZ ROI with fixed TC
                 result = new ROI3DArea(mask.getMask3D(bounds.t, bounds.c));
+
+                // set TC position
+                result.beginUpdate();
+                try
+                {
+                    ((ROI3D) result).setT(bounds.t);
+                    ((ROI2D) result).setC(bounds.c);
+                }
+                finally
+                {
+                    result.endUpdate();
+                }
                 break;
+
             case 4: // XYZT ROI with fixed C
                 result = new ROI4DArea(mask.getMask4D(bounds.c));
+                // set C position
+                ((ROI4D) result).setC(bounds.c);
                 break;
+
             case 5: // XYZTC ROI
                 result = new ROI5DArea(mask);
                 break;
+
             default:
                 result = null;
                 break;

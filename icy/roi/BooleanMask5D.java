@@ -338,7 +338,7 @@ public class BooleanMask5D
 
         // special case of infinite C dim
         if (bounds.sizeC == Integer.MAX_VALUE)
-            this.mask.put(Integer.valueOf(-1), mask[0]);
+            this.mask.put(Integer.valueOf(Integer.MIN_VALUE), mask[0]);
         else
         {
             for (int c = 0; c < bounds.sizeC; c++)
@@ -847,15 +847,15 @@ public class BooleanMask5D
         result.setSizeT(bounds4D.sizeT);
 
         // single C --> check for special MAX_INTEGER case
-        if ((minC == maxC) && (bounds.sizeT == Integer.MAX_VALUE))
+        if ((minC == maxC) && (bounds.sizeC == Integer.MAX_VALUE))
         {
-            result.setC(-1);
+            result.setC(Integer.MIN_VALUE);
             result.setSizeC(Integer.MAX_VALUE);
         }
         else
         {
-            bounds.setC(minC);
-            bounds.setSizeC((maxC - minC) + 1);
+            result.setC(minC);
+            result.setSizeC((maxC - minC) + 1);
         }
 
         return result;
@@ -933,14 +933,14 @@ public class BooleanMask5D
                 // set new mask
                 mask.clear();
                 if (mask4D != null)
-                    mask.put(Integer.valueOf(-1), mask4D);
+                    mask.put(Integer.valueOf(Integer.MIN_VALUE), mask4D);
             }
             else
             {
                 // create new mask array
                 final BooleanMask4D[] newMask = new BooleanMask4D[value.sizeC];
 
-                for (int c = 0; c <= value.sizeC; c++)
+                for (int c = 0; c < value.sizeC; c++)
                 {
                     final BooleanMask4D mask4D = getMask4D(value.c + c);
 
@@ -953,7 +953,7 @@ public class BooleanMask5D
 
                 // set new mask
                 mask.clear();
-                for (int c = 0; c <= value.sizeC; c++)
+                for (int c = 0; c < value.sizeC; c++)
                     mask.put(Integer.valueOf(value.c + c), newMask[c]);
             }
 

@@ -333,7 +333,7 @@ public class BooleanMask3D implements Cloneable
 
         // special case of infinite Z dim
         if (bounds.sizeZ == Integer.MAX_VALUE)
-            this.mask.put(Integer.valueOf(-1), mask[0]);
+            this.mask.put(Integer.valueOf(Integer.MIN_VALUE), mask[0]);
         else
         {
             for (int z = 0; z < bounds.sizeZ; z++)
@@ -674,13 +674,13 @@ public class BooleanMask3D implements Cloneable
         // single Z --> check for special MAX_INTEGER case
         if ((minZ == maxZ) && (bounds.sizeZ == Integer.MAX_VALUE))
         {
-            result.setZ(-1);
+            result.setZ(Integer.MIN_VALUE);
             result.setSizeZ(Integer.MAX_VALUE);
         }
         else
         {
-            bounds.setZ(minZ);
-            bounds.setSizeZ((maxZ - minZ) + 1);
+            result.setZ(minZ);
+            result.setSizeZ((maxZ - minZ) + 1);
         }
 
         return result;
@@ -757,14 +757,14 @@ public class BooleanMask3D implements Cloneable
                 // set new mask
                 mask.clear();
                 if (mask2D != null)
-                    mask.put(Integer.valueOf(-1), mask2D);
+                    mask.put(Integer.valueOf(Integer.MIN_VALUE), mask2D);
             }
             else
             {
                 // create new mask array
                 final BooleanMask2D[] newMask = new BooleanMask2D[value.sizeZ];
 
-                for (int z = 0; z <= value.sizeZ; z++)
+                for (int z = 0; z < value.sizeZ; z++)
                 {
                     final BooleanMask2D mask2D = getMask2D(value.z + z);
 
@@ -777,7 +777,7 @@ public class BooleanMask3D implements Cloneable
 
                 // set new mask
                 mask.clear();
-                for (int z = 0; z <= value.sizeZ; z++)
+                for (int z = 0; z < value.sizeZ; z++)
                     mask.put(Integer.valueOf(value.z + z), newMask[z]);
             }
 

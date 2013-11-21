@@ -446,6 +446,33 @@ public abstract class Rectangle3D implements Cloneable
     public abstract boolean isInfiniteZ();
 
     /**
+     * Sets the X dimension to infinite.
+     */
+    public void setInfiniteX()
+    {
+        setX(java.lang.Double.NEGATIVE_INFINITY);
+        setSizeX(java.lang.Double.POSITIVE_INFINITY);
+    }
+
+    /**
+     * Sets the Y dimension to infinite.
+     */
+    public void setInfiniteY()
+    {
+        setY(java.lang.Double.NEGATIVE_INFINITY);
+        setSizeY(java.lang.Double.POSITIVE_INFINITY);
+    }
+
+    /**
+     * Sets the Z dimension to infinite.
+     */
+    public void setInfiniteZ()
+    {
+        setZ(java.lang.Double.NEGATIVE_INFINITY);
+        setSizeZ(java.lang.Double.POSITIVE_INFINITY);
+    }
+
+    /**
      * Tests if the specified coordinates are inside the boundary of the <code>Rectangle3D</code>.
      * 
      * @param x

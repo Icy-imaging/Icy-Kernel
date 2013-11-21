@@ -337,7 +337,7 @@ public class BooleanMask4D
 
         // special case of infinite T dim
         if (bounds.sizeT == Integer.MAX_VALUE)
-            this.mask.put(Integer.valueOf(-1), mask[0]);
+            this.mask.put(Integer.valueOf(Integer.MIN_VALUE), mask[0]);
         else
         {
             for (int t = 0; t < bounds.sizeT; t++)
@@ -764,13 +764,13 @@ public class BooleanMask4D
         // single T --> check for special MAX_INTEGER case
         if ((minT == maxT) && (bounds.sizeT == Integer.MAX_VALUE))
         {
-            result.setT(-1);
+            result.setT(Integer.MIN_VALUE);
             result.setSizeT(Integer.MAX_VALUE);
         }
         else
         {
-            bounds.setT(minT);
-            bounds.setSizeT((maxT - minT) + 1);
+            result.setT(minT);
+            result.setSizeT((maxT - minT) + 1);
         }
 
         return result;
@@ -848,14 +848,14 @@ public class BooleanMask4D
                 // set new mask
                 mask.clear();
                 if (mask3D != null)
-                    mask.put(Integer.valueOf(-1), mask3D);
+                    mask.put(Integer.valueOf(Integer.MIN_VALUE), mask3D);
             }
             else
             {
                 // create new mask array
                 final BooleanMask3D[] newMask = new BooleanMask3D[value.sizeT];
 
-                for (int t = 0; t <= value.sizeT; t++)
+                for (int t = 0; t < value.sizeT; t++)
                 {
                     final BooleanMask3D mask3D = getMask3D(value.t + t);
 
@@ -868,7 +868,7 @@ public class BooleanMask4D
 
                 // set new mask
                 mask.clear();
-                for (int t = 0; t <= value.sizeT; t++)
+                for (int t = 0; t < value.sizeT; t++)
                     mask.put(Integer.valueOf(value.t + t), newMask[t]);
             }
 

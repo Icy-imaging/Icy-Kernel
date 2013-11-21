@@ -444,13 +444,21 @@ public abstract class ROI4D extends ROI
     @Override
     public void setBounds5D(Rectangle5D bounds)
     {
-        // infinite C dim ?
-        if (bounds.getSizeC() == Double.POSITIVE_INFINITY)
-            setC(-1);
-        else
-            setC((int) bounds.getC());
+        beginUpdate();
+        try
+        {
+            // infinite C dim ?
+            if (bounds.getSizeC() == Double.POSITIVE_INFINITY)
+                setC(-1);
+            else
+                setC((int) bounds.getC());
 
-        setBounds4D(bounds.toRectangle4D());
+            setBounds4D(bounds.toRectangle4D());
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     /**
@@ -469,13 +477,16 @@ public abstract class ROI4D extends ROI
     @Override
     public void setPosition5D(Point5D position)
     {
-        // infinite C dim ?
-        if (position.getC() == Double.NEGATIVE_INFINITY)
-            setC(-1);
-        else
+        beginUpdate();
+        try
+        {
             setC((int) position.getC());
-
-        setPosition4D(position.toPoint4D());
+            setPosition4D(position.toPoint4D());
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     @Override
@@ -664,9 +675,17 @@ public abstract class ROI4D extends ROI
      */
     public void setC(int value)
     {
-        if (c != value)
+        final int v;
+
+        // special value for infinite dimension --> change to -1
+        if (value == Integer.MIN_VALUE)
+            v = -1;
+        else
+            v = value;
+
+        if (c != v)
         {
-            c = value;
+            c = v;
             roiChanged();
         }
     }

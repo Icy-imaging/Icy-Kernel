@@ -539,6 +539,42 @@ public abstract class Rectangle4D implements Cloneable
     public abstract boolean isInfiniteT();
 
     /**
+     * Sets the X dimension to infinite.
+     */
+    public void setInfiniteX()
+    {
+        setX(java.lang.Double.NEGATIVE_INFINITY);
+        setSizeX(java.lang.Double.POSITIVE_INFINITY);
+    }
+
+    /**
+     * Sets the Y dimension to infinite.
+     */
+    public void setInfiniteY()
+    {
+        setY(java.lang.Double.NEGATIVE_INFINITY);
+        setSizeY(java.lang.Double.POSITIVE_INFINITY);
+    }
+
+    /**
+     * Sets the Z dimension to infinite.
+     */
+    public void setInfiniteZ()
+    {
+        setZ(java.lang.Double.NEGATIVE_INFINITY);
+        setSizeZ(java.lang.Double.POSITIVE_INFINITY);
+    }
+
+    /**
+     * Sets the T dimension to infinite.
+     */
+    public void setInfiniteT()
+    {
+        setT(java.lang.Double.NEGATIVE_INFINITY);
+        setSizeT(java.lang.Double.POSITIVE_INFINITY);
+    }
+
+    /**
      * Tests if the specified coordinates are inside the boundary of the <code>Rectangle4D</code>.
      * 
      * @param x

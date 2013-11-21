@@ -976,7 +976,7 @@ public class SequenceUtil
     /**
      * Set all images of the sequence in Z dimension.
      */
-    public static void convertToVolume(Sequence sequence)
+    public static void convertToStack(Sequence sequence)
     {
         sequence.beginUpdate();
         try
@@ -991,6 +991,15 @@ public class SequenceUtil
         {
             sequence.endUpdate();
         }
+    }
+
+    /**
+     * @deprecated Use {@link #convertToStack(Sequence)} instead.
+     */
+    @Deprecated
+    public static void convertToVolume(Sequence sequence)
+    {
+        convertToStack(sequence);
     }
 
     /**
@@ -1809,7 +1818,7 @@ public class SequenceUtil
 
     /**
      * Creates a new sequence which is a sub part of the source sequence defined by the specified
-     * {@link ROI}.
+     * {@link ROI} bounds.
      */
     public static Sequence getSubSequence(Sequence source, ROI roi)
     {

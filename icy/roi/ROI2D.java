@@ -400,9 +400,17 @@ public abstract class ROI2D extends ROI
      */
     public void setZ(int value)
     {
-        if (z != value)
+        final int v;
+
+        // special value for infinite dimension --> change to -1
+        if (value == Integer.MIN_VALUE)
+            v = -1;
+        else
+            v = value;
+
+        if (z != v)
         {
-            z = value;
+            z = v;
             roiChanged();
         }
     }
@@ -421,9 +429,17 @@ public abstract class ROI2D extends ROI
      */
     public void setT(int value)
     {
-        if (t != value)
+        final int v;
+
+        // special value for infinite dimension --> change to -1
+        if (value == Integer.MIN_VALUE)
+            v = -1;
+        else
+            v = value;
+
+        if (t != v)
         {
-            t = value;
+            t = v;
             roiChanged();
         }
     }
@@ -442,9 +458,17 @@ public abstract class ROI2D extends ROI
      */
     public void setC(int value)
     {
-        if (c != value)
+        final int v;
+
+        // special value for infinite dimension --> change to -1
+        if (value == Integer.MIN_VALUE)
+            v = -1;
+        else
+            v = value;
+
+        if (c != v)
         {
-            c = value;
+            c = v;
             roiChanged();
         }
     }
@@ -929,23 +953,31 @@ public abstract class ROI2D extends ROI
     @Override
     public void setBounds5D(Rectangle5D bounds)
     {
-        // infinite Z dim ?
-        if (bounds.getSizeZ() == Double.POSITIVE_INFINITY)
-            setZ(-1);
-        else
-            setZ((int) bounds.getZ());
-        // infinite T dim ?
-        if (bounds.getSizeT() == Double.POSITIVE_INFINITY)
-            setT(-1);
-        else
-            setT((int) bounds.getT());
-        // infinite C dim ?
-        if (bounds.getSizeC() == Double.POSITIVE_INFINITY)
-            setC(-1);
-        else
-            setC((int) bounds.getC());
+        beginUpdate();
+        try
+        {
+            // infinite Z dim ?
+            if (bounds.getSizeZ() == Double.POSITIVE_INFINITY)
+                setZ(-1);
+            else
+                setZ((int) bounds.getZ());
+            // infinite T dim ?
+            if (bounds.getSizeT() == Double.POSITIVE_INFINITY)
+                setT(-1);
+            else
+                setT((int) bounds.getT());
+            // infinite C dim ?
+            if (bounds.getSizeC() == Double.POSITIVE_INFINITY)
+                setC(-1);
+            else
+                setC((int) bounds.getC());
 
-        setBounds2D(bounds.toRectangle2D());
+            setBounds2D(bounds.toRectangle2D());
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     /**
@@ -978,23 +1010,18 @@ public abstract class ROI2D extends ROI
     @Override
     public void setPosition5D(Point5D position)
     {
-        // infinite Z dim ?
-        if (position.getZ() == Double.NEGATIVE_INFINITY)
-            setZ(-1);
-        else
+        beginUpdate();
+        try
+        {
             setZ((int) position.getZ());
-        // infinite T dim ?
-        if (position.getT() == Double.NEGATIVE_INFINITY)
-            setT(-1);
-        else
             setT((int) position.getT());
-        // infinite C dim ?
-        if (position.getC() == Double.NEGATIVE_INFINITY)
-            setC(-1);
-        else
             setC((int) position.getC());
-
-        setPosition2D(position.toPoint2D());
+            setPosition2D(position.toPoint2D());
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     /**
