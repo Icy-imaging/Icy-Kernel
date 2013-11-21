@@ -1,14 +1,12 @@
 package icy.gui.system;
 
-import icy.gui.util.ComponentUtil;
-import icy.main.Icy;
+import icy.gui.frame.IcyFrame;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
 
 import javax.swing.BoxLayout;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -17,14 +15,8 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 
-public class NewVersionFrame extends JFrame
+public class NewVersionFrame extends IcyFrame
 {
-
-    /**
-     * 
-     */
-    private static final long serialVersionUID = -4997600355557528568L;
-
     private JPanel contentPane;
     private JTextPane changesLogTextPane;
 
@@ -33,16 +25,18 @@ public class NewVersionFrame extends JFrame
      */
     public NewVersionFrame(String changesLog)
     {
-        super();
+        super("New version installed !", true, true, false, false);
+        
         setPreferredSize(new Dimension(640, 480));
-        setTitle("New version installed !");
+        setSize(640, 480);
 
         initialize();
 
         changesLogTextPane.setText(changesLog);
         changesLogTextPane.setCaretPosition(2);
 
-        ComponentUtil.center(this, Icy.getMainInterface().getMainFrame());
+        addToMainDesktopPane();
+        center();
         setVisible(true);
         toFront();
     }
@@ -50,7 +44,7 @@ public class NewVersionFrame extends JFrame
     private void initialize()
     {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setBounds(100, 100, 640, 440);
+
         contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
         contentPane.setLayout(new BorderLayout(0, 0));
