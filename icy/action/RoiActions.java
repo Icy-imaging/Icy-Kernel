@@ -32,7 +32,6 @@ import icy.roi.ROI;
 import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
 import icy.system.SystemUtil;
-import icy.util.ShapeUtil.BooleanOperator;
 import icy.util.StringUtil;
 import icy.util.XLSUtil;
 import icy.util.XMLUtil;
@@ -512,6 +511,10 @@ public class RoiActions
                     sequence.addROI(mergeROI);
                     sequence.setSelectedROI(mergeROI);
                 }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                }
                 finally
                 {
                     sequence.endUpdate();
@@ -551,10 +554,14 @@ public class RoiActions
                 try
                 {
                     final List<ROI> selectedROIs = roisPanel.getSelectedRois();
-                    final ROI mergeROI = ROIUtil.merge(selectedROIs, BooleanOperator.OR);
+                    final ROI mergeROI = ROIUtil.getUnion(selectedROIs);
 
                     sequence.addROI(mergeROI);
                     sequence.setSelectedROI(mergeROI);
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
                 }
                 finally
                 {
@@ -596,10 +603,14 @@ public class RoiActions
                 try
                 {
                     final List<ROI> selectedROIs = roisPanel.getSelectedRois();
-                    final ROI mergeROI = ROIUtil.merge(selectedROIs, BooleanOperator.AND);
+                    final ROI mergeROI = ROIUtil.getIntersection(selectedROIs);
 
                     sequence.addROI(mergeROI);
                     sequence.setSelectedROI(mergeROI);
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
                 }
                 finally
                 {
@@ -641,10 +652,14 @@ public class RoiActions
                 try
                 {
                     final List<ROI> selectedROIs = roisPanel.getSelectedRois();
-                    final ROI mergeROI = ROIUtil.merge(selectedROIs, BooleanOperator.XOR);
+                    final ROI mergeROI = ROIUtil.getExclusiveUnion(selectedROIs);
 
                     sequence.addROI(mergeROI);
                     sequence.setSelectedROI(mergeROI);
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
                 }
                 finally
                 {
@@ -695,6 +710,10 @@ public class RoiActions
 
                     sequence.addROI(mergeROI);
                     sequence.setSelectedROI(mergeROI);
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
                 }
                 finally
                 {
@@ -749,7 +768,7 @@ public class RoiActions
                 {
                     // update result folder
                     GeneralPreferences.setResultFolder(FileUtil.getDirectory(filename));
-                    
+
                     // CSV format wanted ?
                     if (FileUtil.getFileExtension(filename, false).equalsIgnoreCase("csv"))
                     {

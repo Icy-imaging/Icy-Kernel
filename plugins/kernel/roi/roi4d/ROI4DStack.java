@@ -513,7 +513,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
             if (!bnd3d.isEmpty())
             {
                 if (xyzBounds == null)
-                    xyzBounds = bnd3d;
+                    xyzBounds = (Rectangle3D) bnd3d.clone();
                 else
                     xyzBounds.add(bnd3d);
             }

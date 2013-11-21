@@ -60,8 +60,8 @@ public class PluginErrorReport
             final String message)
     {
         // cannot be reported...
-        if ((plugin == null) && StringUtil.isEmpty(devId))
-            return;
+        // if ((plugin == null) && StringUtil.isEmpty(devId))
+        // return;
 
         if (ErrorReportFrame.hasErrorFrameOpened())
             return;
@@ -173,9 +173,14 @@ public class PluginErrorReport
             str = "<html><br>The plugin named <b>" + plugin.getName() + "</b> has encountered a problem";
             icon = plugin.getIcon();
         }
-        else
+        else if (!StringUtil.isEmpty(devId))
         {
             str = "<html><br>The plugin from the developer <b>" + devId + "</b> has encountered a problem";
+            icon = null;
+        }
+        else
+        {
+            str = "<html><br>The application has encountered a problem";
             icon = null;
         }
 

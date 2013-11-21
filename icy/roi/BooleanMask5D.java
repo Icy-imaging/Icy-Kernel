@@ -817,7 +817,7 @@ public class BooleanMask5D
             if (compute4DBounds)
                 optB4d = m4d.getOptimizedBounds();
             else
-                optB4d = m4d.bounds;
+                optB4d = new Rectangle4D.Integer(m4d.bounds);
 
             // only add non empty bounds
             if (!optB4d.isEmpty())

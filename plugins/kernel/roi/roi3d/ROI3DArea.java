@@ -377,7 +377,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
      */
     public void setAsBooleanMask(Rectangle3D.Integer rect, BooleanMask2D[] mask)
     {
-        if (rect.sizeZ == Integer.MAX_VALUE)
+        if (rect.isInfiniteZ())
             throw new IllegalArgumentException("Cannot set infinite Z dimension on the 3D Area ROI.");
 
         beginUpdate();

@@ -1779,9 +1779,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             return null;
         }
 
-        // do union
-        Rectangle5D.union(bounds1, bounds2, bounds1);
-
         return bounds1;
     }
 
@@ -1889,21 +1886,21 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 break;
 
             case 3: // XYZ ROI with fixed TC
-                sizeZ = bounds.z;
+                sizeZ = bounds.sizeZ;
                 sizeT = 1;
                 sizeC = 1;
                 break;
 
             case 4: // XYZT ROI with fixed C
-                sizeZ = bounds.z;
-                sizeT = bounds.t;
+                sizeZ = bounds.sizeZ;
+                sizeT = bounds.sizeT;
                 sizeC = 1;
                 break;
 
             default: // XYZTC ROI
-                sizeZ = bounds.z;
-                sizeT = bounds.t;
-                sizeC = bounds.c;
+                sizeZ = bounds.sizeZ;
+                sizeT = bounds.sizeT;
+                sizeC = bounds.sizeC;
                 break;
         }
 
@@ -1992,7 +1989,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 try
                 {
                     ((ROI3D) result).setT(bounds.t);
-                    ((ROI2D) result).setC(bounds.c);
+                    ((ROI3D) result).setC(bounds.c);
                 }
                 finally
                 {

@@ -734,7 +734,7 @@ public class BooleanMask4D
             if (compute3DBounds)
                 optB3d = m3d.getOptimizedBounds();
             else
-                optB3d = m3d.bounds;
+                optB3d = new Rectangle3D.Integer(m3d.bounds);
 
             // only add non empty bounds
             if (!optB3d.isEmpty())

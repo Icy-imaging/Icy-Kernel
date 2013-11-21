@@ -646,7 +646,7 @@ public class BooleanMask3D implements Cloneable
             if (compute2DBounds)
                 optB2d = m2d.getOptimizedBounds();
             else
-                optB2d = m2d.bounds;
+                optB2d = new Rectangle(m2d.bounds);
 
             // only add non empty bounds
             if (!optB2d.isEmpty())

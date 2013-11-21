@@ -209,7 +209,7 @@ public class ROI4DArea extends ROI4DStack<ROI3DArea>
      */
     public void setAsBooleanMask(Rectangle4D.Integer rect, BooleanMask3D[] mask)
     {
-        if (rect.sizeT == Integer.MAX_VALUE)
+        if (rect.isInfiniteT())
             throw new IllegalArgumentException("Cannot set infinite T dimension on the 4D Area ROI.");
 
         beginUpdate();

@@ -145,14 +145,17 @@ public class BooleanMask2D implements Cloneable
      * Build resulting mask from union of the mask1 and mask2.<br>
      * If <code>mask1</code> is <code>null</code> then a copy of <code>mask2</code> is returned.<br>
      * If <code>mask2</code> is <code>null</code> then a copy of <code>mask1</code> is returned.<br>
-     * <code>null</code> is returned if both <code>mask1</code> and <code>mask2</code> are
+     * An empty mask is returned if both <code>mask1</code> and <code>mask2</code> are
      * <code>null</code>.
      */
     public static BooleanMask2D getUnion(BooleanMask2D mask1, BooleanMask2D mask2)
     {
-        if (mask1 == null)
+        if ((mask1 == null) && (mask2 == null))
+            return new BooleanMask2D();
+
+        if ((mask1 == null) || mask1.isEmpty())
             return (BooleanMask2D) mask2.clone();
-        if (mask2 == null)
+        if ((mask2 == null) || mask2.isEmpty())
             return (BooleanMask2D) mask1.clone();
 
         return getUnion(mask1.bounds, mask1.mask, mask2.bounds, mask2.mask);
@@ -239,15 +242,12 @@ public class BooleanMask2D implements Cloneable
 
     /**
      * Build resulting mask from intersection of the mask1 and mask2.<br>
-     * <code>null</code> is returned if <code>mask1</code> or <code>mask2</code> is
-     * <code>null</code>.
+     * An empty mask is returned if <code>mask1</code> or <code>mask2</code> is <code>null</code>.
      */
     public static BooleanMask2D getIntersection(BooleanMask2D mask1, BooleanMask2D mask2)
     {
-        if (mask1 == null)
-            return null;
-        if (mask2 == null)
-            return null;
+        if ((mask1 == null) || (mask2 == null))
+            return new BooleanMask2D();
 
         return getIntersection(mask1.bounds, mask1.mask, mask2.bounds, mask2.mask);
     }
@@ -329,9 +329,12 @@ public class BooleanMask2D implements Cloneable
      */
     public static BooleanMask2D getExclusiveUnion(BooleanMask2D mask1, BooleanMask2D mask2)
     {
-        if (mask1 == null)
+        if ((mask1 == null) && (mask2 == null))
+            return new BooleanMask2D();
+
+        if ((mask1 == null) || mask1.isEmpty())
             return (BooleanMask2D) mask2.clone();
-        if (mask2 == null)
+        if ((mask2 == null) || mask2.isEmpty())
             return (BooleanMask2D) mask1.clone();
 
         return getExclusiveUnion(mask1.bounds, mask1.mask, mask2.bounds, mask2.mask);
@@ -400,12 +403,12 @@ public class BooleanMask2D implements Cloneable
     /**
      * Build resulting mask from the subtraction of mask2 from mask1.<br>
      * If <code>mask2</code> is <code>null</code> then a copy of <code>mask1</code> is returned.<br>
-     * If <code>mask1</code> is <code>null</code> then <code>null</code> is returned.
+     * If <code>mask1</code> is <code>null</code> then a empty mask is returned.
      */
     public static BooleanMask2D getSubtraction(BooleanMask2D mask1, BooleanMask2D mask2)
     {
         if (mask1 == null)
-            return null;
+            return new BooleanMask2D();
         if (mask2 == null)
             return (BooleanMask2D) mask1.clone();
 
@@ -795,6 +798,9 @@ public class BooleanMask2D implements Cloneable
         }
     }
 
+    /**
+     * Create an empty BooleanMask2D
+     */
     public BooleanMask2D()
     {
         this(new Rectangle(), new boolean[0]);
@@ -1684,7 +1690,7 @@ public class BooleanMask2D implements Cloneable
             }
         }
 
-        // empty --> return empty bounds  
+        // empty --> return empty bounds
         if (minX == sizeX)
             return new Rectangle(bounds.x, bounds.y, 0, 0);
 

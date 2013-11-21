@@ -247,10 +247,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
             // {
             if ((current - lastErrorDialog) > ERROR_ANTISPAM_TIME)
             {
-                String title = t.getMessage();
-
-                if (StringUtil.isEmpty(title))
-                    title = t.toString();
+                final String title = t.toString();
 
                 PluginErrorReport.report(plugin, devId, title, message);
                 // update last error dialog time

@@ -202,16 +202,16 @@ public class ROI5DArea extends ROI5DStack<ROI4DArea>
      */
     public void setAsBooleanMask(Rectangle5D.Integer rect, BooleanMask4D[] mask)
     {
-        if (rect.sizeT == Integer.MAX_VALUE)
-            throw new IllegalArgumentException("Cannot set infinite T dimension on the 4D Area ROI.");
+        if (rect.isInfiniteC())
+            throw new IllegalArgumentException("Cannot set infinite C dimension on the 5D Area ROI.");
 
         beginUpdate();
         try
         {
             clear();
 
-            for (int t = 0; t < rect.sizeT; t++)
-                setSlice(t + rect.t, new ROI4DArea(mask[t]));
+            for (int c = 0; c < rect.sizeC; c++)
+                setSlice(c + rect.c, new ROI4DArea(mask[c]));
 
             optimizeBounds();
         }
