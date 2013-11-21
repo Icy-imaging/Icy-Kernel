@@ -87,6 +87,7 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.frame.error"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.pool"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.util"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.swimmingPool"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.list"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.math"/>
