@@ -1245,13 +1245,16 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                     panel3D.paint(panel3D.getGraphics());
 
                     // NOTE: in vtk the [0,0] pixel is bottom left, so a vertical flip is required
-                    renderWindow.GetRGBACharPixelData(0, 0, w - 1, h - 1, 1, array);
+                    // NOTE: GetRGBACharPixelData gives problematic results depending on the platform
+                    // (see comment about alpha and platform-dependence in the doc for vtkWindowToImageFilter)
+                    // Since the canvas is opaque, simply use GetPixelData.
+                    renderWindow.GetPixelData(0, 0, w - 1, h - 1, 1, array);
                 }
             });
 
             // convert the vtk array into a IcyBufferedImage
             final byte[] inData = array.GetJavaArray();
-            final BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            final BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
             final int[] outData = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
 
             int inOffset = 0;
@@ -1264,9 +1267,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                     final int r = TypeUtil.unsign(inData[inOffset++]);
                     final int g = TypeUtil.unsign(inData[inOffset++]);
                     final int b = TypeUtil.unsign(inData[inOffset++]);
-                    final int a = TypeUtil.unsign(inData[inOffset++]);
 
-                    outData[outOffset++] = (a << 24) | (r << 16) | (g << 8) | (b << 0);
+                    outData[outOffset++] = (r << 16) | (g << 8) | (b << 0);
                 }
             }
 
