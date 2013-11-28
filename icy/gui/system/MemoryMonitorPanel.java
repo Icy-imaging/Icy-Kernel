@@ -32,6 +32,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
@@ -72,6 +73,8 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
     private final BasicStroke memStroke = new BasicStroke(3);
     private final Font textFont = new Font("Arial", Font.BOLD, 9);
     private BufferedImage background = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+	private final Image networkImage = ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_NETWORK, Color.gray);
+	private final Image deleteImage = ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_DELETE, Color.red);
     
     boolean displayHelpMessage = false;
 
@@ -192,10 +195,8 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
         // display internet connection
         if (!NetworkUtil.hasInternetAccess())
         {
-            g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_NETWORK, Color.gray), 10, 30, 16, 16,
-                    null);
-            g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_DELETE, Color.red), 13, 35, 10, 10,
-                    null);
+            g2.drawImage(networkImage, 10, 30, 16, 16, null);
+            g2.drawImage(deleteImage, 13, 35, 10, 10, null);
 
             if (displayHelpMessage)
             {
