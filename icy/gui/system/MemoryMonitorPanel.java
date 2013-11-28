@@ -60,6 +60,9 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     private final Timer updateTimer;
     private final double maxMemory;
 
+    private final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
+    private final Color memColor = Color.green;
+    
     boolean displayHelpMessage = false;
 
     public MemoryMonitorPanel()
@@ -103,9 +106,6 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     {
         final int w = getWidth();
         final int h = getHeight();
-
-        final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
-        final Color memColor = Color.green;
 
         GraphicsUtil.paintIcyBackGround(w, h, g);
 
