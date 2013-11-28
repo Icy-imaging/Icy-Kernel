@@ -65,6 +65,8 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
 
     private final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
     private final Color memColor = Color.green;
+    private final BasicStroke cpuStroke = new BasicStroke(2);
+    private final BasicStroke memStroke = new BasicStroke(3);
     private final Font textFont = new Font("Arial", Font.BOLD, 9);
     private BufferedImage background = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
     
@@ -128,7 +130,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
             final float step = w / 100f;
 
             // draw used memory
-            g2.setStroke(new BasicStroke(3));
+            g2.setStroke(memStroke);
             g2.setColor(memColor);
 
             max = this.max[0];
@@ -148,7 +150,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
             }
 
             // draw CPU load
-            g2.setStroke(new BasicStroke(2));
+            g2.setStroke(cpuStroke);
             g2.setColor(cpuColor);
 
             max = this.max[1];
