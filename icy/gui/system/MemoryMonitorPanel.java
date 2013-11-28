@@ -64,7 +64,10 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
     private final double maxMemory;
 
     private final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
+    private final Color cpuTextColor = ColorUtil.mix(cpuColor, Color.white);
     private final Color memColor = Color.green;
+    private final Color memTextColor = ColorUtil.mix(memColor, Color.white);
+    private final Color connectionColor = ColorUtil.mix(Color.red, Color.white);
     private final BasicStroke cpuStroke = new BasicStroke(2);
     private final BasicStroke memStroke = new BasicStroke(3);
     private final Font textFont = new Font("Arial", Font.BOLD, 9);
@@ -176,12 +179,12 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
         // display Used & Max Memory
         g2.setColor(Color.black);
         GraphicsUtil.drawHCenteredString(g2, infos[0], (w / 2) + 1, 6 + 1, false);
-        g2.setColor(ColorUtil.mix(memColor, Color.white));
+        g2.setColor(memTextColor);
         GraphicsUtil.drawHCenteredString(g2, infos[0], w / 2, 6, false);
         // display CPU Load
         g2.setColor(Color.black);
         GraphicsUtil.drawHCenteredString(g2, infos[1], (w / 2) + 1, 18 + 1, false);
-        g2.setColor(ColorUtil.mix(cpuColor, Color.white));
+        g2.setColor(cpuTextColor);
         GraphicsUtil.drawHCenteredString(g2, infos[1], w / 2, 18, false);
 
         String text;
@@ -200,7 +203,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
 
                 g2.setColor(Color.black);
                 GraphicsUtil.drawHCenteredString(g2, text, (w / 2) + 1, 30 + 1, false);
-                g2.setColor(ColorUtil.mix(Color.red, Color.white));
+                g2.setColor(connectionColor);
                 GraphicsUtil.drawHCenteredString(g2, text, w / 2, 30, false);
             }
         }
