@@ -65,6 +65,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
 
     private final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
     private final Color memColor = Color.green;
+    private final Font textFont = new Font("Arial", Font.BOLD, 9);
     private BufferedImage background = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
     
     boolean displayHelpMessage = false;
@@ -168,7 +169,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
         }
 
         // display text
-        g2.setFont(new Font("Arial", Font.BOLD, 9));
+        g2.setFont(textFont);
 
         // display Used & Max Memory
         g2.setColor(Color.black);
