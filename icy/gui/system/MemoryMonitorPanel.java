@@ -33,8 +33,11 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -45,7 +48,7 @@ import javax.swing.JPanel;
  * 
  * @author Fab & Stephane
  */
-public class MemoryMonitorPanel extends JPanel implements MouseListener
+public class MemoryMonitorPanel extends JPanel implements MouseListener, ComponentListener
 {
     private static final long serialVersionUID = 5629509450385435829L;
 
@@ -62,6 +65,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
 
     private final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
     private final Color memColor = Color.green;
+    private BufferedImage background = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
     
     boolean displayHelpMessage = false;
 
@@ -88,8 +92,9 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
 
         setMinimumSize(new Dimension(120, 50));
         setPreferredSize(new Dimension(140, 55));
-
+      
         addMouseListener(this);
+        addComponentListener(this);
 
         updateTimer.scheduleAtFixedRate(new TimerTask()
         {
@@ -107,7 +112,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
         final int w = getWidth();
         final int h = getHeight();
 
-        GraphicsUtil.paintIcyBackGround(w, h, g);
+		g.drawImage(background, 0, 0, null);
 
         final Graphics2D g2 = (Graphics2D) g.create();
 
@@ -283,4 +288,33 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     {
 
     }
+
+	@Override
+	public void componentHidden(ComponentEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void componentMoved(ComponentEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void componentResized(ComponentEvent e) {
+        final int w = getWidth();
+        final int h = getHeight();
+		
+		background = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		Graphics2D background_g2 = background.createGraphics();
+		
+        GraphicsUtil.paintIcyBackGround(w, h, background_g2);
+	}
+
+	@Override
+	public void componentShown(ComponentEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 }
