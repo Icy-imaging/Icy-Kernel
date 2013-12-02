@@ -32,9 +32,13 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.RenderingHints;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -45,7 +49,7 @@ import javax.swing.JPanel;
  * 
  * @author Fab & Stephane
  */
-public class MemoryMonitorPanel extends JPanel implements MouseListener
+public class MemoryMonitorPanel extends JPanel implements MouseListener, ComponentListener
 {
     private static final long serialVersionUID = 5629509450385435829L;
 
@@ -60,6 +64,18 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     private final Timer updateTimer;
     private final double maxMemory;
 
+    private final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
+    private final Color cpuTextColor = ColorUtil.mix(cpuColor, Color.white);
+    private final Color memColor = Color.green;
+    private final Color memTextColor = ColorUtil.mix(memColor, Color.white);
+    private final Color connectionColor = ColorUtil.mix(Color.red, Color.white);
+    private final BasicStroke cpuStroke = new BasicStroke(2);
+    private final BasicStroke memStroke = new BasicStroke(3);
+    private final Font textFont = new Font("Arial", Font.BOLD, 9);
+    private BufferedImage background = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+	private final Image networkImage = ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_NETWORK, Color.gray);
+	private final Image deleteImage = ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_DELETE, Color.red);
+    
     boolean displayHelpMessage = false;
 
     public MemoryMonitorPanel()
@@ -85,8 +101,9 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
 
         setMinimumSize(new Dimension(120, 50));
         setPreferredSize(new Dimension(140, 55));
-
+      
         addMouseListener(this);
+        addComponentListener(this);
 
         updateTimer.scheduleAtFixedRate(new TimerTask()
         {
@@ -104,10 +121,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
         final int w = getWidth();
         final int h = getHeight();
 
-        final Color cpuColor = ColorUtil.mix(Color.blue, Color.white);
-        final Color memColor = Color.green;
-
-        GraphicsUtil.paintIcyBackGround(w, h, g);
+		g.drawImage(background, 0, 0, null);
 
         final Graphics2D g2 = (Graphics2D) g.create();
 
@@ -122,7 +136,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
             final float step = w / 100f;
 
             // draw used memory
-            g2.setStroke(new BasicStroke(3));
+            g2.setStroke(memStroke);
             g2.setColor(memColor);
 
             max = this.max[0];
@@ -142,7 +156,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
             }
 
             // draw CPU load
-            g2.setStroke(new BasicStroke(2));
+            g2.setStroke(cpuStroke);
             g2.setColor(cpuColor);
 
             max = this.max[1];
@@ -163,17 +177,17 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
         }
 
         // display text
-        g2.setFont(new Font("Arial", Font.BOLD, 9));
+        g2.setFont(textFont);
 
         // display Used & Max Memory
         g2.setColor(Color.black);
         GraphicsUtil.drawHCenteredString(g2, infos[0], (w / 2) + 1, 6 + 1, false);
-        g2.setColor(ColorUtil.mix(memColor, Color.white));
+        g2.setColor(memTextColor);
         GraphicsUtil.drawHCenteredString(g2, infos[0], w / 2, 6, false);
         // display CPU Load
         g2.setColor(Color.black);
         GraphicsUtil.drawHCenteredString(g2, infos[1], (w / 2) + 1, 18 + 1, false);
-        g2.setColor(ColorUtil.mix(cpuColor, Color.white));
+        g2.setColor(cpuTextColor);
         GraphicsUtil.drawHCenteredString(g2, infos[1], w / 2, 18, false);
 
         String text;
@@ -181,10 +195,8 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
         // display internet connection
         if (!NetworkUtil.hasInternetAccess())
         {
-            g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_NETWORK, Color.gray), 10, 30, 16, 16,
-                    null);
-            g2.drawImage(ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_DELETE, Color.red), 13, 35, 10, 10,
-                    null);
+            g2.drawImage(networkImage, 10, 30, 16, 16, null);
+            g2.drawImage(deleteImage, 13, 35, 10, 10, null);
 
             if (displayHelpMessage)
             {
@@ -192,7 +204,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
 
                 g2.setColor(Color.black);
                 GraphicsUtil.drawHCenteredString(g2, text, (w / 2) + 1, 30 + 1, false);
-                g2.setColor(ColorUtil.mix(Color.red, Color.white));
+                g2.setColor(connectionColor);
                 GraphicsUtil.drawHCenteredString(g2, text, w / 2, 30, false);
             }
         }
@@ -283,4 +295,33 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     {
 
     }
+
+	@Override
+	public void componentHidden(ComponentEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void componentMoved(ComponentEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void componentResized(ComponentEvent e) {
+        final int w = getWidth();
+        final int h = getHeight();
+		
+		background = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		Graphics2D background_g2 = background.createGraphics();
+		
+        GraphicsUtil.paintIcyBackGround(w, h, background_g2);
+	}
+
+	@Override
+	public void componentShown(ComponentEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 }
