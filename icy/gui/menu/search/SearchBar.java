@@ -82,7 +82,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
     /**
      * Internals
      */
-    private final Timer busyPainterTimer;
+    private Timer busyPainterTimer;
     final BusyPainter busyPainter;
     int frame;
     boolean lastSearchingState;
@@ -117,24 +117,6 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
 
         lastSearchingState = false;
         busyPainterTimer = new Timer("Search animation timer");
-        busyPainterTimer.scheduleAtFixedRate(new TimerTask()
-        {
-            @Override
-            public void run()
-            {
-                frame = (frame + 1) % BUSY_PAINTER_POINTS;
-                busyPainter.setFrame(frame);
-
-                final boolean searching = searchEngine.isSearching();
-
-                // this permit to get rid of the small delay between the searchCompleted
-                // event and when isSearching() actually returns false
-                if (searching || (searching != lastSearchingState))
-                    repaint();
-
-                lastSearchingState = searching;
-            }
-        }, DELAY, DELAY);
 
         // ADD LISTENERS
         addTextChangeListener(new TextChangeListener()
@@ -434,6 +416,28 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
     {
         if (initialized)
             resultsPanel.searchStarted();
+        
+        busyPainterTimer.cancel();
+        busyPainterTimer = new Timer("Search animation timer");
+        busyPainterTimer.scheduleAtFixedRate(new TimerTask()
+        {
+            @Override
+            public void run()
+            {
+                frame = (frame + 1) % BUSY_PAINTER_POINTS;
+                busyPainter.setFrame(frame);
+
+                final boolean searching = searchEngine.isSearching();
+
+                // this permit to get rid of the small delay between the searchCompleted
+                // event and when isSearching() actually returns false
+                if (searching || (searching != lastSearchingState))
+                    repaint();
+
+                lastSearchingState = searching;
+            }
+        }, DELAY, DELAY);
+        
         // for the busy loop animation
         repaint();
     }
@@ -441,6 +445,8 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
     @Override
     public void searchCompleted(SearchEngine source)
     {
+    	busyPainterTimer.cancel();
+    	
         // for the busy loop animation
         repaint();
     }
