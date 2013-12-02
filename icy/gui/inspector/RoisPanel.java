@@ -57,6 +57,8 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 import javax.swing.ActionMap;
@@ -82,7 +84,7 @@ import org.pushingpixels.substance.api.skin.SkinChangeListener;
  * @author Stephane
  */
 public class RoisPanel extends ExternalizablePanel implements ActiveSequenceListener, TextChangeListener,
-        ListSelectionListener, Runnable, PropertyChangeListener
+        ListSelectionListener, PropertyChangeListener
 {
     /**
      * 
@@ -134,8 +136,8 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     final Semaphore modifySelection;
     // complete refresh of the table
     final Runnable tableDataRefresher;
-    final Thread roiInfoComputer;
-    final List<ROIInfo> roisToCompute;
+    // executor that computes the ROI infos
+    final ExecutorService roisInfoComputeService;
 
     public RoisPanel()
     {
@@ -495,11 +497,8 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         tableSelectionModel = table.getSelectionModel();
         tableSelectionModel.addListSelectionListener(this);
         tableSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-
-        roisToCompute = new ArrayList<ROIInfo>();
-        roiInfoComputer = new Thread(this, "ROI properties calculator");
-        roiInfoComputer.setPriority(Thread.MIN_PRIORITY);
-        roiInfoComputer.start();
+       
+        roisInfoComputeService = Executors.newSingleThreadExecutor();
 
         // load panel preferences
         loadPreferences();
@@ -690,36 +689,6 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     ROIInfo getRoiInfoToCompute()
     {
         return null;
-    }
-
-    @Override
-    public void run()
-    {
-        while (true)
-        {
-            final ROIInfo roiInfo;
-
-            synchronized (roisToCompute)
-            {
-                if (!roisToCompute.isEmpty())
-                    roiInfo = roisToCompute.get(0);
-                else
-                    roiInfo = null;
-            }
-
-            if (roiInfo != null)
-            {
-                roiInfo.compute();
-
-                // remove it from the compute list
-                synchronized (roisToCompute)
-                {
-                    roisToCompute.remove(roiInfo);
-                }
-            }
-            else
-                ThreadUtil.sleep(10);
-        }
     }
 
     /**
@@ -1212,12 +1181,13 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         }
 
         void requestCompute()
-        {
-            synchronized (roisToCompute)
-            {
-                if (!roisToCompute.contains(this))
-                    roisToCompute.add(this);
-            }
+        {           
+            roisInfoComputeService.execute(new Runnable() {
+				@Override
+				public void run() {
+					compute();
+				}     	
+            });
         }
 
         public ROI getROI()
