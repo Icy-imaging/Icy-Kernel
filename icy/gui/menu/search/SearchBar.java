@@ -417,7 +417,9 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
         if (initialized)
             resultsPanel.searchStarted();
         
+        // make sure the animation timer for the busy icon is stopped
         busyPainterTimer.cancel();
+        // ... and restart it
         busyPainterTimer = new Timer("Search animation timer");
         busyPainterTimer.scheduleAtFixedRate(new TimerTask()
         {
@@ -445,6 +447,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
     @Override
     public void searchCompleted(SearchEngine source)
     {
+    	// stop the animation timer for the rotating busy icon
     	busyPainterTimer.cancel();
     	
         // for the busy loop animation
