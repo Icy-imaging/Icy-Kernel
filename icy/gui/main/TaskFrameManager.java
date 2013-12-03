@@ -141,13 +141,22 @@ public class TaskFrameManager
     }
     
     void startAnimation() {
+    	// make sure previous timer is stopped
     	animationTimer.cancel();
+    	// start a new Timer
     	animationTimer = new Timer("TaskFrame animation timer");
     	animationTimer.scheduleAtFixedRate(new TimerTask()
     	{
 			@Override
 			public void run() {
 				animateFrames();
+
+		        // stop the animation timer if there is no more TaskFrames
+				synchronized (taskFrameInfos) {
+			        if (taskFrameInfos.isEmpty()) {
+			        	cancel();
+			        }
+				}
 			}
     	}, ANIMATION_DELAY, ANIMATION_PERIOD);
     }
