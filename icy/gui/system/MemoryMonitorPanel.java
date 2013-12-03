@@ -34,8 +34,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
@@ -49,7 +47,7 @@ import javax.swing.JPanel;
  * 
  * @author Fab & Stephane
  */
-public class MemoryMonitorPanel extends JPanel implements MouseListener, ComponentListener
+public class MemoryMonitorPanel extends JPanel implements MouseListener
 {
     private static final long serialVersionUID = 5629509450385435829L;
 
@@ -103,7 +101,6 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
         setPreferredSize(new Dimension(140, 55));
       
         addMouseListener(this);
-        addComponentListener(this);
 
         updateTimer.scheduleAtFixedRate(new TimerTask()
         {
@@ -120,6 +117,13 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
     {
         final int w = getWidth();
         final int h = getHeight();
+        
+        if ((background.getWidth() != w) || (background.getHeight() != h))
+        {
+        	background = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+    		Graphics2D background_g2 = background.createGraphics();
+            GraphicsUtil.paintIcyBackGround(w, h, background_g2);
+        }
 
 		g.drawImage(background, 0, 0, null);
 
@@ -295,33 +299,4 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener, Compone
     {
 
     }
-
-	@Override
-	public void componentHidden(ComponentEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void componentMoved(ComponentEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void componentResized(ComponentEvent e) {
-        final int w = getWidth();
-        final int h = getHeight();
-		
-		background = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-		Graphics2D background_g2 = background.createGraphics();
-		
-        GraphicsUtil.paintIcyBackGround(w, h, background_g2);
-	}
-
-	@Override
-	public void componentShown(ComponentEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
 }
