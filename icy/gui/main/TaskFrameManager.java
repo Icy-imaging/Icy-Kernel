@@ -211,7 +211,10 @@ public class TaskFrameManager implements Runnable
             frameInfos.remove(frame);
 
         // update global list
-        taskFrameInfos = new HashMap<TaskFrame, FrameInformation>(frameInfos);
+        synchronized (taskFrameInfos)
+        {
+        	taskFrameInfos = new HashMap<TaskFrame, FrameInformation>(frameInfos);
+        }
 
         // calculate current Y position
         float currentY = desktopSize.height;
