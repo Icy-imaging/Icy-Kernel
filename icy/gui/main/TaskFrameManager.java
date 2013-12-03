@@ -30,13 +30,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Manage the TaskFrame to display them on right of the window.
  * 
  * @author Fabrice de Chaumont & Stephane Dallongeville
  */
-public class TaskFrameManager implements Runnable
+public class TaskFrameManager
 {
     private static class FrameInformation
     {
@@ -69,9 +71,12 @@ public class TaskFrameManager implements Runnable
         }
     }
 
-    final Thread animThread;
+    Timer animationTimer;
     Map<TaskFrame, FrameInformation> taskFrameInfos;
     long lastAnimationMillisecondTime;
+    
+    final long ANIMATION_DELAY = 0;
+    final long ANIMATION_PERIOD = 20;
 
     /**
      * 
@@ -81,7 +86,7 @@ public class TaskFrameManager implements Runnable
         super();
 
         taskFrameInfos = new HashMap<TaskFrame, FrameInformation>();
-        animThread = new Thread(this, "TaskFrame manager");
+        animationTimer = new Timer("TaskFrame animation timer");
 
         lastAnimationMillisecondTime = System.currentTimeMillis();
     }
@@ -89,7 +94,7 @@ public class TaskFrameManager implements Runnable
     // we have to separate init as thread call the getMainInterface() method
     public void init()
     {
-        animThread.start();
+
     }
 
     Dimension getDesktopSize()
@@ -121,6 +126,8 @@ public class TaskFrameManager implements Runnable
             tFrame.addToMainDesktopPane();
             tFrame.setLocation(pos);
             tFrame.toFront();
+            
+            startAnimation();
         }
     }
 
@@ -132,19 +139,19 @@ public class TaskFrameManager implements Runnable
         else
             addTaskWindow(tFrame, 0, 0);
     }
-
-    @Override
-    public void run()
-    {
-        while (true)
-        {
-        	animateFrames();
-
-            // sleep a bit
-            ThreadUtil.sleep(20);
-        }
-    }
     
+    void startAnimation() {
+    	animationTimer.cancel();
+    	animationTimer = new Timer("TaskFrame animation timer");
+    	animationTimer.scheduleAtFixedRate(new TimerTask()
+    	{
+			@Override
+			public void run() {
+				animateFrames();
+			}
+    	}, ANIMATION_DELAY, ANIMATION_PERIOD);
+    }
+  
     void animateFrames()
     {
         long currentMillisecondTime = System.currentTimeMillis();
