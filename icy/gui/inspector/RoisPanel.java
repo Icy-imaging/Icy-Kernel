@@ -57,6 +57,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
 import javax.swing.ActionMap;
@@ -135,7 +136,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     // complete refresh of the table
     final Runnable tableDataRefresher;
     final Thread roiInfoComputer;
-    final List<ROIInfo> roisToCompute;
+    final LinkedBlockingQueue<ROIInfo> roisToCompute;
 
     public RoisPanel()
     {
@@ -496,7 +497,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         tableSelectionModel.addListSelectionListener(this);
         tableSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-        roisToCompute = new ArrayList<ROIInfo>();
+        roisToCompute = new LinkedBlockingQueue<ROIInfo>();
         roiInfoComputer = new Thread(this, "ROI properties calculator");
         roiInfoComputer.setPriority(Thread.MIN_PRIORITY);
         roiInfoComputer.start();
@@ -698,27 +699,13 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         while (true)
         {
             final ROIInfo roiInfo;
-
-            synchronized (roisToCompute)
-            {
-                if (!roisToCompute.isEmpty())
-                    roiInfo = roisToCompute.get(0);
-                else
-                    roiInfo = null;
-            }
-
-            if (roiInfo != null)
-            {
-                roiInfo.compute();
-
-                // remove it from the compute list
-                synchronized (roisToCompute)
-                {
-                    roisToCompute.remove(roiInfo);
-                }
-            }
-            else
-                ThreadUtil.sleep(10);
+            
+            try {
+				roiInfo = roisToCompute.take();
+				roiInfo.compute();
+			} catch (InterruptedException e) {
+				// ignore
+			}
         }
     }
 
@@ -1213,10 +1200,13 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
         void requestCompute()
         {
-            synchronized (roisToCompute)
+            if (!roisToCompute.contains(this))
             {
-                if (!roisToCompute.contains(this))
-                    roisToCompute.add(this);
+				try {
+					roisToCompute.put(this);
+				} catch (InterruptedException e) {
+					// ignore
+				}
             }
         }
 
