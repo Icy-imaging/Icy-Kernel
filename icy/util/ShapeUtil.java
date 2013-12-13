@@ -93,7 +93,7 @@ public class ShapeUtil
         if (shape == null)
             return false;
 
-        return GraphicsUtil.isVisible(g, shape.getBounds());
+        return GraphicsUtil.isVisible(g, shape.getBounds2D());
     }
 
     /**

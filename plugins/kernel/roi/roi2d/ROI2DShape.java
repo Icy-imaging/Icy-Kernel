@@ -530,7 +530,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
                 if (isSelected() && !isReadOnly())
                 {
-
                     // draw control point if selected
                     for (Anchor2D pt : controlPoints)
                         pt.paint(g2, sequence, canvas);

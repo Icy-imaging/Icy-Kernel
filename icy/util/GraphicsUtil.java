@@ -137,12 +137,62 @@ public class GraphicsUtil
         if ((g == null) || (region == null))
             return false;
 
-        final Rectangle clipArea = g.getClipBounds();
+        final Rectangle clipRegion = g.getClipBounds();
 
-        if (clipArea != null)
-            return region.intersects(clipArea);
+        // no clip region --> return true
+        if (clipRegion == null)
+            return true;
 
-        return true;
+        if (region.width == 0)
+        {
+            // special case of single point region
+            if (region.height == 0)
+                return clipRegion.contains(region.x, region.y);
+            else
+                // special case of null width region
+                return clipRegion.contains(region.x, region.getMinY())
+                        || clipRegion.contains(region.x, region.getMaxY());
+
+        }
+        else if (region.height == 0)
+            // special case of null height region
+            return clipRegion.contains(region.getMinX(), region.y) || clipRegion.contains(region.getMaxX(), region.y);
+        else
+            return clipRegion.intersects(region);
+    }
+
+    /**
+     * Returns true if the specified region is visible in the specified {@link Graphics} object.<br>
+     * Internally use the {@link Graphics} clip area to determine if region is visible.
+     */
+    public static boolean isVisible(Graphics g, Rectangle2D region)
+    {
+        if ((g == null) || (region == null))
+            return false;
+
+        final Rectangle clipRegion = g.getClipBounds();
+
+        // no clip region --> return true
+        if (clipRegion == null)
+            return true;
+
+        if (region.getWidth() == 0d)
+        {
+            // special case of single point region
+            if (region.getHeight() == 0d)
+                return clipRegion.contains(region.getX(), region.getY());
+            else
+                // special case of null width region
+                return clipRegion.contains(region.getX(), region.getMinY())
+                        || clipRegion.contains(region.getX(), region.getMaxY());
+
+        }
+        else if (region.getHeight() == 0d)
+            // special case of null height region
+            return clipRegion.contains(region.getMinX(), region.getY())
+                    || clipRegion.contains(region.getMaxX(), region.getY());
+        else
+            return clipRegion.intersects(region);
     }
 
     /**
