@@ -1521,4 +1521,19 @@ public class PluginDescriptor implements XMLPersistent
     {
         return getClassName().hashCode() ^ getVersion().hashCode();
     }
+
+    /**
+     * Tells if this plugin descriptor comes from a plugin downloaded
+     * from an online repository.
+     *
+     * If this plugin descriptor comes from a plugin bundle (i.e. several
+     * classes extending Plugin in a single JAR), only the one whose classname
+     * is declared online will return True.
+     *
+     * @return True if the plugin comes from a web repository.
+     */
+    public boolean isOnline()
+    {
+        return (getJarUrl() != null && getJarUrl().length() > 0);
+    }
 }

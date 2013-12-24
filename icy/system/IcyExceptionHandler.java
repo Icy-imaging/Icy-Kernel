@@ -30,9 +30,18 @@ import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.net.JarURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Stephane
@@ -173,6 +182,116 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     }
 
     /**
+     *  Find the jar that provides this class.
+     *  This method is defined here because it really needs to be sage regarding exceptions,
+     *  since it will be used to find where do exceptions come from.
+     *
+     * @param fullClassName The class name to look for.
+     *
+     * @return The jar File corresponding that contains this class.
+     * It will return null if the class was not loaded from a jar, or for
+     * any other error.
+     */
+    private static File findMatchingJAR(String fullClassName)
+    {
+        String className = ClassUtil.getBaseClassName(fullClassName);
+
+        Class<?> klass = null;
+		try {
+			klass = ClassUtil.findClass(className);
+		} catch (ClassNotFoundException e) {
+			handleException(null, "", e, true);
+			return null;
+		}
+
+		URL classUrl = klass.getResource(klass.getSimpleName() + ".class");
+
+		URLConnection connection = null;
+		try {
+			connection = classUrl.openConnection();
+		} catch (IOException e) {
+			handleException(null, "", e, true);
+			return null;
+		}
+
+		if (connection instanceof JarURLConnection)
+		{
+			JarURLConnection jarConnection = (JarURLConnection) connection;	
+			URL jarUrl = jarConnection.getJarFileURL();
+
+			URI jarURI = null;
+			try {
+				jarURI = jarUrl.toURI();
+			} catch (URISyntaxException e) {
+				handleException(null, "", e, true);
+				return null;
+			}
+
+			return new File(jarURI);
+		}
+		else
+		{
+			// the class does not come from a Jar (it may be being developed in Eclipse
+			// for example).
+			return null;
+		}
+    }
+
+    /**
+     *  Find the JAR that provides this class and then the online plugin
+     *  corresponding to this JAR.
+     *
+     * @param fullClassName The class name to look for.
+     *
+     * @return The plugin descriptor corresponding to the JAR that contains this class.
+     * It will return null if there is an error or if no online plugin matches.
+     */
+    static PluginDescriptor findMatchingLocalJarPlugin(String fullClassName)
+    {
+    	File jarFile = findMatchingJAR(fullClassName);
+
+		if (jarFile != null)
+		{
+			String jarFileName = jarFile.getAbsolutePath();
+
+			final Set<String> classes = ClassUtil.findClassNamesInJAR(jarFileName);
+
+			// now compare this list of classes with the loaded plugins to find
+			// one that fits
+			ArrayList<PluginDescriptor> descriptors = PluginLoader.getPlugins();
+			ArrayList<PluginDescriptor> matchingDescriptors = new ArrayList<PluginDescriptor>();
+			for (PluginDescriptor descriptor: descriptors)
+			{
+				String pluginClassName = descriptor.getClassName();
+				if (classes.contains(pluginClassName))
+				{
+					matchingDescriptors.add(descriptor);
+				}
+			}
+
+			// Find the descriptors where the jar URL is not empty.
+			// An empty jar URL appears when several plugins are bundled in a single jar.
+			// Only the declared one will be non-empty, and this one is useful for the report.
+			for (PluginDescriptor descriptor: matchingDescriptors)
+			{
+				if (descriptor.isOnline())
+				{
+					return descriptor;
+				}
+			}
+			return null;
+		}
+		else
+		{
+			// the class does not come from a Jar (it may be being developed in Eclipse
+			// for example).
+
+			// we cannot do anything
+			return null;
+		}
+    }
+
+    /**
      * Handle the specified exception.<br>
      * It actually display a message or report dialog depending the exception type.
      */
@@ -277,8 +396,8 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
 
     /**
      * Handle the specified exception.<br>
-     * Try to find the origin plugin which thrown the exception.
-     * It actually display a message or report dialog depending the exception type.
+     * Try to find the plugin which has originally thrown the exception.
+     * It actually displays a message or report dialog depending the exception type.
      */
     public static void handleException(Throwable t, boolean print)
     {
@@ -296,12 +415,35 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                 final PluginDescriptor plugin = findMatchingLocalPlugin(plugins, className);
 
                 // plugin found --> show the plugin report frame
+                // the 
                 if (plugin != null)
                 {
-                    // only send to last plugin raising the exception
-                    handleException(plugin, t, print);
-                    return;
+                	// make sure this is not a bundled plugin 
+                	if (plugin.isOnline())
+                	{
+                		// only send to last plugin raising the exception
+                		handleException(plugin, t, print);
+                		return;
+                	}
                 }
+            }
+        }
+
+        // The class is not a direct child of a plugin, or it belongs to a bundled plugin.
+        // Look harder by searching for which jar it belongs.
+        for (StackTraceElement trace : t.getStackTrace())
+        {
+            final String className = trace.getClassName();
+
+            // try to find a matching plugin
+            final PluginDescriptor plugin = findMatchingLocalJarPlugin(className);
+
+            // plugin found --> show the plugin report frame
+            if (plugin != null)
+            {
+                // only send to last plugin raising the exception
+                handleException(plugin, t, print);
+                return;
             }
         }
 
