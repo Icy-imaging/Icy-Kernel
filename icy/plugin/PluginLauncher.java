@@ -53,6 +53,10 @@ public class PluginLauncher implements Runnable
             @Override
             public void run()
             {
+            	//backup the thread name
+            	String threadName = Thread.currentThread().getName();
+            	//transfer the descriptor name to icyframe
+            	Thread.currentThread().setName(descriptor.getClassName());
                 try
                 {
                     plugin = descriptor.getPluginClass().newInstance();
@@ -62,6 +66,8 @@ public class PluginLauncher implements Runnable
                     plugin = null;
                     IcyExceptionHandler.handleException(descriptor, t, true);
                 }
+                //recover the thread name
+                Thread.currentThread().setName(threadName);
             }
         });
     }
@@ -69,6 +75,10 @@ public class PluginLauncher implements Runnable
     @Override
     public void run()
     {
+    	//backup the thread name
+    	String threadName = Thread.currentThread().getName();
+    	//transfer the descriptor name to icyframe
+    	Thread.currentThread().setName(descriptor.getClassName());
         try
         {
             // keep backward compatibility
@@ -79,6 +89,8 @@ public class PluginLauncher implements Runnable
         {
             IcyExceptionHandler.handleException(descriptor, t, true);
         }
+        //recover the thread name
+        Thread.currentThread().setName(threadName);
     }
 
     /**
@@ -89,10 +101,10 @@ public class PluginLauncher implements Runnable
         final Thread thread;
 
         if (plugin instanceof PluginThreaded)
-            thread = new Thread((PluginThreaded) plugin, descriptor.getName());
+            thread = new Thread((PluginThreaded) plugin, descriptor.getClassName());
         // keep backward compatibility
         else if (plugin instanceof PluginStartAsThread)
-            thread = new Thread(this, descriptor.getName());
+            thread = new Thread(this, descriptor.getClassName());
         else
             thread = null;
 
@@ -100,8 +112,10 @@ public class PluginLauncher implements Runnable
         if (thread != null)
             thread.start();
         else
+        {
             // direct launch in EDT now (no thread creation)
             ThreadUtil.invokeNow(this);
+        }
     }
 
     /**
