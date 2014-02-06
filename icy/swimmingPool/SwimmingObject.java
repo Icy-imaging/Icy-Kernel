@@ -19,9 +19,11 @@
 package icy.swimmingPool;
 
 import icy.util.ClassUtil;
+import icy.util.DateUtil;
 import icy.util.StringUtil;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import javax.swing.ImageIcon;
 
@@ -53,6 +55,8 @@ public class SwimmingObject
     /** 32x32 icon */
     private final ImageIcon icon;
     private final int id;
+    /** Stores the creation date of this object. */
+    private final Date creationDate;
 
     public SwimmingObject(Object object, String name, ImageIcon icon)
     {
@@ -73,6 +77,9 @@ public class SwimmingObject
             this.icon = DEFAULT_ICON;
         else
             this.icon = icon;
+        
+        creationDate = DateUtil.now();
+        
     }
 
     public SwimmingObject(Object object, String name)
@@ -126,6 +133,10 @@ public class SwimmingObject
     {
         return icon;
     }
+    
+    public Date getCreationDate() {
+		return creationDate;
+	}
 
     /**
      * @return the id

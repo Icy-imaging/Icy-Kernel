@@ -19,54 +19,71 @@
 package icy.swimmingPool;
 
 import icy.gui.frame.IcyFrame;
-import icy.gui.util.GuiUtil;
+import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.system.thread.ThreadUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.JButton;
-import javax.swing.JLabel;
+import javax.swing.Box;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.border.BevelBorder;
 
-public class SwimmingPoolViewer implements SwimmingPoolListener
+public class SwimmingPoolViewer implements SwimmingPoolListener , ActionListener
 {
 
     IcyFrame mainFrame = new IcyFrame("Swimming Pool Viewer", true, true, true, true);
-    JPanel mainPanel = new JPanel();
-    JScrollPane mainScrollPane = new JScrollPane(mainPanel);
 
+    SwimmingPoolViewerPanel spvp = new SwimmingPoolViewerPanel();
+    
     public SwimmingPoolViewer()
     {
-
+    	    	
         mainFrame.getContentPane().setLayout(new BorderLayout());
-        mainFrame.getContentPane().add(mainScrollPane, BorderLayout.CENTER);
+        mainFrame.getContentPane().add( spvp , BorderLayout.CENTER);
         mainFrame.setVisible(true);
-        mainFrame.setPreferredSize(new Dimension(300, 300));
+        mainFrame.setPreferredSize(new Dimension(400, 400));
         mainFrame.addToMainDesktopPane();
         mainFrame.center();
         mainFrame.pack();
 
         Icy.getMainInterface().getSwimmingPool().addListener(this);
+        spvp.getDeleteAllButton().addActionListener( this );
 
-        mainPanel.setPreferredSize(new Dimension(200, 200));
-        mainPanel.setLayout(new FlowLayout());
-
-        for (SwimmingObject result : Icy.getMainInterface().getSwimmingPool().getObjects())
-        {
-            mainPanel.add(new SwimmingPoolElementPanel(result));
-            // mainPanel.updateUI();
-            mainPanel.revalidate();
-        }
+        refreshGUI();
 
         mainFrame.requestFocus();
 
+    }
+    
+    private void refreshGUI()
+    {
+    	spvp.getScrollPanel().removeAll();
+
+        for (SwimmingObject result : Icy.getMainInterface().getSwimmingPool().getObjects())
+        {
+        	JPanel panel = new SwimmingPoolObjectPanel( result );
+        	ComponentUtil.setFixedHeight( panel , 40 );
+        	spvp.getScrollPanel().add( panel );        	
+        }
+
+        spvp.getScrollPanel().add( Box.createVerticalGlue() );
+    	
+        String text = "No object in swimming pool.";
+        
+        int numberOfSwimmingObject = Icy.getMainInterface().getSwimmingPool().getObjects().size();
+        if ( numberOfSwimmingObject > 0 )
+        {
+        	text = "" + numberOfSwimmingObject + " objects in swimming pool." ;
+        }
+        
+        spvp.getNumberOfSwimmingObjectLabel().setText( text );
+
+        spvp.getScrollPane().invalidate();
+        spvp.getScrollPane().repaint();
+        
     }
 
     @Override
@@ -79,29 +96,22 @@ public class SwimmingPoolViewer implements SwimmingPoolListener
 
     			@Override
     			public void run() {					
-    				mainPanel.add(new SwimmingPoolElementPanel(swimmingPoolEvent.getResult()));
-    				mainPanel.revalidate();
+
+    				refreshGUI();
     			}
     		} );
     	}
+    	
     	if (swimmingPoolEvent.getType() == SwimmingPoolEventType.ELEMENT_REMOVED)
     	{
     		ThreadUtil.invokeLater( new Runnable() {
 
+    			
     			@Override
-    			public void run() {					
-    				for (int i = 0; i < mainPanel.getComponents().length; i++)
-    				{
-    					SwimmingPoolElementPanel spep = (SwimmingPoolElementPanel) mainPanel.getComponent(i);
-    					if (spep.result == swimmingPoolEvent.getResult())
-    					{
-    						mainPanel.remove(spep);
-    						mainFrame.revalidate();
-    						// FIXME : why this is needed ?
-    						mainFrame.repaint();
-    						break;
-    					}
-    				}
+    			public void run() {
+    				
+    				refreshGUI();
+
     			}
     		} );
 
@@ -109,38 +119,14 @@ public class SwimmingPoolViewer implements SwimmingPoolListener
 
     }
 
-    class SwimmingPoolElementPanel extends JPanel implements ActionListener
-    {
-        private static final long serialVersionUID = 8714333090862303222L;
-        JButton destroyButton = new JButton("Destroy");
-        SwimmingObject result;
-
-        public SwimmingPoolElementPanel(SwimmingObject result)
-        {
-            this.result = result;
-            setBorder(new BevelBorder(BevelBorder.RAISED));
-            setPreferredSize(new Dimension(200, 80));
-            //add(new JLabel("Sequence: test"));
-            try
-            {
-            	add(new JLabel(result.getObject().toString()));
-            }
-            catch ( NullPointerException e) {
-            	add(new JLabel("Unable to retreive object name."));
-            }
-            add(GuiUtil.besidesPanel(destroyButton));
-            destroyButton.addActionListener(this);
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent arg0)
-        {
-            if (arg0.getSource() == destroyButton)
-            {
-                Icy.getMainInterface().getSwimmingPool().remove(result);
-            }
-        }
-
-    }
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		
+		if ( e.getSource() == spvp.getDeleteAllButton() )
+		{
+			Icy.getMainInterface().getSwimmingPool().removeAll();
+		}
+		
+	}
 
 }
