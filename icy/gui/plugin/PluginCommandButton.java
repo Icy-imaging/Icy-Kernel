@@ -20,17 +20,30 @@ package icy.gui.plugin;
 
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.button.IcyCommandToggleButton;
+import icy.gui.frame.IcyFrame;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
+import icy.plugin.abstract_.Plugin;
 import icy.resource.icon.BasicResizableIcon;
+import icy.system.thread.ThreadUtil;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 
 import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
+import org.pushingpixels.flamingo.api.common.JCommandButton;
+import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
+import org.pushingpixels.flamingo.api.common.popup.JPopupPanel;
+import org.pushingpixels.flamingo.api.common.popup.PopupPanelCallback;
 
 /**
  * Class helper to create plugin command button
@@ -42,12 +55,13 @@ public class PluginCommandButton
     /**
      * Set a plugin button with specified action
      */
-    public static void setButton(AbstractCommandButton button, PluginDescriptor plugin, boolean doAction)
+    public static void setButton(AbstractCommandButton button, final PluginDescriptor plugin, boolean doAction)
     {
         final String name = plugin.getName();
         final String className = plugin.getClassName();
         final ImageIcon plugIcon = plugin.getIcon();
-
+        
+        
         // update text & icon
         button.setText(name);
         button.setIcon(new BasicResizableIcon(plugIcon));
@@ -75,7 +89,129 @@ public class PluginCommandButton
                         PluginLauncher.start(plugin);
                 }
             });
+           
+            if(button.getClass().equals(IcyCommandButton.class))
+            {
+	            final IcyCommandButton btn =(IcyCommandButton) button;
+	            btn.addMouseListener(new MouseListener(){
+					@Override
+					public void mouseClicked(MouseEvent arg0) {
+						updateSubmenu(btn,plugin);
+					}
+	
+					@Override
+					public void mouseEntered(MouseEvent arg0) {
+						updateSubmenu(btn,plugin);
+					}
+					@Override
+					public void mouseExited(MouseEvent arg0) {
+						btn.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
+						
+					}
+	
+					@Override
+					public void mousePressed(MouseEvent arg0) {
+						
+					}
+	
+					@Override
+					public void mouseReleased(MouseEvent arg0) {
+						
+					}
+	            	
+	            });
+            }
         }
+    }
+    /**
+     * Update the popup menu of current command button
+     */
+    public static void updateSubmenu(final IcyCommandButton btn, final PluginDescriptor plugin)
+    {
+    	if(Plugin.openedFramesMap.containsKey(plugin.getClassName()))
+		{
+	        btn.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
+	        btn.setPopupRichTooltip(new PluginRichToolTip(plugin));
+	        btn.setPopupCallback(new PopupPanelCallback()
+	        {
+	            @Override
+	            public JPopupPanel getPopupPanel(JCommandButton commandButton)
+	            {
+	            	final JMenu framesOfPluginMenu = new JMenu("Opened frames");
+	            	final JMenuItem newInstanceItem = new JMenuItem("New Instance");
+	            	newInstanceItem.addActionListener(new ActionListener(){
+            			 @Override
+                         public void actionPerformed(ActionEvent e)
+                         {
+            				 btn.doActionClick();
+                         }
+            		});
+	            	framesOfPluginMenu.add(newInstanceItem);
+	            	framesOfPluginMenu.addSeparator();
+	            	ArrayList<IcyFrame> fl = Plugin.openedFramesMap.get(plugin.getClassName());
+	            	synchronized (fl)
+            		{
+	            		for(final IcyFrame f : fl){
+		            		final JMenuItem frameItem = new JMenuItem(f.getTitle());
+		            		frameItem.addActionListener(new ActionListener()
+		                    {
+		            			 @Override
+	                             public void actionPerformed(ActionEvent e)
+	                             {
+	                                 ThreadUtil.invokeLater(new Runnable()
+	                                 {
+	                                     @Override
+	                                     public void run()
+	                                     {
+	                                         // remove minimized state
+	                                         if (f.isMinimized())
+	                                             f.setMinimized(false);
+	                                         // then grab focus
+	                                         f.requestFocus();
+	                                         f.toFront();
+	                                     }
+	                                 });
+	                             }
+		                    });
+		                    framesOfPluginMenu.add(frameItem);
+	            		}
+            		}
+	            	
+	            	framesOfPluginMenu.addSeparator();
+	            	// close all menu item
+	            	final JMenuItem closeAllItem = new JMenuItem("Close All");
+	            	closeAllItem.addActionListener(new ActionListener(){
+            			 @Override
+                         public void actionPerformed(ActionEvent e)
+                         {
+            				 if(Plugin.openedFramesMap.containsKey(plugin.getClassName()))
+            				 {
+            					 synchronized (Plugin.openedFramesMap.get(plugin.getClassName()))
+            					 {
+            						 int count = Plugin.openedFramesMap.get(plugin.getClassName()).size();
+            						 for(int i=0;i<count;i++)
+            						 {
+	            						Plugin.openedFramesMap.get(plugin.getClassName()).get(0).close();
+	            					 }
+	            				 }
+            				 }
+                         }
+            		});
+	            	framesOfPluginMenu.add(closeAllItem);
+	            	
+	                final JPopupMenu popupMenu = framesOfPluginMenu.getPopupMenu();
+	                
+	                // FIXME : set as heavy weight component for VTK (doesn't work)
+	                // popupMenu.setLightWeightPopupEnabled(false);
+	                popupMenu.show(btn, 0, btn.getHeight());
+	
+	                return null;
+	            }
+	        });
+	       
+		}
+		else
+			btn.setCommandButtonKind(CommandButtonKind.ACTION_ONLY);
     }
 
     /**
@@ -89,7 +225,7 @@ public class PluginCommandButton
     /**
      * Build a plugin button
      */
-    public static AbstractCommandButton createButton(PluginDescriptor plugin, boolean toggle, boolean doAction)
+    public static AbstractCommandButton createButton(final PluginDescriptor plugin, boolean toggle, boolean doAction)
     {
         final AbstractCommandButton result;
 
@@ -97,8 +233,10 @@ public class PluginCommandButton
         if (toggle)
             result = new IcyCommandToggleButton();
         else
-            result = new IcyCommandButton();
-
+        {
+	        result = new IcyCommandButton();
+        }
+        
         setButton(result, plugin, doAction);
 
         return result;

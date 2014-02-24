@@ -19,6 +19,7 @@
 package icy.plugin;
 
 import icy.common.EventHierarchicalChecker;
+import icy.file.FileUtil;
 import icy.main.Icy;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginDescriptor.PluginNameSorter;
@@ -26,6 +27,7 @@ import icy.plugin.abstract_.Plugin;
 import icy.plugin.classloader.JarClassLoader;
 import icy.plugin.interface_.PluginBundled;
 import icy.plugin.interface_.PluginDaemon;
+import icy.plugin.interface_.PluginScriptEngine;
 import icy.preferences.PluginPreferences;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.SingleProcessor;
@@ -33,6 +35,7 @@ import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -335,7 +338,54 @@ public class PluginLoader
                 System.err.println("Class '" + className + "' is discarded");
             }
         }
+        
+        //load plugin write in script
+	    File pluginsDir = new File(PLUGIN_PATH);
+	    for(File anyfile:FileUtil.getFiles(pluginsDir, null, true, false, true))
+	    {
+	    	try
+	    	{
+	        	//scan the directory with __init__ file such as __init__.py and __init__.js
+	        	if(FileUtil.getFileName(anyfile.getPath(),false).equals("__init__"))
+	        	{
 
+	        		File pluginRootDirectory = new File(FileUtil.getDirectory(anyfile.getAbsolutePath()));	        	
+	        		PluginDescriptor newPlugin = new PluginDescriptor(pluginRootDirectory);
+	        		//check if it is a valid plugin descriptor
+	        		if(newPlugin.isDescriptorLoaded() && newPlugin.isScriptPlugin())
+	        		{
+	            		PluginDescriptor engineClassDescriptor = PluginDescriptor.getPlugin(newPlugins,newPlugin.getScriptEngineClassname());
+	            		if(engineClassDescriptor == null)
+	            		{
+	            			System.err.println("Script Engine Plugin can not be found:" + newPlugin.getScriptEngineClassname());
+	            		}
+	            		else
+	            		{
+	            			//check if the plugin class has PluginScriptEngine interface
+	            			Class<? extends Plugin> pluginClass = engineClassDescriptor.getPluginClass();
+	            			if(PluginScriptEngine.class.isAssignableFrom( pluginClass) )
+	            			{
+	            				newPlugin.setPluginClass(pluginClass);
+			            		
+			            		if(!PluginDescriptor.existInList(newPlugins,newPlugin))
+			                	{
+			                		newPlugins.add(newPlugin);
+			                	}
+		            		}
+	            		}
+	            		
+	        		}
+	            		
+	        		
+	        	}
+	    	}
+	    	catch(Exception e)
+	    	{
+	    		
+	    	}
+        }
+		
+        
         // sort list
         Collections.sort(newPlugins, PluginNameSorter.instance);
 

@@ -41,6 +41,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 
 import javax.swing.ImageIcon;
 
@@ -53,15 +54,17 @@ import javax.swing.ImageIcon;
  */
 public abstract class Plugin
 {
+	
     public static Plugin getPlugin(ArrayList<Plugin> list, String className)
     {
         for (Plugin plugin : list)
             if (plugin.getClass().getName().equals(className))
                 return plugin;
-
         return null;
     }
 
+    //set to final field enables safely read through non-synchronized methods
+    public final static HashMap<String, ArrayList<IcyFrame>> openedFramesMap = new HashMap<String, ArrayList<IcyFrame>>();
     private final PluginDescriptor descriptor;
 
     public Plugin()
@@ -139,6 +142,7 @@ public abstract class Plugin
 
     public void addIcyFrame(final IcyFrame frame)
     {
+    	//Add the frame to openedFrameMap for popup menu generation
         frame.addToMainDesktopPane();
     }
 

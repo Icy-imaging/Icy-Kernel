@@ -21,6 +21,7 @@ package icy.plugin;
 import icy.main.Icy;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginImageAnalysis;
+import icy.plugin.interface_.PluginScriptEngine;
 import icy.plugin.interface_.PluginStartAsThread;
 import icy.plugin.interface_.PluginThreaded;
 import icy.system.IcyExceptionHandler;
@@ -53,6 +54,10 @@ public class PluginLauncher implements Runnable
             @Override
             public void run()
             {
+            	//backup the thread name
+            	String threadName = Thread.currentThread().getName();
+            	//transfer the descriptor name to icyframe
+            	Thread.currentThread().setName(descriptor.getClassName());
                 try
                 {
                     plugin = descriptor.getPluginClass().newInstance();
@@ -62,6 +67,8 @@ public class PluginLauncher implements Runnable
                     plugin = null;
                     IcyExceptionHandler.handleException(descriptor, t, true);
                 }
+                //recover the thread name
+                Thread.currentThread().setName(threadName);
             }
         });
     }
@@ -69,16 +76,29 @@ public class PluginLauncher implements Runnable
     @Override
     public void run()
     {
+    	//backup the thread name
+    	String threadName = Thread.currentThread().getName();
+    	//transfer the descriptor name to icyframe
+    	Thread.currentThread().setName(descriptor.getClassName());
         try
         {
+        	if(descriptor.isScriptPlugin())
+        	{
+	            if(plugin instanceof PluginScriptEngine && descriptor.getStartupScript()!=null)
+	            {
+	            	((PluginScriptEngine)plugin).evalFile(descriptor.getStartupScript());
+	            }
+        	}
             // keep backward compatibility
-            if (plugin instanceof PluginImageAnalysis)
+            else if (plugin instanceof PluginImageAnalysis)
                 ((PluginImageAnalysis) plugin).compute();
         }
         catch (Throwable t)
         {
             IcyExceptionHandler.handleException(descriptor, t, true);
         }
+        //recover the thread name
+        Thread.currentThread().setName(threadName);
     }
 
     /**
@@ -89,10 +109,10 @@ public class PluginLauncher implements Runnable
         final Thread thread;
 
         if (plugin instanceof PluginThreaded)
-            thread = new Thread((PluginThreaded) plugin, descriptor.getName());
+            thread = new Thread((PluginThreaded) plugin, descriptor.getClassName());
         // keep backward compatibility
         else if (plugin instanceof PluginStartAsThread)
-            thread = new Thread(this, descriptor.getName());
+            thread = new Thread(this, descriptor.getClassName());
         else
             thread = null;
 
@@ -100,8 +120,10 @@ public class PluginLauncher implements Runnable
         if (thread != null)
             thread.start();
         else
+        {
             // direct launch in EDT now (no thread creation)
             ThreadUtil.invokeNow(this);
+        }
     }
 
     /**
