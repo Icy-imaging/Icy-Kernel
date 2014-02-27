@@ -283,6 +283,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     /**
      * Returns true if the ROI is empty (the mask does not contains any point).
      */
+    @Override
     public boolean isEmpty()
     {
         if (getBounds().isEmpty())
@@ -293,12 +294,6 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 return false;
 
         return true;
-    }
-
-    @Override
-    public boolean hasSelectedPoint()
-    {
-        return false;
     }
 
     /**
@@ -322,8 +317,9 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
     }
 
     /**
-     * Translate all 2D slices by the specified delta X <code>dx</code> and Delta Y <code>dy</code>
+     * @deprecated Use {@link #translate(double, double, double)} instead.
      */
+    @Deprecated
     public void translate(double dx, double dy)
     {
         beginUpdate();

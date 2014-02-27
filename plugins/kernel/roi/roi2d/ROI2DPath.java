@@ -28,6 +28,7 @@ import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -60,14 +61,17 @@ public class ROI2DPath extends ROI2DShape
     {
         super(path);
 
-        // add path points to the control point list
-        controlPoints.addAll(ShapeUtil.getAnchorsFromShape(path));
-
-        // add listeners
-        for (Anchor2D pt : controlPoints)
+        synchronized (controlPoints)
         {
-            pt.addOverlayListener(this);
-            pt.addAnchorListener(this);
+            // add path points to the control point list
+            controlPoints.addAll(ShapeUtil.getAnchorsFromShape(path));
+
+            // add listeners
+            for (Anchor2D pt : controlPoints)
+            {
+                pt.addOverlayListener(this);
+                pt.addPositionListener(this);
+            }
         }
 
         // set name
@@ -113,20 +117,6 @@ public class ROI2DPath extends ROI2DShape
         return new PathAnchor2D(pos.getX(), pos.getY(), getColor(), getFocusedColor());
     }
 
-    private ArrayList<PathAnchor2D> getControlPoints()
-    {
-        final ArrayList<PathAnchor2D> result = new ArrayList<PathAnchor2D>();
-
-        synchronized (controlPoints)
-        {
-            for (Anchor2D pt : controlPoints)
-                if (pt instanceof PathAnchor2D)
-                    result.add((PathAnchor2D) pt);
-        }
-
-        return result;
-    }
-
     protected Path2D getPath()
     {
         return (Path2D) shape;
@@ -139,10 +129,26 @@ public class ROI2DPath extends ROI2DShape
         return false;
     }
 
+    /**
+     * Return the list of control points for this ROI.
+     */
+    public List<PathAnchor2D> getPathAnchors()
+    {
+        final List<PathAnchor2D> result = new ArrayList<PathAnchor2D>();
+
+        synchronized (controlPoints)
+        {
+            for (Anchor2D pt : controlPoints)
+                result.add((PathAnchor2D) pt);
+        }
+
+        return result;
+    }
+
     @Override
     protected void updateShape()
     {
-        ShapeUtil.buildPathFromAnchors(getPath(), getControlPoints());
+        ShapeUtil.buildPathFromAnchors(getPath(), getPathAnchors());
 
         // call super method after shape has been updated
         super.updateShape();
@@ -159,13 +165,13 @@ public class ROI2DPath extends ROI2DShape
 
             removeAllPoint();
 
-            final ArrayList<Node> nodesPoint = XMLUtil.getChildren(XMLUtil.getElement(node, ID_POINTS), ID_POINT);
+            final List<Node> nodesPoint = XMLUtil.getChildren(XMLUtil.getElement(node, ID_POINTS), ID_POINT);
             if (nodesPoint != null)
             {
                 for (Node n : nodesPoint)
                 {
                     final PathAnchor2D pt = new PathAnchor2D();
-                    pt.loadFromXML(n);
+                    pt.loadPositionFromXML(n);
                     addPoint(pt);
                 }
             }
@@ -187,8 +193,12 @@ public class ROI2DPath extends ROI2DShape
             return false;
 
         final Element points = XMLUtil.setElement(node, ID_POINTS);
-        for (Anchor2D pt : controlPoints)
-            pt.saveToXML(XMLUtil.addElement(points, ID_POINT));
+
+        synchronized (controlPoints)
+        {
+            for (Anchor2D pt : controlPoints)
+                pt.savePositionToXML(XMLUtil.addElement(points, ID_POINT));
+        }
 
         XMLUtil.setElementIntValue(node, ID_WINDING, getPath().getWindingRule());
 

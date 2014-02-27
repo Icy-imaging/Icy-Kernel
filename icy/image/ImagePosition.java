@@ -21,7 +21,7 @@ package icy.image;
 /**
  * @author Stephane
  */
-public class ImagePosition implements Comparable<Object>
+public class ImagePosition implements Comparable<ImagePosition>
 {
     public static final char T_ID = 'T';
     public static final char Z_ID = 'Z';
@@ -190,26 +190,22 @@ public class ImagePosition implements Comparable<Object>
     }
 
     @Override
-    public int compareTo(Object o)
+    public int compareTo(ImagePosition o)
     {
-        if (o instanceof ImagePosition)
-        {
-            final ImagePosition ip = (ImagePosition) o;
+        final ImagePosition ip = o;
 
-            final int ot = ip.t;
-            final int oz = ip.z;
+        final int ot = ip.t;
+        final int oz = ip.z;
 
-            if (t > ot)
-                return 1;
-            if (t < ot)
-                return -1;
-            if (z > oz)
-                return 1;
-            if (z < oz)
-                return -1;
-        }
+        if (t > ot)
+            return 1;
+        if (t < ot)
+            return -1;
+        if (z > oz)
+            return 1;
+        if (z < oz)
+            return -1;
 
         return 0;
-
     }
 }

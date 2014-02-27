@@ -81,15 +81,18 @@ public class MessageDialog
 
     public static void showDialog(final String title, final String message, final int messageType)
     {
-        ThreadUtil.invokeLater(new Runnable()
+        if (!Icy.isHeadLess())
         {
-            @Override
-            public void run()
+            ThreadUtil.invokeLater(new Runnable()
             {
-                final JFrame parent = Icy.getMainInterface().getMainFrame();
+                @Override
+                public void run()
+                {
+                    final JFrame parent = Icy.getMainInterface().getMainFrame();
 
-                JOptionPane.showMessageDialog(parent, message, title, messageType);
-            }
-        });
+                    JOptionPane.showMessageDialog(parent, message, title, messageType);
+                }
+            });
+        }
     }
 }

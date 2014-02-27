@@ -39,6 +39,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
+import java.util.EventListener;
 
 import org.w3c.dom.Node;
 
@@ -47,7 +48,18 @@ import org.w3c.dom.Node;
  */
 public class Anchor2D extends Overlay implements XMLPersistent
 {
-    @SuppressWarnings("deprecation")
+    /**
+     * Interface to listen Anchor2D position change
+     */
+    public static interface Anchor2DPositionListener extends EventListener
+    {
+        public void positionChanged(Anchor2D source);
+    }
+
+    /**
+     * @deprecated Use {@link Anchor2DPositionListener} listener or {@link OverlayListener}
+     */
+    @Deprecated
     public static interface Anchor2DListener extends PainterListener
     {
         public void positionChanged(Anchor2D source);
@@ -671,22 +683,47 @@ public class Anchor2D extends Overlay implements XMLPersistent
 
     protected void firePositionChangedEvent(Anchor2D source)
     {
+        for (Anchor2DPositionListener listener : listeners.getListeners(Anchor2DPositionListener.class))
+            listener.positionChanged(source);
+
+        // backward compatibility
         for (Anchor2DListener listener : listeners.getListeners(Anchor2DListener.class))
             listener.positionChanged(source);
     }
 
+    public void addPositionListener(Anchor2DPositionListener listener)
+    {
+        listeners.add(Anchor2DPositionListener.class, listener);
+    }
+
+    public void removePositionListener(Anchor2DPositionListener listener)
+    {
+        listeners.remove(Anchor2DPositionListener.class, listener);
+    }
+
+    /**
+     * @deprecated Use {@link #addPositionListener(Anchor2DPositionListener)} or
+     *             {@link #addOverlayListener(OverlayListener)} instead.
+     */
+    @Deprecated
     public void addAnchorListener(Anchor2DListener listener)
     {
         listeners.add(Anchor2DListener.class, listener);
     }
 
+    /**
+     * @deprecated Use {@link #removePositionListener(Anchor2DPositionListener)} or
+     *             {@link #removeOverlayListener(OverlayListener)} instead.
+     */
+    @Deprecated
     public void removeAnchorListener(Anchor2DListener listener)
     {
         listeners.remove(Anchor2DListener.class, listener);
     }
 
     /**
-     * @deprecated Use {@link #addAnchorListener(Anchor2DListener)} instead.
+     * @deprecated Use {@link #addPositionListener(Anchor2DPositionListener)} or
+     *             {@link #addOverlayListener(OverlayListener)} instead.
      */
     @Deprecated
     public void addListener(Anchor2DListener listener)
@@ -695,7 +732,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
     }
 
     /**
-     * @deprecated Use {@link #removeAnchorListener(Anchor2DListener)} instead.
+     * @deprecated Use {@link #removePositionListener(Anchor2DPositionListener)} or
+     *             {@link #removeOverlayListener(OverlayListener)} instead.
      */
     @Deprecated
     public void removeListener(Anchor2DListener listener)
@@ -1016,6 +1054,36 @@ public class Anchor2D extends Overlay implements XMLPersistent
             if (overlapped)
                 e.consume();
         }
+    }
+
+    public boolean loadPositionFromXML(Node node)
+    {
+        if (node == null)
+            return false;
+
+        beginUpdate();
+        try
+        {
+            setX(XMLUtil.getElementDoubleValue(node, ID_POS_X, 0d));
+            setY(XMLUtil.getElementDoubleValue(node, ID_POS_Y, 0d));
+        }
+        finally
+        {
+            endUpdate();
+        }
+
+        return true;
+    }
+
+    public boolean savePositionToXML(Node node)
+    {
+        if (node == null)
+            return false;
+
+        XMLUtil.setElementDoubleValue(node, ID_POS_X, getX());
+        XMLUtil.setElementDoubleValue(node, ID_POS_Y, getY());
+
+        return true;
     }
 
     @Override

@@ -57,6 +57,7 @@ import javax.swing.event.EventListenerList;
 
 import org.w3c.dom.Node;
 
+import plugins.kernel.roi.roi2d.ROI2DArea;
 import plugins.kernel.roi.roi3d.ROI3DArea;
 import plugins.kernel.roi.roi4d.ROI4DArea;
 import plugins.kernel.roi.roi5d.ROI5DArea;
@@ -417,11 +418,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             {
                 final Node nodeROI = XMLUtil.addElement(node, ID_ROI);
 
-                if (nodeROI != null)
-                {
-                    if (!roi.saveToXML(nodeROI))
-                        XMLUtil.removeNode(node, nodeROI);
-                }
+                if (!roi.saveToXML(nodeROI))
+                    XMLUtil.removeNode(node, nodeROI);
             }
         }
     }
@@ -742,12 +740,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                                 {
                                     final boolean result;
 
-                                    if (isFocused())
-                                        // remove ROI from sequence
-                                        result = canvas.getSequence().removeROI(ROI.this);
-                                    else
-                                        // remove all selected ROI from the sequence
-                                        result = canvas.getSequence().removeSelectedROIs(false);
+                                    // if (isFocused())
+                                    // // remove ROI from sequence
+                                    // result = canvas.getSequence().removeROI(ROI.this);
+                                    // else
+                                    // remove all selected ROI from the sequence
+                                    result = canvas.getSequence().removeSelectedROIs(false);
 
                                     if (result)
                                         e.consume();
@@ -901,7 +899,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected abstract ROIPainter createPainter();
 
     /**
-     * Return number of dimension.
+     * Returns the number of dimension of the ROI:<br>
+     * 2 for ROI2D<br>
+     * 3 for ROI3D<br>
+     * 4 for ROI4D<br>
+     * 5 for ROI5D<br>
      */
     public abstract int getDimension();
 
@@ -1560,7 +1562,73 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      * @return <code>true</code> if the interior of the <code>ROI</code> entirely contains the
      *         specified <code>ROI</code>; <code>false</code> otherwise.
      */
-    public abstract boolean contains(ROI roi);
+    public boolean contains(ROI roi)
+    {
+        // default implementation using BooleanMask
+        final Rectangle5D.Integer bounds = getBounds5D().toInteger();
+        final Rectangle5D.Integer roiBounds = roi.getBounds5D().toInteger();
+
+        // simple bounds contains test
+        if (bounds.contains(roiBounds))
+        {
+            final Rectangle5D.Integer intersection = bounds.createIntersection(roiBounds).toInteger();
+            int minZ;
+            int maxZ;
+            int minT;
+            int maxT;
+            int minC;
+            int maxC;
+
+            // special infinite case
+            if (intersection.isInfiniteZ())
+            {
+                minZ = -1;
+                maxZ = -1;
+            }
+            else
+            {
+                minZ = (int) intersection.getMinZ();
+                maxZ = (int) intersection.getMaxZ();
+            }
+            if (intersection.isInfiniteT())
+            {
+                minT = -1;
+                maxT = -1;
+            }
+            else
+            {
+                minT = (int) intersection.getMinT();
+                maxT = (int) intersection.getMaxT();
+            }
+            if (intersection.isInfiniteC())
+            {
+                minC = -1;
+                maxC = -1;
+            }
+            else
+            {
+                minC = (int) intersection.getMinC();
+                maxC = (int) intersection.getMaxC();
+            }
+
+            // slow method using the boolean mask
+            for (int c = minC; c <= maxC; c++)
+            {
+                for (int t = minT; t <= maxT; t++)
+                {
+                    for (int z = minZ; z <= maxZ; z++)
+                    {
+                        if (!getBooleanMask2D(z, t, c, false).contains(roi.getBooleanMask2D(z, t, c, false)))
+                            return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
 
     /**
      * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
@@ -1615,13 +1683,75 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
-     * <code>ROI</code>
+     * Tests if the current <code>ROI</code> intersects the specified <code>ROI</code>
      * 
-     * @return <code>true</code> if the interior of both <code>ROI</code> intersect;
-     *         <code>false</code> otherwise.
+     * @return <code>true</code> if <code>ROI</code> intersect, <code>false</code> otherwise.
      */
-    public abstract boolean intersects(ROI roi);
+    public boolean intersects(ROI roi)
+    {
+        // default implementation using BooleanMask
+        final Rectangle5D.Integer bounds = getBounds5D().toInteger();
+        final Rectangle5D.Integer roiBounds = roi.getBounds5D().toInteger();
+        final Rectangle5D.Integer intersection = bounds.createIntersection(roiBounds).toInteger();
+
+        // intersection not empty
+        if (!intersection.isEmpty())
+        {
+            int minZ;
+            int maxZ;
+            int minT;
+            int maxT;
+            int minC;
+            int maxC;
+
+            // special infinite case
+            if (intersection.isInfiniteZ())
+            {
+                minZ = -1;
+                maxZ = -1;
+            }
+            else
+            {
+                minZ = (int) intersection.getMinZ();
+                maxZ = (int) intersection.getMaxZ();
+            }
+            if (intersection.isInfiniteT())
+            {
+                minT = -1;
+                maxT = -1;
+            }
+            else
+            {
+                minT = (int) intersection.getMinT();
+                maxT = (int) intersection.getMaxT();
+            }
+            if (intersection.isInfiniteC())
+            {
+                minC = -1;
+                maxC = -1;
+            }
+            else
+            {
+                minC = (int) intersection.getMinC();
+                maxC = (int) intersection.getMaxC();
+            }
+
+            // slow method using the boolean mask
+            for (int c = minC; c <= maxC; c++)
+            {
+                for (int t = minT; t <= maxT; t++)
+                {
+                    for (int z = minZ; z <= maxZ; z++)
+                    {
+                        if (getBooleanMask2D(z, t, c, true).intersects(roi.getBooleanMask2D(z, t, c, true)))
+                            return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
 
     /**
      * Returns the boolean array mask for the specified rectangular region at specified C, Z, T
@@ -1750,7 +1880,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         if ((ic1 ^ ic2) || (it1 ^ it2) || (iz1 ^ iz2))
         {
             if (throwException)
-                throw new UnsupportedOperationException("Can't process union on ROI with different finite dimension");
+                throw new UnsupportedOperationException("Can't process union on ROI with different infinite dimension");
             return null;
         }
 
@@ -1857,7 +1987,23 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected ROI computeOperation(ROI roi, BooleanOperator op) throws UnsupportedOperationException
     {
         if (roi == null)
-            return this;
+        {
+            // return copy of itself
+            if (op == null)
+                return getCopy();
+
+            switch (op)
+            {
+                case AND:
+                    // empty ROI
+                    return new ROI2DArea();
+
+                case OR:
+                case XOR:
+                    // return copy of itself
+                    return getCopy();
+            }
+        }
 
         final Rectangle5D bounds5D;
 
@@ -2008,8 +2154,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 break;
 
             default:
-                result = null;
-                break;
+                throw new UnsupportedOperationException(
+                        "Can't process boolean operation on a ROI with unknown dimension.");
         }
 
         if (op == null)
@@ -2371,6 +2517,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
             case PROPERTY_CHANGED:
                 break;
+
             default:
                 break;
         }

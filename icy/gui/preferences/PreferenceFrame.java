@@ -224,7 +224,7 @@ public class PreferenceFrame extends IcyFrame implements TreeSelectionListener
         setMinimumSize(new Dimension(480, 400));
         setPreferredSize(new Dimension(800, 600));
 
-        addToMainDesktopPane();
+        addToDesktopPane();
         setVisible(true);
 
         if (!StringUtil.isEmpty(section))

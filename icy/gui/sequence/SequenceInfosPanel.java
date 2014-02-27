@@ -101,7 +101,7 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
                     final GenericFrame g = new GenericFrame(seq.getName() + " - Metadata", new SequenceMetadataPanel(
                             seq));
 
-                    g.addToMainDesktopPane();
+                    g.addToDesktopPane();
                     g.center();
                     g.requestFocus();
                 }

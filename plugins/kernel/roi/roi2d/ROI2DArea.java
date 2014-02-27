@@ -528,14 +528,14 @@ public class ROI2DArea extends ROI2D
     /**
      * internals
      */
-    final byte[] red;
-    final byte[] green;
-    final byte[] blue;
-    IndexColorModel colorModel;
-    byte[] maskData; // 0 = false, 1 = true
-    boolean boundsNeedUpdate;
-    double translateX, translateY;
-    Color previousColor;
+    protected final byte[] red;
+    protected final byte[] green;
+    protected final byte[] blue;
+    protected IndexColorModel colorModel;
+    protected byte[] maskData; // 0 = false, 1 = true
+    protected boolean boundsNeedUpdate;
+    protected double translateX, translateY;
+    protected Color previousColor;
 
     /**
      * Create a ROI2D Area type from the specified {@link BooleanMask2D}.

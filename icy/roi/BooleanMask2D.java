@@ -838,7 +838,7 @@ public class BooleanMask2D implements Cloneable
      */
     public boolean contains(Rectangle rect, boolean[] bmask)
     {
-        final Rectangle intersect = bounds.union(rect);
+        final Rectangle intersect = bounds.intersection(rect);
 
         // intersection should be equal to rect
         if (intersect.equals(rect))
@@ -945,7 +945,6 @@ public class BooleanMask2D implements Cloneable
         {
             for (int x = bounds.x; x < maxx; x++)
             {
-                // we have a component pixel
                 if (mask[off++])
                 {
                     points[pt++] = x;

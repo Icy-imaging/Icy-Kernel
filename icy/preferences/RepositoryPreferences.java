@@ -23,6 +23,7 @@ import icy.network.NetworkUtil;
 import icy.util.StringUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Stephane
@@ -34,22 +35,31 @@ public class RepositoryPreferences
         private static final String ID_NAME = "name";
         private static final String ID_LOCATION = "location";
         private static final String ID_ENABLED = "enabled";
+        private static final String ID_SUPPORTPARAM = "supportParam";
         private static final String ID_AUTHENTICATION = "authentication";
 
         private String name;
         private String location;
+        private boolean supportParam;
         private boolean enabled;
         private final AuthenticationInfo authInf;
 
         public RepositoryInfo(String name, String location, String login, String password, boolean authEnabled,
-                boolean enabled)
+                boolean enabled, boolean supportParam)
         {
             super();
 
             this.name = name;
             this.location = location;
+            this.supportParam = supportParam;
             this.enabled = enabled;
             authInf = new AuthenticationInfo(login, password, authEnabled);
+        }
+
+        public RepositoryInfo(String name, String location, String login, String password, boolean authEnabled,
+                boolean enabled)
+        {
+            this(name, location, login, password, authEnabled, enabled, true);
         }
 
         public RepositoryInfo(String name, String location, boolean enabled)
@@ -109,6 +119,25 @@ public class RepositoryPreferences
         }
 
         /**
+         * @return the supportParam
+         */
+        public boolean getSupportParam()
+        {
+            return supportParam;
+        }
+
+        /**
+         * @param supportParam
+         *        the supportParam to set
+         */
+        public void setSupportParam(boolean supportParam)
+        {
+            this.supportParam = supportParam;
+        }
+
+        /**
+         * /**
+         * 
          * @return the enabled
          */
         public boolean isEnabled()
@@ -191,6 +220,7 @@ public class RepositoryPreferences
                 name = node.get(ID_NAME, "");
                 location = node.get(ID_LOCATION, "");
                 enabled = node.getBoolean(ID_ENABLED, false);
+                supportParam = node.getBoolean(ID_SUPPORTPARAM, true);
                 authInf.load(node.node(ID_AUTHENTICATION));
             }
         }
@@ -202,6 +232,7 @@ public class RepositoryPreferences
                 node.put(ID_NAME, name);
                 node.put(ID_LOCATION, location);
                 node.putBoolean(ID_ENABLED, enabled);
+                node.putBoolean(ID_SUPPORTPARAM, supportParam);
                 authInf.save(node.node(ID_AUTHENTICATION));
             }
         }
@@ -270,10 +301,7 @@ public class RepositoryPreferences
     public static ArrayList<RepositoryInfo> getRepositeries()
     {
         final ArrayList<RepositoryInfo> result = new ArrayList<RepositoryInfo>();
-        // TODO : check why i modified to uncached access here
-        // final Preferences preferences = Preferences.userRoot().node("icy/repositories");
-
-        final ArrayList<String> childs = preferences.childrenNames();
+        final List<String> childs = preferences.childrenNames();
 
         for (String child : childs)
         {
@@ -285,24 +313,25 @@ public class RepositoryPreferences
         }
 
         // remove default repository
+        boolean defaultOk = false;
         for (int i = result.size() - 1; i >= 0; i--)
+        {
             if (result.get(i).isDefault())
-                result.remove(i);
+            {
+                defaultOk = true;
+                break;
+            }
+        }
 
-        // and add it so we are sure to only have one
-        result.add(new RepositoryInfo(DEFAULT_REPOSITERY_NAME, DEFAULT_REPOSITERY_LOCATION, true));
+        // add default repository if neeeded
+        if (!defaultOk)
+            result.add(new RepositoryInfo(DEFAULT_REPOSITERY_NAME, DEFAULT_REPOSITERY_LOCATION, true));
 
         return result;
     }
 
     public static void setRepositeries(ArrayList<RepositoryInfo> values)
     {
-        final ArrayList<RepositoryInfo> repositories = getRepositeries();
-
-        // no modification --> nothing to do
-        if ((repositories.size() == values.size()) && repositories.containsAll(values))
-            return;
-
         // remove all child nodes
         preferences.removeChildren();
 

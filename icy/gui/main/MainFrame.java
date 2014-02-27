@@ -22,6 +22,7 @@ import icy.action.CanvasActions;
 import icy.action.FileActions;
 import icy.action.GeneralActions;
 import icy.action.WindowActions;
+import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.gui.component.ExternalizablePanel;
 import icy.gui.component.ExternalizablePanel.StateListener;
@@ -191,7 +192,7 @@ public class MainFrame extends JRibbonFrame
             @Override
             public void filesDropped(File[] files)
             {
-                Loader.load(files, false, true, true);
+                Loader.load(CollectionUtil.asList(FileUtil.toPaths(files)), false, true, true);
             }
         };
 
@@ -428,7 +429,7 @@ public class MainFrame extends JRibbonFrame
 
     /**
      * Return content pane dimension (available area in main frame).<br>
-     * If the main frame is in "detached" mode this actually return the desktop dimension.
+     * If the main frame is in "detached" mode this actually return the system desktop dimension.
      */
     public Dimension getDesktopSize()
     {

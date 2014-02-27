@@ -35,6 +35,7 @@ import icy.workspace.Workspace.TaskDefinition.BandDefinition.ItemDefinition;
 
 import java.util.ArrayList;
 import java.util.EventListener;
+import java.util.List;
 
 import javax.swing.event.EventListenerList;
 
@@ -102,11 +103,11 @@ public class WorkspaceInstaller implements Runnable
     /**
      * workspace to install FIFO
      */
-    private final ArrayList<WorkspaceInstallInfo> installFIFO;
+    private final List<WorkspaceInstallInfo> installFIFO;
     /**
      * workspace to delete FIFO
      */
-    private final ArrayList<WorkspaceInstallInfo> removeFIFO;
+    private final List<WorkspaceInstallInfo> removeFIFO;
 
     /**
      * listeners

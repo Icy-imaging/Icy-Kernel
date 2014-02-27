@@ -99,7 +99,10 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
                     }
                 }
 
-                Collections.sort(producers);
+                synchronized (producers)
+                {
+                    Collections.sort(producers);
+                }
 
                 // restore last search
                 search(savedSearch);
@@ -264,17 +267,20 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
     {
         final List<SearchResult> results = new ArrayList<SearchResult>();
 
-        for (SearchResultProducer producer : producers)
+        synchronized (producers)
         {
-            final List<SearchResult> producerResults = producer.getResults();
-
-            // prevent modification of results while adding it
-            synchronized (producerResults)
+            for (SearchResultProducer producer : producers)
             {
-                // sort producer results
-                Collections.sort(producerResults);
-                // and add
-                results.addAll(producerResults);
+                final List<SearchResult> producerResults = producer.getResults();
+
+                // prevent modification of results while adding it
+                synchronized (producerResults)
+                {
+                    // sort producer results
+                    Collections.sort(producerResults);
+                    // and add
+                    results.addAll(producerResults);
+                }
             }
         }
 

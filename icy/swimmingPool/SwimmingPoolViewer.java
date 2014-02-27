@@ -31,102 +31,106 @@ import java.awt.event.ActionListener;
 import javax.swing.Box;
 import javax.swing.JPanel;
 
-public class SwimmingPoolViewer implements SwimmingPoolListener , ActionListener
+public class SwimmingPoolViewer implements SwimmingPoolListener, ActionListener
 {
 
     IcyFrame mainFrame = new IcyFrame("Swimming Pool Viewer", true, true, true, true);
 
     SwimmingPoolViewerPanel spvp = new SwimmingPoolViewerPanel();
-    
+
     public SwimmingPoolViewer()
     {
-    	    	
+
         mainFrame.getContentPane().setLayout(new BorderLayout());
-        mainFrame.getContentPane().add( spvp , BorderLayout.CENTER);
+        mainFrame.getContentPane().add(spvp, BorderLayout.CENTER);
         mainFrame.setVisible(true);
         mainFrame.setPreferredSize(new Dimension(400, 400));
-        mainFrame.addToMainDesktopPane();
+        mainFrame.addToDesktopPane();
         mainFrame.center();
         mainFrame.pack();
 
         Icy.getMainInterface().getSwimmingPool().addListener(this);
-        spvp.getDeleteAllButton().addActionListener( this );
+        spvp.getDeleteAllButton().addActionListener(this);
 
         refreshGUI();
 
         mainFrame.requestFocus();
 
     }
-    
+
     private void refreshGUI()
     {
-    	spvp.getScrollPanel().removeAll();
+        spvp.getScrollPanel().removeAll();
 
         for (SwimmingObject result : Icy.getMainInterface().getSwimmingPool().getObjects())
         {
-        	JPanel panel = new SwimmingPoolObjectPanel( result );
-        	ComponentUtil.setFixedHeight( panel , 40 );
-        	spvp.getScrollPanel().add( panel );        	
+            JPanel panel = new SwimmingPoolObjectPanel(result);
+            ComponentUtil.setFixedHeight(panel, 40);
+            spvp.getScrollPanel().add(panel);
         }
 
-        spvp.getScrollPanel().add( Box.createVerticalGlue() );
-    	
+        spvp.getScrollPanel().add(Box.createVerticalGlue());
+
         String text = "No object in swimming pool.";
-        
+
         int numberOfSwimmingObject = Icy.getMainInterface().getSwimmingPool().getObjects().size();
-        if ( numberOfSwimmingObject > 0 )
+        if (numberOfSwimmingObject > 0)
         {
-        	text = "" + numberOfSwimmingObject + " objects in swimming pool." ;
+            text = "" + numberOfSwimmingObject + " objects in swimming pool.";
         }
-        
-        spvp.getNumberOfSwimmingObjectLabel().setText( text );
+
+        spvp.getNumberOfSwimmingObjectLabel().setText(text);
 
         spvp.getScrollPane().invalidate();
         spvp.getScrollPane().repaint();
-        
+
     }
 
     @Override
     public void swimmingPoolChangeEvent(final SwimmingPoolEvent swimmingPoolEvent)
     {
 
-    	if (swimmingPoolEvent.getType() == SwimmingPoolEventType.ELEMENT_ADDED)
-    	{
-    		ThreadUtil.invokeLater( new Runnable() {
+        if (swimmingPoolEvent.getType() == SwimmingPoolEventType.ELEMENT_ADDED)
+        {
+            ThreadUtil.invokeLater(new Runnable()
+            {
 
-    			@Override
-    			public void run() {					
+                @Override
+                public void run()
+                {
 
-    				refreshGUI();
-    			}
-    		} );
-    	}
-    	
-    	if (swimmingPoolEvent.getType() == SwimmingPoolEventType.ELEMENT_REMOVED)
-    	{
-    		ThreadUtil.invokeLater( new Runnable() {
+                    refreshGUI();
+                }
+            });
+        }
 
-    			
-    			@Override
-    			public void run() {
-    				
-    				refreshGUI();
+        if (swimmingPoolEvent.getType() == SwimmingPoolEventType.ELEMENT_REMOVED)
+        {
+            ThreadUtil.invokeLater(new Runnable()
+            {
 
-    			}
-    		} );
+                @Override
+                public void run()
+                {
 
-    	}
+                    refreshGUI();
+
+                }
+            });
+
+        }
 
     }
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		
-		if ( e.getSource() == spvp.getDeleteAllButton() )
-		{
-			Icy.getMainInterface().getSwimmingPool().removeAll();
-		}
-		
-	}
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+
+        if (e.getSource() == spvp.getDeleteAllButton())
+        {
+            Icy.getMainInterface().getSwimmingPool().removeAll();
+        }
+
+    }
 
 }

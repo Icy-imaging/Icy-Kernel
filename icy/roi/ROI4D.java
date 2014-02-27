@@ -218,15 +218,17 @@ public abstract class ROI4D extends ROI
         if (roi instanceof ROI4D)
         {
             final ROI4D roi4d = (ROI4D) roi;
+            final int c = getC();
+            final boolean cok;
 
-            if (isActiveFor(roi4d.getC()))
-                return getBooleanMask(false).contains(roi4d.getBooleanMask(false));
+            // same position ?
+            cok = (c == -1) || (c == roi4d.getC());
 
-            return false;
+            return cok && getBooleanMask(false).contains(roi4d.getBooleanMask(false));
         }
 
-        // do it the other way
-        return roi.intersects(this);
+        // use default implementation
+        return super.contains(roi);
     }
 
     /**
@@ -322,15 +324,18 @@ public abstract class ROI4D extends ROI
         if (roi instanceof ROI4D)
         {
             final ROI4D roi4d = (ROI4D) roi;
+            final int c = getC();
+            final boolean cok;
 
-            if (isActiveFor(roi4d.getC()))
-                return getBooleanMask(true).intersects(roi4d.getBooleanMask(true));
+            // can intersect ?
+            cok = (c == -1) || (c == roi4d.getC()) || (roi4d.getC() == -1);
 
-            return false;
+            // same position ?
+            return cok && getBooleanMask(true).intersects(roi4d.getBooleanMask(true));
         }
 
-        // do it the other way
-        return roi.intersects(this);
+        // use default implementation
+        return super.intersects(roi);
     }
 
     /**
@@ -421,13 +426,6 @@ public abstract class ROI4D extends ROI
         return false;
     }
 
-    @Override
-    public boolean canSetPosition()
-    {
-        // default
-        return false;
-    }
-
     /**
      * Set the <code>ROI</code> 4D bounds.<br>
      * Note that not all ROI supports bounds modification and you should call
@@ -461,6 +459,13 @@ public abstract class ROI4D extends ROI
         }
     }
 
+    @Override
+    public boolean canSetPosition()
+    {
+        // default implementation use translation if available
+        return canTranslate();
+    }
+
     /**
      * Set the <code>ROI</code> 4D position.<br>
      * Note that not all ROI supports position modification and you should call
@@ -471,7 +476,13 @@ public abstract class ROI4D extends ROI
      */
     public void setPosition4D(Point4D position)
     {
-        // do nothing by default (not supported)
+        // use translation operation by default if supported
+        if (canTranslate())
+        {
+            final Point4D oldPos = getPosition4D();
+            translate(position.getX() - oldPos.getX(), position.getY() - oldPos.getY(),
+                    position.getZ() - oldPos.getZ(), position.getT() - oldPos.getT());
+        }
     }
 
     @Override
@@ -487,6 +498,38 @@ public abstract class ROI4D extends ROI
         {
             endUpdate();
         }
+    }
+
+    /**
+     * Returns <code>true</code> if the ROI support translate operation.
+     * 
+     * @see #translate(double, double, double, double)
+     */
+    public boolean canTranslate()
+    {
+        // by default
+        return false;
+    }
+
+    /**
+     * Translate the ROI position by the specified delta X/Y/Z/T.<br>
+     * Note that not all ROI support this operation so you should test it by calling
+     * {@link #canTranslate()} first.
+     * 
+     * @param dx
+     *        translation value to apply on X dimension
+     * @param dy
+     *        translation value to apply on Y dimension
+     * @param dz
+     *        translation value to apply on Z dimension
+     * @param dt
+     *        translation value to apply on T dimension
+     * @see #canTranslate()
+     * @see #setPosition4D(Point4D)
+     */
+    public void translate(double dx, double dy, double dz, double dt)
+    {
+
     }
 
     @Override
@@ -662,7 +705,9 @@ public abstract class ROI4D extends ROI
     }
 
     /**
-     * @return the c
+     * Returns the C position.<br>
+     * <code>-1</code> is a special value meaning the ROI is set on all C channels (infinite C
+     * dimension).
      */
     public int getC()
     {
@@ -670,8 +715,9 @@ public abstract class ROI4D extends ROI
     }
 
     /**
-     * @param value
-     *        the c to set
+     * Sets C position of this 4D ROI.<br>
+     * You cannot set the ROI on a negative C position as <code>-1</code> is a special value meaning
+     * the ROI is set on all C channels (infinite C dimension).
      */
     public void setC(int value)
     {

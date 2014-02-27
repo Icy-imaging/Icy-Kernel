@@ -20,6 +20,7 @@ package icy.plugin;
 
 import icy.main.Icy;
 import icy.network.NetworkUtil;
+import icy.network.URLUtil;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginDescriptor.PluginNameSorter;
 import icy.plugin.PluginDescriptor.PluginOnlineIdent;
@@ -63,18 +64,11 @@ public class PluginRepositoryLoader
         @Override
         public void run()
         {
-            // no internet connection ?
-            if (!NetworkUtil.hasInternetAccess())
-            {
-                failed = true;
-                return;
-            }
-
-            final ArrayList<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
+            final List<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
 
             try
             {
-                final ArrayList<RepositoryInfo> repositories = RepositoryPreferences.getRepositeries();
+                final List<RepositoryInfo> repositories = RepositoryPreferences.getRepositeries();
 
                 // load online plugins from all active repositories
                 for (RepositoryInfo repoInfo : repositories)
@@ -85,7 +79,7 @@ public class PluginRepositoryLoader
 
                     if (repoInfo.isEnabled())
                     {
-                        final ArrayList<PluginDescriptor> pluginsRepos = loadInternal(repoInfo);
+                        final List<PluginDescriptor> pluginsRepos = loadInternal(repoInfo);
 
                         if (pluginsRepos == null)
                         {
@@ -174,7 +168,7 @@ public class PluginRepositoryLoader
     /**
      * Online plugin list
      */
-    ArrayList<PluginDescriptor> plugins;
+    List<PluginDescriptor> plugins;
 
     /**
      * listeners
@@ -214,64 +208,76 @@ public class PluginRepositoryLoader
     /**
      * Return the plugins identifier list from a repository URL
      */
-    public static ArrayList<PluginOnlineIdent> getPluginIdents(RepositoryInfo repos)
+    public static List<PluginOnlineIdent> getPluginIdents(RepositoryInfo repos)
     {
-        // prepare parameters for plugin list request
-        final HashMap<String, String> values = new HashMap<String, String>();
+        String address = repos.getLocation();
+        final boolean networkAddr = URLUtil.isNetworkURL(address);
 
-        values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
-
-        final Document document = XMLUtil.loadDocument(
-                repos.getLocation() + "?" + NetworkUtil.getContentString(values), repos.getAuthenticationInfo(), false);
-
-        if (document != null)
+        if (networkAddr && repos.getSupportParam())
         {
-            final ArrayList<PluginOnlineIdent> result = new ArrayList<PluginOnlineIdent>();
-            // get plugins node
-            final Node pluginsNode = XMLUtil.getElement(document.getDocumentElement(), ID_ROOT);
+            // prepare parameters for plugin list request
+            final HashMap<String, String> values = new HashMap<String, String>();
 
-            // plugins node found
-            if (pluginsNode != null)
+            values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
+            // add kernel information parameter
+            address += "?" + NetworkUtil.getContentString(values);
+        }
+
+        // load the XML file
+        final Document document = XMLUtil.loadDocument(address, repos.getAuthenticationInfo(), false);
+
+        // error
+        if (document == null)
+        {
+            if (networkAddr && !NetworkUtil.hasInternetAccess())
+                System.out.println("You are not connected to internet.");
+
+            return null;
+        }
+
+        final List<PluginOnlineIdent> result = new ArrayList<PluginOnlineIdent>();
+        // get plugins node
+        final Node pluginsNode = XMLUtil.getElement(document.getDocumentElement(), ID_ROOT);
+
+        // plugins node found
+        if (pluginsNode != null)
+        {
+            // flag for beta version allowed
+            final boolean betaAllowed = PluginPreferences.getAllowBeta();
+            // ident nodes
+            final List<Node> nodes = XMLUtil.getChildren(pluginsNode, ID_PLUGIN);
+
+            for (Node node : nodes)
             {
-                // flag for beta version allowed
-                final boolean betaAllowed = PluginPreferences.getAllowBeta();
-                // ident nodes
-                final ArrayList<Node> nodes = XMLUtil.getChildren(pluginsNode, ID_PLUGIN);
+                final PluginOnlineIdent ident = new PluginOnlineIdent();
 
-                for (Node node : nodes)
+                ident.loadFromXML(node);
+
+                // accept only if not empty
+                if (!ident.isEmpty())
                 {
-                    final PluginOnlineIdent ident = new PluginOnlineIdent();
-
-                    ident.loadFromXML(node);
-
-                    // accept only if not empty
-                    if (!ident.isEmpty())
+                    // accept only if required kernel version is ok and beta accepted
+                    if (ident.getRequiredKernelVersion().isLowerOrEqual(Icy.version)
+                            && (betaAllowed || (!ident.getVersion().isBeta())))
                     {
-                        // accept only if required kernel version is ok and beta accepted
-                        if (ident.getRequiredKernelVersion().isLowerOrEqual(Icy.version)
-                                && (betaAllowed || (!ident.getVersion().isBeta())))
-                        {
 
-                            // check if we have several version of the same plugin
-                            final int ind = PluginIdent.getIndex(result, ident.getClassName());
-                            // other version found ?
-                            if (ind != -1)
-                            {
-                                // replace old version if needed
-                                if (result.get(ind).isOlderOrEqual(ident))
-                                    result.set(ind, ident);
-                            }
-                            else
-                                result.add(ident);
+                        // check if we have several version of the same plugin
+                        final int ind = PluginIdent.getIndex(result, ident.getClassName());
+                        // other version found ?
+                        if (ind != -1)
+                        {
+                            // replace old version if needed
+                            if (result.get(ind).isOlderOrEqual(ident))
+                                result.set(ind, ident);
                         }
+                        else
+                            result.add(ident);
                     }
                 }
             }
-
-            return result;
         }
 
-        return null;
+        return result;
     }
 
     /**
@@ -315,23 +321,19 @@ public class PluginRepositoryLoader
     /**
      * Load and return the list of online plugins located at specified repository
      */
-    ArrayList<PluginDescriptor> loadInternal(RepositoryInfo repos)
+    List<PluginDescriptor> loadInternal(RepositoryInfo repos)
     {
         // we start by loading only identifier part
-        final ArrayList<PluginOnlineIdent> idents = getPluginIdents(repos);
+        final List<PluginOnlineIdent> idents = getPluginIdents(repos);
 
         // error while retrieving identifiers ?
         if (idents == null)
         {
-            if (!NetworkUtil.hasInternetAccess())
-                System.out.println("You are not connected to internet.");
-            else
-                System.out.println("Can't access repository '" + repos.getName() + "'");
-
+            System.out.println("Can't access repository '" + repos.getName() + "'");
             return null;
         }
 
-        final ArrayList<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
+        final List<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
         for (PluginOnlineIdent ident : idents)
         {

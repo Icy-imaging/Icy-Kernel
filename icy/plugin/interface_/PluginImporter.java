@@ -19,11 +19,9 @@
 package icy.plugin.interface_;
 
 /**
- * Plugin Importer interface.<br>
- * Used to define a specific file importer (appears in the "Import" section).<br>
- * 
- * @author Fabrice & Stephane
+ * @deprecated Use #PluginImporter instead.
  */
+@Deprecated
 public interface PluginImporter
 {
 

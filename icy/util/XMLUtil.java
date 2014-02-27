@@ -1297,8 +1297,7 @@ public class XMLUtil
         else
             element = node.getOwnerDocument().createElement(name);
 
-        if (element != null)
-            node.appendChild(element);
+        node.appendChild(element);
 
         return element;
     }
@@ -1310,7 +1309,7 @@ public class XMLUtil
     {
         final Element element = addElement(node, name);
 
-        if ((element != null) && (!StringUtil.isEmpty(value)))
+        if (!StringUtil.isEmpty(value))
             addValue(element, value);
 
         return element;
@@ -1368,6 +1367,7 @@ public class XMLUtil
         final String name = node.getNodeName();
 
         XMLUtil.removeNode(parent, name);
+        
         return XMLUtil.addNode(parent, node);
     }
 

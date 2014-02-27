@@ -318,7 +318,7 @@ public class IcyUpdater
         mainPanel.add(splitPane, BorderLayout.CENTER);
 
         frame.pack();
-        frame.addToMainDesktopPane();
+        frame.addToDesktopPane();
         frame.setVisible(true);
         frame.center();
         frame.requestFocus();

@@ -1342,10 +1342,11 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             final Sequence seq = getSequence();
             final Layer defaultImageLayer = getImageLayer();
 
+            // global layer visible switch for canvas 
             if (isLayersVisible())
             {
                 final List<Layer> layers = getLayers(true);
-
+                
                 // draw them in inverse order to have first painter event at top
                 for (int i = layers.size() - 1; i >= 0; i--)
                 {

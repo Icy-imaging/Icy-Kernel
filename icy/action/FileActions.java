@@ -25,6 +25,7 @@ import icy.gui.menu.ApplicationMenu;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.main.Icy;
+import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
@@ -100,8 +101,16 @@ public class FileActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            Icy.getMainInterface().addSequence(
-                    new Sequence("Single channel sequence", new IcyBufferedImage(512, 512, 1, DataType.UBYTE)));
+            ThreadUtil.bgRun(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    Icy.getMainInterface().addSequence(
+                            new Sequence("Single channel sequence", new IcyBufferedImage(512, 512, 1, DataType.UBYTE)));
+                }
+            });
+
             return true;
         }
     };
@@ -118,8 +127,16 @@ public class FileActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            Icy.getMainInterface().addSequence(
-                    new Sequence("RGB sequence", new IcyBufferedImage(512, 512, 3, DataType.UBYTE)));
+            ThreadUtil.bgRun(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    Icy.getMainInterface().addSequence(
+                            new Sequence("RGB sequence", new IcyBufferedImage(512, 512, 3, DataType.UBYTE)));
+                }
+            });
+
             return true;
         }
     };
@@ -136,8 +153,17 @@ public class FileActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            Icy.getMainInterface().addSequence(
-                    new Sequence("RGB sequence", new IcyBufferedImage(512, 512, 3, DataType.UBYTE)));
+            ThreadUtil.bgRun(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    final IcyBufferedImage image = new IcyBufferedImage(512, 512, 4, DataType.UBYTE);
+                    Arrays.fill(image.getDataXYAsByte(3), (byte) -1);
+                    Icy.getMainInterface().addSequence(new Sequence("RGBA sequence", image));
+                }
+            });
+
             return true;
         }
     };
@@ -159,7 +185,7 @@ public class FileActions
     };
 
     public static IcyAbstractAction saveSequenceAction = new IcyAbstractAction("Save", new IcyIcon(
-            ResourceUtil.ICON_SAVE), "Save active sequence")
+            ResourceUtil.ICON_SAVE), "Save active sequence", "Save the active sequence with its default filename")
     {
         /**
          * 
@@ -200,7 +226,7 @@ public class FileActions
         }
     };
 
-    public static IcyAbstractAction saveAsSequenceAction = new IcyAbstractAction("Save...", new IcyIcon(
+    public static IcyAbstractAction saveDefaultSequenceAction = new IcyAbstractAction("Save...", new IcyIcon(
             ResourceUtil.ICON_SAVE), "Save active sequence", "Save the active sequence under selected file name",
             KeyEvent.VK_S, SystemUtil.getMenuCtrlMask())
     {
@@ -223,6 +249,60 @@ public class FileActions
                     new ImageSaverDialog(seq, viewer.getPositionZ(), viewer.getPositionT());
                     return true;
                 }
+            }
+
+            return false;
+        }
+    };
+
+    public static IcyAbstractAction saveAsSequenceAction = new IcyAbstractAction("Save as...", new IcyIcon(
+            ResourceUtil.ICON_SAVE), "Save active sequence", "Save the active sequence under selected file name",
+            KeyEvent.VK_S, SystemUtil.getMenuCtrlMask())
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 3556923605878121275L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+
+            if (viewer != null)
+            {
+                final Sequence seq = viewer.getSequence();
+
+                if (seq != null)
+                {
+                    new ImageSaverDialog(seq, viewer.getPositionZ(), viewer.getPositionT());
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    };
+
+    public static IcyAbstractAction saveMetaDataAction = new IcyAbstractAction("Save metadata", new IcyIcon(
+            ResourceUtil.ICON_SAVE), "Save active sequence metadata", "Save the metadata of the active sequence now", true,
+            "Saving metadata...")
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 3556923605878121275L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            // Sequence persistence enabled --> save XML metadata
+            if (GeneralPreferences.getSequencePersistence())
+            {
+                final Sequence seq = Icy.getMainInterface().getActiveSequence();
+
+                if (seq != null)
+                    return seq.saveXMLData();
             }
 
             return false;

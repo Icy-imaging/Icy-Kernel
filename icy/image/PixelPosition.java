@@ -21,7 +21,7 @@ package icy.image;
 /**
  * @author Stephane
  */
-public class PixelPosition extends BandPosition
+public class PixelPosition extends ChannelPosition
 {
     public static final char X_ID = 'X';
     public static final char Y_ID = 'Y';
@@ -138,7 +138,7 @@ public class PixelPosition extends BandPosition
     {
         final char id = Character.toUpperCase(ident);
 
-        return BandPosition.isValidIdentStatic(ident) || (id == X_ID) || (id == Y_ID);
+        return ChannelPosition.isValidIdentStatic(ident) || (id == X_ID) || (id == Y_ID);
     }
 
     @Override
@@ -220,7 +220,7 @@ public class PixelPosition extends BandPosition
     }
 
     @Override
-    public int compareTo(Object o)
+    public int compareTo(ImagePosition o)
     {
         final int result = super.compareTo(o);
 

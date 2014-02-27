@@ -40,7 +40,7 @@ public class DateUtil
     /**
      * Return current date (String format).<br>
      * 
-     * @param dateFormat
+     * @param format
      *        define the wanted format.<br>
      *        Ex :<br>
      *        DateUtil.now("dd MMMMM yyyy");<br>
@@ -50,8 +50,26 @@ public class DateUtil
      *        DateUtil.now("H:mm:ss:SSS");<br>
      *        DateUtil.now("yyyy.MMMMM.dd GGG hh:mm aaa");<br>
      */
-    public static String now(String dateFormat)
+    public static String now(String format)
     {
-        return new SimpleDateFormat(dateFormat).format(now());
+        return new SimpleDateFormat(format).format(now());
+    }
+
+    /**
+     * Return the specified date in String format.<br>
+     * 
+     * @param format
+     *        define the wanted format.<br>
+     *        Ex :<br>
+     *        DateUtil.now("dd MMMMM yyyy");<br>
+     *        DateUtil.now("yyyyMMdd");<br>
+     *        DateUtil.now("MM/dd/yy");<br>
+     *        DateUtil.now("yyyy.MM.dd G 'at' hh:mm:ss z");<br>
+     *        DateUtil.now("H:mm:ss:SSS");<br>
+     *        DateUtil.now("yyyy.MMMMM.dd GGG hh:mm aaa");<br>
+     */
+    public static String format(String format, Date date)
+    {
+        return new SimpleDateFormat(format).format(date);
     }
 }

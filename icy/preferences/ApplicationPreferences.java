@@ -109,6 +109,18 @@ public class ApplicationPreferences
         preferences.put(ID_UPDATE_REPOSITORY_FILE, value);
     }
 
+    static int memoryAlign(int memMB)
+    {
+        // arrange to get multiple of 32 MB
+        return (int) MathUtil.prevMultiple(memMB, 32);
+    }
+
+    static int checkMem(int memMB)
+    {
+        // check we can allocate that much
+        return Math.min(getMaxMemoryMBLimit(), memoryAlign(memMB));
+    }
+
     /**
      * Get max memory (in MB)
      */
@@ -121,7 +133,7 @@ public class ApplicationPreferences
             result = getDefaultMemoryMB();
 
         // arrange to get multiple of 32 MB
-        return (int) MathUtil.prevMultiple(result, 32);
+        return checkMem(result);
     }
 
     public static int getDefaultMemoryMB()
@@ -136,18 +148,18 @@ public class ApplicationPreferences
             calculatedMaxMem -= (calculatedMaxMem - freeMemory) / 2;
 
         // get max memory in MB
-        return Math.min(getMaxMemoryMBLimit(), (int) (calculatedMaxMem / (1024 * 1024)));
+        return checkMem((int) (calculatedMaxMem / (1024 * 1024)));
     }
 
     public static int getMaxMemoryMBLimit()
     {
-        final int result = (int) (SystemUtil.getTotalMemory() / (1024 * 1024));
+        int result = (int) (SystemUtil.getTotalMemory() / (1024 * 1024));
 
-        // limit maximum value for 32 bits system
-        if (SystemUtil.is32bits() && (result > 1400))
-            return 1400;
+        // limit maximum memory to 1100 MB for 32 bits system
+        if (SystemUtil.is32bits() && (result > 1100))
+            result = 1100;
 
-        return result;
+        return memoryAlign(result);
     }
 
     /**
@@ -164,7 +176,7 @@ public class ApplicationPreferences
     public static String getExtraVMParams()
     {
         return preferences.get(ID_EXTRA_VMPARAMS,
-                "-XX:CompileCommand=exclude,icy/image/IcyBufferedImage.createFrom -XX:MaxPermSize=128M");
+                "-XX:CompileCommand=exclude,plugins/kernel/importer/LociImporter.getImage -XX:MaxPermSize=128M");
     }
 
     /**

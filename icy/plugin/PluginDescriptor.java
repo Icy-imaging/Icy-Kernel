@@ -91,16 +91,16 @@ public class PluginDescriptor implements XMLPersistent
         }
     }
 
-    private static final int ICON_SIZE = 64;
-    private static final int IMAGE_SIZE = 256;
+    public  static final int ICON_SIZE = 64;
+    public  static final int IMAGE_SIZE = 256;
 
     public static final ImageIcon DEFAULT_ICON = ResourceUtil.getImageIcon(ResourceUtil.IMAGE_PLUGIN_SMALL);
     public static final Image DEFAULT_IMAGE = ResourceUtil.IMAGE_PLUGIN;
 
-    static final String ID_CLASSNAME = "classname";
-    static final String ID_URL = "url";
-    static final String ID_NAME = "name";
-    static final String ID_REQUIRED_KERNEL_VERSION = "required_kernel_version";
+    public static final String ID_CLASSNAME = "classname";
+    public static final String ID_URL = "url";
+    public static final String ID_NAME = "name";
+    public static final String ID_REQUIRED_KERNEL_VERSION = "required_kernel_version";
 
     public static class PluginIdent implements XMLPersistent
     {
@@ -136,9 +136,9 @@ public class PluginDescriptor implements XMLPersistent
 
         static final String ID_VERSION = "version";
 
-        private String className;
-        private Version version;
-        private Version requiredKernelVersion;
+        protected String className;
+        protected Version version;
+        protected Version requiredKernelVersion;
 
         /**
          * 
@@ -162,9 +162,9 @@ public class PluginDescriptor implements XMLPersistent
             if (node == null)
                 return false;
 
-            className = XMLUtil.getElementValue(node, ID_CLASSNAME, "");
-            version = new Version(XMLUtil.getElementValue(node, ID_VERSION, ""));
-            requiredKernelVersion = new Version(XMLUtil.getElementValue(node, ID_REQUIRED_KERNEL_VERSION, ""));
+            setClassName(XMLUtil.getElementValue(node, ID_CLASSNAME, ""));
+            setVersion(new Version(XMLUtil.getElementValue(node, ID_VERSION, "")));
+            setRequiredKernelVersion(new Version(XMLUtil.getElementValue(node, ID_REQUIRED_KERNEL_VERSION, "")));
 
             return true;
         }
@@ -178,9 +178,9 @@ public class PluginDescriptor implements XMLPersistent
             if (node == null)
                 return false;
 
-            XMLUtil.setElementValue(node, ID_CLASSNAME, className);
-            XMLUtil.setElementValue(node, ID_VERSION, version.toString());
-            XMLUtil.setElementValue(node, ID_REQUIRED_KERNEL_VERSION, requiredKernelVersion.toString());
+            XMLUtil.setElementValue(node, ID_CLASSNAME, getClassName());
+            XMLUtil.setElementValue(node, ID_VERSION, getVersion().toString());
+            XMLUtil.setElementValue(node, ID_REQUIRED_KERNEL_VERSION, getRequiredKernelVersion().toString());
 
             return true;
         }
@@ -328,8 +328,8 @@ public class PluginDescriptor implements XMLPersistent
 
     public static class PluginOnlineIdent extends PluginIdent
     {
-        private String name;
-        private String url;
+        protected String name;
+        protected String url;
 
         public PluginOnlineIdent()
         {
@@ -347,6 +347,11 @@ public class PluginDescriptor implements XMLPersistent
             return name;
         }
 
+        public void setName(String name)
+        {
+            this.name = name;
+        }
+
         /**
          * @return the url
          */
@@ -355,13 +360,18 @@ public class PluginDescriptor implements XMLPersistent
             return url;
         }
 
+        public void setUrl(String url)
+        {
+            this.url = url;
+        }
+
         @Override
         public boolean loadFromXML(Node node)
         {
             if (super.loadFromXML(node))
             {
-                name = XMLUtil.getElementValue(node, PluginDescriptor.ID_NAME, "");
-                url = XMLUtil.getElementValue(node, PluginDescriptor.ID_URL, "");
+                setName(XMLUtil.getElementValue(node, PluginDescriptor.ID_NAME, ""));
+                setUrl(XMLUtil.getElementValue(node, PluginDescriptor.ID_URL, ""));
                 return true;
             }
 
@@ -373,8 +383,8 @@ public class PluginDescriptor implements XMLPersistent
         {
             if (super.saveToXML(node))
             {
-                XMLUtil.setElementValue(node, PluginDescriptor.ID_NAME, name);
-                XMLUtil.setElementValue(node, PluginDescriptor.ID_URL, name);
+                XMLUtil.setElementValue(node, PluginDescriptor.ID_NAME, getName());
+                XMLUtil.setElementValue(node, PluginDescriptor.ID_URL, getUrl());
                 return true;
             }
 
@@ -382,46 +392,46 @@ public class PluginDescriptor implements XMLPersistent
         }
     }
 
-    private static final String ID_JAR_URL = "jar_url";
-    private static final String ID_IMAGE_URL = "image_url";
-    private static final String ID_ICON_URL = "icon_url";
-    private static final String ID_AUTHOR = "author";
-    private static final String ID_CHANGELOG = "changelog";
-    private static final String ID_WEB = "web";
-    private static final String ID_EMAIL = "email";
-    private static final String ID_DESCRIPTION = "description";
-    private static final String ID_DEPENDENCIES = "dependencies";
-    private static final String ID_DEPENDENCY = "dependency";
+    public static final String ID_JAR_URL = "jar_url";
+    public static final String ID_IMAGE_URL = "image_url";
+    public static final String ID_ICON_URL = "icon_url";
+    public static final String ID_AUTHOR = "author";
+    public static final String ID_CHANGELOG = "changelog";
+    public static final String ID_WEB = "web";
+    public static final String ID_EMAIL = "email";
+    public static final String ID_DESCRIPTION = "description";
+    public static final String ID_DEPENDENCIES = "dependencies";
+    public static final String ID_DEPENDENCY = "dependency";
 
-    private Class<? extends Plugin> pluginClass;
+    protected Class<? extends Plugin> pluginClass;
 
-    private ImageIcon icon;
-    private Image image;
+    protected ImageIcon icon;
+    protected Image image;
 
-    private String name;
-    private PluginIdent ident;
-    private String xmlUrl;
-    private String jarUrl;
-    String imageUrl;
-    String iconUrl;
-    private String author;
-    private String web;
-    private String email;
-    private String desc;
-    private String changesLog;
+    protected String name;
+    protected PluginIdent ident;
+    protected String xmlUrl;
+    protected String jarUrl;
+    protected String imageUrl;
+    protected String iconUrl;
+    protected String author;
+    protected String web;
+    protected String email;
+    protected String desc;
+    protected String changesLog;
 
-    private boolean enabled;
-    private boolean descriptorLoaded;
-    private boolean imagesLoaded;
+    protected boolean enabled;
+    protected boolean descriptorLoaded;
+    protected boolean imagesLoaded;
     // boolean checkingForUpdate;
     // boolean updateChecked;
     // PluginDescriptor onlineDescriptor;
 
     // private final List<String> publicClasseNames;
-    private final List<PluginIdent> required;
+    protected final List<PluginIdent> required;
 
     // only for online descriptor
-    private RepositoryInfo repository;
+    protected RepositoryInfo repository;
 
     // private static final DateFormat dateFormatter = DateFormat.getDateInstance();
     // private static final GregorianCalendar calendar = (GregorianCalendar)
@@ -894,16 +904,16 @@ public class PluginDescriptor implements XMLPersistent
         // get the plugin ident
         ident.loadFromXML(node);
 
-        name = XMLUtil.getElementValue(node, ID_NAME, "");
-        xmlUrl = XMLUtil.getElementValue(node, ID_URL, "");
-        jarUrl = XMLUtil.getElementValue(node, ID_JAR_URL, "");
-        imageUrl = XMLUtil.getElementValue(node, ID_IMAGE_URL, "");
-        iconUrl = XMLUtil.getElementValue(node, ID_ICON_URL, "");
-        author = XMLUtil.getElementValue(node, ID_AUTHOR, "");
-        web = XMLUtil.getElementValue(node, ID_WEB, "");
-        email = XMLUtil.getElementValue(node, ID_EMAIL, "");
-        desc = XMLUtil.getElementValue(node, ID_DESCRIPTION, "");
-        changesLog = XMLUtil.getElementValue(node, ID_CHANGELOG, "");
+        setName(XMLUtil.getElementValue(node, ID_NAME, ""));
+        setXmlUrl(XMLUtil.getElementValue(node, ID_URL, ""));
+        setJarUrl(XMLUtil.getElementValue(node, ID_JAR_URL, ""));
+        setImageUrl(XMLUtil.getElementValue(node, ID_IMAGE_URL, ""));
+        setIconUrl(XMLUtil.getElementValue(node, ID_ICON_URL, ""));
+        setAuthor(XMLUtil.getElementValue(node, ID_AUTHOR, ""));
+        setWeb(XMLUtil.getElementValue(node, ID_WEB, ""));
+        setEmail(XMLUtil.getElementValue(node, ID_EMAIL, ""));
+        setDescription(XMLUtil.getElementValue(node, ID_DESCRIPTION, ""));
+        setChangesLog(XMLUtil.getElementValue(node, ID_CHANGELOG, ""));
 
         final Node nodeDependances = XMLUtil.getElement(node, ID_DEPENDENCIES);
         if (nodeDependances != null)
@@ -936,16 +946,16 @@ public class PluginDescriptor implements XMLPersistent
 
         ident.saveToXML(node);
 
-        XMLUtil.setElementValue(node, ID_NAME, name);
-        XMLUtil.setElementValue(node, ID_URL, xmlUrl);
-        XMLUtil.setElementValue(node, ID_JAR_URL, jarUrl);
-        XMLUtil.setElementValue(node, ID_IMAGE_URL, imageUrl);
-        XMLUtil.setElementValue(node, ID_ICON_URL, iconUrl);
-        XMLUtil.setElementValue(node, ID_AUTHOR, author);
-        XMLUtil.setElementValue(node, ID_WEB, web);
-        XMLUtil.setElementValue(node, ID_EMAIL, email);
-        XMLUtil.setElementValue(node, ID_DESCRIPTION, desc);
-        XMLUtil.setElementValue(node, ID_CHANGELOG, changesLog);
+        XMLUtil.setElementValue(node, ID_NAME, getName());
+        XMLUtil.setElementValue(node, ID_URL, getXmlUrl());
+        XMLUtil.setElementValue(node, ID_JAR_URL, getJarUrl());
+        XMLUtil.setElementValue(node, ID_IMAGE_URL, getImageUrl());
+        XMLUtil.setElementValue(node, ID_ICON_URL, getIconUrl());
+        XMLUtil.setElementValue(node, ID_AUTHOR, getAuthor());
+        XMLUtil.setElementValue(node, ID_WEB, getWeb());
+        XMLUtil.setElementValue(node, ID_EMAIL, getEmail());
+        XMLUtil.setElementValue(node, ID_DESCRIPTION, getDescription());
+        XMLUtil.setElementValue(node, ID_CHANGELOG, getChangesLog());
 
         // synchronized (dateFormatter)
         // {
@@ -1228,6 +1238,24 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
+     * @param xmlUrl
+     *        the xmlUrl to set
+     */
+    public void setXmlUrl(String xmlUrl)
+    {
+        this.xmlUrl = xmlUrl;
+    }
+
+    /**
+     * @param repository
+     *        the repository to set
+     */
+    public void setRepository(RepositoryInfo repository)
+    {
+        this.repository = repository;
+    }
+
+    /**
      * @return the jarUrl
      */
     public String getJarUrl()
@@ -1382,7 +1410,7 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * Return true if plugin is installed (corresponding JAR file exits)
+     * Return true if plugin is installed (corresponding JAR file exist)
      */
     public boolean isInstalled()
     {
@@ -1461,6 +1489,51 @@ public class PluginDescriptor implements XMLPersistent
     public void setName(String name)
     {
         this.name = name;
+    }
+
+    /**
+     * @param author
+     *        the author to set
+     */
+    public void setAuthor(String author)
+    {
+        this.author = author;
+    }
+
+    /**
+     * @param web
+     *        the web to set
+     */
+    public void setWeb(String web)
+    {
+        this.web = web;
+    }
+
+    /**
+     * @param email
+     *        the email to set
+     */
+    public void setEmail(String email)
+    {
+        this.email = email;
+    }
+
+    /**
+     * @param desc
+     *        the description to set
+     */
+    public void setDescription(String desc)
+    {
+        this.desc = desc;
+    }
+
+    /**
+     * @param changesLog
+     *        the changesLog to set
+     */
+    public void setChangesLog(String changesLog)
+    {
+        this.changesLog = changesLog;
     }
 
     /**

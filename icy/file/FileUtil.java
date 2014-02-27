@@ -147,6 +147,58 @@ public class FileUtil
     }
 
     /**
+     * Transform the specified list of path to file.
+     */
+    public static File[] toFiles(String[] paths)
+    {
+        final File[] result = new File[paths.length];
+
+        for (int i = 0; i < paths.length; i++)
+            result[i] = new File(paths[i]);
+
+        return result;
+    }
+
+    /**
+     * Transform the specified list of path to file.
+     */
+    public static List<File> toFiles(List<String> paths)
+    {
+        final List<File> result = new ArrayList<File>(paths.size());
+
+        for (String path : paths)
+            result.add(new File(path));
+
+        return result;
+    }
+
+    /**
+     * Transform the specified list of file to path.
+     */
+    public static String[] toPaths(File[] files)
+    {
+        final String[] result = new String[files.length];
+
+        for (int i = 0; i < files.length; i++)
+            result[i] = files[i].getAbsolutePath();
+
+        return result;
+    }
+
+    /**
+     * Transform the specified list of file to path.
+     */
+    public static List<String> toPaths(List<File> files)
+    {
+        final List<String> result = new ArrayList<String>(files.size());
+
+        for (File file : files)
+            result.add(file.getAbsolutePath());
+
+        return result;
+    }
+
+    /**
      * Create a symbolic link file
      */
     public static boolean createLink(String path, String target)
@@ -278,6 +330,37 @@ public class FileUtil
      * <br>
      * getDirectory("/file.txt") --> "/"<br>
      * getDirectory("D:/temp/file.txt") --> "D:/temp/"<br>
+     * getDirectory("D:/temp/") --> "D:/temp/"<br>
+     * getDirectory("D:/temp") --> "D:/"<br>
+     * getDirectory("C:file.txt") --> "C:"<br>
+     * getDirectory("file.txt") --> ""<br>
+     * getDirectory("file") --> ""<br>
+     * getDirectory(null) --> ""
+     */
+    public static String getDirectory(String path, boolean separator)
+    {
+        final String finalPath = getGenericPath(path);
+
+        if (!StringUtil.isEmpty(finalPath))
+        {
+            int index = finalPath.lastIndexOf(FileUtil.separatorChar);
+            if (index != -1)
+                return finalPath.substring(0, index + (separator ? 1 : 0));
+
+            index = finalPath.lastIndexOf(':');
+            if (index != -1)
+                return finalPath.substring(0, index + 1);
+        }
+
+        return "";
+    }
+
+    /**
+     * Return directory information from specified path<br>
+     * <br>
+     * getDirectory("/file.txt") --> "/"<br>
+     * getDirectory("D:/temp/file.txt") --> "D:/temp/"<br>
+     * getDirectory("D:/temp/") --> "D:/temp/"<br>
      * getDirectory("D:/temp") --> "D:/"<br>
      * getDirectory("C:file.txt") --> "C:"<br>
      * getDirectory("file.txt") --> ""<br>
@@ -286,20 +369,7 @@ public class FileUtil
      */
     public static String getDirectory(String path)
     {
-        final String finalPath = getGenericPath(path);
-
-        if (!StringUtil.isEmpty(finalPath))
-        {
-            int index = finalPath.lastIndexOf(FileUtil.separatorChar);
-            if (index != -1)
-                return finalPath.substring(0, index + 1);
-
-            index = finalPath.lastIndexOf(':');
-            if (index != -1)
-                return finalPath.substring(0, index + 1);
-        }
-
-        return "";
+        return getDirectory(path, true);
     }
 
     /**
@@ -789,21 +859,20 @@ public class FileUtil
     }
 
     /**
-     * @deprecated Use {@link #explode(File[], FileFilter, boolean, boolean)} instead
+     * @deprecated Use {@link #explode(List, FileFilter, boolean, boolean)} instead.
      */
     @Deprecated
-    public static ArrayList<File> explode(List<File> files, boolean recursive, boolean wantHidden)
+    public static List<File> explode(List<File> files, boolean recursive, boolean wantHidden)
     {
         return explode(files, null, recursive, wantHidden);
     }
 
     /**
-     * @deprecated Use {@link #explode(File[], FileFilter, boolean, boolean)} instead
+     * Transform all directory entries by their sub files list
      */
-    @Deprecated
-    public static ArrayList<File> explode(List<File> files, FileFilter filter, boolean recursive, boolean wantHidden)
+    public static List<File> explode(List<File> files, FileFilter filter, boolean recursive, boolean wantHidden)
     {
-        final ArrayList<File> result = new ArrayList<File>();
+        final List<File> result = new ArrayList<File>();
 
         for (File file : files)
         {

@@ -25,6 +25,7 @@ import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.frame.progress.SuccessfullAnnounceFrame;
 import icy.network.NetworkUtil;
+import icy.network.URLUtil;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.IcyExceptionHandler;
@@ -32,6 +33,7 @@ import icy.system.thread.ThreadUtil;
 import icy.update.Updater;
 import icy.util.StringUtil;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
@@ -91,8 +93,8 @@ public class PluginInstaller implements Runnable
     /**
      * internals
      */
-    private final ArrayList<PluginDescriptor> installingPlugins;
-    private final ArrayList<PluginDescriptor> desinstallingPlugin;
+    private final List<PluginDescriptor> installingPlugins;
+    private final List<PluginDescriptor> desinstallingPlugin;
 
     /**
      * static class
@@ -361,19 +363,27 @@ public class PluginInstaller implements Runnable
             pass = null;
         }
 
+        // try to build the final path using base repository address and plugin relative address
+        // (useful for local repository)
+        URL url;
+        final String basePath = FileUtil.getDirectory(repos.getLocation());
         // download and save JAR file
-        result = downloadAndSave(plugin.getJarUrl(), plugin.getJarFilename(), login, pass, true, taskFrame);
+        url = URLUtil.buildURL(basePath, plugin.getJarUrl());
+        result = downloadAndSave(url, plugin.getJarFilename(), login, pass, true, taskFrame);
         if (!StringUtil.isEmpty(result))
             return result;
 
         // download and save XML file
-        result = downloadAndSave(plugin.getUrl(), plugin.getXMLFilename(), login, pass, true, taskFrame);
+        url = URLUtil.buildURL(basePath, plugin.getUrl());
+        result = downloadAndSave(url, plugin.getXMLFilename(), login, pass, true, taskFrame);
         if (!StringUtil.isEmpty(result))
             return result;
 
         // download and save icon & image files
-        downloadAndSave(plugin.getIconUrl(), plugin.getIconFilename(), login, pass, false, taskFrame);
-        downloadAndSave(plugin.getImageUrl(), plugin.getImageFilename(), login, pass, false, taskFrame);
+        url = URLUtil.buildURL(basePath, plugin.getIconUrl());
+        downloadAndSave(url, plugin.getIconFilename(), login, pass, false, taskFrame);
+        url = URLUtil.buildURL(basePath, plugin.getImageUrl());
+        downloadAndSave(url, plugin.getImageFilename(), login, pass, false, taskFrame);
 
         return "";
     }
@@ -381,13 +391,13 @@ public class PluginInstaller implements Runnable
     /**
      * Return an empty string if no error else return error message
      */
-    private String downloadAndSave(String downloadPath, String savePath, String login, String pass,
-            boolean displayError, ProgressFrame taskFrame)
+    private String downloadAndSave(URL downloadPath, String savePath, String login, String pass, boolean displayError,
+            ProgressFrame taskFrame)
     {
         // load data
         final byte[] data = NetworkUtil.download(downloadPath, login, pass, taskFrame, displayError);
         if (data == null)
-            return ERROR_DOWNLOAD + downloadPath;
+            return ERROR_DOWNLOAD + downloadPath.toString();
 
         // save data
         if (!FileUtil.save(savePath, data, displayError))
@@ -666,7 +676,7 @@ public class PluginInstaller implements Runnable
             // nothing to install
             if (installingPlugins.isEmpty())
                 return;
-            
+
             // order dependencies
             dependencies = orderDependencies(dependencies);
             // add dependencies to the installing list

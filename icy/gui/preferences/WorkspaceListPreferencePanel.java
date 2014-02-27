@@ -344,6 +344,15 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
         mainPanel.validate();
     }
 
+    @Override
+    protected void closed()
+    {
+        super.closed();
+
+        // do not retains workspaces when frame is closed
+        workspaces.clear();
+    }
+
     private ArrayList<Workspace> filterList(ArrayList<Workspace> list, String filter)
     {
         final ArrayList<Workspace> result = new ArrayList<Workspace>();

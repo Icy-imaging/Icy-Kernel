@@ -172,6 +172,19 @@ public class MetaDataUtil
     }
 
     /**
+     * Returns the data type of the specified image serie.
+     */
+    public static DataType getDataType(OMEXMLMetadataImpl metaData, int serie)
+    {
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return DataType.getDataTypeFromPixelType(pix.getType());
+
+        return DataType.UNDEFINED;
+    }
+
+    /**
      * Returns the width (sizeX) of the specified image serie.
      */
     public static int getSizeX(OMEXMLMetadataImpl metaData, int serie)
@@ -234,6 +247,28 @@ public class MetaDataUtil
             return OMEUtil.getValue(pix.getSizeT(), 0);
 
         return 0;
+    }
+
+    /**
+     * Returns the id of the specified image serie.
+     */
+    public static String getImageID(OMEXMLMetadataImpl metaData, int serie)
+    {
+        final Image img = getSerie(metaData, serie);
+
+        metaData.getImageID(serie);
+        if (img != null)
+            return img.getID();
+
+        return "";
+    }
+
+    /**
+     * Set the id of the specified image serie.
+     */
+    public static void setImageID(OMEXMLMetadataImpl metaData, int serie, String value)
+    {
+        metaData.setImageID(value, serie);
     }
 
     /**
@@ -468,18 +503,12 @@ public class MetaDataUtil
     }
 
     /**
-     * Create a new single serie OME Metadata object from the specified Metadata object.
-     * 
-     * @param serie
-     *        Index of the serie we want to keep.
+     * @deprecated Use {@link OMEUtil#createOMEMetadata(MetadataRetrieve, int)}
      */
+    @Deprecated
     public static OMEXMLMetadataImpl createOMEMetadata(MetadataRetrieve metadata, int serie)
     {
-        final OMEXMLMetadataImpl result = OMEUtil.createOMEMetadata(metadata);
-
-        MetaDataUtil.keepSingleSerie(result, serie);
-
-        return result;
+        return OMEUtil.createOMEMetadata(metadata, serie);
     }
 
     /**

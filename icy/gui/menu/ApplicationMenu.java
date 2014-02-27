@@ -28,9 +28,11 @@ import icy.gui.component.menu.IcyRibbonApplicationMenuEntryPrimary;
 import icy.gui.component.menu.IcyRibbonApplicationMenuEntrySecondary;
 import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
+import icy.preferences.GeneralPreferences;
 import icy.preferences.IcyPreferences;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
+import icy.type.collection.CollectionUtil;
 import icy.type.collection.list.RecentFileList;
 import icy.util.StringUtil;
 
@@ -95,22 +97,23 @@ public class ApplicationMenu extends RibbonApplicationMenu
 
                     button.setHorizontalAlignment(SwingConstants.LEFT);
 
-                    final File[] files = recentFileList.getEntryAsFiles(i);
+                    final String[] paths = recentFileList.getEntry(i);
+                    // final File[] files = recentFileList.getEntryAsFiles(i);
 
                     final RichTooltip toolTip;
-                    final int numFile = files.length;
+                    final int numFile = paths.length;
 
                     if (numFile == 1)
-                        toolTip = new RichTooltip("Single file sequence", FileUtil.getFileName(files[0].getPath()));
+                        toolTip = new RichTooltip("Single file sequence", FileUtil.getFileName(paths[0]));
                     else
-                        toolTip = new RichTooltip("Multiple files sequence", FileUtil.getFileName(files[0].getPath()));
+                        toolTip = new RichTooltip("Multiple files sequence", FileUtil.getFileName(paths[0]));
 
                     for (int j = 1; j < Math.min(10, numFile); j++)
-                        toolTip.addDescriptionSection(FileUtil.getFileName(files[j].getPath()));
+                        toolTip.addDescriptionSection(FileUtil.getFileName(paths[j]));
                     if (numFile > 10)
                     {
                         toolTip.addDescriptionSection("...");
-                        toolTip.addDescriptionSection(FileUtil.getFileName(files[numFile - 1].getPath()));
+                        toolTip.addDescriptionSection(FileUtil.getFileName(paths[numFile - 1]));
                     }
 
                     button.setActionRichTooltip(toolTip);
@@ -120,7 +123,7 @@ public class ApplicationMenu extends RibbonApplicationMenu
                         @Override
                         public void actionPerformed(ActionEvent ae)
                         {
-                            Loader.load(files, false, false, true);
+                            Loader.load(CollectionUtil.asList(paths), false, true, true);
                         }
                     });
 
@@ -166,8 +169,10 @@ public class ApplicationMenu extends RibbonApplicationMenu
     private final RibbonApplicationMenuEntrySecondary amesNewRGBSequence;
     private final RibbonApplicationMenuEntrySecondary amesNewRGBASequence;
     private final RibbonApplicationMenuEntryPrimary amepOpen;
-    private final RibbonApplicationMenuEntryPrimary amepSave;
-    private final RibbonApplicationMenuEntryPrimary amepSaveAs;
+    private final RibbonApplicationMenuEntryPrimary amepSaveDefault;
+    private final RibbonApplicationMenuEntrySecondary amepSave;
+    private final RibbonApplicationMenuEntrySecondary amepSaveAs;
+    private final RibbonApplicationMenuEntrySecondary amepSaveMetaData;
     private final RibbonApplicationMenuEntryPrimary amepClose;
     private final RibbonApplicationMenuEntrySecondary amesCloseCurrent;
     private final RibbonApplicationMenuEntrySecondary amesCloseOthers;
@@ -213,11 +218,13 @@ public class ApplicationMenu extends RibbonApplicationMenu
 
         // SAVE & EXPORT
 
-        amepSave = new IcyRibbonApplicationMenuEntryPrimary(FileActions.saveSequenceAction);
-        amepSave.setRolloverCallback(new DefaultRollOverCallBack());
+        amepSaveDefault = new IcyRibbonApplicationMenuEntryPrimary(FileActions.saveDefaultSequenceAction);
 
-        amepSaveAs = new IcyRibbonApplicationMenuEntryPrimary(FileActions.saveAsSequenceAction);
-        amepSaveAs.setRolloverCallback(new DefaultRollOverCallBack());
+        amepSave = new IcyRibbonApplicationMenuEntrySecondary(FileActions.saveSequenceAction);
+        amepSaveAs = new IcyRibbonApplicationMenuEntrySecondary(FileActions.saveAsSequenceAction);
+        amepSaveMetaData = new IcyRibbonApplicationMenuEntrySecondary(FileActions.saveMetaDataAction);
+
+        amepSaveDefault.addSecondaryMenuGroup("Save", amepSave, amepSaveAs, amepSaveMetaData);
 
         // final RibbonApplicationMenuEntryPrimary amepExport = new
         // RibbonApplicationMenuEntryPrimary(
@@ -254,8 +261,7 @@ public class ApplicationMenu extends RibbonApplicationMenu
 
         addMenuEntry(amepNew);
         addMenuEntry(amepOpen);
-        addMenuEntry(amepSave);
-        addMenuEntry(amepSaveAs);
+        addMenuEntry(amepSaveDefault);
 
         // addMenuEntry(amEntryImport);
 
@@ -285,8 +291,11 @@ public class ApplicationMenu extends RibbonApplicationMenu
     {
         final Sequence focusedSequence = Icy.getMainInterface().getActiveSequence();
 
+        amepSaveDefault.setEnabled(focusedSequence != null);
         amepSave.setEnabled((focusedSequence != null) && !StringUtil.isEmpty(focusedSequence.getFilename()));
         amepSaveAs.setEnabled(focusedSequence != null);
+        amepSaveMetaData.setEnabled((focusedSequence != null) && !StringUtil.isEmpty(focusedSequence.getFilename())
+                && GeneralPreferences.getSequencePersistence());
         amepClose.setEnabled(Icy.getMainInterface().getSequences().size() > 0);
     }
 
@@ -298,10 +307,6 @@ public class ApplicationMenu extends RibbonApplicationMenu
         return recentFileList;
     }
 
-    /**
-     * @deprecated Use {@link #addRecentLoadedFile(File[])} instead.
-     */
-    @Deprecated
     public void addRecentLoadedFile(List<File> files)
     {
         addRecentLoadedFile(files.toArray(new File[files.size()]));
@@ -315,6 +320,24 @@ public class ApplicationMenu extends RibbonApplicationMenu
     public void addRecentLoadedFile(File file)
     {
         addRecentLoadedFile(new File[] {file});
+    }
+
+    /**
+     * Add a list of recently opened files (String format)
+     */
+    public void addRecentFile(List<String> paths)
+    {
+        addRecentFile(paths.toArray(new String[paths.size()]));
+    }
+
+    public void addRecentFile(String[] paths)
+    {
+        recentFileList.addEntry(paths);
+    }
+
+    public void addRecentFile(String path)
+    {
+        addRecentFile(new String[] {path});
     }
 
     public void onSequenceActivationChange()

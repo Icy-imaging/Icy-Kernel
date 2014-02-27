@@ -392,7 +392,7 @@ public class ROI2DPolyLine extends ROI2DShape
                 for (Node n : nodesPoint)
                 {
                     final Anchor2D pt = new Anchor2D();
-                    pt.loadFromXML(n);
+                    pt.loadPositionFromXML(n);
                     addPoint(pt);
                 }
             }
@@ -413,7 +413,7 @@ public class ROI2DPolyLine extends ROI2DShape
 
         final Element dependances = XMLUtil.setElement(node, ID_POINTS);
         for (Anchor2D pt : controlPoints)
-            pt.saveToXML(XMLUtil.addElement(dependances, ID_POINT));
+            pt.savePositionToXML(XMLUtil.addElement(dependances, ID_POINT));
 
         return true;
     }

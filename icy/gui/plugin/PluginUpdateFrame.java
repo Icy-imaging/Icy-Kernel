@@ -120,7 +120,7 @@ public class PluginUpdateFrame extends ActionFrame
         mainPanel.add(splitPane, BorderLayout.CENTER);
 
         pack();
-        addToMainDesktopPane();
+        addToDesktopPane();
         setVisible(true);
         center();
         requestFocus();

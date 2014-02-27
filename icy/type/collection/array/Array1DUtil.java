@@ -275,7 +275,7 @@ public class Array1DUtil
     }
 
     /**
-     * Allocate the specified array if it's defined to null with the specified len
+     * Allocate the specified array if it's defined to null with the specified lenght
      */
     public static double[] allocIfNull(double[] out, int len)
     {
@@ -283,6 +283,30 @@ public class Array1DUtil
             return new double[len];
 
         return out;
+    }
+
+    /**
+     * Do a copy of the specified array
+     */
+    public static Object copyOf(Object array)
+    {
+        switch (ArrayUtil.getDataType(array))
+        {
+            case BYTE:
+                return Arrays.copyOf((byte[]) array, ((byte[]) array).length);
+            case SHORT:
+                return Arrays.copyOf((byte[]) array, ((byte[]) array).length);
+            case INT:
+                return Arrays.copyOf((byte[]) array, ((byte[]) array).length);
+            case LONG:
+                return Arrays.copyOf((byte[]) array, ((byte[]) array).length);
+            case FLOAT:
+                return Arrays.copyOf((byte[]) array, ((byte[]) array).length);
+            case DOUBLE:
+                return Arrays.copyOf((byte[]) array, ((byte[]) array).length);
+            default:
+                return null;
+        }
     }
 
     //

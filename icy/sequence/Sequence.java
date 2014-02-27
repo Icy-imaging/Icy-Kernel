@@ -156,7 +156,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     final Set<ROI> rois;
 
     /**
-     * id of sequence (uniq during an ICY session)
+     * id of sequence (uniq during an Icy session)
      */
     private final int id;
     /**
@@ -565,6 +565,27 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         {
             this.filename = filename;
         }
+    }
+
+    /**
+     * Returns serie index if the Sequence comes from a multi serie image.<br>
+     * By default it returns 0 if the sequence comes from a single serie image or if this is the
+     * first serie iamge.
+     */
+    public int getSerieIndex()
+    {
+        // retrieve the image ID (sequences are always single serie)
+        final String id = MetaDataUtil.getImageID(getMetadata(), 0);
+
+        if (id.startsWith("Image:"))
+        {
+            final String[] serieNums = id.substring(6).split(":");
+
+            if (serieNums.length > 0)
+                return StringUtil.parseInt(serieNums[0], 0);
+        }
+
+        return 0;
     }
 
     /**
@@ -1447,7 +1468,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public boolean addROI(ROI roi, boolean canUndo)
     {
-        if (contains(roi))
+        if ((roi == null) || contains(roi))
             return false;
 
         synchronized (rois)
@@ -1687,7 +1708,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public boolean addOverlay(Overlay overlay)
     {
-        if (contains(overlay))
+        if ((overlay == null) || contains(overlay))
             return false;
 
         synchronized (overlays)
@@ -1947,7 +1968,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         if (volImg != null)
             return volImg.getAllImage();
 
-        return null;
+        return new ArrayList<IcyBufferedImage>();
     }
 
     /**
@@ -2022,6 +2043,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public void setImage(int t, int z, BufferedImage image) throws IllegalArgumentException
     {
         final boolean volImgCreated;
+
+        if (image == null)
+            return;
 
         VolumetricImage volImg = getVolumetricImage(t);
 
@@ -5119,7 +5143,13 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Load attached XML data
+     * Load XML persistent data from file.<br>
+     * This method should only be called once when the sequence has just be loaded from file.<br>
+     * Note that it internally uses {@link #getFilename()} to define the XML filename so be sure it
+     * is correctly filled before calling this method.<br>
+     * 
+     * @return <code>true</code> if XML data has been correctly loaded, <code>false</code>
+     *         otherwise.
      */
     public boolean loadXMLData()
     {
@@ -5158,7 +5188,8 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Get XML data node identified by specified name.<br>
-     * The node is created if needed.
+     * The node is created if needed.</br>
+     * Note that the following node names are reserved: <i>image, name, meta, rois</i></br>
      * 
      * @param name
      *        name of wanted node
@@ -5427,7 +5458,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Called when an overlay has changed (internal method).<br>
-     * Use {@link #overlayChanged(Overlay)} instead. 
+     * Use {@link #overlayChanged(Overlay)} instead.
      */
     @Override
     public void overlayChanged(OverlayEvent event)
@@ -5568,7 +5599,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             // do here global process on sequence overlay change
             case SEQUENCE_OVERLAY:
                 break;
-                
+
             // do here global process on sequence ROI change
             case SEQUENCE_ROI:
                 break;

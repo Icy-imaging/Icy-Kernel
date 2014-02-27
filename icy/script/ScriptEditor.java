@@ -113,7 +113,7 @@ public class ScriptEditor extends IcyFrame implements ActionListener
 
         this.pack();
 
-        addToMainDesktopPane();
+        addToDesktopPane();
 
     }
 

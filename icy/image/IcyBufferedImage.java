@@ -24,7 +24,6 @@ import icy.common.listener.ChangeListener;
 import icy.image.IcyBufferedImageEvent.IcyBufferedImageEventType;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.IcyColorMap.IcyColorMapType;
-import icy.image.colormap.LinearColorMap;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colormodel.IcyColorModelEvent;
 import icy.image.colormodel.IcyColorModelListener;
@@ -56,19 +55,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.media.jai.PlanarImage;
 import javax.swing.event.EventListenerList;
 
-import jxl.biff.drawing.PNGReader;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
-import loci.formats.gui.AWTImageTools;
 import loci.formats.gui.SignedByteBuffer;
 import loci.formats.gui.SignedShortBuffer;
 import loci.formats.gui.UnsignedIntBuffer;
-import loci.formats.in.APNGReader;
-import loci.formats.in.JPEG2000Reader;
-import loci.formats.in.TiffDelegateReader;
-import loci.formats.in.TiffJAIReader;
+import plugins.kernel.importer.LociImporter;
 
 /**
  * @author stephane
@@ -186,6 +181,54 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
+     * Create an IcyBufferedImage from a {@link PlanarImage}.<br>
+     * IMPORTANT : source image can be used as part or as the whole result<br>
+     * so consider it as lost.
+     * 
+     * @param image
+     *        {@link PlanarImage}
+     * @return {@link IcyBufferedImage}
+     */
+    public static IcyBufferedImage createFrom(PlanarImage image, boolean signedDataType)
+    {
+        final DataBuffer db = image.getData().getDataBuffer();
+        final int w = image.getWidth();
+        final int h = image.getHeight();
+
+        if (db instanceof DataBufferByte)
+            return new IcyBufferedImage(w, h, ((DataBufferByte) db).getBankData(), signedDataType);
+        else if (db instanceof DataBufferShort)
+            return new IcyBufferedImage(w, h, ((DataBufferShort) db).getBankData(), signedDataType);
+        else if (db instanceof DataBufferInt)
+            return new IcyBufferedImage(w, h, ((DataBufferInt) db).getBankData(), signedDataType);
+        else if (db instanceof DataBufferFloat)
+            return new IcyBufferedImage(w, h, ((DataBufferFloat) db).getBankData(), true);
+        else if (db instanceof javax.media.jai.DataBufferFloat)
+            return new IcyBufferedImage(w, h, ((javax.media.jai.DataBufferFloat) db).getBankData(), true);
+        else if (db instanceof DataBufferDouble)
+            return new IcyBufferedImage(w, h, ((DataBufferDouble) db).getBankData(), true);
+        else if (db instanceof javax.media.jai.DataBufferDouble)
+            return new IcyBufferedImage(w, h, ((javax.media.jai.DataBufferDouble) db).getBankData(), true);
+        else
+            // JAI keep dataType and others stuff in their BufferedImage
+            return IcyBufferedImage.createFrom(image.getAsBufferedImage());
+    }
+
+    /**
+     * Create an IcyBufferedImage from a {@link PlanarImage}.<br>
+     * IMPORTANT : source image can be used as part or as the whole result<br>
+     * so consider it as lost.
+     * 
+     * @param image
+     *        {@link PlanarImage}
+     * @return {@link IcyBufferedImage}
+     */
+    public static IcyBufferedImage createFrom(PlanarImage image)
+    {
+        return createFrom(image, false);
+    }
+
+    /**
      * Create an IcyBufferedImage from a BufferedImage.<br>
      * IMPORTANT : source image can be used as part or as the whole result<br>
      * so consider it as lost.
@@ -261,408 +304,43 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Load the image located at (Z, T) position from the specified IFormatReader<br>
-     * and return it as an IcyBufferedImage (old method).
-     * 
-     * @param reader
-     *        {@link IFormatReader}
-     * @param z
-     *        Z position of the image to load
-     * @param t
-     *        T position of the image to load
-     * @return {@link IcyBufferedImage}
+     * @deprecated Use {@link LociImporter#getThumbnailCompatible(IFormatReader, int, int)} instead.
      */
-    public static IcyBufferedImage createFrom_old(IFormatReader reader, int z, int t) throws FormatException,
-            IOException
-    {
-        final int sizeX = reader.getSizeX();
-        final int sizeY = reader.getSizeY();
-        final List<BufferedImage> imageList = new ArrayList<BufferedImage>();
-        final int sizeC = reader.getEffectiveSizeC();
-
-        for (int c = 0; c < sizeC; c++)
-            imageList.add(AWTImageTools.openImage(reader.openBytes(reader.getIndex(z, c, t)), reader, sizeX, sizeY));
-
-        // combine channels
-        return createFrom(imageList);
-    }
-
-    /**
-     * Load a thumbnail version of the image located at (Z, T) position from the specified
-     * {@link IFormatReader} and returns it as an IcyBufferedImage.<br>
-     * Compatible version (use plain image loading and resize).
-     * 
-     * @param reader
-     *        {@link IFormatReader}
-     * @param z
-     *        Z position of the image to load
-     * @param t
-     *        T position of the image to load
-     * @return {@link IcyBufferedImage}
-     */
+    @Deprecated
     public static IcyBufferedImage createCompatibleThumbnailFrom(IFormatReader reader, int z, int t)
             throws FormatException, IOException
     {
-        return IcyBufferedImageUtil.scale(createFrom(reader, z, t), reader.getThumbSizeX(), reader.getThumbSizeY());
+        return LociImporter.getThumbnailCompatible(reader, z, t);
     }
 
     /**
-     * Load a thumbnail version of the image located at (Z, T) position from the specified
-     * {@link IFormatReader} and returns it as an IcyBufferedImage.
-     * 
-     * @param reader
-     *        {@link IFormatReader}
-     * @param z
-     *        Z position of the image to load
-     * @param t
-     *        T position of the image to load
-     * @return {@link IcyBufferedImage}
+     * @deprecated Use {@link LociImporter#getThumbnail(IFormatReader, int, int)} instead.
      */
+    @Deprecated
     public static IcyBufferedImage createThumbnailFrom(IFormatReader reader, int z, int t) throws FormatException,
             IOException
     {
-        final int sizeX = reader.getThumbSizeX();
-        final int sizeY = reader.getThumbSizeY();
-        // convert in our data type
-        final DataType dataType = DataType.getDataTypeFromFormatToolsType(reader.getPixelType());
-        // prepare informations
-        final int sizeXY = sizeX * sizeY;
-        final int effSizeC = reader.getEffectiveSizeC();
-        final int rgbChanCount = reader.getRGBChannelCount();
-        final int sizeC = effSizeC * rgbChanCount;
-        final boolean indexed = reader.isIndexed();
-        final boolean interleaved = reader.isInterleaved();
-        final boolean little = reader.isLittleEndian();
-
-        // System.out.println("Opening image " + dataType);
-        // System.out.println("Size X*Y*C : " + sizeX + "*" + sizeY + "*" + sizeC);
-        // System.out.println("Effective C : " + effSizeC + "     RGB Channel : " + rgbChanCount);
-        // System.out.println("Indexed : " + Boolean.toString(indexed) + "    Interleaved : "
-        // + Boolean.toString(interleaved) + "     Little endian : " + Boolean.toString(little));
-
-        try
-        {
-
-            // prepare internal image data array
-            final Object[] data = Array2DUtil.createArray(dataType, sizeC);
-            final IcyColorMap[] colormaps = new IcyColorMap[effSizeC];
-
-            // allocate array
-            for (int i = 0; i < sizeC; i++)
-                data[i] = Array1DUtil.createArray(dataType, sizeXY);
-
-            for (int effC = 0; effC < effSizeC; effC++)
-            {
-                // load thumbnail byte data
-                final byte[] byteData = reader.openThumbBytes(reader.getIndex(z, effC, t));
-                // current final component
-                final int c = effC * rgbChanCount;
-                final int componentByteLen = byteData.length / rgbChanCount;
-
-                // build data array
-                int inOffset = 0;
-                if (interleaved)
-                {
-                    for (int sc = 0; sc < rgbChanCount; sc++)
-                    {
-                        ByteArrayConvert.byteArrayTo(byteData, inOffset, rgbChanCount, data[c + sc], 0, 1,
-                                componentByteLen, little);
-                        inOffset++;
-                    }
-                }
-                else
-                {
-                    for (int sc = 0; sc < rgbChanCount; sc++)
-                    {
-                        ByteArrayConvert.byteArrayTo(byteData, inOffset, 1, data[c + sc], 0, 1, componentByteLen,
-                                little);
-                        inOffset += componentByteLen;
-                    }
-                }
-
-                // indexed color ?
-                if (indexed)
-                {
-                    // TODO : GIF transparent color support
-                    //
-                    // <<That would let you find the transparency color using the "Transparency
-                    // index" metadata value as an index into the array returned by
-                    // get8BitLookupTable().>>
-
-                    // only 8 bits and 16 bits lookup table supported
-                    switch (dataType.getJavaType())
-                    {
-                        case BYTE:
-                            colormaps[effC] = new IcyColorMap("component " + effC, reader.get8BitLookupTable());
-                            break;
-
-                        case SHORT:
-                            colormaps[effC] = new IcyColorMap("component " + effC, reader.get16BitLookupTable());
-                            break;
-
-                        default:
-                            colormaps[effC] = null;
-                            break;
-                    }
-                }
-            }
-
-            final IcyBufferedImage result = new IcyBufferedImage(sizeX, sizeY, data, dataType.isSigned());
-
-            result.beginUpdate();
-            try
-            {
-                if (indexed)
-                {
-                    // error ! we should have same number of colormap than component
-                    if (colormaps.length != sizeC)
-                    {
-                        System.err.println("Warning : " + colormaps.length + " colormap for " + sizeC + " components");
-                        System.err.println("Colormap can not be restored");
-                    }
-                    else
-                    {
-                        // set colormaps
-                        for (int comp = 0; comp < sizeC; comp++)
-                        {
-                            // sometime loci return black colormap map and we want to avoid them...
-                            if ((colormaps[comp] != null) && !colormaps[comp].isBlack())
-                                result.setColorMap(comp, colormaps[comp], true);
-                        }
-                    }
-                }
-                // special case of 4 channels image, try to set 4th channel colormap
-                else if (sizeC == 4)
-                {
-                    // assume real alpha channel depending from the reader we use
-                    final boolean alpha = (reader instanceof PNGReader) || (reader instanceof APNGReader)
-                            || (reader instanceof TiffDelegateReader) || (reader instanceof TiffJAIReader)
-                            || (reader instanceof JPEG2000Reader);
-
-                    // replace alpha with Cyan color
-                    if (!alpha)
-                        result.setColorMap(3, LinearColorMap.cyan_, true);
-                }
-            }
-            finally
-            {
-                result.endUpdate();
-            }
-
-            return result;
-        }
-        catch (Exception E)
-        {
-            // LOCI do not support thumbnail for all image, try compatible version
-            return createCompatibleThumbnailFrom(reader, z, t);
-        }
+        return LociImporter.getThumbnail(reader, z, t);
     }
 
     /**
-     * Load a single channel sub image at (Z, T) position from the specified {@link IFormatReader}<br>
-     * and returns it as an IcyBufferedImage.
-     * 
-     * @param reader
-     *        Reader used to load the image
-     * @param c
-     *        Channel index to load
-     * @param z
-     *        Z position of the image to load
-     * @param t
-     *        T position of the image to load
-     * @return {@link IcyBufferedImage}
+     * @deprecated Use {@link LociImporter#getImage(IFormatReader, Rectangle, int, int, int)}
+     *             instead.
      */
-    public static IcyBufferedImage createFrom(IFormatReader reader, int x, int y, int w, int h, int c, int z, int t)
+    @Deprecated
+    public static IcyBufferedImage createFrom(IFormatReader reader, int x, int y, int w, int h, int z, int t, int c)
             throws FormatException, IOException
     {
-        // convert in our data type
-        final DataType dataType = DataType.getDataTypeFromFormatToolsType(reader.getPixelType());
-        // prepare informations
-        final int rgbChanCount = reader.getRGBChannelCount();
-        final boolean indexed = reader.isIndexed();
-        final boolean interleaved = reader.isInterleaved();
-        final boolean little = reader.isLittleEndian();
-
-        // allocate internal image data array
-        final Object data = Array1DUtil.createArray(dataType, w * h);
-
-        final int baseC = c / rgbChanCount;
-        final int subC = c % rgbChanCount;
-
-        // get image data
-        final byte[] byteData = reader.openBytes(reader.getIndex(z, baseC, t), x, y, w, h);
-        // current final component
-        final int componentByteLen = byteData.length / rgbChanCount;
-
-        // build data array
-        if (interleaved)
-            ByteArrayConvert.byteArrayTo(byteData, subC, rgbChanCount, data, 0, 1, componentByteLen, little);
-        else
-            ByteArrayConvert.byteArrayTo(byteData, subC * componentByteLen, 1, data, 0, 1, componentByteLen, little);
-
-        final IcyBufferedImage result = new IcyBufferedImage(w, h, data, dataType.isSigned());
-
-        // indexed color ?
-        if (indexed)
-        {
-            IcyColorMap map;
-
-            // only 8 bits and 16 bits lookup table supported
-            switch (dataType.getJavaType())
-            {
-                case BYTE:
-                    map = new IcyColorMap("component " + c, reader.get8BitLookupTable());
-                    break;
-
-                case SHORT:
-                    map = new IcyColorMap("component " + c, reader.get16BitLookupTable());
-                    break;
-
-                default:
-                    map = null;
-            }
-
-            // sometime loci return black colormap map and we want to avoid them...
-            if ((map != null) && !map.isBlack())
-                result.setColorMap(0, map, true);
-        }
-
-        return result;
+        return LociImporter.getImage(reader, new Rectangle(x, y, w, h), z, t, c);
     }
 
     /**
-     * Load the image located at (Z, T) position from the specified {@link IFormatReader}<br>
-     * and returns it as an IcyBufferedImage.
-     * 
-     * @param reader
-     *        Reader used to load the image
-     * @param z
-     *        Z position of the image to load
-     * @param t
-     *        T position of the image to load
-     * @return {@link IcyBufferedImage}
+     * @deprecated Use {@link LociImporter#getImage(IFormatReader, Rectangle, int, int)} instead.
      */
+    @Deprecated
     public static IcyBufferedImage createFrom(IFormatReader reader, int z, int t) throws FormatException, IOException
     {
-        final int sizeX = reader.getSizeX();
-        final int sizeY = reader.getSizeY();
-        // convert in our data type
-        final DataType dataType = DataType.getDataTypeFromFormatToolsType(reader.getPixelType());
-        // prepare informations
-        final int sizeXY = sizeX * sizeY;
-        final int effSizeC = reader.getEffectiveSizeC();
-        final int rgbChanCount = reader.getRGBChannelCount();
-        final int sizeC = effSizeC * rgbChanCount;
-        final boolean indexed = reader.isIndexed();
-        final boolean interleaved = reader.isInterleaved();
-        final boolean little = reader.isLittleEndian();
-
-        // System.out.println("Opening image " + dataType);
-        // System.out.println("Size X*Y*C : " + sizeX + "*" + sizeY + "*" + sizeC);
-        // System.out.println("Effective C : " + effSizeC + "     RGB Channel : " + rgbChanCount);
-        // System.out.println("Indexed : " + Boolean.toString(indexed) + "    Interleaved : "
-        // + Boolean.toString(interleaved) + "     Little endian : " + Boolean.toString(little));
-
-        // prepare internal image data array
-        final Object[] data = Array2DUtil.createArray(dataType, sizeC);
-        final IcyColorMap[] colormaps = new IcyColorMap[effSizeC];
-
-        // allocate array
-        for (int i = 0; i < sizeC; i++)
-            data[i] = Array1DUtil.createArray(dataType, sizeXY);
-
-        for (int effC = 0; effC < effSizeC; effC++)
-        {
-            final byte[] byteData = reader.openBytes(reader.getIndex(z, effC, t));
-
-            // current final component
-            final int c = effC * rgbChanCount;
-            final int componentByteLen = byteData.length / rgbChanCount;
-
-            // build data array
-            int inOffset = 0;
-            if (interleaved)
-            {
-                for (int sc = 0; sc < rgbChanCount; sc++)
-                {
-                    ByteArrayConvert.byteArrayTo(byteData, inOffset, rgbChanCount, data[c + sc], 0, 1,
-                            componentByteLen, little);
-                    inOffset++;
-                }
-            }
-            else
-            {
-                for (int sc = 0; sc < rgbChanCount; sc++)
-                {
-                    ByteArrayConvert.byteArrayTo(byteData, inOffset, 1, data[c + sc], 0, 1, componentByteLen, little);
-                    inOffset += componentByteLen;
-                }
-            }
-
-            // indexed color ?
-            if (indexed)
-            {
-                // only 8 bits and 16 bits lookup table supported
-                switch (dataType.getJavaType())
-                {
-                    case BYTE:
-                        colormaps[effC] = new IcyColorMap("component " + effC, reader.get8BitLookupTable());
-                        break;
-
-                    case SHORT:
-                        colormaps[effC] = new IcyColorMap("component " + effC, reader.get16BitLookupTable());
-                        break;
-
-                    default:
-                        colormaps[effC] = null;
-                        break;
-                }
-            }
-        }
-
-        final IcyBufferedImage result = new IcyBufferedImage(sizeX, sizeY, data, dataType.isSigned());
-
-        result.beginUpdate();
-        try
-        {
-            if (indexed)
-            {
-                // error ! we should have same number of colormap than component
-                if (colormaps.length != sizeC)
-                {
-                    System.err.println("Warning : " + colormaps.length + " colormap for " + sizeC + " components");
-                    System.err.println("Colormap can not be restored");
-                }
-                else
-                {
-                    // set colormaps
-                    for (int comp = 0; comp < sizeC; comp++)
-                    {
-                        // sometime loci return black colormap map and we want to avoid them...
-                        if ((colormaps[comp] != null) && !colormaps[comp].isBlack())
-                            result.setColorMap(comp, colormaps[comp], true);
-                    }
-                }
-            }
-            // special case of 4 channels image, try to set 4th channel colormap
-            else if (sizeC == 4)
-            {
-                // assume real alpha channel depending from the reader we use
-                final boolean alpha = (reader instanceof PNGReader) || (reader instanceof APNGReader)
-                        || (reader instanceof TiffDelegateReader) || (reader instanceof TiffJAIReader)
-                        || (reader instanceof JPEG2000Reader);
-
-                // replace alpha with Cyan color
-                if (!alpha)
-                    result.setColorMap(3, LinearColorMap.cyan_, true);
-            }
-        }
-        finally
-        {
-            result.endUpdate();
-        }
-
-        return result;
+        return LociImporter.getImage(reader, null, z, t);
     }
 
     /**
@@ -787,7 +465,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * @param wr
      *        {@link WritableRaster}
      */
-    private IcyBufferedImage(IcyColorModel cm, WritableRaster wr)
+    IcyBufferedImage(IcyColorModel cm, WritableRaster wr)
     {
         this(cm, wr, true);
     }
@@ -796,7 +474,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * Create an Icy formatted BufferedImage with specified IcyColorModel, width and height.<br>
      * Private version, {@link IcyColorModel} is directly used internally.
      */
-    private IcyBufferedImage(IcyColorModel cm, int width, int height)
+    IcyBufferedImage(IcyColorModel cm, int width, int height)
     {
         this(cm, cm.createCompatibleWritableRaster(width, height), true);
     }
@@ -804,7 +482,7 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     /**
      * Create an Icy formatted BufferedImage with specified IcyColorModel, data, width and height.
      */
-    private IcyBufferedImage(IcyColorModel cm, Object[] data, int width, int height, boolean autoUpdateChannelBounds)
+    IcyBufferedImage(IcyColorModel cm, Object[] data, int width, int height, boolean autoUpdateChannelBounds)
     {
         this(cm, cm.createWritableRaster(data, width, height), autoUpdateChannelBounds);
 
@@ -3189,9 +2867,9 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      * @param srcImage
      *        source image
      */
-    private void internalCompatibleCopyData(BufferedImage srcImage, int srcChannel, int dstChannel, DataBuffer src_db,
-            DataBuffer dst_db, int[] indices, int[] band_offsets, int[] bank_offsets, int scanlineStride_src,
-            int pixelStride_src, int maxX, int maxY, int decOffsetSrc)
+    private void internalCopyData(int srcChannel, int dstChannel, DataBuffer src_db, DataBuffer dst_db, int[] indices,
+            int[] band_offsets, int[] bank_offsets, int scanlineStride_src, int pixelStride_src, int maxX, int maxY,
+            int decOffsetSrc)
     {
         final int scanlineStride_dst = getSizeX();
 
@@ -3353,53 +3031,49 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * Internal copy data from a compatible image (notify data changed).
+     * Copy channel data from a compatible sample model and writable raster (notify data changed).
      * 
-     * @param srcImage
-     *        source image
+     * @param sampleModel
+     *        source sample model
+     * @param raster
+     *        source writable raster to read data from
      * @param srcChannel
      *        source channel (-1 for all channels)
      * @param dstChannel
      *        destination channel (only significant if source channel != -1)
+     * @return <code>true</code> if the copy operation succeed, <code>false</code> otherwise
      */
-    private boolean compatibleCopyData(BufferedImage srcImage, int srcChannel, int dstChannel)
+    public boolean copyData(ComponentSampleModel sampleModel, WritableRaster raster, int srcChannel, int dstChannel)
     {
         // not compatible sample model
-        if (!(srcImage.getSampleModel() instanceof ComponentSampleModel))
+        if (DataType.getDataTypeFromDataBufferType(sampleModel.getDataType()) != getDataType_())
             return false;
 
-        final ComponentSampleModel sm = (ComponentSampleModel) srcImage.getSampleModel();
-
-        // not compatible sample model
-        if (DataType.getDataTypeFromDataBufferType(sm.getDataType()) != getDataType_())
-            return false;
-
-        final WritableRaster src_wr = srcImage.getRaster();
-        final DataBuffer src_db = src_wr.getDataBuffer();
+        final DataBuffer src_db = raster.getDataBuffer();
         final DataBuffer dst_db = getRaster().getDataBuffer();
-        final int[] indices = sm.getBankIndices();
-        final int[] band_offsets = sm.getBandOffsets();
+        final int[] indices = sampleModel.getBankIndices();
+        final int[] band_offsets = sampleModel.getBandOffsets();
         final int[] bank_offsets = src_db.getOffsets();
-        final int scanlineStride_src = sm.getScanlineStride();
-        final int pixelStride_src = sm.getPixelStride();
-        final int maxX = Math.min(getSizeX(), sm.getWidth());
-        final int maxY = Math.min(getSizeY(), sm.getHeight());
-        final int decOffsetSrc = src_wr.getSampleModelTranslateX()
-                + (src_wr.getSampleModelTranslateY() * scanlineStride_src);
+        final int scanlineStride_src = sampleModel.getScanlineStride();
+        final int pixelStride_src = sampleModel.getPixelStride();
+        final int maxX = Math.min(getSizeX(), sampleModel.getWidth());
+        final int maxY = Math.min(getSizeY(), sampleModel.getHeight());
+        final int decOffsetSrc = raster.getSampleModelTranslateX()
+                + (raster.getSampleModelTranslateY() * scanlineStride_src);
 
         // all channels
         if (srcChannel == -1)
         {
-            final int numBands = sm.getNumBands();
+            final int numBands = sampleModel.getNumBands();
 
             for (int band = 0; band < numBands; band++)
-                internalCompatibleCopyData(srcImage, band, band, src_db, dst_db, indices, band_offsets, bank_offsets,
-                        scanlineStride_src, pixelStride_src, maxX, maxY, decOffsetSrc);
+                internalCopyData(band, band, src_db, dst_db, indices, band_offsets, bank_offsets, scanlineStride_src,
+                        pixelStride_src, maxX, maxY, decOffsetSrc);
         }
         else
         {
-            internalCompatibleCopyData(srcImage, srcChannel, dstChannel, src_db, dst_db, indices, band_offsets,
-                    bank_offsets, scanlineStride_src, pixelStride_src, maxX, maxY, decOffsetSrc);
+            internalCopyData(srcChannel, dstChannel, src_db, dst_db, indices, band_offsets, bank_offsets,
+                    scanlineStride_src, pixelStride_src, maxX, maxY, decOffsetSrc);
         }
 
         // notify data changed
@@ -3496,8 +3170,16 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
             copyData(((IcyBufferedImage) srcImage), null, null, srcChannel, dstChannel);
         else
         {
-            // use intermediate data copy for compatible image
-            if (!compatibleCopyData(srcImage, srcChannel, dstChannel))
+            final boolean done;
+
+            // try to use faster copy for compatible image
+            if (srcImage.getSampleModel() instanceof ComponentSampleModel)
+                done = copyData((ComponentSampleModel) srcImage.getSampleModel(), srcImage.getRaster(), srcChannel,
+                        dstChannel);
+            else
+                done = false;
+
+            if (!done)
             {
                 // image not compatible, use generic (and slow) data copy
                 srcImage.copyData(getRaster());

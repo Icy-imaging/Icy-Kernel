@@ -506,10 +506,14 @@ public class RoiActions
                     // we do the NOT operation by subtracting current ROI to sequence bounds ROI
                     final ROI mergeROI = ROIUtil.subtract(new ROI2DRectangle(sequence.getBounds2D()),
                             selectedROI.get(0));
-                    mergeROI.setName("Inverse");
 
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI);
+                    if (mergeROI != null)
+                    {
+                        mergeROI.setName("Inverse");
+
+                        sequence.addROI(mergeROI);
+                        sequence.setSelectedROI(mergeROI);
+                    }
                 }
                 catch (UnsupportedOperationException ex)
                 {
@@ -556,8 +560,13 @@ public class RoiActions
                     final List<ROI> selectedROIs = roisPanel.getSelectedRois();
                     final ROI mergeROI = ROIUtil.getUnion(selectedROIs);
 
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI);
+                    if (mergeROI != null)
+                    {
+                        mergeROI.setName("Union");
+
+                        sequence.addROI(mergeROI);
+                        sequence.setSelectedROI(mergeROI);
+                    }
                 }
                 catch (UnsupportedOperationException ex)
                 {
@@ -605,8 +614,13 @@ public class RoiActions
                     final List<ROI> selectedROIs = roisPanel.getSelectedRois();
                     final ROI mergeROI = ROIUtil.getIntersection(selectedROIs);
 
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI);
+                    if (mergeROI != null)
+                    {
+                        mergeROI.setName("Intersection");
+
+                        sequence.addROI(mergeROI);
+                        sequence.setSelectedROI(mergeROI);
+                    }
                 }
                 catch (UnsupportedOperationException ex)
                 {
@@ -654,8 +668,13 @@ public class RoiActions
                     final List<ROI> selectedROIs = roisPanel.getSelectedRois();
                     final ROI mergeROI = ROIUtil.getExclusiveUnion(selectedROIs);
 
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI);
+                    if (mergeROI != null)
+                    {
+                        mergeROI.setName("Exclusive union");
+
+                        sequence.addROI(mergeROI);
+                        sequence.setSelectedROI(mergeROI);
+                    }
                 }
                 catch (UnsupportedOperationException ex)
                 {
@@ -681,7 +700,7 @@ public class RoiActions
 
     public static IcyAbstractAction boolSubtractAction = new IcyAbstractAction("SUBTRACT", new IcyIcon(
             ResourceUtil.ICON_ROI_SUB), "Boolean subtraction",
-            "Create a new ROI representing the subtraction of second ROI from the first ROI")
+            "Create 2 ROIs representing the result of (A - B) and (B - A)")
     {
         /**
          * 
@@ -701,15 +720,33 @@ public class RoiActions
                 try
                 {
                     final List<ROI> selectedROI = roisPanel.getSelectedRois();
+                    final List<ROI> generatedROIs = new ArrayList<ROI>();
 
                     // Subtraction work only when 2 ROI are selected
                     if (selectedROI.size() != 2)
                         return false;
 
-                    final ROI mergeROI = ROIUtil.subtract(selectedROI.get(0), selectedROI.get(1));
+                    final ROI subtractAB = ROIUtil.subtract(selectedROI.get(0), selectedROI.get(1));
+                    final ROI subtractBA = ROIUtil.subtract(selectedROI.get(1), selectedROI.get(0));
 
-                    sequence.addROI(mergeROI);
-                    sequence.setSelectedROI(mergeROI);
+                    subtractAB.setName("Subtract A-B");
+                    subtractBA.setName("Subtract B-A");
+
+                    generatedROIs.add(subtractAB);
+                    generatedROIs.add(subtractBA);
+
+                    sequence.beginUpdate();
+                    try
+                    {
+                        for (ROI roi : generatedROIs)
+                            sequence.addROI(roi);
+
+                        sequence.setSelectedROIs(generatedROIs);
+                    }
+                    finally
+                    {
+                        sequence.endUpdate();
+                    }
                 }
                 catch (UnsupportedOperationException ex)
                 {
@@ -734,7 +771,7 @@ public class RoiActions
     };
 
     public static IcyAbstractAction xlsExportAction = new IcyAbstractAction("Export", new IcyIcon(
-            ResourceUtil.ICON_XLS_EXPORT), "ROI Excel export", "Export selected ROI informations in XLS file")
+            ResourceUtil.ICON_XLS_EXPORT), "ROI Excel export", "Export all ROI informations in XLS file")
     {
         /**
          * 
@@ -749,7 +786,7 @@ public class RoiActions
 
             if ((sequence != null) && (roisPanel != null))
             {
-                final String content = roisPanel.getCSVFormattedInfosOfSelectedRois();
+                final String content = roisPanel.getCSVFormattedInfos();
 
                 if (StringUtil.isEmpty(content))
                 {
@@ -762,7 +799,7 @@ public class RoiActions
                 // create it if needed
                 FileUtil.createDir(dir);
 
-                final String filename = SaveDialog.chooseFile("Export selected ROI(s)...", dir, "result", ".xls");
+                final String filename = SaveDialog.chooseFile("Export ROIs...", dir, "result", ".xls");
 
                 if (filename != null)
                 {

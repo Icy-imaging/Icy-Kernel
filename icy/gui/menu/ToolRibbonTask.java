@@ -156,8 +156,7 @@ public class ToolRibbonTask extends RibbonTask implements PluginLoaderListener
             {
                 if (al != null)
                     button.removeActionListener(al);
-                if (getControlPanel() != null)
-                    removeCommandButton(button);
+                removeCommandButton(button);
                 if (buttonGroup != null)
                     buttonGroup.remove(button);
             }

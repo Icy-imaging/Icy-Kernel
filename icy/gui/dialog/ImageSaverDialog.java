@@ -135,7 +135,7 @@ public class ImageSaverDialog extends JFileChooser
         setCurrentDirectory(new File(preferences.get(ID_PATH, "")));
         setPreferredSize(new Dimension(preferences.getInt(ID_WIDTH, 600), preferences.getInt(ID_HEIGHT, 400)));
 
-        setDialogTitle("ICY - Save image file");
+        setDialogTitle("Save image file");
 
         // remove default filter
         removeChoosableFileFilter(getAcceptAllFileFilter());
@@ -147,7 +147,9 @@ public class ImageSaverDialog extends JFileChooser
         setFileFilter(getChoosableFileFilters()[preferences.getInt(ID_FILETYPE, 0)]);
 
         setMultiSelectionEnabled(false);
-        setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        // setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        // so the filename information is not lost when changing directory 
+        setFileSelectionMode(JFileChooser.FILES_ONLY);
 
         String filename = FileUtil.getFileName(sequence.getFilename(), true);
         // empty filename --> use sequence name as default filename

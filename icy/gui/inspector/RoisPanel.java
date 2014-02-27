@@ -35,7 +35,6 @@ import icy.preferences.XMLPreferences;
 import icy.resource.ResourceUtil;
 import icy.roi.ROI;
 import icy.roi.ROIEvent;
-import icy.roi.ROIEvent.ROIEventType;
 import icy.roi.ROIListener;
 import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
@@ -574,7 +573,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         return GeneralPreferences.getPreferences().node(PREF_ID);
     }
 
-    private Sequence getSequence()
+    Sequence getSequence()
     {
         return Icy.getMainInterface().getActiveSequence();
     }
@@ -698,14 +697,14 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     {
         while (true)
         {
-            final ROIInfo roiInfo;
-            
-            try {
-				roiInfo = roisToCompute.take();
-				roiInfo.compute();
-			} catch (InterruptedException e) {
-				// ignore
-			}
+            try
+            {
+                roisToCompute.take().compute();
+            }
+            catch (InterruptedException e)
+            {
+                // ignore
+            }
         }
     }
 
@@ -732,7 +731,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     /**
      * Return index of specified ROI in the table
      */
-    private int getRoiTableIndex(ROI roi)
+    int getRoiTableIndex(ROI roi)
     {
         final int ind = getRoiModelIndex(roi);
 
@@ -868,103 +867,117 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
     public void refreshTableData()
     {
-        ThreadUtil.bgRunSingle(tableDataRefresher, true);
+        ThreadUtil.bgRunSingle(tableDataRefresher, false);
     }
 
     void refreshTableDataInternal()
     {
-        final Sequence sequence = getSequence();
+        // don't eat too much time on data refresh
+        ThreadUtil.sleep(10);
 
-        tableSelectionModel.setValueIsAdjusting(true);
-        modifySelection.acquireUninterruptibly();
-        try
+        ThreadUtil.invokeNow(new Runnable()
         {
-            // clear selection
-            tableSelectionModel.clearSelection();
-            // notify table data changed
-            tableModel.fireTableDataChanged();
 
-            // restore selection from sequence
-            if (sequence != null)
+            @Override
+            public void run()
             {
-                for (ROI roi : sequence.getSelectedROIs())
-                {
-                    final int index = getRoiTableIndex(roi);
+                final Sequence sequence = getSequence();
 
-                    if (index > -1)
-                        tableSelectionModel.addSelectionInterval(index, index);
+                tableSelectionModel.setValueIsAdjusting(true);
+                modifySelection.acquireUninterruptibly();
+                try
+                {
+                    // clear selection
+                    tableSelectionModel.clearSelection();
+                    // notify table data changed
+                    tableModel.fireTableDataChanged();
+
+                    // restore selection from sequence
+                    if (sequence != null)
+                    {
+                        for (ROI roi : sequence.getSelectedROIs())
+                        {
+                            final int index = getRoiTableIndex(roi);
+
+                            if (index > -1)
+                                tableSelectionModel.addSelectionInterval(index, index);
+                        }
+                    }
+                }
+                finally
+                {
+                    modifySelection.release();
+                    tableSelectionModel.setValueIsAdjusting(false);
                 }
             }
-        }
-        finally
-        {
-            modifySelection.release();
-            tableSelectionModel.setValueIsAdjusting(false);
-        }
+        });
 
         // notify the ROI control panel that selection changed
         roiControlPanel.selectionChanged();
     }
 
-    void roiSelectionChanged(ROIInfo roiInfo)
-    {
-        // refresh informations for this ROI
-        final ROI roi = roiInfo.getROI();
-        final int index = getRoiTableIndex(roi);
+    // void roiSelectionChanged(ROIInfo roiInfo)
+    // {
+    // // refresh informations for this ROI
+    // final ROI roi = roiInfo.getROI();
+    // final int index = getRoiTableIndex(roi);
+    //
+    // // check selection change
+    // if (index != -1)
+    // {
+    // // change selection
+    // ThreadUtil.invokeLater(new Runnable()
+    // {
+    // @Override
+    // public void run()
+    // {
+    // modifySelection.acquireUninterruptibly();
+    // try
+    // {
+    // if (roi.isSelected())
+    // tableSelectionModel.addSelectionInterval(index, index);
+    // else
+    // tableSelectionModel.removeSelectionInterval(index, index);
+    // }
+    // finally
+    // {
+    // modifySelection.release();
+    // }
+    //
+    // // notify control panel that ROI selection changed
+    // roiControlPanel.selectionChanged();
+    // }
+    // });
+    // }
+    // }
 
-        // check selection change
-        if (index != -1)
-        {
-            // change selection
-            ThreadUtil.invokeLater(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    modifySelection.acquireUninterruptibly();
-                    try
-                    {
-                        if (roi.isSelected())
-                            tableSelectionModel.addSelectionInterval(index, index);
-                        else
-                            tableSelectionModel.removeSelectionInterval(index, index);
-                    }
-                    finally
-                    {
-                        modifySelection.release();
-                    }
+    // void roiInfoUpdated(ROIInfo roiInfo)
+    // {
+    // // refresh informations for this ROI
+    // final ROI roi = roiInfo.getROI();
+    // final int index = getRoiModelIndex(roiInfo.getROI());
+    //
+    // // notify row changed
+    // if (index != -1)
+    // {
+    // ThreadUtil.invokeLater(new Runnable()
+    // {
+    // @Override
+    // public void run()
+    // {
+    // tableModel.fireTableRowsUpdated(index, index);
+    // }
+    // });
+    // }
+    //
+    // // notify control panel that ROI changed
+    // if (roi.isSelected())
+    // roiControlPanel.roiChanged(new ROIEvent(roi, ROIEventType.ROI_CHANGED));
+    // }
 
-                    // notify control panel that ROI selection changed
-                    roiControlPanel.selectionChanged();
-                }
-            });
-        }
-    }
-
-    void roiInfoUpdated(ROIInfo roiInfo)
-    {
-        // refresh informations for this ROI
-        final ROI roi = roiInfo.getROI();
-        final int index = getRoiModelIndex(roiInfo.getROI());
-
-        // notify row changed
-        if (index != -1)
-        {
-            ThreadUtil.invokeLater(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    tableModel.fireTableRowsUpdated(index, index);
-                }
-            });
-        }
-
-        // notify control panel that ROI changed
-        if (roi.isSelected())
-            roiControlPanel.roiChanged(new ROIEvent(roi, ROIEventType.ROI_CHANGED));
-    }
-
+    /**
+     * Returns selected ROI informations in CSV format (tab separated)
+     */
     public String getCSVFormattedInfosOfSelectedRois()
     {
         // Check to ensure we have selected only a contiguous block of cells
@@ -993,6 +1006,61 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             for (int j = 1; j < numcols; j++)
             {
                 final Object value = table.getModel().getValueAt(table.convertRowIndexToModel(rowsselected[i]), j);
+
+                // special case of double array
+                if (value instanceof double[])
+                {
+                    final double[] darray = (double[]) value;
+
+                    for (int l = 0; l < darray.length; l++)
+                    {
+                        sbf.append(darray[l]);
+                        if (l < darray.length - 1)
+                            sbf.append(" ");
+                    }
+                }
+                else
+                    sbf.append(value);
+
+                if (j < numcols - 1)
+                    sbf.append("\t");
+            }
+            sbf.append("\r\n");
+        }
+
+        return sbf.toString();
+    }
+
+    /**
+     * Returns all ROI informations in CSV format (tab separated)
+     */
+    public String getCSVFormattedInfos()
+    {
+        // Check to ensure we have selected only a contiguous block of cells
+        final int numcols = columnNames.length;
+        final int numrows = table.getRowCount();
+
+        // table is empty --> returns empty string
+        if (numrows == 0)
+            return "";
+
+        final StringBuffer sbf = new StringBuffer();
+
+        // column name
+        for (int j = 1; j < numcols; j++)
+        {
+            sbf.append(table.getModel().getColumnName(j));
+            if (j < numcols - 1)
+                sbf.append("\t");
+        }
+        sbf.append("\r\n");
+
+        // then content
+        for (int i = 0; i < numrows; i++)
+        {
+            for (int j = 1; j < numcols; j++)
+            {
+                final Object value = table.getModel().getValueAt(table.convertRowIndexToModel(i), j);
 
                 // special case of double array
                 if (value instanceof double[])
@@ -1083,7 +1151,9 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         if (modifySelection.availablePermits() == 0)
             return;
 
-        if (event.getSourceType() == SequenceEventSourceType.SEQUENCE_ROI)
+        final SequenceEventSourceType sourceType = event.getSourceType();
+
+        if (sourceType == SequenceEventSourceType.SEQUENCE_ROI)
         {
             final SequenceEventType type = event.getType();
 
@@ -1092,6 +1162,11 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                 // refresh the ROI list
                 refreshRois();
         }
+        // if data or type changed we need to refresh action
+        // so we change change ROI position correctly
+        else if ((sourceType == SequenceEventSourceType.SEQUENCE_DATA)
+                || (sourceType == SequenceEventSourceType.SEQUENCE_TYPE))
+            roiControlPanel.refreshROIActions();
     }
 
     public class ROIInfo implements ROIListener
@@ -1195,18 +1270,22 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                     System.err.println("Cannot compute ROI infos: Not enought memory !");
             }
 
-            roiInfoUpdated(this);
+            refreshTableData();
+            // roiInfoUpdated(this);
         }
 
         void requestCompute()
         {
             if (!roisToCompute.contains(this))
             {
-				try {
-					roisToCompute.put(this);
-				} catch (InterruptedException e) {
-					// ignore
-				}
+                try
+                {
+                    roisToCompute.put(this);
+                }
+                catch (InterruptedException e)
+                {
+                    // ignore
+                }
             }
         }
 
@@ -1577,7 +1656,16 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                 case SELECTION_CHANGED:
                     // update ROI selection if not in internal selection change
                     if (modifySelection.availablePermits() > 0)
-                        roiSelectionChanged(this);
+                        refreshTableData();
+                    // roiSelectionChanged(this);
+                    break;
+
+                case PROPERTY_CHANGED:
+                    final String property = event.getPropertyName();
+
+                    if (ROI.PROPERTY_NAME.equals(property) || ROI.PROPERTY_ICON.equals(property))
+                        refreshTableData();
+                    // roiInfoUpdated(this);
                     break;
             }
         }

@@ -496,7 +496,11 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         {
             layersVisible = value;
             firePropertyChange(PROPERTY_LAYERS_VISIBLE, !value, value);
-            getViewComponent().repaint();
+
+            final Component comp = getViewComponent();
+
+            if (comp != null)
+                comp.repaint();
         }
     }
 
@@ -3492,7 +3496,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Returns a RGB or ARGB (depending support) BufferedImage representing the canvas view for image at position (t, z, c).
+     * Returns a RGB or ARGB (depending support) BufferedImage representing the canvas view for
+     * image at position (t, z, c).
      * Free feel to the canvas to handle or not a specific dimension.
      * 
      * @param t

@@ -33,6 +33,7 @@ import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
+import icy.util.ClassUtil;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -95,6 +96,14 @@ public abstract class Plugin
         return descriptor;
     }
 
+    /**
+     * @return the folder where the plugin is installed (or should be installed).
+     */
+    public String getInstallFolder()
+    {
+        return ClassUtil.getPathFromQualifiedName(ClassUtil.getPackageName(getClass().getName()));
+    }
+
     public Viewer getActiveViewer()
     {
         return Icy.getMainInterface().getActiveViewer();
@@ -139,7 +148,7 @@ public abstract class Plugin
 
     public void addIcyFrame(final IcyFrame frame)
     {
-        frame.addToMainDesktopPane();
+        frame.addToDesktopPane();
     }
 
     public void addSequence(final Sequence sequence)

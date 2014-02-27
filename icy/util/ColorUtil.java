@@ -600,7 +600,7 @@ public class ColorUtil
     }
 
     /**
-     * Returns the distance between 2 colors from same color space.<br>
+     * Returns the distance between 2 colors from same color space.
      */
     static double getDistance(float[] c1, float[] c2, boolean compareThirdComponent)
     {

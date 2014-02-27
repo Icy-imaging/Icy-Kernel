@@ -417,6 +417,15 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         mainPanel.validate();
     }
 
+    @Override
+    protected void closed()
+    {
+        super.closed();
+
+        // do not retains plugins when frame is closed
+        plugins.clear();
+    }
+
     private List<PluginDescriptor> filterList(List<PluginDescriptor> list, String filter)
     {
         final List<PluginDescriptor> result = new ArrayList<PluginDescriptor>();

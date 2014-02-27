@@ -73,9 +73,9 @@ public class ROI2DLine extends ROI2DShape
         controlPoints.add(this.pt2);
 
         this.pt1.addOverlayListener(this);
-        this.pt1.addAnchorListener(this);
+        this.pt1.addPositionListener(this);
         this.pt2.addOverlayListener(this);
-        this.pt2.addAnchorListener(this);
+        this.pt2.addPositionListener(this);
 
         // select the pt2 to size the line for "interactive mode"
         this.pt2.setSelected(true);
@@ -96,6 +96,7 @@ public class ROI2DLine extends ROI2DShape
     /**
      * @deprecated
      */
+    @SuppressWarnings("unused")
     @Deprecated
     public ROI2DLine(Point2D pt, boolean cm)
     {
@@ -192,13 +193,13 @@ public class ROI2DLine extends ROI2DShape
         // by default the total length don't need last point connection
         return super.getTotalDistance(points, false);
     }
-    
+
     @Override
     public double computeNumberOfContourPoints()
     {
         return getTotalDistance(getPoints());
     }
-    
+
     @Override
     public double computeNumberOfPoints()
     {
@@ -214,8 +215,8 @@ public class ROI2DLine extends ROI2DShape
             if (!super.loadFromXML(node))
                 return false;
 
-            pt1.loadFromXML(XMLUtil.getElement(node, ID_PT1));
-            pt2.loadFromXML(XMLUtil.getElement(node, ID_PT2));
+            pt1.loadPositionFromXML(XMLUtil.getElement(node, ID_PT1));
+            pt2.loadPositionFromXML(XMLUtil.getElement(node, ID_PT2));
         }
         finally
         {
@@ -231,8 +232,8 @@ public class ROI2DLine extends ROI2DShape
         if (!super.saveToXML(node))
             return false;
 
-        pt1.saveToXML(XMLUtil.setElement(node, ID_PT1));
-        pt2.saveToXML(XMLUtil.setElement(node, ID_PT2));
+        pt1.savePositionToXML(XMLUtil.setElement(node, ID_PT1));
+        pt2.savePositionToXML(XMLUtil.setElement(node, ID_PT2));
 
         return true;
     }

@@ -79,7 +79,7 @@ public class AboutFrame extends IcyFrame
         add(tabbedPane);
         setSize(680, 480);
         setVisible(true);
-        addToMainDesktopPane();
+        addToDesktopPane();
         center();
         requestFocus();
 

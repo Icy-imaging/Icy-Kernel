@@ -35,7 +35,7 @@ public class NewVersionFrame extends IcyFrame
         changesLogTextPane.setText(changesLog);
         changesLogTextPane.setCaretPosition(2);
 
-        addToMainDesktopPane();
+        addToDesktopPane();
         center();
         setVisible(true);
         toFront();

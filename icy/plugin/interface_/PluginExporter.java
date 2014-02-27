@@ -19,11 +19,9 @@
 package icy.plugin.interface_;
 
 /**
- * Plugin Exporter interface.<br>
- * Used to define a specific file exporter (appears in the "Export" section).<br>
- * 
- * @author Fabrice & Stephane
+ * @deprecated Use #PluginSequenceExporter
  */
+@Deprecated
 public interface PluginExporter
 {
 

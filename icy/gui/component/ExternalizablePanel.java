@@ -99,7 +99,7 @@ public class ExternalizablePanel extends JPanel
 
             setLayout(new BorderLayout());
             setSize(400, 400);
-            addToMainDesktopPane();
+            addToDesktopPane();
         }
     }
 

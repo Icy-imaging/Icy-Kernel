@@ -269,13 +269,7 @@ public class RibbonUtil
 
     public static RibbonElementPriority getButtonPriority(JRibbonBand band, AbstractCommandButton button)
     {
-        final RibbonElementPriority result;
-        final JBandControlPanel controlPanel = band.getControlPanel();
-
-        if (controlPanel != null)
-            result = controlPanel.getPriority(button);
-        else
-            result = null;
+        final RibbonElementPriority result = band.getControlPanel().getPriority(button);
 
         if (result != null)
             return result;
@@ -322,12 +316,7 @@ public class RibbonUtil
 
     public static List<AbstractCommandButton> getButtons(JRibbonBand band)
     {
-        final JBandControlPanel controlPanel = band.getControlPanel();
-
-        if (controlPanel != null)
-            return controlPanel.getAllCommandButtons();
-
-        return new ArrayList<AbstractCommandButton>();
+        return band.getControlPanel().getAllCommandButtons();
     }
 
     public static AbstractCommandButton findButton(List<AbstractCommandButton> buttons, String name)
@@ -342,12 +331,7 @@ public class RibbonUtil
     public static AbstractCommandButton findButton(JRibbonBand band, String name)
     {
         if (band != null)
-        {
-            final JBandControlPanel controlPanel = band.getControlPanel();
-
-            if (controlPanel != null)
-                return findButton(controlPanel.getAllCommandButtons(), name);
-        }
+            return findButton(band.getControlPanel().getAllCommandButtons(), name);
 
         return null;
     }
@@ -357,7 +341,6 @@ public class RibbonUtil
      */
     public static void removeButton(JRibbonBand band, String name)
     {
-        if (band.getControlPanel() != null)
-            band.removeCommandButton(findButton(band, name));
+        band.removeCommandButton(findButton(band, name));
     }
 }

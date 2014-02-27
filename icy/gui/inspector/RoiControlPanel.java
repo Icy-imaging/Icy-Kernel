@@ -187,7 +187,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         JToolBar toolBar = new JToolBar();
         toolBar.setRollover(true);
         GridBagConstraints gbc_toolBar = new GridBagConstraints();
-        gbc_toolBar.fill = GridBagConstraints.HORIZONTAL;
+        gbc_toolBar.anchor = GridBagConstraints.WEST;
         gbc_toolBar.gridwidth = 4;
         gbc_toolBar.insets = new Insets(0, 0, 5, 0);
         gbc_toolBar.gridx = 0;
@@ -231,8 +231,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         JToolBar toolBar_1 = new JToolBar();
         toolBar_1.setRollover(true);
         GridBagConstraints gbc_toolBar_1 = new GridBagConstraints();
+        gbc_toolBar_1.anchor = GridBagConstraints.WEST;
         gbc_toolBar_1.insets = new Insets(0, 0, 5, 0);
-        gbc_toolBar_1.fill = GridBagConstraints.HORIZONTAL;
         gbc_toolBar_1.gridwidth = 4;
         gbc_toolBar_1.gridx = 0;
         gbc_toolBar_1.gridy = 1;
@@ -252,6 +252,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         xorButton.setHideActionText(true);
         toolBar_1.add(xorButton);
         subButton = new IcyButton(RoiActions.boolSubtractAction);
+        subButton.setToolTipText("Create 2 ROIs representing the result of (A - B) and (B - A)");
         subButton.setHideActionText(true);
         toolBar_1.add(subButton);
 
@@ -266,9 +267,9 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         horizontalGlue = Box.createHorizontalGlue();
         toolBar_1.add(horizontalGlue);
 
-        final JLabel lblColor = new JLabel("ROI color");
+        final JLabel lblColor = new JLabel("Color");
         GridBagConstraints gbc_lblColor = new GridBagConstraints();
-        gbc_lblColor.anchor = GridBagConstraints.EAST;
+        gbc_lblColor.anchor = GridBagConstraints.WEST;
         gbc_lblColor.insets = new Insets(0, 0, 0, 5);
         gbc_lblColor.gridx = 0;
         gbc_lblColor.gridy = 2;
@@ -590,7 +591,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
      */
     public void refreshROIActions()
     {
-        ThreadUtil.bgRun(roiActionsRefresher, false);
+        ThreadUtil.bgRunSingle(roiActionsRefresher, false);
     }
 
     /**
@@ -1115,8 +1116,6 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
                 if (ROI.PROPERTY_READONLY.equals(propertyName))
                     refreshROIActions();
-                else if (ROI.PROPERTY_NAME.equals(propertyName))
-                    refreshROIProperties();
                 break;
 
             case SELECTION_CHANGED:

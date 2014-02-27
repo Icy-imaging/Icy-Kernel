@@ -61,7 +61,7 @@ public class ROI2DPoint extends ROI2DShape
         controlPoints.add(this.position);
 
         this.position.addOverlayListener(this);
-        this.position.addAnchorListener(this);
+        this.position.addPositionListener(this);
 
         // select the point for "interactive" mode
         this.position.setSelected(true);
@@ -141,19 +141,17 @@ public class ROI2DPoint extends ROI2DShape
         return true;
     }
 
-    
     @Override
     public double computeNumberOfContourPoints()
     {
         return 0d;
     }
-    
+
     @Override
     public double computeNumberOfPoints()
     {
         return 0d;
     }
-   
 
     @Override
     public boolean loadFromXML(Node node)
@@ -164,7 +162,7 @@ public class ROI2DPoint extends ROI2DShape
             if (!super.loadFromXML(node))
                 return false;
 
-            position.loadFromXML(XMLUtil.getElement(node, ID_POSITION));
+            position.loadPositionFromXML(XMLUtil.getElement(node, ID_POSITION));
         }
         finally
         {
@@ -180,7 +178,7 @@ public class ROI2DPoint extends ROI2DShape
         if (!super.saveToXML(node))
             return false;
 
-        position.saveToXML(XMLUtil.setElement(node, ID_POSITION));
+        position.savePositionToXML(XMLUtil.setElement(node, ID_POSITION));
 
         return true;
     }

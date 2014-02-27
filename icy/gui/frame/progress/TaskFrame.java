@@ -18,7 +18,9 @@
  */
 package icy.gui.frame.progress;
 
+import icy.gui.frame.IcyExternalFrame;
 import icy.gui.frame.IcyFrame;
+import icy.gui.frame.IcyInternalFrame;
 import icy.gui.main.MainFrame;
 import icy.gui.main.TaskFrameManager;
 import icy.main.Icy;
@@ -38,7 +40,7 @@ import javax.swing.JPanel;
 public abstract class TaskFrame extends IcyFrame
 {
     protected JPanel mainPanel;
-    private boolean remove = false;
+    private boolean remove;
 
     /**
      * 
@@ -97,20 +99,28 @@ public abstract class TaskFrame extends IcyFrame
     {
         super(title, resizable, closable, maximizable, iconifiable, true);
 
+        remove = false;
+
         ThreadUtil.invokeLater(new Runnable()
         {
             @Override
             public void run()
             {
+                final IcyInternalFrame iFrame = getIcyInternalFrame();
+                final IcyExternalFrame eFrame = getIcyExternalFrame();
+
                 mainPanel = new JPanel();
                 mainPanel.setBorder(BorderFactory.createTitledBorder(""));
 
                 // no border on frame
-                setBorder(BorderFactory.createEmptyBorder());
+                iFrame.setBorder(BorderFactory.createEmptyBorder());
                 // no focusable
-                setFocusable(false);
+                iFrame.setFocusable(false);
+                eFrame.setFocusable(false);
+                eFrame.setFocusableWindowState(false);
                 // no title bar
-                setTitleBarVisible(false);
+                iFrame.setTitleBarVisible(false);
+                eFrame.setTitleBarVisible(false);
 
                 // set maximum size of task frame
                 Dimension maxDim = new Dimension(800, 600);
@@ -122,11 +132,19 @@ public abstract class TaskFrame extends IcyFrame
                     if (desktopSize != null)
                         maxDim = desktopSize;
                 }
-                setMaximumSize(maxDim);
+                iFrame.setMaximumSize(maxDim);
+                eFrame.setMaximumSize(maxDim);
 
-                setLayout(new BorderLayout());
-
-                add(mainPanel, BorderLayout.CENTER);
+                if (isInternalized())
+                {
+                    iFrame.setLayout(new BorderLayout());
+                    iFrame.add(mainPanel, BorderLayout.CENTER);
+                }
+                else
+                {
+                    eFrame.setLayout(new BorderLayout());
+                    eFrame.add(mainPanel, BorderLayout.CENTER);
+                }
 
                 // add to the task manager if a GUI is present
                 final TaskFrameManager tfm = Icy.getMainInterface().getTaskWindowManager();

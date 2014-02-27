@@ -18,18 +18,16 @@
  */
 package icy.gui.dialog;
 
+import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.gui.component.ThumbnailComponent;
-import icy.image.IcyBufferedImage;
-import icy.image.IcyBufferedImageUtil;
 import icy.resource.ResourceUtil;
-import icy.type.DataType;
+import icy.sequence.MetaDataUtil;
 
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.io.IOException;
 
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
@@ -39,7 +37,7 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import loci.formats.IFormatReader;
+import loci.formats.ome.OMEXMLMetadataImpl;
 
 public class ImageLoaderOptionPanel extends JPanel
 {
@@ -66,41 +64,52 @@ public class ImageLoaderOptionPanel extends JPanel
 
                 try
                 {
-                    final IFormatReader reader = Loader.getReader(fileId);
+                    final OMEXMLMetadataImpl meta = Loader.getMetaData(fileId);
 
-                    // disable file grouping
-                    reader.setGroupFiles(false);
-                    reader.setId(fileId);
+                    final int sizeC = MetaDataUtil.getSizeC(meta, 0);
 
-                    try
-                    {
-                        reader.setSeries(0);
+                    // load metadata first
+                    preview.setTitle(FileUtil.getFileName(fileId));
+                    preview.setInfos(MetaDataUtil.getSizeX(meta, 0) + " x " + MetaDataUtil.getSizeY(meta, 0) + " - "
+                            + MetaDataUtil.getSizeZ(meta, 0) + "Z x " + MetaDataUtil.getSizeT(meta, 0) + "T");
+                    preview.setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
+                            + MetaDataUtil.getDataType(meta, 0) + ")");
 
-                        final int sizeC = reader.getSizeC();
+                    // then thumbnail
+                    preview.setImage(Loader.loadThumbnail(fileId, 0));
 
-                        // load metadata first
-                        preview.setTitle(reader.getFormat());
-                        preview.setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - " + reader.getSizeZ()
-                                + "Z x " + reader.getSizeT() + "T");
-                        preview.setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
-                                + DataType.getDataTypeFromFormatToolsType(reader.getPixelType()) + ")");
-
-                        // then image
-                        final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader,
-                                reader.getSizeZ() / 2, reader.getSizeT() / 2);
-                        preview.setImage(IcyBufferedImageUtil.getARGBImage(img));
-                    }
-                    finally
-                    {
-                        try
-                        {
-                            reader.close();
-                        }
-                        catch (IOException e)
-                        {
-                            // ignore
-                        }
-                    }
+                    // try
+                    // {
+                    // final int sizeC = reader.getSizeC();
+                    //
+                    // // load metadata first
+                    // preview.setTitle(reader.getFormat());
+                    // preview.setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - " +
+                    // reader.getSizeZ()
+                    // + "Z x " + reader.getSizeT() + "T");
+                    // preview.setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
+                    // + DataType.getDataTypeFromFormatToolsType(reader.getPixelType()) + ")");
+                    //
+                    // // then image
+                    // final IcyBufferedImage img =
+                    // Loader.getThIcyBufferedImage.createThumbnailFrom(reader,
+                    // reader.getSizeZ() / 2, reader.getSizeT() / 2);
+                    // final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader,
+                    // reader.getSizeZ() / 2, reader.getSizeT() / 2);
+                    // preview.setImage(IcyBufferedImageUtil.getARGBImage(img));
+                    //
+                    // }
+                    // finally
+                    // {
+                    // try
+                    // {
+                    // reader.close();
+                    // }
+                    // catch (IOException e)
+                    // {
+                    // // ignore
+                    // }
+                    // }
                 }
                 catch (Exception e)
                 {
@@ -111,7 +120,7 @@ public class ImageLoaderOptionPanel extends JPanel
                     preview.setInfos2("");
                 }
             }
-            catch (Throwable t)
+            catch (ThreadDeath t)
             {
                 // ignore
             }

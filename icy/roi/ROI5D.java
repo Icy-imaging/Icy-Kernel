@@ -114,22 +114,62 @@ public abstract class ROI5D extends ROI
     }
 
     @Override
-    public boolean canSetPosition()
-    {
-        // default
-        return false;
-    }
-
-    @Override
     public void setBounds5D(Rectangle5D bounds)
     {
         // do nothing by default (not supported)
     }
 
     @Override
+    public boolean canSetPosition()
+    {
+        // default implementation use translation if available
+        return canTranslate();
+    }
+
+    @Override
     public void setPosition5D(Point5D position)
     {
-        // do nothing by default (not supported)
+        // use translation operation by default if supported
+        if (canTranslate())
+        {
+            final Point5D oldPos = getPosition5D();
+            translate(position.getX() - oldPos.getX(), position.getY() - oldPos.getY(),
+                    position.getZ() - oldPos.getZ(), position.getT() - oldPos.getT(), position.getC() - oldPos.getC());
+        }
+    }
+
+    /**
+     * Returns <code>true</code> if the ROI support translate operation.
+     * 
+     * @see #translate(double, double, double, double, double)
+     */
+    public boolean canTranslate()
+    {
+        // by default
+        return false;
+    }
+
+    /**
+     * Translate the ROI position by the specified delta X/Y/Z/T.<br>
+     * Note that not all ROI support this operation so you should test it by calling
+     * {@link #canTranslate()} first.
+     * 
+     * @param dx
+     *        translation value to apply on X dimension
+     * @param dy
+     *        translation value to apply on Y dimension
+     * @param dz
+     *        translation value to apply on Z dimension
+     * @param dt
+     *        translation value to apply on T dimension
+     * @param dc
+     *        translation value to apply on C dimension
+     * @see #canTranslate()
+     * @see #setPosition5D(Point5D)
+     */
+    public void translate(double dx, double dy, double dz, double dt, double dc)
+    {
+
     }
 
     /*

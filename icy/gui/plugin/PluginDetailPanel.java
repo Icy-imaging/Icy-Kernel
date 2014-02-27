@@ -215,7 +215,7 @@ public class PluginDetailPanel extends IcyFrame implements HyperlinkListener
         add(centerPanel, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        addToMainDesktopPane();
+        addToDesktopPane();
         // random position for more fun
         setLocation(10 * Random.nextInt(20) + 40, 10 * Random.nextInt(10) + 40);
         setVisible(true);

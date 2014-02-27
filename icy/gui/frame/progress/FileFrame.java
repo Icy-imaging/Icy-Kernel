@@ -27,8 +27,7 @@ import icy.util.StringUtil;
  */
 public class FileFrame extends CancelableProgressFrame
 {
-    private final String action;
-    private String filename;
+    private String action;
 
     public FileFrame(String action, String filename)
     {
@@ -50,13 +49,17 @@ public class FileFrame extends CancelableProgressFrame
         return super.buildMessage(action + " " + text);
     }
 
-    public void setFilename(final String filename)
+    public void setAction(String value)
     {
-        if (!StringUtil.equals(this.filename, filename))
+        if (!StringUtil.equals(action, value))
         {
-            this.filename = filename;
-            // set to message
-            setMessage(filename);
+            action = value;
+            refresh();
         }
+    }
+
+    public void setFilename(String value)
+    {
+        setMessage(value);
     }
 }

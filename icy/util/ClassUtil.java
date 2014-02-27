@@ -30,6 +30,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -39,6 +40,8 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
+import sun.net.www.protocol.file.FileURLConnection;
 
 /**
  * @author stephane
@@ -64,7 +67,7 @@ public class ClassUtil
     /**
      * Return the list of all loaded classes by the specified {@link ClassLoader}.<br>
      * Warning: this function is not safe and would not always work as expected.<br>
-     * It can return <code>null</code> if an error occured.
+     * It can return <code>null</code> if an error occurred.
      */
     public static List<Class<?>> getLoadedClasses(ClassLoader cl)
     {
@@ -178,10 +181,7 @@ public class ClassUtil
      * Transform the specified qualified name in path.<br>
      * Be careful, this function do not handle the file extension.<br>
      * <br>
-     * ex : "plugins.class.loader.class" --> "plugins/class/loader/class" (unix)
-     * "plugins.class.loader.class" --> "plugins\class\loader\class" (win)
-     * 
-     * @param qualifiedName
+     * ex : "plugins.user.loader.test" --> "plugins/user/loader/test"
      */
     public static String getPathFromQualifiedName(String qualifiedName)
     {
@@ -680,6 +680,42 @@ public class ClassUtil
         }
 
         return result;
+    }
+
+    /**
+     * Find the file (.jar or .class usually) that host this class.
+     * 
+     * @param fullClassName
+     *        The class name to look for.
+     * @return The File that contains this class.
+     *         It will return <code>null</code> if the class was not loaded from a file or for any
+     *         other error.
+     */
+    public static File getFile(String fullClassName)
+    {
+        final String className = ClassUtil.getBaseClassName(fullClassName);
+
+        try
+        {
+            final Class<?> clazz = findClass(className);
+
+            URL classUrl = clazz.getResource(clazz.getSimpleName() + ".class");
+            if (classUrl == null)
+                classUrl = clazz.getResource(clazz.getName() + ".class");
+
+            final URLConnection connection = classUrl.openConnection();
+
+            if (connection instanceof JarURLConnection)
+                return new File(((JarURLConnection) connection).getJarFileURL().toURI());
+            if (connection instanceof FileURLConnection)
+                return new File(classUrl.toURI());
+        }
+        catch (Exception e)
+        {
+            // ignore
+        }
+
+        return null;
     }
 
     /**

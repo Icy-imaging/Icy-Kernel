@@ -24,7 +24,7 @@ import icy.canvas.IcyCanvas2D;
 import icy.common.EventHierarchicalChecker;
 import icy.main.Icy;
 import icy.painter.Anchor2D;
-import icy.painter.Anchor2D.Anchor2DListener;
+import icy.painter.Anchor2D.Anchor2DPositionListener;
 import icy.painter.OverlayEvent;
 import icy.painter.OverlayEvent.OverlayEventType;
 import icy.painter.OverlayListener;
@@ -67,7 +67,7 @@ import vtk.vtkProp;
 /**
  * @author Stephane
  */
-public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListener, OverlayListener
+public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositionListener, OverlayListener
 {
     public class ROI2DShapePainter extends ROI2DPainter implements VtkPainter
     {
@@ -228,9 +228,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                         try
                         {
                             // send event to controls points first
-                            for (Anchor2D pt : controlPoints)
-                                pt.keyPressed(e, imagePoint, canvas);
-                            
+                            synchronized (controlPoints)
+                            {
+                                for (Anchor2D pt : controlPoints)
+                                    pt.keyPressed(e, imagePoint, canvas);
+                            }
+
                             // specific action for ROI2DShape
                             if (!e.isConsumed())
                             {
@@ -272,8 +275,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                         try
                         {
                             // send event to controls points first
-                            for (Anchor2D pt : controlPoints)
-                                pt.keyReleased(e, imagePoint, canvas);
+                            synchronized (controlPoints)
+                            {
+                                for (Anchor2D pt : controlPoints)
+                                    pt.keyReleased(e, imagePoint, canvas);
+                            }
                         }
                         finally
                         {
@@ -302,8 +308,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                         try
                         {
                             // default anchor action on mouse pressed
-                            for (Anchor2D pt : controlPoints)
-                                pt.mousePressed(e, imagePoint, canvas);
+                            synchronized (controlPoints)
+                            {
+                                for (Anchor2D pt : controlPoints)
+                                    pt.mousePressed(e, imagePoint, canvas);
+                            }
 
                             // specific action for this ROI
                             if (!e.isConsumed())
@@ -348,8 +357,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                         try
                         {
                             // default anchor action on mouse release
-                            for (Anchor2D pt : controlPoints)
-                                pt.mouseReleased(e, imagePoint, canvas);
+                            synchronized (controlPoints)
+                            {
+                                for (Anchor2D pt : controlPoints)
+                                    pt.mouseReleased(e, imagePoint, canvas);
+                            }
                         }
                         finally
                         {
@@ -378,8 +390,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                         try
                         {
                             // default anchor action on mouse click
-                            for (Anchor2D pt : controlPoints)
-                                pt.mouseClick(e, imagePoint, canvas);
+                            synchronized (controlPoints)
+                            {
+                                for (Anchor2D pt : controlPoints)
+                                    pt.mouseClick(e, imagePoint, canvas);
+                            }
                         }
                         finally
                         {
@@ -432,8 +447,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                         try
                         {
                             // default anchor action on mouse drag
-                            for (Anchor2D pt : controlPoints)
-                                pt.mouseDrag(e, imagePoint, canvas);
+                            synchronized (controlPoints)
+                            {
+                                for (Anchor2D pt : controlPoints)
+                                    pt.mouseDrag(e, imagePoint, canvas);
+                            }
                         }
                         finally
                         {
@@ -462,8 +480,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
                         try
                         {
                             // refresh control point state
-                            for (Anchor2D pt : controlPoints)
-                                pt.mouseMove(e, imagePoint, canvas);
+                            synchronized (controlPoints)
+                            {
+                                for (Anchor2D pt : controlPoints)
+                                    pt.mouseMove(e, imagePoint, canvas);
+                            }
                         }
                         finally
                         {
@@ -530,9 +551,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
                 if (isSelected() && !isReadOnly())
                 {
+
                     // draw control point if selected
-                    for (Anchor2D pt : controlPoints)
-                        pt.paint(g2, sequence, canvas);
+                    synchronized (controlPoints)
+                    {
+                        for (Anchor2D pt : controlPoints)
+                            pt.paint(g2, sequence, canvas);
+                    }
 
                     g2.dispose();
                 }
@@ -584,10 +609,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
             beginUpdate();
             try
             {
-                for (Anchor2D anchor : controlPoints)
+                synchronized (controlPoints)
                 {
-                    anchor.setColor(color);
-                    anchor.setSelectedColor(focusedColor);
+                    for (Anchor2D anchor : controlPoints)
+                    {
+                        anchor.setColor(color);
+                        anchor.setSelectedColor(focusedColor);
+                    }
                 }
             }
             finally
@@ -670,8 +698,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         // unselected ? --> unselected all control points
         if (!value)
         {
-            for (Anchor2D pt : controlPoints)
-                pt.setSelected(false);
+            synchronized (controlPoints)
+            {
+                for (Anchor2D pt : controlPoints)
+                    pt.setSelected(false);
+            }
         }
 
         super.setSelected(value);
@@ -690,9 +721,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
     protected Anchor2D getSelectedPoint()
     {
-        for (Anchor2D pt : controlPoints)
-            if (pt.isSelected())
-                return pt;
+        synchronized (controlPoints)
+        {
+            for (Anchor2D pt : controlPoints)
+                if (pt.isSelected())
+                    return pt;
+        }
 
         return null;
     }
@@ -741,7 +775,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      */
     protected void addPoint(Anchor2D pt, int index)
     {
-        pt.addAnchorListener(this);
+        pt.addPositionListener(this);
         pt.addOverlayListener(this);
 
         if (index == -1)
@@ -798,15 +832,22 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     /**
      * internal use only
      */
-    protected boolean removePoint(@SuppressWarnings("unused") IcyCanvas canvas, Anchor2D pt)
+    @SuppressWarnings("unused")
+    protected boolean removePoint(IcyCanvas canvas, Anchor2D pt)
     {
-        pt.removeOverlayListener(this);
-        pt.removeAnchorListener(this);
+        boolean empty;
 
-        controlPoints.remove(pt);
+        pt.removeOverlayListener(this);
+        pt.removePositionListener(this);
+
+        synchronized (controlPoints)
+        {
+            controlPoints.remove(pt);
+            empty = controlPoints.isEmpty();
+        }
 
         // empty ROI ? --> remove from all sequence
-        if (controlPoints.size() == 0)
+        if (empty)
             remove();
         else
             roiChanged();
@@ -819,12 +860,16 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      */
     protected void removeAllPoint()
     {
-        for (Anchor2D pt : controlPoints)
+        synchronized (controlPoints)
         {
-            pt.removeOverlayListener(this);
-            pt.removeAnchorListener(this);
+            for (Anchor2D pt : controlPoints)
+            {
+                pt.removeOverlayListener(this);
+                pt.removePositionListener(this);
+            }
+
+            controlPoints.clear();
         }
-        controlPoints.clear();
     }
 
     /**
@@ -853,7 +898,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      * @deprecated Use {@link #removeSelectedPoint(IcyCanvas)} instead.
      */
     @Deprecated
-    protected boolean removeSelectedPoint(IcyCanvas canvas, Point2D imagePoint)
+    protected boolean removeSelectedPoint(IcyCanvas canvas, @SuppressWarnings("unused") Point2D imagePoint)
     {
         return removeSelectedPoint(canvas);
     }
@@ -868,86 +913,89 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         if (selectedPoint == null)
             return false;
 
-        final int index = controlPoints.indexOf(selectedPoint);
-
-        // try to remove point
-        if (!removePoint(canvas, selectedPoint))
-            return false;
-
-        // last control point removed --> delete ROI
-        if (controlPoints.size() == 0)
-            remove();
-        else
+        synchronized (controlPoints)
         {
-            // save the point position
-            final Point2D imagePoint = selectedPoint.getPosition();
+            final int index = controlPoints.indexOf(selectedPoint);
 
-            // we are using PathAnchor2D ?
-            if (selectedPoint instanceof PathAnchor2D)
+            // try to remove point
+            if (!removePoint(canvas, selectedPoint))
+                return false;
+
+            // last control point removed --> delete ROI
+            if (controlPoints.size() == 0)
+                remove();
+            else
             {
-                final PathAnchor2D selectedPathPoint = (PathAnchor2D) selectedPoint;
+                // save the point position
+                final Point2D imagePoint = selectedPoint.getPosition();
 
-                switch (selectedPathPoint.getType())
+                // we are using PathAnchor2D ?
+                if (selectedPoint instanceof PathAnchor2D)
                 {
-                // we removed a MOVETO point ?
-                    case PathIterator.SEG_MOVETO:
-                        // try to set next point to MOVETO state
-                        if (index < controlPoints.size())
-                        {
-                            final PathAnchor2D nextPoint = (PathAnchor2D) controlPoints.get(index);
+                    final PathAnchor2D selectedPathPoint = (PathAnchor2D) selectedPoint;
 
-                            // next point is a CLOSE one ?
-                            if (nextPoint.getType() == PathIterator.SEG_CLOSE)
+                    switch (selectedPathPoint.getType())
+                    {
+                    // we removed a MOVETO point ?
+                        case PathIterator.SEG_MOVETO:
+                            // try to set next point to MOVETO state
+                            if (index < controlPoints.size())
                             {
-                                // delete it
-                                if (removePoint(canvas, nextPoint))
+                                final PathAnchor2D nextPoint = (PathAnchor2D) controlPoints.get(index);
+
+                                // next point is a CLOSE one ?
+                                if (nextPoint.getType() == PathIterator.SEG_CLOSE)
                                 {
-                                    // it was the last control point --> delete ROI
-                                    if (controlPoints.size() == 0)
-                                        remove();
+                                    // delete it
+                                    if (removePoint(canvas, nextPoint))
+                                    {
+                                        // it was the last control point --> delete ROI
+                                        if (controlPoints.size() == 0)
+                                            remove();
+                                    }
+                                }
+                                else
+                                {
+                                    // whatever is next point, set it to MOVETO
+                                    nextPoint.setType(PathIterator.SEG_MOVETO);
+                                    nextPoint.setVisible(true);
                                 }
                             }
-                            else
-                            {
-                                // whatever is next point, set it to MOVETO
-                                nextPoint.setType(PathIterator.SEG_MOVETO);
-                                nextPoint.setVisible(true);
-                            }
-                        }
-                        break;
+                            break;
 
-                    // we removed a CLOSE point ?
-                    case PathIterator.SEG_CLOSE:
-                        // try to set previous point to CLOSE state
-                        if (index > 0)
-                        {
-                            final PathAnchor2D prevPoint = (PathAnchor2D) controlPoints.get(index - 1);
-
-                            // next point is a MOVETO one ?
-                            if (prevPoint.getType() == PathIterator.SEG_MOVETO)
+                        // we removed a CLOSE point ?
+                        case PathIterator.SEG_CLOSE:
+                            // try to set previous point to CLOSE state
+                            if (index > 0)
                             {
-                                // delete it
-                                if (removePoint(canvas, prevPoint))
+                                final PathAnchor2D prevPoint = (PathAnchor2D) controlPoints.get(index - 1);
+
+                                // next point is a MOVETO one ?
+                                if (prevPoint.getType() == PathIterator.SEG_MOVETO)
                                 {
-                                    // it was the last control point --> delete ROI
-                                    if (controlPoints.size() == 0)
-                                        remove();
+                                    // delete it
+                                    if (removePoint(canvas, prevPoint))
+                                    {
+                                        // it was the last control point --> delete ROI
+                                        if (controlPoints.size() == 0)
+                                            remove();
+                                    }
+                                }
+                                else
+                                {
+                                    // whatever is previous point, set it to CLOSE
+                                    prevPoint.setType(PathIterator.SEG_CLOSE);
+                                    prevPoint.setVisible(false);
                                 }
                             }
-                            else
-                            {
-                                // whatever is previous point, set it to CLOSE
-                                prevPoint.setType(PathIterator.SEG_CLOSE);
-                                prevPoint.setVisible(false);
-                            }
-                        }
-                        break;
+                            break;
+                    }
                 }
-            }
 
-            // select a new point if possible
-            if (controlPoints.size() > 0)
-                selectPointAt(canvas, imagePoint);
+                // select a new point if possible
+                if (controlPoints.size() > 0)
+                    selectPointAt(canvas, imagePoint);
+            }
         }
 
         return true;
@@ -955,15 +1003,18 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
 
     protected boolean selectPointAt(IcyCanvas canvas, Point2D imagePoint)
     {
-        // find the new selected control point
-        for (Anchor2D pt : controlPoints)
+        synchronized (controlPoints)
         {
-            // control point is overlapped ?
-            if (pt.isOver(canvas, imagePoint))
+            // find the new selected control point
+            for (Anchor2D pt : controlPoints)
             {
-                // select it
-                pt.setSelected(true);
-                return true;
+                // control point is overlapped ?
+                if (pt.isOver(canvas, imagePoint))
+                {
+                    // select it
+                    pt.setSelected(true);
+                    return true;
+                }
             }
         }
 
@@ -1005,10 +1056,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      */
     protected int getInsertPointPosition(Point2D pos)
     {
-        final List<Point2D> points = new ArrayList<Point2D>();
-
-        for (Anchor2D pt : controlPoints)
-            points.add(pt.getPosition());
+        final List<Point2D> points = getPoints();
 
         final int size = points.size();
         // by default we use last position
@@ -1065,14 +1113,28 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
     // }
 
     /**
-     * Return the list of (control) points for this ROI.
+     * Return the list of control points for this ROI.
+     */
+    public List<Anchor2D> getControlPoints()
+    {
+        synchronized (controlPoints)
+        {
+            return new ArrayList<Anchor2D>(controlPoints);
+        }
+    }
+
+    /**
+     * Return the list of positions of control points for this ROI.
      */
     public ArrayList<Point2D> getPoints()
     {
         final ArrayList<Point2D> result = new ArrayList<Point2D>();
 
-        for (Anchor2D pt : controlPoints)
-            result.add(pt.getPosition());
+        synchronized (controlPoints)
+        {
+            for (Anchor2D pt : controlPoints)
+                result.add(pt.getPosition());
+        }
 
         return result;
     }
@@ -1158,15 +1220,19 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         {
             final ROI2DShape roiShape = (ROI2DShape) roi;
 
-            // special case for subtraction
-            if (op == null)
-                return new ROI2DPath(ShapeUtil.subtract(this, roiShape));
-            else if (op == BooleanOperator.AND)
-                return new ROI2DPath(ShapeUtil.intersect(this, roiShape));
-            else if (op == BooleanOperator.OR)
-                return new ROI2DPath(ShapeUtil.union(this, roiShape));
-            else if (op == BooleanOperator.XOR)
-                return new ROI2DPath(ShapeUtil.exclusiveUnion(this, roiShape));
+            // only if on same position
+            if ((getZ() == roiShape.getZ()) && (getT() == roiShape.getT()) && (getC() == roiShape.getC()))
+            {
+                // special case for subtraction
+                if (op == null)
+                    return new ROI2DPath(ShapeUtil.subtract(this, roiShape));
+                else if (op == BooleanOperator.AND)
+                    return new ROI2DPath(ShapeUtil.intersect(this, roiShape));
+                else if (op == BooleanOperator.OR)
+                    return new ROI2DPath(ShapeUtil.union(this, roiShape));
+                else if (op == BooleanOperator.XOR)
+                    return new ROI2DPath(ShapeUtil.exclusiveUnion(this, roiShape));
+            }
         }
 
         return super.computeOperation(roi, op);
@@ -1184,8 +1250,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
         beginUpdate();
         try
         {
-            for (Anchor2D pt : controlPoints)
-                pt.translate(dx, dy);
+            synchronized (controlPoints)
+            {
+                for (Anchor2D pt : controlPoints)
+                    pt.translate(dx, dy);
+            }
         }
         finally
         {
@@ -1225,8 +1294,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DListene
      * Called when anchor painter changed, provided only for backward compatibility.<br>
      * Don't use it.
      */
-    @SuppressWarnings("deprecation")
-    @Override
+    @SuppressWarnings({"deprecation", "unused"})
     public void painterChanged(PainterEvent event)
     {
         // ignore it now

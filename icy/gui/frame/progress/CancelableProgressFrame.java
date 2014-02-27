@@ -59,6 +59,15 @@ public class CancelableProgressFrame extends ProgressFrame implements ActionList
         });
     }
 
+    @Override
+    public void onClosed()
+    {
+        super.onClosed();
+
+        // so we force cancel operation on application exit
+        cancelRequested = true;
+    }
+
     /**
      * @return the cancelRequested
      */

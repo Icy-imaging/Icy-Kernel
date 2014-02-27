@@ -25,6 +25,7 @@ import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
 import icy.type.TypeUtil;
 import loci.common.services.ServiceException;
+import loci.formats.MetadataTools;
 import loci.formats.meta.MetadataRetrieve;
 import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
@@ -137,6 +138,24 @@ public class OMEUtil
         }
 
         OMEService.convertMetadata(metadata, result);
+
+        return result;
+    }
+
+    /**
+     * Create a new single serie OME Metadata object from the specified Metadata object.
+     * 
+     * @param serie
+     *        Index of the serie we want to keep.
+     */
+    public static OMEXMLMetadataImpl createOMEMetadata(MetadataRetrieve metadata, int serie)
+    {
+        final OMEXMLMetadataImpl result = OMEUtil.createOMEMetadata(metadata);
+
+        MetaDataUtil.keepSingleSerie(result, serie);
+
+        // set the default id with correct serie number (for XML metadata)
+        result.setImageID(MetadataTools.createLSID("Image", serie), 0);
 
         return result;
     }
@@ -263,7 +282,7 @@ public class OMEUtil
         // TODO: implement this when done in LOCI
         // final IssueReporter reporter = new IssueReporter();
         // return reporter.reportBug(fileName, errorMessage);
-        
+
         return false;
     }
 }

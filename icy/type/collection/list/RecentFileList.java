@@ -44,6 +44,21 @@ public class RecentFileList extends RecentList
         clean();
     }
 
+    public void addEntry(String[] paths)
+    {
+        // check we are under files limit
+        if (paths.length > NB_MAX_FILE)
+            return;
+
+        // first remove previous entry
+        final int ind = find(paths);
+        if (ind != -1)
+            list.remove(ind);
+
+        // add the list
+        super.addEntry(paths);
+    }
+
     public void addEntry(File[] files)
     {
         // check we are under files limit
@@ -54,14 +69,8 @@ public class RecentFileList extends RecentList
 
         for (int i = 0; i < files.length; i++)
             filenames[i] = files[i].getAbsolutePath();
-
-        // first remove previous entry
-        final int ind = find(filenames);
-        if (ind != -1)
-            list.remove(ind);
-
-        // add the list
-        super.addEntry(filenames);
+        
+        addEntry(filenames);
     }
 
     protected int find(String[] filenames)

@@ -99,7 +99,7 @@ public class PluginErrorReportFrame extends TitledFrame
 
         mainPanel.add(panel, BorderLayout.CENTER);
 
-        addToMainDesktopPane();
+        addToDesktopPane();
         setSize(new Dimension(520, 450));
         setVisible(true);
         requestFocus();

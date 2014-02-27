@@ -48,14 +48,16 @@ public class ActionDialog extends JDialog implements ActionListener
     protected static final String OK_CMD = "ok";
     protected static final String CANCEL_CMD = "cancel";
 
-    protected final JPanel mainPanel;
-    protected final JPanel buttonPanel;
+    protected JPanel mainPanel;
+    protected JPanel buttonPanel;
 
-    final JButton okBtn;
-    final JButton cancelBtn;
+    JButton okBtn;
+    JButton cancelBtn;
 
     private ActionListener okAction;
     private boolean closeAfterAction;
+    boolean opened;
+    boolean canceled;
     boolean closed;
 
     /**
@@ -70,6 +72,41 @@ public class ActionDialog extends JDialog implements ActionListener
     {
         super(owner, title, true);
 
+        // init GUI
+        initialize();
+
+        // set action
+        okBtn.setActionCommand(OK_CMD);
+        cancelBtn.setActionCommand(CANCEL_CMD);
+        okBtn.addActionListener(this);
+        cancelBtn.addActionListener(this);
+
+        addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowOpened(WindowEvent e)
+            {
+                opened = true;
+            }
+
+            @Override
+            public void windowClosed(WindowEvent e)
+            {
+                closed = true;
+
+                onClosed();
+            }
+        });
+
+        okAction = null;
+        closeAfterAction = true;
+        opened = false;
+        canceled = true;
+        closed = false;
+    }
+
+    private void initialize()
+    {
         setIconImages(ResourceUtil.getIcyIconImages());
         // so we always pass in the closed event
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -95,27 +132,6 @@ public class ActionDialog extends JDialog implements ActionListener
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-        // OTHERS
-        okBtn.setActionCommand(OK_CMD);
-        cancelBtn.setActionCommand(CANCEL_CMD);
-        okBtn.addActionListener(this);
-        cancelBtn.addActionListener(this);
-
-        addWindowListener(new WindowAdapter()
-        {
-            @Override
-            public void windowClosed(WindowEvent e)
-            {
-                closed = true;
-
-                onClosed();
-            }
-        });
-
-        okAction = null;
-        closeAfterAction = true;
-        closed = false;
     }
 
     /**
@@ -129,6 +145,11 @@ public class ActionDialog extends JDialog implements ActionListener
     public boolean isClosed()
     {
         return closed;
+    }
+
+    public boolean isCanceled()
+    {
+        return opened && canceled;
     }
 
     /**
@@ -206,6 +227,7 @@ public class ActionDialog extends JDialog implements ActionListener
             dispose();
         else if (OK_CMD.equals(cmd))
         {
+            canceled = false;
             // do action here
             if (okAction != null)
                 okAction.actionPerformed(e);

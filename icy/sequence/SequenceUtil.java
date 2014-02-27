@@ -1166,8 +1166,8 @@ public class SequenceUtil
     public static Sequence concatC(Sequence[] sequences, boolean fillEmpty, boolean rescale)
     {
         return concatC(sequences, fillEmpty, rescale, null);
-
     }
+   
 
     /**
      * Create and returns a new sequence by concatenating all given sequences on C dimension.
@@ -1647,6 +1647,78 @@ public class SequenceUtil
         }
 
         return output;
+    }
+
+    /**
+     * Return a rotated version of the source sequence with specified parameters.
+     * 
+     * @param source
+     *        source image
+     * @param xOrigin
+     *        X origin for the rotation
+     * @param yOrigin
+     *        Y origin for the rotation
+     * @param angle
+     *        rotation angle in radian
+     * @param filterType
+     *        filter resampling method used
+     */
+    public static Sequence rotate(Sequence source, double xOrigin, double yOrigin, double angle, FilterType filterType)
+    {
+        final int sizeT = source.getSizeT();
+        final int sizeZ = source.getSizeZ();
+        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+
+        result.beginUpdate();
+        try
+        {
+            for (int t = 0; t < sizeT; t++)
+                for (int z = 0; z < sizeZ; z++)
+                    result.setImage(t, z,
+                            IcyBufferedImageUtil.rotate(source.getImage(t, z), xOrigin, yOrigin, angle, filterType));
+        }
+        finally
+        {
+            result.endUpdate();
+        }
+
+        result.setName(source.getName() + " (rotated)");
+
+        return result;
+    }
+
+    /**
+     * Return a rotated version of the source Sequence with specified parameters.
+     * 
+     * @param source
+     *        source image
+     * @param angle
+     *        rotation angle in radian
+     * @param filterType
+     *        filter resampling method used
+     */
+    public static Sequence rotate(Sequence source, double angle, FilterType filterType)
+    {
+        if (source == null)
+            return null;
+
+        return rotate(source, source.getSizeX() / 2d, source.getSizeY() / 2d, angle, filterType);
+    }
+
+    /**
+     * Return a rotated version of the source Sequence with specified parameters.
+     * 
+     * @param source
+     *        source image
+     * @param angle
+     *        rotation angle in radian
+     */
+    public static Sequence rotate(Sequence source, double angle)
+    {
+        if (source == null)
+            return null;
+
+        return rotate(source, source.getSizeX() / 2d, source.getSizeY() / 2d, angle, FilterType.BILINEAR);
     }
 
     /**

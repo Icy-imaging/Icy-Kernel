@@ -42,7 +42,9 @@ import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.Semaphore;
@@ -69,6 +71,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     protected final Class<R> roiClass;
     protected boolean useChildColor;
     protected Semaphore modifyingSlice;
+    protected double translateT;
 
     /**
      * Creates a new 4D ROI based on the given 3D ROI type.
@@ -80,6 +83,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         this.roiClass = roiClass;
         useChildColor = false;
         modifyingSlice = new Semaphore(1);
+        translateT = 0d;
     }
 
     @Override
@@ -355,6 +359,14 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     }
 
     /**
+     * Returns <code>true</code> if the ROI stack is empty.
+     */
+    public boolean isEmpty()
+    {
+        return slices.isEmpty();
+    }
+    
+    /**
      * @return The size of this ROI stack along T.<br>
      *         Note that the returned value indicates the difference between upper and lower bounds
      *         of this ROI, but doesn't guarantee that all slices in-between exist (
@@ -396,7 +408,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     /**
      * Sets the slice for the given T position.
      */
-    protected void setSlice(int t, R roi3d)
+    public void setSlice(int t, R roi3d)
     {
         // set T and C position
         roi3d.setT(t);
@@ -414,7 +426,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     /**
      * Removes slice at the given T position and returns it.
      */
-    protected R removeSlice(int t)
+    public R removeSlice(int t)
     {
         // remove the current slice (if any)
         final R result = slices.remove(Integer.valueOf(t));
@@ -435,7 +447,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     /**
      * Removes all slices.
      */
-    protected void clear()
+    public void clear()
     {
         for (R slice : slices.values())
         {
@@ -638,6 +650,76 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
             volume += slice.getNumberOfPoints();
 
         return volume;
+    }
+    
+    @Override
+    public boolean canTranslate()
+    {
+        // only need to test the first entry
+        if (!slices.isEmpty())
+            return slices.firstEntry().getValue().canTranslate();
+
+        return false;
+    }
+
+    /**
+     * Translate the stack of specified T position.
+     */
+    public void translate(int t)
+    {
+        // easy optimizations
+        if ((t == 0) || isEmpty())
+            return;
+
+        final Map<Integer, R> map = new HashMap<Integer, R>(slices);
+
+        slices.clear();
+        for (Entry<Integer, R> entry : map.entrySet())
+        {
+            final R roi = entry.getValue();
+            final int newT = roi.getT() + t;
+
+            // only positive value accepted
+            if (newT >= 0)
+            {
+                roi.setT(newT);
+                slices.put(Integer.valueOf(newT), roi);
+            }
+        }
+
+        // notify ROI changed
+        roiChanged();
+    }
+
+    @Override
+    public void translate(double dx, double dy, double dz, double dt)
+    {
+        beginUpdate();
+        try
+        {
+            translateT += dt;
+            // convert to integer
+            final int dti = (int) translateT;
+            // keep trace of not used floating part
+            translateT -= dti;
+
+            translate(dti);
+
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.translate(dx, dy, dz);
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     @Override

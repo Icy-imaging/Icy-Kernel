@@ -162,6 +162,7 @@ public class ROI5DArea extends ROI5DStack<ROI4DArea>
     /**
      * Returns true if the ROI is empty (the mask does not contains any point).
      */
+    @Override
     public boolean isEmpty()
     {
         if (getBounds().isEmpty())
@@ -172,12 +173,6 @@ public class ROI5DArea extends ROI5DStack<ROI4DArea>
                 return false;
 
         return true;
-    }
-
-    @Override
-    public boolean hasSelectedPoint()
-    {
-        return false;
     }
 
     /**

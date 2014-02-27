@@ -34,6 +34,7 @@ import javax.media.jai.BorderExtender;
 import javax.media.jai.Interpolation;
 import javax.media.jai.JAI;
 import javax.media.jai.RenderedOp;
+import javax.media.jai.operator.RotateDescriptor;
 import javax.media.jai.operator.ScaleDescriptor;
 import javax.swing.SwingConstants;
 
@@ -469,7 +470,7 @@ public class IcyBufferedImageUtil
      */
     public static IcyBufferedImage extractChannels(IcyBufferedImage source, int... channels)
     {
-        if (source == null)
+        if ((source == null) || (channels.length == 0))
             return null;
 
         // create output
@@ -537,6 +538,86 @@ public class IcyBufferedImageUtil
     public static IcyBufferedImage addChannel(IcyBufferedImage source)
     {
         return addChannels(source, source.getSizeC(), 1);
+    }
+
+    /**
+     * Return a rotated version of the source image with specified parameters.
+     * 
+     * @param source
+     *        source image
+     * @param xOrigin
+     *        X origin for the rotation
+     * @param yOrigin
+     *        Y origin for the rotation
+     * @param angle
+     *        rotation angle in radian
+     * @param filterType
+     *        filter resampling method used
+     */
+    public static IcyBufferedImage rotate(IcyBufferedImage source, double xOrigin, double yOrigin, double angle,
+            FilterType filterType)
+    {
+        if (source == null)
+            return null;
+
+        final Interpolation interpolation;
+
+        switch (filterType)
+        {
+            default:
+            case NEAREST:
+                interpolation = Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+                break;
+
+            case BILINEAR:
+                interpolation = Interpolation.getInstance(Interpolation.INTERP_BILINEAR);
+                break;
+
+            case BICUBIC:
+                interpolation = Interpolation.getInstance(Interpolation.INTERP_BICUBIC);
+                break;
+        }
+
+        // use JAI scaler (use a copy to avoid source alteration)
+        final RenderedOp renderedOp = RotateDescriptor.create(getCopy(source), Float.valueOf((float) xOrigin), Float
+                .valueOf((float) yOrigin), Float.valueOf((float) angle), interpolation, null, new RenderingHints(
+                JAI.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_COPY)));
+
+        return IcyBufferedImage.createFrom(renderedOp, source.isSignedDataType());
+    }
+
+    /**
+     * Return a rotated version of the source image with specified parameters.
+     * 
+     * @param source
+     *        source image
+     * @param angle
+     *        rotation angle in radian
+     * @param filterType
+     *        filter resampling method used
+     */
+    public static IcyBufferedImage rotate(IcyBufferedImage source, double angle, FilterType filterType)
+    {
+        if (source == null)
+            return null;
+
+        return rotate(source, source.getSizeX() / 2d, source.getSizeY() / 2d, angle, filterType);
+    }
+
+    /**
+     * Return a rotated version of the source image with specified parameters.
+     * 
+     * @param source
+     *        source image
+     * @param angle
+     *        rotation angle in radian
+     */
+    public static IcyBufferedImage rotate(IcyBufferedImage source, double angle)
+    {
+        if (source == null)
+            return null;
+
+        return rotate(source, source.getSizeX() / 2d, source.getSizeY() / 2d, angle, FilterType.BILINEAR);
     }
 
     /**
@@ -642,8 +723,7 @@ public class IcyBufferedImageUtil
                     new RenderingHints(JAI.KEY_BORDER_EXTENDER, BorderExtender
                             .createInstance(BorderExtender.BORDER_COPY)));
 
-            // JAI keep dataType and others stuff in their BufferedImage
-            result = IcyBufferedImage.createFrom(renderedOp.getAsBufferedImage());
+            result = IcyBufferedImage.createFrom(renderedOp, source.isSignedDataType());
         }
 
         return result;

@@ -87,6 +87,31 @@ public class URLUtil
         return (url != null) && url.getProtocol().equals(PROTOCOL_FILE);
     }
 
+    /**
+     * Returns <code>true</code> if the url defines an absolute address and <code>false</code> if it
+     * defines a relative address.
+     */
+    public static boolean isAbsolute(String path)
+    {
+        if (!StringUtil.isEmpty(path))
+        {
+            int index = path.indexOf(':');
+
+            // protocol or drive letter
+            if (index != -1)
+            {
+                if ((index + 1) < path.length())
+                    return (path.charAt(index + 1) == '/');
+
+                return false;
+            }
+
+            return (path.charAt(0) == '/');
+        }
+
+        return false;
+    }
+
     public static String getNetworkURLString(String base, String path)
     {
         if (StringUtil.isEmpty(base))
@@ -227,5 +252,18 @@ public class URLUtil
             return null;
 
         return url.getQuery();
+    }
+
+    /**
+     * Build a URL from a base path and specified url.<br>
+     * If the url is a relative address then result is the concatenation of base path and url.<br>
+     * If the specified url is an absolute address then the url is returned as it is.
+     */
+    public static URL buildURL(String basePath, String url)
+    {
+        if (!isAbsolute(url) && !StringUtil.isEmpty(basePath))
+            return getURL(basePath + url);
+
+        return getURL(url);
     }
 }

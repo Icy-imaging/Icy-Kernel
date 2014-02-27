@@ -174,31 +174,31 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         INTERNALIZED, EXTERNALIZED
     }
 
-    IcyExternalFrame externalFrame;
-    IcyInternalFrame internalFrame;
+    protected IcyExternalFrame externalFrame;
+    protected IcyInternalFrame internalFrame;
 
     /**
      * frame state (internal / external)
      */
-    IcyFrameState state;
+    protected IcyFrameState state;
 
     /**
      * sync flag for AWT thread process
      */
-    boolean syncProcess;
+    protected boolean syncProcess;
 
     /**
      * listeners
      */
-    EventListenerList frameEventListeners;
+    protected EventListenerList frameEventListeners;
 
     /**
      * internals
      */
-    final MenuCallback defaultSystemMenuCallback;
-    SwitchStateAction switchStateAction;
-    boolean switchStateItemVisible;
-    IcyFrameState previousState;
+    protected final MenuCallback defaultSystemMenuCallback;
+    protected SwitchStateAction switchStateAction;
+    protected boolean switchStateItemVisible;
+    protected IcyFrameState previousState;
 
     public IcyFrame()
     {
@@ -588,8 +588,9 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     }
 
     /**
-     * Add to the container c
+     * @deprecated Use {@link #addToDesktopPane()} instead.
      */
+    @Deprecated
     public void addTo(final Container c, final Object constraints)
     {
         // AWT safe
@@ -604,14 +605,39 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
     }
 
     /**
-     * Add the frame to the main pane of ICY
+     * Add the frame to the Icy desktop pane with specified constraint.
      */
+    public void addToDesktopPane(final Object constraints)
+    {
+        // AWT safe
+        ThreadUtil.invoke(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                final JDesktopPane desktop = Icy.getMainInterface().getDesktopPane();
+
+                if (desktop != null)
+                    desktop.add(internalFrame, constraints);
+            }
+        }, syncProcess);
+    }
+
+    /**
+     * Add the frame to the Icy desktop pane
+     */
+    public void addToDesktopPane()
+    {
+        addToDesktopPane(JLayeredPane.DEFAULT_LAYER);
+    }
+
+    /**
+     * @deprecated Use {@link #addToDesktopPane()} instead.
+     */
+    @Deprecated
     public void addToMainDesktopPane()
     {
-        final JDesktopPane desktop = Icy.getMainInterface().getDesktopPane();
-
-        if (desktop != null)
-            addTo(desktop, JLayeredPane.DEFAULT_LAYER);
+        addToDesktopPane();
     }
 
     /**

@@ -75,12 +75,16 @@ public class OverlayEvent implements EventHierarchicalChecker
     {
         if (e.getType() == type)
         {
+//            if (type == OverlayEventType.PROPERTY_CHANGED)
+//            {
+//                // join properties
+//                if (!StringUtil.equals(e.getPropertyName(), propertyName))
+//                    propertyName = null;
+//            }
+
+            // same property event ?
             if (type == OverlayEventType.PROPERTY_CHANGED)
-            {
-                // join properties
-                if (!StringUtil.equals(e.getPropertyName(), propertyName))
-                    propertyName = null;
-            }
+                return StringUtil.equals(e.getPropertyName(), propertyName);
 
             return true;
         }

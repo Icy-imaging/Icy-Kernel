@@ -18,13 +18,15 @@
  */
 package icy.gui.dialog;
 
+import icy.common.exception.UnsupportedFormatException;
+import icy.file.SequenceFileImporter;
 import icy.gui.component.ThumbnailComponent;
 import icy.gui.util.ComponentUtil;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
-import icy.type.DataType;
+import icy.sequence.MetaDataUtil;
 import icy.util.OMEUtil;
 
 import java.awt.BorderLayout;
@@ -35,6 +37,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -69,14 +72,17 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
     // internal
     protected IFormatReader reader;
+    protected SequenceFileImporter importer;
+    protected String id;
     protected OMEXMLMetadataImpl metadata;
     protected int[] selectedSeries;
     protected final MouseAdapter serieDoubleClickAction;
     protected final Thread loadingThread;
 
     /**
-     * Create the dialog.
+     * @deprecated Use {@link #SeriesSelectionDialog(SequenceFileImporter, String)} instead.
      */
+    @Deprecated
     public SeriesSelectionDialog(IFormatReader reader)
     {
         super(Icy.getMainInterface().getMainFrame(), "Series selection");
@@ -211,6 +217,149 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
     }
 
     /**
+     * Create a new dialog to select the series to open from an image.
+     * 
+     * @throws IOException
+     * @throws UnsupportedFormatException
+     */
+    public SeriesSelectionDialog(SequenceFileImporter importer, String id, OMEXMLMetadataImpl metadata)
+            throws UnsupportedFormatException, IOException
+    {
+        super(Icy.getMainInterface().getMainFrame(), "Series selection");
+
+        this.importer = importer;
+        this.id = id;
+        this.metadata = metadata;
+
+        initialize();
+
+        final int series = MetaDataUtil.getNumSerie(metadata);
+
+        // double cick action = direct selection
+        serieDoubleClickAction = new MouseAdapter()
+        {
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                if (e.getClickCount() == 2)
+                {
+                    final ThumbnailComponent thumb = (ThumbnailComponent) e.getSource();
+
+                    for (int i = 0; i < serieComponents.length; i++)
+                    {
+                        if (serieComponents[i] == thumb)
+                        {
+                            selectedSeries = new int[] {i};
+                            dispose();
+                        }
+                    }
+                }
+            }
+        };
+
+        serieComponents = new ThumbnailComponent[series];
+
+        // adjust number of row
+        int numRow = series / NUM_COL;
+        if (series > (NUM_COL * numRow))
+            numRow++;
+
+        ((GridLayout) gridPanel.getLayout()).setRows(numRow);
+
+        for (int i = 0; i < numRow; i++)
+        {
+            for (int j = 0; j < NUM_COL; j++)
+            {
+                final int index = (i * NUM_COL) + j;
+
+                if (index < series)
+                {
+                    final ThumbnailComponent thumb = new ThumbnailComponent(true);
+
+                    // add mouse listener (double click action)
+                    thumb.addMouseListener(serieDoubleClickAction);
+
+                    // remove mouse listener (double click action)
+                    if (serieComponents[index] != null)
+                        serieComponents[index].removeMouseListener(serieDoubleClickAction);
+
+                    serieComponents[index] = thumb;
+                    thumb.setEnabled(true);
+                    thumb.setTitle("loading...");
+                    thumb.setInfos("");
+                    thumb.setInfos2("");
+                    gridPanel.add(thumb);
+                }
+                else
+                    gridPanel.add(Box.createGlue());
+            }
+        }
+
+        // load thumbnails...
+        loadingThread = new Thread(this, "Series thumbnail loading");
+        loadingThread.start();
+
+        // action on "OK"
+        setOkAction(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                int numSelected = 0;
+                for (int i = 0; i < serieComponents.length; i++)
+                    if (serieComponents[i].isSelected())
+                        numSelected++;
+
+                selectedSeries = new int[numSelected];
+
+                int ind = 0;
+                for (int i = 0; i < serieComponents.length; i++)
+                    if (serieComponents[i].isSelected())
+                        selectedSeries[ind++] = i;
+            }
+        });
+
+        // action on "Select All"
+        selectAllBtn.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                for (ThumbnailComponent thumb : serieComponents)
+                    thumb.setSelected(true);
+            }
+        });
+
+        // action on "Unselect All"
+        unselectAllBtn.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                for (ThumbnailComponent thumb : serieComponents)
+                    thumb.setSelected(false);
+            }
+        });
+
+        setPreferredSize(new Dimension(740, 520));
+        pack();
+        ComponentUtil.center(SeriesSelectionDialog.this);
+        setVisible(true);
+    }
+
+    /**
+     * Create a new dialog to select the series to open from an image.
+     * 
+     * @throws IOException
+     * @throws UnsupportedFormatException
+     */
+    public SeriesSelectionDialog(SequenceFileImporter importer, String id) throws UnsupportedFormatException,
+            IOException
+    {
+        this(importer, id, importer.getMetaData(id));
+    }
+
+    /**
      * @return the selectedSeries
      */
     public int[] getSelectedSeries()
@@ -263,6 +412,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         // kill loading task in 2 seconds
         new Timer().schedule(new TimerTask()
         {
+            @SuppressWarnings("deprecation")
             @Override
             public void run()
             {
@@ -295,15 +445,14 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
                 try
                 {
-                    reader.setSeries(i);
-
-                    final int sizeC = reader.getSizeC();
+                    final int sizeC = MetaDataUtil.getSizeC(metadata, i);
 
                     serieComponents[i].setTitle(metadata.getImageName(i));
-                    serieComponents[i].setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - "
-                            + reader.getSizeZ() + "Z x " + reader.getSizeT() + "T");
+                    serieComponents[i].setInfos(MetaDataUtil.getSizeX(metadata, i) + " x "
+                            + MetaDataUtil.getSizeY(metadata, i) + " - " + MetaDataUtil.getSizeZ(metadata, i) + "Z x "
+                            + MetaDataUtil.getSizeT(metadata, i) + "T");
                     serieComponents[i].setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
-                            + DataType.getDataTypeFromFormatToolsType(reader.getPixelType()) + ")");
+                            + MetaDataUtil.getDataType(metadata, i) + ")");
                 }
                 catch (Exception e)
                 {
@@ -332,13 +481,15 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
                 try
                 {
-                    reader.setSeries(i);
-
-                    final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader, reader.getSizeZ() / 2,
-                            reader.getSizeT() / 2);
+                    final IcyBufferedImage img = importer.getThumbnail(id, i);
                     serieComponents[i].setImage(IcyBufferedImageUtil.getARGBImage(img));
                 }
-                catch (Throwable e)
+                catch (OutOfMemoryError e)
+                {
+                    // error image, we just totally ignore error here...
+                    serieComponents[i].setImage(ResourceUtil.ICON_DELETE);
+                }
+                catch (Exception e)
                 {
                     // error image, we just totally ignore error here...
                     serieComponents[i].setImage(ResourceUtil.ICON_DELETE);
@@ -347,7 +498,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         }
         catch (ThreadDeath t)
         {
-            // ignore
+            // just stop process...
         }
     }
 }

@@ -430,7 +430,7 @@ public class SystemUtil
     }
 
     /**
-     * Return total physic memory of system
+     * Return total physic memory of system (in bytes)
      */
     public static long getTotalMemory()
     {
@@ -452,7 +452,7 @@ public class SystemUtil
     }
 
     /**
-     * Return free physic memory of system
+     * Return free physic memory of system (in bytes)
      */
     public static long getFreeMemory()
     {

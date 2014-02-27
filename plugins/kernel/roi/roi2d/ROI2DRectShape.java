@@ -86,13 +86,13 @@ public abstract class ROI2DRectShape extends ROI2DShape
         controlPoints.add(this.bottomLeft);
 
         this.topLeft.addOverlayListener(this);
-        this.topLeft.addAnchorListener(this);
+        this.topLeft.addPositionListener(this);
         this.topRight.addOverlayListener(this);
-        this.topRight.addAnchorListener(this);
+        this.topRight.addPositionListener(this);
         this.bottomLeft.addOverlayListener(this);
-        this.bottomLeft.addAnchorListener(this);
+        this.bottomLeft.addPositionListener(this);
         this.bottomRight.addOverlayListener(this);
-        this.bottomRight.addAnchorListener(this);
+        this.bottomRight.addPositionListener(this);
 
         // select the bottom right point by default for interactive mode
         this.bottomRight.setSelected(true);
@@ -210,8 +210,8 @@ public abstract class ROI2DRectShape extends ROI2DShape
             if (!super.loadFromXML(node))
                 return false;
 
-            topLeft.loadFromXML(XMLUtil.getElement(node, ID_TOPLEFT));
-            bottomRight.loadFromXML(XMLUtil.getElement(node, ID_BOTTOMRIGHT));
+            topLeft.loadPositionFromXML(XMLUtil.getElement(node, ID_TOPLEFT));
+            bottomRight.loadPositionFromXML(XMLUtil.getElement(node, ID_BOTTOMRIGHT));
         }
         finally
         {
@@ -227,8 +227,8 @@ public abstract class ROI2DRectShape extends ROI2DShape
         if (!super.saveToXML(node))
             return false;
 
-        topLeft.saveToXML(XMLUtil.setElement(node, ID_TOPLEFT));
-        bottomRight.saveToXML(XMLUtil.setElement(node, ID_BOTTOMRIGHT));
+        topLeft.savePositionToXML(XMLUtil.setElement(node, ID_TOPLEFT));
+        bottomRight.savePositionToXML(XMLUtil.setElement(node, ID_BOTTOMRIGHT));
 
         return true;
     }

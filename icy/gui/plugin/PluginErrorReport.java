@@ -93,29 +93,26 @@ public class PluginErrorReport
                         info.close();
                     }
 
-                    if (!info.isCancelRequested())
+                    // update found and not canceled
+                    if (!info.isCancelRequested() && (onlinePlugin != null))
                     {
-                        // update found
-                        if (onlinePlugin != null)
-                        {
-                            PluginInstaller.install(onlinePlugin, false);
-                            new AnnounceFrame(
-                                    "The plugin crashed but a new version has been found, try it again when installation is done",
-                                    10);
-                        }
-                        else
-                        {
-                            // display report as no update were found
-                            ThreadUtil.invokeLater(new Runnable()
-                            {
-                                @Override
-                                public void run()
-                                {
-                                    doReport(plugin, null, title, message);
-                                }
-                            });
-                        }
+                        PluginInstaller.install(onlinePlugin, false);
+                        new AnnounceFrame(
+                                "The plugin crashed but a new version has been found, try it again when installation is done",
+                                10);
+                        // don't need to report
+                        return;
                     }
+
+                    // display report as no update were found
+                    ThreadUtil.invokeLater(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            doReport(plugin, null, title, message);
+                        }
+                    });
                 }
                 else
                 {

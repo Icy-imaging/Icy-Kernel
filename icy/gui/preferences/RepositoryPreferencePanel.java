@@ -19,16 +19,12 @@
 package icy.gui.preferences;
 
 import icy.gui.component.IcyTable;
-import icy.gui.component.IcyTextField;
-import icy.gui.dialog.ActionDialog;
-import icy.gui.util.ComponentUtil;
 import icy.plugin.PluginRepositoryLoader;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.workspace.WorkspaceRepositoryLoader;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -37,15 +33,10 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -57,144 +48,6 @@ import javax.swing.table.TableColumnModel;
  */
 public class RepositoryPreferencePanel extends PreferencePanel implements ListSelectionListener
 {
-    private class RepositoryDialog extends ActionDialog
-    {
-        /**
-         * 
-         */
-        private static final long serialVersionUID = -6474402466638414723L;
-
-        // GUI
-        final IcyTextField nameField;
-        final IcyTextField locationField;
-        final JCheckBox authCheckBox;
-        final IcyTextField loginField;
-        final JPasswordField passwordField;
-
-        final JLabel nameLabel;
-        final JLabel locationLabel;
-        final JLabel authLabel;
-        final JLabel loginLabel;
-        final JLabel passwordLabel;
-
-        // internal
-        boolean canceled;
-
-        public RepositoryDialog(String title, final RepositoryInfo reposInf)
-        {
-            super(title);
-
-            setMinimumSize(new Dimension(400, 200));
-            // setPreferredSize(new Dimension(600, 200));
-
-            canceled = true;
-
-            nameField = new IcyTextField(reposInf.getName());
-            ComponentUtil.setFixedHeight(nameField, 24);
-            locationField = new IcyTextField(reposInf.getLocation());
-            ComponentUtil.setFixedHeight(locationField, 24);
-            authCheckBox = new JCheckBox("", reposInf.isAuthenticationEnabled());
-            ComponentUtil.setFixedHeight(authCheckBox, 24);
-            loginField = new IcyTextField(reposInf.getLogin());
-            ComponentUtil.setFixedHeight(loginField, 24);
-            passwordField = new JPasswordField(reposInf.getPassword());
-            ComponentUtil.setFixedHeight(passwordField, 24);
-
-            authCheckBox.addChangeListener(new ChangeListener()
-            {
-                @Override
-                public void stateChanged(ChangeEvent e)
-                {
-                    updateAuthFields();
-                }
-            });
-
-            // save changes on validation
-            setOkAction(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    reposInf.setName(nameField.getText());
-                    reposInf.setLocation(locationField.getText());
-                    reposInf.setLogin(loginField.getText());
-                    reposInf.setPassword(new String(passwordField.getPassword()));
-                    reposInf.setAuthenticationEnabled(authCheckBox.isSelected());
-                    canceled = false;
-                }
-            });
-
-            mainPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-            mainPanel.setLayout(new BorderLayout(8, 8));
-
-            final JPanel labelPanel = new JPanel();
-            labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.PAGE_AXIS));
-
-            nameLabel = new JLabel("Name");
-            ComponentUtil.setFixedHeight(nameLabel, 24);
-            locationLabel = new JLabel("Location");
-            ComponentUtil.setFixedHeight(locationLabel, 24);
-            authLabel = new JLabel("Use authentification");
-            ComponentUtil.setFixedHeight(authLabel, 24);
-            loginLabel = new JLabel("Login");
-            ComponentUtil.setFixedHeight(loginLabel, 24);
-            passwordLabel = new JLabel("Password");
-            ComponentUtil.setFixedHeight(passwordLabel, 24);
-
-            labelPanel.add(nameLabel);
-            labelPanel.add(Box.createVerticalStrut(4));
-            labelPanel.add(locationLabel);
-            labelPanel.add(Box.createVerticalStrut(4));
-            labelPanel.add(authLabel);
-            labelPanel.add(Box.createVerticalStrut(4));
-            labelPanel.add(loginLabel);
-            labelPanel.add(Box.createVerticalStrut(4));
-            labelPanel.add(passwordLabel);
-            labelPanel.add(Box.createVerticalGlue());
-
-            final JPanel fieldPanel = new JPanel();
-            fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.PAGE_AXIS));
-
-            fieldPanel.add(nameField);
-            fieldPanel.add(Box.createVerticalStrut(4));
-            fieldPanel.add(locationField);
-            fieldPanel.add(Box.createVerticalStrut(4));
-            fieldPanel.add(authCheckBox);
-            fieldPanel.add(Box.createVerticalStrut(4));
-            fieldPanel.add(loginField);
-            fieldPanel.add(Box.createVerticalStrut(4));
-            fieldPanel.add(passwordField);
-            fieldPanel.add(Box.createVerticalGlue());
-
-            mainPanel.add(labelPanel, BorderLayout.WEST);
-            mainPanel.add(fieldPanel, BorderLayout.CENTER);
-
-            updateAuthFields();
-
-            pack();
-            ComponentUtil.center(this);
-            setVisible(true);
-        }
-
-        void updateAuthFields()
-        {
-            final boolean enabled = authCheckBox.isSelected();
-
-            loginLabel.setEnabled(enabled);
-            loginField.setEnabled(enabled);
-            passwordLabel.setEnabled(enabled);
-            passwordField.setEnabled(enabled);
-        }
-
-        /**
-         * @return the canceled
-         */
-        public boolean isCanceled()
-        {
-            return canceled;
-        }
-    }
-
     /**
      * 
      */
@@ -465,7 +318,7 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
     {
         final RepositoryInfo reposInf = new RepositoryInfo("name", "http://");
 
-        if (!new RepositoryDialog("Add a new repository", reposInf).isCanceled())
+        if (!new EditRepositoryDialog("Add a new repository", reposInf).isCanceled())
         {
             // add new repository entry
             repositories.add(reposInf);
@@ -484,7 +337,7 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
     {
         final int ind = getRepositeryModelIndex(reposInf);
 
-        if (!new RepositoryDialog("Edit repository", reposInf).isCanceled())
+        if (!new EditRepositoryDialog("Edit repository", reposInf).isCanceled())
         {
             // notify data changed
             tableModel.fireTableRowsUpdated(ind, ind);

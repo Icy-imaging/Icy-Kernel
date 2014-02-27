@@ -31,6 +31,7 @@ import icy.common.listener.ProgressListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.component.renderer.LabelComboBoxRenderer;
+import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.IcyFrameAdapter;
 import icy.gui.frame.IcyFrameEvent;
@@ -122,7 +123,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      * internals
      */
     boolean initialized;
-
+    
     public Viewer(Sequence sequence, boolean visible)
     {
         super("Viewer", true, true, true, true);
@@ -222,9 +223,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         PluginLoader.addListener(this);
 
         // do this when viewer is initialized
-        icy.main.Icy.getMainInterface().registerViewer(this);
+        Icy.getMainInterface().registerViewer(this);
         // automatically add it to the desktop pane
-        addToMainDesktopPane();
+        addToDesktopPane();
 
         if (visible)
         {
@@ -402,11 +403,18 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final IcyCanvas newCanvas = IcyCanvas.create((String) canvasComboBox.getSelectedItem(), Viewer.this);
+                final String canvasName = (String) canvasComboBox.getSelectedItem();
+                final IcyCanvas newCanvas = IcyCanvas.create(canvasName, Viewer.this);
 
-                // set new canvas only if different
-                if ((canvas == null) || !canvas.getClass().equals(newCanvas.getClass()))
-                    setCanvas(newCanvas);
+                // new canvas not created ?
+                if (newCanvas == null)
+                    MessageDialog.showDialog("Cannot create " + canvasName + " canvas !", MessageDialog.ERROR_MESSAGE);
+                else
+                {
+                    // set new canvas only if different
+                    if ((canvas == null) || !canvas.getClass().equals(newCanvas.getClass()))
+                        setCanvas(newCanvas);
+                }
             }
         });
     }

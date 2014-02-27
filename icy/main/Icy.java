@@ -93,7 +93,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.4.3.5");
+    public static Version version = new Version("1.4.4.0");
 
     /**
      * Main interface
@@ -164,7 +164,7 @@ public class Icy
             if (SystemUtil.isHeadLess())
                 headless = true;
 
-            // check if ICY is already running.
+            // check if Icy is already running.
             lock = SingleInstanceCheck.lock("icy");
             if (lock == null)
             {
@@ -341,8 +341,7 @@ public class Icy
         // handle startup arguments
         if (startupImage != null)
         {
-            Icy.getMainInterface().addSequence(
-                    Loader.loadSequence(new File(FileUtil.getGenericPath(startupImage)), 0, true));
+            Icy.getMainInterface().addSequence(Loader.loadSequence(FileUtil.getGenericPath(startupImage), 0, true));
         }
         if (startupPlugin != null)
         {

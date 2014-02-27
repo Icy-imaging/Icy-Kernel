@@ -44,6 +44,12 @@ public class Audit
     private static final String ID_CLIENT_ARCH = "clientArch";
     private static final String ID_CLIENT_ID = "clientId";
     private static final String ID_CLIENT_VERSION = "clientVersion";
+    private static final String ID_CLIENT_CPUNUMBER = "clientCpuNumber";
+    private static final String ID_CLIENT_TOTAL_MEMORY = "clientTotalMemory";
+    private static final String ID_CLIENT_MAXJAVA_MEMORY = "clientMaxJavaMemory";
+    private static final String ID_JAVA_NAME = "javaName";
+    private static final String ID_JAVA_VERSION = "javaVersion";
+    private static final String ID_JAVA_ARCH = "javaArch";
 
     // xml id
     private static final String XMLID_CLIENT_ID_REQUESTED = "client_id_requested";
@@ -76,7 +82,6 @@ public class Audit
                 if (doc != null)
                 {
                     final Node root = XMLUtil.getRootElement(doc);
-
                     final int newId = XMLUtil.getElementIntValue(root, XMLID_CLIENT_ID_REQUESTED, -1);
 
                     // valid id --> save it
@@ -86,8 +91,15 @@ public class Audit
             }
             else
             {
-                // just audit version
+                // just audit infos
                 values.put(ID_CLIENT_ID, Integer.toString(id));
+
+                values.put(ID_CLIENT_CPUNUMBER, Integer.toString(SystemUtil.getAvailableProcessors()));
+                values.put(ID_CLIENT_TOTAL_MEMORY, Long.toString(SystemUtil.getTotalMemory() / 10485760L));
+                values.put(ID_CLIENT_MAXJAVA_MEMORY, Long.toString(SystemUtil.getJavaMaxMemory() / 10485760L));
+                values.put(ID_JAVA_NAME, SystemUtil.getJavaName());
+                values.put(ID_JAVA_VERSION, SystemUtil.getJavaVersion());
+                values.put(ID_JAVA_ARCH, Integer.toString(SystemUtil.getJavaArchDataModel()));
 
                 final Document doc = XMLUtil.loadDocument(URL_AUDIT_VERSION + NetworkUtil.getContentString(values));
 

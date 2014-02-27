@@ -135,8 +135,6 @@ public class ROIEvent implements EventHierarchicalChecker
                     return true;
 
                 case PROPERTY_CHANGED:
-                    if (e.getPropertyName() == null)
-                        propertyName = null;
                     if ((propertyName == null) || propertyName.equals(e.getPropertyName()))
                         return true;
             }

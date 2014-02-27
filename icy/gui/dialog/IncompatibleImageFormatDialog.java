@@ -45,7 +45,7 @@ public class IncompatibleImageFormatDialog extends ActionFrame
         getCancelBtn().setVisible(false);
 
         setSize(600, 240);
-        addToMainDesktopPane();
+        addToDesktopPane();
         center();
         setVisible(true);
     }

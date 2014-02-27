@@ -55,7 +55,7 @@ public abstract class ROI2D extends ROI
 
         return result;
     }
-
+    
     /**
      * @deprecated Use {@link ROI2D#getROI2DList(List)} instead.
      */
@@ -387,7 +387,9 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @return the z
+     * Returns the Z position.<br>
+     * <code>-1</code> is a special value meaning the ROI is set on all Z slices (infinite Z
+     * dimension).
      */
     public int getZ()
     {
@@ -395,8 +397,9 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @param value
-     *        the z to set
+     * Sets Z position of this 2D ROI.<br>
+     * You cannot set the ROI on a negative Z position as <code>-1</code> is a special value meaning
+     * the ROI is set on all Z slices (infinite Z dimension).
      */
     public void setZ(int value)
     {
@@ -416,7 +419,9 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @return the t
+     * Returns the T position.<br>
+     * <code>-1</code> is a special value meaning the ROI is set on all T frames (infinite T
+     * dimension).
      */
     public int getT()
     {
@@ -424,8 +429,9 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @param value
-     *        the t to set
+     * Sets T position of this 3D ROI.<br>
+     * You cannot set the ROI on a negative T position as <code>-1</code> is a special value meaning
+     * the ROI is set on all T frames (infinite T dimension).
      */
     public void setT(int value)
     {
@@ -445,7 +451,9 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @return the c
+     * Returns the C position.<br>
+     * <code>-1</code> is a special value meaning the ROI is set on all C channels (infinite C
+     * dimension).
      */
     public int getC()
     {
@@ -453,8 +461,9 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * @param value
-     *        the c to set
+     * Sets C position of this 2D ROI.<br>
+     * You cannot set the ROI on a negative C position as <code>-1</code> is a special value meaning
+     * the ROI is set on all C channels (infinite C dimension).
      */
     public void setC(int value)
     {
@@ -665,7 +674,7 @@ public abstract class ROI2D extends ROI
         else
             cok = (c >= getC()) && (c < (getC() + 1d));
 
-        return contains(x, y) && cok && zok && tok;
+        return cok && zok && tok && contains(x, y);
     }
 
     @Override
@@ -689,7 +698,7 @@ public abstract class ROI2D extends ROI
         else
             cok = (c >= getC()) && ((c + sizeC) <= (getC() + 1d));
 
-        return contains(x, y, sizeX, sizeY) && zok && tok && cok;
+        return zok && tok && cok && contains(x, y, sizeX, sizeY);
     }
 
     /*
@@ -702,15 +711,23 @@ public abstract class ROI2D extends ROI
         if (roi instanceof ROI2D)
         {
             final ROI2D roi2d = (ROI2D) roi;
+            final int z = getZ();
+            final int t = getT();
+            final int c = getC();
+            final boolean zok;
+            final boolean tok;
+            final boolean cok;
 
-            if (isActiveFor(roi2d.getZ(), roi2d.getT(), roi2d.getC()))
-                return getBooleanMask(false).contains(roi2d.getBooleanMask(false));
+            // same position ?
+            zok = (z == -1) || (z == roi2d.getZ());
+            tok = (t == -1) || (t == roi2d.getT());
+            cok = (c == -1) || (c == roi2d.getC());
 
-            return false;
+            return zok && tok && cok && getBooleanMask(false).contains(roi2d.getBooleanMask(false));
         }
 
-        // do it the other way
-        return roi.intersects(this);
+        // use default implementation
+        return super.contains(roi);
     }
 
     /**
@@ -806,15 +823,24 @@ public abstract class ROI2D extends ROI
         if (roi instanceof ROI2D)
         {
             final ROI2D roi2d = (ROI2D) roi;
+            final int z = getZ();
+            final int t = getT();
+            final int c = getC();
+            final boolean cok;
+            final boolean zok;
+            final boolean tok;
 
-            if (isActiveFor(roi2d.getZ(), roi2d.getT(), roi2d.getC()))
-                return getBooleanMask(true).intersects(roi2d.getBooleanMask(true));
+            // can intersect ?
+            zok = (z == -1) || (z == roi2d.getZ()) || (roi2d.getZ() == -1);
+            tok = (t == -1) || (t == roi2d.getT()) || (roi2d.getT() == -1);
+            cok = (c == -1) || (c == roi2d.getC()) || (roi2d.getC() == -1);
 
-            return false;
+            // same position ?
+            return zok && tok && cok && getBooleanMask(true).intersects(roi2d.getBooleanMask(true));
         }
 
-        // do it the other way
-        return roi.intersects(this);
+        // use default implementation
+        return super.intersects(roi);
     }
 
     /**
@@ -931,12 +957,6 @@ public abstract class ROI2D extends ROI
         return false;
     }
 
-    @Override
-    public boolean canSetPosition()
-    {
-        return canTranslate();
-    }
-
     /**
      * Set the <code>ROI</code> 2D bounds.<br>
      * Note that not all ROI supports bounds modification and you should call
@@ -978,6 +998,13 @@ public abstract class ROI2D extends ROI
         {
             endUpdate();
         }
+    }
+
+    @Override
+    public boolean canSetPosition()
+    {
+        // default implementation use translation if available
+        return canTranslate();
     }
 
     /**
@@ -1036,15 +1063,21 @@ public abstract class ROI2D extends ROI
     }
 
     /**
-     * Translate the ROI position by the specified delta X <code>dx</code> and Delta Y
-     * <code>dy</code>.<br>
+     * Translate the ROI position by the specified delta X/Y.<br>
      * Note that not all ROI support this operation so you should test it by calling
      * {@link #canTranslate()} first.
      * 
+     * @param dx
+     *        translation value to apply on X dimension
+     * @param dy
+     *        translation value to apply on Y dimension
      * @see #canTranslate()
      * @see #setPosition2D(Point2D)
      */
-    public abstract void translate(double dx, double dy);
+    public void translate(double dx, double dy)
+    {
+        // not supported by default
+    }
 
     @Override
     public boolean[] getBooleanMask2D(int x, int y, int width, int height, int z, int t, int c, boolean inclusive)

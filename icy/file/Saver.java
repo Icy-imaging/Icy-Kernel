@@ -413,7 +413,8 @@ public class Saver
      */
     public static void save(Sequence sequence, File file)
     {
-        save(sequence, file, (sequence.getSizeZ() * sequence.getSizeT()) > 1);
+        save(sequence, file, 0, sequence.getSizeZ() - 1, 0, sequence.getSizeT() - 1, 15,
+                (sequence.getSizeZ() * sequence.getSizeT()) > 1, true);
     }
 
     /**
@@ -538,7 +539,7 @@ public class Saver
     public static void save(IFormatWriter formatWriter, Sequence sequence, File file, int zMin, int zMax, int tMin,
             int tMax, int fps, boolean multipleFile, boolean showProgress, boolean addToRecent)
     {
-        final String filePath = file.getAbsolutePath();
+        final String filePath = FileUtil.getGenericPath(file.getAbsolutePath());
         final int sizeT = (tMax - tMin) + 1;
         final int sizeZ = (zMax - zMin) + 1;
         final int numImages = sizeT * sizeZ;
@@ -550,7 +551,7 @@ public class Saver
         else
             mainMenu = null;
         if (showProgress)
-            saveFrame = new FileFrame("Saving", file.getAbsolutePath());
+            saveFrame = new FileFrame("Saving", filePath);
         else
             saveFrame = null;
         try
@@ -617,7 +618,7 @@ public class Saver
 
                 // add as one item to recent file list
                 if (mainMenu != null)
-                    mainMenu.addRecentLoadedFile(new File(fileBaseDirectory));
+                    mainMenu.addRecentFile(fileBaseDirectory);
             }
             else
             {
@@ -642,12 +643,12 @@ public class Saver
                     sequence.setName(FileUtil.getFileName(fixedFilePath, false));
                 sequence.setFilename(fixedFilePath);
 
-                // save as multi images file
+                // save into a single file
                 save(formatWriter, sequence, fixedFilePath, zMin, zMax, tMin, tMax, fps, saveFrame);
 
                 // add as one item to recent file list
                 if (mainMenu != null)
-                    mainMenu.addRecentLoadedFile(new File(fixedFilePath));
+                    mainMenu.addRecentFile(fixedFilePath);
             }
 
             // Sequence persistence enabled --> save XML

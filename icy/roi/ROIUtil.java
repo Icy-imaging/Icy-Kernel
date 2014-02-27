@@ -24,9 +24,13 @@ import icy.math.MathUtil;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceDataIterator;
 import icy.type.DataIteratorUtil;
+import icy.type.point.Point3D;
+import icy.type.point.Point4D;
+import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.ShapeUtil.BooleanOperator;
 
+import java.awt.geom.Point2D;
 import java.util.List;
 
 /**
@@ -168,7 +172,7 @@ public class ROIUtil
     }
 
     /**
-     * Returns the number of pixel contained in the ROI of specified sequence.
+     * Returns the number of sequence pixels contained in the specified ROI.
      * 
      * @param sequence
      *        The sequence we want to get the number of pixel.
@@ -193,7 +197,7 @@ public class ROIUtil
     }
 
     /**
-     * Returns the minimum pixel intensity contained in the ROI of specified sequence.
+     * Returns the minimum intensity of sequence pixels contained in the specified ROI.
      * 
      * @param sequence
      *        The sequence we want to get the min intensity information.
@@ -215,7 +219,7 @@ public class ROIUtil
     }
 
     /**
-     * Returns the maximum pixel intensity contained in the ROI of specified sequence.
+     * Returns the maximum intensity of sequence pixels contained in the specified ROI.
      * 
      * @param sequence
      *        The sequence we want to get the max intensity information.
@@ -237,7 +241,7 @@ public class ROIUtil
     }
 
     /**
-     * Returns the mean pixel intensity contained in the ROI of specified sequence.
+     * Returns the mean intensity of sequence pixels contained in the specified ROI.
      * 
      * @param sequence
      *        The sequence we want to get the mean intensity.
@@ -262,7 +266,7 @@ public class ROIUtil
     }
 
     /**
-     * Returns the sum of all pixel intensity contained in the ROI of specified sequence.
+     * Returns the sum of all intensity of sequence pixels contained in the specified ROI.
      * 
      * @param sequence
      *        The sequence we want to get the intensity sum.
@@ -284,7 +288,20 @@ public class ROIUtil
     }
 
     /**
-     * Returns the min, max, mean intensity for the specified sequence region.
+     * Computes and returns the standard deviation for the specified sequence region.
+     * 
+     * @param sequence
+     *        The sequence we want to get the intensity informations.
+     * @param roi
+     *        The ROI define the region where we want to compute the standard deviation.
+     */
+    public static double getStandardDeviation(Sequence sequence, ROI roi)
+    {
+        return getStandardDeviation(sequence, roi, -1, -1, -1);
+    }
+
+    /**
+     * Returns the min, max, mean intensity of sequence pixels contained in the specified ROI.
      * 
      * @param sequence
      *        The sequence we want to get the intensity informations.
@@ -297,7 +314,7 @@ public class ROIUtil
     }
 
     /**
-     * Returns the number of pixel contained in the ROI of specified sequence.
+     * Returns the number of sequence pixels contained in the specified ROI.
      */
     public static long getNumPixel(Sequence sequence, ROI roi)
     {
@@ -305,7 +322,7 @@ public class ROIUtil
     }
 
     /**
-     * Returns the minimum pixel intensity contained in the ROI of specified sequence.
+     * Returns the minimum intensity of sequence pixels contained in the specified ROI.
      */
     public static double getMinIntensity(Sequence sequence, ROI roi)
     {
@@ -313,7 +330,7 @@ public class ROIUtil
     }
 
     /**
-     * Returns the maximum pixel intensity contained in the ROI of specified sequence.
+     * Returns the maximum intensity of sequence pixels contained in the specified ROI.
      */
     public static double getMaxIntensity(Sequence sequence, ROI roi)
     {
@@ -321,7 +338,7 @@ public class ROIUtil
     }
 
     /**
-     * Returns the mean pixel intensity contained in the ROI of specified sequence.
+     * Returns the mean intensity of sequence pixels contained in the specified ROI.
      */
     public static double getMeanIntensity(Sequence sequence, ROI roi)
     {
@@ -329,11 +346,212 @@ public class ROIUtil
     }
 
     /**
-     * Returns the sum of all pixel intensity contained in the ROI of specified sequence.
+     * Returns the sum of all intensity of sequence pixels contained in the specified ROI.
      */
     public static double getSumIntensity(Sequence sequence, ROI roi)
     {
         return getSumIntensity(sequence, roi, -1, -1, -1);
+    }
+
+    /**
+     * Returns the mass center of specified ROI.
+     */
+    public Point5D getMassCenter(ROI roi)
+    {
+        switch (roi.getDimension())
+        {
+            case 2:
+                final ROI2D roi2d = (ROI2D) roi;
+                final Point2D pt2d = getMassCenter(roi2d);
+                return new Point5D.Double(pt2d.getX(), pt2d.getY(), roi2d.getZ(), roi2d.getT(), roi2d.getC());
+
+            case 3:
+                final ROI3D roi3d = (ROI3D) roi;
+                final Point3D pt3d = getMassCenter(roi3d);
+                return new Point5D.Double(pt3d.getX(), pt3d.getY(), pt3d.getZ(), roi3d.getT(), roi3d.getC());
+
+            case 4:
+                final ROI4D roi4d = (ROI4D) roi;
+                final Point4D pt4d = getMassCenter(roi4d);
+                return new Point5D.Double(pt4d.getX(), pt4d.getY(), pt4d.getZ(), pt4d.getT(), roi4d.getC());
+
+            case 5:
+                return getMassCenter((ROI5D) roi);
+
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Returns the mass center of specified 2D ROI.
+     */
+    public Point2D getMassCenter(ROI2D roi)
+    {
+        double x = 0, y = 0;
+        long len = 0;
+
+        final BooleanMask2D mask = roi.getBooleanMask(true);
+        final boolean m[] = mask.mask;
+        final int h = mask.bounds.height;
+        final int w = mask.bounds.width;
+
+        int off = 0;
+        for (int j = 0; j < h; j++)
+        {
+            for (int i = 0; i < w; i++)
+            {
+                if (m[off++])
+                {
+                    x += i;
+                    y += j;
+                    len++;
+                }
+            }
+        }
+
+        final Point2D pos2d = roi.getPosition2D();
+        return new Point2D.Double(pos2d.getX() + (x / len), pos2d.getY() + (y / len));
+    }
+
+    /**
+     * Returns the mass center of specified 3D ROI.
+     */
+    public Point3D getMassCenter(ROI3D roi)
+    {
+        double x = 0, y = 0, z = 0;
+        long len = 0;
+        final BooleanMask3D mask3d = roi.getBooleanMask(true);
+
+        for (Integer zSlice : mask3d.mask.keySet())
+        {
+            final int zi = zSlice.intValue();
+            final double zd = zi;
+            final BooleanMask2D mask = mask3d.getMask2D(zi);
+            final boolean m[] = mask.mask;
+            final int h = mask.bounds.height;
+            final int w = mask.bounds.width;
+
+            int off = 0;
+            for (int j = 0; j < h; j++)
+            {
+                for (int i = 0; i < w; i++)
+                {
+                    if (m[off++])
+                    {
+                        x += i;
+                        y += j;
+                        z += zd;
+                        len++;
+                    }
+                }
+            }
+        }
+
+        final Point3D pos3d = roi.getPosition3D();
+        return new Point3D.Double(pos3d.getX() + (x / len), pos3d.getY() + (y / len), pos3d.getZ() + (z / len));
+    }
+
+    /**
+     * Returns the mass center of specified 4D ROI.
+     */
+    public Point4D getMassCenter(ROI4D roi)
+    {
+        final BooleanMask4D mask4d = roi.getBooleanMask(true);
+        double x = 0, y = 0, z = 0, t = 0;
+        long len = 0;
+
+        for (Integer tFrame : mask4d.mask.keySet())
+        {
+            final int ti = tFrame.intValue();
+            final double td = ti;
+            final BooleanMask3D mask3d = mask4d.getMask3D(ti);
+
+            for (Integer zSlice : mask3d.mask.keySet())
+            {
+                final int zi = zSlice.intValue();
+                final double zd = zi;
+                final BooleanMask2D mask = mask3d.getMask2D(zi);
+                final boolean m[] = mask.mask;
+                final int h = mask.bounds.height;
+                final int w = mask.bounds.width;
+
+                int off = 0;
+                for (int j = 0; j < h; j++)
+                {
+                    for (int i = 0; i < w; i++)
+                    {
+                        if (m[off++])
+                        {
+                            x += i;
+                            y += j;
+                            z += zd;
+                            t += td;
+                            len++;
+                        }
+                    }
+                }
+            }
+        }
+
+        final Point4D pos4d = roi.getPosition4D();
+        return new Point4D.Double(pos4d.getX() + (x / len), pos4d.getY() + (y / len), pos4d.getZ() + (z / len),
+                pos4d.getT() + (t / len));
+    }
+
+    /**
+     * Returns the mass center of specified 5D ROI.
+     */
+    public Point5D getMassCenter(ROI5D roi)
+    {
+        final BooleanMask5D mask5d = roi.getBooleanMask(true);
+        double x = 0, y = 0, z = 0, t = 0, c = 0;
+        long len = 0;
+
+        for (Integer cChannel : mask5d.mask.keySet())
+        {
+            final int ci = cChannel.intValue();
+            final double cd = ci;
+            final BooleanMask4D mask4d = mask5d.getMask4D(ci);
+
+            for (Integer tFrame : mask4d.mask.keySet())
+            {
+                final int ti = tFrame.intValue();
+                final double td = ti;
+                final BooleanMask3D mask3d = mask4d.getMask3D(ti);
+
+                for (Integer zSlice : mask3d.mask.keySet())
+                {
+                    final int zi = zSlice.intValue();
+                    final double zd = zi;
+                    final BooleanMask2D mask = mask3d.getMask2D(zi);
+                    final boolean m[] = mask.mask;
+                    final int h = mask.bounds.height;
+                    final int w = mask.bounds.width;
+
+                    int off = 0;
+                    for (int j = 0; j < h; j++)
+                    {
+                        for (int i = 0; i < w; i++)
+                        {
+                            if (m[off++])
+                            {
+                                x += i;
+                                y += j;
+                                z += zd;
+                                t += td;
+                                c += cd;
+                                len++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        final Point5D pos5d = roi.getPosition5D();
+        return new Point5D.Double(pos5d.getX() + (x / len), pos5d.getY() + (y / len), pos5d.getZ() + (z / len),
+                pos5d.getT() + (t / len), pos5d.getC() + (c / len));
     }
 
     /**
@@ -566,7 +784,7 @@ public class ROIUtil
      * @param sequence
      *        the input sequence used to retrieve operation unit by using pixel size information.
      * @param interiorPoints
-     *        the number of contour points (override the ROI value)
+     *        the number of interior points (override the ROI value)
      * @param roi
      *        the ROI we want to compute the interior size
      * @param dim

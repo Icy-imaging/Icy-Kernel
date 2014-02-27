@@ -25,6 +25,7 @@ import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.sequence.Sequence;
 import icy.type.DataType;
+import icy.type.collection.array.Array1DUtil;
 import icy.type.collection.array.Array2DUtil;
 import icy.type.collection.array.ArrayUtil;
 import ij.CompositeImage;
@@ -162,11 +163,11 @@ public class ImageJUtil
                     else
                     {
                         final ImageProcessor ip = image.getProcessor();
-                        final Object data = ip.getPixels();
+                        final Object data = Array1DUtil.copyOf(ip.getPixels());
                         final DataType dataType = ArrayUtil.getDataType(data);
                         final Object[] datas = Array2DUtil.createArray(dataType, sizeC);
 
-                        // first channel data
+                        // first channel data (get a copy)
                         datas[0] = data;
                         // special case of 16 bits signed data --> subtract 32768
                         if (signed16)
@@ -176,7 +177,7 @@ public class ImageJUtil
                         for (int c = 1; c < sizeC; c++)
                         {
                             image.setPosition(c + 1, z + 1, t + 1);
-                            datas[c] = image.getProcessor().getPixels();
+                            datas[c] = Array1DUtil.copyOf(image.getProcessor().getPixels());
                             // special case of 16 bits signed data --> subtract 32768
                             if (signed16)
                                 datas[c] = ArrayMath.subtract(datas, Double.valueOf(32768));
@@ -236,7 +237,7 @@ public class ImageJUtil
                     if (progressListener != null)
                         progressListener.notifyProgress(position, len);
 
-                    stack.addSlice(null, sequence.getDataXY(t, z, c));
+                    stack.addSlice(null, Array1DUtil.copyOf(sequence.getDataXY(t, z, c)));
 
                     position++;
                 }

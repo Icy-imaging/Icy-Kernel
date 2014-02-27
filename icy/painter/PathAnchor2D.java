@@ -275,6 +275,31 @@ public class PathAnchor2D extends Anchor2D
     }
 
     @Override
+    public boolean loadPositionFromXML(Node node)
+    {
+        if (node == null)
+            return false;
+
+        beginUpdate();
+        try
+        {
+            super.loadPositionFromXML(node);
+
+            setPosCExtX(XMLUtil.getElementDoubleValue(node, ID_POS_CEXT_X, 0d));
+            setPosCExtY(XMLUtil.getElementDoubleValue(node, ID_POS_CEXT_Y, 0d));
+            setPosQExtX(XMLUtil.getElementDoubleValue(node, ID_POS_QEXT_X, 0d));
+            setPosQExtY(XMLUtil.getElementDoubleValue(node, ID_POS_QEXT_Y, 0d));
+            setType(XMLUtil.getElementIntValue(node, ID_TYPE, -1));
+        }
+        finally
+        {
+            endUpdate();
+        }
+
+        return true;
+    }
+
+    @Override
     public boolean loadFromXML(Node node)
     {
         if (node == null)
@@ -295,6 +320,23 @@ public class PathAnchor2D extends Anchor2D
         {
             endUpdate();
         }
+
+        return true;
+    }
+
+    @Override
+    public boolean savePositionToXML(Node node)
+    {
+        if (node == null)
+            return false;
+
+        super.savePositionToXML(node);
+
+        XMLUtil.setElementDoubleValue(node, ID_POS_CEXT_X, getPosCExtX());
+        XMLUtil.setElementDoubleValue(node, ID_POS_CEXT_Y, getPosCExtY());
+        XMLUtil.setElementDoubleValue(node, ID_POS_QEXT_X, getPosQExtX());
+        XMLUtil.setElementDoubleValue(node, ID_POS_QEXT_Y, getPosQExtY());
+        XMLUtil.setElementIntValue(node, ID_TYPE, getType());
 
         return true;
     }

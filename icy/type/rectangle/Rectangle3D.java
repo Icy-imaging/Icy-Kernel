@@ -204,18 +204,12 @@ public abstract class Rectangle3D implements Cloneable
     /**
      * Returns the point coordinates.
      */
-    public Point3D getPosition()
-    {
-        return new Point3D.Double(getX(), getY(), getZ());
-    }
+    public abstract Point3D getPosition();
 
     /**
      * Returns the dimension.
      */
-    public Dimension3D getDimension()
-    {
-        return new Dimension3D.Double(getSizeX(), getSizeY(), getSizeZ());
-    }
+    public abstract Dimension3D getDimension();
 
     /**
      * Returns the size of X dimension.
@@ -337,13 +331,11 @@ public abstract class Rectangle3D implements Cloneable
      */
     public double getMaxX()
     {
-        final double s = getSizeX();
-
         // handle this special case
-        if (s == java.lang.Double.POSITIVE_INFINITY)
+        if (getSizeX() == java.lang.Double.POSITIVE_INFINITY)
             return java.lang.Double.POSITIVE_INFINITY;
 
-        return getX() + s;
+        return getX() + getSizeX();
     }
 
     /**
@@ -351,13 +343,11 @@ public abstract class Rectangle3D implements Cloneable
      */
     public double getMaxY()
     {
-        final double s = getSizeY();
-
         // handle this special case
-        if (s == java.lang.Double.POSITIVE_INFINITY)
+        if (getSizeY() == java.lang.Double.POSITIVE_INFINITY)
             return java.lang.Double.POSITIVE_INFINITY;
 
-        return getY() + s;
+        return getY() + getSizeY();
     }
 
     /**
@@ -365,13 +355,11 @@ public abstract class Rectangle3D implements Cloneable
      */
     public double getMaxZ()
     {
-        final double s = getSizeZ();
-
         // handle this special case
-        if (s == java.lang.Double.POSITIVE_INFINITY)
+        if (getSizeZ() == java.lang.Double.POSITIVE_INFINITY)
             return java.lang.Double.POSITIVE_INFINITY;
 
-        return getZ() + s;
+        return getZ() + getSizeZ();
     }
 
     /**
@@ -379,14 +367,11 @@ public abstract class Rectangle3D implements Cloneable
      */
     public double getCenterX()
     {
-        final double x = getX();
-        final double s = getSizeX();
-
         // handle this special case
-        if ((x == java.lang.Double.NEGATIVE_INFINITY) && (s == java.lang.Double.POSITIVE_INFINITY))
+        if (isInfiniteX())
             return 0d;
 
-        return x + s / 2d;
+        return (getX() + getSizeX()) / 2d;
     }
 
     /**
@@ -394,14 +379,11 @@ public abstract class Rectangle3D implements Cloneable
      */
     public double getCenterY()
     {
-        final double y = getY();
-        final double s = getSizeY();
-
         // handle this special case
-        if ((y == java.lang.Double.NEGATIVE_INFINITY) && (s == java.lang.Double.POSITIVE_INFINITY))
+        if (isInfiniteY())
             return 0d;
 
-        return y + s / 2d;
+        return (getY() + getSizeY()) / 2d;
     }
 
     /**
@@ -409,20 +391,17 @@ public abstract class Rectangle3D implements Cloneable
      */
     public double getCenterZ()
     {
-        final double z = getZ();
-        final double s = getSizeZ();
-
         // handle this special case
-        if ((z == java.lang.Double.NEGATIVE_INFINITY) && (s == java.lang.Double.POSITIVE_INFINITY))
+        if (isInfiniteZ())
             return 0d;
 
-        return z + s / 2d;
+        return (getZ() + getSizeZ()) / 2d;
     }
 
     /**
-     * Determines whether the <code>Rectangle3D</code> is empty.
+     * Determines whether the <code>Rectangle5D</code> is empty.
      * 
-     * @return <code>true</code> if the <code>Rectangle3D</code> is empty; <code>false</code>
+     * @return <code>true</code> if the <code>Rectangle5D</code> is empty; <code>false</code>
      *         otherwise.
      */
     public boolean isEmpty()
@@ -433,17 +412,26 @@ public abstract class Rectangle3D implements Cloneable
     /**
      * Returns <code>true</code> if the X dimension should be considered as infinite.
      */
-    public abstract boolean isInfiniteX();
+    public boolean isInfiniteX()
+    {
+        return (getX() == java.lang.Double.NEGATIVE_INFINITY) && (getSizeX() == java.lang.Double.POSITIVE_INFINITY);
+    }
 
     /**
      * Returns <code>true</code> if the Y dimension should be considered as infinite.
      */
-    public abstract boolean isInfiniteY();
+    public boolean isInfiniteY()
+    {
+        return (getY() == java.lang.Double.NEGATIVE_INFINITY) && (getSizeY() == java.lang.Double.POSITIVE_INFINITY);
+    }
 
     /**
      * Returns <code>true</code> if the Z dimension should be considered as infinite.
      */
-    public abstract boolean isInfiniteZ();
+    public boolean isInfiniteZ()
+    {
+        return (getZ() == java.lang.Double.NEGATIVE_INFINITY) && (getSizeZ() == java.lang.Double.POSITIVE_INFINITY);
+    }
 
     /**
      * Sets the X dimension to infinite.
@@ -513,11 +501,28 @@ public abstract class Rectangle3D implements Cloneable
      */
     public boolean contains(double x, double y, double z, double sizeX, double sizeY, double sizeZ)
     {
-        if (isEmpty())
-            return false;
+        final double maxX;
+        final double maxY;
+        final double maxZ;
 
-        return (x >= getMinX()) && (y >= getMaxY()) && (z >= getMinZ()) && (x + sizeX <= getMaxX())
-                && (y + sizeY <= getMaxY()) && (z + sizeZ <= getMaxZ());
+        // special infinite case
+        if (sizeX == java.lang.Double.POSITIVE_INFINITY)
+            maxX = java.lang.Double.POSITIVE_INFINITY;
+        else
+            maxX = x + sizeX;
+        // special infinite case
+        if (sizeY == java.lang.Double.POSITIVE_INFINITY)
+            maxY = java.lang.Double.POSITIVE_INFINITY;
+        else
+            maxY = y + sizeY;
+        // special infinite case
+        if (sizeZ == java.lang.Double.POSITIVE_INFINITY)
+            maxZ = java.lang.Double.POSITIVE_INFINITY;
+        else
+            maxZ = z + sizeZ;
+
+        return (x >= getMinX()) && (y >= getMaxY()) && (z >= getMinZ()) && (maxX <= getMaxX()) && (maxY <= getMaxY())
+                && (maxZ <= getMaxZ());
     }
 
     /**
@@ -555,8 +560,28 @@ public abstract class Rectangle3D implements Cloneable
      */
     public boolean intersects(double x, double y, double z, double sizeX, double sizeY, double sizeZ)
     {
-        return (x + sizeX > getMinX()) && (y + sizeY > getMaxY()) && (z + sizeZ > getMinZ()) && (x < getMaxX())
-                && (y < getMaxY()) && (z < getMaxZ());
+        final double maxX;
+        final double maxY;
+        final double maxZ;
+
+        // special infinite case
+        if (sizeX == java.lang.Double.POSITIVE_INFINITY)
+            maxX = java.lang.Double.POSITIVE_INFINITY;
+        else
+            maxX = x + sizeX;
+        // special infinite case
+        if (sizeY == java.lang.Double.POSITIVE_INFINITY)
+            maxY = java.lang.Double.POSITIVE_INFINITY;
+        else
+            maxY = y + sizeY;
+        // special infinite case
+        if (sizeZ == java.lang.Double.POSITIVE_INFINITY)
+            maxZ = java.lang.Double.POSITIVE_INFINITY;
+        else
+            maxZ = z + sizeZ;
+
+        return (maxX > getMinX()) && (maxY > getMaxY()) && (maxZ > getMinZ()) && (x < getMaxX()) && (y < getMaxY())
+                && (z < getMaxZ());
     }
 
     /**
@@ -816,21 +841,15 @@ public abstract class Rectangle3D implements Cloneable
         }
 
         @Override
-        public boolean isInfiniteX()
+        public Point3D.Double getPosition()
         {
-            return (getX() == java.lang.Double.NEGATIVE_INFINITY) && (getSizeX() == java.lang.Double.POSITIVE_INFINITY);
+            return new Point3D.Double(x, y, z);
         }
 
         @Override
-        public boolean isInfiniteY()
+        public Dimension3D.Double getDimension()
         {
-            return (getY() == java.lang.Double.NEGATIVE_INFINITY) && (getSizeY() == java.lang.Double.POSITIVE_INFINITY);
-        }
-
-        @Override
-        public boolean isInfiniteZ()
-        {
-            return (getZ() == java.lang.Double.NEGATIVE_INFINITY) && (getSizeZ() == java.lang.Double.POSITIVE_INFINITY);
+            return new Dimension3D.Double(sizeX, sizeY, sizeZ);
         }
 
         @Override
@@ -907,6 +926,12 @@ public abstract class Rectangle3D implements Cloneable
         @Override
         public double getX()
         {
+            // special infinite case
+            if (x == java.lang.Float.NEGATIVE_INFINITY)
+                return java.lang.Double.NEGATIVE_INFINITY;
+            if (x == java.lang.Float.POSITIVE_INFINITY)
+                return java.lang.Double.POSITIVE_INFINITY;
+
             return x;
         }
 
@@ -919,6 +944,12 @@ public abstract class Rectangle3D implements Cloneable
         @Override
         public double getY()
         {
+            // special infinite case
+            if (y == java.lang.Float.NEGATIVE_INFINITY)
+                return java.lang.Double.NEGATIVE_INFINITY;
+            if (y == java.lang.Float.POSITIVE_INFINITY)
+                return java.lang.Double.POSITIVE_INFINITY;
+
             return y;
         }
 
@@ -931,6 +962,12 @@ public abstract class Rectangle3D implements Cloneable
         @Override
         public double getZ()
         {
+            // special infinite case
+            if (z == java.lang.Float.NEGATIVE_INFINITY)
+                return java.lang.Double.NEGATIVE_INFINITY;
+            if (z == java.lang.Float.POSITIVE_INFINITY)
+                return java.lang.Double.POSITIVE_INFINITY;
+
             return z;
         }
 
@@ -943,6 +980,10 @@ public abstract class Rectangle3D implements Cloneable
         @Override
         public double getSizeX()
         {
+            // special infinite case
+            if (sizeX == java.lang.Float.POSITIVE_INFINITY)
+                return java.lang.Double.POSITIVE_INFINITY;
+
             return sizeX;
         }
 
@@ -955,6 +996,10 @@ public abstract class Rectangle3D implements Cloneable
         @Override
         public double getSizeY()
         {
+            // special infinite case
+            if (sizeY == java.lang.Float.POSITIVE_INFINITY)
+                return java.lang.Double.POSITIVE_INFINITY;
+
             return sizeY;
         }
 
@@ -967,6 +1012,10 @@ public abstract class Rectangle3D implements Cloneable
         @Override
         public double getSizeZ()
         {
+            // special infinite case
+            if (sizeZ == java.lang.Float.POSITIVE_INFINITY)
+                return java.lang.Double.POSITIVE_INFINITY;
+
             return sizeZ;
         }
 
@@ -977,21 +1026,15 @@ public abstract class Rectangle3D implements Cloneable
         }
 
         @Override
-        public boolean isInfiniteX()
+        public Point3D.Float getPosition()
         {
-            return (getX() == java.lang.Float.NEGATIVE_INFINITY) && (getSizeX() == java.lang.Float.POSITIVE_INFINITY);
+            return new Point3D.Float(x, y, z);
         }
 
         @Override
-        public boolean isInfiniteY()
+        public Dimension3D.Float getDimension()
         {
-            return (getY() == java.lang.Float.NEGATIVE_INFINITY) && (getSizeY() == java.lang.Float.POSITIVE_INFINITY);
-        }
-
-        @Override
-        public boolean isInfiniteZ()
-        {
-            return (getZ() == java.lang.Float.NEGATIVE_INFINITY) && (getSizeZ() == java.lang.Float.POSITIVE_INFINITY);
+            return new Dimension3D.Float(sizeX, sizeY, sizeZ);
         }
 
         @Override
@@ -1112,6 +1155,12 @@ public abstract class Rectangle3D implements Cloneable
         @Override
         public double getX()
         {
+            // special infinite case
+            if (x == java.lang.Integer.MIN_VALUE)
+                return java.lang.Double.NEGATIVE_INFINITY;
+            if (x == java.lang.Integer.MAX_VALUE)
+                return java.lang.Double.POSITIVE_INFINITY;
+
             return x;
         }
 
@@ -1124,6 +1173,12 @@ public abstract class Rectangle3D implements Cloneable
         @Override
         public double getY()
         {
+            // special infinite case
+            if (y == java.lang.Integer.MIN_VALUE)
+                return java.lang.Double.NEGATIVE_INFINITY;
+            if (y == java.lang.Integer.MAX_VALUE)
+                return java.lang.Double.POSITIVE_INFINITY;
+
             return y;
         }
 
@@ -1136,6 +1191,12 @@ public abstract class Rectangle3D implements Cloneable
         @Override
         public double getZ()
         {
+            // special infinite case
+            if (z == java.lang.Integer.MIN_VALUE)
+                return java.lang.Double.NEGATIVE_INFINITY;
+            if (z == java.lang.Integer.MAX_VALUE)
+                return java.lang.Double.POSITIVE_INFINITY;
+
             return z;
         }
 
@@ -1148,6 +1209,10 @@ public abstract class Rectangle3D implements Cloneable
         @Override
         public double getSizeX()
         {
+            // special infinite case
+            if (sizeX == java.lang.Integer.MAX_VALUE)
+                return java.lang.Double.POSITIVE_INFINITY;
+
             return sizeX;
         }
 
@@ -1160,6 +1225,10 @@ public abstract class Rectangle3D implements Cloneable
         @Override
         public double getSizeY()
         {
+            // special infinite case
+            if (sizeY == java.lang.Integer.MAX_VALUE)
+                return java.lang.Double.POSITIVE_INFINITY;
+
             return sizeY;
         }
 
@@ -1172,6 +1241,10 @@ public abstract class Rectangle3D implements Cloneable
         @Override
         public double getSizeZ()
         {
+            // special infinite case
+            if (sizeZ == java.lang.Integer.MAX_VALUE)
+                return java.lang.Double.POSITIVE_INFINITY;
+
             return sizeZ;
         }
 
@@ -1182,21 +1255,15 @@ public abstract class Rectangle3D implements Cloneable
         }
 
         @Override
-        public boolean isInfiniteX()
+        public Point3D.Integer getPosition()
         {
-            return (getX() == java.lang.Integer.MIN_VALUE) && (getSizeX() == java.lang.Integer.MAX_VALUE);
+            return new Point3D.Integer(x, y, z);
         }
 
         @Override
-        public boolean isInfiniteY()
+        public Dimension3D.Integer getDimension()
         {
-            return (getY() == java.lang.Integer.MIN_VALUE) && (getSizeY() == java.lang.Integer.MAX_VALUE);
-        }
-
-        @Override
-        public boolean isInfiniteZ()
-        {
-            return (getZ() == java.lang.Integer.MIN_VALUE) && (getSizeZ() == java.lang.Integer.MAX_VALUE);
+            return new Dimension3D.Integer(sizeX, sizeY, sizeZ);
         }
 
         @Override

@@ -42,7 +42,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Rectangle2D;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.Semaphore;
@@ -69,6 +71,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     protected final Class<R> roiClass;
     protected boolean useChildColor;
     protected Semaphore modifyingSlice;
+    protected double translateZ;
 
     /**
      * Creates a new 3D ROI based on the given 2D ROI type.
@@ -80,6 +83,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
         this.roiClass = roiClass;
         useChildColor = false;
         modifyingSlice = new Semaphore(1);
+        translateZ = 0d;
     }
 
     @Override
@@ -380,6 +384,14 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     }
 
     /**
+     * Returns <code>true</code> if the ROI stack is empty.
+     */
+    public boolean isEmpty()
+    {
+        return slices.isEmpty();
+    }
+
+    /**
      * @return The size of this ROI stack along Z.<br>
      *         Note that the returned value indicates the difference between upper and lower bounds
      *         of this ROI, but doesn't guarantee that all slices in-between exist (
@@ -387,7 +399,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
      */
     public int getSizeZ()
     {
-        if (slices.isEmpty())
+        if (isEmpty())
             return 0;
 
         return (slices.lastKey().intValue() - slices.firstKey().intValue()) + 1;
@@ -421,7 +433,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     /**
      * Sets the slice for the given Z position.
      */
-    protected void setSlice(int z, R roi2d)
+    public void setSlice(int z, R roi2d)
     {
         // set Z, T and C position
         roi2d.setZ(z);
@@ -440,7 +452,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     /**
      * Removes slice at the given Z position and returns it.
      */
-    protected R removeSlice(int z)
+    public R removeSlice(int z)
     {
         // remove the current slice (if any)
         final R result = slices.remove(Integer.valueOf(z));
@@ -461,7 +473,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     /**
      * Removes all slices.
      */
-    protected void clear()
+    public void clear()
     {
         for (R slice : slices.values())
         {
@@ -662,6 +674,76 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
             volume += slice.getNumberOfPoints();
 
         return volume;
+    }
+
+    @Override
+    public boolean canTranslate()
+    {
+        // only need to test the first entry
+        if (!slices.isEmpty())
+            return slices.firstEntry().getValue().canTranslate();
+
+        return false;
+    }
+
+    /**
+     * Translate the stack of specified Z position.
+     */
+    public void translate(int z)
+    {
+        // easy optimizations
+        if ((z == 0) || isEmpty())
+            return;
+
+        final Map<Integer, R> map = new HashMap<Integer, R>(slices);
+
+        slices.clear();
+        for (Entry<Integer, R> entry : map.entrySet())
+        {
+            final R roi = entry.getValue();
+            final int newZ = roi.getZ() + z;
+
+            // only positive value accepted
+            if (newZ >= 0)
+            {
+                roi.setZ(newZ);
+                slices.put(Integer.valueOf(newZ), roi);
+            }
+        }
+
+        // notify ROI changed
+        roiChanged();
+    }
+
+    @Override
+    public void translate(double dx, double dy, double dz)
+    {
+        beginUpdate();
+        try
+        {
+            translateZ += dz;
+            // convert to integer
+            final int dzi = (int) translateZ;
+            // keep trace of not used floating part
+            translateZ -= dzi;
+
+            translate(dzi);
+
+            modifyingSlice.acquireUninterruptibly();
+            try
+            {
+                for (R slice : slices.values())
+                    slice.translate(dx, dy);
+            }
+            finally
+            {
+                modifyingSlice.release();
+            }
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     @Override

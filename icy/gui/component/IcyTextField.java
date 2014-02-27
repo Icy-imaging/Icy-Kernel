@@ -65,7 +65,7 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
 
         init();
     }
-
+    
     /**
      * Creates a <code>IcyTextField</code> with the specified <code>AbstractFormatter</code>. The
      * <code>AbstractFormatter</code> is placed in an <code>AbstractFormatterFactory</code>.

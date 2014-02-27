@@ -19,8 +19,9 @@
 package icy.image;
 
 /**
- * @author Stephane
+ * @deprecated Use {@link ChannelPosition} instead.
  */
+@Deprecated
 public class BandPosition extends ImagePosition
 {
     public static final char C_ID = 'C';
@@ -212,7 +213,7 @@ public class BandPosition extends ImagePosition
      * Compare to another ImagePosition with following priority T -> Z -> C
      */
     @Override
-    public int compareTo(Object o)
+    public int compareTo(ImagePosition o)
     {
         final int result = super.compareTo(o);
 

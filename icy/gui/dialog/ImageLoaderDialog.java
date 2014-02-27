@@ -18,11 +18,13 @@
  */
 package icy.gui.dialog;
 
+import icy.file.FileUtil;
 import icy.file.ImageFileFormat;
 import icy.file.Loader;
 import icy.main.Icy;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.XMLPreferences;
+import icy.type.collection.CollectionUtil;
 
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
@@ -135,7 +137,7 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         // listen file filter change
         addPropertyChangeListener(this);
 
-        setDialogTitle("Icy - Load image file");
+        setDialogTitle("Load image file");
 
         // display loader
         final int value = showOpenDialog(Icy.getMainInterface().getMainFrame());
@@ -154,7 +156,8 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
 
             // load if requested
             if (autoLoad)
-                Loader.load(getSelectedFiles(), isSeparateSequenceSelected(), isAutoOrderSelected(), true);
+                Loader.load(CollectionUtil.asList(FileUtil.toPaths(getSelectedFiles())), isSeparateSequenceSelected(),
+                        isAutoOrderSelected(), true);
         }
 
         // store interface option

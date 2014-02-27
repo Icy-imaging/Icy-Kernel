@@ -30,6 +30,7 @@ import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
 
+import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashMap;
 import java.util.List;
@@ -49,26 +50,6 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     }
 
     /**
-     * Display the specified Throwable message in console.<br>
-     * If <i>error</i> is true the message is considerer as an error and then written in error
-     * output.
-     */
-    private static void showSimpleErrorMessage(Throwable t, boolean error)
-    {
-        if (t != null)
-        {
-            final String mess = "Caused by : " + t.toString();
-
-            if (error)
-                System.err.println(mess);
-            else
-                System.out.println(mess);
-
-            showSimpleErrorMessage(t.getCause(), error);
-        }
-    }
-
-    /**
      * Display the specified Throwable message in error output.
      */
     public static void showErrorMessage(Throwable t, boolean printStackTrace)
@@ -83,42 +64,43 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
      */
     public static void showErrorMessage(Throwable t, boolean printStackTrace, boolean error)
     {
-        if (t != null)
+        final String mess = getErrorMessage(t, printStackTrace);
+
+        if (!StringUtil.isEmpty(mess))
         {
-            showSimpleErrorMessage(t.getCause(), error);
-
-            if (printStackTrace)
-                t.printStackTrace();
-
             if (error)
-                System.err.println(t.toString());
+                System.err.println(mess);
             else
-                System.out.println(t.toString());
+                System.out.println(mess);
         }
     }
 
-    private static String getSimpleErrorMessage(Throwable t)
-    {
-        if (t != null)
-            return "Caused by : " + t.toString() + "\n" + getSimpleErrorMessage(t.getCause());
-
-        return "";
-    }
-
+    /**
+     * Returns the formatted error message for the specified {@link Throwable}.<br>
+     * If <i>printStackTrace</i> is <code>true</code> the stack trace is also returned in the
+     * message.
+     */
     public static String getErrorMessage(Throwable t, boolean printStackTrace)
     {
-        if (t != null)
+        String result = "";
+        Throwable throwable = t;
+
+        while (throwable != null)
         {
-            String result = getSimpleErrorMessage(t.getCause()) + t.toString() + "\n";
+            result += throwable.toString() + "\n";
 
             if (printStackTrace)
-                for (StackTraceElement element : t.getStackTrace())
+            {
+                for (StackTraceElement element : throwable.getStackTrace())
                     result = result + "\tat " + element.toString() + "\n";
+            }
 
-            return result;
+            throwable = throwable.getCause();
+            if (throwable != null)
+                result += "Caused by :\n";
         }
 
-        return "";
+        return result;
     }
 
     @Override
@@ -137,46 +119,11 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         });
     }
 
-    static PluginDescriptor findMatchingLocalPlugin(List<PluginDescriptor> plugins, String text)
-    {
-        String className = ClassUtil.getBaseClassName(text);
-
-        while (!(StringUtil.equals(className, PluginLoader.PLUGIN_PACKAGE) || StringUtil.isEmpty(className)))
-        {
-            final PluginDescriptor plugin = findMatchingLocalPluginInternal(plugins, className);
-
-            if (plugin != null)
-                return plugin;
-
-            className = ClassUtil.getPackageName(className);
-        }
-
-        return null;
-    }
-
-    private static PluginDescriptor findMatchingLocalPluginInternal(List<PluginDescriptor> plugins, String text)
-    {
-        PluginDescriptor result = null;
-
-        for (PluginDescriptor plugin : plugins)
-        {
-            if (plugin.getClassName().startsWith(text))
-            {
-                if (result != null)
-                    return null;
-
-                result = plugin;
-            }
-        }
-
-        return result;
-    }
-
     /**
      * Handle the specified exception.<br>
      * It actually display a message or report dialog depending the exception type.
      */
-    private static void handleException(PluginDescriptor plugin, String devId, Throwable t, boolean print)
+    private static void handleException(PluginDescriptor plugin, String devId, Throwable t, boolean printStackStrace)
     {
         final long current = System.currentTimeMillis();
 
@@ -203,35 +150,30 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         }
         else
         {
+            String message = "";
+
             if (t instanceof OutOfMemoryError)
             {
-                if ((current - lastErrorDialog) > ERROR_ANTISPAM_TIME)
+                if (t.getMessage().contains("Thread"))
                 {
-                    // handle out of memory error differently
-                    MessageDialog
-                            .showDialog(
-                                    "Out of memory error !",
-                                    "You're running out of memory !\nTry to increase the Maximum Memory parameter in Preferences.",
-                                    MessageDialog.ERROR_MESSAGE);
-                    // update last error dialog time
-                    lastErrorDialog = System.currentTimeMillis();
+                    message = "Out of resource error: cannot create new thread.\n"
+                            + "You should report this report as something goes wrong here !";
                 }
-
-                // always keep trace in console
-                showErrorMessage(t, print);
+                else
+                {
+                    message = "Not enough memory !\n"
+                            + "Try to increase the Maximum Memory parameter in Preferences.\n"
+                            + "You can also report the error if you think it is not due to a memory problem.";
+                }
             }
 
-            String message = getErrorMessage(t, true);
-
-            if (t instanceof OutOfMemoryError)
-            {
-                message = "Not enough memory or resource !\n"
-                        + "Try to increase the Maximum Memory parameter in Preferences.\n"
-                        + "You can also report the error if you think it is not due to a memory problem:\n" + message;
-            }
+            if (!StringUtil.isEmpty(message))
+                message += "\n";
+            message += getErrorMessage(t, printStackStrace);
 
             // write message in console if wanted or if spam error message
-            if (print || ((current - lastErrorDialog) < ERROR_ANTISPAM_TIME))
+            if ((t instanceof OutOfMemoryError) || printStackStrace
+                    || ((current - lastErrorDialog) < ERROR_ANTISPAM_TIME))
             {
                 if (plugin != null)
                     System.err.println("An error occured while plugin '" + plugin.getName() + "' was running :");
@@ -241,10 +183,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                 System.err.println(message);
             }
 
-            // NOTE : why only for plugin ??
-            // do report only for plugin error
-            // if ((plugin != null) || !StringUtil.isEmpty(devId))
-            // {
+            // do report (anti spam protected)
             if ((current - lastErrorDialog) > ERROR_ANTISPAM_TIME)
             {
                 final String title = t.toString();
@@ -253,7 +192,6 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                 // update last error dialog time
                 lastErrorDialog = System.currentTimeMillis();
             }
-            // }
         }
     }
 
@@ -261,18 +199,18 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
      * Handle the specified exception.<br>
      * It actually display a message or report dialog depending the exception type.
      */
-    public static void handleException(PluginDescriptor pluginDesc, Throwable t, boolean print)
+    public static void handleException(PluginDescriptor pluginDesc, Throwable t, boolean printStackStrace)
     {
-        handleException(pluginDesc, null, t, print);
+        handleException(pluginDesc, null, t, printStackStrace);
     }
 
     /**
      * Handle the specified exception.<br>
      * It actually display a message or report dialog depending the exception type.
      */
-    public static void handleException(String devId, Throwable t, boolean print)
+    public static void handleException(String devId, Throwable t, boolean printStackStrace)
     {
-        handleException(null, devId, t, print);
+        handleException(null, devId, t, printStackStrace);
     }
 
     /**
@@ -280,12 +218,111 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
      * Try to find the origin plugin which thrown the exception.
      * It actually display a message or report dialog depending the exception type.
      */
-    public static void handleException(Throwable t, boolean print)
+    public static void handleException(Throwable t, boolean printStackStrace)
     {
+        Throwable throwable = t;
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins();
 
-        // search plugin class (start from the end of stack trace)
-        for (StackTraceElement trace : t.getStackTrace())
+        while (throwable != null)
+        {
+            // search plugin class (start from the end of stack trace)
+            final PluginDescriptor plugin = findPluginFromStackTrace(plugins, throwable.getStackTrace());
+
+            // plugin found --> show the plugin report frame
+            if (plugin != null)
+            {
+                // only send to last plugin raising the exception
+                handleException(plugin, t, printStackStrace);
+                return;
+            }
+
+            // we did not find plugin class so we will search for plugin developer id
+            final String devId = findDevIdFromStackTrace(throwable.getStackTrace());
+
+            if (devId != null)
+            {
+                handleException(devId, t, printStackStrace);
+                return;
+            }
+
+            throwable = throwable.getCause();
+        }
+
+        // general exception (no plugin information found)
+        handleException(null, null, t, printStackStrace);
+    }
+
+    /**
+     * @deprecated Use {@link #handleException(PluginDescriptor, Throwable, boolean)} instead.
+     */
+    @Deprecated
+    public static void handlePluginException(PluginDescriptor pluginDesc, Throwable t, boolean printStackStrace)
+    {
+        handleException(pluginDesc, t, printStackStrace);
+    }
+
+    private static PluginDescriptor findMatchingLocalPlugin(List<PluginDescriptor> plugins, String text)
+    {
+        String className = ClassUtil.getBaseClassName(text);
+
+        // get the JAR file of this class
+        final File file = ClassUtil.getFile(className);
+
+        // found ?
+        if (file != null)
+        {
+            // try to find plugin using the same JAR file (so
+            for (PluginDescriptor p : plugins)
+            {
+                final String jarFileName = p.getJarFilename();
+
+                if (!StringUtil.isEmpty(jarFileName))
+                {
+                    final File jarFile = new File(jarFileName);
+
+                    // matching jar file --> return plugin
+                    if (StringUtil.equals(file.getAbsolutePath(), jarFile.getAbsolutePath()))
+                        return p;
+                }
+            }
+        }
+
+        // not found with first method so now we try on the class name
+        while (!(StringUtil.equals(className, PluginLoader.PLUGIN_PACKAGE) || StringUtil.isEmpty(className)))
+        {
+            final PluginDescriptor plugin = findMatchingLocalPluginInternal(plugins, className);
+
+            if (plugin != null)
+                return plugin;
+
+            // not found --> we test with parent package
+            className = ClassUtil.getPackageName(className);
+        }
+
+        return null;
+    }
+
+    private static PluginDescriptor findMatchingLocalPluginInternal(List<PluginDescriptor> plugins, String text)
+    {
+        PluginDescriptor result = null;
+
+        for (PluginDescriptor plugin : plugins)
+        {
+            if (plugin.getClassName().startsWith(text))
+            {
+                if (result != null)
+                    return null;
+
+                result = plugin;
+            }
+        }
+
+        return result;
+    }
+
+    private static PluginDescriptor findPluginFromStackTrace(List<PluginDescriptor> plugins, StackTraceElement[] st)
+    {
+        for (StackTraceElement trace : st)
         {
             final String className = trace.getClassName();
 
@@ -297,39 +334,27 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
 
                 // plugin found --> show the plugin report frame
                 if (plugin != null)
-                {
-                    // only send to last plugin raising the exception
-                    handleException(plugin, t, print);
-                    return;
-                }
+                    return plugin;
             }
         }
 
+        return null;
+    }
+
+    private static String findDevIdFromStackTrace(StackTraceElement[] st)
+    {
         // we did not find plugin class so we will search for plugin developer id
-        for (StackTraceElement trace : t.getStackTrace())
+        for (StackTraceElement trace : st)
         {
             final String className = trace.getClassName();
 
             // plugin class ?
             if (className.startsWith(PluginLoader.PLUGIN_PACKAGE + "."))
-            {
                 // use plugin developer id (only send to last plugin raising the exception)
-                handleException(className.split("\\.")[1], t, print);
-                return;
-            }
+                return className.split("\\.")[1];
         }
 
-        // general exception (no plugin information found)
-        handleException(null, null, t, print);
-    }
-
-    /**
-     * @deprecated Use {@link #handleException(PluginDescriptor, Throwable, boolean)} instead.
-     */
-    @Deprecated
-    public static void handlePluginException(PluginDescriptor pluginDesc, Throwable t, boolean print)
-    {
-        handleException(pluginDesc, t, print);
+        return null;
     }
 
     /**

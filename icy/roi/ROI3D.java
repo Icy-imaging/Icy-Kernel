@@ -226,15 +226,20 @@ public abstract class ROI3D extends ROI
         if (roi instanceof ROI3D)
         {
             final ROI3D roi3d = (ROI3D) roi;
+            final int t = getT();
+            final int c = getC();
+            final boolean tok;
+            final boolean cok;
 
-            if (isActiveFor(roi3d.getT(), roi3d.getC()))
-                return getBooleanMask(false).contains(roi3d.getBooleanMask(false));
+            // same position ?
+            tok = (t == -1) || (t == roi3d.getT());
+            cok = (c == -1) || (c == roi3d.getC());
 
-            return false;
+            return tok && cok && getBooleanMask(false).contains(roi3d.getBooleanMask(false));
         }
 
-        // do it the other way
-        return roi.intersects(this);
+        // use default implementation
+        return super.contains(roi);
     }
 
     /**
@@ -329,15 +334,21 @@ public abstract class ROI3D extends ROI
         if (roi instanceof ROI3D)
         {
             final ROI3D roi3d = (ROI3D) roi;
+            final int t = getT();
+            final int c = getC();
+            final boolean cok;
+            final boolean tok;
 
-            if (isActiveFor(roi3d.getT(), roi3d.getC()))
-                return getBooleanMask(true).intersects(roi3d.getBooleanMask(true));
+            // can intersect ?
+            tok = (t == -1) || (t == roi3d.getT()) || (roi3d.getT() == -1);
+            cok = (c == -1) || (c == roi3d.getC()) || (roi3d.getC() == -1);
 
-            return false;
+            // same position ?
+            return tok && cok && getBooleanMask(true).intersects(roi3d.getBooleanMask(true));
         }
 
-        // do it the other way
-        return roi.intersects(this);
+        // use default implementation
+        return super.intersects(roi);
     }
 
     /**
@@ -438,13 +449,6 @@ public abstract class ROI3D extends ROI
         return false;
     }
 
-    @Override
-    public boolean canSetPosition()
-    {
-        // default
-        return false;
-    }
-
     /**
      * Set the <code>ROI</code> 3D bounds.<br>
      * Note that not all ROI supports bounds modification and you should call
@@ -483,6 +487,13 @@ public abstract class ROI3D extends ROI
         }
     }
 
+    @Override
+    public boolean canSetPosition()
+    {
+        // default implementation use translation if available
+        return canTranslate();
+    }
+
     /**
      * Set the <code>ROI</code> 3D position.<br>
      * Note that not all ROI supports position modification and you should call
@@ -493,7 +504,12 @@ public abstract class ROI3D extends ROI
      */
     public void setPosition3D(Point3D position)
     {
-        // do nothing by default (not supported)
+        // use translation operation by default if supported
+        if (canTranslate())
+        {
+            final Point3D oldPos = getPosition3D();
+            translate(position.getX() - oldPos.getX(), position.getY() - oldPos.getY(), position.getZ() - oldPos.getZ());
+        }
     }
 
     @Override
@@ -510,6 +526,36 @@ public abstract class ROI3D extends ROI
         {
             endUpdate();
         }
+    }
+
+    /**
+     * Returns <code>true</code> if the ROI support translate operation.
+     * 
+     * @see #translate(double, double, double)
+     */
+    public boolean canTranslate()
+    {
+        // by default
+        return false;
+    }
+
+    /**
+     * Translate the ROI position by the specified delta X/Y/Z.<br>
+     * Note that not all ROI support this operation so you should test it by calling
+     * {@link #canTranslate()} first.
+     * 
+     * @param dx
+     *        translation value to apply on X dimension
+     * @param dy
+     *        translation value to apply on Y dimension
+     * @param dz
+     *        translation value to apply on Z dimension
+     * @see #canTranslate()
+     * @see #setPosition3D(Point3D)
+     */
+    public void translate(double dx, double dy, double dz)
+    {
+
     }
 
     @Override
@@ -689,7 +735,9 @@ public abstract class ROI3D extends ROI
     }
 
     /**
-     * @return the t
+     * Returns the T position.<br>
+     * <code>-1</code> is a special value meaning the ROI is set on all T frames (infinite T
+     * dimension).
      */
     public int getT()
     {
@@ -697,8 +745,9 @@ public abstract class ROI3D extends ROI
     }
 
     /**
-     * @param value
-     *        the t to set
+     * Sets T position of this 3D ROI.<br>
+     * You cannot set the ROI on a negative T position as <code>-1</code> is a special value meaning
+     * the ROI is set on all T frames (infinite T dimension).
      */
     public void setT(int value)
     {
@@ -718,7 +767,9 @@ public abstract class ROI3D extends ROI
     }
 
     /**
-     * @return the c
+     * Returns the C position.<br>
+     * <code>-1</code> is a special value meaning the ROI is set on all C channels (infinite C
+     * dimension).
      */
     public int getC()
     {
@@ -726,8 +777,9 @@ public abstract class ROI3D extends ROI
     }
 
     /**
-     * @param value
-     *        the c to set
+     * Sets C position of this 3D ROI.<br>
+     * You cannot set the ROI on a negative C position as <code>-1</code> is a special value meaning
+     * the ROI is set on all C channels (infinite C dimension).
      */
     public void setC(int value)
     {
