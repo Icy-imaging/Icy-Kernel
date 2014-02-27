@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry including="icy/**|plugins/kernel/**|plugins/test/**|res/**" kind="src" path=""/>
+	<classpathentry excluding="**/package.html" including="icy/**|plugins/kernel/**|plugins/test/**|res/**" kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/bsh.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/customizer.jar"/>
@@ -18,31 +18,21 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/jmf.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jtransforms.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jxl.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/log4j.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/mediaplayer.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/multiplayer.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/phys2d.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/poi-loci.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/simpleItk.jar" sourcepath="D:/Stephane/workspace/Libraries/SimpleITK/simpleitk-source-0.4.0.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/slf4j-api.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/slf4j-log4j.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/sound.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/Tracking.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/vecmath.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/vtk.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/jai_imageio.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/bio-formats.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/loci-common.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/ome-xml.jar" sourcepath="D:/Stephane/Documents/dev/GIT/bio-formats"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/scifio.jar" sourcepath="D:/Stephane/Documents/dev/GIT/bioformats"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/flamingo.jar" sourcepath="D:/Stephane/Documents/dev/GIT/Icy-Insubstantial"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/flamingo.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/laf-plugin.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/laf-widget.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/substance-flamingo.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/substance.jar" sourcepath="D:/Stephane/Documents/dev/GIT/Icy-Insubstantial"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/substance.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/trident.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/ij/ij.jar" sourcepath="D:/Stephane/Documents/dev/GIT/imagej"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/irclib.jar" sourcepath="D:/Stephane/workspace/Libraries/irclib-1.10"/>
+	<classpathentry kind="lib" path="/Icy-App/ij/ij.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/irclib.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/arpack-combo.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/csparsej.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/jplasma.jar"/>
@@ -54,16 +44,11 @@
 	<classpathentry kind="lib" path="/Icy-App/lib/xuggler.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/substance-swingx.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/swingx-all.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/metakit.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/ome-io.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/poi-excelant.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/poi-ooxml-schemas.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/poi-ooxml.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/poi-scratchpad.jar"/>
 	<classpathentry kind="lib" path="/Icy-App/lib/poi.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/netcdf.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/kryo.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/native-lib-loader.jar"/>
-	<classpathentry kind="lib" path="/Icy-App/lib/turbojpeg.jar"/>
+	<classpathentry kind="lib" path="/Icy-App/lib/bioformats.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>
