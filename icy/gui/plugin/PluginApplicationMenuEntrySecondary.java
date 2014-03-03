@@ -24,6 +24,11 @@ public class PluginApplicationMenuEntrySecondary extends RibbonApplicationMenuEn
         super(new BasicResizableIcon(plugin.getIcon()), description, action, CommandButtonKind.ACTION_ONLY);
     }
 
+    public PluginApplicationMenuEntrySecondary(PluginDescriptor plugin, ActionListener action)
+    {
+        super(new BasicResizableIcon(plugin.getIcon()), plugin.getName(), action, CommandButtonKind.ACTION_ONLY);
+    }
+
     public PluginApplicationMenuEntrySecondary(final PluginDescriptor plugin, String description)
     {
         this(plugin, description, new ActionListener()

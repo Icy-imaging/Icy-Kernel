@@ -32,6 +32,7 @@ import icy.gui.plugin.PluginApplicationMenuEntrySecondary;
 import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
+import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
 import icy.plugin.PluginLoader.PluginLoaderListener;
@@ -40,6 +41,7 @@ import icy.preferences.IcyPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
+import icy.system.IcyExceptionHandler;
 import icy.type.collection.CollectionUtil;
 import icy.type.collection.list.RecentFileList;
 import icy.util.StringUtil;
@@ -215,8 +217,8 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
         amepOpen = new IcyRibbonApplicationMenuEntryPrimary(FileActions.openSequenceAction);
         amepOpen.setRolloverCallback(new OpenRecentFilePrimaryRollOverCallBack());
 
-        amepImport = new IcyRibbonApplicationMenuEntryPrimary(new IcyIcon(ResourceUtil.ICON_DOC_IMPORT),
-                "Import", null, CommandButtonKind.POPUP_ONLY);
+        amepImport = new IcyRibbonApplicationMenuEntryPrimary(new IcyIcon(ResourceUtil.ICON_DOC_IMPORT), "Import",
+                null, CommandButtonKind.POPUP_ONLY);
         amepImport.addSecondaryMenuGroup("Import a sequence", getImportEntries());
 
         // SAVE & EXPORT
@@ -297,10 +299,49 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
         final List<PluginDescriptor> sequenceImporters = PluginLoader.getPlugins(SequenceImporter.class);
         final List<RibbonApplicationMenuEntrySecondary> result = new ArrayList<RibbonApplicationMenuEntrySecondary>();
 
-        for (PluginDescriptor importer : importers)
-            result.add(new PluginApplicationMenuEntrySecondary(importer));
-        for (PluginDescriptor sequenceImporter : sequenceImporters)
-            result.add(new PluginApplicationMenuEntrySecondary(sequenceImporter));
+        for (int i = 0; i < importers.size(); i++)
+        {
+            final PluginDescriptor plugin = importers.get(i);
+
+            result.add(new PluginApplicationMenuEntrySecondary(plugin, new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    try
+                    {
+                        // do load operation
+                        ((Importer) PluginLauncher.start(plugin)).load();
+                    }
+                    catch (Exception exc)
+                    {
+                        IcyExceptionHandler.handleException(exc, false);
+                    }
+                }
+            }));
+        }
+        for (int i = 0; i < sequenceImporters.size(); i++)
+        {
+            final PluginDescriptor plugin = sequenceImporters.get(i);
+
+            result.add(new PluginApplicationMenuEntrySecondary(plugin, new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    try
+                    {
+                        // do load operation
+                        // TODO: modify to the Sequenceimporter interface
+                        // ((SequenceImporter) PluginLauncher.start(plugin)).load();
+                    }
+                    catch (Exception exc)
+                    {
+                        IcyExceptionHandler.handleException(exc, false);
+                    }
+                }
+            }));
+        }
 
         // TODO: add sort here from plugin importer preferences
 
