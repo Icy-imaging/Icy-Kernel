@@ -19,17 +19,19 @@
 package icy.gui.dialog;
 
 import icy.file.FileUtil;
-import icy.file.ImageFileFormat;
 import icy.file.Loader;
+import icy.file.SequenceFileImporter;
 import icy.main.Icy;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.XMLPreferences;
 import icy.type.collection.CollectionUtil;
+import icy.util.StringUtil;
 
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.List;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
@@ -44,6 +46,8 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         @Override
         public boolean accept(File file)
         {
+            if (file.isDirectory()) return true;
+            
             return !Loader.canDiscardImageFile(file.getName());
         }
 
@@ -77,8 +81,6 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
     private static final String ID_AUTOORDER = "autoOrder";
     private static final String ID_EXTENSION = "extension";
 
-    public static final AllImagesFileFilter allImagesFileFilter = new AllImagesFileFilter();
-
     // GUI
     private final ImageLoaderOptionPanel optionPanel;
 
@@ -104,6 +106,7 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         super();
 
         final XMLPreferences preferences = ApplicationPreferences.getPreferences().node(PREF_ID);
+        final List<SequenceFileImporter> importers = Loader.getSequenceFileImporters();
 
         // can't use WindowsPositionSaver as JFileChooser is a fake JComponent
         // only dimension is stored
@@ -113,16 +116,13 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         setAcceptAllFileFilterUsed(false);
         resetChoosableFileFilters();
 
-        addChoosableFileFilter(ImageFileFormat.TIFF.getExtensionFileFilter());
-        addChoosableFileFilter(ImageFileFormat.JPG.getExtensionFileFilter());
-        addChoosableFileFilter(ImageFileFormat.PNG.getExtensionFileFilter());
-        addChoosableFileFilter(ImageFileFormat.LSM.getExtensionFileFilter());
-        addChoosableFileFilter(ImageFileFormat.AVI.getExtensionFileFilter());
-        // so we have AllImageFileFilter selected and in last position
-        addChoosableFileFilter(allImagesFileFilter);
+        // add file filter from importers
+        for (SequenceFileImporter importer : importers)
+            for (FileFilter filter : importer.getFileFilters())
+                addChoosableFileFilter(filter);
 
         // set last used file filter
-        setFileFilter(getFileFilter(preferences.get(ID_EXTENSION, allImagesFileFilter.getDescription())));
+        setFileFilter(getFileFilter(preferences.get(ID_EXTENSION, "")));
 
         setMultiSelectionEnabled(true);
         setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
@@ -156,8 +156,13 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
 
             // load if requested
             if (autoLoad)
-                Loader.load(CollectionUtil.asList(FileUtil.toPaths(getSelectedFiles())), isSeparateSequenceSelected(),
-                        isAutoOrderSelected(), true);
+            {
+                // get the selected imported from file filter
+                final SequenceFileImporter importer = getImporter(importers, getFileFilterIndex());
+                // load selected file(s)
+                Loader.load(importer, CollectionUtil.asList(FileUtil.toPaths(getSelectedFiles())),
+                        isSeparateSequenceSelected(), isAutoOrderSelected(), true);
+            }
         }
 
         // store interface option
@@ -167,26 +172,29 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
 
     protected FileFilter getFileFilter(String description)
     {
-        FileFilter ff;
+        final FileFilter[] filters = getChoosableFileFilters();
 
-        ff = ImageFileFormat.TIFF.getExtensionFileFilter();
-        if (description.equals(ff.getDescription()))
-            return ff;
-        ff = ImageFileFormat.JPG.getExtensionFileFilter();
-        if (description.equals(ff.getDescription()))
-            return ff;
-        ff = ImageFileFormat.PNG.getExtensionFileFilter();
-        if (description.equals(ff.getDescription()))
-            return ff;
-        ff = ImageFileFormat.LSM.getExtensionFileFilter();
-        if (description.equals(ff.getDescription()))
-            return ff;
-        ff = ImageFileFormat.AVI.getExtensionFileFilter();
-        if (description.equals(ff.getDescription()))
-            return ff;
+        for (FileFilter filter : filters)
+            if (StringUtil.equals(filter.getDescription(), description))
+                return filter;
 
-        // default one
-        return allImagesFileFilter;
+        // take first filter by default
+        if (filters.length > 0)
+            return filters[0];
+
+        return null;
+    }
+
+    protected int getFileFilterIndex()
+    {
+        final FileFilter[] filters = getChoosableFileFilters();
+        final FileFilter filter = getFileFilter();
+
+        for (int i = 0; i < filters.length; i++)
+            if (filter == filters[i])
+                return i;
+
+        return -1;
     }
 
     /**
@@ -197,6 +205,17 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
     public ImageLoaderDialog()
     {
         this(true);
+    }
+
+    private SequenceFileImporter getImporter(List<SequenceFileImporter> importers, int filterIndex)
+    {
+        int i = 0;
+        for (SequenceFileImporter importer : importers)
+            for (FileFilter filter : importer.getFileFilters())
+                if (i++ == filterIndex)
+                    return importer;
+
+        return null;
     }
 
     /**

@@ -453,5 +453,4 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
         // for the busy loop animation
         repaint();
     }
-
 }

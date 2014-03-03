@@ -4,8 +4,9 @@
 package plugins.kernel.importer;
 
 import icy.common.exception.UnsupportedFormatException;
-import icy.file.FileUtil;
+import icy.file.Loader;
 import icy.file.SequenceFileImporter;
+import icy.gui.dialog.ImageLoaderDialog.AllImagesFileFilter;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
 import icy.image.IcyBufferedImageUtil.FilterType;
@@ -32,7 +33,7 @@ import loci.formats.ImageReader;
 import loci.formats.MissingLibraryException;
 import loci.formats.UnknownFormatException;
 import loci.formats.gui.AWTImageTools;
-import loci.formats.gui.FormatFileFilter;
+import loci.formats.gui.ExtensionFileFilter;
 import loci.formats.in.APNGReader;
 import loci.formats.in.JPEG2000Reader;
 import loci.formats.in.TiffJAIReader;
@@ -45,10 +46,16 @@ import loci.formats.ome.OMEXMLMetadataImpl;
  */
 public class LociImporter implements SequenceFileImporter
 {
-    final private static String nonImageExtensions[] = {"xml", "txt", "pdf", "xls", "doc", "docx", "pdf", "rtf", "exe",
-            "wav", "mp3", "app"};
+    protected class LociAllFileFilter extends AllImagesFileFilter
+    {
+        @Override
+        public String getDescription()
+        {
+            return "All image files (Bio-Formats)";
+        }
+    };
 
-    final private ImageReader mainReader;
+    private final ImageReader mainReader;
     IFormatReader reader;
 
     public LociImporter()
@@ -109,11 +116,19 @@ public class LociImporter implements SequenceFileImporter
     @Override
     public List<FileFilter> getFileFilters()
     {
-        final IFormatReader[] readers = mainReader.getReaders();
-        final List<FileFilter> result = new ArrayList<FileFilter>(readers.length);
+        final List<FileFilter> result = new ArrayList<FileFilter>();
 
-        for (IFormatReader reader : readers)
-            result.add(new FormatFileFilter(reader, true));
+        result.add(new ExtensionFileFilter(new String[] {"tif", "tiff"}, "TIFF images (Bio-Formats)"));
+        result.add(new ExtensionFileFilter(new String[] {"png"}, "PNG images (Bio-Formats)"));
+        result.add(new ExtensionFileFilter(new String[] {"jpg", "jpeg"}, "JPEG images (Bio-Formats)"));
+        result.add(new ExtensionFileFilter(new String[] {"avi"}, "AVI videos (Bio-Formats)"));
+
+        // final IFormatReader[] readers = mainReader.getReaders();
+
+        // for (IFormatReader reader : readers)
+        // result.add(new FormatFileFilter(reader, true));
+
+        result.add(new LociAllFileFilter());
 
         return result;
     }
@@ -122,7 +137,7 @@ public class LociImporter implements SequenceFileImporter
     public boolean acceptFile(String path)
     {
         // easy discard
-        if (discardFile(path))
+        if (Loader.canDiscardImageFile(path))
             return false;
 
         try
@@ -1049,21 +1064,6 @@ public class LociImporter implements SequenceFileImporter
         }
 
         return source;
-    }
-
-    /**
-     * Returns <code>true</code> if the file should discarded (non image file).<br>
-     * Extension based exclusion.
-     */
-    static boolean discardFile(String path)
-    {
-        final String ext = FileUtil.getFileExtension(path, false).toLowerCase();
-
-        for (String rejected : nonImageExtensions)
-            if (ext.equals(rejected))
-                return true;
-
-        return false;
     }
 
     static UnsupportedFormatException translateException(String path, FormatException exception)

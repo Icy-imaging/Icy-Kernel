@@ -64,6 +64,7 @@ import ij.ImageJ;
 import java.io.File;
 import java.nio.channels.FileLock;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
@@ -123,7 +124,7 @@ public class Icy
     /**
      * Headless flag (default = false)
      */
-    static boolean headless = false;
+    // static boolean headless = false;
 
     /**
      * No splash screen flag (default = false)
@@ -137,6 +138,8 @@ public class Icy
     /**
      * Startup parameters
      */
+    static String[] args;
+    static String[] pluginArgs;
     static String startupPlugin;
     static String startupImage;
 
@@ -152,13 +155,15 @@ public class Icy
      */
     public static void main(String[] args)
     {
+        boolean headless = false;
+
         try
         {
             System.out.println("Initializing...");
             System.out.println();
 
             // handle arguments (must be the first thing to do)
-            handleAppArgs(args);
+            headless = handleAppArgs(args);
 
             // force headless if we have a headless system
             if (SystemUtil.isHeadLess())
@@ -296,22 +301,19 @@ public class Icy
         // prepare native library files (need preferences init)
         nativeLibrariesInit();
 
-        // check for core update
-        if (GeneralPreferences.getAutomaticUpdate())
-            IcyUpdater.checkUpdate(false, true);
-        // check for plugin update
-        if (PluginPreferences.getAutomaticUpdate())
-            PluginUpdater.checkUpdate(false, true);
-
-        // set LOCI debug level
-        DebugTools.enableLogging("ERROR");
-
-        // changed version ?
-        if (!ApplicationPreferences.getVersion().equals(Icy.version))
+        if (!headless)
         {
-            // display the new version information
-            if (!headless)
+            // check for core update
+            if (GeneralPreferences.getAutomaticUpdate())
+                IcyUpdater.checkUpdate(false, true);
+            // check for plugin update
+            if (PluginPreferences.getAutomaticUpdate())
+                PluginUpdater.checkUpdate(false, true);
+
+            // changed version ?
+            if (!ApplicationPreferences.getVersion().equals(Icy.version))
             {
+                // display the new version information
                 final String changeLog = Icy.getChangeLog();
 
                 // show the new version frame
@@ -327,10 +329,13 @@ public class Icy
                     });
                 }
             }
-
-            // update version info
-            ApplicationPreferences.setVersion(Icy.version);
         }
+
+        // update version info
+        ApplicationPreferences.setVersion(Icy.version);
+
+        // set LOCI debug level
+        DebugTools.enableLogging("ERROR");
 
         System.out.println();
         System.out.println("Icy Version " + version + " started !");
@@ -350,14 +355,24 @@ public class Icy
         }
     }
 
-    private static void handleAppArgs(String[] args)
+    private static boolean handleAppArgs(String[] args)
     {
+        final List<String> pluginArgs = new ArrayList<String>();
+
         startupImage = null;
         startupPlugin = null;
         boolean execute = false;
+        boolean headless = false;
+
+        // save the base arguments
+        Icy.args = args;
 
         for (String arg : args)
         {
+            // store plugin arguments
+            if (startupPlugin != null)
+                pluginArgs.add(arg);
+
             if (execute)
             {
                 startupPlugin = arg;
@@ -382,6 +397,11 @@ public class Icy
                     startupImage = arg;
             }
         }
+
+        // save the plugin arguments
+        Icy.pluginArgs = pluginArgs.toArray(new String[pluginArgs.size()]);
+
+        return headless;
     }
 
     static void checkParameters()
@@ -674,11 +694,12 @@ public class Icy
     }
 
     /**
-     * Return true is the application is running in headless mode (no screen device).
+     * @deprecated Use {@link MainInterface#isHeadLess()} instead.
      */
+    @Deprecated
     public static boolean isHeadLess()
     {
-        return headless;
+        return getMainInterface().isHeadLess();
     }
 
     /**
@@ -699,6 +720,22 @@ public class Icy
             mainInterface = new MainInterfaceBatch();
 
         return mainInterface;
+    }
+
+    /**
+     * Returns the command line arguments
+     */
+    public static String[] getCommandLineArgs()
+    {
+        return args;
+    }
+
+    /**
+     * Returns the command line arguments
+     */
+    public static String[] getCommandLinePluginArgs()
+    {
+        return pluginArgs;
     }
 
     /**

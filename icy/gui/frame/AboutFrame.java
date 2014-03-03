@@ -94,7 +94,7 @@ public class AboutFrame extends IcyFrame
             public void run()
             {
                 final String about = "<html><center>" + "<br>" + "<br><h2>Icy " + Icy.version + "</h2>"
-                        + "<br>Quantitative Image Analysis Unit" + "<br>Institut Pasteur"
+                        + "<br>BioImage Analysis unit" + "<br>Institut Pasteur"
                         + "<br>Unite d'analyse d images quantitative" + "<br>25,28 Rue du Docteur Roux\n"
                         + "<br>75015 Paris - France" + "<br>"
                         + "<br><a href=\"http://icy.bioimageanalysis.com\">http://icy.bioimageanalysis.com</a>"
@@ -112,13 +112,8 @@ public class AboutFrame extends IcyFrame
                         + "<br>"
                         + "<br><font size=3><u>LIBRARY:</u></font>"
                         + "<br>"
-                        + "<br><b>BioFormat</b> - http://www.loci.wisc.edu/ome/formats.html"
-                        + "<br>"
-                        + "<br><b>Substance</b> - a completer : http://substance"
-                        + "<br>"
-                        + "<br><font size=3><u>CODE RE-USED:</u></font>"
-                        + "<br>"
-                        + "<br>Class finder by Jorg Hohwiller for the m-m-m project ({@link http://m-m-m.sf.net}) used for dynamic plugin load."
+                        + "<br><b>BioFormat</b> - http://www.openmicroscopy.org/site/products/bio-formats"
+                        + "<br><b>Substance</b> - https://java.net/projects/substance"
                         + "</html>";
 
                 final String changelog = "<html><pre>" + Icy.getChangeLog() + "</pre></html>";

@@ -31,7 +31,6 @@ import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
-import icy.plugin.abstract_.Plugin;
 import icy.preferences.GeneralPreferences;
 import icy.sequence.DimensionId;
 import icy.sequence.MetaDataUtil;
@@ -372,21 +371,51 @@ public class Loader
         }
     }
 
+    private final static String nonImageExtensions[] = {"xml", "txt", "pdf", "xls", "doc", "docx", "pdf", "rtf", "exe",
+            "wav", "mp3", "app"};
+
     /**
-     * Returns all available sequence file importer.
+     * Returns all available resource importers.
      */
-    public static List<SequenceFileImporter> getSequenceImporters()
+    public static List<Importer> getImporters()
     {
-        final List<PluginDescriptor> plugins = PluginLoader.getPlugins(SequenceFileImporter.class, true, false, true);
+        final List<PluginDescriptor> plugins = PluginLoader.getPlugins(Importer.class);
+        final List<Importer> result = new ArrayList<Importer>();
+
+        for (PluginDescriptor plugin : plugins)
+            result.add((Importer) PluginLauncher.start(plugin));
+
+        // TODO: add sort here from plugin importer preferences
+
+        return result;
+    }
+
+    /**
+     * Returns all available sequence importers.
+     */
+    public static List<SequenceImporter> getSequenceImporters()
+    {
+        final List<PluginDescriptor> plugins = PluginLoader.getPlugins(SequenceImporter.class);
+        final List<SequenceImporter> result = new ArrayList<SequenceImporter>();
+
+        for (PluginDescriptor plugin : plugins)
+            result.add((SequenceImporter) PluginLauncher.start(plugin));
+
+        // TODO: add sort here from plugin importer preferences
+
+        return result;
+    }
+
+    /**
+     * Returns all available sequence importers (from file only).
+     */
+    public static List<SequenceFileImporter> getSequenceFileImporters()
+    {
+        final List<PluginDescriptor> plugins = PluginLoader.getPlugins(SequenceFileImporter.class);
         final List<SequenceFileImporter> result = new ArrayList<SequenceFileImporter>();
 
         for (PluginDescriptor plugin : plugins)
-        {
-            final Plugin p = PluginLauncher.start(plugin);
-
-            if (p instanceof SequenceFileImporter)
-                result.add((SequenceFileImporter) p);
-        }
+            result.add((SequenceFileImporter) PluginLauncher.start(plugin));
 
         // TODO: add sort here from plugin importer preferences
 
@@ -396,7 +425,7 @@ public class Loader
     /**
      * Returns all importer which can open the specified file.
      */
-    public static List<SequenceFileImporter> getSequenceImporters(List<SequenceFileImporter> importers, String path)
+    public static List<SequenceFileImporter> getSequenceFileImporters(List<SequenceFileImporter> importers, String path)
     {
         final List<SequenceFileImporter> result = new ArrayList<SequenceFileImporter>();
 
@@ -410,18 +439,18 @@ public class Loader
     /**
      * Returns all importer which can open the specified file.
      */
-    public static List<SequenceFileImporter> getSequenceImporters(String path)
+    public static List<SequenceFileImporter> getSequenceFileImporters(String path)
     {
-        return getSequenceImporters(getSequenceImporters(), path);
+        return getSequenceFileImporters(getSequenceFileImporters(), path);
     }
 
     /**
      * Returns the first importer which can open the specified file.<br>
      * Returns <code>null</code> if no importer can open the file.
      * 
-     * @see #getSequenceImporters(List, String)
+     * @see #getSequenceFileImporters(List, String)
      */
-    public static SequenceFileImporter getSequenceImporter(List<SequenceFileImporter> importers, String path)
+    public static SequenceFileImporter getSequenceFileImporter(List<SequenceFileImporter> importers, String path)
     {
         for (SequenceFileImporter importer : importers)
             if (importer.acceptFile(path))
@@ -431,32 +460,29 @@ public class Loader
     }
 
     /**
-     * Returns the first importer which can open the specified file.<br>
-     * Returns <code>null</code> if no importer can open the file.
+     * Returns the first importer which can open the specified image file.<br>
+     * Returns <code>null</code> if no importer can open the image file.
      * 
-     * @see #getSequenceImporters(String)
+     * @see #getSequenceFileImporters(String)
      */
-    public static SequenceFileImporter getSequenceImporter(String path)
+    public static SequenceFileImporter getSequenceFileImporter(String path)
     {
-        return getSequenceImporter(getSequenceImporters(), path);
+        return getSequenceFileImporter(getSequenceFileImporters(), path);
     }
 
     /**
      * Returns <code>true</code> if the specified path describes a file type which is well known to
      * not be an image file.<br>
-     * For instance <i>.exe</i>, <i>.wav</i> or <i>.doc</i> file cannot specify an image file do we
-     * can quickly discard them.
+     * For instance <i>.exe</i>, <i>.wav</i> or <i>.doc</i> file cannot specify an image file so we
+     * can quickly discard them (extension based exclusion)
      */
     public static boolean canDiscardImageFile(String path)
     {
         final String ext = FileUtil.getFileExtension(path, false).toLowerCase();
 
-        // removes typical extension we can find mixed with image
-        if (StringUtil.equals(ext, "xml") || StringUtil.equals(ext, "txt") || StringUtil.equals(ext, "pdf")
-                || StringUtil.equals(ext, "xls") || StringUtil.equals(ext, "doc") || StringUtil.equals(ext, "doc")
-                || StringUtil.equals(ext, "docx") || StringUtil.equals(ext, "pdf") || StringUtil.equals(ext, "rtf")
-                || StringUtil.equals(ext, "exe") || StringUtil.equals(ext, "wav") || StringUtil.equals(ext, "mp3"))
-            return true;
+        for (String rejected : nonImageExtensions)
+            if (ext.equals(rejected))
+                return true;
 
         return false;
     }
@@ -466,7 +492,7 @@ public class Loader
      */
     public static boolean isSupportedImageFile(String path)
     {
-        return (getSequenceImporter(path) != null);
+        return (getSequenceFileImporter(path) != null);
     }
 
     /**
@@ -495,7 +521,7 @@ public class Loader
     }
 
     /**
-     * @deprecated Use {@link #getSequenceImporters(String)} instead.
+     * @deprecated Use {@link #getSequenceFileImporters(String)} instead.
      */
     @Deprecated
     public static IFormatReader getReader(String path) throws FormatException, IOException
@@ -524,7 +550,7 @@ public class Loader
      */
     public static OMEXMLMetadataImpl getMetaData(String path) throws UnsupportedFormatException, IOException
     {
-        for (SequenceFileImporter importer : getSequenceImporters(path))
+        for (SequenceFileImporter importer : getSequenceFileImporters(path))
         {
             try
             {
@@ -575,7 +601,7 @@ public class Loader
     public static IcyBufferedImage loadThumbnail(String path, int serie) throws UnsupportedFormatException, IOException
     {
         // get importer for this file
-        final SequenceFileImporter importer = getSequenceImporter(path);
+        final SequenceFileImporter importer = getSequenceFileImporter(path);
 
         if (importer == null)
             throw new UnsupportedFormatException("Image file '" + path + "' is not supported !");
@@ -648,7 +674,7 @@ public class Loader
 
     /**
      * Load and return the image at given position from the specified file path.<br>
-     * For lower image level access, you can use {@link #getSequenceImporter(String)} method and
+     * For lower image level access, you can use {@link #getSequenceFileImporter(String)} method and
      * directly work through the returned {@link ImageProvider} interface.
      * 
      * @param path
@@ -667,7 +693,7 @@ public class Loader
             IOException
     {
         // get importer for this file
-        final SequenceFileImporter importer = getSequenceImporter(path);
+        final SequenceFileImporter importer = getSequenceFileImporter(path);
 
         if (importer == null)
             throw new UnsupportedFormatException("Image file '" + path + "' is not supported !");
@@ -940,6 +966,42 @@ public class Loader
     }
 
     /**
+     * Load a list of sequence from the specified list of file with the given
+     * {@link SequenceFileImporter} and returns them.<br>
+     * As the function can take sometime you should not call it from the AWT EDT.<br>
+     * The method returns an empty array if an error occurred or if no file could not be opened (not
+     * supported).
+     * 
+     * @param importer
+     *        Importer used to open and load image files
+     * @param paths
+     *        List of image file to load.
+     * @param serie
+     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).<br>
+     *        -1 is a special value so it gives a chance to the user<br>
+     *        to select the serie to open from a serie selector dialog.
+     * @param separate
+     *        Force image to be loaded in separate sequence.
+     * @param autoOrder
+     *        Try to order image in sequence from their filename
+     * @param addToRecent
+     *        If set to true the files list will be traced in recent opened sequence.
+     * @param showProgress
+     *        Show progression of loading process.
+     */
+    public static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int serie,
+            boolean separate, boolean autoOrder, boolean addToRecent, boolean showProgress)
+    {
+        // detect if this is a complete folder load
+        final boolean directory = (paths.size() == 1) && new File(paths.get(0)).isDirectory();
+        // explode path list
+        final List<String> singlePaths = explodeAndClean(paths);
+
+        // load sequences and return them
+        return loadSequences(importer, singlePaths, serie, separate, autoOrder, directory, addToRecent, showProgress);
+    }
+
+    /**
      * Load a list of sequence from the specified list of file and returns them.<br>
      * As the function can take sometime you should not call it from the AWT EDT.<br>
      * The method returns an empty array if an error occurred or if no file could not be opened (not
@@ -963,13 +1025,7 @@ public class Loader
     public static List<Sequence> loadSequences(List<String> paths, int serie, boolean separate, boolean autoOrder,
             boolean addToRecent, boolean showProgress)
     {
-        // detect if this is a complete folder load
-        final boolean directory = (paths.size() == 1) && new File(paths.get(0)).isDirectory();
-        // explode path list
-        final List<String> singlePaths = explodeAndClean(paths);
-
-        // load sequences and return them
-        return loadSequences(singlePaths, serie, separate, autoOrder, directory, addToRecent, showProgress);
+        return loadSequences(null, paths, serie, separate, autoOrder, addToRecent, showProgress);
     }
 
     /**
@@ -1088,6 +1144,43 @@ public class Loader
     }
 
     /**
+     * Load the specified image files with the given {@link SequenceFileImporter}.<br>
+     * The loading process is asynchronous.<br>
+     * If <i>separate</i> is false the loader try to set image in the same sequence.<br>
+     * If <i>separate</i> is true each image is loaded in a separate sequence.<br>
+     * The resulting sequences are automatically displayed when the process complete.
+     * 
+     * @param importer
+     *        Importer used to open and load image files
+     * @param paths
+     *        list of image file to load
+     * @param separate
+     *        Force image to be loaded in separate sequence
+     * @param autoOrder
+     *        Try to order image in sequence from their filename
+     * @param showProgress
+     *        Show progression in loading process
+     */
+    public static void load(final SequenceFileImporter importer, final List<String> paths, final boolean separate,
+            final boolean autoOrder, final boolean showProgress)
+    {
+        // asynchronous call
+        ThreadUtil.bgRun(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // load sequence
+                final List<Sequence> sequences = loadSequences(importer, paths, -1, separate, autoOrder, true,
+                        showProgress);
+                // and display them
+                for (Sequence seq : sequences)
+                    Icy.getMainInterface().addSequence(seq);
+            }
+        });
+    }
+
+    /**
      * Load the specified image files.<br>
      * The loading process is asynchronous.<br>
      * If <i>separate</i> is false the loader try to set image in the same sequence.<br>
@@ -1106,19 +1199,7 @@ public class Loader
     public static void load(final List<String> paths, final boolean separate, final boolean autoOrder,
             final boolean showProgress)
     {
-        // asynchronous call
-        ThreadUtil.bgRun(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                // load sequence
-                final List<Sequence> sequences = loadSequences(paths, -1, separate, autoOrder, true, showProgress);
-                // and display them
-                for (Sequence seq : sequences)
-                    Icy.getMainInterface().addSequence(seq);
-            }
-        });
+        load(null, paths, separate, autoOrder, showProgress);
     }
 
     /**
@@ -1305,7 +1386,7 @@ public class Loader
             boolean addToRecent, boolean showProgress)
     {
         final List<String> paths = CollectionUtil.asList(FileUtil.toPaths(files));
-        final List<Sequence> result = loadSequences(paths, serie, separate, autoOrder, directory, addToRecent,
+        final List<Sequence> result = loadSequences(null, paths, serie, separate, autoOrder, directory, addToRecent,
                 showProgress);
         return (Sequence[]) result.toArray();
     }
@@ -1316,6 +1397,8 @@ public class Loader
      * If separate is true each image is loaded in a separate sequence.<br>
      * As this method can take sometime, you should not call it from the EDT.<br>
      * 
+     * @param importer
+     *        Importer used to open and load images
      * @param paths
      *        list of image file to load
      * @param serie
@@ -1333,8 +1416,8 @@ public class Loader
      * @param showProgress
      *        Show progression in loading process
      */
-    static List<Sequence> loadSequences(List<String> paths, int serie, boolean separate, boolean autoOrder,
-            boolean directory, boolean addToRecent, boolean showProgress)
+    static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int serie, boolean separate,
+            boolean autoOrder, boolean directory, boolean addToRecent, boolean showProgress)
     {
         final List<Sequence> result = new ArrayList<Sequence>();
 
@@ -1356,8 +1439,14 @@ public class Loader
 
         try
         {
-            final List<SequenceFileImporter> importers = getSequenceImporters();
             final List<String> remainingFiles = new ArrayList<String>(paths);
+            final List<SequenceFileImporter> importers;
+
+            // used the specified importer if any
+            if (importer != null)
+                importers = CollectionUtil.createArrayList(importer);
+            else
+                importers = getSequenceFileImporters();
 
             if (separate)
             {
@@ -1811,7 +1900,7 @@ public class Loader
                 Arrays.fill(result, -1);
 
                 // allow user to select series to open
-                if ((serie == -1) && !Icy.isHeadLess())
+                if ((serie == -1) && !Icy.getMainInterface().isHeadLess())
                 {
                     final Exception[] exception = new Exception[1];
                     exception[0] = null;
@@ -2153,4 +2242,5 @@ public class Loader
 
         return "";
     }
+
 }

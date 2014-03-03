@@ -28,7 +28,6 @@ import icy.gui.menu.ToolRibbonTask;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.imagej.ImageJWrapper;
-import icy.main.Icy;
 import icy.painter.Overlay;
 import icy.painter.Painter;
 import icy.plugin.abstract_.Plugin;
@@ -37,9 +36,7 @@ import icy.roi.ROI;
 import icy.search.SearchEngine;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
-import icy.system.IcyExceptionHandler;
 import icy.type.collection.CollectionUtil;
-import icy.util.ReflectionUtil;
 import icy.util.StringUtil;
 
 import java.util.ArrayList;
@@ -73,17 +70,6 @@ public class MainInterfaceBatch implements MainInterface
     public MainInterfaceBatch()
     {
         swimmingPool = new SwimmingPool();
-
-        try
-        {
-            // try to pass to headless
-            ReflectionUtil.getField(Icy.class, "headless", true).set(null, Boolean.TRUE);
-        }
-        catch (Throwable t)
-        {
-            System.err.println("Can't force the headless setting:");
-            IcyExceptionHandler.showErrorMessage(t, true);
-        }
     }
 
     @Override
@@ -91,6 +77,13 @@ public class MainInterfaceBatch implements MainInterface
     {
         activeSequence = null;
         activePlugin = null;
+    }
+
+    @Override
+    public boolean isHeadLess()
+    {
+        // always true with this interface
+        return true;
     }
 
     @Override
@@ -682,5 +675,4 @@ public class MainInterfaceBatch implements MainInterface
     {
         return null;
     }
-
 }

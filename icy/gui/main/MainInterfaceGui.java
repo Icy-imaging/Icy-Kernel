@@ -178,6 +178,13 @@ public class MainInterfaceGui implements MainInterface
 
         taskFrameManager.init();
     }
+    
+    @Override
+    public boolean isHeadLess()
+    {
+        // we are not head less with this interface
+        return false;
+    }
 
     @Override
     public void addSequence(Sequence sequence)
@@ -1530,5 +1537,4 @@ public class MainInterfaceGui implements MainInterface
         for (Viewer viewer : getViewers())
             viewer.setViewSyncId(id);
     }
-
 }

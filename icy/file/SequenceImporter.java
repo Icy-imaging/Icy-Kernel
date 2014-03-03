@@ -32,8 +32,5 @@ import icy.sequence.Sequence;
  */
 public interface SequenceImporter extends ImageProvider
 {
-    /**
-     * Return the description given on the importer menu
-     */
-    public String getDescription();
+
 }

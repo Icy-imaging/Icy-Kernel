@@ -81,7 +81,7 @@ public class MessageDialog
 
     public static void showDialog(final String title, final String message, final int messageType)
     {
-        if (!Icy.isHeadLess())
+        if (!Icy.getMainInterface().isHeadLess())
         {
             ThreadUtil.invokeLater(new Runnable()
             {

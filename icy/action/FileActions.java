@@ -169,7 +169,9 @@ public class FileActions
     };
 
     public static IcyAbstractAction openSequenceAction = new IcyAbstractAction("Open", new IcyIcon(
-            ResourceUtil.ICON_OPEN), "Open a sequence from file(s)", KeyEvent.VK_O, SystemUtil.getMenuCtrlMask())
+            ResourceUtil.ICON_OPEN), "Open a sequence",
+            "Display a file selection dialog and choose the sequence file to open", KeyEvent.VK_O,
+            SystemUtil.getMenuCtrlMask())
     {
         /**
          * 
@@ -285,8 +287,8 @@ public class FileActions
     };
 
     public static IcyAbstractAction saveMetaDataAction = new IcyAbstractAction("Save metadata", new IcyIcon(
-            ResourceUtil.ICON_SAVE), "Save active sequence metadata", "Save the metadata of the active sequence now", true,
-            "Saving metadata...")
+            ResourceUtil.ICON_SAVE), "Save active sequence metadata", "Save the metadata of the active sequence now",
+            true, "Saving metadata...")
     {
         /**
          * 
@@ -310,7 +312,7 @@ public class FileActions
     };
 
     public static IcyAbstractAction closeSequenceAction = new IcyAbstractAction("Close", new IcyIcon(
-            ResourceUtil.ICON_CLOSE), "Close active sequence")
+            ResourceUtil.ICON_CLOSE), "Close active sequence", "Close the current active sequence")
     {
         /**
          * 

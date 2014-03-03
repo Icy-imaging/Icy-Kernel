@@ -28,7 +28,6 @@ import icy.preferences.ApplicationPreferences;
 import icy.preferences.XMLPreferences;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
-import icy.type.collection.CollectionUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -70,7 +69,7 @@ public class ImageSaverDialog extends JFileChooser
     private static final String ID_PATH = "path";
     private static final String ID_MULTIPLEFILE = "multipleFile";
     private static final String ID_OVERWRITENAME = "overwriteName";
-    private static final String ID_FILETYPE = "fileType";
+    private static final String ID_EXTENSION = "extension";
 
     // GUI
     final JCheckBox multipleFileCheck;
@@ -144,7 +143,9 @@ public class ImageSaverDialog extends JFileChooser
         addChoosableFileFilter(ImageFileFormat.PNG.getExtensionFileFilter());
         addChoosableFileFilter(ImageFileFormat.JPG.getExtensionFileFilter());
         addChoosableFileFilter(ImageFileFormat.AVI.getExtensionFileFilter());
-        setFileFilter(getChoosableFileFilters()[preferences.getInt(ID_FILETYPE, 0)]);
+        
+        // set last used file filter
+        setFileFilter(getFileFilter(preferences.get(ID_EXTENSION, ImageFileFormat.TIFF.getDescription())));
 
         setMultiSelectionEnabled(false);
         // setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
@@ -311,7 +312,7 @@ public class ImageSaverDialog extends JFileChooser
             preferences.putInt(ID_HEIGHT, getHeight());
             preferences.putBoolean(ID_MULTIPLEFILE, multipleFileCheck.isSelected());
             preferences.putBoolean(ID_OVERWRITENAME, overwriteNameCheck.isSelected());
-            preferences.putInt(ID_FILETYPE, CollectionUtil.asList(getChoosableFileFilters()).indexOf(getFileFilter()));
+            preferences.put(ID_EXTENSION, getFileFilter().getDescription());
         }
     }
 
@@ -368,6 +369,19 @@ public class ImageSaverDialog extends JFileChooser
     {
         this(sequence, 0, 0, true);
     }
+    
+    protected FileFilter getFileFilter(String description)
+    {
+        final FileFilter[] filters = getChoosableFileFilters();
+
+        for (FileFilter filter : filters)
+            if (StringUtil.equals(filter.getDescription(), description))
+                return filter;
+
+        // default one
+        return ImageFileFormat.TIFF.getExtensionFileFilter();
+    }
+
 
     private boolean hasExtension(String name, ExtensionFileFilter extensionFilter)
     {

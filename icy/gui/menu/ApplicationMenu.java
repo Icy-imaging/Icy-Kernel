@@ -22,14 +22,22 @@ import icy.action.FileActions;
 import icy.action.GeneralActions;
 import icy.action.PreferencesActions;
 import icy.file.FileUtil;
+import icy.file.Importer;
 import icy.file.Loader;
+import icy.file.SequenceImporter;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.menu.IcyRibbonApplicationMenuEntryPrimary;
 import icy.gui.component.menu.IcyRibbonApplicationMenuEntrySecondary;
+import icy.gui.plugin.PluginApplicationMenuEntrySecondary;
 import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
+import icy.plugin.PluginDescriptor;
+import icy.plugin.PluginLoader;
+import icy.plugin.PluginLoader.PluginLoaderEvent;
+import icy.plugin.PluginLoader.PluginLoaderListener;
 import icy.preferences.GeneralPreferences;
 import icy.preferences.IcyPreferences;
+import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
 import icy.type.collection.CollectionUtil;
@@ -40,6 +48,7 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JPanel;
@@ -48,6 +57,7 @@ import javax.swing.SwingConstants;
 
 import org.pushingpixels.flamingo.api.common.CommandButtonDisplayState;
 import org.pushingpixels.flamingo.api.common.JCommandButton;
+import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
 import org.pushingpixels.flamingo.api.common.JCommandButtonPanel;
 import org.pushingpixels.flamingo.api.common.JCommandButtonPanel.LayoutKind;
 import org.pushingpixels.flamingo.api.common.RichTooltip;
@@ -58,7 +68,7 @@ import org.pushingpixels.flamingo.api.ribbon.RibbonApplicationMenuEntrySecondary
 /**
  * @author Stephane
  */
-public class ApplicationMenu extends RibbonApplicationMenu
+public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoaderListener
 {
     private static final int RECENTFILE_MAXLEN = 100;
 
@@ -169,6 +179,7 @@ public class ApplicationMenu extends RibbonApplicationMenu
     private final RibbonApplicationMenuEntrySecondary amesNewRGBSequence;
     private final RibbonApplicationMenuEntrySecondary amesNewRGBASequence;
     private final RibbonApplicationMenuEntryPrimary amepOpen;
+    private final RibbonApplicationMenuEntryPrimary amepImport;
     private final RibbonApplicationMenuEntryPrimary amepSaveDefault;
     private final RibbonApplicationMenuEntrySecondary amepSave;
     private final RibbonApplicationMenuEntrySecondary amepSaveAs;
@@ -197,24 +208,16 @@ public class ApplicationMenu extends RibbonApplicationMenu
         amesNewRGBSequence = new IcyRibbonApplicationMenuEntrySecondary(FileActions.newRGBSequenceAction);
         amesNewRGBASequence = new IcyRibbonApplicationMenuEntrySecondary(FileActions.newARGBSequenceAction);
 
-        amepNew.addSecondaryMenuGroup("New sequence", amesNewGraySequence, amesNewRGBSequence, amesNewRGBASequence);
+        amepNew.addSecondaryMenuGroup("New image", amesNewGraySequence, amesNewRGBSequence, amesNewRGBASequence);
 
         // OPEN & IMPORT
 
         amepOpen = new IcyRibbonApplicationMenuEntryPrimary(FileActions.openSequenceAction);
         amepOpen.setRolloverCallback(new OpenRecentFilePrimaryRollOverCallBack());
 
-        // final RibbonApplicationMenuEntryPrimary amEntryImport = new
-        // RibbonApplicationMenuEntryPrimary(
-        // new ICYResizableIcon.Icy("doc_import.png"), "Import", new ActionListener()
-        // {
-        // @Override
-        // public void actionPerformed(ActionEvent e)
-        // {
-        // System.out.println("import action...");
-        // }
-        // }, CommandButtonKind.ACTION_ONLY);
-        // amEntryImport.setRolloverCallback(new DefaultRollOverCallBack());
+        amepImport = new IcyRibbonApplicationMenuEntryPrimary(new IcyIcon(ResourceUtil.ICON_DOC_IMPORT),
+                "Import", null, CommandButtonKind.POPUP_ONLY);
+        amepImport.addSecondaryMenuGroup("Import a sequence", getImportEntries());
 
         // SAVE & EXPORT
 
@@ -263,9 +266,8 @@ public class ApplicationMenu extends RibbonApplicationMenu
         addMenuEntry(amepOpen);
         addMenuEntry(amepSaveDefault);
 
-        // addMenuEntry(amEntryImport);
-
-        // addMenuSeparator();
+        addMenuSeparator();
+        addMenuEntry(amepImport);
 
         // addMenuEntry(amepExport);
 
@@ -285,12 +287,31 @@ public class ApplicationMenu extends RibbonApplicationMenu
         // setDefaultCallback(new DefaultRollOverCallBack());
 
         refreshState();
+
+        PluginLoader.addListener(this);
+    }
+
+    private RibbonApplicationMenuEntrySecondary[] getImportEntries()
+    {
+        final List<PluginDescriptor> importers = PluginLoader.getPlugins(Importer.class);
+        final List<PluginDescriptor> sequenceImporters = PluginLoader.getPlugins(SequenceImporter.class);
+        final List<RibbonApplicationMenuEntrySecondary> result = new ArrayList<RibbonApplicationMenuEntrySecondary>();
+
+        for (PluginDescriptor importer : importers)
+            result.add(new PluginApplicationMenuEntrySecondary(importer));
+        for (PluginDescriptor sequenceImporter : sequenceImporters)
+            result.add(new PluginApplicationMenuEntrySecondary(sequenceImporter));
+
+        // TODO: add sort here from plugin importer preferences
+
+        return result.toArray(new RibbonApplicationMenuEntrySecondary[result.size()]);
     }
 
     private void refreshState()
     {
         final Sequence focusedSequence = Icy.getMainInterface().getActiveSequence();
 
+        amepImport.setEnabled(getImportEntries().length > 0);
         amepSaveDefault.setEnabled(focusedSequence != null);
         amepSave.setEnabled((focusedSequence != null) && !StringUtil.isEmpty(focusedSequence.getFilename()));
         amepSaveAs.setEnabled(focusedSequence != null);
@@ -341,6 +362,12 @@ public class ApplicationMenu extends RibbonApplicationMenu
     }
 
     public void onSequenceActivationChange()
+    {
+        refreshState();
+    }
+
+    @Override
+    public void pluginLoaderChanged(PluginLoaderEvent e)
     {
         refreshState();
     }

@@ -31,11 +31,6 @@ import icy.sequence.Sequence;
 public interface Importer
 {
     /**
-     * Return the description given on the importer menu
-     */
-    public String getDescription();
-
-    /**
      * Launch the importer.<br>
      * The importer is responsible to handle its own UI and load the wanted resource.
      * 

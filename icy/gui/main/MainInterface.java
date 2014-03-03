@@ -60,6 +60,11 @@ public interface MainInterface
      * Check if exit is allowed from registered listeners
      */
     public abstract boolean canExitExternal();
+    
+    /**
+     * Return true is the application is running in headless mode (no screen device).
+     */
+    public abstract boolean isHeadLess();
 
     /**
      * Open a viewer for the specified sequence.
