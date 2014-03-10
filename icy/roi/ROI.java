@@ -666,19 +666,21 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
 
         /**
-         * Returns the overlay internals mouse position (image coordinates)
+         * @deprecated Better to retrieve mouse position from the {@link IcyCanvas} object.
          */
+        @Deprecated
         public Point5D.Double getMousePos()
         {
             return mousePos;
         }
 
         /**
-         * Set the overlay internals mouse position (image coordinates)
+         * @deprecated Better to retrieve mouse position from the {@link IcyCanvas} object.
          */
+        @Deprecated
         public void setMousePos(Point5D pos)
         {
-            if ((pos != null) && !mousePos.equals(pos))
+            if (!mousePos.equals(pos))
                 mousePos.setLocation(pos);
         }
 
@@ -716,14 +718,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         @Override
         public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            if (isActiveFor(canvas))
+            if (!e.isConsumed())
             {
-                if (!e.isConsumed())
+                if (isActiveFor(canvas))
                 {
                     switch (e.getKeyCode())
                     {
                         case KeyEvent.VK_ESCAPE:
-                            // shape selected ? --> global unselect ROI
+                            // roi selected ? --> global unselect ROI
                             if (isSelected())
                             {
                                 canvas.getSequence().setSelectedROI(null);
@@ -770,13 +772,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         @Override
         public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            if (isActiveFor(canvas))
-            {
-                // update mouse position
-                if (imagePoint != null)
-                    setMousePos(imagePoint);
-            }
-
             // this allow to keep the backward compatibility
             super.mouseDrag(e, imagePoint, canvas);
         }
@@ -784,13 +779,6 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         @Override
         public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            if (isActiveFor(canvas))
-            {
-                // update mouse position
-                if (imagePoint != null)
-                    setMousePos(imagePoint);
-            }
-
             // this allow to keep the backward compatibility
             super.mouseMove(e, imagePoint, canvas);
         }

@@ -83,6 +83,12 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
     public static final String PROPERTY_RECEIVEKEYEVENTONHIDDEN = "receiveKeyEventOnHidden";
     public static final String PROPERTY_RECEIVEMOUSEEVENTONHIDDEN = "receiveMouseEventOnHidden";
 
+    /**
+     * We consider as tiny object anything with a size of 10 pixels or less
+     */
+    public static final int LOD_SMALL = 10;
+    public static final int LOD_TINY = 4;
+
     protected static int id_gen = 1;
 
     /**

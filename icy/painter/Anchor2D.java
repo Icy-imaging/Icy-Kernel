@@ -599,7 +599,12 @@ public class Anchor2D extends Overlay implements XMLPersistent
     public boolean isOver(IcyCanvas canvas, double x, double y)
     {
         updateEllipse(canvas);
-        return ellipse.contains(x, y);
+
+        // fast contains test to start with
+        if (ellipse.getBounds2D().contains(x, y))
+            return ellipse.contains(x, y);
+
+        return false;
     }
 
     protected double getAdjRay(IcyCanvas canvas)
@@ -609,10 +614,9 @@ public class Anchor2D extends Overlay implements XMLPersistent
 
     private void updateEllipse(IcyCanvas canvas)
     {
-        final double adjRayX = canvas.canvasToImageLogDeltaX(ray);
-        final double adjRayY = canvas.canvasToImageLogDeltaY(ray);
+        final double adjRay = getAdjRay(canvas);
 
-        ellipse.setFrame(position.x - adjRayX, position.y - adjRayY, adjRayX * 2, adjRayY * 2);
+        ellipse.setFrame(position.x - adjRay, position.y - adjRay, adjRay * 2, adjRay * 2);
     }
 
     protected boolean updateDrag(InputEvent e, double x, double y)
@@ -764,8 +768,9 @@ public class Anchor2D extends Overlay implements XMLPersistent
                     g2.setColor(getSelectedColor());
                 else
                     g2.setColor(getColor());
-                g2.fill(ellipse);
 
+                // draw ellipse content
+                g2.fill(ellipse);
                 // draw black border
                 g2.setStroke(new BasicStroke((float) (getAdjRay(canvas) / 8f)));
                 g2.setColor(Color.black);

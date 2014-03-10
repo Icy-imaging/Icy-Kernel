@@ -155,9 +155,9 @@ public class ApplicationPreferences
     {
         int result = (int) (SystemUtil.getTotalMemory() / (1024 * 1024));
 
-        // limit maximum memory to 1100 MB for 32 bits system
-        if (SystemUtil.is32bits() && (result > 1100))
-            result = 1100;
+        // limit maximum memory to 1024 MB for 32 bits system
+        if (SystemUtil.is32bits() && (result > 1024))
+            result = 1024;
 
         return memoryAlign(result);
     }

@@ -29,7 +29,9 @@ import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
+import icy.type.point.Point5D.Double;
 import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
 
@@ -42,6 +44,7 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -78,11 +81,21 @@ public class ROI2DArea extends ROI2D
         private static final float MIN_CURSOR_SIZE = 0.6f;
         private static final float MAX_CURSOR_SIZE = 500f;
 
+        protected final Point2D brushPosition;
+
+        public ROI2DAreaPainter()
+        {
+            super();
+
+            brushPosition = new Point2D.Double();
+        }
+
         void updateCursor()
         {
-            final Point5D.Double pos = getMousePos();
+            final double x = brushPosition.getX();
+            final double y = brushPosition.getY();
 
-            brush.setFrameFromDiagonal(pos.x - brushSize, pos.y - brushSize, pos.x + brushSize, pos.y + brushSize);
+            brush.setFrameFromDiagonal(x - brushSize, y - brushSize, x + brushSize, y + brushSize);
 
             // if roi selected (cursor displayed) --> painter changed
             if (isSelected())
@@ -91,22 +104,22 @@ public class ROI2DArea extends ROI2D
 
         /**
          * Returns the brush position.
-         * 
-         * @see #getMousePos()
          */
         public Point2D getBrushPosition()
         {
-            return getMousePos().toPoint2D();
+            return (Point) brushPosition.clone();
         }
 
         /**
          * Set the brush position.
-         * 
-         * @see #setMousePos(Point5D)
          */
         public void setBrushPosition(Point2D position)
         {
-            setMousePos(new Point5D.Double(position.getX(), position.getY(), -1d, -1d, -1d));
+            if (!brushPosition.equals(position))
+            {
+                brushPosition.setLocation(position);
+                updateCursor();
+            }
         }
 
         /**
@@ -125,16 +138,6 @@ public class ROI2DArea extends ROI2D
         public void setCursorPosition(Point2D position)
         {
             setBrushPosition(position);
-        }
-
-        @Override
-        public void setMousePos(Point5D pos)
-        {
-            if ((pos != null) && !getMousePos().equals(pos))
-            {
-                super.setMousePos(pos);
-                updateCursor();
-            }
         }
 
         /**
@@ -241,14 +244,14 @@ public class ROI2DArea extends ROI2D
             // send event to parent first
             super.keyPressed(e, imagePoint, canvas);
 
-            // then process it here
-            if (isActiveFor(canvas))
+            // not yet consumed and ROI editable...
+            if (!e.isConsumed() && !isReadOnly())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                // then process it here
+                if (isActiveFor(canvas))
                 {
-                    // not yet consumed and ROI editable...
-                    if (!e.isConsumed() && !isReadOnly())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         ROI2DArea.this.beginUpdate();
                         try
@@ -281,35 +284,31 @@ public class ROI2DArea extends ROI2D
             // send event to parent first
             super.mousePressed(e, imagePoint, canvas);
 
-            // then process it here
-            if (isActiveFor(canvas))
+            // not yet consumed, ROI editable, selected and not focused...
+            if (!e.isConsumed() && !isReadOnly() && isSelected() && !isFocused())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                // then process it here
+                if (isActiveFor(canvas))
                 {
-                    // not yet consumed and ROI editable...
-                    if (!e.isConsumed() && !isReadOnly())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         ROI2DArea.this.beginUpdate();
                         try
                         {
-                            // ROI selected and not focused
-                            if (isSelected() && !isFocused())
+                            // left button action
+                            if (EventUtil.isLeftMouseButton(e))
                             {
-                                // left button action
-                                if (EventUtil.isLeftMouseButton(e))
-                                {
-                                    // add point first
-                                    addToMask(imagePoint.toPoint2D());
-                                    e.consume();
-                                }
-                                // right button action
-                                else if (EventUtil.isRightMouseButton(e))
-                                {
-                                    // remove point
-                                    removeFromMask(imagePoint.toPoint2D());
-                                    e.consume();
-                                }
+                                // add point first
+                                addToMask(imagePoint.toPoint2D());
+                                e.consume();
+                            }
+                            // right button action
+                            else if (EventUtil.isRightMouseButton(e))
+                            {
+                                // remove point
+                                removeFromMask(imagePoint.toPoint2D());
+                                e.consume();
                             }
                         }
                         finally
@@ -338,40 +337,57 @@ public class ROI2DArea extends ROI2D
         }
 
         @Override
+        public void mouseMove(MouseEvent e, Double imagePoint, IcyCanvas canvas)
+        {
+            // send event to parent first
+            super.mouseMove(e, imagePoint, canvas);
+
+            // not yet consumed, ROI editable and selected...
+            if (!e.isConsumed() && !isReadOnly() && isSelected())
+            {
+                // then process it here
+                if (isActiveFor(canvas))
+                {
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    {
+                        setBrushPosition(imagePoint.toPoint2D());
+                    }
+                }
+            }
+        }
+
+        @Override
         public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // send event to parent first
             super.mouseDrag(e, imagePoint, canvas);
 
-            // then process it here
-            if (isActiveFor(canvas))
+            // not yet consumed, ROI editable and selected...
+            if (!e.isConsumed() && !isReadOnly() && isSelected())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                // then process it here
+                if (isActiveFor(canvas))
                 {
-                    // not yet consumed and ROI editable...
-                    if (!e.isConsumed() && !isReadOnly())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         ROI2DArea.this.beginUpdate();
                         try
                         {
-                            // roi selected ?
-                            if (isSelected())
+                            // left button action
+                            if (EventUtil.isLeftMouseButton(e))
                             {
-                                // left button action
-                                if (EventUtil.isLeftMouseButton(e))
-                                {
-                                    // add point first
-                                    addToMask(imagePoint.toPoint2D());
-                                    e.consume();
-                                }
-                                // right button action
-                                else if (EventUtil.isRightMouseButton(e))
-                                {
-                                    // remove point
-                                    removeFromMask(imagePoint.toPoint2D());
-                                    e.consume();
-                                }
+                                // add point first
+                                addToMask(imagePoint.toPoint2D());
+                                e.consume();
+                            }
+                            // right button action
+                            else if (EventUtil.isRightMouseButton(e))
+                            {
+                                // remove point
+                                removeFromMask(imagePoint.toPoint2D());
+                                e.consume();
                             }
                         }
                         finally
@@ -400,66 +416,69 @@ public class ROI2DArea extends ROI2D
         {
             if (canvas instanceof IcyCanvas2D)
             {
-                final Graphics2D g2 = (Graphics2D) g.create();
-
-                final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
-                // show content with an alpha factor
-                g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity()));
-
+                final Rectangle bounds = getBounds();
                 // trivial paint optimization
-                final boolean shapeVisible = ShapeUtil.isVisible(g, getBounds());
-
-                // draw mask
-                if (shapeVisible)
-                    g2.drawImage(imageMask, null, bounds.x, bounds.y);
-
-                // ROI selected ? draw cursor
-                if (isSelected() && !isFocused() && !isReadOnly())
-                {
-                    // trivial paint optimization
-                    if (ShapeUtil.isVisible(g, brush))
-                    {
-                        // draw cursor border
-                        g2.setColor(Color.black);
-                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                        g2.draw(brush);
-
-                        // cursor color
-                        g2.setColor(brushColor);
-                        // draw cursor
-                        g2.fill(brush);
-                    }
-                }
-
-                // restore alpha
-                g2.setComposite(prevAlpha);
+                final boolean shapeVisible = GraphicsUtil.isVisible(g, bounds);
 
                 if (shapeVisible)
                 {
-                    // draw border
-                    if (isSelected())
-                    {
-                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                        g2.setColor(getDisplayColor());
-                        g2.draw(bounds);
-                    }
+                    final Graphics2D g2 = (Graphics2D) g.create();
+                    final boolean small;
+
+                    // disable LOD when creating the ROI
+                    if (isCreating())
+                        small = false;
                     else
                     {
-                        // outside border
-                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                        g2.setColor(Color.black);
-                        g2.draw(bounds);
-                        // internal border
-                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                        g2.setColor(getDisplayColor());
-                        g2.draw(bounds);
+                        final AffineTransform trans = g2.getTransform();
+                        final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
+                        small = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight()) < LOD_SMALL;
                     }
+
+                    // simplified draw
+                    if (small)
+                    {
+                        g2.setColor(getDisplayColor());
+                        g2.drawImage(imageMask, null, bounds.x, bounds.y);
+                    }
+                    // normal draw
+                    else
+                    {
+                        final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
+                        // show content with an alpha factor
+                        g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity()));
+
+                        // draw mask
+                        g2.drawImage(imageMask, null, bounds.x, bounds.y);
+
+                        // restore alpha
+                        g2.setComposite(prevAlpha);
+
+                        // draw border
+                        if (isSelected())
+                        {
+                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                            g2.setColor(getDisplayColor());
+                            g2.draw(bounds);
+                        }
+                        else
+                        {
+                            // outside border
+                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                            g2.setColor(Color.black);
+                            g2.draw(bounds);
+                            // internal border
+                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
+                            g2.setColor(getDisplayColor());
+                            g2.draw(bounds);
+                        }
+                    }
+
+                    g2.dispose();
                 }
 
                 // for (Point2D pt : getBooleanMask().getEdgePoints())
                 // g2.drawRect((int) pt.getX(), (int) pt.getY(), 1, 1);
-
-                g2.dispose();
             }
 
             if (canvas instanceof IcyCanvas3D)
@@ -470,7 +489,7 @@ public class ROI2DArea extends ROI2D
         }
 
         /**
-         * Draw extras informations as name, size and position
+         * draw the ROI cursor
          */
         protected void drawCursor(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
@@ -479,22 +498,48 @@ public class ROI2DArea extends ROI2D
                 // ROI selected ? draw cursor
                 if (isSelected() && !isFocused() && !isReadOnly())
                 {
+                    final Rectangle bounds = brush.getBounds();
                     // trivial paint optimization
-                    if (ShapeUtil.isVisible(g, brush))
+                    final boolean shapeVisible = GraphicsUtil.isVisible(g, bounds);
+
+                    if (shapeVisible)
                     {
                         final Graphics2D g2 = (Graphics2D) g.create();
+                        final boolean tiny;
 
-                        final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
-                        // show cursor with an alpha factor
-                        g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity()));
+                        // disable LOD when creating the ROI
+                        if (isCreating())
+                            tiny = false;
+                        else
+                        {
+                            final AffineTransform trans = g2.getTransform();
+                            final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
+                            tiny = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight()) < LOD_TINY;
+                        }
 
-                        // draw cursor border
-                        g2.setColor(Color.black);
-                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                        g2.draw(brush);
-                        // draw cursor
-                        g2.setColor(brushColor);
-                        g2.fill(brush);
+                        // simplified draw
+                        if (tiny)
+                        {
+                            // cursor color
+                            g2.setColor(brushColor);
+                            // draw cursor
+                            g2.fill(brush);
+                        }
+                        // normal draw
+                        else
+                        {
+                            final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
+                            // show cursor with an alpha factor
+                            g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity()*2));
+
+                            // draw cursor border
+                            g2.setColor(Color.black);
+                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
+                            g2.draw(brush);
+                            // draw cursor
+                            g2.setColor(brushColor);
+                            g2.fill(brush);
+                        }
 
                         g2.dispose();
                     }
@@ -590,8 +635,6 @@ public class ROI2DArea extends ROI2D
     {
         this();
 
-        // init mouse position
-        setMousePos(position);
         // add current point to mask
         addBrush(position);
     }
@@ -1116,8 +1159,13 @@ public class ROI2DArea extends ROI2D
         // use bigger stroke for isOverEdge test for easier intersection
         final double strk = getAdjustedStroke(canvas) * 3;
         final Rectangle2D rect = new Rectangle2D.Double(x - (strk * 0.5), y - (strk * 0.5), strk, strk);
-        // use flatten path, intersects on curved shape return incorrect result
-        return ShapeUtil.pathIntersects(bounds.getPathIterator(null, 0.1), rect);
+
+        // fast intersect test to start with
+        if (getBounds2D().intersects(rect))
+            // use flatten path, intersects on curved shape return incorrect result
+            return ShapeUtil.pathIntersects(bounds.getPathIterator(null, 0.1), rect);
+
+        return false;
     }
 
     @Override

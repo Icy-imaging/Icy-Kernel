@@ -38,6 +38,7 @@ import icy.sequence.Sequence;
 import icy.type.point.Point3D;
 import icy.type.point.Point5D;
 import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
 import icy.util.ShapeUtil.BooleanOperator;
 import icy.vtk.VtkUtil;
@@ -217,12 +218,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         @Override
         public void keyPressed(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            if (isActiveFor(canvas))
+            if (isSelected() && !isReadOnly())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                if (isActiveFor(canvas))
                 {
-                    if (isSelected() && !isReadOnly())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -264,12 +265,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         @Override
         public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            if (isActiveFor(canvas))
+            if (isSelected() && !isReadOnly())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                if (isActiveFor(canvas))
                 {
-                    if (isSelected() && !isReadOnly())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -296,13 +297,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         @Override
         public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to controls points first
-            if (isActiveFor(canvas))
+            if (isSelected() && !isReadOnly())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                // send event to controls points first
+                if (isActiveFor(canvas))
                 {
-                    if (isSelected() && !isReadOnly())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -345,13 +346,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         @Override
         public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to controls points first
-            if (isActiveFor(canvas))
+            if (isSelected() && !isReadOnly())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                // send event to controls points first
+                if (isActiveFor(canvas))
                 {
-                    if (isSelected() && !isReadOnly())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -378,13 +379,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         @Override
         public void mouseClick(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to controls points first
-            if (isActiveFor(canvas))
+            if (isSelected() && !isReadOnly())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                // send event to controls points first
+                if (isActiveFor(canvas))
                 {
-                    if (isSelected() && !isReadOnly())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -407,14 +408,14 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
             // then send event to parent
             super.mouseClick(e, imagePoint, canvas);
 
-            // and process ROI stuff now
-            if (isActiveFor(canvas))
+            // not yet consumed...
+            if (!e.isConsumed())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                // and process ROI stuff now
+                if (isActiveFor(canvas))
                 {
-                    // not yet consumed...
-                    if (!e.isConsumed())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         // single click
                         if (e.getClickCount() == 1)
@@ -435,13 +436,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         @Override
         public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to controls points first
-            if (isActiveFor(canvas))
+            if (isSelected() && !isReadOnly())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                // send event to controls points first
+                if (isActiveFor(canvas))
                 {
-                    if (isSelected() && !isReadOnly())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -468,13 +469,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         @Override
         public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
-            // send event to controls points first
-            if (isActiveFor(canvas))
+            if (isSelected() && !isReadOnly())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                // send event to controls points first
+                if (isActiveFor(canvas))
                 {
-                    if (isSelected() && !isReadOnly())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -499,70 +500,132 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         }
 
         /**
-         * Draw the ROI itself
+         * Draw the ROI
          */
         protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
             if (canvas instanceof IcyCanvas2D)
             {
+                final Rectangle2D bounds = shape.getBounds2D();
                 // trivial paint optimization
-                final boolean shapeVisible = ShapeUtil.isVisible(g, shape);
+                final boolean shapeVisible = GraphicsUtil.isVisible(g, bounds);
+                final boolean small;
+                final boolean tiny;
 
-                // ROI selected ?
-                if (shapeVisible && isSelected())
+                // disable LOD when creating the ROI
+                if (isCreating())
                 {
-                    final Graphics2D g2 = (Graphics2D) g.create();
-                    final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
-
-                    // show content with an alpha factor
-                    g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity()));
-                    g2.setColor(getDisplayColor());
-                    g2.fill(shape);
-
-                    g2.dispose();
+                    small = false;
+                    tiny = false;
+                }
+                else
+                {
+                    final AffineTransform trans = g.getTransform();
+                    final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
+                    final double size = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight());
+                    small = size < LOD_SMALL;
+                    tiny = size < LOD_TINY;
                 }
 
-                final Graphics2D g2 = (Graphics2D) g.create();
-
-                if (shapeVisible)
+                // simplified draw
+                if (small)
                 {
-                    if (isSelected())
+                    if (shapeVisible)
                     {
-                        // just draw plain object shape without border
-                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                        g2.setColor(getDisplayColor());
-                        g2.draw(shape);
-                    }
-                    else
-                    {
-                        // draw border
-                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                        g2.setColor(Color.black);
-                        g2.draw(shape);
+                        final Graphics2D g2 = (Graphics2D) g.create();
+
                         // draw shape
                         g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
                         g2.setColor(getDisplayColor());
                         g2.draw(shape);
+
+                        if (isSelected())
+                        {
+                            g2.fill(shape);
+
+                            if (!tiny)
+                            {
+                                // draw simplified control points
+                                if (!isReadOnly())
+                                {
+                                    final int ray = (int) canvas.canvasToImageDeltaX(2);
+
+                                    for (Anchor2D pt : controlPoints)
+                                    {
+                                        if (pt.isVisible())
+                                        {
+                                            // control point content
+                                            if (pt.isSelected())
+                                                g2.setColor(pt.getSelectedColor());
+                                            else
+                                                g2.setColor(pt.getColor());
+                                            g2.fillRect((int) pt.getPositionX() - ray, (int) pt.getPositionY() - ray,
+                                                    ray * 2, ray * 2);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        g2.dispose();
                     }
                 }
-
-                // draw from flatten shape as we use it for collision detection
-                // ShapeUtil.drawFromPath(getPathIterator(null, 0.1), g);
-
-                if (isSelected() && !isReadOnly())
+                // normal draw
+                else
                 {
-
-                    // draw control point if selected
-                    synchronized (controlPoints)
+                    // ROI selected ?
+                    if (shapeVisible && isSelected())
                     {
-                        for (Anchor2D pt : controlPoints)
-                            pt.paint(g2, sequence, canvas);
+                        final Graphics2D g2 = (Graphics2D) g.create();
+                        final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
+
+                        // show content with an alpha factor
+                        g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity()));
+                        g2.setColor(getDisplayColor());
+                        g2.fill(shape);
+
+                        g2.dispose();
+                    }
+
+                    final Graphics2D g2 = (Graphics2D) g.create();
+
+                    if (shapeVisible)
+                    {
+                        if (isSelected())
+                        {
+                            // just draw plain object shape without border
+                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                            g2.setColor(getDisplayColor());
+                            g2.draw(shape);
+                        }
+                        else
+                        {
+                            // draw border
+                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                            g2.setColor(Color.black);
+                            g2.draw(shape);
+                            // draw shape
+                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
+                            g2.setColor(getDisplayColor());
+                            g2.draw(shape);
+                        }
+                    }
+
+                    // draw from flatten shape as we use it for collision detection
+                    // ShapeUtil.drawFromPath(getPathIterator(null, 0.1), g);
+
+                    if (isSelected() && !isReadOnly())
+                    {
+                        // draw control point if selected
+                        synchronized (controlPoints)
+                        {
+                            for (Anchor2D pt : controlPoints)
+                                pt.paint(g2, sequence, canvas);
+                        }
                     }
 
                     g2.dispose();
                 }
-
-                g2.dispose();
             }
 
             if (canvas instanceof Canvas3D)
@@ -1095,8 +1158,13 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         // use bigger stroke for isOver test for easier intersection
         final double strk = painter.getAdjustedStroke(canvas) * 3;
         final Rectangle2D rect = new Rectangle2D.Double(x - (strk * 0.5), y - (strk * 0.5), strk, strk);
-        // use flatten path, intersects on curved shape return incorrect result
-        return ShapeUtil.pathIntersects(getPathIterator(null, 0.1), rect);
+
+        // fast intersect test to start with
+        if (getBounds2D().intersects(rect))
+            // use flatten path, intersects on curved shape return incorrect result
+            return ShapeUtil.pathIntersects(getPathIterator(null, 0.1), rect);
+
+        return false;
     }
 
     // @Override

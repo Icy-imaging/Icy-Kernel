@@ -1109,6 +1109,9 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     @Override
     public void valueChanged(ListSelectionEvent e)
     {
+        if (e.getValueIsAdjusting())
+            return;
+        
         // not in internal selection change ?
         if (modifySelection.tryAcquire())
         {

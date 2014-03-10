@@ -181,11 +181,10 @@ public class GraphicsUtil
             // special case of single point region
             if (region.getHeight() == 0d)
                 return clipRegion.contains(region.getX(), region.getY());
-            else
-                // special case of null width region
-                return clipRegion.contains(region.getX(), region.getMinY())
-                        || clipRegion.contains(region.getX(), region.getMaxY());
 
+            // special case of null width region
+            return clipRegion.contains(region.getX(), region.getMinY())
+                    || clipRegion.contains(region.getX(), region.getMaxY());
         }
         else if (region.getHeight() == 0d)
             // special case of null height region

@@ -22,6 +22,7 @@ import icy.gui.main.MainFrame;
 import icy.gui.viewer.Viewer;
 import icy.main.Icy;
 import icy.painter.Overlay;
+import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
 
 import java.awt.Component;
@@ -33,6 +34,7 @@ import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.JComponent;
@@ -46,6 +48,9 @@ public abstract class IcyCanvas2D extends IcyCanvas
      * 
      */
     private static final long serialVersionUID = 743937493919099495L;
+
+    /** mouse position (image coordinate space) */
+    protected Point2D.Double mouseImagePos;
 
     // image coordinate to canvas coordinate transform
     protected final AffineTransform transform;
@@ -63,6 +68,8 @@ public abstract class IcyCanvas2D extends IcyCanvas
         posZ = 0;
         posT = 0;
 
+        // initial mouse position
+        mouseImagePos = new Point2D.Double();
         transform = new AffineTransform();
         inverseTransform = new AffineTransform();
         transformChanged = false;
@@ -84,21 +91,47 @@ public abstract class IcyCanvas2D extends IcyCanvas
             super.setPositionT(t);
     }
 
+    @Override
+    public double getMouseImagePosX()
+    {
+        // can be called before constructor ended
+        if (mouseImagePos == null)
+            return 0d;
+
+        return mouseImagePos.x;
+
+    }
+
+    @Override
+    public double getMouseImagePosY()
+    {
+        // can be called before constructor ended
+        if (mouseImagePos == null)
+            return 0d;
+
+        return mouseImagePos.y;
+    }
+
     /**
      * Return mouse image position
      */
     public Point2D.Double getMouseImagePos()
     {
-        return new Point2D.Double(getMouseImagePosX(), getMouseImagePosY());
+        return (Double) mouseImagePos.clone();
     }
 
-    /**
-     * Set mouse image position
-     */
     public void setMouseImagePos(double x, double y)
     {
-        setMouseImagePosX(x);
-        setMouseImagePosY(y);
+        if ((mouseImagePos.x != x) || (mouseImagePos.y != y))
+        {
+            mouseImagePos.x = x;
+            mouseImagePos.y = y;
+
+            // direct update of mouse canvas position
+            mousePos = imageToCanvas(mouseImagePos);
+            // notify change
+            mouseImagePositionChanged(DimensionId.NULL);
+        }
     }
 
     /**
@@ -107,6 +140,62 @@ public abstract class IcyCanvas2D extends IcyCanvas
     public void setMouseImagePos(Point2D.Double point)
     {
         setMouseImagePos(point.x, point.y);
+    }
+
+    @Override
+    public boolean setMousePos(int x, int y)
+    {
+        final boolean result = super.setMousePos(x, y);
+
+        if (result)
+        {
+            // direct update of mouse image position
+            mouseImagePos = canvasToImage(mousePos);
+            // notify change
+            mouseImagePositionChanged(DimensionId.NULL);
+        }
+
+        return result;
+    }
+
+    /**
+     * @deprecated Use {@link #setMousePos(int, int)} instead
+     */
+    @Deprecated
+    public void setMouseCanvasPos(int x, int y)
+    {
+        setMousePos(x, y);
+    }
+
+    /**
+     * @deprecated Use {@link #setMousePos(Point)} instead.
+     */
+    @Deprecated
+    public void setMouseCanvasPos(Point point)
+    {
+        setMousePos(point);
+    }
+
+    @Override
+    protected void setMouseImagePosXInternal(double value)
+    {
+        mouseImagePos.x = value;
+
+        // direct update of mouse canvas position
+        mousePos = imageToCanvas(mouseImagePos);
+
+        super.setMouseImagePosXInternal(value);
+    }
+
+    @Override
+    protected void setMouseImagePosYInternal(double value)
+    {
+        mouseImagePos.y = value;
+
+        // direct update of mouse canvas position
+        mousePos = imageToCanvas(mouseImagePos);
+
+        super.setMouseImagePosYInternal(value);
     }
 
     /**

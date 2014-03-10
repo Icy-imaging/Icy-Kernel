@@ -65,6 +65,7 @@ import icy.util.OMEUtil;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -296,6 +297,11 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     protected int posC;
 
     /**
+     * Current mouse position (canvas coordinate space)
+     */
+    protected Point mousePos;
+
+    /**
      * internals
      */
     protected LUT lut;
@@ -321,6 +327,14 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         synchHeader = false;
         orderedLayersOutdated = false;
         updater = new UpdateEventHandler(this, false);
+
+        // default position
+        mousePos = new Point(0, 0);
+        posX = -1;
+        posY = -1;
+        posZ = -1;
+        posT = -1;
+        posC = -1;
 
         // GUI stuff
         panel = new JPanel();
@@ -1413,6 +1427,14 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
+     * Returns the mouse position (in canvas coordinate space).
+     */
+    public Point getMousePos()
+    {
+        return (Point) mousePos.clone();
+    }
+
+    /**
      * Get mouse image position for specified Dimension
      */
     public double getMouseImagePos(DimensionId dim)
@@ -2181,6 +2203,34 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         posC = c;
         // common process on position change
         positionChanged(DimensionId.C);
+    }
+
+    /**
+     * Set mouse position (in canvas coordinate space).<br>
+     * The method returns <code>true</code> if the mouse position actually changed.
+     */
+    public boolean setMousePos(int x, int y)
+    {
+        if ((mousePos.x != x) || (mousePos.y != y))
+        {
+            mousePos.x = x;
+            mousePos.y = y;
+
+            // mouse image position as probably changed so this method should be overridden
+            // to implement the correct calculation for the mouse iamge position change
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Set mouse position (in canvas coordinate space)
+     */
+    public void setMousePos(Point point)
+    {
+        setMousePos(point.x, point.y);
     }
 
     /**

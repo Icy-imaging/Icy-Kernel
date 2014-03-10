@@ -18,10 +18,8 @@
  */
 package icy.gui.main;
 
-import icy.action.CanvasActions;
 import icy.action.FileActions;
 import icy.action.GeneralActions;
-import icy.action.WindowActions;
 import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.gui.component.ExternalizablePanel;
@@ -328,27 +326,11 @@ public class MainFrame extends JRibbonFrame
         imap.put(FileActions.openSequenceAction.getKeyStroke(), FileActions.openSequenceAction.getName());
         imap.put(FileActions.saveAsSequenceAction.getKeyStroke(), FileActions.saveAsSequenceAction.getName());
         imap.put(GeneralActions.onlineHelpAction.getKeyStroke(), GeneralActions.onlineHelpAction.getName());
-        imap.put(WindowActions.gridTileAction.getKeyStroke(), WindowActions.gridTileAction.getName());
-        imap.put(WindowActions.horizontalTileAction.getKeyStroke(), WindowActions.horizontalTileAction.getName());
-        imap.put(WindowActions.verticalTileAction.getKeyStroke(), WindowActions.verticalTileAction.getName());
-        imap.put(CanvasActions.globalDisableSyncAction.getKeyStroke(), CanvasActions.globalDisableSyncAction.getName());
-        imap.put(CanvasActions.globalSyncGroup1Action.getKeyStroke(), CanvasActions.globalSyncGroup1Action.getName());
-        imap.put(CanvasActions.globalSyncGroup2Action.getKeyStroke(), CanvasActions.globalSyncGroup2Action.getName());
-        imap.put(CanvasActions.globalSyncGroup3Action.getKeyStroke(), CanvasActions.globalSyncGroup3Action.getName());
-        imap.put(CanvasActions.globalSyncGroup4Action.getKeyStroke(), CanvasActions.globalSyncGroup4Action.getName());
 
         amap.put(GeneralActions.searchAction.getName(), GeneralActions.searchAction);
         amap.put(FileActions.openSequenceAction.getName(), FileActions.openSequenceAction);
         amap.put(FileActions.saveAsSequenceAction.getName(), FileActions.saveAsSequenceAction);
         amap.put(GeneralActions.onlineHelpAction.getName(), GeneralActions.onlineHelpAction);
-        amap.put(WindowActions.gridTileAction.getName(), WindowActions.gridTileAction);
-        amap.put(WindowActions.horizontalTileAction.getName(), WindowActions.horizontalTileAction);
-        amap.put(WindowActions.verticalTileAction.getName(), WindowActions.verticalTileAction);
-        amap.put(CanvasActions.globalDisableSyncAction.getName(), CanvasActions.globalDisableSyncAction);
-        amap.put(CanvasActions.globalSyncGroup1Action.getName(), CanvasActions.globalSyncGroup1Action);
-        amap.put(CanvasActions.globalSyncGroup2Action.getName(), CanvasActions.globalSyncGroup2Action);
-        amap.put(CanvasActions.globalSyncGroup3Action.getName(), CanvasActions.globalSyncGroup3Action);
-        amap.put(CanvasActions.globalSyncGroup4Action.getName(), CanvasActions.globalSyncGroup4Action);
     }
 
     public ApplicationMenu getApplicationMenu()

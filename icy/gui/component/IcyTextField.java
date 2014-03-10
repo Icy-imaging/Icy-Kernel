@@ -50,6 +50,10 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
     }
 
     // internals
+    /**
+     * @deprecated Don't use this property.
+     */
+    @Deprecated
     protected boolean consumeCharKeyPressEvent;
     protected boolean changed;
 
@@ -113,7 +117,7 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
     protected void init()
     {
         changed = false;
-        consumeCharKeyPressEvent = true;
+        consumeCharKeyPressEvent = false;
 
         getDocument().addDocumentListener(this);
         addActionListener(this);
@@ -171,20 +175,18 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
     }
 
     /**
-     * Set to true if the TextField should consume any <i>Character</i> KEY_PRESSED event.<br>
-     * This allows the event to not be dispatched on others components (Key Bindings) when the
-     * TextField "use" it.
+     * @deprecated Should not be used (keep it to false)
      */
+    @Deprecated
     public void setConsumeCharKeyPressEvent(boolean consumeCharKeyPressEvent)
     {
         this.consumeCharKeyPressEvent = consumeCharKeyPressEvent;
     }
 
     /**
-     * Returns the <i>consumeCharKeyPressEvent</i> property.
-     * 
-     * @see #setConsumeCharKeyPressEvent(boolean)
+     * @deprecated Should not be used.
      */
+    @Deprecated
     public boolean getConsumeCharKeyPressEvent()
     {
         return consumeCharKeyPressEvent;

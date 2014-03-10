@@ -56,10 +56,16 @@ public class ConfirmDialog
         @Override
         public void run()
         {
-            final JFrame parent = Icy.getMainInterface().getMainFrame();
+            // always confirm in headless mode
+            if (Icy.getMainInterface().isHeadLess())
+                result = true;
+            else
+            {
+                final JFrame parent = Icy.getMainInterface().getMainFrame();
 
-            result = getBooleanReturnValue(JOptionPane.showConfirmDialog(parent, message, title, optionType,
-                    JOptionPane.QUESTION_MESSAGE));
+                result = getBooleanReturnValue(JOptionPane.showConfirmDialog(parent, message, title, optionType,
+                        JOptionPane.QUESTION_MESSAGE));
+            }
         }
     }
 

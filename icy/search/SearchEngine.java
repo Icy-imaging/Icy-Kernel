@@ -87,10 +87,11 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
                     try
                     {
                         final PluginSearchProvider psp = (PluginSearchProvider) plugin.getPluginClass().newInstance();
+                        final SearchResultProducer producer = psp.getSearchProviderClass().newInstance();
 
                         synchronized (producers)
                         {
-                            producers.add(psp.getSearchProviderClass().newInstance());
+                            producers.add(producer);
                         }
                     }
                     catch (Throwable t)

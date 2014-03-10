@@ -893,7 +893,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             if (!moving)
                 return;
 
-            Point delta = new Point(mouseCanvasPos.x - startDragPosition.x, mouseCanvasPos.y - startDragPosition.y);
+            final Point mousePos = getMousePos();
+            final Point delta = new Point(mousePos.x - startDragPosition.x, mousePos.y - startDragPosition.y);
 
             // shift action --> limit to one direction
             if (shift)
@@ -932,6 +933,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             if (!rotating)
                 return;
 
+            final Point mousePos = getMousePos();
+
             // get canvas center
             final int canvasCenterX = getCanvasSizeX() / 2;
             final int canvasCenterY = getCanvasSizeY() / 2;
@@ -939,8 +942,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             // get last and current mouse position delta with center
             final int lastMouseDeltaPosX = startDragPosition.x - canvasCenterX;
             final int lastMouseDeltaPosY = startDragPosition.y - canvasCenterY;
-            final int newMouseDeltaPosX = mouseCanvasPos.x - canvasCenterX;
-            final int newMouseDeltaPosY = mouseCanvasPos.y - canvasCenterY;
+            final int newMouseDeltaPosX = mousePos.x - canvasCenterX;
+            final int newMouseDeltaPosY = mousePos.y - canvasCenterY;
 
             // get angle in radian between last and current mouse position
             // relative to image center
@@ -988,7 +991,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             if (!consumed)
             {
                 // start drag mouse position
-                startDragPosition = (Point) mouseCanvasPos.clone();
+                startDragPosition = getMousePos();
                 // store canvas parameters
                 startOffset = new Point(getOffsetX(), getOffsetY());
                 startRotationZ = getRotationZ();
@@ -1342,11 +1345,11 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             final Sequence seq = getSequence();
             final Layer defaultImageLayer = getImageLayer();
 
-            // global layer visible switch for canvas 
+            // global layer visible switch for canvas
             if (isLayersVisible())
             {
                 final List<Layer> layers = getLayers(true);
-                
+
                 // draw them in inverse order to have first painter event at top
                 for (int i = layers.size() - 1; i >= 0; i--)
                 {
@@ -1406,8 +1409,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
 
-                final int x = mouseCanvasPos.x - (ICON_TARGET_SIZE / 2);
-                final int y = mouseCanvasPos.y - (ICON_TARGET_SIZE / 2);
+                final Point mousePos = getMousePos();
+                final int x = mousePos.x - (ICON_TARGET_SIZE / 2);
+                final int y = mousePos.y - (ICON_TARGET_SIZE / 2);
 
                 // display cursor at mouse pos
                 g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
@@ -1910,11 +1914,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
      */
     final Canvas2DSmoothMover transform;
 
-    /**
-     * internals
-     */
-    Point mouseCanvasPos;
-    Point2D.Double mouseImagePos;
     String textInfos;
     boolean modifyingZoom;
     boolean modifyingRotation;
@@ -1938,9 +1937,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         transform = new Canvas2DSmoothMover(5, SmoothMoveType.LOG);
         // initials transform values
         transform.setValues(new double[] {0d, 0d, 1d, 1d, 0d});
-        // initial mouse position
-        mouseCanvasPos = new Point();
-        mouseImagePos = new Point2D.Double();
         textInfos = null;
         modifyingZoom = false;
         modifyingRotation = false;
@@ -2428,17 +2424,16 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         if (mouseCentered)
         {
-            // we want the mouse image point to becomes the canvas center (take
-            // rotation in account)
+            // we want the mouse image point to becomes the canvas center (take rotation in account)
             newTrans = canvasToImageDelta(canvasCenterX - newMouseCanvasPos.x, canvasCenterY - newMouseCanvasPos.y, 1d,
                     1d, rot);
         }
         else
         {
-            // we want the mouse image point to keep its place (take rotation in
-            // account)
-            newTrans = canvasToImageDelta(mouseCanvasPos.x - newMouseCanvasPos.x, mouseCanvasPos.y
-                    - newMouseCanvasPos.y, 1d, 1d, rot);
+            final Point mousePos = getMousePos();
+            // we want the mouse image point to keep its place (take rotation in account)
+            newTrans = canvasToImageDelta(mousePos.x - newMouseCanvasPos.x, mousePos.y - newMouseCanvasPos.y, 1d, 1d,
+                    rot);
         }
 
         // limit translation to min / max offset
@@ -2499,27 +2494,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     public boolean isSynchronizationSupported()
     {
         return true;
-    }
-
-    @Override
-    public double getMouseImagePosX()
-    {
-        // can be called before constructor ended
-        if (mouseImagePos == null)
-            return 0d;
-
-        return mouseImagePos.x;
-
-    }
-
-    @Override
-    public double getMouseImagePosY()
-    {
-        // can be called before constructor ended
-        if (mouseImagePos == null)
-            return 0d;
-
-        return mouseImagePos.y;
     }
 
     protected int getMinOffsetX()
@@ -2611,72 +2585,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         return MathUtil.formatRadianAngle(getRotationZ());
     }
 
-    /**
-     * Set mouse canvas position
-     */
-    public void setMouseCanvasPos(int x, int y)
-    {
-        if ((mouseCanvasPos.x != x) || (mouseCanvasPos.y != y))
-        {
-            mouseCanvasPos.x = x;
-            mouseCanvasPos.y = y;
-
-            // direct update of mouse image position
-            mouseImagePos = canvasToImage(mouseCanvasPos);
-            // notify change
-            mouseImagePositionChanged(DimensionId.NULL);
-        }
-    }
-
-    /**
-     * Set mouse canvas position
-     */
-    public void setMouseCanvasPos(Point point)
-    {
-        setMouseCanvasPos(point.x, point.y);
-    }
-
-    @Override
-    public void setMouseImagePos(double x, double y)
-    {
-        if ((mouseImagePos.x != x) || (mouseImagePos.y != y))
-        {
-            mouseImagePos.x = x;
-            mouseImagePos.y = y;
-
-            // direct update of mouse canvas position
-            mouseCanvasPos = imageToCanvas(mouseImagePos);
-            // notify change
-            mouseImagePositionChanged(DimensionId.NULL);
-        }
-    }
-
     @Override
     protected void setPositionCInternal(int c)
     {
         // not supported in this canvas, C should stay at -1
-    }
-
-    @Override
-    protected void setMouseImagePosXInternal(double value)
-    {
-        mouseImagePos.x = value;
-
-        // direct update of mouse canvas position
-        mouseCanvasPos = imageToCanvas(mouseImagePos);
-
-        super.setMouseImagePosXInternal(value);
-    }
-
-    @Override
-    protected void setMouseImagePosYInternal(double value)
-    {
-        mouseImagePos.y = value;
-
-        // direct update of mouse canvas position
-        mouseCanvasPos = imageToCanvas(mouseImagePos);
-
-        super.setMouseImagePosYInternal(value);
     }
 
     @Override
@@ -3096,7 +3008,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             case SCALE_CHANGED:
             case ROTATION_CHANGED:
                 // update mouse image position from mouse canvas position
-                setMouseImagePos(canvasToImage(mouseCanvasPos));
+                setMouseImagePos(canvasToImage(getMousePos()));
 
                 // display info message
                 if (type == IcyCanvasEventType.SCALE_CHANGED)
@@ -3159,13 +3071,14 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 if (!canvasView.handlingMouseMoveEvent && !canvasView.isDragging() && !isSynchSlave())
                 {
                     // mouse position in canvas
-                    final Point mouseAbsolutePos = new Point(mouseCanvasPos);
+                    final Point mousePos = getMousePos();
+                    final Point mouseAbsolutePos = getMousePos();
                     // absolute mouse position
                     SwingUtilities.convertPointToScreen(mouseAbsolutePos, canvasView);
 
                     // simulate a mouse move event so overlays can handle position change
                     final MouseEvent mouseEvent = new MouseEvent(this, MouseEvent.MOUSE_MOVED,
-                            System.currentTimeMillis(), 0, mouseCanvasPos.x, mouseCanvasPos.y, mouseAbsolutePos.x,
+                            System.currentTimeMillis(), 0, mousePos.x, mousePos.y, mouseAbsolutePos.x,
                             mouseAbsolutePos.y, 0, false, 0);
 
                     // send mouse move event to overlays

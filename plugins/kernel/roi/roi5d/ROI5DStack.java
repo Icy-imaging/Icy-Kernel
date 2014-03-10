@@ -89,7 +89,7 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
     @Override
     protected ROIPainter createPainter()
     {
-        return new ROI4DStackPainter();
+        return new ROI5DStackPainter();
     }
 
     /**
@@ -789,7 +789,7 @@ public class ROI5DStack<R extends ROI4D> extends ROI5D implements ROIListener, O
         return true;
     }
 
-    public class ROI4DStackPainter extends ROIPainter
+    public class ROI5DStackPainter extends ROIPainter
     {
         R getSliceForCanvas(IcyCanvas canvas)
         {

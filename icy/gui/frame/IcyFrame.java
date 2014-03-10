@@ -50,6 +50,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -1252,6 +1254,28 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
             return internalFrame.getJMenuBar();
 
         return externalFrame.getJMenuBar();
+    }
+
+    /**
+     * Returns the content pane InputMap
+     */
+    public InputMap getInputMap(int condition)
+    {
+        if (isInternalized())
+            return ((JPanel) internalFrame.getContentPane()).getInputMap(condition);
+
+        return ((JPanel) externalFrame.getContentPane()).getInputMap(condition);
+    }
+
+    /**
+     * Returns the content pane InputMap
+     */
+    public ActionMap getActionMap()
+    {
+        if (isInternalized())
+            return ((JPanel) internalFrame.getContentPane()).getActionMap();
+
+        return ((JPanel) externalFrame.getContentPane()).getActionMap();
     }
 
     /**

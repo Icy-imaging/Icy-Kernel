@@ -19,6 +19,7 @@
 package icy.gui.dialog;
 
 import icy.file.FileUtil;
+import icy.main.Icy;
 import icy.system.thread.ThreadUtil;
 
 import java.io.File;
@@ -101,6 +102,10 @@ public class SaveDialog
     public static String chooseFile(String title, String defaultDir, String defaultName, String extension)
     {
         final SaveDialogRunner runner = new SaveDialogRunner(title, defaultDir, defaultName, extension);
+
+        // no result in headless
+        if (Icy.getMainInterface().isHeadLess())
+            return null;
 
         ThreadUtil.invokeNow(runner);
 

@@ -55,7 +55,7 @@ public abstract class ROI2D extends ROI
 
         return result;
     }
-    
+
     /**
      * @deprecated Use {@link ROI2D#getROI2DList(List)} instead.
      */
@@ -143,10 +143,8 @@ public abstract class ROI2D extends ROI
 
         protected boolean updateFocus(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
         {
-            if (imagePoint == null)
-                return false;
-
-            final boolean focused = isOverEdge(canvas, imagePoint);
+            // test on canvas has already be done, don't do it again
+            final boolean focused = isOverEdge(canvas, imagePoint.getX(), imagePoint.getY());
 
             setFocused(focused);
 
@@ -245,13 +243,13 @@ public abstract class ROI2D extends ROI
             // do parent stuff
             super.mousePressed(e, imagePoint, canvas);
 
-            if (isActiveFor(canvas))
+            // not yet consumed...
+            if (!e.isConsumed())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                if (isActiveFor(canvas))
                 {
-                    // not yet consumed...
-                    if (!e.isConsumed())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         ROI2D.this.beginUpdate();
                         try
@@ -291,13 +289,13 @@ public abstract class ROI2D extends ROI
             // do parent stuff
             super.mouseDrag(e, imagePoint, canvas);
 
-            if (isActiveFor(canvas))
+            // not yet consumed and ROI editable...
+            if (!e.isConsumed() && !isReadOnly())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                if (isActiveFor(canvas))
                 {
-                    // not yet consumed and ROI editable...
-                    if (!e.isConsumed() && !isReadOnly())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         ROI2D.this.beginUpdate();
                         try
@@ -337,13 +335,13 @@ public abstract class ROI2D extends ROI
             // do parent stuff
             super.mouseMove(e, imagePoint, canvas);
 
-            if (isActiveFor(canvas))
+            // update focus
+            if (!e.isConsumed())
             {
-                // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                if (isActiveFor(canvas))
                 {
-                    // update focus
-                    if (!e.isConsumed())
+                    // check we can do the action
+                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
                     {
                         if (updateFocus(e, imagePoint, canvas))
                             e.consume();

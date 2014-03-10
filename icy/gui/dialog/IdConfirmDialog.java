@@ -103,7 +103,7 @@ public class IdConfirmDialog
                         BorderLayout.SOUTH);
                 dialog.pack();
             }
-            dialog.show();
+            dialog.setVisible(true);
             dialog.dispose();
 
             final Object selectedValue = pane.getValue();
@@ -140,6 +140,10 @@ public class IdConfirmDialog
     public static boolean confirm(String title, String message, int optionType, String id)
     {
         final Confirmer confirmer = new Confirmer(title, message, optionType, id);
+
+        // always confirm in headless mode
+        if (Icy.getMainInterface().isHeadLess())
+            return true;
 
         ThreadUtil.invokeNow(confirmer);
 

@@ -21,6 +21,7 @@ package icy.gui.viewer;
 import icy.action.CanvasActions;
 import icy.action.CanvasActions.ToggleLayersAction;
 import icy.action.ViewerActions;
+import icy.action.WindowActions;
 import icy.canvas.Canvas2D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
@@ -70,10 +71,13 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.InputMap;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -123,7 +127,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      * internals
      */
     boolean initialized;
-    
+
     public Viewer(Sequence sequence, boolean visible)
     {
         super("Viewer", true, true, true, true);
@@ -234,11 +238,41 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         }
         else
             setVisible(false);
+
+        // can be done after setVisible
+        buildActionMap();
     }
 
     public Viewer(Sequence sequence)
     {
         this(sequence, true);
+    }
+
+    void buildActionMap()
+    {
+        // global input map
+        buildActionMap(getInputMap(JComponent.WHEN_FOCUSED), getActionMap());
+    }
+
+    private void buildActionMap(InputMap imap, ActionMap amap)
+    {
+        imap.put(WindowActions.gridTileAction.getKeyStroke(), WindowActions.gridTileAction.getName());
+        imap.put(WindowActions.horizontalTileAction.getKeyStroke(), WindowActions.horizontalTileAction.getName());
+        imap.put(WindowActions.verticalTileAction.getKeyStroke(), WindowActions.verticalTileAction.getName());
+        imap.put(CanvasActions.globalDisableSyncAction.getKeyStroke(), CanvasActions.globalDisableSyncAction.getName());
+        imap.put(CanvasActions.globalSyncGroup1Action.getKeyStroke(), CanvasActions.globalSyncGroup1Action.getName());
+        imap.put(CanvasActions.globalSyncGroup2Action.getKeyStroke(), CanvasActions.globalSyncGroup2Action.getName());
+        imap.put(CanvasActions.globalSyncGroup3Action.getKeyStroke(), CanvasActions.globalSyncGroup3Action.getName());
+        imap.put(CanvasActions.globalSyncGroup4Action.getKeyStroke(), CanvasActions.globalSyncGroup4Action.getName());
+
+        amap.put(WindowActions.gridTileAction.getName(), WindowActions.gridTileAction);
+        amap.put(WindowActions.horizontalTileAction.getName(), WindowActions.horizontalTileAction);
+        amap.put(WindowActions.verticalTileAction.getName(), WindowActions.verticalTileAction);
+        amap.put(CanvasActions.globalDisableSyncAction.getName(), CanvasActions.globalDisableSyncAction);
+        amap.put(CanvasActions.globalSyncGroup1Action.getName(), CanvasActions.globalSyncGroup1Action);
+        amap.put(CanvasActions.globalSyncGroup2Action.getName(), CanvasActions.globalSyncGroup2Action);
+        amap.put(CanvasActions.globalSyncGroup3Action.getName(), CanvasActions.globalSyncGroup3Action);
+        amap.put(CanvasActions.globalSyncGroup4Action.getName(), CanvasActions.globalSyncGroup4Action);
     }
 
     /**

@@ -1307,7 +1307,7 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * @return the author
+     * Returns the author's plugin name.
      */
     public String getAuthor()
     {
@@ -1315,7 +1315,7 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * @return the web
+     * Returns the website url of this plugin.
      */
     public String getWeb()
     {

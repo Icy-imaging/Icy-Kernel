@@ -26,6 +26,7 @@ import icy.resource.ResourceUtil;
 import icy.roi.ROI;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
+import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
 import icy.util.XMLUtil;
 
@@ -33,6 +34,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -87,35 +89,93 @@ public class ROI2DPolyLine extends ROI2DShape
             if (canvas instanceof IcyCanvas2D)
             {
                 final Graphics2D g2 = (Graphics2D) g.create();
-
+                final Rectangle2D bounds = shape.getBounds2D();
                 // trivial paint optimization
-                if (ShapeUtil.isVisible(g, shape))
+                final boolean shapeVisible = GraphicsUtil.isVisible(g2, bounds);
+                final boolean small;
+                final boolean tiny;
+
+                // disable LOD when creating the ROI
+                if (isCreating())
                 {
-                    if (isSelected())
+                    small = false;
+                    tiny = false;
+                }
+                else
+                {
+                    final AffineTransform trans = g.getTransform();
+                    final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
+                    final double size = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight());
+                    small = size < LOD_SMALL;
+                    tiny = size < LOD_TINY;
+                }
+
+                // simplified draw
+                if (small)
+                {
+                    // trivial paint optimization
+                    if (shapeVisible)
                     {
-                        // just draw plain object shape without border
-                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                        g2.setColor(getDisplayColor());
-                        g2.draw(shape);
-                    }
-                    else
-                    {
-                        // draw border
-                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
-                        g2.setColor(Color.black);
-                        g2.draw(shape);
-                        // draw shape
+                        // draw shape (simplified version)
                         g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
                         g2.setColor(getDisplayColor());
                         g2.draw(shape);
+
+                        if (!tiny)
+                        {
+                            // draw simplified control points
+                            if (isSelected() && !isReadOnly())
+                            {
+                                final int ray = (int) canvas.canvasToImageDeltaX(2);
+
+                                for (Anchor2D pt : controlPoints)
+                                {
+                                    if (pt.isVisible())
+                                    {
+                                        if (pt.isSelected())
+                                            g2.setColor(pt.getSelectedColor());
+                                        else
+                                            g2.setColor(pt.getColor());
+
+                                        g2.fillRect((int) pt.getPositionX() - ray, (int) pt.getPositionY() - ray,
+                                                ray * 2, ray * 2);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-
-                if (isSelected() && !isReadOnly())
+                // normal draw
+                else
                 {
-                    // draw control point if selected
-                    for (Anchor2D pt : controlPoints)
-                        pt.paint(g2, sequence, canvas);
+                    if (shapeVisible)
+                    {
+                        if (isSelected())
+                        {
+                            // just draw plain object shape without border
+                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                            g2.setColor(getDisplayColor());
+                            g2.draw(shape);
+                        }
+                        else
+                        {
+                            // draw border
+                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke + 1d)));
+                            g2.setColor(Color.black);
+                            g2.draw(shape);
+                            // draw shape
+                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
+                            g2.setColor(getDisplayColor());
+                            g2.draw(shape);
+                        }
+                    }
+
+                    if (isSelected() && !isReadOnly())
+                    {
+                        // draw control point if selected
+                        for (Anchor2D pt : controlPoints)
+                            pt.paint(g2, sequence, canvas);
+                    }
                 }
 
                 g2.dispose();

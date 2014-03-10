@@ -178,7 +178,7 @@ public class MainInterfaceGui implements MainInterface
 
         taskFrameManager.init();
     }
-    
+
     @Override
     public boolean isHeadLess()
     {
@@ -467,11 +467,15 @@ public class MainInterfaceGui implements MainInterface
             else
             {
                 // it was the active viewer ?
-                if (getActiveViewer() == viewer)
+                if (activeViewer == viewer)
                 {
                     // restore focus to previous active
                     if (previousActiveViewer != null)
+                    {
                         setActiveViewer(previousActiveViewer);
+                        // no more previous active now
+                        previousActiveViewer = null;
+                    }
                     else
                         // or just focus another one
                         setActiveViewer(viewers.get(viewers.size() - 1));
