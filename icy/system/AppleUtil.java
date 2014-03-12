@@ -51,66 +51,71 @@ public class AppleUtil
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static void init()
     {
-        try
+        // only when we have the GUI
+        if (!Icy.getMainInterface().isHeadLess())
         {
-            final ClassLoader classLoader = SystemUtil.getSystemClassLoader();
-            final Class appClass = classLoader.loadClass("com.apple.eawt.Application");
-            final Object app = appClass.newInstance();
+            try
+            {
+                final ClassLoader classLoader = SystemUtil.getSystemClassLoader();
+                final Class appClass = classLoader.loadClass("com.apple.eawt.Application");
+                final Object app = appClass.newInstance();
 
-            final Class listenerClass = classLoader.loadClass("com.apple.eawt.ApplicationListener");
-            final Object listener = Proxy.newProxyInstance(classLoader, new Class[] {listenerClass},
-                    new InvocationHandler()
-                    {
-                        @Override
-                        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
+                final Class listenerClass = classLoader.loadClass("com.apple.eawt.ApplicationListener");
+                final Object listener = Proxy.newProxyInstance(classLoader, new Class[] {listenerClass},
+                        new InvocationHandler()
                         {
-                            final Object applicationEvent = args[0];
-                            final Class appEventClass = applicationEvent.getClass();
-                            final Method m = appEventClass.getMethod("setHandled", boolean.class);
-
-                            if (method.getName().equals("handleQuit"))
+                            @Override
+                            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
                             {
-                                m.invoke(applicationEvent, Boolean.valueOf(Icy.exit(false)));
+                                final Object applicationEvent = args[0];
+                                final Class appEventClass = applicationEvent.getClass();
+                                final Method m = appEventClass.getMethod("setHandled", boolean.class);
+
+                                if (method.getName().equals("handleQuit"))
+                                {
+                                    m.invoke(applicationEvent, Boolean.valueOf(Icy.exit(false)));
+                                }
+                                if (method.getName().equals("handleAbout"))
+                                {
+                                    new AboutFrame();
+                                    m.invoke(applicationEvent, Boolean.valueOf(true));
+                                }
+                                if (method.getName().equals("handleOpenFile"))
+                                {
+                                    new ImageLoaderDialog();
+                                    m.invoke(applicationEvent, Boolean.valueOf(true));
+                                }
+                                if (method.getName().equals("handlePreferences"))
+                                {
+                                    new PreferenceFrame(GeneralPreferencePanel.NODE_NAME);
+                                    m.invoke(applicationEvent, Boolean.valueOf(true));
+                                }
+
+                                return null;
                             }
-                            if (method.getName().equals("handleAbout"))
-                            {
-                                new AboutFrame();
-                                m.invoke(applicationEvent, Boolean.valueOf(true));
-                            }
-                            if (method.getName().equals("handleOpenFile"))
-                            {
-                                new ImageLoaderDialog();
-                                m.invoke(applicationEvent, Boolean.valueOf(true));
-                            }
-                            if (method.getName().equals("handlePreferences"))
-                            {
-                                new PreferenceFrame(GeneralPreferencePanel.NODE_NAME);
-                                m.invoke(applicationEvent, Boolean.valueOf(true));
-                            }
+                        });
 
-                            return null;
-                        }
-                    });
+                Method m;
 
-            Method m;
+                m = appClass.getMethod("addApplicationListener", listenerClass);
+                m.invoke(app, listener);
+                m = appClass.getMethod("setDockIconImage", java.awt.Image.class);
+                m.invoke(app, ResourceUtil.IMAGE_ICY_256);
+                m = appClass.getMethod("addPreferencesMenuItem");
+                m.invoke(app);
 
-            m = appClass.getMethod("addApplicationListener", listenerClass);
-            m.invoke(app, listener);
-            m = appClass.getMethod("setDockIconImage", java.awt.Image.class);
-            m.invoke(app, ResourceUtil.IMAGE_ICY_256);
-            m = appClass.getMethod("addPreferencesMenuItem");
-            m.invoke(app);
+                // set menu bar name
+                SystemUtil.setProperty("com.apple.mrj.application.apple.menu.about.name", "Icy");
 
-            // set menu bar name
-            SystemUtil.setProperty("com.apple.mrj.application.apple.menu.about.name", "Icy");
-
-            // start the fix thread
-            fixThread.start();
+            }
+            catch (Exception e)
+            {
+                System.err.println("Can't install OSX application wrapper...");
+            }
         }
-        catch (Exception e)
-        {
-            System.err.println("Can't install OSX application wrapper...");
-        }
+
+        // start the fix thread
+        fixThread.start();
     }
 
     /**
