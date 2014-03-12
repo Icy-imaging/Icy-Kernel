@@ -60,6 +60,13 @@ public class PluginErrorReport
     public static void report(final PluginDescriptor plugin, final String devId, final String title,
             final String message)
     {
+        // directly report in headless mode
+        if (Icy.getMainInterface().isHeadLess())
+        {
+            IcyExceptionHandler.report(plugin, devId, message);
+            return;
+        }
+
         // cannot be reported...
         // if ((plugin == null) && StringUtil.isEmpty(devId))
         // return;
