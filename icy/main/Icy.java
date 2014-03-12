@@ -72,7 +72,6 @@ import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
 
-import loci.common.DebugTools;
 import vtk.vtkNativeLibrary;
 
 /**
@@ -335,7 +334,8 @@ public class Icy
         ApplicationPreferences.setVersion(Icy.version);
 
         // set LOCI debug level
-        DebugTools.enableLogging("ERROR");
+        loci.common.DebugTools.enableLogging("ERROR");
+        ome.scifio.common.DebugTools.enableLogging("ERROR");
 
         System.out.println();
         System.out.println("Icy Version " + version + " started !");
@@ -345,9 +345,7 @@ public class Icy
 
         // handle startup arguments
         if (startupImage != null)
-        {
-            Icy.getMainInterface().addSequence(Loader.loadSequence(FileUtil.getGenericPath(startupImage), 0, true));
-        }
+            Icy.getMainInterface().addSequence(Loader.loadSequence(FileUtil.getGenericPath(startupImage), 0, false));
         if (startupPlugin != null)
         {
             PluginLoader.waitWhileLoading();
@@ -372,30 +370,23 @@ public class Icy
             // store plugin arguments
             if (startupPlugin != null)
                 pluginArgs.add(arg);
-
-            if (execute)
-            {
+            else if (execute)
                 startupPlugin = arg;
-                execute = false;
-            }
+            // special flag to disabled JCL (needed for development)
+            else if (arg.equalsIgnoreCase("--disableJCL") || arg.equalsIgnoreCase("-dJCL"))
+                PluginLoader.setJCLDisabled(true);
+            // headless mode
+            else if (arg.equalsIgnoreCase("--headless") || arg.equalsIgnoreCase("-hl"))
+                headless = true;
+            // disable splash-screen
+            else if (arg.equalsIgnoreCase("--nosplash") || arg.equalsIgnoreCase("-ns"))
+                noSplash = true;
+            // execute plugin
+            else if (arg.equalsIgnoreCase("--execute") || arg.equalsIgnoreCase("-x"))
+                execute = true;
+            // assume image name ?
             else
-            {
-                // special flag to disabled JCL (needed for development)
-                if (arg.equalsIgnoreCase("--disableJCL") || arg.equalsIgnoreCase("-dJCL"))
-                    PluginLoader.setJCLDisabled(true);
-                // headless mode
-                else if (arg.equalsIgnoreCase("--headless") || arg.equalsIgnoreCase("-hl"))
-                    headless = true;
-                // disable splash-screen
-                else if (arg.equalsIgnoreCase("--nosplash") || arg.equalsIgnoreCase("-ns"))
-                    noSplash = true;
-                // execute plugin
-                else if (arg.equalsIgnoreCase("--execute") || arg.equalsIgnoreCase("-x"))
-                    execute = true;
-                // image name ?
-                else
-                    startupImage = arg;
-            }
+                startupImage = arg;
         }
 
         // save the plugin arguments
@@ -942,6 +933,127 @@ public class Icy
             System.out.println("Cannot load VTK library...");
         }
     }
+
+    // private static void loadVtkLibrary(String libPath, boolean osChanged)
+    // {
+    // final String vtkLibPath = libPath + FileUtil.separator + "vtk";
+    //
+    // // we load it directly from inner lib path if possible
+    // System.setProperty("vtk.lib.dir", vtkLibPath);
+    //
+    // try
+    // {
+    // if (SystemUtil.isWindow())
+    // {
+    // loadLibrary(vtkLibPath, "vtkalglib");
+    // loadLibrary(vtkLibPath, "vtkexpat");
+    // loadLibrary(vtkLibPath, "vtkDICOMParser");
+    // loadLibrary(vtkLibPath, "vtkjpeg");
+    // loadLibrary(vtkLibPath, "vtkjsoncpp");
+    // loadLibrary(vtkLibPath, "vtkzlib");
+    // loadLibrary(vtkLibPath, "vtkoggtheora");
+    // loadLibrary(vtkLibPath, "vtkverdict");
+    // loadLibrary(vtkLibPath, "vtkpng");
+    // loadLibrary(vtkLibPath, "vtkgl2ps");
+    // loadLibrary(vtkLibPath, "vtktiff");
+    // loadLibrary(vtkLibPath, "vtklibxml2");
+    // loadLibrary(vtkLibPath, "vtkproj4");
+    // loadLibrary(vtkLibPath, "vtksys");
+    // loadLibrary(vtkLibPath, "vtkfreetype");
+    // loadLibrary(vtkLibPath, "vtkmetaio");
+    // loadLibrary(vtkLibPath, "vtkftgl");
+    //
+    // loadLibrary(vtkLibPath, "vtkCommonCore");
+    // loadLibrary(vtkLibPath, "vtkWrappingJava");
+    // loadLibrary(vtkLibPath, "vtkCommonSystem");
+    // loadLibrary(vtkLibPath, "vtkCommonMath");
+    // loadLibrary(vtkLibPath, "vtkCommonMisc");
+    // loadLibrary(vtkLibPath, "vtkCommonTransforms");
+    //
+    // loadLibrary(vtkLibPath, "vtkhdf5");
+    // loadLibrary(vtkLibPath, "vtkhdf5_hl");
+    // loadLibrary(vtkLibPath, "vtkNetCDF");
+    // loadLibrary(vtkLibPath, "vtkNetCDF_cxx");
+    //
+    // loadLibrary(vtkLibPath, "vtkCommonDataModel");
+    // loadLibrary(vtkLibPath, "vtkCommonColor");
+    // loadLibrary(vtkLibPath, "vtkCommonComputationalGeometry");
+    // loadLibrary(vtkLibPath, "vtkCommonExecutionModel");
+    //
+    // loadLibrary(vtkLibPath, "vtkexoIIc");
+    //
+    // loadLibrary(vtkLibPath, "vtkFiltersVerdict");
+    // loadLibrary(vtkLibPath, "vtkFiltersProgrammable");
+    //
+    // loadLibrary(vtkLibPath, "vtkIOCore");
+    // loadLibrary(vtkLibPath, "vtkIOEnSight");
+    // loadLibrary(vtkLibPath, "vtkIOVideo");
+    // loadLibrary(vtkLibPath, "vtkIOLegacy");
+    // loadLibrary(vtkLibPath, "vtkIONetCDF");
+    // loadLibrary(vtkLibPath, "vtkIOXMLParser");
+    // loadLibrary(vtkLibPath, "vtkIOXML");
+    // -->
+    // loadLibrary(vtkLibPath, "vtkIOLSDyna");
+    // loadLibrary(vtkLibPath, "vtkIOMINC");
+    // loadLibrary(vtkLibPath, "vtkIOMovie");
+    // loadLibrary(vtkLibPath, "vtkIOExodus");
+    // loadLibrary(vtkLibPath, "vtkIOExport");
+    // loadLibrary(vtkLibPath, "vtkIOGeometry");
+    // loadLibrary(vtkLibPath, "vtkIOImage");
+    // loadLibrary(vtkLibPath, "vtkIOImport");
+    // loadLibrary(vtkLibPath, "vtkIOInfovis");
+    // loadLibrary(vtkLibPath, "vtkIOParallel");
+    // loadLibrary(vtkLibPath, "vtkIOPLY");
+    // loadLibrary(vtkLibPath, "vtkIOSQL");
+    //
+    // loadLibrary(vtkLibPath, "vtkImaging");
+    // loadLibrary(vtkLibPath, "vtkverdict");
+    // loadLibrary(vtkLibPath, "vtkGraphics");
+    // loadLibrary(vtkLibPath, "vtkRendering");
+    // loadLibrary(vtkLibPath, "vtkHybrid");
+    // loadLibrary(vtkLibPath, "vtkGenericFiltering");
+    // loadLibrary(vtkLibPath, "vtkInfovis");
+    // loadLibrary(vtkLibPath, "vtkWidgets");
+    // loadLibrary(vtkLibPath, "vtkViews");
+    // loadLibrary(vtkLibPath, "vtkVolumeRendering");
+    // loadLibrary(vtkLibPath, "vtkCharts");
+    // loadLibrary(vtkLibPath, "vtkGeovis");
+    // }
+    //
+    // // VTK library loading from inner directory do not work on MAC OSX
+    // // so we have to copy lib files to the root
+    // if (SystemUtil.isMac())
+    // {
+    // // get VTK library file list (we don't want hidden files if any)
+    // final File[] libraryFiles = FileUtil.getFiles(new File(vtkLibPath), null, true, false,
+    // false);
+    // // copy to root directory
+    // for (File libraryFile : libraryFiles)
+    // {
+    // // get destination file (directly copy in root application directory)
+    // final File dstFile = new File(libraryFile.getName());
+    //
+    // // check if we need to copy the file
+    // if (osChanged || !dstFile.exists() || (dstFile.lastModified() != libraryFile.lastModified()))
+    // FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false);
+    // }
+    // }
+    //
+    // // use the VTK native method to load library so it don't try to load them later...
+    // // vtkLibraryLoaded = vtkNativeLibrary.LoadAllNativeLibraries();
+    // // redirect vtk error log to file
+    // vtkNativeLibrary.DisableOutputWindow(new File("vtk.log"));
+    // }
+    // catch (Throwable e)
+    // {
+    // vtkLibraryLoaded = false;
+    // }
+    //
+    // if (vtkLibraryLoaded)
+    // System.out.println("VTK library successfully loaded...");
+    // else
+    // System.out.println("Cannot load VTK library...");
+    // }
 
     private static void loadItkLibrary(String osDir)
     {

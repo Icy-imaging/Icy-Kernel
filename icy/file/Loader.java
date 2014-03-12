@@ -998,7 +998,8 @@ public class Loader
         final List<String> singlePaths = explodeAndClean(paths);
 
         // load sequences and return them
-        return loadSequences(importer, singlePaths, serie, separate, autoOrder, directory, addToRecent, showProgress);
+        return loadSequences(importer, singlePaths, serie, separate, autoOrder, directory, addToRecent, showProgress
+                && !Icy.getMainInterface().isHeadLess());
     }
 
     /**
@@ -1387,7 +1388,7 @@ public class Loader
     {
         final List<String> paths = CollectionUtil.asList(FileUtil.toPaths(files));
         final List<Sequence> result = loadSequences(null, paths, serie, separate, autoOrder, directory, addToRecent,
-                showProgress);
+                showProgress && !Icy.getMainInterface().isHeadLess());
         return (Sequence[]) result.toArray();
     }
 

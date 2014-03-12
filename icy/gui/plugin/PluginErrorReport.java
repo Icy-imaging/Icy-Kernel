@@ -22,6 +22,7 @@ import icy.gui.frame.error.ErrorReportFrame;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.gui.frame.progress.ProgressFrame;
+import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginRepositoryLoader;
@@ -188,30 +189,36 @@ public class PluginErrorReport
 
         str += "Reporting this problem is anonymous and will help improving this plugin.<br><br></html>";
 
-        final ErrorReportFrame frame = new ErrorReportFrame(icon, str, message);
-
-        // set specific report action here
-        frame.setReportAction(new ActionListener()
+        // headless mode --> report directly
+        if (Icy.getMainInterface().isHeadLess())
+            IcyExceptionHandler.report(plugin, devId, message);
+        else
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final ProgressFrame progressFrame = new ProgressFrame("Sending report...");
+            final ErrorReportFrame frame = new ErrorReportFrame(icon, str, message);
 
-                try
+            // set specific report action here
+            frame.setReportAction(new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent e)
                 {
-                    IcyExceptionHandler.report(plugin, devId, frame.getReportMessage());
+                    final ProgressFrame progressFrame = new ProgressFrame("Sending report...");
+
+                    try
+                    {
+                        IcyExceptionHandler.report(plugin, devId, frame.getReportMessage());
+                    }
+                    catch (BadLocationException ex)
+                    {
+                        System.err.println("Error while reporting error :");
+                        IcyExceptionHandler.showErrorMessage(ex, true);
+                    }
+                    finally
+                    {
+                        progressFrame.close();
+                    }
                 }
-                catch (BadLocationException ex)
-                {
-                    System.err.println("Error while reporting error :");
-                    IcyExceptionHandler.showErrorMessage(ex, true);
-                }
-                finally
-                {
-                    progressFrame.close();
-                }
-            }
-        });
+            });
+        }
     }
 }
