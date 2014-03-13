@@ -526,7 +526,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         }
 
         // setup connections
-        volumeMapper.SetInput(imageData);
+        volumeMapper.SetInputData(imageData);
         volume.SetMapper(volumeMapper);
     }
 
@@ -576,6 +576,7 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         final int sizeX = sequence.getSizeX();
         final int sizeY = sequence.getSizeY();
         final int sizeZ = sequence.getSizeZ();
+        final int sizeC;
         final DataType dataType = sequence.getDataType_();
         final int posT = getPositionT();
         final int posC = getPositionC();
@@ -586,19 +587,18 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
         newImageData.SetDimensions(sizeX, sizeY, sizeZ);
         // all component ?
         if (posC == -1)
-            newImageData.SetNumberOfScalarComponents(sequence.getSizeC());
+            sizeC = sequence.getSizeC();
         else
-            newImageData.SetNumberOfScalarComponents(1);
-        newImageData.SetWholeExtent(0, sizeX - 1, 0, sizeY - 1, 0, sizeZ - 1);
+            sizeC = 1;
+        newImageData.SetExtent(0, sizeX - 1, 0, sizeY - 1, 0, sizeZ - 1);
 
         vtkDataArray array;
 
         switch (dataType)
         {
             case UBYTE:
-                newImageData.SetScalarTypeToUnsignedChar();
                 // pre-allocate data
-                newImageData.AllocateScalars();
+                newImageData.AllocateScalars(VtkUtil.VTK_UNSIGNED_CHAR, sizeC);
                 // get array structure
                 array = newImageData.GetPointData().GetScalars();
                 // set frame sequence data in the array structure
@@ -610,21 +610,10 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
 
             case BYTE:
                 // FIXME: signed char not supported by VTK java wrapper ??
-                // imageData.SetScalarTypeToChar();
-                // // pre-allocate data
-                // imageData.AllocateScalars();
-                // // get array structure
-                // final vtkCharArray array = (vtkCharArray)
-                // imageData.GetPointData().GetScalars();
-                // // set frame sequence data in the array structure
-                // if (posC == -1)
-                // array.SetJavaArray(sequence.getDataCopyCXYZAsByte(posT));
-                // else
-                // array.SetJavaArray(sequence.getDataCopyXYZAsByte(posT, posC));
 
-                newImageData.SetScalarTypeToUnsignedChar();
                 // pre-allocate data
-                newImageData.AllocateScalars();
+                // newImageData.AllocateScalars(VtkUtil.VTK_SIGNED_CHAR, sizeC);
+                newImageData.AllocateScalars(VtkUtil.VTK_UNSIGNED_CHAR, sizeC);
                 // get array structure
                 array = newImageData.GetPointData().GetScalars();
                 // set frame sequence data in the array structure
@@ -635,9 +624,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                 break;
 
             case USHORT:
-                newImageData.SetScalarTypeToUnsignedShort();
                 // pre-allocate data
-                newImageData.AllocateScalars();
+                newImageData.AllocateScalars(VtkUtil.VTK_UNSIGNED_SHORT, sizeC);
                 // get array structure
                 array = newImageData.GetPointData().GetScalars();
                 // set frame sequence data in the array structure
@@ -648,9 +636,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                 break;
 
             case SHORT:
-                newImageData.SetScalarTypeToShort();
                 // pre-allocate data
-                newImageData.AllocateScalars();
+                newImageData.AllocateScalars(VtkUtil.VTK_SHORT, sizeC);
                 // get array structure
                 array = newImageData.GetPointData().GetScalars();
                 // set frame sequence data in the array structure
@@ -661,9 +648,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                 break;
 
             case UINT:
-                newImageData.SetScalarTypeToUnsignedInt();
                 // pre-allocate data
-                newImageData.AllocateScalars();
+                newImageData.AllocateScalars(VtkUtil.VTK_UNSIGNED_INT, sizeC);
                 // get array structure
                 array = newImageData.GetPointData().GetScalars();
                 // set frame sequence data in the array structure
@@ -674,9 +660,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                 break;
 
             case INT:
-                newImageData.SetScalarTypeToInt();
                 // pre-allocate data
-                newImageData.AllocateScalars();
+                newImageData.AllocateScalars(VtkUtil.VTK_INT, sizeC);
                 // get array structure
                 array = newImageData.GetPointData().GetScalars();
                 // set frame sequence data in the array structure
@@ -686,39 +671,9 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                     ((vtkIntArray) array).SetJavaArray(sequence.getDataCopyXYZAsInt(posT, posC));
                 break;
 
-            // not supported because DataBufferLong doesn't exist
-            // case ULONG:
-            // newImageData.SetScalarTypeToUnsignedInt();
-            // // pre-allocate data
-            // newImageData.AllocateScalars();
-            // // get array structure
-            // array = newImageData.GetPointData().GetScalars();
-            // // set frame sequence data in the array structure
-            // if (posC == -1)
-            // ((vtkUnsignedLongArray) array).SetJavaArray(sequence.getDataCopyCXYZAsInt(posT));
-            // else
-            // ((vtkUnsignedLongArray) array).SetJavaArray(sequence.getDataCopyXYZAsInt(posT,
-            // posC));
-            // break;
-
-            // not supported because DataBufferLong doesn't exist
-            // case LONG:
-            // newImageData.SetScalarTypeToInt();
-            // // pre-allocate data
-            // newImageData.AllocateScalars();
-            // // get array structure
-            // array = newImageData.GetPointData().GetScalars();
-            // // set frame sequence data in the array structure
-            // if (posC == -1)
-            // ((vtkLongArray) array).SetJavaArray(sequence.getDataCopyCXYZAsInt(posT));
-            // else
-            // ((vtkLongArray) array).SetJavaArray(sequence.getDataCopyXYZAsInt(posT, posC));
-            // break;
-
             case FLOAT:
-                newImageData.SetScalarTypeToFloat();
                 // pre-allocate data
-                newImageData.AllocateScalars();
+                newImageData.AllocateScalars(VtkUtil.VTK_FLOAT, sizeC);
                 // get array structure
                 array = newImageData.GetPointData().GetScalars();
                 // set frame sequence data in the array structure
@@ -729,9 +684,8 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                 break;
 
             case DOUBLE:
-                newImageData.SetScalarTypeToDouble();
                 // pre-allocate data
-                newImageData.AllocateScalars();
+                newImageData.AllocateScalars(VtkUtil.VTK_DOUBLE, sizeC);
                 // get array structure
                 array = newImageData.GetPointData().GetScalars();
                 // set frame sequence data in the array structure
@@ -744,16 +698,14 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
             default:
                 // we probably have an empty sequence
                 newImageData.SetDimensions(1, 1, 1);
-                newImageData.SetNumberOfScalarComponents(1);
-                newImageData.SetWholeExtent(0, 0, 0, 0, 0, 0);
-                newImageData.SetScalarTypeToUnsignedChar();
+                newImageData.SetExtent(0, 0, 0, 0, 0, 0);
                 // pre-allocate data
-                newImageData.AllocateScalars();
+                newImageData.AllocateScalars(VtkUtil.VTK_UNSIGNED_CHAR, sizeC);
                 break;
         }
 
         // set connection
-        volumeMapper.SetInput(newImageData);
+        volumeMapper.SetInputData(newImageData);
         // mark volume as modified
         volume.Modified();
 
@@ -1245,8 +1197,10 @@ public class Canvas3D extends IcyCanvas3D implements ActionListener, ColorChange
                     panel3D.paint(panel3D.getGraphics());
 
                     // NOTE: in vtk the [0,0] pixel is bottom left, so a vertical flip is required
-                    // NOTE: GetRGBACharPixelData gives problematic results depending on the platform
-                    // (see comment about alpha and platform-dependence in the doc for vtkWindowToImageFilter)
+                    // NOTE: GetRGBACharPixelData gives problematic results depending on the
+                    // platform
+                    // (see comment about alpha and platform-dependence in the doc for
+                    // vtkWindowToImageFilter)
                     // Since the canvas is opaque, simply use GetPixelData.
                     renderWindow.GetPixelData(0, 0, w - 1, h - 1, 1, array);
                 }

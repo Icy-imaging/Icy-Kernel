@@ -73,11 +73,12 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 grid = new vtkStructuredGrid();
                 gridOutline = new vtkStructuredGridOutlineFilter();
 
-                ((vtkStructuredGridOutlineFilter) gridOutline).SetInput((vtkStructuredGrid) grid);
+                ((vtkStructuredGridOutlineFilter) gridOutline).SetInputData((vtkStructuredGrid) grid);
 
                 polyMapper = new vtkPolyDataMapper();
                 // ((vtkPolyDataMapper) polyMapper).SetInput((vtkPolyData) polyData);
-                ((vtkPolyDataMapper) polyMapper).SetInput(((vtkStructuredGridOutlineFilter) gridOutline).GetOutput());
+                ((vtkPolyDataMapper) polyMapper).SetInputConnection(((vtkStructuredGridOutlineFilter) gridOutline)
+                        .GetOutputPort());
 
                 actor = new vtkActor();
                 ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);

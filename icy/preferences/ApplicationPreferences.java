@@ -167,7 +167,8 @@ public class ApplicationPreferences
      */
     public static int getStackSizeKB()
     {
-        return preferences.getInt(ID_STACK_SIZE, 4096);
+        // 2MB by default for VTK on 32 systems
+        return preferences.getInt(ID_STACK_SIZE, 2048);
     }
 
     /**
@@ -175,8 +176,9 @@ public class ApplicationPreferences
      */
     public static String getExtraVMParams()
     {
-        return preferences.get(ID_EXTRA_VMPARAMS,
-                "-XX:CompileCommand=exclude,plugins/kernel/importer/LociImporter.getImage -XX:MaxPermSize=128M");
+        // we want a big permgen space for the class loader
+        return preferences.get(ID_EXTRA_VMPARAMS, "-XX:MaxPermSize=128M");
+        // "-XX:CompileCommand=exclude,plugins/kernel/importer/LociImporter.getImage -XX:MaxPermSize=128M");
     }
 
     /**

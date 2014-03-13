@@ -91,7 +91,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
                 polyData = new vtkPolyData();
 
                 polyMapper = new vtkPolyDataMapper();
-                ((vtkPolyDataMapper) polyMapper).SetInput((vtkPolyData) polyData);
+                ((vtkPolyDataMapper) polyMapper).SetInputData((vtkPolyData) polyData);
 
                 actor = new vtkActor();
                 ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);

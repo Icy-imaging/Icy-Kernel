@@ -59,6 +59,7 @@ public class VtkUtil
     public final static int VTK_UNSIGNED_LONG = 9;
     public final static int VTK_FLOAT = 10;
     public final static int VTK_DOUBLE = 11;
+    public final static int VTK_ID = 12;
 
     /**
      * Add an actor to the specified renderer.<br>

@@ -310,7 +310,7 @@ public class SystemUtil
      */
     public static boolean isHeadLess()
     {
-        return getLocalGraphicsEnvironment().isHeadlessInstance();
+        return GraphicsEnvironment.isHeadless();
     }
 
     public static ClassLoader getContextClassLoader()
@@ -325,22 +325,22 @@ public class SystemUtil
 
     public static BufferCapabilities getSystemBufferCapabilities()
     {
-        return getSystemGraphicsConfiguration().getBufferCapabilities();
+        return getDefaultGraphicsConfiguration().getBufferCapabilities();
     }
 
     public static ImageCapabilities getSystemImageCapabilities()
     {
-        return getSystemGraphicsConfiguration().getImageCapabilities();
+        return getDefaultGraphicsConfiguration().getImageCapabilities();
     }
 
     public static ColorModel getSystemColorModel()
     {
-        return getSystemGraphicsConfiguration().getColorModel();
+        return getDefaultGraphicsConfiguration().getColorModel();
     }
 
     public static ColorModel getSystemColorModel(int transparency)
     {
-        return getSystemGraphicsConfiguration().getColorModel(transparency);
+        return getDefaultGraphicsConfiguration().getColorModel(transparency);
     }
 
     /**
