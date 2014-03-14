@@ -60,10 +60,14 @@ public class PluginErrorReport
     public static void report(final PluginDescriptor plugin, final String devId, final String title,
             final String message)
     {
-        // directly report in headless mode
+        // headless mode ?
         if (Icy.getMainInterface().isHeadLess())
         {
-            IcyExceptionHandler.report(plugin, devId, message);
+            // do nothing
+
+            // directly report
+            // IcyExceptionHandler.report(plugin, devId, message);
+
             return;
         }
 
@@ -169,6 +173,17 @@ public class PluginErrorReport
     // internal use only
     static void doReport(final PluginDescriptor plugin, final String devId, String title, String message)
     {
+        // headless mode
+        if (Icy.getMainInterface().isHeadLess())
+        {
+            // do not report
+
+            // report directly
+            // IcyExceptionHandler.report(plugin, devId, message);
+
+            return;
+        }
+
         String str;
         Icon icon;
 
@@ -196,36 +211,30 @@ public class PluginErrorReport
 
         str += "Reporting this problem is anonymous and will help improving this plugin.<br><br></html>";
 
-        // headless mode --> report directly
-        if (Icy.getMainInterface().isHeadLess())
-            IcyExceptionHandler.report(plugin, devId, message);
-        else
+        final ErrorReportFrame frame = new ErrorReportFrame(icon, str, message);
+
+        // set specific report action here
+        frame.setReportAction(new ActionListener()
         {
-            final ErrorReportFrame frame = new ErrorReportFrame(icon, str, message);
-
-            // set specific report action here
-            frame.setReportAction(new ActionListener()
+            @Override
+            public void actionPerformed(ActionEvent e)
             {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    final ProgressFrame progressFrame = new ProgressFrame("Sending report...");
+                final ProgressFrame progressFrame = new ProgressFrame("Sending report...");
 
-                    try
-                    {
-                        IcyExceptionHandler.report(plugin, devId, frame.getReportMessage());
-                    }
-                    catch (BadLocationException ex)
-                    {
-                        System.err.println("Error while reporting error :");
-                        IcyExceptionHandler.showErrorMessage(ex, true);
-                    }
-                    finally
-                    {
-                        progressFrame.close();
-                    }
+                try
+                {
+                    IcyExceptionHandler.report(plugin, devId, frame.getReportMessage());
                 }
-            });
-        }
+                catch (BadLocationException ex)
+                {
+                    System.err.println("Error while reporting error :");
+                    IcyExceptionHandler.showErrorMessage(ex, true);
+                }
+                finally
+                {
+                    progressFrame.close();
+                }
+            }
+        });
     }
 }
