@@ -18,8 +18,11 @@
  */
 package icy.system.thread;
 
+import icy.main.Icy;
 import icy.system.IcyExceptionHandler;
 
+import java.awt.EventQueue;
+import java.awt.HeadlessException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -99,15 +102,11 @@ public class ThreadUtil
     public final static int MAX_PRIORITY = Thread.MAX_PRIORITY;
 
     /**
-     * Returns true if the current thread is an AWT event dispatching thread.
-     * As of 1.3 this method is just a cover for <code>java.awt.EventQueue.isDispatchThread()</code>
-     * .
-     * 
-     * @return true if the current thread is an AWT event dispatching thread
+     * @return true if the current thread is an AWT event dispatching thread.
      */
     public static boolean isEventDispatchThread()
     {
-        return SwingUtilities.isEventDispatchThread();
+        return EventQueue.isDispatchThread();
     }
 
     /**
@@ -144,7 +143,7 @@ public class ThreadUtil
      */
     public static void invokeNow(Runnable runnable)
     {
-        if (SwingUtilities.isEventDispatchThread())
+        if (isEventDispatchThread())
         {
             try
             {
@@ -158,20 +157,30 @@ public class ThreadUtil
         }
         else
         {
-            try
+            // headless mode ?
+            if (Icy.getMainInterface().isHeadLess())
             {
-                SwingUtilities.invokeAndWait(runnable);
+                // cannot use the EDT in headless mode
+                IcyExceptionHandler.showErrorMessage(new HeadlessException(
+                        "Cannot use invokeNow(..) in headless mode (EDT do not exist) !"), true);
             }
-            catch (InvocationTargetException e)
+            else
             {
-                // the runnable thrown an exception
-                IcyExceptionHandler.handleException(e, true);
-            }
-            catch (Exception e)
-            {
-                // probably an interrupt exception here
-                System.err.println("ThreadUtil.invokeNow(...) error :");
-                IcyExceptionHandler.showErrorMessage(e, true);
+                try
+                {
+                    EventQueue.invokeAndWait(runnable);
+                }
+                catch (InvocationTargetException e)
+                {
+                    // the runnable thrown an exception
+                    IcyExceptionHandler.handleException(e, true);
+                }
+                catch (Exception e)
+                {
+                    // probably an interrupt exception here
+                    System.err.println("ThreadUtil.invokeNow(...) error :");
+                    IcyExceptionHandler.showErrorMessage(e, true);
+                }
             }
         }
     }

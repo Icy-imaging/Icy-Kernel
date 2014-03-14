@@ -437,6 +437,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             endUpdate();
         }
 
+        // release layers
+        orderedLayers = null;
+
         // remove all IcyCanvas listeners
         final IcyCanvasListener[] canvasListenters = listenerList.getListeners(IcyCanvasListener.class);
         for (IcyCanvasListener listener : canvasListenters)

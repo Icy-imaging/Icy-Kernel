@@ -306,7 +306,7 @@ public class SystemUtil
     }
 
     /**
-     * Return true if current system is "head less" (no screen output device).
+     * Returns true if current system is "head less" (no screen output device).
      */
     public static boolean isHeadLess()
     {
