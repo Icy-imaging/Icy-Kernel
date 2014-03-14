@@ -399,7 +399,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
      */
     public int getSizeZ()
     {
-        if (isEmpty())
+        if (slices.isEmpty())
             return 0;
 
         return (slices.lastKey().intValue() - slices.firstKey().intValue()) + 1;
