@@ -256,9 +256,8 @@ public class MetaDataUtil
     {
         final Image img = getSerie(metaData, serie);
 
-        metaData.getImageID(serie);
         if (img != null)
-            return img.getID();
+            return StringUtil.getValue(img.getID(), "");
 
         return "";
     }
@@ -279,7 +278,7 @@ public class MetaDataUtil
         final Image img = getSerie(metaData, serie);
 
         if (img != null)
-            return img.getName();
+            return StringUtil.getValue(img.getName(), "");
 
         return "";
     }
