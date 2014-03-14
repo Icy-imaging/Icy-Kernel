@@ -165,9 +165,6 @@ public class ROI5DArea extends ROI5DStack<ROI4DArea>
     @Override
     public boolean isEmpty()
     {
-        if (getBounds().isEmpty())
-            return true;
-
         for (ROI4DArea area : slices.values())
             if (!area.isEmpty())
                 return false;

@@ -172,9 +172,6 @@ public class ROI4DArea extends ROI4DStack<ROI3DArea>
     @Override
     public boolean isEmpty()
     {
-        if (getBounds().isEmpty())
-            return true;
-
         for (ROI3DArea area : slices.values())
             if (!area.isEmpty())
                 return false;
