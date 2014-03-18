@@ -28,8 +28,10 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 
 /**
+ * @deprecated Don't use this anymore
  * @author stephane
  */
+@Deprecated
 public class LabelFrame extends IcyFrame
 {
     public LabelFrame(String text)

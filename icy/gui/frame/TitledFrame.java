@@ -31,6 +31,10 @@ import javax.swing.JPanel;
 public class TitledFrame extends IcyFrame
 {
     protected final JPanel mainPanel;
+    /**
+     * @deprecated logo is now disabled (waste of space)
+     */
+    @Deprecated
     protected final IcyLogo logo;
 
     public TitledFrame(String title)
@@ -58,6 +62,7 @@ public class TitledFrame extends IcyFrame
         this(title, null, resizable, closable, maximizable, iconifiable);
     }
 
+    @SuppressWarnings("deprecation")
     public TitledFrame(String title, Dimension dim, boolean resizable, boolean closable, boolean maximizable,
             boolean iconifiable)
     {
@@ -70,7 +75,6 @@ public class TitledFrame extends IcyFrame
 
         logo = new IcyLogo(title, dim);
 
-        add(logo, BorderLayout.NORTH);
         add(mainPanel, BorderLayout.CENTER);
     }
 
@@ -83,18 +87,20 @@ public class TitledFrame extends IcyFrame
     }
 
     /**
-     * Display or not the ICY black title
+     * @deprecated Title always hidden now
      */
+    @Deprecated
     public void setTitleVisible(boolean value)
     {
-        logo.setVisible(value);
+        // ignore
     }
 
     /**
-     * Return true if ICY black title is visible
+     * @deprecated Title always hidden now
      */
+    @Deprecated
     public boolean isTitleVisible()
     {
-        return logo.isVisible();
+        return false;
     }
 }

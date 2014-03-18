@@ -18,7 +18,6 @@
  */
 package icy.gui.preferences;
 
-import icy.gui.component.IcyLogo;
 import icy.gui.dialog.ConfirmDialog;
 import icy.gui.frame.IcyFrame;
 import icy.gui.util.ComponentUtil;
@@ -215,7 +214,6 @@ public class PreferenceFrame extends IcyFrame implements TreeSelectionListener
 
         setLayout(new BorderLayout());
 
-        add(new IcyLogo("Preferences", new Dimension(800, 100)), BorderLayout.NORTH);
         add(mainPanel, BorderLayout.CENTER);
         add(tmpPanel, BorderLayout.SOUTH);
 

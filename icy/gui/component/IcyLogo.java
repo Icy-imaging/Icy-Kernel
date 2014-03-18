@@ -29,10 +29,11 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
 /**
- * Generate a panel with an uniformed logo.
+ * @deprecated Don't use this anymore...
  * 
  * @author Fabrice de Chaumont
  */
+@Deprecated
 public class IcyLogo extends IcyPanel // implements ComponentListener
 {
     private static final long serialVersionUID = 3914710344010035775L;

@@ -40,8 +40,6 @@ public class IncompatibleImageFormatDialog extends ActionFrame
 
         initialize();
 
-        // hide title and cancel button
-        setTitleVisible(false);
         getCancelBtn().setVisible(false);
 
         setSize(600, 240);

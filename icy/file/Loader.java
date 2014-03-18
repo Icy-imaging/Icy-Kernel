@@ -1888,20 +1888,19 @@ public class Loader
     }
 
     static int[] selectSerie(final SequenceFileImporter importer, final String path, final OMEXMLMetadataImpl meta,
-            int serie, int serieCount) throws UnsupportedFormatException, IOException
+            int defaultSerie, int serieCount) throws UnsupportedFormatException, IOException
     {
-        final int[] result = new int[serieCount];
+        final int[] tmp = new int[serieCount + 1];
 
         if (serieCount > 0)
         {
+            tmp[0] = 1;
+
             // multi serie, display selection dialog
             if (serieCount > 1)
             {
-                // default: no selected serie
-                Arrays.fill(result, -1);
-
                 // allow user to select series to open
-                if ((serie == -1) && !Icy.getMainInterface().isHeadLess())
+                if ((defaultSerie == -1) && !Icy.getMainInterface().isHeadLess())
                 {
                     final Exception[] exception = new Exception[1];
                     exception[0] = null;
@@ -1917,7 +1916,8 @@ public class Loader
                                 final int[] series = new SeriesSelectionDialog(importer, path, meta)
                                         .getSelectedSeries();
                                 // get result
-                                System.arraycopy(series, 0, result, 0, series.length);
+                                tmp[0] = series.length;
+                                System.arraycopy(series, 0, tmp, 1, series.length);
                             }
                             catch (Exception e)
                             {
@@ -1932,14 +1932,18 @@ public class Loader
                     else if (exception[0] instanceof IOException)
                         throw (IOException) exception[0];
                 }
+                // use the pre selected serie
                 else
-                    // use the pre selected serie
-                    result[0] = (serie != -1) ? serie : 0;
+                    tmp[1] = (defaultSerie != -1) ? defaultSerie : 0;
             }
+            // only 1 serie so open it
             else
-                // only 1 serie so open it
-                result[0] = 0;
+                tmp[1] = 0;
         }
+
+        // copy back result to adjusted array
+        final int[] result = new int[tmp[0]];
+        System.arraycopy(tmp, 1, result, 0, result.length);
 
         return result;
     }
