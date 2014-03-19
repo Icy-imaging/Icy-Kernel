@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with Icy. If not, see <http://www.gnu.org/licenses/>.
  */
-package icy.file;
+package icy.sequence;
 
-import icy.sequence.Sequence;
+import icy.file.SequenceFileExporter;
 
 /**
  * Sequence exporter interface.<br>
@@ -30,11 +30,6 @@ import icy.sequence.Sequence;
  */
 public interface SequenceExporter
 {
-    /**
-     * Return the description given on the exporter menu
-     */
-    public String getDescription();
-
     /**
      * Launch the exporter and save the specified Sequence.<br>
      * The exporter is responsible to handle its own UI and save the wanted resource.

@@ -4,9 +4,9 @@
 package icy.plugin.abstract_;
 
 import icy.common.exception.UnsupportedFormatException;
-import icy.file.SequenceFileImporter;
 import icy.image.AbstractImageProvider;
 import icy.image.IcyBufferedImage;
+import icy.sequence.SequenceIdImporter;
 
 import java.awt.Rectangle;
 import java.io.IOException;
@@ -14,16 +14,16 @@ import java.io.IOException;
 import loci.formats.ome.OMEXMLMetadataImpl;
 
 /**
- * Plugin specialized for Sequence file import operation (see the {@link SequenceFileImporter}
+ * Plugin specialized for Sequence id import operation (see the {@link SequenceIdImporter}
  * interface)
  * 
  * @see PluginImporter
  * @see PluginFileImporter
- * @see PluginSequenceIdImporter
+ * @see PluginSequenceFileImporter
  * @see PluginSequenceImporter
  * @author Stephane
  */
-public abstract class PluginSequenceFileImporter extends Plugin implements SequenceFileImporter
+public abstract class PluginSequenceIdImporter extends Plugin implements SequenceIdImporter
 {
     // default helper
     protected class InternalImageProviderHelper extends AbstractImageProvider
@@ -31,20 +31,20 @@ public abstract class PluginSequenceFileImporter extends Plugin implements Seque
         @Override
         public OMEXMLMetadataImpl getMetaData() throws UnsupportedFormatException, IOException
         {
-            return PluginSequenceFileImporter.this.getMetaData();
+            return PluginSequenceIdImporter.this.getMetaData();
         }
 
         @Override
         public IcyBufferedImage getImage(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
                 throws UnsupportedFormatException, IOException
         {
-            return PluginSequenceFileImporter.this.getImage(serie, resolution, rectangle, z, t, c);
+            return PluginSequenceIdImporter.this.getImage(serie, resolution, rectangle, z, t, c);
         }
     }
 
     protected final InternalImageProviderHelper interfaceHelper;
 
-    public PluginSequenceFileImporter()
+    public PluginSequenceIdImporter()
     {
         super();
 

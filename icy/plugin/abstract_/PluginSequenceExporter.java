@@ -18,11 +18,12 @@
  */
 package icy.plugin.abstract_;
 
-import icy.file.SequenceExporter;
+import icy.sequence.SequenceExporter;
 
 /**
  * Plugin specialized for Sequence export operation (see the {@link SequenceExporter} interface)
  * 
+ * @see PluginSequenceFileExporter
  * @author Stephane
  */
 public abstract class PluginSequenceExporter extends Plugin implements SequenceExporter

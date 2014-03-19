@@ -24,6 +24,10 @@ import icy.file.Importer;
 /**
  * Plugin specialized for import operation (see the {@link Importer} interface)
  * 
+ * @see PluginFileImporter
+ * @see PluginSequenceImporter
+ * @see PluginSequenceFileImporter
+ * @see PluginSequenceIdImporter
  * @author Stephane
  */
 public abstract class PluginImporter extends Plugin implements FileImporter

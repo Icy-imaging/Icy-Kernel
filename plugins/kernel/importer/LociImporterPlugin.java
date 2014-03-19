@@ -48,9 +48,9 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     @Override
-    public boolean open(String id) throws UnsupportedFormatException, IOException
+    public boolean open(String path, int flags) throws UnsupportedFormatException, IOException
     {
-        return importer.open(id);
+        return importer.open(path, flags);
     }
 
     @Override
@@ -60,74 +60,74 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     @Override
-    public OMEXMLMetadataImpl getMetaData(String id) throws UnsupportedFormatException, IOException
+    public OMEXMLMetadataImpl getMetaData() throws UnsupportedFormatException, IOException
     {
-        return importer.getMetaData(id);
+        return importer.getMetaData();
     }
 
     @Override
-    public int getTileWidth(String id, int serie) throws UnsupportedFormatException, IOException
+    public int getTileWidth(int serie) throws UnsupportedFormatException, IOException
     {
-        return importer.getTileWidth(id, serie);
+        return importer.getTileWidth(serie);
     }
 
     @Override
-    public int getTileHeight(String id, int serie) throws UnsupportedFormatException, IOException
+    public int getTileHeight(int serie) throws UnsupportedFormatException, IOException
     {
-        return importer.getTileHeight(id, serie);
+        return importer.getTileHeight(serie);
     }
 
     @Override
-    public IcyBufferedImage getThumbnail(String id, int serie) throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getThumbnail(int serie) throws UnsupportedFormatException, IOException
     {
-        return importer.getThumbnail(id, serie);
+        return importer.getThumbnail(serie);
     }
 
     @Override
-    public Object getPixels(String id, int serie, int resolution, Rectangle rectangle, int z, int t, int c)
+    public Object getPixels(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
             throws UnsupportedFormatException, IOException
     {
-        return importer.getPixels(id, serie, resolution, rectangle, z, t, c);
+        return importer.getPixels(serie, resolution, rectangle, z, t, c);
     }
 
     @Override
-    public IcyBufferedImage getImage(String id, int serie, int resolution, Rectangle rectangle, int z, int t, int c)
+    public IcyBufferedImage getImage(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
             throws UnsupportedFormatException, IOException
     {
-        return importer.getImage(id, serie, resolution, rectangle, z, t, c);
+        return importer.getImage(serie, resolution, rectangle, z, t, c);
     }
 
     @Override
-    public IcyBufferedImage getImage(String id, int serie, int resolution, Rectangle rectangle, int z, int t)
+    public IcyBufferedImage getImage(int serie, int resolution, Rectangle rectangle, int z, int t)
             throws UnsupportedFormatException, IOException
     {
-        return importer.getImage(id, serie, resolution, rectangle, z, t);
+        return importer.getImage(serie, resolution, rectangle, z, t);
     }
 
     @Override
-    public IcyBufferedImage getImage(String id, int serie, int resolution, int z, int t, int c)
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t, int c)
             throws UnsupportedFormatException, IOException
     {
-        return importer.getImage(id, serie, resolution, z, t, c);
+        return importer.getImage(serie, resolution, z, t, c);
     }
 
     @Override
-    public IcyBufferedImage getImage(String id, int serie, int resolution, int z, int t)
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t)
             throws UnsupportedFormatException, IOException
     {
-        return importer.getImage(id, serie, resolution, z, t);
+        return importer.getImage(serie, resolution, z, t);
     }
 
     @Override
-    public IcyBufferedImage getImage(String id, int serie, int z, int t) throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getImage(int serie, int z, int t) throws UnsupportedFormatException, IOException
     {
-        return importer.getImage(id, serie, z, t);
+        return importer.getImage(serie, z, t);
     }
 
     @Override
-    public IcyBufferedImage getImage(String id, int z, int t) throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getImage(int z, int t) throws UnsupportedFormatException, IOException
     {
-        return importer.getImage(id, z, t);
+        return importer.getImage(z, t);
     }
 
 }

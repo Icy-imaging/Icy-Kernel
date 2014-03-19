@@ -94,7 +94,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.4.4.0");
+    public static Version version = new Version("1.4.5.0b");
 
     /**
      * Main interface
@@ -181,7 +181,7 @@ public class Icy
                             "Icy is already running on this computer. Start anyway ?", "Confirmation",
                             JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE)))
                     {
-                        
+
                         System.out.println("Exiting...");
                         System.exit(0);
                         return;
@@ -549,7 +549,7 @@ public class Icy
             {
                 // mark the application as exiting
                 exiting = true;
-                
+
                 System.out.println("Exiting...");
 
                 final ImageJ ij = Icy.getMainInterface().getImageJ();
@@ -808,14 +808,14 @@ public class Icy
         }
 
         if (!SystemUtil.addToJavaLibraryPath(directories.toArray(new String[directories.size()])))
-            System.err.println("Native libraries won't be loaded.");
+            System.err.println("Native libraries may won't load correctly.");
 
         // save os change
         if (osChanged)
             ApplicationPreferences.setOs(os);
 
         // load native libraries
-        loadVtkLibrary(libPath, osChanged);
+        loadVtkLibrary(libPath);
         // loadItkLibrary(libPath);
 
         // disable native lib support for JAI as we don't provide them (for the moment)
@@ -941,7 +941,7 @@ public class Icy
     // }
     // }
 
-    private static void loadVtkLibrary(String libPath, boolean osChanged)
+    private static void loadVtkLibrary(String libPath)
     {
         final String vtkLibPath = libPath + FileUtil.separator + "vtk";
 
@@ -985,7 +985,7 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkhdf5");
                 loadLibrary(vtkLibPath, "vtkhdf5_hl");
             }
-            
+
             loadLibrary(vtkLibPath, "vtkNetCDF");
             loadLibrary(vtkLibPath, "vtkNetCDF_cxx");
             loadLibrary(vtkLibPath, "vtkCommonDataModel");
@@ -1163,24 +1163,6 @@ public class Icy
             loadLibrary(vtkLibPath, "vtkViewsInfovisJava");
             loadLibrary(vtkLibPath, "vtkViewsGeovisJava");
 
-            // VTK library loading from inner directory do not work on MAC OSX
-            // so we have to copy lib files to the root
-//            if (SystemUtil.isMac())
-//            {
-//                // get VTK library file list (we don't want hidden files if any)
-//                final File[] libraryFiles = FileUtil.getFiles(new File(vtkLibPath), null, true, false, false);
-//                // copy to root directory
-//                for (File libraryFile : libraryFiles)
-//                {
-//                    // get destination file (directly copy in root application directory)
-//                    final File dstFile = new File(libraryFile.getName());
-//
-//                    // check if we need to copy the file
-//                    if (osChanged || !dstFile.exists() || (dstFile.lastModified() != libraryFile.lastModified()))
-//                        FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false);
-//                }
-//            }
-
             // VTK library successfully loaded
             vtkLibraryLoaded = true;
 
@@ -1190,7 +1172,6 @@ public class Icy
         catch (Throwable e)
         {
             System.out.println(e);
-            // problem while loading VTK library
         }
 
         if (vtkLibraryLoaded)
@@ -1198,7 +1179,6 @@ public class Icy
         else
             System.out.println("Cannot load VTK library...");
     }
-
 
     private static void loadItkLibrary(String osDir)
     {

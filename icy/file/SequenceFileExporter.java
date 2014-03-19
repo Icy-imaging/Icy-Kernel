@@ -46,11 +46,11 @@ public interface SequenceFileExporter
      * 
      * @param sequence
      *        sequence to save
-     * @param file
+     * @param path
      *        file where we want to save sequence
      * @param loadingFrame
      *        progress bar (if available)
      * @return <code>true</code> if the operation succeed
      */
-    public boolean save(Sequence sequence, File file, FileFrame loadingFrame);
+    public boolean save(Sequence sequence, String path, FileFrame loadingFrame);
 }

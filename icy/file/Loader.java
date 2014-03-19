@@ -35,6 +35,8 @@ import icy.preferences.GeneralPreferences;
 import icy.sequence.DimensionId;
 import icy.sequence.MetaDataUtil;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceIdImporter;
+import icy.sequence.SequenceImporter;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.type.collection.CollectionUtil;
@@ -391,6 +393,22 @@ public class Loader
     }
 
     /**
+     * Returns all available resource (non image) importers which take file as input.
+     */
+    public static List<FileImporter> getFileImporters()
+    {
+        final List<PluginDescriptor> plugins = PluginLoader.getPlugins(FileImporter.class);
+        final List<FileImporter> result = new ArrayList<FileImporter>();
+
+        for (PluginDescriptor plugin : plugins)
+            result.add((FileImporter) PluginLauncher.start(plugin));
+
+        // TODO: add sort here from plugin importer preferences
+
+        return result;
+    }
+
+    /**
      * Returns all available sequence importers.
      */
     public static List<SequenceImporter> getSequenceImporters()
@@ -407,7 +425,23 @@ public class Loader
     }
 
     /**
-     * Returns all available sequence importers (from file only).
+     * Returns all available sequence importers which take id as input.
+     */
+    public static List<SequenceIdImporter> getSequenceIdImporters()
+    {
+        final List<PluginDescriptor> plugins = PluginLoader.getPlugins(SequenceIdImporter.class);
+        final List<SequenceIdImporter> result = new ArrayList<SequenceIdImporter>();
+
+        for (PluginDescriptor plugin : plugins)
+            result.add((SequenceIdImporter) PluginLauncher.start(plugin));
+
+        // TODO: add sort here from plugin importer preferences
+
+        return result;
+    }
+
+    /**
+     * Returns all available sequence importers which take file as input.
      */
     public static List<SequenceFileImporter> getSequenceFileImporters()
     {
@@ -554,8 +588,19 @@ public class Loader
         {
             try
             {
-                // load current file and add to results
-                return importer.getMetaData(path);
+                // open file
+                if (importer.open(path, 0))
+                {
+                    try
+                    {
+                        // return associated metadata
+                        return importer.getMetaData();
+                    }
+                    finally
+                    {
+                        importer.close();
+                    }
+                }
             }
             catch (UnsupportedFormatException e)
             {
@@ -603,10 +648,17 @@ public class Loader
         // get importer for this file
         final SequenceFileImporter importer = getSequenceFileImporter(path);
 
-        if (importer == null)
+        if ((importer == null) || !importer.open(path, 0))
             throw new UnsupportedFormatException("Image file '" + path + "' is not supported !");
 
-        return importer.getThumbnail(path, 0);
+        try
+        {
+            return importer.getThumbnail(0);
+        }
+        finally
+        {
+            importer.close();
+        }
     }
 
     /**
@@ -695,10 +747,17 @@ public class Loader
         // get importer for this file
         final SequenceFileImporter importer = getSequenceFileImporter(path);
 
-        if (importer == null)
+        if ((importer == null) || !importer.open(path, 0))
             throw new UnsupportedFormatException("Image file '" + path + "' is not supported !");
 
-        return importer.getImage(path, serie, z, t);
+        try
+        {
+            return importer.getImage(serie, z, t);
+        }
+        finally
+        {
+            importer.close();
+        }
     }
 
     /**
@@ -973,7 +1032,8 @@ public class Loader
      * supported).
      * 
      * @param importer
-     *        Importer used to open and load image files
+     *        Importer used to open and load image files.<br>
+     *        If set to <code>null</code> the first compatible importer will be used. 
      * @param paths
      *        List of image file to load.
      * @param serie
@@ -1145,6 +1205,68 @@ public class Loader
     }
 
     /**
+     * Load the specified files with the given {@link FileImporter}.<br>
+     * The loading process is asynchronous.<br>
+     * The FileImporter is responsible to make the loaded files available in the application.<br>
+     * This method should be used only for non image file.
+     * 
+     * @param importer
+     *        Importer used to open and load image files
+     * @param paths
+     *        list of file to load
+     * @param showProgress
+     *        Show progression in loading process
+     */
+    public static void load(final FileImporter importer, final List<String> paths, final boolean showProgress)
+    {
+        // asynchronous call
+        ThreadUtil.bgRun(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // explode path list
+                final List<String> singlePaths = explodeAndClean(paths);
+                final FileFrame loadingFrame;
+
+                if (showProgress)
+                {
+                    loadingFrame = new FileFrame("Loading", null);
+                    loadingFrame.setLength(paths.size());
+                    loadingFrame.setPosition(0);
+                }
+                else
+                    loadingFrame = null;
+
+                try
+                {
+                    // load each file in a separate sequence
+                    for (String path : singlePaths)
+                    {
+                        if (loadingFrame != null)
+                            loadingFrame.incPosition();
+
+                        // load curent file
+                        importer.load(path, loadingFrame);
+                    }
+                }
+                catch (Throwable t)
+                {
+                    // just show the error
+                    IcyExceptionHandler.showErrorMessage(t, true);
+                    if (loadingFrame != null)
+                        new FailedAnnounceFrame("Failed to open file(s), see the console output for more details.");
+                }
+                finally
+                {
+                    if (loadingFrame != null)
+                        loadingFrame.close();
+                }
+            }
+        });
+    }
+
+    /**
      * Load the specified image files with the given {@link SequenceFileImporter}.<br>
      * The loading process is asynchronous.<br>
      * If <i>separate</i> is false the loader try to set image in the same sequence.<br>
@@ -1152,7 +1274,8 @@ public class Loader
      * The resulting sequences are automatically displayed when the process complete.
      * 
      * @param importer
-     *        Importer used to open and load image files
+     *        Importer used to open and load images.<br>
+     *        If set to <code>null</code> the first compatible importer will be used. 
      * @param paths
      *        list of image file to load
      * @param separate
@@ -1399,7 +1522,8 @@ public class Loader
      * As this method can take sometime, you should not call it from the EDT.<br>
      * 
      * @param importer
-     *        Importer used to open and load images
+     *        Importer used to open and load images.<br>
+     *        If set to <code>null</code> the first compatible importer will be used. 
      * @param paths
      *        list of image file to load
      * @param serie
@@ -1778,10 +1902,11 @@ public class Loader
             try
             {
                 // prepare image loading for this file
-                importer.open(path);
+                if (!importer.open(path, 0))
+                    throw new UnsupportedFormatException("Image file '" + path + "' is not supported !");
 
                 // get metadata
-                final OMEXMLMetadataImpl meta = importer.getMetaData(path);
+                final OMEXMLMetadataImpl meta = importer.getMetaData();
                 final int serieCount = MetaDataUtil.getNumSerie(meta);
                 // do serie selection
                 final int selectedSeries[] = selectSerie(importer, path, meta, serie, serieCount);
@@ -1823,7 +1948,7 @@ public class Loader
                                     }
 
                                     // load image and add it to the sequence
-                                    seq.setImage(t, z, importer.getImage(path, s, z, t));
+                                    seq.setImage(t, z, importer.getImage(s, z, t));
                                 }
                             }
                         }

@@ -23,42 +23,42 @@ public abstract class AbstractImageProvider implements ImageProvider
 {
     public static final int DEFAULT_THUMBNAIL_SIZE = 160;
 
-    // default implementation, override it to provide better consecutive access performance
-    @Override
-    public String getOpened()
-    {
-        // just assume not opened
-        return null;
-    }
-    
-    // default implementation, override it to provide better consecutive access performance
-    @Override
-    public boolean open(String id) throws UnsupportedFormatException, IOException
-    {
-        // just assume ok
-        return true;
-    }
+    // // default implementation, override it to provide better consecutive access performance
+    // @Override
+    // public String getOpened()
+    // {
+    // // just assume not opened
+    // return null;
+    // }
+    //
+    // // default implementation, override it to provide better consecutive access performance
+    // @Override
+    // public boolean open(String id) throws UnsupportedFormatException, IOException
+    // {
+    // // just assume ok
+    // return true;
+    // }
+    //
+    // // default implementation, override it to provide better consecutive access performance
+    // @Override
+    // public boolean close() throws IOException
+    // {
+    // // just assume ok
+    // return true;
+    // }
 
-    // default implementation, override it to provide better consecutive access performance
+    // default implementation, override it if you need specific value for faster tile access
     @Override
-    public boolean close() throws IOException
+    public int getTileWidth(int serie) throws UnsupportedFormatException, IOException
     {
-        // just assume ok
-        return true;
+        return MetaDataUtil.getSizeX(getMetaData(), serie);
     }
 
     // default implementation, override it if you need specific value for faster tile access
     @Override
-    public int getTileWidth(String id, int serie) throws UnsupportedFormatException, IOException
+    public int getTileHeight(int serie) throws UnsupportedFormatException, IOException
     {
-        return MetaDataUtil.getSizeX(getMetaData(id), serie);
-    }
-
-    // default implementation, override it if you need specific value for faster tile access
-    @Override
-    public int getTileHeight(String id, int serie) throws UnsupportedFormatException, IOException
-    {
-        final OMEXMLMetadataImpl meta = getMetaData(id);
+        final OMEXMLMetadataImpl meta = getMetaData();
         final int sx = MetaDataUtil.getSizeX(meta, serie);
 
         if (sx == 0)
@@ -71,11 +71,12 @@ public abstract class AbstractImageProvider implements ImageProvider
         return Math.min(maxHeight, sy);
     }
 
-    // default implementation which use the getImage(..) method, override it for better support / performance.
+    // default implementation which use the getImage(..) method, override it for better support /
+    // performance.
     @Override
-    public IcyBufferedImage getThumbnail(String id, int serie) throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getThumbnail(int serie) throws UnsupportedFormatException, IOException
     {
-        final OMEXMLMetadataImpl meta = getMetaData(id);
+        final OMEXMLMetadataImpl meta = getMetaData();
         final int sx = MetaDataUtil.getSizeX(meta, serie);
         final int sy = MetaDataUtil.getSizeY(meta, serie);
         final int sz = MetaDataUtil.getSizeZ(meta, serie);
@@ -94,7 +95,7 @@ public abstract class AbstractImageProvider implements ImageProvider
         final int resolution = getResolutionFactor(sx, sy, DEFAULT_THUMBNAIL_SIZE);
 
         // take middle image for thumbnail
-        IcyBufferedImage result = getImage(id, serie, resolution, sz / 2, st / 2);
+        IcyBufferedImage result = getImage(serie, resolution, sz / 2, st / 2);
         // scale it to desired dimension
         return IcyBufferedImageUtil.scale(result, tnx, tny, FilterType.BILINEAR);
     }
@@ -102,44 +103,44 @@ public abstract class AbstractImageProvider implements ImageProvider
     // default implementation: use the getImage(..) method then return data.
     // It should be the opposite side for performance reason, override this method if possible
     @Override
-    public Object getPixels(String id, int serie, int resolution, Rectangle rectangle, int z, int t, int c)
+    public Object getPixels(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
             throws UnsupportedFormatException, IOException
     {
-        return getImage(id, serie, resolution, rectangle, z, t, c).getDataXY(0);
+        return getImage(serie, resolution, rectangle, z, t, c).getDataXY(0);
     }
 
     @Override
-    public IcyBufferedImage getImage(String id, int serie, int resolution, Rectangle rectangle, int z, int t)
+    public IcyBufferedImage getImage(int serie, int resolution, Rectangle rectangle, int z, int t)
             throws UnsupportedFormatException, IOException
     {
-        return getImage(id, serie, resolution, rectangle, z, t, -1);
+        return getImage(serie, resolution, rectangle, z, t, -1);
     }
 
     // default implementation using the region getImage(..) method, better to override
     @Override
-    public IcyBufferedImage getImage(String id, int serie, int resolution, int z, int t, int c)
-            throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t, int c) throws UnsupportedFormatException,
+            IOException
     {
-        return getImage(id, serie, resolution, null, z, t, c);
+        return getImage(serie, resolution, null, z, t, c);
     }
 
     @Override
-    public IcyBufferedImage getImage(String id, int serie, int resolution, int z, int t)
-            throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t) throws UnsupportedFormatException,
+            IOException
     {
-        return getImage(id, serie, resolution, null, z, t, -1);
+        return getImage(serie, resolution, null, z, t, -1);
     }
 
     @Override
-    public IcyBufferedImage getImage(String id, int serie, int z, int t) throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getImage(int serie, int z, int t) throws UnsupportedFormatException, IOException
     {
-        return getImage(id, serie, 0, null, z, t, -1);
+        return getImage(serie, 0, null, z, t, -1);
     }
 
     @Override
-    public IcyBufferedImage getImage(String id, int z, int t) throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getImage(int z, int t) throws UnsupportedFormatException, IOException
     {
-        return getImage(id, 0, 0, null, z, t, -1);
+        return getImage(0, 0, null, z, t, -1);
     }
 
     /**
@@ -175,9 +176,6 @@ public abstract class AbstractImageProvider implements ImageProvider
     /**
      * Returns the image resolution that best suit to the size resolution.
      * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
      * @param wantedSize
@@ -189,9 +187,9 @@ public abstract class AbstractImageProvider implements ImageProvider
      * @throws IOException
      * @throws UnsupportedFormatException
      */
-    public int getResolutionFactor(String id, int serie, int wantedSize) throws UnsupportedFormatException, IOException
+    public int getResolutionFactor(int serie, int wantedSize) throws UnsupportedFormatException, IOException
     {
-        final OMEXMLMetadataImpl meta = getMetaData(id);
+        final OMEXMLMetadataImpl meta = getMetaData();
         return getResolutionFactor(MetaDataUtil.getSizeX(meta, serie), MetaDataUtil.getSizeY(meta, serie), wantedSize);
     }
 }

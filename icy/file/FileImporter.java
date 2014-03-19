@@ -51,26 +51,12 @@ public interface FileImporter
      * Load the specified file and returns true if the operation succeed.<br>
      * The method is free to handle the way it makes the opened file available in the application.
      * 
-     * @param file
+     * @param path
      *        File to load.
      * @param loadingFrame
      *        Frame where to display the loading progression (can be <code>null</code> if no
      *        progression wanted)
      * @return <code>true</code> if the operation succeed
      */
-    public boolean load(File file, FileFrame loadingFrame) throws UnsupportedFormatException, IOException;
-
-    // /**
-    // * Load the specified files and returns true if the operation succeed.<br>
-    // * The method is free to handle the way it makes the opened file available in the application.
-    // *
-    // * @param files
-    // * List of image file to load.
-    // * @param loadingFrame
-    // * Frame where to display the loading progression (can be <code>null</code> if no
-    // * progression wanted)
-    // * @return <code>true</code> if the operation succeed
-    // */
-    // public boolean load(File[] files, FileFrame loadingFrame) throws UnsupportedFormatException,
-    // IOException;
+    public boolean load(String path, FileFrame loadingFrame) throws UnsupportedFormatException, IOException;
 }

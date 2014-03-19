@@ -50,7 +50,8 @@ public class CancelableProgressFrame extends ProgressFrame implements ActionList
             public void run()
             {
                 cancelBtn = new JButton("Cancel");
-
+                
+                cancelBtn.setFocusPainted(false);
                 cancelBtn.addActionListener(CancelableProgressFrame.this);
 
                 mainPanel.add(cancelBtn);

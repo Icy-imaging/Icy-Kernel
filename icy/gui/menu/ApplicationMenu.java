@@ -24,7 +24,6 @@ import icy.action.PreferencesActions;
 import icy.file.FileUtil;
 import icy.file.Importer;
 import icy.file.Loader;
-import icy.file.SequenceImporter;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.menu.IcyRibbonApplicationMenuEntryPrimary;
 import icy.gui.component.menu.IcyRibbonApplicationMenuEntrySecondary;
@@ -41,7 +40,9 @@ import icy.preferences.IcyPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
+import icy.sequence.SequenceImporter;
 import icy.system.IcyExceptionHandler;
+import icy.system.thread.ThreadUtil;
 import icy.type.collection.CollectionUtil;
 import icy.type.collection.list.RecentFileList;
 import icy.util.StringUtil;
@@ -296,7 +297,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
     private RibbonApplicationMenuEntrySecondary[] getImportEntries()
     {
         final List<PluginDescriptor> importers = PluginLoader.getPlugins(Importer.class);
-        final List<PluginDescriptor> sequenceImporters = PluginLoader.getPlugins(SequenceImporter.class);
+        final List<PluginDescriptor> fileImporters = PluginLoader.getPlugins(SequenceImporter.class);
         final List<RibbonApplicationMenuEntrySecondary> result = new ArrayList<RibbonApplicationMenuEntrySecondary>();
 
         for (int i = 0; i < importers.size(); i++)
@@ -308,37 +309,52 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    try
+                    // asynchronous loading
+                    ThreadUtil.bgRun(new Runnable()
                     {
-                        // do load operation
-                        ((Importer) PluginLauncher.start(plugin)).load();
-                    }
-                    catch (Exception exc)
-                    {
-                        IcyExceptionHandler.handleException(exc, false);
-                    }
+                        @Override
+                        public void run()
+                        {
+                            try
+                            {
+                                // do load operation
+                                ((Importer) PluginLauncher.start(plugin)).load();
+                            }
+                            catch (Exception exc)
+                            {
+                                IcyExceptionHandler.handleException(exc, false);
+                            }
+                        }
+                    });
                 }
             }));
         }
-        for (int i = 0; i < sequenceImporters.size(); i++)
+        for (int i = 0; i < fileImporters.size(); i++)
         {
-            final PluginDescriptor plugin = sequenceImporters.get(i);
+            final PluginDescriptor plugin = fileImporters.get(i);
 
             result.add(new PluginApplicationMenuEntrySecondary(plugin, new ActionListener()
             {
                 @Override
                 public void actionPerformed(ActionEvent e)
                 {
-                    try
+                    // asynchronous loading
+                    ThreadUtil.bgRun(new Runnable()
                     {
-                        // do load operation
-                        // TODO: modify to the Sequenceimporter interface
-                        // ((SequenceImporter) PluginLauncher.start(plugin)).load();
-                    }
-                    catch (Exception exc)
-                    {
-                        IcyExceptionHandler.handleException(exc, false);
-                    }
+                        @Override
+                        public void run()
+                        {
+                            try
+                            {
+                                // do load operation
+                                ((SequenceImporter) PluginLauncher.start(plugin)).load();
+                            }
+                            catch (Exception exc)
+                            {
+                                IcyExceptionHandler.handleException(exc, false);
+                            }
+                        }
+                    });
                 }
             }));
         }

@@ -18,6 +18,7 @@
  */
 package icy.gui.dialog;
 
+import icy.file.FileImporter;
 import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.file.SequenceFileImporter;
@@ -46,8 +47,9 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         @Override
         public boolean accept(File file)
         {
-            if (file.isDirectory()) return true;
-            
+            if (file.isDirectory())
+                return true;
+
             return !Loader.canDiscardImageFile(file.getName());
         }
 
@@ -72,6 +74,8 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
      */
     private static final long serialVersionUID = 347950414244936110L;
 
+    public static AllImagesFileFilter allImagesFileFilter = new AllImagesFileFilter();
+
     private static final String PREF_ID = "frame/imageLoader";
 
     private static final String ID_WIDTH = "width";
@@ -82,11 +86,11 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
     private static final String ID_EXTENSION = "extension";
 
     // GUI
-    private final ImageLoaderOptionPanel optionPanel;
+    protected final ImageLoaderOptionPanel optionPanel;
+    protected final List<SequenceFileImporter> sequenceImporters;
+    protected final List<FileImporter> fileImporters;
 
     /**
-     * <b>Image Loader Dialog</b><br>
-     * <br>
      * Display a dialog to select image file(s) and load them.<br>
      * <br>
      * To only get selected image files from the dialog you must do:<br>
@@ -106,38 +110,39 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         super();
 
         final XMLPreferences preferences = ApplicationPreferences.getPreferences().node(PREF_ID);
-        final List<SequenceFileImporter> importers = Loader.getSequenceFileImporters();
+        sequenceImporters = Loader.getSequenceFileImporters();
+        fileImporters = Loader.getFileImporters();
+
+        // create option panel
+        optionPanel = new ImageLoaderOptionPanel(preferences.getBoolean(ID_SEPARATE, false), preferences.getBoolean(
+                ID_AUTOORDER, true));
 
         // can't use WindowsPositionSaver as JFileChooser is a fake JComponent
         // only dimension is stored
         setCurrentDirectory(new File(preferences.get(ID_PATH, "")));
         setPreferredSize(new Dimension(preferences.getInt(ID_WIDTH, 600), preferences.getInt(ID_HEIGTH, 400)));
 
+        setMultiSelectionEnabled(true);
+        setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+
         setAcceptAllFileFilterUsed(false);
         resetChoosableFileFilters();
 
         // add file filter from importers
-        for (SequenceFileImporter importer : importers)
+        for (SequenceFileImporter importer : sequenceImporters)
+            for (FileFilter filter : importer.getFileFilters())
+                addChoosableFileFilter(filter);
+        for (FileImporter importer : fileImporters)
             for (FileFilter filter : importer.getFileFilters())
                 addChoosableFileFilter(filter);
 
         // set last used file filter
-        setFileFilter(getFileFilter(preferences.get(ID_EXTENSION, "")));
-
-        setMultiSelectionEnabled(true);
-        setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-
+        setFileFilter(getFileFilter(preferences.get(ID_EXTENSION, allImagesFileFilter.getDescription())));
         // setting GUI
-        optionPanel = new ImageLoaderOptionPanel(preferences.getBoolean(ID_SEPARATE, false), preferences.getBoolean(
-                ID_AUTOORDER, true));
-
-        setAccessory(optionPanel);
-        updateOptionPanel(false);
+        updateGUI();
 
         // listen file filter change
         addPropertyChangeListener(this);
-
-        setDialogTitle("Load image file");
 
         // display loader
         final int value = showOpenDialog(Icy.getMainInterface().getMainFrame());
@@ -157,17 +162,36 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
             // load if requested
             if (autoLoad)
             {
-                // get the selected imported from file filter
-                final SequenceFileImporter importer = getImporter(importers, getFileFilterIndex());
-                // load selected file(s)
-                Loader.load(importer, CollectionUtil.asList(FileUtil.toPaths(getSelectedFiles())),
-                        isSeparateSequenceSelected(), isAutoOrderSelected(), true);
+                // get the selected importer from file filter
+                final Object importer = getImporter(getFileFilterIndex());
+
+                if (importer instanceof SequenceFileImporter)
+                {
+                    // load selected file(s)
+                    Loader.load((SequenceFileImporter) importer,
+                            CollectionUtil.asList(FileUtil.toPaths(getSelectedFiles())), isSeparateSequenceSelected(),
+                            isAutoOrderSelected(), true);
+                }
+                else if (importer instanceof FileImporter)
+                {
+                    // load selected file(s)
+                    Loader.load((FileImporter) importer, CollectionUtil.asList(FileUtil.toPaths(getSelectedFiles())),
+                            true);
+                }
             }
         }
 
         // store interface option
         preferences.putInt(ID_WIDTH, getWidth());
         preferences.putInt(ID_HEIGTH, getHeight());
+    }
+
+    /**
+     * Display a dialog to select image file(s) and load them.
+     */
+    public ImageLoaderDialog()
+    {
+        this(true);
     }
 
     protected FileFilter getFileFilter(String description)
@@ -197,23 +221,33 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
         return -1;
     }
 
-    /**
-     * <b>Image Loader Dialog</b><br>
-     * <br>
-     * Display a dialog to select image file(s) and load them.
-     */
-    public ImageLoaderDialog()
+    protected boolean isImageFilter()
     {
-        this(true);
+        return getImporter(getFileFilterIndex()) instanceof SequenceFileImporter;
     }
 
-    private SequenceFileImporter getImporter(List<SequenceFileImporter> importers, int filterIndex)
+    protected Object getImporter(int filterIndex)
     {
-        int i = 0;
-        for (SequenceFileImporter importer : importers)
-            for (FileFilter filter : importer.getFileFilters())
-                if (i++ == filterIndex)
-                    return importer;
+        int ind = 0;
+
+        for (SequenceFileImporter importer : sequenceImporters)
+        {
+            final int count = importer.getFileFilters().size();
+
+            if (filterIndex < (ind + count))
+                return importer;
+
+            ind += count;
+        }
+        for (FileImporter importer : fileImporters)
+        {
+            final int count = importer.getFileFilters().size();
+
+            if (filterIndex < (ind + count))
+                return importer;
+
+            ind += count;
+        }
 
         return null;
     }
@@ -238,8 +272,11 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
     public void propertyChange(PropertyChangeEvent evt)
     {
         final String prop = evt.getPropertyName();
+        final boolean imageFilter = isImageFilter();
 
-        if (prop.equals(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY))
+        if (prop.equals(JFileChooser.FILE_FILTER_CHANGED_PROPERTY))
+            updateGUI();
+        else if (prop.equals(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY))
         {
             File f = (File) evt.getNewValue();
 
@@ -250,14 +287,42 @@ public class ImageLoaderDialog extends JFileChooser implements PropertyChangeLis
             if (f != null)
                 optionPanel.updatePreview(f.getAbsolutePath());
 
-            updateOptionPanel((f != null) && f.isDirectory());
+            updateOptionPanel();
         }
         else
-            updateOptionPanel(getSelectedFiles().length > 1);
+            updateOptionPanel();
     }
 
-    protected void updateOptionPanel(boolean multi)
+    protected void updateGUI()
     {
+        if (isImageFilter())
+        {
+            setDialogTitle("Load image file(s)");
+            setAccessory(optionPanel);
+            updateOptionPanel();
+        }
+        else
+        {
+            setDialogTitle("Load file(s)");
+            setAccessory(null);
+        }
+    }
+
+    protected void updateOptionPanel()
+    {
+        final int numFile = getSelectedFiles().length;
+        final boolean multi;
+
+        if (numFile > 1)
+            multi = true;
+        else if (numFile == 1)
+        {
+            final File file = getSelectedFile();
+            multi = file.isDirectory();
+        }
+        else
+            multi = false;
+
         optionPanel.setSeparateSequenceEnabled(multi);
         optionPanel.setAutoOrderEnabled(multi);
     }

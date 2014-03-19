@@ -12,44 +12,23 @@ import loci.formats.ome.OMEXMLMetadataImpl;
 
 /**
  * Image provider interface.<br>
- * This interface is designed for any class capable of providing image to Icy.<br>
- * This can be image reader classes as LOCI (Bio-Formats) or image database interface for instance.
+ * This interface is designed to any class capable of delivering image data at different level
+ * access.<br>
+ * Takes an uniquely identified resource as input and returns image data at different level access.<br>
+ * <br>
+ * Example of possible class implementing this interface:
+ * <ul>
+ * <li>LOCI (Bio-Formats) image reader class.</li>
+ * <li>image database interface.</li>
+ * </ul>
  * 
  * @author Stephane
  */
 public interface ImageProvider
 {
     /**
-     * @return The <code>id</code> of the image currently opened or <code>null</code> otherwise.
-     * @see #open(String)
-     * @see #close()
-     */
-    public String getOpened();
-
-    /**
-     * Open the image designed by the specified <code>id</code>.<br>
-     * This operation is optional but allow for better performance when doing severals consecutive
-     * operations on the same image.<br>
-     * Don't forget to call {@link #close()} to close the image when you're done.<br>
-     * Calling this method will automatically close any previous opened image.     * 
-     * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
-     * @return <code>true</code> if the operation has succeeded and <code>false</code> otherwise.
-     */
-    public boolean open(String id) throws UnsupportedFormatException, IOException;
-
-    /**
-     * Close the image which has been previously opened with {@link #open(String)} method.<br>
-     * 
-     * @return <code>true</code> if the operation has succeeded and <code>false</code> otherwise.
-     */
-    public boolean close() throws IOException;
-
-    /**
-     * Returns metadata in OME format for the given serie for specified image.<br>
-     * Metadata give many information about the image.<br>
+     * Returns the image metadata in OME format.<br>
+     * Metadata give many informations about the image.<br>
      * <br>
      * Number of serie (mandatory field) :<br>
      * {@link OMEXMLMetadataImpl#getImageCount()}<br>
@@ -64,61 +43,45 @@ public interface ImageProvider
      * {@link OMEXMLMetadataImpl#getPixelsType(int)}<br>
      * <br>
      * and many others informations depending the available metadata in the image format.
-     * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
      */
-    public OMEXMLMetadataImpl getMetaData(String id) throws UnsupportedFormatException, IOException;
+    public OMEXMLMetadataImpl getMetaData() throws UnsupportedFormatException, IOException;
 
     /**
      * Returns the tile width for the specified serie of the image.<br>
      * This method allow to know the best tile size to use when using the sub region image loading
      * operations.
      * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
      * @return tile width
      */
-    public int getTileWidth(String id, int serie) throws UnsupportedFormatException, IOException;
+    public int getTileWidth(int serie) throws UnsupportedFormatException, IOException;
 
     /**
      * Returns the tile height for the specified serie of the image.<br>
      * This method allow to know the best tile size to use when using the sub region image loading
      * operations.
      * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
      * @return tile height
      */
-    public int getTileHeight(String id, int serie) throws UnsupportedFormatException, IOException;
+    public int getTileHeight(int serie) throws UnsupportedFormatException, IOException;
 
     /**
      * Returns the image thumbnail for the specified serie of the image.<br>
      * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
      * @return thumbnail image.
      */
-    public IcyBufferedImage getThumbnail(String id, int serie) throws UnsupportedFormatException, IOException;
+    public IcyBufferedImage getThumbnail(int serie) throws UnsupportedFormatException, IOException;
 
     /**
-     * Returns the pixel data located for specified position of the image designed by id.<br>
+     * Returns the pixel data located for specified position of the image.<br>
      * Data is returned in form of an array, the type of this array depends from the image data type<br>
      * which can be retrieve from the metadata (see {@link OMEXMLMetadataImpl#getPixelsType(int)}
      * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
      * @param resolution
@@ -138,15 +101,12 @@ public interface ImageProvider
      *        C position of the image (channel) we want retrieve.
      * @return native type array containing image pixel data.<br>
      */
-    public Object getPixels(String id, int serie, int resolution, Rectangle rectangle, int z, int t, int c)
+    public Object getPixels(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
             throws UnsupportedFormatException, IOException;
 
     /**
-     * Returns the image located at specified position and designed by id.
+     * Returns the image located at specified position.
      * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
      * @param resolution
@@ -167,15 +127,12 @@ public interface ImageProvider
      *        -1 is a special value meaning we want all channels.
      * @return image
      */
-    public IcyBufferedImage getImage(String id, int serie, int resolution, Rectangle rectangle, int z, int t, int c)
+    public IcyBufferedImage getImage(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
             throws UnsupportedFormatException, IOException;
 
     /**
-     * Returns the image located at specified position and designed by id.
+     * Returns the image located at specified position.
      * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
      * @param resolution
@@ -193,15 +150,12 @@ public interface ImageProvider
      *        T position of the image (frame) we want retrieve
      * @return image
      */
-    public IcyBufferedImage getImage(String id, int serie, int resolution, Rectangle rectangle, int z, int t)
+    public IcyBufferedImage getImage(int serie, int resolution, Rectangle rectangle, int z, int t)
             throws UnsupportedFormatException, IOException;
 
     /**
-     * Returns the image located at specified position and designed by id.
+     * Returns the image located at specified position.
      * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
      * @param z
@@ -213,15 +167,12 @@ public interface ImageProvider
      *        -1 is a special value meaning we want all channel.
      * @return image
      */
-    public IcyBufferedImage getImage(String id, int serie, int resolution, int z, int t, int c)
-            throws UnsupportedFormatException, IOException;
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t, int c) throws UnsupportedFormatException,
+            IOException;
 
     /**
-     * Returns the image located at specified position and designed by id.
+     * Returns the image located at specified position.
      * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
      * @param resolution
@@ -236,15 +187,12 @@ public interface ImageProvider
      *        T position of the image (frame) we want retrieve
      * @return image
      */
-    public IcyBufferedImage getImage(String id, int serie, int resolution, int z, int t)
-            throws UnsupportedFormatException, IOException;
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t) throws UnsupportedFormatException,
+            IOException;
 
     /**
-     * Returns the image located at specified position and designed by id.
+     * Returns the image located at specified position.
      * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
      * @param z
@@ -253,19 +201,16 @@ public interface ImageProvider
      *        T position of the image (frame) we want retrieve
      * @return image
      */
-    public IcyBufferedImage getImage(String id, int serie, int z, int t) throws UnsupportedFormatException, IOException;
+    public IcyBufferedImage getImage(int serie, int z, int t) throws UnsupportedFormatException, IOException;
 
     /**
-     * Returns the image located at specified position and designed by id.
+     * Returns the image located at specified position.
      * 
-     * @param id
-     *        Image id, it can be a file path or URL or whatever depending the internal
-     *        import method.
      * @param z
      *        Z position of the image (slice) we want retrieve
      * @param t
      *        T position of the image (frame) we want retrieve
      * @return image
      */
-    public IcyBufferedImage getImage(String id, int z, int t) throws UnsupportedFormatException, IOException;
+    public IcyBufferedImage getImage(int z, int t) throws UnsupportedFormatException, IOException;
 }

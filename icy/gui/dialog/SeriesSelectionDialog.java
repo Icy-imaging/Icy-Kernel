@@ -356,7 +356,23 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
     public SeriesSelectionDialog(SequenceFileImporter importer, String id) throws UnsupportedFormatException,
             IOException
     {
-        this(importer, id, importer.getMetaData(id));
+        this(importer, id, getMetaData(importer, id));
+    }
+
+    static OMEXMLMetadataImpl getMetaData(SequenceFileImporter importer, String id) throws UnsupportedFormatException,
+            IOException
+    {
+        if (importer.open(id, 0))
+            try
+            {
+                return importer.getMetaData();
+            }
+            finally
+            {
+                importer.close();
+            }
+
+        return null;
     }
 
     /**
@@ -481,8 +497,20 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
                 try
                 {
-                    final IcyBufferedImage img = importer.getThumbnail(id, i);
-                    serieComponents[i].setImage(IcyBufferedImageUtil.getARGBImage(img));
+                    if (importer.open(id, 0))
+                    {
+                        try
+                        {
+                            final IcyBufferedImage img = importer.getThumbnail(i);
+                            serieComponents[i].setImage(IcyBufferedImageUtil.getARGBImage(img));
+                        }
+                        finally
+                        {
+                            importer.close();
+                        }
+                    }
+                    else
+                        serieComponents[i].setImage(ResourceUtil.ICON_DELETE);
                 }
                 catch (OutOfMemoryError e)
                 {

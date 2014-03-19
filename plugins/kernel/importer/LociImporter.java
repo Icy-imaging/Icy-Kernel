@@ -51,7 +51,7 @@ public class LociImporter implements SequenceFileImporter
         @Override
         public String getDescription()
         {
-            return "All image files (Bio-Formats)";
+            return "All image files / Bio-Formats";
         }
     };
 
@@ -118,17 +118,16 @@ public class LociImporter implements SequenceFileImporter
     {
         final List<FileFilter> result = new ArrayList<FileFilter>();
 
-        result.add(new ExtensionFileFilter(new String[] {"tif", "tiff"}, "TIFF images (Bio-Formats)"));
-        result.add(new ExtensionFileFilter(new String[] {"png"}, "PNG images (Bio-Formats)"));
-        result.add(new ExtensionFileFilter(new String[] {"jpg", "jpeg"}, "JPEG images (Bio-Formats)"));
-        result.add(new ExtensionFileFilter(new String[] {"avi"}, "AVI videos (Bio-Formats)"));
+        result.add(new LociAllFileFilter());
+        result.add(new ExtensionFileFilter(new String[] {"tif", "tiff"}, "TIFF images / Bio-Formats"));
+        result.add(new ExtensionFileFilter(new String[] {"png"}, "PNG images / Bio-Formats"));
+        result.add(new ExtensionFileFilter(new String[] {"jpg", "jpeg"}, "JPEG images / Bio-Formats"));
+        result.add(new ExtensionFileFilter(new String[] {"avi"}, "AVI videos / Bio-Formats"));
 
         // final IFormatReader[] readers = mainReader.getReaders();
 
         // for (IFormatReader reader : readers)
         // result.add(new FormatFileFilter(reader, true));
-
-        result.add(new LociAllFileFilter());
 
         return result;
     }
@@ -170,7 +169,7 @@ public class LociImporter implements SequenceFileImporter
     }
 
     @Override
-    public boolean open(String path) throws UnsupportedFormatException, IOException
+    public boolean open(String path, int flags) throws UnsupportedFormatException, IOException
     {
         // already opened ?
         if (isOpen(path))
@@ -239,99 +238,45 @@ public class LociImporter implements SequenceFileImporter
     }
 
     @Override
-    public OMEXMLMetadataImpl getMetaData(String path) throws UnsupportedFormatException, IOException
+    public OMEXMLMetadataImpl getMetaData() throws UnsupportedFormatException, IOException
     {
-        boolean close;
+        // no image currently opened
+        if (getOpened() == null)
+            return null;
 
-        if (!isOpen(path))
-        {
-            open(path);
-            // keep info if we need to close the reader at end or not
-            close = true;
-        }
-        else
-            close = false;
-
-        try
-        {
-            return (OMEXMLMetadataImpl) reader.getMetadataStore();
-        }
-        finally
-        {
-            if (close)
-                reader.close();
-        }
+        return (OMEXMLMetadataImpl) reader.getMetadataStore();
     }
 
     @Override
-    public int getTileWidth(String path, int serie) throws UnsupportedFormatException, IOException
+    public int getTileWidth(int serie) throws UnsupportedFormatException, IOException
     {
-        boolean close;
+        // no image currently opened
+        if (getOpened() == null)
+            return 0;
 
-        if (!isOpen(path))
-        {
-            open(path);
-            // keep info if we need to close the reader at end or not
-            close = true;
-        }
-        else
-            close = false;
-
-        try
-        {
-            // prepare reader
-            prepareReader(serie, 0);
-
-            return reader.getOptimalTileWidth();
-        }
-        finally
-        {
-            if (close)
-                reader.close();
-        }
+        // prepare reader
+        prepareReader(serie, 0);
+        return reader.getOptimalTileWidth();
     }
 
     @Override
-    public int getTileHeight(String path, int serie) throws UnsupportedFormatException, IOException
+    public int getTileHeight(int serie) throws UnsupportedFormatException, IOException
     {
-        boolean close;
+        // no image currently opened
+        if (getOpened() == null)
+            return 0;
 
-        if (!isOpen(path))
-        {
-            open(path);
-            // keep info if we need to close the reader at end or not
-            close = true;
-        }
-        else
-            close = false;
-
-        try
-        {
-            // prepare reader
-            prepareReader(serie, 0);
-
-            return reader.getOptimalTileHeight();
-        }
-        finally
-        {
-            if (close)
-                reader.close();
-        }
+        // prepare reader
+        prepareReader(serie, 0);
+        return reader.getOptimalTileHeight();
     }
 
     @Override
-    public IcyBufferedImage getThumbnail(String path, int serie) throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getThumbnail(int serie) throws UnsupportedFormatException, IOException
     {
-        boolean close;
-
-        if (!isOpen(path))
-        {
-            open(path);
-            // keep info if we need to close the reader at end or not
-            close = true;
-        }
-        else
-            close = false;
+        // no image currently opened
+        if (getOpened() == null)
+            return null;
 
         try
         {
@@ -344,29 +289,17 @@ public class LociImporter implements SequenceFileImporter
         }
         catch (FormatException e)
         {
-            throw translateException(path, e);
-        }
-        finally
-        {
-            if (close)
-                reader.close();
+            throw translateException(getOpened(), e);
         }
     }
 
     @Override
-    public Object getPixels(String path, int serie, int resolution, Rectangle rectangle, int z, int t, int c)
+    public Object getPixels(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
             throws UnsupportedFormatException, IOException
     {
-        boolean close;
-
-        if (!isOpen(path))
-        {
-            open(path);
-            // keep info if we need to close the reader at end or not
-            close = true;
-        }
-        else
-            close = false;
+        // no image currently opened
+        if (getOpened() == null)
+            return null;
 
         try
         {
@@ -386,29 +319,17 @@ public class LociImporter implements SequenceFileImporter
         }
         catch (FormatException e)
         {
-            throw translateException(path, e);
-        }
-        finally
-        {
-            if (close)
-                reader.close();
+            throw translateException(getOpened(), e);
         }
     }
 
     @Override
-    public IcyBufferedImage getImage(String path, int serie, int resolution, Rectangle rectangle, int z, int t, int c)
+    public IcyBufferedImage getImage(int serie, int resolution, Rectangle rectangle, int z, int t, int c)
             throws icy.common.exception.UnsupportedFormatException, IOException
     {
-        boolean close;
-
-        if (!isOpen(path))
-        {
-            open(path);
-            // keep info if we need to close the reader at end or not
-            close = true;
-        }
-        else
-            close = false;
+        // no image currently opened
+        if (getOpened() == null)
+            return null;
 
         try
         {
@@ -421,29 +342,17 @@ public class LociImporter implements SequenceFileImporter
         }
         catch (FormatException e)
         {
-            throw translateException(path, e);
-        }
-        finally
-        {
-            if (close)
-                reader.close();
+            throw translateException(getOpened(), e);
         }
     }
 
     @Override
-    public IcyBufferedImage getImage(String path, int serie, int resolution, Rectangle rectangle, int z, int t)
+    public IcyBufferedImage getImage(int serie, int resolution, Rectangle rectangle, int z, int t)
             throws UnsupportedFormatException, IOException
     {
-        boolean close;
-
-        if (!isOpen(path))
-        {
-            open(path);
-            // keep info if we need to close the reader at end or not
-            close = true;
-        }
-        else
-            close = false;
+        // no image currently opened
+        if (getOpened() == null)
+            return null;
 
         try
         {
@@ -456,29 +365,17 @@ public class LociImporter implements SequenceFileImporter
         }
         catch (FormatException e)
         {
-            throw translateException(path, e);
-        }
-        finally
-        {
-            if (close)
-                reader.close();
+            throw translateException(getOpened(), e);
         }
     }
 
     @Override
-    public IcyBufferedImage getImage(String path, int serie, int resolution, int z, int t, int c)
-            throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t, int c) throws UnsupportedFormatException,
+            IOException
     {
-        boolean close;
-
-        if (!isOpen(path))
-        {
-            open(path);
-            // keep info if we need to close the reader at end or not
-            close = true;
-        }
-        else
-            close = false;
+        // no image currently opened
+        if (getOpened() == null)
+            return null;
 
         try
         {
@@ -491,29 +388,17 @@ public class LociImporter implements SequenceFileImporter
         }
         catch (FormatException e)
         {
-            throw translateException(path, e);
-        }
-        finally
-        {
-            if (close)
-                reader.close();
+            throw translateException(getOpened(), e);
         }
     }
 
     @Override
-    public IcyBufferedImage getImage(String path, int serie, int resolution, int z, int t)
-            throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getImage(int serie, int resolution, int z, int t) throws UnsupportedFormatException,
+            IOException
     {
-        boolean close;
-
-        if (!isOpen(path))
-        {
-            open(path);
-            // keep info if we need to close the reader at end or not
-            close = true;
-        }
-        else
-            close = false;
+        // no image currently opened
+        if (getOpened() == null)
+            return null;
 
         try
         {
@@ -526,26 +411,20 @@ public class LociImporter implements SequenceFileImporter
         }
         catch (FormatException e)
         {
-            throw translateException(path, e);
-        }
-        finally
-        {
-            if (close)
-                reader.close();
+            throw translateException(getOpened(), e);
         }
     }
 
     @Override
-    public IcyBufferedImage getImage(String path, int serie, int z, int t) throws UnsupportedFormatException,
-            IOException
+    public IcyBufferedImage getImage(int serie, int z, int t) throws UnsupportedFormatException, IOException
     {
-        return getImage(path, serie, 0, z, t);
+        return getImage(serie, 0, z, t);
     }
 
     @Override
-    public IcyBufferedImage getImage(String path, int z, int t) throws UnsupportedFormatException, IOException
+    public IcyBufferedImage getImage(int z, int t) throws UnsupportedFormatException, IOException
     {
-        return getImage(path, 0, 0, z, t);
+        return getImage(0, 0, z, t);
     }
 
     /**

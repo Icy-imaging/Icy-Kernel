@@ -20,6 +20,7 @@ package icy.file;
 
 import icy.image.AbstractImageProvider;
 import icy.image.ImageProvider;
+import icy.sequence.SequenceIdImporter;
 
 import java.util.List;
 
@@ -29,12 +30,15 @@ import javax.swing.filechooser.FileFilter;
  * Sequence file importer interface.<br>
  * The importer is directly integrated in the classic <i>Open</i> command menu and in the
  * {@link Loader} class to open Sequence.<br>
- * See details about the implementation with the {@link ImageProvider} interface and
- * {@link AbstractImageProvider} abstract class helper.
+ * Can take any resource type identified by a file and should be able to give multiple level access
+ * to the image data.<br>
+ * See details about the image data access implementation with the {@link ImageProvider} interface
+ * and {@link AbstractImageProvider} abstract class helper.
  * 
+ * @see SequenceIdImporter
  * @author Stephane
  */
-public interface SequenceFileImporter extends ImageProvider
+public interface SequenceFileImporter extends SequenceIdImporter
 {
     /**
      * Return <code>true</code> if the specified file can be opened by the importer.
