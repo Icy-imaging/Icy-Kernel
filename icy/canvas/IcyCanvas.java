@@ -85,7 +85,7 @@ import javax.swing.JToolBar;
 import javax.swing.event.ChangeEvent;
 
 import plugins.kernel.canvas.Canvas2DPlugin;
-import plugins.kernel.canvas.Canvas3DPlugin;
+import plugins.kernel.canvas.VtkCanvasPlugin;
 
 /**
  * @author Fabrice de Chaumont & Stephane Dallongeville<br>
@@ -133,26 +133,21 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     {
         // get all canvas plugins
         final List<PluginDescriptor> plugins = PluginLoader.getPlugins(PluginCanvas.class);
-
-        // remove VTK canvas if VTK is not loaded
-        if (!Icy.isVtkLibraryLoaded())
-            PluginDescriptor.removeFromList(plugins, Canvas3DPlugin.class.getName());
-
         final List<String> result = new ArrayList<String>();
 
-        // we want the kernel canvas to be first
+        // we want the default 2D and 3D canvas to be first
         result.add(Canvas2DPlugin.class.getName());
         if (Icy.isVtkLibraryLoaded())
-            result.add(Canvas3DPlugin.class.getName());
+            result.add(VtkCanvasPlugin.class.getName());
 
         for (PluginDescriptor plugin : plugins)
         {
             final String className = plugin.getClassName();
 
-            // ignore kernel as they have been already added
+            // ignore default canvas as they have been already added
             if (Canvas2DPlugin.class.getName().equals(className))
                 continue;
-            if (Canvas3DPlugin.class.getName().equals(className))
+            if (VtkCanvasPlugin.class.getName().equals(className))
                 continue;
 
             CollectionUtil.addUniq(result, plugin.getClassName());

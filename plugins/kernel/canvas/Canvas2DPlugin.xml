@@ -2,7 +2,7 @@
 <root>
 <name>Canvas 2D</name>
 <version>1.0.0.0</version>
-<description>2D Canvas (default)</description>
+<description>Default 2D canvas</description>
 <classname>plugins.kernel.canvas.Canvas2DPlugin</classname>
 <author>Kernel</author>
 </root>

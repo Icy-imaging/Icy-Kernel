@@ -61,6 +61,10 @@ public class VtkUtil
     public final static int VTK_DOUBLE = 11;
     public final static int VTK_ID = 12;
 
+    public final static int VTK_NEAREST_INTERPOLATION = 0;
+    public final static int VTK_LINEAR_INTERPOLATION = 1;
+    public final static int VTK_CUBIC_INTERPOLATION = 2;
+
     /**
      * Add an actor to the specified renderer.<br>
      * If the actor is already existing in the renderer then no operation is done.

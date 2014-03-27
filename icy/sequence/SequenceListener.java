@@ -31,5 +31,4 @@ public interface SequenceListener extends EventListener
      * Called when sequence has been closed (all viewers displaying it closed).
      */
     public void sequenceClosed(Sequence sequence);
-
 }

@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<root>
+<name>VTK Canvas</name>
+<version>1.1.0.0</version>
+<description>Default 3D canvas using VTK library</description>
+<classname>plugins.kernel.canvas.VtkCanvasPlugin</classname>
+<author>Kernel</author>
+</root>

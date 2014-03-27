@@ -27,8 +27,6 @@ import icy.gui.sequence.tools.SequenceDimensionExtendFrame;
 import icy.gui.sequence.tools.SequenceDimensionMergeFrame;
 import icy.gui.sequence.tools.SequenceResizeFrame;
 import icy.gui.viewer.Viewer;
-import icy.image.IcyBufferedImageUtil;
-import icy.image.lut.LUT;
 import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
@@ -39,7 +37,6 @@ import icy.sequence.SequenceDataIterator;
 import icy.sequence.SequenceUtil;
 import icy.type.DataIteratorUtil;
 import icy.type.DataType;
-import icy.util.OMEUtil;
 
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -145,56 +142,13 @@ public class SequenceOperationActions
 
             if (viewer != null)
             {
-                final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+                final Sequence sequence = viewer.getSequence();
 
                 if (sequence != null)
                 {
-                    final LUT lut = viewer.getLut();
-                    final Sequence out = new Sequence(OMEUtil.createOMEMetadata(sequence.getMetadata()));
-
-                    // image receiver
-                    final BufferedImage imgOut = new BufferedImage(sequence.getSizeX(), sequence.getSizeY(), imageType);
-
-                    out.beginUpdate();
-                    try
-                    {
-                        for (int t = 0; t < sequence.getSizeT(); t++)
-                            for (int z = 0; z < sequence.getSizeZ(); z++)
-                                // ARGB image is converted so we can safely always use
-                                // the same input image
-                                out.setImage(t, z,
-                                        IcyBufferedImageUtil.toBufferedImage(sequence.getImage(t, z), imgOut, lut));
-                    }
-                    finally
-                    {
-                        out.endUpdate();
-                    }
-
-                    // rename channels
-                    out.setChannelName(0, "red");
-                    out.setChannelName(1, "green");
-                    out.setChannelName(2, "blue");
-                    out.setChannelName(3, "alpha");
-
-                    // and set final name
-                    switch (imageType)
-                    {
-                        default:
-                        case BufferedImage.TYPE_INT_ARGB:
-                            out.setName(sequence.getName() + " (ARGB rendering)");
-                            break;
-
-                        case BufferedImage.TYPE_INT_RGB:
-                            out.setName(sequence.getName() + " (RGB rendering)");
-                            break;
-
-                        case BufferedImage.TYPE_BYTE_GRAY:
-                            out.setName(sequence.getName() + " (gray rendering)");
-                            break;
-                    }
-
+                    // convert the sequence
+                    final Sequence out = SequenceUtil.convertColor(sequence, imageType, viewer.getLut());
                     Icy.getMainInterface().addSequence(out);
-
                     return true;
                 }
             }
@@ -793,7 +747,7 @@ public class SequenceOperationActions
 
                 if (sequence != null)
                 {
-                    SequenceUtil.convertToVolume(sequence);
+                    SequenceUtil.convertToStack(sequence);
                     viewer.setPositionZ(t);
                     return true;
                 }

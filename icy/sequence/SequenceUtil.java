@@ -22,6 +22,7 @@ import icy.common.listener.ProgressListener;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
 import icy.image.IcyBufferedImageUtil.FilterType;
+import icy.image.lut.LUT;
 import icy.math.Scaler;
 import icy.roi.ROI;
 import icy.type.DataType;
@@ -1167,7 +1168,6 @@ public class SequenceUtil
     {
         return concatC(sequences, fillEmpty, rescale, null);
     }
-   
 
     /**
      * Create and returns a new sequence by concatenating all given sequences on C dimension.
@@ -1924,4 +1924,87 @@ public class SequenceUtil
         return result;
     }
 
+    /**
+     * Convert the specified sequence to gray sequence (single channel)
+     */
+    public static Sequence toGray(Sequence source)
+    {
+        return convertColor(source, BufferedImage.TYPE_BYTE_GRAY, null);
+    }
+
+    /**
+     * Convert the specified sequence to RGB sequence (3 channels)
+     */
+    public static Sequence toRGB(Sequence source)
+    {
+        return convertColor(source, BufferedImage.TYPE_INT_RGB, null);
+    }
+
+    /**
+     * Convert the specified sequence to ARGB sequence (4 channels)
+     */
+    public static Sequence toARGB(Sequence source)
+    {
+        return convertColor(source, BufferedImage.TYPE_INT_ARGB, null);
+    }
+
+    /**
+     * Do color conversion of the specified {@link Sequence} into the specified type.<br>
+     * The resulting Sequence will have 4, 3 or 1 channel(s) depending the selected type.
+     * 
+     * @param source
+     *        source sequence
+     * @param imageType
+     *        wanted image type, only the following is accepted :<br>
+     *        BufferedImage.TYPE_INT_ARGB (4 channels)<br>
+     *        BufferedImage.TYPE_INT_RGB (3 channels)<br>
+     *        BufferedImage.TYPE_BYTE_GRAY (1 channel)<br>
+     * @param lut
+     *        lut used for color calculation (source sequence lut is used if null)
+     */
+    public static Sequence convertColor(Sequence source, int imageType, LUT lut)
+    {
+        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        // image receiver
+        final BufferedImage imgOut = new BufferedImage(source.getSizeX(), source.getSizeY(), imageType);
+
+        result.beginUpdate();
+        try
+        {
+            for (int t = 0; t < source.getSizeT(); t++)
+                for (int z = 0; z < source.getSizeZ(); z++)
+                    result.setImage(t, z, IcyBufferedImageUtil.toBufferedImage(source.getImage(t, z), imgOut, lut));
+
+            // rename channels and set final name
+            switch (imageType)
+            {
+                default:
+                case BufferedImage.TYPE_INT_ARGB:
+                    result.setChannelName(0, "red");
+                    result.setChannelName(1, "green");
+                    result.setChannelName(2, "blue");
+                    result.setChannelName(3, "alpha");
+                    result.setName(source.getName() + " (ARGB rendering)");
+                    break;
+
+                case BufferedImage.TYPE_INT_RGB:
+                    result.setChannelName(0, "red");
+                    result.setChannelName(1, "green");
+                    result.setChannelName(2, "blue");
+                    result.setName(source.getName() + " (RGB rendering)");
+                    break;
+
+                case BufferedImage.TYPE_BYTE_GRAY:
+                    result.setChannelName(0, "gray");
+                    result.setName(source.getName() + " (gray rendering)");
+                    break;
+            }
+        }
+        finally
+        {
+            result.endUpdate();
+        }
+
+        return result;
+    }
 }

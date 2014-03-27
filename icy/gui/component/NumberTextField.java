@@ -45,8 +45,8 @@ public class NumberTextField extends IcyTextField
         public void valueChanged(double newValue, boolean validate);
     }
 
-    private double _value;
-    private List<ValueChangeListener> _listeners;
+    private double value;
+    private List<ValueChangeListener> listeners;
 
     /**
      * Constructor
@@ -54,8 +54,8 @@ public class NumberTextField extends IcyTextField
     public NumberTextField()
     {
         super();
-        _value = 0;
-        _listeners = new ArrayList<ValueChangeListener>();
+        value = 0;
+        listeners = new ArrayList<ValueChangeListener>();
     }
 
     /**
@@ -63,7 +63,7 @@ public class NumberTextField extends IcyTextField
      */
     public void addValueListener(ValueChangeListener l)
     {
-        _listeners.add(l);
+        listeners.add(l);
     }
 
     /**
@@ -71,7 +71,7 @@ public class NumberTextField extends IcyTextField
      */
     public void removeValueListener(ValueChangeListener l)
     {
-        _listeners.remove(l);
+        listeners.remove(l);
     }
 
     /**
@@ -79,7 +79,7 @@ public class NumberTextField extends IcyTextField
      */
     public double getNumericValue()
     {
-        return _value;
+        return value;
     }
 
     /**
@@ -100,12 +100,12 @@ public class NumberTextField extends IcyTextField
     {
         super.textChanged(validate);
 
-        double oldValue = _value;
+        double oldValue = value;
 
         try
         {
             final String text = getText();
-            _value = text.isEmpty() ? 0.0 : Double.parseDouble(text);
+            value = text.isEmpty() ? 0.0 : Double.parseDouble(text);
             setForeground(Color.BLACK);
         }
         catch (NumberFormatException err)
@@ -115,7 +115,7 @@ public class NumberTextField extends IcyTextField
 
         if (validate)
             valueChanged(validate);
-        else if (_value != oldValue)
+        else if (value != oldValue)
             valueChanged(false);
     }
 
@@ -124,7 +124,7 @@ public class NumberTextField extends IcyTextField
      */
     private void fireValueChangedEvent(boolean validate)
     {
-        for (ValueChangeListener l : _listeners)
-            l.valueChanged(_value, validate);
+        for (ValueChangeListener l : listeners)
+            l.valueChanged(value, validate);
     }
 }
