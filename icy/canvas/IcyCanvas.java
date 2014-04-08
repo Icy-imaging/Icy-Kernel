@@ -4123,14 +4123,11 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
                     case C:
                         // single channel mode
-                        if (curC != -1)
-                        {
-                            final int maxC = getMaxPositionC();
+                        final int maxC = getMaxPositionC();
 
-                            // disabled others channels
-                            for (int c = 0; c <= maxC; c++)
-                                getLut().getLutChannel(c).setEnabled(curC == c);
-                        }
+                        // disabled others channels
+                        for (int c = 0; c <= maxC; c++)
+                            getLut().getLutChannel(c).setEnabled((curC == -1) || (curC == c));
                         break;
 
                     case NULL:

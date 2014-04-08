@@ -40,7 +40,6 @@ import icy.math.SmoothMover.SmoothMoveType;
 import icy.math.SmoothMover.SmoothMoverAdapter;
 import icy.painter.ImageOverlay;
 import icy.painter.Overlay;
-import icy.preferences.ApplicationPreferences;
 import icy.preferences.CanvasPreferences;
 import icy.preferences.XMLPreferences;
 import icy.resource.ResourceUtil;
@@ -1931,7 +1930,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         canvasMap = new CanvasMap();
 
         // variables initialization
-        preferences = ApplicationPreferences.getPreferences().node(PREF_CANVAS2D_ID);
+        preferences = CanvasPreferences.getPreferences().node(PREF_CANVAS2D_ID);
 
         // init transform (5 values, log transition type)
         transform = new Canvas2DSmoothMover(5, SmoothMoveType.LOG);

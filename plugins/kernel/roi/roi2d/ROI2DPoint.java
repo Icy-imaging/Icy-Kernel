@@ -65,7 +65,7 @@ public class ROI2DPoint extends ROI2DShape
 
         // select the point for "interactive" mode
         this.position.setSelected(true);
-        getOverlay().setMousePos(new Point5D.Double(position.getX(), position.getY(), -1d, -1d, -1d));
+//        getOverlay().setMousePos(new Point5D.Double(position.getX(), position.getY(), -1d, -1d, -1d));
 
         updateShape();
 
@@ -80,7 +80,7 @@ public class ROI2DPoint extends ROI2DShape
     public ROI2DPoint(Point5D pt)
     {
         this(pt.toPoint2D());
-        getOverlay().setMousePos(pt);
+//        getOverlay().setMousePos(pt);
     }
 
     public ROI2DPoint(double x, double y)

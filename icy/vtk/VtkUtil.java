@@ -18,6 +18,10 @@
  */
 package icy.vtk;
 
+import icy.image.colormap.IcyColorMap;
+import icy.image.lut.LUT.LUTChannel;
+import icy.math.Scaler;
+import icy.type.DataType;
 import icy.type.collection.array.Array2DUtil;
 import icy.type.collection.array.ArrayUtil;
 import vtk.vtkActor;
@@ -25,12 +29,15 @@ import vtk.vtkActor2D;
 import vtk.vtkActor2DCollection;
 import vtk.vtkActorCollection;
 import vtk.vtkCellArray;
+import vtk.vtkColorTransferFunction;
 import vtk.vtkDataArray;
 import vtk.vtkDoubleArray;
 import vtk.vtkFloatArray;
 import vtk.vtkIdTypeArray;
+import vtk.vtkImageData;
 import vtk.vtkIntArray;
 import vtk.vtkLongArray;
+import vtk.vtkPiecewiseFunction;
 import vtk.vtkPoints;
 import vtk.vtkProp;
 import vtk.vtkPropCollection;
@@ -46,6 +53,7 @@ import vtk.vtkUnsignedShortArray;
  */
 public class VtkUtil
 {
+    // VTK type
     public final static int VTK_VOID = 0;
     public final static int VTK_BIT = 1;
     public final static int VTK_CHAR = 2;
@@ -61,9 +69,61 @@ public class VtkUtil
     public final static int VTK_DOUBLE = 11;
     public final static int VTK_ID = 12;
 
+    // VTK interpolation
     public final static int VTK_NEAREST_INTERPOLATION = 0;
     public final static int VTK_LINEAR_INTERPOLATION = 1;
     public final static int VTK_CUBIC_INTERPOLATION = 2;
+
+    // VTK bounding box
+    public final static int VTK_FLY_OUTER_EDGES = 0;
+    public final static int VTK_FLY_CLOSEST_TRIAD = 1;
+    public final static int VTK_FLY_FURTHEST_TRIAD = 2;
+    public final static int VTK_FLY_STATIC_TRIAD = 3;
+    public final static int VTK_FLY_STATIC_EDGES = 4;
+
+    public final static int VTK_TICKS_INSIDE = 0;
+    public final static int VTK_TICKS_OUTSIDE = 1;
+    public final static int VTK_TICKS_BOTH = 2;
+
+    public final static int VTK_GRID_LINES_ALL = 0;
+    public final static int VTK_GRID_LINES_CLOSEST = 1;
+    public final static int VTK_GRID_LINES_FURTHEST = 2;
+
+    /**
+     * Returns the VTK type corresponding to the specified DataType
+     */
+    public static int getVtkType(DataType type)
+    {
+        switch (type)
+        {
+            default:
+            case UBYTE:
+            case BYTE:
+                return VTK_UNSIGNED_CHAR;
+
+                // FIXME: signed char not supported by VTK java wrapper ??
+                // case BYTE:
+                // return VTK_CHAR;
+                // return VTK_SIGNED_CHAR;
+
+            case USHORT:
+                return VTK_UNSIGNED_SHORT;
+            case SHORT:
+                return VTK_SHORT;
+            case UINT:
+                return VTK_UNSIGNED_INT;
+            case INT:
+                return VTK_INT;
+            case ULONG:
+                return VTK_UNSIGNED_LONG;
+            case LONG:
+                return VTK_LONG;
+            case FLOAT:
+                return VTK_FLOAT;
+            case DOUBLE:
+                return VTK_DOUBLE;
+        }
+    }
 
     /**
      * Add an actor to the specified renderer.<br>
@@ -423,6 +483,100 @@ public class VtkUtil
         final vtkCellArray result = new vtkCellArray();
 
         result.SetCells(numCell, getIdTypeArray(cells));
+
+        return result;
+    }
+
+    /**
+     * Creates and returns a {@link vtkImageData} object from the specified 1D array data.
+     */
+    public static vtkImageData getImageData(Object data, DataType dataType, int sizeX, int sizeY, int sizeZ, int sizeC)
+    {
+        final vtkImageData result;
+        final vtkDataArray array;
+
+        // create a new image data structure
+        result = new vtkImageData();
+        result.SetDimensions(sizeX, sizeY, sizeZ);
+        result.SetExtent(0, sizeX - 1, 0, sizeY - 1, 0, sizeZ - 1);
+        // pre-allocate data
+        result.AllocateScalars(getVtkType(dataType), sizeC);
+        // get array structure
+        array = result.GetPointData().GetScalars();
+
+        switch (dataType)
+        {
+            case UBYTE:
+            case BYTE:
+                ((vtkUnsignedCharArray) array).SetJavaArray((byte[]) data);
+                break;
+            case USHORT:
+                ((vtkUnsignedShortArray) array).SetJavaArray((short[]) data);
+                break;
+            case SHORT:
+                ((vtkShortArray) array).SetJavaArray((short[]) data);
+                break;
+            case UINT:
+                ((vtkUnsignedIntArray) array).SetJavaArray((int[]) data);
+                break;
+            case INT:
+                ((vtkIntArray) array).SetJavaArray((int[]) data);
+                break;
+            case FLOAT:
+                ((vtkFloatArray) array).SetJavaArray((float[]) data);
+                break;
+            case DOUBLE:
+                ((vtkDoubleArray) array).SetJavaArray((double[]) data);
+                break;
+        }
+
+        return result;
+    }
+
+    /**
+     * Creates and returns the color map in {@link vtkColorTransferFunction} format from the
+     * specified {@link LUTChannel}.
+     */
+    public static vtkColorTransferFunction getColorMap(LUTChannel lutChannel)
+    {
+        final IcyColorMap colorMap = lutChannel.getColorMap();
+        final Scaler scaler = lutChannel.getScaler();
+
+        // SCALAR COLOR FUNCTION
+        final vtkColorTransferFunction result = new vtkColorTransferFunction();
+
+        result.SetRange(scaler.getLeftIn(), scaler.getRightIn());
+        for (int i = 0; i < IcyColorMap.SIZE; i++)
+        {
+            result.AddRGBPoint(scaler.unscale(i), colorMap.getNormalizedRed(i), colorMap.getNormalizedGreen(i),
+                    colorMap.getNormalizedBlue(i));
+        }
+
+        return result;
+    }
+
+    /**
+     * Creates and returns the opacity map in {@link vtkPiecewiseFunction} format from the specified
+     * {@link LUTChannel}.
+     */
+    public static vtkPiecewiseFunction getOpacityMap(LUTChannel lutChannel)
+    {
+        final IcyColorMap colorMap = lutChannel.getColorMap();
+        final Scaler scaler = lutChannel.getScaler();
+
+        // SCALAR OPACITY FUNCTION
+        final vtkPiecewiseFunction result = new vtkPiecewiseFunction();
+
+        if (colorMap.isEnabled())
+        {
+            for (int i = 0; i < IcyColorMap.SIZE; i++)
+                result.AddPoint(scaler.unscale(i), colorMap.getNormalizedAlpha(i));
+        }
+        else
+        {
+            for (int i = 0; i < IcyColorMap.SIZE; i++)
+                result.AddPoint(scaler.unscale(i), 0d);
+        }
 
         return result;
     }

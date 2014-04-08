@@ -103,7 +103,7 @@ public class ROI2DPath extends ROI2DShape
     public ROI2DPath(Point5D pt)
     {
         this(pt.toPoint2D());
-        getOverlay().setMousePos(pt);
+//        getOverlay().setMousePos(pt);
     }
 
     public ROI2DPath()

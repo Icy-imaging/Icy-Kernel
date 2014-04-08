@@ -340,7 +340,6 @@ public class Icy
 
         // set LOCI debug level
         loci.common.DebugTools.enableLogging("ERROR");
-        ome.scifio.common.DebugTools.enableLogging("ERROR");
 
         System.out.println();
         System.out.println("Icy Version " + version + " started !");

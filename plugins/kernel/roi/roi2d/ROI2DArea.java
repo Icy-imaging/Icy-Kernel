@@ -18,7 +18,6 @@
  */
 package plugins.kernel.roi.roi2d;
 
-import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvas3D;
@@ -53,6 +52,8 @@ import java.awt.image.DataBufferByte;
 import java.awt.image.IndexColorModel;
 
 import org.w3c.dom.Node;
+
+import plugins.kernel.canvas.VtkCanvas;
 
 /**
  * ROI Area type.<br>
@@ -251,7 +252,7 @@ public class ROI2DArea extends ROI2D
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         ROI2DArea.this.beginUpdate();
                         try
@@ -260,12 +261,18 @@ public class ROI2DArea extends ROI2D
                             {
                                 case '+':
                                     if (isSelected())
+                                    {
                                         setBrushSize(getBrushSize() * 1.1f);
+                                        e.consume();
+                                    }
                                     break;
 
                                 case '-':
                                     if (isSelected())
+                                    {
                                         setBrushSize(getBrushSize() * 0.9f);
+                                        e.consume();
+                                    }
                                     break;
                             }
                         }
@@ -291,7 +298,7 @@ public class ROI2DArea extends ROI2D
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         ROI2DArea.this.beginUpdate();
                         try
@@ -349,7 +356,7 @@ public class ROI2DArea extends ROI2D
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         setBrushPosition(imagePoint.toPoint2D());
                     }
@@ -370,7 +377,7 @@ public class ROI2DArea extends ROI2D
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         ROI2DArea.this.beginUpdate();
                         try
@@ -530,7 +537,7 @@ public class ROI2DArea extends ROI2D
                         {
                             final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
                             // show cursor with an alpha factor
-                            g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity()*2));
+                            g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity() * 2));
 
                             // draw cursor border
                             g2.setColor(Color.black);

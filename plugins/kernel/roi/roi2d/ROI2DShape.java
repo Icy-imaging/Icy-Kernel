@@ -18,7 +18,6 @@
  */
 package plugins.kernel.roi.roi2d;
 
-import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.EventHierarchicalChecker;
@@ -59,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
 import vtk.vtkPointSet;
 import vtk.vtkPolyData;
@@ -112,7 +112,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         /**
          * update 3D painter for 3D canvas (called only when vtk is loaded).
          */
-        protected void rebuild3DPainter(Canvas3D canvas)
+        protected void rebuild3DPainter(VtkCanvas canvas)
         {
             final Sequence seq = canvas.getSequence();
 
@@ -223,7 +223,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -270,7 +270,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -303,7 +303,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -352,7 +352,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -385,7 +385,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -415,7 +415,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         // single click
                         if (e.getClickCount() == 1)
@@ -442,7 +442,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -475,7 +475,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         ROI2DShape.this.beginUpdate();
                         try
@@ -628,10 +628,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
                 }
             }
 
-            if (canvas instanceof Canvas3D)
+            if (canvas instanceof VtkCanvas)
             {
                 // 3D canvas
-                final Canvas3D canvas3d = (Canvas3D) canvas;
+                final VtkCanvas canvas3d = (VtkCanvas) canvas;
 
                 // FIXME : need a better implementation
                 final double[] s = canvas3d.getVolumeScale();

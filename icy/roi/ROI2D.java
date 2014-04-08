@@ -18,7 +18,6 @@
  */
 package icy.roi;
 
-import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle5D;
@@ -38,6 +37,7 @@ import java.util.List;
 
 import org.w3c.dom.Node;
 
+import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 
 public abstract class ROI2D extends ROI
@@ -228,7 +228,7 @@ public abstract class ROI2D extends ROI
             if (isActiveFor(canvas))
             {
                 // check we can do the action
-                if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                 {
                     // just for the shift key state change
                     if (!isReadOnly())
@@ -249,7 +249,7 @@ public abstract class ROI2D extends ROI
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         ROI2D.this.beginUpdate();
                         try
@@ -295,7 +295,7 @@ public abstract class ROI2D extends ROI
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         ROI2D.this.beginUpdate();
                         try
@@ -341,7 +341,7 @@ public abstract class ROI2D extends ROI
                 if (isActiveFor(canvas))
                 {
                     // check we can do the action
-                    if (!(canvas instanceof Canvas3D) && (imagePoint != null))
+                    if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
                         if (updateFocus(e, imagePoint, canvas))
                             e.consume();

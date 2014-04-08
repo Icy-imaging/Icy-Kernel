@@ -9,16 +9,12 @@ import icy.gui.component.model.SpecialValueSpinnerModel;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.JSpinner.DefaultEditor;
 import javax.swing.SwingConstants;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
-
-import sun.util.resources.LocaleData;
 
 /**
  * @author Stephane
@@ -89,19 +85,9 @@ public class SpecialValueSpinnerEditor extends DefaultEditor
         }
     }
 
-    // This is here until DecimalFormat gets a constructor that
-    // takes a Locale: 4923525
-    private static String getDefaultPattern(Locale locale)
-    {
-        // Get the pattern for the default locale.
-        ResourceBundle rb = LocaleData.getNumberFormatData(locale);
-        String[] all = rb.getStringArray("NumberPatterns");
-        return all[0];
-    }
-
     public SpecialValueSpinnerEditor(SpecialValueSpinner spinner)
     {
-        this(spinner, getDefaultPattern(spinner.getLocale()));
+        this(spinner, (DecimalFormat) NumberFormat.getInstance(spinner.getLocale()));
     }
 
     public SpecialValueSpinnerEditor(SpecialValueSpinner spinner, String decimalFormatPattern)

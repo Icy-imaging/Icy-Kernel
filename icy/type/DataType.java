@@ -19,6 +19,7 @@
 package icy.type;
 
 import icy.math.MathUtil;
+import icy.vtk.VtkUtil;
 
 import java.awt.image.DataBuffer;
 import java.util.ArrayList;
@@ -182,6 +183,41 @@ public enum DataType
             return DataType.DOUBLE;
 
         return DataType.UNDEFINED;
+    }
+
+    /**
+     * Return a DataType from the specified VTK type.<br>
+     * ex : <code>getDataTypeFromVTKType(VtkUtil.VTK_INT)</code> will return
+     * <code>DataType.INT</code>
+     */
+    public static DataType getDataTypeFromVTKType(int vtkType)
+    {
+        switch (vtkType)
+        {
+            case VtkUtil.VTK_UNSIGNED_CHAR:
+                return UBYTE;
+            case VtkUtil.VTK_CHAR:
+            case VtkUtil.VTK_SIGNED_CHAR:
+                return BYTE;
+            case VtkUtil.VTK_UNSIGNED_SHORT:
+                return USHORT;
+            case VtkUtil.VTK_SHORT:
+                return SHORT;
+            case VtkUtil.VTK_UNSIGNED_INT:
+                return UINT;
+            case VtkUtil.VTK_INT:
+                return INT;
+            case VtkUtil.VTK_FLOAT:
+                return FLOAT;
+            case VtkUtil.VTK_DOUBLE:
+                return DOUBLE;
+            case VtkUtil.VTK_UNSIGNED_LONG:
+                return ULONG;
+            case VtkUtil.VTK_LONG:
+                return LONG;
+            default:
+                return UNDEFINED;
+        }
     }
 
     /**

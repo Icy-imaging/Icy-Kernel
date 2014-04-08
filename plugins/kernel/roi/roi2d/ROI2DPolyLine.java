@@ -206,7 +206,7 @@ public class ROI2DPolyLine extends ROI2DShape
         // always select
         anchor.setSelected(true);
 
-        getOverlay().setMousePos(new Point5D.Double(pt.getX(), pt.getY(), -1d, -1d, -1d));
+        // getOverlay().setMousePos(new Point5D.Double(pt.getX(), pt.getY(), -1d, -1d, -1d));
 
         updateShape();
 
@@ -221,7 +221,7 @@ public class ROI2DPolyLine extends ROI2DShape
     public ROI2DPolyLine(Point5D pt)
     {
         this(pt.toPoint2D());
-        getOverlay().setMousePos(pt);
+        // getOverlay().setMousePos(pt);
     }
 
     public ROI2DPolyLine(Polygon polygon)
@@ -279,6 +279,7 @@ public class ROI2DPolyLine extends ROI2DShape
     /**
      * @deprecated Use {@link #setPoints(ArrayList)} instead.
      */
+    @Deprecated
     public void setPoints(ArrayList<Point2D> pts)
     {
         setPoints((List<Point2D>) pts);

@@ -21,7 +21,6 @@ package plugins.kernel.roi.roi2d;
 import icy.canvas.IcyCanvas;
 import icy.painter.Anchor2D;
 import icy.painter.RectAnchor2D;
-import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
@@ -96,7 +95,7 @@ public abstract class ROI2DRectShape extends ROI2DShape
 
         // select the bottom right point by default for interactive mode
         this.bottomRight.setSelected(true);
-        getOverlay().setMousePos(new Point5D.Double(bottomRight.getX(), bottomRight.getY(), -1d, -1d, -1d));
+//        getOverlay().setMousePos(new Point5D.Double(bottomRight.getX(), bottomRight.getY(), -1d, -1d, -1d));
 
         updateShape();
     }

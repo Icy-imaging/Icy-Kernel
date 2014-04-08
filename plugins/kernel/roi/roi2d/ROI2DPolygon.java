@@ -92,7 +92,7 @@ public class ROI2DPolygon extends ROI2DShape
         // always select
         anchor.setSelected(true);
 
-        getOverlay().setMousePos(new Point5D.Double(pt.getX(), pt.getY(), -1d, -1d, -1d));
+        // getOverlay().setMousePos(new Point5D.Double(pt.getX(), pt.getY(), -1d, -1d, -1d));
 
         updateShape();
 
@@ -107,7 +107,7 @@ public class ROI2DPolygon extends ROI2DShape
     public ROI2DPolygon(Point5D pt)
     {
         this(pt.toPoint2D());
-        getOverlay().setMousePos(pt);
+        // getOverlay().setMousePos(pt);
     }
 
     public ROI2DPolygon(List<Point2D> points)
@@ -159,6 +159,7 @@ public class ROI2DPolygon extends ROI2DShape
     /**
      * @deprecated Use {@link #setPoints(List)} instead.
      */
+    @Deprecated
     public void setPoints(ArrayList<Point2D> pts)
     {
         setPoints((List<Point2D>) pts);

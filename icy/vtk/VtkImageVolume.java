@@ -9,29 +9,18 @@ import icy.image.lut.LUT.LUTChannel;
 import icy.math.Scaler;
 import icy.type.DataType;
 import vtk.vtkColorTransferFunction;
-import vtk.vtkDataArray;
-import vtk.vtkDoubleArray;
 import vtk.vtkFixedPointVolumeRayCastMapper;
-import vtk.vtkFloatArray;
 import vtk.vtkGPUVolumeRayCastMapper;
 import vtk.vtkImageData;
-import vtk.vtkIntArray;
 import vtk.vtkOpenGLGPUVolumeRayCastMapper;
 import vtk.vtkOpenGLVolumeTextureMapper2D;
 import vtk.vtkOpenGLVolumeTextureMapper3D;
 import vtk.vtkPiecewiseFunction;
-import vtk.vtkPointData;
 import vtk.vtkRenderer;
-import vtk.vtkShortArray;
-import vtk.vtkUnsignedCharArray;
-import vtk.vtkUnsignedIntArray;
-import vtk.vtkUnsignedShortArray;
 import vtk.vtkVolume;
 import vtk.vtkVolumeMapper;
 import vtk.vtkVolumeProperty;
 import vtk.vtkVolumeRayCastMapper;
-import vtk.vtkVolumeTextureMapper2D;
-import vtk.vtkVolumeTextureMapper3D;
 
 /**
  * Class to represent a 3D image as a 3D VTK volume object.
@@ -84,7 +73,7 @@ public class VtkImageVolume
             @Override
             public String toString()
             {
-                return "Raycaster (CPU fast)";
+                return "Raycaster (CPU)";
             }
         },
         // RAYCAST_CPU
@@ -92,17 +81,17 @@ public class VtkImageVolume
         // @Override
         // public String toString()
         // {
-        // return "Raycaster (CPU)";
+        // return "Raycaster";
         // }
         // },
-        RAYCAST_GPU
-        {
-            @Override
-            public String toString()
-            {
-                return "Raycaster (GPU)";
-            }
-        },
+        // RAYCAST_GPU
+        // {
+        // @Override
+        // public String toString()
+        // {
+        // return "Raycaster (GPU)";
+        // }
+        // },
         RAYCAST_GPU_OPENGL
         {
             @Override
@@ -111,14 +100,14 @@ public class VtkImageVolume
                 return "Raycaster (OpenGL)";
             }
         },
-        TEXTURE2D
-        {
-            @Override
-            public String toString()
-            {
-                return "Texture 2D";
-            }
-        },
+        // TEXTURE2D
+        // {
+        // @Override
+        // public String toString()
+        // {
+        // return "Texture 2D";
+        // }
+        // },
         TEXTURE2D_OPENGL
         {
             @Override
@@ -127,14 +116,14 @@ public class VtkImageVolume
                 return "Texture 2D (OpenGL)";
             }
         },
-        TEXTURE3D
-        {
-            @Override
-            public String toString()
-            {
-                return "Texture 3D";
-            }
-        },
+        // TEXTURE3D
+        // {
+        // @Override
+        // public String toString()
+        // {
+        // return "Texture 3D";
+        // }
+        // },
         TEXTURE3D_OPENGL
         {
             @Override
@@ -191,15 +180,13 @@ public class VtkImageVolume
     public void release()
     {
         // delete every VTK objects
-        volume.Delete();
+        volume.FastDelete();
         volumeMapper.RemoveAllInputs();
-        volumeMapper.Delete();
-        volumeProperty.Delete();
-        imageData.GetPointData().GetScalars().Delete();
-        imageData.GetPointData().Delete();
-        imageData.ReleaseData();
-        imageData.Delete();
+        volumeMapper.FastDelete();
+        volumeProperty.FastDelete();
+        imageData.FastDelete();
 
+        // after FastDelete we need to release reference
         volume = null;
         volumeMapper = null;
         volumeProperty = null;
@@ -226,6 +213,40 @@ public class VtkImageVolume
     // }
 
     /**
+     * Sets the color map ({@link vtkColorTransferFunction}) used to render the specified channel of
+     * image volume.
+     */
+    public void setColorMap(vtkColorTransferFunction map, int channel)
+    {
+        vtkColorTransferFunction oldMap = volumeProperty.GetRGBTransferFunction(channel);
+        // global colormap, don't release it
+        if (volumeProperty.GetRGBTransferFunction() == oldMap)
+            oldMap = null;
+
+        volumeProperty.SetColor(channel, map);
+        // delete previous color transfer function if any
+        if (oldMap != null)
+            oldMap.FastDelete();
+    }
+
+    /**
+     * Sets the opacity map ({@link vtkPiecewiseFunction}) used to render the specified channel of
+     * image volume.
+     */
+    public void setOpacityMap(vtkPiecewiseFunction map, int channel)
+    {
+        vtkPiecewiseFunction oldMap = volumeProperty.GetScalarOpacity(channel);
+        // global opacity, don't release it
+        if (volumeProperty.GetScalarOpacity() == oldMap)
+            oldMap = null;
+
+        volumeProperty.SetScalarOpacity(channel, map);
+        // delete previous opacity function if any
+        if (oldMap != null)
+            oldMap.FastDelete();
+    }
+
+    /**
      * Sets the {@link LUT} used to render the image volume.
      */
     public void setLUT(LUT value)
@@ -243,7 +264,6 @@ public class VtkImageVolume
         final Scaler scaler = lutChannel.getScaler();
 
         // SCALAR COLOR FUNCTION
-        final vtkColorTransferFunction oldColorMap = volumeProperty.GetRGBTransferFunction(channel);
         final vtkColorTransferFunction newColorMap = new vtkColorTransferFunction();
 
         newColorMap.SetRange(scaler.getLeftIn(), scaler.getRightIn());
@@ -253,13 +273,17 @@ public class VtkImageVolume
                     colorMap.getNormalizedBlue(i));
         }
 
+        vtkColorTransferFunction oldColorMap = volumeProperty.GetRGBTransferFunction(channel);
+        // global colormap, don't release it
+        if (volumeProperty.GetRGBTransferFunction() == oldColorMap)
+            oldColorMap = null;
+
         volumeProperty.SetColor(channel, newColorMap);
         // delete previous color transfer function if any
         if (oldColorMap != null)
-            oldColorMap.Delete();
+            oldColorMap.FastDelete();
 
         // SCALAR OPACITY FUNCTION
-        final vtkPiecewiseFunction oldOpacity = volumeProperty.GetScalarOpacity(channel);
         final vtkPiecewiseFunction newOpacity = new vtkPiecewiseFunction();
 
         if (colorMap.isEnabled())
@@ -273,10 +297,15 @@ public class VtkImageVolume
                 newOpacity.AddPoint(scaler.unscale(i), 0d);
         }
 
+        vtkPiecewiseFunction oldOpacity = volumeProperty.GetScalarOpacity(channel);
+        // global opacity, don't release it
+        if (volumeProperty.GetScalarOpacity() == oldOpacity)
+            oldOpacity = null;
+
         volumeProperty.SetScalarOpacity(channel, newOpacity);
         // delete previous opacity function if any
         if (oldOpacity != null)
-            oldOpacity.Delete();
+            oldOpacity.FastDelete();
     }
 
     /**
@@ -606,10 +635,10 @@ public class VtkImageVolume
                 return true;
 
             default:
-            case RAYCAST_GPU:
+                // case RAYCAST_GPU:
             case RAYCAST_GPU_OPENGL:
-            case TEXTURE2D:
-            case TEXTURE3D:
+                // case TEXTURE2D:
+                // case TEXTURE3D:
             case TEXTURE2D_OPENGL:
             case TEXTURE3D_OPENGL:
                 return false;
@@ -623,18 +652,18 @@ public class VtkImageVolume
     {
         if (volumeMapper instanceof vtkFixedPointVolumeRayCastMapper)
             return VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT;
-//        else if (volumeMapper instanceof vtkVolumeRayCastMapper)
-//            return VtkVolumeMapperType.RAYCAST_CPU;
-        else if (volumeMapper instanceof vtkGPUVolumeRayCastMapper)
-            return VtkVolumeMapperType.RAYCAST_GPU;
+        // else if (volumeMapper instanceof vtkVolumeRayCastMapper)
+        // return VtkVolumeMapperType.RAYCAST_CPU;
+        // else if (volumeMapper instanceof vtkGPUVolumeRayCastMapper)
+        // return VtkVolumeMapperType.RAYCAST_GPU;
         else if (volumeMapper instanceof vtkOpenGLGPUVolumeRayCastMapper)
             return VtkVolumeMapperType.RAYCAST_GPU_OPENGL;
         // else if (volumeMapper instanceof vtkSmartVolumeMapper)
         // return VtkVolumeMapperType.SMART;
-        else if (volumeMapper instanceof vtkVolumeTextureMapper2D)
-            return VtkVolumeMapperType.TEXTURE2D;
-        else if (volumeMapper instanceof vtkVolumeTextureMapper3D)
-            return VtkVolumeMapperType.TEXTURE3D;
+        // else if (volumeMapper instanceof vtkVolumeTextureMapper2D)
+        // return VtkVolumeMapperType.TEXTURE2D;
+        // else if (volumeMapper instanceof vtkVolumeTextureMapper3D)
+        // return VtkVolumeMapperType.TEXTURE3D;
         else if (volumeMapper instanceof vtkOpenGLVolumeTextureMapper2D)
             return VtkVolumeMapperType.TEXTURE2D_OPENGL;
         else if (volumeMapper instanceof vtkOpenGLVolumeTextureMapper3D)
@@ -662,36 +691,28 @@ public class VtkImageVolume
                     newMapper = new vtkFixedPointVolumeRayCastMapper();
                     ((vtkFixedPointVolumeRayCastMapper) newMapper).IntermixIntersectingGeometryOn();
                     break;
-
                 // case RAYCAST_CPU:
                 // newMapper = new vtkVolumeRayCastMapper();
                 // ((vtkVolumeRayCastMapper) newMapper).IntermixIntersectingGeometryOn();
                 // break;
-                //
-                case RAYCAST_GPU:
-                    newMapper = new vtkGPUVolumeRayCastMapper();
-                    break;
-
+                // case RAYCAST_GPU:
+                // newMapper = new vtkGPUVolumeRayCastMapper();
+                // break;
                 case RAYCAST_GPU_OPENGL:
                     newMapper = new vtkOpenGLGPUVolumeRayCastMapper();
                     break;
-
                 // case SMART:
                 // newMapper = new vtkSmartVolumeMapper();
                 // break;
-
-                case TEXTURE2D:
-                    newMapper = new vtkVolumeTextureMapper2D();
-                    break;
-
-                case TEXTURE3D:
-                    newMapper = new vtkVolumeTextureMapper3D();
-                    break;
-
+                // case TEXTURE2D:
+                // newMapper = new vtkVolumeTextureMapper2D();
+                // break;
+                // case TEXTURE3D:
+                // newMapper = new vtkVolumeTextureMapper3D();
+                // break;
                 case TEXTURE2D_OPENGL:
                     newMapper = new vtkOpenGLVolumeTextureMapper2D();
                     break;
-
                 case TEXTURE3D_OPENGL:
                     newMapper = new vtkOpenGLVolumeTextureMapper3D();
                     break;
@@ -704,7 +725,7 @@ public class VtkImageVolume
             if (volumeMapper != null)
             {
                 volumeMapper.RemoveAllInputs();
-                volumeMapper.Delete();
+                volumeMapper.FastDelete();
             }
 
             // update volume mapper
@@ -735,17 +756,16 @@ public class VtkImageVolume
             default:
                 return true;
 
-            case RAYCAST_GPU:
-                return (((vtkGPUVolumeRayCastMapper) volumeMapper).IsRenderSupported(renderer.GetRenderWindow(),
-                        volumeProperty) != 0);
-
+                // case RAYCAST_GPU:
+                // return (((vtkGPUVolumeRayCastMapper)
+                // volumeMapper).IsRenderSupported(renderer.GetRenderWindow(),
+                // volumeProperty) != 0);
             case RAYCAST_GPU_OPENGL:
                 return (((vtkOpenGLGPUVolumeRayCastMapper) volumeMapper).IsRenderSupported(renderer.GetRenderWindow(),
                         volumeProperty) != 0);
-
-            case TEXTURE3D:
-                return (((vtkVolumeTextureMapper3D) volumeMapper).IsRenderSupported(volumeProperty, renderer) != 0);
-
+                // case TEXTURE3D:
+                // return (((vtkVolumeTextureMapper3D)
+                // volumeMapper).IsRenderSupported(volumeProperty, renderer) != 0);
             case TEXTURE3D_OPENGL:
                 return (((vtkOpenGLVolumeTextureMapper3D) volumeMapper).IsRenderSupported(volumeProperty, renderer) != 0);
         }
@@ -767,120 +787,21 @@ public class VtkImageVolume
         volumeMapper.SetBlendMode(value.ordinal());
     }
 
-    public void setVolumeData(Object data, DataType dataType, int sizeX, int sizeY, int sizeZ, int sizeC)
+    /**
+     * Set the volume image data.
+     * 
+     * @see VtkUtil#getImageData(Object, DataType, int, int, int, int)
+     */
+    public void setVolumeData(vtkImageData data)
     {
-        vtkDataArray array;
-        final vtkImageData newImageData;
-
-        // create a new image data structure
-        newImageData = new vtkImageData();
-        newImageData.SetDimensions(sizeX, sizeY, sizeZ);
-        newImageData.SetExtent(0, sizeX - 1, 0, sizeY - 1, 0, sizeZ - 1);
-
-        switch (dataType)
-        {
-            case UBYTE:
-                // pre-allocate data
-                newImageData.AllocateScalars(VtkUtil.VTK_UNSIGNED_CHAR, sizeC);
-                // get array structure
-                array = newImageData.GetPointData().GetScalars();
-                // set frame sequence data in the array structure
-                ((vtkUnsignedCharArray) array).SetJavaArray((byte[]) data);
-
-            case BYTE:
-                // FIXME: signed char not supported by VTK java wrapper ??
-
-                // pre-allocate data
-                // newImageData.AllocateScalars(VtkUtil.VTK_SIGNED_CHAR, sizeC);
-                newImageData.AllocateScalars(VtkUtil.VTK_UNSIGNED_CHAR, sizeC);
-                // get array structure
-                array = newImageData.GetPointData().GetScalars();
-                // set frame sequence data in the array structure
-                ((vtkUnsignedCharArray) array).SetJavaArray((byte[]) data);
-                break;
-
-            case USHORT:
-                // pre-allocate data
-                newImageData.AllocateScalars(VtkUtil.VTK_UNSIGNED_SHORT, sizeC);
-                // get array structure
-                array = newImageData.GetPointData().GetScalars();
-                // set frame sequence data in the array structure
-                ((vtkUnsignedShortArray) array).SetJavaArray((short[]) data);
-                break;
-
-            case SHORT:
-                // pre-allocate data
-                newImageData.AllocateScalars(VtkUtil.VTK_SHORT, sizeC);
-                // get array structure
-                array = newImageData.GetPointData().GetScalars();
-                // set frame sequence data in the array structure
-                ((vtkShortArray) array).SetJavaArray((short[]) data);
-                break;
-
-            case UINT:
-                // pre-allocate data
-                newImageData.AllocateScalars(VtkUtil.VTK_UNSIGNED_INT, sizeC);
-                // get array structure
-                array = newImageData.GetPointData().GetScalars();
-                // set frame sequence data in the array structure
-                ((vtkUnsignedIntArray) array).SetJavaArray((int[]) data);
-                break;
-
-            case INT:
-                // pre-allocate data
-                newImageData.AllocateScalars(VtkUtil.VTK_INT, sizeC);
-                // get array structure
-                array = newImageData.GetPointData().GetScalars();
-                // set frame sequence data in the array structure
-                ((vtkIntArray) array).SetJavaArray((int[]) data);
-                break;
-
-            case FLOAT:
-                // pre-allocate data
-                newImageData.AllocateScalars(VtkUtil.VTK_FLOAT, sizeC);
-                // get array structure
-                array = newImageData.GetPointData().GetScalars();
-                // set frame sequence data in the array structure
-                ((vtkFloatArray) array).SetJavaArray((float[]) data);
-                break;
-
-            case DOUBLE:
-                // pre-allocate data
-                newImageData.AllocateScalars(VtkUtil.VTK_DOUBLE, sizeC);
-                // get array structure
-                array = newImageData.GetPointData().GetScalars();
-                // set frame sequence data in the array structure
-                ((vtkDoubleArray) array).SetJavaArray((double[]) data);
-                break;
-
-            default:
-                // we probably have an empty sequence
-                newImageData.SetDimensions(1, 1, 1);
-                newImageData.SetExtent(0, 0, 0, 0, 0, 0);
-                // pre-allocate data
-                newImageData.AllocateScalars(VtkUtil.VTK_UNSIGNED_CHAR, sizeC);
-                break;
-        }
-
         // set connection
-        volumeMapper.SetInputData(newImageData);
+        volumeMapper.SetInputData(data);
 
         // release previous volume data memory
         if (imageData != null)
-        {
-            final vtkPointData pointData = imageData.GetPointData();
-            if (pointData != null)
-            {
-                final vtkDataArray dataArray = pointData.GetScalars();
-                if (dataArray != null)
-                    dataArray.Delete();
-                pointData.Delete();
-            }
-            imageData.ReleaseData();
-            imageData.Delete();
-        }
+            imageData.FastDelete();
 
         // set to new image data
-        imageData = newImageData;
+        imageData = data;
     }
 }

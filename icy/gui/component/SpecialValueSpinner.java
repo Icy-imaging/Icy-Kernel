@@ -7,6 +7,11 @@ import javax.swing.JComponent;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 
+/**
+ * JSpinner component using a special value for a specific state.
+ * 
+ * @author Stephane
+ */
 public class SpecialValueSpinner extends JSpinner
 {
     /**
