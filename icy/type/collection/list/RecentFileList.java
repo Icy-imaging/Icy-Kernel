@@ -69,7 +69,7 @@ public class RecentFileList extends RecentList
 
         for (int i = 0; i < files.length; i++)
             filenames[i] = files[i].getAbsolutePath();
-        
+
         addEntry(filenames);
     }
 

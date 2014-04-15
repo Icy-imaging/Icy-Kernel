@@ -19,6 +19,7 @@
 package icy.gui.sequence;
 
 import icy.gui.dialog.ActionDialog;
+import icy.gui.dialog.MessageDialog;
 import icy.main.Icy;
 import icy.math.UnitUtil;
 import icy.math.UnitUtil.UnitPrefix;
@@ -38,33 +39,47 @@ public class SequencePropertiesDialog extends ActionDialog
      */
     private static final long serialVersionUID = 5696186054980120411L;
 
-    final SequencePropertiesPanel panel;
+    SequencePropertiesPanel panel;
 
     public SequencePropertiesDialog(final Sequence sequence)
     {
         super("Sequence Properties");
 
-        panel = new SequencePropertiesPanel();
-        panel.setSequence(sequence);
+        initialize();
 
-        mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(panel, BorderLayout.CENTER);
-        mainPanel.validate();
+        panel.setSequence(sequence);
+        // don't close automatically
+        setCloseAfterAction(false);
 
         setOkAction(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                sequence.setName(panel.getNameFieldValue());
-                sequence.setPixelSizeX(UnitUtil.getValueInUnit(panel.getPixelSizeXFieldValue(),
-                        panel.getPixelSizeXUnit(), UnitPrefix.MICRO));
-                sequence.setPixelSizeY(UnitUtil.getValueInUnit(panel.getPixelSizeYFieldValue(),
-                        panel.getPixelSizeYUnit(), UnitPrefix.MICRO));
-                sequence.setPixelSizeZ(UnitUtil.getValueInUnit(panel.getPixelSizeZFieldValue(),
-                        panel.getPixelSizeZUnit(), UnitPrefix.MICRO));
+                final double sx, sy, sz, st;
 
-                double valueInSec = panel.getTimeIntervalFieldValue();
+                sx = panel.getPixelSizeXFieldValue();
+                sy = panel.getPixelSizeYFieldValue();
+                sz = panel.getPixelSizeZFieldValue();
+                st = panel.getTimeIntervalFieldValue();
+
+                if ((sx <= 0d) || (sy <= 0d) || (sz <= 0d))
+                {
+                    MessageDialog.showDialog("Pixel size values should be > 0 !", MessageDialog.WARNING_MESSAGE);
+                    return;
+                }
+                if (st <= 0d)
+                {
+                    MessageDialog.showDialog("Timer interval should be > 0 !", MessageDialog.WARNING_MESSAGE);
+                    return;
+                }
+
+                sequence.setName(panel.getNameFieldValue());
+                sequence.setPixelSizeX(UnitUtil.getValueInUnit(sx, panel.getPixelSizeXUnit(), UnitPrefix.MICRO));
+                sequence.setPixelSizeY(UnitUtil.getValueInUnit(sy, panel.getPixelSizeYUnit(), UnitPrefix.MICRO));
+                sequence.setPixelSizeZ(UnitUtil.getValueInUnit(sz, panel.getPixelSizeZUnit(), UnitPrefix.MICRO));
+
+                double valueInSec = st;
 
                 switch (panel.getTimeIntervalUnit())
                 {
@@ -82,12 +97,22 @@ public class SequencePropertiesDialog extends ActionDialog
 
                 for (int c = 0; c < sequence.getSizeC(); c++)
                     sequence.setChannelName(c, panel.getChannelNameFieldValue(c));
+
+                dispose();
             }
         });
 
-        setLocationRelativeTo(Icy.getMainInterface().getMainFrame());
         pack();
-
+        setLocationRelativeTo(Icy.getMainInterface().getMainFrame());
         setVisible(true);
+    }
+
+    private void initialize()
+    {
+        panel = new SequencePropertiesPanel();
+
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(panel, BorderLayout.CENTER);
+        mainPanel.validate();
     }
 }

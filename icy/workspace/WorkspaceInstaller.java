@@ -277,7 +277,7 @@ public class WorkspaceInstaller implements Runnable
     @Override
     public void run()
     {
-        while (true)
+        while (!Thread.interrupted())
         {
             boolean empty;
             boolean result;

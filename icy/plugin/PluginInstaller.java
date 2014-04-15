@@ -302,7 +302,7 @@ public class PluginInstaller implements Runnable
     @Override
     public void run()
     {
-        while (true)
+        while (!Thread.interrupted())
         {
             // process installations
             while (!installFIFO.isEmpty())

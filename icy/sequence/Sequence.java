@@ -1683,7 +1683,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         if (painter instanceof Overlay)
             return addOverlay((Overlay) painter);
 
-        if (contains(painter))
+        if ((painter == null) || contains(painter))
             return false;
 
         addOverlay(new OverlayWrapper(painter, "Overlay wrapper"));

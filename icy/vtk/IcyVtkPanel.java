@@ -106,6 +106,10 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
     @Override
     public void mouseDragged(MouseEvent e)
     {
+        // camera not yet defined --> exit
+        if (cam == null)
+            return;
+
         if (e.isConsumed())
             return;
         if (ren.VisibleActorCount() == 0)
@@ -229,6 +233,10 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
     @Override
     public void mouseWheelMoved(MouseWheelEvent e)
     {
+        // camera not yet defined --> exit
+        if (cam == null)
+            return;
+
         // cancel pending task
         timer.cancel();
         // want fast update
@@ -292,5 +300,4 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
     {
         return rendering;
     }
-
 }

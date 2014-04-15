@@ -259,7 +259,7 @@ public class RoiActions
                 @SuppressWarnings("unchecked")
                 final List<ROI> rois = (List<ROI>) Clipboard.get(Clipboard.TYPE_ROILIST);
 
-                if (rois.size() > 0)
+                if ((rois != null) && (rois.size() > 0))
                 {
                     sequence.beginUpdate();
                     try
@@ -315,7 +315,7 @@ public class RoiActions
                 @SuppressWarnings("unchecked")
                 final List<ROI> rois = (List<ROI>) Clipboard.get(Clipboard.TYPE_ROILINKLIST);
 
-                if (rois.size() > 0)
+                if ((rois != null) && (rois.size() > 0))
                 {
                     sequence.beginUpdate();
                     try

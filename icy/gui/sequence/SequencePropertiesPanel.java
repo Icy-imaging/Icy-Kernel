@@ -20,6 +20,7 @@ package icy.gui.sequence;
 
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
+import icy.gui.component.NumberTextField;
 import icy.gui.util.ComponentUtil;
 import icy.math.UnitUtil;
 import icy.math.UnitUtil.UnitPrefix;
@@ -51,13 +52,13 @@ public class SequencePropertiesPanel extends JPanel
     private static final long serialVersionUID = -1568878218022361239L;
 
     private IcyTextField nameField;
-    IcyTextField tfPxSizeX;
-    IcyTextField tfPxSizeY;
-    private IcyTextField tfPxSizeZ;
+    NumberTextField tfPxSizeX;
+    NumberTextField tfPxSizeY;
+    private NumberTextField tfPxSizeZ;
     private JComboBox cbPxSizeX;
     JComboBox cbPxSizeY;
     private JComboBox cbPxSizeZ;
-    private IcyTextField tfTimeInterval;
+    private NumberTextField tfTimeInterval;
     private JPanel panelChannels;
     private IcyTextField[] tfsChannels;
     private JLabel lblX;
@@ -135,7 +136,7 @@ public class SequencePropertiesPanel extends JPanel
         lblX = new JLabel("X: ");
         panelPxSizeXLeft.add(lblX, BorderLayout.WEST);
 
-        tfPxSizeX = new IcyTextField();
+        tfPxSizeX = new NumberTextField();
         tfPxSizeX.addTextChangeListener(new TextChangeListener()
         {
             @Override
@@ -166,7 +167,7 @@ public class SequencePropertiesPanel extends JPanel
         lblY = new JLabel("Y: ");
         panelPxSizeYLeft.add(lblY, BorderLayout.WEST);
 
-        tfPxSizeY = new IcyTextField();
+        tfPxSizeY = new NumberTextField();
         panelPxSizeYLeft.add(tfPxSizeY);
         tfPxSizeY.setPreferredSize(new Dimension(60, 20));
         tfPxSizeY.setToolTipText("Y pixel size.");
@@ -208,7 +209,7 @@ public class SequencePropertiesPanel extends JPanel
         lblZ = new JLabel("Z: ");
         panelPxSizeZLeft.add(lblZ, BorderLayout.WEST);
 
-        tfPxSizeZ = new IcyTextField();
+        tfPxSizeZ = new NumberTextField();
         panelPxSizeZLeft.add(tfPxSizeZ);
         tfPxSizeZ.setPreferredSize(new Dimension(40, 20));
         tfPxSizeZ.setMinimumSize(new Dimension(40, 20));
@@ -238,7 +239,7 @@ public class SequencePropertiesPanel extends JPanel
         lblValue = new JLabel("Value: ");
         panelPxSizeTLeft.add(lblValue, BorderLayout.WEST);
 
-        tfTimeInterval = new IcyTextField();
+        tfTimeInterval = new NumberTextField();
         panelPxSizeTLeft.add(tfTimeInterval, BorderLayout.CENTER);
         tfTimeInterval.setPreferredSize(new Dimension(40, 20));
         tfTimeInterval.setMinimumSize(new Dimension(40, 20));
@@ -349,7 +350,7 @@ public class SequencePropertiesPanel extends JPanel
 
     public double getPixelSizeXFieldValue()
     {
-        return StringUtil.parseDouble(tfPxSizeX.getText(), 1d);
+        return tfPxSizeX.getNumericValue();
     }
 
     public UnitPrefix getPixelSizeXUnit()
@@ -360,9 +361,9 @@ public class SequencePropertiesPanel extends JPanel
     public double getPixelSizeYFieldValue()
     {
         if (checkLinked.isSelected())
-            return StringUtil.parseDouble(tfPxSizeX.getText(), 1d);
+            return tfPxSizeX.getNumericValue();
 
-        return StringUtil.parseDouble(tfPxSizeY.getText(), 1d);
+        return tfPxSizeY.getNumericValue();
     }
 
     public UnitPrefix getPixelSizeYUnit()
@@ -375,7 +376,7 @@ public class SequencePropertiesPanel extends JPanel
 
     public double getPixelSizeZFieldValue()
     {
-        return StringUtil.parseDouble(tfPxSizeZ.getText(), 1d);
+        return tfPxSizeZ.getNumericValue();
     }
 
     public UnitPrefix getPixelSizeZUnit()
@@ -385,7 +386,7 @@ public class SequencePropertiesPanel extends JPanel
 
     public double getTimeIntervalFieldValue()
     {
-        return StringUtil.parseDouble(tfTimeInterval.getText(), 1d);
+        return tfTimeInterval.getNumericValue();
     }
 
     public int getTimeIntervalUnit()

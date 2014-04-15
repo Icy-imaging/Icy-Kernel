@@ -189,17 +189,20 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public void addSequence(Sequence sequence)
     {
-        final Sequence seq = sequence;
-
-        // thread safe
-        ThreadUtil.invokeLater(new Runnable()
+        if (sequence != null)
         {
-            @Override
-            public void run()
+            final Sequence seq = sequence;
+
+            // thread safe
+            ThreadUtil.invokeLater(new Runnable()
             {
-                new Viewer(seq);
-            }
-        });
+                @Override
+                public void run()
+                {
+                    new Viewer(seq);
+                }
+            });
+        }
     }
 
     @Override

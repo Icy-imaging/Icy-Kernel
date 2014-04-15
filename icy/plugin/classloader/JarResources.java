@@ -121,7 +121,7 @@ public class JarResources
             }
             catch (IOException e)
             {
-                System.err.print("JarResources.loadJarContent(" + url + ") error:");
+                System.err.println("JarResources.loadJarContent(" + url + ") error:");
                 IcyExceptionHandler.showErrorMessage(e, false, true);
             }
         }
@@ -179,7 +179,7 @@ public class JarResources
                 catch (IOException e)
                 {
                     // not important
-                    System.err.print("JarResources.loadJar(" + jarFile + ") error:");
+                    System.err.println("JarResources.loadJar(" + jarFile + ") error:");
                     IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
         }
@@ -211,7 +211,7 @@ public class JarResources
                 catch (IOException e)
                 {
                     // not important
-                    System.err.print("JarResources.loadJar(" + url + ") error:");
+                    System.err.println("JarResources.loadJar(" + url + ") error:");
                     IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
         }
@@ -272,7 +272,7 @@ public class JarResources
                 catch (IOException e)
                 {
                     // not important
-                    System.err.print("JarResources.loadJar(" + baseUrl + "," + jarStream + ") error:");
+                    System.err.println("JarResources.loadJar(" + baseUrl + "," + jarStream + ") error:");
                     IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
 
@@ -284,7 +284,7 @@ public class JarResources
                 catch (IOException e)
                 {
                     // not important
-                    System.err.print("JarResources.loadJar(" + baseUrl + "," + jarStream + ") error:");
+                    System.err.println("JarResources.loadJar(" + baseUrl + "," + jarStream + ") error:");
                     IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
         }
@@ -366,7 +366,7 @@ public class JarResources
                 return out.toByteArray();
             }
 
-            System.err.print("JarResources.loadJarContent(" + url.toString() + ") error: Can't find '" + resname
+            System.err.println("JarResources.loadJarContent(" + url.toString() + ") error: Can't find '" + resname
                     + "' in JAR file");
 
             return null;
@@ -381,7 +381,7 @@ public class JarResources
                 catch (IOException e)
                 {
                     // file close error is not that much important
-                    System.err.print("JarResources.loadJarContent(" + url.toString() + ") error:");
+                    System.err.println("JarResources.loadJarContent(" + url.toString() + ") error:");
                     IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
 
@@ -393,7 +393,7 @@ public class JarResources
                 catch (IOException e)
                 {
                     // file close error is not that much important
-                    System.err.print("JarResources.loadJarContent(" + url.toString() + ") error:");
+                    System.err.println("JarResources.loadJarContent(" + url.toString() + ") error:");
                     IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
 
@@ -405,7 +405,7 @@ public class JarResources
                 catch (IOException e)
                 {
                     // file close error is not that much important
-                    System.err.print("JarResources.loadJarContent(" + url.toString() + ") error:");
+                    System.err.println("JarResources.loadJarContent(" + url.toString() + ") error:");
                     IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
         }

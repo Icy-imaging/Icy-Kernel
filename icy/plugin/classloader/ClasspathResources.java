@@ -71,7 +71,7 @@ public class ClasspathResources extends JarResources
             }
             catch (IOException e)
             {
-                System.err.print("JarResources.loadJar(" + url + ") error:");
+                System.err.println("JarResources.loadJar(" + url + ") error:");
                 IcyExceptionHandler.showErrorMessage(e, false, true);
             }
             return;
@@ -194,7 +194,7 @@ public class ClasspathResources extends JarResources
                 }
                 catch (IOException e)
                 {
-                    System.err.print("JarResources.loadJar(" + fol.getAbsolutePath() + ") error:");
+                    System.err.println("JarResources.loadJar(" + fol.getAbsolutePath() + ") error:");
                     IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
             }
