@@ -79,7 +79,7 @@ public interface ImageProvider
 
     /**
      * Returns the pixel data located for specified position of the image.<br>
-     * Data is returned in form of an array, the type of this array depends from the image data type<br>
+     * Data is returned in form of a single dimension array, the type of this array depends from the image data type<br>
      * which can be retrieve from the metadata (see {@link OMEXMLMetadataImpl#getPixelsType(int)}
      * 
      * @param serie
@@ -158,6 +158,12 @@ public interface ImageProvider
      * 
      * @param serie
      *        Serie index for multi serie image (use 0 if unsure).
+     * @param resolution
+     *        Wanted resolution level for the image (use 0 if unsure).<br>
+     *        The retrieved image resolution is equal to
+     *        <code>image.resolution / (2^resolution)</code><br>
+     *        So for instance level 0 is the default image resolution while level 1 is base image
+     *        resolution / 2 and so on...
      * @param z
      *        Z position of the image (slice) we want retrieve
      * @param t
