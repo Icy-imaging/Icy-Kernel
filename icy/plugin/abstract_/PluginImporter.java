@@ -18,7 +18,6 @@
  */
 package icy.plugin.abstract_;
 
-import icy.file.FileImporter;
 import icy.file.Importer;
 
 /**
@@ -30,7 +29,7 @@ import icy.file.Importer;
  * @see PluginSequenceIdImporter
  * @author Stephane
  */
-public abstract class PluginImporter extends Plugin implements FileImporter
+public abstract class PluginImporter extends Plugin implements Importer
 {
 
 }
