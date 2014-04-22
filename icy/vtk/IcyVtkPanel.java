@@ -224,10 +224,27 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
     @Override
     public void mouseReleased(MouseEvent e)
     {
-        // set back quality rendering
-        rw.SetDesiredUpdateRate(0.01);
-        // request repaint
-        repaint();
+        // cancel pending task
+        timer.cancel();
+
+        // schedule quality restoration
+        timer = new Timer();
+        timer.schedule(new TimerTask()
+        {
+            @Override
+            public void run()
+            {
+                // set back quality rendering
+                GetRenderWindow().SetDesiredUpdateRate(0.01);
+                // request repaint
+                repaint();
+            }
+        }, 1000);
+
+//        // set back quality rendering
+//        rw.SetDesiredUpdateRate(0.01);
+//        // request repaint
+//        repaint();
     }
 
     @Override
@@ -276,7 +293,7 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
                 // request repaint
                 repaint();
             }
-        }, 250);
+        }, 1000);
     }
 
     @Override
@@ -291,6 +308,22 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
     {
         if (!e.isConsumed())
             super.keyReleased(e);
+    }
+    
+    @Override
+    public void lock()
+    {
+        if (windowset == 0) return;
+        
+        super.lock();
+    }
+    
+    @Override
+    public void unlock()
+    {
+        if (windowset == 0) return;
+
+        super.unlock();
     }
 
     /**
