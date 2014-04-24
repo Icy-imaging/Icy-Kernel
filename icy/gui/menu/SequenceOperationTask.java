@@ -231,7 +231,7 @@ public class SequenceOperationTask extends RibbonTask
          */
         private static final long serialVersionUID = -7475753600896040618L;
 
-        private static final String NAME = "Plan (XY)";
+        private static final String NAME = "Plane (XY)";
 
         final IcyCommandButton cropButton;
         final IcyCommandButton canvasResizeButton;
@@ -243,7 +243,7 @@ public class SequenceOperationTask extends RibbonTask
         {
             super(NAME, new IcyIcon(ResourceUtil.ICON_PICTURE));
 
-            setToolTipText("XY (plan) operation");
+            setToolTipText("XY (plane) operation");
 
             // fast crop operation
             cropButton = new IcyCommandButton(SequenceOperationActions.cropSequenceAction);
