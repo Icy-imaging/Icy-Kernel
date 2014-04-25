@@ -18,6 +18,8 @@
  */
 package icy.plugin;
 
+import java.lang.reflect.InvocationTargetException;
+
 import icy.main.Icy;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginImageAnalysis;
@@ -47,19 +49,34 @@ public class PluginLauncher implements Runnable
 
     protected void create()
     {
-        // create the plugin instance on the AWT
+        // create the plugin instance on the EDT
         ThreadUtil.invokeNow(new Runnable()
         {
             @Override
             public void run()
             {
+                final Class<? extends Plugin> clazz = descriptor.getPluginClass();
+
                 try
                 {
-                    plugin = descriptor.getPluginClass().newInstance();
+                    plugin = clazz.newInstance();
+                }
+                catch (IllegalAccessException e1)
+                {
+                    System.err.println("PluginLauncher.create() error: cannot instantiate " + clazz.getName()
+                            + " class.");
+                    System.err.println(e1.getMessage());
+                }
+                catch (InstantiationException e2)
+                {
+                    System.err.println("PluginLauncher.create() error: cannot instantiate " + clazz.getName()
+                            + " class.");
+                    System.err.println(e2.getMessage());
                 }
                 catch (Throwable t)
                 {
-                    plugin = null;
+                    System.err.println("PluginLauncher.create() error: cannot instantiate " + clazz.getName()
+                            + " class.");
                     IcyExceptionHandler.handleException(descriptor, t, true);
                 }
             }

@@ -173,7 +173,7 @@ public class ThreadUtil
                 catch (InvocationTargetException e)
                 {
                     // the runnable thrown an exception
-                    IcyExceptionHandler.handleException(e, true);
+                    IcyExceptionHandler.handleException(e.getTargetException(), true);
                 }
                 catch (Exception e)
                 {
@@ -213,7 +213,7 @@ public class ThreadUtil
         if ((!forceLater) && isEventDispatchThread())
             r.run();
         else
-            SwingUtilities.invokeLater(r);
+            EventQueue.invokeLater(r);
     }
 
     /**
