@@ -101,9 +101,25 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
 
                         // find the new installed plugin
                         final PluginDescriptor localPlugin = PluginLoader.getPlugin(plugin.getClassName());
-                        // plugin found ? --> launch it !
+                        // plugin found ?
                         if (localPlugin != null)
-                            PluginLauncher.start(localPlugin);
+                        {
+                            // launch it if actionable
+                            if (localPlugin.isActionable())
+                                PluginLauncher.start(localPlugin);
+                            else
+                            {
+                                // just display info
+                                ThreadUtil.invokeLater(new Runnable()
+                                {
+                                    @Override
+                                    public void run()
+                                    {
+                                        new PluginDetailPanel(localPlugin);
+                                    }
+                                });
+                            }
+                        }
                     }
                 }
             });

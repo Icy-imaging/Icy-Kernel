@@ -297,7 +297,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
     private RibbonApplicationMenuEntrySecondary[] getImportEntries()
     {
         final List<PluginDescriptor> importers = PluginLoader.getPlugins(Importer.class);
-        final List<PluginDescriptor> fileImporters = PluginLoader.getPlugins(SequenceImporter.class);
+        final List<PluginDescriptor> sequenceImporters = PluginLoader.getPlugins(SequenceImporter.class);
         final List<RibbonApplicationMenuEntrySecondary> result = new ArrayList<RibbonApplicationMenuEntrySecondary>();
 
         for (int i = 0; i < importers.size(); i++)
@@ -332,9 +332,9 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                 }
             }));
         }
-        for (int i = 0; i < fileImporters.size(); i++)
+        for (int i = 0; i < sequenceImporters.size(); i++)
         {
-            final PluginDescriptor plugin = fileImporters.get(i);
+            final PluginDescriptor plugin = sequenceImporters.get(i);
 
             result.add(new PluginApplicationMenuEntrySecondary(plugin, new ActionListener()
             {
