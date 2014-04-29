@@ -317,8 +317,11 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                         {
                             try
                             {
-                                // do load operation
-                                ((Importer) PluginLauncher.start(plugin)).load();
+                                final Importer importer = (Importer) PluginLauncher.start(plugin);
+
+                                // plugin correctly started ? --> do load operation
+                                if (importer != null)
+                                    importer.load();
                             }
                             catch (Exception exc)
                             {
@@ -346,8 +349,11 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
                         {
                             try
                             {
-                                // do load operation
-                                ((SequenceImporter) PluginLauncher.start(plugin)).load();
+                                final SequenceImporter importer = (SequenceImporter) PluginLauncher.start(plugin);
+
+                                // plugin correctly started ? --> do load operation
+                                if (importer != null)
+                                    importer.load();
                             }
                             catch (Exception exc)
                             {

@@ -22,7 +22,6 @@ import icy.main.Icy;
 import icy.system.IcyExceptionHandler;
 
 import java.awt.EventQueue;
-import java.awt.HeadlessException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -160,9 +159,11 @@ public class ThreadUtil
             // headless mode ?
             if (Icy.getMainInterface().isHeadLess())
             {
-                // cannot use the EDT in headless mode
-                IcyExceptionHandler.showErrorMessage(new HeadlessException(
-                        "Cannot use invokeNow(..) in headless mode (EDT do not exist) !"), true);
+                // just run the code now and hope that graphic part is headless safe ^^
+                runnable.run();
+                
+                // IcyExceptionHandler.showErrorMessage(new HeadlessException(
+                // "Cannot use invokeNow(..) in headless mode (EDT do not exist) !"), true);
             }
             else
             {

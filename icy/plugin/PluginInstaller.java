@@ -24,6 +24,7 @@ import icy.gui.frame.progress.CancelableProgressFrame;
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.frame.progress.SuccessfullAnnounceFrame;
+import icy.main.Icy;
 import icy.network.NetworkUtil;
 import icy.network.URLUtil;
 import icy.plugin.PluginDescriptor.PluginIdent;
@@ -126,14 +127,20 @@ public class PluginInstaller implements Runnable
     /**
      * Install a plugin (asynchronous)
      */
-    public static void install(PluginDescriptor plugin, boolean showConfirm)
+    public static void install(PluginDescriptor plugin, boolean showConfirm) 
     {
         if ((plugin != null) && isEnabled())
         {
             if (!NetworkUtil.hasInternetAccess())
             {
-                new FailedAnnounceFrame("Cannot install '" + plugin.getName()
-                        + "' plugin : you are not connected to Internet.", 10);
+                final String text = "Cannot install '" + plugin.getName()
+                        + "' plugin : you are not connected to Internet.";
+
+                if (Icy.getMainInterface().isHeadLess())
+                    System.err.println(text);
+                else
+                    new FailedAnnounceFrame(text, 10);
+
                 return;
             }
 
@@ -642,7 +649,7 @@ public class PluginInstaller implements Runnable
                 installFIFO.clear();
             }
 
-            if (showConfirm)
+            if (showConfirm && !Icy.getMainInterface().isHeadLess())
                 taskFrame = new CancelableProgressFrame("initializing...");
 
             List<PluginDescriptor> dependencies = new ArrayList<PluginDescriptor>();
@@ -798,7 +805,7 @@ public class PluginInstaller implements Runnable
                 System.out.println();
             }
 
-            if (showConfirm)
+            if (showConfirm && !Icy.getMainInterface().isHeadLess())
             {
                 if (pluginsNOk.isEmpty())
                     new SuccessfullAnnounceFrame("Plugin(s) installation was successful !");
@@ -844,7 +851,7 @@ public class PluginInstaller implements Runnable
                 removeFIFO.clear();
             }
 
-            if (showConfirm)
+            if (showConfirm && !Icy.getMainInterface().isHeadLess())
                 taskFrame = new CancelableProgressFrame("Initializing...");
 
             // now we can proceed remove
@@ -867,7 +874,7 @@ public class PluginInstaller implements Runnable
                 // notify plugin deletion
                 fireRemovedEvent(plugin, result);
 
-                if (showConfirm)
+                if (showConfirm && !Icy.getMainInterface().isHeadLess())
                 {
                     if (!result)
                         new FailedAnnounceFrame("Plugin '" + plugDesc + "' delete operation failed !");

@@ -61,21 +61,19 @@ public class IcyUpdater
 {
     private static class Checker implements Runnable
     {
-        private boolean showProgress;
-        private boolean auto;
+        private boolean silent;
 
-        public Checker(boolean showProgress, boolean auto)
+        public Checker(boolean silent)
         {
             super();
 
-            this.showProgress = showProgress;
-            this.auto = auto;
+            this.silent = silent;
         }
 
         @Override
         public void run()
         {
-            processCheckUpdate(showProgress, auto);
+            processCheckUpdate(silent);
         }
     }
 
@@ -117,10 +115,20 @@ public class IcyUpdater
     /**
      * Do the check update process
      */
-    public static void checkUpdate(boolean showProgress, boolean auto)
+    public static void checkUpdate(boolean silent)
     {
         if (!isUpdating())
-            processor.submit(new Checker(showProgress, auto));
+            processor.submit(new Checker(silent));
+    }
+
+    /**
+     * @deprecated Use {@link #checkUpdate(boolean)} instead
+     */
+    @Deprecated
+    public static void checkUpdate(@SuppressWarnings("unused") boolean showProgress, boolean auto)
+    {
+        // usually auto = !showProgress
+        checkUpdate(auto);
     }
 
     /**
@@ -142,7 +150,7 @@ public class IcyUpdater
     /**
      * Do the check update process (internal)
      */
-    static void processCheckUpdate(boolean showProgress, boolean auto)
+    static void processCheckUpdate(boolean silent)
     {
         wantUpdate = false;
 
@@ -152,7 +160,7 @@ public class IcyUpdater
         final ArrayList<ElementDescriptor> toUpdate;
         final ProgressFrame checkingFrame;
 
-        if (showProgress)
+        if (!silent && !Icy.getMainInterface().isHeadLess())
             checkingFrame = new CancelableProgressFrame("checking for application update...");
         else
             checkingFrame = null;
@@ -165,7 +173,7 @@ public class IcyUpdater
             // error (or cancel) while downloading XML ?
             if (!downloadAndSaveForUpdate(
                     ApplicationPreferences.getUpdateRepositoryBase() + ApplicationPreferences.getUpdateRepositoryFile()
-                            + "?" + params, Updater.UPDATE_NAME, checkingFrame, showProgress))
+                            + "?" + params, Updater.UPDATE_NAME, checkingFrame, !silent))
             {
                 // remove partially downloaded files
                 FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
@@ -177,7 +185,7 @@ public class IcyUpdater
         }
         finally
         {
-            if (showProgress)
+            if (checkingFrame != null)
                 checkingFrame.close();
         }
 
@@ -196,7 +204,8 @@ public class IcyUpdater
         // some elements need to be updated ?
         if (needUpdate)
         {
-            if (!showProgress && auto)
+            // silent update or headless mode
+            if (silent || Icy.getMainInterface().isHeadLess())
             {
                 // automatically install updates
                 if (prepareUpdate(toUpdate, true))
@@ -229,7 +238,7 @@ public class IcyUpdater
             // cleanup
             FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
             // inform that there is no update available
-            if (showProgress)
+            if (!silent && !Icy.getMainInterface().isHeadLess())
                 new AnnounceFrame("No application udpate available", 10);
         }
     }
@@ -332,7 +341,7 @@ public class IcyUpdater
         final DownloadFrame downloadingFrame;
 
         updating = true;
-        if (showProgress)
+        if (showProgress && !Icy.getMainInterface().isHeadLess())
             downloadingFrame = new DownloadFrame("");
         else
             downloadingFrame = null;

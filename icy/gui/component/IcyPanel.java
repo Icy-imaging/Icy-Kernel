@@ -26,6 +26,10 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
 
+/**
+ * @deprecated Don't use this fancy background panel anymore...
+ */
+@Deprecated
 public class IcyPanel extends JPanel
 {
     private static final long serialVersionUID = -7893535181542546173L;

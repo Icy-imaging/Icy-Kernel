@@ -385,7 +385,13 @@ public class Loader
         final List<Importer> result = new ArrayList<Importer>();
 
         for (PluginDescriptor plugin : plugins)
-            result.add((Importer) PluginLauncher.start(plugin));
+        {
+            final Importer importer = (Importer) PluginLauncher.start(plugin);
+
+            // plugin correctly started ? --> add the importer
+            if (importer != null)
+                result.add(importer);
+        }
 
         // TODO: add sort here from plugin importer preferences
 
@@ -401,7 +407,13 @@ public class Loader
         final List<FileImporter> result = new ArrayList<FileImporter>();
 
         for (PluginDescriptor plugin : plugins)
-            result.add((FileImporter) PluginLauncher.start(plugin));
+        {
+            final FileImporter importer = (FileImporter) PluginLauncher.start(plugin);
+
+            // plugin correctly started ? --> add the importer
+            if (importer != null)
+                result.add(importer);
+        }
 
         // TODO: add sort here from plugin importer preferences
 
@@ -417,7 +429,13 @@ public class Loader
         final List<SequenceImporter> result = new ArrayList<SequenceImporter>();
 
         for (PluginDescriptor plugin : plugins)
-            result.add((SequenceImporter) PluginLauncher.start(plugin));
+        {
+            final SequenceImporter importer = (SequenceImporter) PluginLauncher.start(plugin);
+
+            // plugin correctly started ? --> add the importer
+            if (importer != null)
+                result.add(importer);
+        }
 
         // TODO: add sort here from plugin importer preferences
 
@@ -433,7 +451,13 @@ public class Loader
         final List<SequenceIdImporter> result = new ArrayList<SequenceIdImporter>();
 
         for (PluginDescriptor plugin : plugins)
-            result.add((SequenceIdImporter) PluginLauncher.start(plugin));
+        {
+            final SequenceIdImporter importer = (SequenceIdImporter) PluginLauncher.start(plugin);
+
+            // plugin correctly started ? --> add the importer
+            if (importer != null)
+                result.add(importer);
+        }
 
         // TODO: add sort here from plugin importer preferences
 
@@ -449,7 +473,13 @@ public class Loader
         final List<SequenceFileImporter> result = new ArrayList<SequenceFileImporter>();
 
         for (PluginDescriptor plugin : plugins)
-            result.add((SequenceFileImporter) PluginLauncher.start(plugin));
+        {
+            final SequenceFileImporter importer = (SequenceFileImporter) PluginLauncher.start(plugin);
+
+            // plugin correctly started ? --> add the importer
+            if (importer != null)
+                result.add(importer);
+        }
 
         // TODO: add sort here from plugin importer preferences
 
@@ -1028,12 +1058,13 @@ public class Loader
      * Load a list of sequence from the specified list of file with the given
      * {@link SequenceFileImporter} and returns them.<br>
      * As the function can take sometime you should not call it from the AWT EDT.<br>
-     * The method returns an empty array if an error occurred or if no file could not be opened (not
-     * supported).
+     * The method returns an empty array if an error occurred or if no file could be opened (not
+     * supported).<br>
+     * If the user cancelled the action (serie selection dialog) then it returns <code>null</code>.
      * 
      * @param importer
      *        Importer used to open and load image files.<br>
-     *        If set to <code>null</code> the first compatible importer will be used. 
+     *        If set to <code>null</code> the first compatible importer will be used.
      * @param paths
      *        List of image file to load.
      * @param serie
@@ -1058,8 +1089,7 @@ public class Loader
         final List<String> singlePaths = explodeAndClean(paths);
 
         // load sequences and return them
-        return loadSequences(importer, singlePaths, serie, separate, autoOrder, directory, addToRecent, showProgress
-                && !Icy.getMainInterface().isHeadLess());
+        return loadSequences(importer, singlePaths, serie, separate, autoOrder, directory, addToRecent, showProgress);
     }
 
     /**
@@ -1128,7 +1158,7 @@ public class Loader
     }
 
     /**
-     * @deprecated Use {@link #load(File[], boolean, boolean, boolean)} instead.
+     * @deprecated Use {@link #load(List, boolean, boolean, boolean)} instead.
      */
     @Deprecated
     public static void load(List<File> files)
@@ -1137,7 +1167,7 @@ public class Loader
     }
 
     /**
-     * @deprecated Use {@link #load(File[], boolean, boolean, boolean)} instead.
+     * @deprecated Use {@link #load(List, boolean, boolean, boolean)} instead.
      */
     @Deprecated
     public static void load(List<File> files, boolean separate)
@@ -1146,7 +1176,7 @@ public class Loader
     }
 
     /**
-     * @deprecated Use {@link #load(File[], boolean, boolean, boolean)} instead.
+     * @deprecated Use {@link #load(List, boolean, boolean, boolean)} instead.
      */
     @Deprecated
     public static void load(List<File> files, boolean separate, boolean showProgress)
@@ -1165,7 +1195,7 @@ public class Loader
     // }
 
     /**
-     * @deprecated Use {@link #load(File, boolean)} instead.
+     * @deprecated Use {@link #load(String, boolean)} instead.
      */
     @Deprecated
     public static void load(File file)
@@ -1229,7 +1259,7 @@ public class Loader
                 final List<String> singlePaths = explodeAndClean(paths);
                 final FileFrame loadingFrame;
 
-                if (showProgress)
+                if (showProgress && !Icy.getMainInterface().isHeadLess())
                 {
                     loadingFrame = new FileFrame("Loading", null);
                     loadingFrame.setLength(paths.size());
@@ -1275,7 +1305,7 @@ public class Loader
      * 
      * @param importer
      *        Importer used to open and load images.<br>
-     *        If set to <code>null</code> the first compatible importer will be used. 
+     *        If set to <code>null</code> the first compatible importer will be used.
      * @param paths
      *        list of image file to load
      * @param separate
@@ -1511,7 +1541,7 @@ public class Loader
     {
         final List<String> paths = CollectionUtil.asList(FileUtil.toPaths(files));
         final List<Sequence> result = loadSequences(null, paths, serie, separate, autoOrder, directory, addToRecent,
-                showProgress && !Icy.getMainInterface().isHeadLess());
+                showProgress);
         return (Sequence[]) result.toArray();
     }
 
@@ -1523,7 +1553,7 @@ public class Loader
      * 
      * @param importer
      *        Importer used to open and load images.<br>
-     *        If set to <code>null</code> the first compatible importer will be used. 
+     *        If set to <code>null</code> the first compatible importer will be used.
      * @param paths
      *        list of image file to load
      * @param serie
@@ -1557,7 +1587,7 @@ public class Loader
             mainMenu = Icy.getMainInterface().getApplicationMenu();
         else
             mainMenu = null;
-        if (showProgress)
+        if (showProgress && !Icy.getMainInterface().isHeadLess())
             loadingFrame = new FileFrame("Loading", null);
         else
             loadingFrame = null;
@@ -1893,9 +1923,7 @@ public class Loader
         if (loadingFrame != null)
             loadingFrame.setFilename(path);
 
-        // get importers for this file
-        // final List<SequenceFileImporter> fileImporters = getSequenceImporters(importers, path);
-        final List<Sequence> result = new ArrayList<Sequence>();
+        List<Sequence> result = new ArrayList<Sequence>();
 
         for (SequenceFileImporter importer : importers)
         {
@@ -1908,10 +1936,24 @@ public class Loader
                 // get metadata
                 final OMEXMLMetadataImpl meta = importer.getMetaData();
                 final int serieCount = MetaDataUtil.getNumSerie(meta);
-                // do serie selection
-                final int selectedSeries[] = selectSerie(importer, path, meta, serie, serieCount);
+                int selectedSeries[];
 
-                if (selectedSeries.length > 0)
+                try
+                {
+                    // do serie selection (new to create a new instance of the importer)
+                    selectedSeries = selectSerie(importer.getClass().newInstance(), path, meta, serie, serieCount);
+                }
+                catch (Exception e)
+                {
+                    IcyExceptionHandler.showErrorMessage(e, true, true);
+                    System.err.print("Open first serie by default...");
+                    selectedSeries = new int[] {0};
+                }
+
+                // user cancelled action in the serie selection ? null = cancel
+                if (selectedSeries.length == 0)
+                    result = null;
+                else
                 {
                     for (int s : selectedSeries)
                     {

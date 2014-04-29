@@ -51,6 +51,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 /**
  * XML utilities class (parse, read, create and write XML documents).
@@ -68,47 +69,34 @@ public class XMLUtil
     private static final String ATTR_VALUE_NAME = "value";
 
     // static document builder factory
-    private static DocumentBuilderFactory docBuilderFactory = null;
-    // static document builder
-    private static DocumentBuilder docBuilder = null;
-
+    private static DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
     // static transformer factory
-    private static TransformerFactory transformerFactory = null;
-    // static transformer
-    private static Transformer transformer = null;
+    private static TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
-    private static synchronized void initFactories()
-    {
-        // initialize static factories
-        if (docBuilderFactory == null)
-            docBuilderFactory = DocumentBuilderFactory.newInstance();
-        if (transformerFactory == null)
-            transformerFactory = TransformerFactory.newInstance();
-    }
-
-    private static synchronized void init()
-    {
-        // initialize static builder
-        if (docBuilder == null)
-            docBuilder = createDocumentBuilder();
-        // initialize static transformer
-        if (transformer == null)
-            transformer = createTransformer();
-    }
+    // private static synchronized void init()
+    // {
+    // // initialize static builder
+    // if (docBuilder == null)
+    // docBuilder = createDocumentBuilder();
+    // // initialize static transformer
+    // if (transformer == null)
+    // transformer = createTransformer();
+    // }
+    // docBuilder = createDocumentBuilder();
+    // transformer = createTransformer();
 
     /**
      * Create and returns a new DocumentBuilder.
      */
     public static DocumentBuilder createDocumentBuilder()
     {
-        initFactories();
-
         try
         {
             return docBuilderFactory.newDocumentBuilder();
         }
         catch (ParserConfigurationException e)
         {
+            e.printStackTrace();
             return null;
         }
     }
@@ -118,8 +106,6 @@ public class XMLUtil
      */
     public static Transformer createTransformer()
     {
-        initFactories();
-
         final Transformer result;
 
         try
@@ -128,6 +114,7 @@ public class XMLUtil
         }
         catch (TransformerConfigurationException e)
         {
+            IcyExceptionHandler.showErrorMessage(e, true, true);
             return null;
         }
 
@@ -145,52 +132,64 @@ public class XMLUtil
      */
     public static Document createDocument(boolean createRoot)
     {
-        init();
+        final DocumentBuilder docBuilder = createDocumentBuilder();
 
-        if (docBuilder != null)
-        {
-            final Document result;
+        // an error occurred
+        if (docBuilder == null)
+            return null;
 
-            synchronized (docBuilder)
-            {
-                // create document
-                result = docBuilder.newDocument();
-            }
+        // create document
+        final Document result = docBuilder.newDocument();
 
-            // add default "root" element if wanted
-            if (createRoot)
-                createRootElement(result);
+        // add default "root" element if wanted
+        if (createRoot)
+            createRootElement(result);
 
-            return result;
-        }
-
-        return null;
+        return result;
     }
 
     /**
-     * Parse the specified string and convert it to XML Document.
+     * Parse the specified string and convert it to XML Document.<br>
+     * Returns an empty document if an error occurred (error shown in console).
+     * 
+     * @see #getDocumentSafe(String)
      */
     public static Document getDocument(String xmlString)
     {
-        init();
+        final DocumentBuilder docBuilder = createDocumentBuilder();
 
-        if (docBuilder != null)
+        // an error occurred
+        if (docBuilder == null)
+            return null;
+
+        try
         {
-            try
-            {
-                synchronized (docBuilder)
-                {
-                    return docBuilder.parse(new InputSource(new StringReader(xmlString)));
-                }
-            }
-            catch (Exception e)
-            {
-                IcyExceptionHandler.showErrorMessage(e, true);
-            }
+            return docBuilder.parse(new InputSource(new StringReader(xmlString)));
+        }
+        catch (Exception e)
+        {
+            IcyExceptionHandler.showErrorMessage(e, true);
         }
 
         // return empty document
         return createDocument(false);
+    }
+
+    /**
+     * Parse the specified string and convert it to XML Document (safe version).
+     * 
+     * @throws IOException
+     * @throws SAXException
+     */
+    public static Document getDocumentSafe(String xmlString) throws SAXException, IOException
+    {
+        final DocumentBuilder docBuilder = createDocumentBuilder();
+
+        // an error occurred
+        if (docBuilder == null)
+            return null;
+
+        return docBuilder.parse(new InputSource(new StringReader(xmlString)));
     }
 
     /**
@@ -354,35 +353,33 @@ public class XMLUtil
      */
     public static boolean saveDocument(Document doc, File f)
     {
-        init();
+        final Transformer transformer = createTransformer();
 
-        if (transformer != null)
+        // an error occurred
+        if (transformer == null)
+            return false;
+
+        doc.normalizeDocument();
+
+        final DocumentType doctype = doc.getDoctype();
+        final DOMSource domSource = new DOMSource(doc);
+        final StreamResult streamResult = new StreamResult(f);
+
+        try
         {
-            doc.normalizeDocument();
-
-            final DocumentType doctype = doc.getDoctype();
-            final DOMSource domSource = new DOMSource(doc);
-            final StreamResult streamResult = new StreamResult(f);
-
-            try
+            if (doctype != null)
             {
-                synchronized (transformer)
-                {
-                    if (doctype != null)
-                    {
-                        transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, doctype.getPublicId());
-                        transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, doctype.getSystemId());
-                    }
+                transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, doctype.getPublicId());
+                transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, doctype.getSystemId());
+            }
 
-                    transformer.transform(domSource, streamResult);
-                }
-            }
-            catch (Exception e)
-            {
-                return false;
-            }
+            transformer.transform(domSource, streamResult);
 
             return true;
+        }
+        catch (Exception e)
+        {
+            IcyExceptionHandler.showErrorMessage(e, true);
         }
 
         return false;
@@ -1367,7 +1364,7 @@ public class XMLUtil
         final String name = node.getNodeName();
 
         XMLUtil.removeNode(parent, name);
-        
+
         return XMLUtil.addNode(parent, node);
     }
 

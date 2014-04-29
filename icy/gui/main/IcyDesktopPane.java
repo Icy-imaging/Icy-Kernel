@@ -94,10 +94,9 @@ public class IcyDesktopPane extends JDesktopPane implements ContainerListener, M
         {
             super();
 
-            // load random background (nor really random as we have only one
-            // right now)
+            // load random background (nor really random as we have only one right now)
             backGround = ResourceUtil.getImage(BACKGROUND_PATH + Integer.toString(Random.nextInt(1)) + ".jpg");
-            // load ICY logo
+            // load Icy logo
             icyLogo = ResourceUtil.getImage("logoICY.png");
 
             // default text colors

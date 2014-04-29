@@ -729,7 +729,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 xorButton.setEnabled(multiSelect);
                 subButton.setEnabled(twoSelected);
 
-                xlsExportButton.setEnabled(hasSelected);
+                xlsExportButton.setEnabled(getVisibleRois().size() > 0);
             }
         });
     }

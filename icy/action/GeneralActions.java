@@ -366,10 +366,10 @@ public class GeneralActions
         {
             // check core update
             if (!IcyUpdater.isCheckingForUpdate())
-                IcyUpdater.checkUpdate(true, false);
+                IcyUpdater.checkUpdate(false);
             // check plugin update
             if (!PluginUpdater.isCheckingForUpdate())
-                PluginUpdater.checkUpdate(true, false);
+                PluginUpdater.checkUpdate(false);
 
             return true;
         }

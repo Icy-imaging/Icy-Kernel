@@ -232,7 +232,7 @@ public class Icy
         catch (Throwable t)
         {
             // any error at this point is fatal
-            fatalError(t);
+            fatalError(t, headless);
         }
 
         if (!headless)
@@ -253,7 +253,7 @@ public class Icy
                     catch (Throwable t)
                     {
                         // any error here is fatal
-                        fatalError(t);
+                        fatalError(t, false);
                     }
                 }
             });
@@ -309,10 +309,10 @@ public class Icy
         {
             // check for core update
             if (GeneralPreferences.getAutomaticUpdate())
-                IcyUpdater.checkUpdate(false, true);
+                IcyUpdater.checkUpdate(true);
             // check for plugin update
             if (PluginPreferences.getAutomaticUpdate())
-                PluginUpdater.checkUpdate(false, true);
+                PluginUpdater.checkUpdate(true);
 
             // changed version ?
             if (!ApplicationPreferences.getVersion().equals(Icy.version))
@@ -404,16 +404,25 @@ public class Icy
         // we verify that some parameters are incorrect
         if ((ApplicationPreferences.getMaxMemoryMB() <= 128) && (ApplicationPreferences.getMaxMemoryMBLimit() > 128))
         {
-            MessageDialog.showDialog(
-                    "Your maximum memory setting is low, you should increase it in preferences setting.",
-                    MessageDialog.WARNING_MESSAGE);
+            final String text = "Your maximum memory setting is low, you should increase it in preferences setting.";
+
+            if (Icy.getMainInterface().isHeadLess())
+                System.out.println(text);
+            else
+                MessageDialog.showDialog(text, MessageDialog.WARNING_MESSAGE);
         }
         else if (ApplicationPreferences.getMaxMemoryMB() < (ApplicationPreferences.getDefaultMemoryMB() / 2))
-            new ToolTipFrame("<html><b>Tip:</b> you can increase your maximum memory in preferences setting.</html>",
-                    15, "maxMemoryTip");
+        {
+            if (!Icy.getMainInterface().isHeadLess())
+            {
+                new ToolTipFrame(
+                        "<html><b>Tip:</b> you can increase your maximum memory in preferences setting.</html>", 15,
+                        "maxMemoryTip");
+            }
+        }
     }
 
-    static void fatalError(Throwable t)
+    static void fatalError(Throwable t, boolean headless)
     {
         // hide splashScreen if needed
         if ((splashScreen != null) && (splashScreen.isVisible()))
@@ -421,9 +430,12 @@ public class Icy
 
         // show error in console
         IcyExceptionHandler.showErrorMessage(t, true);
-        // and show error in dialog
-        JOptionPane.showMessageDialog(null, IcyExceptionHandler.getErrorMessage(t, true), "Fatal error",
-                JOptionPane.ERROR_MESSAGE);
+        // and show error in dialog if not headless
+        if (!headless)
+        {
+            JOptionPane.showMessageDialog(null, IcyExceptionHandler.getErrorMessage(t, true), "Fatal error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
 
         // exit with error code 1
         System.exit(1);
@@ -474,15 +486,23 @@ public class Icy
         else
             mess = message;
 
-        new AnnounceFrame(mess, "Restart Now", new Runnable()
+        if (Icy.getMainInterface().isHeadLess())
         {
-            @Override
-            public void run()
+            // just display this message
+            System.out.println(mess);
+        }
+        else
+        {
+            new AnnounceFrame(mess, "Restart Now", new Runnable()
             {
-                // restart application now
-                exit(true);
-            }
-        }, 20);
+                @Override
+                public void run()
+                {
+                    // restart application now
+                    exit(true);
+                }
+            }, 20);
+        }
     }
 
     /**

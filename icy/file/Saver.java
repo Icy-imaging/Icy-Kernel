@@ -550,7 +550,7 @@ public class Saver
             mainMenu = Icy.getMainInterface().getApplicationMenu();
         else
             mainMenu = null;
-        if (showProgress)
+        if (showProgress && !Icy.getMainInterface().isHeadLess())
             saveFrame = new FileFrame("Saving", filePath);
         else
             saveFrame = null;
@@ -658,7 +658,7 @@ public class Saver
         catch (Exception e)
         {
             IcyExceptionHandler.showErrorMessage(e, true);
-            if (showProgress)
+            if (showProgress && !Icy.getMainInterface().isHeadLess())
                 new FailedAnnounceFrame("Failed to save image(s) (see output console for details)", 15);
             return;
         }

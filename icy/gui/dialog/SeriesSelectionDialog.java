@@ -88,6 +88,8 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         super(Icy.getMainInterface().getMainFrame(), "Series selection");
 
         this.reader = reader;
+        // default is empty
+        selectedSeries = new int[]{};
 
         initialize();
 
@@ -230,6 +232,8 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         this.importer = importer;
         this.id = id;
         this.metadata = metadata;
+        // default is empty
+        selectedSeries = new int[]{};
 
         initialize();
 

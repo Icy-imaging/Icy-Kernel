@@ -19,6 +19,7 @@
 package icy.action;
 
 import icy.gui.frame.progress.ProgressFrame;
+import icy.main.Icy;
 import icy.resource.icon.IcyIcon;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
@@ -78,7 +79,7 @@ public abstract class IcyAbstractAction extends AbstractAction
         {
             final String mess = getProcessMessage();
 
-            if (isBgProcess() && !StringUtil.isEmpty(mess))
+            if (isBgProcess() && !StringUtil.isEmpty(mess) && !Icy.getMainInterface().isHeadLess())
                 progressFrame = new ProgressFrame(mess);
             else
                 progressFrame = null;

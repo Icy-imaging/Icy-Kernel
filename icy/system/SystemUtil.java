@@ -25,6 +25,7 @@ import icy.util.ReflectionUtil;
 import java.awt.BufferCapabilities;
 import java.awt.Desktop;
 import java.awt.DisplayMode;
+import java.awt.Event;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -219,7 +220,15 @@ public class SystemUtil
      */
     public static int getMenuCtrlMask()
     {
-        return Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+        try
+        {
+            return Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+        }
+        catch (HeadlessException e)
+        {
+            // headless mode, use default Ctrl Mask
+            return Event.CTRL_MASK;
+        }
     }
 
     /**

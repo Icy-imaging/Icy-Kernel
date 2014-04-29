@@ -20,6 +20,7 @@ package icy.type.collection;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -66,6 +67,24 @@ public class CollectionUtil
     public static <T> boolean addUniq(List<T> list, T t)
     {
         return addUniq(list, t, true);
+    }
+
+    /**
+     * Return <code>true</code> if both collections contains the same elements.
+     */
+    public static <T> boolean equals(Collection<T> c1, Collection<T> c2)
+    {
+        if (c1 == c2)
+            return true;
+        if (c1 == null)
+            return false;
+        if (c2 == null)
+            return false;
+
+        if (c1.size() != c2.size())
+            return false;
+
+        return c2.containsAll(c1);
     }
 
 }

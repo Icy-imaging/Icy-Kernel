@@ -154,8 +154,14 @@ public class WorkspaceInstaller implements Runnable
         {
             if (!NetworkUtil.hasInternetAccess())
             {
-                new FailedAnnounceFrame("Cannot install '" + workspace.getName()
-                        + "' workspace : you are not connected to Internet.", 10);
+                final String text = "Cannot install '" + workspace.getName()
+                        + "' workspace : you are not connected to Internet.";
+
+                if (Icy.getMainInterface().isHeadLess())
+                    System.err.println(text);
+                else
+                    new FailedAnnounceFrame(text, 10);
+
                 return;
             }
 
@@ -430,7 +436,7 @@ public class WorkspaceInstaller implements Runnable
             int result = 0;
             final String workspaceName = workspace.getName();
 
-            if (showConfirm)
+            if (showConfirm && !Icy.getMainInterface().isHeadLess())
                 taskFrame = new ProgressFrame("installing workspace '" + workspaceName + "'...");
             try
             {
@@ -460,7 +466,7 @@ public class WorkspaceInstaller implements Runnable
 
             final String resMess = "Workspace '" + workspaceName + "' installation";
 
-            if (showConfirm)
+            if (showConfirm && !Icy.getMainInterface().isHeadLess())
             {
                 switch (result)
                 {
@@ -531,7 +537,7 @@ public class WorkspaceInstaller implements Runnable
 
             if (deletePlugin)
             {
-                if (showConfirm)
+                if (showConfirm && !Icy.getMainInterface().isHeadLess())
                     taskFrame = new ProgressFrame("checking plugins dependences...");
                 try
                 {
@@ -567,7 +573,7 @@ public class WorkspaceInstaller implements Runnable
 
             final String resMess = "Workspace '" + workspaceDesc + "' remove";
 
-            if (showConfirm)
+            if (showConfirm && !Icy.getMainInterface().isHeadLess())
             {
                 if (result)
                     new SuccessfullAnnounceFrame(resMess + " succeed !", 10);

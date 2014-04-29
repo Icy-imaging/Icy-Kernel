@@ -55,6 +55,7 @@ import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.type.TypeUtil;
+import icy.type.collection.CollectionUtil;
 import icy.type.collection.array.Array1DUtil;
 import icy.type.dimension.Dimension5D;
 import icy.type.rectangle.Rectangle5D;
@@ -1389,32 +1390,28 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         else
             newSelected = new HashSet<ROI>();
 
-        // same selection size ?
-        if (newSelectedSize == oldSelectedSize)
+        // selection changed ?
+        if (!CollectionUtil.equals(oldSelected, newSelected))
         {
-            // same selection, don't need to update it
-            if (newSelected.containsAll(oldSelected))
-                return;
-        }
-
-        beginUpdate();
-        try
-        {
-            if (newSelectedSize > 0)
+            beginUpdate();
+            try
             {
-                for (ROI roi : getROIs())
-                    roi.setSelected(newSelected.contains(roi));
+                if (newSelectedSize > 0)
+                {
+                    for (ROI roi : getROIs())
+                        roi.setSelected(newSelected.contains(roi));
+                }
+                else
+                {
+                    // unselected all ROIs
+                    for (ROI roi : getROIs())
+                        roi.setSelected(false);
+                }
             }
-            else
+            finally
             {
-                // unselected all ROIs
-                for (ROI roi : getROIs())
-                    roi.setSelected(false);
+                endUpdate();
             }
-        }
-        finally
-        {
-            endUpdate();
         }
     }
 
