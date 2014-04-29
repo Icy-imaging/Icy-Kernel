@@ -18,7 +18,6 @@
  */
 package icy.system.thread;
 
-import icy.main.Icy;
 import icy.system.IcyExceptionHandler;
 
 import java.awt.EventQueue;
@@ -156,32 +155,20 @@ public class ThreadUtil
         }
         else
         {
-            // headless mode ?
-            if (Icy.getMainInterface().isHeadLess())
+            try
             {
-                // just run the code now and hope that graphic part is headless safe ^^
-                runnable.run();
-                
-                // IcyExceptionHandler.showErrorMessage(new HeadlessException(
-                // "Cannot use invokeNow(..) in headless mode (EDT do not exist) !"), true);
+                EventQueue.invokeAndWait(runnable);
             }
-            else
+            catch (InvocationTargetException e)
             {
-                try
-                {
-                    EventQueue.invokeAndWait(runnable);
-                }
-                catch (InvocationTargetException e)
-                {
-                    // the runnable thrown an exception
-                    IcyExceptionHandler.handleException(e.getTargetException(), true);
-                }
-                catch (Exception e)
-                {
-                    // probably an interrupt exception here
-                    System.err.println("ThreadUtil.invokeNow(...) error :");
-                    IcyExceptionHandler.showErrorMessage(e, true);
-                }
+                // the runnable thrown an exception
+                IcyExceptionHandler.handleException(e.getTargetException(), true);
+            }
+            catch (Exception e)
+            {
+                // probably an interrupt exception here
+                System.err.println("ThreadUtil.invokeNow(...) error :");
+                IcyExceptionHandler.showErrorMessage(e, true);
             }
         }
     }
