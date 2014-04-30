@@ -109,7 +109,7 @@ public enum DataType
             if (((!javaTypeOnly) || dataType.isJavaType()) && (wantUndef || (dataType != UNDEFINED)))
                 result.add(dataType.toString(longString));
 
-        return (String[]) result.toArray();
+        return result.toArray(new String[result.size()]);
     }
 
     /**

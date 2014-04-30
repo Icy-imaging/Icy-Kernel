@@ -1542,7 +1542,7 @@ public class Loader
         final List<String> paths = CollectionUtil.asList(FileUtil.toPaths(files));
         final List<Sequence> result = loadSequences(null, paths, serie, separate, autoOrder, directory, addToRecent,
                 showProgress);
-        return (Sequence[]) result.toArray();
+        return result.toArray(new Sequence[result.size()]);
     }
 
     /**
@@ -1743,7 +1743,6 @@ public class Loader
                     {
                         if (concat)
                         {
-                            //
                             final Sequence seq = sequences.get(0);
                             // find last sequence for this channel
                             Sequence lastSequence = map.get(Integer.valueOf(c));
