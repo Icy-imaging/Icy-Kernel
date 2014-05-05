@@ -20,12 +20,12 @@ package icy.gui.frame.progress;
 
 import icy.system.thread.ThreadUtil;
 
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
@@ -133,10 +133,10 @@ public class AnnounceFrame extends TaskFrame implements ActionListener
                 button.setFocusable(false);
                 button.addActionListener(AnnounceFrame.this);
 
-                mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.LINE_AXIS));
+                mainPanel.setLayout(new BorderLayout());
 
-                mainPanel.add(label);
-                mainPanel.add(button);
+                mainPanel.add(label, BorderLayout.CENTER);
+                mainPanel.add(button, BorderLayout.EAST);
 
                 pack();
             }

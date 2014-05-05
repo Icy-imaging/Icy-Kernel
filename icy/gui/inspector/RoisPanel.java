@@ -152,12 +152,12 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             new ColumnInfo("Volume", ID_COLUMN_VOLUME, "Volume", String.class, 40, 80, false, false),
             new ColumnInfo("Min Intensity", ID_COLUMN_MIN_INT, "Minimum pixel intensity", Double.class, 40, 100, false,
                     true),
-            new ColumnInfo("Mean Intensity", ID_COLUMN_MEAN_INT, "Mean pixel intensity (per channel)", Double.class,
-                    40, 100, false, true),
-            new ColumnInfo("Max Intensity", ID_COLUMN_MAX_INT, "Maximum pixel intensity (per channel)", Double.class,
-                    40, 100, false, true),
-            new ColumnInfo("Std Deviation", ID_COLUMN_STANDARD_DEV, "Standard deviation (per channel)", Double.class,
-                    40, 100, false, true)};
+            new ColumnInfo("Mean Intensity", ID_COLUMN_MEAN_INT, "Mean pixel intensity", Double.class, 40, 100, false,
+                    true),
+            new ColumnInfo("Max Intensity", ID_COLUMN_MAX_INT, "Maximum pixel intensity", Double.class, 40, 100, false,
+                    true),
+            new ColumnInfo("Std Deviation", ID_COLUMN_STANDARD_DEV, "Standard deviation", Double.class, 40, 100, false,
+                    true)};
 
     // GUI
     AbstractTableModel tableModel;
@@ -465,7 +465,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         // remove row sorter the time we update columns
         table.setRowSorter(null);
 
-        // --> try to find a way to disable table refresh while modifying column
+        // TODO: try to find a way to disable table refresh while modifying column
 
         // and regenerate them
         for (int i = 0; i < newColCount; i++)
@@ -483,10 +483,15 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             else
                 col = (TableColumnExt) columns.get(i);
 
-            // build column name
+            // build column name & tool tip
             String name = ci.name;
+            String toolTip = ci.toolTip;
+
             if (ci.channelInfo)
+            {
                 name += getTableChannelName(getTableChannelIndex(i));
+                toolTip += getTableChannelName(getTableChannelIndex(i));
+            }
 
             // column changed ?
             if ((!name.equals(col.getHeaderValue())) || (!ci.id.equals(col.getIdentifier())))
@@ -494,8 +499,8 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                 col.setIdentifier(ci.id);
                 col.setMinWidth(ci.minSize);
                 col.setPreferredWidth(ci.preferredSize);
-                col.setToolTipText(ci.toolTip);
                 col.setHeaderValue(name);
+                col.setToolTipText(toolTip);
                 col.setVisible(preferences.getBoolean(ci.id, ci.defVisible));
                 col.setModelIndex(i);
 

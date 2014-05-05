@@ -1371,165 +1371,6 @@ public class Loader
         load(CollectionUtil.createArrayList(path), false, false, showProgress);
     }
 
-    // /**
-    // * Loads the specified image files and return them as sequences.<br>
-    // * If 'separate' is false the loader try to set images in the same sequence.<br>
-    // * If separate is true each image is loaded in a separate sequence.<br>
-    // * As this method can take sometime, you should not call it from the EDT.<br>
-    // *
-    // * @param files
-    // * list of image file to load
-    // * @param serie
-    // * Serie to load.
-    // * @param separate
-    // * Force image to be loaded in separate sequence
-    // * @param directory
-    // * Specify is the source is a single complete directory
-    // * @param display
-    // * If set to true sequences will be automatically displayed after being loaded.
-    // * @param addToRecent
-    // * If set to true the files list will be traced in recent opened sequence.
-    // * @param showProgress
-    // * Show progression in loading process
-    // */
-    // static Sequence[] loadSequences(File[] files, int serie, boolean separate, boolean autoOrder,
-    // boolean directory,
-    // boolean addToRecent, boolean showProgress)
-    // {
-    // // nothing to load
-    // if (files.length <= 0)
-    // return new Sequence[0];
-    //
-    // final List<Sequence> result = new ArrayList<Sequence>();
-    //
-    // final ApplicationMenu mainMenu;
-    // final FileFrame loadingFrame;
-    //
-    // if (addToRecent)
-    // mainMenu = Icy.getMainInterface().getApplicationMenu();
-    // else
-    // mainMenu = null;
-    // if (showProgress)
-    // loadingFrame = new FileFrame("Loading...", null);
-    // else
-    // loadingFrame = null;
-    //
-    // try
-    // {
-    // final SequenceFileImporter[] importers = getSequenceImporters();
-    // final List<File> remainingFiles = Arrays.asList(files);
-    //
-    // if (separate)
-    // {
-    // // load each file in a separate sequence
-    // for (File file : files)
-    // {
-    // final SequenceFileImporter[] fileImporters = getSequenceImporters(importers, file);
-    //
-    // for (SequenceFileImporter importer : fileImporters)
-    // {
-    // try
-    // {
-    // // load current file and add to results
-    // result.addAll(Arrays.asList(importer.load(new FilePosition[] {new FilePosition(file)},
-    // serie, loadingFrame)));
-    // // remove from remaining
-    // remainingFiles.remove(file);
-    // // add as separate item to recent file list
-    // if (mainMenu != null)
-    // mainMenu.addRecentLoadedFile(file);
-    // }
-    // catch (UnsupportedFormatException e)
-    // {
-    // // just ignore and pass to next importer
-    // }
-    // }
-    // }
-    // }
-    // else
-    // {
-    // // pass through all importers
-    // for (SequenceFileImporter importer : importers)
-    // {
-    // // retrieve supported files for this importer
-    // final File[] supportedFiles = getSupportedFiles(importer,
-    // remainingFiles.toArray(new File[remainingFiles.size()]));
-    //
-    // if (supportedFiles.length > 0)
-    // {
-    // try
-    // {
-    // // get positions from files
-    // final FilePosition[] filePositions = getFilePositions(supportedFiles, autoOrder);
-    // // load files and add to results
-    // result.addAll(Arrays.asList(importer.load(filePositions, serie, loadingFrame)));
-    // // remove from remaining
-    // remainingFiles.removeAll(CollectionUtil.asList(supportedFiles));
-    // }
-    // catch (UnsupportedFormatException e)
-    // {
-    // // just ignore and pass to next importer
-    // }
-    // }
-    // }
-    //
-    // // add as one item to recent file list
-    // if (mainMenu != null)
-    // {
-    // // set only the directory entry
-    // if (directory)
-    // mainMenu.addRecentLoadedFile(files[0].getParentFile());
-    // else
-    // mainMenu.addRecentLoadedFile(files);
-    // }
-    // }
-    //
-    // if (remainingFiles.size() > 0)
-    // {
-    // System.err.println("Cannot open the following file(s) (format not supported):");
-    // for (File file : remainingFiles)
-    // System.err.println(file.getAbsolutePath());
-    //
-    // if (loadingFrame != null)
-    // {
-    // if (remainingFiles.size() == 1)
-    // new FailedAnnounceFrame(
-    // "A file could not be opened (format not supported).\nSee the console output for more details.");
-    // else
-    // new FailedAnnounceFrame(
-    // "Some files could not be opened (format not supported).\nSee the console output for more details.");
-    //
-    // }
-    // }
-    //
-    // // directory load fit in a single sequence ?
-    // if ((result.size() == 1) && directory)
-    // {
-    // final Sequence seq = result.get(0);
-    // // get directory without last separator
-    // final String fileDir = FileUtil.getGenericPath(files[0].getParentFile().getAbsolutePath());
-    //
-    // // set name and filename to use directory instead
-    // seq.setName(FileUtil.getFileName(fileDir, false));
-    // seq.setFilename(fileDir);
-    // }
-    // }
-    // catch (Exception e)
-    // {
-    // // just show the error
-    // IcyExceptionHandler.showErrorMessage(e, true);
-    // if (loadingFrame != null)
-    // new FailedAnnounceFrame("Failed to open file(s), see the console output for more details.");
-    // }
-    // finally
-    // {
-    // if (loadingFrame != null)
-    // loadingFrame.close();
-    // }
-    //
-    // return result.toArray(new Sequence[result.size()]);
-    // }
-
     /**
      * @deprecated Use
      *             {@link #loadSequences(List, int, boolean, boolean, boolean, boolean, boolean)}
@@ -1641,37 +1482,6 @@ public class Loader
 
                 if (loadingFrame != null)
                     loadingFrame.setAction("Extracting position from filename");
-
-                // final List<FilePosition> filePositions = new ArrayList<Loader.FilePosition>();
-                // if (remainingFiles.size() > 1)
-                // {
-                // // use FilePattern to split images in group
-                // while (remainingFiles.size() > 0)
-                // {
-                // final String path = remainingFiles.get(0);
-                // final FilePattern pattern = new FilePattern(new Location(path));
-                // final String fileArray[] = pattern.getFiles();
-                // final List<String> fileList;
-                //
-                // // FilePattern could not work it out --> single group file
-                // if ((fileArray == null) || (fileArray.length == 0))
-                // fileList = CollectionUtil.createArrayList(path);
-                // else
-                // // get files path handled by the pattern in correct format
-                // fileList = FileUtil.toPaths(FileUtil.toFiles(CollectionUtil.asList(fileArray)));
-                //
-                // // get positions from files
-                // filePositions.addAll(getFilePositions(fileList, autoOrder));
-                //
-                // // remove processed files
-                // remainingFiles.removeAll(fileList);
-                // }
-                //
-                // // now we will do the loading operation
-                // remainingFiles.addAll(paths);
-                // }
-                // else
-                // filePositions.addAll(getFilePositions(paths, autoOrder));
 
                 final List<FilePosition> filePositions = getFilePositions(paths, autoOrder);
                 int lastS = 0;
@@ -1792,7 +1602,7 @@ public class Loader
                 if (loadingFrame != null)
                 {
                     new FailedAnnounceFrame(
-                            "Some file(s) could not be opened (format not supported).\nSee the console output for more details.");
+                            "Some file(s) could not be opened (format not supported). See the console output for more details.");
                 }
             }
 

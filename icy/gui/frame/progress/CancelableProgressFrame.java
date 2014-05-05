@@ -20,6 +20,7 @@ package icy.gui.frame.progress;
 
 import icy.system.thread.ThreadUtil;
 
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -54,7 +55,8 @@ public class CancelableProgressFrame extends ProgressFrame implements ActionList
                 cancelBtn.setFocusPainted(false);
                 cancelBtn.addActionListener(CancelableProgressFrame.this);
 
-                mainPanel.add(cancelBtn);
+                mainPanel.add(cancelBtn, BorderLayout.EAST);
+                
                 pack();
             }
         });

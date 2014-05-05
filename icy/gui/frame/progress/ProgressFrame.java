@@ -22,8 +22,9 @@ import icy.common.listener.ProgressListener;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
+import java.awt.BorderLayout;
+
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.JProgressBar;
 
 /**
@@ -85,9 +86,8 @@ public class ProgressFrame extends TaskFrame implements ProgressListener, Runnab
                 // this is enough for a smooth progress
                 progressBar.setMaximum(1000);
 
-                mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.LINE_AXIS));
-
-                mainPanel.add(progressBar);
+                mainPanel.setLayout(new BorderLayout());
+                mainPanel.add(progressBar, BorderLayout.CENTER);
 
                 pack();
             }

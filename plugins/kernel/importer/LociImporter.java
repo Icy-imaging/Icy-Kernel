@@ -63,6 +63,9 @@ public class LociImporter implements SequenceFileImporter
         super();
 
         mainReader = new ImageReader();
+        // just to be sure
+        mainReader.setAllowOpenFiles(true);
+
         reader = null;
     }
 
@@ -232,8 +235,8 @@ public class LociImporter implements SequenceFileImporter
             res = resCount - 1;
         else
             res = resolution;
-
         reader.setResolution(res);
+        
         return Math.pow(2d, resolution - res);
     }
 
