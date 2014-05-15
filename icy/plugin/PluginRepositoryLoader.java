@@ -76,7 +76,7 @@ public class PluginRepositoryLoader
                     for (RepositoryInfo repoInfo : repositories)
                     {
                         // reload requested --> stop current loading
-                        if (ThreadUtil.hasWaitingSingleTask(this))
+                        if (ThreadUtil.hasWaitingBgSingleTask(this))
                             return;
 
                         if (repoInfo.isEnabled())
@@ -113,7 +113,7 @@ public class PluginRepositoryLoader
                 for (PluginDescriptor plugin : plugins)
                 {
                     // reload requested --> stop current loading
-                    if (ThreadUtil.hasWaitingSingleTask(this))
+                    if (ThreadUtil.hasWaitingBgSingleTask(this))
                         return;
                     // internet connection lost --> failed
                     if (!NetworkUtil.hasInternetAccess())
@@ -139,7 +139,7 @@ public class PluginRepositoryLoader
                 for (PluginDescriptor plugin : plugins)
                 {
                     // reload requested --> stop current loading
-                    if (ThreadUtil.hasWaitingSingleTask(this))
+                    if (ThreadUtil.hasWaitingBgSingleTask(this))
                         return;
                     // internet connection lost --> failed
                     if (!NetworkUtil.hasInternetAccess())
@@ -297,7 +297,7 @@ public class PluginRepositoryLoader
         imagesLoaded = false;
         failed = false;
 
-        ThreadUtil.runSingle(loader);
+        ThreadUtil.bgRunSingle(loader);
     }
 
     /**
@@ -407,7 +407,7 @@ public class PluginRepositoryLoader
      */
     public static boolean isLoading()
     {
-        return instance.loader.isLoading() || ThreadUtil.hasWaitingBgTask(instance.loader);
+        return instance.loader.isLoading() || ThreadUtil.hasWaitingBgSingleTask(instance.loader);
     }
 
     /**

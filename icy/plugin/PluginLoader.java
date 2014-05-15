@@ -176,7 +176,7 @@ public class PluginLoader implements Runnable
      */
     public static boolean isLoading()
     {
-        return instance.loading || ThreadUtil.hasWaitingSingleTask(instance);
+        return instance.loading || ThreadUtil.hasWaitingBgSingleTask(instance);
     }
 
     /**
@@ -193,7 +193,7 @@ public class PluginLoader implements Runnable
      */
     public static void reloadAsynch()
     {
-        ThreadUtil.runSingle(instance);
+        ThreadUtil.bgRunSingle(instance);
     }
 
     /**
@@ -202,6 +202,7 @@ public class PluginLoader implements Runnable
     public static void reload()
     {
         reloadAsynch();
+        ThreadUtil.sleep(10);
         waitWhileLoading();
     }
 
@@ -263,7 +264,7 @@ public class PluginLoader implements Runnable
             }
 
             // no need to complete loading...
-            if (ThreadUtil.hasWaitingSingleTask(this))
+            if (ThreadUtil.hasWaitingBgSingleTask(this))
                 return;
 
             final HashSet<String> classes = new HashSet<String>();
@@ -291,7 +292,7 @@ public class PluginLoader implements Runnable
                     continue;
 
                 // no need to complete loading...
-                if (ThreadUtil.hasWaitingSingleTask(this))
+                if (ThreadUtil.hasWaitingBgSingleTask(this))
                     return;
 
                 try

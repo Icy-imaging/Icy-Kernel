@@ -92,18 +92,17 @@ public class ThreadUtil
     {
         if (SystemUtil.is32bits())
         {
-            int wantedThread = SystemUtil.getAvailableProcessors();
+            int wantedThread = SystemUtil.getAvailableProcessors() * 2;
             wantedThread = Math.max(wantedThread, 2);
-            wantedThread = Math.min(wantedThread, 4);
 
             // 32 bits JVM, limit the number of thread
-            bgProcessor = new Processor(wantedThread);
-            instanceProcessors = new InstanceProcessor[wantedThread];
-            bgInstanceProcessors = new InstanceProcessor[wantedThread];
+            bgProcessor = new Processor(Math.min(wantedThread, 8));
+            instanceProcessors = new InstanceProcessor[Math.min(wantedThread, 4)];
+            bgInstanceProcessors = new InstanceProcessor[Math.min(wantedThread, 4)];
         }
         else
         {
-            int wantedThread = SystemUtil.getAvailableProcessors();
+            int wantedThread = SystemUtil.getAvailableProcessors() * 2;
             wantedThread = Math.max(wantedThread, 4);
 
             // 64 bits JVM, can have higher limit
@@ -355,8 +354,10 @@ public class ThreadUtil
     }
 
     /**
-     * Add background processing (low priority) of specified Runnable.<br>
-     * Return <code>false</code> if background process queue is full.
+     * Adds background processing (low priority) of specified Runnable.<br>
+     * Returns <code>false</code> if background process queue is full.<br>
+     * Don't use this method for long process (> 5 seconds) as the number of thread is
+     * limited and others processes may be executed too late.
      */
     public static boolean bgRun(Runnable runnable)
     {
@@ -374,9 +375,11 @@ public class ThreadUtil
     }
 
     /**
-     * Add background processing (low priority) of specified Callable task.<br>
-     * Return a Future representing the pending result of the task or <code>null</code> if
-     * background process queue is full.
+     * Adds background processing (low priority) of specified Callable task.<br>
+     * Returns a Future representing the pending result of the task or <code>null</code> if
+     * background process queue is full.<br>
+     * Don't use this method for long process (> 5 seconds) as the number of thread is
+     * limited and others processes may be executed too late.
      */
     public static <T> Future<T> bgRun(Callable<T> callable)
     {
@@ -416,10 +419,12 @@ public class ThreadUtil
     }
 
     /**
-     * Add single processing (low priority) of specified Runnable.<br>
+     * Adds single processing (low priority) of specified Runnable.<br>
      * If this <code>Runnable</code> instance is already pending in single processes queue then
      * nothing is done.<br>
-     * Return <code>false</code> if single processes queue is full.
+     * Returns <code>false</code> if single processes queue is full.<br>
+     * Don't use this method for long process (> 5 seconds) as the number of thread is
+     * limited and others processes may be executed too late.
      */
     public static boolean bgRunSingle(Runnable runnable)
     {
@@ -432,11 +437,13 @@ public class ThreadUtil
     }
 
     /**
-     * Add single processing (low priority) of specified Callable task.<br>
+     * Adds single processing (low priority) of specified Callable task.<br>
      * If this <code>Callable</code> instance is already pending in single processes queue then
      * nothing is done.<br>
-     * Return a Future representing the pending result of the task or <code>null</code> if
-     * single processes queue is full.
+     * Returns a Future representing the pending result of the task or <code>null</code> if
+     * single processes queue is full.<br>
+     * Don't use this method for long process (> 5 seconds) as the number of thread is
+     * limited and others processes may be executed too late.
      */
     public static <T> Future<T> bgRunSingle(Callable<T> callable)
     {
