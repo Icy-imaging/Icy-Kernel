@@ -318,7 +318,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             final Point2D.Double imagePoint = getImagePosition(mouseMapPos);
 
             // update mouse canvas position from image position
-            setMouseCanvasPos(imageToCanvas(imagePoint));
+            setMousePos(imageToCanvas(imagePoint));
 
             // get map center
             final int mapCenterX = getWidth() / 2;
@@ -505,7 +505,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                         // center view on this point
                         centerOnImage(imagePoint.getX(), imagePoint.getY());
                         // update new canvas position
-                        setMouseCanvasPos(imageToCanvas(imagePoint.getX(), imagePoint.getY()));
+                        setMousePos(imageToCanvas(imagePoint.getX(), imagePoint.getY()));
                         // consume event
                         e.consume();
                     }
@@ -555,7 +555,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     // center view on this point
                     centerOnImage(imagePoint.getX(), imagePoint.getY());
                     // update new canvas position
-                    setMouseCanvasPos(imageToCanvas(imagePoint.getX(), imagePoint.getY()));
+                    setMousePos(imageToCanvas(imagePoint.getX(), imagePoint.getY()));
                 }
                 catch (Exception ecx)
                 {
@@ -596,7 +596,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 final BufferedImage img = canvasView.imageCache.getImage();
 
                 // draw image
-                g2.drawImage(img, trans, null);
+                if (img != null)
+                    g2.drawImage(img, trans, null);
 
                 // then apply canvas inverse transformation
                 trans.scale(1 / getScaleX(), 1 / getScaleY());
@@ -664,7 +665,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             /**
              * image cache
              */
-            private BufferedImage imageCache;
+            private BufferedImage image;
 
             /**
              * processor
@@ -683,7 +684,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 // we want the processor to stay alive for sometime
                 processor.setKeepAliveTime(3, TimeUnit.SECONDS);
 
-                imageCache = null;
+                image = null;
                 needRebuild = true;
                 // build cache
                 processor.submit(this);
@@ -706,17 +707,17 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
             public void refresh()
             {
+                // rebuild cache
                 if (needRebuild)
-                    // rebuild cache
                     processor.submit(this);
 
-                // just repaint
-                CanvasView.this.repaint();
+                // just repaint in the meantime
+                getViewComponent().repaint();
             }
 
             public BufferedImage getImage()
             {
-                return imageCache;
+                return image;
             }
 
             @Override
@@ -726,10 +727,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 needRebuild = false;
 
                 // build image
-                imageCache = Canvas2D.this.getARGBImage(getPositionT(), getPositionZ(), getPositionC(), imageCache);
+                image = Canvas2D.this.getARGBImage(getPositionT(), getPositionZ(), getPositionC(), image);
 
                 // repaint now
-                CanvasView.this.repaint();
+                getViewComponent().repaint();
             }
         }
 
@@ -1035,7 +1036,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             try
             {
                 // update mouse position
-                setMouseCanvasPos(pos);
+                setMousePos(pos);
             }
             finally
             {
@@ -2336,7 +2337,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
      */
     protected void centerMouseOnView()
     {
-        setMouseCanvasPos(getCanvasSizeX() >> 1, getCanvasSizeY() >> 1);
+        setMousePos(getCanvasSizeX() >> 1, getCanvasSizeY() >> 1);
     }
 
     /**

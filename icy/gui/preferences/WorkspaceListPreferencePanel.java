@@ -24,7 +24,7 @@ import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.util.ComponentUtil;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
-import icy.system.thread.InstanceProcessor;
+import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 import icy.workspace.Workspace;
 
@@ -33,7 +33,6 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -78,8 +77,6 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
     final JButton refreshButton;
     final JButton action1Button;
 
-    final InstanceProcessor processor;
-
     private final Runnable buttonsStateUpdater;
     private final Runnable tableDataRefresher;
     private final Runnable workspaceListRefresher;
@@ -94,17 +91,20 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
         // preferences = Preferences.userRoot().node(preferencesId);
         workspaces = new ArrayList<Workspace>();
 
-        processor = new InstanceProcessor();
-        processor.setDefaultThreadName("Workspace preferences GUI");
-        // we want the processor to stay alive for sometime
-        processor.setKeepAliveTime(5, TimeUnit.MINUTES);
-
         buttonsStateUpdater = new Runnable()
         {
             @Override
             public void run()
             {
-                updateButtonsStateInternal();
+                // need to be done on EDT
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        updateButtonsStateInternal();
+                    }
+                });
             }
         };
         tableDataRefresher = new Runnable()
@@ -112,7 +112,15 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
             @Override
             public void run()
             {
-                refreshTableDataInternal();
+                // need to be done on EDT
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        refreshTableDataInternal();
+                    }
+                });
             }
         };
         workspaceListRefresher = new Runnable()
@@ -128,7 +136,15 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
             @Override
             public void run()
             {
-                updateRepositoriesInternal();
+                // need to be done on EDT
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        updateRepositoriesInternal();
+                    }
+                });
             }
         };
 
@@ -393,7 +409,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
     protected final void updateButtonsState()
     {
-        processor.submit(buttonsStateUpdater, true);
+        ThreadUtil.runSingle(buttonsStateUpdater);
     }
 
     protected void updateRepositoriesInternal()
@@ -449,7 +465,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
     protected final void updateRepositories()
     {
-        processor.submit(repositoriesUpdater, true);
+        ThreadUtil.runSingle(repositoriesUpdater);
     }
 
     protected Boolean isWorkspaceEnable(Workspace workspace)
@@ -469,7 +485,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
     protected final void refreshWorkspaces()
     {
-        processor.submit(workspaceListRefresher, false);
+        ThreadUtil.runSingle(workspaceListRefresher);
     }
 
     protected int getWorkspaceIndex(Workspace workspace)
@@ -559,7 +575,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
     protected final void refreshTableData()
     {
-        processor.submit(tableDataRefresher, true);
+        ThreadUtil.runSingle(tableDataRefresher);
     }
 
     protected void workspacesChanged()

@@ -108,45 +108,55 @@ public class ProgressFrame extends TaskFrame implements ProgressListener, Runnab
     public void refresh()
     {
         // refresh (need single delayed execution)
-        ThreadUtil.bgRunSingle(this, true);
+        ThreadUtil.runSingle(this);
     }
 
     protected void updateDisplay()
     {
-        // position information
-        if ((position != -1d) && (length > 0d))
+        // repacking need to be done on EDT
+        ThreadUtil.invokeNow(new Runnable()
         {
-            // remove indeterminate state
-            if (progressBar.isIndeterminate())
-                progressBar.setIndeterminate(false);
+            @Override
+            public void run()
+            {
 
-            // set progress
-            final int value = (int) (position * 1000d / length);
-            if (progressBar.getValue() != value)
-                progressBar.setValue(value);
-        }
-        else
-        {
-            // set indeterminate state
-            if (!progressBar.isIndeterminate())
-                progressBar.setIndeterminate(true);
-        }
+                // position information
+                if ((position != -1d) && (length > 0d))
+                {
+                    // remove indeterminate state
+                    if (progressBar.isIndeterminate())
+                        progressBar.setIndeterminate(false);
 
-        final String text = buildMessage(message);
+                    // set progress
+                    final int value = (int) (position * 1000d / length);
+                    if (progressBar.getValue() != value)
+                        progressBar.setValue(value);
+                }
+                else
+                {
+                    // set indeterminate state
+                    if (!progressBar.isIndeterminate())
+                        progressBar.setIndeterminate(true);
+                }
 
-        // set progress message
-        if (!StringUtil.equals(progressBar.getString(), text))
-        {
-            progressBar.setString(text);
-            // so component is resized according to its string length
-            progressBar.invalidate();
-            // repack frame
-            pack();
-        }
+                final String text = buildMessage(message);
 
-        // set tooltip
-        if (!StringUtil.equals(progressBar.getToolTipText(), tooltip))
-            progressBar.setToolTipText(tooltip);
+                // set progress message
+                if (!StringUtil.equals(progressBar.getString(), text))
+                {
+                    progressBar.setString(text);
+                    // so component is resized according to its string length
+                    progressBar.invalidate();
+
+                    // repack frame
+                    pack();
+                }
+
+                // set tooltip
+                if (!StringUtil.equals(progressBar.getToolTipText(), tooltip))
+                    progressBar.setToolTipText(tooltip);
+            }
+        });
     }
 
     public String getMessage()

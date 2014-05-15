@@ -944,7 +944,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
     public void refreshTableDataStructure()
     {
-        ThreadUtil.bgRunSingle(tableDataStructureRefresher, false);
+        ThreadUtil.runSingle(tableDataStructureRefresher);
     }
 
     void refreshTableDataStructureInternal()
@@ -994,7 +994,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
     public void refreshTableData()
     {
-        ThreadUtil.bgRunSingle(tableDataRefresher, false);
+        ThreadUtil.runSingle(tableDataRefresher);
     }
 
     void refreshTableDataInternal()
@@ -1020,7 +1020,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
     public void refreshTableSelection()
     {
-        ThreadUtil.bgRunSingle(tableSelectionRefresher, false);
+        ThreadUtil.runSingle(tableSelectionRefresher);
     }
 
     void refreshTableSelectionInternal()

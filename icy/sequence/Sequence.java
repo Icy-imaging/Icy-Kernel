@@ -1805,7 +1805,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     private VolumetricImage setVolumetricImage(int t)
     {
         // remove old volumetric image if any
-        removeVolumetricImage(t);
+        removeAllImages(t);
 
         final VolumetricImage volImg = new VolumetricImage(this);
 
@@ -2063,7 +2063,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         {
             // image set failed ? remove empty image list if needed
             if (volImgCreated)
-                removeVolumetricImage(t);
+                removeAllImages(t);
             // throw exception
             throw e;
         }
@@ -2109,7 +2109,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 // empty ?
                 if (volImg.isEmpty())
                     // remove it
-                    removeVolumetricImage(t);
+                    removeAllImages(t);
             }
             finally
             {
@@ -2200,7 +2200,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                     final int t = entry.getKey().intValue();
 
                     if (volImg == null)
-                        removeVolumetricImage(t);
+                        removeAllImages(t);
                     else
                     {
                         // pack the list
@@ -2208,7 +2208,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                         // empty ?
                         if (volImg.isEmpty())
                             // remove it
-                            removeVolumetricImage(t);
+                            removeAllImages(t);
                     }
                 }
             }

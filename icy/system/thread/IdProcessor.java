@@ -44,7 +44,7 @@ public class IdProcessor extends Processor
      */
     public IdProcessor(int priority)
     {
-        super(Processor.DEFAULT_MAX_WAITING, 1, priority);
+        super(-1, 1, priority);
         setDefaultThreadName("IdProcessor");
     }
 

@@ -132,7 +132,7 @@ public class XLSUtil
         }
         catch (Exception e)
         {
-            System.err.println("Error while writing Xls data (XlsManager.java) File Already open by an other app ?");
+            IcyExceptionHandler.showErrorMessage(e, false, true);
         }
 
         return false;
@@ -150,10 +150,10 @@ public class XLSUtil
         {
             wcf.setBackground(background);
         }
-        catch (WriteException e1)
+        catch (WriteException e)
         {
             // not a fatal error
-            IcyExceptionHandler.showErrorMessage(e1, false, true);
+            IcyExceptionHandler.showErrorMessage(e, false, true);
         }
 
         final Label label = new Label(x, y, value, wcf);
@@ -165,7 +165,7 @@ public class XLSUtil
         }
         catch (Exception e)
         {
-            System.err.println("Error while writing Xls data (XlsManager.java) File Already open by an other app ?");
+            IcyExceptionHandler.showErrorMessage(e, false, true);
         }
 
         return false;
@@ -186,7 +186,7 @@ public class XLSUtil
         }
         catch (Exception e)
         {
-            System.err.println("Error while writing Xls data (XlsManager.java) File Already open by an other app ?");
+            IcyExceptionHandler.showErrorMessage(e, false, true);
         }
 
         return false;
@@ -204,10 +204,10 @@ public class XLSUtil
         {
             wcf.setBackground(background);
         }
-        catch (WriteException e1)
+        catch (WriteException e)
         {
             // not a fatal error
-            IcyExceptionHandler.showErrorMessage(e1, false, true);
+            IcyExceptionHandler.showErrorMessage(e, false, true);
         }
 
         final Number number = new Number(x, y, value, wcf);
@@ -219,7 +219,7 @@ public class XLSUtil
         }
         catch (Exception e)
         {
-            System.err.println("Error while writing Xls data (XlsManager.java) File Already open by an other app ?");
+            IcyExceptionHandler.showErrorMessage(e, false, true);
         }
 
         return false;
@@ -240,7 +240,7 @@ public class XLSUtil
         }
         catch (Exception e)
         {
-            System.err.println("Error while writing Xls data (XlsManager.java) File Already open by an other app ?");
+            IcyExceptionHandler.showErrorMessage(e, false, true);
         }
 
         return false;

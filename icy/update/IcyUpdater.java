@@ -31,7 +31,6 @@ import icy.network.NetworkUtil;
 import icy.network.URLUtil;
 import icy.preferences.ApplicationPreferences;
 import icy.system.SystemUtil;
-import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.update.ElementDescriptor.ElementFile;
 import icy.util.StringUtil;
@@ -41,7 +40,6 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.Box;
 import javax.swing.JLabel;
@@ -59,51 +57,24 @@ import javax.swing.event.ListSelectionListener;
  */
 public class IcyUpdater
 {
-    private static class Checker implements Runnable
-    {
-        private boolean silent;
-
-        public Checker(boolean silent)
-        {
-            super();
-
-            this.silent = silent;
-        }
-
-        @Override
-        public void run()
-        {
-            processCheckUpdate(silent);
-        }
-    }
 
     private final static int ANNOUNCE_SHOWTIME = 15;
 
     public final static String PARAM_ARCH = "arch";
     public final static String PARAM_VERSION = "version";
 
+    // internals
     static boolean wantUpdate = false;
-    static boolean updating = false;
-
-    private static final SingleProcessor processor = new SingleProcessor(false, "General updater");
-
-    static
-    {
-        // we want the processor to stay alive
-        processor.setKeepAliveTime(1, TimeUnit.DAYS);
-    }
-
+    private static boolean silent;
+    private static boolean updating = false;
+    private static boolean checking = false;
     private static ActionFrame frame = null;
-
-    static final Runnable doRestart = new Runnable()
+    private static Runnable checker = new Runnable()
     {
         @Override
         public void run()
         {
-            wantUpdate = true;
-
-            // ask to update and restart application now
-            Icy.confirmRestart();
+            processCheckUpdate();
         }
     };
 
@@ -113,30 +84,11 @@ public class IcyUpdater
     }
 
     /**
-     * Do the check update process
-     */
-    public static void checkUpdate(boolean silent)
-    {
-        if (!isUpdating())
-            processor.submit(new Checker(silent));
-    }
-
-    /**
-     * @deprecated Use {@link #checkUpdate(boolean)} instead
-     */
-    @Deprecated
-    public static void checkUpdate(@SuppressWarnings("unused") boolean showProgress, boolean auto)
-    {
-        // usually auto = !showProgress
-        checkUpdate(auto);
-    }
-
-    /**
      * return true if we are currently checking for update
      */
     public static boolean isCheckingForUpdate()
     {
-        return processor.isProcessing();
+        return checking;
     }
 
     /**
@@ -148,98 +100,128 @@ public class IcyUpdater
     }
 
     /**
-     * Do the check update process (internal)
+     * Do the check update process
      */
-    static void processCheckUpdate(boolean silent)
+    public static void checkUpdate(boolean silent)
     {
-        wantUpdate = false;
+        if (!isUpdating())
+        {
+            IcyUpdater.silent = silent;
+            ThreadUtil.bgRunSingle(checker);
+        }
+    }
 
-        // delete update directory to avoid partial update
-        FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
+    /**
+     * @deprecated Use {@link #checkUpdate(boolean)} instead
+     */
+    @Deprecated
+    public static void checkUpdate(boolean showProgress, boolean auto)
+    {
+        checkUpdate(!showProgress || auto);
+    }
 
-        final ArrayList<ElementDescriptor> toUpdate;
-        final ProgressFrame checkingFrame;
-
-        if (!silent && !Icy.getMainInterface().isHeadLess())
-            checkingFrame = new CancelableProgressFrame("checking for application update...");
-        else
-            checkingFrame = null;
-
-        final String params = PARAM_ARCH + "=" + SystemUtil.getOSArchIdString() + "&" + PARAM_VERSION + "="
-                + Icy.version;
-
+    /**
+     * Check for application update process (synchronized method)
+     */
+    public static synchronized void processCheckUpdate()
+    {
+        checking = true;
         try
         {
-            // error (or cancel) while downloading XML ?
-            if (!downloadAndSaveForUpdate(
-                    ApplicationPreferences.getUpdateRepositoryBase() + ApplicationPreferences.getUpdateRepositoryFile()
-                            + "?" + params, Updater.UPDATE_NAME, checkingFrame, !silent))
+            wantUpdate = false;
+
+            // delete update directory to avoid partial update
+            FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
+
+            final ArrayList<ElementDescriptor> toUpdate;
+            final ProgressFrame checkingFrame;
+
+            if (!silent && !Icy.getMainInterface().isHeadLess())
+                checkingFrame = new CancelableProgressFrame("checking for application update...");
+            else
+                checkingFrame = null;
+
+            final String params = PARAM_ARCH + "=" + SystemUtil.getOSArchIdString() + "&" + PARAM_VERSION + "="
+                    + Icy.version;
+
+            try
             {
-                // remove partially downloaded files
-                FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
-                return;
+                // error (or cancel) while downloading XML ?
+                if (!downloadAndSaveForUpdate(
+                        ApplicationPreferences.getUpdateRepositoryBase()
+                                + ApplicationPreferences.getUpdateRepositoryFile() + "?" + params, Updater.UPDATE_NAME,
+                        checkingFrame, !silent))
+                {
+                    // remove partially downloaded files
+                    FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
+                    return;
+                }
+
+                // check if some elements need to be updated from network
+                toUpdate = Updater.getUpdateElements(Updater.getLocalElements());
+            }
+            finally
+            {
+                if (checkingFrame != null)
+                    checkingFrame.close();
             }
 
-            // check if some elements need to be updated from network
-            toUpdate = Updater.getUpdateElements(Updater.getLocalElements());
-        }
-        finally
-        {
-            if (checkingFrame != null)
-                checkingFrame.close();
-        }
+            final boolean needUpdate;
 
-        final boolean needUpdate;
+            // empty ? --> no update
+            if (toUpdate.isEmpty())
+                needUpdate = false;
+            // only the updater require updates ? --> no update
+            else if ((toUpdate.size() == 1) && (toUpdate.get(0).getName().equals(Updater.ICYUPDATER_NAME)))
+                needUpdate = false;
+            // otherwise --> update
+            else
+                needUpdate = true;
 
-        // empty ? --> no update
-        if (toUpdate.isEmpty())
-            needUpdate = false;
-        // only the updater require updates ? --> no update
-        else if ((toUpdate.size() == 1) && (toUpdate.get(0).getName().equals(Updater.ICYUPDATER_NAME)))
-            needUpdate = false;
-        // otherwise --> update
-        else
-            needUpdate = true;
-
-        // some elements need to be updated ?
-        if (needUpdate)
-        {
-            // silent update or headless mode
-            if (silent || Icy.getMainInterface().isHeadLess())
+            // some elements need to be updated ?
+            if (needUpdate)
             {
-                // automatically install updates
-                if (prepareUpdate(toUpdate, true))
-                    // we want update when application will exit
-                    wantUpdate = true;
+                // silent update or headless mode
+                if (silent || Icy.getMainInterface().isHeadLess())
+                {
+                    // automatically install updates
+                    if (prepareUpdate(toUpdate, true))
+                        // we want update when application will exit
+                        wantUpdate = true;
+                }
+                else
+                {
+                    final String mess;
+
+                    if (toUpdate.size() > 1)
+                        mess = "Some updates are available...";
+                    else
+                        mess = "An update is available...";
+
+                    // show announcement for 15 seconds
+                    new AnnounceFrame(mess, "View", new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            // display updates and process them if user accept
+                            showUpdateAndProcess(toUpdate);
+                        }
+                    }, ANNOUNCE_SHOWTIME);
+                }
             }
             else
             {
-                final String mess;
-
-                if (toUpdate.size() > 1)
-                    mess = "Some updates are available...";
-                else
-                    mess = "An update is available...";
-
-                // show announcement for 15 seconds
-                new AnnounceFrame(mess, "View", new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        // display updates and process them if user accept
-                        showUpdateAndProcess(toUpdate);
-                    }
-                }, ANNOUNCE_SHOWTIME);
+                // cleanup
+                FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
+                // inform that there is no update available
+                if (!silent && !Icy.getMainInterface().isHeadLess())
+                    new AnnounceFrame("No application udpate available", 10);
             }
         }
-        else
+        finally
         {
-            // cleanup
-            FileUtil.delete(Updater.UPDATE_DIRECTORY, true);
-            // inform that there is no update available
-            if (!silent && !Icy.getMainInterface().isHeadLess())
-                new AnnounceFrame("No application udpate available", 10);
+            checking = false;
         }
     }
 
@@ -272,8 +254,11 @@ public class IcyUpdater
                     {
                         // download required files
                         if (prepareUpdate(elements, true))
-                            // restart application to finish update process
-                            doRestart.run();
+                        {
+                            // ask to update and restart application now
+                            wantUpdate = true;
+                            Icy.confirmRestart();
+                        }
                         else
                             new FailedAnnounceFrame(
                                     "An error occured while downloading files (see details in console)", 10000);

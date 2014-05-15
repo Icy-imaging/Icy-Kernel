@@ -28,7 +28,7 @@ import icy.plugin.PluginDescriptor;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.resource.ResourceUtil;
-import icy.system.thread.InstanceProcessor;
+import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
@@ -37,7 +37,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -87,8 +86,6 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
     final JButton action1Button;
     final JButton action2Button;
 
-    final InstanceProcessor processor;
-
     private final Runnable buttonsStateUpdater;
     private final Runnable tableDataRefresher;
     private final Runnable pluginsListRefresher;
@@ -102,17 +99,20 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
         plugins = new ArrayList<PluginDescriptor>();
 
-        processor = new InstanceProcessor();
-        processor.setDefaultThreadName("Plugin preferences GUI");
-        // we want the processor to stay alive for sometime
-        processor.setKeepAliveTime(5, TimeUnit.MINUTES);
-
         buttonsStateUpdater = new Runnable()
         {
             @Override
             public void run()
             {
-                updateButtonsStateInternal();
+                // need to be done on EDT
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        updateButtonsStateInternal();
+                    }
+                });
             }
         };
         tableDataRefresher = new Runnable()
@@ -120,7 +120,15 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
             @Override
             public void run()
             {
-                refreshTableDataInternal();
+                // need to be done on EDT
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        refreshTableDataInternal();
+                    }
+                });
             }
         };
         pluginsListRefresher = new Runnable()
@@ -136,7 +144,15 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
             @Override
             public void run()
             {
-                updateRepositoriesInternal();
+                // need to be done on EDT
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        updateRepositoriesInternal();
+                    }
+                });
             }
         };
 
@@ -568,7 +584,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected final void refreshPlugins()
     {
-        processor.submit(pluginsListRefresher);
+        ThreadUtil.runSingle(pluginsListRefresher);
     }
 
     protected void updateButtonsStateInternal()
@@ -582,7 +598,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected final void updateButtonsState()
     {
-        processor.submit(buttonsStateUpdater, true);
+        ThreadUtil.runSingle(buttonsStateUpdater);
     }
 
     protected void updateRepositoriesInternal()
@@ -593,8 +609,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         // final ArrayList<RepositoryInfo> repositeries = panel.repositories;
 
         // refresh repositories list
-        final ArrayList<RepositoryInfo> repositeries = RepositoryPreferences.getRepositeries();
-
+        final List<RepositoryInfo> repositeries = RepositoryPreferences.getRepositeries();
         final RepositoryInfo savedRepository = (RepositoryInfo) repository.getSelectedItem();
 
         // needed to disable events during update time
@@ -637,7 +652,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected final void updateRepositories()
     {
-        processor.submit(repositoriesUpdater, true);
+        ThreadUtil.runSingle(repositoriesUpdater);
     }
 
     protected void refreshTableDataInternal()
@@ -645,14 +660,13 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         final PluginDescriptor plugin = getSelectedPlugin();
 
         tableModel.fireTableDataChanged();
-
         // restore previous selected plugin if possible
         setSelectedPlugin(plugin);
     }
 
     protected final void refreshTableData()
     {
-        processor.submit(tableDataRefresher, true);
+        ThreadUtil.runSingle(tableDataRefresher);
     }
 
     protected void pluginsChanged()

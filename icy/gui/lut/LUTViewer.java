@@ -156,19 +156,26 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
             @Override
             public void run()
             {
-
                 final Sequence sequence = getSequence();
 
-                for (int c = 0; c < Math.min(bottomPane.getTabCount(), sequence.getSizeC()); c++)
+                // need to be done on EDT
+                ThreadUtil.invokeNow(new Runnable()
                 {
-                    final String channelName = sequence.getChannelName(c);
+                    @Override
+                    public void run()
+                    {
+                        for (int c = 0; c < Math.min(bottomPane.getTabCount(), sequence.getSizeC()); c++)
+                        {
+                            final String channelName = sequence.getChannelName(c);
 
-                    bottomPane.setTitleAt(c, StringUtil.limit(channelName, 10));
-                    if (sequence.getDefaultChannelName(c).equals(channelName))
-                        bottomPane.setToolTipTextAt(c, "Channel " + c);
-                    else
-                        bottomPane.setToolTipTextAt(c, channelName + " (channel " + c + ")");
-                }
+                            bottomPane.setTitleAt(c, StringUtil.limit(channelName, 10));
+                            if (sequence.getDefaultChannelName(c).equals(channelName))
+                                bottomPane.setToolTipTextAt(c, "Channel " + c);
+                            else
+                                bottomPane.setToolTipTextAt(c, channelName + " (channel " + c + ")");
+                        }
+                    }
+                });
             }
         };
 
@@ -237,7 +244,7 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
 
                 if (value)
                 {
-                    ThreadUtil.bgRunSingle(boundsUpdater, false);
+                    ThreadUtil.runSingle(boundsUpdater);
                     autoRefreshHistogramInternal(true);
                     autoRefreshHistoCheckBox.setSelected(true);
                     autoRefreshHistoCheckBox.setEnabled(false);
@@ -253,7 +260,7 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
         });
         if (autoBoundsCheckBox.isSelected())
         {
-            ThreadUtil.bgRunSingle(boundsUpdater, false);
+            ThreadUtil.runSingle(boundsUpdater);
             autoRefreshHistogramInternal(true);
             autoRefreshHistoCheckBox.setSelected(true);
             autoRefreshHistoCheckBox.setEnabled(false);
@@ -312,20 +319,20 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
                 switch (e.getSourceType())
                 {
                     case SEQUENCE_META:
-                        ThreadUtil.bgRunSingle(channelNameUpdater, true);
+                        ThreadUtil.runSingle(channelNameUpdater);
                         break;
 
                     case SEQUENCE_COMPONENTBOUNDS:
                         if (autoBoundsCheckBox.isSelected())
-                            ThreadUtil.bgRunSingle(boundsUpdater, false);
+                            ThreadUtil.runSingle(boundsUpdater);
                         break;
                 }
             }
         };
 
         // update channel name and color
-        ThreadUtil.bgRunSingle(channelTabColorUpdater);
-        ThreadUtil.bgRunSingle(channelNameUpdater);
+        ThreadUtil.runSingle(channelTabColorUpdater);
+        ThreadUtil.runSingle(channelNameUpdater);
 
         // weak reference --> released when LUTViewer is released
         weakSequenceListener = new WeakSequenceListener(sequenceListener);
@@ -388,11 +395,11 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
         switch (e.getType())
         {
             case ENABLED_CHANGED:
-                ThreadUtil.bgRunSingle(channelEnableUpdater, false);
+                ThreadUtil.runSingle(channelEnableUpdater);
                 break;
 
             case MAP_CHANGED:
-                ThreadUtil.bgRunSingle(channelTabColorUpdater, false);
+                ThreadUtil.runSingle(channelTabColorUpdater);
                 break;
 
             case TYPE_CHANGED:

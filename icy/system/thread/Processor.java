@@ -24,33 +24,38 @@ import icy.system.SystemUtil;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.event.EventListenerList;
-
 /**
+ * Processor class.<br>
+ * Allow you to queue and execute tasks on a defined set of thread.
+ * 
  * @author stephane
  */
 public class Processor extends ThreadPoolExecutor
 {
     public static final int DEFAULT_MAX_WAITING = 1024;
-    public static final int DEFAULT_MAX_PROCESSING = SystemUtil.getAvailableProcessors() * 2;
+    public static final int DEFAULT_MAX_PROCESSING = SystemUtil.getAvailableProcessors();
 
+    /**
+     * @deprecated Useless interface
+     */
+    @Deprecated
     public interface ProcessorEventListener extends EventListener
     {
         public void processDone(Processor source, Runnable runnable);
     }
 
-    class ProcessorThreadFactory implements ThreadFactory
+    protected class ProcessorThreadFactory implements ThreadFactory
     {
         @Override
         public Thread newThread(Runnable r)
@@ -63,6 +68,48 @@ public class Processor extends ThreadPoolExecutor
         }
     }
 
+    protected class ProcessorRejectedExecutionHandler implements RejectedExecutionHandler
+    {
+        @Override
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor)
+        {
+            // ignore if we try to submit process while Icy is exiting
+            if (!Icy.isExiting())
+                throw new RejectedExecutionException("Cannot add new task, ignore execution of " + r);
+        }
+    }
+
+    protected class FutureTaskAdapter<T> extends FutureTask<T>
+    {
+        public Runnable runnable;
+        public Callable<T> callable;
+
+        public FutureTaskAdapter(Runnable runnable, T result)
+        {
+            super(runnable, result);
+
+            this.runnable = runnable;
+            this.callable = null;
+        }
+
+        public FutureTaskAdapter(Runnable runnable)
+        {
+            this(runnable, null);
+        }
+
+        public FutureTaskAdapter(Callable<T> callable)
+        {
+            super(callable);
+
+            this.runnable = null;
+            this.callable = callable;
+        }
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
     protected class RunnableAdapter implements Runnable
     {
         private final Runnable task;
@@ -97,6 +144,10 @@ public class Processor extends ThreadPoolExecutor
         }
     }
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
     protected class CallableAdapter<T> implements Callable<T>
     {
         private final Callable<T> task;
@@ -133,28 +184,31 @@ public class Processor extends ThreadPoolExecutor
         }
     }
 
-    protected class FutureTaskAdapter<T> extends FutureTask<T>
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    protected class FutureTaskAdapterEDT<T> extends FutureTaskAdapter<T>
     {
-        private final Runnable runnable;
-        private final Callable<T> callable;
-
-        public FutureTaskAdapter(Runnable runnable, T result, boolean onEDT)
+        public FutureTaskAdapterEDT(Runnable runnable, T result, boolean onEDT)
         {
             super(new RunnableAdapter(runnable, onEDT), result);
 
+            // assign the original runnable
             this.runnable = runnable;
             this.callable = null;
         }
 
-        public FutureTaskAdapter(Runnable runnable, boolean onEDT)
+        public FutureTaskAdapterEDT(Runnable runnable, boolean onEDT)
         {
             this(runnable, null, onEDT);
         }
 
-        public FutureTaskAdapter(Callable<T> callable, boolean onEDT)
+        public FutureTaskAdapterEDT(Callable<T> callable, boolean onEDT)
         {
             super(new CallableAdapter<T>(callable, onEDT));
 
+            // assign the original callable
             this.runnable = null;
             this.callable = callable;
         }
@@ -192,11 +246,6 @@ public class Processor extends ThreadPoolExecutor
     String defaultThreadName;
 
     /**
-     * listeners
-     */
-    private final EventListenerList listeners;
-
-    /**
      * internal
      */
     protected Runnable waitingExecution;
@@ -211,17 +260,19 @@ public class Processor extends ThreadPoolExecutor
      *        <code>Processor.NORM_PRIORITY</code><br>
      *        <code>Processor.MAX_PRIORITY</code>
      */
-    public Processor(int maxWaiting, int maxProcessing, int priority)
+    public Processor(int maxWaiting, int numThread, int priority)
     {
-        super(maxProcessing, maxProcessing, 1000L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(maxWaiting));
+        super(numThread, numThread, 1000L, TimeUnit.MILLISECONDS,
+                (maxWaiting == -1) ? new LinkedBlockingQueue<Runnable>()
+                        : new LinkedBlockingQueue<Runnable>(maxWaiting));
 
         setThreadFactory(new ProcessorThreadFactory());
+        setRejectedExecutionHandler(new ProcessorRejectedExecutionHandler());
         allowCoreThreadTimeOut(true);
         setKeepAliveTime(2, TimeUnit.SECONDS);
 
         this.priority = priority;
         defaultThreadName = "Processor";
-        listeners = new EventListenerList();
 
         waitingExecution = null;
     }
@@ -229,9 +280,17 @@ public class Processor extends ThreadPoolExecutor
     /**
      * Create a new Processor with specified number of maximum waiting and processing tasks.
      */
-    public Processor(int maxWaiting, int maxProcessing)
+    public Processor(int maxWaiting, int numThread)
     {
-        this(maxWaiting, maxProcessing, NORM_PRIORITY);
+        this(maxWaiting, numThread, NORM_PRIORITY);
+    }
+
+    /**
+     * Create a new Processor with specified number of processing thread.
+     */
+    public Processor(int numThread)
+    {
+        this(-1, numThread, NORM_PRIORITY);
     }
 
     /**
@@ -252,7 +311,7 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * @deprecated Use {@link #submit(Runnable, boolean)} instead.
+     * @deprecated Use {@link #submit(Runnable)} instead.
      */
     @SuppressWarnings("unused")
     @Deprecated
@@ -262,7 +321,7 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * @deprecated Use {@link #submit(Runnable, boolean)} instead.
+     * @deprecated Use {@link #submit(Runnable)} instead.
      */
     @Deprecated
     public boolean addTask(Runnable task, boolean onEDT)
@@ -299,95 +358,101 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Returns a <tt>RunnableFuture</tt> for the given runnable and default
-     * value.
-     * 
+     * @deprecated Use {@link #newTaskFor(Runnable, Object)} instead.
+     */
+    @Deprecated
+    protected <T> FutureTaskAdapter<T> newTaskFor(Runnable runnable, T value, boolean onEDT)
+    {
+        return new FutureTaskAdapterEDT<T>(runnable, value, onEDT);
+    };
+
+    /**
+     * @deprecated Use {@link #newTaskFor(Callable)} instead.
+     */
+    @Deprecated
+    protected <T> FutureTaskAdapter<T> newTaskFor(Callable<T> callable, boolean onEDT)
+    {
+        return new FutureTaskAdapterEDT<T>(callable, onEDT);
+    }
+
+    /**
      * @param runnable
      *        the runnable task being wrapped
      * @param value
      *        the default value for the returned future
-     * @param onEDT
-     *        if set to <code>true</code> then the <tt>RunnableFuture</tt> will be executed on the
-     *        Swing EDT.
      * @return a <tt>RunnableFuture</tt> which when run will run the underlying runnable and which,
      *         as a <tt>Future</tt>, will yield the given value as its result and provide for
      *         cancellation of the underlying task.
      */
-    protected <T> FutureTaskAdapter<T> newTaskFor(Runnable runnable, T value, boolean onEDT)
+    @Override
+    protected <T> FutureTaskAdapter<T> newTaskFor(Runnable runnable, T value)
     {
-        return new FutureTaskAdapter<T>(runnable, value, onEDT);
+        return new FutureTaskAdapter<T>(runnable, value);
     };
 
     /**
-     * Returns a <tt>RunnableFuture</tt> for the given callable task.
-     * 
      * @param callable
      *        the callable task being wrapped
-     * @param onEDT
-     *        if set to <code>true</code> then the <tt>RunnableFuture</tt> will be executed on the
-     *        Swing EDT.
      * @return a <tt>RunnableFuture</tt> which when run will call the
      *         underlying callable and which, as a <tt>Future</tt>, will yield
      *         the callable's result as its result and provide for
      *         cancellation of the underlying task.
-     * @since 1.6
      */
-    protected <T> FutureTaskAdapter<T> newTaskFor(Callable<T> callable, boolean onEDT)
+    @Override
+    protected <T> FutureTaskAdapter<T> newTaskFor(Callable<T> callable)
     {
-        return new FutureTaskAdapter<T>(callable, onEDT);
+        return new FutureTaskAdapter<T>(callable);
+    }
+
+    @Override
+    public void execute(Runnable task)
+    {
+        super.execute(task);
+        // save the last executed task
+        waitingExecution = task;
     }
 
     /**
-     * Submits a task for execution and returns a Future representing that task. The
-     * Future's <tt>get</tt> method will return the given result upon successful completion.
-     * 
-     * @param task
-     *        the task to submit
-     * @return a Future representing pending completion of the task
-     * @throws RejectedExecutionException
-     *         if the task cannot be scheduled for execution
-     * @throws NullPointerException
-     *         if the task is null
+     * Submit the given task (internal use only).
      */
     protected synchronized <T> Future<T> submit(FutureTaskAdapter<T> task)
+    {
+        execute(task);
+        return task;
+    }
+
+    @Override
+    public Future<?> submit(Runnable task)
     {
         if (task == null)
             throw new NullPointerException();
 
-        try
-        {
-            execute(task);
-        }
-        catch (RejectedExecutionException e)
-        {
-            if (!Icy.isExiting())
-            {
-                // error while adding task
-                System.err.println("Cannot add new task, ignore execution : " + task);
-                // TODO: may be better to throw the RejectedExecutionException exception
-                return null;
-            }
-        }
+        return submit(newTaskFor(task, null));
+    }
 
-        waitingExecution = task;
-        return task;
+    @Override
+    public <T> Future<T> submit(Runnable task, T result)
+    {
+        if (task == null)
+            throw new NullPointerException();
+
+        return submit(newTaskFor(task, result));
+    }
+
+    @Override
+    public <T> Future<T> submit(Callable<T> task)
+    {
+        if (task == null)
+            throw new NullPointerException();
+
+        return submit(newTaskFor(task));
     }
 
     /**
-     * Submits a Runnable task for execution and returns a Future representing that task. The
-     * Future's <tt>get</tt> method will return <tt>null</tt> upon <em>successful</em> completion.
-     * 
-     * @param task
-     *        the task to submit
-     * @param onEDT
-     *        if set to <code>true</code> then the <tt>RunnableFuture</tt> will be executed on the
-     *        Swing EDT.
-     * @return a Future representing pending completion of the task
-     * @throws RejectedExecutionException
-     *         if the task cannot be scheduled for execution
-     * @throws NullPointerException
-     *         if the task is null
+     * @deprecated Use {@link #submit(Runnable)} instead and ThreadUtil.invokeNow(..) where you need
+     *             it.
      */
+    @Deprecated
     public Future<?> submit(Runnable task, boolean onEDT)
     {
         if (task == null)
@@ -397,22 +462,11 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Submits a Runnable task for execution and returns a Future representing that task. The
-     * Future's <tt>get</tt> method will return the given result upon successful completion.
-     * 
-     * @param task
-     *        the task to submit
-     * @param result
-     *        the result to return
-     * @param onEDT
-     *        if set to <code>true</code> then the <tt>RunnableFuture</tt> will be executed on the
-     *        Swing EDT.
-     * @return a Future representing pending completion of the task
-     * @throws RejectedExecutionException
-     *         if the task cannot be scheduled for execution
-     * @throws NullPointerException
-     *         if the task is null
+     * @deprecated Use {@link #submit(Runnable, Object)} instead and ThreadUtil.invokeNow(..) where
+     *             you
+     *             need it.
      */
+    @Deprecated
     public <T> Future<T> submit(Runnable task, T result, boolean onEDT)
     {
         if (task == null)
@@ -422,52 +476,16 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Submits a value-returning task for execution and returns a Future representing the pending
-     * results of the task. The Future's <tt>get</tt> method will return the task's result upon
-     * successful completion.
-     * <p>
-     * If you would like to immediately block waiting for a task, you can use constructions of the
-     * form <tt>result = exec.submit(aCallable).get();</tt>
-     * <p>
-     * Note: The {@link Executors} class includes a set of methods that can convert some other
-     * common closure-like objects, for example, {@link java.security.PrivilegedAction} to
-     * {@link Callable} form so they can be submitted.
-     * 
-     * @param task
-     *        the task to submit
-     * @param onEDT
-     *        if set to <code>true</code> then the <tt>RunnableFuture</tt> will be executed on the
-     *        Swing EDT.
-     * @return a Future representing pending completion of the task
-     * @throws RejectedExecutionException
-     *         if the task cannot be scheduled for execution
-     * @throws NullPointerException
-     *         if the task is null
+     * @deprecated Use {@link #submit(Callable)} instead and ThreadUtil.invokeNow(..) where you need
+     *             it.
      */
+    @Deprecated
     public <T> Future<T> submit(Callable<T> task, boolean onEDT)
     {
         if (task == null)
             throw new NullPointerException();
 
         return submit(newTaskFor(task, onEDT));
-    }
-
-    @Override
-    public Future<?> submit(Runnable task)
-    {
-        return submit(task, false);
-    }
-
-    @Override
-    public <T> Future<T> submit(Runnable task, T result)
-    {
-        return submit(task, result, false);
-    }
-
-    @Override
-    public <T> Future<T> submit(Callable<T> task)
-    {
-        return submit(task, false);
     }
 
     /**
@@ -546,13 +564,12 @@ public class Processor extends ThreadPoolExecutor
     protected List<FutureTaskAdapter<?>> getWaitingTasks()
     {
         final BlockingQueue<Runnable> q = getQueue();
-        final List<FutureTaskAdapter<?>> result = new ArrayList<Processor.FutureTaskAdapter<?>>();
+        final List<FutureTaskAdapter<?>> result = new ArrayList<FutureTaskAdapter<?>>();
 
         synchronized (q)
         {
             for (Runnable r : q)
-                if (r instanceof FutureTaskAdapter<?>)
-                    result.add((FutureTaskAdapter<?>) r);
+                result.add((FutureTaskAdapter<?>) r);
         }
 
         return result;
@@ -563,11 +580,11 @@ public class Processor extends ThreadPoolExecutor
      */
     protected List<FutureTaskAdapter<?>> getWaitingTasks(Runnable task)
     {
-        final List<FutureTaskAdapter<?>> result = new ArrayList<Processor.FutureTaskAdapter<?>>();
+        final List<FutureTaskAdapter<?>> result = new ArrayList<FutureTaskAdapter<?>>();
 
         // scan all tasks
         for (FutureTaskAdapter<?> f : getWaitingTasks())
-            if (f.getRunnable() == task)
+            if (f.runnable == task)
                 result.add(f);
 
         return result;
@@ -578,11 +595,11 @@ public class Processor extends ThreadPoolExecutor
      */
     protected List<FutureTaskAdapter<?>> getWaitingTasks(Callable<?> task)
     {
-        final List<FutureTaskAdapter<?>> result = new ArrayList<Processor.FutureTaskAdapter<?>>();
+        final List<FutureTaskAdapter<?>> result = new ArrayList<FutureTaskAdapter<?>>();
 
         // scan all tasks
         for (FutureTaskAdapter<?> f : getWaitingTasks())
-            if (f.getCallable() == task)
+            if (f.callable == task)
                 result.add(f);
 
         return result;
@@ -625,7 +642,7 @@ public class Processor extends ThreadPoolExecutor
         int result = 0;
 
         for (FutureTaskAdapter<?> f : getWaitingTasks())
-            if (f.getRunnable() == task)
+            if (f.runnable == task)
                 result++;
 
         return result;
@@ -639,7 +656,7 @@ public class Processor extends ThreadPoolExecutor
         int result = 0;
 
         for (FutureTaskAdapter<?> f : getWaitingTasks())
-            if (f.getCallable() == task)
+            if (f.callable == task)
                 result++;
 
         return result;
@@ -673,7 +690,7 @@ public class Processor extends ThreadPoolExecutor
     {
         // scan all tasks
         for (FutureTaskAdapter<?> f : getWaitingTasks())
-            if (f.getRunnable() == task)
+            if (f.runnable == task)
                 return true;
 
         return false;
@@ -687,7 +704,7 @@ public class Processor extends ThreadPoolExecutor
     {
         // scan all tasks
         for (FutureTaskAdapter<?> f : getWaitingTasks())
-            if (f.getCallable() == task)
+            if (f.callable == task)
                 return true;
 
         return false;
@@ -708,15 +725,18 @@ public class Processor extends ThreadPoolExecutor
     /**
      * Remove first waiting task for the specified <tt>Runnable</tt> instance.
      */
-    public boolean removeFirstWaitingTask(FutureTaskAdapter<?> task)
+    protected boolean removeFirstWaitingTask(FutureTaskAdapter<?> task)
     {
         if (task == null)
             return false;
 
-        if (task.getCallable() != null)
-            return removeFirstWaitingTask(task.getCallable());
-        if (task.getRunnable() != null)
-            return removeFirstWaitingTask(task.getRunnable());
+        synchronized (getQueue())
+        {
+            // remove first task of specified instance
+            for (FutureTaskAdapter<?> f : getWaitingTasks())
+                if (f == task)
+                    return remove(f);
+        }
 
         return false;
     }
@@ -726,11 +746,14 @@ public class Processor extends ThreadPoolExecutor
      */
     public boolean removeFirstWaitingTask(Runnable task)
     {
+        if (task == null)
+            return false;
+
         synchronized (getQueue())
         {
             // remove first task of specified instance
             for (FutureTaskAdapter<?> f : getWaitingTasks())
-                if (f.getRunnable() == task)
+                if (f.runnable == task)
                     return remove(f);
         }
 
@@ -742,11 +765,14 @@ public class Processor extends ThreadPoolExecutor
      */
     public boolean removeFirstWaitingTask(Callable<?> task)
     {
+        if (task == null)
+            return false;
+
         synchronized (getQueue())
         {
             // remove first task of specified instance
             for (FutureTaskAdapter<?> f : getWaitingTasks())
-                if (f.getCallable() == task)
+                if (f.callable == task)
                     return remove(f);
         }
 
@@ -858,43 +884,30 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Add a listener
-     * 
-     * @param listener
+     * @deprecated Useless...
      */
+    @Deprecated
     public void addListener(ProcessorEventListener listener)
     {
-        listeners.add(ProcessorEventListener.class, listener);
+
     }
 
     /**
-     * Remove a listener
-     * 
-     * @param listener
+     * @deprecated Useless...
      */
+    @Deprecated
     public void removeListener(ProcessorEventListener listener)
     {
-        listeners.remove(ProcessorEventListener.class, listener);
+
     }
 
     /**
-     * fire event
-     * 
-     * @param task
+     * @deprecated useless
      */
+    @Deprecated
     public void fireDoneEvent(FutureTaskAdapter<?> task)
     {
-        for (ProcessorEventListener listener : listeners.getListeners(ProcessorEventListener.class))
-            listener.processDone(this, task);
-    }
 
-    @Override
-    protected void afterExecute(Runnable r, Throwable t)
-    {
-        super.afterExecute(r, t);
-
-        // notify we just achieved a process
-        fireDoneEvent((FutureTaskAdapter<?>) r);
     }
 
     @Override
@@ -905,5 +918,4 @@ public class Processor extends ThreadPoolExecutor
         // ok we can remove reference...
         waitingExecution = null;
     }
-
 }

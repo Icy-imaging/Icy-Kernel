@@ -19,25 +19,13 @@
 package icy.system.thread;
 
 import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author stephane
  */
 public class SingleProcessor extends Processor
 {
-    class SingleProcessorRejectedExecutionHandler implements RejectedExecutionHandler
-    {
-        @Override
-        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor)
-        {
-            // just ignore
-            // System.out.println("Ignore execution :" + r);
-        }
-    }
-
-    private final boolean queue;
+    private final boolean queueEnabled;
 
     /**
      * 
@@ -46,8 +34,8 @@ public class SingleProcessor extends Processor
     {
         super(1, 1);
 
-        queue = enableQueue;
-        setRejectedExecutionHandler(new SingleProcessorRejectedExecutionHandler());
+        queueEnabled = enableQueue;
+        setRejectedExecutionHandler(new DiscardPolicy());
         setDefaultThreadName(name);
     }
 
@@ -59,16 +47,20 @@ public class SingleProcessor extends Processor
         this(enableQueue, "SingleProcessor");
     }
 
+    /**
+     * Try to submit the specified task for execution and returns a Future representing that task.<br>
+     * The Future's <tt>get</tt> method will return <tt>null</tt> upon <em>successful</em>
+     * completion.<br>
+     * Returns a <code>null</code> Future object if processor is already processing or queue is not
+     * empty (depending the {@link #isQueueEnabled()} parameter) to notify the task has been
+     * ignored.
+     */
     @Override
     protected synchronized <T> Future<T> submit(FutureTaskAdapter<T> task)
     {
-        if (queue || (!isProcessing()))
-        {
-            // remove current task if any
-            removeAllWaitingTasks();
-            // then add task
+        // add task only if not already processing or queue empty
+        if (!hasWaitingTasks() && (!isProcessing() || queueEnabled))
             return super.submit(task);
-        }
 
         // return null mean the task was ignored
         return null;
@@ -92,4 +84,8 @@ public class SingleProcessor extends Processor
         return submit(task, onAWTEventThread) != null;
     }
 
+    public boolean isQueueEnabled()
+    {
+        return queueEnabled;
+    }
 }

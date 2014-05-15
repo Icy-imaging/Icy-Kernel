@@ -470,7 +470,7 @@ public class IcyBufferedImageUtil
      */
     public static IcyBufferedImage extractChannels(IcyBufferedImage source, int... channels)
     {
-        if ((source == null) || (channels.length == 0))
+        if ((source == null) || (channels == null) || (channels.length == 0))
             return null;
 
         // create output

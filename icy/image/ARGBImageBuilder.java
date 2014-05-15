@@ -26,32 +26,19 @@ import icy.system.thread.ThreadUtil;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * @author Stephane
  */
 class ARGBImageBuilder
 {
-    private static final int BLOC_SIZE = 256 * 256;
-    private static final int PARALLEL_PROCESS = SystemUtil.getAvailableProcessors() * 2;
+    private static final int BLOC_SIZE = 512 * 512;
 
-    private class BlockBuilder implements Runnable
+    class BlockBuilder implements Runnable
     {
-        /**
-         * working buffer
-         */
-        int[][] componentValues;
-
-        /**
-         * processor
-         */
-        private Processor processor;
-
-        /**
-         * processing flag
-         */
-        boolean processing;
-
         /**
          * cached variables
          */
@@ -62,24 +49,10 @@ class ARGBImageBuilder
         private int length;
         private int numChannel;
 
-        BlockBuilder()
+        BlockBuilder(IcyBufferedImage image, LUT lut, int[] dest, int offset, int length)
         {
             super();
 
-            // default
-            componentValues = new int[0][0];
-
-            // no queue
-            processor = new Processor(1, 1);
-            processor.setDefaultThreadName("ARGB Image builder");
-            // don't change priority else our image won't never be build if
-            // normal priority thread take all available time
-            // processor.setPriority(Processor.MIN_PRIORITY + 1);
-            processing = false;
-        }
-
-        private boolean prepare(IcyBufferedImage image, LUT lut, int[] dest, int offset, int length)
-        {
             this.image = image;
             // use internal lut if specified lut is null
             if (lut == null)
@@ -93,107 +66,67 @@ class ARGBImageBuilder
             numChannel = image.getSizeC();
 
             if (lut.getNumChannel() != numChannel)
-            {
-                System.err.println("ARGBImageBuilder.prepare(...): LUT.numChannel != IMAGE.numChannel");
-                return false;
-            }
-
-            return true;
-        }
-
-        private void clean()
-        {
-            // release reference
-            image = null;
-            lut = null;
-            dest = null;
-        }
-
-        boolean build(IcyBufferedImage image, LUT lut, int dest[], int offset, int length)
-        {
-            synchronized (this)
-            {
-                if (processing)
-                    return false;
-                processing = true;
-            }
-
-            // prepare variables
-            if (prepare(image, lut, dest, offset, length))
-            {
-                // add task
-                if (processor.submit(this) != null)
-                    return true;
-
-                synchronized (this)
-                {
-                    processing = false;
-                }
-
-                // task not added
-                return false;
-            }
-
-            synchronized (this)
-            {
-                processing = false;
-            }
-
-            // error while preparing (synchronization error) --> ignore
-            return true;
+                throw new IllegalArgumentException("ARGBImageBuilder.prepare(...): LUT.numChannel != IMAGE.numChannel");
         }
 
         @Override
         public void run()
         {
+            int[][] componentValues = null;
+
             try
             {
-                // rebuild buffer if needed
-                if (componentValues.length != numChannel)
-                    componentValues = new int[numChannel][BLOC_SIZE];
+                // get working buffer
+                componentValues = requestBuffer(numChannel);
 
-                // update output image buffer
-                final Scaler[] scalers = lut.getScalers();
-                final boolean signed = image.getIcyColorModel().getDataType_().isSigned();
+                if (componentValues != null)
+                {
+                    // update output image buffer
+                    final Scaler[] scalers = lut.getScalers();
+                    final boolean signed = image.getIcyColorModel().getDataType_().isSigned();
 
-                // scale component values
-                for (int comp = 0; comp < numChannel; comp++)
-                    scalers[comp].scale(image.getDataXY(comp), offset, componentValues[comp], 0, length, signed);
+                    // scale component values
+                    for (int comp = 0; comp < numChannel; comp++)
+                        scalers[comp].scale(image.getDataXY(comp), offset, componentValues[comp], 0, length, signed);
 
-                // build ARGB destination buffer
-                lut.getColorSpace().fillARGBBuffer(componentValues, dest, offset, length);
+                    // build ARGB destination buffer
+                    lut.getColorSpace().fillARGBBuffer(componentValues, dest, offset, length);
+                }
             }
-            catch (Exception E)
+            catch (Exception e)
             {
+                System.out.println(".");
                 // we just ignore any exceptions here as we can be in asynch process
             }
             finally
             {
-                // clean up
-                clean();
-
-                synchronized (this)
-                {
-                    processing = false;
-                }
+                releaseBuffer(componentValues);
             }
         }
 
     }
 
-    // builders
-    private final BlockBuilder builders[];
+    // processor
+    private final Processor processor;
+    // data buffer pool
+    private final List<int[][]> buffers;
 
     /**
      * 
      */
-    ARGBImageBuilder()
+    public ARGBImageBuilder()
     {
         super();
 
-        builders = new BlockBuilder[PARALLEL_PROCESS];
-        for (int i = 0; i < PARALLEL_PROCESS; i++)
-            builders[i] = new BlockBuilder();
+        if (SystemUtil.is32bits())
+            processor = new Processor(Math.max(1, Math.min(SystemUtil.getAvailableProcessors() - 1, 4)));
+        else
+            processor = new Processor(Math.max(1, Math.min(SystemUtil.getAvailableProcessors() - 1, 16)));
+
+        processor.setDefaultThreadName("ARGB Image builder");
+        processor.setPriority(Processor.NORM_PRIORITY - 1);
+
+        buffers = new ArrayList<int[][]>();
     }
 
     private BufferedImage getImage(IcyBufferedImage in, BufferedImage out)
@@ -204,7 +137,36 @@ class ARGBImageBuilder
         return new BufferedImage(in.getWidth(), in.getHeight(), BufferedImage.TYPE_INT_ARGB);
     }
 
-    synchronized BufferedImage buildARGBImage(IcyBufferedImage image, LUT lut, BufferedImage out)
+    int[][] requestBuffer(int numChannel)
+    {
+        if (numChannel <= 0)
+            return null;
+
+        int index;
+
+        synchronized (buffers)
+        {
+            for (index = 0; index < buffers.size(); index++)
+                if (buffers.get(index).length == numChannel)
+                    return buffers.remove(index);
+        }
+
+        // allocate a new one
+        return new int[numChannel][BLOC_SIZE];
+    }
+
+    void releaseBuffer(int[][] buffer)
+    {
+        if (buffer == null)
+            return;
+
+        synchronized (buffers)
+        {
+            buffers.add(buffer);
+        }
+    }
+
+    public BufferedImage buildARGBImage(IcyBufferedImage image, LUT lut, BufferedImage out)
     {
         // planar size
         final int imageSize = image.getSizeX() * image.getSizeY();
@@ -212,67 +174,76 @@ class ARGBImageBuilder
         final BufferedImage result = getImage(image, out);
         // destination buffer
         final int[] dest = ((DataBufferInt) result.getRaster().getDataBuffer()).getData();
+        final List<Future<?>> futures = new ArrayList<Future<?>>();
 
         int offset = 0;
-        for (int i = 0; i < step; i++)
+        try
         {
-            // build bloc
-            sendBuild(image, lut, dest, offset, BLOC_SIZE);
-            offset += BLOC_SIZE;
+            for (int i = 0; i < step; i++)
+            {
+                // build bloc
+                futures.add(addBloc(image, lut, dest, offset, BLOC_SIZE));
+                offset += BLOC_SIZE;
+            }
+
+            // last bloc
+            if (offset < imageSize)
+                futures.add(addBloc(image, lut, dest, offset, imageSize - offset));
+
+            // wait until image is built
+            waitCompletion(futures);
         }
-
-        // last bloc
-        if (offset < imageSize)
-            sendBuild(image, lut, dest, offset, imageSize - offset);
-
-        // wait until image is built
-        waitCompletion();
+        catch (IllegalArgumentException e)
+        {
+            // image has changed in the meantime, just ignore
+        }
 
         return result;
     }
 
-    private void sendBuild(IcyBufferedImage image, LUT lut, int dest[], int offset, int length)
+    private Future<?> addBloc(IcyBufferedImage image, LUT lut, int dest[], int offset, int length)
     {
-        boolean done = false;
+        final BlockBuilder builder = new BlockBuilder(image, lut, dest, offset, length);
+        Future<?> result = processor.submit(builder);
 
-        while (!done)
+        // not accepted ? retry until it is accepted...
+        while (result == null)
         {
-            final BlockBuilder builder = getAvailableBuilder();
-            done = builder.build(image, lut, dest, offset, length);
+            // wait a bit
+            ThreadUtil.sleep(1);
+            // and retry task submission
+            result = processor.submit(builder);
+        }
+
+        return result;
+    }
+
+    private void waitCompletion(List<Future<?>> futures)
+    {
+        while (!futures.isEmpty())
+        {
+            final int last = futures.size() - 1;
+
+            if (futures.get(last).isDone())
+                futures.remove(last);
+            else
+                ThreadUtil.sleep(1);
         }
     }
 
     /**
-     * Get first available builder, wait until we get one
+     * Returns <code>true</code> if the ARGB builder is processing an image.
      */
-    private BlockBuilder getAvailableBuilder()
+    public boolean isProcessing()
     {
-        while (true)
-        {
-            for (BlockBuilder builder : builders)
-                if (!builder.processing)
-                    return builder;
-
-            // allow other thread to process
-            ThreadUtil.sleep(1);
-        }
-    }
-
-    boolean isProcessing()
-    {
-        for (BlockBuilder builder : builders)
-            if (builder.processing)
-                return true;
-
-        return false;
+        return processor.isProcessing();
     }
 
     /**
      * wait until all process ended
      */
-    private void waitCompletion()
+    public void waitCompletion()
     {
-        while (isProcessing())
-            ThreadUtil.sleep(1);
+        processor.waitAll();
     }
 }

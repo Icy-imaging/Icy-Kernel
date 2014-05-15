@@ -383,7 +383,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
      */
     protected void refreshLayers()
     {
-        ThreadUtil.bgRunSingle(layersRefresher);
+        ThreadUtil.runSingle(layersRefresher);
     }
 
     /**
@@ -397,7 +397,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
             layers.clear();
 
         // refresh table data
-        ThreadUtil.bgRunSingle(tableDataRefresher, true);
+        ThreadUtil.runSingle(tableDataRefresher);
     }
 
     /**
@@ -489,10 +489,10 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
     {
         setSelectedLayersInternal(new ArrayList<Layer>());
         // refresh control panel
-        ThreadUtil.bgRunSingle(controlPanelRefresher, true);
+        ThreadUtil.runSingle(controlPanelRefresher);
     }
 
-    void setSelectedLayersInternal(ArrayList<Layer> newSelected)
+    void setSelectedLayersInternal(List<Layer> newSelected)
     {
         isSelectionAdjusting = true;
         try
@@ -504,7 +504,6 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
                 for (Layer layer : newSelected)
                 {
                     final int index = getLayerTableIndex(layer);
-                    // final int index = getLayerModelIndex(layer);
 
                     if (index > -1)
                         tableSelectionModel.addSelectionInterval(index, index);
@@ -541,21 +540,30 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
 
     protected void refreshTableData()
     {
-        final ArrayList<Layer> save = getSelectedLayers();
+        final List<Layer> save = getSelectedLayers();
 
-        isSelectionAdjusting = true;
-        try
+        // need to be done on EDT
+        ThreadUtil.invokeNow(new Runnable()
         {
-            tableModel.fireTableDataChanged();
-        }
-        finally
-        {
-            isSelectionAdjusting = false;
-        }
+            @Override
+            public void run()
+            {
+                isSelectionAdjusting = true;
+                try
+                {
+                    tableModel.fireTableDataChanged();
+                }
+                finally
+                {
+                    isSelectionAdjusting = false;
+                }
 
-        setSelectedLayersInternal(save);
+                setSelectedLayersInternal(save);
+            }
+        });
+
         // refresh control panel
-        ThreadUtil.bgRunSingle(controlPanelRefresher, true);
+        ThreadUtil.runSingle(controlPanelRefresher);
     }
 
     // protected void refreshTableRow(final Layer layer)
@@ -604,7 +612,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
     protected void selectionChanged()
     {
         // refresh control panel
-        ThreadUtil.bgRunSingle(controlPanelRefresher, true);
+        ThreadUtil.runSingle(controlPanelRefresher);
     }
 
     @Override
@@ -631,7 +639,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         else
             canvasRefresher.newCanvas = null;
 
-        ThreadUtil.bgRunSingle(canvasRefresher);
+        ThreadUtil.runSingle(canvasRefresher);
     }
 
     @Override
@@ -646,7 +654,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         if (event.getType() == ViewerEventType.CANVAS_CHANGED)
         {
             canvasRefresher.newCanvas = event.getSource().getCanvas();
-            ThreadUtil.bgRunSingle(canvasRefresher);
+            ThreadUtil.runSingle(canvasRefresher);
         }
     }
 
@@ -669,7 +677,8 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
 
                 if (Layer.PROPERTY_NAME.equals(property) || Layer.PROPERTY_ALPHA.equals(property)
                         || Layer.PROPERTY_VISIBLE.equals(property))
-                    refreshTableData();
+                    // refresh table data
+                    ThreadUtil.runSingle(tableDataRefresher);
                 break;
         }
     }

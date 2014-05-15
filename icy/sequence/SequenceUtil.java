@@ -1758,6 +1758,16 @@ public class SequenceUtil
         }
 
         result.setName(source.getName() + " (resized)");
+        // content was resized ?
+        if (resizeContent)
+        {
+            final double sx = result.getSizeX() / source.getSizeX();
+            final double sy = result.getSizeY() / source.getSizeY();
+            
+            // update pixel size
+            result.setPixelSizeX(result.getPixelSizeX() * sx);
+            result.setPixelSizeY(result.getPixelSizeY() * sy);
+        }
 
         return result;
     }

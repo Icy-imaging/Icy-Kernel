@@ -28,7 +28,6 @@ import icy.preferences.PluginPreferences;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.IcyExceptionHandler;
-import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.XMLUtil;
 
@@ -37,7 +36,6 @@ import java.util.Collections;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.event.EventListenerList;
 
@@ -56,6 +54,8 @@ public class PluginRepositoryLoader
 
     private class Loader implements Runnable
     {
+        private boolean loading;
+
         public Loader()
         {
             super();
@@ -64,95 +64,107 @@ public class PluginRepositoryLoader
         @Override
         public void run()
         {
-            final List<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
-
+            loading = true;
             try
             {
-                final List<RepositoryInfo> repositories = RepositoryPreferences.getRepositeries();
+                try
+                {
+                    final List<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
+                    final List<RepositoryInfo> repositories = RepositoryPreferences.getRepositeries();
 
-                // load online plugins from all active repositories
-                for (RepositoryInfo repoInfo : repositories)
+                    // load online plugins from all active repositories
+                    for (RepositoryInfo repoInfo : repositories)
+                    {
+                        // reload requested --> stop current loading
+                        if (ThreadUtil.hasWaitingSingleTask(this))
+                            return;
+
+                        if (repoInfo.isEnabled())
+                        {
+                            final List<PluginDescriptor> pluginsRepos = loadInternal(repoInfo);
+
+                            if (pluginsRepos == null)
+                            {
+                                failed = true;
+                                return;
+                            }
+
+                            newPlugins.addAll(pluginsRepos);
+                        }
+                    }
+
+                    // sort list on plugin class name
+                    Collections.sort(newPlugins, PluginNameSorter.instance);
+
+                    plugins = newPlugins;
+                }
+                catch (Exception e)
+                {
+                    IcyExceptionHandler.showErrorMessage(e, true);
+                    failed = true;
+                    return;
+                }
+
+                // notify change for basic infos
+                basicLoaded = true;
+                changed(null);
+
+                // we load descriptor
+                for (PluginDescriptor plugin : plugins)
                 {
                     // reload requested --> stop current loading
-                    if (processor.hasWaitingTasks())
+                    if (ThreadUtil.hasWaitingSingleTask(this))
                         return;
-
-                    if (repoInfo.isEnabled())
+                    // internet connection lost --> failed
+                    if (!NetworkUtil.hasInternetAccess())
                     {
-                        final List<PluginDescriptor> pluginsRepos = loadInternal(repoInfo);
-
-                        if (pluginsRepos == null)
-                        {
-                            failed = true;
-                            return;
-                        }
-
-                        newPlugins.addAll(pluginsRepos);
+                        failed = true;
+                        return;
                     }
+
+                    plugin.loadDescriptor();
                 }
 
-                // sort list on plugin class name
-                Collections.sort(newPlugins, PluginNameSorter.instance);
-
-                plugins = newPlugins;
-            }
-            catch (Exception e)
-            {
-                IcyExceptionHandler.showErrorMessage(e, true);
-                failed = true;
-                return;
-            }
-
-            // notify change for basic infos
-            basicLoaded = true;
-            changed(null);
-
-            // we load descriptor
-            for (PluginDescriptor plugin : plugins)
-            {
-                // reload requested --> stop current loading
-                if (processor.hasWaitingTasks())
-                    return;
-                // internet connection lost --> failed
-                if (!NetworkUtil.hasInternetAccess())
+                // sort list on plugin name
+                synchronized (plugins)
                 {
-                    failed = true;
-                    return;
+                    Collections.sort(plugins, PluginNameSorter.instance);
                 }
 
-                plugin.loadDescriptor();
-            }
+                // notify final change for descriptors loading
+                descriptorsLoaded = true;
+                changed(null);
 
-            // sort list on plugin name
-            synchronized (plugins)
-            {
-                Collections.sort(plugins, PluginNameSorter.instance);
-            }
-
-            // notify final change for descriptors loading
-            descriptorsLoaded = true;
-            changed(null);
-
-            // then we load images
-            for (PluginDescriptor plugin : plugins)
-            {
-                // reload requested --> stop current loading
-                if (processor.hasWaitingTasks())
-                    return;
-                // internet connection lost --> failed
-                if (!NetworkUtil.hasInternetAccess())
+                // then we load images
+                for (PluginDescriptor plugin : plugins)
                 {
-                    failed = true;
-                    return;
+                    // reload requested --> stop current loading
+                    if (ThreadUtil.hasWaitingSingleTask(this))
+                        return;
+                    // internet connection lost --> failed
+                    if (!NetworkUtil.hasInternetAccess())
+                    {
+                        failed = true;
+                        return;
+                    }
+
+                    plugin.loadImages();
+                    // notify change
+                    changed(plugin);
                 }
 
-                plugin.loadImages();
-                // notify change
-                changed(plugin);
+                // images loaded
+                imagesLoaded = true;
             }
+            finally
+            {
+                loading = false;
+            }
+        }
 
-            // images loaded
-            imagesLoaded = true;
+        public boolean isLoading()
+        {
+            return loading;
         }
     }
 
@@ -184,7 +196,6 @@ public class PluginRepositoryLoader
     boolean failed;
 
     private final Loader loader;
-    final SingleProcessor processor;
 
     /**
      * static class
@@ -197,10 +208,6 @@ public class PluginRepositoryLoader
         listeners = new EventListenerList();
 
         loader = new Loader();
-        processor = new SingleProcessor(true, "Online Plugin Loader");
-        // we want the processor to stay alive
-        processor.setKeepAliveTime(1, TimeUnit.DAYS);
-
         // initial loading
         load();
     }
@@ -290,7 +297,7 @@ public class PluginRepositoryLoader
         imagesLoaded = false;
         failed = false;
 
-        processor.submit(loader);
+        ThreadUtil.runSingle(loader);
     }
 
     /**
@@ -400,7 +407,7 @@ public class PluginRepositoryLoader
      */
     public static boolean isLoading()
     {
-        return instance.processor.isProcessing();
+        return instance.loader.isLoading() || ThreadUtil.hasWaitingBgTask(instance.loader);
     }
 
     /**
@@ -497,4 +504,5 @@ public class PluginRepositoryLoader
         for (PluginRepositoryLoaderListener listener : listeners.getListeners(PluginRepositoryLoaderListener.class))
             listener.pluginRepositeryLoaderChanged(plugin);
     }
+
 }

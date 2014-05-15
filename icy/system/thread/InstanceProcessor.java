@@ -21,7 +21,9 @@ package icy.system.thread;
 import java.util.concurrent.Future;
 
 /**
- * @author Stephane
+ * Single instance processor.<br>
+ * It allows to run processes on a thread and verify the constraint that only one single instance of
+ * a specific process can be queued at a given time.
  */
 public class InstanceProcessor extends Processor
 {
@@ -40,7 +42,7 @@ public class InstanceProcessor extends Processor
      */
     public InstanceProcessor(int priority)
     {
-        this(Processor.DEFAULT_MAX_WAITING, priority);
+        this(-1, priority);
     }
 
     /**
@@ -51,12 +53,21 @@ public class InstanceProcessor extends Processor
         this(Processor.NORM_PRIORITY);
     }
 
+    /**
+     * Try to submit the specified task for execution and returns a Future representing that task.<br>
+     * The Future's <tt>get</tt> method will return <tt>null</tt> upon <em>successful</em>
+     * completion.<br>
+     * Returns a <code>null</code> Future object if processor has already this task pending in queue
+     * (in this case the new task is simply ignored)..
+     */
     @Override
     protected synchronized <T> Future<T> submit(FutureTaskAdapter<T> task)
     {
-        // we remove pending task if any
-        removeFirstWaitingTask(task);
+        // add task only if not already present in queue
+        if (!hasWaitingTasks(task))
+            return super.submit(task);
 
-        return super.submit(task);
+        // return null mean the task was ignored
+        return null;
     }
 }

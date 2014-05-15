@@ -29,7 +29,6 @@ import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
-import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
@@ -38,7 +37,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -53,6 +51,7 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
      */
     private static final long serialVersionUID = -6123324347914804260L;
 
+    // GUI
     private JLabel dimensionLabel;
     private JLabel resXLabel;
     private JLabel resYLabel;
@@ -64,10 +63,12 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
     private IcyButton editBtn;
     private IcyButton detailBtn;
 
-    final SingleProcessor processor;
     private JLabel pathLabel;
     private IcyTextField pathField;
     private IcyTextField nameField;
+
+    // internals
+    private final Runnable infosRefresher;
 
     public SequenceInfosPanel()
     {
@@ -108,11 +109,23 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
             }
         });
 
-        processor = new SingleProcessor(true, "Sequence infos GUI");
-        // we want the processor to stay alive for some time
-        processor.setKeepAliveTime(10, TimeUnit.MINUTES);
+        infosRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        updateInfosInternal(Icy.getMainInterface().getActiveSequence());
+                    }
+                });
+            }
+        };
 
-        updateInfos(null);
+        updateInfosInternal(null);
     }
 
     public void initialize()
@@ -308,16 +321,9 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
         add(detailBtn, gbc_detailBtn);
     }
 
-    public void updateInfos(final Sequence sequence)
+    public void updateInfos()
     {
-        processor.submit(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                updateInfosInternal(sequence);
-            }
-        }, true);
+        ThreadUtil.runSingle(infosRefresher);
     }
 
     public void updateInfosInternal(Sequence sequence)
@@ -409,7 +415,7 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
     @Override
     public void sequenceActivated(Sequence sequence)
     {
-        updateInfos(sequence);
+        updateInfos();
     }
 
     @Override
@@ -421,21 +427,12 @@ public class SequenceInfosPanel extends JPanel implements ActiveSequenceListener
     @Override
     public void activeSequenceChanged(SequenceEvent event)
     {
-        final Sequence sequence = event.getSequence();
-
         switch (event.getSourceType())
         {
             case SEQUENCE_DATA:
             case SEQUENCE_TYPE:
             case SEQUENCE_META:
-                ThreadUtil.invokeLater(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        updateInfos(sequence);
-                    }
-                });
+                updateInfos();
                 break;
         }
     }

@@ -28,7 +28,6 @@ import icy.plugin.interface_.PluginBundled;
 import icy.plugin.interface_.PluginDaemon;
 import icy.preferences.PluginPreferences;
 import icy.system.IcyExceptionHandler;
-import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
 import icy.util.StringUtil;
@@ -44,7 +43,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.event.EventListenerList;
 
@@ -54,7 +52,7 @@ import javax.swing.event.EventListenerList;
  * 
  * @author Stephane<br>
  */
-public class PluginLoader
+public class PluginLoader implements Runnable
 {
     public static class PluginClassLoader extends JarClassLoader
     {
@@ -133,9 +131,6 @@ public class PluginLoader
     /**
      * internals
      */
-    private final Runnable reloader;
-    final SingleProcessor processor;
-
     private boolean initialized;
     private boolean loading;
 
@@ -162,20 +157,6 @@ public class PluginLoader
         plugins = new ArrayList<PluginDescriptor>();
         listeners = new EventListenerList();
 
-        // reloader
-        reloader = new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                reloadInternal();
-            }
-        };
-
-        processor = new SingleProcessor(true, "Local Plugin Loader");
-        // we want the processor to stay alive
-        processor.setKeepAliveTime(1, TimeUnit.DAYS);
-
         // don't load by default as we need Preferences to be ready first
     };
 
@@ -191,11 +172,28 @@ public class PluginLoader
     }
 
     /**
+     * @return the loading
+     */
+    public static boolean isLoading()
+    {
+        return instance.loading || ThreadUtil.hasWaitingSingleTask(instance);
+    }
+
+    /**
+     * wait until loading completed
+     */
+    public static void waitWhileLoading()
+    {
+        while (isLoading())
+            ThreadUtil.sleep(10);
+    }
+
+    /**
      * Reload the list of installed plugins (asynchronous version).
      */
     public static void reloadAsynch()
     {
-        instance.processor.submit(instance.reloader);
+        ThreadUtil.runSingle(instance);
     }
 
     /**
@@ -203,8 +201,7 @@ public class PluginLoader
      */
     public static void reload()
     {
-        instance.processor.submit(instance.reloader);
-        ThreadUtil.sleep(10);
+        reloadAsynch();
         waitWhileLoading();
     }
 
@@ -231,122 +228,133 @@ public class PluginLoader
         startDaemons();
     }
 
+    @Override
+    public void run()
+    {
+        reloadInternal();
+    }
+
     /**
      * Reload the list of installed plugins (in "plugins" directory)
      */
-    void reloadInternal()
+    synchronized void reloadInternal()
     {
         // needReload = false;
         loading = true;
-
-        // stop daemon plugins
-        stopDaemons();
-
-        // reset plugins and loader
-        final ArrayList<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
-        final ClassLoader newLoader;
-
-        // special case where JCL is disabled
-        if (JCLDisabled)
-            newLoader = PluginLoader.class.getClassLoader();
-        else
-        {
-            newLoader = new PluginClassLoader();
-
-            // reload plugins directory to search path
-            ((PluginClassLoader) newLoader).add(PLUGIN_PATH);
-        }
-
-        // no need to complete loading...
-        if (processor.hasWaitingTasks())
-            return;
-
-        final HashSet<String> classes = new HashSet<String>();
-
         try
         {
-            // search for plugins in "Plugins" package (needed when working from JAR archive)
-            ClassUtil.findClassNamesInPackage(PLUGIN_PACKAGE, true, classes);
-            // search for plugins in "Plugins" directory with default plugin package name
-            ClassUtil.findClassNamesInPath(PLUGIN_PATH, PLUGIN_PACKAGE, true, classes);
-        }
-        catch (IOException e)
-        {
-            System.err.println("Error loading plugins :");
-            IcyExceptionHandler.showErrorMessage(e, true);
-        }
 
-        for (String className : classes)
-        {
-            // we only want to load classes from 'plugins' package
-            if (!className.startsWith(PLUGIN_PACKAGE))
-                continue;
-            // filter incorrect named classes (Jython classes for instances)
-            if (className.contains("$"))
-                continue;
+            // stop daemon plugins
+            stopDaemons();
+
+            // reset plugins and loader
+            final ArrayList<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
+            final ClassLoader newLoader;
+
+            // special case where JCL is disabled
+            if (JCLDisabled)
+                newLoader = PluginLoader.class.getClassLoader();
+            else
+            {
+                newLoader = new PluginClassLoader();
+
+                // reload plugins directory to search path
+                ((PluginClassLoader) newLoader).add(PLUGIN_PATH);
+            }
 
             // no need to complete loading...
-            if (processor.hasWaitingTasks())
+            if (ThreadUtil.hasWaitingSingleTask(this))
                 return;
+
+            final HashSet<String> classes = new HashSet<String>();
 
             try
             {
-                // try to load class and check we have a Plugin class at same time
-                final Class<? extends Plugin> pluginClass = newLoader.loadClass(className).asSubclass(Plugin.class);
+                // search for plugins in "Plugins" package (needed when working from JAR archive)
+                ClassUtil.findClassNamesInPackage(PLUGIN_PACKAGE, true, classes);
+                // search for plugins in "Plugins" directory with default plugin package name
+                ClassUtil.findClassNamesInPath(PLUGIN_PATH, PLUGIN_PACKAGE, true, classes);
+            }
+            catch (IOException e)
+            {
+                System.err.println("Error loading plugins :");
+                IcyExceptionHandler.showErrorMessage(e, true);
+            }
 
-                newPlugins.add(new PluginDescriptor(pluginClass));
-            }
-            catch (NoClassDefFoundError e)
+            for (String className : classes)
             {
-                // fatal error
-                System.err.println("Class '" + className + "' cannot be loaded :");
-                System.err.println("Required class '" + ClassUtil.getQualifiedNameFromPath(e.getMessage())
-                        + "' not found.");
+                // we only want to load classes from 'plugins' package
+                if (!className.startsWith(PLUGIN_PACKAGE))
+                    continue;
+                // filter incorrect named classes (Jython classes for instances)
+                if (className.contains("$"))
+                    continue;
+
+                // no need to complete loading...
+                if (ThreadUtil.hasWaitingSingleTask(this))
+                    return;
+
+                try
+                {
+                    // try to load class and check we have a Plugin class at same time
+                    final Class<? extends Plugin> pluginClass = newLoader.loadClass(className).asSubclass(Plugin.class);
+
+                    newPlugins.add(new PluginDescriptor(pluginClass));
+                }
+                catch (NoClassDefFoundError e)
+                {
+                    // fatal error
+                    System.err.println("Class '" + className + "' cannot be loaded :");
+                    System.err.println("Required class '" + ClassUtil.getQualifiedNameFromPath(e.getMessage())
+                            + "' not found.");
+                }
+                catch (OutOfMemoryError e)
+                {
+                    // fatal error
+                    IcyExceptionHandler.showErrorMessage(e, false);
+                    System.err.println("Class '" + className + "' is discarded");
+                }
+                catch (UnsupportedClassVersionError e)
+                {
+                    // java version error
+                    System.err.println("Unsupported java version for class '" + className + "' (discarded)");
+                }
+                catch (Error e)
+                {
+                    // fatal error
+                    IcyExceptionHandler.showErrorMessage(e, false);
+                    System.err.println("Class '" + className + "' is discarded");
+                }
+                catch (ClassCastException e)
+                {
+                    // ignore ClassCastException (for classes which doesn't extend Plugin)
+                }
+                catch (ClassNotFoundException e)
+                {
+                    // ignore ClassNotFoundException (for no public classes)
+                }
+                catch (Exception e)
+                {
+                    // fatal error
+                    IcyExceptionHandler.showErrorMessage(e, false);
+                    System.err.println("Class '" + className + "' is discarded");
+                }
             }
-            catch (OutOfMemoryError e)
-            {
-                // fatal error
-                IcyExceptionHandler.showErrorMessage(e, false);
-                System.err.println("Class '" + className + "' is discarded");
-            }
-            catch (UnsupportedClassVersionError e)
-            {
-                // java version error
-                System.err.println("Unsupported java version for class '" + className + "' (discarded)");
-            }
-            catch (Error e)
-            {
-                // fatal error
-                IcyExceptionHandler.showErrorMessage(e, false);
-                System.err.println("Class '" + className + "' is discarded");
-            }
-            catch (ClassCastException e)
-            {
-                // ignore ClassCastException (for classes which doesn't extend Plugin)
-            }
-            catch (ClassNotFoundException e)
-            {
-                // ignore ClassNotFoundException (for no public classes)
-            }
-            catch (Exception e)
-            {
-                // fatal error
-                IcyExceptionHandler.showErrorMessage(e, false);
-                System.err.println("Class '" + className + "' is discarded");
-            }
+
+            // sort list
+            Collections.sort(newPlugins, PluginNameSorter.instance);
+
+            // release loaded resources
+            if (loader instanceof JarClassLoader)
+                ((JarClassLoader) loader).unloadAll();
+
+            loader = newLoader;
+            plugins = newPlugins;
         }
-
-        // sort list
-        Collections.sort(newPlugins, PluginNameSorter.instance);
-
-        // release loaded resources
-        if (loader instanceof JarClassLoader)
-            ((JarClassLoader) loader).unloadAll();
-
-        loader = newLoader;
-        plugins = newPlugins;
-
-        loading = false;
+        finally
+        {
+            loading = false;
+        }
 
         // notify change
         changed();
@@ -676,23 +684,6 @@ public class PluginLoader
     public static ArrayList<PluginDescriptor> getActionablePlugins()
     {
         return getActionablePlugins(false);
-    }
-
-    /**
-     * @return the loading
-     */
-    public static boolean isLoading()
-    {
-        return instance.processor.hasWaitingTasks() || instance.loading;
-    }
-
-    /**
-     * wait until loading completed
-     */
-    public static void waitWhileLoading()
-    {
-        while (isLoading())
-            ThreadUtil.sleep(10);
     }
 
     public static boolean isLoaded(PluginDescriptor plugin, boolean acceptNewer)

@@ -642,6 +642,15 @@ public class Loader
         throw new UnsupportedFormatException("Image file '" + path + "' is not supported !");
     }
 
+    /**
+     * @deprecated Use {@link #getMetaData(String)} instead.
+     */
+    @Deprecated
+    public static OMEXMLMetadataImpl getMetaData(File file) throws UnsupportedFormatException, IOException
+    {
+        return getMetaData(file.getAbsolutePath());
+    }
+
     // /**
     // * Use the given importer to load and return metadata of the specified image file.
     // *
@@ -654,15 +663,6 @@ public class Loader
     // // load current file and add to results
     // return importer.getMetaData(file);
     // }
-
-    /**
-     * Loads and returns metadata of the specified image file.<br>
-     * It returns <code>null</code> if the specified file is not a valid (or supported) image file.
-     */
-    public static OMEXMLMetadataImpl getMetaData(File file) throws UnsupportedFormatException, IOException
-    {
-        return getMetaData(file.getAbsolutePath());
-    }
 
     /**
      * Returns a thumbnail of the specified image file path.

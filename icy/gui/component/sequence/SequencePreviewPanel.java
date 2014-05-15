@@ -116,7 +116,7 @@ public class SequencePreviewPanel extends JPanel implements ChangeListener, Sequ
         public void imageChanged()
         {
             // request rebuild cache
-            ThreadUtil.bgRunSingle(this);
+            ThreadUtil.runSingle(this);
         }
 
         int getSizeX()

@@ -34,7 +34,7 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.sequence.SequenceListener;
-import icy.system.thread.SingleProcessor;
+import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
 import icy.util.ColorUtil;
@@ -59,7 +59,6 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 import java.lang.reflect.Array;
 import java.util.EventListener;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.JPanel;
 import javax.swing.event.EventListenerList;
@@ -460,7 +459,6 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
     /**
      * internals
      */
-    private final SingleProcessor processor;
     private final Runnable histoUpdater;
     String message;
 
@@ -476,10 +474,6 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
 
         message = "";
         scalerMapPositionListeners = new EventListenerList();
-        processor = new SingleProcessor(true, "Histogram updater");
-        processor.setPriority(Thread.MIN_PRIORITY);
-        // we want the processor to stay alive for few time
-        processor.setKeepAliveTime(30, TimeUnit.SECONDS);
         histoUpdater = new Runnable()
         {
             @Override
@@ -560,7 +554,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
     private void refreshHistoData()
     {
         // send refresh operation
-        processor.submit(histoUpdater);
+        ThreadUtil.bgRunSingle(histoUpdater);
     }
 
     // this method is called by processor, we don't mind about exception here
@@ -578,8 +572,8 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
 
                 final int maxZ;
                 final int maxT;
-                int t = viewer.getT();
-                int z = viewer.getZ();
+                int t = viewer.getPositionT();
+                int z = viewer.getPositionZ();
 
                 if (t != -1)
                     maxT = t;
@@ -612,11 +606,8 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                             if ((i & 0xFFF) == 0)
                             {
                                 // need to be recalculated so don't waste time here...
-                                if (processor.hasWaitingTasks())
-                                {
-                                    // histogram.done();
-                                    // return;
-                                }
+                                if (ThreadUtil.hasWaitingBgSingleTask(histoUpdater))
+                                     return;
                             }
 
                             histogram.addValue(Array1DUtil.getValue(data, i, dataType));
@@ -624,15 +615,16 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                     }
                 }
             }
+
+            // notify that histogram computation is done
+            histogram.done();
         }
         catch (Exception e)
         {
-            // System.out.println("error");
+            // just redo it
+            refreshHistoData();
+            //System.out.println("error");
         }
-
-        histogram.done();
-
-        repaint();
     }
 
     /**

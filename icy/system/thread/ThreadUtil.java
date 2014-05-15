@@ -19,6 +19,7 @@
 package icy.system.thread;
 
 import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
 
 import java.awt.EventQueue;
 import java.lang.reflect.InvocationTargetException;
@@ -65,25 +66,6 @@ public class ThreadUtil
         }
     }
 
-    private static final Processor bgProcessor = new Processor(Processor.DEFAULT_MAX_WAITING,
-            Processor.DEFAULT_MAX_PROCESSING, Processor.MIN_PRIORITY);
-    private static final InstanceProcessor[] instanceProcessors = new InstanceProcessor[Processor.DEFAULT_MAX_PROCESSING];
-
-    static
-    {
-        bgProcessor.setDefaultThreadName("Background processor");
-        bgProcessor.setKeepAliveTime(3, TimeUnit.SECONDS);
-
-        // instance processors initialization
-        for (int i = 0; i < instanceProcessors.length; i++)
-        {
-            instanceProcessors[i] = new InstanceProcessor(Processor.DEFAULT_MAX_WAITING, Processor.NORM_PRIORITY);
-            instanceProcessors[i].setDefaultThreadName("Background single processor " + (i + 1));
-            // we want the processor to stay alive
-            instanceProcessors[i].setKeepAliveTime(1, TimeUnit.DAYS);
-        }
-    }
-
     /**
      * The minimum priority that a thread can have.
      */
@@ -98,6 +80,53 @@ public class ThreadUtil
      * The maximum priority that a thread can have.
      */
     public final static int MAX_PRIORITY = Thread.MAX_PRIORITY;
+
+    // low priority background processor
+    private static final Processor bgProcessor;
+    // single Runnable / Callable instance processor
+    private static final InstanceProcessor instanceProcessors[];
+    // low priority single Runnable / Callable instance processor
+    private static final InstanceProcessor bgInstanceProcessors[];
+
+    static
+    {
+        if (SystemUtil.is32bits())
+        {
+            int wantedThread = SystemUtil.getAvailableProcessors();
+            wantedThread = Math.max(wantedThread, 2);
+            wantedThread = Math.min(wantedThread, 4);
+
+            // 32 bits JVM, limit the number of thread
+            bgProcessor = new Processor(wantedThread);
+            instanceProcessors = new InstanceProcessor[wantedThread];
+            bgInstanceProcessors = new InstanceProcessor[wantedThread];
+        }
+        else
+        {
+            int wantedThread = SystemUtil.getAvailableProcessors();
+            wantedThread = Math.max(wantedThread, 4);
+
+            // 64 bits JVM, can have higher limit
+            bgProcessor = new Processor(Math.min(wantedThread, 16));
+            instanceProcessors = new InstanceProcessor[Math.min(wantedThread, 8)];
+            bgInstanceProcessors = new InstanceProcessor[Math.min(wantedThread, 8)];
+        }
+
+        bgProcessor.setPriority(MIN_PRIORITY);
+        bgProcessor.setDefaultThreadName("Background processor");
+        bgProcessor.setKeepAliveTime(3, TimeUnit.SECONDS);
+
+        for (int i = 0; i < instanceProcessors.length; i++)
+        {
+            // keep these thread active
+            instanceProcessors[i] = new InstanceProcessor(NORM_PRIORITY);
+            instanceProcessors[i].setDefaultThreadName("Instance processor (normal priority)");
+            instanceProcessors[i].setKeepAliveTime(3, TimeUnit.SECONDS);
+            bgInstanceProcessors[i] = new InstanceProcessor(MIN_PRIORITY);
+            bgInstanceProcessors[i].setDefaultThreadName("Instance processor (low priority)");
+            bgInstanceProcessors[i].setKeepAliveTime(3, TimeUnit.SECONDS);
+        }
+    }
 
     /**
      * @return true if the current thread is an AWT event dispatching thread.
@@ -210,8 +239,11 @@ public class ThreadUtil
     public static void shutdown()
     {
         bgProcessor.shutdown();
-        for (InstanceProcessor ip : instanceProcessors)
-            ip.shutdown();
+        for (int i = 0; i < instanceProcessors.length; i++)
+        {
+            instanceProcessors[i].shutdown();
+            bgInstanceProcessors[i].shutdown();
+        }
     }
 
     /**
@@ -219,66 +251,14 @@ public class ThreadUtil
      */
     public static boolean isShutdownAndTerminated()
     {
-        for (InstanceProcessor ip : instanceProcessors)
-            if (!ip.isTerminated())
+        for (int i = 0; i < instanceProcessors.length; i++)
+        {
+            if (!instanceProcessors[i].isTerminated())
                 return false;
-
+            if (!bgInstanceProcessors[i].isTerminated())
+                return false;
+        }
         return bgProcessor.isTerminated();
-    }
-
-    /**
-     * Add background processing (low priority) of specified Runnable.<br>
-     * Return <code>false</code> if background process queue is full.
-     */
-    public static boolean bgRun(Runnable runnable, boolean onEDT)
-    {
-        return (bgProcessor.submit(runnable, onEDT) != null);
-    }
-
-    /**
-     * Add background processing (low priority) of specified Runnable.<br>
-     * Return <code>false</code> if background process queue is full.
-     */
-    public static boolean bgRun(Runnable runnable)
-    {
-        return bgRun(runnable, false);
-    }
-
-    /**
-     * @deprecated Use {@link #bgRun(Runnable)} instead and check for acceptance.
-     */
-    @Deprecated
-    public static void bgRunWait(Runnable runnable)
-    {
-        while (!bgRun(runnable, false))
-            ThreadUtil.sleep(1);
-    }
-
-    /**
-     * Add single background processing (normal priority) of specified Runnable.<br>
-     * If this <code>runnable</code> instance is already pending in waiting background process<br>
-     * then nothing is done.<br>
-     * Return <code>false</code> if background process queue is full.
-     */
-    public static boolean bgRunSingle(Runnable runnable, boolean onEDT)
-    {
-        final InstanceProcessor p = getInstanceProcessor(runnable);
-
-        if (p.hasWaitingTasks(runnable))
-            return false;
-
-        return (p.submit(runnable, onEDT) != null);
-    }
-
-    /**
-     * Add single background processing (normal priority) of specified Runnable.<br>
-     * If this <code>runnable</code> instance is already pending in waiting background process<br>
-     * then nothing is done.<br>
-     * Return <code>false</code> if background process queue is full.
-     */
-    public static boolean bgRunSingle(Runnable runnable)
-    {
-        return bgRunSingle(runnable, false);
     }
 
     /**
@@ -309,7 +289,7 @@ public class ThreadUtil
      * 
      * @param forceLater
      *        If <code>true</code> the <code>Callable</code> is forced to execute later even if we
-     *        are on the Swing EDT.
+     *        are on the EDT.
      */
     public static <T> Future<T> invokeLater(Callable<T> callable, boolean forceLater) throws Exception
     {
@@ -319,10 +299,75 @@ public class ThreadUtil
     }
 
     /**
-     * Add background processing (low priority) of specified Callable task.<br>
-     * Return a Future representing the pending result of the task or <code>null</code> if
-     * background process queue is full.
+     * Retrieve the instance processor (normal priority) to use for specified runnable.
      */
+    private static InstanceProcessor getInstanceProcessor(Runnable runnable)
+    {
+        // get processor index from the hash code
+        return instanceProcessors[runnable.hashCode() % instanceProcessors.length];
+    }
+
+    /**
+     * Retrieve the instance processor (normal priority) to use for specified callable.
+     */
+    private static InstanceProcessor getInstanceProcessor(Callable<?> callable)
+    {
+        // get processor index from the hash code
+        return instanceProcessors[callable.hashCode() % instanceProcessors.length];
+    }
+
+    /**
+     * Retrieve the instance processor (low priority) to use for specified runnable.
+     */
+    private static InstanceProcessor getInstanceProcessorLow(Runnable runnable)
+    {
+        // get processor index from the hash code
+        return instanceProcessors[runnable.hashCode() % instanceProcessors.length];
+    }
+
+    /**
+     * Retrieve the instance processor (low priority) to use for specified callable.
+     */
+    private static InstanceProcessor getInstanceProcessorLow(Callable<?> callable)
+    {
+        // get processor index from the hash code
+        return instanceProcessors[callable.hashCode() % instanceProcessors.length];
+    }
+
+    /**
+     * @deprecated Use {@link #bgRun(Runnable)} instead and {@link #invokeNow(Runnable)} separately.
+     * @see #bgRun(Runnable)
+     */
+    @Deprecated
+    public static boolean bgRun(Runnable runnable, boolean onEDT)
+    {
+        return (bgProcessor.submit(runnable, onEDT) != null);
+    }
+
+    /**
+     * @deprecated Use {@link #bgRun(Runnable)} instead and check for acceptance.
+     */
+    @Deprecated
+    public static void bgRunWait(Runnable runnable)
+    {
+        while (!bgRun(runnable))
+            ThreadUtil.sleep(1);
+    }
+
+    /**
+     * Add background processing (low priority) of specified Runnable.<br>
+     * Return <code>false</code> if background process queue is full.
+     */
+    public static boolean bgRun(Runnable runnable)
+    {
+        return (bgProcessor.submit(runnable) != null);
+    }
+
+    /**
+     * @deprecated Use {@link #bgRun(Callable)} instead and {@link #invokeNow(Callable)} separately.
+     * @see #bgRun(Callable)
+     */
+    @Deprecated
     public static <T> Future<T> bgRun(Callable<T> callable, boolean onEDT)
     {
         return bgProcessor.submit(callable, onEDT);
@@ -335,54 +380,105 @@ public class ThreadUtil
      */
     public static <T> Future<T> bgRun(Callable<T> callable)
     {
-        return bgRun(callable, false);
+        return bgProcessor.submit(callable);
     }
 
     /**
-     * Add single background processing (normal priority) of specified Callable task.<br>
-     * If this <code>Callable</code> instance is already pending in waiting background process<br>
-     * then nothing is done.<br>
-     * Return a Future representing the pending result of the task or <code>null</code> if
-     * background process queue is full.
+     * @deprecated Use {@link #runSingle(Runnable)} instead and {@link #invokeNow(Runnable)}
+     *             separately.
+     * @see #bgRunSingle(Runnable)
      */
+    @Deprecated
+    public static boolean bgRunSingle(Runnable runnable, boolean onEDT)
+    {
+        final InstanceProcessor processor = getInstanceProcessor(runnable);
+
+        if (processor.hasWaitingTasks(runnable))
+            return false;
+
+        return (processor.submit(runnable, onEDT) != null);
+    }
+
+    /**
+     * @deprecated Use {@link #runSingle(Callable)} instead and {@link #invokeNow(Callable)}
+     *             separately.
+     * @see #bgRunSingle(Callable)
+     */
+    @Deprecated
     public static <T> Future<T> bgRunSingle(Callable<T> callable, boolean onEDT)
     {
-        final InstanceProcessor p = getInstanceProcessor(callable);
+        final InstanceProcessor processor = getInstanceProcessor(callable);
 
-        if (p.hasWaitingTasks(callable))
+        if (processor.hasWaitingTasks(callable))
             return null;
 
-        return p.submit(callable, onEDT);
+        return processor.submit(callable, onEDT);
     }
 
     /**
-     * Add single background processing (normal priority) of specified Callable task.<br>
-     * If this <code>Callable</code> instance is already pending in waiting background process<br>
-     * then nothing is done.<br>
+     * Add single processing (low priority) of specified Runnable.<br>
+     * If this <code>Runnable</code> instance is already pending in single processes queue then
+     * nothing is done.<br>
+     * Return <code>false</code> if single processes queue is full.
+     */
+    public static boolean bgRunSingle(Runnable runnable)
+    {
+        final InstanceProcessor processor = getInstanceProcessorLow(runnable);
+
+        if (processor.hasWaitingTasks(runnable))
+            return false;
+
+        return (processor.submit(runnable) != null);
+    }
+
+    /**
+     * Add single processing (low priority) of specified Callable task.<br>
+     * If this <code>Callable</code> instance is already pending in single processes queue then
+     * nothing is done.<br>
      * Return a Future representing the pending result of the task or <code>null</code> if
-     * background process queue is full.
+     * single processes queue is full.
      */
     public static <T> Future<T> bgRunSingle(Callable<T> callable)
     {
-        return bgRunSingle(callable, false);
+        final InstanceProcessor processor = getInstanceProcessorLow(callable);
+
+        if (processor.hasWaitingTasks(callable))
+            return null;
+
+        return processor.submit(callable);
     }
 
     /**
-     * Retrieve the instance processor to use for specified runnable.
+     * Add single processing (normal priority) of specified Runnable.<br>
+     * If this <code>Runnable</code> instance is already pending in single processes queue then
+     * nothing is done.<br>
+     * Return <code>false</code> if single processes queue is full.
      */
-    private static InstanceProcessor getInstanceProcessor(Runnable runnable)
+    public static boolean runSingle(Runnable runnable)
     {
-        // get processor index from the hash code
-        return instanceProcessors[runnable.hashCode() % instanceProcessors.length];
+        final InstanceProcessor processor = getInstanceProcessor(runnable);
+
+        if (processor.hasWaitingTasks(runnable))
+            return false;
+
+        return (processor.submit(runnable) != null);
     }
 
     /**
-     * Retrieve the instance processor to use for specified callable.
+     * Add single processing (normal priority) of specified Callable task.<br>
+     * If this <code>Callable</code> instance is already pending in single processes queue then
+     * nothing is done.<br>
+     * Return a Future representing the pending result of the task or <code>null</code> if
+     * single processes queue is full.
      */
-    private static InstanceProcessor getInstanceProcessor(Callable<?> callable)
+    public static <T> Future<T> runSingle(Callable<T> callable)
     {
-        // get processor index from the hash code
-        return instanceProcessors[callable.hashCode() % instanceProcessors.length];
+        final InstanceProcessor processor = getInstanceProcessor(callable);
+
+        if (processor.hasWaitingTasks(callable))
+            return null;
+
+        return processor.submit(callable);
     }
 
     /**
@@ -403,20 +499,42 @@ public class ThreadUtil
 
     /**
      * Return true if the specified runnable is waiting to be processed<br>
-     * in single scheme background processing.
+     * in single scheme background processing (low priority).
      */
     public static boolean hasWaitingBgSingleTask(Runnable runnable)
     {
-        return getInstanceProcessor(runnable).hasWaitingTasks(runnable);
+        final InstanceProcessor processor = getInstanceProcessorLow(runnable);
+        return processor.hasWaitingTasks(runnable);
     }
 
     /**
      * Return true if the specified callable is waiting to be processed<br>
-     * in single scheme background processing.
+     * in single scheme background processing (low priority).
      */
     public static boolean hasWaitingBgSingleTask(Callable<?> callable)
     {
-        return getInstanceProcessor(callable).hasWaitingTasks(callable);
+        final InstanceProcessor processor = getInstanceProcessorLow(callable);
+        return processor.hasWaitingTasks(callable);
+    }
+
+    /**
+     * Return true if the specified runnable is waiting to be processed<br>
+     * in single scheme background processing (normal priority).
+     */
+    public static boolean hasWaitingSingleTask(Runnable runnable)
+    {
+        final InstanceProcessor processor = getInstanceProcessor(runnable);
+        return processor.hasWaitingTasks(runnable);
+    }
+
+    /**
+     * Return true if the specified callable is waiting to be processed<br>
+     * in single scheme background processing (normal priority).
+     */
+    public static boolean hasWaitingSingleTask(Callable<?> callable)
+    {
+        final InstanceProcessor processor = getInstanceProcessor(callable);
+        return processor.hasWaitingTasks(callable);
     }
 
     /**

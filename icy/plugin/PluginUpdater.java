@@ -24,11 +24,10 @@ import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.plugin.PluginUpdateFrame;
 import icy.main.Icy;
 import icy.network.NetworkUtil;
-import icy.system.thread.SingleProcessor;
+import icy.system.thread.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Plugin updater class.
@@ -37,40 +36,26 @@ import java.util.concurrent.TimeUnit;
  */
 public class PluginUpdater
 {
-    private static class Checker implements Runnable
+    private static final int ANNOUNCE_SHOWTIME = 15;
+
+    // internal
+    private static boolean silent;
+    private static boolean checking = false;
+    private static Runnable checker = new Runnable()
     {
-        private boolean silent;
-
-        public Checker(boolean silent)
-        {
-            super();
-
-            this.silent = silent;
-        }
-
         @Override
         public void run()
         {
-            processCheckUpdate(silent);
+            processCheckUpdate();
         }
-    }
-
-    private static final int ANNOUNCE_SHOWTIME = 15;
-
-    private static final SingleProcessor processor = new SingleProcessor(false, "Plugin updater");
-
-    static
-    {
-        // we want the processor to stay alive
-        processor.setKeepAliveTime(1, TimeUnit.DAYS);
-    }
+    };
 
     /**
      * return true if we are currently checking for update
      */
     public static boolean isCheckingForUpdate()
     {
-        return processor.isProcessing();
+        return checking;
     }
 
     /**
@@ -78,7 +63,11 @@ public class PluginUpdater
      */
     public static void checkUpdate(boolean silent)
     {
-        processor.submit(new Checker(silent));
+        if (!isCheckingForUpdate())
+        {
+            PluginUpdater.silent = silent;
+            ThreadUtil.bgRunSingle(checker);
+        }
     }
 
     /**
@@ -87,7 +76,7 @@ public class PluginUpdater
     @Deprecated
     public static void checkUpdate(boolean showProgress, boolean auto)
     {
-        checkUpdate(auto);
+        checkUpdate(!showProgress || auto);
     }
 
     /**
@@ -143,84 +132,95 @@ public class PluginUpdater
         }
     }
 
-    static void processCheckUpdate(boolean silent)
+    /**
+     * Check for plugins update process (synchronized method)
+     */
+    public static synchronized void processCheckUpdate()
     {
-        final List<PluginDescriptor> toInstallPlugins = new ArrayList<PluginDescriptor>();
-        final List<PluginDescriptor> localPlugins = PluginLoader.getPlugins(false);
-        final ProgressFrame checkingFrame;
-
-        if (!silent && !Icy.getMainInterface().isHeadLess())
-            checkingFrame = new CancelableProgressFrame("checking for plugins update...");
-        else
-            checkingFrame = null;
+        checking = true;
         try
         {
-            // reload online plugins from all active repositories
-            PluginRepositoryLoader.reload();
-            // wait for basic infos
-            PluginRepositoryLoader.waitBasicLoaded();
+            final List<PluginDescriptor> toInstallPlugins = new ArrayList<PluginDescriptor>();
+            final List<PluginDescriptor> localPlugins = PluginLoader.getPlugins(false);
+            final ProgressFrame checkingFrame;
 
-            if (PluginRepositoryLoader.failed())
+            if (!silent && !Icy.getMainInterface().isHeadLess())
+                checkingFrame = new CancelableProgressFrame("checking for plugins update...");
+            else
+                checkingFrame = null;
+            try
             {
-                if (!silent && !Icy.getMainInterface().isHeadLess())
+                // reload online plugins from all active repositories
+                PluginRepositoryLoader.reload();
+                // wait for basic infos
+                PluginRepositoryLoader.waitBasicLoaded();
+
+                if (PluginRepositoryLoader.failed())
                 {
-                    if (!NetworkUtil.hasInternetAccess())
-                        new AnnounceFrame("You are not connected to internet.", 10);
-                    else
-                        new AnnounceFrame("Can't access the repositories... You should verify your connection.", 10);
+                    if (!silent && !Icy.getMainInterface().isHeadLess())
+                    {
+                        if (!NetworkUtil.hasInternetAccess())
+                            new AnnounceFrame("You are not connected to internet.", 10);
+                        else
+                            new AnnounceFrame("Can't access the repositories... You should verify your connection.", 10);
+                    }
+
+                    return;
                 }
 
-                return;
+                for (PluginDescriptor localPlugin : localPlugins)
+                {
+                    // find update
+                    final PluginDescriptor onlinePlugin = getUpdate(localPlugin);
+
+                    // update found, add to the list
+                    if (onlinePlugin != null)
+                    {
+                        // we load complete descriptor so we will have the changeslog
+                        onlinePlugin.loadDescriptor();
+                        toInstallPlugins.add(onlinePlugin);
+                    }
+                }
+            }
+            finally
+            {
+                if (checkingFrame != null)
+                    checkingFrame.close();
             }
 
-            for (PluginDescriptor localPlugin : localPlugins)
+            // some updates availables ?
+            if (!toInstallPlugins.isEmpty())
             {
-                // find update
-                final PluginDescriptor onlinePlugin = getUpdate(localPlugin);
-
-                // update found, add to the list
-                if (onlinePlugin != null)
+                // silent update or headless mode
+                if (silent || Icy.getMainInterface().isHeadLess())
                 {
-                    // we load complete descriptor so we will have the changeslog
-                    onlinePlugin.loadDescriptor();
-                    toInstallPlugins.add(onlinePlugin);
+                    // automatically install all updates (orderer depending dependencies)
+                    updatePlugins(toInstallPlugins, true);
                 }
+                else
+                {
+                    // show announcement for 15 seconds
+                    new AnnounceFrame(toInstallPlugins.size() + " plugin update are available", "View", new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            // show pluginInstaller frame
+                            new PluginUpdateFrame(toInstallPlugins);
+                        }
+                    }, ANNOUNCE_SHOWTIME);
+                }
+            }
+            else
+            {
+                // inform that there is no plugin update available
+                if (!silent && !Icy.getMainInterface().isHeadLess())
+                    new AnnounceFrame("No plugin udpate available", 10);
             }
         }
         finally
         {
-            if (checkingFrame != null)
-                checkingFrame.close();
-        }
-
-        // some updates availables ?
-        if (!toInstallPlugins.isEmpty())
-        {
-            // silent update or headless mode
-            if (silent || Icy.getMainInterface().isHeadLess())
-            {
-                // automatically install all updates (orderer depending dependencies)
-                updatePlugins(toInstallPlugins, true);
-            }
-            else
-            {
-                // show announcement for 15 seconds
-                new AnnounceFrame(toInstallPlugins.size() + " plugin update are available", "View", new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        // show pluginInstaller frame
-                        new PluginUpdateFrame(toInstallPlugins);
-                    }
-                }, ANNOUNCE_SHOWTIME);
-            }
-        }
-        else
-        {
-            // inform that there is no plugin update available
-            if (!silent && !Icy.getMainInterface().isHeadLess())
-                new AnnounceFrame("No plugin udpate available", 10);
+            checking = false;
         }
     }
 }

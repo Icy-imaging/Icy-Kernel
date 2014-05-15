@@ -208,19 +208,27 @@ public class PluginsPanel extends JPanel implements GlobalPluginListener, Runnab
     @Override
     public void run()
     {
-        // rebuild the panel
-        rebuildPluginPanel();
+        // need to be done on EDT
+        ThreadUtil.invokeNow(new Runnable()
+        {
+
+            @Override
+            public void run()
+            {
+                rebuildPluginPanel();
+            }
+        });
     }
 
     @Override
     public void pluginStarted(Plugin plugin)
     {
-        ThreadUtil.bgRunSingle(this, true);
+        ThreadUtil.runSingle(this);
     }
 
     @Override
     public void pluginEnded(Plugin plugin)
     {
-        ThreadUtil.bgRunSingle(this, true);
+        ThreadUtil.runSingle(this);
     }
 }

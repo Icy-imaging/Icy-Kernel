@@ -117,7 +117,7 @@ public class SearchEngine implements SearchResultConsumer, PluginLoaderListener
 
     private void updateSearchProducers()
     {
-        ThreadUtil.bgRunSingle(searchProviderSetter);
+        ThreadUtil.runSingle(searchProviderSetter);
     }
 
     /**

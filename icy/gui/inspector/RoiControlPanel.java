@@ -591,7 +591,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
      */
     public void refreshROIActions()
     {
-        ThreadUtil.bgRunSingle(roiActionsRefresher, false);
+        ThreadUtil.runSingle(roiActionsRefresher);
     }
 
     /**
@@ -739,7 +739,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
      */
     public void refreshROIProperties()
     {
-        ThreadUtil.bgRunSingle(roiPropertiesRefresher, false);
+        ThreadUtil.runSingle(roiPropertiesRefresher);
     }
 
     /**
@@ -822,8 +822,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
      */
     public void refreshROIActionsAndProperties()
     {
-        ThreadUtil.bgRunSingle(roiActionsRefresher, false);
-        ThreadUtil.bgRunSingle(roiPropertiesRefresher, false);
+        ThreadUtil.runSingle(roiActionsRefresher);
+        ThreadUtil.runSingle(roiPropertiesRefresher);
     }
 
     @Override

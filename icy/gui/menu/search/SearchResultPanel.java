@@ -69,7 +69,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     private static final int MAX_ROW = 15;
 
     /** Associated Search Bar */
-    private final SearchBar searchBar;
+    final SearchBar searchBar;
 
     /** PopupMenu */
     JRichTooltipPanel tooltipPanel;
@@ -78,9 +78,9 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     boolean toolTipForceRefresh;
 
     /** GUI */
-    private final SearchResultTableModel tableModel;
+    final SearchResultTableModel tableModel;
     final JTable table;
-    private final JButton moreResultBtn;
+    final JButton moreResultBtn;
     final JScrollPane scrollPane;
 
     /**
@@ -88,7 +88,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
      */
     private final Runnable refresher;
     private final Runnable toolTipRefresher;
-    private boolean firstResultsDisplay;
+    boolean firstResultsDisplay;
 
     public SearchResultPanel(final SearchBar sb)
     {
@@ -330,44 +330,52 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     {
         final SearchResult searchResult = getSelectedResult();
 
-        if (!isVisible() || (searchResult == null))
+        // need to be done on EDT
+        ThreadUtil.invokeNow(new Runnable()
         {
-            hideToolTip();
-            return;
-        }
+            @Override
+            public void run()
+            {
+                if (!isVisible() || (searchResult == null))
+                {
+                    hideToolTip();
+                    return;
+                }
 
-        final RichTooltip rtp = searchResult.getRichToolTip();
+                final RichTooltip rtp = searchResult.getRichToolTip();
 
-        if (rtp == null)
-        {
-            hideToolTip();
-            return;
-        }
+                if (rtp == null)
+                {
+                    hideToolTip();
+                    return;
+                }
 
-        // tool tip is not yet visible or result changed --> refresh the tool tip
-        if ((tooltip == null) || (searchResult != toolTipResult) || toolTipForceRefresh)
-        {
-            // hide out dated tool tip
-            hideToolTip();
-            
-            final Rectangle bounds = getBounds();
+                // tool tip is not yet visible or result changed --> refresh the tool tip
+                if ((tooltip == null) || (searchResult != toolTipResult) || toolTipForceRefresh)
+                {
+                    // hide out dated tool tip
+                    hideToolTip();
 
-            tooltipPanel = new JRichTooltipPanel(rtp);
+                    final Rectangle bounds = getBounds();
 
-            int x = bounds.x + bounds.width;
-            int y = bounds.y + (ROW_HEIGHT * table.getSelectedRow());
+                    tooltipPanel = new JRichTooltipPanel(rtp);
 
-            // adjust vertical position
-            y -= scrollPane.getVerticalScrollBar().getValue();
+                    int x = bounds.x + bounds.width;
+                    int y = bounds.y + (ROW_HEIGHT * table.getSelectedRow());
 
-            // show tooltip
-            tooltip = PopupFactory.getSharedInstance().getPopup(Icy.getMainInterface().getMainFrame(), tooltipPanel, x,
-                    y);
-            tooltip.show();
+                    // adjust vertical position
+                    y -= scrollPane.getVerticalScrollBar().getValue();
 
-            toolTipResult = searchResult;
-            toolTipForceRefresh = false;
-        }
+                    // show tooltip
+                    tooltip = PopupFactory.getSharedInstance().getPopup(Icy.getMainInterface().getMainFrame(),
+                            tooltipPanel, x, y);
+                    tooltip.show();
+
+                    toolTipResult = searchResult;
+                    toolTipForceRefresh = false;
+                }
+            }
+        });
     }
 
     /**
@@ -405,7 +413,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
      */
     public void refresh()
     {
-        ThreadUtil.bgRunSingle(refresher, true);
+        ThreadUtil.runSingle(refresher);
     }
 
     /**
@@ -416,56 +424,64 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
         final SearchEngine searchEngine = getSearchEngine();
         final List<SearchResult> results = searchEngine.getResults();
         final int resultCount = results.size();
-
-        if (resultCount == 0)
-        {
-            close(false);
-            return;
-        }
-
-        // fix row height (can be changed on LAF change)
-        table.setRowHeight(ROW_HEIGHT);
-
         // save selected
         final SearchResult selected = getSelectedResult();
 
-        if (firstResultsDisplay)
+        // need to be done on EDT
+        ThreadUtil.invokeNow(new Runnable()
         {
-            // limit result list size to MAX_ROW and refresh table data
-            if (tableModel.getMaxRowCount() != MAX_ROW)
-                tableModel.setMaxRowCount(MAX_ROW);
-            else
-                tableModel.fireTableDataChanged();
+            @Override
+            public void run()
+            {
+                // TODO Auto-generated method stub
+                if (resultCount == 0)
+                {
+                    close(false);
+                    return;
+                }
 
-            // no more need to re init the limited display
-            firstResultsDisplay = false;
-        }
-        else
-            tableModel.fireTableDataChanged();
+                // fix row height (can be changed on LAF change)
+                table.setRowHeight(ROW_HEIGHT);
 
-        // restore selected
-        setSelectedResult(selected);
+                if (firstResultsDisplay)
+                {
+                    // limit result list size to MAX_ROW and refresh table data
+                    if (tableModel.getMaxRowCount() != MAX_ROW)
+                        tableModel.setMaxRowCount(MAX_ROW);
+                    else
+                        tableModel.fireTableDataChanged();
 
-        final int maxRow = tableModel.getMaxRowCount();
+                    // no more need to re init the limited display
+                    firstResultsDisplay = false;
+                }
+                else
+                    tableModel.fireTableDataChanged();
 
-        // result list do not display all results ?
-        if ((maxRow > 0) && (resultCount > maxRow))
-        {
-            moreResultBtn.setText(maxRow + " / " + resultCount + " (show all)");
-            moreResultBtn.setVisible(true);
-        }
-        else
-            moreResultBtn.setVisible(false);
+                // restore selected
+                setSelectedResult(selected);
 
-        // update bounds and display window
-        final Point p = searchBar.getLocationOnScreen();
-        setBounds(p.x, p.y + searchBar.getHeight(), 600, getPanelHeight());
+                final int maxRow = tableModel.getMaxRowCount();
 
-        // show the result list
-        setVisible(true);
+                // result list do not display all results ?
+                if ((maxRow > 0) && (resultCount > maxRow))
+                {
+                    moreResultBtn.setText(maxRow + " / " + resultCount + " (show all)");
+                    moreResultBtn.setVisible(true);
+                }
+                else
+                    moreResultBtn.setVisible(false);
 
-        // update tooltip
-        updateToolTip();
+                // update bounds and display window
+                final Point p = searchBar.getLocationOnScreen();
+                setBounds(p.x, p.y + searchBar.getHeight(), 600, getPanelHeight());
+
+                // show the result list
+                setVisible(true);
+
+                // update tooltip
+                updateToolTip();
+            }
+        });
     }
 
     /**
@@ -501,7 +517,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     public void valueChanged(ListSelectionEvent e)
     {
         // selection changed --> update tooltip
-        ThreadUtil.bgRunSingle(toolTipRefresher, true);
+        ThreadUtil.runSingle(toolTipRefresher);
     }
 
     public void searchStarted()
@@ -522,7 +538,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
             if (result == getSelectedResult())
             {
                 toolTipForceRefresh = true;
-                ThreadUtil.bgRunSingle(toolTipRefresher, true);
+                ThreadUtil.runSingle(toolTipRefresher);
             }
         }
     }
