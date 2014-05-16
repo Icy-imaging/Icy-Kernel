@@ -771,7 +771,7 @@ public class RoiActions
     };
 
     public static IcyAbstractAction xlsExportAction = new IcyAbstractAction("Export", new IcyIcon(
-            ResourceUtil.ICON_XLS_EXPORT), "ROI Excel export", "Export all ROI informations in XLS file")
+            ResourceUtil.ICON_XLS_EXPORT), "ROI Excel export", "Export all ROI informations in XLS file", true, "Exporting...")
     {
         /**
          * 
@@ -786,7 +786,8 @@ public class RoiActions
 
             if ((sequence != null) && (roisPanel != null))
             {
-                final String content = roisPanel.getCSVFormattedInfos();
+                // get ROI infos (wait 1mn max to retrieve them)
+                final String content = roisPanel.getCSVFormattedInfos(60000);
 
                 if (StringUtil.isEmpty(content))
                 {

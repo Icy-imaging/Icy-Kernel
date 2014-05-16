@@ -80,11 +80,11 @@ public class PluginInstaller implements Runnable
     /**
      * plugin(s) to install FIFO
      */
-    private final ArrayList<PluginInstallInfo> installFIFO;
+    private final List<PluginInstallInfo> installFIFO;
     /**
      * plugin(s) to delete FIFO
      */
-    private final ArrayList<PluginInstallInfo> removeFIFO;
+    private final List<PluginInstallInfo> removeFIFO;
 
     /**
      * listeners

@@ -262,14 +262,12 @@ public class Processor extends ThreadPoolExecutor
      */
     public Processor(int maxWaiting, int numThread, int priority)
     {
-        super(numThread, numThread, 1000L, TimeUnit.MILLISECONDS,
-                (maxWaiting == -1) ? new LinkedBlockingQueue<Runnable>()
-                        : new LinkedBlockingQueue<Runnable>(maxWaiting));
+        super(numThread, numThread, 2L, TimeUnit.SECONDS, (maxWaiting == -1) ? new LinkedBlockingQueue<Runnable>()
+                : new LinkedBlockingQueue<Runnable>(maxWaiting));
 
         setThreadFactory(new ProcessorThreadFactory());
         setRejectedExecutionHandler(new ProcessorRejectedExecutionHandler());
         allowCoreThreadTimeOut(true);
-        setKeepAliveTime(2, TimeUnit.SECONDS);
 
         this.priority = priority;
         defaultThreadName = "Processor";

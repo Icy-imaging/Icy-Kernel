@@ -1128,7 +1128,39 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     }
 
     /**
-     * Returns all ROI informations in CSV format (tab separated)
+     * Returns all ROI informations in CSV format (tab separated).
+     * 
+     * @param waitCompletion
+     *        amount of time (in ms) to wait for ROI calculations to complete.<br>
+     *        <code>0</code> means that results are immediately returned<br>
+     *        <code>-1</code> means we wait until completion (if ROI are continuously modified it
+     *        may never return !)
+     * @see #getCSVFormattedInfos()
+     */
+    public String getCSVFormattedInfos(int waitCompletion)
+    {
+        if (waitCompletion != 0)
+        {
+            if (waitCompletion == -1)
+            {
+                while (roisToCompute.size() > 0)
+                    ThreadUtil.sleep(1);
+            }
+            else
+            {
+                final long st = System.currentTimeMillis();
+                while ((roisToCompute.size() > 0) && ((System.currentTimeMillis() - st) < waitCompletion))
+                    ThreadUtil.sleep(1);
+            }
+        }
+
+        return getCSVFormattedInfos();
+    }
+
+    /**
+     * Returns all ROI informations in CSV format (tab separated) immediately.
+     * 
+     * @see #getCSVFormattedInfos(int)
      */
     public String getCSVFormattedInfos()
     {
@@ -1303,6 +1335,8 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             intensityInfos = new IntensityInfo[0];
             sequenceInfInvalid = true;
             roiInfInvalid = true;
+            
+            requestCompute();
 
             roi.addListener(this);
         }

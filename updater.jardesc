@@ -11,24 +11,38 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread{ThreadUtil.java"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.util{StringUtil.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system{IcyExceptionHandler.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file.xml{XMLPersistent.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{IcyPreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{PluginsPreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.math{MathUtil.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.network{URLUtil.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread{Processor.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{WorkspaceLocalPreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread{InstanceProcessor.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{PluginPreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{PluginLocalPreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file{FileUtil.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{PluginOnlinePreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread{ThreadUtil.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.update{Updater.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.util{StringUtil.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{NetworkPreferences.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.network{NetworkUtil.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.array{DynamicArray.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system{SystemUtil.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.common{Version.java"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file.xml{XMLPersistent.java"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.math{MathUtil.java"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.network{URLUtil.java"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread{Processor.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{WorkspacePreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{XMLPreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{RepositoryPreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{GeneralPreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{CanvasPreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{ApplicationPreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{WorkspaceOnlinePreferences.java"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences{ChatPreferences.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.update{ElementDescriptor.java"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.thread{InstanceProcessor.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin{PluginDescriptor.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.util{ZipUtil.java"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.util{XMLUtil.java"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file{FileUtil.java"/>
     </selectedElements>
 </jardesc>

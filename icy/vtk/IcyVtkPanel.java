@@ -54,6 +54,15 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
     }
 
     @Override
+    public void removeNotify()
+    {
+        super.removeNotify();
+
+        // important to release timer here
+        timer.cancel();
+    }
+
+    @Override
     public void setBounds(int x, int y, int width, int height)
     {
         super.setBounds(x, y, width, height);
@@ -241,10 +250,10 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
             }
         }, 1000);
 
-//        // set back quality rendering
-//        rw.SetDesiredUpdateRate(0.01);
-//        // request repaint
-//        repaint();
+        // // set back quality rendering
+        // rw.SetDesiredUpdateRate(0.01);
+        // // request repaint
+        // repaint();
     }
 
     @Override
@@ -309,19 +318,21 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
         if (!e.isConsumed())
             super.keyReleased(e);
     }
-    
+
     @Override
     public void lock()
     {
-        if (windowset == 0) return;
-        
+        if (windowset == 0)
+            return;
+
         super.lock();
     }
-    
+
     @Override
     public void unlock()
     {
-        if (windowset == 0) return;
+        if (windowset == 0)
+            return;
 
         super.unlock();
     }
