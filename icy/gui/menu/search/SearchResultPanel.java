@@ -302,6 +302,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
         {
             tooltip.hide();
             tooltip = null;
+            toolTipResult = null;
         }
     }
 
