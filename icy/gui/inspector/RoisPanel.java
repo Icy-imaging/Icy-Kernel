@@ -174,6 +174,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     final XMLPreferences preferences;
     final Semaphore modifySelection;
     // complete refresh of the table
+    final Runnable roiListRefresher;
     final Runnable tableDataStructureRefresher;
     final Runnable tableDataRefresher;
     final Runnable tableSelectionRefresher;
@@ -191,6 +192,14 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         modifySelection = new Semaphore(1);
         columnCount = 0;
 
+        roiListRefresher = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                refreshRoisInternal();
+            }
+        };
         tableDataStructureRefresher = new Runnable()
         {
             @Override
@@ -672,76 +681,6 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         nameFilter.setText(name);
     }
 
-    /**
-     * refresh ROI list
-     */
-    protected void refreshRois()
-    {
-        final Sequence sequence = getSequence();
-
-        if (sequence != null)
-        {
-            final List<ROI> newRois = sequence.getROIs();
-            final List<ROI> oldRois = new ArrayList<ROI>();
-
-            // build old ROI list
-            for (int i = 0; i < rois.size(); i++)
-                oldRois.add(rois.get(i).getROI());
-
-            // remove ROI which are no more in the list (use HashSet for fast contains())
-            final Set<ROI> newRoiSet = new HashSet<ROI>(newRois);
-            for (int i = oldRois.size() - 1; i >= 0; i--)
-                if (!newRoiSet.contains(oldRois.get(i)))
-                    roisToCompute.remove(rois.remove(i));
-
-            // add ROI which has been added (use HashSet for fast contains())
-            final Set<ROI> oldRoiSet = new HashSet<ROI>(oldRois);
-            for (ROI roi : newRois)
-                if (!oldRoiSet.contains(roi))
-                    rois.add(new ROIInfo(roi));
-        }
-        else
-        {
-            // no change --> exit
-            if (rois.isEmpty())
-                return;
-
-            // clear ROI list
-            rois.clear();
-        }
-
-        // need to refresh the filtered list
-        refreshFilteredRois();
-    }
-
-    /**
-     * refresh filtered ROI list (and refresh table data according)
-     */
-    protected void refreshFilteredRois()
-    {
-        final List<ROIInfo> newFilteredRois = getFilteredList(nameFilter.getText());
-
-        final int newSize = newFilteredRois.size();
-        final int oldSize = filteredRois.size();
-
-        // easy optimization
-        if ((newSize == 0) && (oldSize == 0))
-            return;
-
-        // same size
-        if (newSize == oldSize)
-        {
-            // same values, don't need to update it
-            if (new HashSet<ROIInfo>(newFilteredRois).containsAll(filteredRois))
-                return;
-        }
-
-        // update filtered ROI list
-        filteredRois = newFilteredRois;
-        // refresh whole table
-        refreshTableDataStructure();
-    }
-
     ROIInfo getRoiInfoToCompute()
     {
         return null;
@@ -938,6 +877,75 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         }
 
         return result;
+    }
+
+    /**
+     * refresh ROI list
+     */
+    protected void refreshRois()
+    {
+        ThreadUtil.runSingle(roiListRefresher);
+    }
+
+    /**
+     * refresh ROI list
+     */
+    protected void refreshRoisInternal()
+    {
+        final Sequence sequence = getSequence();
+
+        if (sequence != null)
+        {
+            final List<ROI> newRois = sequence.getROIs();
+            final List<ROI> oldRois = new ArrayList<ROI>();
+
+            // build old ROI list
+            for (int i = 0; i < rois.size(); i++)
+                oldRois.add(rois.get(i).getROI());
+
+            // remove ROI which are no more in the list (use HashSet for fast contains())
+            final Set<ROI> newRoiSet = new HashSet<ROI>(newRois);
+            for (int i = oldRois.size() - 1; i >= 0; i--)
+                if (!newRoiSet.contains(oldRois.get(i)))
+                    roisToCompute.remove(rois.remove(i));
+
+            // add ROI which has been added (use HashSet for fast contains())
+            final Set<ROI> oldRoiSet = new HashSet<ROI>(oldRois);
+            for (ROI roi : newRois)
+                if (!oldRoiSet.contains(roi))
+                    rois.add(new ROIInfo(roi));
+        }
+        else
+        {
+            // no change --> exit
+            if (rois.isEmpty())
+                return;
+
+            // clear ROI list
+            rois.clear();
+        }
+
+        // need to refresh the filtered list
+        final List<ROIInfo> newFilteredRois = getFilteredList(nameFilter.getText());
+        final int newSize = newFilteredRois.size();
+        final int oldSize = filteredRois.size();
+
+        // easy optimization
+        if ((newSize == 0) && (oldSize == 0))
+            return;
+
+        // same size
+        if (newSize == oldSize)
+        {
+            // same values, don't need to update it
+            if (new HashSet<ROIInfo>(newFilteredRois).containsAll(filteredRois))
+                return;
+        }
+
+        // update filtered ROI list
+        filteredRois = newFilteredRois;
+        // refresh whole table
+        refreshTableDataStructure();
     }
 
     public void refreshTableDataStructure()
