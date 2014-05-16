@@ -158,7 +158,6 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     protected void repositoryChanged()
     {
         refreshPlugins();
-        refreshTableData();
     }
 
     @Override

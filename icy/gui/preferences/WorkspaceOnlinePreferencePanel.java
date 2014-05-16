@@ -121,14 +121,13 @@ public class WorkspaceOnlinePreferencePanel extends WorkspaceListPreferencePanel
     protected void repositoryChanged()
     {
         refreshWorkspaces();
-        refreshTableData();
     }
 
     @Override
     protected void reloadWorkspaces()
     {
         WorkspaceRepositoryLoader.reload();
-        updateButtonsState();
+        refreshWorkspaces();
     }
 
     @Override

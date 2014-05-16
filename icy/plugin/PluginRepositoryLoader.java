@@ -28,6 +28,7 @@ import icy.preferences.PluginPreferences;
 import icy.preferences.RepositoryPreferences;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.system.IcyExceptionHandler;
+import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.XMLUtil;
 
@@ -54,8 +55,6 @@ public class PluginRepositoryLoader
 
     private class Loader implements Runnable
     {
-        private boolean loading;
-
         public Loader()
         {
             super();
@@ -64,107 +63,95 @@ public class PluginRepositoryLoader
         @Override
         public void run()
         {
-            loading = true;
+            final List<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
+
             try
             {
-                try
-                {
-                    final List<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
-                    final List<RepositoryInfo> repositories = RepositoryPreferences.getRepositeries();
+                final List<RepositoryInfo> repositories = RepositoryPreferences.getRepositeries();
 
-                    // load online plugins from all active repositories
-                    for (RepositoryInfo repoInfo : repositories)
+                // load online plugins from all active repositories
+                for (RepositoryInfo repoInfo : repositories)
+                {
+                    // reload requested --> stop current loading
+                    if (processor.hasWaitingTasks())
+                        return;
+
+                    if (repoInfo.isEnabled())
                     {
-                        // reload requested --> stop current loading
-                        if (ThreadUtil.hasWaitingBgSingleTask(this))
-                            return;
+                        final List<PluginDescriptor> pluginsRepos = loadInternal(repoInfo);
 
-                        if (repoInfo.isEnabled())
+                        if (pluginsRepos == null)
                         {
-                            final List<PluginDescriptor> pluginsRepos = loadInternal(repoInfo);
-
-                            if (pluginsRepos == null)
-                            {
-                                failed = true;
-                                return;
-                            }
-
-                            newPlugins.addAll(pluginsRepos);
+                            failed = true;
+                            return;
                         }
+
+                        newPlugins.addAll(pluginsRepos);
                     }
-
-                    // sort list on plugin class name
-                    Collections.sort(newPlugins, PluginNameSorter.instance);
-
-                    plugins = newPlugins;
                 }
-                catch (Exception e)
+
+                // sort list on plugin class name
+                Collections.sort(newPlugins, PluginNameSorter.instance);
+
+                plugins = newPlugins;
+            }
+            catch (Exception e)
+            {
+                IcyExceptionHandler.showErrorMessage(e, true);
+                failed = true;
+                return;
+            }
+
+            // notify change for basic infos
+            basicLoaded = true;
+            changed(null);
+
+            // we load descriptor
+            for (PluginDescriptor plugin : plugins)
+            {
+                // reload requested --> stop current loading
+                if (processor.hasWaitingTasks())
+                    return;
+                // internet connection lost --> failed
+                if (!NetworkUtil.hasInternetAccess())
                 {
-                    IcyExceptionHandler.showErrorMessage(e, true);
                     failed = true;
                     return;
                 }
 
-                // notify change for basic infos
-                basicLoaded = true;
-                changed(null);
-
-                // we load descriptor
-                for (PluginDescriptor plugin : plugins)
-                {
-                    // reload requested --> stop current loading
-                    if (ThreadUtil.hasWaitingBgSingleTask(this))
-                        return;
-                    // internet connection lost --> failed
-                    if (!NetworkUtil.hasInternetAccess())
-                    {
-                        failed = true;
-                        return;
-                    }
-
-                    plugin.loadDescriptor();
-                }
-
-                // sort list on plugin name
-                synchronized (plugins)
-                {
-                    Collections.sort(plugins, PluginNameSorter.instance);
-                }
-
-                // notify final change for descriptors loading
-                descriptorsLoaded = true;
-                changed(null);
-
-                // then we load images
-                for (PluginDescriptor plugin : plugins)
-                {
-                    // reload requested --> stop current loading
-                    if (ThreadUtil.hasWaitingBgSingleTask(this))
-                        return;
-                    // internet connection lost --> failed
-                    if (!NetworkUtil.hasInternetAccess())
-                    {
-                        failed = true;
-                        return;
-                    }
-
-                    plugin.loadImages();
-                    // notify change
-                    changed(plugin);
-                }
-
-                // images loaded
-                imagesLoaded = true;
+                plugin.loadDescriptor();
             }
-            finally
+
+            // sort list on plugin name
+            synchronized (plugins)
             {
-                loading = false;
+                Collections.sort(plugins, PluginNameSorter.instance);
             }
-        }
 
-        public boolean isLoading()
-        {
-            return loading;
+            // notify final change for descriptors loading
+            descriptorsLoaded = true;
+            changed(null);
+
+            // then we load images
+            for (PluginDescriptor plugin : plugins)
+            {
+                // reload requested --> stop current loading
+                if (processor.hasWaitingTasks())
+                    return;
+                // internet connection lost --> failed
+                if (!NetworkUtil.hasInternetAccess())
+                {
+                    failed = true;
+                    return;
+                }
+
+                plugin.loadImages();
+                // notify change
+                changed(plugin);
+            }
+
+            // images loaded
+            imagesLoaded = true;
         }
     }
 
@@ -196,6 +183,7 @@ public class PluginRepositoryLoader
     boolean failed;
 
     private final Loader loader;
+    final SingleProcessor processor;
 
     /**
      * static class
@@ -208,6 +196,8 @@ public class PluginRepositoryLoader
         listeners = new EventListenerList();
 
         loader = new Loader();
+        processor = new SingleProcessor(true, "Online Plugin Loader");
+
         // initial loading
         load();
     }
@@ -297,7 +287,7 @@ public class PluginRepositoryLoader
         imagesLoaded = false;
         failed = false;
 
-        ThreadUtil.bgRunSingle(loader);
+        processor.submit(loader);
     }
 
     /**
@@ -407,7 +397,7 @@ public class PluginRepositoryLoader
      */
     public static boolean isLoading()
     {
-        return instance.loader.isLoading() || ThreadUtil.hasWaitingBgSingleTask(instance.loader);
+        return instance.processor.isProcessing();
     }
 
     /**
@@ -504,5 +494,4 @@ public class PluginRepositoryLoader
         for (PluginRepositoryLoaderListener listener : listeners.getListeners(PluginRepositoryLoaderListener.class))
             listener.pluginRepositeryLoaderChanged(plugin);
     }
-
 }

@@ -318,19 +318,19 @@ public class ThreadUtil
     /**
      * Retrieve the instance processor (low priority) to use for specified runnable.
      */
-    private static InstanceProcessor getInstanceProcessorLow(Runnable runnable)
+    private static InstanceProcessor getBgInstanceProcessor(Runnable runnable)
     {
         // get processor index from the hash code
-        return instanceProcessors[runnable.hashCode() % instanceProcessors.length];
+        return bgInstanceProcessors[runnable.hashCode() % bgInstanceProcessors.length];
     }
 
     /**
      * Retrieve the instance processor (low priority) to use for specified callable.
      */
-    private static InstanceProcessor getInstanceProcessorLow(Callable<?> callable)
+    private static InstanceProcessor getBgInstanceProcessor(Callable<?> callable)
     {
         // get processor index from the hash code
-        return instanceProcessors[callable.hashCode() % instanceProcessors.length];
+        return bgInstanceProcessors[callable.hashCode() % bgInstanceProcessors.length];
     }
 
     /**
@@ -356,7 +356,7 @@ public class ThreadUtil
     /**
      * Adds background processing (low priority) of specified Runnable.<br>
      * Returns <code>false</code> if background process queue is full.<br>
-     * Don't use this method for long process (> 5 seconds) as the number of thread is
+     * Don't use this method for long process (more than 1 second) as the number of thread is
      * limited and others processes may be executed too late.
      */
     public static boolean bgRun(Runnable runnable)
@@ -378,7 +378,7 @@ public class ThreadUtil
      * Adds background processing (low priority) of specified Callable task.<br>
      * Returns a Future representing the pending result of the task or <code>null</code> if
      * background process queue is full.<br>
-     * Don't use this method for long process (> 5 seconds) as the number of thread is
+     * Don't use this method for long process (more than 1 second) as the number of thread is
      * limited and others processes may be executed too late.
      */
     public static <T> Future<T> bgRun(Callable<T> callable)
@@ -423,12 +423,12 @@ public class ThreadUtil
      * If this <code>Runnable</code> instance is already pending in single processes queue then
      * nothing is done.<br>
      * Returns <code>false</code> if single processes queue is full.<br>
-     * Don't use this method for long process (> 5 seconds) as the number of thread is
+     * Don't use this method for long process (more than 1 second) as the number of thread is
      * limited and others processes may be executed too late.
      */
     public static boolean bgRunSingle(Runnable runnable)
     {
-        final InstanceProcessor processor = getInstanceProcessorLow(runnable);
+        final InstanceProcessor processor = getBgInstanceProcessor(runnable);
 
         if (processor.hasWaitingTasks(runnable))
             return false;
@@ -442,12 +442,12 @@ public class ThreadUtil
      * nothing is done.<br>
      * Returns a Future representing the pending result of the task or <code>null</code> if
      * single processes queue is full.<br>
-     * Don't use this method for long process (> 5 seconds) as the number of thread is
+     * Don't use this method for long process (more than 1 second) as the number of thread is
      * limited and others processes may be executed too late.
      */
     public static <T> Future<T> bgRunSingle(Callable<T> callable)
     {
-        final InstanceProcessor processor = getInstanceProcessorLow(callable);
+        final InstanceProcessor processor = getBgInstanceProcessor(callable);
 
         if (processor.hasWaitingTasks(callable))
             return null;
@@ -459,7 +459,9 @@ public class ThreadUtil
      * Add single processing (normal priority) of specified Runnable.<br>
      * If this <code>Runnable</code> instance is already pending in single processes queue then
      * nothing is done.<br>
-     * Return <code>false</code> if single processes queue is full.
+     * Return <code>false</code> if single processes queue is full.<br>
+     * Don't use this method for long process (more than 1 second) as the number of thread is
+     * limited and others processes may be executed too late.
      */
     public static boolean runSingle(Runnable runnable)
     {
@@ -476,7 +478,9 @@ public class ThreadUtil
      * If this <code>Callable</code> instance is already pending in single processes queue then
      * nothing is done.<br>
      * Return a Future representing the pending result of the task or <code>null</code> if
-     * single processes queue is full.
+     * single processes queue is full.<br>
+     * Don't use this method for long process (more than 1 second) as the number of thread is
+     * limited and others processes may be executed too late.
      */
     public static <T> Future<T> runSingle(Callable<T> callable)
     {
@@ -510,7 +514,7 @@ public class ThreadUtil
      */
     public static boolean hasWaitingBgSingleTask(Runnable runnable)
     {
-        final InstanceProcessor processor = getInstanceProcessorLow(runnable);
+        final InstanceProcessor processor = getBgInstanceProcessor(runnable);
         return processor.hasWaitingTasks(runnable);
     }
 
@@ -520,7 +524,7 @@ public class ThreadUtil
      */
     public static boolean hasWaitingBgSingleTask(Callable<?> callable)
     {
-        final InstanceProcessor processor = getInstanceProcessorLow(callable);
+        final InstanceProcessor processor = getBgInstanceProcessor(callable);
         return processor.hasWaitingTasks(callable);
     }
 

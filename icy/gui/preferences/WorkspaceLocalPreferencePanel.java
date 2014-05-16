@@ -28,6 +28,7 @@ import icy.workspace.WorkspaceLoader.WorkspaceLoaderEvent;
 import icy.workspace.WorkspaceLoader.WorkspaceLoaderListener;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Stephane
@@ -52,7 +53,6 @@ public class WorkspaceLocalPreferencePanel extends WorkspaceListPreferencePanel 
         action1Button.setVisible(true);
 
         refreshWorkspaces();
-        updateButtonsState();
 
         WorkspaceLoader.addListener(this);
         WorkspaceInstaller.addListener(this);
@@ -104,7 +104,7 @@ public class WorkspaceLocalPreferencePanel extends WorkspaceListPreferencePanel 
             activesWorkspace.remove(name);
     }
 
-    private void cleanActivesWorkspace(ArrayList<Workspace> workspaces)
+    private void cleanActivesWorkspace(List<Workspace> workspaces)
     {
         // clean active workspace list
         for (int i = activesWorkspace.size() - 1; i >= 0; i--)
@@ -142,7 +142,7 @@ public class WorkspaceLocalPreferencePanel extends WorkspaceListPreferencePanel 
     protected void reloadWorkspaces()
     {
         WorkspaceLoader.reloadAsynch();
-        updateButtonsState();
+        refreshWorkspaces();
     }
 
     @Override
@@ -158,14 +158,20 @@ public class WorkspaceLocalPreferencePanel extends WorkspaceListPreferencePanel 
     }
 
     @Override
-    protected ArrayList<Workspace> getWorkspaces()
+    protected List<Workspace> getWorkspaces()
     {
-        final ArrayList<Workspace> result = WorkspaceLoader.getWorkspaces();
+        final List<Workspace> result;
 
-        // we don't want to see here WORKSPACE_SYSTEM
-        Workspace.removeWorkspace(result, Workspace.WORKSPACE_SYSTEM_NAME);
+        if (WorkspaceLoader.isLoading())
+            result = new ArrayList<Workspace>();
+        else
+        {
+            result = WorkspaceLoader.getWorkspaces();
 
-        cleanActivesWorkspace(result);
+            // we don't want to see here WORKSPACE_SYSTEM
+            Workspace.removeWorkspace(result, Workspace.WORKSPACE_SYSTEM_NAME);
+            cleanActivesWorkspace(result);
+        }
 
         return result;
     }

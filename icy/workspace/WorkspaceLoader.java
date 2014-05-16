@@ -20,6 +20,7 @@ package icy.workspace;
 
 import icy.common.EventHierarchicalChecker;
 import icy.file.FileUtil;
+import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.workspace.WorkspaceLoader.WorkspaceLoaderEvent.WorkspaceLoaderEventType;
 
@@ -34,7 +35,7 @@ import javax.swing.event.EventListenerList;
 /**
  * @author Stephane
  */
-public class WorkspaceLoader implements Runnable
+public class WorkspaceLoader
 {
     public static interface WorkspaceLoaderListener extends EventListener
     {
@@ -96,8 +97,10 @@ public class WorkspaceLoader implements Runnable
     /**
      * internals
      */
+    private final Runnable reloader;
+    final SingleProcessor processor;
+
     private boolean initialized;
-    private boolean loading;
 
     /**
      * @param path
@@ -108,8 +111,18 @@ public class WorkspaceLoader implements Runnable
 
         workspaces = new ArrayList<Workspace>();
         listeners = new EventListenerList();
+        reloader = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                reloadInternal();
+            }
+        };
+
         initialized = false;
-        loading = false;
+
+        processor = new SingleProcessor(true, "Local Workspace Loader");
 
         // don't load by default as we need Preferences to be ready first
     }
@@ -126,29 +139,12 @@ public class WorkspaceLoader implements Runnable
     }
 
     /**
-     * @return the loading flag
-     */
-    public static boolean isLoading()
-    {
-        return instance.loading || ThreadUtil.hasWaitingBgSingleTask(instance);
-    }
-
-    /**
-     * wait until loading completed
-     */
-    public static void waitWhileLoading()
-    {
-        while (isLoading())
-            ThreadUtil.sleep(10);
-    }
-
-    /**
      * Reload the list of installed workspaces (workspaces present in the "workspaces" directory).<br>
      * Asynchronous version.
      */
     public static void reloadAsynch()
     {
-        ThreadUtil.bgRunSingle(instance);
+        instance.processor.submit(instance.reloader);
     }
 
     /**
@@ -169,61 +165,47 @@ public class WorkspaceLoader implements Runnable
         waitWhileLoading();
     }
 
-    @Override
-    public void run()
-    {
-        reloadInternal();
-    }
-
     /**
      * Reload the list of installed workspaces (workspaces present in the "workspaces" directory)
      */
-    synchronized void reloadInternal()
+    void reloadInternal()
     {
-        loading = true;
-        try
+        final ArrayList<Workspace> newWorkspaces = new ArrayList<Workspace>();
+
+        final File[] files = FileUtil.getFiles(new File(FileUtil.getGenericPath(WORKSPACE_PATH)), new FileFilter()
         {
-            final ArrayList<Workspace> newWorkspaces = new ArrayList<Workspace>();
-
-            final File[] files = FileUtil.getFiles(new File(FileUtil.getGenericPath(WORKSPACE_PATH)), new FileFilter()
+            @Override
+            public boolean accept(File file)
             {
-                @Override
-                public boolean accept(File file)
-                {
-                    // only accept xml file
-                    return FileUtil.getFileExtension(file.getPath(), true).toLowerCase().equals(EXT);
-                }
-            }, true, false, false);
-
-            for (File file : files)
-            {
-                final Workspace workspace = new Workspace(file);
-
-                // don't load the specific system workspace
-                if (!workspace.getName().equals(Workspace.WORKSPACE_SYSTEM_NAME))
-                {
-                    // empty workspace ?
-                    if (workspace.isEmpty())
-                    {
-                        // don't show this message for default workspace
-                        // if (!workspace.getName().equals(Workspace.WORKSPACE_DEFAULT_NAME))
-                        System.err.println("Empty workspace '" + workspace.getName() + "' is not loaded");
-                    }
-                    else
-                        newWorkspaces.add(workspace);
-                }
+                // only accept xml file
+                return FileUtil.getFileExtension(file.getPath(), true).toLowerCase().equals(EXT);
             }
+        }, true, false, false);
 
-            // sort list
-            Collections.sort(newWorkspaces);
-
-            // set workspace list
-            workspaces = newWorkspaces;
-        }
-        finally
+        for (File file : files)
         {
-            loading = false;
+            final Workspace workspace = new Workspace(file);
+
+            // don't load the specific system workspace
+            if (!workspace.getName().equals(Workspace.WORKSPACE_SYSTEM_NAME))
+            {
+                // empty workspace ?
+                if (workspace.isEmpty())
+                {
+                    // don't show this message for default workspace
+                    // if (!workspace.getName().equals(Workspace.WORKSPACE_DEFAULT_NAME))
+                    System.err.println("Empty workspace '" + workspace.getName() + "' is not loaded");
+                }
+                else
+                    newWorkspaces.add(workspace);
+            }
         }
+
+        // sort list
+        Collections.sort(newWorkspaces);
+
+        // set workspace list
+        workspaces = newWorkspaces;
 
         // notify change
         changed();
@@ -241,6 +223,23 @@ public class WorkspaceLoader implements Runnable
             // better to return a copy as we have async list loading
             return new ArrayList<Workspace>(instance.workspaces);
         }
+    }
+
+    /**
+     * @return the loading flag
+     */
+    public static boolean isLoading()
+    {
+        return instance.processor.isProcessing();
+    }
+
+    /**
+     * wait until loading completed
+     */
+    public static void waitWhileLoading()
+    {
+        while (isLoading())
+            ThreadUtil.sleep(10);
     }
 
     public static boolean isLoaded(Workspace workspace)

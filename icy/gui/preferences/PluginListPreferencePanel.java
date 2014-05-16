@@ -580,6 +580,8 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
     protected void refreshPluginsInternal()
     {
         plugins = filterList(getPlugins(), filter.getText());
+        // refresh table data
+        refreshTableData();
     }
 
     protected final void refreshPlugins()
@@ -662,6 +664,8 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         tableModel.fireTableDataChanged();
         // restore previous selected plugin if possible
         setSelectedPlugin(plugin);
+        // update button state
+        buttonsStateUpdater.run();
     }
 
     protected final void refreshTableData()
@@ -672,8 +676,6 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
     protected void pluginsChanged()
     {
         refreshPlugins();
-        refreshTableData();
-        updateButtonsState();
     }
 
     @Override

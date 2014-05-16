@@ -33,6 +33,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -66,7 +67,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
     static final String[] columnNames = {"Name", "Description", "", "Enabled"};
 
     // protected final Preferences preferences;
-    ArrayList<Workspace> workspaces;
+    List<Workspace> workspaces;
 
     final AbstractTableModel tableModel;
     final JTable table;
@@ -369,9 +370,9 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
         workspaces.clear();
     }
 
-    private ArrayList<Workspace> filterList(ArrayList<Workspace> list, String filter)
+    private List<Workspace> filterList(List<Workspace> list, String filter)
     {
-        final ArrayList<Workspace> result = new ArrayList<Workspace>();
+        final List<Workspace> result = new ArrayList<Workspace>();
         final boolean empty = StringUtil.isEmpty(filter, true);
         final String filterUp;
 
@@ -403,7 +404,7 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
     protected abstract int getColumnCount();
 
-    protected abstract ArrayList<Workspace> getWorkspaces();
+    protected abstract List<Workspace> getWorkspaces();
 
     protected abstract void updateButtonsStateInternal();
 
@@ -481,6 +482,8 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
     protected void refreshWorkspacesInternal()
     {
         workspaces = filterList(getWorkspaces(), filter.getText());
+        // refresh table data
+        refreshTableData();
     }
 
     protected final void refreshWorkspaces()
@@ -571,6 +574,9 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
 
         // restore previous selected workspace if possible
         setSelectedWorkspace(workspace);
+
+        // update buttons state
+        updateButtonsState();
     }
 
     protected final void refreshTableData()
@@ -581,8 +587,6 @@ public abstract class WorkspaceListPreferencePanel extends PreferencePanel imple
     protected void workspacesChanged()
     {
         refreshWorkspaces();
-        refreshTableData();
-        updateButtonsState();
     }
 
     @Override
