@@ -95,14 +95,16 @@ public class ClasspathResources extends JarResources
 
     /**
      * Loads and returns content the remote resource (jars, properties files, etc)
+     * 
+     * @throws IOException
      */
-    protected byte[] loadRemoteResourceContent(URL url)
+    protected byte[] loadRemoteResourceContent(URL url) throws IOException
     {
         InputStream stream = null;
         ByteArrayOutputStream out = null;
+        stream = url.openStream();
         try
         {
-            stream = url.openStream();
             out = new ByteArrayOutputStream();
 
             int byt;
@@ -117,9 +119,11 @@ public class ClasspathResources extends JarResources
 
             return out.toByteArray();
         }
-        catch (IOException e)
+        finally
         {
-            throw new JclException(e);
+            stream.close();
+            if (out != null)
+                out.close();
         }
     }
 
@@ -264,60 +268,50 @@ public class ClasspathResources extends JarResources
     }
 
     @Override
-    protected boolean loadContent(String name, URL url)
+    protected void loadContent(String name, URL url) throws IOException
     {
-        // not loaded by parent ?
-        if (!super.loadContent(name, url))
+        // JAR protocol
+        if (url.getProtocol().equalsIgnoreCase(("jar")))
+            super.loadContent(name, url);
+        // FILE protocol
+        else if (url.getProtocol().equalsIgnoreCase(("file")))
         {
-            if (url.getProtocol().equalsIgnoreCase(("file")))
+
+            try
             {
-                final byte content[] = loadResourceContent(url);
-
-                if (content != null)
-                {
-                    setResourceContent(name, content);
-                    return true;
-                }
-
-                return false;
-            }
-
-            final byte content[] = loadRemoteResourceContent(url);
-
-            if (content != null)
-            {
+                final byte[] content = loadResourceContent(url);
                 setResourceContent(name, content);
-                return true;
             }
-
-            return false;
+            catch (URISyntaxException e)
+            {
+                // transform to IOException
+                throw new IOException(e);
+            }
         }
-
-        return true;
+        // try remote loading
+        else
+        {
+            final byte content[] = loadRemoteResourceContent(url);
+            setResourceContent(name, content);
+        }
     }
 
     /**
      * Loads and returns the local resource content.
+     * 
+     * @throws URISyntaxException
+     * @throws IOException
      */
-    protected byte[] loadResourceContent(URL url)
+    protected byte[] loadResourceContent(URL url) throws URISyntaxException, IOException
     {
-        File resourceFile;
-
-        try
-        {
-            resourceFile = new File(url.toURI());
-        }
-        catch (Exception e)
-        {
-            return null;
-        }
-
+        final File resourceFile = new File(url.toURI());
         FileInputStream fis = null;
         byte[] content = null;
+        final int len = (int) resourceFile.length();
+        fis = new FileInputStream(resourceFile);
+
         try
         {
-            final int len = (int) resourceFile.length();
-            fis = new FileInputStream(resourceFile);
             content = new byte[len];
 
             loadedSize += len;
@@ -325,25 +319,13 @@ public class ClasspathResources extends JarResources
             // System.out.println("Entry Name: " + url.getPath() + ", Size: " + len + " (" +
             // (loadedSize / 1024) + " KB)");
 
-            if (fis.read(content) != -1)
-                return content;
+            fis.read(content);
 
-            return null;
-        }
-        catch (IOException e)
-        {
-            throw new JclException(e);
+            return content;
         }
         finally
         {
-            try
-            {
-                fis.close();
-            }
-            catch (IOException e)
-            {
-                throw new JclException(e);
-            }
+            fis.close();
         }
     }
 

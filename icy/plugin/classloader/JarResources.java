@@ -71,20 +71,12 @@ public class JarResources
         loadedSize = 0;
     }
 
-    /**
-     * @param name
-     * @return byte[]
-     */
     public URL getResource(String name)
     {
         return jarEntryUrls.get(name);
     }
 
-    /**
-     * @param name
-     * @return byte[]
-     */
-    public byte[] getResourceContent(String name)
+    public byte[] getResourceContent(String name) throws IOException
     {
         byte content[] = jarEntryContents.get(name);
 
@@ -95,38 +87,30 @@ public class JarResources
 
             if (url != null)
             {
-                // load content and return it
-                if (loadContent(name, url))
-                    return jarEntryContents.get(name);
+                try
+                {
+                    // load content and return it
+                    loadContent(name, url);
+                    content = jarEntryContents.get(name);
+                }
+                catch (IOException e)
+                {
+                    // content cannot be loaded, remove the URL entry
+                    jarEntryUrls.remove(name);
+                    // and throw exception
+                    throw e;
+                }
             }
         }
 
         return content;
     }
 
-    protected boolean loadContent(String name, URL url)
+    protected void loadContent(String name, URL url) throws IOException
     {
         // only support JAR resource here
-        if (url.getProtocol().equalsIgnoreCase(("jar")))
-        {
-            try
-            {
-                final byte[] content = loadJarContent(url);
-
-                if (content != null)
-                {
-                    setResourceContent(name, content);
-                    return true;
-                }
-            }
-            catch (IOException e)
-            {
-                System.err.println("JarResources.loadJarContent(" + url + ") error:");
-                IcyExceptionHandler.showErrorMessage(e, false, true);
-            }
-        }
-
-        return false;
+        final byte[] content = loadJarContent(url);
+        setResourceContent(name, content);
     }
 
     /**
@@ -366,10 +350,8 @@ public class JarResources
                 return out.toByteArray();
             }
 
-            System.err.println("JarResources.loadJarContent(" + url.toString() + ") error: Can't find '" + resname
+            throw new IOException("JarResources.loadJarContent(" + url.toString() + ") error: Can't find '" + resname
                     + "' in JAR file");
-
-            return null;
         }
         finally
         {

@@ -21,6 +21,7 @@ package icy.plugin.classloader;
 
 import icy.plugin.classloader.exception.JclException;
 import icy.plugin.classloader.exception.ResourceNotFoundException;
+import icy.system.IcyExceptionHandler;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -189,10 +190,19 @@ public class JarClassLoader extends AbstractClassLoader
      * 
      * @param className
      * @return byte[]
+     * @throws ClassNotFoundException
      */
     protected byte[] getClassBytes(String className)
     {
-        return classpathResources.getResourceContent(formatClassName(className));
+        try
+        {
+            return classpathResources.getResourceContent(formatClassName(className));
+        }
+        catch (IOException e)
+        {
+            IcyExceptionHandler.showErrorMessage(e, false, true);
+            return null;
+        }
     }
 
     /**
@@ -319,14 +329,21 @@ public class JarClassLoader extends AbstractClassLoader
         @Override
         public InputStream getResourceAsStream(String name)
         {
-            byte[] arr = classpathResources.getResourceContent(name);
-
-            if (arr != null)
+            try
             {
-                if (logger.isLoggable(Level.FINEST))
-                    logger.finest("Returning newly loaded resource " + name);
+                byte[] arr = classpathResources.getResourceContent(name);
 
-                return new ByteArrayInputStream(arr);
+                if (arr != null)
+                {
+                    if (logger.isLoggable(Level.FINEST))
+                        logger.finest("Returning newly loaded resource " + name);
+
+                    return new ByteArrayInputStream(arr);
+                }
+            }
+            catch (IOException e)
+            {
+                IcyExceptionHandler.showErrorMessage(e, false, true);
             }
 
             return null;

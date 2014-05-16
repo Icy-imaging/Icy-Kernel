@@ -152,7 +152,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
             @Override
             public void run()
             {
-                refreshControlPanel();
+                controlPanel.refresh();
             }
         };
         canvasRefresher = new CanvasRefresher();
@@ -488,8 +488,6 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
     public void clearSelected()
     {
         setSelectedLayersInternal(new ArrayList<Layer>());
-        // refresh control panel
-        ThreadUtil.runSingle(controlPanelRefresher);
     }
 
     void setSelectedLayersInternal(List<Layer> newSelected)
@@ -514,6 +512,9 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         {
             isSelectionAdjusting = false;
         }
+
+        // notify selection changed
+        selectionChanged();
     }
 
     List<Layer> filterList(List<Layer> list, String nameFilterText)
@@ -561,9 +562,6 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
                 setSelectedLayersInternal(save);
             }
         });
-
-        // refresh control panel
-        ThreadUtil.runSingle(controlPanelRefresher);
     }
 
     // protected void refreshTableRow(final Layer layer)
@@ -590,24 +588,8 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
     // refreshControlPanel();
     // }
 
-    protected void refreshControlPanel()
-    {
-        while (isLayerPropertiesAdjusting)
-            ThreadUtil.sleep(10);
-
-        isLayerPropertiesAdjusting = true;
-        try
-        {
-            controlPanel.refresh();
-        }
-        finally
-        {
-            isLayerPropertiesAdjusting = false;
-        }
-    }
-
     /**
-     * Called when selection has changed
+     * Called when selection changed
      */
     protected void selectionChanged()
     {
@@ -625,6 +607,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
     @Override
     public void valueChanged(ListSelectionEvent e)
     {
+        // internal change --> ignore
         if (isSelectionAdjusting || e.getValueIsAdjusting())
             return;
 

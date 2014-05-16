@@ -32,6 +32,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -422,10 +423,27 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     void refreshInternal()
     {
         final SearchEngine searchEngine = getSearchEngine();
-        final List<SearchResult> results = searchEngine.getResults();
-        final int resultCount = results.size();
-        // save selected
-        final SearchResult selected = getSelectedResult();
+        final List<SearchResult> results;
+        final int resultCount;
+        final SearchResult selected;
+
+        // quick cancel
+        if (searchEngine.getLastSearch().isEmpty())
+        {
+            results = new ArrayList<SearchResult>();
+            resultCount = 0;
+            selected = null;
+        }
+        else
+        {
+            results = searchEngine.getResults();
+            resultCount = results.size();
+            // save selected
+            selected = getSelectedResult();
+        }
+
+        // free a bit of time
+        ThreadUtil.sleep(10);
 
         // need to be done on EDT
         ThreadUtil.invokeNow(new Runnable()
@@ -433,7 +451,6 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
             @Override
             public void run()
             {
-                // TODO Auto-generated method stub
                 if (resultCount == 0)
                 {
                     close(false);

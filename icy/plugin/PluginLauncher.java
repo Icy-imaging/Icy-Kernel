@@ -18,8 +18,6 @@
  */
 package icy.plugin;
 
-import java.lang.reflect.InvocationTargetException;
-
 import icy.main.Icy;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginImageAnalysis;
@@ -63,20 +61,16 @@ public class PluginLauncher implements Runnable
                 }
                 catch (IllegalAccessException e1)
                 {
-                    System.err.println("PluginLauncher.create() error: cannot instantiate " + clazz.getName()
-                            + " class.");
+                    System.err.println("Cannot start plugin " + descriptor.getName() + " :");
                     System.err.println(e1.getMessage());
                 }
                 catch (InstantiationException e2)
                 {
-                    System.err.println("PluginLauncher.create() error: cannot instantiate " + clazz.getName()
-                            + " class.");
+                    System.err.println("Cannot start plugin " + descriptor.getName() + " :");
                     System.err.println(e2.getMessage());
                 }
                 catch (Throwable t)
                 {
-                    System.err.println("PluginLauncher.create() error: cannot instantiate " + clazz.getName()
-                            + " class.");
                     IcyExceptionHandler.handleException(descriptor, t, true);
                 }
             }
