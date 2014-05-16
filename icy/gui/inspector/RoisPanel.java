@@ -692,7 +692,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             final Set<ROI> newRoiSet = new HashSet<ROI>(newRois);
             for (int i = oldRois.size() - 1; i >= 0; i--)
                 if (!newRoiSet.contains(oldRois.get(i)))
-                    rois.remove(i);
+                    roisToCompute.remove(rois.remove(i));
 
             // add ROI which has been added (use HashSet for fast contains())
             final Set<ROI> oldRoiSet = new HashSet<ROI>(oldRois);
@@ -880,8 +880,6 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
      */
     protected void setSelectedRoisInternal(HashSet<ROI> newSelected)
     {
-        System.out.println("selection changed");
-
         final List<ROIInfo> modelRois = filteredRois;
 
         // start selection change
@@ -1128,45 +1126,13 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     }
 
     /**
-     * Returns all ROI informations in CSV format (tab separated).
-     * 
-     * @param waitCompletion
-     *        amount of time (in ms) to wait for ROI calculations to complete.<br>
-     *        <code>0</code> means that results are immediately returned<br>
-     *        <code>-1</code> means we wait until completion (if ROI are continuously modified it
-     *        may never return !)
-     * @see #getCSVFormattedInfos()
-     */
-    public String getCSVFormattedInfos(int waitCompletion)
-    {
-        if (waitCompletion != 0)
-        {
-            if (waitCompletion == -1)
-            {
-                while (roisToCompute.size() > 0)
-                    ThreadUtil.sleep(1);
-            }
-            else
-            {
-                final long st = System.currentTimeMillis();
-                while ((roisToCompute.size() > 0) && ((System.currentTimeMillis() - st) < waitCompletion))
-                    ThreadUtil.sleep(1);
-            }
-        }
-
-        return getCSVFormattedInfos();
-    }
-
-    /**
      * Returns all ROI informations in CSV format (tab separated) immediately.
-     * 
-     * @see #getCSVFormattedInfos(int)
      */
     public String getCSVFormattedInfos()
     {
         // Check to ensure we have selected only a contiguous block of cells
-        final int numcols = table.getColumnCount(true);
-        final int numrows = table.getRowCount();
+        final int numcols = tableModel.getColumnCount();
+        final int numrows = tableModel.getRowCount();
 
         // table is empty --> returns empty string
         if (numrows == 0)
@@ -1188,22 +1154,9 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         {
             for (int j = 1; j < numcols; j++)
             {
-                final Object value = tableModel.getValueAt(table.convertRowIndexToModel(i), j);
+                final Object value = tableModel.getValueAt(i, j);
 
-                // special case of double array
-                if (value instanceof double[])
-                {
-                    final double[] darray = (double[]) value;
-
-                    for (int l = 0; l < darray.length; l++)
-                    {
-                        sbf.append(darray[l]);
-                        if (l < darray.length - 1)
-                            sbf.append(" ");
-                    }
-                }
-                else
-                    sbf.append(value);
+                sbf.append(value);
 
                 if (j < numcols - 1)
                     sbf.append("\t");
@@ -1335,7 +1288,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             intensityInfos = new IntensityInfo[0];
             sequenceInfInvalid = true;
             roiInfInvalid = true;
-            
+
             requestCompute();
 
             roi.addListener(this);
