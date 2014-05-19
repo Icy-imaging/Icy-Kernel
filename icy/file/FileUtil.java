@@ -180,7 +180,7 @@ public class FileUtil
         final String[] result = new String[files.length];
 
         for (int i = 0; i < files.length; i++)
-            result[i] = files[i].getAbsolutePath();
+            result[i] = getGenericPath(files[i].getAbsolutePath());
 
         return result;
     }
@@ -193,7 +193,7 @@ public class FileUtil
         final List<String> result = new ArrayList<String>(files.size());
 
         for (File file : files)
-            result.add(file.getAbsolutePath());
+            result.add(getGenericPath(file.getAbsolutePath()));
 
         return result;
     }
