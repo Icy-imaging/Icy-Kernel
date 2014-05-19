@@ -19,6 +19,7 @@
 package icy.system.thread;
 
 import icy.main.Icy;
+import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import java.util.EventListener;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -83,26 +85,47 @@ public class Processor extends ThreadPoolExecutor
     {
         public Runnable runnable;
         public Callable<T> callable;
+        final boolean handleException;
 
-        public FutureTaskAdapter(Runnable runnable, T result)
+        public FutureTaskAdapter(Runnable runnable, T result, boolean handleException)
         {
             super(runnable, result);
 
             this.runnable = runnable;
             this.callable = null;
+            this.handleException = handleException;
         }
 
-        public FutureTaskAdapter(Runnable runnable)
+        public FutureTaskAdapter(Runnable runnable, boolean handleException)
         {
-            this(runnable, null);
+            this(runnable, null, handleException);
         }
 
-        public FutureTaskAdapter(Callable<T> callable)
+        public FutureTaskAdapter(Callable<T> callable, boolean handleException)
         {
             super(callable);
 
             this.runnable = null;
             this.callable = callable;
+            this.handleException = handleException;
+        }
+
+        @Override
+        protected void done()
+        {
+            super.done();
+
+            if (handleException)
+            {
+                try
+                {
+                    get();
+                }
+                catch (Exception e)
+                {
+                    IcyExceptionHandler.handleException(e.getCause(), true);
+                }
+            }
         }
     }
 
@@ -192,7 +215,7 @@ public class Processor extends ThreadPoolExecutor
     {
         public FutureTaskAdapterEDT(Runnable runnable, T result, boolean onEDT)
         {
-            super(new RunnableAdapter(runnable, onEDT), result);
+            super(new RunnableAdapter(runnable, onEDT), result, true);
 
             // assign the original runnable
             this.runnable = runnable;
@@ -206,7 +229,7 @@ public class Processor extends ThreadPoolExecutor
 
         public FutureTaskAdapterEDT(Callable<T> callable, boolean onEDT)
         {
-            super(new CallableAdapter<T>(callable, onEDT));
+            super(new CallableAdapter<T>(callable, onEDT), true);
 
             // assign the original callable
             this.runnable = null;
@@ -374,6 +397,9 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
+     * @param handledException
+     *        if set to <code>true</code> then any occurring exception during the runnable
+     *        processing will be catch by {@link IcyExceptionHandler}.
      * @param runnable
      *        the runnable task being wrapped
      * @param value
@@ -382,13 +408,15 @@ public class Processor extends ThreadPoolExecutor
      *         as a <tt>Future</tt>, will yield the given value as its result and provide for
      *         cancellation of the underlying task.
      */
-    @Override
-    protected <T> FutureTaskAdapter<T> newTaskFor(Runnable runnable, T value)
+    protected <T> FutureTaskAdapter<T> newTaskFor(boolean handledException, Runnable runnable, T value)
     {
-        return new FutureTaskAdapter<T>(runnable, value);
+        return new FutureTaskAdapter<T>(runnable, value, handledException);
     };
 
     /**
+     * @param handledException
+     *        if set to <code>true</code> then any occurring exception during the runnable
+     *        processing will be catch by {@link IcyExceptionHandler}.
      * @param callable
      *        the callable task being wrapped
      * @return a <tt>RunnableFuture</tt> which when run will call the
@@ -396,10 +424,9 @@ public class Processor extends ThreadPoolExecutor
      *         the callable's result as its result and provide for
      *         cancellation of the underlying task.
      */
-    @Override
-    protected <T> FutureTaskAdapter<T> newTaskFor(Callable<T> callable)
+    protected <T> FutureTaskAdapter<T> newTaskFor(boolean handledException, Callable<T> callable)
     {
-        return new FutureTaskAdapter<T>(callable);
+        return new FutureTaskAdapter<T>(callable, handledException);
     }
 
     @Override
@@ -425,7 +452,7 @@ public class Processor extends ThreadPoolExecutor
         if (task == null)
             throw new NullPointerException();
 
-        return submit(newTaskFor(task, null));
+        return submit(newTaskFor(false, task, null));
     }
 
     @Override
@@ -434,7 +461,7 @@ public class Processor extends ThreadPoolExecutor
         if (task == null)
             throw new NullPointerException();
 
-        return submit(newTaskFor(task, result));
+        return submit(newTaskFor(false, task, result));
     }
 
     @Override
@@ -443,7 +470,92 @@ public class Processor extends ThreadPoolExecutor
         if (task == null)
             throw new NullPointerException();
 
-        return submit(newTaskFor(task));
+        return submit(newTaskFor(false, task));
+    }
+
+    /**
+     * Submits a Runnable task for execution and returns a Future
+     * representing that task. The Future's <tt>get</tt> method will
+     * return <tt>null</tt> upon <em>successful</em> completion.
+     * 
+     * @param handleException
+     *        if set to <code>true</code> then any occurring exception during the runnable
+     *        processing will be catch by {@link IcyExceptionHandler}.
+     * @param task
+     *        the task to submit
+     * @return a Future representing pending completion of the task
+     * @throws RejectedExecutionException
+     *         if the task cannot be
+     *         scheduled for execution
+     * @throws NullPointerException
+     *         if the task is null
+     */
+    public Future<?> submit(boolean handleException, Runnable task)
+    {
+        if (task == null)
+            throw new NullPointerException();
+
+        return submit(newTaskFor(handleException, task, null));
+    }
+
+    /**
+     * Submits a Runnable task for execution and returns a Future
+     * representing that task. The Future's <tt>get</tt> method will
+     * return the given result upon successful completion.
+     * 
+     * @param handleException
+     *        if set to <code>true</code> then any occurring exception during the runnable
+     *        processing will be catch by {@link IcyExceptionHandler}.
+     * @param task
+     *        the task to submit
+     * @param result
+     *        the result to return
+     * @return a Future representing pending completion of the task
+     * @throws RejectedExecutionException
+     *         if the task cannot be
+     *         scheduled for execution
+     * @throws NullPointerException
+     *         if the task is null
+     */
+    public <T> Future<T> submit(boolean handleException, Runnable task, T result)
+    {
+        if (task == null)
+            throw new NullPointerException();
+
+        return submit(newTaskFor(handleException, task, result));
+    }
+
+    /**
+     * Submits a value-returning task for execution and returns a
+     * Future representing the pending results of the task. The
+     * Future's <tt>get</tt> method will return the task's result upon
+     * successful completion.
+     * <p>
+     * If you would like to immediately block waiting for a task, you can use constructions of the
+     * form <tt>result = exec.submit(aCallable).get();</tt>
+     * <p>
+     * Note: The {@link Executors} class includes a set of methods that can convert some other
+     * common closure-like objects, for example, {@link java.security.PrivilegedAction} to
+     * {@link Callable} form so they can be submitted.
+     * 
+     * @param handleException
+     *        if set to <code>true</code> then any occurring exception during the runnable
+     *        processing will be catch by {@link IcyExceptionHandler}.
+     * @param task
+     *        the task to submit
+     * @return a Future representing pending completion of the task
+     * @throws RejectedExecutionException
+     *         if the task cannot be
+     *         scheduled for execution
+     * @throws NullPointerException
+     *         if the task is null
+     */
+    public <T> Future<T> submit(boolean handleException, Callable<T> task)
+    {
+        if (task == null)
+            throw new NullPointerException();
+
+        return submit(newTaskFor(handleException, task));
     }
 
     /**

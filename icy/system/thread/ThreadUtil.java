@@ -128,6 +128,34 @@ public class ThreadUtil
     }
 
     /**
+     * Shutdown all background runner.
+     */
+    public static void shutdown()
+    {
+        bgProcessor.shutdown();
+        for (int i = 0; i < instanceProcessors.length; i++)
+        {
+            instanceProcessors[i].shutdown();
+            bgInstanceProcessors[i].shutdown();
+        }
+    }
+
+    /**
+     * Return true if all background runner are shutdown and terminated.
+     */
+    public static boolean isShutdownAndTerminated()
+    {
+        for (int i = 0; i < instanceProcessors.length; i++)
+        {
+            if (!instanceProcessors[i].isTerminated())
+                return false;
+            if (!bgInstanceProcessors[i].isTerminated())
+                return false;
+        }
+        return bgProcessor.isTerminated();
+    }
+
+    /**
      * @return true if the current thread is an AWT event dispatching thread.
      */
     public static boolean isEventDispatchThread()
@@ -233,34 +261,6 @@ public class ThreadUtil
     }
 
     /**
-     * Shutdown all background runner.
-     */
-    public static void shutdown()
-    {
-        bgProcessor.shutdown();
-        for (int i = 0; i < instanceProcessors.length; i++)
-        {
-            instanceProcessors[i].shutdown();
-            bgInstanceProcessors[i].shutdown();
-        }
-    }
-
-    /**
-     * Return true if all background runner are shutdown and terminated.
-     */
-    public static boolean isShutdownAndTerminated()
-    {
-        for (int i = 0; i < instanceProcessors.length; i++)
-        {
-            if (!instanceProcessors[i].isTerminated())
-                return false;
-            if (!bgInstanceProcessors[i].isTerminated())
-                return false;
-        }
-        return bgProcessor.isTerminated();
-    }
-
-    /**
      * Invoke the specified <code>Runnable</code> on the AWT event dispatching thread now.<br>
      * Wait until completion. Be careful, using this method may lead to dead lock !
      * 
@@ -271,7 +271,7 @@ public class ThreadUtil
      * @throws Exception
      *         if the computation threw an exception and the calling thread is the EDT
      */
-    public static <T> T invokeNow(Callable<T> callable) throws Exception
+    public static <T> T invokeNow(Callable<T> callable) throws InterruptedException, ExecutionException, Exception
     {
         if (SwingUtilities.isEventDispatchThread())
             return callable.call();
@@ -290,7 +290,7 @@ public class ThreadUtil
      *        If <code>true</code> the <code>Callable</code> is forced to execute later even if we
      *        are on the EDT.
      */
-    public static <T> Future<T> invokeLater(Callable<T> callable, boolean forceLater) throws Exception
+    public static <T> Future<T> invokeLater(Callable<T> callable, boolean forceLater)
     {
         final FutureTask<T> task = new FutureTask<T>(callable);
         invokeLater(task, forceLater);
@@ -361,7 +361,7 @@ public class ThreadUtil
      */
     public static boolean bgRun(Runnable runnable)
     {
-        return (bgProcessor.submit(runnable) != null);
+        return (bgProcessor.submit(true, runnable) != null);
     }
 
     /**
@@ -395,10 +395,6 @@ public class ThreadUtil
     public static boolean bgRunSingle(Runnable runnable, boolean onEDT)
     {
         final InstanceProcessor processor = getInstanceProcessor(runnable);
-
-        if (processor.hasWaitingTasks(runnable))
-            return false;
-
         return (processor.submit(runnable, onEDT) != null);
     }
 
@@ -411,10 +407,6 @@ public class ThreadUtil
     public static <T> Future<T> bgRunSingle(Callable<T> callable, boolean onEDT)
     {
         final InstanceProcessor processor = getInstanceProcessor(callable);
-
-        if (processor.hasWaitingTasks(callable))
-            return null;
-
         return processor.submit(callable, onEDT);
     }
 
@@ -429,11 +421,7 @@ public class ThreadUtil
     public static boolean bgRunSingle(Runnable runnable)
     {
         final InstanceProcessor processor = getBgInstanceProcessor(runnable);
-
-        if (processor.hasWaitingTasks(runnable))
-            return false;
-
-        return (processor.submit(runnable) != null);
+        return (processor.submit(true, runnable) != null);
     }
 
     /**
@@ -448,10 +436,6 @@ public class ThreadUtil
     public static <T> Future<T> bgRunSingle(Callable<T> callable)
     {
         final InstanceProcessor processor = getBgInstanceProcessor(callable);
-
-        if (processor.hasWaitingTasks(callable))
-            return null;
-
         return processor.submit(callable);
     }
 
@@ -466,11 +450,7 @@ public class ThreadUtil
     public static boolean runSingle(Runnable runnable)
     {
         final InstanceProcessor processor = getInstanceProcessor(runnable);
-
-        if (processor.hasWaitingTasks(runnable))
-            return false;
-
-        return (processor.submit(runnable) != null);
+        return (processor.submit(true, runnable) != null);
     }
 
     /**
@@ -485,10 +465,6 @@ public class ThreadUtil
     public static <T> Future<T> runSingle(Callable<T> callable)
     {
         final InstanceProcessor processor = getInstanceProcessor(callable);
-
-        if (processor.hasWaitingTasks(callable))
-            return null;
-
         return processor.submit(callable);
     }
 

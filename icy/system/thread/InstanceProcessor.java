@@ -63,11 +63,11 @@ public class InstanceProcessor extends Processor
     @Override
     protected synchronized <T> Future<T> submit(FutureTaskAdapter<T> task)
     {
-        // add task only if not already present in queue
-        if (!hasWaitingTasks(task))
-            return super.submit(task);
+        // task already present in queue --> return null (mean the task was ignored)
+        if (hasWaitingTasks(task))
+            return null;
 
-        // return null mean the task was ignored
-        return null;
+        // add task only if not already present in queue
+        return super.submit(task);
     }
 }

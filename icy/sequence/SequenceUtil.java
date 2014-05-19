@@ -1761,8 +1761,8 @@ public class SequenceUtil
         // content was resized ?
         if (resizeContent)
         {
-            final double sx = result.getSizeX() / source.getSizeX();
-            final double sy = result.getSizeY() / source.getSizeY();
+            final double sx = (double) result.getSizeX() / source.getSizeX();
+            final double sy = (double) result.getSizeY() / source.getSizeY();
             
             // update pixel size
             result.setPixelSizeX(result.getPixelSizeX() * sx);
