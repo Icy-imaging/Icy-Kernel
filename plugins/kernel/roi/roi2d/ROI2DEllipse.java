@@ -98,7 +98,7 @@ public class ROI2DEllipse extends ROI2DRectShape
     public ROI2DEllipse(Point5D pt)
     {
         this(pt.toPoint2D());
-//        getOverlay().setMousePos(pt);
+        // getOverlay().setMousePos(pt);
     }
 
     public ROI2DEllipse()
@@ -114,6 +114,13 @@ public class ROI2DEllipse extends ROI2DRectShape
     public void setEllipse(Ellipse2D ellipse)
     {
         setBounds2D(ellipse.getBounds2D());
+    }
+
+    @Override
+    public double computeNumberOfPoints()
+    {
+        final Rectangle2D bounds = getEllipse().getBounds();
+        return Math.PI * bounds.getWidth() * bounds.getHeight();
     }
 
     /**

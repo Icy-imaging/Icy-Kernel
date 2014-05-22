@@ -44,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.swing.event.EventListenerList;
 
@@ -240,7 +241,7 @@ public class PluginLoader
         stopDaemons();
 
         // reset plugins and loader
-        final ArrayList<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
+        final List<PluginDescriptor> newPlugins = new ArrayList<PluginDescriptor>();
         final ClassLoader newLoader;
 
         // special case where JCL is disabled
@@ -258,7 +259,7 @@ public class PluginLoader
         if (processor.hasWaitingTasks())
             return;
 
-        final HashSet<String> classes = new HashSet<String>();
+        final Set<String> classes = new HashSet<String>();
 
         try
         {

@@ -536,8 +536,13 @@ public class ROI2DArea extends ROI2D
                         else
                         {
                             final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
+
+                            float newAlpha = prevAlpha.getAlpha() * getOpacity() * 2f;
+                            newAlpha = Math.min(1f, newAlpha);
+                            newAlpha = Math.max(0f, newAlpha);
+
                             // show cursor with an alpha factor
-                            g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity() * 2));
+                            g2.setComposite(prevAlpha.derive(newAlpha));
 
                             // draw cursor border
                             g2.setColor(Color.black);

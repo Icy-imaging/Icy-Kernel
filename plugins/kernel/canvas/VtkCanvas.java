@@ -407,6 +407,11 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     @Override
     public void shutDown()
     {
+        final long st = System.currentTimeMillis();
+        // wait for initialization to complete before shutdown (max 5s)
+        while (((System.currentTimeMillis() - st) < 5000L) && !initialized)
+            ThreadUtil.sleep(10);
+
         super.shutDown();
 
         propertiesUpdater.interrupt();
@@ -439,7 +444,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         removeAll();
         panel.removeAll();
 
-        renderer.RemoveAllViewProps();
+//        renderer.RemoveAllViewProps();
         renderer.FastDelete();
         renderWindow.FastDelete();
         imageVolume.release();
@@ -1365,7 +1370,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
             else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SPECULAR_INTENSITY))
             {
                 final double d = ((Double) value).doubleValue();
-                
+
                 // get exclusive access to VTK
                 panel3D.lock();
                 try

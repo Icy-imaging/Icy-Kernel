@@ -20,6 +20,7 @@ package icy.util;
 
 import icy.file.FileUtil;
 import icy.plugin.PluginLoader;
+import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
 
 import java.io.File;
@@ -78,7 +79,7 @@ public class ClassUtil
         }
         catch (Exception e)
         {
-            // ignore
+            IcyExceptionHandler.showErrorMessage(e, false, true);
         }
 
         return null;
@@ -584,7 +585,8 @@ public class ClassUtil
         }
         catch (IOException e)
         {
-            System.out.println(e.toString());
+            System.err.println("Cannot open " + fileName + ":");
+            IcyExceptionHandler.showErrorMessage(e, false, true);
             return;
         }
 
@@ -713,6 +715,7 @@ public class ClassUtil
         catch (Exception e)
         {
             // ignore
+            IcyExceptionHandler.showErrorMessage(e, false, true);
         }
 
         return null;

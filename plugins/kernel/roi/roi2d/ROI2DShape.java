@@ -120,8 +120,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
             if (seq == null)
                 return;
 
-            final ArrayList<Point3D.Double> point3DList = new ArrayList<Point3D.Double>();
-            final ArrayList<Poly3D> polyList = new ArrayList<Poly3D>();
+            final List<Point3D.Double> point3DList = new ArrayList<Point3D.Double>();
+            final List<Poly3D> polyList = new ArrayList<Poly3D>();
             final double[] coords = new double[6];
 
             final double nbSlice = seq.getSizeZ(canvas.getPositionT());
@@ -507,25 +507,11 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
             if (canvas instanceof IcyCanvas2D)
             {
                 final Rectangle2D bounds = shape.getBounds2D();
-                // trivial paint optimization
-                final boolean shapeVisible = GraphicsUtil.isVisible(g, bounds);
-                final boolean small;
-                final boolean tiny;
 
-                // disable LOD when creating the ROI
-                if (isCreating())
-                {
-                    small = false;
-                    tiny = false;
-                }
-                else
-                {
-                    final AffineTransform trans = g.getTransform();
-                    final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
-                    final double size = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight());
-                    small = size < LOD_SMALL;
-                    tiny = size < LOD_TINY;
-                }
+                // define LOD level
+                final boolean shapeVisible = isVisible(bounds, g, canvas);
+                final boolean small = isSmall(bounds, g, canvas);
+                final boolean tiny = isTiny(bounds, g, canvas);
 
                 // simplified draw
                 if (small)
@@ -579,8 +565,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
                         final Graphics2D g2 = (Graphics2D) g.create();
                         final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
 
+                        float newAlpha = prevAlpha.getAlpha() * getOpacity();
+                        newAlpha = Math.min(1f, newAlpha);
+                        newAlpha = Math.max(0f, newAlpha);
+
                         // show content with an alpha factor
-                        g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity()));
+                        g2.setComposite(prevAlpha.derive(newAlpha));
                         g2.setColor(getDisplayColor());
                         g2.fill(shape);
 
@@ -659,6 +649,47 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         {
             if (isActiveFor(canvas))
                 drawROI(g, sequence, canvas);
+        }
+
+        /**
+         * Returns <code>true</code> if the specified bounds should be considered as "tiny" in the
+         * specified canvas / graphics context.
+         */
+        protected boolean isVisible(Rectangle2D bounds, Graphics2D g, IcyCanvas canvas)
+        {
+            return GraphicsUtil.isVisible(g, bounds);
+        }
+
+        /**
+         * Returns <code>true</code> if the specified bounds should be considered as "tiny" in the
+         * specified canvas / graphics context.
+         */
+        protected boolean isSmall(Rectangle2D bounds, Graphics2D g, IcyCanvas canvas)
+        {
+            if (isCreating())
+                return false;
+
+            final AffineTransform trans = g.getTransform();
+            final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
+            final double size = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight());
+
+            return size < LOD_SMALL;
+        }
+
+        /**
+         * Returns <code>true</code> if the specified bounds should be considered as "tiny" in the
+         * specified canvas / graphics context.
+         */
+        protected boolean isTiny(Rectangle2D bounds, Graphics2D g, IcyCanvas canvas)
+        {
+            if (isCreating())
+                return false;
+
+            final AffineTransform trans = g.getTransform();
+            final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
+            final double size = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight());
+
+            return size < LOD_TINY;
         }
 
         @Override
@@ -1158,9 +1189,14 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         // use bigger stroke for isOver test for easier intersection
         final double strk = painter.getAdjustedStroke(canvas) * 3;
         final Rectangle2D rect = new Rectangle2D.Double(x - (strk * 0.5), y - (strk * 0.5), strk, strk);
+        final Rectangle2D roiBounds = getBounds2D();
+
+        // special test for empty object
+        if (roiBounds.isEmpty())
+            return rect.contains(roiBounds.getX(), roiBounds.getY());
 
         // fast intersect test to start with
-        if (getBounds2D().intersects(rect))
+        if (roiBounds.intersects(rect))
             // use flatten path, intersects on curved shape return incorrect result
             return ShapeUtil.pathIntersects(getPathIterator(null, 0.1), rect);
 

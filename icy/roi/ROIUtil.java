@@ -356,7 +356,7 @@ public class ROIUtil
     /**
      * Returns the mass center of specified ROI.
      */
-    public Point5D getMassCenter(ROI roi)
+    public static Point5D getMassCenter(ROI roi)
     {
         switch (roi.getDimension())
         {
@@ -386,7 +386,7 @@ public class ROIUtil
     /**
      * Returns the mass center of specified 2D ROI.
      */
-    public Point2D getMassCenter(ROI2D roi)
+    public static Point2D getMassCenter(ROI2D roi)
     {
         double x = 0, y = 0;
         long len = 0;
@@ -417,7 +417,7 @@ public class ROIUtil
     /**
      * Returns the mass center of specified 3D ROI.
      */
-    public Point3D getMassCenter(ROI3D roi)
+    public static Point3D getMassCenter(ROI3D roi)
     {
         double x = 0, y = 0, z = 0;
         long len = 0;
@@ -429,6 +429,8 @@ public class ROIUtil
             final double zd = zi;
             final BooleanMask2D mask = mask3d.getMask2D(zi);
             final boolean m[] = mask.mask;
+            final double bx = mask.bounds.x;
+            final double by = mask.bounds.y;
             final int h = mask.bounds.height;
             final int w = mask.bounds.width;
 
@@ -439,8 +441,8 @@ public class ROIUtil
                 {
                     if (m[off++])
                     {
-                        x += i;
-                        y += j;
+                        x += bx + i;
+                        y += by + j;
                         z += zd;
                         len++;
                     }
@@ -448,14 +450,13 @@ public class ROIUtil
             }
         }
 
-        final Point3D pos3d = roi.getPosition3D();
-        return new Point3D.Double(pos3d.getX() + (x / len), pos3d.getY() + (y / len), pos3d.getZ() + (z / len));
+        return new Point3D.Double(x / len, y / len, z / len);
     }
 
     /**
      * Returns the mass center of specified 4D ROI.
      */
-    public Point4D getMassCenter(ROI4D roi)
+    public static Point4D getMassCenter(ROI4D roi)
     {
         final BooleanMask4D mask4d = roi.getBooleanMask(true);
         double x = 0, y = 0, z = 0, t = 0;
@@ -473,6 +474,8 @@ public class ROIUtil
                 final double zd = zi;
                 final BooleanMask2D mask = mask3d.getMask2D(zi);
                 final boolean m[] = mask.mask;
+                final double bx = mask.bounds.x;
+                final double by = mask.bounds.y;
                 final int h = mask.bounds.height;
                 final int w = mask.bounds.width;
 
@@ -483,8 +486,8 @@ public class ROIUtil
                     {
                         if (m[off++])
                         {
-                            x += i;
-                            y += j;
+                            x += bx + i;
+                            y += by + j;
                             z += zd;
                             t += td;
                             len++;
@@ -494,15 +497,13 @@ public class ROIUtil
             }
         }
 
-        final Point4D pos4d = roi.getPosition4D();
-        return new Point4D.Double(pos4d.getX() + (x / len), pos4d.getY() + (y / len), pos4d.getZ() + (z / len),
-                pos4d.getT() + (t / len));
+        return new Point4D.Double(x / len, y / len, z / len, t / len);
     }
 
     /**
      * Returns the mass center of specified 5D ROI.
      */
-    public Point5D getMassCenter(ROI5D roi)
+    public static Point5D getMassCenter(ROI5D roi)
     {
         final BooleanMask5D mask5d = roi.getBooleanMask(true);
         double x = 0, y = 0, z = 0, t = 0, c = 0;
@@ -526,6 +527,8 @@ public class ROIUtil
                     final double zd = zi;
                     final BooleanMask2D mask = mask3d.getMask2D(zi);
                     final boolean m[] = mask.mask;
+                    final double bx = mask.bounds.x;
+                    final double by = mask.bounds.y;
                     final int h = mask.bounds.height;
                     final int w = mask.bounds.width;
 
@@ -536,8 +539,8 @@ public class ROIUtil
                         {
                             if (m[off++])
                             {
-                                x += i;
-                                y += j;
+                                x += bx + i;
+                                y += bx + j;
                                 z += zd;
                                 t += td;
                                 c += cd;
@@ -549,9 +552,7 @@ public class ROIUtil
             }
         }
 
-        final Point5D pos5d = roi.getPosition5D();
-        return new Point5D.Double(pos5d.getX() + (x / len), pos5d.getY() + (y / len), pos5d.getZ() + (z / len),
-                pos5d.getT() + (t / len), pos5d.getC() + (c / len));
+        return new Point5D.Double(x / len, y / len, z / len, t / len, c / len);
     }
 
     /**

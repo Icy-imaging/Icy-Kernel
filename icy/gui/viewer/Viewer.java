@@ -45,16 +45,13 @@ import icy.image.IcyBufferedImage;
 import icy.image.lut.LUT;
 import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
-import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
 import icy.plugin.PluginLoader.PluginLoaderListener;
-import icy.plugin.interface_.PluginCanvas;
 import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
-import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.Random;
 import icy.util.StringUtil;
@@ -420,7 +417,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     private void buildCanvasCombo()
     {
         // build comboBox with canvas plugins
-        canvasComboBox = new JComboBox(IcyCanvas.getCanvasPlugins().toArray());
+        canvasComboBox = new JComboBox(IcyCanvas.getCanvasPluginNames().toArray());
         // specific renderer
         canvasComboBox.setRenderer(new PluginComboBoxRenderer(canvasComboBox, false));
         // limit size
@@ -437,17 +434,24 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final String canvasName = (String) canvasComboBox.getSelectedItem();
-                final IcyCanvas newCanvas = IcyCanvas.create(canvasName, Viewer.this);
+                final String pluginClassName = (String) canvasComboBox.getSelectedItem();
+                final String canvasClassName = IcyCanvas.getCanvasClassName(pluginClassName);
 
-                // new canvas not created ?
-                if (newCanvas == null)
-                    MessageDialog.showDialog("Cannot create " + canvasName + " canvas !", MessageDialog.ERROR_MESSAGE);
-                else
+                // canvas class name found
+                if (canvasClassName != null)
                 {
                     // set new canvas only if different
-                    if ((canvas == null) || !canvas.getClass().equals(newCanvas.getClass()))
-                        setCanvas(newCanvas);
+                    if ((canvas == null) || !canvas.getClass().getName().equals(canvasClassName))
+                    {
+                        final IcyCanvas newCanvas = IcyCanvas.create(pluginClassName, Viewer.this);
+
+                        if (newCanvas != null)
+                            setCanvas(newCanvas);
+                        else
+                            // new canvas not created ?
+                            MessageDialog.showDialog("Cannot create Canvas " + canvasClassName + " !",
+                                    MessageDialog.ERROR_MESSAGE);
+                    }
                 }
             }
         });
@@ -551,33 +555,14 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     {
         if (canvas != null)
         {
-            // select current active canvas
-            final String currentCanvasClassName = canvas.getClass().getName();
+            // get plugin class name for this canvas
+            final String pluginName = IcyCanvas.getPluginClassName(canvas.getClass().getName());
 
-            for (String pluginName : IcyCanvas.getCanvasPlugins())
+            if (pluginName != null)
             {
-                try
-                {
-                    final PluginDescriptor plugin = PluginLoader.getPlugin(pluginName);
-
-                    if (plugin != null)
-                    {
-                        final PluginCanvas pluginCanvas = (PluginCanvas) plugin.getPluginClass().newInstance();
-                        final String newCanvasClassName = pluginCanvas.getCanvasClassName();
-
-                        // canvas change ? --> find corresponding plugin in comboBox and select it
-                        if (currentCanvasClassName.equals(newCanvasClassName))
-                        {
-                            if (!canvasComboBox.getSelectedItem().equals(pluginName))
-                                canvasComboBox.setSelectedItem(pluginName);
-                            return;
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    IcyExceptionHandler.showErrorMessage(e, true);
-                }
+                // align canvas combo to plugin name
+                if (!canvasComboBox.getSelectedItem().equals(pluginName))
+                    canvasComboBox.setSelectedItem(pluginName);
             }
         }
     }

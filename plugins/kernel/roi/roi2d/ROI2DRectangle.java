@@ -115,7 +115,6 @@ public class ROI2DRectangle extends ROI2DRectShape
     public double computeNumberOfPoints()
     {
         final Rectangle2D r = getRectangle();
-
         return r.getWidth() * r.getHeight();
     }
 }

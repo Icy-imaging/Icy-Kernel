@@ -24,6 +24,7 @@ import icy.resource.ResourceUtil;
 import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
+import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -38,6 +39,27 @@ import org.w3c.dom.Node;
  */
 public class ROI2DPoint extends ROI2DShape
 {
+    public class ROI2DPointPainter extends ROI2DShapePainter
+    {
+        @Override
+        protected boolean isSmall(Rectangle2D bounds, Graphics2D g, IcyCanvas canvas)
+        {
+            if (isSelected())
+                return false;
+
+            return super.isSmall(bounds, g, canvas);
+        }
+
+        @Override
+        protected boolean isTiny(Rectangle2D bounds, Graphics2D g, IcyCanvas canvas)
+        {
+            if (isSelected())
+                return false;
+
+            return super.isTiny(bounds, g, canvas);
+        }
+    }
+
     public static final String ID_POSITION = "position";
 
     private final Anchor2D position;
@@ -65,7 +87,8 @@ public class ROI2DPoint extends ROI2DShape
 
         // select the point for "interactive" mode
         this.position.setSelected(true);
-//        getOverlay().setMousePos(new Point5D.Double(position.getX(), position.getY(), -1d, -1d, -1d));
+        // getOverlay().setMousePos(new Point5D.Double(position.getX(), position.getY(), -1d, -1d,
+        // -1d));
 
         updateShape();
 
@@ -80,7 +103,7 @@ public class ROI2DPoint extends ROI2DShape
     public ROI2DPoint(Point5D pt)
     {
         this(pt.toPoint2D());
-//        getOverlay().setMousePos(pt);
+        // getOverlay().setMousePos(pt);
     }
 
     public ROI2DPoint(double x, double y)
@@ -91,6 +114,12 @@ public class ROI2DPoint extends ROI2DShape
     public ROI2DPoint()
     {
         this(new Point2D.Double());
+    }
+
+    @Override
+    protected ROI2DShapePainter createPainter()
+    {
+        return new ROI2DPointPainter();
     }
 
     /**

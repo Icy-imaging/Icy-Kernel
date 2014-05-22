@@ -794,14 +794,17 @@ public class VtkImageVolume
      */
     public void setVolumeData(vtkImageData data)
     {
-        // set connection
-        volumeMapper.SetInputData(data);
+        if (imageData != data)
+        {
+            // set connection
+            volumeMapper.SetInputData(data);
 
-        // release previous volume data memory
-        if (imageData != null)
-            imageData.FastDelete();
+            // release previous volume data memory
+            if (imageData != null)
+                imageData.FastDelete();
 
-        // set to new image data
-        imageData = data;
+            // set to new image data
+            imageData = data;
+        }
     }
 }

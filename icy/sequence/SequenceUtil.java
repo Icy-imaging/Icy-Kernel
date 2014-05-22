@@ -1761,12 +1761,14 @@ public class SequenceUtil
         // content was resized ?
         if (resizeContent)
         {
-            final double sx = (double) result.getSizeX() / source.getSizeX();
-            final double sy = (double) result.getSizeY() / source.getSizeY();
-            
+            final double sx = (double) source.getSizeX() / result.getSizeX();
+            final double sy = (double) source.getSizeY() / result.getSizeY();
+
             // update pixel size
-            result.setPixelSizeX(result.getPixelSizeX() * sx);
-            result.setPixelSizeY(result.getPixelSizeY() * sy);
+            if ((sx != 0d) && !Double.isInfinite(sx))
+                result.setPixelSizeX(result.getPixelSizeX() * sx);
+            if ((sy != 0d) && !Double.isInfinite(sy))
+                result.setPixelSizeY(result.getPixelSizeY() * sy);
         }
 
         return result;

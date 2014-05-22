@@ -713,9 +713,11 @@ public abstract class ROI3D extends ROI
      * Return surface area of the 3D ROI in pixels.<br>
      * This is basically the number of pixel representing ROI edges.<br>
      * 
+     * @deprecated Use {@link #getNumberOfContourPoints()} instead.
      * @see #getNumberOfContourPoints()
      * @see #computeNumberOfContourPoints()
      */
+    @Deprecated
     public double getSurfaceArea()
     {
         return getNumberOfContourPoints();
@@ -725,10 +727,12 @@ public abstract class ROI3D extends ROI
      * Return volume of the 3D ROI in pixels.<br>
      * This is basically the number of pixel contained in the ROI.<br>
      * 
+     * @deprecated Use {@link #getNumberOfPoints()} instead.
      * @see #getNumberOfPoints()
      * @see #computeNumberOfPoints()
      */
     @Override
+    @Deprecated
     public double getVolume()
     {
         return getNumberOfPoints();

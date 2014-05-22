@@ -124,7 +124,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
             @Override
             public void textChanged(IcyTextField source, boolean validate)
             {
-                search(getText());
+                searchInternal(getText());
             }
         });
         addMouseListener(new MouseAdapter()
@@ -147,7 +147,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
             @Override
             public void focusGained(FocusEvent e)
             {
-                search(getText());
+                searchInternal(getText());
             }
         });
 
@@ -329,7 +329,27 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
         setText("");
     }
 
+    // public void search(String text)
+    // {
+    // final String filter = text.trim();
+    //
+    // if (StringUtil.isEmpty(filter))
+    // searchEngine.cancelSearch();
+    // else
+    // searchEngine.search(filter);
+    // }
+    //
+    /**
+     * Request search for the specified text.
+     * 
+     * @see SearchEngine#search(String)
+     */
     public void search(String text)
+    {
+        setText(text);
+    }
+
+    protected void searchInternal(String text)
     {
         final String filter = text.trim();
 
@@ -345,7 +365,7 @@ public class SearchBar extends IcyTextField implements SearchEngineListener
         if (resultsPanel.isShowing())
             resultsPanel.executeSelected();
         else
-            search(getText());
+            searchInternal(getText());
     }
 
     protected void moveDown()

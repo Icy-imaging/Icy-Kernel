@@ -25,6 +25,7 @@ import icy.resource.ResourceUtil;
 import icy.type.point.Point5D;
 import icy.util.XMLUtil;
 
+import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -55,6 +56,18 @@ public class ROI2DLine extends ROI2DShape
         }
     }
 
+    public class ROI2DLinePainter extends ROI2DShapePainter
+    {
+        @Override
+        protected boolean isTiny(Rectangle2D bounds, Graphics2D g, IcyCanvas canvas)
+        {
+            if (isSelected())
+                return false;
+
+            return super.isTiny(bounds, g, canvas);
+        }
+    }
+
     public static final String ID_PT1 = "pt1";
     public static final String ID_PT2 = "pt2";
 
@@ -79,7 +92,7 @@ public class ROI2DLine extends ROI2DShape
 
         // select the pt2 to size the line for "interactive mode"
         this.pt2.setSelected(true);
-//        getOverlay().setMousePos(new Point5D.Double(pt2.getX(), pt2.getY(), -1d, -1d, -1d));
+        // getOverlay().setMousePos(new Point5D.Double(pt2.getX(), pt2.getY(), -1d, -1d, -1d));
 
         updateShape();
 
@@ -114,7 +127,7 @@ public class ROI2DLine extends ROI2DShape
     public ROI2DLine(Point5D pt)
     {
         this(pt.toPoint2D());
-//        getOverlay().setMousePos(pt);
+        // getOverlay().setMousePos(pt);
     }
 
     public ROI2DLine(double x1, double y1, double x2, double y2)
@@ -125,6 +138,12 @@ public class ROI2DLine extends ROI2DShape
     public ROI2DLine()
     {
         this(new Point2D.Double(), new Point2D.Double());
+    }
+
+    @Override
+    protected ROI2DShapePainter createPainter()
+    {
+        return new ROI2DLinePainter();
     }
 
     @Override

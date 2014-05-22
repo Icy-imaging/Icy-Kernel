@@ -1326,7 +1326,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
                 if (sequenceInfInvalid)
                 {
-                    final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+                    final Sequence sequence = getSequence();
 
                     if (sequence != null)
                     {
@@ -1435,24 +1435,38 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
         public String getPerimeter()
         {
-            return ROIUtil.getContourSize(Icy.getMainInterface().getActiveSequence(), getNumberOfContourPoints(), roi,
-                    2, 5);
+            final Sequence seq = getSequence();
+            if (seq == null)
+                return "";
+
+            return ROIUtil.getContourSize(seq, getNumberOfContourPoints(), roi, 2, 5);
         }
 
         public String getArea()
         {
-            return ROIUtil.getInteriorSize(Icy.getMainInterface().getActiveSequence(), getNumberOfPoints(), roi, 2, 5);
+            final Sequence seq = getSequence();
+            if (seq == null)
+                return "";
+
+            return ROIUtil.getInteriorSize(seq, getNumberOfPoints(), roi, 2, 5);
         }
 
         public String getSurfaceArea()
         {
-            return ROIUtil.getContourSize(Icy.getMainInterface().getActiveSequence(), getNumberOfContourPoints(), roi,
-                    3, 5);
+            final Sequence seq = getSequence();
+            if (seq == null)
+                return "";
+
+            return ROIUtil.getContourSize(seq, getNumberOfContourPoints(), roi, 3, 5);
         }
 
         public String getVolume()
         {
-            return ROIUtil.getInteriorSize(Icy.getMainInterface().getActiveSequence(), getNumberOfPoints(), roi, 3, 5);
+            final Sequence seq = getSequence();
+            if (seq == null)
+                return "";
+
+            return ROIUtil.getInteriorSize(seq, getNumberOfPoints(), roi, 3, 5);
         }
 
         public double getMinIntensities(int channel)

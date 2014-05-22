@@ -181,6 +181,20 @@ public class PluginUpdater
                         toInstallPlugins.add(onlinePlugin);
                     }
                 }
+
+                final List<PluginDescriptor> onlinePlugins = PluginRepositoryLoader.getPlugins();
+
+                for (PluginDescriptor onlinePlugin : onlinePlugins)
+                {
+                    // we found a plugin which is installed but not correctly loaded
+                    // so we try to reinstall it
+                    if (onlinePlugin.isInstalled() && !PluginLoader.isLoaded(onlinePlugin.getClassName()))
+                    {
+                        // we load complete descriptor so we will have the changeslog
+                        onlinePlugin.loadDescriptor();
+                        toInstallPlugins.add(onlinePlugin);
+                    }
+                }
             }
             finally
             {

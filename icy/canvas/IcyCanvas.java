@@ -56,7 +56,6 @@ import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.sequence.SequenceListener;
 import icy.system.IcyExceptionHandler;
-import icy.type.collection.CollectionUtil;
 import icy.type.point.Point5D;
 import icy.util.ClassUtil;
 import icy.util.EventUtil;
@@ -74,6 +73,7 @@ import java.awt.image.BufferedImage;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -127,34 +127,139 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Return the class name of all {@link PluginCanvas}.
+     * Returns all {@link PluginCanvas} plugins (kernel plugin are returned first).
      */
-    public static List<String> getCanvasPlugins()
+    public static List<PluginDescriptor> getCanvasPlugins()
     {
         // get all canvas plugins
-        final List<PluginDescriptor> plugins = PluginLoader.getPlugins(PluginCanvas.class);
-        final List<String> result = new ArrayList<String>();
+        final List<PluginDescriptor> result = PluginLoader.getPlugins(PluginCanvas.class);
 
-        // we want the default 2D and 3D canvas to be first
-        result.add(Canvas2DPlugin.class.getName());
-        if (Icy.isVtkLibraryLoaded())
-            result.add(VtkCanvasPlugin.class.getName());
-
-        for (PluginDescriptor plugin : plugins)
+        // VTK is not loaded ?
+        if (!Icy.isVtkLibraryLoaded())
         {
-            final String className = plugin.getClassName();
-
-            // ignore default canvas as they have been already added
-            if (Canvas2DPlugin.class.getName().equals(className))
-                continue;
-            if (VtkCanvasPlugin.class.getName().equals(className))
-                continue;
-
-            CollectionUtil.addUniq(result, plugin.getClassName());
+            // remove VtkCanvas
+            final int ind = PluginDescriptor.getIndex(result, VtkCanvasPlugin.class.getName());
+            if (ind != -1)
+                result.remove(ind);
         }
+
+        // sort plugins list
+        Collections.sort(result, new Comparator<PluginDescriptor>()
+        {
+            @Override
+            public int compare(PluginDescriptor o1, PluginDescriptor o2)
+            {
+                return Integer.compare(getOrder(o1), getOrder(o2));
+            }
+
+            int getOrder(PluginDescriptor p)
+            {
+                if (p.getClassName() == Canvas2DPlugin.class.getName())
+                    return 0;
+                if (p.getClassName() == VtkCanvasPlugin.class.getName())
+                    return 1;
+                return 10;
+            }
+        });
 
         return result;
     }
+
+    /**
+     * Returns all {@link PluginCanvas} plugins class name (kernel plugin are returned first).
+     */
+    public static List<String> getCanvasPluginNames()
+    {
+        // get all canvas plugins
+        final List<PluginDescriptor> plugins = getCanvasPlugins();
+        final List<String> result = new ArrayList<String>();
+
+        for (PluginDescriptor plugin : plugins)
+            result.add(plugin.getClassName());
+
+        return result;
+    }
+
+    /**
+     * Returns the plugin class name corresponding to the specified Canvas class name.<br>
+     * Returns <code>null</code> if we can't find a corresponding plugin.
+     */
+    public static String getPluginClassName(String canvasClassName)
+    {
+        for (PluginDescriptor plugin : IcyCanvas.getCanvasPlugins())
+        {
+            final String className = getCanvasClassName(plugin);
+
+            // we found the corresponding plugin
+            if (canvasClassName.equals(className))
+                // get plugin class name
+                return plugin.getClassName();
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns the canvas class name corresponding to the specified {@link PluginCanvas} plugin.<br>
+     * Returns <code>null</code> if we can't retrieve the corresponding canvas class name.
+     */
+    public static String getCanvasClassName(PluginDescriptor plugin)
+    {
+        try
+        {
+            if (plugin != null)
+            {
+                final PluginCanvas pluginCanvas = (PluginCanvas) plugin.getPluginClass().newInstance();
+                // return canvas class name
+                return pluginCanvas.getCanvasClassName();
+            }
+        }
+        catch (Exception e)
+        {
+            IcyExceptionHandler.showErrorMessage(e, true);
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns the canvas class name corresponding to the specified {@link PluginCanvas} class name.<br>
+     * Returns <code>null</code> if we can't find retrieve the corresponding canvas class name.
+     */
+    public static String getCanvasClassName(String pluginClassName)
+    {
+        return getCanvasClassName(PluginLoader.getPlugin(pluginClassName));
+    }
+
+    // /**
+    // * Return the class name of all {@link PluginCanvas}.
+    // */
+    // public static List<String> getCanvasPlugins()
+    // {
+    // // get all canvas plugins
+    // final List<PluginDescriptor> plugins = PluginLoader.getPlugins(PluginCanvas.class);
+    // final List<String> result = new ArrayList<String>();
+    //
+    // // we want the default 2D and 3D canvas to be first
+    // result.add(Canvas2DPlugin.class.getName());
+    // if (Icy.isVtkLibraryLoaded())
+    // result.add(VtkCanvasPlugin.class.getName());
+    //
+    // for (PluginDescriptor plugin : plugins)
+    // {
+    // final String className = plugin.getClassName();
+    //
+    // // ignore default canvas as they have been already added
+    // if (Canvas2DPlugin.class.getName().equals(className))
+    // continue;
+    // if (VtkCanvasPlugin.class.getName().equals(className))
+    // continue;
+    //
+    // CollectionUtil.addUniq(result, plugin.getClassName());
+    // }
+    //
+    // return result;
+    // }
 
     /**
      * Create a {@link IcyCanvas} object from its class name or {@link PluginCanvas} class name.<br>
