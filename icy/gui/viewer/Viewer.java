@@ -22,7 +22,6 @@ import icy.action.CanvasActions;
 import icy.action.CanvasActions.ToggleLayersAction;
 import icy.action.ViewerActions;
 import icy.action.WindowActions;
-import icy.canvas.Canvas2D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvasEvent;
@@ -48,6 +47,7 @@ import icy.main.Icy;
 import icy.plugin.PluginLoader;
 import icy.plugin.PluginLoader.PluginLoaderEvent;
 import icy.plugin.PluginLoader.PluginLoaderListener;
+import icy.plugin.interface_.PluginCanvas;
 import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
@@ -158,8 +158,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         // set lut (this modify lutPanel)
         setLut(sequence.createCompatibleLUT());
-        // set default canvas to Canvas2D (this modify mainPanel)
-        setCanvas(Canvas2D.class.getName());
+        // set default canvas to first available canvas plugin (Canvas2D should be first)
+        setCanvas(IcyCanvas.getCanvasPluginNames().get(0));
 
         setLayout(new BorderLayout());
 
@@ -434,12 +434,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final String pluginClassName = (String) canvasComboBox.getSelectedItem();
-                final String canvasClassName = IcyCanvas.getCanvasClassName(pluginClassName);
-
-                // canvas class name found
-                if (canvasClassName != null)
-                    setCanvas(canvasClassName);
+                // set selected canvas
+                setCanvas((String) canvasComboBox.getSelectedItem());
             }
         });
     }
@@ -619,12 +615,14 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
-     * Set the specified canvas for the viewer (from the canvas class name)
+     * Set the specified canvas for the viewer (from the {@link PluginCanvas} class name).
+     * 
+     * @see IcyCanvas#getCanvasPluginNames()
      */
-    public void setCanvas(String canvasClassName)
+    public void setCanvas(String pluginClassName)
     {
         // not the same canvas ?
-        if ((canvas == null) || !canvas.getClass().getName().equals(canvasClassName))
+        if ((canvas == null) || !canvas.getClass().getName().equals(IcyCanvas.getCanvasClassName(pluginClassName)))
         {
             final int saveX;
             final int saveY;
@@ -651,7 +649,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 saveX = saveY = saveZ = saveT = saveC = -1;
 
             // set new canvas
-            canvas = IcyCanvas.create(canvasClassName, this);
+            canvas = IcyCanvas.create(pluginClassName, this);
 
             if (canvas != null)
             {
@@ -675,7 +673,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             else
             {
                 // new canvas not created ?
-                MessageDialog.showDialog("Cannot create Canvas " + canvasClassName + " !", MessageDialog.ERROR_MESSAGE);
+                MessageDialog.showDialog("Cannot create Canvas from plugin " + pluginClassName + " !", MessageDialog.ERROR_MESSAGE);
             }
 
             mainPanel.revalidate();
