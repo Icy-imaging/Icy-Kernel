@@ -159,7 +159,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         // set lut (this modify lutPanel)
         setLut(sequence.createCompatibleLUT());
         // set default canvas to Canvas2D (this modify mainPanel)
-        setCanvas(new Canvas2D(this));
+        setCanvas(Canvas2D.class.getName());
 
         setLayout(new BorderLayout());
 
@@ -439,20 +439,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
                 // canvas class name found
                 if (canvasClassName != null)
-                {
-                    // set new canvas only if different
-                    if ((canvas == null) || !canvas.getClass().getName().equals(canvasClassName))
-                    {
-                        final IcyCanvas newCanvas = IcyCanvas.create(pluginClassName, Viewer.this);
-
-                        if (newCanvas != null)
-                            setCanvas(newCanvas);
-                        else
-                            // new canvas not created ?
-                            MessageDialog.showDialog("Cannot create Canvas " + canvasClassName + " !",
-                                    MessageDialog.ERROR_MESSAGE);
-                    }
-                }
+                    setCanvas(canvasClassName);
             }
         });
     }
@@ -632,8 +619,84 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     }
 
     /**
-     * Set the specified canvas for the viewer.
+     * Set the specified canvas for the viewer (from the canvas class name)
      */
+    public void setCanvas(String canvasClassName)
+    {
+        // not the same canvas ?
+        if ((canvas == null) || !canvas.getClass().getName().equals(canvasClassName))
+        {
+            final int saveX;
+            final int saveY;
+            final int saveZ;
+            final int saveT;
+            final int saveC;
+
+            if (canvas != null)
+            {
+                // save position
+                saveX = canvas.getPositionX();
+                saveY = canvas.getPositionY();
+                saveZ = canvas.getPositionZ();
+                saveT = canvas.getPositionT();
+                saveC = canvas.getPositionC();
+
+                canvas.removePropertyChangeListener(IcyCanvas.PROPERTY_LAYERS_VISIBLE, this);
+                canvas.removeCanvasListener(this);
+                canvas.shutDown();
+                // remove from mainPanel
+                mainPanel.remove(canvas);
+            }
+            else
+                saveX = saveY = saveZ = saveT = saveC = -1;
+
+            // set new canvas
+            canvas = IcyCanvas.create(canvasClassName, this);
+
+            if (canvas != null)
+            {
+                canvas.addCanvasListener(this);
+                canvas.addPropertyChangeListener(IcyCanvas.PROPERTY_LAYERS_VISIBLE, this);
+                // add to mainPanel
+                mainPanel.add(canvas, BorderLayout.CENTER);
+
+                // restore position
+                if (saveX != -1)
+                    canvas.setPositionX(saveX);
+                if (saveY != -1)
+                    canvas.setPositionY(saveY);
+                if (saveZ != -1)
+                    canvas.setPositionZ(saveZ);
+                if (saveT != -1)
+                    canvas.setPositionT(saveT);
+                if (saveC != -1)
+                    canvas.setPositionC(saveC);
+            }
+            else
+            {
+                // new canvas not created ?
+                MessageDialog.showDialog("Cannot create Canvas " + canvasClassName + " !", MessageDialog.ERROR_MESSAGE);
+            }
+
+            mainPanel.revalidate();
+
+            // refresh viewer menu (so overlay checkbox is correctly set)
+            updateSystemMenu();
+            updateToolbarComponents();
+            refreshToolBar();
+
+            // fix the OSX lost keyboard focus on canvas change in detached mode.
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().upFocusCycle(getCanvas());
+
+            // notify canvas changed to listener
+            fireViewerChanged(ViewerEventType.CANVAS_CHANGED);
+        }
+    }
+
+    /**
+     * @deprecated Use {@link #setCanvas(String)} instead.
+     */
+    @Deprecated
     public void setCanvas(IcyCanvas value)
     {
         if (canvas == value)

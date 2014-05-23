@@ -158,24 +158,27 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
             {
                 final Sequence sequence = getSequence();
 
-                // need to be done on EDT
-                ThreadUtil.invokeNow(new Runnable()
+                if (sequence != null)
                 {
-                    @Override
-                    public void run()
+                    // need to be done on EDT
+                    ThreadUtil.invokeNow(new Runnable()
                     {
-                        for (int c = 0; c < Math.min(bottomPane.getTabCount(), sequence.getSizeC()); c++)
+                        @Override
+                        public void run()
                         {
-                            final String channelName = sequence.getChannelName(c);
+                            for (int c = 0; c < Math.min(bottomPane.getTabCount(), sequence.getSizeC()); c++)
+                            {
+                                final String channelName = sequence.getChannelName(c);
 
-                            bottomPane.setTitleAt(c, StringUtil.limit(channelName, 10));
-                            if (sequence.getDefaultChannelName(c).equals(channelName))
-                                bottomPane.setToolTipTextAt(c, "Channel " + c);
-                            else
-                                bottomPane.setToolTipTextAt(c, channelName + " (channel " + c + ")");
+                                bottomPane.setTitleAt(c, StringUtil.limit(channelName, 10));
+                                if (sequence.getDefaultChannelName(c).equals(channelName))
+                                    bottomPane.setToolTipTextAt(c, "Channel " + c);
+                                else
+                                    bottomPane.setToolTipTextAt(c, channelName + " (channel " + c + ")");
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         };
 
@@ -331,12 +334,19 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
         };
 
         // update channel name and color
-        ThreadUtil.runSingle(channelTabColorUpdater);
-        ThreadUtil.runSingle(channelNameUpdater);
+        ThreadUtil.bgRunSingle(channelTabColorUpdater);
+        ThreadUtil.bgRunSingle(channelNameUpdater);
 
-        // weak reference --> released when LUTViewer is released
-        weakSequenceListener = new WeakSequenceListener(sequenceListener);
-        getSequence().addListener(weakSequenceListener);
+        final Sequence sequence = getSequence();
+
+        if (sequence != null)
+        {
+            // weak reference --> released when LUTViewer is released
+            weakSequenceListener = new WeakSequenceListener(sequenceListener);
+            sequence.addListener(weakSequenceListener);
+        }
+        else
+            weakSequenceListener = null;
     }
 
     private boolean getPreferredAutoBounds()

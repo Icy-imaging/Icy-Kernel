@@ -149,15 +149,16 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             @Override
             public int compare(PluginDescriptor o1, PluginDescriptor o2)
             {
-                return Integer.compare(getOrder(o1), getOrder(o2));
+                return Integer.valueOf(getOrder(o1)).compareTo(Integer.valueOf(getOrder(o2)));
             }
 
             int getOrder(PluginDescriptor p)
             {
-                if (p.getClassName() == Canvas2DPlugin.class.getName())
+                if (p.getClassName().equals(Canvas2DPlugin.class.getName()))
                     return 0;
-                if (p.getClassName() == VtkCanvasPlugin.class.getName())
+                if (p.getClassName().equals(VtkCanvasPlugin.class.getName()))
                     return 1;
+                
                 return 10;
             }
         });
