@@ -285,16 +285,16 @@ public class FileUtil
 
         try
         {
-            // try to get from resource
-            directory = new File(ClassLoader.getSystemClassLoader().getResource(".").toURI()).getAbsolutePath();
+            // try to get from sources
+            directory = new File(FileUtil.class.getProtectionDomain().getCodeSource().getLocation().toURI())
+                    .getParentFile().getAbsolutePath();
         }
         catch (Exception e1)
         {
             try
             {
-                // try to get from sources
-                directory = new File(FileUtil.class.getProtectionDomain().getCodeSource().getLocation().toURI())
-                        .getParentFile().getAbsolutePath();
+                // try to get from resource (this sometime return incorrect folder on mac osx)
+                directory = new File(ClassLoader.getSystemClassLoader().getResource(".").toURI()).getAbsolutePath();
             }
             catch (Exception e2)
             {
@@ -317,7 +317,7 @@ public class FileUtil
     }
 
     /**
-     * @deprecated USe {@link #getApplicationDirectory()} instead.
+     * @deprecated Use {@link #getApplicationDirectory()} instead.
      */
     @Deprecated
     public static String getCurrentDirectory()
