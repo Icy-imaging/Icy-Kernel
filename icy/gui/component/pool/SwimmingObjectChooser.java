@@ -51,7 +51,7 @@ public class SwimmingObjectChooser extends JComboBox implements SwimmingPoolList
 
     private static final long serialVersionUID = 1594001236878708868L;
 
-    private ArrayList<SwimmingObjectChooserListener> listeners;
+    private List<SwimmingObjectChooserListener> listeners;
     private final Class<? extends Object> itemClass;
 
     public SwimmingObjectChooser(Class<? extends Object> itemClass)
@@ -132,15 +132,11 @@ public class SwimmingObjectChooser extends JComboBox implements SwimmingPoolList
     Object[] getSwimmingObjects()
     {
         final List<Object> objectList = new ArrayList<Object>();
-        final ArrayList<SwimmingObject> objects = Icy.getMainInterface().getSwimmingPool().getObjects();
+        final List<SwimmingObject> objects = Icy.getMainInterface().getSwimmingPool().getObjects();
 
         for (SwimmingObject so : objects)
-        {
-            final Object o = so.getObject();
-
-            if (o.getClass() == itemClass)
+            if (itemClass.isInstance(so.getObject()))
                 objectList.add(so);
-        }
 
         return objectList.toArray();
     }
