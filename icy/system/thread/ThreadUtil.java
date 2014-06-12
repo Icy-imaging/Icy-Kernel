@@ -220,9 +220,9 @@ public class ThreadUtil
                 // the runnable thrown an exception
                 IcyExceptionHandler.handleException(e.getTargetException(), true);
             }
-            catch (Exception e)
+            catch (InterruptedException e)
             {
-                // probably an interrupt exception here
+                // interrupt exception
                 System.err.println("ThreadUtil.invokeNow(...) error :");
                 IcyExceptionHandler.showErrorMessage(e, true);
             }
@@ -264,6 +264,8 @@ public class ThreadUtil
      * Invoke the specified <code>Runnable</code> on the AWT event dispatching thread now.<br>
      * Wait until completion. Be careful, using this method may lead to dead lock !
      * 
+     * @throws InvocationTargetException
+     *         if the computation threw an exception
      * @throws ExecutionException
      *         if the computation threw an exception
      * @throws InterruptedException
@@ -271,13 +273,14 @@ public class ThreadUtil
      * @throws Exception
      *         if the computation threw an exception and the calling thread is the EDT
      */
-    public static <T> T invokeNow(Callable<T> callable) throws InterruptedException, ExecutionException, Exception
+    public static <T> T invokeNow(Callable<T> callable) throws InterruptedException, InvocationTargetException,
+            ExecutionException, Exception
     {
         if (SwingUtilities.isEventDispatchThread())
             return callable.call();
 
         final FutureTask<T> task = new FutureTask<T>(callable);
-        invokeNow(task);
+        EventQueue.invokeAndWait(task);
         return task.get();
     }
 

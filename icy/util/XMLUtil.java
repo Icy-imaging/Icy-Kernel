@@ -43,6 +43,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.xerces.util.XMLChar;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentType;
@@ -1270,11 +1271,12 @@ public class XMLUtil
     public static Node addValue(Node node, String value)
     {
         final Node newNode;
+        final String filteredValue = filterString(value);
 
         if (node instanceof Document)
-            newNode = ((Document) node).createTextNode(value);
+            newNode = ((Document) node).createTextNode(filteredValue);
         else
-            newNode = node.getOwnerDocument().createTextNode(value);
+            newNode = node.getOwnerDocument().createTextNode(filteredValue);
 
         if (newNode != null)
             node.appendChild(newNode);
@@ -1401,7 +1403,7 @@ public class XMLUtil
      */
     public static void setAttributeValue(Element element, String attribute, String value)
     {
-        element.setAttribute(attribute, value);
+        element.setAttribute(attribute, filterString(value));
     }
 
     /**
@@ -1458,9 +1460,27 @@ public class XMLUtil
     public static void setValue(Element element, String value)
     {
         // remove child nodes
-        removeAllChilds(element);
+        removeAllChildren(element);
         // add value
         addValue(element, value);
+    }
+
+    /**
+     * Remove any invalid XML character from the specified string
+     */
+    public static String filterString(String text)
+    {
+        final int len = text.length();
+        final StringBuilder result = new StringBuilder(len);
+
+        for (int i = 0; i < len; i++)
+        {
+            final char c = text.charAt(i);
+            if (XMLChar.isValid(c))
+                result.append(c);
+        }
+
+        return result.toString();
     }
 
     /**

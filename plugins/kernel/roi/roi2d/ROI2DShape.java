@@ -1308,7 +1308,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
             // if the intersection of both ROI is not empty
             return !ShapeUtil.intersect(shape, ((ROI2DShape) roi).shape).isEmpty();
 
-        return super.contains(roi);
+        return super.intersects(roi);
     }
 
     @Override

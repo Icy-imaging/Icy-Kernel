@@ -180,13 +180,19 @@ public class VtkImageVolume
     public void release()
     {
         // delete every VTK objects
-        volume.FastDelete();
+        volume.Delete();
         volumeMapper.RemoveAllInputs();
-        volumeMapper.FastDelete();
-        volumeProperty.FastDelete();
-        imageData.FastDelete();
+        volumeMapper.Delete();
+        volumeProperty.Delete();
 
-        // after FastDelete we need to release reference
+        if (imageData != null)
+        {
+            imageData.GetPointData().GetScalars().Delete();
+            imageData.GetPointData().Delete();
+            imageData.Delete();
+        }
+
+        // after Delete we need to release reference
         volume = null;
         volumeMapper = null;
         volumeProperty = null;
@@ -226,7 +232,7 @@ public class VtkImageVolume
         volumeProperty.SetColor(channel, map);
         // delete previous color transfer function if any
         if (oldMap != null)
-            oldMap.FastDelete();
+            oldMap.Delete();
     }
 
     /**
@@ -243,7 +249,7 @@ public class VtkImageVolume
         volumeProperty.SetScalarOpacity(channel, map);
         // delete previous opacity function if any
         if (oldMap != null)
-            oldMap.FastDelete();
+            oldMap.Delete();
     }
 
     /**
@@ -281,7 +287,7 @@ public class VtkImageVolume
         volumeProperty.SetColor(channel, newColorMap);
         // delete previous color transfer function if any
         if (oldColorMap != null)
-            oldColorMap.FastDelete();
+            oldColorMap.Delete();
 
         // SCALAR OPACITY FUNCTION
         final vtkPiecewiseFunction newOpacity = new vtkPiecewiseFunction();
@@ -305,7 +311,7 @@ public class VtkImageVolume
         volumeProperty.SetScalarOpacity(channel, newOpacity);
         // delete previous opacity function if any
         if (oldOpacity != null)
-            oldOpacity.FastDelete();
+            oldOpacity.Delete();
     }
 
     /**
@@ -725,7 +731,7 @@ public class VtkImageVolume
             if (volumeMapper != null)
             {
                 volumeMapper.RemoveAllInputs();
-                volumeMapper.FastDelete();
+                volumeMapper.Delete();
             }
 
             // update volume mapper
@@ -801,7 +807,11 @@ public class VtkImageVolume
 
             // release previous volume data memory
             if (imageData != null)
-                imageData.FastDelete();
+            {
+                imageData.GetPointData().GetScalars().Delete();
+                imageData.GetPointData().Delete();
+                imageData.Delete();
+            }
 
             // set to new image data
             imageData = data;

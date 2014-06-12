@@ -820,7 +820,7 @@ public class ROI2DArea extends ROI2D
 
             colorModel = new IndexColorModel(8, 256, red, green, blue, 0);
 
-            // recreate image (needed so new colormodel takes effect)
+            // recreate image (so the new colormodel takes effect)
             if (rebuildImage)
                 imageMask = ImageUtil.createIndexedImage(imageMask.getWidth(), imageMask.getHeight(), colorModel,
                         maskData);
@@ -892,9 +892,9 @@ public class ROI2DArea extends ROI2D
             }
             else
             {
-                // new bounds empty
-                imageMask = null;
-                maskData = new byte[0];
+                // new bounds empty --> use single pixel image to avoid NPE
+                imageMask = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_INDEXED, colorModel);
+                maskData = ((DataBufferByte) imageMask.getRaster().getDataBuffer()).getData();
             }
 
             bounds.setBounds(newBnd);

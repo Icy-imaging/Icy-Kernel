@@ -527,8 +527,9 @@ public class NetworkUtil
     }
 
     /**
-     * Download data from specified URL and return it as an array of byte.
-     * Process authentication process if login / pass are not null.
+     * Download data from specified URL and return it as an array of byte.<br>
+     * Process authentication process if login / pass fields are not null.<br>
+     * It returns <code>null</code> if an error occurred.
      */
     public static byte[] download(URL url, String login, String pass, ProgressListener listener, boolean displayError)
     {
@@ -582,7 +583,9 @@ public class NetworkUtil
     }
 
     /**
-     * Download data from File and return it as an array of byte
+     * Download data from File and return it as an array of byte.<br>
+     * It returns <code>null</code> if an error occurred (file not found or not existing, IO
+     * error...)
      */
     public static byte[] download(File f, ProgressListener listener, boolean displayError)
     {
@@ -661,7 +664,8 @@ public class NetworkUtil
     }
 
     /**
-     * Download data from specified InputStream and return it as an array of byte
+     * Download data from specified InputStream and return it as an array of byte.<br>
+     * It returns <code>null</code> if an error occurred.
      */
     public static byte[] download(InputStream in) throws IOException
     {

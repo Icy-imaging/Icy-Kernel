@@ -43,6 +43,10 @@ public class FileUtil
     public static final char separatorChar = '/';
     public static final String separator = "/";
 
+    /**
+     * Transform any system specific path in java generic path form.<br>
+     * Ex: "C:\windows" --> "C:/windows"
+     */
     public static String getGenericPath(String path)
     {
         if (path != null)

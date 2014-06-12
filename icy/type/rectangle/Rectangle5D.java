@@ -1795,7 +1795,7 @@ public abstract class Rectangle5D implements Cloneable
         public double getSizeC()
         {
             // special infinite case
-            if (sizeC == java.lang.Float.POSITIVE_INFINITY)
+            if (sizeC == java.lang.Integer.MAX_VALUE)
                 return java.lang.Double.POSITIVE_INFINITY;
             
             return sizeC;

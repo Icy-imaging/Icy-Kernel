@@ -1749,7 +1749,7 @@ public class Loader
 
                 try
                 {
-                    // do serie selection (new to create a new instance of the importer)
+                    // do serie selection (need to create a new instance of the importer as selectSerie(..) does async processes)
                     selectedSeries = selectSerie(importer.getClass().newInstance(), path, meta, serie, serieCount);
                 }
                 catch (Exception e)

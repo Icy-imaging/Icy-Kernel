@@ -28,7 +28,9 @@ import java.awt.event.MouseWheelListener;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import vtk.vtkActor;
 import vtk.vtkPanel;
+import vtk.vtkPropPicker;
 
 /**
  * @author stephane
@@ -41,13 +43,16 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
     private static final long serialVersionUID = -8455671369400627703L;
 
     protected Timer timer;
+    final protected vtkPropPicker picker;
 
     public IcyVtkPanel()
     {
         super();
 
         // used for restore quality rendering after mouse wheel
-        timer = new Timer();
+        timer = new Timer("Timer - vtkPanel");
+        // picker
+        picker = new vtkPropPicker();
 
         // we want mouse wheel events
         addMouseWheelListener(this);
@@ -226,6 +231,7 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
 
         // cancel pending task
         timer.cancel();
+
         // want fast update
         rw.SetDesiredUpdateRate(10.0);
     }
@@ -265,6 +271,7 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
 
         // cancel pending task
         timer.cancel();
+
         // want fast update
         rw.SetDesiredUpdateRate(10.0);
 
@@ -343,5 +350,25 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
     public boolean isRendering()
     {
         return rendering;
+    }
+
+    /**
+     * Return picker object.
+     */
+    public vtkPropPicker getPicker()
+    {
+        return picker;
+    }
+
+    /**
+     * Pick object at specified position and return it.
+     */
+    public vtkActor pick(int x, int y)
+    {
+        Lock();
+        picker.PickProp(x, rw.GetSize()[1] - y, ren);
+        UnLock();
+
+        return picker.GetActor();
     }
 }

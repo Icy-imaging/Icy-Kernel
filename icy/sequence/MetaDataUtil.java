@@ -25,6 +25,7 @@ import icy.util.OMEUtil;
 import icy.util.StringUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import loci.common.services.ServiceException;
 import loci.formats.MetadataTools;
@@ -546,7 +547,7 @@ public class MetaDataUtil
         setNumSerie(metadata, 1);
 
         // save channel name
-        final ArrayList<String> channelNames = new ArrayList<String>();
+        final List<String> channelNames = new ArrayList<String>();
         for (int c = 0; c < sizeC; c++)
             channelNames.add(getChannelName(metadata, 0, c));
 

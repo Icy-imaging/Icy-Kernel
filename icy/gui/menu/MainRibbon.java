@@ -455,7 +455,7 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
     {
         if (item != null)
         {
-            // FIXME : unsafe (not supposed to work)
+            // FIXME : unsafe (ribbon component is not supposed to support that)
             RibbonUtil.removeButton(
                     RibbonUtil.getBand(RibbonUtil.getTask(ribbon, item.getTaskName()), item.getBandName()),
                     item.getClassName());

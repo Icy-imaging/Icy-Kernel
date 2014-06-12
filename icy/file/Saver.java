@@ -814,25 +814,25 @@ public class Saver
         if (formatWriter == null)
             writer = getWriter(file, ImageFileFormat.TIFF);
         else
-        {
-            // writer = formatWriter;
+            writer = formatWriter;
 
-            // TODO: temporary fix for the "incorrect close operation" bug in Bio-Formats
-            // with OME TIF writer, remove it when fixed.
-            try
-            {
-                writer = formatWriter.getClass().newInstance();
-            }
-            catch (Exception e)
-            {
-                throw new ServiceException("Can't create new writer instance: " + e);
-            }
-        }
+        // TODO: temporary fix for the "incorrect close operation" bug in Bio-Formats
+        // with OME TIF writer, remove it when fixed.
+        // {
+        // try
+        // {
+        // writer = formatWriter.getClass().newInstance();
+        // }
+        // catch (Exception e)
+        // {
+        // throw new ServiceException("Can't create new writer instance: " + e);
+        // }
+        // }
 
         if (writer == null)
             throw new UnknownFormatException("Can't find a valid image writer for the specified file: " + filePath);
 
-        // first delete the file else LOCI won't save it
+        // first delete the file else LOCI won't save it correctly
         if (file.exists())
             file.delete();
         // ensure parent directory exist
@@ -899,7 +899,6 @@ public class Saver
                             data = image.getRawData(data, 0, littleEndian, interleaved);
                             writer.saveBytes(imageIndex, data);
                         }
-                        // ((BufferedImageWriter) writer).saveImage(imageIndex, image);
 
                         imageIndex++;
                     }

@@ -159,10 +159,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 }
             }
         }
-        catch (Exception e)
+        catch (NoSuchMethodException e)
         {
             IcyExceptionHandler.handleException(new NoSuchMethodException("Default constructor not found in class '"
                     + className + "', cannot create the ROI."), true);
+        }
+        catch (Exception e)
+        {
+            IcyExceptionHandler.handleException(e, true);
         }
 
         return result;
@@ -1843,6 +1847,56 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
+     * Compute the resulting bounds for <i>subtraction</i> operation with the specified ROI.<br>
+     * It returns <code>null</code> or throw an exception if the <i>subtraction</i> operation cannot
+     * be
+     * done (incompatible dimension).
+     */
+    protected Rectangle5D getSubtractionBounds(ROI roi, boolean throwException) throws UnsupportedOperationException
+    {
+        final Rectangle5D bounds1 = getBounds5D();
+
+        if (roi == null)
+            return bounds1;
+
+        final Rectangle5D bounds2 = roi.getBounds5D();
+
+        // init infinite dim infos
+        final boolean ic1 = bounds1.isInfiniteC();
+        final boolean ic2 = bounds2.isInfiniteC();
+        final boolean it1 = bounds1.isInfiniteT();
+        final boolean it2 = bounds2.isInfiniteT();
+        final boolean iz1 = bounds1.isInfiniteZ();
+        final boolean iz2 = bounds2.isInfiniteZ();
+
+        // cannot process subtraction when we have an infinite dimension on second ROI
+        // while having a finite one on the first ROI
+        if (ic1 && !ic2)
+        {
+            if (throwException)
+                throw new UnsupportedOperationException(
+                        "Can't process subtraction: ROI 1 has infinite C dimension while ROI 2 has a finite one");
+            return null;
+        }
+        if (!it1 && it2)
+        {
+            if (throwException)
+                throw new UnsupportedOperationException(
+                        "Can't process subtraction: ROI 1 has infinite T dimension while ROI 2 has a finite one");
+            return null;
+        }
+        if (!iz1 && iz2)
+        {
+            if (throwException)
+                throw new UnsupportedOperationException(
+                        "Can't process subtraction: ROI 1 has infinite Z dimension while ROI 2 has a finite one");
+            return null;
+        }
+
+        return bounds1;
+    }
+
+    /**
      * Compute the resulting bounds for <i>union</i> operation with the specified ROI.<br>
      * It returns <code>null</code> or throw an exception if the <i>union</i> operation cannot be
      * done (incompatible dimension).
@@ -1996,7 +2050,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         final Rectangle5D bounds5D;
 
         if (op == null)
-            bounds5D = getBounds5D();
+            bounds5D = getSubtractionBounds(roi, true);
         else if (op == BooleanOperator.AND)
             bounds5D = getIntersectionBounds(roi, true);
         else

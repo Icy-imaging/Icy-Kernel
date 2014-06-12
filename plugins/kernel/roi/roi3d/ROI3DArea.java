@@ -18,7 +18,6 @@
  */
 package plugins.kernel.roi.roi3d;
 
-import icy.canvas.Canvas3D;
 import icy.main.Icy;
 import icy.painter.VtkPainter;
 import icy.roi.BooleanMask2D;
@@ -37,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map.Entry;
 
+import plugins.kernel.canvas.VtkCanvas;
 import plugins.kernel.roi.roi2d.ROI2DArea;
 import vtk.vtkActor;
 import vtk.vtkPolyDataMapper;
@@ -101,7 +101,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         /**
          * update 3D painter for 3D canvas (called only when VTK is loaded).
          */
-        protected void rebuild3DPainter(Canvas3D canvas)
+        protected void rebuild3DPainter(VtkCanvas canvas)
         {
             final Sequence seq = canvas.getSequence();
 
@@ -112,7 +112,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             int width = seq.getSizeX();
             int height = seq.getSizeY();
 
-            ArrayList<double[]> verticesArray = new ArrayList<double[]>(0);
+            final ArrayList<double[]> verticesArray = new ArrayList<double[]>(0);
 
             for (ROI2DArea area : ROI3DArea.this)
             {

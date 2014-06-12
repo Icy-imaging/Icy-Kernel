@@ -46,10 +46,12 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JToolBar;
 
+import vtk.vtkActor;
 import vtk.vtkAxesActor;
 import vtk.vtkCamera;
 import vtk.vtkColorTransferFunction;
@@ -59,6 +61,7 @@ import vtk.vtkOrientationMarkerWidget;
 import vtk.vtkPanel;
 import vtk.vtkPiecewiseFunction;
 import vtk.vtkProp;
+import vtk.vtkPropPicker;
 import vtk.vtkRenderWindow;
 import vtk.vtkRenderWindowInteractor;
 import vtk.vtkRenderer;
@@ -192,6 +195,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     protected XMLPreferences preferences;
     protected final LUT lutSave;
     protected final LinkedBlockingQueue<Property> propertiesToUpdate;
+    protected final EDTTask<Object> edtTask;
     protected boolean initialized;
 
     public VtkCanvas(Viewer viewer)
@@ -286,7 +290,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         // initialize volume data
         imageVolume = new VtkImageVolume();
         // rebuild volume image
-        updateVolumeData();
+        updateImageData(getImageData());
         // setup volume scaling
         imageVolume.setScale(seq.getPixelSizeX(), seq.getPixelSizeY(), seq.getPixelSizeZ());
         // setup volume LUT
@@ -398,6 +402,9 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         setBoundingBoxRulerLabelsVisible(preferences.getBoolean(ID_BOUNDINGBOX_LABELS, false));
         setVolumeShadingEnable(preferences.getBoolean(ID_SHADING, false));
 
+        // create EDTTask object
+        edtTask = new EDTTask<Object>();
+
         // start the properties updater thread
         propertiesUpdater.start();
 
@@ -437,21 +444,27 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         restoreOpacity(lutSave, getLut());
         // restoreColormap(getLut());
 
-        // processor.shutdownAndWait();
-
         // AWTMultiCaster of vtkPanel keep reference of this frame so
         // we have to release as most stuff we can
         removeAll();
         panel.removeAll();
 
-//        renderer.RemoveAllViewProps();
-        renderer.FastDelete();
-        renderWindow.FastDelete();
-        imageVolume.release();
-        widget.FastDelete();
-        axes.FastDelete();
-        boundingBox.FastDelete();
-        activeCam.FastDelete();
+        // VTK need it
+        invokeOnEDTSilent(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                renderer.RemoveAllViewProps();
+                renderer.Delete();
+                renderWindow.Delete();
+                imageVolume.release();
+                widget.Delete();
+                axes.Delete();
+                boundingBox.Delete();
+                activeCam.Delete();
+            }
+        });
 
         renderer = null;
         renderWindow = null;
@@ -477,6 +490,72 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         toolBar.add(rulerLabelButton);
         toolBar.addSeparator();
         toolBar.add(shadingButton);
+    }
+
+    /**
+     * Request exclusive access to VTK rendering.
+     */
+    public void lock()
+    {
+        if (panel3D != null)
+            panel3D.lock();
+    }
+
+    /**
+     * Release exclusive access from VTK rendering.
+     */
+    public void unlock()
+    {
+        if (panel3D != null)
+            panel3D.unlock();
+    }
+
+    /**
+     * @return the VTK active camera object
+     */
+    public vtkCamera getActiveCam()
+    {
+        return activeCam;
+    }
+
+    /**
+     * @return the VTK axes object
+     */
+    public vtkAxesActor getAxes()
+    {
+        return axes;
+    }
+
+    /**
+     * @return the VTK bounding box object
+     */
+    public vtkCubeAxesActor getBoundingBox()
+    {
+        return boundingBox;
+    }
+
+    /**
+     * @return the VTK ruler box object
+     */
+    public vtkCubeAxesActor getRulerBox()
+    {
+        return rulerBox;
+    }
+
+    /**
+     * @return the VTK widget object used to display axes
+     */
+    public vtkOrientationMarkerWidget getWidget()
+    {
+        return widget;
+    }
+
+    /**
+     * @return the VTK image volume object
+     */
+    public VtkImageVolume getImageVolume()
+    {
+        return imageVolume;
     }
 
     /**
@@ -569,36 +648,29 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     public void setBoundingBoxColor(Color color)
     {
         final float[] comp = color.getRGBColorComponents(null);
-        float r = comp[0];
-        float g = comp[0];
-        float b = comp[0];
 
-        panel3D.lock();
-        try
-        {
-            boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
-            boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
-            boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
+        final float r = comp[0];
+        final float g = comp[0];
+        final float b = comp[0];
 
-            rulerBox.GetXAxesGridlinesProperty().SetColor(r, g, b);
-            rulerBox.GetXAxesGridpolysProperty().SetColor(r, g, b);
-            rulerBox.GetXAxesInnerGridlinesProperty().SetColor(r, g, b);
-            rulerBox.GetXAxesLinesProperty().SetColor(r, g, b);
+        boundingBox.GetXAxesLinesProperty().SetColor(r, g, b);
+        boundingBox.GetYAxesLinesProperty().SetColor(r, g, b);
+        boundingBox.GetZAxesLinesProperty().SetColor(r, g, b);
 
-            rulerBox.GetYAxesGridlinesProperty().SetColor(r, g, b);
-            rulerBox.GetYAxesGridpolysProperty().SetColor(r, g, b);
-            rulerBox.GetYAxesInnerGridlinesProperty().SetColor(r, g, b);
-            rulerBox.GetYAxesLinesProperty().SetColor(r, g, b);
+        rulerBox.GetXAxesGridlinesProperty().SetColor(r, g, b);
+        rulerBox.GetXAxesGridpolysProperty().SetColor(r, g, b);
+        rulerBox.GetXAxesInnerGridlinesProperty().SetColor(r, g, b);
+        rulerBox.GetXAxesLinesProperty().SetColor(r, g, b);
 
-            rulerBox.GetZAxesGridlinesProperty().SetColor(r, g, b);
-            rulerBox.GetZAxesGridpolysProperty().SetColor(r, g, b);
-            rulerBox.GetZAxesInnerGridlinesProperty().SetColor(r, g, b);
-            rulerBox.GetZAxesLinesProperty().SetColor(r, g, b);
-        }
-        finally
-        {
-            panel3D.unlock();
-        }
+        rulerBox.GetYAxesGridlinesProperty().SetColor(r, g, b);
+        rulerBox.GetYAxesGridpolysProperty().SetColor(r, g, b);
+        rulerBox.GetYAxesInnerGridlinesProperty().SetColor(r, g, b);
+        rulerBox.GetYAxesLinesProperty().SetColor(r, g, b);
+
+        rulerBox.GetZAxesGridlinesProperty().SetColor(r, g, b);
+        rulerBox.GetZAxesGridpolysProperty().SetColor(r, g, b);
+        rulerBox.GetZAxesInnerGridlinesProperty().SetColor(r, g, b);
+        rulerBox.GetZAxesLinesProperty().SetColor(r, g, b);
     }
 
     /**
@@ -773,8 +845,8 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
             return;
 
         // refresh rendering
-        panel3D.repaint();
-        // panel3D.paint(panel3D.getGraphics());
+        if (panel3D != null)
+            panel3D.repaint();
     }
 
     // private void test()
@@ -835,6 +907,22 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         return result;
     }
 
+    /**
+     * @see icy.vtk.IcyVtkPanel#getPicker()
+     */
+    public vtkPropPicker getPicker()
+    {
+        return panel3D.getPicker();
+    }
+
+    /**
+     * @see icy.vtk.IcyVtkPanel#pick(int, int)
+     */
+    public vtkActor pick(int x, int y)
+    {
+        return panel3D.pick(x, y);
+    }
+
     protected void setDefaultOpacity(LUT lut)
     {
         lut.beginUpdate();
@@ -890,75 +978,79 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
 
     protected void addLayerActors(Layer layer)
     {
-        for (vtkProp actor : getLayerActors(layer))
-            VtkUtil.addProp(renderer, actor);
+        final vtkProp[] props = getLayerActors(layer);
+
+        invokeOnEDTSilent(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                for (vtkProp actor : props)
+                    VtkUtil.addProp(renderer, actor);
+            }
+        });
     }
 
     protected void removeLayerActors(Layer layer)
     {
-        for (vtkProp actor : getLayerActors(layer))
-            VtkUtil.removeProp(renderer, actor);
+        final vtkProp[] props = getLayerActors(layer);
+
+        invokeOnEDTSilent(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                for (vtkProp actor : props)
+                    VtkUtil.removeProp(renderer, actor);
+            }
+        });
     }
 
     protected void updateBoundingBoxSize()
     {
-        // get exclusive access to VTK
-        panel3D.lock();
-        try
-        {
-            boundingBox.SetBounds(imageVolume.getVolume().GetBounds());
-            rulerBox.SetBounds(imageVolume.getVolume().GetBounds());
-        }
-        finally
-        {
-            // release VTK access
-            panel3D.unlock();
-        }
+        boundingBox.SetBounds(imageVolume.getVolume().GetBounds());
+        rulerBox.SetBounds(imageVolume.getVolume().GetBounds());
     }
 
     /**
-     * Rebuild image data
+     * Build and get image data
      */
-    protected void updateVolumeData()
+    protected vtkImageData getImageData()
     {
         final Sequence sequence = getSequence();
-        if (sequence == null)
-            return;
+        if ((sequence == null) || sequence.isEmpty())
+            return null;
 
         final int posT = getPositionT();
         final int posC = getPositionC();
 
         final Object data;
-        final vtkImageData vtkData;
 
-        if (posC == -1)
-            data = sequence.getDataCopyCXYZ(posT);
-        else
-            data = sequence.getDataCopyXYZ(posT, posC);
-
-        // convert to vtkImage
         if (posC == -1)
         {
-            vtkData = VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
+            data = sequence.getDataCopyCXYZ(posT);
+            return VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
                     sequence.getSizeZ(), sequence.getSizeC());
         }
-        else
-        {
-            vtkData = VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
-                    sequence.getSizeZ(), 1);
-        }
 
-        // need to acquire access to VTK
-        panel3D.lock();
-        try
+        data = sequence.getDataCopyXYZ(posT, posC);
+        return VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
+                sequence.getSizeZ(), 1);
+    }
+
+    /**
+     * update image data
+     */
+    protected void updateImageData(vtkImageData data)
+    {
+        if (data != null)
         {
-            imageVolume.setVolumeData(vtkData);
+            imageVolume.setVolumeData(data);
+            imageVolume.getVolume().SetVisibility(1);
         }
-        finally
-        {
-            // release VTK access
-            panel3D.unlock();
-        }
+        else
+            // no data --> hide volume
+            imageVolume.getVolume().SetVisibility(0);
     }
 
     protected void updateLut()
@@ -980,21 +1072,16 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
 
     protected void updateLut(LUTChannel lutChannel, int channel)
     {
+        final Sequence sequence = getSequence();
+        if ((sequence == null) || sequence.isEmpty())
+            return;
+        
+        final int ch = channel;
         final vtkColorTransferFunction colorMap = VtkUtil.getColorMap(lutChannel);
         final vtkPiecewiseFunction opacityMap = VtkUtil.getOpacityMap(lutChannel);
 
-        // get exclusive access to VTK
-        panel3D.lock();
-        try
-        {
-            imageVolume.setColorMap(colorMap, channel);
-            imageVolume.setOpacityMap(opacityMap, channel);
-        }
-        finally
-        {
-            // release VTK access
-            panel3D.unlock();
-        }
+        imageVolume.setColorMap(colorMap, ch);
+        imageVolume.setOpacityMap(opacityMap, ch);
     }
 
     @Override
@@ -1117,15 +1204,17 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
             final int w = size[0];
             final int h = size[1];
             final vtkUnsignedCharArray array = new vtkUnsignedCharArray();
+            final vtkImageData imageData = getImageData();
 
-            // VTK need this to be called in the EDT :-(
-            ThreadUtil.invokeNow(new Runnable()
+            // VTK need this to be called in the EDT
+            invokeOnEDTSilent(new Runnable()
             {
                 @Override
                 public void run()
                 {
-                    // force image rebuild
-                    updateVolumeData();
+                    // set image data
+                    updateImageData(imageData);
+
                     // render now !
                     panel3D.paint(panel3D.getGraphics());
 
@@ -1186,379 +1275,382 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     {
         while (!propertiesUpdater.isInterrupted())
         {
-            final Property prop = propertiesToUpdate.poll();
+            Property prop;
 
-            if (prop == null)
+            try
             {
-                // nothing to do...
-                ThreadUtil.sleep(10);
-                continue;
-            }
+                prop = propertiesToUpdate.take();
 
-            final String name = prop.name;
-            final Object value = prop.value;
+                final String name = prop.name;
+                final Object value = prop.value;
 
-            if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_AMBIENT))
-            {
-                final double d = ((Double) value).doubleValue();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
+                if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_AMBIENT))
                 {
-                    imageVolume.setAmbient(d);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
+                    final double d = ((Double) value).doubleValue();
 
-                preferences.putDouble(ID_AMBIENT, d);
-            }
-            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_BG_COLOR))
-            {
-                final Color color = (Color) value;
-
-                panel3D.lock();
-                try
-                {
-                    renderer.SetBackground(Array1DUtil.floatArrayToDoubleArray(color.getColorComponents(null)));
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                // adjust bounding box color
-                if (ColorUtil.getLuminance(color) > 128)
-                    setBoundingBoxColor(Color.black);
-                else
-                    setBoundingBoxColor(Color.white);
-            }
-            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_DIFFUSE))
-            {
-                final double d = ((Double) value).doubleValue();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
-                {
-                    imageVolume.setDiffuse(d);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                preferences.putDouble(ID_DIFFUSE, d);
-            }
-            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_INTERPOLATION))
-            {
-                final int i = ((Integer) value).intValue();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
-                {
-                    imageVolume.setInterpolationMode(i);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                preferences.putDouble(ID_INTERPOLATION, i);
-            }
-            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_MAPPER))
-            {
-                final VtkVolumeMapperType type = (VtkVolumeMapperType) value;
-                final boolean prevMC = imageVolume.isMultiChannelVolumeMapper();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
-                {
-                    imageVolume.setVolumeMapperType(type);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                // FIXME: this line actually make VTK to crash
-                // mapper not supported ? --> switch back to default one
-                // if (!sequenceVolume.isMapperSupported(renderer))
-                // sequenceVolume.setVolumeMapperType(VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT);
-
-                // blending mode can change when mapper changed
-                ThreadUtil.invokeLater(new Runnable()
-                {
-                    @Override
-                    public void run()
+                    invokeOnEDT(new Runnable()
                     {
-                        // refresh combo state
-                        setVolumeBlendingMode(imageVolume.getBlendingMode());
-                    }
-                });
-
-                final boolean newMC = imageVolume.isMultiChannelVolumeMapper();
-                if (prevMC != newMC)
-                {
-                    // changed to multi channel mapper --> display all channel
-                    if (newMC)
-                        setPositionC(-1);
-                    // changed to single channel mapper ?
-                    else
-                    {
-                        // find channel pos from enabled channel
-                        final int c = getChannelPos();
-
-                        if (c == -1)
-                            setPositionC(0);
-                        else
+                        @Override
+                        public void run()
                         {
-                            // this won't do any LUT change event so do it manually
-                            setPositionC(c);
-                            updateLut();
+                            imageVolume.setAmbient(d);
                         }
-                    }
+                    });
+
+                    preferences.putDouble(ID_AMBIENT, d);
                 }
-
-                preferences.putInt(ID_MAPPER, type.ordinal());
-            }
-            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_BLENDING))
-            {
-                final VtkVolumeBlendType type = (VtkVolumeBlendType) value;
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
+                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_BG_COLOR))
                 {
-                    imageVolume.setBlendingMode(type);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
+                    final Color color = (Color) value;
+                    final double[] colorArray = Array1DUtil.floatArrayToDoubleArray(color.getColorComponents(null));
 
-                preferences.putInt(ID_BLENDING, getVolumeBlendingMode().ordinal());
-            }
-            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SAMPLE))
-            {
-                final int i = ((Integer) value).intValue();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
-                {
-                    imageVolume.setSampleResolution(i);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                preferences.putDouble(ID_SAMPLE, i);
-            }
-            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SPECULAR_INTENSITY))
-            {
-                final double d = ((Double) value).doubleValue();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
-                {
-                    imageVolume.setSpecular(d);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                preferences.putDouble(ID_SPECULAR, d);
-            }
-            else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SPECULAR_POWER))
-            {
-                final double d = ((Double) value).doubleValue();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
-                {
-                    imageVolume.setSpecularPower(d);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                preferences.putDouble(ID_SPECULAR_POWER, d);
-            }
-            else if (StringUtil.equals(name, PROPERTY_AXES))
-            {
-                final boolean b = ((Boolean) value).booleanValue();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
-                {
-                    axes.SetVisibility(b ? 1 : 0);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                preferences.putBoolean(ID_AXES, b);
-            }
-            else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX))
-            {
-                final boolean b = ((Boolean) value).booleanValue();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
-                {
-                    boundingBox.SetVisibility(b ? 1 : 0);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                preferences.putBoolean(ID_BOUNDINGBOX, b);
-            }
-            else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX_GRID))
-            {
-                final boolean b = ((Boolean) value).booleanValue();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
-                {
-                    rulerBox.SetDrawXGridlines(b ? 1 : 0);
-                    rulerBox.SetDrawYGridlines(b ? 1 : 0);
-                    rulerBox.SetDrawZGridlines(b ? 1 : 0);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                preferences.putBoolean(ID_BOUNDINGBOX_GRID, b);
-            }
-            else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX_RULES))
-            {
-                final boolean b = ((Boolean) value).booleanValue();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
-                {
-                    rulerBox.SetXAxisTickVisibility(b ? 1 : 0);
-                    rulerBox.SetXAxisMinorTickVisibility(b ? 1 : 0);
-                    rulerBox.SetYAxisTickVisibility(b ? 1 : 0);
-                    rulerBox.SetYAxisMinorTickVisibility(b ? 1 : 0);
-                    rulerBox.SetZAxisTickVisibility(b ? 1 : 0);
-                    rulerBox.SetZAxisMinorTickVisibility(b ? 1 : 0);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                preferences.putBoolean(ID_BOUNDINGBOX_RULES, b);
-            }
-            else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX_LABELS))
-            {
-                final boolean b = ((Boolean) value).booleanValue();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
-                {
-                    rulerBox.SetXAxisLabelVisibility(b ? 1 : 0);
-                    rulerBox.SetYAxisLabelVisibility(b ? 1 : 0);
-                    rulerBox.SetZAxisLabelVisibility(b ? 1 : 0);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                preferences.putBoolean(ID_BOUNDINGBOX_LABELS, b);
-            }
-            else if (StringUtil.equals(name, PROPERTY_SHADING))
-            {
-                final boolean b = ((Boolean) value).booleanValue();
-
-                // get exclusive access to VTK
-                panel3D.lock();
-                try
-                {
-                    imageVolume.setShade(b);
-                }
-                finally
-                {
-                    // release VTK access
-                    panel3D.unlock();
-                }
-
-                preferences.putBoolean(ID_SHADING, b);
-            }
-            else if (StringUtil.equals(name, PROPERTY_LUT))
-            {
-                updateLut();
-            }
-            else if (StringUtil.equals(name, PROPERTY_SCALE))
-            {
-                final double[] oldScale = getVolumeScale();
-                final double[] newScale = (double[]) value;
-
-                if (!Arrays.equals(oldScale, newScale))
-                {
-                    // get exclusive access to VTK
-                    panel3D.lock();
-                    try
+                    invokeOnEDT(new Runnable()
                     {
-                        imageVolume.setScale(newScale);
-                    }
-                    finally
-                    {
-                        // release VTK access
-                        panel3D.unlock();
-                    }
+                        @Override
+                        public void run()
+                        {
+                            renderer.SetBackground(colorArray);
 
-                    // need to update bounding box as well
-                    updateBoundingBoxSize();
+                            // adjust bounding box color
+                            if (ColorUtil.getLuminance(color) > 128)
+                                setBoundingBoxColor(Color.black);
+                            else
+                                setBoundingBoxColor(Color.white);
+                        }
+                    });
+
+                }
+                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_DIFFUSE))
+                {
+                    final double d = ((Double) value).doubleValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            imageVolume.setDiffuse(d);
+                        }
+                    });
+
+                    preferences.putDouble(ID_DIFFUSE, d);
+                }
+                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_INTERPOLATION))
+                {
+                    final int i = ((Integer) value).intValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            imageVolume.setInterpolationMode(i);
+                        }
+                    });
+
+                    preferences.putDouble(ID_INTERPOLATION, i);
+                }
+                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_MAPPER))
+                {
+                    final VtkVolumeMapperType type = (VtkVolumeMapperType) value;
+                    final boolean prevMC = imageVolume.isMultiChannelVolumeMapper();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            imageVolume.setVolumeMapperType(type);
+
+                            // FIXME: this line actually make VTK to crash
+                            // mapper not supported ? --> switch back to default one
+                            // if (!sequenceVolume.isMapperSupported(renderer))
+                            // sequenceVolume.setVolumeMapperType(VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT);
+
+                            // blending mode can change when mapper changed
+                            setVolumeBlendingMode(imageVolume.getBlendingMode());
+
+                            final boolean newMC = imageVolume.isMultiChannelVolumeMapper();
+                            if (prevMC != newMC)
+                            {
+                                // changed to multi channel mapper --> display all channel
+                                if (newMC)
+                                    setPositionC(-1);
+                                // changed to single channel mapper ?
+                                else
+                                {
+                                    // find channel pos from enabled channel
+                                    final int c = getChannelPos();
+
+                                    if (c == -1)
+                                        setPositionC(0);
+                                    else
+                                    {
+                                        // this won't do any LUT change event so do it manually
+                                        setPositionC(c);
+                                        updateLut();
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    preferences.putInt(ID_MAPPER, type.ordinal());
+                }
+                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_BLENDING))
+                {
+                    final VtkVolumeBlendType type = (VtkVolumeBlendType) value;
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            imageVolume.setBlendingMode(type);
+                        }
+                    });
+
+                    preferences.putInt(ID_BLENDING, getVolumeBlendingMode().ordinal());
+                }
+                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SAMPLE))
+                {
+                    final int i = ((Integer) value).intValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            imageVolume.setSampleResolution(i);
+                        }
+                    });
+
+                    preferences.putDouble(ID_SAMPLE, i);
+                }
+                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SPECULAR_INTENSITY))
+                {
+                    final double d = ((Double) value).doubleValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            imageVolume.setSpecular(d);
+                        }
+                    });
+
+                    preferences.putDouble(ID_SPECULAR, d);
+                }
+                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SPECULAR_POWER))
+                {
+                    final double d = ((Double) value).doubleValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            imageVolume.setSpecularPower(d);
+                        }
+                    });
+
+                    preferences.putDouble(ID_SPECULAR_POWER, d);
+                }
+                else if (StringUtil.equals(name, PROPERTY_AXES))
+                {
+                    final boolean b = ((Boolean) value).booleanValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            axes.SetVisibility(b ? 1 : 0);
+                        }
+                    });
+
+                    preferences.putBoolean(ID_AXES, b);
+                }
+                else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX))
+                {
+                    final boolean b = ((Boolean) value).booleanValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            boundingBox.SetVisibility(b ? 1 : 0);
+                        }
+                    });
+
+                    preferences.putBoolean(ID_BOUNDINGBOX, b);
+                }
+                else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX_GRID))
+                {
+                    final boolean b = ((Boolean) value).booleanValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            rulerBox.SetDrawXGridlines(b ? 1 : 0);
+                            rulerBox.SetDrawYGridlines(b ? 1 : 0);
+                            rulerBox.SetDrawZGridlines(b ? 1 : 0);
+                        }
+                    });
+
+                    preferences.putBoolean(ID_BOUNDINGBOX_GRID, b);
+                }
+                else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX_RULES))
+                {
+                    final boolean b = ((Boolean) value).booleanValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            rulerBox.SetXAxisTickVisibility(b ? 1 : 0);
+                            rulerBox.SetXAxisMinorTickVisibility(b ? 1 : 0);
+                            rulerBox.SetYAxisTickVisibility(b ? 1 : 0);
+                            rulerBox.SetYAxisMinorTickVisibility(b ? 1 : 0);
+                            rulerBox.SetZAxisTickVisibility(b ? 1 : 0);
+                            rulerBox.SetZAxisMinorTickVisibility(b ? 1 : 0);
+                        }
+                    });
+
+                    preferences.putBoolean(ID_BOUNDINGBOX_RULES, b);
+                }
+                else if (StringUtil.equals(name, PROPERTY_BOUNDINGBOX_LABELS))
+                {
+                    final boolean b = ((Boolean) value).booleanValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            rulerBox.SetXAxisLabelVisibility(b ? 1 : 0);
+                            rulerBox.SetYAxisLabelVisibility(b ? 1 : 0);
+                            rulerBox.SetZAxisLabelVisibility(b ? 1 : 0);
+                        }
+                    });
+
+                    preferences.putBoolean(ID_BOUNDINGBOX_LABELS, b);
+                }
+                else if (StringUtil.equals(name, PROPERTY_SHADING))
+                {
+                    final boolean b = ((Boolean) value).booleanValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            imageVolume.setShade(b);
+                        }
+                    });
+
+                    preferences.putBoolean(ID_SHADING, b);
+                }
+                else if (StringUtil.equals(name, PROPERTY_LUT))
+                {
+                    updateLut();
+                }
+                else if (StringUtil.equals(name, PROPERTY_SCALE))
+                {
+                    final double[] oldScale = getVolumeScale();
+                    final double[] newScale = (double[]) value;
+
+                    if (!Arrays.equals(oldScale, newScale))
+                    {
+                        invokeOnEDT(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                imageVolume.setScale(newScale);
+                                // need to update bounding box as well
+                                updateBoundingBoxSize();
+                            }
+                        });
+                    }
+                }
+                else if (StringUtil.equals(name, PROPERTY_DATA))
+                {
+                    final vtkImageData data = getImageData();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            // set image data
+                            updateImageData(data);
+                        }
+                    });
+                }
+                else if (StringUtil.equals(name, PROPERTY_BOUNDS))
+                {
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            updateBoundingBoxSize();
+                        }
+                    });
                 }
             }
-            else if (StringUtil.equals(name, PROPERTY_DATA))
+            catch (InterruptedException e)
             {
-                updateVolumeData();
-            }
-            else if (StringUtil.equals(name, PROPERTY_BOUNDS))
-            {
-                updateBoundingBoxSize();
+                // just end process
+                return;
             }
 
             // need to refresh rendering
             if (propertiesToUpdate.isEmpty())
                 refresh();
+        }
+    }
+
+    protected void invokeOnEDT(Runnable task) throws InterruptedException
+    {
+        // in initialization --> just execute
+        if (edtTask == null)
+        {
+            task.run();
+            return;
+        }
+
+        edtTask.setTask(task);
+
+        try
+        {
+            ThreadUtil.invokeNow(edtTask);
+        }
+        catch (InterruptedException e)
+        {
+            throw e;
+        }
+        catch (Exception e)
+        {
+            // just ignore as this is async process
+        }
+    }
+
+    protected void invokeOnEDTSilent(Runnable task)
+    {
+        try
+        {
+            invokeOnEDT(task);
+        }
+        catch (InterruptedException e)
+        {
+            // just ignore
         }
     }
 
@@ -1630,7 +1722,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         super.sequenceMetaChanged(metadataName);
 
         final Sequence sequence = getSequence();
-        if (sequence == null)
+        if ((sequence == null) || sequence.isEmpty())
             return;
 
         // need to set scale ?
@@ -1710,7 +1802,25 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         propertyChange(evt.getPropertyName(), evt.getNewValue());
     }
 
-    private class CustomVtkPanel extends IcyVtkPanel
+    protected class EDTTask<T> implements Callable<T>
+    {
+        protected Runnable task;
+
+        public void setTask(Runnable task)
+        {
+            this.task = task;
+        }
+
+        @Override
+        public T call() throws Exception
+        {
+            task.run();
+
+            return null;
+        }
+    }
+
+    protected class CustomVtkPanel extends IcyVtkPanel
     {
         /**
          * 
@@ -1831,5 +1941,4 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
             super.mouseWheelMoved(e);
         }
     }
-
 }

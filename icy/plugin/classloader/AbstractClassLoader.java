@@ -58,29 +58,20 @@ public abstract class AbstractClassLoader extends ClassLoader
         addDefaultLoader();
     }
 
-    protected void addLoaderInternal(ProxyClassLoader loader)
-    {
-        // avoid duplicate loader
-        for (ProxyClassLoader l : loaders)
-            if (l.getLoader() == loader.getLoader())
-                return;
-
-        loaders.add(loader);
-    }
-
     public void addLoader(ProxyClassLoader loader)
     {
-        addLoaderInternal(loader);
+        loaders.add(loader);
 
         Collections.sort(loaders);
     }
 
     protected void addDefaultLoader()
     {
-        addLoaderInternal(systemLoader);
-        addLoaderInternal(parentLoader);
-        addLoaderInternal(currentLoader);
-        addLoaderInternal(threadLoader);
+        // always add this one
+        loaders.add(systemLoader);
+        loaders.add(parentLoader);
+        loaders.add(currentLoader);
+        loaders.add(threadLoader);
 
         Collections.sort(loaders);
     }
@@ -104,13 +95,19 @@ public abstract class AbstractClassLoader extends ClassLoader
         if (className == null || className.trim().equals(""))
             return null;
 
+        final List<ProxyClassLoader> loadersDone = new ArrayList<ProxyClassLoader>();
+
         for (ProxyClassLoader l : loaders)
         {
-            if (l.isEnabled())
+            // don't search in same loader
+            if (l.isEnabled() && !loadersDone.contains(l))
             {
                 final Class clazz = l.loadClass(className, resolveIt);
                 if (clazz != null)
                     return clazz;
+
+                // loader done
+                loadersDone.add(l);
             }
         }
 

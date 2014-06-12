@@ -226,10 +226,6 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
     {
         sequencePanel.viewerActivated(viewer);
         layersPanel.viewerActivated(viewer);
-
-        // FIXME : why this is needed ?
-        // revalidate();
-        // repaint();
     }
 
     @Override

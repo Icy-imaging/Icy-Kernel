@@ -4,6 +4,7 @@
 package plugins.kernel.importer;
 
 import icy.common.exception.UnsupportedFormatException;
+import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.file.SequenceFileImporter;
 import icy.gui.dialog.ImageLoaderDialog.AllImagesFileFilter;
@@ -20,6 +21,7 @@ import icy.util.StringUtil;
 
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -144,7 +146,8 @@ public class LociImporter implements SequenceFileImporter
 
         try
         {
-            setReader(path);
+            // better for Bio-Formats to have system path format
+            setReader(new File(path).getAbsolutePath());
             return true;
         }
         catch (Exception e)
@@ -156,17 +159,14 @@ public class LociImporter implements SequenceFileImporter
 
     public boolean isOpen(String path)
     {
-        if (reader != null)
-            return StringUtil.equals(reader.getCurrentFile(), path);
-
-        return false;
+        return StringUtil.equals(getOpened(), FileUtil.getGenericPath(path));
     }
 
     @Override
     public String getOpened()
     {
         if (reader != null)
-            return reader.getCurrentFile();
+            return FileUtil.getGenericPath(reader.getCurrentFile());
 
         return null;
     }
@@ -183,8 +183,11 @@ public class LociImporter implements SequenceFileImporter
 
         try
         {
+            // better for Bio-Formats to have system path format
+            final String adjPath = new File(path).getAbsolutePath();
+
             // ensure we have the correct reader
-            setReader(path);
+            setReader(adjPath);
 
             // disable file grouping
             reader.setGroupFiles(false);
@@ -193,7 +196,7 @@ public class LociImporter implements SequenceFileImporter
             // prepare meta data store structure
             reader.setMetadataStore(new OMEXMLMetadataImpl());
             // load file with LOCI library
-            reader.setId(path);
+            reader.setId(adjPath);
 
             return true;
         }
@@ -236,7 +239,7 @@ public class LociImporter implements SequenceFileImporter
         else
             res = resolution;
         reader.setResolution(res);
-        
+
         return Math.pow(2d, resolution - res);
     }
 

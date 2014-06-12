@@ -131,7 +131,7 @@ public class OMEUtil
                 {
                     final XMLAnnotation annotation = annotations.getXMLAnnotation(i);
 
-                    if (annotation.getValue() == null)
+                    if (StringUtil.isEmpty(annotation.getValue()))
                         annotations.removeXMLAnnotation(annotation);
                 }
             }
