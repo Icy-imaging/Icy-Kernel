@@ -57,6 +57,7 @@ import vtk.vtkCamera;
 import vtk.vtkColorTransferFunction;
 import vtk.vtkCubeAxesActor;
 import vtk.vtkImageData;
+import vtk.vtkLight;
 import vtk.vtkOrientationMarkerWidget;
 import vtk.vtkPanel;
 import vtk.vtkPiecewiseFunction;
@@ -125,8 +126,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     protected static final String ID_INTERPOLATION = VtkSettingPanel.PROPERTY_INTERPOLATION;
     protected static final String ID_AMBIENT = VtkSettingPanel.PROPERTY_AMBIENT;
     protected static final String ID_DIFFUSE = VtkSettingPanel.PROPERTY_DIFFUSE;
-    protected static final String ID_SPECULAR = VtkSettingPanel.PROPERTY_SPECULAR_INTENSITY;
-    protected static final String ID_SPECULAR_POWER = VtkSettingPanel.PROPERTY_SPECULAR_POWER;
+    protected static final String ID_SPECULAR = VtkSettingPanel.PROPERTY_SPECULAR;
 
     /**
      * Property to update
@@ -165,7 +165,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
      */
     protected vtkRenderer renderer;
     protected vtkRenderWindow renderWindow;
-    protected vtkCamera activeCam;
+    protected vtkCamera camera;
     protected vtkAxesActor axes;
     protected vtkCubeAxesActor boundingBox;
     protected vtkCubeAxesActor rulerBox;
@@ -263,14 +263,15 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         renderWindow = panel3D.GetRenderWindow();
         // set renderer properties
         renderer.SetBackground(Array1DUtil.floatArrayToDoubleArray(getBackgroundColor().getColorComponents(null)));
+        renderer.SetLightFollowCamera(1);
         // set interactor
         final vtkRenderWindowInteractor interactor = new vtkRenderWindowInteractor();
         interactor.SetRenderWindow(renderWindow);
 
-        activeCam = renderer.GetActiveCamera();
+        camera = renderer.GetActiveCamera();
         // set camera properties
-        // activeCam.Azimuth(20.0);
-        // activeCam.Dolly(1.60);
+        // camera.Azimuth(20.0);
+        // camera.Dolly(1.60);
 
         // initialize internals
         // processor = new InstanceProcessor();
@@ -309,7 +310,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         // initialize bounding box
         boundingBox = new vtkCubeAxesActor();
         boundingBox.SetBounds(imageVolume.getVolume().GetBounds());
-        boundingBox.SetCamera(activeCam);
+        boundingBox.SetCamera(camera);
         // set bounding box labels properties
         boundingBox.SetFlyModeToStaticEdges();
         boundingBox.SetUseBounds(true);
@@ -328,7 +329,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         // initialize rules and box axis
         rulerBox = new vtkCubeAxesActor();
         rulerBox.SetBounds(imageVolume.getVolume().GetBounds());
-        rulerBox.SetCamera(activeCam);
+        rulerBox.SetCamera(camera);
         // set bounding box labels properties
         rulerBox.GetTitleTextProperty(0).SetColor(1.0, 0.0, 0.0);
         rulerBox.GetLabelTextProperty(0).SetColor(1.0, 0.0, 0.0);
@@ -390,10 +391,9 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         setVolumeInterpolation(preferences.getInt(ID_INTERPOLATION, VtkUtil.VTK_LINEAR_INTERPOLATION));
         setVolumeBlendingMode(VtkVolumeBlendType.values()[preferences.getInt(ID_BLENDING,
                 VtkVolumeBlendType.COMPOSITE.ordinal())]);
-        setVolumeAmbient(preferences.getDouble(ID_AMBIENT, 0.6d));
-        setVolumeDiffuse(preferences.getDouble(ID_DIFFUSE, 0.5d));
-        setVolumeSpecularIntensity(preferences.getDouble(ID_SPECULAR, 0.3d));
-        setVolumeSpecularPower(preferences.getDouble(ID_SPECULAR_POWER, 30.0d));
+        setVolumeAmbient(preferences.getDouble(ID_AMBIENT, 0.5d));
+        setVolumeDiffuse(preferences.getDouble(ID_DIFFUSE, 0.4d));
+        setVolumeSpecular(preferences.getDouble(ID_SPECULAR, 0.4d));
 
         setAxisVisible(preferences.getBoolean(ID_AXES, true));
         setBoundingBoxVisible(preferences.getBoolean(ID_BOUNDINGBOX, true));
@@ -437,8 +437,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         preferences.putBoolean(ID_SHADING, isVolumeShadingEnable());
         preferences.putDouble(ID_AMBIENT, getVolumeAmbient());
         preferences.putDouble(ID_DIFFUSE, getVolumeDiffuse());
-        preferences.putDouble(ID_SPECULAR, getVolumeSpecularIntensity());
-        preferences.putDouble(ID_SPECULAR_POWER, getVolumeSpecularPower());
+        preferences.putDouble(ID_SPECULAR, getVolumeSpecular());
 
         // restore colormap
         restoreOpacity(lutSave, getLut());
@@ -462,7 +461,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
                 widget.Delete();
                 axes.Delete();
                 boundingBox.Delete();
-                activeCam.Delete();
+                camera.Delete();
             }
         });
 
@@ -472,7 +471,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         widget = null;
         axes = null;
         boundingBox = null;
-        activeCam = null;
+        camera = null;
 
         panel3D = null;
         panel = null;
@@ -511,11 +510,29 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     }
 
     /**
-     * @return the VTK active camera object
+     * @deprecated Use {@link #getCamera()} instead
      */
+    @Deprecated
     public vtkCamera getActiveCam()
     {
-        return activeCam;
+        return getCamera();
+    }
+
+    /**
+     * @return the VTK scene camera object
+     */
+    public vtkCamera getCamera()
+    {
+        return camera;
+    }
+
+    /**
+     * @return the VTK default scene light object.<br>
+     *         Can be <code>null</code> if render window is not yet initialized.
+     */
+    public vtkLight getLight()
+    {
+        return renderer.GetLights().GetNextItem();
     }
 
     /**
@@ -774,33 +791,17 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     /**
      * @see VtkImageVolume#getSpecular()
      */
-    public double getVolumeSpecularIntensity()
+    public double getVolumeSpecular()
     {
-        return settingPanel.getVolumeSpecularIntensity();
+        return settingPanel.getVolumeSpecular();
     }
 
     /**
      * @see VtkImageVolume#setSpecular(double)
      */
-    public void setVolumeSpecularIntensity(double value)
+    public void setVolumeSpecular(double value)
     {
-        settingPanel.setVolumeSpecularIntensity(value);
-    }
-
-    /**
-     * @see VtkImageVolume#getSpecularPower()
-     */
-    public double getVolumeSpecularPower()
-    {
-        return settingPanel.getVolumeSpecularPower();
-    }
-
-    /**
-     * @see VtkImageVolume#setSpecularPower(double)
-     */
-    public void setVolumeSpecularPower(double value)
-    {
-        settingPanel.setVolumeSpecularPower(value);
+        settingPanel.setVolumeSpecular(value);
     }
 
     /**
@@ -836,6 +837,25 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     }
 
     /**
+     * @return visible state of the image volume object
+     * @see VtkImageVolume#isVisible()
+     */
+    public boolean isVolumeVisible()
+    {
+        return imageVolume.isVisible();
+    }
+
+    /**
+     * Sets the visible state of the image volume object
+     * 
+     * @see VtkImageVolume#setVisible(boolean)
+     */
+    public void setVolumeVisible(boolean value)
+    {
+        imageVolume.setVisible(value);
+    }
+
+    /**
      * Force render refresh
      */
     @Override
@@ -865,9 +885,9 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
 
     protected void resetCamera()
     {
-        activeCam.SetViewUp(0, -1, 0);
+        camera.SetViewUp(0, -1, 0);
         renderer.ResetCamera();
-        activeCam.Elevation(180);
+        camera.Elevation(180);
         renderer.ResetCameraClippingRange();
     }
 
@@ -1075,7 +1095,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         final Sequence sequence = getSequence();
         if ((sequence == null) || sequence.isEmpty())
             return;
-        
+
         final int ch = channel;
         final vtkColorTransferFunction colorMap = VtkUtil.getColorMap(lutChannel);
         final vtkPiecewiseFunction opacityMap = VtkUtil.getOpacityMap(lutChannel);
@@ -1299,6 +1319,36 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
 
                     preferences.putDouble(ID_AMBIENT, d);
                 }
+                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_DIFFUSE))
+                {
+                    final double d = ((Double) value).doubleValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            imageVolume.setDiffuse(d);
+                        }
+                    });
+
+                    preferences.putDouble(ID_DIFFUSE, d);
+                }
+                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SPECULAR))
+                {
+                    final double d = ((Double) value).doubleValue();
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            imageVolume.setSpecular(d);
+                        }
+                    });
+
+                    preferences.putDouble(ID_SPECULAR, d);
+                }
                 else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_BG_COLOR))
                 {
                     final Color color = (Color) value;
@@ -1319,21 +1369,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
                         }
                     });
 
-                }
-                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_DIFFUSE))
-                {
-                    final double d = ((Double) value).doubleValue();
-
-                    invokeOnEDT(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            imageVolume.setDiffuse(d);
-                        }
-                    });
-
-                    preferences.putDouble(ID_DIFFUSE, d);
+                    preferences.putInt(ID_BGCOLOR, color.getRGB());
                 }
                 else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_INTERPOLATION))
                 {
@@ -1426,36 +1462,6 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
                     });
 
                     preferences.putDouble(ID_SAMPLE, i);
-                }
-                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SPECULAR_INTENSITY))
-                {
-                    final double d = ((Double) value).doubleValue();
-
-                    invokeOnEDT(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            imageVolume.setSpecular(d);
-                        }
-                    });
-
-                    preferences.putDouble(ID_SPECULAR, d);
-                }
-                else if (StringUtil.equals(name, VtkSettingPanel.PROPERTY_SPECULAR_POWER))
-                {
-                    final double d = ((Double) value).doubleValue();
-
-                    invokeOnEDT(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            imageVolume.setSpecularPower(d);
-                        }
-                    });
-
-                    preferences.putDouble(ID_SPECULAR_POWER, d);
                 }
                 else if (StringUtil.equals(name, PROPERTY_AXES))
                 {

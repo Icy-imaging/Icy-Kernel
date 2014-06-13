@@ -160,7 +160,9 @@ public class VtkImageVolume
         volumeProperty.IndependentComponentsOn();
         volumeProperty.DisableGradientOpacityOn();
         setShade(false);
-        setSpecular(1.0d);
+        setAmbient(0.5d);
+        setDiffuse(0.4d);
+        setSpecular(0.4d);
         setInterpolationMode(VtkUtil.VTK_LINEAR_INTERPOLATION);
 
         // build default volume mapper
@@ -173,6 +175,8 @@ public class VtkImageVolume
         volume.SetProperty(volumeProperty);
         // setup volume connection
         volume.SetMapper(volumeMapper);
+        // we want the volume to be pickable
+        volume.SetPickable(1);
 
         imageData = null;
     }
@@ -204,19 +208,17 @@ public class VtkImageVolume
         return volume;
     }
 
-    // private void test()
-    // {
-    // // exemple de clipping a utiliser par la suite.
-    // if ( false )
-    // {
-    // vtkPlane plane = new vtkPlane();
-    // plane.SetOrigin(1000, 1000, 1000);
-    // plane.SetNormal( 1, 1, 0);
-    // volumeMapper.AddClippingPlane( plane );
-    // }
-    //
-    // vtkOrientationMarkerWidget ow = new vtkOrientationMarkerWidget();
-    // }
+    /**
+     * Return the number of channel contained in image data.
+     */
+    protected int getChannelNumber()
+    {
+        if (imageData != null)
+            return imageData.GetNumberOfScalarComponents();
+
+        // assume 1 by default
+        return 1;
+    }
 
     /**
      * Sets the color map ({@link vtkColorTransferFunction}) used to render the specified channel of
@@ -442,26 +444,30 @@ public class VtkImageVolume
     /**
      * Returns <code>true</code> if shading is enabled for the specified component
      */
-    public boolean getShade(int index)
-    {
-        return (volumeProperty.GetShade(index) == 1) ? true : false;
-    }
+    // public boolean getShade(int index)
+    // {
+    // return (volumeProperty.GetShade(index) == 1) ? true : false;
+    // }
 
     /**
      * Enable / Disable the shading (global)
      */
     public void setShade(boolean value)
     {
+        final int num = getChannelNumber();
+        for (int ch = 0; ch < num; ch++)
+            volumeProperty.SetShade(ch, value ? 1 : 0);
+
         volumeProperty.SetShade(value ? 1 : 0);
     }
 
     /**
      * Enable / Disable the shading for the specified component
      */
-    public void setShade(int index, boolean value)
-    {
-        volumeProperty.SetShade(index, value ? 1 : 0);
-    }
+    // public void setShade(int index, boolean value)
+    // {
+    // volumeProperty.SetShade(index, value ? 1 : 0);
+    // }
 
     /**
      * Returns the ambient lighting coefficient (global)
@@ -474,26 +480,30 @@ public class VtkImageVolume
     /**
      * Returns the ambient lighting coefficient for the specified component
      */
-    public double getAmbient(int index)
-    {
-        return volumeProperty.GetAmbient(index);
-    }
+    // public double getAmbient(int index)
+    // {
+    // return volumeProperty.GetAmbient(index);
+    // }
 
     /**
      * Sets the ambient lighting coefficient (global)
      */
     public void setAmbient(double value)
     {
+        final int num = getChannelNumber();
+        for (int ch = 0; ch < num; ch++)
+            volumeProperty.SetAmbient(ch, value);
+
         volumeProperty.SetAmbient(value);
     }
 
     /**
      * Sets the ambient lighting coefficient for the specified component
      */
-    public void setAmbient(int index, double value)
-    {
-        volumeProperty.SetAmbient(index, value);
-    }
+    // public void setAmbient(int index, double value)
+    // {
+    // volumeProperty.SetAmbient(index, value);
+    // }
 
     /**
      * Returns the diffuse lighting coefficient (global)
@@ -506,27 +516,30 @@ public class VtkImageVolume
     /**
      * Returns the diffuse lighting coefficient for the specified component
      */
-    public double getDiffuse(int index)
-    {
-        return volumeProperty.GetDiffuse(index);
-    }
+    // public double getDiffuse(int index)
+    // {
+    // return volumeProperty.GetDiffuse(index);
+    // }
 
     /**
      * Sets the diffuse lighting coefficient (global)
      */
     public void setDiffuse(double value)
     {
+        final int num = getChannelNumber();
+        for (int ch = 0; ch < num; ch++)
+            volumeProperty.SetDiffuse(ch, value);
+
         volumeProperty.SetDiffuse(value);
-        volume.Update();
     }
 
     /**
      * Sets the diffuse lighting coefficient for the specified component
      */
-    public void setDiffuse(int index, double value)
-    {
-        volumeProperty.SetDiffuse(index, value);
-    }
+    // public void setDiffuse(int index, double value)
+    // {
+    // volumeProperty.SetDiffuse(index, value);
+    // }
 
     /**
      * Returns the specular lighting coefficient (global)
@@ -539,26 +552,30 @@ public class VtkImageVolume
     /**
      * Returns the specular lighting coefficient for the specified component
      */
-    public double getSpecular(int index)
-    {
-        return volumeProperty.GetSpecular(index);
-    }
+    // public double getSpecular(int index)
+    // {
+    // return volumeProperty.GetSpecular(index);
+    // }
 
     /**
      * Sets the specular lighting coefficient (global)
      */
     public void setSpecular(double value)
     {
+        final int num = getChannelNumber();
+        for (int ch = 0; ch < num; ch++)
+            volumeProperty.SetSpecular(ch, value);
+
         volumeProperty.SetSpecular(value);
     }
 
     /**
      * Sets the specular lighting coefficient for the specified component
      */
-    public void setSpecular(int index, double value)
-    {
-        volumeProperty.SetSpecular(index, value);
-    }
+    // public void setSpecular(int index, double value)
+    // {
+    // volumeProperty.SetSpecular(index, value);
+    // }
 
     /**
      * Returns the specular power (global)
@@ -571,26 +588,30 @@ public class VtkImageVolume
     /**
      * Returns the specular power for the specified component
      */
-    public double getSpecularPower(int index)
-    {
-        return volumeProperty.GetSpecularPower(index);
-    }
+    // public double getSpecularPower(int index)
+    // {
+    // return volumeProperty.GetSpecularPower(index);
+    // }
 
     /**
      * Sets the specular power (global)
      */
     public void setSpecularPower(double value)
     {
+        final int num = getChannelNumber();
+        for (int ch = 0; ch < num; ch++)
+            volumeProperty.SetSpecularPower(ch, value);
+
         volumeProperty.SetSpecularPower(value);
     }
 
     /**
      * Sets the specular power for the specified component
      */
-    public void setSpecularPower(int index, double value)
-    {
-        volumeProperty.SetSpecularPower(index, value);
-    }
+    // public void setSpecularPower(int index, double value)
+    // {
+    // volumeProperty.SetSpecularPower(index, value);
+    // }
 
     /**
      * Returns the interpolation method for rendering.<br>
@@ -816,5 +837,35 @@ public class VtkImageVolume
             // set to new image data
             imageData = data;
         }
+
+        updateChannelProperties();
+    }
+
+    /**
+     * Refresh channel properties
+     */
+    protected void updateChannelProperties()
+    {
+        setShade(getShade());
+        setAmbient(getAmbient());
+        setDiffuse(getDiffuse());
+        setSpecular(getSpecular());
+        setSpecularPower(getSpecularPower());
+    }
+
+    /**
+     * Sets the visible state of the image volume object
+     */
+    public void setVisible(boolean value)
+    {
+        volume.SetVisibility(value ? 1 : 0);
+    }
+
+    /**
+     * @return visible state of the image volume object
+     */
+    public boolean isVisible()
+    {
+        return (volume.GetVisibility() != 0) ? true : false;
     }
 }

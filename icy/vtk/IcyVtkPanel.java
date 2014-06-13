@@ -53,6 +53,8 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
         timer = new Timer("Timer - vtkPanel");
         // picker
         picker = new vtkPropPicker();
+        // set ambient color to white
+        lgt.SetAmbientColor(1d, 1d, 1d);
 
         // we want mouse wheel events
         addMouseWheelListener(this);

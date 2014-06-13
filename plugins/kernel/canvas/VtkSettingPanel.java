@@ -36,8 +36,7 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
     public static final String PROPERTY_INTERPOLATION = "volumeInterpolation";
     public static final String PROPERTY_AMBIENT = "volumeAmbient";
     public static final String PROPERTY_DIFFUSE = "volumeDiffuse";
-    public static final String PROPERTY_SPECULAR_INTENSITY = "volumeSpecularIntensity";
-    public static final String PROPERTY_SPECULAR_POWER = "volumeSpecularPower";
+    public static final String PROPERTY_SPECULAR = "volumeSpecular";
 
     /**
      * GUI
@@ -48,9 +47,8 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
     private JComboBox volumeSampleComboBox;
     private JComboBox volumeInterpolationComboBox;
     private NumberTextField volumeAmbientField;
-    private NumberTextField diffuseField;
-    private NumberTextField volumeSpecularIntensityField;
-    private NumberTextField volumeSpecularPowerField;
+    private NumberTextField volumeSpecularField;
+    private NumberTextField volumeDiffuseField;
 
     /**
      * Create the panel.
@@ -60,11 +58,6 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         super();
 
         initialize();
-
-        // manually create it (hidden field)
-        diffuseField = new NumberTextField();
-        diffuseField.setToolTipText("Diffuse lighting coefficient");
-        diffuseField.setColumns(4);
 
         updateState();
 
@@ -76,18 +69,17 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         volumeSampleComboBox.addActionListener(this);
 
         volumeAmbientField.addTextChangeListener(this);
-        diffuseField.addTextChangeListener(this);
-        volumeSpecularIntensityField.addTextChangeListener(this);
-        volumeSpecularPowerField.addTextChangeListener(this);
+        volumeDiffuseField.addTextChangeListener(this);
+        volumeSpecularField.addTextChangeListener(this);
     }
 
     private void initialize()
     {
         setBorder(new EmptyBorder(2, 0, 2, 0));
         GridBagLayout gridBagLayout = new GridBagLayout();
-        gridBagLayout.columnWidths = new int[] {0, 0, 0, 0, 0, 0, 0};
+        gridBagLayout.columnWidths = new int[] {0, 0, 0, 0, 0};
         gridBagLayout.rowHeights = new int[] {0, 0, 0, 0, 0, 0, 0};
-        gridBagLayout.columnWeights = new double[] {0.0, 1.0, 0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
+        gridBagLayout.columnWeights = new double[] {0.0, 1.0, 1.0, 1.0, Double.MIN_VALUE};
         gridBagLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
         setLayout(gridBagLayout);
 
@@ -103,7 +95,6 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         bgColorButton = new ColorChooserButton();
         bgColorButton.setToolTipText("Change background color");
         GridBagConstraints gbc_bgColorButton = new GridBagConstraints();
-        gbc_bgColorButton.gridwidth = 2;
         gbc_bgColorButton.anchor = GridBagConstraints.WEST;
         gbc_bgColorButton.insets = new Insets(0, 0, 5, 5);
         gbc_bgColorButton.gridx = 1;
@@ -124,7 +115,7 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         volumeMapperComboBox.setModel(new DefaultComboBoxModel(VtkVolumeMapperType.values()));
         GridBagConstraints gbc_volumeMapperComboBox = new GridBagConstraints();
         gbc_volumeMapperComboBox.fill = GridBagConstraints.HORIZONTAL;
-        gbc_volumeMapperComboBox.gridwidth = 5;
+        gbc_volumeMapperComboBox.gridwidth = 3;
         gbc_volumeMapperComboBox.insets = new Insets(0, 0, 5, 0);
         gbc_volumeMapperComboBox.gridx = 1;
         gbc_volumeMapperComboBox.gridy = 1;
@@ -147,7 +138,7 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         volumeInterpolationComboBox.setSelectedIndex(1);
         GridBagConstraints gbc_volumeInterpolationComboBox = new GridBagConstraints();
         gbc_volumeInterpolationComboBox.fill = GridBagConstraints.HORIZONTAL;
-        gbc_volumeInterpolationComboBox.gridwidth = 5;
+        gbc_volumeInterpolationComboBox.gridwidth = 3;
         gbc_volumeInterpolationComboBox.insets = new Insets(0, 0, 5, 0);
         gbc_volumeInterpolationComboBox.gridx = 1;
         gbc_volumeInterpolationComboBox.gridy = 2;
@@ -166,15 +157,15 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         volumeBlendingComboBox.setToolTipText("Select volume rendering blending method");
         volumeBlendingComboBox.setModel(new DefaultComboBoxModel(VtkVolumeBlendType.values()));
         GridBagConstraints gbc_volumeBlendingComboBox = new GridBagConstraints();
-        gbc_volumeBlendingComboBox.gridwidth = 5;
-        gbc_volumeBlendingComboBox.insets = new Insets(0, 0, 5, 0);
         gbc_volumeBlendingComboBox.fill = GridBagConstraints.HORIZONTAL;
+        gbc_volumeBlendingComboBox.gridwidth = 3;
+        gbc_volumeBlendingComboBox.insets = new Insets(0, 0, 5, 0);
         gbc_volumeBlendingComboBox.gridx = 1;
         gbc_volumeBlendingComboBox.gridy = 3;
         add(volumeBlendingComboBox, gbc_volumeBlendingComboBox);
 
         final JLabel lblSample = new JLabel("Sample");
-        lblSample.setToolTipText("Sample resolution (raycaster mapper only)");
+        lblSample.setToolTipText("Set volume sample resolution (raycaster mapper only)");
         GridBagConstraints gbc_lblSample = new GridBagConstraints();
         gbc_lblSample.anchor = GridBagConstraints.WEST;
         gbc_lblSample.insets = new Insets(0, 0, 5, 5);
@@ -191,14 +182,14 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         volumeSampleComboBox.setSelectedIndex(0);
         GridBagConstraints gbc_volumeSampleComboBox = new GridBagConstraints();
         gbc_volumeSampleComboBox.fill = GridBagConstraints.HORIZONTAL;
-        gbc_volumeSampleComboBox.gridwidth = 5;
+        gbc_volumeSampleComboBox.gridwidth = 3;
         gbc_volumeSampleComboBox.insets = new Insets(0, 0, 5, 0);
         gbc_volumeSampleComboBox.gridx = 1;
         gbc_volumeSampleComboBox.gridy = 4;
         add(volumeSampleComboBox, gbc_volumeSampleComboBox);
 
-        JLabel lblShading = new JLabel("Shading");
-        lblShading.setToolTipText("Shading properties");
+        JLabel lblShading = new JLabel("Light");
+        lblShading.setToolTipText("Set volume light properties");
         GridBagConstraints gbc_lblShading = new GridBagConstraints();
         gbc_lblShading.insets = new Insets(0, 0, 0, 5);
         gbc_lblShading.anchor = GridBagConstraints.WEST;
@@ -216,36 +207,24 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         add(volumeAmbientField, gbc_volumeAmbientField);
         volumeAmbientField.setColumns(4);
 
-        // diffuseField = new NumberTextField();
-        // diffuseField.setToolTipText("Diffuse lighting coefficient");
-        // GridBagConstraints gbc_diffuseField = new GridBagConstraints();
-        // gbc_diffuseField.anchor = GridBagConstraints.WEST;
-        // gbc_diffuseField.insets = new Insets(0, 0, 0, 5);
-        // gbc_diffuseField.gridx = 2;
-        // gbc_diffuseField.gridy = 6;
-        // add(diffuseField, gbc_diffuseField);
-        // diffuseField.setColumns(4);
+        volumeDiffuseField = new NumberTextField();
+        volumeDiffuseField.setToolTipText("Diffuse lighting coefficient");
+        GridBagConstraints gbc_volumeDiffuseField = new GridBagConstraints();
+        gbc_volumeDiffuseField.insets = new Insets(0, 0, 0, 5);
+        gbc_volumeDiffuseField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_volumeDiffuseField.gridx = 2;
+        gbc_volumeDiffuseField.gridy = 5;
+        add(volumeDiffuseField, gbc_volumeDiffuseField);
+        volumeDiffuseField.setColumns(4);
 
-        volumeSpecularIntensityField = new NumberTextField();
-        volumeSpecularIntensityField.setToolTipText("Specular lighting coefficient");
-        GridBagConstraints gbc_volumeSpecularIntensityField = new GridBagConstraints();
-        gbc_volumeSpecularIntensityField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_volumeSpecularIntensityField.gridwidth = 2;
-        gbc_volumeSpecularIntensityField.insets = new Insets(0, 0, 0, 5);
-        gbc_volumeSpecularIntensityField.gridx = 2;
-        gbc_volumeSpecularIntensityField.gridy = 5;
-        add(volumeSpecularIntensityField, gbc_volumeSpecularIntensityField);
-        volumeSpecularIntensityField.setColumns(4);
-
-        volumeSpecularPowerField = new NumberTextField();
-        volumeSpecularPowerField.setToolTipText("Specular power");
-        GridBagConstraints gbc_volumeSpecularPowerField = new GridBagConstraints();
-        gbc_volumeSpecularPowerField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_volumeSpecularPowerField.gridwidth = 2;
-        gbc_volumeSpecularPowerField.gridx = 4;
-        gbc_volumeSpecularPowerField.gridy = 5;
-        add(volumeSpecularPowerField, gbc_volumeSpecularPowerField);
-        volumeSpecularPowerField.setColumns(4);
+        volumeSpecularField = new NumberTextField();
+        volumeSpecularField.setToolTipText("Specular lighting coefficient");
+        GridBagConstraints gbc_volumeSpecularField = new GridBagConstraints();
+        gbc_volumeSpecularField.fill = GridBagConstraints.HORIZONTAL;
+        gbc_volumeSpecularField.gridx = 3;
+        gbc_volumeSpecularField.gridy = 5;
+        add(volumeSpecularField, gbc_volumeSpecularField);
+        volumeSpecularField.setColumns(4);
     }
 
     protected void updateState()
@@ -344,38 +323,29 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
 
     public double getVolumeDiffuse()
     {
-        return diffuseField.getNumericValue();
+        return volumeDiffuseField.getNumericValue();
     }
 
     public void setVolumeDiffuse(double value)
     {
-        diffuseField.setNumericValue(value);
+        volumeDiffuseField.setNumericValue(value);
     }
 
-    public double getVolumeSpecularIntensity()
+    public double getVolumeSpecular()
     {
-        return volumeSpecularIntensityField.getNumericValue();
+        return volumeSpecularField.getNumericValue();
     }
 
-    public void setVolumeSpecularIntensity(double value)
+    public void setVolumeSpecular(double value)
     {
-        volumeSpecularIntensityField.setNumericValue(value);
-    }
-
-    public double getVolumeSpecularPower()
-    {
-        return volumeSpecularPowerField.getNumericValue();
-    }
-
-    public void setVolumeSpecularPower(double value)
-    {
-        volumeSpecularPowerField.setNumericValue(value);
+        volumeSpecularField.setNumericValue(value);
     }
 
     @Override
     public void colorChanged(ColorChooserButton source)
     {
-        firePropertyChange(PROPERTY_BG_COLOR, null, source.getColor());
+        if (source == bgColorButton)
+            firePropertyChange(PROPERTY_BG_COLOR, null, source.getColor());
     }
 
     @Override
@@ -403,12 +373,10 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
 
         if (source == volumeAmbientField)
             firePropertyChange(PROPERTY_AMBIENT, -1d, volumeAmbientField.getNumericValue());
-        else if (source == diffuseField)
-            firePropertyChange(PROPERTY_DIFFUSE, -1d, diffuseField.getNumericValue());
-        else if (source == volumeSpecularIntensityField)
-            firePropertyChange(PROPERTY_SPECULAR_INTENSITY, -1d, volumeSpecularIntensityField.getNumericValue());
-        else if (source == volumeSpecularPowerField)
-            firePropertyChange(PROPERTY_SPECULAR_POWER, -1d, volumeSpecularPowerField.getNumericValue());
+        else if (source == volumeDiffuseField)
+            firePropertyChange(PROPERTY_DIFFUSE, -1d, volumeDiffuseField.getNumericValue());
+        else if (source == volumeSpecularField)
+            firePropertyChange(PROPERTY_SPECULAR, -1d, volumeSpecularField.getNumericValue());
 
         updateState();
     }
