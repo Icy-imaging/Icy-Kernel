@@ -88,8 +88,8 @@ public class IcyFrame implements InternalFrameListener, WindowListener, ImageObs
         {
             super("");
 
-            detachIcon = new IcyIcon(ResourceUtil.ICON_EXPAND, 20);
-            attachIcon = new IcyIcon(ResourceUtil.ICON_COLLAPSE, 20);
+            detachIcon = new IcyIcon(ResourceUtil.ICON_WINDOW_EXPAND, 20);
+            attachIcon = new IcyIcon(ResourceUtil.ICON_WINDOW_COLLAPSE, 20);
             setAccelerator(KeyEvent.VK_F3);
 
             refreshState();

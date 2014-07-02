@@ -156,8 +156,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         mainPanel.setLayout(new BorderLayout());
 
-        // set lut (this modify lutPanel)
-        setLut(sequence.createCompatibleLUT());
+        // set user lut (this modify lutPanel)
+        setLut(sequence.getUserLUT());
         // set default canvas to first available canvas plugin (Canvas2D should be first)
         setCanvas(IcyCanvas.getCanvasPluginNames().get(0));
 
@@ -601,7 +601,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         if ((lut == null) || !sequence.isLutCompatible(lut))
         {
             // sequence type has changed, we need to recreate a compatible LUT
-            final LUT newLut = sequence.createCompatibleLUT();
+            final LUT newLut = sequence.getDefaultLUT();
 
             // keep the color map of previous LUT if they have the same number of channels
             if ((lut != null) && (lut.getNumChannel() == newLut.getNumChannel()))
@@ -673,7 +673,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             else
             {
                 // new canvas not created ?
-                MessageDialog.showDialog("Cannot create Canvas from plugin " + pluginClassName + " !", MessageDialog.ERROR_MESSAGE);
+                MessageDialog.showDialog("Cannot create Canvas from plugin " + pluginClassName + " !",
+                        MessageDialog.ERROR_MESSAGE);
             }
 
             mainPanel.revalidate();
@@ -1312,7 +1313,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 // // try to keep current LUT if possible
                 if (!sequence.isLutCompatible(lut))
                     // need to update the lut according to the colormodel change
-                    setLut(sequence.createCompatibleLUT());
+                    setLut(sequence.getDefaultLUT());
                 break;
 
             case SEQUENCE_COLORMAP:
@@ -1320,8 +1321,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 break;
 
             case SEQUENCE_COMPONENTBOUNDS:
-                // refresh lut scalers from sequence lut
-                final LUT sequenceLut = sequence.createCompatibleLUT();
+                // refresh lut scalers from sequence default lut
+                final LUT sequenceLut = sequence.getDefaultLUT();
 
                 if (!sequenceLut.isCompatible(lut) || (lutViewer == null) || lutViewer.getAutoBounds())
                     lut.setScalers(sequenceLut);

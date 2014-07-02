@@ -18,6 +18,7 @@
  */
 package icy.gui.preferences;
 
+import icy.gui.dialog.ConfirmDialog;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginInstaller;
 import icy.plugin.PluginInstaller.PluginInstallerListener;
@@ -91,7 +92,7 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
             // get online version
             final PluginDescriptor onlinePlugin = PluginUpdater.getUpdate(plugin);
 
-            // udpate available ?
+            // update available ?
             if (onlinePlugin != null)
             {
                 if (PluginInstaller.isInstallingPlugin(onlinePlugin))
@@ -111,28 +112,64 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     }
 
     @Override
-    protected void doAction1(PluginDescriptor plugin)
+    protected void doAction1()
     {
-        // desinstall udpate
-        PluginInstaller.desinstall(plugin, true);
+        final List<PluginDescriptor> selectedPlugins = getSelectedPlugins();
+        final List<PluginDescriptor> toRemove = new ArrayList<PluginDescriptor>();
+
+        for (PluginDescriptor plugin : selectedPlugins)
+            if (!PluginInstaller.isDesinstallingPlugin(plugin) && plugin.isInstalled())
+                toRemove.add(plugin);
+
+        // nothing to remove
+        if (toRemove.isEmpty())
+            return;
+
+        // get dependants plugins
+        final List<PluginDescriptor> dependants = PluginInstaller.getLocalDependenciesFrom(toRemove);
+        // delete the one we plan to remove
+        dependants.removeAll(toRemove);
+
+        String message = "<html>";
+
+        if (!dependants.isEmpty())
+        {
+            message = message + "The following plugin(s) won't work anymore :<br>";
+
+            for (PluginDescriptor depPlug : dependants)
+                message = message + depPlug.getName() + " " + depPlug.getVersion() + "<br>";
+
+            message = message + "<br>";
+        }
+
+        message = message + "Are you sure you want to remove selected plugin(s) ?</html>";
+
+        if (ConfirmDialog.confirm(message))
+        {
+            // remove plugins
+            for (PluginDescriptor plugin : toRemove)
+                PluginInstaller.desinstall(plugin, false, true);
+        }
+
         // refresh state
         refreshTableData();
     }
 
     @Override
-    protected void doAction2(PluginDescriptor plugin)
+    protected void doAction2()
     {
-        switch (getPluginLocalState(plugin))
-        {
-            case HAS_UPDATE:
-                final PluginDescriptor onlinePlugin = PluginUpdater.getUpdate(plugin);
+        final List<PluginDescriptor> selectedPlugins = getSelectedPlugins();
 
-                // install udpate
+        for (PluginDescriptor plugin : selectedPlugins)
+        {
+            final PluginDescriptor onlinePlugin = PluginUpdater.getUpdate(plugin);
+            // install update
+            if (onlinePlugin != null)
                 PluginInstaller.install(onlinePlugin, true);
-                // refresh state
-                refreshTableData();
-                break;
         }
+
+        // refresh state
+        refreshTableData();
     }
 
     @Override
@@ -198,6 +235,9 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
     {
         super.updateButtonsStateInternal();
 
+        final List<PluginDescriptor> selectedPlugins = getSelectedPlugins();
+        final boolean selected = (selectedPlugins.size() > 0);
+
         if (PluginLoader.isLoading())
         {
             refreshButton.setText("Reloading...");
@@ -209,28 +249,64 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
             refreshButton.setEnabled(true);
         }
 
-        final PluginDescriptor plugin = getSelectedPlugin();
-
-        if (plugin == null)
+        if (!selected)
         {
             action1Button.setEnabled(false);
             action2Button.setEnabled(false);
             return;
         }
 
-        // special case where plugin is currently begin removed
-        if (PluginInstaller.isDesinstallingPlugin(plugin))
+        boolean removing = true;
+        for (PluginDescriptor plugin : selectedPlugins)
         {
-            action1Button.setText("Deleting...");
+            if (!PluginInstaller.isDesinstallingPlugin(plugin))
+            {
+                removing = false;
+                break;
+            }
+        }
+
+        // special case where plugins are currently begin removed
+        if (removing)
+        {
+            action1Button.setText("Removing...");
             action1Button.setEnabled(false);
         }
         else
         {
-            action1Button.setText("Delete");
+            action1Button.setText("Remove");
             action1Button.setEnabled(true);
         }
 
-        switch (getPluginLocalState(plugin))
+        PluginLocalState state = PluginLocalState.NULL;
+
+        for (PluginDescriptor plugin : selectedPlugins)
+        {
+            switch (getPluginLocalState(plugin))
+            {
+                case CHECKING_UPDATE:
+                    if ((state == PluginLocalState.NULL) || (state == PluginLocalState.NO_UPDATE))
+                        state = PluginLocalState.CHECKING_UPDATE;
+                    break;
+
+                case UPDATING:
+                    if ((state == PluginLocalState.NULL) || (state == PluginLocalState.NO_UPDATE)
+                            || (state == PluginLocalState.CHECKING_UPDATE))
+                        state = PluginLocalState.UPDATING;
+                    break;
+
+                case HAS_UPDATE:
+                    state = PluginLocalState.HAS_UPDATE;
+                    break;
+
+                case NO_UPDATE:
+                    if (state == PluginLocalState.NULL)
+                        state = PluginLocalState.NO_UPDATE;
+                    break;
+            }
+        }
+
+        switch (state)
         {
             case CHECKING_UPDATE:
                 action1Button.setEnabled(false);
@@ -262,7 +338,19 @@ public class PluginLocalPreferencePanel extends PluginListPreferencePanel implem
 
         // keep delete button enabled only if we can actually delete the plugin
         if (action1Button.isEnabled())
-            action1Button.setEnabled(plugin.isInstalled());
+        {
+            boolean canDelete = false;
+            for (PluginDescriptor plugin : selectedPlugins)
+            {
+                if (plugin.isInstalled())
+                {
+                    canDelete = true;
+                    break;
+                }
+            }
+
+            action1Button.setEnabled(canDelete);
+        }
     }
 
     @Override

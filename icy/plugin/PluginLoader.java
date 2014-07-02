@@ -19,7 +19,9 @@
 package icy.plugin;
 
 import icy.common.EventHierarchicalChecker;
+import icy.gui.frame.progress.ProgressFrame;
 import icy.main.Icy;
+import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginDescriptor.PluginNameSorter;
 import icy.plugin.abstract_.Plugin;
@@ -31,7 +33,6 @@ import icy.system.IcyExceptionHandler;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.ClassUtil;
-import icy.util.StringUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -693,16 +694,39 @@ public class PluginLoader
             ThreadUtil.sleep(10);
     }
 
+    /**
+     * Returns <code>true</code> if the specified plugin exists in the {@link PluginLoader}.
+     * 
+     * @param plugin
+     *        the plugin we are looking for.
+     * @param acceptNewer
+     *        allow newer version of the plugin
+     */
     public static boolean isLoaded(PluginDescriptor plugin, boolean acceptNewer)
     {
         return (getPlugin(plugin.getIdent(), acceptNewer) != null);
     }
 
+    /**
+     * Returns <code>true</code> if the specified plugin class exists in the {@link PluginLoader}.
+     * 
+     * @param className
+     *        class name of the plugin we are looking for.
+     */
     public static boolean isLoaded(String className)
     {
         return (getPlugin(className) != null);
     }
 
+    /**
+     * Returns the plugin corresponding to the specified plugin identity structure.<br>
+     * Returns <code>null</code> if the plugin does not exists in the {@link PluginLoader}.
+     * 
+     * @param ident
+     *        plugin identity
+     * @param acceptNewer
+     *        allow newer version of the plugin
+     */
     public static PluginDescriptor getPlugin(PluginIdent ident, boolean acceptNewer)
     {
         prepare();
@@ -713,6 +737,13 @@ public class PluginLoader
         }
     }
 
+    /**
+     * Returns the plugin corresponding to the specified plugin class name.<br>
+     * Returns <code>null</code> if the plugin does not exists in the {@link PluginLoader}.
+     * 
+     * @param className
+     *        class name of the plugin we are looking for.
+     */
     public static PluginDescriptor getPlugin(String className)
     {
         prepare();
@@ -723,6 +754,13 @@ public class PluginLoader
         }
     }
 
+    /**
+     * Returns the plugin class corresponding to the specified plugin class name.<br>
+     * Returns <code>null</code> if the plugin does not exists in the {@link PluginLoader}.
+     * 
+     * @param className
+     *        class name of the plugin we are looking for.
+     */
     public static Class<? extends Plugin> getPluginClass(String className)
     {
         prepare();
@@ -736,7 +774,12 @@ public class PluginLoader
     }
 
     /**
-     * Loads the class with the specified binary name from the Plugin class loader.
+     * Try to load and returns the specified class from the {@link PluginLoader}.<br>
+     * This method is equivalent to call {@link #getLoader()} then call
+     * <code>loadClass(String)</code> method from it.
+     * 
+     * @param className
+     *        class name of the class we want to load.
      */
     public static Class<?> loadClass(String className) throws ClassNotFoundException
     {
@@ -750,8 +793,8 @@ public class PluginLoader
     }
 
     /**
-     * Verify the specified plugin is valid.<br>
-     * Returns an empty string if the plugin is valid otherwise it returns the error string.
+     * Verify the specified plugin is correctly installed.<br>
+     * Returns an empty string if the plugin is valid otherwise it returns the error message.
      */
     public static String verifyPlugin(PluginDescriptor plugin)
     {
@@ -782,26 +825,6 @@ public class PluginLoader
             catch (Exception e)
             {
                 return mess + IcyExceptionHandler.getErrorMessage(e, false);
-            }
-        }
-
-        return "";
-    }
-
-    /**
-     * Verify that specified plugins are valid.<br>
-     * Return the error string if any (empty string = plugins are valid)
-     */
-    public static String verifyPlugins(ArrayList<PluginDescriptor> plugins)
-    {
-        synchronized (instance.loader)
-        {
-            for (PluginDescriptor plugin : plugins)
-            {
-                final String result = verifyPlugin(plugin);
-
-                if (!StringUtil.isEmpty(result))
-                    return result;
             }
         }
 
@@ -880,7 +903,12 @@ public class PluginLoader
      */
     protected void changed()
     {
-        initialized = true;
+        // check for missing or mis-installed plugins on first start
+        if (!initialized)
+        {
+            initialized = true;
+            checkPlugins(false);
+        }
 
         // start daemon plugins
         startDaemons();
@@ -894,6 +922,74 @@ public class PluginLoader
     // final PluginLoaderEvent event = (PluginLoaderEvent) e;
     //
     // }
+
+    /**
+     * Check for missing plugins and install them if needed.
+     */
+    public static void checkPlugins(boolean showProgress)
+    {
+        final List<PluginDescriptor> plugins = getPlugins(false);
+        final List<PluginDescriptor> missings = new ArrayList<PluginDescriptor>();
+        final List<PluginDescriptor> faulties = new ArrayList<PluginDescriptor>();
+
+        if (NetworkUtil.hasInternetAccess())
+        {
+            ProgressFrame pf;
+
+            if (showProgress)
+            {
+                pf = new ProgressFrame("Checking plugins...");
+                pf.setLength(plugins.size());
+                pf.setPosition(0);
+            }
+            else
+                pf = null;
+
+            PluginRepositoryLoader.waitBasicLoaded();
+
+            // check for missing plugins
+            for (PluginDescriptor plugin : plugins)
+            {
+                // get dependencies
+                if (!PluginInstaller.getDependencies(plugin, missings, null, false))
+                    // error in dependencies --> try to reinstall the plugin
+                    faulties.add(PluginUpdater.getUpdate(plugin));
+
+                if (pf != null)
+                    pf.incPosition();
+            }
+
+            if ((faulties.size() > 0) || (missings.size() > 0))
+            {
+                if (pf != null)
+                {
+                    pf.setMessage("Installing missing plugins...");
+                    pf.setPosition(0);
+                    pf.setLength(faulties.size() + missings.size());
+                }
+
+                // remove faulty plugins
+//                for (PluginDescriptor plugin : faulties)
+//                    PluginInstaller.desinstall(plugin, false, false);
+//                PluginInstaller.waitDesinstall();
+
+                // install missing plugins
+                for (PluginDescriptor plugin : missings)
+                {
+                    PluginInstaller.install(plugin, pf != null);
+                    if (pf != null)
+                        pf.incPosition();
+                }
+                // and reinstall faulty plugins
+//                for (PluginDescriptor plugin : faulties)
+//                {
+//                    PluginInstaller.install(plugin, pf != null);
+//                    if (pf != null)
+//                        pf.incPosition();
+//                }
+            }
+        }
+    }
 
     /**
      * Add a listener

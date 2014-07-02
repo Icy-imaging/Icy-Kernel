@@ -1355,7 +1355,7 @@ public class MainInterfaceGui implements MainInterface
             // if no viewer for this sequence
             if (getViewers(viewer.getSequence()).size() == 0)
                 // sequence close
-                sequenceClosed(sequence);
+                sequenceClosed(sequence, viewer);
         }
 
         // remove active viewer listener
@@ -1439,9 +1439,14 @@ public class MainInterfaceGui implements MainInterface
     }
 
     /**
-     * called when a sequence is closed
+     * Called when a sequence is closed.
+     * 
+     * @param sequence
+     *        the sequence which has been closed.
+     * @param viewer
+     *        the viewer which has been closed.
      */
-    private void sequenceClosed(Sequence sequence)
+    private void sequenceClosed(Sequence sequence, Viewer viewer)
     {
         // check if it still contains Overlay
         for (Overlay overlay : sequence.getOverlays())
@@ -1452,6 +1457,8 @@ public class MainInterfaceGui implements MainInterface
             // the sequence is already removed so the method is ok
             checkRoiRemoved(roi);
 
+        // save user LUT
+        sequence.setUserLUT(viewer.getLut());
         // inform sequence is now closed
         sequence.closed();
 

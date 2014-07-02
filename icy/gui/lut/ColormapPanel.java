@@ -46,6 +46,7 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -76,6 +77,7 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
     final IcyToggleButton grayBtn;
     final IcyToggleButton alphaBtn;
     final ButtonGroup colormapTypeBtnGrp;
+    final JComboBox colormapComboBox;
 
     /**
      * associated Viewer & LUTBand
@@ -159,7 +161,8 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         // });
 
         final IcyColorMap defaultColormap;
-        final LUT defaultLUT = viewer.getSequence().createCompatibleLUT();
+        // retrieve the default sequence LUT
+        final LUT defaultLUT = viewer.getSequence().getDefaultLUT();
 
         // compatible colormap (should always be the case)
         if (defaultLUT.getNumChannel() == lutChannel.getLut().getNumChannel())
@@ -175,8 +178,8 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
             defaultColormap.copyFrom(colormap);
         }
 
-        // colormap models
-        final ArrayList<IcyColorMap> colormaps = new ArrayList<IcyColorMap>();
+        // build colormap list
+        final List<IcyColorMap> colormaps = new ArrayList<IcyColorMap>();
 
         colormaps.add(defaultColormap);
 
@@ -205,14 +208,15 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         colormaps.add(new JETColorMap());
         colormaps.add(new GlowColorMap(true));
 
-        // colormap models comboBox
-        final JComboBox colormapComboBox = new JComboBox(colormaps.toArray());
+        // build colormap selector
+        colormapComboBox = new JComboBox(colormaps.toArray());
         colormapComboBox.setRenderer(new ColormapComboBoxRenderer(colormapComboBox, 64, 16));
         // limit size
         ComponentUtil.setFixedWidth(colormapComboBox, 64 + 30);
         colormapComboBox.setToolTipText("Select colormap model");
         // don't want focusable here
         colormapComboBox.setFocusable(false);
+        colormapComboBox.setEditable(true);
 
         colormapComboBox.addActionListener(new ActionListener()
         {
@@ -329,9 +333,13 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         }
     }
 
-    public void copyColorMap(IcyColorMap src)
+    /**
+     * Set the colormap.
+     */
+    public void setColorMap(IcyColorMap src)
     {
-        // 3D canvas ?
+        colormap.setName(src.getName());
+
         if (viewer.getCanvas() instanceof IcyCanvas3D)
         {
             // copy alpha component only if we have specific alpha info
@@ -349,6 +357,17 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         }
         else
             colormap.copyFrom(src, true);
+
+        colormapComboBox.setSelectedItem(colormap);
+    }
+
+    /**
+     * @deprecated Use {@link #setColorMap(IcyColorMap)} instead.
+     */
+    @Deprecated
+    public void copyColorMap(IcyColorMap src)
+    {
+        setColorMap(src);
     }
 
     @Override
@@ -362,8 +381,8 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
                 break;
 
             case MAP_CHANGED:
-                // nothing to do here
-
+                // update the combo box colormap representation
+                // updateCurrentColormap();
                 break;
         }
     }

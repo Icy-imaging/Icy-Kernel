@@ -20,6 +20,7 @@ package icy.sequence;
 
 import icy.file.FileUtil;
 import icy.file.xml.XMLPersistent;
+import icy.image.lut.LUT;
 import icy.roi.ROI;
 import icy.system.IcyExceptionHandler;
 import icy.util.StringUtil;
@@ -39,6 +40,7 @@ public class SequencePersistent implements XMLPersistent
 {
     private final static String ID_META = "meta";
     private final static String ID_ROIS = "rois";
+    private final static String ID_LUT = "lut";
 
     private final Sequence sequence;
 
@@ -181,6 +183,8 @@ public class SequencePersistent implements XMLPersistent
             result = false;
         if (!loadROIsFromXML(node))
             result = false;
+        if (!loadLUTFromXML(node))
+            result = false;
 
         return result;
     }
@@ -189,17 +193,20 @@ public class SequencePersistent implements XMLPersistent
     {
         final Node nodeMeta = XMLUtil.getElement(node, ID_META);
 
-        if (nodeMeta != null)
-        {
-            sequence.setPixelSizeX(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_X, 1d));
-            sequence.setPixelSizeY(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Y, 1d));
-            sequence.setPixelSizeZ(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Z, 1d));
-            sequence.setTimeInterval(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_TIME_INTERVAL, 1d));
+        // new node --> nothing to load...
+        if (nodeMeta == null)
+            return true;
 
-            for (int c = 0; c < sequence.getSizeC(); c++)
-                sequence.setChannelName(c, XMLUtil.getElementValue(nodeMeta, Sequence.ID_CHANNEL_NAME + c,
-                        MetaDataUtil.DEFAULT_CHANNEL_NAME + c));
-        }
+        sequence.setPixelSizeX(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_X, 1d));
+        sequence.setPixelSizeY(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Y, 1d));
+        sequence.setPixelSizeZ(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_PIXEL_SIZE_Z, 1d));
+        sequence.setTimeInterval(XMLUtil.getElementDoubleValue(nodeMeta, Sequence.ID_TIME_INTERVAL, 1d));
+
+        for (int c = 0; c < sequence.getSizeC(); c++)
+            sequence.setChannelName(
+                    c,
+                    XMLUtil.getElementValue(nodeMeta, Sequence.ID_CHANNEL_NAME + c, MetaDataUtil.DEFAULT_CHANNEL_NAME
+                            + c));
 
         return true;
     }
@@ -223,6 +230,23 @@ public class SequencePersistent implements XMLPersistent
         return (roiCount == rois.size());
     }
 
+    private boolean loadLUTFromXML(Node node)
+    {
+        final Node nodeLut = XMLUtil.getElement(node, ID_LUT);
+
+        // new node --> nothing to load...
+        if (nodeLut == null)
+            return true;
+
+        // use the default LUT by default
+        final LUT result = sequence.getDefaultLUT();
+
+        if (result.loadFromXML(nodeLut))
+            sequence.setUserLUT(result);
+
+        return true;
+    }
+
     @Override
     public boolean saveToXML(Node node)
     {
@@ -230,6 +254,7 @@ public class SequencePersistent implements XMLPersistent
 
         saveMetaDataToXML(node);
         saveROIsToXML(node);
+        saveLUTToXML(node);
 
         return true;
     }
@@ -265,6 +290,23 @@ public class SequencePersistent implements XMLPersistent
 
             // set rois in the XML node
             ROI.saveROIsToXML(nodeROIs, rois);
+        }
+    }
+
+    private void saveLUTToXML(Node node)
+    {
+        final LUT lut = sequence.getUserLUT();
+
+        // something to save ?
+        if (lut != null)
+        {
+            final Node nodeLut = XMLUtil.setElement(node, ID_LUT);
+
+            if (nodeLut != null)
+            {
+                XMLUtil.removeAllChildren(nodeLut);
+                lut.saveToXML(nodeLut);
+            }
         }
     }
 

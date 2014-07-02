@@ -59,8 +59,9 @@ public class ResourceUtil
     public static final ImageIcon ICON_ICY_32 = ResourceUtil.getImageIcon(IMAGE_ICY_32);
 
     public static final Image ICON_NULL = ResourceUtil.getAlphaIconAsImage("null.png");
-    public static final Image ICON_EXPAND = ResourceUtil.getAlphaIconAsImage("top_right_expand.png");
-    public static final Image ICON_COLLAPSE = ResourceUtil.getAlphaIconAsImage("top_right_collapse.png");
+
+    public static final Image ICON_WINDOW_EXPAND = ResourceUtil.getAlphaIconAsImage("top_right_expand.png");
+    public static final Image ICON_WINDOW_COLLAPSE = ResourceUtil.getAlphaIconAsImage("top_right_collapse.png");
     public static final Image ICON_PICTURE = ResourceUtil.getAlphaIconAsImage("picture.png");
     public static final Image ICON_PICTURE_COPY = ResourceUtil.getAlphaIconAsImage("picture_copy.png");
     public static final Image ICON_PICTURE_PASTE = ResourceUtil.getAlphaIconAsImage("picture_paste.png");
@@ -86,27 +87,6 @@ public class ResourceUtil
     public static final Image ICON_LINK_COPY = ResourceUtil.getAlphaIconAsImage("clipboard_link_copy.png");
     public static final Image ICON_PASTE = ResourceUtil.getAlphaIconAsImage("clipboard_past.png");
     public static final Image ICON_LINK_PASTE = ResourceUtil.getAlphaIconAsImage("clipboard_link_past.png");
-
-    /**
-     * @deprecated Use {@link #ICON_DOC_NEW} instead.
-     */
-    @Deprecated
-    public static final Image ICON_NEWDOC = ICON_DOC_NEW;
-    /**
-     * @deprecated Use {@link #ICON_DOC_COPY} instead.
-     */
-    @Deprecated
-    public static final Image ICON_DOCCOPY = ICON_DOC_COPY;
-    /**
-     * @deprecated Use {@link #ICON_DOC_IMPORT} instead.
-     */
-    @Deprecated
-    public static final Image ICON_DOCIMPORT = ICON_DOC_IMPORT;
-    /**
-     * @deprecated Use {@link #ICON_DOC_EXPORT} instead.
-     */
-    @Deprecated
-    public static final Image ICON_DOCEXPORT = ICON_DOC_EXPORT;
 
     public static final Image ICON_HELP = ResourceUtil.getAlphaIconAsImage("help.png");
     public static final Image ICON_INFO = ResourceUtil.getAlphaIconAsImage("info.png");
@@ -188,19 +168,9 @@ public class ResourceUtil
     public static final Image ICON_ROTATE_CLOCK = ResourceUtil.getAlphaIconAsImage("playback_reload.png");
 
     public static final Image ICON_ARROW_UP = ResourceUtil.getAlphaIconAsImage("arrow_top.png");
-    /**
-     * @deprecated Use {@link #ICON_ARROW_UP} instead.
-     */
-    @Deprecated
-    public static final Image ICON_ARROW_TOP = ICON_ARROW_UP;
     public static final Image ICON_ARROW_LEFT = ResourceUtil.getAlphaIconAsImage("arrow_left.png");
     public static final Image ICON_ARROW_RIGHT = ResourceUtil.getAlphaIconAsImage("arrow_right.png");
     public static final Image ICON_ARROW_DOWN = ResourceUtil.getAlphaIconAsImage("arrow_bottom.png");
-    /**
-     * @deprecated Use {@link #ICON_ARROW_DOWN} instead.
-     */
-    @Deprecated
-    public static final Image ICON_ARROW_BOTTOM = ICON_ARROW_DOWN;
     public static final Image ICON_ARROW_TOP_RIGHT = ResourceUtil.getAlphaIconAsImage("arrow_top_right.png");
 
     public static final Image ICON_ROUND_ARROW_UP = ResourceUtil.getAlphaIconAsImage("round_arrow_up.png");
@@ -213,6 +183,8 @@ public class ResourceUtil
     public static final Image ICON_SQUARE_PREV = ResourceUtil.getAlphaIconAsImage("sq_prev.png");
     public static final Image ICON_SQUARE_NEXT = ResourceUtil.getAlphaIconAsImage("sq_next.png");
 
+    public static final Image ICON_PANEL_EXPAND = ResourceUtil.getAlphaIconAsImage("br_next.png");
+    public static final Image ICON_PANEL_COLLAPSE = ResourceUtil.getAlphaIconAsImage("br_down.png");
     public static final Image ICON_PIN = ResourceUtil.getAlphaIconAsImage("pin.png");
 
     public static final Image ICON_BAND_RIGHT = ResourceUtil.getAlphaIconAsImage("arrow_r.png");
@@ -232,6 +204,47 @@ public class ResourceUtil
     public static final Image ICON_CHAT = ResourceUtil.getAlphaIconAsImage("spechbubble.png");
     public static final Image ICON_PHOTO = ResourceUtil.getAlphaIconAsImage("photo.png");
     public static final Image ICON_PHOTO_SMALL = ResourceUtil.getAlphaIconAsImage("photo_small.png");
+
+    /**
+     * @deprecated Use {@link #ICON_DOC_NEW} instead.
+     */
+    @Deprecated
+    public static final Image ICON_NEWDOC = ICON_DOC_NEW;
+    /**
+     * @deprecated Use {@link #ICON_DOC_COPY} instead.
+     */
+    @Deprecated
+    public static final Image ICON_DOCCOPY = ICON_DOC_COPY;
+    /**
+     * @deprecated Use {@link #ICON_DOC_IMPORT} instead.
+     */
+    @Deprecated
+    public static final Image ICON_DOCIMPORT = ICON_DOC_IMPORT;
+    /**
+     * @deprecated Use {@link #ICON_DOC_EXPORT} instead.
+     */
+    @Deprecated
+    public static final Image ICON_DOCEXPORT = ICON_DOC_EXPORT;
+    /**
+     * @deprecated Use {@link #ICON_ARROW_DOWN} instead.
+     */
+    @Deprecated
+    public static final Image ICON_ARROW_BOTTOM = ICON_ARROW_DOWN;
+    /**
+     * @deprecated Use {@link #ICON_ARROW_UP} instead.
+     */
+    @Deprecated
+    public static final Image ICON_ARROW_TOP = ICON_ARROW_UP;
+    /**
+     * @deprecated Use {@link #ICON_WINDOW_EXPAND} instead.
+     */
+    @Deprecated
+    public static final Image ICON_EXPAND = ICON_WINDOW_EXPAND;
+    /**
+     * @deprecated Use {@link #ICON_WINDOW_COLLAPSE} instead.
+     */
+    @Deprecated
+    public static final Image ICON_COLLAPSE = ICON_WINDOW_COLLAPSE;
 
     // color icons
     public static final Image ICON_ALPHA_COLOR = ResourceUtil.getColorIconAsImage("alpha.png");

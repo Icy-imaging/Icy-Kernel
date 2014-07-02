@@ -19,23 +19,20 @@
 
 package icy.plugin.classloader;
 
+import icy.network.NetworkUtil;
 import icy.plugin.classloader.exception.JclException;
 import icy.system.IcyExceptionHandler;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.JarURLConnection;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,9 +47,9 @@ import java.util.zip.ZipEntry;
 public class JarResources
 {
     // <resourceName, content> map
-    protected Map<String, byte[]> jarEntryContents;
+    protected Map<String, byte[]> entryContents;
     // <resourceName, fileName> map
-    protected Map<String, URL> jarEntryUrls;
+    protected Map<String, URL> entryUrls;
 
     protected boolean collisionAllowed;
     // keep trace of loaded resource size
@@ -65,25 +62,25 @@ public class JarResources
      */
     public JarResources()
     {
-        jarEntryContents = new HashMap<String, byte[]>();
-        jarEntryUrls = new HashMap<String, URL>();
+        entryContents = new HashMap<String, byte[]>();
+        entryUrls = new HashMap<String, URL>();
         collisionAllowed = Configuration.suppressCollisionException();
         loadedSize = 0;
     }
 
     public URL getResource(String name)
     {
-        return jarEntryUrls.get(name);
+        return entryUrls.get(name);
     }
 
     public byte[] getResourceContent(String name) throws IOException
     {
-        byte content[] = jarEntryContents.get(name);
+        byte content[] = entryContents.get(name);
 
         // we load the content
         if (content == null)
         {
-            final URL url = jarEntryUrls.get(name);
+            final URL url = entryUrls.get(name);
 
             if (url != null)
             {
@@ -91,12 +88,12 @@ public class JarResources
                 {
                     // load content and return it
                     loadContent(name, url);
-                    content = jarEntryContents.get(name);
+                    content = entryContents.get(name);
                 }
                 catch (IOException e)
                 {
                     // content cannot be loaded, remove the URL entry
-                    jarEntryUrls.remove(name);
+                    entryUrls.remove(name);
                     // and throw exception
                     throw e;
                 }
@@ -118,7 +115,7 @@ public class JarResources
      */
     public Set<String> getResourcesName()
     {
-        return Collections.unmodifiableSet(jarEntryUrls.keySet());
+        return Collections.unmodifiableSet(entryUrls.keySet());
     }
 
     /**
@@ -126,7 +123,7 @@ public class JarResources
      */
     public Map<String, URL> getResources()
     {
-        return Collections.unmodifiableMap(jarEntryUrls);
+        return Collections.unmodifiableMap(entryUrls);
     }
 
     /**
@@ -134,39 +131,7 @@ public class JarResources
      */
     public Map<String, byte[]> getLoadedResources()
     {
-        return Collections.unmodifiableMap(jarEntryContents);
-    }
-
-    /**
-     * Reads the specified jar file
-     * 
-     * @throws IOException
-     */
-    public void loadJar(String jarFile) throws IOException
-    {
-        if (logger.isLoggable(Level.FINEST))
-            logger.finest("Loading jar: " + jarFile);
-
-        FileInputStream fis = null;
-        try
-        {
-            fis = new FileInputStream(jarFile);
-            loadJar(new File(jarFile).toURI().toURL(), fis);
-        }
-        finally
-        {
-            if (fis != null)
-                try
-                {
-                    fis.close();
-                }
-                catch (IOException e)
-                {
-                    // not important
-                    System.err.println("JarResources.loadJar(" + jarFile + ") error:");
-                    IcyExceptionHandler.showErrorMessage(e, false, true);
-                }
-        }
+        return Collections.unmodifiableMap(entryContents);
     }
 
     /**
@@ -179,41 +144,18 @@ public class JarResources
         if (logger.isLoggable(Level.FINEST))
             logger.finest("Loading jar: " + url.toString());
 
-        InputStream in = null;
-        try
-        {
-            in = url.openStream();
-            loadJar(url, in);
-        }
-        finally
-        {
-            if (in != null)
-                try
-                {
-                    in.close();
-                }
-                catch (IOException e)
-                {
-                    // not important
-                    System.err.println("JarResources.loadJar(" + url + ") error:");
-                    IcyExceptionHandler.showErrorMessage(e, false, true);
-                }
-        }
-    }
-
-    /**
-     * Load the jar from InputStream
-     * 
-     * @throws IOException
-     */
-    public void loadJar(URL baseUrl, InputStream jarStream) throws IOException
-    {
         BufferedInputStream bis = null;
         JarInputStream jis = null;
 
         try
         {
-            bis = new BufferedInputStream(jarStream);
+            final InputStream in = url.openStream();
+
+            if (in instanceof BufferedInputStream)
+                bis = (BufferedInputStream) in;
+            else
+                bis = new BufferedInputStream(in);
+
             jis = new JarInputStream(bis);
 
             JarEntry jarEntry = null;
@@ -223,11 +165,9 @@ public class JarResources
                     logger.finest(dump(jarEntry));
 
                 if (jarEntry.isDirectory())
-                {
                     continue;
-                }
 
-                if (jarEntryUrls.containsKey(jarEntry.getName()))
+                if (entryUrls.containsKey(jarEntry.getName()))
                 {
                     if (!collisionAllowed)
                         throw new JclException("Class/Resource " + jarEntry.getName() + " already loaded");
@@ -238,17 +178,18 @@ public class JarResources
                 }
 
                 // add to internal resource HashMap
-                jarEntryUrls.put(jarEntry.getName(), new URL("jar:" + baseUrl.toString() + "!/" + jarEntry.getName()));
+                entryUrls.put(jarEntry.getName(), new URL("jar:" + url.toString() + "!/" + jarEntry.getName()));
             }
         }
-        catch (NullPointerException e)
-        {
-            if (logger.isLoggable(Level.FINEST))
-                logger.finest("Done loading.");
-        }
+        // catch (NullPointerException e)
+        // {
+        // if (logger.isLoggable(Level.FINEST))
+        // logger.finest("Done loading.");
+        // }
         finally
         {
             if (jis != null)
+            {
                 try
                 {
                     jis.close();
@@ -256,11 +197,13 @@ public class JarResources
                 catch (IOException e)
                 {
                     // not important
-                    System.err.println("JarResources.loadJar(" + baseUrl + "," + jarStream + ") error:");
+                    System.err.println("JarResources.loadJar(" + url + ") error:");
                     IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
+            }
 
             if (bis != null)
+            {
                 try
                 {
                     bis.close();
@@ -268,9 +211,10 @@ public class JarResources
                 catch (IOException e)
                 {
                     // not important
-                    System.err.println("JarResources.loadJar(" + baseUrl + "," + jarStream + ") error:");
+                    System.err.println("JarResources.loadJar(" + url + ") error:");
                     IcyExceptionHandler.showErrorMessage(e, false, true);
                 }
+            }
         }
     }
 
@@ -281,121 +225,23 @@ public class JarResources
      */
     protected byte[] loadJarContent(URL url) throws IOException
     {
-        InputStream in = null;
-        BufferedInputStream bis = null;
-        JarFile jf = null;
+        final JarURLConnection uc = (JarURLConnection) url.openConnection();
+        final JarEntry jarEntry = uc.getJarEntry();
 
-        String path;
-        int indStart, indEnd;
-        String filename;
-        String resname;
-
-        try
+        if (jarEntry != null)
         {
-            path = url.getPath();
-            indStart = path.indexOf("file:");
-            if (indStart != -1)
-                indStart += 5;
-            else
-                indStart = 0;
-            indEnd = path.indexOf('!');
-            filename = path.substring(indStart, indEnd);
-            resname = path.substring(indEnd + 2);
+            if (logger.isLoggable(Level.FINEST))
+                logger.finest(dump(jarEntry));
 
-            try
-            {
-                jf = new JarFile(filename);
-            }
-            catch (IOException e)
-            {
-                // try to decode the URL then
-                path = URLDecoder.decode(url.getFile(), "UTF-8");
-                indStart = path.indexOf("file:");
-                if (indStart != -1)
-                    indStart += 5;
-                else
-                    indStart = 0;
-                indEnd = path.indexOf('!');
-                filename = path.substring(indStart, indEnd);
-                resname = path.substring(indEnd + 2);
-
-                jf = new JarFile(filename);
-            }
-
-            final JarEntry jarEntry = jf.getJarEntry(resname);
-
-            if (jarEntry != null)
-            {
-                if (logger.isLoggable(Level.FINEST))
-                    logger.finest(dump(jarEntry));
-
-                in = jf.getInputStream(jarEntry);
-                bis = new BufferedInputStream(in);
-
-                byte[] b = new byte[2048];
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-                int len = 0;
-                while ((len = bis.read(b)) > 0)
-                    out.write(b, 0, len);
-
-                out.close();
-
-                loadedSize += out.size();
-
-                // System.out.println("Entry Name: " + jarEntry.getName() + ", Size: " + out.size()
-                // + " ("
-                // + (loadedSize / 1024) + " KB)");
-
-                return out.toByteArray();
-            }
-
-            throw new IOException("JarResources.loadJarContent(" + url.toString() + ") error: Can't find '" + resname
-                    + "' in JAR file");
+            return NetworkUtil.download(uc.getInputStream(), jarEntry.getSize(), null);
         }
-        finally
-        {
-            if (bis != null)
-                try
-                {
-                    bis.close();
-                }
-                catch (IOException e)
-                {
-                    // file close error is not that much important
-                    System.err.println("JarResources.loadJarContent(" + url.toString() + ") error:");
-                    IcyExceptionHandler.showErrorMessage(e, false, true);
-                }
 
-            if (in != null)
-                try
-                {
-                    in.close();
-                }
-                catch (IOException e)
-                {
-                    // file close error is not that much important
-                    System.err.println("JarResources.loadJarContent(" + url.toString() + ") error:");
-                    IcyExceptionHandler.showErrorMessage(e, false, true);
-                }
-
-            if (jf != null)
-                try
-                {
-                    jf.close();
-                }
-                catch (IOException e)
-                {
-                    // file close error is not that much important
-                    System.err.println("JarResources.loadJarContent(" + url.toString() + ") error:");
-                    IcyExceptionHandler.showErrorMessage(e, false, true);
-                }
-        }
+        throw new IOException("JarResources.loadJarContent(" + url.toString() + ") error:\nEntry not found !");
     }
 
     protected void setResourceContent(String name, byte content[])
     {
-        if (jarEntryContents.containsKey(name))
+        if (entryContents.containsKey(name))
         {
             if (!collisionAllowed)
                 throw new JclException("Class/Resource " + name + " already loaded");
@@ -409,7 +255,7 @@ public class JarResources
             logger.finest("Entry Name: " + name + ", " + "Entry Size: " + content.length);
 
         // add to internal resource HashMap
-        jarEntryContents.put(name, content);
+        entryContents.put(name, content);
     }
 
     /**
@@ -422,30 +268,20 @@ public class JarResources
     {
         StringBuffer sb = new StringBuffer();
         if (je.isDirectory())
-        {
             sb.append("d ");
-        }
         else
-        {
             sb.append("f ");
-        }
 
         if (je.getMethod() == ZipEntry.STORED)
-        {
             sb.append("stored   ");
-        }
         else
-        {
             sb.append("deflated ");
-        }
 
         sb.append(je.getName());
         sb.append("\t");
         sb.append("" + je.getSize());
         if (je.getMethod() == ZipEntry.DEFLATED)
-        {
             sb.append("/" + je.getCompressedSize());
-        }
 
         return (sb.toString());
     }

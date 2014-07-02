@@ -57,14 +57,14 @@ public class PluginInstaller implements Runnable
     {
         // final PluginRepositoryLoader loader;
         final PluginDescriptor plugin;
-        final boolean showConfirm;
+        final boolean showProgress;
 
-        public PluginInstallInfo(PluginDescriptor plugin, boolean showConfirm)
+        public PluginInstallInfo(PluginDescriptor plugin, boolean showProgress)
         {
             super();
 
             this.plugin = plugin;
-            this.showConfirm = showConfirm;
+            this.showProgress = showProgress;
         }
     }
 
@@ -126,8 +126,13 @@ public class PluginInstaller implements Runnable
 
     /**
      * Install a plugin (asynchronous)
+     * 
+     * @param plugin
+     *        the plugin to install
+     * @param showProgress
+     *        show a progress frame during process
      */
-    public static void install(PluginDescriptor plugin, boolean showConfirm) 
+    public static void install(PluginDescriptor plugin, boolean showProgress)
     {
         if ((plugin != null) && isEnabled())
         {
@@ -146,7 +151,7 @@ public class PluginInstaller implements Runnable
 
             synchronized (instance.installFIFO)
             {
-                instance.installFIFO.add(new PluginInstallInfo(plugin, showConfirm));
+                instance.installFIFO.add(new PluginInstallInfo(plugin, showProgress));
             }
         }
     }
@@ -211,9 +216,16 @@ public class PluginInstaller implements Runnable
     }
 
     /**
-     * uninstall a plugin (asynchronous)
+     * Uninstall a plugin (asynchronous)
+     * 
+     * @param plugin
+     *        the plugin to uninstall
+     * @param showConfirm
+     *        show a confirmation dialog
+     * @param showProgress
+     *        show a progress frame during process
      */
-    public static void desinstall(PluginDescriptor plugin, boolean showConfirm)
+    public static void desinstall(PluginDescriptor plugin, boolean showConfirm, boolean showProgress)
     {
         if ((plugin != null) && isEnabled())
         {
@@ -249,10 +261,19 @@ public class PluginInstaller implements Runnable
             {
                 synchronized (instance.removeFIFO)
                 {
-                    instance.removeFIFO.add(new PluginInstallInfo(plugin, showConfirm));
+                    instance.removeFIFO.add(new PluginInstallInfo(plugin, showProgress));
                 }
             }
         }
+    }
+
+    /**
+     * @deprecated Use {@link #desinstall(PluginDescriptor, boolean, boolean)} instead.
+     */
+    @Deprecated
+    public static void desinstall(PluginDescriptor plugin, boolean showConfirm)
+    {
+        desinstall(plugin, showConfirm, showConfirm);
     }
 
     /**
@@ -421,14 +442,14 @@ public class PluginInstaller implements Runnable
     {
         if (!FileUtil.delete(plugin.getJarFilename(), false))
         {
-            System.err.println("deletePlugin() : Can't delete " + plugin.getJarFilename());
+            System.err.println("Can't delete '" + plugin.getJarFilename() + "' file !");
             // fatal error
             return false;
         }
 
         if (FileUtil.exists(plugin.getXMLFilename()))
             if (!FileUtil.delete(plugin.getXMLFilename(), false))
-                System.err.println("deletePlugin() : Can't delete " + plugin.getXMLFilename());
+                System.err.println("Can't delete '" + plugin.getXMLFilename() + "' file !");
 
         FileUtil.delete(plugin.getImageFilename(), false);
         FileUtil.delete(plugin.getIconFilename(), false);
@@ -439,7 +460,7 @@ public class PluginInstaller implements Runnable
     /**
      * Fill list with local dependencies (plugins) of specified plugin
      */
-    public static void getLocalDependenciesOf(ArrayList<PluginDescriptor> result, PluginDescriptor plugin)
+    public static void getLocalDependenciesOf(List<PluginDescriptor> result, PluginDescriptor plugin)
     {
         // load plugin descriptor informations if not yet done
         plugin.loadDescriptor();
@@ -465,18 +486,39 @@ public class PluginInstaller implements Runnable
     }
 
     /**
-     * Return local plugin list which depend from specified plugin.
+     * Return local plugins list which depend from the specified list of plugins.
+     */
+    public static List<PluginDescriptor> getLocalDependenciesFrom(List<PluginDescriptor> plugins)
+    {
+        final List<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
+
+        for (PluginDescriptor plugin : plugins)
+            getLocalDependenciesFrom(plugin, result);
+
+        return result;
+    }
+
+    /**
+     * Return local plugins list which depend from the specified plugin.
      */
     public static List<PluginDescriptor> getLocalDependenciesFrom(PluginDescriptor plugin)
     {
         final List<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
+        getLocalDependenciesFrom(plugin, result);
+
+        return result;
+    }
+
+    /**
+     * Return local plugins list which depend from the specified plugin.
+     */
+    private static void getLocalDependenciesFrom(PluginDescriptor plugin, List<PluginDescriptor> result)
+    {
         for (PluginDescriptor curPlug : PluginLoader.getPlugins(false))
             // require specified plugin ?
             if (curPlug.requires(plugin))
                 PluginDescriptor.addToList(result, curPlug);
-
-        return result;
     }
 
     /**
@@ -537,12 +579,12 @@ public class PluginInstaller implements Runnable
     }
 
     /**
-     * resolve dependencies for specified plugin
+     * Resolve dependencies for specified plugin
      * 
      * @param taskFrame
      */
-    private boolean checkDependencies(PluginDescriptor plugin, List<PluginDescriptor> pluginsToInstall,
-            CancelableProgressFrame taskFrame)
+    public static boolean getDependencies(PluginDescriptor plugin, List<PluginDescriptor> pluginsToInstall,
+            CancelableProgressFrame taskFrame, boolean showError)
     {
         // load plugin descriptor informations if not yet done
         plugin.loadDescriptor();
@@ -570,14 +612,17 @@ public class PluginInstaller implements Runnable
                 if (onlinePlugin == null)
                 {
                     // error
-                    System.err.println("Can't resolve dependencies for plugin '" + plugin.getName() + "' :");
-
-                    if (localPlugin == null)
-                        System.err.println("Plugin class '" + ident.getClassName() + " not found !");
-                    else
+                    if (showError)
                     {
-                        System.err.println(localPlugin.getName() + " " + localPlugin.getVersion() + " installed");
-                        System.err.println("but version " + ident.getVersion() + " or greater needed.");
+                        System.err.println("Can't resolve dependencies for plugin '" + plugin.getName() + "' :");
+
+                        if (localPlugin == null)
+                            System.err.println("Plugin class '" + ident.getClassName() + " not found !");
+                        else
+                        {
+                            System.err.println(localPlugin.getName() + " " + localPlugin.getVersion() + " installed");
+                            System.err.println("but version " + ident.getVersion() + " or greater needed.");
+                        }
                     }
 
                     return false;
@@ -586,17 +631,21 @@ public class PluginInstaller implements Runnable
                 else if (ident.getVersion().isGreater(onlinePlugin.getVersion()))
                 {
                     // error
-                    System.err.println("Can't resolve dependencies for plugin '" + plugin.getName() + "' :");
-                    System.err.println(onlinePlugin.getName() + " " + onlinePlugin.getVersion()
-                            + " found in repository");
-                    System.err.println("but version " + ident.getVersion() + " or greater needed.");
+                    if (showError)
+                    {
+                        System.err.println("Can't resolve dependencies for plugin '" + plugin.getName() + "' :");
+                        System.err.println(onlinePlugin.getName() + " " + onlinePlugin.getVersion()
+                                + " found in repository");
+                        System.err.println("but version " + ident.getVersion() + " or greater needed.");
+                    }
+
                     return false;
                 }
 
                 // add to the install list
                 PluginDescriptor.addToList(pluginsToInstall, onlinePlugin);
                 // and check dependencies for this plugin
-                if (!checkDependencies(onlinePlugin, pluginsToInstall, taskFrame))
+                if (!getDependencies(onlinePlugin, pluginsToInstall, taskFrame, showError))
                     return false;
             }
             else
@@ -609,7 +658,7 @@ public class PluginInstaller implements Runnable
                     // add to the install list
                     PluginDescriptor.addToList(pluginsToInstall, onlinePlugin);
                     // and check dependencies for this plugin
-                    if (!checkDependencies(onlinePlugin, pluginsToInstall, taskFrame))
+                    if (!getDependencies(onlinePlugin, pluginsToInstall, taskFrame, showError))
                         return false;
                 }
             }
@@ -625,7 +674,7 @@ public class PluginInstaller implements Runnable
         try
         {
             final List<PluginInstallInfo> infos;
-            boolean showConfirm;
+            boolean showProgress;
 
             synchronized (installFIFO)
             {
@@ -633,7 +682,7 @@ public class PluginInstaller implements Runnable
 
                 // remove plugin already installed from list and determine if we should
                 // display the progress bar
-                showConfirm = false;
+                showProgress = false;
                 for (int i = infos.size() - 1; i >= 0; i--)
                 {
                     final PluginInstallInfo info = infos.get(i);
@@ -642,14 +691,14 @@ public class PluginInstaller implements Runnable
                     if (!PluginLoader.isLoaded(plugin, false))
                     {
                         installingPlugins.add(plugin);
-                        showConfirm |= info.showConfirm;
+                        showProgress |= info.showProgress;
                     }
                 }
 
                 installFIFO.clear();
             }
 
-            if (showConfirm && !Icy.getMainInterface().isHeadLess())
+            if (showProgress && !Icy.getMainInterface().isHeadLess())
                 taskFrame = new CancelableProgressFrame("initializing...");
 
             List<PluginDescriptor> dependencies = new ArrayList<PluginDescriptor>();
@@ -672,7 +721,7 @@ public class PluginInstaller implements Runnable
                 }
 
                 // check dependencies
-                if (!checkDependencies(plugin, dependencies, taskFrame))
+                if (!getDependencies(plugin, dependencies, taskFrame, true))
                 {
                     // can't resolve dependencies for this plugin
                     pluginsNOk.add(plugin);
@@ -805,7 +854,7 @@ public class PluginInstaller implements Runnable
                 System.out.println();
             }
 
-            if (showConfirm && !Icy.getMainInterface().isHeadLess())
+            if (showProgress && !Icy.getMainInterface().isHeadLess())
             {
                 if (pluginsNOk.isEmpty())
                     new SuccessfullAnnounceFrame("Plugin(s) installation was successful !");
@@ -831,27 +880,27 @@ public class PluginInstaller implements Runnable
 
         try
         {
-            final ArrayList<PluginInstallInfo> infos;
-            boolean showConfirm;
+            final List<PluginInstallInfo> infos;
+            boolean showProgress;
 
             synchronized (removeFIFO)
             {
                 infos = new ArrayList<PluginInstaller.PluginInstallInfo>(removeFIFO);
 
                 // determine if we should display the progress bar
-                showConfirm = false;
+                showProgress = false;
                 for (int i = infos.size() - 1; i >= 0; i--)
                 {
                     final PluginInstallInfo info = infos.get(i);
 
                     desinstallingPlugin.add(info.plugin);
-                    showConfirm |= info.showConfirm;
+                    showProgress |= info.showProgress;
                 }
 
                 removeFIFO.clear();
             }
 
-            if (showConfirm && !Icy.getMainInterface().isHeadLess())
+            if (showProgress && !Icy.getMainInterface().isHeadLess())
                 taskFrame = new CancelableProgressFrame("Initializing...");
 
             // now we can proceed remove
@@ -874,7 +923,7 @@ public class PluginInstaller implements Runnable
                 // notify plugin deletion
                 fireRemovedEvent(plugin, result);
 
-                if (showConfirm && !Icy.getMainInterface().isHeadLess())
+                if (showProgress && !Icy.getMainInterface().isHeadLess())
                 {
                     if (!result)
                         new FailedAnnounceFrame("Plugin '" + plugDesc + "' delete operation failed !");

@@ -23,6 +23,7 @@ import icy.util.XMLUtil;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -132,11 +133,14 @@ public class XMLPreferences
     {
         String result = "/" + name();
 
-        Element parent = XMLUtil.getParentElement(currentElement);
-        while ((parent != null) && (parent != root.element))
+        synchronized (root)
         {
-            result = "/" + XMLUtil.getGenericElementName(parent) + result;
-            parent = XMLUtil.getParentElement(parent);
+            Element parent = XMLUtil.getParentElement(currentElement);
+            while ((parent != null) && (parent != root.element))
+            {
+                result = "/" + XMLUtil.getGenericElementName(parent) + result;
+                parent = XMLUtil.getParentElement(parent);
+            }
         }
 
         return result;
@@ -144,12 +148,20 @@ public class XMLPreferences
 
     public String name()
     {
-        return XMLUtil.getGenericElementName(currentElement);
+        synchronized (root)
+        {
+            return XMLUtil.getGenericElementName(currentElement);
+        }
     }
 
     public XMLPreferences getParent()
     {
-        final Element parent = XMLUtil.getParentElement(currentElement);
+        final Element parent;
+
+        synchronized (root)
+        {
+            parent = XMLUtil.getParentElement(currentElement);
+        }
 
         if (parent != null)
             return new XMLPreferences(root, parent);
@@ -160,8 +172,14 @@ public class XMLPreferences
     public ArrayList<XMLPreferences> getChildren()
     {
         final ArrayList<XMLPreferences> result = new ArrayList<XMLPreferences>();
+        final List<Element> elements;
 
-        for (Element element : XMLUtil.getGenericElements(currentElement, TYPE_SECTION))
+        synchronized (root)
+        {
+            elements = XMLUtil.getGenericElements(currentElement, TYPE_SECTION);
+        }
+
+        for (Element element : elements)
             result.add(new XMLPreferences(root, element));
 
         return result;
@@ -171,8 +189,11 @@ public class XMLPreferences
     {
         final ArrayList<String> result = new ArrayList<String>();
 
-        for (Element element : XMLUtil.getGenericElements(currentElement, TYPE_SECTION))
-            result.add(XMLUtil.getGenericElementName(element));
+        synchronized (root)
+        {
+            for (Element element : XMLUtil.getGenericElements(currentElement, TYPE_SECTION))
+                result.add(XMLUtil.getGenericElementName(element));
+        }
 
         return result;
     }
@@ -192,9 +213,12 @@ public class XMLPreferences
             element = currentElement;
         }
 
-        for (String subName : name.split("/"))
-            if (!subName.isEmpty())
-                element = XMLUtil.getGenericElement(element, TYPE_SECTION, subName);
+        synchronized (root)
+        {
+            for (String subName : name.split("/"))
+                if (!subName.isEmpty())
+                    element = XMLUtil.getGenericElement(element, TYPE_SECTION, subName);
+        }
 
         return element;
     }
@@ -217,9 +241,12 @@ public class XMLPreferences
             element = currentElement;
         }
 
-        for (String subName : name.split("/"))
-            if (!subName.isEmpty())
-                element = XMLUtil.setGenericElement(element, TYPE_SECTION, subName);
+        synchronized (root)
+        {
+            for (String subName : name.split("/"))
+                if (!subName.isEmpty())
+                    element = XMLUtil.setGenericElement(element, TYPE_SECTION, subName);
+        }
 
         return element;
     }
@@ -267,15 +294,18 @@ public class XMLPreferences
         if (currentElement == root.element)
             return true;
 
-        // try to reach root from current element
-        Element parent = XMLUtil.getParentElement(currentElement);
-        while (parent != null)
+        synchronized (root)
         {
-            // we reached root so the element still exist
-            if (parent == root.element)
-                return true;
+            // try to reach root from current element
+            Element parent = XMLUtil.getParentElement(currentElement);
+            while (parent != null)
+            {
+                // we reached root so the element still exist
+                if (parent == root.element)
+                    return true;
 
-            parent = XMLUtil.getParentElement(parent);
+                parent = XMLUtil.getParentElement(parent);
+            }
         }
 
         // can't reach root, element is no more existing
@@ -307,8 +337,11 @@ public class XMLPreferences
     {
         final ArrayList<String> result = new ArrayList<String>();
 
-        for (Element element : XMLUtil.getGenericElements(currentElement, TYPE_KEY))
-            result.add(XMLUtil.getGenericElementName(element));
+        synchronized (root)
+        {
+            for (Element element : XMLUtil.getGenericElements(currentElement, TYPE_KEY))
+                result.add(XMLUtil.getGenericElementName(element));
+        }
 
         return result;
     }
@@ -318,14 +351,17 @@ public class XMLPreferences
      */
     public void clean()
     {
-        final ArrayList<Node> nodes = XMLUtil.getChildren(currentElement);
-
-        for (Node node : nodes)
+        synchronized (root)
         {
-            final String nodeName = node.getNodeName();
+            final List<Node> nodes = XMLUtil.getChildren(currentElement);
 
-            if (!(nodeName.equals(TYPE_KEY) || nodeName.equals(TYPE_SECTION)))
-                XMLUtil.removeNode(currentElement, node);
+            for (Node node : nodes)
+            {
+                final String nodeName = node.getNodeName();
+
+                if (!(nodeName.equals(TYPE_KEY) || nodeName.equals(TYPE_SECTION)))
+                    XMLUtil.removeNode(currentElement, node);
+            }
         }
     }
 
@@ -334,7 +370,10 @@ public class XMLPreferences
      */
     public void clear()
     {
-        XMLUtil.removeChildren(currentElement, TYPE_KEY);
+        synchronized (root)
+        {
+            XMLUtil.removeChildren(currentElement, TYPE_KEY);
+        }
     }
 
     /**
@@ -344,10 +383,13 @@ public class XMLPreferences
     {
         if (element != null)
         {
-            final Element parent = XMLUtil.getParentElement(element);
+            synchronized (root)
+            {
+                final Element parent = XMLUtil.getParentElement(element);
 
-            if (parent != null)
-                XMLUtil.removeNode(parent, element);
+                if (parent != null)
+                    XMLUtil.removeNode(parent, element);
+            }
         }
     }
 
@@ -372,77 +414,121 @@ public class XMLPreferences
      */
     public void removeChildren()
     {
-        XMLUtil.removeChildren(currentElement, TYPE_SECTION);
+        synchronized (root)
+        {
+            XMLUtil.removeChildren(currentElement, TYPE_SECTION);
+        }
     }
 
     public String get(String key, String def)
     {
-        return XMLUtil.getGenericElementValue(currentElement, TYPE_KEY, key, def);
+        synchronized (root)
+        {
+            return XMLUtil.getGenericElementValue(currentElement, TYPE_KEY, key, def);
+        }
     }
 
     public boolean getBoolean(String key, boolean def)
     {
-        return XMLUtil.getGenericElementBooleanValue(currentElement, TYPE_KEY, key, def);
+        synchronized (root)
+        {
+            return XMLUtil.getGenericElementBooleanValue(currentElement, TYPE_KEY, key, def);
+        }
     }
 
     public byte[] getBytes(String key, byte[] def)
     {
-        return XMLUtil.getGenericElementBytesValue(currentElement, TYPE_KEY, key, def);
+        synchronized (root)
+        {
+            return XMLUtil.getGenericElementBytesValue(currentElement, TYPE_KEY, key, def);
+        }
     }
 
     public double getDouble(String key, double def)
     {
-        return XMLUtil.getGenericElementDoubleValue(currentElement, TYPE_KEY, key, def);
+        synchronized (root)
+        {
+            return XMLUtil.getGenericElementDoubleValue(currentElement, TYPE_KEY, key, def);
+        }
     }
 
     public float getFloat(String key, float def)
     {
-        return XMLUtil.getGenericElementFloatValue(currentElement, TYPE_KEY, key, def);
+        synchronized (root)
+        {
+            return XMLUtil.getGenericElementFloatValue(currentElement, TYPE_KEY, key, def);
+        }
     }
 
     public int getInt(String key, int def)
     {
-        return XMLUtil.getGenericElementIntValue(currentElement, TYPE_KEY, key, def);
+        synchronized (root)
+        {
+            return XMLUtil.getGenericElementIntValue(currentElement, TYPE_KEY, key, def);
+        }
     }
 
     public long getLong(String key, long def)
     {
-        return XMLUtil.getGenericElementLongValue(currentElement, TYPE_KEY, key, def);
+        synchronized (root)
+        {
+            return XMLUtil.getGenericElementLongValue(currentElement, TYPE_KEY, key, def);
+        }
     }
 
     public void put(String key, String value)
     {
-        XMLUtil.setGenericElementValue(currentElement, TYPE_KEY, key, value);
+        synchronized (root)
+        {
+            XMLUtil.setGenericElementValue(currentElement, TYPE_KEY, key, value);
+        }
     }
 
     public void putBoolean(String key, boolean value)
     {
-        XMLUtil.setGenericElementBooleanValue(currentElement, TYPE_KEY, key, value);
+        synchronized (root)
+        {
+            XMLUtil.setGenericElementBooleanValue(currentElement, TYPE_KEY, key, value);
+        }
     }
 
     public void putBytes(String key, byte[] value)
     {
-        XMLUtil.setGenericElementBytesValue(currentElement, TYPE_KEY, key, value);
+        synchronized (root)
+        {
+            XMLUtil.setGenericElementBytesValue(currentElement, TYPE_KEY, key, value);
+        }
     }
 
     public void putDouble(String key, double value)
     {
-        XMLUtil.setGenericElementDoubleValue(currentElement, TYPE_KEY, key, value);
+        synchronized (root)
+        {
+            XMLUtil.setGenericElementDoubleValue(currentElement, TYPE_KEY, key, value);
+        }
     }
 
     public void putFloat(String key, float value)
     {
-        XMLUtil.setGenericElementFloatValue(currentElement, TYPE_KEY, key, value);
+        synchronized (root)
+        {
+            XMLUtil.setGenericElementFloatValue(currentElement, TYPE_KEY, key, value);
+        }
     }
 
     public void putInt(String key, int value)
     {
-        XMLUtil.setGenericElementIntValue(currentElement, TYPE_KEY, key, value);
+        synchronized (root)
+        {
+            XMLUtil.setGenericElementIntValue(currentElement, TYPE_KEY, key, value);
+        }
     }
 
     public void putLong(String key, long value)
     {
-        XMLUtil.setGenericElementLongValue(currentElement, TYPE_KEY, key, value);
+        synchronized (root)
+        {
+            XMLUtil.setGenericElementLongValue(currentElement, TYPE_KEY, key, value);
+        }
     }
-
 }

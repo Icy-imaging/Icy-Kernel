@@ -41,9 +41,6 @@ import javax.swing.SwingConstants;
  */
 public class PopupPanel extends JPanel
 {
-    static final Image ICON_EXPAND = ResourceUtil.getAlphaIconAsImage("br_next.png");
-    static final Image ICON_COLLAPSE = ResourceUtil.getAlphaIconAsImage("br_down.png");
-
     private class PopupTitlePanel extends IcyToggleButton
     {
         /**
@@ -104,7 +101,6 @@ public class PopupPanel extends JPanel
             if (text != null)
             {
                 final Rectangle2D r = GraphicsUtil.getStringBounds(this, text);
-
                 return new Dimension((int) r.getWidth(), (int) r.getHeight());
             }
 
@@ -123,7 +119,6 @@ public class PopupPanel extends JPanel
                 iconTextGap -= (icon.getIconWidth() + 10);
                 setIconTextGap(iconTextGap);
             }
-
         }
     }
 
@@ -132,22 +127,48 @@ public class PopupPanel extends JPanel
      */
     private static final long serialVersionUID = -5208183544572376729L;
 
-    private final PopupTitlePanel topPanel;
-    final JPanel mainPanel;
+    protected final PopupTitlePanel topPanel;
+    protected final JPanel mainPanel;
 
-    final boolean subPopupPanel;
+    protected final boolean subPopupPanel;
 
+    /**
+     * @deprecated Use {@link #PopupPanel(String, boolean)} instead
+     */
+    @Deprecated
     public PopupPanel(String title, int panelHeight, boolean subPopupPanel)
+    {
+        this(title, subPopupPanel);
+
+    }
+
+    /**
+     * @deprecated Use {@link #PopupPanel(String, boolean)} instead
+     */
+    @Deprecated
+    public PopupPanel(String title, int panelHeight)
+    {
+        this(title, false);
+    }
+
+    /**
+     * Create a new popup panel with specified title.
+     * 
+     * @param title
+     *        Panel title
+     * @param subPanel
+     *        Determine if this is an embedded popup panel or a normal one.
+     */
+    public PopupPanel(String title, boolean subPanel)
     {
         super();
 
-        this.subPopupPanel = subPopupPanel;
+        subPopupPanel = subPanel;
 
-        topPanel = new PopupTitlePanel(title, ICON_COLLAPSE);
-
+        topPanel = new PopupTitlePanel(title, ResourceUtil.ICON_PANEL_COLLAPSE);
         mainPanel = new JPanel();
-        if (panelHeight != -1)
-            ComponentUtil.setFixedHeight(mainPanel, panelHeight);
+        // if (panelHeight != -1)
+        // ComponentUtil.setFixedHeight(mainPanel, panelHeight);
 
         setBorder(BorderFactory.createRaisedBevelBorder());
         setLayout(new BorderLayout());
@@ -158,19 +179,21 @@ public class PopupPanel extends JPanel
         refresh();
     }
 
-    public PopupPanel(String title, int panelHeight)
-    {
-        this(title, panelHeight, false);
-    }
-
+    /**
+     * Create a new popup panel with specified title.
+     */
     public PopupPanel(String title)
     {
-        this(title, -1, false);
+        this(title, false);
     }
 
+    /**
+     * @deprecated Use {@link #PopupPanel(String)} instead.
+     */
+    @Deprecated
     public PopupPanel()
     {
-        this("no title", -1, false);
+        this("no title", false);
     }
 
     public String getTitle()
@@ -181,6 +204,14 @@ public class PopupPanel extends JPanel
     public void setTitle(String value)
     {
         topPanel.setText(value);
+    }
+
+    /**
+     * @return the title panel
+     */
+    public PopupTitlePanel getTitlePanel()
+    {
+        return topPanel;
     }
 
     /**
@@ -243,16 +274,16 @@ public class PopupPanel extends JPanel
         if (subPopupPanel)
         {
             if (topPanel.isSelected())
-                topPanel.setIcon(new IcyIcon(ICON_COLLAPSE, 10));
+                topPanel.setIcon(new IcyIcon(ResourceUtil.ICON_PANEL_COLLAPSE, 10));
             else
-                topPanel.setIcon(new IcyIcon(ICON_EXPAND, 10));
+                topPanel.setIcon(new IcyIcon(ResourceUtil.ICON_PANEL_EXPAND, 10));
         }
         else
         {
             if (topPanel.isSelected())
-                topPanel.setIcon(new IcyIcon(ICON_COLLAPSE, 14));
+                topPanel.setIcon(new IcyIcon(ResourceUtil.ICON_PANEL_COLLAPSE, 14));
             else
-                topPanel.setIcon(new IcyIcon(ICON_EXPAND, 14));
+                topPanel.setIcon(new IcyIcon(ResourceUtil.ICON_PANEL_EXPAND, 14));
         }
 
         mainPanel.setVisible(topPanel.isSelected());

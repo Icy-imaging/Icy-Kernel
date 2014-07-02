@@ -58,7 +58,7 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
         // remove columns 3 (not used here)
         table.removeColumn(table.getColumn(columnIds[3]));
 
-//        filter.setVisible(false);
+        // filter.setVisible(false);
         action1Button.setVisible(false);
         action2Button.setVisible(false);
         refreshButton.setVisible(false);
@@ -121,12 +121,12 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
     }
 
     @Override
-    protected void doAction1(PluginDescriptor plugin)
+    protected void doAction1()
     {
     }
 
     @Override
-    protected void doAction2(PluginDescriptor plugin)
+    protected void doAction2()
     {
     }
 
@@ -169,6 +169,9 @@ public class PluginStartupPreferencePanel extends PluginListPreferencePanel impl
             refreshButton.setText("Reload list");
             refreshButton.setEnabled(true);
         }
+
+        action1Button.setEnabled(false);
+        action2Button.setEnabled(false);
     }
 
     @Override

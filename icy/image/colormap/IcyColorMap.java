@@ -1004,7 +1004,7 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
         {
             case RGB:
                 for (int i = 0; i < MAX_INDEX; i++)
-                    if ((red.map[i] & green.map[i] & blue.map[i]) != 0)
+                    if ((red.map[i] | green.map[i] | blue.map[i]) != 0)
                         return false;
                 return true;
 

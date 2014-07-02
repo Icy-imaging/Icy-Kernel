@@ -98,9 +98,9 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
     final Runnable channelEnableUpdater;
     final Runnable channelTabColorUpdater;
 
-    public LUTViewer(final Viewer viewer, final LUT lut)
+    public LUTViewer(Viewer v, LUT l)
     {
-        super(viewer, lut);
+        super(v, l);
 
         pref = ApplicationPreferences.getPreferences().node(PREF_ID_HISTO);
 
@@ -116,12 +116,12 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
                     double[][] typeBounds = sequence.getChannelsTypeBounds();
                     double[][] bounds = sequence.getChannelsBounds();
 
-                    for (int i = 0; i < Math.min(lutChannelViewers.size(), typeBounds.length); i++)
+                    for (int i = 0; i < Math.min(getLut().getNumChannel(), typeBounds.length); i++)
                     {
                         double[] tb = typeBounds[i];
                         double[] b = bounds[i];
 
-                        final Scaler scaler = lutChannelViewers.get(i).getScalerPanel().getScaler();
+                        final Scaler scaler = getLut().getLutChannel(i).getScaler();
 
                         scaler.setAbsLeftRightIn(tb[0], tb[1]);
                         scaler.setLeftRightIn(b[0], b[1]);
@@ -134,8 +134,8 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
             @Override
             public void run()
             {
-                for (int c = 0; c < lutChannelViewers.size(); c++)
-                    bottomPane.setTabChecked(c, lutChannelViewers.get(c).lutChannel.isEnabled());
+                for (int c = 0; c < Math.min(getLut().getNumChannel(), bottomPane.getTabCount()); c++)
+                    bottomPane.setTabChecked(c, getLut().getLutChannel(c).isEnabled());
             }
         };
         channelTabColorUpdater = new Runnable()
@@ -143,10 +143,9 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
             @Override
             public void run()
             {
-                for (int c = 0; c < bottomPane.getTabCount(); c++)
+                for (int c = 0; c < Math.min(getLut().getNumChannel(), bottomPane.getTabCount()); c++)
                 {
-                    final IcyColorMap colormap = lut.getLutChannel(c).getColorMap();
-
+                    final IcyColorMap colormap = getLut().getLutChannel(c).getColorMap();
                     bottomPane.setBackgroundAt(c, colormap.getDominantColor());
                 }
             }
@@ -166,7 +165,7 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
                         @Override
                         public void run()
                         {
-                            for (int c = 0; c < Math.min(bottomPane.getTabCount(), sequence.getSizeC()); c++)
+                            for (int c = 0; c < Math.min(sequence.getSizeC(), bottomPane.getTabCount()); c++)
                             {
                                 final String channelName = sequence.getChannelName(c);
 
@@ -184,8 +183,22 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
 
         lutChannelViewers = new ArrayList<LUTChannelViewer>();
 
+        // build GUI
         bottomPane = new CheckTabbedPane(SwingConstants.BOTTOM, true);
         bottomPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+
+        // add tab for each channel
+        for (int c = 0; c < getLut().getNumChannel(); c++)
+        {
+            final LUTChannel lutChannel = getLut().getLutChannel(c);
+            final LUTChannelViewer lbv = new LUTChannelViewer(viewer, lutChannel);
+
+            lutChannel.getColorMap().addListener(this);
+
+            lutChannelViewers.add(lbv);
+            bottomPane.addTab("ch " + c, lbv);
+        }
+
         bottomPane.addChangeListener(new ChangeListener()
         {
             @Override
@@ -209,18 +222,6 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
                 }
             }
         });
-
-        // GUI
-        for (int c = 0; c < lut.getLutChannels().size(); c++)
-        {
-            final LUTChannel lutChannel = lut.getLutChannels().get(c);
-            final LUTChannelViewer lbv = new LUTChannelViewer(viewer, lutChannel);
-
-            lutChannel.getColorMap().addListener(this);
-
-            lutChannelViewers.add(lbv);
-            bottomPane.addTab("ch " + c, lbv);
-        }
 
         autoRefreshHistoCheckBox = new JCheckBox("Refresh", pref.getBoolean(ID_AUTO_REFRESH, true));
         autoRefreshHistoCheckBox.setToolTipText("Automatically refresh histogram when data is modified");
@@ -261,7 +262,11 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
                 }
             }
         });
-        if (autoBoundsCheckBox.isSelected())
+
+        final Sequence seq = getSequence();
+        final boolean userLut = (seq != null) ? seq.hasUserLUT() : false;
+
+        if (!userLut && autoBoundsCheckBox.isSelected())
         {
             ThreadUtil.runSingle(boundsUpdater);
             autoRefreshHistogramInternal(true);
@@ -334,8 +339,8 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
         };
 
         // update channel name and color
-        ThreadUtil.bgRunSingle(channelTabColorUpdater);
-        ThreadUtil.bgRunSingle(channelNameUpdater);
+        channelTabColorUpdater.run();
+        channelNameUpdater.run();
 
         final Sequence sequence = getSequence();
 
@@ -353,18 +358,33 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
     {
         final Sequence sequence = getSequence();
 
-        if ((sequence != null) && (sequence.getColorModel() != null))
+        if (sequence != null)
         {
-            final DataType dataType = sequence.getDataType_();
-            final boolean byteRGBImage = (dataType == DataType.UBYTE)
-                    && ((sequence.getSizeC() == 3) || (sequence.getSizeC() == 4));
-            final boolean indexedImage = !sequence.getColorModel().hasLinearColormaps();
+            if (sequence.getColorModel() != null)
+            {
+                final DataType dataType = sequence.getDataType_();
+                final boolean byteRGBImage = (dataType == DataType.UBYTE)
+                        && ((sequence.getSizeC() == 3) || (sequence.getSizeC() == 4));
+                final boolean indexedImage = !sequence.getColorModel().hasLinearColormaps();
 
-            // Do not use auto bounds on RGB or ARGB 8 bits image nor on indexed image.
-            return !(byteRGBImage || indexedImage);
+                // Do not use auto bounds on RGB or ARGB 8 bits image nor on indexed image.
+                return !(byteRGBImage || indexedImage);
+            }
         }
 
         return true;
+    }
+
+    @Override
+    public Sequence getSequence()
+    {
+        return super.getSequence();
+    }
+
+    @Override
+    public LUT getLut()
+    {
+        return super.getLut();
     }
 
     public boolean getAutoBounds()

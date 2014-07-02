@@ -609,28 +609,43 @@ public class Loader
     }
 
     /**
+     * Loads and returns metadata of the specified image file with given importer.<br>
+     * It returns <code>null</code> if the specified file is not a valid (or supported) image file.
+     */
+    public static OMEXMLMetadataImpl getMetaData(SequenceFileImporter importer, String path)
+            throws UnsupportedFormatException, IOException
+    {
+        if (importer.open(path, 0))
+        {
+            try
+            {
+                return importer.getMetaData();
+            }
+            finally
+            {
+                importer.close();
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Loads and returns metadata of the specified image file.<br>
      * It returns <code>null</code> if the specified file is not a valid (or supported) image file.
      */
     public static OMEXMLMetadataImpl getMetaData(String path) throws UnsupportedFormatException, IOException
     {
+        OMEXMLMetadataImpl result;
+
         for (SequenceFileImporter importer : getSequenceFileImporters(path))
         {
             try
             {
-                // open file
-                if (importer.open(path, 0))
-                {
-                    try
-                    {
-                        // return associated metadata
-                        return importer.getMetaData();
-                    }
-                    finally
-                    {
-                        importer.close();
-                    }
-                }
+                result = getMetaData(importer, path);
+
+                if (result != null)
+                    return result;
             }
             catch (UnsupportedFormatException e)
             {
@@ -1744,12 +1759,16 @@ public class Loader
 
                 // get metadata
                 final OMEXMLMetadataImpl meta = importer.getMetaData();
+                // clean the metadata
+                MetaDataUtil.clean(meta);
+                // get number of serie
                 final int serieCount = MetaDataUtil.getNumSerie(meta);
                 int selectedSeries[];
 
                 try
                 {
-                    // do serie selection (need to create a new instance of the importer as selectSerie(..) does async processes)
+                    // do serie selection (need to create a new instance of the importer as
+                    // selectSerie(..) does async processes)
                     selectedSeries = selectSerie(importer.getClass().newInstance(), path, meta, serie, serieCount);
                 }
                 catch (Exception e)

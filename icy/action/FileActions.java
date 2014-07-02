@@ -302,7 +302,6 @@ public class FileActions
             if (GeneralPreferences.getSequencePersistence())
             {
                 final Sequence seq = Icy.getMainInterface().getActiveSequence();
-
                 if (seq != null)
                     return seq.saveXMLData();
             }

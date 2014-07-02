@@ -63,7 +63,7 @@ import loci.formats.IFormatReader;
 import loci.formats.gui.SignedByteBuffer;
 import loci.formats.gui.SignedShortBuffer;
 import loci.formats.gui.UnsignedIntBuffer;
-import plugins.kernel.importer.LociImporter;
+import plugins.kernel.importer.LociImporterPlugin;
 
 /**
  * @author stephane
@@ -304,43 +304,43 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link LociImporter#getThumbnailCompatible(IFormatReader, int, int)} instead.
+     * @deprecated Use {@link LociImporterPlugin#getThumbnailCompatible(IFormatReader, int, int)} instead.
      */
     @Deprecated
     public static IcyBufferedImage createCompatibleThumbnailFrom(IFormatReader reader, int z, int t)
             throws FormatException, IOException
     {
-        return LociImporter.getThumbnailCompatible(reader, z, t);
+        return LociImporterPlugin.getThumbnailCompatible(reader, z, t);
     }
 
     /**
-     * @deprecated Use {@link LociImporter#getThumbnail(IFormatReader, int, int)} instead.
+     * @deprecated Use {@link LociImporterPlugin#getThumbnail(IFormatReader, int, int)} instead.
      */
     @Deprecated
     public static IcyBufferedImage createThumbnailFrom(IFormatReader reader, int z, int t) throws FormatException,
             IOException
     {
-        return LociImporter.getThumbnail(reader, z, t);
+        return LociImporterPlugin.getThumbnail(reader, z, t);
     }
 
     /**
-     * @deprecated Use {@link LociImporter#getImage(IFormatReader, Rectangle, int, int, int)}
+     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int, int)}
      *             instead.
      */
     @Deprecated
     public static IcyBufferedImage createFrom(IFormatReader reader, int x, int y, int w, int h, int z, int t, int c)
             throws FormatException, IOException
     {
-        return LociImporter.getImage(reader, new Rectangle(x, y, w, h), z, t, c);
+        return LociImporterPlugin.getImage(reader, new Rectangle(x, y, w, h), z, t, c);
     }
 
     /**
-     * @deprecated Use {@link LociImporter#getImage(IFormatReader, Rectangle, int, int)} instead.
+     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int)} instead.
      */
     @Deprecated
     public static IcyBufferedImage createFrom(IFormatReader reader, int z, int t) throws FormatException, IOException
     {
-        return LociImporter.getImage(reader, null, z, t);
+        return LociImporterPlugin.getImage(reader, null, z, t);
     }
 
     /**

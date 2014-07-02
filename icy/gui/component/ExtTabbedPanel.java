@@ -80,7 +80,7 @@ public class ExtTabbedPanel extends JTabbedPane
             label = new JLabel(title + " ", icon, SwingConstants.CENTER);
             label.setOpaque(false);
 
-            externButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_EXPAND, 16));
+            externButton = new IcyButton(new IcyIcon(ResourceUtil.ICON_WINDOW_EXPAND, 16));
             externButton.setFlat(true);
             externButton.setOpaque(false);
             externButton.setContentAreaFilled(false);

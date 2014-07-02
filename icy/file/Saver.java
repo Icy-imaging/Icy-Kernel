@@ -608,8 +608,13 @@ public class Saver
                 {
                     for (int z = zMin; z <= zMax; z++)
                     {
-                        final String filename = filePathWithoutExt + "_t" + decimalFormat.format(t) + "_z"
-                                + decimalFormat.format(z) + fileExt;
+                        String filename = filePathWithoutExt;
+
+                        if ((tMax - tMin) > 0)
+                            filename += "_t" + decimalFormat.format(t);
+                        if ((zMax - zMin) > 0)
+                            filename += "_z" + decimalFormat.format(z);
+                        filename += fileExt;
 
                         // save as single image file
                         save(writer, sequence, filename, z, z, t, t, fps, saveFrame);

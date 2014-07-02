@@ -36,6 +36,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -209,11 +210,11 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final PluginDescriptor plugin = getSelectedPlugin();
+                final List<PluginDescriptor> selectedPlugins = getSelectedPlugins();
 
                 // open plugin web page
-                if (plugin != null)
-                    NetworkUtil.openBrowser(plugin.getWeb());
+                if (selectedPlugins.size() == 1)
+                    NetworkUtil.openBrowser(selectedPlugins.get(0).getWeb());
             }
         });
         ComponentUtil.setFixedSize(documentationButton, buttonsDim);
@@ -224,8 +225,11 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
             @Override
             public void actionPerformed(ActionEvent e)
             {
+                final List<PluginDescriptor> selectedPlugins = getSelectedPlugins();
+
                 // open the detail
-                new PluginDetailPanel(getSelectedPlugin());
+                if (selectedPlugins.size() == 1)
+                    new PluginDetailPanel(selectedPlugins.get(0));
             }
         });
         ComponentUtil.setFixedSize(detailButton, buttonsDim);
@@ -236,7 +240,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                doAction1(getSelectedPlugin());
+                doAction1();
             }
         });
         action1Button.setVisible(false);
@@ -248,7 +252,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                doAction2(getSelectedPlugin());
+                doAction2();
             }
         });
         action2Button.setVisible(false);
@@ -397,7 +401,7 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         col.setPreferredWidth(60);
         col.setMaxWidth(60);
 
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         table.getSelectionModel().addListSelectionListener(this);
         table.setRowHeight(32);
         table.setColumnSelectionAllowed(false);
@@ -477,9 +481,9 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
     {
     }
 
-    protected abstract void doAction1(PluginDescriptor plugin);
+    protected abstract void doAction1();
 
-    protected abstract void doAction2(PluginDescriptor plugin);
+    protected abstract void doAction2();
 
     protected abstract void repositoryChanged();
 
@@ -543,37 +547,73 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
         return getPluginTableIndex(getPluginModelIndex(pluginClassName));
     }
 
-    PluginDescriptor getSelectedPlugin()
+    List<PluginDescriptor> getSelectedPlugins()
     {
-        int index;
+        final List<PluginDescriptor> result = new ArrayList<PluginDescriptor>();
 
-        index = table.getSelectedRow();
-        if (index == -1)
-            return null;
+        final int[] rows = table.getSelectedRows();
+        if (rows.length == 0)
+            return result;
 
-        try
+        final List<PluginDescriptor> cachedPlugins = plugins;
+
+        for (int i = 0; i < rows.length; i++)
         {
-            index = table.convertRowIndexToModel(index);
-        }
-        catch (IndexOutOfBoundsException e)
-        {
-            index = -1;
+            try
+            {
+                final int index = table.convertRowIndexToModel(rows[i]);
+                if (index < cachedPlugins.size())
+                    result.add(cachedPlugins.get(index));
+            }
+            catch (IndexOutOfBoundsException e)
+            {
+                // ignore as async process can cause it
+            }
         }
 
-        if ((index < 0) || (index >= plugins.size()))
-            return null;
-
-        return plugins.get(index);
+        return result;
     }
 
-    void setSelectedPlugin(PluginDescriptor plugin)
+    /**
+     * Select the specified list of ROI in the ROI Table
+     */
+    void setSelectedPlugins(HashSet<PluginDescriptor> newSelected)
     {
-        final int index = getPluginTableIndex(plugin);
+        final List<PluginDescriptor> modelPlugins = plugins;
+        final ListSelectionModel selectionModel = table.getSelectionModel();
 
-        if (index > -1)
+        // start selection change
+        selectionModel.setValueIsAdjusting(true);
+        try
         {
-            table.clearSelection();
-            table.getSelectionModel().setSelectionInterval(index, index);
+            // start by clearing selection
+            selectionModel.clearSelection();
+
+            for (int i = 0; i < modelPlugins.size(); i++)
+            {
+                final PluginDescriptor plugin = modelPlugins.get(i);
+
+                // HashSet provide fast "contains"
+                if (newSelected.contains(plugin))
+                {
+                    try
+                    {
+                        // convert model index to view index
+                        final int ind = table.convertRowIndexToView(i);
+                        if (ind != -1)
+                            selectionModel.addSelectionInterval(ind, ind);
+                    }
+                    catch (IndexOutOfBoundsException e)
+                    {
+                        // ignore
+                    }
+                }
+            }
+        }
+        finally
+        {
+            // end selection change
+            selectionModel.setValueIsAdjusting(false);
         }
     }
 
@@ -591,11 +631,12 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected void updateButtonsStateInternal()
     {
-        final PluginDescriptor plugin = getSelectedPlugin();
-        final boolean pluginSelected = (plugin != null);
+        final List<PluginDescriptor> selectedPlugins = getSelectedPlugins();
+        final boolean singleSelection = (selectedPlugins.size() == 1);
+        final PluginDescriptor singlePlugin = singleSelection ? selectedPlugins.get(0) : null;
 
-        detailButton.setEnabled(pluginSelected);
-        documentationButton.setEnabled(pluginSelected && !StringUtil.isEmpty(plugin.getWeb()));
+        detailButton.setEnabled(singleSelection);
+        documentationButton.setEnabled(singleSelection && !StringUtil.isEmpty(singlePlugin.getWeb()));
     }
 
     protected final void updateButtonsState()
@@ -659,11 +700,11 @@ public abstract class PluginListPreferencePanel extends PreferencePanel implemen
 
     protected void refreshTableDataInternal()
     {
-        final PluginDescriptor plugin = getSelectedPlugin();
+        final List<PluginDescriptor> plugins = getSelectedPlugins();
 
         tableModel.fireTableDataChanged();
-        // restore previous selected plugin if possible
-        setSelectedPlugin(plugin);
+        // restore previous selected plugins if possible
+        setSelectedPlugins(new HashSet<PluginDescriptor>(plugins));
         // update button state
         buttonsStateUpdater.run();
     }

@@ -33,9 +33,17 @@ import loci.formats.meta.MetadataRetrieve;
 import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import ome.xml.model.Channel;
+import ome.xml.model.Dataset;
+import ome.xml.model.Experiment;
+import ome.xml.model.Experimenter;
+import ome.xml.model.ExperimenterGroup;
 import ome.xml.model.Image;
+import ome.xml.model.Instrument;
 import ome.xml.model.OME;
 import ome.xml.model.Pixels;
+import ome.xml.model.ROI;
+import ome.xml.model.StructuredAnnotations;
+import ome.xml.model.XMLAnnotation;
 import ome.xml.model.enums.DimensionOrder;
 import ome.xml.model.primitives.PositiveInteger;
 
@@ -116,19 +124,6 @@ public class MetaDataUtil
 
         // create missing image
         ensureSerie(ome, num - 1);
-    }
-
-    /**
-     * Keep only the specified image serie.
-     */
-    public static void keepSingleSerie(OMEXMLMetadataImpl metaData, int num)
-    {
-        final OME ome = getOME(metaData);
-
-        // keep only the desired image
-        for (int i = ome.sizeOfImageList() - 1; i >= 0; i--)
-            if (i != num)
-                ome.removeImage(ome.getImage(i));
     }
 
     /**
@@ -693,4 +688,170 @@ public class MetaDataUtil
         return generateMetaData(sequence, true, true, separateChannel);
     }
 
+    /**
+     * Keep only the specified image serie.
+     */
+    public static void keepSingleSerie(OMEXMLMetadataImpl metaData, int num)
+    {
+        final OME ome = getOME(metaData);
+        final int numSeries = ome.sizeOfImageList();
+        final Image img = getSerie(metaData, num);
+
+        // keep only the desired image
+        for (int i = ome.sizeOfImageList() - 1; i >= 0; i--)
+            if (i != num)
+                ome.removeImage(ome.getImage(i));
+
+        List<Object> toKeep = new ArrayList<Object>();
+
+        // try to keep associated dataset only
+        toKeep.clear();
+        for (int i = 0; i < img.sizeOfLinkedDatasetList(); i++)
+            toKeep.add(img.getLinkedDataset(i));
+        if (!toKeep.isEmpty())
+        {
+            for (int i = ome.sizeOfDatasetList() - 1; i >= 0; i--)
+            {
+                final Dataset obj = ome.getDataset(i);
+                if (!toKeep.contains(obj))
+                    ome.removeDataset(obj);
+            }
+        }
+        // just assume they are indirectly linked
+        else if (ome.sizeOfDatasetList() == numSeries)
+        {
+            for (int i = numSeries - 1; i >= 0; i--)
+                if (i != num)
+                    ome.removeDataset(ome.getDataset(i));
+        }
+
+        // try to keep associated ROI only
+        toKeep.clear();
+        for (int i = 0; i < img.sizeOfLinkedROIList(); i++)
+            toKeep.add(img.getLinkedROI(i));
+        if (!toKeep.isEmpty())
+        {
+            for (int i = ome.sizeOfROIList() - 1; i >= 0; i--)
+            {
+                final ROI obj = ome.getROI(i);
+                if (!toKeep.contains(obj))
+                    ome.removeROI(obj);
+            }
+        }
+        // just assume they are indirectly linked
+        else if (ome.sizeOfROIList() == numSeries)
+        {
+            for (int i = numSeries - 1; i >= 0; i--)
+                if (i != num)
+                    ome.removeROI(ome.getROI(i));
+        }
+
+        // try to keep associated experiment only
+        final Experiment exp = img.getLinkedExperiment();
+        if (exp != null)
+        {
+            for (int i = ome.sizeOfExperimentList() - 1; i >= 0; i--)
+                if (ome.getExperiment(i) != exp)
+                    ome.removeExperiment(exp);
+        }
+        else if (ome.sizeOfExperimentList() == numSeries)
+        {
+            for (int i = numSeries - 1; i >= 0; i--)
+                if (i != num)
+                    ome.removeExperiment(ome.getExperiment(i));
+        }
+
+        // try to keep associated experimenter only
+        final Experimenter expr = img.getLinkedExperimenter();
+        if (expr != null)
+        {
+            for (int i = ome.sizeOfExperimenterList() - 1; i >= 0; i--)
+                if (ome.getExperimenter(i) != expr)
+                    ome.removeExperimenter(expr);
+        }
+        else if (ome.sizeOfExperimenterList() == numSeries)
+        {
+            for (int i = numSeries - 1; i >= 0; i--)
+                if (i != num)
+                    ome.removeExperimenter(ome.getExperimenter(i));
+        }
+
+        // try to keep associated experimenter group only
+        final ExperimenterGroup exprGroup = img.getLinkedExperimenterGroup();
+        if (exprGroup != null)
+        {
+            for (int i = ome.sizeOfExperimenterGroupList() - 1; i >= 0; i--)
+                if (ome.getExperimenterGroup(i) != exprGroup)
+                    ome.removeExperimenterGroup(exprGroup);
+        }
+        else if (ome.sizeOfExperimenterGroupList() == numSeries)
+        {
+            for (int i = numSeries - 1; i >= 0; i--)
+                if (i != num)
+                    ome.removeExperimenterGroup(ome.getExperimenterGroup(i));
+        }
+
+        // try to keep associated instrument only
+        final Instrument instr = img.getLinkedInstrument();
+        if (instr != null)
+        {
+            for (int i = ome.sizeOfInstrumentList() - 1; i >= 0; i--)
+                if (ome.getInstrument(i) != instr)
+                    ome.removeInstrument(instr);
+        }
+        else if (ome.sizeOfInstrumentList() == numSeries)
+        {
+            for (int i = numSeries - 1; i >= 0; i--)
+                if (i != num)
+                    ome.removeInstrument(ome.getInstrument(i));
+        }
+
+        // others misc data to clean
+        if (ome.sizeOfPlateList() == numSeries)
+        {
+            for (int i = numSeries - 1; i >= 0; i--)
+                if (i != num)
+                    ome.removePlate(ome.getPlate(i));
+        }
+        if (ome.sizeOfProjectList() == numSeries)
+        {
+            for (int i = numSeries - 1; i >= 0; i--)
+                if (i != num)
+                    ome.removeProject(ome.getProject(i));
+        }
+        if (ome.sizeOfScreenList() == numSeries)
+        {
+            for (int i = numSeries - 1; i >= 0; i--)
+                if (i != num)
+                    ome.removeScreen(ome.getScreen(i));
+        }
+    }
+
+    /**
+     * Cleanup the meta data (sometime we have empty data structure sitting there)
+     */
+    public static void clean(OMEXMLMetadataImpl metaData)
+    {
+        final OME ome = getOME(metaData);
+        final StructuredAnnotations annotations = ome.getStructuredAnnotations();
+
+        if (annotations != null)
+        {
+            for (int i = annotations.sizeOfXMLAnnotationList() - 1; i >= 0; i--)
+            {
+                final XMLAnnotation xmlAnnotation = annotations.getXMLAnnotation(i);
+
+                if (isEmpty(xmlAnnotation))
+                    annotations.removeXMLAnnotation(xmlAnnotation);
+            }
+        }
+    }
+
+    /**
+     * Returns <code>true</code> if the specified XML annotation are empty.
+     */
+    public static boolean isEmpty(XMLAnnotation xmlAnnotation)
+    {
+        return StringUtil.isEmpty(xmlAnnotation.getDescription()) && StringUtil.isEmpty(xmlAnnotation.getValue());
+    }
 }

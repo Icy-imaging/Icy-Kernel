@@ -69,7 +69,7 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
 
         init();
     }
-    
+
     /**
      * Creates a <code>IcyTextField</code> with the specified <code>AbstractFormatter</code>. The
      * <code>AbstractFormatter</code> is placed in an <code>AbstractFormatterFactory</code>.
@@ -200,7 +200,7 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
         if (consumeCharKeyPressEvent)
         {
             final char c = e.getKeyChar();
-            
+
             // consume KEY_PRESSED character event
             if ((e.getID() == KeyEvent.KEY_PRESSED) && Character.isDefined(c) && !Character.isISOControl(c))
                 e.consume();
@@ -254,5 +254,4 @@ public class IcyTextField extends JFormattedTextField implements DocumentListene
     {
         internalTextChanged(true);
     }
-
 }

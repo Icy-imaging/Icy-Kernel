@@ -165,6 +165,10 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     IcyColorModel colorModel;
     /**
+     * user lut for this sequence (saved in metadata)
+     */
+    LUT userLut;
+    /**
      * Origin filename (from/to which the sequence has been loaded/saved)<br>
      * null --> no file attachment<br>
      * directory or metadata file --> multiples files attachment<br>
@@ -274,6 +278,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         // no colorModel yet
         colorModel = null;
+        userLut = null;
         channelBoundsInvalid = false;
         // automatic update of channel bounds
         autoUpdateChannelBounds = true;
@@ -356,7 +361,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Called when sequence has been closed (all viewers displaying it closed).<br>
-     * You should not call it this method directly !
+     * <i>Used internally, you should not call it this method directly !</i>
      */
     public void closed()
     {
@@ -2521,21 +2526,6 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Creates a compatible LUT for this sequence
-     */
-    public LUT createCompatibleLUT()
-    {
-        IcyColorModel cm = colorModel;
-        // not yet defined ? use default one
-        if (colorModel == null)
-            cm = IcyColorModel.createInstance();
-        else
-            cm = IcyColorModel.createInstance(colorModel, true, true);
-
-        return new LUT(cm);
-    }
-
-    /**
      * Returns true if specified LUT is compatible with sequence LUT
      */
     public boolean isLutCompatible(LUT lut)
@@ -2554,6 +2544,63 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     public IcyColorModel getColorModel()
     {
         return colorModel;
+    }
+
+    /**
+     * Creates and returns the default LUT for this sequence
+     */
+    public LUT getDefaultLUT()
+    {
+        IcyColorModel cm = colorModel;
+
+        // not yet defined ? use default one
+        if (colorModel == null)
+            cm = IcyColorModel.createInstance();
+        else
+            cm = IcyColorModel.createInstance(colorModel, true, true);
+
+        return new LUT(cm);
+    }
+
+    /**
+     * Returns <code>true</code> if a user LUT has be defined for this sequence.
+     */
+    public boolean hasUserLUT()
+    {
+        return (userLut != null);
+    }
+
+    /**
+     * Returns the users LUT.<br>
+     * If user LUT is not defined then the default LUT is returned.
+     * 
+     * @see #getDefaultLUT()
+     */
+    public LUT getUserLUT()
+    {
+        if ((userLut != null) && !isLutCompatible(userLut))
+            userLut = null;
+
+        if (userLut == null)
+            return getDefaultLUT();
+
+        return userLut;
+    }
+
+    /**
+     * Sets the user LUT (saved in XML persistent metadata).
+     */
+    public void setUserLUT(LUT lut)
+    {
+        userLut = lut;
+    }
+
+    /**
+     * @see #getDefaultLUT()
+     */
+    public LUT createCompatibleLUT()
+    {
+        return getDefaultLUT();
     }
 
     /**
@@ -5156,7 +5203,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Synchronize XML data with sequence data :<br>
      * This function refresh all the meta data and ROIs of the sequence and put it in the current
-     * XML Document.
+     * XML document.
      */
     public void refreshXMLData()
     {
@@ -5164,7 +5211,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Save attached XML data
+     * Save attached XML data.
      */
     public boolean saveXMLData()
     {
@@ -5186,7 +5233,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     /**
      * Get XML data node identified by specified name.<br>
      * The node is created if needed.</br>
-     * Note that the following node names are reserved: <i>image, name, meta, rois</i></br>
+     * Note that the following node names are reserved: <i>image, name, meta, rois, lut</i></br>
      * 
      * @param name
      *        name of wanted node

@@ -19,6 +19,7 @@
 package icy.gui.dialog;
 
 import icy.common.exception.UnsupportedFormatException;
+import icy.file.Loader;
 import icy.file.SequenceFileImporter;
 import icy.gui.component.ThumbnailComponent;
 import icy.gui.util.ComponentUtil;
@@ -89,7 +90,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
 
         this.reader = reader;
         // default is empty
-        selectedSeries = new int[]{};
+        selectedSeries = new int[] {};
 
         initialize();
 
@@ -233,7 +234,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
         this.id = id;
         this.metadata = metadata;
         // default is empty
-        selectedSeries = new int[]{};
+        selectedSeries = new int[] {};
 
         initialize();
 
@@ -360,23 +361,7 @@ public class SeriesSelectionDialog extends ActionDialog implements Runnable
     public SeriesSelectionDialog(SequenceFileImporter importer, String id) throws UnsupportedFormatException,
             IOException
     {
-        this(importer, id, getMetaData(importer, id));
-    }
-
-    static OMEXMLMetadataImpl getMetaData(SequenceFileImporter importer, String id) throws UnsupportedFormatException,
-            IOException
-    {
-        if (importer.open(id, 0))
-            try
-            {
-                return importer.getMetaData();
-            }
-            finally
-            {
-                importer.close();
-            }
-
-        return null;
+        this(importer, id, Loader.getMetaData(importer, id));
     }
 
     /**

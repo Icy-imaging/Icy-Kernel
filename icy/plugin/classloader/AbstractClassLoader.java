@@ -38,7 +38,6 @@ import java.util.logging.Logger;
 @SuppressWarnings("unchecked")
 public abstract class AbstractClassLoader extends ClassLoader
 {
-
     protected final List<ProxyClassLoader> loaders = new ArrayList<ProxyClassLoader>();
 
     private final ProxyClassLoader systemLoader = new SystemLoader();

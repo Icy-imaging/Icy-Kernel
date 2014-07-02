@@ -150,6 +150,13 @@ public class CheckTabbedPane extends JTabbedPane
     {
         this.defaultSelected = defaultSelected;
     }
+    
+    @Override
+    protected void fireStateChanged()
+    {
+        // just to avoid warning
+        super.fireStateChanged();
+    }
 
     /**
      * Returns the check state of tab component at <code>index</code>.

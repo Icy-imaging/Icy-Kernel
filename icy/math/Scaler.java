@@ -42,8 +42,8 @@ public class Scaler implements ChangeListener, XMLPersistent
 
     private static final String ID_ABSLEFTIN = "absleftin";
     private static final String ID_ABSRIGHTIN = "absrightin";
-    private static final String ID_LEFTIN = "absleftin";
-    private static final String ID_RIGHTIN = "absrightin";
+    private static final String ID_LEFTIN = "leftin";
+    private static final String ID_RIGHTIN = "rightin";
     private static final String ID_LEFTOUT = "leftout";
     private static final String ID_RIGHTOUT = "rightout";
     private static final String ID_INTEGERDATA = "integerdata";
@@ -1305,10 +1305,10 @@ public class Scaler implements ChangeListener, XMLPersistent
 
         XMLUtil.setElementDoubleValue(node, ID_ABSLEFTIN, getAbsLeftIn());
         XMLUtil.setElementDoubleValue(node, ID_ABSRIGHTIN, getAbsRightIn());
-        XMLUtil.getElementDoubleValue(node, ID_LEFTIN, getLeftIn());
-        XMLUtil.getElementDoubleValue(node, ID_RIGHTIN, getRightIn());
-        XMLUtil.getElementDoubleValue(node, ID_LEFTOUT, getLeftOut());
-        XMLUtil.getElementDoubleValue(node, ID_RIGHTOUT, getRightOut());
+        XMLUtil.setElementDoubleValue(node, ID_LEFTIN, getLeftIn());
+        XMLUtil.setElementDoubleValue(node, ID_RIGHTIN, getRightIn());
+        XMLUtil.setElementDoubleValue(node, ID_LEFTOUT, getLeftOut());
+        XMLUtil.setElementDoubleValue(node, ID_RIGHTOUT, getRightOut());
 
         return true;
     }

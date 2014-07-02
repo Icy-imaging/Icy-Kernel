@@ -280,7 +280,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         // processor.setKeepAliveTime(3, TimeUnit.SECONDS);
 
         // save lut and prepare for 3D visualization
-        lutSave = seq.createCompatibleLUT();
+        lutSave = seq.getDefaultLUT();
         final LUT lut = getLut();
 
         // save colormap

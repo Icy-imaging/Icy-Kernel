@@ -41,12 +41,12 @@ public class IcyLutViewer extends JPanel
     protected final Viewer viewer;
     protected final LUT lut;
 
-    public IcyLutViewer(Viewer viewer, LUT lut)
+    public IcyLutViewer(Viewer v, LUT l)
     {
         super();
 
-        this.viewer = viewer;
-        this.lut = lut;
+        viewer = v;
+        lut = l;
     }
 
     /**

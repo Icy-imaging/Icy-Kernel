@@ -60,9 +60,10 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
         table.removeColumn(table.getColumn(columnIds[4]));
 
         repositoryPanel.setVisible(true);
-        action1Button.setText("Install");
+        action1Button.setText("Delete");
         action1Button.setVisible(true);
-        action2Button.setVisible(false);
+        action2Button.setText("Install");
+        action2Button.setVisible(true);
 
         updateButtonsState();
         updateRepositories();
@@ -84,7 +85,6 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
 
         if ((PluginInstaller.isInstallingPlugin(plugin)))
             return PluginOnlineState.INSTALLING;
-
         if ((PluginInstaller.isDesinstallingPlugin(plugin)))
             return PluginOnlineState.REMOVING;
 
@@ -112,15 +112,66 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     }
 
     @Override
-    protected void doAction1(PluginDescriptor plugin)
+    protected void doAction1()
     {
-        final PluginOnlineState state = getPluginOnlineState(plugin);
+        final List<PluginDescriptor> selectedPlugins = getSelectedPlugins();
+        final List<PluginDescriptor> toRemove = new ArrayList<PluginDescriptor>();
 
-        switch (state)
+        for (PluginDescriptor plugin : selectedPlugins)
         {
-            case HAS_INSTALL:
-            case NEWER:
-            case OLDER:
+            final PluginOnlineState state = getPluginOnlineState(plugin);
+
+            // remove plugin
+            if ((state == PluginOnlineState.INSTALLED) || (state == PluginOnlineState.INSTALLED_FAULTY))
+                toRemove.add(plugin);
+        }
+
+        // nothing to remove
+        if (toRemove.isEmpty())
+            return;
+
+        // get dependants plugins
+        final List<PluginDescriptor> dependants = PluginInstaller.getLocalDependenciesFrom(toRemove);
+        // delete the one we plan to remove
+        dependants.removeAll(toRemove);
+
+        String message = "<html>";
+
+        if (!dependants.isEmpty())
+        {
+            message = message + "The following plugin(s) won't work anymore :<br>";
+
+            for (PluginDescriptor depPlug : dependants)
+                message = message + depPlug.getName() + " " + depPlug.getVersion() + "<br>";
+
+            message = message + "<br>";
+        }
+
+        message = message + "Are you sure you want to remove selected plugin(s) ?</html>";
+
+        if (ConfirmDialog.confirm(message))
+        {
+            // remove plugins
+            for (PluginDescriptor plugin : toRemove)
+                PluginInstaller.desinstall(plugin, false, true);
+        }
+
+        // refresh state
+        refreshTableData();
+    }
+
+    @Override
+    protected void doAction2()
+    {
+        final List<PluginDescriptor> selectedPlugins = getSelectedPlugins();
+
+        for (PluginDescriptor plugin : selectedPlugins)
+        {
+            final PluginOnlineState state = getPluginOnlineState(plugin);
+
+            if ((state == PluginOnlineState.HAS_INSTALL) || (state == PluginOnlineState.NEWER)
+                    || (state == PluginOnlineState.OLDER))
+            {
                 final boolean doInstall;
 
                 if (state == PluginOnlineState.OLDER)
@@ -129,29 +180,14 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
                 else
                     doInstall = true;
 
+                // install plugin
                 if (doInstall)
-                {
-                    // install plugin
                     PluginInstaller.install(plugin, true);
-                    // refresh state
-                    refreshTableData();
-                }
-                break;
-
-            case INSTALLED:
-            case INSTALLED_FAULTY:
-                // desinstall plugin
-                PluginInstaller.desinstall(plugin, true);
-                // refresh state
-                refreshTableData();
-                break;
+            }
         }
-    }
 
-    @Override
-    protected void doAction2(PluginDescriptor plugin)
-    {
-        // nothing here
+        // refresh state
+        refreshTableData();
     }
 
     @Override
@@ -217,6 +253,9 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
     {
         super.updateButtonsStateInternal();
 
+        final List<PluginDescriptor> selectedPlugins = getSelectedPlugins();
+        final boolean selected = (selectedPlugins.size() > 0);
+
         if (PluginRepositoryLoader.isBasicLoaded())
         {
             refreshButton.setText("Reload list");
@@ -230,58 +269,105 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
             repository.setEnabled(false);
         }
 
-        final PluginDescriptor plugin = getSelectedPlugin();
-
-        if (plugin == null)
+        if (!selected)
         {
             action1Button.setEnabled(false);
+            action2Button.setEnabled(false);
             return;
         }
 
-        switch (getPluginOnlineState(plugin))
+        PluginOnlineState state;
+
+        state = PluginOnlineState.NULL;
+        for (PluginDescriptor plugin : selectedPlugins)
         {
-            case INSTALLING:
-                action1Button.setText("Installing...");
-                action1Button.setEnabled(false);
-                break;
+            switch (getPluginOnlineState(plugin))
+            {
+                case REMOVING:
+                    if (state == PluginOnlineState.NULL)
+                        state = PluginOnlineState.REMOVING;
+                    break;
 
+                case INSTALLED:
+                case INSTALLED_FAULTY:
+                    if ((state == PluginOnlineState.NULL) || (state == PluginOnlineState.REMOVING))
+                        state = PluginOnlineState.INSTALLED;
+                    break;
+            }
+        }
+
+        // some online plugins are already installed ?
+        switch (state)
+        {
             case REMOVING:
-                action1Button.setText("Removing...");
+                // special case where plugins are currently begin removed
+                action1Button.setText("Deleting...");
                 action1Button.setEnabled(false);
-                break;
-
-            case HAS_INSTALL:
-                action1Button.setText("Install");
-                action1Button.setEnabled(true);
                 break;
 
             case INSTALLED:
-            case INSTALLED_FAULTY:
-                // special case where plugin is currently begin removed
-                if (PluginInstaller.isDesinstallingPlugin(plugin))
-                {
-                    action1Button.setText("Deleting...");
-                    action1Button.setEnabled(false);
-                }
-                else
-                {
-                    action1Button.setText("Delete");
-                    action1Button.setEnabled(plugin.isInstalled());
-                }
-                break;
-
-            case OLDER:
-                action1Button.setText("Revert");
-                action1Button.setEnabled(true);
-                break;
-
-            case NEWER:
-                action1Button.setText("Update");
+                action1Button.setText("Delete");
                 action1Button.setEnabled(true);
                 break;
 
             case NULL:
+                action1Button.setText("Delete");
                 action1Button.setEnabled(false);
+                break;
+        }
+
+        state = PluginOnlineState.NULL;
+        for (PluginDescriptor plugin : selectedPlugins)
+        {
+            switch (getPluginOnlineState(plugin))
+            {
+                case INSTALLING:
+                    if (state == PluginOnlineState.NULL)
+                        state = PluginOnlineState.INSTALLING;
+                    break;
+
+                case OLDER:
+                    if ((state == PluginOnlineState.NULL) || (state == PluginOnlineState.INSTALLING))
+                        state = PluginOnlineState.OLDER;
+                    break;
+
+                case NEWER:
+                    if ((state == PluginOnlineState.NULL) || (state == PluginOnlineState.INSTALLING)
+                            || (state == PluginOnlineState.OLDER))
+                        state = PluginOnlineState.NEWER;
+                    break;
+
+                case HAS_INSTALL:
+                    state = PluginOnlineState.HAS_INSTALL;
+                    break;
+            }
+        }
+
+        switch (state)
+        {
+            case INSTALLING:
+                action2Button.setText("Installing...");
+                action2Button.setEnabled(false);
+                break;
+
+            case HAS_INSTALL:
+                action2Button.setText("Install");
+                action2Button.setEnabled(true);
+                break;
+
+            case OLDER:
+                action2Button.setText("Revert");
+                action2Button.setEnabled(true);
+                break;
+
+            case NEWER:
+                action2Button.setText("Update");
+                action2Button.setEnabled(true);
+                break;
+
+            case NULL:
+                action2Button.setText("Install");
+                action2Button.setEnabled(false);
                 break;
         }
     }

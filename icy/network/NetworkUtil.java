@@ -30,6 +30,7 @@ import icy.util.StringUtil;
 
 import java.awt.Desktop;
 import java.awt.Desktop.Action;
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -618,7 +619,14 @@ public class NetworkUtil
     public static byte[] download(InputStream in, long len, ProgressListener listener) throws IOException
     {
         final int READ_BLOCKSIZE = 64 * 1024;
-        final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        final BufferedInputStream bin;
+
+        if (in instanceof BufferedInputStream)
+            bin = (BufferedInputStream) in;
+        else
+            bin = new BufferedInputStream(in);
+
+        final ByteArrayOutputStream bout = new ByteArrayOutputStream((int) ((len > 0) ? len : READ_BLOCKSIZE));
         // read per block of 64 KB
         final byte[] data = new byte[READ_BLOCKSIZE];
 
@@ -629,7 +637,7 @@ public class NetworkUtil
 
             while (count >= 0)
             {
-                count = in.read(data);
+                count = bin.read(data);
                 if (count < 0)
                 {
                     // unexpected length
@@ -641,7 +649,7 @@ public class NetworkUtil
 
                 // copy to dynamic buffer
                 if (count > 0)
-                    buffer.write(data, 0, count);
+                    bout.write(data, 0, count);
 
                 if (listener != null)
                 {
@@ -657,10 +665,10 @@ public class NetworkUtil
         }
         finally
         {
-            in.close();
+            bin.close();
         }
 
-        return buffer.toByteArray();
+        return bout.toByteArray();
     }
 
     /**

@@ -179,7 +179,7 @@ public class JarClassLoader extends AbstractClassLoader
     public void unloadAll()
     {
         // unload resources
-        classpathResources.jarEntryContents.clear();
+        classpathResources.entryContents.clear();
         // unload classes
         loadedClasses.clear();
     }

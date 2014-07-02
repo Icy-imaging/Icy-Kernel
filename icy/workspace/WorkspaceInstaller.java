@@ -557,7 +557,7 @@ public class WorkspaceInstaller implements Runnable
                 // remove workspace independent plugins
                 for (PluginDescriptor plugin : independentPlugins)
                     if (plugin.isInstalled())
-                        PluginInstaller.desinstall(plugin, false);
+                        PluginInstaller.desinstall(plugin, false, false);
 
                 // wait for plugins desintallation
                 PluginInstaller.waitDesinstall();

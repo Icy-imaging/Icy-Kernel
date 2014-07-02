@@ -22,7 +22,7 @@ import icy.plugin.abstract_.Plugin;
 import icy.preferences.XMLPreferences.XMLPreferencesRoot;
 
 /**
- * Global class for Preferences
+ * Global class for Preferences.
  * 
  * @author Stephane
  */

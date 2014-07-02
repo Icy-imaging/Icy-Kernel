@@ -11,6 +11,7 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -436,8 +437,6 @@ public class IcyColorMapComponent implements XMLPersistent
 
         // take it as this is a raw map
         rawData = true;
-        // rebuild fixed control points
-        updateFixedCP();
 
         // notify we changed table data
         mapDataChanged();
@@ -461,6 +460,36 @@ public class IcyColorMapComponent implements XMLPersistent
 
         // copy
         copyFrom(byteMap);
+    }
+
+    /**
+     * Returns colormap content as an array of byte (length = IcyColorMap.SIZE).
+     */
+    public byte[] asByteArray()
+    {
+        final byte[] result = new byte[IcyColorMap.SIZE];
+
+        for (int i = 0; i < result.length; i++)
+            result[i] = (byte) getValue(i);
+
+        return result;
+    }
+
+    /**
+     * Return value for specified index
+     */
+    public short getValue(int index)
+    {
+        return map[index];
+    }
+
+    /**
+     * @deprecated Use {@link #getValue(int)} instead.
+     */
+    @Deprecated
+    public short getIntensity(int index)
+    {
+        return getValue(index);
     }
 
     /**
@@ -503,14 +532,6 @@ public class IcyColorMapComponent implements XMLPersistent
             // notify change
             mapFDataChanged();
         }
-    }
-
-    /**
-     * return intensity for specified index
-     */
-    public short getIntensity(int index)
-    {
-        return map[index];
     }
 
     /**
@@ -669,6 +690,11 @@ public class IcyColorMapComponent implements XMLPersistent
         updateFloatMapFromIntMap();
         // update fixed controls points
         updateFixedCP();
+
+        // take it as this is a raw map
+        if (rawData)
+            rawData = !isLinear();
+
         // manually set a changed event as we directly modified the colormap
         colormap.changed();
     }
@@ -785,7 +811,7 @@ public class IcyColorMapComponent implements XMLPersistent
 
         rawData = XMLUtil.getAttributeBooleanValue((Element) node, ID_RAWDATA, false);
 
-        final ArrayList<Node> nodesPoint = XMLUtil.getChildren(node, ID_POINT);
+        final List<Node> nodesPoint = XMLUtil.getChildren(node, ID_POINT);
 
         beginUpdate();
         try
@@ -793,12 +819,18 @@ public class IcyColorMapComponent implements XMLPersistent
             if (rawData)
             {
                 int ind = 0;
-                for (Node nodePoint : nodesPoint)
+                if (nodesPoint.size() == 0)
+                    copyFrom(XMLUtil.getElementBytesValue(node, ID_VALUE, new byte[] {}));
+                else
                 {
-                    final int val = XMLUtil.getElementIntValue(nodePoint, ID_VALUE, 0);
+                    // backward compatibility
+                    for (Node nodePoint : nodesPoint)
+                    {
+                        final int val = XMLUtil.getElementIntValue(nodePoint, ID_VALUE, 0);
 
-                    setValue(ind, val);
-                    ind++;
+                        setValue(ind, val);
+                        ind++;
+                    }
                 }
             }
             else
@@ -834,11 +866,8 @@ public class IcyColorMapComponent implements XMLPersistent
 
         if (rawData)
         {
-            for (int ind = 0; ind < map.length; ind++)
-            {
-                final Node nodePoint = XMLUtil.addElement(node, ID_POINT);
-                XMLUtil.setElementIntValue(nodePoint, ID_VALUE, map[ind]);
-            }
+            XMLUtil.removeChildren(node, ID_VALUE);
+            XMLUtil.setElementBytesValue(node, ID_VALUE, asByteArray());
         }
         else
         {
@@ -853,5 +882,4 @@ public class IcyColorMapComponent implements XMLPersistent
 
         return result;
     }
-
 }

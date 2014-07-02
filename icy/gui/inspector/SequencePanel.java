@@ -28,6 +28,8 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -43,15 +45,16 @@ public class SequencePanel extends JPanel implements ActiveSequenceListener, Act
      */
     private static final long serialVersionUID = -5727785928741370159L;
 
-    private final PopupPanel canvasPopupPanel;
-    private final PopupPanel lutPopupPanel;
-    private final PopupPanel infosPopupPanel;
+    private PopupPanel canvasPopupPanel;
+    private PopupPanel lutPopupPanel;
+    private PopupPanel infosPopupPanel;
 
-    private final JPanel canvasPanel;
-    private final JPanel lutPanel;
-    private final JPanel infosPanel;
+    private JPanel canvasPanel;
+    private JPanel lutPanel;
+    private JPanel infosPanel;
 
-    private final SequenceInfosPanel sequenceInfosPanel;
+    private SequenceInfosPanel sequenceInfosPanel;
+    private Component verticalGlue;
 
     /**
      * 
@@ -60,41 +63,36 @@ public class SequencePanel extends JPanel implements ActiveSequenceListener, Act
     {
         super();
 
-        // enable vertical scroll only
-        // setScrollableTracksViewportHeight(false);
-        // setScrollableTracksViewportWidth(true);
+        initialize();
+    }
+
+    private void initialize()
+    {
+        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 
         canvasPopupPanel = new PopupPanel("Canvas");
         canvasPanel = canvasPopupPanel.getMainPanel();
         canvasPanel.setLayout(new BorderLayout());
         canvasPopupPanel.expand();
+        add(canvasPopupPanel);
+
         lutPopupPanel = new PopupPanel("Lookup Table");
         lutPanel = lutPopupPanel.getMainPanel();
         lutPanel.setLayout(new BorderLayout());
         lutPopupPanel.expand();
+        add(lutPopupPanel);
+
+        sequenceInfosPanel = new SequenceInfosPanel();
         infosPopupPanel = new PopupPanel("Sequence Properties");
         infosPanel = infosPopupPanel.getMainPanel();
         infosPanel.setLayout(new BorderLayout());
         infosPopupPanel.expand();
-
-        sequenceInfosPanel = new SequenceInfosPanel();
         infosPanel.add(sequenceInfosPanel, BorderLayout.CENTER);
+        add(infosPopupPanel);
 
-        final JPanel topPanel = new JPanel();
-        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.PAGE_AXIS));
-
-        topPanel.add(canvasPopupPanel);
-        topPanel.add(lutPopupPanel);
-        topPanel.add(infosPopupPanel);
-
-        topPanel.validate();
-
-        setLayout(new BorderLayout());
-
-        add(topPanel, BorderLayout.NORTH);
-        add(Box.createGlue(), BorderLayout.CENTER);
-
-        validate();
+        verticalGlue = Box.createVerticalGlue();
+        verticalGlue.setPreferredSize(new Dimension(100, 32000));
+        add(verticalGlue);
     }
 
     public void setCanvasPanel(JPanel panel)

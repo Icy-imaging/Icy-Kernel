@@ -23,7 +23,6 @@ import icy.file.Loader;
 import icy.gui.component.ThumbnailComponent;
 import icy.resource.ResourceUtil;
 import icy.sequence.MetaDataUtil;
-import icy.system.thread.ThreadUtil;
 
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
@@ -271,19 +270,7 @@ public class ImageLoaderOptionPanel extends JPanel
     public void cancelPreview()
     {
         // brutal interruption of previous execution
-        if ((previewThread != null) && previewThread.isAlive())
-        {
-            try
-            {
-                previewThread.interrupt();
-                ThreadUtil.sleep(10);
-                if (previewThread.isAlive())
-                    previewThread.stop();
-            }
-            catch (Throwable t)
-            {
-                // ignore
-            }
-        }
+        if (previewThread != null)
+            previewThread.interrupt();
     }
 }

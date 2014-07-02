@@ -21,6 +21,7 @@ package icy.image.lut;
 import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
+import icy.file.xml.XMLPersistent;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colorspace.IcyColorSpace;
@@ -32,14 +33,22 @@ import icy.math.Scaler;
 import icy.math.ScalerEvent;
 import icy.math.ScalerListener;
 import icy.type.DataType;
+import icy.util.XMLUtil;
 
 import java.util.ArrayList;
 import java.util.EventListener;
+import java.util.List;
 
 import javax.swing.event.EventListenerList;
 
-public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListener
+import org.w3c.dom.Node;
+
+public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListener, XMLPersistent
 {
+    private final static String ID_NUM_CHANNEL = "numChannel";
+    private final static String ID_SCALER = "scaler";
+    private final static String ID_COLORMAP = "colormap";
+
     public static interface LUTChannelListener extends EventListener
     {
         public void lutChannelChanged(LUTChannelEvent e);
@@ -243,7 +252,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
         }
     }
 
-    private ArrayList<LUTChannel> lutChannels = new ArrayList<LUTChannel>();
+    private List<LUTChannel> lutChannels = new ArrayList<LUTChannel>();
 
     final IcyColorSpace colorSpace;
     final Scaler[] scalers;
@@ -458,21 +467,17 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
      */
     public boolean isCompatible(LUT lut)
     {
-        if (numChannel == lut.getNumChannel())
-        {
-            for (int channel = 0; channel < numChannel; channel++)
-            {
-                final Scaler[] cmScalers = lut.getScalers();
+        if (numChannel != lut.getNumChannel())
+            return false;
 
-                // not compatible data type ?
-                if (scalers[channel].isIntegerData() != cmScalers[channel].isIntegerData())
-                    return false;
-            }
+        final Scaler[] cmScalers = lut.getScalers();
 
-            return true;
-        }
+        // check that data type is compatible
+        for (int channel = 0; channel < numChannel; channel++)
+            if (scalers[channel].isIntegerData() != cmScalers[channel].isIntegerData())
+                return false;
 
-        return false;
+        return true;
     }
 
     /**
@@ -481,21 +486,17 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
      */
     public boolean isCompatible(IcyColorModel colorModel)
     {
-        if (numChannel == colorModel.getNumComponents())
-        {
-            for (int comp = 0; comp < numChannel; comp++)
-            {
-                final Scaler[] cmScalers = colorModel.getColormapScalers();
+        if (numChannel != colorModel.getNumComponents())
+            return false;
 
-                // not compatible data type ?
-                if (scalers[comp].isIntegerData() != cmScalers[comp].isIntegerData())
-                    return false;
-            }
+        final Scaler[] cmScalers = colorModel.getColormapScalers();
 
-            return true;
-        }
+        // check that data type is compatible
+        for (int comp = 0; comp < numChannel; comp++)
+            if (scalers[comp].isIntegerData() != cmScalers[comp].isIntegerData())
+                return false;
 
-        return false;
+        return true;
     }
 
     /**
@@ -578,4 +579,59 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
         return updater.isUpdating();
     }
 
+    @Override
+    public boolean loadFromXML(Node node)
+    {
+        if (node == null)
+            return false;
+
+        // different channel number --> exit
+        if (numChannel != XMLUtil.getElementIntValue(node, ID_NUM_CHANNEL, 1))
+            return false;
+
+        beginUpdate();
+        try
+        {
+            for (int ch = 0; ch < numChannel; ch++)
+            {
+                Node n;
+
+                n = XMLUtil.getElement(node, ID_SCALER + ch);
+                if (n != null)
+                    scalers[ch].loadFromXML(n);
+                n = XMLUtil.getElement(node, ID_COLORMAP + ch);
+                if (n != null)
+                    colorSpace.getColorMap(ch).loadFromXML(n);
+            }
+        }
+        finally
+        {
+            endUpdate();
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean saveToXML(Node node)
+    {
+        if (node == null)
+            return false;
+
+        XMLUtil.setElementIntValue(node, ID_NUM_CHANNEL, numChannel);
+
+        for (int ch = 0; ch < numChannel; ch++)
+        {
+            Node n;
+
+            n = XMLUtil.setElement(node, ID_SCALER + ch);
+            if (n != null)
+                scalers[ch].saveToXML(n);
+            n = XMLUtil.setElement(node, ID_COLORMAP + ch);
+            if (n != null)
+                colorSpace.getColorMap(ch).saveToXML(n);
+        }
+
+        return true;
+    }
 }
