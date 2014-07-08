@@ -32,10 +32,11 @@ import icy.plugin.interface_.PluginImageAnalysis;
 public abstract class PluginActionable extends Plugin implements PluginImageAnalysis, Runnable
 {
     /**
-     * Used to keep backward compatibility with {@link PluginImageAnalysis} interface
+     * @deprecated Used to keep backward compatibility with {@link PluginImageAnalysis} interface.
+     *             Use {@link #run()} instead.
      */
-    @SuppressWarnings("javadoc")
     @Override
+    @Deprecated
     public void compute()
     {
         run();

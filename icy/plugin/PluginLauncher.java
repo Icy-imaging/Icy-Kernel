@@ -20,7 +20,6 @@ package icy.plugin;
 
 import icy.main.Icy;
 import icy.plugin.abstract_.Plugin;
-import icy.plugin.abstract_.PluginActionable;
 import icy.plugin.interface_.PluginImageAnalysis;
 import icy.plugin.interface_.PluginStartAsThread;
 import icy.plugin.interface_.PluginThreaded;
@@ -53,10 +52,17 @@ public class PluginLauncher
         @Override
         public Boolean call() throws Exception
         {
-            if (plugin instanceof PluginActionable)
-                ((PluginActionable) plugin).run();
+            // some plugins (as EzPlug) do not respect the PluginActionable convention (run() method contains all the process)
+            // so we can't yet use this bloc of code
+            
+            // if (plugin instanceof PluginActionable)
+            // ((PluginActionable) plugin).run();
+            // // keep backward compatibility
+            // else if (plugin instanceof PluginImageAnalysis)
+            // ((PluginImageAnalysis) plugin).compute();
+
             // keep backward compatibility
-            else if (plugin instanceof PluginImageAnalysis)
+            if (plugin instanceof PluginImageAnalysis)
                 ((PluginImageAnalysis) plugin).compute();
 
             return Boolean.TRUE;
