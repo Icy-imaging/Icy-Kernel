@@ -43,7 +43,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.xerces.util.XMLChar;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentType;
@@ -1466,21 +1465,42 @@ public class XMLUtil
     }
 
     /**
-     * Remove any invalid XML character from the specified string
+     * Remove all characters that are valid XML markups.
+     */
+    public static String removeXMLMarkups(String s)
+    {
+        final StringBuffer out = new StringBuffer();
+
+        for (char c : s.toCharArray())
+        {
+            if ((c == '\'') || (c == '<') || (c == '>') || (c == '&') || (c == '\"'))
+                continue;
+
+            out.append(c);
+        }
+
+        return out.toString();
+    }
+
+    /**
+     * Remove any invalid XML character from the specified string.
+     */
+    public static String removeInvalidXMLCharacters(String text)
+    {
+        final String xml10pattern = "[^" + "\u0009\r\n" + "\u0020-\uD7FF" + "\uE000-\uFFFD"
+                + "\ud800\udc00-\udbff\udfff" + "]";
+        // final String xml11pattern = "[^" + "\u0001-\uD7FF" + "\uE000-\uFFFD" +
+        // "\ud800\udc00-\udbff\udfff" + "]+";
+
+        return text.replaceAll(xml10pattern, "");
+    }
+
+    /**
+     * Same as {@link #removeInvalidXMLCharacters(String)}
      */
     public static String filterString(String text)
     {
-        final int len = text.length();
-        final StringBuilder result = new StringBuilder(len);
-
-        for (int i = 0; i < len; i++)
-        {
-            final char c = text.charAt(i);
-            if (XMLChar.isValid(c))
-                result.append(c);
-        }
-
-        return result.toString();
+        return removeInvalidXMLCharacters(text);
     }
 
     /**
