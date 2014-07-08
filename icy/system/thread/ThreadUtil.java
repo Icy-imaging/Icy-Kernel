@@ -191,9 +191,11 @@ public class ThreadUtil
     }
 
     /**
-     * Invoke the specified <code>Runnable</code> on the AWT event dispatching thread now.<br>
-     * Wait until completion. Any exception is automatically caught by Icy exception handler.<br>
-     * Be careful, using this method may lead to dead lock !
+     * Invoke the specified <code>Runnable</code> on the AWT event dispatching thread now and wait
+     * until completion.<br>
+     * Any exception is automatically caught by Icy exception handler, if you want to catch them use
+     * {@link #invokeNow(Callable)} instead.<br>
+     * Use this method carefully as it may lead to dead lock.
      */
     public static void invokeNow(Runnable runnable)
     {
@@ -261,31 +263,54 @@ public class ThreadUtil
     }
 
     /**
-     * Invoke the specified <code>Runnable</code> on the AWT event dispatching thread now.<br>
-     * Wait until completion. Be careful, using this method may lead to dead lock !
+     * Invoke the specified <code>Callable</code> on the AWT event dispatching thread now and return
+     * the result.<br>
+     * The returned result can be <code>null</code> when a {@link Throwable} exception happen.<br>
+     * Use this method carefully as it may lead to dead lock.
      * 
-     * @throws InvocationTargetException
-     *         if the computation threw an exception
-     * @throws ExecutionException
-     *         if the computation threw an exception
      * @throws InterruptedException
      *         if the current thread was interrupted while waiting
      * @throws Exception
-     *         if the computation threw an exception and the calling thread is the EDT
+     *         if the computation threw an exception
      */
-    public static <T> T invokeNow(Callable<T> callable) throws InterruptedException, InvocationTargetException,
-            ExecutionException, Exception
+    public static <T> T invokeNow(Callable<T> callable) throws InterruptedException, Exception
     {
         if (SwingUtilities.isEventDispatchThread())
             return callable.call();
 
         final FutureTask<T> task = new FutureTask<T>(callable);
-        EventQueue.invokeAndWait(task);
-        return task.get();
+
+        try
+        {
+            EventQueue.invokeAndWait(task);
+        }
+        catch (InvocationTargetException e)
+        {
+            if (e.getCause() instanceof Exception)
+                throw (Exception) e.getCause();
+
+            // not an exception --> handle it
+            IcyExceptionHandler.showErrorMessage(e, true);
+            return null;
+        }
+
+        try
+        {
+            return task.get();
+        }
+        catch (ExecutionException e)
+        {
+            if (e.getCause() instanceof Exception)
+                throw (Exception) e.getCause();
+
+            // not an exception --> handle it
+            IcyExceptionHandler.showErrorMessage(e, true);
+            return null;
+        }
     }
 
     /**
-     * Invoke "runnable" on the AWT event dispatching thread.<br>
+     * Invoke the specified {@link Callable} on the AWT event dispatching thread.<br>
      * Depending the <code>forceLater</code> parameter the <code>Callable</code> can be executed
      * immediately if we are on the EDT.
      * 
@@ -368,7 +393,7 @@ public class ThreadUtil
     }
 
     /**
-     * @deprecated Use {@link #bgRun(Callable)} instead and {@link #invokeNow(Callable)} separately.
+     * @deprecated Use {@link #bgRun(Callable)} and {@link #invokeNow(Callable)} separately instead.
      * @see #bgRun(Callable)
      */
     @Deprecated
@@ -402,8 +427,8 @@ public class ThreadUtil
     }
 
     /**
-     * @deprecated Use {@link #runSingle(Callable)} instead and {@link #invokeNow(Callable)}
-     *             separately.
+     * @deprecated Use {@link #runSingle(Callable)} and {@link #invokeNow(Callable)} separately
+     *             instead.
      * @see #bgRunSingle(Callable)
      */
     @Deprecated

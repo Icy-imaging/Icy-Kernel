@@ -2996,6 +2996,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     {
         super.changed(event);
 
+        // not yet initialized
+        if (canvasView == null)
+            return;
+
         final IcyCanvasEventType type = event.getType();
 
         switch (type)

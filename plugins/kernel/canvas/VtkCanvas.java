@@ -1642,7 +1642,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         {
             throw e;
         }
-        catch (Exception e)
+        catch (Exception t)
         {
             // just ignore as this is async process
         }

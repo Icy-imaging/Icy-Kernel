@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with Icy. If not, see <http://www.gnu.org/licenses/>.
  */
-package icy.gui.lut;
+package icy.gui.component.renderer;
 
-import icy.gui.component.renderer.CustomComboBoxRenderer;
+import icy.gui.lut.ColormapIcon;
 import icy.image.colormap.IcyColorMap;
 
 import javax.swing.JComboBox;

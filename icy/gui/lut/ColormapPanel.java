@@ -22,6 +22,7 @@ import icy.canvas.IcyCanvas3D;
 import icy.file.xml.XMLPersistentHelper;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
+import icy.gui.component.renderer.ColormapComboBoxRenderer;
 import icy.gui.dialog.LoadDialog;
 import icy.gui.dialog.SaveDialog;
 import icy.gui.util.ComponentUtil;
@@ -98,6 +99,8 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         this.lutChannel = lutChannel;
 
         colormap = lutChannel.getColorMap();
+        colormap.setName("Custom");
+
         colormapViewer = new ColormapViewer(lutChannel);
 
         // colormap type
@@ -105,38 +108,14 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         rgbBtn.setToolTipText("Set colormap type to Color");
         rgbBtn.setFocusPainted(false);
         ComponentUtil.setFixedWidth(rgbBtn, 26);
-        rgbBtn.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                colormap.setType(IcyColorMapType.RGB);
-            }
-        });
         grayBtn = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_GRAY_COLOR, false));
         grayBtn.setToolTipText("Set colormap type to Gray");
         grayBtn.setFocusPainted(false);
         ComponentUtil.setFixedWidth(grayBtn, 26);
-        grayBtn.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                colormap.setType(IcyColorMapType.GRAY);
-            }
-        });
         alphaBtn = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_ALPHA_COLOR, false));
         alphaBtn.setToolTipText("Set colormap type to Alpha (transparency)");
         alphaBtn.setFocusPainted(false);
         ComponentUtil.setFixedWidth(alphaBtn, 26);
-        alphaBtn.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                colormap.setType(IcyColorMapType.ALPHA);
-            }
-        });
 
         colormapTypeBtnGrp = new ButtonGroup();
 
@@ -146,6 +125,31 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
 
         // select item according to current colormap type
         updateColormapType(colormap.getType());
+
+        rgbBtn.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                colormap.setType(IcyColorMapType.RGB);
+            }
+        });
+        grayBtn.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                colormap.setType(IcyColorMapType.GRAY);
+            }
+        });
+        alphaBtn.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                colormap.setType(IcyColorMapType.ALPHA);
+            }
+        });
 
         // alpha checkbox
         // final JCheckBox alphaEnabled = new JCheckBox("alpha", null, true);
@@ -165,7 +169,7 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         final LUT defaultLUT = viewer.getSequence().getDefaultLUT();
 
         // compatible colormap (should always be the case)
-        if (defaultLUT.getNumChannel() == lutChannel.getLut().getNumChannel())
+        if (defaultLUT.isCompatible(lutChannel.getLut()))
         {
             defaultColormap = defaultLUT.getLutChannel(lutChannel.getChannel()).getColorMap();
             defaultColormap.setName("Default");
@@ -173,7 +177,7 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         else
         {
             // asynchronous sequence change, get a default colormap from current one
-            defaultColormap = new IcyColorMap("default");
+            defaultColormap = new IcyColorMap("Default");
             // copy from current colormap
             defaultColormap.copyFrom(colormap);
         }
@@ -208,6 +212,9 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         colormaps.add(new JETColorMap());
         colormaps.add(new GlowColorMap(true));
 
+        // this is the custom colormap
+        colormaps.add(colormap);
+
         // build colormap selector
         colormapComboBox = new JComboBox(colormaps.toArray());
         colormapComboBox.setRenderer(new ColormapComboBoxRenderer(colormapComboBox, 64, 16));
@@ -216,14 +223,15 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         colormapComboBox.setToolTipText("Select colormap model");
         // don't want focusable here
         colormapComboBox.setFocusable(false);
-        colormapComboBox.setEditable(true);
+        // set to current colormap
+        colormapComboBox.setSelectedItem(colormap);
 
         colormapComboBox.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                copyColorMap((IcyColorMap) colormapComboBox.getSelectedItem());
+                setColorMap((IcyColorMap) colormapComboBox.getSelectedItem());
             }
         });
 
@@ -245,7 +253,7 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
                 {
                     final IcyColorMap map = new IcyColorMap();
                     XMLPersistentHelper.loadFromXML(map, filename);
-                    copyColorMap(map);
+                    setColorMap(map);
                 }
             }
         });
@@ -338,6 +346,9 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
      */
     public void setColorMap(IcyColorMap src)
     {
+        if (colormap == src)
+            return;
+
         colormap.setName(src.getName());
 
         if (viewer.getCanvas() instanceof IcyCanvas3D)
@@ -382,7 +393,8 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
 
             case MAP_CHANGED:
                 // update the combo box colormap representation
-                // updateCurrentColormap();
+                colormapComboBox.setSelectedItem(colormap);
+                colormapComboBox.repaint();
                 break;
         }
     }

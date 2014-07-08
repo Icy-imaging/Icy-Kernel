@@ -20,11 +20,14 @@ package icy.plugin;
 
 import icy.main.Icy;
 import icy.plugin.abstract_.Plugin;
+import icy.plugin.abstract_.PluginActionable;
 import icy.plugin.interface_.PluginImageAnalysis;
 import icy.plugin.interface_.PluginStartAsThread;
 import icy.plugin.interface_.PluginThreaded;
 import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
+
+import java.util.concurrent.Callable;
 
 /**
  * This class launch plugins and register them to the main application.<br>
@@ -32,92 +35,145 @@ import icy.system.thread.ThreadUtil;
  * 
  * @author Fabrice de Chaumont & Stephane
  */
-public class PluginLauncher implements Runnable
+public class PluginLauncher
 {
-    protected final PluginDescriptor descriptor;
-    protected Plugin plugin;
-
-    protected PluginLauncher(PluginDescriptor descriptor)
+    protected static class PluginExecutor implements Callable<Boolean>, Runnable
     {
-        super();
+        final PluginDescriptor descriptor;
+        final Plugin plugin;
 
-        this.descriptor = descriptor;
-        plugin = null;
+        public PluginExecutor(PluginDescriptor descriptor, Plugin plugin)
+        {
+            super();
+
+            this.descriptor = descriptor;
+            this.plugin = plugin;
+        }
+
+        @Override
+        public Boolean call() throws Exception
+        {
+            if (plugin instanceof PluginActionable)
+                ((PluginActionable) plugin).run();
+            // keep backward compatibility
+            else if (plugin instanceof PluginImageAnalysis)
+                ((PluginImageAnalysis) plugin).compute();
+
+            return Boolean.TRUE;
+        }
+
+        @Override
+        public void run()
+        {
+            try
+            {
+                call();
+            }
+            catch (Throwable t)
+            {
+                IcyExceptionHandler.handleException(descriptor, t, true);
+            }
+        }
     }
 
-    protected void create()
+    /**
+     * Executes the specified plugin.<br>
+     * If the specified plugin implements {@link PluginThreaded} then the plugin will be executed in
+     * a separate thread and the method will return before completion.<br>
+     * In other case the plugin is executed on the EDT by using
+     * {@link ThreadUtil#invokeNow(Callable)} and so method return after completion.
+     * 
+     * @throws InterruptedException
+     *         if the current thread was interrupted while waiting for execution on EDT.
+     * @throws Exception
+     *         if the computation threw an exception (only when plugin is executed on EDT).
+     */
+    private static void internalExecute(final PluginDescriptor descriptor, final Plugin plugin)
+            throws InterruptedException, Exception
+    {
+
+        if (plugin instanceof PluginThreaded)
+            new Thread((PluginThreaded) plugin, descriptor.getName()).start();
+        else
+        {
+            final PluginExecutor executor = new PluginExecutor(descriptor, plugin);
+
+            // keep backward compatibility
+            if (plugin instanceof PluginStartAsThread)
+                new Thread(executor, descriptor.getName()).start();
+            // direct launch in EDT now (no thread creation)
+            else
+                ThreadUtil.invokeNow((Callable<Boolean>) executor);
+        }
+    }
+
+    private static Plugin internalCreate(final PluginDescriptor descriptor) throws InterruptedException, Exception
     {
         // create the plugin instance on the EDT
-        ThreadUtil.invokeNow(new Runnable()
+        return ThreadUtil.invokeNow(new Callable<Plugin>()
         {
             @Override
-            public void run()
+            public Plugin call() throws Exception
             {
-                final Class<? extends Plugin> clazz = descriptor.getPluginClass();
-
-                try
-                {
-                    plugin = clazz.newInstance();
-                }
-                catch (IllegalAccessException e1)
-                {
-                    System.err.println("Cannot start plugin " + descriptor.getName() + " :");
-                    System.err.println(e1.getMessage());
-                }
-                catch (InstantiationException e2)
-                {
-                    System.err.println("Cannot start plugin " + descriptor.getName() + " :");
-                    System.err.println(e2.getMessage());
-                }
-                catch (Throwable t)
-                {
-                    IcyExceptionHandler.handleException(descriptor, t, true);
-                }
+                return descriptor.getPluginClass().newInstance();
             }
         });
     }
 
-    @Override
-    public void run()
+    /**
+     * Start the specified plugin (catched exception version).<br>
+     * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin) or
+     * <code>null<code> if an error occured.
+     * 
+     * @see #startSafe(PluginDescriptor)
+     */
+    public static Plugin start(PluginDescriptor descriptor)
     {
+        final Plugin result;
+
         try
         {
-            // keep backward compatibility
-            if (plugin instanceof PluginImageAnalysis)
-                ((PluginImageAnalysis) plugin).compute();
+            try
+            {
+                // create plugin instance
+                result = internalCreate(descriptor);
+            }
+            catch (IllegalAccessException e)
+            {
+                System.err.println("Cannot start plugin " + descriptor.getName() + " :");
+                System.err.println(e.getMessage());
+                return null;
+            }
+            catch (InstantiationException e)
+            {
+                System.err.println("Cannot start plugin " + descriptor.getName() + " :");
+                System.err.println(e.getMessage());
+                return null;
+            }
+
+            // register plugin
+            Icy.getMainInterface().registerPlugin(result);
+            // execute plugin
+            internalExecute(descriptor, result);
+
+            return result;
+        }
+        catch (InterruptedException e)
+        {
+            // we just ignore interruption
         }
         catch (Throwable t)
         {
             IcyExceptionHandler.handleException(descriptor, t, true);
         }
-    }
 
-    /**
-     * Execute the plugin (instance should exists).
-     */
-    protected void execute()
-    {
-        final Thread thread;
-
-        if (plugin instanceof PluginThreaded)
-            thread = new Thread((PluginThreaded) plugin, descriptor.getName());
-        // keep backward compatibility
-        else if (plugin instanceof PluginStartAsThread)
-            thread = new Thread(this, descriptor.getName());
-        else
-            thread = null;
-
-        // launch as thread
-        if (thread != null)
-            thread.start();
-        else
-            // direct launch in EDT now (no thread creation)
-            ThreadUtil.invokeNow(this);
+        return null;
     }
 
     /**
      * Start the specified plugin.<br>
-     * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin)
+     * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin) or
+     * <code>null<code> if an error occurred or if the specified class name is not a valid plugin class name.
      */
     public static Plugin start(String pluginClassName)
     {
@@ -130,34 +186,44 @@ public class PluginLauncher implements Runnable
     }
 
     /**
-     * Start the specified plugin.<br>
-     * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin)
+     * Same as {@link #start(PluginDescriptor)} except it throws {@link Exception} on error so user
+     * can handle them.
+     * 
+     * @throws InterruptedException
+     *         if the current thread was interrupted while waiting for execution on EDT.
+     * @throws Exception
+     *         if the computation threw an exception (only when plugin is executed on EDT).
      */
-    public static Plugin start(PluginDescriptor descriptor)
+    public static Plugin startSafe(PluginDescriptor descriptor) throws InterruptedException, Exception
     {
-        try
-        {
-            final PluginLauncher launcher = new PluginLauncher(descriptor);
+        final Plugin result;
 
-            // create plugin instance
-            launcher.create();
+        // create plugin instance
+        result = internalCreate(descriptor);
 
-            final Plugin plugin = launcher.plugin;
+        // register plugin
+        Icy.getMainInterface().registerPlugin(result);
+        // execute plugin
+        internalExecute(descriptor, result);
 
-            if (plugin != null)
-            {
-                // register plugin
-                Icy.getMainInterface().registerPlugin(launcher.plugin);
-                // execute plugin
-                launcher.execute();
-            }
+        return result;
+    }
 
-            return plugin;
-        }
-        catch (Throwable t)
-        {
-            IcyExceptionHandler.handleException(descriptor, t, true);
-        }
+    /**
+     * Same as {@link #start(String)} except it throws {@link Exception} on error so user
+     * can handle them.
+     * 
+     * @throws InterruptedException
+     *         if the current thread was interrupted while waiting for execution on EDT.
+     * @throws Exception
+     *         if the computation threw an exception (only when plugin is executed on EDT).
+     */
+    public static Plugin startSafe(String pluginClassName) throws InterruptedException, Exception
+    {
+        final PluginDescriptor plugin = PluginLoader.getPlugin(pluginClassName);
+
+        if (plugin != null)
+            return startSafe(plugin);
 
         return null;
     }
