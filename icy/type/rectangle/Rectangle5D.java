@@ -750,7 +750,7 @@ public abstract class Rectangle5D implements Cloneable
         else
             maxC = c + sizeC;
 
-        return (x >= getMinX()) && (y >= getMaxY()) && (z >= getMinZ()) && (t >= getMinT()) && (c >= getMinC())
+        return (x >= getMinX()) && (y >= getMinY()) && (z >= getMinZ()) && (t >= getMinT()) && (c >= getMinC())
                 && (maxX <= getMaxX()) && (maxY <= getMaxY()) && (maxZ <= getMaxZ()) && (maxT <= getMaxT())
                 && (maxC <= getMaxC());
     }

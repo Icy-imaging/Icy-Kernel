@@ -474,7 +474,7 @@ public abstract class Rectangle3D implements Cloneable
      */
     public boolean contains(double x, double y, double z)
     {
-        return (x >= getMinX()) && (y >= getMaxY()) && (z >= getMinZ()) && (x < getMaxX()) && (y < getMaxY())
+        return (x >= getMinX()) && (y >= getMinY()) && (z >= getMinZ()) && (x < getMaxX()) && (y < getMaxY())
                 && (z < getMaxZ());
     }
 
