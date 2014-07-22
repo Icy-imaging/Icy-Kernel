@@ -71,7 +71,6 @@ import java.util.ArrayList;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.InputMap;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -124,6 +123,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      * internals
      */
     boolean initialized;
+    final Runnable lutUpdater;
 
     public Viewer(Sequence sequence, boolean visible)
     {
@@ -138,6 +138,28 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         canvas = null;
         lut = null;
         initialized = false;
+
+        lutUpdater = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // don't need to update that too much
+                ThreadUtil.sleep(10);
+
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        // refresh LUT viewer
+                        setLutViewer(new LUTViewer(Viewer.this, getLut()));
+                        // notify
+                        fireViewerChanged(ViewerEventType.LUT_CHANGED);
+                    }
+                });
+            }
+        };
 
         mainPanel = new JPanel();
 
@@ -414,7 +436,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         });
     }
 
-    private void buildCanvasCombo()
+    void buildCanvasCombo()
     {
         // build comboBox with canvas plugins
         canvasComboBox = new JComboBox(IcyCanvas.getCanvasPluginNames().toArray());
@@ -478,7 +500,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         updateToolbarComponents();
     }
 
-    private void updateToolbarComponents()
+    void updateToolbarComponents()
     {
         toolBar.removeAll();
 
@@ -1193,17 +1215,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
     private void lutChanged()
     {
         // can be called from external thread, replace it in AWT dispatch thread
-        ThreadUtil.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                // refresh LUT viewer
-                setLutViewer(new LUTViewer(Viewer.this, getLut()));
-
-                fireViewerChanged(ViewerEventType.LUT_CHANGED);
-            }
-        });
+        ThreadUtil.bgRunSingle(lutUpdater);
     }
 
     private void positionChanged(DimensionId dim)
@@ -1380,11 +1392,10 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             public void run()
             {
                 // refresh available canvas
-                if (canvasComboBox != null)
-                {
-                    canvasComboBox.setModel(new DefaultComboBoxModel(IcyCanvas.getCanvasPlugins().toArray()));
-                    refreshCanvasCombo();
-                }
+                buildCanvasCombo();
+                // and refresh components
+                refreshCanvasCombo();
+                updateToolbarComponents();
             }
         });
     }

@@ -34,6 +34,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.util.List;
 
+import javax.swing.JPanel;
 import javax.swing.event.EventListenerList;
 
 /**
@@ -294,6 +295,15 @@ public abstract class Overlay implements Painter, ChangeListener, Comparable<Ove
             receiveMouseEventOnHidden = value;
             propertyChanged(PROPERTY_RECEIVEMOUSEEVENTONHIDDEN);
         }
+    }
+
+    /**
+     * Override this method to provide an extra options panel for the overlay.<br>
+     * The options panel will appears in the inspector when the layer's overlay is selected.
+     */
+    public JPanel getOptionsPanel()
+    {
+        return null;
     }
 
     /**

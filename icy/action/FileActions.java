@@ -21,6 +21,7 @@ package icy.action;
 import icy.file.Saver;
 import icy.gui.dialog.ImageLoaderDialog;
 import icy.gui.dialog.ImageSaverDialog;
+import icy.gui.dialog.LoaderDialog;
 import icy.gui.menu.ApplicationMenu;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
@@ -181,7 +182,7 @@ public class FileActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            new ImageLoaderDialog();
+            new LoaderDialog();
             return true;
         }
     };

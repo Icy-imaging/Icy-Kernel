@@ -379,10 +379,10 @@ public class FileUtil
     /**
      * Return filename information from specified path.<br>
      * <br>
-     * getFileName("/file.txt") --> "file(.txt)"<br>
-     * getFileName("D:/temp/file.txt") --> "file(.txt)"<br>
-     * getFileName("C:file.txt") --> "file(.txt)"<br>
-     * getFileName("file.txt") --> "file(.txt)"<br>
+     * getFileName("/file.txt") --> "file.txt"<br>
+     * getFileName("D:/temp/file.txt") --> "file.txt"<br>
+     * getFileName("C:file.txt") --> "file.txt"<br>
+     * getFileName("file.txt") --> "file.txt"<br>
      * getFileName(null) --> ""
      */
     public static String getFileName(String path)

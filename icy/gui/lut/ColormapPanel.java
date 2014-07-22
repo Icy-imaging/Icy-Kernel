@@ -23,7 +23,7 @@ import icy.file.xml.XMLPersistentHelper;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.component.renderer.ColormapComboBoxRenderer;
-import icy.gui.dialog.LoadDialog;
+import icy.gui.dialog.OpenDialog;
 import icy.gui.dialog.SaveDialog;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
@@ -246,7 +246,7 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final String filename = LoadDialog.chooseFile("Load colormap...", DEFAULT_COLORMAP_DIR,
+                final String filename = OpenDialog.chooseFile("Load colormap...", DEFAULT_COLORMAP_DIR,
                         DEFAULT_COLORMAP_NAME);
 
                 if (filename != null)

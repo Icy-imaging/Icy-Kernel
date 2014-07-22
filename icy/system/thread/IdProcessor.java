@@ -45,7 +45,7 @@ public class IdProcessor extends Processor
     public IdProcessor(int priority)
     {
         super(-1, 1, priority);
-        setDefaultThreadName("IdProcessor");
+        setThreadName("IdProcessor");
     }
 
     /**

@@ -1,6 +1,7 @@
 package icy.gui.frame.error;
 
 import icy.gui.component.IcyTextField;
+import icy.preferences.GeneralPreferences;
 import icy.system.IcyExceptionHandler;
 import icy.util.StringUtil;
 
@@ -106,6 +107,9 @@ public class ErrorReportPanel extends JPanel
                 }
             }
         });
+
+        // set default email
+        emailTextField.setText(GeneralPreferences.getUserEmail());
     }
 
     /**
@@ -212,7 +216,10 @@ public class ErrorReportPanel extends JPanel
         String result = "";
 
         if (!StringUtil.isEmpty(email))
+        {
             result += "Email: " + email + "\n";
+            GeneralPreferences.setUserEmail(email);
+        }
         if (!StringUtil.isEmpty(comment))
             result += "Comment:\n" + comment + "\n\n";
 

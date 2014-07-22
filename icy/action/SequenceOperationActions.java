@@ -18,8 +18,8 @@
  */
 package icy.action;
 
+import icy.gui.dialog.MessageDialog;
 import icy.gui.main.MainFrame;
-import icy.gui.menu.tools.SequenceCropper;
 import icy.gui.sequence.tools.SequenceCanvasResizeFrame;
 import icy.gui.sequence.tools.SequenceDimensionAdjustFrame;
 import icy.gui.sequence.tools.SequenceDimensionConvertFrame;
@@ -35,6 +35,7 @@ import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceDataIterator;
 import icy.sequence.SequenceUtil;
+import icy.system.thread.ThreadUtil;
 import icy.type.DataIteratorUtil;
 import icy.type.DataType;
 
@@ -338,7 +339,68 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            return SequenceCropper.doRoiCrop();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            if (viewer == null)
+                return false;
+
+            final Sequence seq = viewer.getSequence();
+            if (seq == null)
+                return false;
+
+            List<ROI> rois = seq.getROIs();
+            int size = rois.size();
+
+            if (size == 0)
+            {
+                MessageDialog.showDialog("There is no ROI in the current sequence.\nCrop operation need a ROI.",
+                        MessageDialog.INFORMATION_MESSAGE);
+                return false;
+            }
+            else if (size > 1)
+            {
+                rois = seq.getSelectedROIs();
+                size = rois.size();
+
+                if (size == 0)
+                {
+                    MessageDialog.showDialog("You need to select a ROI to do the crop operation.",
+                            MessageDialog.INFORMATION_MESSAGE);
+                    return false;
+                }
+                else if (size > 1)
+                {
+                    MessageDialog.showDialog("You must have only one selected ROI to do the crop operation.",
+                            MessageDialog.INFORMATION_MESSAGE);
+                    return false;
+                }
+            }
+
+            final ROI roi = rois.get(0);
+
+            ThreadUtil.bgRun(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+
+                    // create output sequence
+                    final Sequence out = SequenceUtil.getSubSequence(seq, roi);
+
+                    ThreadUtil.invokeLater(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            // get output viewer
+                            final Viewer vout = new Viewer(out);
+                            // copy colormap from input viewer
+                            vout.getLut().copyFrom(viewer.getLut());
+                        }
+                    });
+                }
+            });
+
+            return true;
         }
 
         @Override

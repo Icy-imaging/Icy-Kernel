@@ -6,7 +6,7 @@ package plugins.kernel.importer;
 import icy.common.exception.UnsupportedFormatException;
 import icy.file.FileUtil;
 import icy.file.Loader;
-import icy.gui.dialog.ImageLoaderDialog.AllImagesFileFilter;
+import icy.gui.dialog.LoaderDialog.AllImagesFileFilter;
 import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageUtil;
 import icy.image.IcyBufferedImageUtil.FilterType;

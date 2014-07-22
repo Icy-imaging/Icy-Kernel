@@ -28,6 +28,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
 /**
+ * Simple dialog to let user select a file for save operation.
+ * 
  * @author stephane
  */
 public class SaveDialog

@@ -380,4 +380,10 @@ public abstract class Plugin
     {
         IcyExceptionHandler.report(descriptor, errorLog);
     }
+
+    @Override
+    public String toString()
+    {
+        return getDescriptor().getName();
+    }
 }

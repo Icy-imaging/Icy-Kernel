@@ -25,9 +25,7 @@ import icy.canvas.IcyCanvas;
 import icy.canvas.Layer;
 import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
-import icy.gui.component.editor.SliderCellEditor;
 import icy.gui.component.editor.VisibleCellEditor;
-import icy.gui.component.renderer.SliderCellRenderer;
 import icy.gui.component.renderer.VisibleCellRenderer;
 import icy.gui.main.ActiveViewerListener;
 import icy.gui.viewer.Viewer;
@@ -99,7 +97,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
      */
     private static final long serialVersionUID = 4550426171735455449L;
 
-    static final String[] columnNames = {"Name", "Opacity", ""};
+    static final String[] columnNames = {"Name", ""};
 
     List<Layer> layers;
     IcyCanvas canvas;
@@ -189,7 +187,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
             @Override
             public Object getValueAt(int row, int column)
             {
-                // substance occasionally do not check size before getting value
+                // safe
                 if (row >= layers.size())
                     return null;
 
@@ -202,10 +200,6 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
                         return layer.getName();
 
                     case 1:
-                        // layer transparency
-                        return Integer.valueOf((int) (layer.getAlpha() * 1000f));
-
-                    case 2:
                         // layer visibility
                         return Boolean.valueOf(layer.isVisible());
 
@@ -217,6 +211,10 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
             @Override
             public void setValueAt(Object value, int row, int column)
             {
+                // safe
+                if (row >= layers.size())
+                    return;
+
                 isLayerEditing = true;
                 try
                 {
@@ -229,11 +227,6 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
                             break;
 
                         case 1:
-                            // layer transparency
-                            layer.setAlpha(((Integer) value).intValue() / 1000f);
-                            break;
-
-                        case 2:
                             // layer visibility
                             layer.setVisible(((Boolean) value).booleanValue());
                             break;
@@ -248,10 +241,14 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
             @Override
             public boolean isCellEditable(int row, int column)
             {
+                // safe
+                if (row >= layers.size())
+                    return false;
+
                 final boolean editable;
 
-                // name or opacity field ?
-                if ((column == 0) || (column == 1))
+                // name field ?
+                if (column == 0)
                 {
                     final Layer layer = layers.get(row);
                     editable = (layer != null) ? !layer.isReadOnly() : false;
@@ -273,10 +270,6 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
                         return String.class;
 
                     case 1:
-                        // layer transparency
-                        return Integer.class;
-
-                    case 2:
                         // layer visibility
                         return Boolean.class;
                 }
@@ -298,19 +291,8 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
         col.setPreferredWidth(140);
         col.setToolTipText("Layer name (double click in a cell to edit)");
 
-        // columns setting - transparency
-        col = table.getColumnExt(1);
-        // slider doesn't like to be resized when they are used as CellRenderer
-        col.setPreferredWidth(100);
-        col.setMinWidth(100);
-        col.setMaxWidth(100);
-        col.setCellEditor(new SliderCellEditor(true));
-        col.setCellRenderer(new SliderCellRenderer());
-        col.setToolTipText("Change the layer opacity");
-        col.setResizable(false);
-
         // columns setting - visible
-        col = table.getColumnExt(2);
+        col = table.getColumnExt(1);
         col.setPreferredWidth(20);
         col.setMinWidth(20);
         col.setMaxWidth(20);

@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='no'?>
+<root>
+<name>Bio-Formats importer</name>
+<version>1.0.0.0</version>
+<description>Bio-Formats based library importer</description>
+<classname>plugins.kernel.importer.LociImporterPlugin</classname>
+<author>Kernel</author>
+</root>

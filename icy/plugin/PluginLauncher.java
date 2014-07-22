@@ -129,7 +129,7 @@ public class PluginLauncher
     /**
      * Start the specified plugin (catched exception version).<br>
      * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin) or
-     * <code>null<code> if an error occured.
+     * <code>null</code> if an error occured.
      * 
      * @see #startSafe(PluginDescriptor)
      */
@@ -179,7 +179,7 @@ public class PluginLauncher
     /**
      * Start the specified plugin.<br>
      * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin) or
-     * <code>null<code> if an error occurred or if the specified class name is not a valid plugin class name.
+     * <code>null</code> if an error occurred or if the specified class name is not a valid plugin class name.
      */
     public static Plugin start(String pluginClassName)
     {

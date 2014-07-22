@@ -24,8 +24,10 @@ import icy.image.IcyBufferedImageUtil;
 import icy.image.IcyBufferedImageUtil.FilterType;
 import icy.image.lut.LUT;
 import icy.math.Scaler;
+import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.type.DataType;
+import icy.type.collection.array.Array1DUtil;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
@@ -1102,7 +1104,11 @@ public class SequenceUtil
         final int sizeZ = getMaxDim(sequences, DimensionId.Z);
         final int sizeT = getMaxDim(sequences, DimensionId.T);
 
-        final Sequence result = new Sequence("C Merge");
+        final Sequence result = new Sequence();
+
+        if (sequences.length > 0)
+            result.setMetaData(OMEUtil.createOMEMetadata(sequences[0].getMetadata()));
+        result.setName("C Merge");
 
         int ind = 0;
         for (int t = 0; t < sizeT; t++)
@@ -1208,7 +1214,11 @@ public class SequenceUtil
         for (Sequence seq : sequences)
             sizeZ += seq.getSizeZ();
 
-        final Sequence result = new Sequence("Z Merge");
+        final Sequence result = new Sequence();
+
+        if (sequences.length > 0)
+            result.setMetaData(OMEUtil.createOMEMetadata(sequences[0].getMetadata()));
+        result.setName("Z Merge");
 
         int ind = 0;
         for (int t = 0; t < sizeT; t++)
@@ -1287,7 +1297,11 @@ public class SequenceUtil
         for (Sequence seq : sequences)
             sizeT += seq.getSizeT();
 
-        final Sequence result = new Sequence("T Merge");
+        final Sequence result = new Sequence();
+
+        if (sequences.length > 0)
+            result.setMetaData(OMEUtil.createOMEMetadata(sequences[0].getMetadata()));
+        result.setName("T Merge");
 
         int ind = 0;
         for (int t = 0; t < sizeT; t++)
@@ -1902,11 +1916,68 @@ public class SequenceUtil
 
     /**
      * Creates a new sequence which is a sub part of the source sequence defined by the specified
+     * {@link ROI} bounds.<br>
+     * 
+     * @param source
+     *        the source sequence
+     * @param roi
+     *        used to define to region to retain.
+     * @param nullValue
+     *        the returned sequence is created by using the ROI rectangular bounds.<br>
+     *        if <code>nullValue</code> is different of <code>Double.NaN</code> then any pixel
+     *        outside the ROI region will be set to <code>nullValue</code>
+     */
+    public static Sequence getSubSequence(Sequence source, ROI roi, double nullValue)
+    {
+        final Rectangle5D.Integer bounds = roi.getBounds5D().toInteger();
+        final Sequence result = getSubSequence(source, bounds);
+
+        // use null value ?
+        if (!Double.isNaN(nullValue))
+        {
+            final int offX = (bounds.x == Integer.MIN_VALUE) ? 0 : (int) bounds.x;
+            final int offY = (bounds.y == Integer.MIN_VALUE) ? 0 : (int) bounds.y;
+            final int offZ = (bounds.z == Integer.MIN_VALUE) ? 0 : (int) bounds.z;
+            final int offT = (bounds.t == Integer.MIN_VALUE) ? 0 : (int) bounds.t;
+            final int offC = (bounds.c == Integer.MIN_VALUE) ? 0 : (int) bounds.c;
+            final int sizeX = result.getSizeX();
+            final int sizeY = result.getSizeY();
+            final int sizeZ = result.getSizeZ();
+            final int sizeT = result.getSizeT();
+            final int sizeC = result.getSizeC();
+            final DataType dataType = result.getDataType_();
+
+            for (int t = 0; t < sizeT; t++)
+            {
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    for (int c = 0; c < sizeC; c++)
+                    {
+                        final BooleanMask2D mask = roi.getBooleanMask2D(z + offZ, t + offT, c + offC, false);
+                        final Object data = result.getDataXY(t, z, c);
+                        int offset = 0;
+
+                        for (int y = 0; y < sizeY; y++)
+                            for (int x = 0; x < sizeX; x++, offset++)
+                                if (!mask.contains(x + offX, y + offY))
+                                    Array1DUtil.setValue(data, offset, dataType, nullValue);
+                    }
+                }
+            }
+
+            result.dataChanged();
+        }
+
+        return result;
+    }
+
+    /**
+     * Creates a new sequence which is a sub part of the source sequence defined by the specified
      * {@link ROI} bounds.
      */
     public static Sequence getSubSequence(Sequence source, ROI roi)
     {
-        return getSubSequence(source, roi.getBounds5D().toInteger());
+        return getSubSequence(source, roi, Double.NaN);
     }
 
     /**

@@ -34,7 +34,7 @@ public class InstanceProcessor extends Processor
     {
         super(maxWaiting, 1, priority);
 
-        setDefaultThreadName("InstanceProcessor");
+        setThreadName("InstanceProcessor");
     }
 
     /**

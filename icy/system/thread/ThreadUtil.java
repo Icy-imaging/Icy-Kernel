@@ -25,6 +25,7 @@ import java.awt.EventQueue;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -112,17 +113,17 @@ public class ThreadUtil
         }
 
         bgProcessor.setPriority(MIN_PRIORITY);
-        bgProcessor.setDefaultThreadName("Background processor");
+        bgProcessor.setThreadName("Background processor");
         bgProcessor.setKeepAliveTime(3, TimeUnit.SECONDS);
 
         for (int i = 0; i < instanceProcessors.length; i++)
         {
             // keep these thread active
             instanceProcessors[i] = new InstanceProcessor(NORM_PRIORITY);
-            instanceProcessors[i].setDefaultThreadName("Instance processor (normal priority)");
+            instanceProcessors[i].setThreadName("Instance processor (normal priority)");
             instanceProcessors[i].setKeepAliveTime(3, TimeUnit.SECONDS);
             bgInstanceProcessors[i] = new InstanceProcessor(MIN_PRIORITY);
-            bgInstanceProcessors[i].setDefaultThreadName("Instance processor (low priority)");
+            bgInstanceProcessors[i].setThreadName("Instance processor (low priority)");
             bgInstanceProcessors[i].setKeepAliveTime(3, TimeUnit.SECONDS);
         }
     }
@@ -558,6 +559,22 @@ public class ThreadUtil
     public static int getActiveBgTaskCount()
     {
         return bgProcessor.getActiveCount();
+    }
+
+    /**
+     * Create a thread pool with the given name.<br>
+     * The number of processing thread is automatically calculated given the number of core of the
+     * system.
+     * 
+     * @see Processor#Processor(int, int, int)
+     */
+    public static ExecutorService createThreadPool(String name)
+    {
+        final Processor result = new Processor(SystemUtil.getAvailableProcessors());
+
+        result.setThreadName(name);
+
+        return result;
     }
 
     /**

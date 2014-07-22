@@ -18,7 +18,7 @@
  */
 package icy.system;
 
-import icy.gui.dialog.ImageLoaderDialog;
+import icy.gui.dialog.LoaderDialog;
 import icy.gui.frame.AboutFrame;
 import icy.gui.preferences.GeneralPreferencePanel;
 import icy.gui.preferences.PreferenceFrame;
@@ -82,7 +82,7 @@ public class AppleUtil
                                 }
                                 if (method.getName().equals("handleOpenFile"))
                                 {
-                                    new ImageLoaderDialog();
+                                    new LoaderDialog();
                                     m.invoke(applicationEvent, Boolean.valueOf(true));
                                 }
                                 if (method.getName().equals("handlePreferences"))

@@ -47,6 +47,10 @@ public class GeneralPreferences
     public static final String ID_GUI_FONT_SIZE = "guiFontSize";
     public static final String ID_STARTUP_TOOLTIP = "startupTooltip";
     public static final String ID_RESULT_FOLDER = "resultFolder";
+    public static final String ID_USER_LOGIN = "userLogin";
+    public static final String ID_USER_PASSWORD = "userPassword";
+    public static final String ID_USER_NAME = "userName";
+    public static final String ID_USER_EMAIL = "userEmail";
 
     /**
      * id confirm
@@ -141,6 +145,26 @@ public class GeneralPreferences
         return prefGeneral.get(ID_RESULT_FOLDER, FileUtil.getApplicationDirectory() + FileUtil.separator + "result");
     }
 
+    public static String getUserLogin()
+    {
+        return prefGeneral.get(ID_USER_LOGIN, "");
+    }
+
+    public static String getUserPassword()
+    {
+        return prefGeneral.get(ID_USER_PASSWORD, "");
+    }
+
+    public static String getUserName()
+    {
+        return prefGeneral.get(ID_USER_NAME, "");
+    }
+
+    public static String getUserEmail()
+    {
+        return prefGeneral.get(ID_USER_EMAIL, "");
+    }
+
     public static int getGuiFontSize()
     {
         return prefGeneral.getInt(ID_GUI_FONT_SIZE, LookAndFeelUtil.getDefaultFontSize());
@@ -200,4 +224,25 @@ public class GeneralPreferences
     {
         prefGeneral.put(ID_GUI_SKIN, value);
     }
+
+    public static void setUserLogin(String value)
+    {
+        prefGeneral.put(ID_USER_LOGIN, value);
+    }
+
+    public static void setUserPassword(String value)
+    {
+        prefGeneral.put(ID_USER_PASSWORD, value);
+    }
+
+    public static void setUserName(String value)
+    {
+        prefGeneral.put(ID_USER_NAME, value);
+    }
+
+    public static void setUserEmail(String value)
+    {
+        prefGeneral.put(ID_USER_EMAIL, value);
+    }
+
 }

@@ -59,10 +59,43 @@ public class Processor extends ThreadPoolExecutor
 
     protected class ProcessorThreadFactory implements ThreadFactory
     {
+        String name;
+        int threadCount;
+        final boolean showNumber;
+
+        public ProcessorThreadFactory(String name, boolean showNumber)
+        {
+            super();
+
+            setName(name);
+            threadCount = 0;
+            this.showNumber = showNumber;
+        }
+
+        public String getName()
+        {
+            return name;
+        }
+
+        public void setName(String value)
+        {
+            this.name = value;
+        }
+
+        String getThreadName()
+        {
+            String result = name;
+
+            if (showNumber)
+                result += " (thread #" + threadCount + ")";
+
+            return result;
+        }
+
         @Override
         public Thread newThread(Runnable r)
         {
-            final Thread result = new Thread(r, defaultThreadName);
+            final Thread result = new Thread(r, getThreadName());
 
             result.setPriority(priority);
 
@@ -266,7 +299,6 @@ public class Processor extends ThreadPoolExecutor
      * parameters
      */
     int priority;
-    String defaultThreadName;
 
     /**
      * internal
@@ -277,6 +309,10 @@ public class Processor extends ThreadPoolExecutor
     /**
      * Create a new Processor with specified number of maximum waiting and processing tasks.<br>
      * 
+     * @param maxWaiting
+     *        The length of waiting queue.
+     * @param numThread
+     *        The maximum number of processing thread.
      * @param priority
      *        Processor priority<br>
      *        <code>Processor.MIN_PRIORITY</code><br>
@@ -288,18 +324,22 @@ public class Processor extends ThreadPoolExecutor
         super(numThread, numThread, 2L, TimeUnit.SECONDS, (maxWaiting == -1) ? new LinkedBlockingQueue<Runnable>()
                 : new LinkedBlockingQueue<Runnable>(maxWaiting));
 
-        setThreadFactory(new ProcessorThreadFactory());
+        setThreadFactory(new ProcessorThreadFactory("Processor", numThread > 1));
         setRejectedExecutionHandler(new ProcessorRejectedExecutionHandler());
         allowCoreThreadTimeOut(true);
 
         this.priority = priority;
-        defaultThreadName = "Processor";
 
         waitingExecution = null;
     }
 
     /**
      * Create a new Processor with specified number of maximum waiting and processing tasks.
+     * 
+     * @param maxWaiting
+     *        The length of waiting queue.
+     * @param numThread
+     *        The maximum number of processing thread.
      */
     public Processor(int maxWaiting, int numThread)
     {
@@ -308,6 +348,9 @@ public class Processor extends ThreadPoolExecutor
 
     /**
      * Create a new Processor with specified number of processing thread.
+     * 
+     * @param numThread
+     *        The maximum number of processing thread.
      */
     public Processor(int numThread)
     {
@@ -642,14 +685,38 @@ public class Processor extends ThreadPoolExecutor
         this.priority = priority;
     }
 
+    /**
+     * @deprecated Use {@link #getThreadName()} instead
+     */
+    @Deprecated
     public String getDefaultThreadName()
     {
-        return defaultThreadName;
+        return ((ProcessorThreadFactory) getThreadFactory()).getName();
     }
 
+    /**
+     * @deprecated Use {@link #setThreadName(String)} instead
+     */
+    @Deprecated
     public void setDefaultThreadName(String defaultThreadName)
     {
-        this.defaultThreadName = defaultThreadName;
+        ((ProcessorThreadFactory) getThreadFactory()).setName(defaultThreadName);
+    }
+
+    /**
+     * Return the thread name.
+     */
+    public String getThreadName()
+    {
+        return ((ProcessorThreadFactory) getThreadFactory()).getName();
+    }
+
+    /**
+     * Set the wanted thread name.
+     */
+    public void setThreadName(String defaultThreadName)
+    {
+        ((ProcessorThreadFactory) getThreadFactory()).setName(defaultThreadName);
     }
 
     /**

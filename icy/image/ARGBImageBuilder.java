@@ -123,7 +123,7 @@ class ARGBImageBuilder
         else
             processor = new Processor(Math.max(1, Math.min(SystemUtil.getAvailableProcessors() - 1, 16)));
 
-        processor.setDefaultThreadName("ARGB Image builder");
+        processor.setThreadName("ARGB Image builder");
         processor.setPriority(Processor.NORM_PRIORITY - 1);
 
         buffers = new ArrayList<int[][]>();

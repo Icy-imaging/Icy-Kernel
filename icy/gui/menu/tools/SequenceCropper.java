@@ -29,10 +29,9 @@ import icy.system.thread.ThreadUtil;
 import java.util.List;
 
 /**
- * Helper to do crop operation on focused sequence
- * 
- * @author Stephane
+ * @deprecated Use {@link SequenceUtil#getSubSequence(Sequence, ROI)} instead.
  */
+@Deprecated
 public class SequenceCropper
 {
     private SequenceCropper()
@@ -40,6 +39,10 @@ public class SequenceCropper
         super();
     }
 
+    /**
+     * @deprecated Use {@link SequenceUtil#getSubSequence(Sequence, ROI)} instead.
+     */
+    @Deprecated
     public static boolean doRoiCrop()
     {
         final Viewer viewer = Icy.getMainInterface().getActiveViewer();
@@ -81,6 +84,10 @@ public class SequenceCropper
         return doRoiCrop(viewer, rois.get(0));
     }
 
+    /**
+     * @deprecated Use {@link SequenceUtil#getSubSequence(Sequence, ROI)} instead.
+     */
+    @Deprecated
     public static boolean doRoiCrop(final Viewer viewer, final ROI roi)
     {
         final Sequence seq = viewer.getSequence();

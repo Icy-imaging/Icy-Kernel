@@ -94,7 +94,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.5.3.1");
+    public static Version version = new Version("1.5.4.0");
 
     /**
      * Main interface
@@ -120,11 +120,6 @@ public class Icy
      * ITK library loaded flag
      */
     static boolean itkLibraryLoaded = false;
-
-    /**
-     * Headless flag (default = false)
-     */
-    // static boolean headless = false;
 
     /**
      * No splash screen flag (default = false)

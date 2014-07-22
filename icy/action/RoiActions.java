@@ -20,8 +20,8 @@ package icy.action;
 
 import icy.clipboard.Clipboard;
 import icy.file.FileUtil;
-import icy.gui.dialog.LoadDialog;
 import icy.gui.dialog.MessageDialog;
+import icy.gui.dialog.OpenDialog;
 import icy.gui.dialog.SaveDialog;
 import icy.gui.inspector.RoisPanel;
 import icy.main.Icy;
@@ -76,7 +76,7 @@ public class RoiActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final String filename = LoadDialog.chooseFile("Load roi(s)...", DEFAULT_ROI_DIR, DEFAULT_ROI_NAME);
+            final String filename = OpenDialog.chooseFile("Load roi(s)...", DEFAULT_ROI_DIR, DEFAULT_ROI_NAME);
             final Sequence sequence = Icy.getMainInterface().getActiveSequence();
 
             if ((filename != null) && (sequence != null))

@@ -21,7 +21,6 @@ package icy.file;
 import icy.common.exception.UnsupportedFormatException;
 import icy.gui.frame.progress.FileFrame;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -40,7 +39,7 @@ public interface FileImporter
     /**
      * Return <code>true</code> if the specified file can be opened by the importer.
      */
-    public boolean acceptFile(File file);
+    public boolean acceptFile(String path);
 
     /**
      * Return the supported FileFilter for this importer.

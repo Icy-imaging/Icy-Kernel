@@ -295,15 +295,15 @@ public class Array1DUtil
             case BYTE:
                 return Arrays.copyOf((byte[]) array, ((byte[]) array).length);
             case SHORT:
-                return Arrays.copyOf((byte[]) array, ((byte[]) array).length);
+                return Arrays.copyOf((short[]) array, ((short[]) array).length);
             case INT:
-                return Arrays.copyOf((byte[]) array, ((byte[]) array).length);
+                return Arrays.copyOf((int[]) array, ((int[]) array).length);
             case LONG:
-                return Arrays.copyOf((byte[]) array, ((byte[]) array).length);
+                return Arrays.copyOf((long[]) array, ((long[]) array).length);
             case FLOAT:
-                return Arrays.copyOf((byte[]) array, ((byte[]) array).length);
+                return Arrays.copyOf((float[]) array, ((float[]) array).length);
             case DOUBLE:
-                return Arrays.copyOf((byte[]) array, ((byte[]) array).length);
+                return Arrays.copyOf((double[]) array, ((double[]) array).length);
             default:
                 return null;
         }

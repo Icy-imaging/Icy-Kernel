@@ -21,6 +21,7 @@ package icy.gui.component.model;
 import icy.util.StringUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TreeModelEvent;
@@ -56,9 +57,9 @@ public class XMLTreeModel implements TreeModel
         /**
          * Return all children
          */
-        public ArrayList<Node> getChildren()
+        public List<Node> getChildren()
         {
-            final ArrayList<Node> result = new ArrayList<Node>();
+            final List<Node> result = new ArrayList<Node>();
 
             if (node.hasAttributes())
             {
@@ -115,7 +116,12 @@ public class XMLTreeModel implements TreeModel
          */
         public XMLAdapterNode child(int index)
         {
-            return new XMLAdapterNode(getChildren().get(index));
+            final Node n = getChildren().get(index);
+
+            if (n == null)
+                return null;
+
+            return new XMLAdapterNode(n);
         }
 
         /**
@@ -178,13 +184,16 @@ public class XMLTreeModel implements TreeModel
     {
         super();
 
+        if (doc == null)
+            throw new NullPointerException();
+
         document = doc;
     }
 
     @Override
     public Object getRoot()
     {
-        if (document == null)
+        if (document.getDocumentElement() == null)
             return null;
 
         return new XMLAdapterNode(document.getDocumentElement());

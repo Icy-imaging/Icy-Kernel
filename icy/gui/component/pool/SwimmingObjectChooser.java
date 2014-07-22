@@ -109,11 +109,16 @@ public class SwimmingObjectChooser extends JComboBox implements SwimmingPoolList
             {
                 refreshList();
 
-                final Object obj = event.getResult().getObject();
+                final SwimmingObject swimObj = event.getResult();
 
-                // Select the last entry computed
-                if (obj != null)
-                    setSelectedItem(obj);
+                if (swimObj != null)
+                {
+                    final Object obj = swimObj.getObject();
+
+                    // Select the last entry computed
+                    if (obj != null)
+                        setSelectedItem(obj);
+                }
             }
         });
 

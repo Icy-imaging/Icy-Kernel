@@ -19,6 +19,7 @@
 package icy.file;
 
 import icy.common.exception.UnsupportedFormatException;
+import icy.gui.dialog.ImporterSelectionDialog;
 import icy.gui.dialog.SeriesSelectionDialog;
 import icy.gui.frame.progress.FailedAnnounceFrame;
 import icy.gui.frame.progress.FileFrame;
@@ -50,8 +51,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -377,7 +381,7 @@ public class Loader
             "wav", "mp3", "app"};
 
     /**
-     * Returns all available resource importers.
+     * Returns all available resource importer.
      */
     public static List<Importer> getImporters()
     {
@@ -393,13 +397,11 @@ public class Loader
                 result.add(importer);
         }
 
-        // TODO: add sort here from plugin importer preferences
-
         return result;
     }
 
     /**
-     * Returns all available resource (non image) importers which take file as input.
+     * Returns all available resource (non image) importer which take file as input.
      */
     public static List<FileImporter> getFileImporters()
     {
@@ -415,13 +417,187 @@ public class Loader
                 result.add(importer);
         }
 
-        // TODO: add sort here from plugin importer preferences
+        return result;
+    }
+
+    /**
+     * Returns a Map containing the appropriate file importer for the specified file.<br>
+     * A file can be absent from the returned Map when no importer support it.<br>
+     * 
+     * @param importers
+     *        the base list of importer we want to test to open file.
+     * @param paths
+     *        the list of file we want to retrieve importer for.
+     * @param useFirstFound
+     *        if set to <code>true</code> then the first matching importer is automatically selected
+     *        otherwise a dialog appears to let the user to choose the correct importer when
+     *        severals importers match for a file.
+     */
+    public static Map<FileImporter, List<String>> getFileImporters(List<FileImporter> importers, List<String> paths,
+            boolean useFirstFound)
+    {
+        final Map<FileImporter, List<String>> result = new HashMap<FileImporter, List<String>>(importers.size());
+        final Map<String, FileImporter> extensionImporters = new HashMap<String, FileImporter>(importers.size());
+
+        for (String path : paths)
+        {
+            final String ext = FileUtil.getFileExtension(path, false);
+            FileImporter imp;
+
+            // try to get importer from extension first
+            imp = extensionImporters.get(ext);
+
+            // do not exist yet
+            if (imp == null)
+            {
+                // find it
+                imp = getFileImporter(importers, path, useFirstFound);
+                // set the importer for this extension
+                if (imp != null)
+                    extensionImporters.put(ext, imp);
+            }
+
+            // importer found for this path ?
+            if (imp != null)
+            {
+                // retrieve current list of path for this importer
+                List<String> list = result.get(imp);
+
+                // do not exist yet --> create it
+                if (list == null)
+                {
+                    list = new ArrayList<String>();
+                    // set the list for this importer
+                    result.put(imp, list);
+                }
+
+                // add path to the list
+                list.add(path);
+            }
+        }
 
         return result;
     }
 
     /**
-     * Returns all available sequence importers.
+     * Returns a Map containing the appropriate file importer for the specified file.<br>
+     * A file can be absent from the returned Map when no importer support it.<br>
+     * 
+     * @param paths
+     *        the list of file we want to retrieve importer for.
+     * @param useFirstFound
+     *        if set to <code>true</code> then the first matching importer is automatically selected
+     *        otherwise a dialog appears to let the user to choose the correct importer when
+     *        severals importers match for a file.
+     */
+    public static Map<FileImporter, List<String>> getFileImporters(List<String> paths, boolean useFirstFound)
+    {
+        return getFileImporters(getFileImporters(), paths, useFirstFound);
+    }
+
+    /**
+     * Returns all file importer which can open the specified file.
+     */
+    public static List<FileImporter> getFileImporters(List<FileImporter> importers, String path)
+    {
+        final List<FileImporter> result = new ArrayList<FileImporter>(importers.size());
+
+        for (FileImporter importer : importers)
+            if (importer.acceptFile(path))
+                result.add(importer);
+
+        return result;
+    }
+
+    /**
+     * Returns all file importer which can open the specified file.
+     */
+    public static List<FileImporter> getFileImporters(String path)
+    {
+        return getFileImporters(getFileImporters(), path);
+    }
+
+    /**
+     * Returns the appropriate file importer for the specified file.<br>
+     * Returns <code>null</code> if no importer can open the file.
+     * 
+     * @param importers
+     *        the base list of importer we want to test to open file.
+     * @param path
+     *        the file we want to retrieve importer for.
+     * @param useFirstFound
+     *        if set to <code>true</code> then the first matching importer is automatically selected
+     *        otherwise a dialog appears to let the user to choose the correct importer when
+     *        severals importers match.
+     * @see #getFileImporters(List, String)
+     */
+    public static FileImporter getFileImporter(List<FileImporter> importers, String path, boolean useFirstFound)
+    {
+        final List<FileImporter> result = new ArrayList<FileImporter>(importers.size());
+
+        for (FileImporter importer : importers)
+        {
+            if (importer.acceptFile(path))
+            {
+                if (useFirstFound)
+                    return importer;
+
+                result.add(importer);
+            }
+        }
+
+        // let user select the good importer
+        return selectFileImporter(result, path);
+    }
+
+    /**
+     * Returns the appropriate file importer for the specified file.<br>
+     * Returns <code>null</code> if no importer can open the file.
+     * 
+     * @param path
+     *        the file we want to retrieve importer for.
+     * @param useFirstFound
+     *        if set to <code>true</code> then the first matching importer is automatically selected
+     *        otherwise a dialog appears to let the user to choose the correct importer when
+     *        severals importers match.
+     * @see #getFileImporters(String)
+     */
+    public static FileImporter getFileImporter(String path, boolean useFirstFound)
+    {
+        return getFileImporter(getFileImporters(), path, useFirstFound);
+    }
+
+    /**
+     * Display a dialog to let the user select the appropriate file importer for the specified file.
+     */
+    public static FileImporter selectFileImporter(final List<FileImporter> importers, final String path)
+    {
+        if (importers.size() == 0)
+            return null;
+        if (importers.size() == 1)
+            return importers.get(0);
+
+        if (Icy.getMainInterface().isHeadLess())
+            return importers.get(0);
+
+        final Object result[] = new Object[1];
+
+        // use invokeNow carefully !
+        ThreadUtil.invokeNow(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // get importer
+                result[0] = new ImporterSelectionDialog(importers, path).getSelectedImporter();
+            }
+        });
+
+        return (FileImporter) result[0];
+    }
+
+    /**
+     * Returns all available sequence importer.
      */
     public static List<SequenceImporter> getSequenceImporters()
     {
@@ -437,13 +613,11 @@ public class Loader
                 result.add(importer);
         }
 
-        // TODO: add sort here from plugin importer preferences
-
         return result;
     }
 
     /**
-     * Returns all available sequence importers which take id as input.
+     * Returns all available sequence importer which take id as input.
      */
     public static List<SequenceIdImporter> getSequenceIdImporters()
     {
@@ -459,13 +633,11 @@ public class Loader
                 result.add(importer);
         }
 
-        // TODO: add sort here from plugin importer preferences
-
         return result;
     }
 
     /**
-     * Returns all available sequence importers which take file as input.
+     * Returns all available sequence importer which take file as input.
      */
     public static List<SequenceFileImporter> getSequenceFileImporters()
     {
@@ -481,17 +653,93 @@ public class Loader
                 result.add(importer);
         }
 
-        // TODO: add sort here from plugin importer preferences
+        return result;
+    }
+
+    /**
+     * Returns a Map containing the appropriate sequence file importer for the specified file.<br>
+     * A file can be absent from the returned Map when no importer support it.<br>
+     * 
+     * @param importers
+     *        the base list of importer we want to test to open file.
+     * @param paths
+     *        the list of file we want to retrieve importer for.
+     * @param useFirstFound
+     *        if set to <code>true</code> then the first matching importer is automatically selected
+     *        otherwise a dialog appears to let the user to choose the correct importer when
+     *        severals importers match for a file.
+     */
+    public static Map<SequenceFileImporter, List<String>> getSequenceFileImporters(
+            List<SequenceFileImporter> importers, List<String> paths, boolean useFirstFound)
+    {
+        final Map<SequenceFileImporter, List<String>> result = new HashMap<SequenceFileImporter, List<String>>(
+                importers.size());
+        final Map<String, SequenceFileImporter> extensionImporters = new HashMap<String, SequenceFileImporter>(
+                importers.size());
+
+        for (String path : paths)
+        {
+            final String ext = FileUtil.getFileExtension(path, false);
+            SequenceFileImporter imp;
+
+            // try to get importer from extension first
+            imp = extensionImporters.get(ext);
+
+            // do not exist yet
+            if (imp == null)
+            {
+                // find it
+                imp = getSequenceFileImporter(importers, path, useFirstFound);
+                // set the importer for this extension
+                if (imp != null)
+                    extensionImporters.put(ext, imp);
+            }
+
+            // importer found for this path ?
+            if (imp != null)
+            {
+                // retrieve current list of path for this importer
+                List<String> list = result.get(imp);
+
+                // do not exist yet --> create it
+                if (list == null)
+                {
+                    list = new ArrayList<String>();
+                    // set the list for this importer
+                    result.put(imp, list);
+                }
+
+                // add path to the list
+                list.add(path);
+            }
+        }
 
         return result;
     }
 
     /**
-     * Returns all importer which can open the specified file.
+     * Returns a Map containing the appropriate sequence file importer for the specified file.<br>
+     * A file can be absent from the returned Map when no importer support it.<br>
+     * 
+     * @param paths
+     *        the list of file we want to retrieve importer for.
+     * @param useFirstFound
+     *        if set to <code>true</code> then the first matching importer is automatically selected
+     *        otherwise a dialog appears to let the user to choose the correct importer when
+     *        severals importers match for a file.
+     */
+    public static Map<SequenceFileImporter, List<String>> getSequenceFileImporters(List<String> paths,
+            boolean useFirstFound)
+    {
+        return getSequenceFileImporters(getSequenceFileImporters(), paths, useFirstFound);
+    }
+
+    /**
+     * Returns all sequence file importer which can open the specified file.
      */
     public static List<SequenceFileImporter> getSequenceFileImporters(List<SequenceFileImporter> importers, String path)
     {
-        final List<SequenceFileImporter> result = new ArrayList<SequenceFileImporter>();
+        final List<SequenceFileImporter> result = new ArrayList<SequenceFileImporter>(importers.size());
 
         for (SequenceFileImporter importer : importers)
             if (importer.acceptFile(path))
@@ -501,7 +749,7 @@ public class Loader
     }
 
     /**
-     * Returns all importer which can open the specified file.
+     * Returns all sequence file importer which can open the specified file.
      */
     public static List<SequenceFileImporter> getSequenceFileImporters(String path)
     {
@@ -509,29 +757,108 @@ public class Loader
     }
 
     /**
-     * Returns the first importer which can open the specified file.<br>
+     * Returns the appropriate sequence file importer for the specified file.<br>
      * Returns <code>null</code> if no importer can open the file.
      * 
+     * @param importers
+     *        the base list of importer we want to test to open file.
+     * @param path
+     *        the file we want to retrieve importer for.
+     * @param useFirstFound
+     *        if set to <code>true</code> then the first matching importer is automatically selected
+     *        otherwise a dialog appears to let the user to choose the correct importer when
+     *        severals importers match.
      * @see #getSequenceFileImporters(List, String)
      */
-    public static SequenceFileImporter getSequenceFileImporter(List<SequenceFileImporter> importers, String path)
+    public static SequenceFileImporter getSequenceFileImporter(List<SequenceFileImporter> importers, String path,
+            boolean useFirstFound)
     {
-        for (SequenceFileImporter importer : importers)
-            if (importer.acceptFile(path))
-                return importer;
+        final List<SequenceFileImporter> result = new ArrayList<SequenceFileImporter>(importers.size());
 
-        return null;
+        for (SequenceFileImporter importer : importers)
+        {
+            if (importer.acceptFile(path))
+            {
+                if (useFirstFound)
+                    return importer;
+
+                result.add(importer);
+            }
+        }
+
+        // let user select the good importer
+        return selectSequenceFileImporter(result, path);
     }
 
     /**
-     * Returns the first importer which can open the specified image file.<br>
-     * Returns <code>null</code> if no importer can open the image file.
+     * Returns the appropriate sequence file importer for the specified file.<br>
+     * Returns <code>null</code> if no importer can open the file.
      * 
+     * @param path
+     *        the file we want to retrieve importer for.
+     * @param useFirstFound
+     *        if set to <code>true</code> then the first matching importer is automatically selected
+     *        otherwise a dialog appears to let the user to choose the correct importer when
+     *        severals importers match.
      * @see #getSequenceFileImporters(String)
      */
+    public static SequenceFileImporter getSequenceFileImporter(String path, boolean useFirstFound)
+    {
+        return getSequenceFileImporter(getSequenceFileImporters(), path, useFirstFound);
+    }
+
+    /**
+     * @deprecated Use {@link #getSequenceFileImporter(List, String, boolean)}
+     */
+    @Deprecated
+    public static SequenceFileImporter getSequenceFileImporter(List<SequenceFileImporter> importers, String path)
+    {
+        return getSequenceFileImporter(importers, path, true);
+    }
+
+    /**
+     * @deprecated Use {@link #getSequenceFileImporter(String, boolean)}
+     */
+    @Deprecated
     public static SequenceFileImporter getSequenceFileImporter(String path)
     {
-        return getSequenceFileImporter(getSequenceFileImporters(), path);
+        return getSequenceFileImporter(path, true);
+    }
+
+    /**
+     * Display a dialog to let the user select the appropriate sequence file importer for the
+     * specified file.
+     */
+    public static SequenceFileImporter selectSequenceFileImporter(final List<SequenceFileImporter> importers,
+            final String path)
+    {
+        if (importers.size() == 0)
+            return null;
+        if (importers.size() == 1)
+            return importers.get(0);
+
+        if (Icy.getMainInterface().isHeadLess())
+            return importers.get(0);
+
+        final Object result[] = new Object[1];
+
+        // use invokeNow carefully !
+        ThreadUtil.invokeNow(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // get importer
+                final ImporterSelectionDialog selectionDialog = new ImporterSelectionDialog(importers, path);
+
+                if (!selectionDialog.isCanceled())
+                    result[0] = selectionDialog.getSelectedImporter();
+                else
+                    result[0] = null;
+            }
+        });
+
+        return (SequenceFileImporter) result[0];
     }
 
     /**
@@ -556,7 +883,7 @@ public class Loader
      */
     public static boolean isSupportedImageFile(String path)
     {
-        return (getSequenceFileImporter(path) != null);
+        return (getSequenceFileImporter(path, true) != null);
     }
 
     /**
@@ -682,17 +1009,17 @@ public class Loader
     /**
      * Returns a thumbnail of the specified image file path.
      * 
+     * @param importer
+     *        Importer used to open and load the thumbnail from the image file.<br>
      * @param path
      *        image file path.
      * @param serie
      *        Serie index we want to retrieve thumbnail from (for multi serie image).<br>
      *        Set to 0 if unsure.
      */
-    public static IcyBufferedImage loadThumbnail(String path, int serie) throws UnsupportedFormatException, IOException
+    public static IcyBufferedImage loadThumbnail(SequenceFileImporter importer, String path, int serie)
+            throws UnsupportedFormatException, IOException
     {
-        // get importer for this file
-        final SequenceFileImporter importer = getSequenceFileImporter(path);
-
         if ((importer == null) || !importer.open(path, 0))
             throw new UnsupportedFormatException("Image file '" + path + "' is not supported !");
 
@@ -704,6 +1031,20 @@ public class Loader
         {
             importer.close();
         }
+    }
+
+    /**
+     * Returns a thumbnail of the specified image file path.
+     * 
+     * @param path
+     *        image file path.
+     * @param serie
+     *        Serie index we want to retrieve thumbnail from (for multi serie image).<br>
+     *        Set to 0 if unsure.
+     */
+    public static IcyBufferedImage loadThumbnail(String path, int serie) throws UnsupportedFormatException, IOException
+    {
+        return loadThumbnail(getSequenceFileImporter(path, true), path, serie);
     }
 
     /**
@@ -771,7 +1112,42 @@ public class Loader
 
     /**
      * Load and return the image at given position from the specified file path.<br>
-     * For lower image level access, you can use {@link #getSequenceFileImporter(String)} method and
+     * For lower image level access, you can use importer methods.
+     * 
+     * @param importer
+     *        Importer used to open and load the image file.<br>
+     * @param path
+     *        image file path.
+     * @param serie
+     *        Serie index we want to retrieve image from (for multi serie image).<br>
+     *        Set to 0 if unsure (default).
+     * @param z
+     *        Z position of the image to open.
+     * @param t
+     *        T position of the image to open.
+     * @throws IOException
+     * @throws UnsupportedFormatException
+     */
+    public static IcyBufferedImage loadImage(SequenceFileImporter importer, String path, int serie, int z, int t)
+            throws UnsupportedFormatException, IOException
+    {
+        if ((importer == null) || !importer.open(path, 0))
+            throw new UnsupportedFormatException("Image file '" + path + "' is not supported !");
+
+        try
+        {
+            return importer.getImage(serie, z, t);
+        }
+        finally
+        {
+            importer.close();
+        }
+    }
+
+    /**
+     * Load and return the image at given position from the specified file path.<br>
+     * For lower image level access, you can use {@link #getSequenceFileImporter(String, boolean)}
+     * method and
      * directly work through the returned {@link ImageProvider} interface.
      * 
      * @param path
@@ -789,20 +1165,7 @@ public class Loader
     public static IcyBufferedImage loadImage(String path, int serie, int z, int t) throws UnsupportedFormatException,
             IOException
     {
-        // get importer for this file
-        final SequenceFileImporter importer = getSequenceFileImporter(path);
-
-        if ((importer == null) || !importer.open(path, 0))
-            throw new UnsupportedFormatException("Image file '" + path + "' is not supported !");
-
-        try
-        {
-            return importer.getImage(serie, z, t);
-        }
-        finally
-        {
-            importer.close();
-        }
+        return loadImage(getSequenceFileImporter(path, true), path, serie, z, t);
     }
 
     /**
@@ -821,22 +1184,15 @@ public class Loader
     public static Sequence[] loadSequences(File[] files, int[] series, boolean separate, boolean autoOrder,
             boolean showProgress)
     {
-        // detect if this is a complete folder load
-        final boolean directory = (files.length == 1) && files[0].isDirectory();
-        // explode file list
-        final File[] singleFiles = explodeAndClean(files);
+        final List<Sequence> result = new ArrayList<Sequence>();
+        final List<String> paths = FileUtil.toPaths(CollectionUtil.asList(files));
 
         if (series == null)
-            return loadSequences(singleFiles, -1, separate, autoOrder, directory, false, showProgress);
-        if (series.length == 1)
-            return loadSequences(singleFiles, series[0], separate, autoOrder, directory, false, showProgress);
-
-        final List<Sequence> result = new ArrayList<Sequence>();
-
-        for (int serie : series)
+            result.addAll(loadSequences(paths, -1, separate, autoOrder, false, showProgress));
+        else
         {
-            result.addAll(Arrays.asList(loadSequences(singleFiles, serie, separate, autoOrder, directory, false,
-                    showProgress)));
+            for (int serie : series)
+                result.addAll(loadSequences(paths, serie, separate, autoOrder, false, showProgress));
         }
 
         return result.toArray(new Sequence[result.size()]);
@@ -1028,13 +1384,9 @@ public class Loader
     public static Sequence[] loadSequences(File[] files, int serie, boolean separate, boolean autoOrder,
             boolean showProgress)
     {
-        // detect if this is a complete folder load
-        final boolean directory = (files.length == 1) && files[0].isDirectory();
-        // explode file list
-        final File[] singleFiles = explodeAndClean(files);
-
-        // load sequences and return them
-        return loadSequences(singleFiles, serie, separate, autoOrder, directory, false, showProgress);
+        final List<Sequence> result = loadSequences(FileUtil.toPaths(CollectionUtil.asList(files)), serie, separate,
+                autoOrder, false, showProgress);
+        return result.toArray(new Sequence[result.size()]);
     }
 
     /**
@@ -1079,7 +1431,9 @@ public class Loader
      * 
      * @param importer
      *        Importer used to open and load image files.<br>
-     *        If set to <code>null</code> the first compatible importer will be used.
+     *        If set to <code>null</code> the loader will search for a compatible importer and if
+     *        several importers match the user will have to select the appropriate one from a
+     *        selection dialog.
      * @param paths
      *        List of image file to load.
      * @param serie
@@ -1098,20 +1452,60 @@ public class Loader
     public static List<Sequence> loadSequences(SequenceFileImporter importer, List<String> paths, int serie,
             boolean separate, boolean autoOrder, boolean addToRecent, boolean showProgress)
     {
+        final List<Sequence> result = new ArrayList<Sequence>();
+
         // detect if this is a complete folder load
         final boolean directory = (paths.size() == 1) && new File(paths.get(0)).isDirectory();
         // explode path list
         final List<String> singlePaths = explodeAndClean(paths);
 
-        // load sequences and return them
-        return loadSequences(importer, singlePaths, serie, separate, autoOrder, directory, addToRecent, showProgress);
+        // get the sequence importer first
+        final Map<SequenceFileImporter, List<String>> sequenceFileImporters;
+
+        // importer not defined --> find the appropriate importers
+        if (importer == null)
+            sequenceFileImporters = getSequenceFileImporters(singlePaths, false);
+        else
+        {
+            sequenceFileImporters = new HashMap<SequenceFileImporter, List<String>>(1);
+            sequenceFileImporters.put(importer, new ArrayList<String>(singlePaths));
+        }
+
+        for (Entry<SequenceFileImporter, List<String>> entry : sequenceFileImporters.entrySet())
+        {
+            final SequenceFileImporter imp = entry.getKey();
+            final List<String> currPaths = entry.getValue();
+            final boolean dir = directory && (sequenceFileImporters.size() == 1)
+                    && (currPaths.size() == singlePaths.size());
+
+            // load sequence
+            result.addAll(loadSequences(imp, currPaths, serie, separate, autoOrder, dir, addToRecent, showProgress));
+
+            // remove loaded files
+            singlePaths.removeAll(currPaths);
+        }
+
+        // remaining files ?
+        if (singlePaths.size() > 0)
+        {
+            // just log in console
+            System.err.println("No compatible importer found for the following files:");
+            for (String path : singlePaths)
+                System.err.println(path);
+            System.err.println();
+        }
+
+        // return sequences
+        return result;
     }
 
     /**
-     * Load a list of sequence from the specified list of file and returns them.<br>
+     * Loads a list of sequence from the specified list of file and returns them.<br>
      * As the function can take sometime you should not call it from the AWT EDT.<br>
      * The method returns an empty array if an error occurred or if no file could not be opened (not
-     * supported).
+     * supported).<br>
+     * If several importers match to open a file the user will have to select the appropriate one
+     * from a selection dialog.
      * 
      * @param paths
      *        List of image file to load.
@@ -1139,16 +1533,23 @@ public class Loader
      * As the function can take sometime you should not call it from the AWT EDT.<br>
      * The function can return null if no sequence can be loaded from the specified files.
      * 
+     * @param importer
+     *        Importer used to load the image file.<br>
+     *        If set to <code>null</code> the loader will search for a compatible importer and if
+     *        several importers match the user will have to select the appropriate one from a
+     *        selection dialog.
      * @param paths
      *        List of image file to load.
      * @param serie
      *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
      * @param showProgress
      *        Show progression of loading process.
+     * @see #getSequenceFileImporter(String, boolean)
      */
-    public static Sequence loadSequence(List<String> paths, int serie, boolean showProgress)
+    public static Sequence loadSequence(SequenceFileImporter importer, List<String> paths, int serie,
+            boolean showProgress)
     {
-        final List<Sequence> result = loadSequences(paths, serie, false, true, false, showProgress);
+        final List<Sequence> result = loadSequences(importer, paths, serie, false, true, false, showProgress);
 
         if (result.size() > 0)
             return result.get(0);
@@ -1157,8 +1558,51 @@ public class Loader
     }
 
     /**
+     * Load a sequence from the specified list of file and returns it.<br>
+     * As the function can take sometime you should not call it from the AWT EDT.<br>
+     * The function can return null if no sequence can be loaded from the specified files.<br>
+     * If several importers match to open a file the user will have to select the appropriate one
+     * from a selection dialog.
+     * 
+     * @param paths
+     *        List of image file to load.
+     * @param serie
+     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
+     * @param showProgress
+     *        Show progression of loading process.
+     * @see #getSequenceFileImporter(String, boolean)
+     */
+    public static Sequence loadSequence(List<String> paths, int serie, boolean showProgress)
+    {
+        return loadSequence(null, paths, serie, showProgress);
+    }
+
+    /**
      * Load a sequence from the specified file.<br>
      * As the function can take sometime you should not call it from the AWT EDT.
+     * 
+     * @param importer
+     *        Importer used to load the image file.<br>
+     *        If set to <code>null</code> the loader will search for a compatible importer and if
+     *        several importers match the user will have to select the appropriate one from a
+     *        selection dialog.
+     * @param path
+     *        Image file to load.
+     * @param serie
+     *        Serie index to load (for multi serie sequence), set to 0 if unsure (default).
+     * @param showProgress
+     *        Show progression of loading process.
+     */
+    public static Sequence loadSequence(SequenceFileImporter importer, String path, int serie, boolean showProgress)
+    {
+        return loadSequence(importer, CollectionUtil.createArrayList(path), serie, showProgress);
+    }
+
+    /**
+     * Load a sequence from the specified file.<br>
+     * As the function can take sometime you should not call it from the AWT EDT.<br>
+     * If several importers match to open the file the user will have to select the appropriate one
+     * from a selection dialog.
      * 
      * @param path
      *        Image file to load.
@@ -1169,7 +1613,7 @@ public class Loader
      */
     public static Sequence loadSequence(String path, int serie, boolean showProgress)
     {
-        return loadSequence(CollectionUtil.createArrayList(path), serie, showProgress);
+        return loadSequence(null, path, serie, showProgress);
     }
 
     /**
@@ -1256,7 +1700,10 @@ public class Loader
      * This method should be used only for non image file.
      * 
      * @param importer
-     *        Importer used to open and load image files
+     *        Importer used to open and load files.<br>
+     *        If set to <code>null</code> the loader will search for a compatible importer and if
+     *        several importers match the user will have to select the appropriate one from a
+     *        selection dialog.
      * @param paths
      *        list of file to load
      * @param showProgress
@@ -1272,43 +1719,107 @@ public class Loader
             {
                 // explode path list
                 final List<String> singlePaths = explodeAndClean(paths);
-                final FileFrame loadingFrame;
 
-                if (showProgress && !Icy.getMainInterface().isHeadLess())
+                if (singlePaths.size() > 0)
                 {
-                    loadingFrame = new FileFrame("Loading", null);
-                    loadingFrame.setLength(paths.size());
-                    loadingFrame.setPosition(0);
-                }
-                else
-                    loadingFrame = null;
+                    // get the file importer now for remaining file
+                    final Map<FileImporter, List<String>> fileImporters;
 
-                try
-                {
-                    // load each file in a separate sequence
-                    for (String path : singlePaths)
+                    // importer not defined --> find the appropriate importers
+                    if (importer == null)
+                        fileImporters = getFileImporters(singlePaths, false);
+                    else
                     {
-                        if (loadingFrame != null)
-                            loadingFrame.incPosition();
+                        fileImporters = new HashMap<FileImporter, List<String>>(1);
+                        fileImporters.put(importer, new ArrayList<String>(singlePaths));
+                    }
 
-                        // load curent file
-                        importer.load(path, loadingFrame);
+                    for (Entry<FileImporter, List<String>> entry : fileImporters.entrySet())
+                    {
+                        final FileImporter importer = entry.getKey();
+                        final List<String> currPaths = entry.getValue();
+
+                        // load files
+                        loadFiles(importer, paths, true, showProgress);
+
+                        // remove loaded files
+                        singlePaths.removeAll(currPaths);
                     }
                 }
-                catch (Throwable t)
+
+                // remaining files ?
+                if (singlePaths.size() > 0)
                 {
-                    // just show the error
-                    IcyExceptionHandler.showErrorMessage(t, true);
-                    if (loadingFrame != null)
-                        new FailedAnnounceFrame("Failed to open file(s), see the console output for more details.");
-                }
-                finally
-                {
-                    if (loadingFrame != null)
-                        loadingFrame.close();
+                    // just log in console
+                    System.err.println("No compatible importer found for the following files:");
+                    for (String path : singlePaths)
+                        System.err.println(path);
+                    System.err.println();
                 }
             }
         });
+    }
+
+    /**
+     * Load the specified files with the given {@link FileImporter}.<br>
+     * The FileImporter is responsible to make the loaded files available in the application.<br>
+     * This method should be used only for non image file.
+     * 
+     * @param importer
+     *        Importer used to open and load image files.
+     * @param paths
+     *        list of file to load
+     * @param addToRecent
+     *        If set to true the files list will be traced in recent opened files.
+     * @param showProgress
+     *        Show progression in loading process
+     */
+    static void loadFiles(FileImporter importer, List<String> paths, boolean addToRecent, boolean showProgress)
+    {
+        final ApplicationMenu mainMenu;
+        final FileFrame loadingFrame;
+
+        if (addToRecent)
+            mainMenu = Icy.getMainInterface().getApplicationMenu();
+        else
+            mainMenu = null;
+        if (showProgress && !Icy.getMainInterface().isHeadLess())
+        {
+            loadingFrame = new FileFrame("Loading", null);
+            loadingFrame.setLength(paths.size());
+            loadingFrame.setPosition(0);
+        }
+        else
+            loadingFrame = null;
+
+        try
+        {
+            // load each file in a separate sequence
+            for (String path : paths)
+            {
+                if (loadingFrame != null)
+                    loadingFrame.incPosition();
+
+                // load current file
+                importer.load(path, loadingFrame);
+
+                // add as separate item to recent file list
+                if (mainMenu != null)
+                    mainMenu.addRecentLoadedFile(new File(path));
+            }
+        }
+        catch (Throwable t)
+        {
+            // just show the error
+            IcyExceptionHandler.showErrorMessage(t, true);
+            if (loadingFrame != null)
+                new FailedAnnounceFrame("Failed to open file(s), see the console output for more details.");
+        }
+        finally
+        {
+            if (loadingFrame != null)
+                loadingFrame.close();
+        }
     }
 
     /**
@@ -1319,8 +1830,10 @@ public class Loader
      * The resulting sequences are automatically displayed when the process complete.
      * 
      * @param importer
-     *        Importer used to open and load images.<br>
-     *        If set to <code>null</code> the first compatible importer will be used.
+     *        Importer used to open and load image files.<br>
+     *        If set to <code>null</code> the loader will search for a compatible importer and if
+     *        several importers match the user will have to select the appropriate one from a
+     *        selection dialog.
      * @param paths
      *        list of image file to load
      * @param separate
@@ -1350,34 +1863,101 @@ public class Loader
     }
 
     /**
-     * Load the specified image files.<br>
-     * The loading process is asynchronous.<br>
-     * If <i>separate</i> is false the loader try to set image in the same sequence.<br>
-     * If <i>separate</i> is true each image is loaded in a separate sequence.<br>
+     * Load the specified files (asynchronous process) by using automatically the appropriate
+     * {@link FileImporter} or {@link SequenceFileImporter}. If several importers match to open the
+     * file the user will have to select the appropriate one from a selection dialog.<br>
+     * <br>
+     * If the specified files are image files:<br>
+     * When <i>separate</i> is <code>false</code> the loader try to set image in the same sequence.<br>
+     * When <i>separate</i> is <code>true</code> each image is loaded in a separate sequence.<br>
      * The resulting sequences are automatically displayed when the process complete.
      * 
      * @param paths
-     *        list of image file to load
+     *        list of file to load
      * @param separate
-     *        Force image to be loaded in separate sequence
+     *        Force image to be loaded in separate sequence (image files only)
      * @param autoOrder
-     *        Try to order image in sequence from their filename
+     *        Try to order image in sequence from their filename (image files only)
      * @param showProgress
      *        Show progression in loading process
      */
     public static void load(final List<String> paths, final boolean separate, final boolean autoOrder,
             final boolean showProgress)
     {
-        load(null, paths, separate, autoOrder, showProgress);
+        // asynchronous call
+        ThreadUtil.bgRun(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // detect if this is a complete folder load
+                final boolean directory = (paths.size() == 1) && new File(paths.get(0)).isDirectory();
+                // explode path list
+                final List<String> singlePaths = explodeAndClean(paths);
+
+                // get the sequence importer first
+                final Map<SequenceFileImporter, List<String>> sequenceFileImporters = getSequenceFileImporters(
+                        singlePaths, false);
+
+                for (Entry<SequenceFileImporter, List<String>> entry : sequenceFileImporters.entrySet())
+                {
+                    final SequenceFileImporter importer = entry.getKey();
+                    final List<String> currPaths = entry.getValue();
+                    final boolean dir = directory && (sequenceFileImporters.size() == 1)
+                            && (currPaths.size() == singlePaths.size());
+
+                    // load sequence
+                    final List<Sequence> sequences = loadSequences(importer, currPaths, -1, separate, autoOrder, dir,
+                            true, showProgress);
+                    // and display them
+                    for (Sequence seq : sequences)
+                        Icy.getMainInterface().addSequence(seq);
+
+                    // remove loaded files
+                    singlePaths.removeAll(currPaths);
+                }
+
+                if (singlePaths.size() > 0)
+                {
+                    // get the file importer now for remaining file
+                    final Map<FileImporter, List<String>> fileImporters = getFileImporters(singlePaths, false);
+
+                    for (Entry<FileImporter, List<String>> entry : fileImporters.entrySet())
+                    {
+                        final FileImporter importer = entry.getKey();
+                        final List<String> currPaths = entry.getValue();
+
+                        // load files
+                        loadFiles(importer, paths, true, showProgress);
+
+                        // remove loaded files
+                        singlePaths.removeAll(currPaths);
+                    }
+                }
+
+                // remaining files ?
+                if (singlePaths.size() > 0)
+                {
+                    // just log in console
+                    System.err.println("No compatible importer found for the following files:");
+                    for (String path : singlePaths)
+                        System.err.println(path);
+                    System.err.println();
+                }
+            }
+        });
     }
 
     /**
-     * Load the specified image file.<br>
-     * The loading process is asynchronous and the resulting sequence is automatically displayed
-     * when the process complete.
+     * Load the specified file (asynchronous process) by using automatically the appropriate
+     * {@link FileImporter} or {@link SequenceFileImporter}. If several importers match to open the
+     * file the user will have to select the appropriate one from a selection dialog.<br>
+     * <br>
+     * If the specified file is an image file, the resulting sequence is automatically displayed
+     * when process complete.
      * 
      * @param path
-     *        image file to load
+     *        file to load
      * @param showProgress
      *        Show progression of loading process.
      */
@@ -1387,17 +1967,16 @@ public class Loader
     }
 
     /**
-     * @deprecated Use
-     *             {@link #loadSequences(List, int, boolean, boolean, boolean, boolean, boolean)}
+     * @deprecated Use {@link #loadSequences(List, int, boolean, boolean, boolean, boolean)}
      *             instead.
      */
     @Deprecated
-    static Sequence[] loadSequences(File[] files, int serie, boolean separate, boolean autoOrder, boolean directory,
-            boolean addToRecent, boolean showProgress)
+    static Sequence[] loadSequences(SequenceFileImporter importer, File[] files, int serie, boolean separate,
+            boolean autoOrder, boolean directory, boolean addToRecent, boolean showProgress)
     {
         final List<String> paths = CollectionUtil.asList(FileUtil.toPaths(files));
-        final List<Sequence> result = loadSequences(null, paths, serie, separate, autoOrder, directory, addToRecent,
-                showProgress);
+        final List<Sequence> result = loadSequences(importer, paths, serie, separate, autoOrder, directory,
+                addToRecent, showProgress);
         return result.toArray(new Sequence[result.size()]);
     }
 
@@ -1408,8 +1987,7 @@ public class Loader
      * As this method can take sometime, you should not call it from the EDT.<br>
      * 
      * @param importer
-     *        Importer used to open and load images.<br>
-     *        If set to <code>null</code> the first compatible importer will be used.
+     *        Importer used to open and load images.
      * @param paths
      *        list of image file to load
      * @param serie
@@ -1418,10 +1996,10 @@ public class Loader
      *        serie selector dialog.
      * @param separate
      *        Force image to be loaded in separate sequence
+     * @param autoOrder
+     *        If set to true then images are automatically orderer from their filename.
      * @param directory
      *        Specify is the source is a single complete directory
-     * @param display
-     *        If set to true sequences will be automatically displayed after being loaded.
      * @param addToRecent
      *        If set to true the files list will be traced in recent opened sequence.
      * @param showProgress

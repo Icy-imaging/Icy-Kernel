@@ -54,15 +54,19 @@ public abstract class SearchResultProducer implements Comparable<SearchResultPro
                 doSearch(words, consumer);
             else
             {
+                final boolean notEmpty;
+
                 synchronized (results)
                 {
                     // clear the list if necessary
-                    if (!results.isEmpty())
-                    {
+                    notEmpty = !results.isEmpty();
+                    if (notEmpty)
                         results.clear();
-                        consumer.resultsChanged(SearchResultProducer.this);
-                    }
                 }
+
+                // avoid death lock by sending event after synchronization
+                if (notEmpty)
+                    consumer.resultsChanged(SearchResultProducer.this);
             }
 
             // search completed (do it after searching set to false)

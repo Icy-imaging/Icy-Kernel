@@ -159,7 +159,7 @@ public class GeneralActions
 
                         return true;
                     }
-                    catch (Exception e1)
+                    catch (Throwable e1)
                     {
                         System.err.println("Can't copy image to clipboard:");
                         IcyExceptionHandler.showErrorMessage(e1, false);
@@ -198,7 +198,7 @@ public class GeneralActions
                     Icy.getMainInterface().addSequence(new Sequence("Clipboard image", ImageUtil.toBufferedImage(img)));
                     return true;
                 }
-                catch (Exception e1)
+                catch (Throwable e1)
                 {
                     System.err.println("Can't paste image from clipboard:");
                     IcyExceptionHandler.showErrorMessage(e1, false);

@@ -39,7 +39,7 @@ import javax.swing.event.ChangeListener;
 
 import loci.formats.ome.OMEXMLMetadataImpl;
 
-public class ImageLoaderOptionPanel extends JPanel
+public class LoaderOptionPanel extends JPanel
 {
     private class PreviewUpdater extends Thread
     {
@@ -77,39 +77,6 @@ public class ImageLoaderOptionPanel extends JPanel
 
                     // then thumbnail
                     preview.setImage(Loader.loadThumbnail(fileId, 0));
-
-                    // try
-                    // {
-                    // final int sizeC = reader.getSizeC();
-                    //
-                    // // load metadata first
-                    // preview.setTitle(reader.getFormat());
-                    // preview.setInfos(reader.getSizeX() + " x " + reader.getSizeY() + " - " +
-                    // reader.getSizeZ()
-                    // + "Z x " + reader.getSizeT() + "T");
-                    // preview.setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
-                    // + DataType.getDataTypeFromFormatToolsType(reader.getPixelType()) + ")");
-                    //
-                    // // then image
-                    // final IcyBufferedImage img =
-                    // Loader.getThIcyBufferedImage.createThumbnailFrom(reader,
-                    // reader.getSizeZ() / 2, reader.getSizeT() / 2);
-                    // final IcyBufferedImage img = IcyBufferedImage.createThumbnailFrom(reader,
-                    // reader.getSizeZ() / 2, reader.getSizeT() / 2);
-                    // preview.setImage(IcyBufferedImageUtil.getARGBImage(img));
-                    //
-                    // }
-                    // finally
-                    // {
-                    // try
-                    // {
-                    // reader.close();
-                    // }
-                    // catch (IOException e)
-                    // {
-                    // // ignore
-                    // }
-                    // }
                 }
                 catch (Exception e)
                 {
@@ -148,7 +115,7 @@ public class ImageLoaderOptionPanel extends JPanel
     /**
      * Create the panel.
      */
-    public ImageLoaderOptionPanel(boolean separate, boolean autoOrder)
+    public LoaderOptionPanel(boolean separate, boolean autoOrder)
     {
         super();
 
