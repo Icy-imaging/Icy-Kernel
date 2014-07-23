@@ -22,6 +22,7 @@ import icy.gui.main.MainFrame;
 import icy.gui.util.SwingUtil;
 import icy.main.Icy;
 import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.util.ReflectionUtil;
 import ij.ImageJ;
@@ -76,7 +77,7 @@ public class ImageJWrapper extends ImageJ
      */
     final ArrayList<ImageJActiveImageListener> listeners;
     MenuBar menuBarSave;
-    
+
     public ImageJWrapper()
     {
         // silent creation
@@ -92,7 +93,6 @@ public class ImageJWrapper extends ImageJ
         // toolbar
         swingToolBar = new ToolbarWrapper(this);
         swingPanel.add(swingToolBar.getSwingComponent(), BorderLayout.CENTER);
-
         try
         {
             // patch imageJ toolbar to uses our wrapper
@@ -132,6 +132,17 @@ public class ImageJWrapper extends ImageJ
         listeners = new ArrayList<ImageJWrapper.ImageJActiveImageListener>();
     }
 
+    @Override
+    public void removeNotify()
+    {
+        // TODO: remove this temporary hack when the "window dispose" bug will be fixed
+        // on the OpenJDK / Sun JVM
+        if (SystemUtil.isUnix())
+            swingPanel.remove(swingToolBar);
+
+        super.removeNotify();
+    }
+
     void updateMenu()
     {
         ThreadUtil.invokeLater(new Runnable()
@@ -153,7 +164,7 @@ public class ImageJWrapper extends ImageJ
             }
         });
     }
-    
+
     public void setActiveImage(ImageWindow iw)
     {
         // notify active image changed
@@ -246,7 +257,7 @@ public class ImageJWrapper extends ImageJ
     @Override
     public void setMenuBar(MenuBar mb)
     {
-    	menuBarSave = mb;
+        menuBarSave = mb;
         menuChanged();
     }
 
@@ -255,7 +266,7 @@ public class ImageJWrapper extends ImageJ
     {
         return swingPanel.createImage(width, height);
     }
-    
+
     public void addActiveImageListener(ImageJActiveImageListener listener)
     {
         listeners.add(listener);

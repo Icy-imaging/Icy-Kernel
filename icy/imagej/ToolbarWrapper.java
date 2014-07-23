@@ -21,6 +21,7 @@ package icy.imagej;
 import icy.gui.util.LookAndFeelUtil;
 import icy.gui.util.LookAndFeelUtil.WeakSkinChangeListener;
 import icy.system.IcyExceptionHandler;
+import icy.system.SystemUtil;
 import icy.util.ColorUtil;
 import icy.util.ReflectionUtil;
 import ij.IJ;
@@ -32,7 +33,6 @@ import java.awt.Graphics;
 import java.awt.MenuComponent;
 import java.awt.PopupMenu;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
@@ -69,16 +69,41 @@ public class ToolbarWrapper extends Toolbar
         @Override
         protected void paintComponent(Graphics g)
         {
+            ToolbarWrapper.this.paint(g);
+            
+            // try
+            // {
+            // if (drawButtonsMethod != null)
+            // drawButtonsMethod.invoke(ToolbarWrapper.this, g);
+            // }
+            // catch (Exception e)
+            // {
+            // IcyExceptionHandler.showErrorMessage(e, false);
+            // System.err.println("Cannot redraw toolbar buttons from ImageJ.");
+            // }
+        }
+
+        @Override
+        public void removeNotify()
+        {
             try
             {
-                if (drawButtonsMethod != null)
-                    drawButtonsMethod.invoke(ToolbarWrapper.this, g);
+                // TODO: remove this temporary hack when the "window dispose" bug will be fixed
+                // on the OpenJDK / Sun JVM
+                if (SystemUtil.isUnix())
+                {
+                    @SuppressWarnings("rawtypes")
+                    Vector pp = (Vector) ReflectionUtil.getFieldObject(this, "popups", true);
+                    pp.clear();
+                }
             }
             catch (Exception e)
             {
                 IcyExceptionHandler.showErrorMessage(e, false);
-                System.err.println("Cannot redraw toolbar buttons from ImageJ.");
+                System.err.println("Cannot remove toolbar buttons from ImageJ.");
             }
+
+            super.removeNotify();
         }
     }
 
@@ -94,7 +119,7 @@ public class ToolbarWrapper extends Toolbar
     /**
      * leaked methods and fields
      */
-    Method drawButtonsMethod;
+    // Method drawButtonsMethod;
     Field grayField;
     Field brighterField;
     Field darkerField;
@@ -123,6 +148,7 @@ public class ToolbarWrapper extends Toolbar
             @SuppressWarnings("rawtypes")
             final Vector popups = (Vector) ((Vector) ReflectionUtil.getFieldObject(this, "popups", true)).clone();
 
+            // transfer all popup from original toolbar to the swing toolbar
             for (Object obj : popups)
             {
                 final PopupMenu popup = (PopupMenu) obj;
@@ -132,13 +158,15 @@ public class ToolbarWrapper extends Toolbar
             }
 
             // get access to private methods
-            drawButtonsMethod = ReflectionUtil.getMethod(this, "drawButtons", true, Graphics.class);
+            // drawButtonsMethod = ReflectionUtil.getMethod(this.getClass(), "drawButtons", true,
+            // Graphics.class);
+            
             // get access to private fields
-            grayField = ReflectionUtil.getField(this, "gray", true);
-            brighterField = ReflectionUtil.getField(this, "brighter", true);
-            darkerField = ReflectionUtil.getField(this, "darker", true);
-            evenDarkerField = ReflectionUtil.getField(this, "evenDarker", true);
-            toolColorField = ReflectionUtil.getField(this, "toolColor", true);
+            grayField = ReflectionUtil.getField(this.getClass(), "gray", true);
+            brighterField = ReflectionUtil.getField(this.getClass(), "brighter", true);
+            darkerField = ReflectionUtil.getField(this.getClass(), "darker", true);
+            evenDarkerField = ReflectionUtil.getField(this.getClass(), "evenDarker", true);
+            toolColorField = ReflectionUtil.getField(this.getClass(), "toolColor", true);
         }
         catch (Exception e)
         {
@@ -183,6 +211,8 @@ public class ToolbarWrapper extends Toolbar
                         evenDarkerField.set(ToolbarWrapper.this, evenDarkerCol);
                     if (toolColorField != null)
                         toolColorField.set(ToolbarWrapper.this, LookAndFeelUtil.getForeground(swingComponent));
+
+                    swingComponent.repaint();
                 }
                 catch (Exception e)
                 {
@@ -250,13 +280,12 @@ public class ToolbarWrapper extends Toolbar
         return swingComponent.getGraphics();
     }
 
-    /**
-     * Rebuild swing toolbar component
-     */
-    protected void rebuild()
-    {
-        swingComponent.removeAll();
-
-        swingComponent.validate();
-    }
+    // /**
+    // * Rebuild swing toolbar component
+    // */
+    // protected void rebuild()
+    // {
+    // swingComponent.removeAll();
+    // swingComponent.validate();
+    // }
 }

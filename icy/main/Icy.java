@@ -821,6 +821,30 @@ public class Icy
             }
         }
 
+        // add lib folder for unix system
+        if (SystemUtil.isUnix())
+        {
+            directories.add("/lib");
+            directories.add("/usr/lib");
+            
+            if (SystemUtil.is64bits())
+            {
+                directories.add("/lib64");
+                directories.add("/lib/x86_64");
+                directories.add("/lib/x86_64-linux-gnu");
+                directories.add("/usr/lib64");
+                directories.add("/usr/lib/x86_64");
+                directories.add("/usr/lib/x86_64-linux-gnu");
+            }
+            else
+            {
+                directories.add("/lib/x86");
+                directories.add("/lib/x86-linux-gnu");
+                directories.add("/usr/lib/x86");
+                directories.add("/usr/lib/x86-linux-gnu");
+            }
+        }
+
         if (!SystemUtil.addToJavaLibraryPath(directories.toArray(new String[directories.size()])))
             System.err.println("Native libraries may won't load correctly.");
 
@@ -836,125 +860,6 @@ public class Icy
         SystemUtil.setProperty("com.sun.media.jai.disableMediaLib", "true");
     }
 
-    // private static void loadVtkLibrary_old(String libPath, boolean osChanged)
-    // {
-    // final String vtkLibPath = libPath + FileUtil.separator + "vtk";
-    //
-    // try
-    // {
-    // if (SystemUtil.isWindow())
-    // {
-    // loadLibrary(vtkLibPath, "vtksys");
-    // loadLibrary(vtkLibPath, "vtkCommon");
-    // loadLibrary(vtkLibPath, "vtkFiltering");
-    // loadLibrary(vtkLibPath, "vtkDICOMParser");
-    // loadLibrary(vtkLibPath, "vtkNetCDF");
-    // loadLibrary(vtkLibPath, "vtkNetCDF_cxx");
-    // loadLibrary(vtkLibPath, "vtkzlib");
-    // loadLibrary(vtkLibPath, "vtkmetaio");
-    // loadLibrary(vtkLibPath, "vtkpng");
-    // loadLibrary(vtkLibPath, "vtkjpeg");
-    // loadLibrary(vtkLibPath, "vtktiff");
-    // loadLibrary(vtkLibPath, "vtkexpat");
-    // loadLibrary(vtkLibPath, "vtkIO");
-    // loadLibrary(vtkLibPath, "vtkImaging");
-    // loadLibrary(vtkLibPath, "vtkverdict");
-    // loadLibrary(vtkLibPath, "vtkGraphics");
-    // loadLibrary(vtkLibPath, "vtkfreetype");
-    // loadLibrary(vtkLibPath, "vtkftgl");
-    // loadLibrary(vtkLibPath, "vtkRendering");
-    // loadLibrary(vtkLibPath, "vtkexoIIc");
-    // loadLibrary(vtkLibPath, "vtkHybrid");
-    // loadLibrary(vtkLibPath, "vtkGenericFiltering");
-    // loadLibrary(vtkLibPath, "vtklibxml2");
-    // loadLibrary(vtkLibPath, "vtkalglib");
-    // loadLibrary(vtkLibPath, "vtkInfovis");
-    // loadLibrary(vtkLibPath, "vtkWidgets");
-    // loadLibrary(vtkLibPath, "vtkViews");
-    // loadLibrary(vtkLibPath, "vtkVolumeRendering");
-    // loadLibrary(vtkLibPath, "vtkCharts");
-    // loadLibrary(vtkLibPath, "vtkproj4");
-    // loadLibrary(vtkLibPath, "vtkGeovis");
-    // }
-    //
-    // final String prefix;
-    //
-    // // VTK library loading from inner directory do not work on MAC OSX
-    // // so we have to copy lib files to the root
-    // if (SystemUtil.isMac())
-    // {
-    // // get VTK library file list (we don't want hidden files if any)
-    // final File[] libraryFiles = FileUtil.getFiles(new File(vtkLibPath), null, true, false,
-    // false);
-    // // copy to root directory
-    // for (File libraryFile : libraryFiles)
-    // {
-    // // get destination file (directly copy in root application directory)
-    // final File dstFile = new File(libraryFile.getName());
-    //
-    // // check if we need to copy the file
-    // if (osChanged || !dstFile.exists() || (dstFile.lastModified() != libraryFile.lastModified()))
-    // FileUtil.copy(libraryFile.getPath(), dstFile.getPath(), true, false);
-    // }
-    //
-    // prefix = null;
-    // }
-    // else
-    // {
-    // // else we load it directly from inner lib path
-    // System.setProperty("vtk.lib.dir", vtkLibPath);
-    // prefix = vtkLibPath;
-    // }
-    //
-    // // use the VTK native method to load library so it don't try to load them later...
-    // vtkNativeLibrary.COMMON.LoadLibrary();
-    // vtkNativeLibrary.FILTERING.LoadLibrary();
-    // vtkNativeLibrary.IO.LoadLibrary();
-    // vtkNativeLibrary.IMAGING.LoadLibrary();
-    // vtkNativeLibrary.GRAPHICS.LoadLibrary();
-    // vtkNativeLibrary.RENDERING.LoadLibrary();
-    // try
-    // {
-    // vtkNativeLibrary.HYBRID.LoadLibrary();
-    // }
-    // catch (UnsatisfiedLinkError e)
-    // {
-    // System.out.println("cannot load vtkHybrid, skipping...");
-    // }
-    // loadLibrary(prefix, "vtkGenericFilteringJava", true);
-    // vtkNativeLibrary.INFOVIS.LoadLibrary();
-    // vtkNativeLibrary.WIDGETS.LoadLibrary();
-    // vtkNativeLibrary.VIEWS.LoadLibrary();
-    // vtkNativeLibrary.VOLUME_RENDERING.LoadLibrary();
-    // try
-    // {
-    // vtkNativeLibrary.CHARTS.LoadLibrary();
-    // }
-    // catch (UnsatisfiedLinkError e)
-    // {
-    // System.out.println("cannot load vtkHybrid, skipping...");
-    // }
-    // try
-    // {
-    // vtkNativeLibrary.GEOVIS.LoadLibrary();
-    // }
-    // catch (UnsatisfiedLinkError e)
-    // {
-    // System.out.println("cannot load vtkHybrid, skipping...");
-    // }
-    // loadLibrary(prefix, "vtkParallelJava", false, true);
-    //
-    // vtkNativeLibrary.DisableOutputWindow(new File("vtk.log"));
-    //
-    // System.out.println("VTK library successfully loaded...");
-    // vtkLibraryLoaded = true;
-    // }
-    // catch (Throwable e)
-    // {
-    // System.out.println("Cannot load VTK library...");
-    // }
-    // }
-
     private static void loadVtkLibrary(String libPath)
     {
         final String vtkLibPath = libPath + FileUtil.separator + "vtk";
@@ -965,16 +870,16 @@ public class Icy
         vtkLibraryLoaded = false;
         try
         {
-            if (SystemUtil.isUnix())
-            {
-                vtkNativeLibrary.LoadAllNativeLibraries();
-
-                // assume VTK loaded if at least 1 native library is loaded
-                for (vtkNativeLibrary lib : vtkNativeLibrary.values())
-                    if (lib.IsLoaded())
-                        vtkLibraryLoaded = true;
-            }
-            else
+            // if (SystemUtil.isUnix())
+            // {
+            // vtkNativeLibrary.LoadAllNativeLibraries();
+            //
+            // // assume VTK loaded if at least 1 native library is loaded
+            // for (vtkNativeLibrary lib : vtkNativeLibrary.values())
+            // if (lib.IsLoaded())
+            // vtkLibraryLoaded = true;
+            // }
+            // else
             {
                 loadLibrary(vtkLibPath, "vtkalglib");
                 loadLibrary(vtkLibPath, "vtkexpat");
@@ -1030,7 +935,7 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkIOXML");
                 loadLibrary(vtkLibPath, "vtkIOImage");
 
-                if (SystemUtil.isMac())
+                if (SystemUtil.isMac() || SystemUtil.isUnix())
                     loadLibrary(vtkLibPath, "vtksqlite");
 
                 loadLibrary(vtkLibPath, "vtkIOSQL");
