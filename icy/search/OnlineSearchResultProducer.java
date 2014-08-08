@@ -40,6 +40,7 @@ public abstract class OnlineSearchResultProducer extends SearchResultProducer
 {
     protected static final String SEARCH_URL = "http://bioimageanalysis.org/icy/search/search.php?search=";
     protected static final long REQUEST_INTERVAL = 400;
+    protected static final long MAXIMUM_SEARCH_TIME = 10000;
 
     // we want to have only one online search shared between all online providers
     protected static volatile boolean searchingOnline = false;
@@ -94,8 +95,9 @@ public abstract class OnlineSearchResultProducer extends SearchResultProducer
 
                 int retry = 0;
 
-                // let's 10 try to get the result
-                while ((document == null) && (retry < 10))
+                // let's 5 tries to get the result
+                while (((System.currentTimeMillis() - startTime) < MAXIMUM_SEARCH_TIME) && (document == null)
+                        && (retry < 5))
                 {
                     // we use an online request as website can search in plugin documentation
                     document = XMLUtil.loadDocument(URLUtil.getURL(request), false);

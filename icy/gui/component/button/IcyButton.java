@@ -23,6 +23,7 @@ import icy.gui.util.ComponentUtil;
 import icy.resource.icon.IcyIcon;
 import icy.util.StringUtil;
 
+import java.awt.Dimension;
 import java.awt.Image;
 
 import javax.swing.Action;
@@ -279,7 +280,12 @@ public class IcyButton extends JButton
 
         // adjust size to icon size if no text
         if (flat && (icon != null) && noText)
-            ComponentUtil.setFixedSize(this, icon.getDimension());
+        {
+            final Dimension dim = icon.getDimension();
+            dim.height += 2;
+            dim.width += 2;
+            ComponentUtil.setFixedSize(this, dim);
+        }
     }
 
     @Override

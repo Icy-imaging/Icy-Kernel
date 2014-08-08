@@ -221,10 +221,11 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public ArrayList<JInternalFrame> getInternalFrames()
     {
-        if (mainFrame != null)
-            return mainFrame.getInternalFrames();
+        if (mainFrame == null)
+            return new ArrayList<JInternalFrame>();
 
-        return new ArrayList<JInternalFrame>();
+        return mainFrame.getInternalFrames();
+
     }
 
     /**
@@ -239,29 +240,36 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public InspectorPanel getInspector()
     {
+        if (mainFrame == null)
+            return null;
+
         return mainFrame.getInspector();
     }
 
     @Override
     public RoisPanel getRoisPanel()
     {
+        if (mainFrame == null)
+            return null;
+
         final InspectorPanel inspector = mainFrame.getInspector();
+        if (inspector == null)
+            return null;
 
-        if (inspector != null)
-            return inspector.getRoisPanel();
-
-        return null;
+        return inspector.getRoisPanel();
     }
 
     @Override
     public LayersPanel getLayersPanel()
     {
+        if (mainFrame == null)
+            return null;
+
         final InspectorPanel inspector = mainFrame.getInspector();
+        if (inspector == null)
+            return null;
 
-        if (inspector != null)
-            return inspector.getLayersPanel();
-
-        return null;
+        return inspector.getLayersPanel();
     }
 
     @Override
@@ -380,12 +388,18 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public IcyDesktopPane getDesktopPane()
     {
+        if (mainFrame == null)
+            return null;
+
         return mainFrame.getDesktopPane();
     }
 
     @Override
     public ApplicationMenu getApplicationMenu()
     {
+        if (mainFrame == null)
+            return null;
+
         return mainFrame.getApplicationMenu();
     }
 
@@ -784,52 +798,67 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public ImageJWrapper getImageJ()
     {
-        if (mainFrame != null)
-            return mainFrame.getMainRibbon().getImageJ();
+        if (mainFrame == null)
+            return null;
 
-        return null;
+        return mainFrame.getMainRibbon().getImageJ();
     }
 
     @Override
     public String getSelectedTool()
     {
+        if (mainFrame == null)
+            return null;
+
         return mainFrame.getMainRibbon().getToolRibbon().getSelected();
     }
 
     @Override
     public void setSelectedTool(String command)
     {
-        mainFrame.getMainRibbon().getToolRibbon().setSelected(command);
+        if (mainFrame != null)
+            mainFrame.getMainRibbon().getToolRibbon().setSelected(command);
     }
 
     @Override
     public ToolRibbonTask getToolRibbon()
     {
+        if (mainFrame == null)
+            return null;
+
         return mainFrame.getMainRibbon().getToolRibbon();
     }
 
     @Override
     public boolean isAlwaysOnTop()
     {
+        if (mainFrame == null)
+            return false;
+
         return mainFrame.isAlwaysOnTop();
     }
 
     @Override
     public void setAlwaysOnTop(boolean value)
     {
-        mainFrame.setAlwaysOnTop(value);
+        if (mainFrame != null)
+            mainFrame.setAlwaysOnTop(value);
     }
 
     @Override
     public boolean isDetachedMode()
     {
+        if (mainFrame == null)
+            return false;
+
         return mainFrame.isDetachedMode();
     }
 
     @Override
     public void setDetachedMode(boolean value)
     {
-        mainFrame.setDetachedMode(value);
+        if (mainFrame != null)
+            mainFrame.setDetachedMode(value);
     }
 
     @Override

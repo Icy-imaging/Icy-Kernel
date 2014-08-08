@@ -283,10 +283,8 @@ public class SequencePersistent implements XMLPersistent
         {
             XMLUtil.removeAllChildren(nodeROIs);
 
-            final List<ROI> rois = sequence.getROIs();
-
-            // sort on id
-            Collections.sort(rois, ROI.idComparator);
+            // get sorted ROIs
+            final List<ROI> rois = sequence.getROIs(true);
 
             // set rois in the XML node
             ROI.saveROIsToXML(nodeROIs, rois);

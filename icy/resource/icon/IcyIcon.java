@@ -250,7 +250,7 @@ public class IcyIcon implements ResizableIcon
 
     public Dimension getDimension()
     {
-        return dim;
+        return new Dimension(dim);
     }
 
     @Override

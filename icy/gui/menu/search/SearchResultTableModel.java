@@ -18,10 +18,10 @@
  */
 package icy.gui.menu.search;
 
-import icy.search.SearchEngine;
 import icy.search.SearchResult;
 import icy.search.SearchResultProducer;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
@@ -35,13 +35,13 @@ public class SearchResultTableModel extends AbstractTableModel
 
     public static final int COL_RESULT_OBJECT = 1;
 
-    private final SearchEngine searchEngine;
     private int maxRowCount;
+    private List<SearchResult> results;
 
-    public SearchResultTableModel(SearchEngine searchEngine, int maxRowCount)
+    public SearchResultTableModel(int maxRowCount)
     {
-        this.searchEngine = searchEngine;
         this.maxRowCount = maxRowCount;
+        results = new ArrayList<SearchResult>();
     }
 
     public int getMaxRowCount()
@@ -67,7 +67,7 @@ public class SearchResultTableModel extends AbstractTableModel
     @Override
     public int getRowCount()
     {
-        final int size = searchEngine.getResults().size();
+        final int size = results.size();
 
         if (maxRowCount > 0)
             return Math.min(maxRowCount, size);
@@ -84,7 +84,6 @@ public class SearchResultTableModel extends AbstractTableModel
     @Override
     public Object getValueAt(int rowIndex, int columnIndex)
     {
-        final List<SearchResult> results = searchEngine.getResults();
         int resultsCount = results.size();
 
         // limit to maxRow
@@ -114,5 +113,10 @@ public class SearchResultTableModel extends AbstractTableModel
         }
 
         return null;
+    }
+
+    public void setResults(List<SearchResult> results)
+    {
+        this.results = results;
     }
 }

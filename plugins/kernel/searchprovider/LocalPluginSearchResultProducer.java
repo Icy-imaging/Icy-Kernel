@@ -27,6 +27,7 @@ import icy.search.SearchResultConsumer;
 import icy.search.SearchResultProducer;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is used to provide installed plugin elements to the search engine.
@@ -88,8 +89,7 @@ public class LocalPluginSearchResultProducer extends SearchResultProducer
     public void doSearch(String[] words, SearchResultConsumer consumer)
     {
         final boolean shortSearch = PluginSearchResultProducerHelper.getShortSearch(words);
-
-        final ArrayList<SearchResult> tmpResults = new ArrayList<SearchResult>();
+        final List<SearchResult> tmpResults = new ArrayList<SearchResult>();
 
         for (PluginDescriptor plugin : PluginLoader.getPlugins())
         {

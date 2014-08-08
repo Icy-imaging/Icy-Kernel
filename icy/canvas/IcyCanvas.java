@@ -158,7 +158,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                     return 0;
                 if (p.getClassName().equals(VtkCanvasPlugin.class.getName()))
                     return 1;
-                
+
                 return 10;
             }
         });
@@ -406,7 +406,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      * internals
      */
     protected LUT lut;
-    protected boolean synchHeader;
+    protected boolean synchMaster;
     protected boolean orderedLayersOutdated;
 
     /**
@@ -425,7 +425,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         layers = new HashMap<Overlay, Layer>();
         orderedLayers = new ArrayList<Layer>();
         syncId = 0;
-        synchHeader = false;
+        synchMaster = false;
         orderedLayersOutdated = false;
         updater = new UpdateEventHandler(this, false);
 
@@ -905,24 +905,33 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     /**
      * Return true if current canvas is synchronized and is currently the synchronize leader.
      */
-    public boolean isSynchHeader()
+    public boolean isSynchMaster()
     {
-        return synchHeader;
+        return synchMaster;
     }
 
     /**
-     * Return true if current canvas is synchronized and it's not the synchronize header
+     * @deprecated Use {@link #isSynchMaster()} instead.
+     */
+    @Deprecated
+    public boolean isSynchHeader()
+    {
+        return isSynchMaster();
+    }
+
+    /**
+     * Return true if current canvas is synchronized and it's not the synchronize master
      */
     public boolean isSynchSlave()
     {
         if (isSynchronized())
         {
-            if (isSynchHeader())
+            if (isSynchMaster())
                 return false;
 
-            // search for a header in synchronized canvas
+            // search for a master in synchronized canvas
             for (IcyCanvas cnv : getSynchronizedCanvas())
-                if (cnv.isSynchHeader())
+                if (cnv.isSynchMaster())
                     return true;
         }
 
@@ -954,34 +963,61 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Return true if we get the synchronizer header from synchronized canvas
+     * Return true if we get the synchronizer master from synchronized canvas
      */
-    protected boolean getSynchHeader()
+    protected boolean getSynchMaster()
     {
-        return getSynchHeader(getSynchronizedCanvas());
+        return getSynchMaster(getSynchronizedCanvas());
     }
 
     /**
-     * Return true if we get the synchronizer header from specified canvas list.
+     * @deprecated Use {@link #getSynchMaster()} instead.
      */
-    protected boolean getSynchHeader(List<IcyCanvas> canvasList)
+    @Deprecated
+    protected boolean getSynchHeader()
+    {
+        return getSynchMaster();
+    }
+
+    /**
+     * Return true if we get the synchronizer master from specified canvas list.
+     */
+    protected boolean getSynchMaster(List<IcyCanvas> canvasList)
     {
         for (IcyCanvas canvas : canvasList)
-            if (canvas.isSynchHeader())
+            if (canvas.isSynchMaster())
                 return canvas == this;
 
-        // no header found so we are header
-        synchHeader = true;
+        // no master found so we are master
+        synchMaster = true;
 
         return true;
     }
 
     /**
-     * Release synchronizer header
+     * @deprecated Use {@link #getSynchMaster(List)} instead.
      */
+    @Deprecated
+    protected boolean getSynchHeader(List<IcyCanvas> canvasList)
+    {
+        return getSynchMaster(canvasList);
+    }
+
+    /**
+     * Release synchronizer master
+     */
+    protected void releaseSynchMaster()
+    {
+        synchMaster = false;
+    }
+
+    /**
+     * @deprecated Use {@link #releaseSynchMaster()} instead.
+     */
+    @Deprecated
     protected void releaseSynchHeader()
     {
-        synchHeader = false;
+        releaseSynchMaster();
     }
 
     /**
@@ -989,11 +1025,11 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     private List<IcyCanvas> getSynchronizedCanvas()
     {
-        final ArrayList<IcyCanvas> result = new ArrayList<IcyCanvas>();
+        final List<IcyCanvas> result = new ArrayList<IcyCanvas>();
 
         if (isSynchronized())
         {
-            final ArrayList<Viewer> viewers = Icy.getMainInterface().getViewers();
+            final List<Viewer> viewers = Icy.getMainInterface().getViewers();
 
             for (int i = viewers.size() - 1; i >= 0; i--)
             {
@@ -4190,8 +4226,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         {
             final List<IcyCanvas> synchCanvasList = getSynchronizedCanvas();
 
-            // this is the synchronizer header so dispatch view changes to others canvas
-            if (getSynchHeader(synchCanvasList))
+            // this is the synchronizer master so dispatch view changes to others canvas
+            if (getSynchMaster(synchCanvasList))
             {
                 try
                 {
@@ -4201,7 +4237,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
                 }
                 finally
                 {
-                    releaseSynchHeader();
+                    releaseSynchMaster();
                 }
             }
         }

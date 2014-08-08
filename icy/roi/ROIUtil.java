@@ -564,7 +564,7 @@ public class ROIUtil
      *        {@link BooleanOperator} to apply.
      * @return {@link ROI} representing the result of the merge operation.
      */
-    public static ROI merge(List<? extends ROI> rois, BooleanOperator operator)
+    public static ROI merge(List<? extends ROI> rois, BooleanOperator operator) throws UnsupportedOperationException
     {
         if (rois.size() == 0)
             return null;
@@ -595,7 +595,7 @@ public class ROIUtil
     /**
      * Builds and returns a ROI corresponding to the union of the specified ROI list.
      */
-    public static ROI getUnion(List<? extends ROI> rois)
+    public static ROI getUnion(List<? extends ROI> rois) throws UnsupportedOperationException
     {
         return merge(rois, BooleanOperator.OR);
     }
@@ -603,7 +603,7 @@ public class ROIUtil
     /**
      * Builds and returns a ROI corresponding to the exclusive union of the specified ROI list.
      */
-    public static ROI getExclusiveUnion(List<? extends ROI> rois)
+    public static ROI getExclusiveUnion(List<? extends ROI> rois)  throws UnsupportedOperationException
     {
         return merge(rois, BooleanOperator.XOR);
     }
@@ -611,7 +611,7 @@ public class ROIUtil
     /**
      * Builds and returns a ROI corresponding to the intersection of the specified ROI list.
      */
-    public static ROI getIntersection(List<? extends ROI> rois)
+    public static ROI getIntersection(List<? extends ROI> rois) throws UnsupportedOperationException
     {
         return merge(rois, BooleanOperator.AND);
     }
@@ -622,7 +622,7 @@ public class ROIUtil
      * 
      * @return {@link ROI} representing the result of subtraction.
      */
-    public static ROI subtract(ROI roi1, ROI roi2)
+    public static ROI subtract(ROI roi1, ROI roi2) throws UnsupportedOperationException
     {
         return roi1.getSubtraction(roi2);
     }

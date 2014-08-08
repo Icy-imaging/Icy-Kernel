@@ -158,6 +158,13 @@ public class ResourceUtil
     public static final Image ICON_TOIJ = ResourceUtil.getAlphaIconAsImage("to_ij.png");
     public static final Image ICON_TOICY = ResourceUtil.getAlphaIconAsImage("to_icy.png");
 
+    public static final Image ICON_PLAY = ResourceUtil.getAlphaIconAsImage("playback_play.png");
+    public static final Image ICON_STOP = ResourceUtil.getAlphaIconAsImage("playback_stop.png");
+    public static final Image ICON_PAUSE = ResourceUtil.getAlphaIconAsImage("playback_pause.png");
+    public static final Image ICON_PLAY_NEXT = ResourceUtil.getAlphaIconAsImage("playback_next.png");
+    public static final Image ICON_PLAY_PREV = ResourceUtil.getAlphaIconAsImage("playback_prev.png");
+    public static final Image ICON_RELOAD = ResourceUtil.getAlphaIconAsImage("playback_reload.png");
+
     public static final Image ICON_PLUS = ResourceUtil.getAlphaIconAsImage("plus.png");
     public static final Image ICON_MINUS = ResourceUtil.getAlphaIconAsImage("minus.png");
 
@@ -165,7 +172,7 @@ public class ResourceUtil
     public static final Image ICON_ROUND_MINUS = ResourceUtil.getAlphaIconAsImage("round_minus.png");
 
     public static final Image ICON_ROTATE_UNCLOCK = ResourceUtil.getAlphaIconAsImage("rot_unclock.png");
-    public static final Image ICON_ROTATE_CLOCK = ResourceUtil.getAlphaIconAsImage("playback_reload.png");
+    public static final Image ICON_ROTATE_CLOCK = ICON_RELOAD;
 
     public static final Image ICON_ARROW_UP = ResourceUtil.getAlphaIconAsImage("arrow_top.png");
     public static final Image ICON_ARROW_LEFT = ResourceUtil.getAlphaIconAsImage("arrow_left.png");

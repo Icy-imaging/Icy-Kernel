@@ -122,7 +122,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
         };
 
         // build table (display 15 rows max)
-        tableModel = new SearchResultTableModel(sb.getSearchEngine(), MAX_ROW);
+        tableModel = new SearchResultTableModel(MAX_ROW);
         table = new JTable(tableModel);
 
         // sets the different column values and renderers
@@ -460,6 +460,8 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
 
                 // fix row height (can be changed on LAF change)
                 table.setRowHeight(ROW_HEIGHT);
+                // refresh data model
+                tableModel.setResults(results);
 
                 if (firstResultsDisplay)
                 {

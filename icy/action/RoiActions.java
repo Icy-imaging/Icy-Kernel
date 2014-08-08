@@ -517,7 +517,8 @@ public class RoiActions
                 }
                 catch (UnsupportedOperationException ex)
                 {
-                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                    MessageDialog.showDialog("Operation not supported", ex.getLocalizedMessage(),
+                            MessageDialog.ERROR_MESSAGE);
                 }
                 finally
                 {
@@ -570,7 +571,8 @@ public class RoiActions
                 }
                 catch (UnsupportedOperationException ex)
                 {
-                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                    MessageDialog.showDialog("Operation not supported", ex.getLocalizedMessage(),
+                            MessageDialog.ERROR_MESSAGE);
                 }
                 finally
                 {
@@ -624,7 +626,8 @@ public class RoiActions
                 }
                 catch (UnsupportedOperationException ex)
                 {
-                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                    MessageDialog.showDialog("Operation not supported", ex.getLocalizedMessage(),
+                            MessageDialog.ERROR_MESSAGE);
                 }
                 finally
                 {
@@ -678,7 +681,8 @@ public class RoiActions
                 }
                 catch (UnsupportedOperationException ex)
                 {
-                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                    MessageDialog.showDialog("Operation not supported", ex.getLocalizedMessage(),
+                            MessageDialog.ERROR_MESSAGE);
                 }
                 finally
                 {
@@ -750,7 +754,8 @@ public class RoiActions
                 }
                 catch (UnsupportedOperationException ex)
                 {
-                    MessageDialog.showDialog("Operation not supported", ex.toString(), MessageDialog.ERROR_MESSAGE);
+                    MessageDialog.showDialog("Operation not supported", ex.getLocalizedMessage(),
+                            MessageDialog.ERROR_MESSAGE);
                 }
                 finally
                 {

@@ -43,6 +43,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -116,9 +117,45 @@ public class NetworkUtil
     }
 
     /**
+     * Internet monitor thread
+     */
+    private static class InternetMonitorThread extends Thread
+    {
+        public InternetMonitorThread()
+        {
+            super("Internet monitor");
+        }
+
+        @Override
+        public void run()
+        {
+            while (!isInterrupted())
+            {
+                try
+                {
+                    final Socket socket = new Socket(WEBSITE_HOST, 80);
+                    socket.close();
+
+                    // we have internet access
+                    setInternetAccess(true);
+                }
+                catch (Exception e)
+                {
+                    // we don't have internet access
+                    setInternetAccess(false);
+                }
+
+                // wait a bit depending connection state
+                ThreadUtil.sleep(hasInternetAccess() ? 30000 : 5000);
+            }
+        }
+    };
+
+    /**
      * URL
      */
-    public static final String WEBSITE_URL = "http://icy.bioimageanalysis.org/";
+    public static final String WEBSITE_HOST = "icy.bioimageanalysis.org";
+    public static final String WEBSITE_URL = "http://" + WEBSITE_HOST + "/";
 
     static final String REPORT_URL = WEBSITE_URL + "index.php";
 
@@ -145,56 +182,7 @@ public class NetworkUtil
     /**
      * Internet monitor
      */
-    public static final Thread internetMonitor = new Thread(new Runnable()
-    {
-        @Override
-        public void run()
-        {
-            while (true)
-            {
-                boolean up = false;
-
-                URLConnection urlConnection;
-
-                try
-                {
-                    urlConnection = openConnection("http://www.google.com", true, false);
-                    if (urlConnection != null)
-                    {
-                        urlConnection.setConnectTimeout(3000);
-                        urlConnection.setReadTimeout(3000);
-                        up = connect(urlConnection, false);
-                    }
-                }
-                catch (Throwable t)
-                {
-                    // ignore
-                }
-
-                if (!up)
-                {
-                    try
-                    {
-                        urlConnection = openConnection("http://www.java.com", true, false);
-                        if (urlConnection != null)
-                        {
-                            urlConnection.setConnectTimeout(3000);
-                            urlConnection.setReadTimeout(3000);
-                            up = connect(urlConnection, false);
-                        }
-                    }
-                    catch (Throwable t)
-                    {
-                        // ignore
-                    }
-                }
-
-                setInternetAccess(up);
-                ThreadUtil.sleep(5000);
-            }
-        }
-    }, "Internet monitor");
-
+    public static final InternetMonitorThread internetMonitor = new InternetMonitorThread();
     /**
      * Internet access up flag
      */

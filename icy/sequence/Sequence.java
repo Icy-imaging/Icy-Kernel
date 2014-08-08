@@ -66,6 +66,7 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -1070,6 +1071,21 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns true if the sequence contains Overlay of specified Overlay class.
+     */
+    public boolean hasOverlay(Class<? extends Overlay> overlayClass)
+    {
+        synchronized (overlays)
+        {
+            for (Overlay overlay : overlays)
+                if (overlay.getClass().isAssignableFrom(overlayClass))
+                    return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Returns overlays of specified class attached to this sequence
      */
     public List<Overlay> getOverlays(Class<? extends Overlay> overlayClass)
@@ -1095,14 +1111,33 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns all ROIs attached to this sequence
+     * Returns all ROIs attached to this sequence.
+     * 
+     * @param sorted
+     *        If true the returned list is ordered by the ROI id (creation order).
+     */
+    public List<ROI> getROIs(boolean sorted)
+    {
+        final List<ROI> result;
+
+        synchronized (rois)
+        {
+            result = new ArrayList<ROI>(rois);
+        }
+
+        // sort it if required
+        if (sorted)
+            Collections.sort(result, ROI.idComparator);
+
+        return result;
+    }
+
+    /**
+     * Returns all ROIs attached to this sequence.
      */
     public ArrayList<ROI> getROIs()
     {
-        synchronized (rois)
-        {
-            return new ArrayList<ROI>(rois);
-        }
+        return (ArrayList<ROI>) getROIs(false);
     }
 
     /**
@@ -1117,11 +1152,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns all 2D ROIs attached to this sequence
+     * Returns all 2D ROIs attached to this sequence.
+     * 
+     * @param sorted
+     *        If true the returned list is ordered by the ROI id (creation order).
      */
-    public ArrayList<ROI2D> getROI2Ds()
+    public List<ROI2D> getROI2Ds(boolean sorted)
     {
-        final ArrayList<ROI2D> result = new ArrayList<ROI2D>(rois.size());
+        final List<ROI2D> result = new ArrayList<ROI2D>(rois.size());
 
         synchronized (rois)
         {
@@ -1130,15 +1168,30 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                     result.add((ROI2D) roi);
         }
 
+        // sort it if required
+        if (sorted)
+            Collections.sort(result, ROI.idComparator);
+
         return result;
     }
 
     /**
-     * Returns all 3D ROIs attached to this sequence
+     * Returns all 2D ROIs attached to this sequence.
      */
-    public ArrayList<ROI3D> getROI3Ds()
+    public ArrayList<ROI2D> getROI2Ds()
     {
-        final ArrayList<ROI3D> result = new ArrayList<ROI3D>(rois.size());
+        return (ArrayList<ROI2D>) getROI2Ds(false);
+    }
+
+    /**
+     * Returns all 3D ROIs attached to this sequence.
+     * 
+     * @param sorted
+     *        If true the returned list is ordered by the ROI id (creation order).
+     */
+    public List<ROI3D> getROI3Ds(boolean sorted)
+    {
+        final List<ROI3D> result = new ArrayList<ROI3D>(rois.size());
 
         synchronized (rois)
         {
@@ -1147,7 +1200,19 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                     result.add((ROI3D) roi);
         }
 
+        // sort it if required
+        if (sorted)
+            Collections.sort(result, ROI.idComparator);
+
         return result;
+    }
+
+    /**
+     * Returns all 3D ROIs attached to this sequence.
+     */
+    public ArrayList<ROI3D> getROI3Ds()
+    {
+        return (ArrayList<ROI3D>) getROI3Ds(false);
     }
 
     /**

@@ -181,7 +181,7 @@ public class OnlinePluginSearchResultProducer extends OnlineSearchResultProducer
                     lpsrp = (LocalPluginSearchResultProducer) srp;
         }
 
-        final ArrayList<SearchResult> tmpResults = new ArrayList<SearchResult>();
+        final List<SearchResult> tmpResults = new ArrayList<SearchResult>();
 
         for (Element plugin : XMLUtil.getElements(resultElement, ID_PLUGIN))
         {

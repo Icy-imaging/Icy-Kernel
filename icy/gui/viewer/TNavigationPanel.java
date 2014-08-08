@@ -19,10 +19,10 @@
 package icy.gui.viewer;
 
 import icy.gui.component.IcySlider;
-import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.GuiUtil;
+import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.system.thread.ThreadUtil;
 
@@ -63,7 +63,7 @@ public class TNavigationPanel extends JPanel
     final JLabel leftLabel;
     final JLabel rightLabel;
 
-    final IcyButton play, stop;
+    final IcyToggleButton play;
     final IcyToggleButton loop;
     final JSpinner frameRate;
 
@@ -83,18 +83,12 @@ public class TNavigationPanel extends JPanel
             @Override
             public void stateChanged(ChangeEvent e)
             {
-                ThreadUtil.invokeLater(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        rightLabel.setText(Integer.toString(slider.getMaximum()));
-                        leftLabel.setText(Integer.toString(slider.getValue()));
-                        validate();
-                    }
-                });
+                rightLabel.setText(Integer.toString(slider.getMaximum()));
+                leftLabel.setText(Integer.toString(slider.getValue()));
+                validate();
             }
         });
+
         ComponentUtil.setFixedHeight(slider, 22);
 
         timer = new Timer(1000 / DEFAULT_FRAME_RATE, new ActionListener()
@@ -102,69 +96,55 @@ public class TNavigationPanel extends JPanel
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final int oldT = getTPosition();
-
-                incTPosition();
-
-                // end reached ?
-                if (oldT == getTPosition())
+                // only if slider is not adjusting T position
+                if (!slider.getValueIsAdjusting())
                 {
-                    // loop mode --> reset
-                    if (loop.isSelected())
-                        resetTPosition();
-                    else
+                    final int oldT = getTPosition();
+
+                    incTPosition();
+
+                    // end reached ?
+                    if (oldT == getTPosition())
                     {
-                        // end play
-                        timer.stop();
-                        stop.setVisible(false);
-                        play.setVisible(true);
-                        // and reset position
-                        resetTPosition();
+                        // loop mode --> reset
+                        if (isRepeat())
+                            setTPosition(0);
+                        else
+                        {
+                            // end play
+                            stopPlay();
+                            // and reset position
+                            setTPosition(0);
+                        }
                     }
                 }
             }
         });
 
-        play = new IcyButton(new IcyIcon("playback_play"));
+        play = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_PLAY));
         play.setFlat(true);
-        play.setFocusable(false);
         play.setToolTipText("play");
         play.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                startPlay();
+                if (isPlaying())
+                    stopPlay();
+                else
+                    startPlay();
             }
         });
 
-        stop = new IcyButton(new IcyIcon("playback_stop"));
-        stop.setFlat(true);
-        stop.setFocusable(false);
-        stop.setToolTipText("stop");
-        stop.setVisible(false);
-        stop.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                stopPlay();
-            }
-        });
-
-        loop = new IcyToggleButton(new IcyIcon("playback_reload", 14));
+        loop = new IcyToggleButton(new IcyIcon(ResourceUtil.ICON_ARROW_RIGHT, 16));
         loop.setFlat(true);
-        loop.setFocusable(false);
         loop.setToolTipText("Enable loop playback");
         loop.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                if (loop.isSelected())
-                    loop.setToolTipText("Disable loop playback");
-                else
-                    loop.setToolTipText("Enable loop playback");
+                setRepeat(!isRepeat());
             }
         });
 
@@ -215,7 +195,6 @@ public class TNavigationPanel extends JPanel
         rightPanel.add(rightLabel);
         rightPanel.add(Box.createHorizontalStrut(12));
         rightPanel.add(play);
-        rightPanel.add(stop);
         rightPanel.add(loop);
         rightPanel.add(Box.createHorizontalStrut(8));
         rightPanel.add(frameRate);
@@ -232,11 +211,6 @@ public class TNavigationPanel extends JPanel
         add(rightPanel, BorderLayout.EAST);
 
         validate();
-    }
-
-    protected void resetTPosition()
-    {
-        setTPosition(0);
     }
 
     protected void incTPosition()
@@ -259,9 +233,17 @@ public class TNavigationPanel extends JPanel
         return slider.getValue();
     }
 
-    protected void setTPosition(int t)
+    protected void setTPosition(final int t)
     {
-        slider.setValue(t);
+        // we want to be sure the T position is changed in EDT
+        ThreadUtil.invokeNow(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                slider.setValue(t);
+            }
+        });
     }
 
     /**
@@ -285,7 +267,7 @@ public class TNavigationPanel extends JPanel
      */
     public boolean isRepeat()
     {
-        return loop.isSelected();
+        return loop.getToolTipText().startsWith("Disable");
     }
 
     /**
@@ -293,7 +275,18 @@ public class TNavigationPanel extends JPanel
      */
     public void setRepeat(boolean value)
     {
-        loop.setSelected(value);
+        if (value)
+        {
+            loop.setIcon(new IcyIcon(ResourceUtil.ICON_RELOAD, 16));
+            loop.setSelected(true);
+            loop.setToolTipText("Disable loop playback");
+        }
+        else
+        {
+            loop.setIcon(new IcyIcon(ResourceUtil.ICON_ARROW_RIGHT, 16));
+            loop.setSelected(false);
+            loop.setToolTipText("Enable loop playback");
+        }
     }
 
     /**
@@ -313,8 +306,9 @@ public class TNavigationPanel extends JPanel
     public void startPlay()
     {
         timer.start();
-        play.setVisible(false);
-        stop.setVisible(true);
+        play.setIcon(new IcyIcon(ResourceUtil.ICON_PAUSE));
+        play.setSelected(true);
+        play.setToolTipText("pause");
     }
 
     /**
@@ -325,8 +319,9 @@ public class TNavigationPanel extends JPanel
     public void stopPlay()
     {
         timer.stop();
-        stop.setVisible(false);
-        play.setVisible(true);
+        play.setIcon(new IcyIcon(ResourceUtil.ICON_PLAY));
+        play.setSelected(false);
+        play.setToolTipText("play");
     }
 
     /**

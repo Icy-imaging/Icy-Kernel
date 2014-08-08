@@ -71,7 +71,11 @@ public class XLSUtil
         if (!file.exists())
             return createWorkbook(file);
 
-        return Workbook.createWorkbook(file, Workbook.getWorkbook(file));
+        final WritableWorkbook result = Workbook.createWorkbook(file, Workbook.getWorkbook(file));
+        // need to do it as the createWorkbook method does erase the old one
+        result.write();
+
+        return result;
     }
 
     /**

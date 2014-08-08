@@ -420,9 +420,21 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
             ThreadUtil.sleep(10);
 
         super.shutDown();
-
+        
         propertiesUpdater.interrupt();
         propertiesToUpdate.clear();
+        try
+        {
+            // be sure there is no more processing here
+            propertiesUpdater.join();
+        }
+        catch (InterruptedException e)
+        {
+            // can ignore safely
+        }
+
+        // nore more initialized (prevent extra useless processing)
+        initialized = false;
 
         // save settings
         preferences.putInt(ID_BGCOLOR, getBackgroundColor().getRGB());
@@ -443,12 +455,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         restoreOpacity(lutSave, getLut());
         // restoreColormap(getLut());
 
-        // AWTMultiCaster of vtkPanel keep reference of this frame so
-        // we have to release as most stuff we can
-        removeAll();
-        panel.removeAll();
-
-        // VTK need it
+        // VTK stuff in EDT
         invokeOnEDTSilent(new Runnable()
         {
             @Override
@@ -464,6 +471,11 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
                 camera.Delete();
             }
         });
+
+        // AWTMultiCaster of vtkPanel keep reference of this frame so
+        // we have to release as most stuff we can
+        removeAll();
+        panel.removeAll();
 
         renderer = null;
         renderWindow = null;
