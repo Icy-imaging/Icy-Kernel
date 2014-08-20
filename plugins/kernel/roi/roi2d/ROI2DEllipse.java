@@ -40,16 +40,16 @@ public class ROI2DEllipse extends ROI2DRectShape
     {
         this(topLeft, bottomRight);
     }
-
+    
     public ROI2DEllipse(Point2D topLeft, Point2D bottomRight)
     {
         super(new Ellipse2D.Double(), topLeft, bottomRight);
-
+        
         // set name and icon
         setName("Ellipse2D");
         setIcon(ResourceUtil.ICON_ROI_OVAL);
     }
-
+    
     /**
      * Create a ROI ellipse from its rectangular bounds.
      */
@@ -57,7 +57,7 @@ public class ROI2DEllipse extends ROI2DRectShape
     {
         this(new Point2D.Double(xmin, ymin), new Point2D.Double(xmax, ymax));
     }
-
+    
     /**
      * @deprecated
      */
@@ -66,18 +66,18 @@ public class ROI2DEllipse extends ROI2DRectShape
     {
         this(rectangle);
     }
-
+    
     public ROI2DEllipse(Rectangle2D rectangle)
     {
         this(rectangle.getMinX(), rectangle.getMinY(), rectangle.getMaxX(), rectangle.getMaxY());
     }
-
+    
     public ROI2DEllipse(Ellipse2D ellipse)
     {
         this(new Point2D.Double(ellipse.getMinX(), ellipse.getMinY()), new Point2D.Double(ellipse.getMaxX(),
                 ellipse.getMaxY()));
     }
-
+    
     /**
      * @deprecated
      */
@@ -86,12 +86,12 @@ public class ROI2DEllipse extends ROI2DRectShape
     {
         this(pt);
     }
-
+    
     public ROI2DEllipse(Point2D pt)
     {
         this(new Point2D.Double(pt.getX(), pt.getY()), pt);
     }
-
+    
     /**
      * Generic constructor for interactive mode
      */
@@ -100,52 +100,72 @@ public class ROI2DEllipse extends ROI2DRectShape
         this(pt.toPoint2D());
         // getOverlay().setMousePos(pt);
     }
-
+    
     public ROI2DEllipse()
     {
         this(new Point2D.Double(), new Point2D.Double());
     }
-
+    
     public Ellipse2D getEllipse()
     {
         return (Ellipse2D) shape;
     }
-
+    
     public void setEllipse(Ellipse2D ellipse)
     {
         setBounds2D(ellipse.getBounds2D());
     }
-
+    
+    /**
+     * Calculating the perimeter of an ellipse is non-trivial. Here we follow the approximation
+     * proposed in:<br/>
+     * Ramanujan, S., "Modular Equations and Approximations to Pi," Quart. J. Pure. Appl. Math.,
+     * v.45 (1913-1914), 350-372
+     * 
+     * @since Icy 1.5.3.2
+     */
+    @Override
+    public double computeNumberOfContourPoints()
+    {
+        Rectangle2D r = getEllipse().getBounds2D();
+        double a = r.getWidth() * 0.5;
+        double b = r.getHeight() * 0.5;
+        double h = (a - b) / (a + b);
+        h *= h;
+        
+        return Math.PI * (a + b) * (1 + h / 4 + h * h / 64 + h * h * h / 256);
+    }
+    
     @Override
     public double computeNumberOfPoints()
     {
-        final Rectangle2D bounds = getEllipse().getBounds();
-        return Math.PI * bounds.getWidth() * bounds.getHeight();
+        final Rectangle2D bounds = getEllipse().getBounds2D();
+        return Math.PI * bounds.getWidth() * bounds.getHeight() / 4;
     }
-
+    
     /**
      * Adjust the ROI to fit the specified list of coordinates with a circle
      * 
      * @param points
-     *        the list of points to fit
+     *            the list of points to fit
      */
     public void setToFitCircle(Collection<? extends Point2D> points)
     {
         int nbPoints = points.size();
-
+        
         double[] xCoords = new double[nbPoints];
         double[] yCoords = new double[nbPoints];
-
+        
         for (Point2D point : points)
         {
             nbPoints--;
             xCoords[nbPoints] = point.getX();
             yCoords[nbPoints] = point.getY();
         }
-
+        
         setToFitCircle(xCoords, yCoords);
     }
-
+    
     /**
      * Circle fit by Taubin. <br/>
      * Reference: G. Taubin, "Estimation Of Planar Curves, Surfaces And Nonplanar Space Curves
@@ -158,28 +178,28 @@ public class ROI2DEllipse extends ROI2DRectShape
      * Chernov (2009)</a>
      * 
      * @param xCoords
-     *        the X coordinates of the points to fit
+     *            the X coordinates of the points to fit
      * @param yCoords
-     *        the Y coordinates of the points to fit
+     *            the Y coordinates of the points to fit
      */
     private void setToFitCircle(double[] xCoords, double[] yCoords)
     {
         int n = xCoords.length;
-
+        
         if (n != yCoords.length)
             throw new IllegalArgumentException("Coordinate arrays must have the same size");
-
+        
         Point2D centroid = new Point2D.Double(ArrayMath.mean(xCoords), ArrayMath.mean(yCoords));
-
+        
         // temporary buffer to save memory
         double[] buffer = new double[n];
-
+        
         double[] X = ArrayMath.subtract(xCoords, centroid.getX());
         double[] Y = ArrayMath.subtract(yCoords, centroid.getY());
         double[] XX = ArrayMath.multiply(X, X);
         double[] YY = ArrayMath.multiply(Y, Y);
         double[] Z = ArrayMath.add(XX, YY);
-
+        
         // compute normalized moments
         double Mxx = ArrayMath.sum(XX) / n;
         double Mxy = ArrayMath.sum(ArrayMath.multiply(X, Y, buffer)) / n;
@@ -187,9 +207,9 @@ public class ROI2DEllipse extends ROI2DRectShape
         double Mxz = ArrayMath.sum(ArrayMath.multiply(X, Z, buffer)) / n;
         double Myz = ArrayMath.sum(ArrayMath.multiply(Y, Z, buffer)) / n;
         double Mzz = ArrayMath.sum(ArrayMath.multiply(Z, Z, buffer)) / n;
-
+        
         // computing the coefficients of the characteristic polynomial
-
+        
         double Mz = Mxx + Myy;
         double Cov_xy = Mxx * Myy - Mxy * Mxy;
         double A3 = 4 * Mz;
@@ -198,14 +218,14 @@ public class ROI2DEllipse extends ROI2DRectShape
         double A0 = Mxz * Mxz * Myy + Myz * Myz * Mxx - Mzz * Cov_xy - 2 * Mxz * Myz * Mxy + Mz * Mz * Cov_xy;
         double A22 = A2 + A2;
         double A33 = A3 + A3 + A3;
-
+        
         double xold, xnew = 0;
         double yold, ynew = 1e+20;
         double epsilon = 1e-12;
         int IterMax = 20;
-
+        
         // Newton's method starting at x=0
-
+        
         for (int iter = 0; iter < IterMax; iter++)
         {
             yold = ynew;
@@ -216,36 +236,36 @@ public class ROI2DEllipse extends ROI2DRectShape
                 xnew = 0;
                 break;
             }
-
+            
             double Dy = A1 + xnew * (A22 + xnew * A33);
             xold = xnew;
             xnew = xold - ynew / Dy;
-
+            
             if (Math.abs((xnew - xold) / xnew) < epsilon)
                 break;
-
+            
             if (iter >= IterMax)
             {
                 System.err.println("Circle fitting error: Newton-Taubin will not converge");
                 xnew = 0;
             }
-
+            
             if (xnew < 0)
             {
                 System.out.println("Newton-Taubin negative root: x=" + xnew);
                 xnew = 0;
             }
         }
-
+        
         // computing the circle parameters
-
+        
         double DET = xnew * xnew - xnew * Mz + Cov_xy;
         double xCenter = (Mxz * (Myy - xnew) - Myz * Mxy) / DET / 2;
         double yCenter = (Myz * (Mxx - xnew) - Mxz * Mxy) / DET / 2;
         double radius = Math.sqrt(xCenter * xCenter + yCenter * yCenter + Mz);
         xCenter += centroid.getX();
         yCenter += centroid.getY();
-
+        
         setEllipse(new Ellipse2D.Double(xCenter - radius, yCenter - radius, 2 * radius, 2 * radius));
     }
 }
