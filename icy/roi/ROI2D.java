@@ -48,14 +48,14 @@ public abstract class ROI2D extends ROI
     public static List<ROI2D> getROI2DList(List<ROI> rois)
     {
         final List<ROI2D> result = new ArrayList<ROI2D>();
-
+        
         for (ROI roi : rois)
             if (roi instanceof ROI2D)
                 result.add((ROI2D) roi);
-
+        
         return result;
     }
-
+    
     /**
      * @deprecated Use {@link ROI2D#getROI2DList(List)} instead.
      */
@@ -63,14 +63,14 @@ public abstract class ROI2D extends ROI
     public static ArrayList<ROI2D> getROI2DList(ArrayList<ROI> rois)
     {
         final ArrayList<ROI2D> result = new ArrayList<ROI2D>();
-
+        
         for (ROI roi : rois)
             if (roi instanceof ROI2D)
                 result.add((ROI2D) roi);
-
+        
         return result;
     }
-
+    
     /**
      * @deprecated Use {@link ROI2D#getROI2DList(List)} instead.
      */
@@ -78,14 +78,14 @@ public abstract class ROI2D extends ROI
     public static ROI2D[] getROI2DList(ROI[] rois)
     {
         final ArrayList<ROI2D> result = new ArrayList<ROI2D>();
-
+        
         for (ROI roi : rois)
             if (roi instanceof ROI2D)
                 result.add((ROI2D) roi);
-
+        
         return result.toArray(new ROI2D[result.size()]);
     }
-
+    
     /**
      * @deprecated Use {@link ROIUtil#merge(List, icy.util.ShapeUtil.BooleanOperator)} instead.
      */
@@ -93,13 +93,13 @@ public abstract class ROI2D extends ROI
     public static ROI2D merge(ROI2D[] rois, ShapeOperation operation)
     {
         final List<ROI> list = new ArrayList<ROI>();
-
+        
         for (ROI2D roi2d : rois)
             list.add(roi2d);
-
+        
         return (ROI2D) ROIUtil.merge(list, operation.getBooleanOperator());
     }
-
+    
     /**
      * @deprecated Use {@link ROI#getSubtraction(ROI)} instead.
      */
@@ -108,7 +108,7 @@ public abstract class ROI2D extends ROI
     {
         return subtract(roi1, roi2);
     }
-
+    
     /**
      * @deprecated Use {@link ROI#getSubtraction(ROI)} instead.
      */
@@ -116,47 +116,47 @@ public abstract class ROI2D extends ROI
     public static ROI2D subtract(ROI2D roi1, ROI2D roi2)
     {
         ROI result = roi1.getSubtraction(roi2);
-
+        
         if (result instanceof ROI2D)
             return (ROI2D) result;
-
+        
         // use ROI2DArea then...
         result = new ROI2DArea(BooleanMask2D.getSubtraction(roi1.getBooleanMask(true), roi2.getBooleanMask(true)));
-
+        
         result.setName("Subtraction");
-
+        
         return (ROI2D) result;
     }
-
+    
     public abstract class ROI2DPainter extends ROIPainter
     {
         protected Point2D startDragMousePosition;
         protected Point2D startDragROIPosition;
-
+        
         public ROI2DPainter()
         {
             super();
-
+            
             startDragMousePosition = null;
             startDragROIPosition = null;
         }
-
+        
         protected boolean updateFocus(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
         {
             // test on canvas has already be done, don't do it again
             final boolean focused = isOverEdge(canvas, imagePoint.getX(), imagePoint.getY());
-
+            
             setFocused(focused);
-
+            
             return focused;
         }
-
+        
         protected boolean updateSelect(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
         {
             // nothing to do if the ROI does not have focus
             if (!isFocused())
                 return false;
-
+            
             // union selection
             if (EventUtil.isShiftDown(e))
             {
@@ -183,14 +183,14 @@ public abstract class ROI2D extends ROI
                     // exclusive selection can fail if we use embedded ROI (as ROIStack)
                     if (!canvas.getSequence().setSelectedROI(ROI2D.this))
                         ROI2D.this.setSelected(true);
-
+                    
                     return true;
                 }
             }
-
+            
             return false;
         }
-
+        
         protected boolean updateDrag(InputEvent e, Point5D imagePoint, IcyCanvas canvas)
         {
             // not dragging --> exit
@@ -198,10 +198,10 @@ public abstract class ROI2D extends ROI
                 return false;
             if (imagePoint == null)
                 return false;
-
+            
             double dx = imagePoint.getX() - startDragMousePosition.getX();
             double dy = imagePoint.getY() - startDragMousePosition.getY();
-
+            
             // shift action --> limit to one direction
             if (EventUtil.isShiftDown(e))
             {
@@ -212,19 +212,19 @@ public abstract class ROI2D extends ROI
                 else
                     dx = 0;
             }
-
+            
             // set new position
             setPosition2D(new Point2D.Double(startDragROIPosition.getX() + dx, startDragROIPosition.getY() + dy));
-
+            
             return true;
         }
-
+        
         @Override
         public void keyReleased(KeyEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // do parent stuff
             super.keyReleased(e, imagePoint, canvas);
-
+            
             if (isActiveFor(canvas))
             {
                 // check we can do the action
@@ -236,13 +236,13 @@ public abstract class ROI2D extends ROI
                 }
             }
         }
-
+        
         @Override
         public void mousePressed(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // do parent stuff
             super.mousePressed(e, imagePoint, canvas);
-
+            
             // not yet consumed...
             if (!e.isConsumed())
             {
@@ -273,22 +273,22 @@ public abstract class ROI2D extends ROI
                 }
             }
         }
-
+        
         @Override
         public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // do parent stuff
             super.mouseReleased(e, imagePoint, canvas);
-
+            
             startDragMousePosition = null;
         }
-
+        
         @Override
         public void mouseDrag(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // do parent stuff
             super.mouseDrag(e, imagePoint, canvas);
-
+            
             // not yet consumed and ROI editable...
             if (!e.isConsumed() && !isReadOnly())
             {
@@ -312,9 +312,9 @@ public abstract class ROI2D extends ROI
                                         startDragMousePosition = imagePoint.toPoint2D();
                                         startDragROIPosition = getPosition2D();
                                     }
-
+                                    
                                     updateDrag(e, imagePoint, canvas);
-
+                                    
                                     // consume event
                                     e.consume();
                                 }
@@ -328,13 +328,13 @@ public abstract class ROI2D extends ROI
                 }
             }
         }
-
+        
         @Override
         public void mouseMove(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
             // do parent stuff
             super.mouseMove(e, imagePoint, canvas);
-
+            
             // update focus
             if (!e.isConsumed())
             {
@@ -350,40 +350,40 @@ public abstract class ROI2D extends ROI
             }
         }
     }
-
+    
     public static final String ID_Z = "z";
     public static final String ID_T = "t";
     public static final String ID_C = "c";
-
+    
     /**
      * z coordinate attachment
      */
-    protected int z;
+    protected int              z;
     /**
      * t coordinate attachment
      */
-    protected int t;
+    protected int              t;
     /**
      * c coordinate attachment
      */
-    protected int c;
-
+    protected int              c;
+    
     public ROI2D()
     {
         super();
-
+        
         // by default we consider no specific Z, T and C attachment
         z = -1;
         t = -1;
         c = -1;
     }
-
+    
     @Override
     final public int getDimension()
     {
         return 2;
     }
-
+    
     /**
      * Returns the Z position.<br>
      * <code>-1</code> is a special value meaning the ROI is set on all Z slices (infinite Z
@@ -393,7 +393,7 @@ public abstract class ROI2D extends ROI
     {
         return z;
     }
-
+    
     /**
      * Sets Z position of this 2D ROI.<br>
      * You cannot set the ROI on a negative Z position as <code>-1</code> is a special value meaning
@@ -402,20 +402,20 @@ public abstract class ROI2D extends ROI
     public void setZ(int value)
     {
         final int v;
-
+        
         // special value for infinite dimension --> change to -1
         if (value == Integer.MIN_VALUE)
             v = -1;
         else
             v = value;
-
+        
         if (z != v)
         {
             z = v;
             roiChanged();
         }
     }
-
+    
     /**
      * Returns the T position.<br>
      * <code>-1</code> is a special value meaning the ROI is set on all T frames (infinite T
@@ -425,7 +425,7 @@ public abstract class ROI2D extends ROI
     {
         return t;
     }
-
+    
     /**
      * Sets T position of this 3D ROI.<br>
      * You cannot set the ROI on a negative T position as <code>-1</code> is a special value meaning
@@ -434,20 +434,20 @@ public abstract class ROI2D extends ROI
     public void setT(int value)
     {
         final int v;
-
+        
         // special value for infinite dimension --> change to -1
         if (value == Integer.MIN_VALUE)
             v = -1;
         else
             v = value;
-
+        
         if (t != v)
         {
             t = v;
             roiChanged();
         }
     }
-
+    
     /**
      * Returns the C position.<br>
      * <code>-1</code> is a special value meaning the ROI is set on all C channels (infinite C
@@ -457,7 +457,7 @@ public abstract class ROI2D extends ROI
     {
         return c;
     }
-
+    
     /**
      * Sets C position of this 2D ROI.<br>
      * You cannot set the ROI on a negative C position as <code>-1</code> is a special value meaning
@@ -466,26 +466,26 @@ public abstract class ROI2D extends ROI
     public void setC(int value)
     {
         final int v;
-
+        
         // special value for infinite dimension --> change to -1
         if (value == Integer.MIN_VALUE)
             v = -1;
         else
             v = value;
-
+        
         if (c != v)
         {
             c = v;
             roiChanged();
         }
     }
-
+    
     @Override
     public boolean isActiveFor(IcyCanvas canvas)
     {
         return isActiveFor(canvas.getPositionZ(), canvas.getPositionT(), canvas.getPositionC());
     }
-
+    
     /**
      * Return true if the ROI is active for the specified Z, T, C coordinates
      */
@@ -494,7 +494,7 @@ public abstract class ROI2D extends ROI
         return ((getZ() == -1) || (z == -1) || (getZ() == z)) && ((getT() == -1) || (t == -1) || (getT() == t))
                 && ((getC() == -1) || (c == -1) || (getC() == c));
     }
-
+    
     // public abstract boolean canAddPoint();
     //
     // /**
@@ -516,7 +516,7 @@ public abstract class ROI2D extends ROI
     // * Remove selected point at specified position (used to build ROI)
     // */
     // protected abstract boolean removeSelectedPoint(IcyCanvas canvas, Point2D imagePoint);
-
+    
     /**
      * @deprecated Use {@link #isOverEdge(IcyCanvas, Point2D)} instead.
      */
@@ -525,7 +525,7 @@ public abstract class ROI2D extends ROI
     {
         return isOverEdge(canvas, p.getX(), p.getY());
     }
-
+    
     /**
      * @deprecated Use {@link #isOverEdge(IcyCanvas, double, double)} instead.
      */
@@ -534,7 +534,7 @@ public abstract class ROI2D extends ROI
     {
         return isOverEdge(canvas, x, y);
     }
-
+    
     /**
      * Returns true if specified point coordinates overlap the ROI edge.<br>
      * Use {@link #contains(Point2D)} to test for content overlap instead.
@@ -543,13 +543,13 @@ public abstract class ROI2D extends ROI
     {
         return isOverEdge(canvas, p.getX(), p.getY());
     }
-
+    
     /**
      * Returns true if specified point coordinates overlap the ROI edge.<br>
      * Use {@link #contains(double, double)} to test for content overlap instead.
      */
     public abstract boolean isOverEdge(IcyCanvas canvas, double x, double y);
-
+    
     /**
      * Returns true if specified point coordinates overlap the ROI edge.<br>
      * Use {@link #contains(Point5D)} to test for content overlap instead.
@@ -558,7 +558,7 @@ public abstract class ROI2D extends ROI
     {
         return isOverEdge(canvas, p.getX(), p.getY(), p.getZ(), p.getT(), p.getC());
     }
-
+    
     /**
      * Returns true if specified point coordinates overlap the ROI edge.<br>
      * Use {@link #contains(double, double, double, double, double)} to test for content overlap
@@ -568,10 +568,10 @@ public abstract class ROI2D extends ROI
     {
         if (isActiveFor((int) z, (int) t, (int) c))
             return isOverEdge(canvas, x, y);
-
+        
         return false;
     }
-
+    
     /**
      * Tests if a specified {@link Point2D} is inside the ROI.
      * 
@@ -584,7 +584,7 @@ public abstract class ROI2D extends ROI
     {
         return contains(p.getX(), p.getY());
     }
-
+    
     /**
      * Tests if the interior of the <code>ROI</code> entirely contains the specified
      * <code>Rectangle2D</code>. The {@code ROI.contains()} method allows a implementation to
@@ -609,7 +609,7 @@ public abstract class ROI2D extends ROI
     {
         return contains(r.getX(), r.getY(), r.getWidth(), r.getHeight());
     }
-
+    
     /**
      * Tests if the specified coordinates are inside the <code>ROI</code>.
      * 
@@ -621,7 +621,7 @@ public abstract class ROI2D extends ROI
      *         boundary; <code>false</code> otherwise.
      */
     public abstract boolean contains(double x, double y);
-
+    
     /**
      * Tests if the <code>ROI</code> entirely contains the specified rectangular area. All
      * coordinates that lie inside the rectangular area must lie within the <code>ROI</code> for the
@@ -651,14 +651,14 @@ public abstract class ROI2D extends ROI
      *         <code>true</code> and the containment calculations would be too expensive to perform.
      */
     public abstract boolean contains(double x, double y, double w, double h);
-
+    
     @Override
     public boolean contains(double x, double y, double z, double t, double c)
     {
         final boolean cok;
         final boolean zok;
         final boolean tok;
-
+        
         if (getZ() == -1)
             zok = true;
         else
@@ -671,10 +671,10 @@ public abstract class ROI2D extends ROI
             cok = true;
         else
             cok = (c >= getC()) && (c < (getC() + 1d));
-
+        
         return cok && zok && tok && contains(x, y);
     }
-
+    
     @Override
     public boolean contains(double x, double y, double z, double t, double c, double sizeX, double sizeY, double sizeZ,
             double sizeT, double sizeC)
@@ -682,7 +682,7 @@ public abstract class ROI2D extends ROI
         final boolean zok;
         final boolean tok;
         final boolean cok;
-
+        
         if (getZ() == -1)
             zok = true;
         else
@@ -695,13 +695,13 @@ public abstract class ROI2D extends ROI
             cok = true;
         else
             cok = (c >= getC()) && ((c + sizeC) <= (getC() + 1d));
-
+        
         return zok && tok && cok && contains(x, y, sizeX, sizeY);
     }
-
+    
     /*
-     * Generic implementation using the BooleanMask which is not accurate and slow.
-     * Override this for specific ROI type.
+     * Generic implementation using the BooleanMask which is not accurate and slow. Override this
+     * for specific ROI type.
      */
     @Override
     public boolean contains(ROI roi)
@@ -715,19 +715,19 @@ public abstract class ROI2D extends ROI
             final boolean zok;
             final boolean tok;
             final boolean cok;
-
+            
             // same position ?
             zok = (z == -1) || (z == roi2d.getZ());
             tok = (t == -1) || (t == roi2d.getT());
             cok = (c == -1) || (c == roi2d.getC());
-
+            
             return zok && tok && cok && getBooleanMask(false).contains(roi2d.getBooleanMask(false));
         }
-
+        
         // use default implementation
         return super.contains(roi);
     }
-
+    
     /**
      * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
      * <code>Rectangle2D</code>. The {@code ROI.intersects()} method allows a {@code ROI}
@@ -752,7 +752,7 @@ public abstract class ROI2D extends ROI
     {
         return intersects(r.getX(), r.getY(), r.getWidth(), r.getHeight());
     }
-
+    
     /**
      * Tests if the interior of the <code>ROI</code> intersects the interior of a specified
      * rectangular area. The rectangular area is considered to intersect the <code>ROI</code> if any
@@ -782,7 +782,7 @@ public abstract class ROI2D extends ROI
      *         calculations would be too expensive to perform; <code>false</code> otherwise.
      */
     public abstract boolean intersects(double x, double y, double w, double h);
-
+    
     @Override
     public boolean intersects(double x, double y, double z, double t, double c, double sizeX, double sizeY,
             double sizeZ, double sizeT, double sizeC)
@@ -790,11 +790,11 @@ public abstract class ROI2D extends ROI
         // easy discard
         if ((sizeX == 0d) || (sizeY == 0d) || (sizeZ == 0d) || (sizeT == 0d) || (sizeC == 0d))
             return false;
-
+        
         final boolean zok;
         final boolean tok;
         final boolean cok;
-
+        
         if (getZ() == -1)
             zok = true;
         else
@@ -807,13 +807,13 @@ public abstract class ROI2D extends ROI
             cok = true;
         else
             cok = ((c + sizeC) > getC()) && (c < (getC() + 1d));
-
+        
         return intersects(x, y, sizeX, sizeY) && zok && tok && cok;
     }
-
+    
     /*
-     * Generic implementation using the BooleanMask which is not accurate and slow.
-     * Override this for specific ROI type.
+     * Generic implementation using the BooleanMask which is not accurate and slow. Override this
+     * for specific ROI type.
      */
     @Override
     public boolean intersects(ROI roi)
@@ -827,34 +827,34 @@ public abstract class ROI2D extends ROI
             final boolean cok;
             final boolean zok;
             final boolean tok;
-
+            
             // can intersect ?
             zok = (z == -1) || (z == roi2d.getZ()) || (roi2d.getZ() == -1);
             tok = (t == -1) || (t == roi2d.getT()) || (roi2d.getT() == -1);
             cok = (c == -1) || (c == roi2d.getC()) || (roi2d.getC() == -1);
-
+            
             // same position ?
             return zok && tok && cok && getBooleanMask(true).intersects(roi2d.getBooleanMask(true));
         }
-
+        
         // use default implementation
         return super.intersects(roi);
     }
-
+    
     /**
      * Calculate and returns the 2D bounding box of the <code>ROI</code>.<br>
      * This method is used by {@link #getBounds2D()} which should try to cache the result as the
      * bounding box calculation can take some computation time for complex ROI.
      */
     public abstract Rectangle2D computeBounds2D();
-
+    
     @Override
     public Rectangle5D computeBounds5D()
     {
         final Rectangle2D bounds2D = computeBounds2D();
         final Rectangle5D.Double result = new Rectangle5D.Double(bounds2D.getX(), bounds2D.getY(), 0d, 0d, 0d,
                 bounds2D.getWidth(), bounds2D.getHeight(), 0d, 0d, 0d);
-
+        
         if (getZ() == -1)
         {
             result.z = Double.NEGATIVE_INFINITY;
@@ -885,10 +885,10 @@ public abstract class ROI2D extends ROI
             result.c = getC();
             result.sizeC = 1d;
         }
-
+        
         return result;
     }
-
+    
     /**
      * Returns an integer {@link Rectangle} that completely encloses the <code>ROI</code>. Note that
      * there is no guarantee that the returned <code>Rectangle</code> is the smallest bounding box
@@ -904,7 +904,7 @@ public abstract class ROI2D extends ROI
     {
         return getBounds2D().getBounds();
     }
-
+    
     /**
      * Returns a high precision and more accurate bounding box of the <code>ROI</code> than the
      * <code>getBounds</code> method. Note that there is no guarantee that the returned
@@ -922,7 +922,7 @@ public abstract class ROI2D extends ROI
     {
         return getBounds5D().toRectangle2D();
     }
-
+    
     /**
      * Returns the upper left point of the ROI bounds.<br>
      * Equivalent to :<br>
@@ -934,7 +934,7 @@ public abstract class ROI2D extends ROI
     {
         return getBounds().getLocation();
     }
-
+    
     /**
      * Returns the ROI position which normally correspond to the <i>minimum</i> point of the ROI
      * bounds:<br>
@@ -947,14 +947,14 @@ public abstract class ROI2D extends ROI
         final Rectangle2D r = getBounds2D();
         return new Point2D.Double(r.getX(), r.getY());
     }
-
+    
     @Override
     public boolean canSetBounds()
     {
         // default
         return false;
     }
-
+    
     /**
      * Set the <code>ROI</code> 2D bounds.<br>
      * Note that not all ROI supports bounds modification and you should call
@@ -967,7 +967,7 @@ public abstract class ROI2D extends ROI
     {
         // do nothing by default (not supported)
     }
-
+    
     @Override
     public void setBounds5D(Rectangle5D bounds)
     {
@@ -989,7 +989,7 @@ public abstract class ROI2D extends ROI
                 setC(-1);
             else
                 setC((int) bounds.getC());
-
+            
             setBounds2D(bounds.toRectangle2D());
         }
         finally
@@ -997,14 +997,14 @@ public abstract class ROI2D extends ROI
             endUpdate();
         }
     }
-
+    
     @Override
     public boolean canSetPosition()
     {
         // default implementation use translation if available
         return canTranslate();
     }
-
+    
     /**
      * @deprecated Use {@link #setPosition2D(Point2D)} instead.
      */
@@ -1013,7 +1013,7 @@ public abstract class ROI2D extends ROI
     {
         setPosition2D(position);
     }
-
+    
     /**
      * Set the <code>ROI</code> 2D position.<br>
      * Note that not all ROI supports position modification and you should call
@@ -1031,7 +1031,7 @@ public abstract class ROI2D extends ROI
             translate(position.getX() - oldPos.getX(), position.getY() - oldPos.getY());
         }
     }
-
+    
     @Override
     public void setPosition5D(Point5D position)
     {
@@ -1048,7 +1048,7 @@ public abstract class ROI2D extends ROI
             endUpdate();
         }
     }
-
+    
     /**
      * Returns <code>true</code> if the ROI support translate operation.
      * 
@@ -1059,7 +1059,7 @@ public abstract class ROI2D extends ROI
         // by default
         return false;
     }
-
+    
     /**
      * Translate the ROI position by the specified delta X/Y.<br>
      * Note that not all ROI support this operation so you should test it by calling
@@ -1076,17 +1076,17 @@ public abstract class ROI2D extends ROI
     {
         // not supported by default
     }
-
+    
     @Override
     public boolean[] getBooleanMask2D(int x, int y, int width, int height, int z, int t, int c, boolean inclusive)
     {
         // not on the correct Z, T, C position --> return empty mask
         if (!isActiveFor(z, t, c))
             return new boolean[width * height];
-
+        
         return getBooleanMask(x, y, width, height, inclusive);
     }
-
+    
     /**
      * Get the boolean bitmap mask for the specified rectangular area of the roi.<br>
      * if the pixel (x,y) is contained in the roi then result[(y * width) + x] = true<br>
@@ -1107,7 +1107,7 @@ public abstract class ROI2D extends ROI
     public boolean[] getBooleanMask(int x, int y, int width, int height, boolean inclusive)
     {
         final boolean[] result = new boolean[width * height];
-
+        
         // simple and basic implementation, override it to have better performance
         int offset = 0;
         for (int j = 0; j < height; j++)
@@ -1121,10 +1121,10 @@ public abstract class ROI2D extends ROI
                 offset++;
             }
         }
-
+        
         return result;
     }
-
+    
     /**
      * @deprecated Use {@link #getBooleanMask(int, int, int, int, boolean)} instead
      */
@@ -1133,7 +1133,7 @@ public abstract class ROI2D extends ROI
     {
         return getBooleanMask(x, y, width, height, false);
     }
-
+    
     /**
      * Get the boolean bitmap mask for the specified rectangular area of the roi.<br>
      * if the pixel (x,y) is contained in the roi then result[(y * w) + x] = true<br>
@@ -1148,7 +1148,7 @@ public abstract class ROI2D extends ROI
     {
         return getBooleanMask(rect.x, rect.y, rect.width, rect.height, inclusive);
     }
-
+    
     /**
      * @deprecated Use {@link #getBooleanMask(Rectangle, boolean)} instead
      */
@@ -1157,17 +1157,17 @@ public abstract class ROI2D extends ROI
     {
         return getBooleanMask(rect, false);
     }
-
+    
     @Override
     public BooleanMask2D getBooleanMask2D(int z, int t, int c, boolean inclusive)
     {
         // not on the correct Z, T, C position --> return empty mask
         if (!isActiveFor(z, t, c))
             return new BooleanMask2D(new Rectangle(), new boolean[0]);
-
+        
         return getBooleanMask(inclusive);
     }
-
+    
     /**
      * Get the {@link BooleanMask2D} object representing the roi.<br>
      * It contains the rectangle mask bounds and the associated boolean array mask.<br>
@@ -1180,14 +1180,14 @@ public abstract class ROI2D extends ROI
     public BooleanMask2D getBooleanMask(boolean inclusive)
     {
         final Rectangle bounds = getBounds();
-
+        
         // empty ROI --> return empty mask
         if (bounds.isEmpty())
             return new BooleanMask2D(new Rectangle(), new boolean[0]);
-
+        
         return new BooleanMask2D(bounds, getBooleanMask(bounds, inclusive));
     }
-
+    
     /**
      * @deprecated Use {@link #getBooleanMask(boolean)} instead.
      */
@@ -1196,7 +1196,7 @@ public abstract class ROI2D extends ROI
     {
         return getBooleanMask(false);
     }
-
+    
     /**
      * @deprecated Use {@link #getBooleanMask(boolean)} instead.
      */
@@ -1205,7 +1205,7 @@ public abstract class ROI2D extends ROI
     {
         return getBooleanMask(inclusive);
     }
-
+    
     /**
      * @deprecated Use {@link #getBooleanMask(Rectangle, boolean)} instead.
      */
@@ -1214,7 +1214,7 @@ public abstract class ROI2D extends ROI
     {
         return getBooleanMask(rect, inclusive);
     }
-
+    
     /**
      * @deprecated Use {@link #getBooleanMask(int, int, int, int, boolean)} instead.
      */
@@ -1223,7 +1223,7 @@ public abstract class ROI2D extends ROI
     {
         return getBooleanMask(x, y, w, h, inclusive);
     }
-
+    
     /**
      * @deprecated Use {@link #getBooleanMask(boolean)} instead.
      */
@@ -1232,7 +1232,7 @@ public abstract class ROI2D extends ROI
     {
         return getBooleanMask();
     }
-
+    
     /**
      * @deprecated Use {@link #getBooleanMask(boolean)} instead.
      */
@@ -1241,7 +1241,7 @@ public abstract class ROI2D extends ROI
     {
         return getBooleanMask(rect);
     }
-
+    
     /**
      * @deprecated Use {@link #getBooleanMask(boolean)} instead.
      */
@@ -1250,23 +1250,84 @@ public abstract class ROI2D extends ROI
     {
         return getBooleanMask(x, y, w, h);
     }
-
-    /*
-     * Generic implementation for ROI2D using the BooleanMask object so
-     * the result is just an approximation.
-     * Override to optimize for specific ROI.
+    
+    /**
+     * Generic implementation for ROI2D using the BooleanMask object so the result is just an
+     * approximation. This method should be overridden whenever possible to provide more optimal
+     * approximations.
      */
     @Override
     public double computeNumberOfContourPoints()
     {
         // approximation by using number of point of the edge of boolean mask
-        return getBooleanMask(true).getContourPointsAsIntArray().length / getDimension();
+        // return getBooleanMask(true).getContourPointsAsIntArray().length /
+        // getDimension();
+        
+        // Modified Aug 19, 2014 by Alexandre Dufour
+        // Reason: provide a better approximation accounting for digitisation artifacts
+        
+        double perimeter = 0;
+        
+        BooleanMask2D mask2D = getBooleanMask(true);
+        int[] edge = mask2D.getContourPointsAsIntArray();
+        int width = mask2D.bounds.width;
+        int height = mask2D.bounds.height;
+        
+        // count the edges and corners in 2D/3D
+        double sideEdges = 0, cornerEdges = 0;
+        
+        for (int i = 0; i < edge.length; i += 2)
+        {
+            int x = edge[i] - mask2D.bounds.x;
+            int y = edge[i + 1] - mask2D.bounds.y;
+            
+            int xy = x + y * width;
+            
+            // count the edges in 4-connectivity
+            int nbEdges = 0;
+            
+            if (x == 0 || !mask2D.mask[xy - 1])
+                nbEdges++; // left
+            if (x == width - 1 || !mask2D.mask[xy + 1])
+                nbEdges++; // right
+            if (y == 0 || !mask2D.mask[xy - width])
+                nbEdges++; // north
+            if (y == height - 1 || !mask2D.mask[xy + width])
+                nbEdges++; // south
+                
+            switch (nbEdges)
+            {
+            case 0:
+                break;
+            case 1: // "side" edge
+                sideEdges++;
+                perimeter++;
+                break;
+            case 2: // "corner" edge
+                cornerEdges++;
+                perimeter += Math.sqrt(2);
+                break;
+            case 3: // "salient" point
+                cornerEdges += 2;
+                perimeter += 2 * Math.sqrt(2);
+                break;
+            default: // single pixel, weird, but happens...
+                perimeter++;
+            }
+        }
+        
+        // adjust the perimeter empirically according to the edge distribution
+        double overShoot = Math.min(sideEdges / 10, cornerEdges);
+        
+        perimeter -= overShoot;
+        
+        return perimeter;
     }
-
-    /*
-     * Generic implementation for ROI2D using the BooleanMask object so
-     * the result is just an approximation.
-     * Override to optimize for specific ROI.
+    
+    /**
+     * Generic implementation for ROI2D using the BooleanMask object so the result is just an
+     * approximation. This method should be overridden whenever possible to provide more optimal
+     * approximations.
      */
     @Override
     public double computeNumberOfPoints()
@@ -1274,7 +1335,7 @@ public abstract class ROI2D extends ROI
         // approximation by using number of point of boolean mask
         return getBooleanMask(true).getPointsAsIntArray().length / getDimension();
     }
-
+    
     /**
      * Return perimeter of the 2D ROI in pixels.<br>
      * This is basically the number of pixel representing ROI edges.<br>
@@ -1289,7 +1350,7 @@ public abstract class ROI2D extends ROI
     {
         return getNumberOfContourPoints();
     }
-
+    
     /**
      * Return area of the 2D ROI in pixels.<br>
      * This is basically the number of pixel contained in the ROI.<br>
@@ -1303,7 +1364,7 @@ public abstract class ROI2D extends ROI
     {
         return getNumberOfPoints();
     }
-
+    
     @Override
     public boolean loadFromXML(Node node)
     {
@@ -1312,7 +1373,7 @@ public abstract class ROI2D extends ROI
         {
             if (!super.loadFromXML(node))
                 return false;
-
+            
             setZ(XMLUtil.getElementIntValue(node, ID_Z, -1));
             setT(XMLUtil.getElementIntValue(node, ID_T, -1));
             setC(XMLUtil.getElementIntValue(node, ID_C, -1));
@@ -1321,20 +1382,20 @@ public abstract class ROI2D extends ROI
         {
             endUpdate();
         }
-
+        
         return true;
     }
-
+    
     @Override
     public boolean saveToXML(Node node)
     {
         if (!super.saveToXML(node))
             return false;
-
+        
         XMLUtil.setElementIntValue(node, ID_Z, getZ());
         XMLUtil.setElementIntValue(node, ID_T, getT());
         XMLUtil.setElementIntValue(node, ID_C, getC());
-
+        
         return true;
     }
 }
