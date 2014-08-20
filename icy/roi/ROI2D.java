@@ -358,15 +358,15 @@ public abstract class ROI2D extends ROI
     /**
      * z coordinate attachment
      */
-    protected int              z;
+    protected int z;
     /**
      * t coordinate attachment
      */
-    protected int              t;
+    protected int t;
     /**
      * c coordinate attachment
      */
-    protected int              c;
+    protected int c;
     
     public ROI2D()
     {

@@ -71,11 +71,11 @@ public abstract class ROI3D extends ROI
     /**
      * t coordinate attachment
      */
-    protected int              t;
+    protected int t;
     /**
      * c coordinate attachment
      */
-    protected int              c;
+    protected int c;
     
     public ROI3D()
     {
@@ -217,8 +217,8 @@ public abstract class ROI3D extends ROI
     }
     
     /*
-     * Generic implementation using the BooleanMask which is not accurate and slow.
-     * Override this for specific ROI type.
+     * Generic implementation using the BooleanMask which is not accurate and slow. Override this
+     * for specific ROI type.
      */
     @Override
     public boolean contains(ROI roi)
@@ -432,8 +432,7 @@ public abstract class ROI3D extends ROI
     
     /**
      * Returns the high precision ROI position which normally correspond to the <i>minimum</i> point
-     * of the ROI
-     * bounds.<br>
+     * of the ROI bounds.<br>
      * 
      * @see #getBounds3D()
      */
@@ -740,19 +739,20 @@ public abstract class ROI3D extends ROI
             {
             case 0:
                 break;
-            case 1: // "side" edge
+            case 1:
                 sideEdges++;
                 perimeter++;
                 break;
-            case 2: // "corner" edge
+            case 2:
                 cornerEdges++;
                 perimeter += Math.sqrt(2);
                 break;
-            case 3: // "salient" point
+            case 3:
                 cornerEdges += 2;
                 perimeter += 2 * Math.sqrt(2);
                 break;
             default:
+                cornerEdges += 3;
                 perimeter += Math.sqrt(3);
             }
         }
@@ -766,9 +766,8 @@ public abstract class ROI3D extends ROI
     }
     
     /*
-     * Generic implementation for ROI3D using the BooleanMask object so
-     * the result is just an approximation.
-     * Override to optimize for specific ROI.
+     * Generic implementation for ROI3D using the BooleanMask object so the result is just an
+     * approximation. Override to optimize for specific ROI.
      */
     @Override
     public double computeNumberOfPoints()
