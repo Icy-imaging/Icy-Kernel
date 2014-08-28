@@ -95,7 +95,6 @@ class ARGBImageBuilder
             }
             catch (Exception e)
             {
-                System.out.println(".");
                 // we just ignore any exceptions here as we can be in asynch process
             }
             finally
@@ -142,11 +141,9 @@ class ARGBImageBuilder
         if (numChannel <= 0)
             return null;
 
-        int index;
-
         synchronized (buffers)
         {
-            for (index = 0; index < buffers.size(); index++)
+            for (int index = buffers.size() - 1; index >= 0; index--)
                 if (buffers.get(index).length == numChannel)
                     return buffers.remove(index);
         }
@@ -222,12 +219,10 @@ class ARGBImageBuilder
     {
         while (!futures.isEmpty())
         {
-            final int last = futures.size() - 1;
-
-            if (futures.get(last).isDone())
-                futures.remove(last);
-            else
-                ThreadUtil.sleep(1);
+            // wait for last in the queue
+            final Future<?> f = futures.get(futures.size() - 1);
+            // remove it
+            futures.remove(f);
         }
     }
 

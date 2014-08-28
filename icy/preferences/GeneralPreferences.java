@@ -46,6 +46,7 @@ public class GeneralPreferences
     public static final String ID_GUI_SKIN = "guiSkin";
     public static final String ID_GUI_FONT_SIZE = "guiFontSize";
     public static final String ID_STARTUP_TOOLTIP = "startupTooltip";
+    public static final String ID_LOADER_FOLDER = "loaderFolder";
     public static final String ID_RESULT_FOLDER = "resultFolder";
     public static final String ID_USER_LOGIN = "userLogin";
     public static final String ID_USER_PASSWORD = "userPassword";
@@ -140,6 +141,11 @@ public class GeneralPreferences
         return prefGeneral.getBoolean(ID_STARTUP_TOOLTIP, true);
     }
 
+    public static String getLoaderFolder()
+    {
+        return prefGeneral.get(ID_LOADER_FOLDER, "");
+    }
+
     public static String getResultFolder()
     {
         return prefGeneral.get(ID_RESULT_FOLDER, FileUtil.getApplicationDirectory() + FileUtil.separator + "result");
@@ -208,6 +214,11 @@ public class GeneralPreferences
     public static void setStatupTooltip(boolean value)
     {
         prefGeneral.putBoolean(ID_STARTUP_TOOLTIP, value);
+    }
+
+    public static void setLoaderFolder(String value)
+    {
+        prefGeneral.put(ID_LOADER_FOLDER, value);
     }
 
     public static void setResultFolder(String value)

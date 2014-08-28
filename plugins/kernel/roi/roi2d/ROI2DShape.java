@@ -21,7 +21,6 @@ package plugins.kernel.roi.roi2d;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.EventHierarchicalChecker;
-import icy.main.Icy;
 import icy.painter.Anchor2D;
 import icy.painter.Anchor2D.Anchor2DPositionListener;
 import icy.painter.OverlayEvent;
@@ -68,14 +67,14 @@ import vtk.vtkProp;
 /**
  * @author Stephane
  */
-public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositionListener, OverlayListener
+public abstract class ROI2DShape extends ROI2D implements Shape
 {
     public class ROI2DShapePainter extends ROI2DPainter implements VtkPainter
     {
         // VTK 3D objects, we use Object to prevent UnsatisfiedLinkError
-        final Object polyData;
-        final Object polyMapper;
-        final Object actor;
+        Object polyData;
+        Object polyMapper;
+        Object actor;
         // 3D internal
         boolean needRebuild;
         double scaling[];
@@ -84,24 +83,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         {
             super();
 
-            // avoid to use vtk objects when vtk library is missing.
-            if (Icy.isVtkLibraryLoaded())
-            {
-                // init 3D painters stuff
-                polyData = new vtkPolyData();
-
-                polyMapper = new vtkPolyDataMapper();
-                ((vtkPolyDataMapper) polyMapper).SetInputData((vtkPolyData) polyData);
-
-                actor = new vtkActor();
-                ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
-            }
-            else
-            {
-                polyData = null;
-                polyMapper = null;
-                actor = null;
-            }
+            // don't create VTK object on constructor
+            polyData = null;
+            polyMapper = null;
+            actor = null;
 
             scaling = new double[3];
             Arrays.fill(scaling, 1d);
@@ -119,6 +104,19 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
             // nothing to update
             if (seq == null)
                 return;
+
+            // initialize VTK objects if not yet done
+            if (actor == null)
+            {
+                // init 3D painters stuff
+                polyData = new vtkPolyData();
+
+                polyMapper = new vtkPolyDataMapper();
+                ((vtkPolyDataMapper) polyMapper).SetInputData((vtkPolyData) polyData);
+
+                actor = new vtkActor();
+                ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
+            }
 
             final List<Point3D.Double> point3DList = new ArrayList<Point3D.Double>();
             final List<Poly3D> polyList = new ArrayList<Poly3D>();
@@ -508,6 +506,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
             {
                 final Rectangle2D bounds = shape.getBounds2D();
 
+                // enlarge bounds with stroke
+                final double over = getAdjustedStroke(canvas) * 2;
+                ShapeUtil.enlarge(bounds, over, over, true);
+
                 // define LOD level
                 final boolean shapeVisible = isVisible(bounds, g, canvas);
                 final boolean small = isSmall(bounds, g, canvas);
@@ -748,12 +750,36 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
      */
     protected final List<Anchor2D> controlPoints;
 
+    /**
+     * internals
+     */
+    protected final Anchor2DPositionListener anchor2DPositionListener;
+    protected final OverlayListener anchor2DOverlayListener;
+
     public ROI2DShape(Shape shape)
     {
         super();
 
         this.shape = shape;
         controlPoints = new ArrayList<Anchor2D>();
+
+        anchor2DPositionListener = new Anchor2DPositionListener()
+        {
+            @Override
+            public void positionChanged(Anchor2D source)
+            {
+                controlPointPositionChanged(source);
+            }
+        };
+
+        anchor2DOverlayListener = new OverlayListener()
+        {
+            @Override
+            public void overlayChanged(OverlayEvent event)
+            {
+                controlPointOverlayChanged(event);
+            }
+        };
     }
 
     @Override
@@ -869,8 +895,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
      */
     protected void addPoint(Anchor2D pt, int index)
     {
-        pt.addPositionListener(this);
-        pt.addOverlayListener(this);
+        pt.addPositionListener(anchor2DPositionListener);
+        pt.addOverlayListener(anchor2DOverlayListener);
 
         if (index == -1)
             controlPoints.add(pt);
@@ -931,8 +957,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
     {
         boolean empty;
 
-        pt.removeOverlayListener(this);
-        pt.removePositionListener(this);
+        pt.removeOverlayListener(anchor2DOverlayListener);
+        pt.removePositionListener(anchor2DPositionListener);
 
         synchronized (controlPoints)
         {
@@ -958,8 +984,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         {
             for (Anchor2D pt : controlPoints)
             {
-                pt.removeOverlayListener(this);
-                pt.removePositionListener(this);
+                pt.removeOverlayListener(anchor2DOverlayListener);
+                pt.removePositionListener(anchor2DPositionListener);
             }
 
             controlPoints.clear();
@@ -1191,9 +1217,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         final Rectangle2D rect = new Rectangle2D.Double(x - (strk * 0.5), y - (strk * 0.5), strk, strk);
         final Rectangle2D roiBounds = getBounds2D();
 
-        // special test for empty object
+        // special test for empty object (point or orthogonal line)
         if (roiBounds.isEmpty())
-            return rect.contains(roiBounds.getX(), roiBounds.getY());
+            return rect.intersectsLine(roiBounds.getMinX(), roiBounds.getMinY(), roiBounds.getMaxX(),
+                    roiBounds.getMaxY());
 
         // fast intersect test to start with
         if (roiBounds.intersects(rect))
@@ -1323,19 +1350,30 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
         if (roi instanceof ROI2DShape)
         {
             final ROI2DShape roiShape = (ROI2DShape) roi;
+            ROI2DPath result = null;
 
             // only if on same position
             if ((getZ() == roiShape.getZ()) && (getT() == roiShape.getT()) && (getC() == roiShape.getC()))
             {
                 // special case for subtraction
                 if (op == null)
-                    return new ROI2DPath(ShapeUtil.subtract(this, roiShape));
+                    result = new ROI2DPath(ShapeUtil.subtract(this, roiShape));
                 else if (op == BooleanOperator.AND)
-                    return new ROI2DPath(ShapeUtil.intersect(this, roiShape));
+                    result = new ROI2DPath(ShapeUtil.intersect(this, roiShape));
                 else if (op == BooleanOperator.OR)
-                    return new ROI2DPath(ShapeUtil.union(this, roiShape));
+                    result = new ROI2DPath(ShapeUtil.union(this, roiShape));
                 else if (op == BooleanOperator.XOR)
-                    return new ROI2DPath(ShapeUtil.exclusiveUnion(this, roiShape));
+                    result = new ROI2DPath(ShapeUtil.exclusiveUnion(this, roiShape));
+            }
+
+            if (result != null)
+            {
+                // don't forget to restore 5D position
+                result.setZ(getZ());
+                result.setT(getT());
+                result.setC(getC());
+
+                return result;
             }
         }
 
@@ -1369,8 +1407,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
     /**
      * Called when anchor position changed
      */
-    @Override
-    public void positionChanged(Anchor2D source)
+    public void controlPointPositionChanged(Anchor2D source)
     {
         // anchor(s) position changed --> ROI changed
         roiChanged();
@@ -1379,8 +1416,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape, Anchor2DPositio
     /**
      * Called when anchor overlay changed
      */
-    @Override
-    public void overlayChanged(OverlayEvent event)
+    public void controlPointOverlayChanged(OverlayEvent event)
     {
         // we only mind about painter change from anchor...
         if (event.getType() == OverlayEventType.PAINTER_CHANGED)

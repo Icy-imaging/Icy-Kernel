@@ -956,7 +956,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     void refreshTableDataStructureInternal()
     {
         // don't eat too much time on data structure refresh
-        ThreadUtil.sleep(10);
+        ThreadUtil.sleep(1);
 
         final HashSet<ROI> newSelectedRois;
         final Sequence sequence = getSequence();
@@ -1006,7 +1006,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     void refreshTableDataInternal()
     {
         // don't eat too much time on data structure refresh
-        ThreadUtil.sleep(10);
+        ThreadUtil.sleep(1);
 
         ThreadUtil.invokeNow(new Runnable()
         {
@@ -1032,7 +1032,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     void refreshTableSelectionInternal()
     {
         // don't eat too much time on selection refresh
-        ThreadUtil.sleep(10);
+        ThreadUtil.sleep(1);
 
         final HashSet<ROI> newSelectedRois;
         final List<ROI> currentSelectedRois = getSelectedRois();

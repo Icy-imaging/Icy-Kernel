@@ -277,12 +277,15 @@ public class MainInterfaceGui implements MainInterface
     {
         final ArrayList<Plugin> result = new ArrayList<Plugin>();
 
-        for (WeakReference<Plugin> ref : activePlugins)
+        synchronized (activePlugins)
         {
-            final Plugin plugin = ref.get();
+            for (WeakReference<Plugin> ref : activePlugins)
+            {
+                final Plugin plugin = ref.get();
 
-            if (plugin != null)
-                result.add(plugin);
+                if (plugin != null)
+                    result.add(plugin);
+            }
         }
 
         return result;
@@ -411,9 +414,12 @@ public class MainInterfaceGui implements MainInterface
 
     private WeakReference<Plugin> getPluginReference(Plugin plugin)
     {
-        for (WeakReference<Plugin> ref : activePlugins)
-            if (ref.get() == plugin)
-                return ref;
+        synchronized (activePlugins)
+        {
+            for (WeakReference<Plugin> ref : activePlugins)
+                if (ref.get() == plugin)
+                    return ref;
+        }
 
         return null;
     }
@@ -435,7 +441,10 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public synchronized void registerPlugin(Plugin plugin)
     {
-        activePlugins.add(new WeakReference<Plugin>(plugin));
+        synchronized (activePlugins)
+        {
+            activePlugins.add(new WeakReference<Plugin>(plugin));
+        }
 
         // plugin opened
         pluginStarted(plugin);
@@ -445,10 +454,14 @@ public class MainInterfaceGui implements MainInterface
     public synchronized void unRegisterPlugin(Plugin plugin)
     {
         final WeakReference<Plugin> ref = getPluginReference(plugin);
-        // reference found
-        if (ref != null)
-            activePlugins.remove(ref);
 
+        synchronized (activePlugins)
+        {
+            // reference found
+            if (ref != null)
+                activePlugins.remove(ref);
+        }
+        
         // plugin closed
         pluginEnded(plugin);
     }
@@ -456,7 +469,10 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public synchronized void registerViewer(Viewer viewer)
     {
-        viewers.add(viewer);
+        synchronized (viewers)
+        {
+            viewers.add(viewer);
+        }
 
         // viewer opened
         viewerOpened(viewer);
@@ -465,7 +481,10 @@ public class MainInterfaceGui implements MainInterface
     @Override
     public synchronized void unRegisterViewer(Viewer viewer)
     {
-        viewers.remove(viewer);
+        synchronized (viewers)
+        {
+            viewers.remove(viewer);
+        }
 
         // viewer closed
         viewerClosed(viewer);

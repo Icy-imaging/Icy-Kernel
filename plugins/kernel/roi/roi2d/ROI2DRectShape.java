@@ -84,18 +84,19 @@ public abstract class ROI2DRectShape extends ROI2DShape
         controlPoints.add(this.bottomRight);
         controlPoints.add(this.bottomLeft);
 
-        this.topLeft.addOverlayListener(this);
-        this.topLeft.addPositionListener(this);
-        this.topRight.addOverlayListener(this);
-        this.topRight.addPositionListener(this);
-        this.bottomLeft.addOverlayListener(this);
-        this.bottomLeft.addPositionListener(this);
-        this.bottomRight.addOverlayListener(this);
-        this.bottomRight.addPositionListener(this);
+        this.topLeft.addOverlayListener(anchor2DOverlayListener);
+        this.topLeft.addPositionListener(anchor2DPositionListener);
+        this.topRight.addOverlayListener(anchor2DOverlayListener);
+        this.topRight.addPositionListener(anchor2DPositionListener);
+        this.bottomLeft.addOverlayListener(anchor2DOverlayListener);
+        this.bottomLeft.addPositionListener(anchor2DPositionListener);
+        this.bottomRight.addOverlayListener(anchor2DOverlayListener);
+        this.bottomRight.addPositionListener(anchor2DPositionListener);
 
         // select the bottom right point by default for interactive mode
         this.bottomRight.setSelected(true);
-//        getOverlay().setMousePos(new Point5D.Double(bottomRight.getX(), bottomRight.getY(), -1d, -1d, -1d));
+        // getOverlay().setMousePos(new Point5D.Double(bottomRight.getX(), bottomRight.getY(), -1d,
+        // -1d, -1d));
 
         updateShape();
     }
@@ -157,7 +158,7 @@ public abstract class ROI2DRectShape extends ROI2DShape
     }
 
     @Override
-    public void positionChanged(Anchor2D source)
+    public void controlPointPositionChanged(Anchor2D source)
     {
         // adjust dependents anchors
         if (source == topLeft)
@@ -181,7 +182,7 @@ public abstract class ROI2DRectShape extends ROI2DShape
             bottomLeft.setY(bottomRight.getY());
         }
 
-        super.positionChanged(source);
+        super.controlPointPositionChanged(source);
     }
 
     @Override

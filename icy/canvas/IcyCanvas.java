@@ -56,6 +56,7 @@ import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.sequence.SequenceListener;
 import icy.system.IcyExceptionHandler;
+import icy.system.thread.ThreadUtil;
 import icy.type.point.Point5D;
 import icy.util.ClassUtil;
 import icy.util.EventUtil;
@@ -264,6 +265,8 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Create a {@link IcyCanvas} object from its class name or {@link PluginCanvas} class name.<br>
+     * Return <code>null</code> if the specified canvas classname does not exist or if an error
+     * occured.
      * 
      * @param viewer
      *        {@link Viewer} to which to canvas is attached.
@@ -408,6 +411,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     protected LUT lut;
     protected boolean synchMaster;
     protected boolean orderedLayersOutdated;
+    private Runnable guiUpdater;
 
     /**
      * Constructor
@@ -473,9 +477,62 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         add(zNav, BorderLayout.WEST);
         add(GuiUtil.createPageBoxPanel(tNav, mouseInfPanel), BorderLayout.SOUTH);
 
+        // asynchronous updater for GUI
+        guiUpdater = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        // update sliders bounds if needed
+                        updateZNav();
+                        updateTNav();
+
+                        // adjust X position if needed
+                        final int maxX = getMaxPositionX();
+                        final int curX = getPositionX();
+                        if ((curX != -1) && (curX > maxX))
+                            setPositionX(maxX);
+
+                        // adjust Y position if needed
+                        final int maxY = getMaxPositionY();
+                        final int curY = getPositionY();
+                        if ((curY != -1) && (curY > maxY))
+                            setPositionY(maxY);
+
+                        // adjust C position if needed
+                        final int maxC = getMaxPositionC();
+                        final int curC = getPositionC();
+                        if ((curC != -1) && (curC > maxC))
+                            setPositionC(maxC);
+
+                        // adjust Z position if needed
+                        final int maxZ = getMaxPositionZ();
+                        final int curZ = getPositionZ();
+                        if ((curZ != -1) && (curZ > maxZ))
+                            setPositionZ(maxZ);
+
+                        // adjust T position if needed
+                        final int maxT = getMaxPositionT();
+                        final int curT = getPositionT();
+                        if ((curT != -1) && (curT > maxT))
+                            setPositionT(maxT);
+
+                        // refresh mouse panel informations (data values can have changed)
+                        mouseInfPanel.updateInfos(IcyCanvas.this);
+                    }
+                });
+            }
+        };
+
         // create image overlay
         imageOverlay = createImageOverlay();
 
+        // create layers from overlays
         beginUpdate();
         try
         {
@@ -4401,42 +4458,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
      */
     protected void sequenceDataChanged(IcyBufferedImage image, SequenceEventType type)
     {
-        // update sliders bounds if needed
-        updateZNav();
-        updateTNav();
-
-        // adjust X position if needed
-        final int maxX = getMaxPositionX();
-        final int curX = getPositionX();
-        if ((curX != -1) && (curX > maxX))
-            setPositionX(maxX);
-
-        // adjust Y position if needed
-        final int maxY = getMaxPositionY();
-        final int curY = getPositionY();
-        if ((curY != -1) && (curY > maxY))
-            setPositionY(maxY);
-
-        // adjust C position if needed
-        final int maxC = getMaxPositionC();
-        final int curC = getPositionC();
-        if ((curC != -1) && (curC > maxC))
-            setPositionC(maxC);
-
-        // adjust Z position if needed
-        final int maxZ = getMaxPositionZ();
-        final int curZ = getPositionZ();
-        if ((curZ != -1) && (curZ > maxZ))
-            setPositionZ(maxZ);
-
-        // adjust T position if needed
-        final int maxT = getMaxPositionT();
-        final int curT = getPositionT();
-        if ((curT != -1) && (curT > maxT))
-            setPositionT(maxT);
-
-        // refresh mouse panel informations (data values can have changed)
-        mouseInfPanel.updateInfos(this);
+        ThreadUtil.runSingle(guiUpdater);
     }
 
     /**

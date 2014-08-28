@@ -54,7 +54,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JSlider;
+import javax.swing.JSpinner;
 import javax.swing.JToolBar;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -111,6 +113,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
     IcyButton copyLinkButton;
     IcyButton pasteLinkButton;
     IcyButton xlsExportButton;
+    JLabel lblNewLabel;
+    JSpinner strokeSpinner;
 
     // internals
     private final RoisPanel roisPanel;
@@ -148,6 +152,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         initialize();
 
         colorButton.addColorChangeListener(this);
+        strokeSpinner.addChangeListener(this);
         alphaSlider.addChangeListener(this);
 
         posXField.addTextChangeListener(this);
@@ -178,9 +183,9 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         actionPanel.setBorder(new TitledBorder(null, "Action", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         add(actionPanel);
         GridBagLayout gbl_actionPanel = new GridBagLayout();
-        gbl_actionPanel.columnWidths = new int[] {0, 0, 0, 0, 0};
+        gbl_actionPanel.columnWidths = new int[] {0, 30, 0, 0, 0, 60, 0};
         gbl_actionPanel.rowHeights = new int[] {0, 0, 0, 0};
-        gbl_actionPanel.columnWeights = new double[] {0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
+        gbl_actionPanel.columnWeights = new double[] {0.0, 1.0, 0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
         gbl_actionPanel.rowWeights = new double[] {0.0, 0.0, 0.0, Double.MIN_VALUE};
         actionPanel.setLayout(gbl_actionPanel);
 
@@ -188,7 +193,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         toolBar.setRollover(true);
         GridBagConstraints gbc_toolBar = new GridBagConstraints();
         gbc_toolBar.anchor = GridBagConstraints.WEST;
-        gbc_toolBar.gridwidth = 4;
+        gbc_toolBar.gridwidth = 6;
         gbc_toolBar.insets = new Insets(0, 0, 5, 0);
         gbc_toolBar.gridx = 0;
         gbc_toolBar.gridy = 0;
@@ -233,7 +238,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         GridBagConstraints gbc_toolBar_1 = new GridBagConstraints();
         gbc_toolBar_1.anchor = GridBagConstraints.WEST;
         gbc_toolBar_1.insets = new Insets(0, 0, 5, 0);
-        gbc_toolBar_1.gridwidth = 4;
+        gbc_toolBar_1.gridwidth = 6;
         gbc_toolBar_1.gridx = 0;
         gbc_toolBar_1.gridy = 1;
         actionPanel.add(toolBar_1, gbc_toolBar_1);
@@ -282,27 +287,45 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         gbc_colorButton.gridx = 1;
         gbc_colorButton.gridy = 2;
         actionPanel.add(colorButton, gbc_colorButton);
-        colorButton.setToolTipText("Select the ROI color");
+        colorButton.setToolTipText("ROI color");
 
-        JLabel lblContentOpacity = new JLabel("Content opacity");
+        lblNewLabel = new JLabel("Stroke");
+        GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
+        gbc_lblNewLabel.anchor = GridBagConstraints.WEST;
+        gbc_lblNewLabel.insets = new Insets(0, 0, 0, 5);
+        gbc_lblNewLabel.gridx = 2;
+        gbc_lblNewLabel.gridy = 2;
+        actionPanel.add(lblNewLabel, gbc_lblNewLabel);
+
+        strokeSpinner = new JSpinner();
+        strokeSpinner.setToolTipText("ROI stroke size (visualization only)");
+        strokeSpinner.setModel(new SpinnerNumberModel(1.0, 1.0, 9.0, 1.0));
+        GridBagConstraints gbc_strokeSpinner = new GridBagConstraints();
+        gbc_strokeSpinner.fill = GridBagConstraints.HORIZONTAL;
+        gbc_strokeSpinner.insets = new Insets(0, 0, 0, 5);
+        gbc_strokeSpinner.gridx = 3;
+        gbc_strokeSpinner.gridy = 2;
+        actionPanel.add(strokeSpinner, gbc_strokeSpinner);
+
+        JLabel lblContentOpacity = new JLabel("Opacity");
         GridBagConstraints gbc_lblContentOpacity = new GridBagConstraints();
-        gbc_lblContentOpacity.fill = GridBagConstraints.HORIZONTAL;
+        gbc_lblContentOpacity.anchor = GridBagConstraints.WEST;
         gbc_lblContentOpacity.insets = new Insets(0, 0, 0, 5);
-        gbc_lblContentOpacity.gridx = 2;
+        gbc_lblContentOpacity.gridx = 4;
         gbc_lblContentOpacity.gridy = 2;
         actionPanel.add(lblContentOpacity, gbc_lblContentOpacity);
 
         alphaSlider = new JSlider();
         GridBagConstraints gbc_alphaSlider = new GridBagConstraints();
         gbc_alphaSlider.fill = GridBagConstraints.HORIZONTAL;
-        gbc_alphaSlider.gridx = 3;
+        gbc_alphaSlider.gridx = 5;
         gbc_alphaSlider.gridy = 2;
         actionPanel.add(alphaSlider, gbc_alphaSlider);
         alphaSlider.setPreferredSize(new Dimension(80, 20));
         alphaSlider.setMaximumSize(new Dimension(32767, 20));
         alphaSlider.setMinimumSize(new Dimension(36, 20));
         alphaSlider.setFocusable(false);
-        alphaSlider.setToolTipText("Change the ROI content opacity");
+        alphaSlider.setToolTipText("ROI content opacity");
 
         JPanel positionAndSizePanel = new JPanel();
         add(positionAndSizePanel);
@@ -621,7 +644,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         final int dim = hasSelected ? roi.getDimension() : 0;
 
         // wait a bit to avoid eating too much time with refresh
-        ThreadUtil.sleep(10);
+        ThreadUtil.sleep(1);
 
         ThreadUtil.invokeNow(new Runnable()
         {
@@ -712,6 +735,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 }
 
                 colorButton.setEnabled(hasSelected && editable);
+                strokeSpinner.setEnabled(hasSelected && editable);
                 alphaSlider.setEnabled(hasSelected);
 
                 loadButton.setEnabled(hasSequence);
@@ -752,7 +776,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         final ROIInfo roiInfo = (roi != null) ? roisPanel.getROIInfo(roi) : null;
 
         // wait a bit to avoid eating too much time with refresh
-        ThreadUtil.sleep(10);
+        ThreadUtil.sleep(1);
 
         ThreadUtil.invokeNow(new Runnable()
         {
@@ -762,12 +786,23 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 modifyingRoi.acquireUninterruptibly();
                 try
                 {
+                    if (roi != null)
+                    {
+                        colorButton.setColor(roi.getColor());
+                        strokeSpinner.setValue(Double.valueOf(roi.getStroke()));
+                        alphaSlider.setValue((int) (roi.getOpacity() * 100));
+                    }
+                    else
+                    {
+                        // no ROI selected
+                        colorButton.setColor(Color.gray);
+                        strokeSpinner.setValue(Double.valueOf(1d));
+                        alphaSlider.setValue(0);
+                    }
+
                     if (roiInfo != null)
                     {
                         double value;
-
-                        colorButton.setColor(roi.getColor());
-                        alphaSlider.setValue((int) (roi.getOpacity() * 100));
 
                         posXField.setText(StringUtil.toString(roiInfo.getPositionX()));
                         posYField.setText(StringUtil.toString(roiInfo.getPositionY()));
@@ -789,10 +824,6 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                     }
                     else
                     {
-                        // no ROI selected
-                        colorButton.setColor(Color.gray);
-                        alphaSlider.setValue(0);
-
                         posXField.setText("");
                         posYField.setText("");
                         posZField.setText("");
@@ -1015,7 +1046,23 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
         try
         {
-            if (source == alphaSlider)
+            if (source == strokeSpinner)
+            {
+                sequence.beginUpdate();
+                try
+                {
+                    final double stroke = ((Double) strokeSpinner.getValue()).doubleValue();
+
+                    for (ROI roi : getSelectedRois())
+                        if (!roi.isReadOnly())
+                            roi.setStroke(stroke);
+                }
+                finally
+                {
+                    sequence.endUpdate();
+                }
+            }
+            else if (source == alphaSlider)
             {
                 sequence.beginUpdate();
                 try

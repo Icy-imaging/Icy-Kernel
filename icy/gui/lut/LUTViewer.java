@@ -31,10 +31,8 @@ import icy.math.Scaler;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.XMLPreferences;
 import icy.sequence.Sequence;
-import icy.sequence.SequenceAdapter;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
-import icy.sequence.WeakSequenceListener;
 import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.util.StringUtil;
@@ -54,7 +52,7 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
+public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, SequenceListener
 {
     private static final long serialVersionUID = 8385018166371243663L;
 
@@ -86,12 +84,6 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
      * preferences
      */
     final XMLPreferences pref;
-
-    /**
-     * internals
-     */
-    private final SequenceListener sequenceListener;
-    private final WeakSequenceListener weakSequenceListener;
 
     final Runnable boundsUpdater;
     final Runnable channelNameUpdater;
@@ -317,41 +309,12 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
 
         validate();
 
-        sequenceListener = new SequenceAdapter()
-        {
-            @Override
-            public void sequenceChanged(SequenceEvent event)
-            {
-                final SequenceEvent e = event;
-
-                switch (e.getSourceType())
-                {
-                    case SEQUENCE_META:
-                        ThreadUtil.runSingle(channelNameUpdater);
-                        break;
-
-                    case SEQUENCE_COMPONENTBOUNDS:
-                        if (autoBoundsCheckBox.isSelected())
-                            ThreadUtil.runSingle(boundsUpdater);
-                        break;
-                }
-            }
-        };
-
         // update channel name and color
         channelTabColorUpdater.run();
         channelNameUpdater.run();
 
-        final Sequence sequence = getSequence();
-
-        if (sequence != null)
-        {
-            // weak reference --> released when LUTViewer is released
-            weakSequenceListener = new WeakSequenceListener(sequenceListener);
-            sequence.addListener(weakSequenceListener);
-        }
-        else
-            weakSequenceListener = null;
+        if (seq != null)
+            seq.addListener(this);
     }
 
     private boolean getPreferredAutoBounds()
@@ -437,4 +400,36 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener
         }
     }
 
+    public void dispose()
+    {
+        removeAll();
+
+        Sequence seq = getSequence();
+        if (seq != null)
+            seq.removeListener(this);
+    }
+
+    @Override
+    public void sequenceChanged(SequenceEvent sequenceEvent)
+    {
+        final SequenceEvent e = sequenceEvent;
+
+        switch (e.getSourceType())
+        {
+            case SEQUENCE_META:
+                ThreadUtil.runSingle(channelNameUpdater);
+                break;
+
+            case SEQUENCE_COMPONENTBOUNDS:
+                if (autoBoundsCheckBox.isSelected())
+                    ThreadUtil.runSingle(boundsUpdater);
+                break;
+        }
+    }
+
+    @Override
+    public void sequenceClosed(Sequence sequence)
+    {
+
+    }
 }

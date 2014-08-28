@@ -137,6 +137,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         // default
         canvas = null;
         lut = null;
+        lutViewer = null;
         initialized = false;
 
         lutUpdater = new Runnable()
@@ -145,7 +146,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
             public void run()
             {
                 // don't need to update that too much
-                ThreadUtil.sleep(10);
+                ThreadUtil.sleep(1);
 
                 ThreadUtil.invokeNow(new Runnable()
                 {
@@ -308,7 +309,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         // remove listeners
         sequence.removeListener(this);
-        canvas.removeCanvasListener(this);
+        if (canvas != null)
+            canvas.removeCanvasListener(this);
         PluginLoader.removeListener(this);
 
         icy.main.Icy.getMainInterface().unRegisterViewer(this);
@@ -317,9 +319,12 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         // it's good to free as much reference we can here
         canvas.shutDown();
 
-        lutViewer.removeAll();
-        mainPanel.removeAll();
-        toolBar.removeAll();
+        if (lutViewer != null)
+            lutViewer.dispose();
+        if (mainPanel != null)
+            mainPanel.removeAll();
+        if (toolBar != null)
+            toolBar.removeAll();
 
         // remove all listeners for this viewer
         ViewerListener[] vls = listeners.getListeners(ViewerListener.class);
@@ -824,7 +829,12 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      */
     public void setLutViewer(LUTViewer value)
     {
-        lutViewer = value;
+        if (lutViewer != value)
+        {
+            if (lutViewer != null)
+                lutViewer.dispose();
+            lutViewer = value;
+        }
     }
 
     /**
@@ -1097,6 +1107,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      */
     public BufferedImage getRenderedImage(int t, int z, int c, boolean canvasView)
     {
+        if (canvas == null)
+            return null;
+
         return canvas.getRenderedImage(t, z, c, canvasView);
     }
 
@@ -1105,6 +1118,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      */
     public Sequence getRenderedSequence(boolean canvasView, ProgressListener progressListener)
     {
+        if (canvas == null)
+            return null;
+
         return canvas.getRenderedSequence(canvasView, progressListener);
     }
 
@@ -1113,6 +1129,9 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
      */
     protected TNavigationPanel getTNavigationPanel()
     {
+        if (canvas == null)
+            return null;
+
         return canvas.getTNavigationPanel();
     }
 

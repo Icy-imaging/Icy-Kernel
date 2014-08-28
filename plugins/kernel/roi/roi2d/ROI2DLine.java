@@ -85,10 +85,10 @@ public class ROI2DLine extends ROI2DShape
         controlPoints.add(this.pt1);
         controlPoints.add(this.pt2);
 
-        this.pt1.addOverlayListener(this);
-        this.pt1.addPositionListener(this);
-        this.pt2.addOverlayListener(this);
-        this.pt2.addPositionListener(this);
+        this.pt1.addOverlayListener(anchor2DOverlayListener);
+        this.pt1.addPositionListener(anchor2DPositionListener);
+        this.pt2.addOverlayListener(anchor2DOverlayListener);
+        this.pt2.addPositionListener(anchor2DPositionListener);
 
         // select the pt2 to size the line for "interactive mode"
         this.pt2.setSelected(true);

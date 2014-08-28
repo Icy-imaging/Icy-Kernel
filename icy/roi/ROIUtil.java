@@ -27,10 +27,13 @@ import icy.type.DataIteratorUtil;
 import icy.type.point.Point3D;
 import icy.type.point.Point4D;
 import icy.type.point.Point5D;
+import icy.type.rectangle.Rectangle3D;
+import icy.type.rectangle.Rectangle4D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.ShapeUtil.BooleanOperator;
 
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 /**
@@ -410,8 +413,14 @@ public class ROIUtil
             }
         }
 
-        final Point2D pos2d = roi.getPosition2D();
-        return new Point2D.Double(pos2d.getX() + (x / len), pos2d.getY() + (y / len));
+        // get bounds
+        final Rectangle2D bounds2D = roi.getBounds2D();
+
+        // empty roi --> use bounds center
+        if (len == 0)
+            return new Point2D.Double(bounds2D.getCenterX(), bounds2D.getCenterY());
+
+        return new Point2D.Double(bounds2D.getX() + (x / len), bounds2D.getY() + (y / len));
     }
 
     /**
@@ -450,7 +459,14 @@ public class ROIUtil
             }
         }
 
-        return new Point3D.Double(x / len, y / len, z / len);
+        // get bounds
+        final Rectangle3D bounds3D = roi.getBounds3D();
+
+        // empty roi --> use bounds center
+        if (len == 0)
+            return new Point3D.Double(bounds3D.getCenterX(), bounds3D.getCenterY(), bounds3D.getCenterZ());
+
+        return new Point3D.Double(bounds3D.getX() + (x / len), bounds3D.getY() + (y / len), bounds3D.getZ() + (z / len));
     }
 
     /**
@@ -497,7 +513,17 @@ public class ROIUtil
             }
         }
 
-        return new Point4D.Double(x / len, y / len, z / len, t / len);
+        // get bounds
+        final Rectangle4D bounds4D = roi.getBounds4D();
+
+        // empty roi --> use bounds center
+        if (len == 0)
+            return new Point4D.Double(bounds4D.getCenterX(), bounds4D.getCenterY(), bounds4D.getCenterZ(),
+                    bounds4D.getCenterT());
+
+        return new Point4D.Double(bounds4D.getX() + (x / len), bounds4D.getY() + (y / len),
+                bounds4D.getZ() + (z / len), bounds4D.getT() + (t / len));
+
     }
 
     /**
@@ -540,7 +566,7 @@ public class ROIUtil
                             if (m[off++])
                             {
                                 x += bx + i;
-                                y += bx + j;
+                                y += by + j;
                                 z += zd;
                                 t += td;
                                 c += cd;
@@ -552,7 +578,16 @@ public class ROIUtil
             }
         }
 
-        return new Point5D.Double(x / len, y / len, z / len, t / len, c / len);
+        // get bounds
+        final Rectangle5D bounds5D = roi.getBounds5D();
+
+        // empty roi --> use bounds center
+        if (len == 0)
+            return new Point5D.Double(bounds5D.getCenterX(), bounds5D.getCenterY(), bounds5D.getCenterZ(),
+                    bounds5D.getCenterT(), bounds5D.getCenterC());
+
+        return new Point5D.Double(bounds5D.getX() + (x / len), bounds5D.getY() + (y / len),
+                bounds5D.getZ() + (z / len), bounds5D.getT() + (t / len), bounds5D.getC() + (c / len));
     }
 
     /**
@@ -603,7 +638,7 @@ public class ROIUtil
     /**
      * Builds and returns a ROI corresponding to the exclusive union of the specified ROI list.
      */
-    public static ROI getExclusiveUnion(List<? extends ROI> rois)  throws UnsupportedOperationException
+    public static ROI getExclusiveUnion(List<? extends ROI> rois) throws UnsupportedOperationException
     {
         return merge(rois, BooleanOperator.XOR);
     }

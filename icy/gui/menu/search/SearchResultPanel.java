@@ -444,7 +444,7 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
         }
 
         // free a bit of time
-        ThreadUtil.sleep(10);
+        ThreadUtil.sleep(1);
 
         // need to be done on EDT
         ThreadUtil.invokeNow(new Runnable()

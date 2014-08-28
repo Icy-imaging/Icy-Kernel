@@ -32,6 +32,7 @@ import icy.main.Icy;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.util.StringUtil;
 
@@ -655,14 +656,15 @@ public class SequenceOperationTask extends RibbonTask
 
     public static final String NAME = "Sequence operation";
 
-    private final CopyConvertBand copyConvertBand;
-    private final RenderingBand colorConvertBand;
-    private final ZTConversionBand stackConversionBand;
-    private final PlanarOperationBand planarOperationBand;
-    private final ChannelOperationBand channelOperationBand;
-    private final ZOperationBand zStackOperationBand;
-    private final TOperationBand tStackOperationBand;
-    private final ModifyRibbonBand modifyBand;
+    final CopyConvertBand copyConvertBand;
+    final RenderingBand colorConvertBand;
+    final ZTConversionBand stackConversionBand;
+    final PlanarOperationBand planarOperationBand;
+    final ChannelOperationBand channelOperationBand;
+    final ZOperationBand zStackOperationBand;
+    final TOperationBand tStackOperationBand;
+    final ModifyRibbonBand modifyBand;
+    final Runnable buttonUpdater;
 
     public SequenceOperationTask()
     {
@@ -677,6 +679,41 @@ public class SequenceOperationTask extends RibbonTask
         stackConversionBand = (ZTConversionBand) getBand(5);
         colorConvertBand = (RenderingBand) getBand(6);
         modifyBand = (ModifyRibbonBand) getBand(7);
+
+        copyConvertBand.updateButtonsState();
+        colorConvertBand.updateButtonsState();
+        channelOperationBand.updateButtonsState();
+        planarOperationBand.updateButtonsState();
+        stackConversionBand.updateButtonsState();
+        zStackOperationBand.updateButtonsState();
+        tStackOperationBand.updateButtonsState();
+        modifyBand.updateButtonsState();
+
+        buttonUpdater = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // sleep a bit
+                ThreadUtil.sleep(1);
+
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        copyConvertBand.updateButtonsState();
+                        colorConvertBand.updateButtonsState();
+                        channelOperationBand.updateButtonsState();
+                        planarOperationBand.updateButtonsState();
+                        stackConversionBand.updateButtonsState();
+                        zStackOperationBand.updateButtonsState();
+                        tStackOperationBand.updateButtonsState();
+                        modifyBand.updateButtonsState();
+                    }
+                });
+            }
+        };
     }
 
     public double getFillValue()
@@ -689,13 +726,6 @@ public class SequenceOperationTask extends RibbonTask
      */
     public void onSequenceChange()
     {
-        copyConvertBand.updateButtonsState();
-        colorConvertBand.updateButtonsState();
-        channelOperationBand.updateButtonsState();
-        planarOperationBand.updateButtonsState();
-        stackConversionBand.updateButtonsState();
-        zStackOperationBand.updateButtonsState();
-        tStackOperationBand.updateButtonsState();
-        modifyBand.updateButtonsState();
+        ThreadUtil.runSingle(buttonUpdater);
     }
 }

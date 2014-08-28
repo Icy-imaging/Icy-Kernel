@@ -417,7 +417,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         final long st = System.currentTimeMillis();
         // wait for initialization to complete before shutdown (max 5s)
         while (((System.currentTimeMillis() - st) < 5000L) && !initialized)
-            ThreadUtil.sleep(10);
+            ThreadUtil.sleep(1);
 
         super.shutDown();
         

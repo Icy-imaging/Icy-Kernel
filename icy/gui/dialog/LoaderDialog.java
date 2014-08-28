@@ -6,6 +6,7 @@ import icy.file.Loader;
 import icy.file.SequenceFileImporter;
 import icy.main.Icy;
 import icy.preferences.ApplicationPreferences;
+import icy.preferences.GeneralPreferences;
 import icy.preferences.XMLPreferences;
 import icy.type.collection.CollectionUtil;
 import icy.util.StringUtil;
@@ -112,7 +113,7 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
 
         // can't use WindowsPositionSaver as JFileChooser is a fake JComponent
         // only dimension is stored
-        setCurrentDirectory(new File(preferences.get(ID_PATH, "")));
+        setCurrentDirectory(new File(GeneralPreferences.getLoaderFolder()));
         setPreferredSize(new Dimension(preferences.getInt(ID_WIDTH, 600), preferences.getInt(ID_HEIGTH, 400)));
 
         setMultiSelectionEnabled(true);
@@ -149,7 +150,7 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         if (value == JFileChooser.APPROVE_OPTION)
         {
             // store current path
-            preferences.put(ID_PATH, getCurrentDirectory().getAbsolutePath());
+            GeneralPreferences.setLoaderFolder(getCurrentDirectory().getAbsolutePath());
             preferences.putBoolean(ID_SEPARATE, isSeparateSequenceSelected());
             preferences.putBoolean(ID_AUTOORDER, isAutoOrderSelected());
             preferences.put(ID_EXTENSION, getFileFilter().getDescription());
@@ -227,6 +228,11 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
         return getImporter(getFileFilterIndex()) instanceof SequenceFileImporter;
     }
 
+    protected boolean isAllFileFilter()
+    {
+        return getFileFilter() == allFileFilter;
+    }
+
     protected Object getImporter(int filterIndex)
     {
         int ind = 0;
@@ -296,7 +302,7 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
 
     protected void updateGUI()
     {
-        if (isImageFilter())
+        if (isImageFilter() || isAllFileFilter())
         {
             setDialogTitle("Load image file(s)");
             setAccessory(optionPanel);

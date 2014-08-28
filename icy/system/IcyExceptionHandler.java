@@ -126,10 +126,11 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
     private static void handleException(PluginDescriptor plugin, String devId, Throwable t, boolean printStackStrace)
     {
         final long current = System.currentTimeMillis();
+        final String errMess = (t.getMessage() != null) ? t.getMessage() : "";
 
         if (t instanceof IcyHandledException)
         {
-            final String message = t.getMessage() + ((t.getCause() == null) ? "" : "\n" + t.getCause());
+            final String message = errMess + ((t.getCause() == null) ? "" : "\n" + t.getCause());
 
             // handle HandledException differently
             MessageDialog.showDialog(message, MessageDialog.ERROR_MESSAGE);
@@ -154,10 +155,10 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
 
             if (t instanceof OutOfMemoryError)
             {
-                if (t.getMessage().contains("Thread"))
+                if (errMess.contains("Thread"))
                 {
                     message = "Out of resource error: cannot create new thread.\n"
-                            + "You should report this report as something goes wrong here !";
+                            + "You should report this error as something goes wrong here !";
                 }
                 else
                 {

@@ -28,6 +28,8 @@ import icy.image.lut.LUT.LUTChannel;
 import icy.image.lut.LUT.LUTChannelEvent;
 import icy.image.lut.LUT.LUTChannelEvent.LUTChannelEventType;
 import icy.image.lut.LUT.LUTChannelListener;
+import icy.math.ArrayMath;
+import icy.math.Histogram;
 import icy.math.MathUtil;
 import icy.math.Scaler;
 import icy.sequence.Sequence;
@@ -41,6 +43,7 @@ import icy.util.ColorUtil;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.StringUtil;
+import ij.util.ArrayUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -222,7 +225,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                     g2.drawLine(x, bottom, x, y);
                 }
 
-                displayBounds(g2);
+                paintBounds(g2);
 
                 if (!StringUtil.isEmpty(message))
                 {
@@ -247,7 +250,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
         /**
          * draw bounds
          */
-        private void displayBounds(Graphics2D g)
+        private void paintBounds(Graphics2D g)
         {
             final int h = getClientHeight() - 1;
             final int y = getClientY();
@@ -560,16 +563,14 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
     // this method is called by processor, we don't mind about exception here
     void refreshHistoDataInternal()
     {
-        // init histoGram
-        histogram.reset();
-
+        final Histogram histo = histogram.getHistogram();
         final Sequence seq = viewer.getSequence();
 
+        histogram.reset();
         try
         {
             if (seq != null)
             {
-
                 final int maxZ;
                 final int maxT;
                 int t = viewer.getPositionT();
@@ -607,23 +608,29 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                             {
                                 // need to be recalculated so don't waste time here...
                                 if (ThreadUtil.hasWaitingBgSingleTask(histoUpdater))
-                                     return;
+                                    return;
                             }
 
-                            histogram.addValue(Array1DUtil.getValue(data, i, dataType));
+                            histo.addValue(Array1DUtil.getValue(data, i, dataType));
                         }
                     }
                 }
             }
-
-            // notify that histogram computation is done
-            histogram.done();
         }
         catch (Exception e)
         {
-            // just redo it
+            // just redo it later
             refreshHistoData();
-            //System.out.println("error");
+            // System.out.println("error");
+        }
+        finally
+        {
+            // notify that histogram computation is done
+            histogram.done();
+
+            // histogram changed in the meantime --> recompute
+            if (histo != histogram.getHistogram())
+                refreshHistoData();
         }
     }
 

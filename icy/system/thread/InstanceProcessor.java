@@ -64,7 +64,9 @@ public class InstanceProcessor extends Processor
     protected synchronized <T> Future<T> submit(FutureTaskAdapter<T> task)
     {
         // task already present in queue --> return null (mean the task was ignored)
-        if (hasWaitingTasks(task))
+        if ((task.runnable != null) && hasWaitingTasks(task.runnable))
+            return null;
+        if ((task.callable != null) && hasWaitingTasks(task.callable))
             return null;
 
         // add task only if not already present in queue

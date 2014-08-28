@@ -86,6 +86,23 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
     }
 
+    public static class ROINameComparator implements Comparator<ROI>
+    {
+        @Override
+        public int compare(ROI roi1, ROI roi2)
+        {
+            if (roi1 == roi2)
+                return 0;
+
+            if (roi1 == null)
+                return -1;
+            if (roi2 == null)
+                return 1;
+
+            return roi1.getName().compareTo(roi2.getName());
+        }
+    }
+
     public static final String ID_ROI = "roi";
 
     public static final String ID_CLASSNAME = "classname";
@@ -98,6 +115,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final String ID_SELECTED = "selected";
 
     public static final ROIIdComparator idComparator = new ROIIdComparator();
+    public static final ROINameComparator nameComparator = new ROINameComparator();
 
     public static final int DEFAULT_STROKE = 2;
     public static final Color DEFAULT_COLOR = Color.GREEN;

@@ -373,7 +373,7 @@ public interface MainInterface
     public abstract String getSelectedTool();
 
     /**
-     * Set current selected tool (ROI / Selection)
+     * Set current selected tool (ROI / Selection).
      */
     public abstract void setSelectedTool(String command);
 

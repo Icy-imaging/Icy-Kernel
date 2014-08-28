@@ -284,6 +284,9 @@ public class Histogram
      */
     public int getBinSize(int index)
     {
+        if ((index < 0) || (index >= bins.length))
+            return 0;
+        
         return bins[index];
     }
 

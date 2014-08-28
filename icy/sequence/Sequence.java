@@ -376,22 +376,26 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
                 if (GeneralPreferences.getSequencePersistence())
                     saveXMLData();
 
-                synchronized (overlays)
-                {
-                    for (Overlay overlay : overlays)
-                        overlay.removeOverlayListener(Sequence.this);
+                // TODO: normally the GC should be able to release overlay and roi if needed
+                // also that might be a problem for a sequence maintained by code (but not in GUI)
+                // to lost the overlays and the rois.
 
-                    overlays.clear();
-                }
-
-                synchronized (rois)
-                {
-                    // remove all listener on ROI
-                    for (ROI roi : rois)
-                        roi.removeListener(Sequence.this);
-
-                    rois.clear();
-                }
+                // synchronized (overlays)
+                // {
+                // for (Overlay overlay : overlays)
+                // overlay.removeOverlayListener(Sequence.this);
+                //
+                // overlays.clear();
+                // }
+                //
+                // synchronized (rois)
+                // {
+                // // remove all listener on ROI
+                // for (ROI roi : rois)
+                // roi.removeListener(Sequence.this);
+                //
+                // rois.clear();
+                // }
             }
         }))
         {

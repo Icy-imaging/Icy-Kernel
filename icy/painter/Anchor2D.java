@@ -43,6 +43,8 @@ import java.util.EventListener;
 
 import org.w3c.dom.Node;
 
+import plugins.kernel.canvas.VtkCanvas;
+
 /**
  * @author Stephane
  */
@@ -1039,8 +1041,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (!isVisible())
             return;
 
-        // canvas3D not handled here
-        if (canvas instanceof Canvas3D)
+        // VtkCanvas not handled here
+        if (canvas instanceof VtkCanvas)
             return;
         // no image position --> exit
         if (imagePoint == null)

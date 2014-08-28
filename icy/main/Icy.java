@@ -62,6 +62,7 @@ import icy.workspace.WorkspaceLoader;
 import ij.ImageJ;
 
 import java.awt.EventQueue;
+import java.beans.PropertyVetoException;
 import java.io.File;
 import java.nio.channels.FileLock;
 import java.util.ArrayList;
@@ -593,15 +594,26 @@ public class Icy
                         {
                             for (JInternalFrame frame : desktopPane.getAllFrames())
                             {
-                                if (frame instanceof IcyInternalFrame)
-                                {
-                                    final IcyInternalFrame iFrame = (IcyInternalFrame) frame;
-                                    iFrame.close(true);
-                                    if (iFrame.getDefaultCloseOperation() != WindowConstants.DISPOSE_ON_CLOSE)
-                                        iFrame.dispose();
-                                }
-                                else
-                                    frame.dispose();
+//                                if (frame instanceof IcyInternalFrame)
+//                                {
+//                                    final IcyInternalFrame iFrame = (IcyInternalFrame) frame;
+//                                    if (!iFrame.isClosed())
+//                                        iFrame.close(true);
+//                                    if (iFrame.getDefaultCloseOperation() != WindowConstants.DISPOSE_ON_CLOSE)
+//                                        iFrame.dispose();
+//                                }
+//                                else
+//                                {
+                                    try
+                                    {
+                                        frame.setClosed(true);
+                                    }
+                                    catch (PropertyVetoException e)
+                                    {
+                                        //if (frame.getDefaultCloseOperation() != WindowConstants.DISPOSE_ON_CLOSE)
+                                            frame.dispose();
+                                    }
+//                                }
                             }
                         }
 
@@ -643,7 +655,7 @@ public class Icy
 
                 // wait that background processors completed theirs tasks
                 while (!ThreadUtil.isShutdownAndTerminated() && !exitFrame.isForced())
-                    ThreadUtil.sleep(10);
+                    ThreadUtil.sleep(1);
 
                 // can close the exit frame now
                 exitFrame.dispose();
@@ -826,7 +838,7 @@ public class Icy
         {
             directories.add("/lib");
             directories.add("/usr/lib");
-            
+
             if (SystemUtil.is64bits())
             {
                 directories.add("/lib64");

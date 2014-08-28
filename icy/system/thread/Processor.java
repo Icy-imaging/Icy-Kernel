@@ -900,7 +900,7 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
-     * Remove first waiting task for the specified <tt>Runnable</tt> instance.
+     * Remove first waiting task for the specified <tt>FutureTaskAdapter</tt> instance.
      */
     protected boolean removeFirstWaitingTask(FutureTaskAdapter<?> task)
     {

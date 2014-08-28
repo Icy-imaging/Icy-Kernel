@@ -19,17 +19,25 @@
 package plugins.kernel.roi.roi2d;
 
 import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
 import icy.painter.Anchor2D;
 import icy.resource.ResourceUtil;
+import icy.sequence.Sequence;
 import icy.type.point.Point5D;
+import icy.type.point.Point5D.Double;
 import icy.util.XMLUtil;
 
 import java.awt.Graphics2D;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
 
 import org.w3c.dom.Node;
+
+import plugins.kernel.canvas.VtkCanvas;
 
 /**
  * ROI 2D Point class.<br>
@@ -47,7 +55,7 @@ public class ROI2DPoint extends ROI2DShape
             if (isSelected())
                 return false;
 
-            return super.isSmall(bounds, g, canvas);
+            return true;
         }
 
         @Override
@@ -56,7 +64,73 @@ public class ROI2DPoint extends ROI2DShape
             if (isSelected())
                 return false;
 
-            return super.isTiny(bounds, g, canvas);
+            return true;
+        }
+
+        @Override
+        public void mouseMove(MouseEvent e, Double imagePoint, IcyCanvas canvas)
+        {
+            super.mouseMove(e, imagePoint, canvas);
+
+            // special case: we want to set focus when we have control point selected
+            if (hasSelectedPoint())
+                setFocused(true);
+        }
+
+        @Override
+        protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            if (canvas instanceof IcyCanvas2D)
+            {
+                final Graphics2D g2 = (Graphics2D) g.create();
+
+                if (isSelected() && !isReadOnly())
+                {
+                    // draw control point if selected
+                    synchronized (controlPoints)
+                    {
+                        for (Anchor2D pt : controlPoints)
+                            pt.paint(g2, sequence, canvas);
+                    }
+                }
+                else
+                {
+                    final Point2D pos = getPoint();
+                    final double ray = getAdjustedStroke(canvas);
+                    final Ellipse2D ellipse = new Ellipse2D.Double(pos.getX() - ray, pos.getY() - ray, ray * 2, ray * 2);
+
+                    // draw shape
+                    g2.setColor(getDisplayColor());
+                    g2.fill(ellipse);
+                }
+
+                g2.dispose();
+            }
+
+            if (canvas instanceof VtkCanvas)
+            {
+                // 3D canvas
+                final VtkCanvas canvas3d = (VtkCanvas) canvas;
+
+                // FIXME : need a better implementation
+                final double[] s = canvas3d.getVolumeScale();
+
+                // scaling changed ?
+                if (!Arrays.equals(scaling, s))
+                {
+                    // update scaling
+                    scaling = s;
+                    // need rebuild
+                    needRebuild = true;
+                }
+
+                // need to rebuild 3D data structures ?
+                if (needRebuild)
+                {
+                    rebuild3DPainter(canvas3d);
+                    needRebuild = false;
+                }
+            }
         }
     }
 
@@ -82,8 +156,8 @@ public class ROI2DPoint extends ROI2DShape
         // add to the control point list
         controlPoints.add(this.position);
 
-        this.position.addOverlayListener(this);
-        this.position.addPositionListener(this);
+        this.position.addOverlayListener(anchor2DOverlayListener);
+        this.position.addPositionListener(anchor2DPositionListener);
 
         // select the point for "interactive" mode
         this.position.setSelected(true);
