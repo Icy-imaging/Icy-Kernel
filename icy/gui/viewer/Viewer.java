@@ -153,10 +153,16 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                     @Override
                     public void run()
                     {
-                        // refresh LUT viewer
-                        setLutViewer(new LUTViewer(Viewer.this, getLut()));
-                        // notify
-                        fireViewerChanged(ViewerEventType.LUT_CHANGED);
+                        final LUT lut = getLut();
+
+                        // closed --> ignore
+                        if (lut != null)
+                        {
+                            // refresh LUT viewer
+                            setLutViewer(new LUTViewer(Viewer.this, lut));
+                            // notify
+                            fireViewerChanged(ViewerEventType.LUT_CHANGED);
+                        }
                     }
                 });
             }

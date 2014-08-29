@@ -90,9 +90,9 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
     final Runnable channelEnableUpdater;
     final Runnable channelTabColorUpdater;
 
-    public LUTViewer(Viewer v, LUT l)
+    public LUTViewer(Viewer viewer, LUT lut)
     {
-        super(v, l);
+        super(viewer, lut);
 
         pref = ApplicationPreferences.getPreferences().node(PREF_ID_HISTO);
 
@@ -180,9 +180,9 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
         bottomPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
         // add tab for each channel
-        for (int c = 0; c < getLut().getNumChannel(); c++)
+        for (int c = 0; c < lut.getNumChannel(); c++)
         {
-            final LUTChannel lutChannel = getLut().getLutChannel(c);
+            final LUTChannel lutChannel = lut.getLutChannel(c);
             final LUTChannelViewer lbv = new LUTChannelViewer(viewer, lutChannel);
 
             lutChannel.getColorMap().addListener(this);
