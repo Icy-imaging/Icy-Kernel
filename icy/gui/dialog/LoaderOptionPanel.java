@@ -87,7 +87,7 @@ public class LoaderOptionPanel extends JPanel
                     preview.setInfos2("");
                 }
             }
-            catch (ThreadDeath t)
+            catch (Throwable t)
             {
                 // ignore
             }

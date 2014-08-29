@@ -102,7 +102,6 @@ class ARGBImageBuilder
                 releaseBuffer(componentValues);
             }
         }
-
     }
 
     // processor
@@ -157,6 +156,7 @@ class ARGBImageBuilder
         if (buffer == null)
             return;
 
+        // --> blocked
         synchronized (buffers)
         {
             buffers.add(buffer);
@@ -219,8 +219,19 @@ class ARGBImageBuilder
     {
         while (!futures.isEmpty())
         {
-            // wait for last in the queue
+            // get last in queue
             final Future<?> f = futures.get(futures.size() - 1);
+
+            try
+            {
+                // wait for it
+                f.get();
+            }
+            catch (Exception e)
+            {
+                // ignore
+            }
+
             // remove it
             futures.remove(f);
         }
