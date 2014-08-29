@@ -94,6 +94,18 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             needRebuild = true;
         }
 
+        protected void initVTKObjects()
+        {
+            // init 3D painters stuff
+            polyData = new vtkPolyData();
+
+            polyMapper = new vtkPolyDataMapper();
+            ((vtkPolyDataMapper) polyMapper).SetInputData((vtkPolyData) polyData);
+
+            actor = new vtkActor();
+            ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
+        }
+
         /**
          * update 3D painter for 3D canvas (called only when vtk is loaded).
          */
@@ -107,16 +119,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
             // initialize VTK objects if not yet done
             if (actor == null)
-            {
-                // init 3D painters stuff
-                polyData = new vtkPolyData();
-
-                polyMapper = new vtkPolyDataMapper();
-                ((vtkPolyDataMapper) polyMapper).SetInputData((vtkPolyData) polyData);
-
-                actor = new vtkActor();
-                ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
-            }
+                initVTKObjects();
 
             final List<Point3D.Double> point3DList = new ArrayList<Point3D.Double>();
             final List<Poly3D> polyList = new ArrayList<Poly3D>();
@@ -723,6 +726,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         @Override
         public vtkProp[] getProps()
         {
+            // initialize VTK objects if not yet done
+            if (actor == null)
+                initVTKObjects();
+
             return new vtkProp[] {(vtkProp) actor};
         }
     }

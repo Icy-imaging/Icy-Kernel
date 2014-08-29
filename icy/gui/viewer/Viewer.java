@@ -179,8 +179,13 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         mainPanel.setLayout(new BorderLayout());
 
-        // set user lut (this modify lutPanel)
-        setLut(sequence.getUserLUT());
+        // create a new compatible LUT
+        final LUT lut = sequence.createCompatibleLUT();
+        // restore user colormaps (without alpha)
+        lut.setColorMaps(sequence.getUserLUT(), false);
+
+        // set lut (this modify lutPanel)
+        setLut(lut);
         // set default canvas to first available canvas plugin (Canvas2D should be first)
         setCanvas(IcyCanvas.getCanvasPluginNames().get(0));
 
