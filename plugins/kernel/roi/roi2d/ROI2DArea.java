@@ -409,20 +409,28 @@ public class ROI2DArea extends ROI2D
         @Override
         public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
+            super.paint(g, sequence, canvas);
+
             if (isActiveFor(canvas))
             {
-                drawROI(g, sequence, canvas);
-                drawCursor(g, sequence, canvas);
+                // ROI selected ? draw cursor
+                if (isSelected() && !isFocused() && !isReadOnly())
+                    drawCursor(g, sequence, canvas);
             }
         }
 
         /**
          * Draw the ROI itself
          */
+        @Override
         protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
             if (canvas instanceof IcyCanvas2D)
             {
+                // not supported
+                if (g == null)
+                    return;
+
                 final Rectangle bounds = getBounds();
                 // trivial paint optimization
                 final boolean shapeVisible = GraphicsUtil.isVisible(g, bounds);
@@ -438,7 +446,7 @@ public class ROI2DArea extends ROI2D
                     else
                     {
                         final AffineTransform trans = g2.getTransform();
-                        final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
+                        final double scale = Math.max(Math.abs(trans.getScaleX()), Math.abs(trans.getScaleY()));
                         small = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight()) < LOD_SMALL;
                     }
 
@@ -502,59 +510,59 @@ public class ROI2DArea extends ROI2D
         {
             if (canvas instanceof IcyCanvas2D)
             {
-                // ROI selected ? draw cursor
-                if (isSelected() && !isFocused() && !isReadOnly())
+                // not supported
+                if (g == null)
+                    return;
+
+                final Rectangle bounds = brush.getBounds();
+                // trivial paint optimization
+                final boolean shapeVisible = GraphicsUtil.isVisible(g, bounds);
+
+                if (shapeVisible)
                 {
-                    final Rectangle bounds = brush.getBounds();
-                    // trivial paint optimization
-                    final boolean shapeVisible = GraphicsUtil.isVisible(g, bounds);
+                    final Graphics2D g2 = (Graphics2D) g.create();
+                    final boolean tiny;
 
-                    if (shapeVisible)
+                    // disable LOD when creating the ROI
+                    if (isCreating())
+                        tiny = false;
+                    else
                     {
-                        final Graphics2D g2 = (Graphics2D) g.create();
-                        final boolean tiny;
-
-                        // disable LOD when creating the ROI
-                        if (isCreating())
-                            tiny = false;
-                        else
-                        {
-                            final AffineTransform trans = g2.getTransform();
-                            final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
-                            tiny = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight()) < LOD_TINY;
-                        }
-
-                        // simplified draw
-                        if (tiny)
-                        {
-                            // cursor color
-                            g2.setColor(brushColor);
-                            // draw cursor
-                            g2.fill(brush);
-                        }
-                        // normal draw
-                        else
-                        {
-                            final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
-
-                            float newAlpha = prevAlpha.getAlpha() * getOpacity() * 2f;
-                            newAlpha = Math.min(1f, newAlpha);
-                            newAlpha = Math.max(0f, newAlpha);
-
-                            // show cursor with an alpha factor
-                            g2.setComposite(prevAlpha.derive(newAlpha));
-
-                            // draw cursor border
-                            g2.setColor(Color.black);
-                            g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
-                            g2.draw(brush);
-                            // draw cursor
-                            g2.setColor(brushColor);
-                            g2.fill(brush);
-                        }
-
-                        g2.dispose();
+                        final AffineTransform trans = g2.getTransform();
+                        final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
+                        tiny = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight()) < LOD_TINY;
                     }
+
+                    // simplified draw
+                    if (tiny)
+                    {
+                        // cursor color
+                        g2.setColor(brushColor);
+                        // draw cursor
+                        g2.fill(brush);
+                    }
+                    // normal draw
+                    else
+                    {
+                        final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
+
+                        float newAlpha = prevAlpha.getAlpha() * getOpacity() * 2f;
+                        newAlpha = Math.min(1f, newAlpha);
+                        newAlpha = Math.max(0f, newAlpha);
+
+                        // show cursor with an alpha factor
+                        g2.setComposite(prevAlpha.derive(newAlpha));
+
+                        // draw cursor border
+                        g2.setColor(Color.black);
+                        g2.setStroke(new BasicStroke((float) ROI.getAdjustedStroke(canvas, stroke)));
+                        g2.draw(brush);
+                        // draw cursor
+                        g2.setColor(brushColor);
+                        g2.fill(brush);
+                    }
+
+                    g2.dispose();
                 }
             }
 

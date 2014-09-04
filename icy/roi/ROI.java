@@ -109,10 +109,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final String ID_ID = "id";
     public static final String ID_NAME = "name";
     public static final String ID_COLOR = "color";
-    // public static final String ID_SELECTED_COLOR = "selected_color";
     public static final String ID_STROKE = "stroke";
     public static final String ID_OPACITY = "opacity";
     public static final String ID_SELECTED = "selected";
+    public static final String ID_READONLY = "readOnly";
+    public static final String ID_DISPLAYNAME = "displayName";
 
     public static final ROIIdComparator idComparator = new ROIIdComparator();
     public static final ROINameComparator nameComparator = new ROINameComparator();
@@ -124,14 +125,13 @@ public abstract class ROI implements ChangeListener, XMLPersistent
      */
     @Deprecated
     public static final Color DEFAULT_NORMAL_COLOR = DEFAULT_COLOR;
-    // protected static final Color DEFAULT_SELECTED_COLOR = Color.ORANGE;
-    // protected static final Color OVER_COLOR = Color.WHITE;
     public static final float DEFAULT_OPACITY = 0.3f;
 
-    public static final String PROPERTY_NAME = "name";
+    public static final String PROPERTY_NAME = ID_NAME;
     public static final String PROPERTY_ICON = "icon";
     public static final String PROPERTY_CREATING = "creating";
-    public static final String PROPERTY_READONLY = "readonly";
+    public static final String PROPERTY_READONLY = ID_READONLY;
+    public static final String PROPERTY_DISPLAYNAME = ID_DISPLAYNAME;
 
     /**
      * Create a ROI from its class name or {@link PluginROI} class name.
@@ -856,6 +856,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected boolean focused;
     protected boolean selected;
     protected boolean readOnly;
+    protected boolean displayName;
 
     // attached ROI icon
     protected Image icon;
@@ -891,6 +892,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         creating = false;
         focused = false;
         selected = false;
+        displayName = true;
 
         cachedBounds = new Rectangle5D.Double();
         cachedNumberOfPoints = 0d;
@@ -1390,6 +1392,27 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             propertyChanged(PROPERTY_READONLY);
             if (value)
                 setSelected(false);
+        }
+    }
+
+    /**
+     * Return <code>true</code> if ROI should display its name at draw time.<br>
+     */
+    public boolean getDisplayName()
+    {
+        return displayName;
+    }
+
+    /**
+     * Set the <i>display name</i> property of ROI.<br>
+     * When set to <code>true</code> the ROI should display its name at draw time.
+     */
+    public void setDisplayName(boolean value)
+    {
+        if (displayName != value)
+        {
+            displayName = value;
+            propertyChanged(PROPERTY_DISPLAYNAME);
         }
     }
 
@@ -2410,6 +2433,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             id = XMLUtil.getElementIntValue(node, ID_ID, 0);
             setName(XMLUtil.getElementValue(node, ID_NAME, ""));
             setSelected(XMLUtil.getElementBooleanValue(node, ID_SELECTED, false));
+            setReadOnly(XMLUtil.getElementBooleanValue(node, ID_READONLY, false));
+            setDisplayName(XMLUtil.getElementBooleanValue(node, ID_DISPLAYNAME, false));
             painter.loadFromXML(node);
         }
         finally
@@ -2430,6 +2455,9 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         XMLUtil.setElementIntValue(node, ID_ID, id);
         XMLUtil.setElementValue(node, ID_NAME, getName());
         XMLUtil.setElementBooleanValue(node, ID_SELECTED, isSelected());
+        XMLUtil.setElementBooleanValue(node, ID_READONLY, isReadOnly());
+        XMLUtil.setElementBooleanValue(node, ID_DISPLAYNAME, getDisplayName());
+
         painter.saveToXML(node);
 
         return true;
@@ -2576,6 +2604,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                 break;
 
             case PROPERTY_CHANGED:
+                final String property = event.getPropertyName();
+
+                // painter can display name so repaint
+                if (StringUtil.isEmpty(property) || StringUtil.equals(property, PROPERTY_NAME)
+                        || StringUtil.equals(property, PROPERTY_DISPLAYNAME))
+                    painter.painterChanged();
                 break;
 
             default:

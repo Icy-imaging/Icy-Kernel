@@ -23,6 +23,8 @@ import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.frame.progress.ToolTipFrame;
 import icy.gui.util.LookAndFeelUtil;
 
+import java.util.Date;
+
 /**
  * @author Stephane
  */
@@ -40,6 +42,7 @@ public class GeneralPreferences
      */
     public static final String ID_SEQUENCE_PERSISTENCE = "sequencePersistence";
     public static final String ID_AUTO_UPDATE = "autoUpdate";
+    public static final String ID_LAST_UPDATECHECK_TIME = "lastUpdateCheckTime";
     public static final String ID_RIBBON_MINIMIZED = "ribbonMinimized";
     public static final String ID_DETACHED_MODE = "detached";
     public static final String ID_ALWAYS_ON_TOP = "alwaysOnTop";
@@ -121,6 +124,11 @@ public class GeneralPreferences
         return prefGeneral.getBoolean(ID_AUTO_UPDATE, true);
     }
 
+    public static long getLastUpdateCheckTime()
+    {
+        return prefGeneral.getLong(ID_LAST_UPDATECHECK_TIME, new Date().getTime());
+    }
+
     public static boolean getRibbonMinimized()
     {
         return prefGeneral.getBoolean(ID_RIBBON_MINIMIZED, false);
@@ -194,6 +202,11 @@ public class GeneralPreferences
     public static void setAutomaticUpdate(boolean value)
     {
         prefGeneral.putBoolean(ID_AUTO_UPDATE, value);
+    }
+
+    public static void setLastUpdateCheckTime(long time)
+    {
+        prefGeneral.putLong(ID_LAST_UPDATECHECK_TIME, time);
     }
 
     public static void setRibbonMinimized(boolean value)

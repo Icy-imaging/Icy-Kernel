@@ -28,11 +28,10 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 /**
@@ -54,7 +53,6 @@ public class SequencePanel extends JPanel implements ActiveSequenceListener, Act
     private JPanel infosPanel;
 
     private SequenceInfosPanel sequenceInfosPanel;
-    private Component verticalGlue;
 
     /**
      * 
@@ -68,31 +66,47 @@ public class SequencePanel extends JPanel implements ActiveSequenceListener, Act
 
     private void initialize()
     {
-        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-
-        canvasPopupPanel = new PopupPanel("Canvas");
-        canvasPanel = canvasPopupPanel.getMainPanel();
-        canvasPanel.setLayout(new BorderLayout());
-        canvasPopupPanel.expand();
-        add(canvasPopupPanel);
-
-        lutPopupPanel = new PopupPanel("Lookup Table");
-        lutPanel = lutPopupPanel.getMainPanel();
-        lutPanel.setLayout(new BorderLayout());
-        lutPopupPanel.expand();
-        add(lutPopupPanel);
+        GridBagLayout gridBagLayout = new GridBagLayout();
+        gridBagLayout.columnWidths = new int[] {0, 0};
+        gridBagLayout.rowHeights = new int[] {0, 0, 0, 0, 0};
+        gridBagLayout.columnWeights = new double[] {1.0, Double.MIN_VALUE};
+        gridBagLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+        setLayout(gridBagLayout);
 
         sequenceInfosPanel = new SequenceInfosPanel();
         infosPopupPanel = new PopupPanel("Sequence Properties");
         infosPanel = infosPopupPanel.getMainPanel();
         infosPanel.setLayout(new BorderLayout());
         infosPopupPanel.expand();
-        infosPanel.add(sequenceInfosPanel, BorderLayout.CENTER);
-        add(infosPopupPanel);
 
-        verticalGlue = Box.createVerticalGlue();
-        verticalGlue.setPreferredSize(new Dimension(100, 32000));
-        add(verticalGlue);
+        canvasPopupPanel = new PopupPanel("Canvas");
+        canvasPanel = canvasPopupPanel.getMainPanel();
+        canvasPanel.setLayout(new BorderLayout());
+        canvasPopupPanel.expand();
+        GridBagConstraints gbc_canvasPopupPanel = new GridBagConstraints();
+        gbc_canvasPopupPanel.fill = GridBagConstraints.HORIZONTAL;
+        gbc_canvasPopupPanel.insets = new Insets(0, 0, 0, 0);
+        gbc_canvasPopupPanel.gridx = 0;
+        gbc_canvasPopupPanel.gridy = 0;
+        add(canvasPopupPanel, gbc_canvasPopupPanel);
+
+        lutPopupPanel = new PopupPanel("Lookup Table");
+        lutPanel = lutPopupPanel.getMainPanel();
+        lutPanel.setLayout(new BorderLayout());
+        lutPopupPanel.expand();
+        GridBagConstraints gbc_lutPopupPanel = new GridBagConstraints();
+        gbc_lutPopupPanel.fill = GridBagConstraints.HORIZONTAL;
+        gbc_lutPopupPanel.insets = new Insets(0, 0, 0, 0);
+        gbc_lutPopupPanel.gridx = 0;
+        gbc_lutPopupPanel.gridy = 1;
+        add(lutPopupPanel, gbc_lutPopupPanel);
+        infosPanel.add(sequenceInfosPanel, BorderLayout.CENTER);
+        GridBagConstraints gbc_infosPopupPanel = new GridBagConstraints();
+        gbc_infosPopupPanel.insets = new Insets(0, 0, 0, 0);
+        gbc_infosPopupPanel.fill = GridBagConstraints.HORIZONTAL;
+        gbc_infosPopupPanel.gridx = 0;
+        gbc_infosPopupPanel.gridy = 2;
+        add(infosPopupPanel, gbc_infosPopupPanel);
     }
 
     public void setCanvasPanel(JPanel panel)

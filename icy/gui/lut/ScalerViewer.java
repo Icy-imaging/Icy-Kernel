@@ -28,7 +28,6 @@ import icy.image.lut.LUT.LUTChannel;
 import icy.image.lut.LUT.LUTChannelEvent;
 import icy.image.lut.LUT.LUTChannelEvent.LUTChannelEventType;
 import icy.image.lut.LUT.LUTChannelListener;
-import icy.math.ArrayMath;
 import icy.math.Histogram;
 import icy.math.MathUtil;
 import icy.math.Scaler;
@@ -43,7 +42,6 @@ import icy.util.ColorUtil;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.StringUtil;
-import ij.util.ArrayUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -599,19 +597,24 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                     for (; z <= maxZ; z++)
                     {
                         final Object data = seq.getDataXY(t, z, c);
-                        final DataType dataType = seq.getDataType_();
-                        final int len = Array.getLength(data);
 
-                        for (int i = 0; i < len; i++)
+                        // need to test for empty sequence
+                        if (data != null)
                         {
-                            if ((i & 0xFFF) == 0)
-                            {
-                                // need to be recalculated so don't waste time here...
-                                if (ThreadUtil.hasWaitingBgSingleTask(histoUpdater))
-                                    return;
-                            }
+                            final DataType dataType = seq.getDataType_();
+                            final int len = Array.getLength(data);
 
-                            histo.addValue(Array1DUtil.getValue(data, i, dataType));
+                            for (int i = 0; i < len; i++)
+                            {
+                                if ((i & 0xFFF) == 0)
+                                {
+                                    // need to be recalculated so don't waste time here...
+                                    if (ThreadUtil.hasWaitingBgSingleTask(histoUpdater))
+                                        return;
+                                }
+
+                                histo.addValue(Array1DUtil.getValue(data, i, dataType));
+                            }
                         }
                     }
                 }
@@ -620,6 +623,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
         catch (Exception e)
         {
             // just redo it later
+            // TODO: check if this can lead on infinite refresh
             refreshHistoData();
             // System.out.println("error");
         }

@@ -199,6 +199,8 @@ public class ResourceUtil
 
     public static final Image ICON_RESIZE = ResourceUtil.getAlphaIconAsImage("cursor_drag_arrow.png");
     public static final Image ICON_RESIZE_2 = ResourceUtil.getAlphaIconAsImage("cursor_drag_arrow_2.png");
+    
+    public static final Image ICON_TEXT = ResourceUtil.getAlphaIconAsImage("text_letter_t.png");
 
     public static final Image ICON_SMILEY_HAPPY = ResourceUtil.getAlphaIconAsImage("emotion_smile.png");
     public static final Image ICON_SMILEY_SAD = ResourceUtil.getAlphaIconAsImage("emotion_sad.png");

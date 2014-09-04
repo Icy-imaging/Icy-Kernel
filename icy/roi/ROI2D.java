@@ -19,14 +19,22 @@
 package icy.roi;
 
 import icy.canvas.IcyCanvas;
+import icy.canvas.IcyCanvas2D;
+import icy.canvas.IcyCanvas3D;
+import icy.gui.util.FontUtil;
+import icy.preferences.GeneralPreferences;
+import icy.sequence.Sequence;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle5D;
 import icy.util.EventUtil;
+import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil.ShapeOperation;
 import icy.util.XMLUtil;
 
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -347,6 +355,63 @@ public abstract class ROI2D extends ROI
                             e.consume();
                     }
                 }
+            }
+        }
+
+        @Override
+        public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            if (isActiveFor(canvas))
+            {
+                drawROI(g, sequence, canvas);
+                // display name ?
+                if (getDisplayName())
+                    drawName(g, sequence, canvas);
+            }
+        }
+
+        /**
+         * Draw the ROI
+         */
+        protected abstract void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas);
+
+        /**
+         * Draw the ROI name
+         */
+        protected void drawName(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            if (canvas instanceof IcyCanvas2D)
+            {
+                // not supported
+                if (g == null)
+                    return;
+
+                final Graphics2D g2 = (Graphics2D) g.create();
+                final IcyCanvas2D cnv2d = (IcyCanvas2D) canvas;
+                final Rectangle2D bounds = getBounds2D();
+                final Point pos = cnv2d.imageToCanvas(bounds.getCenterX(), bounds.getMinY());
+                final double coef = Math.log(canvas.getScaleX() + 1);
+                final double fontSize = (GeneralPreferences.getGuiFontSize() - 4) + (int) (coef * 10d);
+
+                // go to absolute coordinates
+                g2.transform(cnv2d.getInverseTransform());
+                // set text anti alias
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                // set font
+                g2.setFont(FontUtil.setSize(g2.getFont(), (int) fontSize));
+                // set color
+                g2.setColor(getColor());
+
+                // draw ROI name
+                GraphicsUtil.drawHCenteredString(g2, getName(), pos.x, pos.y - (int) (2 * fontSize), true);
+
+                g2.dispose();
+            }
+
+            if (canvas instanceof IcyCanvas3D)
+            {
+                // not yet supported
+
             }
         }
     }

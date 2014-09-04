@@ -1040,8 +1040,10 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
 
     protected void updateBoundingBoxSize()
     {
-        boundingBox.SetBounds(imageVolume.getVolume().GetBounds());
-        rulerBox.SetBounds(imageVolume.getVolume().GetBounds());
+        final double[] bounds = imageVolume.getVolume().GetBounds();
+        
+        boundingBox.SetBounds(bounds);
+        rulerBox.SetBounds(bounds);
     }
 
     /**

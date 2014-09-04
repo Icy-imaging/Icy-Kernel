@@ -66,6 +66,15 @@ public class PluginInstaller implements Runnable
             this.plugin = plugin;
             this.showProgress = showProgress;
         }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (obj instanceof PluginInstallInfo)
+                return ((PluginInstallInfo) obj).plugin.equals(plugin);
+
+            return super.equals(obj);
+        }
     }
 
     private static final String ERROR_DOWNLOAD = "Error while downloading ";
@@ -680,19 +689,13 @@ public class PluginInstaller implements Runnable
             {
                 infos = new ArrayList<PluginInstaller.PluginInstallInfo>(installFIFO);
 
-                // remove plugin already installed from list and determine if we should
-                // display the progress bar
                 showProgress = false;
                 for (int i = infos.size() - 1; i >= 0; i--)
                 {
                     final PluginInstallInfo info = infos.get(i);
-                    final PluginDescriptor plugin = info.plugin;
 
-                    if (!PluginLoader.isLoaded(plugin, false))
-                    {
-                        installingPlugins.add(plugin);
-                        showProgress |= info.showProgress;
-                    }
+                    PluginDescriptor.addToList(installingPlugins, info.plugin);
+                    showProgress |= info.showProgress;
                 }
 
                 installFIFO.clear();
@@ -746,10 +749,6 @@ public class PluginInstaller implements Runnable
             // now we can proceed the installation itself
             for (PluginDescriptor plugin : installingPlugins)
             {
-                // already installed --> go to next one
-                if (PluginLoader.isLoaded(plugin, false))
-                    continue;
-
                 for (PluginIdent ident : plugin.getRequired())
                 {
                     // one of the dependencies was not correctly installed ?

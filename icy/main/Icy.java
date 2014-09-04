@@ -27,7 +27,6 @@ import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.ExitFrame;
 import icy.gui.frame.IcyExternalFrame;
-import icy.gui.frame.IcyInternalFrame;
 import icy.gui.frame.SplashScreenFrame;
 import icy.gui.frame.progress.AnnounceFrame;
 import icy.gui.frame.progress.ToolTipFrame;
@@ -66,6 +65,7 @@ import java.beans.PropertyVetoException;
 import java.io.File;
 import java.nio.channels.FileLock;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.swing.JDesktopPane;
@@ -95,7 +95,7 @@ public class Icy
     /**
      * ICY Version
      */
-    public static Version version = new Version("1.5.4.0");
+    public static Version version = new Version("1.5.4.2");
 
     /**
      * Main interface
@@ -208,7 +208,6 @@ public class Icy
 
             // initialize preferences
             IcyPreferences.init();
-
             // initialize network (need preferences)
             NetworkUtil.init();
 
@@ -289,8 +288,8 @@ public class Icy
             System.out.println("Headless mode.");
         System.out.println();
 
-        // initialize OSX specific stuff
-        if (SystemUtil.isMac())
+        // initialize OSX specific GUI stuff
+        if (!headless && SystemUtil.isMac())
             AppleUtil.init();
         // initialize security
         IcySecurityManager.init();
@@ -301,7 +300,11 @@ public class Icy
         // prepare native library files (need preferences init)
         nativeLibrariesInit();
 
-        if (!headless)
+        final long currentTime = new Date().getTime();
+        final long slice = 1000 * 60 * 12;
+
+        // check only once per 12 hours slice
+        if (currentTime > (GeneralPreferences.getLastUpdateCheckTime() + slice))
         {
             // check for core update
             if (GeneralPreferences.getAutomaticUpdate())
@@ -310,24 +313,27 @@ public class Icy
             if (PluginPreferences.getAutomaticUpdate())
                 PluginUpdater.checkUpdate(true);
 
-            // changed version ?
-            if (!ApplicationPreferences.getVersion().equals(Icy.version))
-            {
-                // display the new version information
-                final String changeLog = Icy.getChangeLog();
+            // update last update check time
+            GeneralPreferences.setLastUpdateCheckTime(currentTime);
+        }
 
-                // show the new version frame
-                if (!StringUtil.isEmpty(changeLog))
+        // changed version and not headless ?
+        if (!headless && !ApplicationPreferences.getVersion().equals(Icy.version))
+        {
+            // display the new version information
+            final String changeLog = Icy.getChangeLog();
+
+            // show the new version frame
+            if (!StringUtil.isEmpty(changeLog))
+            {
+                ThreadUtil.invokeNow(new Runnable()
                 {
-                    ThreadUtil.invokeNow(new Runnable()
+                    @Override
+                    public void run()
                     {
-                        @Override
-                        public void run()
-                        {
-                            new NewVersionFrame(Icy.getChangeLog());
-                        }
-                    });
-                }
+                        new NewVersionFrame(Icy.getChangeLog());
+                    }
+                });
             }
         }
 
@@ -350,6 +356,17 @@ public class Icy
         {
             PluginLoader.waitWhileLoading();
             PluginLauncher.start(startupPlugin);
+        }
+
+        // headless mode ?
+        if (headless)
+        {
+            // wait while updates are occurring...
+            while (PluginInstaller.isProcessing() || WorkspaceInstaller.isProcessing())
+                ThreadUtil.sleep(1);
+
+            // now we can exit
+            exit(false);
         }
     }
 
@@ -502,14 +519,18 @@ public class Icy
     }
 
     /**
-     * Return true if application can exit
-     * This show a confirmation dialog if setting require it or if it's unsafe to exit now.
+     * Returns <code>true</code> if application can exit.<br>
+     * Shows a confirmation dialog if setting requires it or if it's unsafe to exit now.
      */
     public static boolean canExit(boolean showConfirm)
     {
         // we first check if externals listeners allow existing
         if (!getMainInterface().canExitExternal())
             return false;
+
+        // headless mode --> allow exit
+        if (Icy.getMainInterface().isHeadLess())
+            return true;
 
         // PluginInstaller or WorkspaceInstaller not running
         final boolean safeExit = (!PluginInstaller.isProcessing()) && (!WorkspaceInstaller.isProcessing());
@@ -590,30 +611,33 @@ public class Icy
                         // frame.close();
                         // close all JInternalFrames
                         final JDesktopPane desktopPane = Icy.getMainInterface().getDesktopPane();
+
                         if (desktopPane != null)
                         {
                             for (JInternalFrame frame : desktopPane.getAllFrames())
                             {
-//                                if (frame instanceof IcyInternalFrame)
-//                                {
-//                                    final IcyInternalFrame iFrame = (IcyInternalFrame) frame;
-//                                    if (!iFrame.isClosed())
-//                                        iFrame.close(true);
-//                                    if (iFrame.getDefaultCloseOperation() != WindowConstants.DISPOSE_ON_CLOSE)
-//                                        iFrame.dispose();
-//                                }
-//                                else
-//                                {
-                                    try
-                                    {
-                                        frame.setClosed(true);
-                                    }
-                                    catch (PropertyVetoException e)
-                                    {
-                                        //if (frame.getDefaultCloseOperation() != WindowConstants.DISPOSE_ON_CLOSE)
-                                            frame.dispose();
-                                    }
-//                                }
+                                // if (frame instanceof IcyInternalFrame)
+                                // {
+                                // final IcyInternalFrame iFrame = (IcyInternalFrame) frame;
+                                // if (!iFrame.isClosed())
+                                // iFrame.close(true);
+                                // if (iFrame.getDefaultCloseOperation() !=
+                                // WindowConstants.DISPOSE_ON_CLOSE)
+                                // iFrame.dispose();
+                                // }
+                                // else
+                                // {
+                                try
+                                {
+                                    frame.setClosed(true);
+                                }
+                                catch (PropertyVetoException e)
+                                {
+                                    // if (frame.getDefaultCloseOperation() !=
+                                    // WindowConstants.DISPOSE_ON_CLOSE)
+                                    frame.dispose();
+                                }
+                                // }
                             }
                         }
 
@@ -638,27 +662,42 @@ public class Icy
 
                 // stop daemon plugin
                 PluginLoader.stopDaemons();
-
                 // shutdown background processor after frame close
                 ThreadUtil.shutdown();
 
-                // need to create the exit frame in EDT
-                ThreadUtil.invokeNow(new Runnable()
+                // headless mode
+                if (Icy.getMainInterface().isHeadLess())
                 {
-                    @Override
-                    public void run()
+                    // final long start = System.currentTimeMillis();
+                    // // wait 10s max for background processors completed theirs tasks
+                    // while (!ThreadUtil.isShutdownAndTerminated() && ((System.currentTimeMillis()
+                    // - start) < 10 * 1000))
+                    // ThreadUtil.sleep(1);
+
+                    // wait for background processors completed theirs tasks
+                    while (!ThreadUtil.isShutdownAndTerminated())
+                        ThreadUtil.sleep(1);
+                }
+                else
+                {
+                    // need to create the exit frame in EDT
+                    ThreadUtil.invokeNow(new Runnable()
                     {
-                        // create and display the exit frame
-                        exitFrame = new ExitFrame(EXIT_FORCE_DELAY);
-                    }
-                });
+                        @Override
+                        public void run()
+                        {
+                            // create and display the exit frame
+                            exitFrame = new ExitFrame(EXIT_FORCE_DELAY);
+                        }
+                    });
 
-                // wait that background processors completed theirs tasks
-                while (!ThreadUtil.isShutdownAndTerminated() && !exitFrame.isForced())
-                    ThreadUtil.sleep(1);
+                    // wait that background processors completed theirs tasks
+                    while (!ThreadUtil.isShutdownAndTerminated() && !exitFrame.isForced())
+                        ThreadUtil.sleep(1);
 
-                // can close the exit frame now
-                exitFrame.dispose();
+                    // can close the exit frame now
+                    exitFrame.dispose();
+                }
 
                 // finally close the main frame
                 if (mainFrame != null)

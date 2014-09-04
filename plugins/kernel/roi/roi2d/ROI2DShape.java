@@ -507,6 +507,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         {
             if (canvas instanceof IcyCanvas2D)
             {
+                // not supported
+                if (g == null)
+                    return;
+
                 final Rectangle2D bounds = shape.getBounds2D();
 
                 // enlarge bounds with stroke
@@ -649,13 +653,6 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             }
         }
 
-        @Override
-        public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
-        {
-            if (isActiveFor(canvas))
-                drawROI(g, sequence, canvas);
-        }
-
         /**
          * Returns <code>true</code> if the specified bounds should be considered as "tiny" in the
          * specified canvas / graphics context.
@@ -675,7 +672,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 return false;
 
             final AffineTransform trans = g.getTransform();
-            final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
+            final double scale = Math.max(Math.abs(trans.getScaleX()), Math.abs(trans.getScaleY()));
             final double size = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight());
 
             return size < LOD_SMALL;
@@ -691,7 +688,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 return false;
 
             final AffineTransform trans = g.getTransform();
-            final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
+            final double scale = Math.max(Math.abs(trans.getScaleX()), Math.abs(trans.getScaleY()));
             final double size = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight());
 
             return size < LOD_TINY;

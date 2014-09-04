@@ -73,7 +73,7 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         volumeSpecularField.addTextChangeListener(this);
     }
 
-    private void initialize()
+    protected void initialize()
     {
         setBorder(new EmptyBorder(2, 0, 2, 0));
         GridBagLayout gridBagLayout = new GridBagLayout();

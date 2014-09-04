@@ -139,10 +139,31 @@ public class NetworkUtil
                     // we have internet access
                     setInternetAccess(true);
                 }
-                catch (Exception e)
+                catch (Throwable t1)
                 {
-                    // we don't have internet access
-                    setInternetAccess(false);
+                    // in case we use proxy
+                    try
+                    {
+                        final URLConnection urlConnection = openConnection("http://www.google.com", true, false);
+
+                        if (urlConnection != null)
+                        {
+                            urlConnection.setConnectTimeout(3000);
+                            urlConnection.setReadTimeout(3000);
+                            urlConnection.getInputStream();
+
+                            // we have internet access
+                            setInternetAccess(true);
+                        }
+                        else
+                            // we don't have internet access
+                            setInternetAccess(false);
+                    }
+                    catch (Throwable t2)
+                    {
+                        // we don't have internet access
+                        setInternetAccess(false);
+                    }
                 }
 
                 // wait a bit depending connection state
@@ -758,7 +779,7 @@ public class NetworkUtil
 
     /**
      * Returns a new {@link URLConnection} from specified path.<br>
-     * Returns null if an error occurred.
+     * Returns <code>null</code> if an error occurred.
      * 
      * @param path
      *        path to connect.

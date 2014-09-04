@@ -929,6 +929,7 @@ public class PluginLoader
     public static void checkPlugins(boolean showProgress)
     {
         final List<PluginDescriptor> plugins = getPlugins(false);
+        final List<PluginDescriptor> required = new ArrayList<PluginDescriptor>();
         final List<PluginDescriptor> missings = new ArrayList<PluginDescriptor>();
         final List<PluginDescriptor> faulties = new ArrayList<PluginDescriptor>();
 
@@ -947,13 +948,31 @@ public class PluginLoader
 
             PluginRepositoryLoader.waitBasicLoaded();
 
-            // check for missing plugins
+            // get list of required and faulty plugins
             for (PluginDescriptor plugin : plugins)
             {
                 // get dependencies
-                if (!PluginInstaller.getDependencies(plugin, missings, null, false))
+                if (!PluginInstaller.getDependencies(plugin, required, null, false))
                     // error in dependencies --> try to reinstall the plugin
-                    faulties.add(PluginUpdater.getUpdate(plugin));
+                    faulties.add(PluginRepositoryLoader.getPlugin(plugin.getClassName()));
+
+                if (pf != null)
+                    pf.incPosition();
+            }
+
+            if (pf != null)
+                pf.setLength(required.size());
+
+            // check for missing plugins
+            for (PluginDescriptor plugin : required)
+            {
+                // dependency missing ? --> try to reinstall the plugin
+                if (!plugin.isInstalled())
+                {
+                    final PluginDescriptor toInstall = PluginRepositoryLoader.getPlugin(plugin.getClassName());
+                    if (toInstall != null)
+                        missings.add(toInstall);
+                }
 
                 if (pf != null)
                     pf.incPosition();
@@ -969,9 +988,9 @@ public class PluginLoader
                 }
 
                 // remove faulty plugins
-//                for (PluginDescriptor plugin : faulties)
-//                    PluginInstaller.desinstall(plugin, false, false);
-//                PluginInstaller.waitDesinstall();
+                // for (PluginDescriptor plugin : faulties)
+                // PluginInstaller.desinstall(plugin, false, false);
+                // PluginInstaller.waitDesinstall();
 
                 // install missing plugins
                 for (PluginDescriptor plugin : missings)
@@ -981,12 +1000,12 @@ public class PluginLoader
                         pf.incPosition();
                 }
                 // and reinstall faulty plugins
-//                for (PluginDescriptor plugin : faulties)
-//                {
-//                    PluginInstaller.install(plugin, pf != null);
-//                    if (pf != null)
-//                        pf.incPosition();
-//                }
+                for (PluginDescriptor plugin : faulties)
+                {
+                    PluginInstaller.install(plugin, pf != null);
+                    if (pf != null)
+                        pf.incPosition();
+                }
             }
         }
     }
