@@ -892,7 +892,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         creating = false;
         focused = false;
         selected = false;
-        displayName = true;
+        displayName = false;
 
         cachedBounds = new Rectangle5D.Double();
         cachedNumberOfPoints = 0d;
