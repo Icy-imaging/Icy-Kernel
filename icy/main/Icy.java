@@ -938,7 +938,7 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkjpeg");
                 loadLibrary(vtkLibPath, "vtkjsoncpp");
                 loadLibrary(vtkLibPath, "vtkzlib");
-                loadLibrary(vtkLibPath, "vtkoggtheora");
+                loadLibrary(vtkLibPath, "vtkoggtheora", false);
                 loadLibrary(vtkLibPath, "vtkverdict");
                 loadLibrary(vtkLibPath, "vtkpng");
                 loadLibrary(vtkLibPath, "vtkgl2ps");
@@ -1039,7 +1039,7 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkIOMINC");
                 loadLibrary(vtkLibPath, "vtkIOParallel");
                 loadLibrary(vtkLibPath, "vtkRenderingVolume");
-                loadLibrary(vtkLibPath, "vtkRenderingVolumeAMR");
+                loadLibrary(vtkLibPath, "vtkRenderingVolumeAMR", false);
                 loadLibrary(vtkLibPath, "vtkInteractionWidgets");
                 loadLibrary(vtkLibPath, "vtkInteractionImage");
                 loadLibrary(vtkLibPath, "vtkViewsCore");
@@ -1048,13 +1048,14 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkRenderingLIC");
                 loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGL");
                 loadLibrary(vtkLibPath, "vtkRenderingContext2D");
+                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGL", false);
                 loadLibrary(vtkLibPath, "vtkRenderingGL2PS");
                 loadLibrary(vtkLibPath, "vtkViewsContext2D");
                 loadLibrary(vtkLibPath, "vtkGeovisCore");
                 loadLibrary(vtkLibPath, "vtkIOExport");
                 loadLibrary(vtkLibPath, "vtkChartsCore");
                 loadLibrary(vtkLibPath, "vtkViewsInfovis");
-                loadLibrary(vtkLibPath, "vtkViewsGeovis");
+                loadLibrary(vtkLibPath, "vtkViewsGeovis", false);
 
                 // JAVA wrapper
                 loadLibrary(vtkLibPath, "vtkCommonCoreJava");
@@ -1127,7 +1128,7 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkIOMINCJava");
                 loadLibrary(vtkLibPath, "vtkIOParallelJava");
                 loadLibrary(vtkLibPath, "vtkRenderingVolumeJava");
-                loadLibrary(vtkLibPath, "vtkRenderingVolumeAMRJava");
+                loadLibrary(vtkLibPath, "vtkRenderingVolumeAMRJava", false);
                 loadLibrary(vtkLibPath, "vtkInteractionWidgetsJava");
                 loadLibrary(vtkLibPath, "vtkInteractionImageJava");
                 loadLibrary(vtkLibPath, "vtkViewsCoreJava");
@@ -1136,13 +1137,14 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkRenderingLICJava");
                 loadLibrary(vtkLibPath, "vtkRenderingVolumeOpenGLJava");
                 loadLibrary(vtkLibPath, "vtkRenderingContext2DJava");
+                loadLibrary(vtkLibPath, "vtkRenderingContextOpenGLJava", false);
                 loadLibrary(vtkLibPath, "vtkRenderingGL2PSJava");
                 loadLibrary(vtkLibPath, "vtkViewsContext2DJava");
                 loadLibrary(vtkLibPath, "vtkGeovisCoreJava");
                 loadLibrary(vtkLibPath, "vtkIOExportJava");
                 loadLibrary(vtkLibPath, "vtkChartsCoreJava");
                 loadLibrary(vtkLibPath, "vtkViewsInfovisJava");
-                loadLibrary(vtkLibPath, "vtkViewsGeovisJava");
+                loadLibrary(vtkLibPath, "vtkViewsGeovisJava", false);
 
                 // VTK library successfully loaded
                 vtkLibraryLoaded = true;
