@@ -90,9 +90,9 @@ public class InspectorPanel extends ExternalizablePanel implements ActiveViewerL
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
                 "Sequence informations");
         // mainPane.add("Active Plugin", pluginsPanel);
-        mainPane.addTab("Layer", null, layersPanel, "Show all layers details");
         mainPane.addTab("ROI", null, roisPanel, "Manage / edit your ROI");
-        // mainPane.addTab("History", null, historyPanel, "Actions history");
+        mainPane.addTab("Layer", null, layersPanel, "Show all layers details");
+        mainPane.addTab("History", null, historyPanel, "Actions history");
         mainPane.addTab("Output", null, outputConsolePanel, "Console output");
         mainPane.addTab("Chat", null, chatPanel, "Chat room");
 

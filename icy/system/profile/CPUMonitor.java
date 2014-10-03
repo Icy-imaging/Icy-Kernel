@@ -279,7 +279,7 @@ public class CPUMonitor
     @Deprecated
     public static int getAvailableProcessors()
     {
-        return SystemUtil.getAvailableProcessors();
+        return SystemUtil.getNumberOfCPUs();
     }
 
     public long getElapsedTimeMilli()

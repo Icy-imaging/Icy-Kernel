@@ -413,6 +413,16 @@ public class IcyBufferedImageUtil
     }
 
     /**
+     * Creates a new image which is a sub part of the source image from the specified region.
+     * 
+     * @see #getSubImage(IcyBufferedImage, Rectangle, int, int)
+     */
+    public static IcyBufferedImage getSubImage(IcyBufferedImage source, Rectangle region)
+    {
+        return getSubImage(source, region, 0, source.getSizeC());
+    }
+
+    /**
      * @deprecated Use {@link #getSubImage(IcyBufferedImage, Rectangle, int, int)} instead.
      */
     @Deprecated

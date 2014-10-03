@@ -41,6 +41,7 @@ public class ApplicationPreferences
     public static final String ID_STACK_SIZE = "stackSize";
     public static final String ID_EXTRA_VMPARAMS = "extraVMParams";
     public static final String ID_OS_EXTRA_VMPARAMS = "osExtraVMParams";
+    public static final String ID_APP_FOLDER = "appFolder";
     public static final String ID_APP_PARAMS = "appParams";
     public static final String ID_VERSION = "version";
 
@@ -200,7 +201,15 @@ public class ApplicationPreferences
     }
 
     /**
-     * Get ICY application parameters string
+     * Get Icy application folder
+     */
+    public static String getAppFolder()
+    {
+        return preferences.get(ID_APP_FOLDER, "");
+    }
+
+    /**
+     * Get Icy application parameters string
      */
     public static String getAppParams()
     {
@@ -245,6 +254,14 @@ public class ApplicationPreferences
     public static void setOSExtraVMParams(String value)
     {
         preferences.put(ID_OS_EXTRA_VMPARAMS + SystemUtil.getOSNameId(), value);
+    }
+
+    /**
+     * Set Icy application folder
+     */
+    public static void setAppFolder(String value)
+    {
+        preferences.put(ID_APP_FOLDER, value);
     }
 
     /**

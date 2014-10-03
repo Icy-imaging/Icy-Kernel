@@ -24,7 +24,7 @@ import icy.sequence.SequenceEvent;
 import icy.system.thread.ThreadUtil;
 import icy.undo.IcyUndoManager;
 import icy.undo.IcyUndoManagerListener;
-import icy.undo.IcyUndoableEdit;
+import icy.undo.AbstractIcyUndoableEdit;
 
 import java.awt.BorderLayout;
 
@@ -123,7 +123,7 @@ public class UndoManagerPanel extends JPanel implements ActiveSequenceListener, 
 
                 if (undoManager != null)
                 {
-                    final IcyUndoableEdit edit = undoManager.getSignificantEdit(row - 1);
+                    final AbstractIcyUndoableEdit edit = undoManager.getSignificantEdit(row - 1);
 
                     switch (column)
                     {
@@ -191,9 +191,6 @@ public class UndoManagerPanel extends JPanel implements ActiveSequenceListener, 
         setLayout(new BorderLayout());
 
         add(middlePanel, BorderLayout.CENTER);
-
-        // if (showControl)
-        // add(controlPanel, BorderLayout.SOUTH);
     }
 
     public void setUndoManager(IcyUndoManager value)
@@ -216,7 +213,7 @@ public class UndoManagerPanel extends JPanel implements ActiveSequenceListener, 
     // /**
     // * Return index of specified Edit
     // */
-    // protected int getEditIndex(IcyUndoableEdit edit)
+    // protected int getEditIndex(AbstractIcyUndoableEdit edit)
     // {
     // if (undoManager != null)
     // return undoManager.getSignificantIndex(edit);
@@ -224,7 +221,7 @@ public class UndoManagerPanel extends JPanel implements ActiveSequenceListener, 
     // return -1;
     // }
 
-    public IcyUndoableEdit getLastSelectedEdit()
+    public AbstractIcyUndoableEdit getLastSelectedEdit()
     {
         if (undoManager != null)
         {
@@ -270,7 +267,7 @@ public class UndoManagerPanel extends JPanel implements ActiveSequenceListener, 
         // process undo / redo operation
         if (undoManager != null)
         {
-            final IcyUndoableEdit selectedEdit = getLastSelectedEdit();
+            final AbstractIcyUndoableEdit selectedEdit = getLastSelectedEdit();
 
             // first entry
             if (selectedEdit == null)

@@ -758,6 +758,8 @@ public class Loader
 
     /**
      * Returns the appropriate sequence file importer for the specified file.<br>
+     * Depending the parameters it will open a dialog to let the user choose the importer to use
+     * when severals match.<br>
      * Returns <code>null</code> if no importer can open the file.
      * 
      * @param importers
@@ -792,6 +794,8 @@ public class Loader
 
     /**
      * Returns the appropriate sequence file importer for the specified file.<br>
+     * Depending the parameters it will open a dialog to let the user choose the importer to use
+     * when severals match.<br>
      * Returns <code>null</code> if no importer can open the file.
      * 
      * @param path
@@ -883,7 +887,7 @@ public class Loader
      */
     public static boolean isSupportedImageFile(String path)
     {
-        return (getSequenceFileImporter(path, true) != null);
+        return (getSequenceFileImporters(path).size() > 0);
     }
 
     /**
@@ -1488,11 +1492,21 @@ public class Loader
         // remaining files ?
         if (singlePaths.size() > 0)
         {
-            // just log in console
-            System.err.println("No compatible importer found for the following files:");
-            for (String path : singlePaths)
-                System.err.println(path);
-            System.err.println();
+            // get first found importer for remaining files
+            final Map<SequenceFileImporter, List<String>> importers = getSequenceFileImporters(singlePaths, true);
+
+            // user canceled action for these paths so we remove them
+            for (List<String> values : importers.values())
+                singlePaths.removeAll(values);
+
+            if (singlePaths.size() > 0)
+            {
+                // just log in console
+                System.err.println("No compatible importer found for the following files:");
+                for (String path : singlePaths)
+                    System.err.println(path);
+                System.err.println();
+            }
         }
 
         // return sequences
@@ -1750,11 +1764,22 @@ public class Loader
                 // remaining files ?
                 if (singlePaths.size() > 0)
                 {
-                    // just log in console
-                    System.err.println("No compatible importer found for the following files:");
-                    for (String path : singlePaths)
-                        System.err.println(path);
-                    System.err.println();
+                    // get first found importer for remaining files
+                    final Map<SequenceFileImporter, List<String>> importers = getSequenceFileImporters(singlePaths,
+                            true);
+
+                    // user canceled action for these paths so we remove them
+                    for (List<String> values : importers.values())
+                        singlePaths.removeAll(values);
+
+                    if (singlePaths.size() > 0)
+                    {
+                        // just log in console
+                        System.err.println("No compatible importer found for the following files:");
+                        for (String path : singlePaths)
+                            System.err.println(path);
+                        System.err.println();
+                    }
                 }
             }
         });
@@ -1938,11 +1963,22 @@ public class Loader
                 // remaining files ?
                 if (singlePaths.size() > 0)
                 {
-                    // just log in console
-                    System.err.println("No compatible importer found for the following files:");
-                    for (String path : singlePaths)
-                        System.err.println(path);
-                    System.err.println();
+                    // get first found importer for remaining files
+                    final Map<SequenceFileImporter, List<String>> importers = getSequenceFileImporters(singlePaths,
+                            true);
+
+                    // user canceled action for these paths so we remove them
+                    for (List<String> values : importers.values())
+                        singlePaths.removeAll(values);
+
+                    if (singlePaths.size() > 0)
+                    {
+                        // just log in console
+                        System.err.println("No compatible importer found for the following files:");
+                        for (String path : singlePaths)
+                            System.err.println(path);
+                        System.err.println();
+                    }
                 }
             }
         });

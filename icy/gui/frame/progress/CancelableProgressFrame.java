@@ -51,12 +51,12 @@ public class CancelableProgressFrame extends ProgressFrame implements ActionList
             public void run()
             {
                 cancelBtn = new JButton("Cancel");
-                
+
                 cancelBtn.setFocusPainted(false);
                 cancelBtn.addActionListener(CancelableProgressFrame.this);
 
                 mainPanel.add(cancelBtn, BorderLayout.EAST);
-                
+
                 pack();
             }
         });
@@ -69,6 +69,15 @@ public class CancelableProgressFrame extends ProgressFrame implements ActionList
 
         // so we force cancel operation on application exit
         cancelRequested = true;
+    }
+
+    /**
+     * Request cancel and close the frame
+     */
+    public void cancel()
+    {
+        cancelRequested = true;
+        close();
     }
 
     /**

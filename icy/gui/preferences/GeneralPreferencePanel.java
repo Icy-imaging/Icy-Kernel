@@ -55,6 +55,7 @@ public class GeneralPreferencePanel extends PreferencePanel
     private final JCheckBox sequencePersistence;
     final JCheckBox autoUpdateCheckBox;
     private final JCheckBox alwaysOnTopCheckBox;
+    private final JCheckBox usageStatistics;
     private final JSpinner maxMemoryMBSpinner;
     private final JSpinner uiFontSizeSpinner;
     private final JButton reenableAllToolTipButton;
@@ -71,9 +72,12 @@ public class GeneralPreferencePanel extends PreferencePanel
         sequencePersistence = new JCheckBox("Enable sequence persistence");
         sequencePersistence
                 .setToolTipText("Enable the XML persistence for Sequence (file is automatically loaded/saved when sequence is opened/closed)");
-        autoUpdateCheckBox = new JCheckBox("Enable automatic update");
+        autoUpdateCheckBox = new JCheckBox("Enable application update");
         autoUpdateCheckBox.setToolTipText("Enable automatic update for application as soon a new version is available");
         alwaysOnTopCheckBox = new JCheckBox("Application window always on top");
+        usageStatistics = new JCheckBox("Usage statistics report");
+        usageStatistics
+                .setToolTipText("Report is 100% anonymous, very light on network trafic and help developers so keep it enabled please :)");
 
         final int maxMemLimit = (int) MathUtil.prevMultiple(ApplicationPreferences.getMaxMemoryMBLimit(), 32);
         maxMemoryMBSpinner = new JSpinner(new SpinnerNumberModel(128, 64, maxMemLimit, 32));
@@ -125,6 +129,8 @@ public class GeneralPreferencePanel extends PreferencePanel
         topPanel.add(GuiUtil.createLineBoxPanel(autoUpdateCheckBox, Box.createHorizontalGlue()));
         topPanel.add(Box.createVerticalStrut(6));
         topPanel.add(GuiUtil.createLineBoxPanel(sequencePersistence, Box.createHorizontalGlue()));
+        topPanel.add(Box.createVerticalStrut(6));
+        topPanel.add(GuiUtil.createLineBoxPanel(usageStatistics, Box.createHorizontalGlue()));
         topPanel.add(Box.createVerticalStrut(18));
         topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" GUI font size  "), uiFontSizeSpinner,
                 Box.createHorizontalGlue()));
@@ -158,6 +164,7 @@ public class GeneralPreferencePanel extends PreferencePanel
         sequencePersistence.setSelected(GeneralPreferences.getSequencePersistence());
         autoUpdateCheckBox.setSelected(GeneralPreferences.getAutomaticUpdate());
         alwaysOnTopCheckBox.setSelected(GeneralPreferences.getAlwaysOnTop());
+        usageStatistics.setSelected(GeneralPreferences.getUsageStatisticsReport());
     }
 
     @Override
@@ -179,6 +186,7 @@ public class GeneralPreferencePanel extends PreferencePanel
         GeneralPreferences.setExitConfirm(exitConfirm.isSelected());
         GeneralPreferences.setSequencePersistence(sequencePersistence.isSelected());
         GeneralPreferences.setAutomaticUpdate(autoUpdateCheckBox.isSelected());
+        GeneralPreferences.setUsageStatisticsReport(usageStatistics.isSelected());
 
         booleanValue = alwaysOnTopCheckBox.isSelected();
         Icy.getMainInterface().setAlwaysOnTop(booleanValue);

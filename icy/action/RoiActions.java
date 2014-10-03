@@ -31,6 +31,8 @@ import icy.resource.icon.IcyIcon;
 import icy.roi.ROI;
 import icy.roi.ROIUtil;
 import icy.sequence.Sequence;
+import icy.sequence.edit.ROIAddSequenceEdit;
+import icy.sequence.edit.ROIAddsSequenceEdit;
 import icy.system.SystemUtil;
 import icy.util.StringUtil;
 import icy.util.XLSUtil;
@@ -98,6 +100,19 @@ public class RoiActions
                     {
                         sequence.endUpdate();
                     }
+
+                    // add to undo manager
+                    sequence.getUndoManager().addEdit(new ROIAddsSequenceEdit(sequence, rois)
+                    {
+                        @Override
+                        public String getPresentationName()
+                        {
+                            if (getROIs().size() > 1)
+                                return "ROIs loaded from XML file";
+
+                            return "ROI loaded from XML file";
+                        };
+                    });
 
                     return true;
                 }
@@ -282,6 +297,19 @@ public class RoiActions
                         sequence.endUpdate();
                     }
 
+                    // add to undo manager
+                    sequence.getUndoManager().addEdit(new ROIAddsSequenceEdit(sequence, rois)
+                    {
+                        @Override
+                        public String getPresentationName()
+                        {
+                            if (getROIs().size() > 1)
+                                return "ROIs added from clipboard";
+
+                            return "ROI added from clipboard";
+                        };
+                    });
+
                     return true;
                 }
             }
@@ -328,6 +356,19 @@ public class RoiActions
                     {
                         sequence.endUpdate();
                     }
+
+                    // add to undo manager
+                    sequence.getUndoManager().addEdit(new ROIAddsSequenceEdit(sequence, rois)
+                    {
+                        @Override
+                        public String getPresentationName()
+                        {
+                            if (getROIs().size() > 1)
+                                return "ROIs linked from clipboard";
+
+                            return "ROI linked from clipboard";
+                        };
+                    });
 
                     return true;
                 }
@@ -443,26 +484,8 @@ public class RoiActions
 
             if (sequence != null)
             {
-                final List<ROI> rois = sequence.getSelectedROIs();
-
-                if (rois.size() > 0)
-                {
-
-                    sequence.beginUpdate();
-                    try
-                    {
-                        // delete selected rois
-                        for (ROI roi : rois)
-                            if (!roi.isReadOnly())
-                                sequence.removeROI(roi);
-                    }
-                    finally
-                    {
-                        sequence.endUpdate();
-                    }
-
-                    return true;
-                }
+                sequence.removeSelectedROIs(false, true);
+                return true;
             }
 
             return false;
@@ -513,6 +536,9 @@ public class RoiActions
 
                         sequence.addROI(mergeROI);
                         sequence.setSelectedROI(mergeROI);
+
+                        // add to undo manager
+                        sequence.getUndoManager().addEdit(new ROIAddSequenceEdit(sequence, mergeROI, "ROI Inverse"));
                     }
                 }
                 catch (UnsupportedOperationException ex)
@@ -567,6 +593,9 @@ public class RoiActions
 
                         sequence.addROI(mergeROI);
                         sequence.setSelectedROI(mergeROI);
+
+                        // add to undo manager
+                        sequence.getUndoManager().addEdit(new ROIAddSequenceEdit(sequence, mergeROI, "ROI Union"));
                     }
                 }
                 catch (UnsupportedOperationException ex)
@@ -622,6 +651,10 @@ public class RoiActions
 
                         sequence.addROI(mergeROI);
                         sequence.setSelectedROI(mergeROI);
+
+                        // add to undo manager
+                        sequence.getUndoManager().addEdit(
+                                new ROIAddSequenceEdit(sequence, mergeROI, "ROI Intersection"));
                     }
                 }
                 catch (UnsupportedOperationException ex)
@@ -677,6 +710,10 @@ public class RoiActions
 
                         sequence.addROI(mergeROI);
                         sequence.setSelectedROI(mergeROI);
+
+                        // add to undo manager
+                        sequence.getUndoManager().addEdit(
+                                new ROIAddSequenceEdit(sequence, mergeROI, "ROI Exclusive Union"));
                     }
                 }
                 catch (UnsupportedOperationException ex)
@@ -746,6 +783,10 @@ public class RoiActions
                             sequence.addROI(roi);
 
                         sequence.setSelectedROIs(generatedROIs);
+
+                        // add to undo manager
+                        sequence.getUndoManager().addEdit(
+                                new ROIAddsSequenceEdit(sequence, generatedROIs, "ROI Subtraction"));
                     }
                     finally
                     {

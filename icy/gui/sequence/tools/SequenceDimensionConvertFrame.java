@@ -19,6 +19,7 @@
 package icy.gui.sequence.tools;
 
 import icy.gui.dialog.ActionDialog;
+import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.gui.util.ComponentUtil;
 import icy.sequence.Sequence;
@@ -66,9 +67,27 @@ public class SequenceDimensionConvertFrame extends ActionDialog
                     public void run()
                     {
                         final ProgressFrame pf = new ProgressFrame("Converting Z / T dimension...");
+                        final Sequence sequence = convertPanel.getSequence();
+
+                        // create undo point
+                        final boolean canUndo = sequence.createUndoDataPoint("Sequence dimension change");
+
+                        // cannot backup
+                        if (!canUndo)
+                        {
+                            // ask confirmation to continue
+                            if (!IdConfirmDialog.confirm(
+                                    "Not enough memory to undo the operation, do you want to continue ?",
+                                    "ZTDimensionChangeNoUndoConfirm"))
+                                return;
+                        }
 
                         SequenceUtil.adjustZT(convertPanel.getSequence(), convertPanel.getNewSizeZ(),
                                 convertPanel.getNewSizeT(), convertPanel.isOrderReversed());
+
+                        // no undo, clear undo manager after modification
+                        if (!canUndo)
+                            sequence.clearUndoManager();
 
                         pf.close();
                     }

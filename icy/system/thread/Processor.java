@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 public class Processor extends ThreadPoolExecutor
 {
     public static final int DEFAULT_MAX_WAITING = 1024;
-    public static final int DEFAULT_MAX_PROCESSING = SystemUtil.getAvailableProcessors();
+    public static final int DEFAULT_MAX_PROCESSING = SystemUtil.getNumberOfCPUs();
 
     /**
      * @deprecated Useless interface
@@ -483,7 +483,7 @@ public class Processor extends ThreadPoolExecutor
     /**
      * Submit the given task (internal use only).
      */
-    protected synchronized <T> Future<T> submit(FutureTaskAdapter<T> task)
+    protected synchronized <T> FutureTask<T> submit(FutureTaskAdapter<T> task)
     {
         execute(task);
         return task;

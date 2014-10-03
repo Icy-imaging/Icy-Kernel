@@ -122,25 +122,25 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             new ColumnInfo("Name", ID_COLUMN_NAME, "ROI name (double click in a cell to edit)", String.class, 60, 100,
                     true, false),
             new ColumnInfo("Type", ID_COLUMN_TYPE, "ROI type", String.class, 60, 80, false, false),
-            new ColumnInfo("Position X", ID_COLUMN_POSITION_X, "X Position of the ROI", String.class, 30, 60, false,
+            new ColumnInfo("Position X", ID_COLUMN_POSITION_X, "X Position of the ROI", Double.class, 30, 60, false,
                     false),
-            new ColumnInfo("Position Y", ID_COLUMN_POSITION_Y, "Y Position of the ROI", String.class, 30, 60, false,
+            new ColumnInfo("Position Y", ID_COLUMN_POSITION_Y, "Y Position of the ROI", Double.class, 30, 60, false,
                     false),
-            new ColumnInfo("Position Z", ID_COLUMN_POSITION_Z, "Z Position of the ROI", String.class, 30, 60, false,
+            new ColumnInfo("Position Z", ID_COLUMN_POSITION_Z, "Z Position of the ROI", Double.class, 30, 60, false,
                     false),
-            new ColumnInfo("Position T", ID_COLUMN_POSITION_T, "T Position of the ROI", String.class, 30, 60, false,
+            new ColumnInfo("Position T", ID_COLUMN_POSITION_T, "T Position of the ROI", Double.class, 30, 60, false,
                     false),
-            new ColumnInfo("Position C", ID_COLUMN_POSITION_C, "C Position of the ROI", String.class, 30, 60, false,
+            new ColumnInfo("Position C", ID_COLUMN_POSITION_C, "C Position of the ROI", Double.class, 30, 60, false,
                     false),
-            new ColumnInfo("Size X", ID_COLUMN_SIZE_X, "X dimension size of the ROI (width)", String.class, 30, 60,
+            new ColumnInfo("Size X", ID_COLUMN_SIZE_X, "X dimension size of the ROI (width)", Double.class, 30, 60,
                     false, false),
-            new ColumnInfo("Size Y", ID_COLUMN_SIZE_Y, "Y dimension size of the ROI (heigth)", String.class, 30, 60,
+            new ColumnInfo("Size Y", ID_COLUMN_SIZE_Y, "Y dimension size of the ROI (heigth)", Double.class, 30, 60,
                     false, false),
-            new ColumnInfo("Size Z", ID_COLUMN_SIZE_Z, "Z dimension size of the ROI (depth)", String.class, 30, 60,
+            new ColumnInfo("Size Z", ID_COLUMN_SIZE_Z, "Z dimension size of the ROI (depth)", Double.class, 30, 60,
                     false, false),
-            new ColumnInfo("Size T", ID_COLUMN_SIZE_T, "T dimension size of the ROI (time)", String.class, 30, 60,
+            new ColumnInfo("Size T", ID_COLUMN_SIZE_T, "T dimension size of the ROI (time)", Double.class, 30, 60,
                     false, false),
-            new ColumnInfo("Size C", ID_COLUMN_SIZE_C, "C dimension size of the ROI (channel)", String.class, 30, 60,
+            new ColumnInfo("Size C", ID_COLUMN_SIZE_C, "C dimension size of the ROI (channel)", Double.class, 30, 60,
                     false, false),
             new ColumnInfo("Contour", ID_COLUMN_CONTOUR, "Number of points for the contour", Double.class, 30, 60,
                     false, false),
@@ -296,25 +296,25 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                     case 2: // type
                         return roi.getSimpleClassName();
                     case 3: // position X
-                        return roiInfo.getPositionXAsString();
+                        return Double.valueOf(roiInfo.getPositionX());
                     case 4: // position Y
-                        return roiInfo.getPositionYAsString();
+                        return Double.valueOf(roiInfo.getPositionY());
                     case 5: // position Z
-                        return roiInfo.getPositionZAsString();
+                        return Double.valueOf(roiInfo.getPositionZ());
                     case 6: // position T
-                        return roiInfo.getPositionTAsString();
+                        return Double.valueOf(roiInfo.getPositionT());
                     case 7: // position C
-                        return roiInfo.getPositionCAsString();
+                        return Double.valueOf(roiInfo.getPositionC());
                     case 8: // size X
-                        return roiInfo.getSizeXAsString();
+                        return Double.valueOf(roiInfo.getSizeX());
                     case 9: // size Y
-                        return roiInfo.getSizeYAsString();
+                        return Double.valueOf(roiInfo.getSizeY());
                     case 10: // size Z
-                        return roiInfo.getSizeZAsString();
+                        return Double.valueOf(roiInfo.getSizeZ());
                     case 11: // size T
-                        return roiInfo.getSizeTAsString();
+                        return Double.valueOf(roiInfo.getSizeT());
                     case 12: // size C
-                        return roiInfo.getSizeCAsString();
+                        return Double.valueOf(roiInfo.getSizeC());
                     case 13: // contour points
                         return Double.valueOf(roiInfo.getNumberOfContourPoints());
                     case 14: // points

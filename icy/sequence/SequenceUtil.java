@@ -24,6 +24,7 @@ import icy.image.IcyBufferedImageUtil;
 import icy.image.IcyBufferedImageUtil.FilterType;
 import icy.image.lut.LUT;
 import icy.math.Scaler;
+import icy.painter.Overlay;
 import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.type.DataType;
@@ -1982,29 +1983,52 @@ public class SequenceUtil
 
     /**
      * Creates and return a copy of the sequence.
+     * 
+     * @param source
+     *        the source sequence to copy
+     * @param copyROI
+     *        Copy the ROI from source sequence
+     * @param copyOverlay
+     *        Copy the Overlay from source sequence
+     * @param nameSuffix
+     *        add the suffix <i>" (copy)"</i> to the new Sequence name to distinguish it
+     */
+    public static Sequence getCopy(Sequence source, boolean copyROI, boolean copyOverlay, boolean nameSuffix)
+    {
+        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+
+        result.beginUpdate();
+        try
+        {
+            result.copyDataFrom(source);
+            if (copyROI)
+            {
+                for (ROI roi : source.getROIs())
+                    result.addROI(roi);
+            }
+            if (copyOverlay)
+            {
+                for (Overlay overlay : source.getOverlays())
+                    result.addOverlay(overlay);
+            }
+            if (nameSuffix)
+                result.setName(source.getName() + " (copy)");
+        }
+        finally
+        {
+            result.endUpdate();
+        }
+
+        return result;
+    }
+
+    /**
+     * Creates and return a copy of the sequence.<br>
+     * Note that only data and metadata are copied, overlays and ROIs are not preserved.
      */
     public static Sequence getCopy(Sequence source)
     {
-        final Sequence result = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
-        final int sizeT = source.getSizeT();
-        final int sizeZ = source.getSizeZ();
-
-        for (int t = 0; t < sizeT; t++)
-        {
-            for (int z = 0; z < sizeZ; z++)
-            {
-                final IcyBufferedImage img = source.getImage(t, z);
-
-                if (img != null)
-                    result.setImage(t, z, IcyBufferedImageUtil.getCopy(img));
-                else
-                    source.setImage(t, z, null);
-            }
-        }
-
-        result.setName(source.getName() + " (copy)");
-
-        return result;
+        return getCopy(source, false, false, true);
     }
 
     /**

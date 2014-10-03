@@ -27,12 +27,14 @@ import icy.main.Icy;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
+import icy.plugin.interface_.PluginBundled;
 import icy.preferences.PluginsPreferences;
 import icy.preferences.XMLPreferences;
 import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
+import icy.system.audit.Audit;
 import icy.util.ClassUtil;
 
 import java.awt.image.BufferedImage;
@@ -42,6 +44,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 
@@ -54,7 +57,7 @@ import javax.swing.ImageIcon;
  */
 public abstract class Plugin
 {
-    public static Plugin getPlugin(ArrayList<Plugin> list, String className)
+    public static Plugin getPlugin(List<Plugin> list, String className)
     {
         for (Plugin plugin : list)
             if (plugin.getClass().getName().equals(className))
@@ -63,20 +66,40 @@ public abstract class Plugin
         return null;
     }
 
-    private final PluginDescriptor descriptor;
+    private PluginDescriptor descriptor;
+
+    public Plugin(PluginDescriptor desc)
+    {
+        super();
+
+        // get descriptor from loader
+        if (desc == null)
+            descriptor = PluginLoader.getPlugin(getClass().getName());
+        else
+            descriptor = desc;
+
+        if (descriptor == null)
+        {
+            // descriptor not found (don't check for anonymous plugin class) ?
+            if (!getClass().isAnonymousClass())
+            {
+                System.out.println("Warning : Plugin '" + getClass().getName()
+                        + "' started but not found in PluginLoader !");
+                System.out.println("Local XML plugin description file is probably incorrect.");
+            }
+
+            // create dummy descriptor
+            descriptor = new PluginDescriptor(this.getClass());
+            descriptor.setName(getClass().getSimpleName());
+        }
+
+        // audit
+        Audit.pluginInstancied(this);
+    }
 
     public Plugin()
     {
-        // get descriptor from loader
-        descriptor = PluginLoader.getPlugin(getClass().getName());
-
-        // don't check for anonymous plugin class...
-        if ((descriptor == null) && !getClass().isAnonymousClass())
-        {
-            System.out.println("Warning : Plugin '" + getClass().getName()
-                    + "' started but not found in PluginLoader !");
-            System.out.println("Local XML plugin description file is probably incorrect.");
-        }
+        this(null);
     }
 
     @Override
@@ -94,6 +117,35 @@ public abstract class Plugin
     public PluginDescriptor getDescriptor()
     {
         return descriptor;
+    }
+
+    /**
+     * @return the plugin name (from its descriptor)
+     */
+    public String getName()
+    {
+        return descriptor.getName();
+    }
+
+    /**
+     * @return <code>true</code> if this is a bundled plugin (see {@link PluginBundled}).
+     */
+    public boolean isBundled()
+    {
+        return this instanceof PluginBundled;
+    }
+
+    /**
+     * @return the class name of the plugin owner.<br>
+     *         If this Plugin is not bundled (see {@link PluginBundled}) then it just returns the
+     *         current class name otherwise it will returns the plugin owner class name.
+     */
+    public String getOwnerClassName()
+    {
+        if (isBundled())
+            return ((PluginBundled) this).getMainPluginClassName();
+
+        return getClass().getName();
     }
 
     /**

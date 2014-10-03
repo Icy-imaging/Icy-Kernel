@@ -19,7 +19,7 @@
 package icy.plugin.interface_;
 
 /**
- * @deprecated Use #PluginImporter instead.
+ * @deprecated Use {@link icy.plugin.abstract_.PluginImporter} instead.
  */
 @Deprecated
 public interface PluginImporter

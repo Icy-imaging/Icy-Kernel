@@ -36,12 +36,14 @@ import icy.roi.ROI;
 import icy.search.SearchEngine;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
+import icy.undo.IcyUndoManager;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
+import javax.swing.undo.UndoManager;
 
 /**
  * MainInterface
@@ -60,7 +62,7 @@ public interface MainInterface
      * Check if exit is allowed from registered listeners
      */
     public abstract boolean canExitExternal();
-    
+
     /**
      * Return true is the application is running in headless mode (no screen device).
      */
@@ -139,6 +141,30 @@ public interface MainInterface
      */
     @Deprecated
     public abstract IcyBufferedImage getFocusedImage();
+
+    /**
+     * Returns the current active {@link UndoManager} (UndoManager from active sequence).
+     * It returns <code>null</code> if the active sequence is <code>null</code>.
+     * 
+     * @see Sequence#getUndoManager()
+     */
+    public abstract IcyUndoManager getUndoManager();
+
+    /**
+     * Undo to the last <i>Undoable</i> change set in the active Sequence {@link UndoManager}
+     * 
+     * @return <code>true</code> if the operation succeed
+     * @see Sequence#undo()
+     */
+    public abstract boolean undo();
+
+    /**
+     * Redo the next <i>Undoable</i> change set in the active Sequence {@link UndoManager}
+     * 
+     * @return <code>true</code> if the operation succeed
+     * @see Sequence#redo()
+     */
+    public abstract boolean redo();
 
     /**
      * Returns all active viewers

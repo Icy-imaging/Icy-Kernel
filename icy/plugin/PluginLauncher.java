@@ -24,6 +24,7 @@ import icy.plugin.interface_.PluginImageAnalysis;
 import icy.plugin.interface_.PluginStartAsThread;
 import icy.plugin.interface_.PluginThreaded;
 import icy.system.IcyExceptionHandler;
+import icy.system.audit.Audit;
 import icy.system.thread.ThreadUtil;
 
 import java.util.concurrent.Callable;
@@ -38,23 +39,22 @@ public class PluginLauncher
 {
     protected static class PluginExecutor implements Callable<Boolean>, Runnable
     {
-        final PluginDescriptor descriptor;
         final Plugin plugin;
 
-        public PluginExecutor(PluginDescriptor descriptor, Plugin plugin)
+        public PluginExecutor(Plugin plugin)
         {
             super();
 
-            this.descriptor = descriptor;
             this.plugin = plugin;
         }
 
         @Override
         public Boolean call() throws Exception
         {
-            // some plugins (as EzPlug) do not respect the PluginActionable convention (run() method contains all the process)
+            // some plugins (as EzPlug) do not respect the PluginActionable convention (run() method
+            // contains all the process)
             // so we can't yet use this bloc of code
-            
+
             // if (plugin instanceof PluginActionable)
             // ((PluginActionable) plugin).run();
             // // keep backward compatibility
@@ -77,7 +77,7 @@ public class PluginLauncher
             }
             catch (Throwable t)
             {
-                IcyExceptionHandler.handleException(descriptor, t, true);
+                IcyExceptionHandler.handleException(plugin.getDescriptor(), t, true);
             }
         }
     }
@@ -94,19 +94,17 @@ public class PluginLauncher
      * @throws Exception
      *         if the computation threw an exception (only when plugin is executed on EDT).
      */
-    private static void internalExecute(final PluginDescriptor descriptor, final Plugin plugin)
-            throws InterruptedException, Exception
+    private static void internalExecute(final Plugin plugin) throws InterruptedException, Exception
     {
-
         if (plugin instanceof PluginThreaded)
-            new Thread((PluginThreaded) plugin, descriptor.getName()).start();
+            new Thread((PluginThreaded) plugin, plugin.getName()).start();
         else
         {
-            final PluginExecutor executor = new PluginExecutor(descriptor, plugin);
+            final PluginExecutor executor = new PluginExecutor(plugin);
 
             // keep backward compatibility
             if (plugin instanceof PluginStartAsThread)
-                new Thread(executor, descriptor.getName()).start();
+                new Thread(executor, plugin.getName()).start();
             // direct launch in EDT now (no thread creation)
             else
                 ThreadUtil.invokeNow((Callable<Boolean>) executor);
@@ -121,7 +119,16 @@ public class PluginLauncher
             @Override
             public Plugin call() throws Exception
             {
-                return descriptor.getPluginClass().newInstance();
+                try
+                {
+                    // try constructor with descriptor argument by default
+                    return descriptor.getPluginClass().getConstructor(PluginDescriptor.class).newInstance(descriptor);
+                }
+                catch (NoSuchMethodException e)
+                {
+                    // then use default constructor
+                    return descriptor.getPluginClass().newInstance();
+                }
             }
         });
     }
@@ -159,8 +166,10 @@ public class PluginLauncher
 
             // register plugin
             Icy.getMainInterface().registerPlugin(result);
+            // audit
+            Audit.pluginLaunched(result);
             // execute plugin
-            internalExecute(descriptor, result);
+            internalExecute(result);
 
             return result;
         }
@@ -179,7 +188,8 @@ public class PluginLauncher
     /**
      * Start the specified plugin.<br>
      * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin) or
-     * <code>null</code> if an error occurred or if the specified class name is not a valid plugin class name.
+     * <code>null</code> if an error occurred or if the specified class name is not a valid plugin
+     * class name.
      */
     public static Plugin start(String pluginClassName)
     {
@@ -210,7 +220,7 @@ public class PluginLauncher
         // register plugin
         Icy.getMainInterface().registerPlugin(result);
         // execute plugin
-        internalExecute(descriptor, result);
+        internalExecute(result);
 
         return result;
     }

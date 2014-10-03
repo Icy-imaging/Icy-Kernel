@@ -26,6 +26,7 @@ import icy.image.ImageUtil;
 import icy.network.NetworkUtil;
 import icy.network.URLUtil;
 import icy.plugin.abstract_.Plugin;
+import icy.plugin.interface_.PluginBundled;
 import icy.plugin.interface_.PluginImageAnalysis;
 import icy.preferences.RepositoryPreferences.RepositoryInfo;
 import icy.resource.ResourceUtil;
@@ -55,342 +56,25 @@ import org.w3c.dom.Node;
  */
 public class PluginDescriptor implements XMLPersistent
 {
-    public static class PluginNameSorter implements Comparator<PluginDescriptor>
-    {
-        // static class
-        public static PluginNameSorter instance = new PluginNameSorter();
-
-        // static class
-        private PluginNameSorter()
-        {
-            super();
-        }
-
-        @Override
-        public int compare(PluginDescriptor o1, PluginDescriptor o2)
-        {
-            return o1.toString().compareToIgnoreCase(o2.toString());
-        }
-    }
-
-    public static class PluginClassNameSorter implements Comparator<PluginDescriptor>
-    {
-        // static class
-        public static PluginClassNameSorter instance = new PluginClassNameSorter();
-
-        // static class
-        private PluginClassNameSorter()
-        {
-            super();
-        }
-
-        @Override
-        public int compare(PluginDescriptor o1, PluginDescriptor o2)
-        {
-            return o1.getClassName().compareToIgnoreCase(o2.getClassName());
-        }
-    }
-
-    public  static final int ICON_SIZE = 64;
-    public  static final int IMAGE_SIZE = 256;
+    public static final int ICON_SIZE = 64;
+    public static final int IMAGE_SIZE = 256;
 
     public static final ImageIcon DEFAULT_ICON = ResourceUtil.getImageIcon(ResourceUtil.IMAGE_PLUGIN_SMALL);
     public static final Image DEFAULT_IMAGE = ResourceUtil.IMAGE_PLUGIN;
 
-    public static final String ID_CLASSNAME = "classname";
+    /**
+     * @deprecated Use {@link PluginIdent#ID_CLASSNAME} instead
+     */
+    @Deprecated
+    public static final String ID_CLASSNAME = PluginIdent.ID_CLASSNAME;
+    /**
+     * @deprecated Use {@link PluginIdent#ID_REQUIRED_KERNEL_VERSION} instead
+     */
+    @Deprecated
+    public static final String ID_REQUIRED_KERNEL_VERSION = PluginIdent.ID_REQUIRED_KERNEL_VERSION;
+
     public static final String ID_URL = "url";
     public static final String ID_NAME = "name";
-    public static final String ID_REQUIRED_KERNEL_VERSION = "required_kernel_version";
-
-    public static class PluginIdent implements XMLPersistent
-    {
-        /**
-         * Returns the index for the specified plugin ident in the specified list.<br>
-         * Returns -1 if not found.
-         */
-        public static int getIndex(List<PluginIdent> list, PluginIdent ident)
-        {
-            final int size = list.size();
-
-            for (int i = 0; i < size; i++)
-                if (list.get(i).equals(ident))
-                    return i;
-
-            return -1;
-        }
-
-        /**
-         * Returns the index for the specified plugin in the specified list.<br>
-         * Returns -1 if not found.
-         */
-        public static int getIndex(List<? extends PluginIdent> list, String className)
-        {
-            final int size = list.size();
-
-            for (int i = 0; i < size; i++)
-                if (list.get(i).getClassName().equals(className))
-                    return i;
-
-            return -1;
-        }
-
-        static final String ID_VERSION = "version";
-
-        protected String className;
-        protected Version version;
-        protected Version requiredKernelVersion;
-
-        /**
-         * 
-         */
-        public PluginIdent()
-        {
-            super();
-
-            // default
-            className = "";
-            version = new Version();
-            requiredKernelVersion = new Version();
-        }
-
-        /**
-         * 
-         */
-        @Override
-        public boolean loadFromXML(Node node)
-        {
-            if (node == null)
-                return false;
-
-            setClassName(XMLUtil.getElementValue(node, ID_CLASSNAME, ""));
-            setVersion(new Version(XMLUtil.getElementValue(node, ID_VERSION, "")));
-            setRequiredKernelVersion(new Version(XMLUtil.getElementValue(node, ID_REQUIRED_KERNEL_VERSION, "")));
-
-            return true;
-        }
-
-        /**
-         * 
-         */
-        @Override
-        public boolean saveToXML(Node node)
-        {
-            if (node == null)
-                return false;
-
-            XMLUtil.setElementValue(node, ID_CLASSNAME, getClassName());
-            XMLUtil.setElementValue(node, ID_VERSION, getVersion().toString());
-            XMLUtil.setElementValue(node, ID_REQUIRED_KERNEL_VERSION, getRequiredKernelVersion().toString());
-
-            return true;
-        }
-
-        public boolean isEmpty()
-        {
-            return StringUtil.isEmpty(className) && version.isEmpty() && requiredKernelVersion.isEmpty();
-        }
-
-        /**
-         * @return the className
-         */
-        public String getClassName()
-        {
-            return className;
-        }
-
-        /**
-         * @param className
-         *        the className to set
-         */
-        public void setClassName(String className)
-        {
-            this.className = className;
-        }
-
-        /**
-         * return the simple className
-         */
-        public String getSimpleClassName()
-        {
-            return ClassUtil.getSimpleClassName(className);
-        }
-
-        /**
-         * return the package name
-         */
-        public String getPackageName()
-        {
-            return ClassUtil.getPackageName(className);
-        }
-
-        /**
-         * return the minimum package name (remove "icy" or/and "plugin" header)<br>
-         */
-        public String getSimplePackageName()
-        {
-            String result = getPackageName();
-
-            if (result.startsWith("icy."))
-                result = result.substring(4);
-            if (result.startsWith(PluginLoader.PLUGIN_PACKAGE))
-                result = result.substring(PluginLoader.PLUGIN_PACKAGE.length() + 1);
-
-            return result;
-        }
-
-        /**
-         * return the author package name (first part of simple package name)
-         */
-        public String getAuthorPackageName()
-        {
-            final String result = getSimplePackageName();
-            final int index = result.indexOf('.');
-
-            if (index != -1)
-                return result.substring(0, index);
-
-            return result;
-        }
-
-        /**
-         * @param version
-         *        the version to set
-         */
-        public void setVersion(Version version)
-        {
-            this.version = version;
-        }
-
-        /**
-         * @return the version
-         */
-        public Version getVersion()
-        {
-            return version;
-        }
-
-        /**
-         * @return the requiredKernelVersion
-         */
-        public Version getRequiredKernelVersion()
-        {
-            return requiredKernelVersion;
-        }
-
-        /**
-         * @param requiredKernelVersion
-         *        the requiredKernelVersion to set
-         */
-        public void setRequiredKernelVersion(Version requiredKernelVersion)
-        {
-            this.requiredKernelVersion = requiredKernelVersion;
-        }
-
-        public boolean isOlderOrEqual(PluginIdent ident)
-        {
-            return className.equals(ident.getClassName()) && version.isOlderOrEqual(ident.getVersion());
-        }
-
-        public boolean isOlder(PluginIdent ident)
-        {
-            return className.equals(ident.getClassName()) && version.isOlder(ident.getVersion());
-        }
-
-        public boolean isNewerOrEqual(PluginIdent ident)
-        {
-            return className.equals(ident.getClassName()) && version.isNewerOrEqual(ident.getVersion());
-        }
-
-        public boolean isNewer(PluginIdent ident)
-        {
-            return className.equals(ident.getClassName()) && version.isNewer(ident.getVersion());
-        }
-
-        @Override
-        public boolean equals(Object obj)
-        {
-            if (obj instanceof PluginIdent)
-            {
-                PluginIdent ident = (PluginIdent) obj;
-
-                return ident.getClassName().equals(className) && ident.getVersion().equals(getVersion());
-            }
-
-            return super.equals(obj);
-        }
-
-        @Override
-        public String toString()
-        {
-            return className + " " + version.toString();
-        }
-    }
-
-    public static class PluginOnlineIdent extends PluginIdent
-    {
-        protected String name;
-        protected String url;
-
-        public PluginOnlineIdent()
-        {
-            super();
-
-            name = "";
-            url = "";
-        }
-
-        /**
-         * @return the name
-         */
-        public String getName()
-        {
-            return name;
-        }
-
-        public void setName(String name)
-        {
-            this.name = name;
-        }
-
-        /**
-         * @return the url
-         */
-        public String getUrl()
-        {
-            return url;
-        }
-
-        public void setUrl(String url)
-        {
-            this.url = url;
-        }
-
-        @Override
-        public boolean loadFromXML(Node node)
-        {
-            if (super.loadFromXML(node))
-            {
-                setName(XMLUtil.getElementValue(node, PluginDescriptor.ID_NAME, ""));
-                setUrl(XMLUtil.getElementValue(node, PluginDescriptor.ID_URL, ""));
-                return true;
-            }
-
-            return false;
-        }
-
-        @Override
-        public boolean saveToXML(Node node)
-        {
-            if (super.saveToXML(node))
-            {
-                XMLUtil.setElementValue(node, PluginDescriptor.ID_NAME, getName());
-                XMLUtil.setElementValue(node, PluginDescriptor.ID_URL, getUrl());
-                return true;
-            }
-
-            return false;
-        }
-    }
 
     public static final String ID_JAR_URL = "jar_url";
     public static final String ID_IMAGE_URL = "image_url";
@@ -840,11 +524,29 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
+     * Return true if the plugin is bundled inside another plugin (mean it does not have a proper
+     * descriptor)
+     */
+    public boolean isBundled()
+    {
+        return isClassLoaded() && isInstanceOf(PluginBundled.class);
+    }
+
+    /**
      * Return true if the plugin is in beta state
      */
     public boolean isBeta()
     {
         return getVersion().isBeta();
+    }
+
+    /**
+     * Return true if this plugin is a system application plugin (declared in plugins.kernel
+     * package).
+     */
+    public boolean isKernelPlugin()
+    {
+        return getClassName().startsWith(PluginLoader.PLUGIN_KERNEL_PACKAGE + ".");
     }
 
     void loadIcon(URL url)
@@ -1001,13 +703,16 @@ public class PluginDescriptor implements XMLPersistent
         return ident.getSimpleClassName();
     }
 
+    /**
+     * Returns the package name of the plugin class.
+     */
     public String getPackageName()
     {
         return ident.getPackageName();
     }
 
     /**
-     * return the minimum package name (remove "icy" or/and "plugin" header)<br>
+     * Returns the minimum package name (remove "icy" or/and "plugin" header)<br>
      */
     public String getSimplePackageName()
     {
@@ -1015,7 +720,7 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * return the author package name (first part of simple package name)
+     * Returns the author package name (first part of simple package name)
      */
     public String getAuthorPackageName()
     {
@@ -1023,8 +728,9 @@ public class PluginDescriptor implements XMLPersistent
     }
 
     /**
-     * @return the pluginClass
+     * @deprecated useless method
      */
+    @Deprecated
     public String getClassAsString()
     {
         if (pluginClass != null)
@@ -1594,4 +1300,388 @@ public class PluginDescriptor implements XMLPersistent
     {
         return getClassName().hashCode() ^ getVersion().hashCode();
     }
+
+    public static class PluginIdent implements XMLPersistent
+    {
+        /**
+         * Returns the index for the specified plugin ident in the specified list.<br>
+         * Returns -1 if not found.
+         */
+        public static int getIndex(List<PluginIdent> list, PluginIdent ident)
+        {
+            final int size = list.size();
+
+            for (int i = 0; i < size; i++)
+                if (list.get(i).equals(ident))
+                    return i;
+
+            return -1;
+        }
+
+        /**
+         * Returns the index for the specified plugin in the specified list.<br>
+         * Returns -1 if not found.
+         */
+        public static int getIndex(List<? extends PluginIdent> list, String className)
+        {
+            final int size = list.size();
+
+            for (int i = 0; i < size; i++)
+                if (list.get(i).getClassName().equals(className))
+                    return i;
+
+            return -1;
+        }
+
+        public static final String ID_CLASSNAME = "classname";
+        public static final String ID_VERSION = "version";
+        public static final String ID_REQUIRED_KERNEL_VERSION = "required_kernel_version";
+
+        protected String className;
+        protected Version version;
+        protected Version requiredKernelVersion;
+
+        /**
+         * 
+         */
+        public PluginIdent()
+        {
+            super();
+
+            // default
+            className = "";
+            version = new Version();
+            requiredKernelVersion = new Version();
+        }
+
+        public boolean loadFromXMLShort(Node node)
+        {
+            if (node == null)
+                return false;
+
+            setClassName(XMLUtil.getElementValue(node, ID_CLASSNAME, ""));
+            setVersion(new Version(XMLUtil.getElementValue(node, ID_VERSION, "")));
+
+            return true;
+        }
+
+        @Override
+        public boolean loadFromXML(Node node)
+        {
+            if (!loadFromXMLShort(node))
+                return false;
+
+            setRequiredKernelVersion(new Version(XMLUtil.getElementValue(node, ID_REQUIRED_KERNEL_VERSION, "")));
+
+            return true;
+        }
+
+        public boolean saveToXMLShort(Node node)
+        {
+            if (node == null)
+                return false;
+
+            XMLUtil.setElementValue(node, ID_CLASSNAME, getClassName());
+            XMLUtil.setElementValue(node, ID_VERSION, getVersion().toString());
+
+            return true;
+        }
+
+        @Override
+        public boolean saveToXML(Node node)
+        {
+            if (!saveToXMLShort(node))
+                return false;
+
+            XMLUtil.setElementValue(node, ID_REQUIRED_KERNEL_VERSION, getRequiredKernelVersion().toString());
+
+            return true;
+        }
+
+        public boolean isEmpty()
+        {
+            return StringUtil.isEmpty(className) && version.isEmpty() && requiredKernelVersion.isEmpty();
+        }
+
+        /**
+         * @return the className
+         */
+        public String getClassName()
+        {
+            return className;
+        }
+
+        /**
+         * @param className
+         *        the className to set
+         */
+        public void setClassName(String className)
+        {
+            this.className = className;
+        }
+
+        /**
+         * return the simple className
+         */
+        public String getSimpleClassName()
+        {
+            return ClassUtil.getSimpleClassName(className);
+        }
+
+        /**
+         * return the package name
+         */
+        public String getPackageName()
+        {
+            return ClassUtil.getPackageName(className);
+        }
+
+        /**
+         * return the minimum package name (remove "icy" or/and "plugin" header)<br>
+         */
+        public String getSimplePackageName()
+        {
+            String result = getPackageName();
+
+            if (result.startsWith("icy."))
+                result = result.substring(4);
+            if (result.startsWith(PluginLoader.PLUGIN_PACKAGE))
+                result = result.substring(PluginLoader.PLUGIN_PACKAGE.length() + 1);
+
+            return result;
+        }
+
+        /**
+         * return the author package name (first part of simple package name)
+         */
+        public String getAuthorPackageName()
+        {
+            final String result = getSimplePackageName();
+            final int index = result.indexOf('.');
+
+            if (index != -1)
+                return result.substring(0, index);
+
+            return result;
+        }
+
+        /**
+         * @param version
+         *        the version to set
+         */
+        public void setVersion(Version version)
+        {
+            this.version = version;
+        }
+
+        /**
+         * @return the version
+         */
+        public Version getVersion()
+        {
+            return version;
+        }
+
+        /**
+         * @return the requiredKernelVersion
+         */
+        public Version getRequiredKernelVersion()
+        {
+            return requiredKernelVersion;
+        }
+
+        /**
+         * @param requiredKernelVersion
+         *        the requiredKernelVersion to set
+         */
+        public void setRequiredKernelVersion(Version requiredKernelVersion)
+        {
+            this.requiredKernelVersion = requiredKernelVersion;
+        }
+
+        public boolean isOlderOrEqual(PluginIdent ident)
+        {
+            return className.equals(ident.getClassName()) && version.isOlderOrEqual(ident.getVersion());
+        }
+
+        public boolean isOlder(PluginIdent ident)
+        {
+            return className.equals(ident.getClassName()) && version.isOlder(ident.getVersion());
+        }
+
+        public boolean isNewerOrEqual(PluginIdent ident)
+        {
+            return className.equals(ident.getClassName()) && version.isNewerOrEqual(ident.getVersion());
+        }
+
+        public boolean isNewer(PluginIdent ident)
+        {
+            return className.equals(ident.getClassName()) && version.isNewer(ident.getVersion());
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (obj instanceof PluginIdent)
+            {
+                final PluginIdent ident = (PluginIdent) obj;
+                return ident.getClassName().equals(className) && ident.getVersion().equals(getVersion());
+            }
+
+            return super.equals(obj);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return className.hashCode() ^ version.hashCode();
+        }
+
+        @Override
+        public String toString()
+        {
+            return className + " " + version.toString();
+        }
+    }
+
+    public static class PluginOnlineIdent extends PluginIdent
+    {
+        protected String name;
+        protected String url;
+
+        public PluginOnlineIdent()
+        {
+            super();
+
+            name = "";
+            url = "";
+        }
+
+        /**
+         * @return the name
+         */
+        public String getName()
+        {
+            return name;
+        }
+
+        public void setName(String name)
+        {
+            this.name = name;
+        }
+
+        /**
+         * @return the url
+         */
+        public String getUrl()
+        {
+            return url;
+        }
+
+        public void setUrl(String url)
+        {
+            this.url = url;
+        }
+
+        @Override
+        public boolean loadFromXML(Node node)
+        {
+            if (super.loadFromXML(node))
+            {
+                setName(XMLUtil.getElementValue(node, PluginDescriptor.ID_NAME, ""));
+                setUrl(XMLUtil.getElementValue(node, PluginDescriptor.ID_URL, ""));
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean saveToXML(Node node)
+        {
+            if (super.saveToXML(node))
+            {
+                XMLUtil.setElementValue(node, PluginDescriptor.ID_NAME, getName());
+                XMLUtil.setElementValue(node, PluginDescriptor.ID_URL, getUrl());
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    /**
+     * Sort plugins on name with kernel plugins appearing first.
+     */
+    public static class PluginKernelNameSorter implements Comparator<PluginDescriptor>
+    {
+        // static class
+        public static PluginKernelNameSorter instance = new PluginKernelNameSorter();
+
+        // static class
+        private PluginKernelNameSorter()
+        {
+            super();
+        }
+
+        @Override
+        public int compare(PluginDescriptor o1, PluginDescriptor o2)
+        {
+            final String packageName1 = o1.getPackageName();
+            final String packageName2 = o2.getPackageName();
+
+            if (packageName1.startsWith(PluginLoader.PLUGIN_KERNEL_PACKAGE))
+            {
+                if (!packageName2.startsWith(PluginLoader.PLUGIN_KERNEL_PACKAGE))
+                    return -1;
+            }
+            else if (packageName2.startsWith(PluginLoader.PLUGIN_KERNEL_PACKAGE))
+                return 1;
+
+            return o1.toString().compareToIgnoreCase(o2.toString());
+        }
+    }
+
+    /**
+     * Sort plugins on name.
+     */
+    public static class PluginNameSorter implements Comparator<PluginDescriptor>
+    {
+        // static class
+        public static PluginNameSorter instance = new PluginNameSorter();
+
+        // static class
+        private PluginNameSorter()
+        {
+            super();
+        }
+
+        @Override
+        public int compare(PluginDescriptor o1, PluginDescriptor o2)
+        {
+            return o1.toString().compareToIgnoreCase(o2.toString());
+        }
+    }
+
+    /**
+     * Sort plugins on class name.
+     */
+    public static class PluginClassNameSorter implements Comparator<PluginDescriptor>
+    {
+        // static class
+        public static PluginClassNameSorter instance = new PluginClassNameSorter();
+
+        // static class
+        private PluginClassNameSorter()
+        {
+            super();
+        }
+
+        @Override
+        public int compare(PluginDescriptor o1, PluginDescriptor o2)
+        {
+            return o1.getClassName().compareToIgnoreCase(o2.getClassName());
+        }
+    }
+
 }

@@ -32,6 +32,9 @@ import icy.gui.inspector.RoisPanel.ROIInfo;
 import icy.main.Icy;
 import icy.roi.ROI;
 import icy.roi.ROIEvent;
+import icy.roi.edit.BoundsROIEdit;
+import icy.roi.edit.PositionROIEdit;
+import icy.roi.edit.PropertyROIsEdit;
 import icy.sequence.Sequence;
 import icy.system.thread.ThreadUtil;
 import icy.type.point.Point5D;
@@ -46,6 +49,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
@@ -622,7 +626,29 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
      */
     List<ROI> getSelectedRois()
     {
-        return roisPanel.getSelectedRois();
+        return getSelectedRois(true);
+    }
+
+    /**
+     * Get the selected ROI in the ROI control panel.
+     * 
+     * @param wantReadOnly
+     *        If <code>true</code> the returned list will also contains ROI in Read-Only state
+     */
+    List<ROI> getSelectedRois(boolean wantReadOnly)
+    {
+        final List<ROI> selected = roisPanel.getSelectedRois();
+
+        if (wantReadOnly)
+            return selected;
+
+        final List<ROI> result = new ArrayList<ROI>();
+
+        for (ROI roi : selected)
+            if (!roi.isReadOnly())
+                result.add(roi);
+
+        return result;
     }
 
     /**
@@ -809,7 +835,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                         colorButton.setColor(roi.getColor());
                         strokeSpinner.setValue(Double.valueOf(roi.getStroke()));
                         alphaSlider.setValue((int) (roi.getOpacity() * 100));
-                        displayNameCheckBox.setSelected(roi.getDisplayName());
+                        displayNameCheckBox.setSelected(roi.getShowName());
                     }
                     else
                     {
@@ -914,7 +940,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                     || (source == posCField))
             {
                 // get current ROI position
-                Point5D position = roi.getPosition5D();
+                final Point5D savePosition = roi.getPosition5D();
+                Point5D position = (Point5D) savePosition.clone();
 
                 // roi support position change ?
                 if (roi.canSetPosition())
@@ -937,6 +964,9 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                         roi.setPosition5D(position);
                         // update position with ROI accepted values
                         position = roi.getPosition5D();
+
+                        // add position change to undo manager
+                        Icy.getMainInterface().getUndoManager().addEdit(new PositionROIEdit(roi, savePosition));
                     }
                 }
 
@@ -965,7 +995,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                     || (source == sizeTField) || (source == sizeCField))
             {
                 // get current ROI size
-                Rectangle5D bounds = roi.getBounds5D();
+                final Rectangle5D saveBounds = roi.getBounds5D();
+                Rectangle5D bounds = (Rectangle5D) saveBounds.clone();
 
                 // roi support size change ?
                 if (roi.canSetBounds())
@@ -988,6 +1019,9 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                         roi.setBounds5D(bounds);
                         // update bounds with ROI accepted values
                         bounds = roi.getBounds5D();
+
+                        // add position change to undo manager
+                        Icy.getMainInterface().getUndoManager().addEdit(new BoundsROIEdit(roi, saveBounds));
                     }
                 }
 
@@ -1028,21 +1062,29 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         if (!modifyingRoi.tryAcquire())
             return;
 
+        final List<ROI> rois = getSelectedRois(false);
+        final List<Object> oldValues = new ArrayList<Object>();
+        final Color color = source.getColor();
+
         sequence.beginUpdate();
         try
         {
-            // color changed
-            final Color color = source.getColor();
-
-            for (ROI roi : getSelectedRois())
-                if (!roi.isReadOnly())
-                    roi.setColor(color);
+            // set new color
+            for (ROI roi : rois)
+            {
+                // save previous color
+                oldValues.add(roi.getColor());
+                roi.setColor(color);
+            }
         }
         finally
         {
             sequence.endUpdate();
             modifyingRoi.release();
         }
+
+        // add color change to undo manager
+        sequence.addUndoableEdit(new PropertyROIsEdit(rois, ROI.PROPERTY_COLOR, oldValues, color));
     }
 
     @Override
@@ -1068,35 +1110,53 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         {
             if (source == strokeSpinner)
             {
+                final List<ROI> rois = getSelectedRois(false);
+                final List<Object> oldValues = new ArrayList<Object>();
+                final double stroke = ((Double) strokeSpinner.getValue()).doubleValue();
+
                 sequence.beginUpdate();
                 try
                 {
-                    final double stroke = ((Double) strokeSpinner.getValue()).doubleValue();
-
-                    for (ROI roi : getSelectedRois())
-                        if (!roi.isReadOnly())
-                            roi.setStroke(stroke);
+                    for (ROI roi : rois)
+                    {
+                        // save previous stroke
+                        oldValues.add(Double.valueOf(roi.getStroke()));
+                        roi.setStroke(stroke);
+                    }
                 }
                 finally
                 {
                     sequence.endUpdate();
                 }
+
+                // add stroke change to undo manager
+                sequence.addUndoableEdit(new PropertyROIsEdit(rois, ROI.PROPERTY_STROKE, oldValues, Double
+                        .valueOf(stroke)));
             }
             else if (source == alphaSlider)
             {
+                final List<ROI> rois = getSelectedRois(true);
+                final List<Object> oldValues = new ArrayList<Object>();
+                final float opacity = alphaSlider.getValue() / 100f;
+
                 sequence.beginUpdate();
                 try
                 {
-                    final float opacity = alphaSlider.getValue() / 100f;
-
-                    for (ROI roi : getSelectedRois())
-                        if (!roi.isReadOnly())
-                            roi.setOpacity(opacity);
+                    for (ROI roi : rois)
+                    {
+                        // save previous opacity
+                        oldValues.add(Float.valueOf(roi.getOpacity()));
+                        roi.setOpacity(opacity);
+                    }
                 }
                 finally
                 {
                     sequence.endUpdate();
                 }
+
+                // add opacity change to undo manager
+                sequence.addUndoableEdit(new PropertyROIsEdit(rois, ROI.PROPERTY_OPACITY, oldValues, Float
+                        .valueOf(opacity)));
             }
             else if ((source == posZSpinner) || (source == posTSpinner) || (source == posCSpinner))
             {
@@ -1116,7 +1176,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 final SpecialValueSpinner spinner = (SpecialValueSpinner) source;
 
                 // get current ROI position
-                Point5D position = roi.getPosition5D();
+                final Point5D savePosition = roi.getPosition5D();
+                Point5D position = (Point5D) savePosition.clone();
 
                 // roi support position change ?
                 if (roi.canSetPosition())
@@ -1133,6 +1194,9 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                     roi.setPosition5D(position);
                     // update position with ROI accepted values
                     position = roi.getPosition5D();
+
+                    // add position change to undo manager
+                    sequence.addUndoableEdit(new PositionROIEdit(roi, savePosition));
                 }
 
                 double p;
@@ -1186,9 +1250,8 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
                 {
                     final boolean display = displayNameCheckBox.isSelected();
 
-                    for (ROI roi : getSelectedRois())
-                        if (!roi.isReadOnly())
-                            roi.setDisplayName(display);
+                    for (ROI roi : getSelectedRois(false))
+                        roi.setShowName(display);
                 }
                 finally
                 {

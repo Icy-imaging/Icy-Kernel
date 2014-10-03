@@ -50,6 +50,7 @@ import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent.SequenceEventType;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
+import icy.type.rectangle.Rectangle5D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
 import icy.util.StringUtil;
@@ -155,6 +156,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 if (canvasView.imageCache.isProcessing())
                     // cache not yet built
                     canvasView.drawTextCenter(g2, "Loading...", 0.8f);
+                else if (canvasView.imageCache.getNotEnoughMemory())
+                    // not enough memory to render image
+                    canvasView.drawTextCenter(g2, "Not enough memory to display image", 0.8f);
                 else
                     // no image
                     canvasView.drawTextCenter(g2, " No image ", 0.8f);
@@ -395,72 +399,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     // consume event
                     e.consume();
                 }
-
-                // final AffineTransform trans = getImageTransform();
-                //
-                // if (trans != null)
-                // {
-                // try
-                // {
-                //
-                // // save last mouse position
-                // final int lastMouseCanvasPosX = mouseCanvasPos.x;
-                // final int lastMouseCanvasPosY = mouseCanvasPos.y;
-                //
-                // // image position
-                // final Point2D imagePoint = trans.inverseTransform(e.getPoint(), null);
-                //
-                // // left button action --> center view on mouse point
-                // if (EventUtil.isLeftMouseButton(e))
-                // {
-                // // center view on this point (this update mouse canvas position)
-                // centerOnImage(imagePoint.getX(), imagePoint.getY());
-                // // no need to update mouse canvas position here as it stays at center
-                //
-                // // consume event
-                // e.consume();
-                // }
-                // else if (EventUtil.isRightMouseButton(e))
-                // {
-                // mapRotating = true;
-                //
-                // // update mouse canvas position from image position
-                // setMouseCanvasPos(imageToCanvas(imagePoint.getX(), imagePoint.getY()));
-                // // get canvas center image position
-                // final Point2D.Double canvasCenter = canvasToImage(getCanvasSizeX() / 2,
-                // getCanvasSizeY() / 2);
-                //
-                // // get last and current mouse position delta with center
-                // final Point2D.Double lastMouseDeltaPos = canvasToImage(lastMouseCanvasPosX,
-                // lastMouseCanvasPosY);
-                // lastMouseDeltaPos.x -= canvasCenter.x;
-                // lastMouseDeltaPos.y -= canvasCenter.y;
-                // final Point2D.Double newMouseDeltaPos = getMouseImagePos();
-                // newMouseDeltaPos.x -= canvasCenter.x;
-                // newMouseDeltaPos.y -= canvasCenter.y;
-                //
-                // // get reverse angle in radian between last and
-                // // current mouse position relative to canvas center
-                // double angle = Math.atan2(lastMouseDeltaPos.y, lastMouseDeltaPos.x)
-                // - Math.atan2(newMouseDeltaPos.y, newMouseDeltaPos.x);
-                //
-                // // control button down --> rotation is enforced
-                // if (EventUtil.isControlDown(e))
-                // angle *= 3;
-                //
-                // angle = MathUtil.formatRadianAngle2(angle);
-                //
-                // // modify rotation with smooth mover
-                // setRotation(transform.getDestValue(ROT) + angle, true);
-                //
-                // e.consume();
-                // }
-                // }
-                // catch (Exception ecx)
-                // {
-                // // ignore
-                // }
-                // }
             }
             finally
             {
@@ -675,6 +613,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
              * internals
              */
             private boolean needRebuild;
+            private boolean notEnoughMemory;
 
             public ImageCache()
             {
@@ -686,6 +625,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
                 image = null;
                 needRebuild = true;
+                notEnoughMemory = false;
+
                 // build cache
                 processor.submit(this);
             }
@@ -720,14 +661,27 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 return image;
             }
 
+            public boolean getNotEnoughMemory()
+            {
+                return notEnoughMemory;
+            }
+
             @Override
             public void run()
             {
                 // important to set it to false at beginning
                 needRebuild = false;
 
-                // build image
-                image = Canvas2D.this.getARGBImage(getPositionT(), getPositionZ(), getPositionC(), image);
+                try
+                {
+                    // build image
+                    image = Canvas2D.this.getARGBImage(getPositionT(), getPositionZ(), getPositionC(), image);
+                    notEnoughMemory = false;
+                }
+                catch (OutOfMemoryError e)
+                {
+                    notEnoughMemory = true;
+                }
 
                 // repaint now
                 getViewComponent().repaint();
@@ -762,6 +716,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         boolean moving;
         boolean rotating;
         boolean hasMouseFocus;
+        boolean areaSelection;
 
         public CanvasView()
         {
@@ -778,6 +733,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             moving = false;
             rotating = false;
             hasMouseFocus = false;
+            areaSelection = false;
             lastSize = getSize();
 
             font = new Font("Arial", Font.BOLD, 16);
@@ -988,8 +944,51 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
          */
         boolean onMousePressed(boolean consumed, boolean left, boolean right, boolean control)
         {
+            // not yet consumed
             if (!consumed)
             {
+                final ToolRibbonTask toolTask = Icy.getMainInterface().getToolRibbon();
+                final Sequence seq = getSequence();
+
+                // left button press ?
+                if (left)
+                {
+                    // ROI tool selected --> ROI creation
+                    if ((toolTask != null) && toolTask.isROITool())
+                    {
+                        // get the ROI plugin class name
+                        final String roiClassName = toolTask.getSelected();
+
+                        // unselect tool before ROI creation unless
+                        // control modifier is used for multiple ROI creation
+                        if (!control)
+                            Icy.getMainInterface().setSelectedTool(null);
+
+                        // only if sequence still live
+                        if (seq != null)
+                        {
+                            // try to create ROI from current selected ROI tool
+                            final ROI roi = ROI.create(roiClassName, getMouseImagePos5D());
+                            // roi created ? --> it becomes the selected ROI
+                            if (roi != null)
+                            {
+                                roi.setCreating(true);
+                                // attach to sequence
+                                seq.addROI(roi, true);
+                                // then do exclusive selection
+                                seq.setSelectedROI(roi);
+                            }
+
+                            // consume event
+                            return true;
+                        }
+                    }
+
+                    // start area selection
+                    if (control)
+                        areaSelection = true;
+                }
+
                 // start drag mouse position
                 startDragPosition = getMousePos();
                 // store canvas parameters
@@ -1013,10 +1012,43 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
          */
         boolean onMouseReleased(boolean consumed, boolean left, boolean right, boolean control)
         {
+            // area selection ?
+            if (areaSelection)
+            {
+                final Sequence seq = getSequence();
+
+                if (seq != null)
+                {
+                    final List<ROI> rois = seq.getROIs();
+
+                    // we have some rois ?
+                    if (rois.size() > 0)
+                    {
+                        final Rectangle2D area = canvasToImage(getAreaSelection());
+                        // 5D area
+                        final Rectangle5D area5d = new Rectangle5D.Double(area.getX(), area.getY(), getPositionZ(),
+                                getPositionT(), Double.NEGATIVE_INFINITY, area.getWidth(), area.getHeight(), 1d, 1d,
+                                Double.POSITIVE_INFINITY);
+
+                        seq.beginUpdate();
+                        try
+                        {
+                            for (ROI roi : rois)
+                                roi.setSelected(roi.intersects(area5d));
+                        }
+                        finally
+                        {
+                            seq.endUpdate();
+                        }
+                    }
+                }
+            }
+
             // assume end dragging
             startDragPosition = null;
             moving = false;
             rotating = false;
+            areaSelection = false;
 
             // repaint
             refresh();
@@ -1085,6 +1117,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     // dragging --> consume event
                     return true;
                 }
+                // repaint area selection
+                else if (areaSelection)
+                    repaint();
 
                 // no dragging --> no consume
                 return false;
@@ -1184,44 +1219,6 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             // send mouse event to overlays first
             Canvas2D.this.mousePressed(e);
 
-            // not yet consumed
-            if (!e.isConsumed())
-            {
-                final ToolRibbonTask toolTask = Icy.getMainInterface().getToolRibbon();
-                final Sequence seq = getSequence();
-
-                // ROI creation
-                if (EventUtil.isLeftMouseButton(e) && (toolTask != null) && toolTask.isROITool())
-                {
-                    // get the ROI plugin class name
-                    final String roiClassName = toolTask.getSelected();
-
-                    // unselect tool before ROI creation unless
-                    // control modifier is used for multiple ROI creation
-                    if (!EventUtil.isControlDown(e))
-                        Icy.getMainInterface().setSelectedTool(null);
-
-                    // only if sequence still live
-                    if (seq != null)
-                    {
-                        // try to create ROI from current selected ROI tool
-                        final ROI roi = ROI.create(roiClassName, getMouseImagePos5D());
-                        // roi created ? --> it becomes the selected ROI
-                        if (roi != null)
-                        {
-                            roi.setCreating(true);
-                            // attach to sequence
-                            seq.addROI(roi, true);
-                            // then do exclusive selection
-                            seq.setSelectedROI(roi);
-                        }
-
-                        // consume event
-                        e.consume();
-                    }
-                }
-            }
-
             // process
             if (onMousePressed(e.isConsumed(), EventUtil.isLeftMouseButton(e), EventUtil.isRightMouseButton(e),
                     EventUtil.isControlDown(e)))
@@ -1247,7 +1244,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
             // send mouse event to overlays
             Canvas2D.this.mouseEntered(e);
-
+            // and refresh
             refresh();
         }
 
@@ -1258,7 +1255,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
             // send mouse event to overlays
             Canvas2D.this.mouseExited(e);
-
+            // and refresh
             refresh();
         }
 
@@ -1404,6 +1401,21 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 g2.dispose();
             }
 
+            // area selection
+            if (areaSelection)
+            {
+                final Rectangle area = getAreaSelection();
+                final Graphics2D g2 = (Graphics2D) g.create();
+
+                g2.setStroke(new BasicStroke(1));
+                g2.setColor(Color.darkGray);
+                g2.drawRect(area.x + 1, area.y + 1, area.width, area.height);
+                g2.setColor(Color.lightGray);
+                g2.drawRect(area.x, area.y, area.width, area.height);
+
+                g2.dispose();
+            }
+
             // synchronized canvas ? display external cursor
             if (!hasMouseFocus)
             {
@@ -1530,15 +1542,21 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         void updateCursor()
         {
-            final Cursor cursor = getCursor();
-
-            // save previous cursor if different from HAND
-            if (cursor.getType() != Cursor.HAND_CURSOR)
-                previousCursor = cursor;
-
+            // final Cursor cursor = getCursor();
+            //
+            // // save previous cursor if different from HAND
+            // if (cursor.getType() != Cursor.HAND_CURSOR)
+            // previousCursor = cursor;
+            //
             if (isDragging())
             {
                 GuiUtil.setCursor(this, Cursor.HAND_CURSOR);
+                return;
+            }
+
+            if (areaSelection)
+            {
+                GuiUtil.setCursor(this, Cursor.CROSSHAIR_CURSOR);
                 return;
             }
 
@@ -1575,7 +1593,8 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                 }
             }
 
-            setCursor(previousCursor);
+            // setCursor(previousCursor);
+            GuiUtil.setCursor(this, Cursor.DEFAULT_CURSOR);
         }
 
         public void refresh()
@@ -1644,12 +1663,49 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
 
         public boolean isDragging()
         {
-            return startDragPosition != null;
+            return !areaSelection && (startDragPosition != null);
         }
 
         public boolean isCacheValid()
         {
             return imageCache.isValid();
+        }
+
+        /**
+         * Returns the current Rectangle region of the area selection.<br>
+         * It returns <code>null</code> if we are not in area selection mode
+         */
+        public Rectangle getAreaSelection()
+        {
+            if (!areaSelection)
+                return null;
+
+            final int x, y;
+            final int w, h;
+            final Point mp = getMousePos();
+
+            if (mp.x > startDragPosition.x)
+            {
+                x = startDragPosition.x;
+                w = mp.x - x;
+            }
+            else
+            {
+                x = mp.x;
+                w = startDragPosition.x - x;
+            }
+            if (mp.y > startDragPosition.y)
+            {
+                y = startDragPosition.y;
+                h = mp.y - y;
+            }
+            else
+            {
+                y = mp.y;
+                h = startDragPosition.y - y;
+            }
+
+            return new Rectangle(x, y, w, h);
         }
 
         @Override

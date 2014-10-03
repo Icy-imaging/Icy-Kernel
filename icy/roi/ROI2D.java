@@ -365,7 +365,7 @@ public abstract class ROI2D extends ROI
             {
                 drawROI(g, sequence, canvas);
                 // display name ?
-                if (getDisplayName())
+                if (getShowName())
                     drawName(g, sequence, canvas);
             }
         }

@@ -23,7 +23,7 @@ import icy.gui.frame.progress.ProgressFrame;
 import icy.main.Icy;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor.PluginIdent;
-import icy.plugin.PluginDescriptor.PluginNameSorter;
+import icy.plugin.PluginDescriptor.PluginKernelNameSorter;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.classloader.JarClassLoader;
 import icy.plugin.interface_.PluginBundled;
@@ -57,50 +57,8 @@ import javax.swing.event.EventListenerList;
  */
 public class PluginLoader
 {
-    public static class PluginClassLoader extends JarClassLoader
-    {
-        public PluginClassLoader()
-        {
-            super();
-        }
-
-        /**
-         * Give access to this method
-         */
-        public Class<?> getLoadedClass(String name)
-        {
-            return super.findLoadedClass(name);
-        }
-
-        /**
-         * Give access to this method
-         */
-        public boolean isLoadedClass(String name)
-        {
-            return getLoadedClass(name) != null;
-        }
-    }
-
-    public static interface PluginLoaderListener extends EventListener
-    {
-        public void pluginLoaderChanged(PluginLoaderEvent e);
-    }
-
-    public static class PluginLoaderEvent implements EventHierarchicalChecker
-    {
-        public PluginLoaderEvent()
-        {
-            super();
-        }
-
-        @Override
-        public boolean isEventRedundantWith(EventHierarchicalChecker event)
-        {
-            return (event instanceof PluginLoaderEvent);
-        }
-    }
-
     public final static String PLUGIN_PACKAGE = "plugins";
+    public final static String PLUGIN_KERNEL_PACKAGE = "plugins.kernel";
     public final static String PLUGIN_PATH = "plugins";
 
     /**
@@ -336,7 +294,7 @@ public class PluginLoader
         }
 
         // sort list
-        Collections.sort(newPlugins, PluginNameSorter.instance);
+        Collections.sort(newPlugins, PluginKernelNameSorter.instance);
 
         // release loaded resources
         if (loader instanceof JarClassLoader)
@@ -396,8 +354,8 @@ public class PluginLoader
         if (!instance.activeDaemons.isEmpty())
             stopDaemons();
 
-        final ArrayList<String> inactives = PluginPreferences.getInactiveDaemons();
-        final ArrayList<PluginDaemon> newDaemons = new ArrayList<PluginDaemon>();
+        final List<String> inactives = PluginPreferences.getInactiveDaemons();
+        final List<PluginDaemon> newDaemons = new ArrayList<PluginDaemon>();
 
         for (PluginDescriptor pluginDesc : getDaemonPlugins())
         {
@@ -572,13 +530,8 @@ public class PluginLoader
         {
             for (PluginDescriptor plugin : instance.plugins)
             {
-                final Class<? extends Plugin> classPlug = plugin.getPluginClass();
-
-                if (classPlug != null)
-                {
-                    if (wantBundled || !PluginBundled.class.isAssignableFrom(classPlug))
-                        result.add(plugin);
-                }
+                if (wantBundled || (!plugin.isBundled()))
+                    result.add(plugin);
             }
         }
 
@@ -628,7 +581,7 @@ public class PluginLoader
                         // accept class ?
                         if ((wantAbstract || !ClassUtil.isAbstract(classPlug))
                                 && (wantInterface || !classPlug.isInterface())
-                                && (wantBundled || !PluginBundled.class.isAssignableFrom(classPlug)))
+                                && (wantBundled || !pluginDescriptor.isBundled()))
                             result.add(pluginDescriptor);
                     }
                 }
@@ -654,14 +607,8 @@ public class PluginLoader
         {
             for (PluginDescriptor pluginDescriptor : instance.plugins)
             {
-                final Class<? extends Plugin> classPlug = pluginDescriptor.getPluginClass();
-
-                if (classPlug != null)
-                {
-                    if (pluginDescriptor.isActionable()
-                            && (wantBundled || !PluginBundled.class.isAssignableFrom(classPlug)))
-                        result.add(pluginDescriptor);
-                }
+                if (pluginDescriptor.isActionable() && (wantBundled || !pluginDescriptor.isBundled()))
+                    result.add(pluginDescriptor);
             }
         }
 
@@ -1045,6 +992,49 @@ public class PluginLoader
         {
             for (PluginLoaderListener listener : listeners.getListeners(PluginLoaderListener.class))
                 listener.pluginLoaderChanged(e);
+        }
+    }
+
+    public static class PluginClassLoader extends JarClassLoader
+    {
+        public PluginClassLoader()
+        {
+            super();
+        }
+
+        /**
+         * Give access to this method
+         */
+        public Class<?> getLoadedClass(String name)
+        {
+            return super.findLoadedClass(name);
+        }
+
+        /**
+         * Give access to this method
+         */
+        public boolean isLoadedClass(String name)
+        {
+            return getLoadedClass(name) != null;
+        }
+    }
+
+    public static interface PluginLoaderListener extends EventListener
+    {
+        public void pluginLoaderChanged(PluginLoaderEvent e);
+    }
+
+    public static class PluginLoaderEvent implements EventHierarchicalChecker
+    {
+        public PluginLoaderEvent()
+        {
+            super();
+        }
+
+        @Override
+        public boolean isEventRedundantWith(EventHierarchicalChecker event)
+        {
+            return (event instanceof PluginLoaderEvent);
         }
     }
 }

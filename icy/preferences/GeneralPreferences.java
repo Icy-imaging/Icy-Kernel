@@ -46,13 +46,13 @@ public class GeneralPreferences
     public static final String ID_RIBBON_MINIMIZED = "ribbonMinimized";
     public static final String ID_DETACHED_MODE = "detached";
     public static final String ID_ALWAYS_ON_TOP = "alwaysOnTop";
+    public static final String ID_USAGE_STATS_REPORT = "usageStatsReport";
     public static final String ID_GUI_SKIN = "guiSkin";
     public static final String ID_GUI_FONT_SIZE = "guiFontSize";
     public static final String ID_STARTUP_TOOLTIP = "startupTooltip";
     public static final String ID_LOADER_FOLDER = "loaderFolder";
     public static final String ID_RESULT_FOLDER = "resultFolder";
     public static final String ID_USER_LOGIN = "userLogin";
-    public static final String ID_USER_PASSWORD = "userPassword";
     public static final String ID_USER_NAME = "userName";
     public static final String ID_USER_EMAIL = "userEmail";
 
@@ -144,6 +144,11 @@ public class GeneralPreferences
         return prefGeneral.getBoolean(ID_ALWAYS_ON_TOP, false);
     }
 
+    public static boolean getUsageStatisticsReport()
+    {
+        return prefGeneral.getBoolean(ID_USAGE_STATS_REPORT, true);
+    }
+
     public static boolean getStatupTooltip()
     {
         return prefGeneral.getBoolean(ID_STARTUP_TOOLTIP, true);
@@ -162,11 +167,6 @@ public class GeneralPreferences
     public static String getUserLogin()
     {
         return prefGeneral.get(ID_USER_LOGIN, "");
-    }
-
-    public static String getUserPassword()
-    {
-        return prefGeneral.get(ID_USER_PASSWORD, "");
     }
 
     public static String getUserName()
@@ -202,6 +202,11 @@ public class GeneralPreferences
     public static void setAutomaticUpdate(boolean value)
     {
         prefGeneral.putBoolean(ID_AUTO_UPDATE, value);
+    }
+
+    public static void setUsageStatisticsReport(boolean value)
+    {
+        prefGeneral.putBoolean(ID_USAGE_STATS_REPORT, value);
     }
 
     public static void setLastUpdateCheckTime(long time)
@@ -252,11 +257,6 @@ public class GeneralPreferences
     public static void setUserLogin(String value)
     {
         prefGeneral.put(ID_USER_LOGIN, value);
-    }
-
-    public static void setUserPassword(String value)
-    {
-        prefGeneral.put(ID_USER_PASSWORD, value);
     }
 
     public static void setUserName(String value)

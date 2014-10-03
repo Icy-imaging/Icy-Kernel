@@ -28,6 +28,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
@@ -117,9 +118,9 @@ class ARGBImageBuilder
         super();
 
         if (SystemUtil.is32bits())
-            processor = new Processor(Math.max(1, Math.min(SystemUtil.getAvailableProcessors() - 1, 4)));
+            processor = new Processor(Math.max(1, Math.min(SystemUtil.getNumberOfCPUs() - 1, 4)));
         else
-            processor = new Processor(Math.max(1, Math.min(SystemUtil.getAvailableProcessors() - 1, 16)));
+            processor = new Processor(Math.max(1, Math.min(SystemUtil.getNumberOfCPUs() - 1, 16)));
 
         processor.setThreadName("ARGB Image builder");
         processor.setPriority(Processor.NORM_PRIORITY - 1);
@@ -227,7 +228,12 @@ class ARGBImageBuilder
                 // wait for it
                 f.get();
             }
-            catch (Exception e)
+            catch (ExecutionException e)
+            {
+                // warning
+                System.out.println("ARGBImageBuilder - Warning: " + e);
+            }
+            catch (InterruptedException e)
             {
                 // ignore
             }

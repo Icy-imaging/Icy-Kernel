@@ -18,6 +18,7 @@
  */
 package icy.action;
 
+import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.main.MainFrame;
 import icy.gui.sequence.tools.SequenceCanvasResizeFrame;
@@ -234,7 +235,24 @@ public class SequenceOperationActions
 
             if (sequence != null)
             {
+                // create undo point
+                final boolean canUndo = sequence.createUndoDataPoint("Channel " + channel + "removed");
+
+                // cannot backup
+                if (!canUndo)
+                {
+                    // ask confirmation to continue
+                    if (!IdConfirmDialog.confirm("Not enough memory to undo the operation, do you want to continue ?",
+                            "ChannelRemoveNoUndoConfirm"))
+                        return false;
+                }
+
                 SequenceUtil.removeChannel(sequence, channel);
+
+                // no undo, clear undo manager after modification
+                if (!canUndo)
+                    sequence.clearUndoManager();
+
                 return true;
             }
 

@@ -49,6 +49,7 @@ import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
 import icy.swimmingPool.SwimmingPool;
 import icy.system.thread.ThreadUtil;
+import icy.undo.IcyUndoManager;
 import icy.util.StringUtil;
 
 import java.awt.Window;
@@ -334,6 +335,33 @@ public class MainInterfaceGui implements MainInterface
     }
 
     @Override
+    public IcyUndoManager getUndoManager()
+    {
+        if (activeSequence != null)
+            return activeSequence.getUndoManager();
+
+        return null;
+    }
+
+    @Override
+    public boolean undo()
+    {
+        if (activeSequence != null)
+            return activeSequence.undo();
+
+        return false;
+    }
+
+    @Override
+    public boolean redo()
+    {
+        if (activeSequence != null)
+            return activeSequence.redo();
+
+        return false;
+    }
+
+    @Override
     public ArrayList<Viewer> getViewers()
     {
         synchronized (viewers)
@@ -461,7 +489,7 @@ public class MainInterfaceGui implements MainInterface
             if (ref != null)
                 activePlugins.remove(ref);
         }
-        
+
         // plugin closed
         pluginEnded(plugin);
     }

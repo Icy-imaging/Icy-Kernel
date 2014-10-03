@@ -246,6 +246,54 @@ public class MetaDataUtil
     }
 
     /**
+     * Sets the data type of the specified image serie.
+     */
+    public static void setDataType(OMEXMLMetadataImpl metaData, int serie, DataType dataType)
+    {
+        metaData.setPixelsType(dataType.toPixelType(), serie);
+    }
+
+    /**
+     * Sets the width (sizeX) of the specified image serie.
+     */
+    public static void setSizeX(OMEXMLMetadataImpl metaData, int serie, int sizeX)
+    {
+        metaData.setPixelsSizeX(OMEUtil.getPositiveInteger(sizeX), serie);
+    }
+
+    /**
+     * Sets the height (sizeY) of the specified image serie.
+     */
+    public static void setSizeY(OMEXMLMetadataImpl metaData, int serie, int sizeY)
+    {
+        metaData.setPixelsSizeY(OMEUtil.getPositiveInteger(sizeY), serie);
+    }
+
+    /**
+     * Sets the number of channel (sizeC) of the specified image serie.
+     */
+    public static void setSizeC(OMEXMLMetadataImpl metaData, int serie, int sizeC)
+    {
+        metaData.setPixelsSizeC(OMEUtil.getPositiveInteger(sizeC), serie);
+    }
+
+    /**
+     * Sets the depth (sizeZ) of the specified image serie.
+     */
+    public static void setSizeZ(OMEXMLMetadataImpl metaData, int serie, int sizeZ)
+    {
+        metaData.setPixelsSizeZ(OMEUtil.getPositiveInteger(sizeZ), serie);
+    }
+
+    /**
+     * Sets the number of frame (sizeT) of the specified image serie.
+     */
+    public static void setSizeT(OMEXMLMetadataImpl metaData, int serie, int sizeT)
+    {
+        metaData.setPixelsSizeT(OMEUtil.getPositiveInteger(sizeT), serie);
+    }
+
+    /**
      * Returns the id of the specified image serie.
      */
     public static String getImageID(OMEXMLMetadataImpl metaData, int serie)

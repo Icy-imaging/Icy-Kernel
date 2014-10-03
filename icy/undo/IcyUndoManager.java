@@ -19,25 +19,32 @@
 package icy.undo;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.UIManager;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.CompoundEdit;
+import javax.swing.undo.UndoableEdit;
 
 /**
+ * Custom UndoManager for Icy.
+ * 
  * @author Stephane
  */
 // public class IcyUndoManager extends UndoManager implements IcyUndoableEditListener
-public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableEditListener
+public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEditListener
 {
     /**
      * 
      */
     private static final long serialVersionUID = 3080107472163005941L;
+
+    private static final int INITIAL_LIMIT = 64;
 
     /**
      * owner of UndoManager
@@ -45,10 +52,10 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     protected final Object owner;
 
     /**
-     * The collection of <code>IcyUndoableEdit</code>s
+     * The collection of <code>AbstractIcyUndoableEdit</code>s
      * undone/redone "en masse" by this <code>CompoundEdit</code>.
      */
-    protected ArrayList<IcyUndoableEdit> edits;
+    protected List<AbstractIcyUndoableEdit> edits;
 
     /**
      * listeners
@@ -65,12 +72,11 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     {
         super();
 
-        edits = new ArrayList<IcyUndoableEdit>();
+        edits = new ArrayList<AbstractIcyUndoableEdit>(INITIAL_LIMIT / 2);
         this.owner = owner;
         listeners = new EventListenerList();
         indexOfNextAdd = 0;
-        limit = 100;
-        edits.ensureCapacity(limit);
+        limit = INITIAL_LIMIT;
     }
 
     /**
@@ -83,8 +89,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
 
     /**
      * Returns the maximum number of edits this {@code UndoManager} holds. A value less than 0
-     * indicates the number of edits is not
-     * limited.
+     * indicates the number of edits is not limited.
      * 
      * @return the maximum number of edits this {@code UndoManager} holds
      * @see #addEdit
@@ -112,6 +117,9 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
         fireChangeEvent();
     }
 
+    /**
+     * remove all edit from the undo manager
+     */
     private void clear()
     {
         edits.clear();
@@ -219,13 +227,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
      * 
      * @return the next significant edit to be undone
      */
-    protected IcyUndoableEdit editToBeUndone()
+    protected AbstractIcyUndoableEdit editToBeUndone()
     {
         int i = indexOfNextAdd;
 
         while (i > 0)
         {
-            final IcyUndoableEdit edit = edits.get(--i);
+            final AbstractIcyUndoableEdit edit = edits.get(--i);
 
             if (edit.isSignificant())
                 return edit;
@@ -240,14 +248,14 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
      * 
      * @return the next significant edit to be redone
      */
-    protected IcyUndoableEdit editToBeRedone()
+    protected AbstractIcyUndoableEdit editToBeRedone()
     {
         final int count = edits.size();
         int i = indexOfNextAdd;
 
         while (i < count)
         {
-            final IcyUndoableEdit edit = edits.get(i++);
+            final AbstractIcyUndoableEdit edit = edits.get(i++);
 
             if (edit.isSignificant())
                 return edit;
@@ -266,7 +274,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     {
         while (indexOfNextAdd > 0)
         {
-            final IcyUndoableEdit next = edits.get(--indexOfNextAdd);
+            final AbstractIcyUndoableEdit next = edits.get(--indexOfNextAdd);
             next.undo();
         }
     }
@@ -278,13 +286,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
      * @throws CannotUndoException
      *         if one of the edits throws <code>CannotUndoException</code>
      */
-    protected void undoTo(IcyUndoableEdit edit) throws CannotUndoException
+    protected void undoTo(AbstractIcyUndoableEdit edit) throws CannotUndoException
     {
         boolean done = false;
 
         while (!done)
         {
-            final IcyUndoableEdit next = edits.get(--indexOfNextAdd);
+            final AbstractIcyUndoableEdit next = edits.get(--indexOfNextAdd);
             next.undo();
             done = (next == edit);
         }
@@ -304,7 +312,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     @Override
     public synchronized void undo() throws CannotUndoException
     {
-        final IcyUndoableEdit edit = editToBeUndone();
+        final AbstractIcyUndoableEdit edit = editToBeUndone();
 
         if (edit == null)
             throw new CannotUndoException();
@@ -325,7 +333,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     @Override
     public synchronized boolean canUndo()
     {
-        IcyUndoableEdit edit = editToBeUndone();
+        AbstractIcyUndoableEdit edit = editToBeUndone();
         return edit != null && edit.canUndo();
     }
 
@@ -336,13 +344,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
      * @throws CannotRedoException
      *         if one of the edits throws <code>CannotRedoException</code>
      */
-    protected void redoTo(IcyUndoableEdit edit) throws CannotRedoException
+    protected void redoTo(AbstractIcyUndoableEdit edit) throws CannotRedoException
     {
         boolean done = false;
 
         while (!done)
         {
-            IcyUndoableEdit next = edits.get(indexOfNextAdd++);
+            AbstractIcyUndoableEdit next = edits.get(indexOfNextAdd++);
             next.redo();
             done = (next == edit);
         }
@@ -363,7 +371,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     @Override
     public synchronized void redo() throws CannotRedoException
     {
-        IcyUndoableEdit edit = editToBeRedone();
+        AbstractIcyUndoableEdit edit = editToBeRedone();
         if (edit == null)
         {
             throw new CannotRedoException();
@@ -385,7 +393,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     @Override
     public synchronized boolean canRedo()
     {
-        IcyUndoableEdit edit = editToBeRedone();
+        AbstractIcyUndoableEdit edit = editToBeRedone();
         return edit != null && edit.canRedo();
     }
 
@@ -395,7 +403,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
      * That means redo operation is inclusive while undo is exclusive.<br>
      * To undo all operations just use undoAll().
      */
-    public synchronized void undoOrRedoTo(IcyUndoableEdit edit) throws CannotRedoException, CannotUndoException
+    public synchronized void undoOrRedoTo(AbstractIcyUndoableEdit edit) throws CannotRedoException, CannotUndoException
     {
         final int index = getIndex(edit);
 
@@ -406,13 +414,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
             while ((indexOfNextAdd - 1) > index)
             {
                 // process undo
-                final IcyUndoableEdit next = edits.get(--indexOfNextAdd);
+                final AbstractIcyUndoableEdit next = edits.get(--indexOfNextAdd);
                 next.undo();
             }
             while (indexOfNextAdd <= index)
             {
                 // process undo
-                IcyUndoableEdit next = edits.get(indexOfNextAdd++);
+                AbstractIcyUndoableEdit next = edits.get(indexOfNextAdd++);
                 next.redo();
             }
 
@@ -422,10 +430,10 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     }
 
     /**
-     * Returns the last <code>IcyUndoableEdit</code> in <code>edits</code>, or <code>null</code> if
+     * Returns the last <code>AbstractIcyUndoableEdit</code> in <code>edits</code>, or <code>null</code> if
      * <code>edits</code> is empty.
      */
-    protected IcyUndoableEdit lastEdit()
+    protected AbstractIcyUndoableEdit lastEdit()
     {
         int count = edits.size();
 
@@ -435,8 +443,17 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
         return null;
     }
 
+    @Override
+    public boolean addEdit(UndoableEdit anEdit)
+    {
+        if (anEdit instanceof AbstractIcyUndoableEdit)
+            addEdit((AbstractIcyUndoableEdit) anEdit);
+
+        return super.addEdit(anEdit);
+    }
+
     /**
-     * Adds an <code>IcyUndoableEdit</code> to this <code>UndoManager</code>, if it's possible. This
+     * Adds an <code>AbstractIcyUndoableEdit</code> to this <code>UndoManager</code>, if it's possible. This
      * removes all edits from the index of the next edit to the end of the edits
      * list.
      * 
@@ -444,13 +461,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
      *        the edit to be added
      * @see CompoundEdit#addEdit
      */
-    public synchronized void addEdit(IcyUndoableEdit anEdit)
+    public synchronized void addEdit(AbstractIcyUndoableEdit anEdit)
     {
         // Trim from the indexOfNextAdd to the end, as we'll
         // never reach these edits once the new one is added.
         trimEdits(indexOfNextAdd, edits.size() - 1);
 
-        final IcyUndoableEdit last = lastEdit();
+        final AbstractIcyUndoableEdit last = lastEdit();
 
         // If this is the first edit received, just add it.
         // Otherwise, give the last one a chance to absorb the new
@@ -554,13 +571,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     /**
      * Retrieve all edits in the UndoManager
      */
-    public ArrayList<IcyUndoableEdit> getAllEdits()
+    public List<AbstractIcyUndoableEdit> getAllEdits()
     {
-        final ArrayList<IcyUndoableEdit> result = new ArrayList<IcyUndoableEdit>();
+        final List<AbstractIcyUndoableEdit> result = new ArrayList<AbstractIcyUndoableEdit>();
 
         synchronized (edits)
         {
-            for (IcyUndoableEdit edit : edits)
+            for (AbstractIcyUndoableEdit edit : edits)
                 result.add(edit);
         }
 
@@ -578,7 +595,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     /**
      * Get the index in list of specified edit
      */
-    public int getIndex(IcyUndoableEdit e)
+    public int getIndex(AbstractIcyUndoableEdit e)
     {
         return edits.indexOf(e);
     }
@@ -586,13 +603,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     /**
      * Get the index in list of specified significant edit
      */
-    public int getSignificantIndex(IcyUndoableEdit e)
+    public int getSignificantIndex(AbstractIcyUndoableEdit e)
     {
         int result = 0;
 
         synchronized (edits)
         {
-            for (IcyUndoableEdit edit : edits)
+            for (AbstractIcyUndoableEdit edit : edits)
             {
                 if (edit.isSignificant())
                 {
@@ -615,7 +632,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
 
         synchronized (edits)
         {
-            for (IcyUndoableEdit edit : edits)
+            for (AbstractIcyUndoableEdit edit : edits)
                 if (edit.isSignificant())
                     result++;
         }
@@ -626,13 +643,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
     /**
      * Get significant edit of specified index
      */
-    public IcyUndoableEdit getSignificantEdit(int index)
+    public AbstractIcyUndoableEdit getSignificantEdit(int index)
     {
         int i = 0;
 
         synchronized (edits)
         {
-            for (IcyUndoableEdit edit : edits)
+            for (AbstractIcyUndoableEdit edit : edits)
             {
                 if (edit.isSignificant())
                 {
@@ -702,7 +719,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
 
             if (lastIndex != -1)
             {
-                final ArrayList<IcyUndoableEdit> validEdits = new ArrayList<IcyUndoableEdit>();
+                final ArrayList<AbstractIcyUndoableEdit> validEdits = new ArrayList<AbstractIcyUndoableEdit>();
 
                 // keep valid edits
                 for (int i = lastIndex + 1; i < edits.size(); i++)
@@ -712,7 +729,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements IcyUndoableE
                 clear();
 
                 // add valid edits
-                for (IcyUndoableEdit edit : validEdits)
+                for (AbstractIcyUndoableEdit edit : validEdits)
                     edits.add(edit);
 
                 // make sure the indexOfNextAdd is pointed at the right place

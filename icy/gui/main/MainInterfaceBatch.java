@@ -37,6 +37,7 @@ import icy.search.SearchEngine;
 import icy.sequence.Sequence;
 import icy.swimmingPool.SwimmingPool;
 import icy.type.collection.CollectionUtil;
+import icy.undo.IcyUndoManager;
 import icy.util.StringUtil;
 
 import java.util.ArrayList;
@@ -147,6 +148,33 @@ public class MainInterfaceBatch implements MainInterface
             return activeSequence.getFirstImage();
 
         return null;
+    }
+
+    @Override
+    public IcyUndoManager getUndoManager()
+    {
+        if (activeSequence != null)
+            return activeSequence.getUndoManager();
+
+        return null;
+    }
+
+    @Override
+    public boolean undo()
+    {
+        if (activeSequence != null)
+            return activeSequence.undo();
+
+        return false;
+    }
+
+    @Override
+    public boolean redo()
+    {
+        if (activeSequence != null)
+            return activeSequence.redo();
+
+        return false;
     }
 
     @Override
@@ -675,4 +703,5 @@ public class MainInterfaceBatch implements MainInterface
     {
         return null;
     }
+
 }

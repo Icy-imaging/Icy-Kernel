@@ -285,39 +285,44 @@ public class FileUtil
      */
     public static String getApplicationDirectory()
     {
-        String directory;
+        String result;
 
         try
         {
             // try to get from sources
-            directory = new File(FileUtil.class.getProtectionDomain().getCodeSource().getLocation().toURI())
-                    .getParentFile().getAbsolutePath();
+            final File f = new File(FileUtil.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+
+            // if already a folder, return it directly
+            if (f.isDirectory())
+                result = f.getAbsolutePath();
+            else
+                result = f.getParentFile().getAbsolutePath();
         }
         catch (Exception e1)
         {
             try
             {
                 // try to get from resource (this sometime return incorrect folder on mac osx)
-                directory = new File(ClassLoader.getSystemClassLoader().getResource(".").toURI()).getAbsolutePath();
+                result = new File(ClassLoader.getSystemClassLoader().getResource(".").toURI()).getAbsolutePath();
             }
             catch (Exception e2)
             {
                 // use launch directory (which may be different from application directory)
-                directory = new File(System.getProperty("user.dir")).getAbsolutePath();
+                result = new File(System.getProperty("user.dir")).getAbsolutePath();
             }
         }
 
         try
         {
             // so we replace any %20 sequence in space
-            directory = URLDecoder.decode(directory, "UTF-8");
+            result = URLDecoder.decode(result, "UTF-8");
         }
         catch (UnsupportedEncodingException e)
         {
             // ignore
         }
 
-        return getGenericPath(directory);
+        return getGenericPath(result);
     }
 
     /**

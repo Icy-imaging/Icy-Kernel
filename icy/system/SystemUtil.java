@@ -380,9 +380,18 @@ public class SystemUtil
     }
 
     /**
+     * @deprecated Use {@link #getNumberOfCPUs()} instead
+     */
+    @Deprecated
+    public static int getAvailableProcessors()
+    {
+        return Runtime.getRuntime().availableProcessors();
+    }
+
+    /**
      * Return total number of processors or cores available to the JVM (same as system)
      */
-    public static int getAvailableProcessors()
+    public static int getNumberOfCPUs()
     {
         return Runtime.getRuntime().availableProcessors();
     }
@@ -531,7 +540,7 @@ public class SystemUtil
                 // below 0.5s the reported value isn't very significant
                 if (dNano > 500000000L)
                 {
-                    lastCpuLoad = (int) ((dCpu * 100L) / (dNano * getAvailableProcessors()));
+                    lastCpuLoad = (int) ((dCpu * 100L) / (dNano * getNumberOfCPUs()));
                     lastNano = nanoAfter;
                     lastCpu = cpuAfter;
                 }

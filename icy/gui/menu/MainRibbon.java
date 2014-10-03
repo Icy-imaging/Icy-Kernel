@@ -994,7 +994,7 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
         ribbon.addTaskbarComponent(searchBar);
 
         // HELP / INFOS
-        final IcyCommandButton helpAndInfoButton = new IcyCommandButton(new IcyIcon("info"));
+        final IcyCommandButton helpAndInfoButton = new IcyCommandButton(new IcyIcon(ResourceUtil.ICON_INFO));
 
         helpAndInfoButton.setPopupRichTooltip(new RichTooltip("General help and information",
                 "Help, Updates and Informations about Icy."));
@@ -1021,6 +1021,9 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
             }
         });
         ribbon.addTaskbarComponent(helpAndInfoButton);
+
+        // LINK
+        ribbon.addTaskbarComponent(new IcyCommandButton(GeneralActions.linkAction));
     }
 
     private void checkPluginsMenuCoherence()

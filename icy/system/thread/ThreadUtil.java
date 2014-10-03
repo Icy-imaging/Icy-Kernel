@@ -93,7 +93,7 @@ public class ThreadUtil
     {
         if (SystemUtil.is32bits())
         {
-            int wantedThread = SystemUtil.getAvailableProcessors() * 2;
+            int wantedThread = SystemUtil.getNumberOfCPUs() * 2;
             wantedThread = Math.max(wantedThread, 2);
 
             // 32 bits JVM, limit the number of thread
@@ -103,7 +103,7 @@ public class ThreadUtil
         }
         else
         {
-            int wantedThread = SystemUtil.getAvailableProcessors() * 2;
+            int wantedThread = SystemUtil.getNumberOfCPUs() * 2;
             wantedThread = Math.max(wantedThread, 4);
 
             // 64 bits JVM, can have higher limit
@@ -570,7 +570,7 @@ public class ThreadUtil
      */
     public static ExecutorService createThreadPool(String name)
     {
-        final Processor result = new Processor(SystemUtil.getAvailableProcessors());
+        final Processor result = new Processor(SystemUtil.getNumberOfCPUs());
 
         result.setThreadName(name);
 

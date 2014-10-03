@@ -671,8 +671,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (isCreating())
                 return false;
 
-            final AffineTransform trans = g.getTransform();
-            final double scale = Math.max(Math.abs(trans.getScaleX()), Math.abs(trans.getScaleY()));
+            final double scale = Math.max(Math.abs(canvas.getScaleX()), Math.abs(canvas.getScaleY()));
             final double size = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight());
 
             return size < LOD_SMALL;
@@ -687,8 +686,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (isCreating())
                 return false;
 
-            final AffineTransform trans = g.getTransform();
-            final double scale = Math.max(Math.abs(trans.getScaleX()), Math.abs(trans.getScaleY()));
+            final double scale = Math.max(Math.abs(canvas.getScaleX()), Math.abs(canvas.getScaleY()));
             final double size = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight());
 
             return size < LOD_TINY;

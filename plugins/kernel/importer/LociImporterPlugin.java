@@ -195,8 +195,15 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
 
         try
         {
-            // better for Bio-Formats to have system path format
-            setReader(new File(path).getAbsolutePath());
+            // better for Bio-Formats to have system path format (bug with Bio-Format?)
+            final String adjPath = new File(path).getAbsolutePath();
+
+            // this method should not modify the current reader !
+            
+            // no reader defined or not the same type --> try to obtain the reader for this file
+            if ((reader == null) || (!reader.isThisType(adjPath, false) && !reader.isThisType(adjPath, true)))
+                mainReader.getReader(adjPath);
+
             return true;
         }
         catch (Exception e)

@@ -445,8 +445,7 @@ public class ROI2DArea extends ROI2D
                         small = false;
                     else
                     {
-                        final AffineTransform trans = g2.getTransform();
-                        final double scale = Math.max(Math.abs(trans.getScaleX()), Math.abs(trans.getScaleY()));
+                        final double scale = Math.max(Math.abs(canvas.getScaleX()), Math.abs(canvas.getScaleY()));
                         small = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight()) < LOD_SMALL;
                     }
 
@@ -528,8 +527,7 @@ public class ROI2DArea extends ROI2D
                         tiny = false;
                     else
                     {
-                        final AffineTransform trans = g2.getTransform();
-                        final double scale = Math.max(trans.getScaleX(), trans.getScaleY());
+                        final double scale = Math.max(canvas.getScaleX(), canvas.getScaleY());
                         tiny = Math.max(scale * bounds.getWidth(), scale * bounds.getHeight()) < LOD_TINY;
                     }
 

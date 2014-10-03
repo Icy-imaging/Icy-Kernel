@@ -42,6 +42,7 @@ import icy.system.FileDrop;
 import icy.system.FileDrop.FileDropListener;
 import icy.system.SystemUtil;
 import icy.type.collection.CollectionUtil;
+import icy.util.StringUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -138,6 +139,15 @@ public class MainFrame extends JRibbonFrame
 
         // FIXME : remove this when Ribbon with have fixed KeyTipLayer component
         getRootPane().getLayeredPane().getComponent(0).setVisible(false);
+
+        // SubstanceRibbonFrameTitlePane titlePane = (SubstanceRibbonFrameTitlePane)
+        // LookAndFeelUtil.getTitlePane(this);
+        // JCheckBox comp = new JCheckBox("test")
+        // comp.setP
+        // titlePane.add();
+        //
+        // "substancelaf.internal.titlePane.extraComponentKind"
+        // titlePane.m
 
         final Rectangle defaultBounds = getDefaultBounds();
 
@@ -852,6 +862,22 @@ public class MainFrame extends JRibbonFrame
         }
     }
 
+    /**
+     * Refresh connected username informations
+     */
+    public void refreshUserInfos()
+    {
+        final String login = GeneralPreferences.getUserLogin();
+        final String userName = GeneralPreferences.getUserName();
+
+        if (!StringUtil.isEmpty(userName))
+            setTitle(TITLE + " - " + userName);
+        else if (!StringUtil.isEmpty(login))
+            setTitle(TITLE + " - " + login);
+        else
+            setTitle(TITLE);
+    }
+
     @Override
     public void paint(Graphics g)
     {
@@ -869,6 +895,6 @@ public class MainFrame extends JRibbonFrame
         }
 
         super.paint(g);
-
     }
+
 }

@@ -24,7 +24,6 @@ import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.gui.dialog.ConfirmDialog;
 import icy.gui.dialog.IdConfirmDialog;
-import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.ExitFrame;
 import icy.gui.frame.IcyExternalFrame;
 import icy.gui.frame.SplashScreenFrame;
@@ -53,6 +52,7 @@ import icy.system.IcyExceptionHandler;
 import icy.system.IcySecurityManager;
 import icy.system.SingleInstanceCheck;
 import icy.system.SystemUtil;
+import icy.system.audit.Audit;
 import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
 import icy.util.StringUtil;
@@ -65,7 +65,6 @@ import java.beans.PropertyVetoException;
 import java.io.File;
 import java.nio.channels.FileLock;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.swing.JDesktopPane;
@@ -280,7 +279,7 @@ public class Icy
                 + SystemUtil.getJavaArchDataModel() + " bit)");
         System.out.println("Running on " + SystemUtil.getOSName() + " " + SystemUtil.getOSVersion() + " ("
                 + SystemUtil.getOSArch() + ")");
-        System.out.println("Number of processors : " + SystemUtil.getAvailableProcessors());
+        System.out.println("Number of processors : " + SystemUtil.getNumberOfCPUs());
         System.out.println("System total memory : " + UnitUtil.getBytesString(SystemUtil.getTotalMemory()));
         System.out.println("System available memory : " + UnitUtil.getBytesString(SystemUtil.getFreeMemory()));
         System.out.println("Max java memory : " + UnitUtil.getBytesString(SystemUtil.getJavaMaxMemory()));
@@ -300,11 +299,11 @@ public class Icy
         // prepare native library files (need preferences init)
         nativeLibrariesInit();
 
-        final long currentTime = new Date().getTime();
-        final long slice = 1000 * 60 * 12;
+        final long currentTime = System.currentTimeMillis();
+        final long halfDayInterval = 1000 * 60 * 60 * 12;
 
         // check only once per 12 hours slice
-        if (currentTime > (GeneralPreferences.getLastUpdateCheckTime() + slice))
+        if (currentTime > (GeneralPreferences.getLastUpdateCheckTime() + halfDayInterval))
         {
             // check for core update
             if (GeneralPreferences.getAutomaticUpdate())
@@ -339,7 +338,6 @@ public class Icy
 
         // update version info
         ApplicationPreferences.setVersion(Icy.version);
-
         // set LOCI debug level
         loci.common.DebugTools.enableLogging("ERROR");
 
@@ -415,14 +413,14 @@ public class Icy
     static void checkParameters()
     {
         // we verify that some parameters are incorrect
-        if ((ApplicationPreferences.getMaxMemoryMB() <= 128) && (ApplicationPreferences.getMaxMemoryMBLimit() > 128))
+        if ((ApplicationPreferences.getMaxMemoryMB() <= 128) && (ApplicationPreferences.getMaxMemoryMBLimit() > 256))
         {
-            final String text = "Your maximum memory setting is low, you should increase it in preferences setting.";
+            final String text = "Your maximum memory setting is low ! You should increase it in preferences setting.";
 
             if (Icy.getMainInterface().isHeadLess())
                 System.out.println(text);
             else
-                MessageDialog.showDialog(text, MessageDialog.WARNING_MESSAGE);
+                new ToolTipFrame("<html>" + text + "</html>", 15, "lowMemoryTip");
         }
         else if (ApplicationPreferences.getMaxMemoryMB() < (ApplicationPreferences.getDefaultMemoryMB() / 2))
         {
@@ -674,7 +672,7 @@ public class Icy
                     // - start) < 10 * 1000))
                     // ThreadUtil.sleep(1);
 
-                    // wait for background processors completed theirs tasks
+                    // wait that background processors completed theirs tasks
                     while (!ThreadUtil.isShutdownAndTerminated())
                         ThreadUtil.sleep(1);
                 }
@@ -705,6 +703,8 @@ public class Icy
 
                 // save preferences
                 IcyPreferences.save();
+                // save audit data
+                Audit.save();
 
                 // clean up native library files
                 // unPrepareNativeLibraries();
@@ -844,12 +844,8 @@ public class Icy
 
     static void nativeLibrariesInit()
     {
-        final String lastOs = ApplicationPreferences.getOs();
-        final String os = SystemUtil.getOSArchIdString();
-        final boolean osChanged = !StringUtil.equals(lastOs, os);
-
         // build the local native library path
-        final String libPath = LIB_PATH + FileUtil.separator + os;
+        final String libPath = LIB_PATH + FileUtil.separator + SystemUtil.getOSArchIdString();
         final File libFile = new File(libPath);
 
         // get all files in local native library path
@@ -898,10 +894,6 @@ public class Icy
 
         if (!SystemUtil.addToJavaLibraryPath(directories.toArray(new String[directories.size()])))
             System.err.println("Native libraries may won't load correctly.");
-
-        // save os change
-        if (osChanged)
-            ApplicationPreferences.setOs(os);
 
         // load native libraries
         loadVtkLibrary(libPath);
@@ -955,18 +947,16 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkCommonMath");
                 loadLibrary(vtkLibPath, "vtkCommonMisc");
                 loadLibrary(vtkLibPath, "vtkCommonTransforms");
-
                 if (SystemUtil.isMac())
                 {
-                    loadLibrary(vtkLibPath, "vtkhdf5.1.8.5");
-                    loadLibrary(vtkLibPath, "vtkhdf5_hl.1.8.5");
+                    loadLibrary(vtkLibPath, "vtkhdf5.1.8.5", false);
+                    loadLibrary(vtkLibPath, "vtkhdf5_hl.1.8.5", false);
                 }
                 else
                 {
-                    loadLibrary(vtkLibPath, "vtkhdf5");
-                    loadLibrary(vtkLibPath, "vtkhdf5_hl");
+                    loadLibrary(vtkLibPath, "vtkhdf5", false);
+                    loadLibrary(vtkLibPath, "vtkhdf5_hl", false);
                 }
-
                 loadLibrary(vtkLibPath, "vtkNetCDF");
                 loadLibrary(vtkLibPath, "vtkNetCDF_cxx");
                 loadLibrary(vtkLibPath, "vtkCommonDataModel");
@@ -985,10 +975,7 @@ public class Icy
                 loadLibrary(vtkLibPath, "vtkIOXMLParser");
                 loadLibrary(vtkLibPath, "vtkIOXML");
                 loadLibrary(vtkLibPath, "vtkIOImage");
-
-                if (SystemUtil.isMac() || SystemUtil.isUnix())
-                    loadLibrary(vtkLibPath, "vtksqlite");
-
+                loadLibrary(vtkLibPath, "vtksqlite", false);
                 loadLibrary(vtkLibPath, "vtkIOSQL");
                 loadLibrary(vtkLibPath, "vtkIOMovie");
                 loadLibrary(vtkLibPath, "vtkParallelCore");

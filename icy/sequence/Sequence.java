@@ -47,11 +47,14 @@ import icy.roi.ROI2D;
 import icy.roi.ROI3D;
 import icy.roi.ROIEvent;
 import icy.roi.ROIListener;
-import icy.sequence.SequenceEdit.ROIAddEdit;
-import icy.sequence.SequenceEdit.ROIRemoveEdit;
-import icy.sequence.SequenceEdit.ROIRemovesEdit;
 import icy.sequence.SequenceEvent.SequenceEventSourceType;
 import icy.sequence.SequenceEvent.SequenceEventType;
+import icy.sequence.edit.DataSequenceEdit;
+import icy.sequence.edit.DefaultSequenceEdit;
+import icy.sequence.edit.MetadataSequenceEdit;
+import icy.sequence.edit.ROIAddSequenceEdit;
+import icy.sequence.edit.ROIRemoveSequenceEdit;
+import icy.sequence.edit.ROIRemovesSequenceEdit;
 import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.type.TypeUtil;
@@ -59,7 +62,10 @@ import icy.type.collection.CollectionUtil;
 import icy.type.collection.array.Array1DUtil;
 import icy.type.dimension.Dimension5D;
 import icy.type.rectangle.Rectangle5D;
+import icy.undo.EndUndoableEdit;
 import icy.undo.IcyUndoManager;
+import icy.undo.IcyUndoableEdit;
+import icy.util.OMEUtil;
 import icy.util.StringUtil;
 
 import java.awt.Dimension;
@@ -74,6 +80,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import javax.swing.event.EventListenerList;
+import javax.swing.undo.UndoManager;
 
 import loci.formats.ome.OMEXMLMetadataImpl;
 
@@ -405,6 +412,218 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         // notify close
         fireClosedEvent();
+    }
+
+    /**
+     * Copy data and metadata from the specified Sequence
+     * 
+     * @param source
+     *        the source sequence to copy data from
+     * @param copyName
+     *        if set to <code>true</code> it will also copy the name from the source sequence
+     */
+    public void copyFrom(Sequence source, boolean copyName)
+    {
+        copyDataFrom(source);
+        copyMetaDataFrom(source, copyName);
+    }
+
+    /**
+     * Copy data from the specified Sequence
+     */
+    public void copyDataFrom(Sequence source)
+    {
+        final int sizeT = source.getSizeT();
+        final int sizeZ = source.getSizeZ();
+
+        beginUpdate();
+        try
+        {
+            removeAllImages();
+            for (int t = 0; t < sizeT; t++)
+            {
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    final IcyBufferedImage img = source.getImage(t, z);
+
+                    if (img != null)
+                        setImage(t, z, IcyBufferedImageUtil.getCopy(img));
+                    else
+                        source.setImage(t, z, null);
+                }
+            }
+        }
+        finally
+        {
+            endUpdate();
+        }
+    }
+
+    /**
+     * Copy metadata from the specified Sequence
+     * 
+     * @param source
+     *        the source sequence to copy metadata from
+     * @param copyName
+     *        if set to <code>true</code> it will also copy the name from the source sequence
+     */
+    public void copyMetaDataFrom(Sequence source, boolean copyName)
+    {
+        final String name = getName();
+
+        // copy all metadata from source
+        metaData = OMEUtil.createOMEMetadata(source.getMetadata());
+
+        // restore name if needed
+        if (!copyName)
+            setName(name);
+
+        // notify metadata changed
+        metaChanged(null);
+    }
+
+    /**
+     * Create a complete restore point for this sequence.
+     * 
+     * @param name
+     *        restore point name (visible in the History panel)
+     * @return false if for some reason the operation failed (out of memory for instance)
+     * @see #undo()
+     */
+    public boolean createUndoPoint(String name)
+    {
+        try
+        {
+            undoManager.addEdit(new DefaultSequenceEdit(SequenceUtil.getCopy(this, true, true, false), this));
+            return true;
+        }
+        catch (Throwable t)
+        {
+            return false;
+        }
+    }
+
+    /**
+     * Create a restore point for sequence data.
+     * 
+     * @param name
+     *        restore point name (visible in the History panel)
+     * @return false if for some reason the operation failed (out of memory for instance)
+     * @see #undo()
+     */
+    public boolean createUndoDataPoint(String name)
+    {
+        try
+        {
+            undoManager.addEdit(new DataSequenceEdit(SequenceUtil.getCopy(this, false, false, false), this));
+            return true;
+        }
+        catch (Throwable t)
+        {
+            return false;
+        }
+    }
+
+    /**
+     * Create a restore point for sequence metadata.
+     * 
+     * @param name
+     *        restore point name (visible in the History panel)
+     * @return false if for some reason the operation failed (out of memory for instance)
+     * @see #undo()
+     */
+    public boolean createUndoMetadataPoint(String name)
+    {
+        try
+        {
+            undoManager.addEdit(new MetadataSequenceEdit(OMEUtil.createOMEMetadata(metaData), this));
+            return true;
+        }
+        catch (Throwable t)
+        {
+            return false;
+        }
+    }
+
+    /**
+     * Add an Undoable edit to the Sequence UndoManager
+     * 
+     * @param edit
+     *        the undoable edit to add
+     * @param collapsable
+     *        define if this edit can be collapsed with a previous similar edit (<code>true</code>
+     *        by default)
+     * @return <code>false</code> if the operation failed
+     */
+    public boolean addUndoableEdit(IcyUndoableEdit edit, boolean collapsable)
+    {
+        if (edit != null)
+        {
+            // for no collapse
+            if (!collapsable)
+                undoManager.addEdit(new EndUndoableEdit());
+
+            return undoManager.addEdit(edit);
+        }
+
+        return false;
+    }
+
+    /**
+     * Add an Undoable edit to the Sequence UndoManager
+     * 
+     * @return <code>false</code> if the operation failed
+     */
+    public boolean addUndoableEdit(IcyUndoableEdit edit)
+    {
+        // by default we try to collapse edits
+        return addUndoableEdit(edit, true);
+    }
+
+    /**
+     * Undo to the last <i>Undoable</i> change set in the Sequence {@link UndoManager}
+     * 
+     * @return <code>true</code> if the operation succeed
+     * @see #createUndoPoint(String)
+     * @see UndoManager#undo()
+     */
+    public boolean undo()
+    {
+        if (undoManager.canUndo())
+        {
+            undoManager.undo();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Redo the next <i>Undoable</i> change set in the Sequence {@link UndoManager}
+     * 
+     * @return <code>true</code> if the operation succeed
+     * @see #createUndoPoint(String)
+     * @see UndoManager#redo()
+     */
+    public boolean redo()
+    {
+        if (undoManager.canRedo())
+        {
+            undoManager.redo();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Clear all undo operations from the {@link UndoManager}.<br>
+     * You should use this method after you modified the sequence without providing any <i>undo</i>
+     * support.
+     */
+    public void clearUndoManager()
+    {
+        getUndoManager().discardAllEdits();
     }
 
     private void setColorModel(IcyColorModel cm)
@@ -917,10 +1136,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Get the Undo manager of this sequence
-     * 
-     * @deprecated Don't use it as this is not supported yet.
      */
-    @Deprecated
     public IcyUndoManager getUndoManager()
     {
         return undoManager;
@@ -1314,6 +1530,29 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Returns all selected ROI of given class.
+     * 
+     * @param roiClass
+     *        ROI class restriction
+     * @param wantReadOnly
+     *        also return ROI with read only state
+     */
+    public List<ROI> getSelectedROIs(Class<? extends ROI> roiClass, boolean wantReadOnly)
+    {
+        final List<ROI> result = new ArrayList<ROI>(rois.size());
+
+        synchronized (rois)
+        {
+            for (ROI roi : rois)
+                if (roi.isSelected() && roi.getClass().isAssignableFrom(roiClass))
+                    if (wantReadOnly || !roi.isReadOnly())
+                        result.add(roi);
+        }
+
+        return result;
+    }
+
+    /**
      * Returns all selected ROI
      */
     public ArrayList<ROI> getSelectedROIs()
@@ -1554,7 +1793,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         addOverlay(roi.getOverlay());
 
         if (canUndo)
-            undoManager.addEdit(new ROIAddEdit(this, roi));
+            addUndoableEdit(new ROIAddSequenceEdit(this, roi), true);
 
         return true;
 
@@ -1599,7 +1838,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             roiChanged(roi, SequenceEventType.REMOVED);
 
             if (canUndo)
-                undoManager.addEdit(new ROIRemoveEdit(this, roi));
+                addUndoableEdit(new ROIRemoveSequenceEdit(this, roi), true);
 
             return true;
         }
@@ -1617,7 +1856,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public boolean removeSelectedROIs(boolean removeReadOnly)
     {
-        return removeSelectedROIs(removeReadOnly, true);
+        return removeSelectedROIs(removeReadOnly, false);
     }
 
     /**
@@ -1659,7 +1898,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             }
 
             if (canUndo)
-                undoManager.addEdit(new ROIRemovesEdit(this, undoList));
+                undoManager.addEdit(new ROIRemovesSequenceEdit(this, undoList));
         }
         finally
         {
@@ -1720,7 +1959,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             roiChanged(null, SequenceEventType.REMOVED);
 
             if (canUndo)
-                undoManager.addEdit(new ROIRemovesEdit(this, allROIs));
+                addUndoableEdit(new ROIRemovesSequenceEdit(this, allROIs), true);
         }
     }
 

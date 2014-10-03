@@ -22,9 +22,9 @@ import icy.common.listener.ProgressListener;
 import icy.common.listener.weak.WeakListener;
 import icy.file.FileUtil;
 import icy.preferences.NetworkPreferences;
-import icy.system.Audit;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
+import icy.system.audit.Audit;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
 
@@ -51,6 +51,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -317,8 +318,12 @@ public class NetworkUtil
 
             fireInternetConnectionEvent(value);
 
-            // process id audit
-            Audit.processIdAudit();
+            // local stuff to do on connection recovery
+            if (value)
+            {
+                // process id audit
+                Audit.onConnect();
+            }
         }
     }
 
@@ -968,7 +973,7 @@ public class NetworkUtil
         uc.setRequestProperty("Authorization", "Basic " + encoded);
     }
 
-    public static String getContentString(HashMap<String, String> values)
+    public static String getContentString(Map<String, String> values)
     {
         String result = "";
 
@@ -999,7 +1004,7 @@ public class NetworkUtil
         return result.substring(1);
     }
 
-    public static String postData(String target, HashMap<String, String> values, String login, String pass)
+    public static String postData(String target, Map<String, String> values, String login, String pass)
             throws IOException
     {
         return postData(target, getContentString(values), login, pass);
@@ -1026,12 +1031,16 @@ public class NetworkUtil
         uc.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
         final DataOutputStream out = new DataOutputStream(uc.getOutputStream());
-
-        // write out the bytes of the content string to the stream.
-        out.writeBytes(content);
-
-        out.flush();
-        out.close();
+        try
+        {
+            // write out the bytes of the content string to the stream
+            out.writeBytes(content);
+            out.flush();
+        }
+        finally
+        {
+            out.close();
+        }
 
         // read response from the input stream.
         final InputStream inStream = getInputStream(uc, false);
@@ -1054,7 +1063,7 @@ public class NetworkUtil
         return response;
     }
 
-    public static String postData(String target, HashMap<String, String> values) throws IOException
+    public static String postData(String target, Map<String, String> values) throws IOException
     {
         return postData(target, values, null, null);
     }
@@ -1070,7 +1079,7 @@ public class NetworkUtil
      * @param values
      *        list of <key,value>
      */
-    public static void report(final HashMap<String, String> values)
+    public static void report(final Map<String, String> values)
     {
         ThreadUtil.bgRun(new Runnable()
         {
@@ -1089,6 +1098,43 @@ public class NetworkUtil
                 }
             }
         });
+    }
+
+    /**
+     * @deprecated Use {@link #getContentString(Map)} instead.
+     */
+    @Deprecated
+    public static String getContentString(HashMap<String, String> values)
+    {
+        return getContentString((Map<String, String>) values);
+    }
+
+    /**
+     * @deprecated Use {@link #postData(String, Map, String, String)} instead.
+     */
+    @Deprecated
+    public static String postData(String target, HashMap<String, String> values, String login, String pass)
+            throws IOException
+    {
+        return postData(target, (Map<String, String>) values, login, pass);
+    }
+
+    /**
+     * @deprecated Use {@link #postData(String, Map)} instead.
+     */
+    @Deprecated
+    public static String postData(String target, HashMap<String, String> values) throws IOException
+    {
+        return postData(target, (Map<String, String>) values);
+    }
+
+    /**
+     * @deprecated Use {@link #report(Map)} instead.
+     */
+    @Deprecated
+    public static void report(final HashMap<String, String> values)
+    {
+        report((Map<String, String>) values);
     }
 
     public static void enableSystemProxy()

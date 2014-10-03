@@ -18,7 +18,7 @@
  */
 package icy.system.thread;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 /**
  * @author stephane
@@ -56,7 +56,7 @@ public class SingleProcessor extends Processor
      * ignored.
      */
     @Override
-    protected synchronized <T> Future<T> submit(FutureTaskAdapter<T> task)
+    protected synchronized <T> FutureTask<T> submit(FutureTaskAdapter<T> task)
     {
         // add task only if not already processing or queue empty
         if ((getActiveCount() == 0) || (queueEnabled && !hasWaitingTasks()))

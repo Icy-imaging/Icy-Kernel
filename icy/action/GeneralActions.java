@@ -20,6 +20,7 @@ package icy.action;
 
 import icy.clipboard.Clipboard;
 import icy.clipboard.TransferableImage;
+import icy.gui.dialog.ConfirmDialog;
 import icy.gui.frame.AboutFrame;
 import icy.gui.main.MainFrame;
 import icy.gui.menu.search.SearchBar;
@@ -35,6 +36,7 @@ import icy.resource.icon.IcyIcon;
 import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
 import icy.system.SystemUtil;
+import icy.system.audit.Audit;
 import icy.system.thread.ThreadUtil;
 import icy.update.IcyUpdater;
 import ij.ImagePlus;
@@ -348,6 +350,49 @@ public class GeneralActions
         {
             // open browser on help page
             NetworkUtil.openBrowser(NetworkUtil.WEBSITE_URL);
+            return true;
+        }
+    };
+
+    public static IcyAbstractAction linkAction = new IcyAbstractAction("Link", new IcyIcon(ResourceUtil.ICON_LINK),
+            "Link / unlink online user account",
+            "Link / unlink with online user account.\nGive access to extra features as plugin rating")
+    {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 3449298011169150396L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            // open browser on help page
+            if (Audit.isUserLinked())
+            {
+                // ask for confirmation
+                if (!Icy.getMainInterface().isHeadLess()
+                        && !ConfirmDialog.confirm("Do you want to unlink user account ?"))
+                    return false;
+
+                // unlink user
+                Audit.unlinkUser();
+            }
+            else
+            {
+                // update link first
+                Audit.updateUserLink();
+
+                // still not linked --> link user
+                if (!Audit.isUserLinked())
+                    Audit.linkUser();
+            }
+
+            // refresh user infos
+            final MainFrame frame = Icy.getMainInterface().getMainFrame();
+            if (frame != null)
+                frame.refreshUserInfos();
+
             return true;
         }
     };

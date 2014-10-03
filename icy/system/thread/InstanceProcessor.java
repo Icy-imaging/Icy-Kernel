@@ -18,7 +18,7 @@
  */
 package icy.system.thread;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 /**
  * Single instance processor.<br>
@@ -61,7 +61,7 @@ public class InstanceProcessor extends Processor
      * (in this case the new task is simply ignored)..
      */
     @Override
-    protected synchronized <T> Future<T> submit(FutureTaskAdapter<T> task)
+    protected synchronized <T> FutureTask<T> submit(FutureTaskAdapter<T> task)
     {
         // task already present in queue --> return null (mean the task was ignored)
         if ((task.runnable != null) && hasWaitingTasks(task.runnable))

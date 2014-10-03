@@ -113,25 +113,29 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     public static final String ID_OPACITY = "opacity";
     public static final String ID_SELECTED = "selected";
     public static final String ID_READONLY = "readOnly";
-    public static final String ID_DISPLAYNAME = "displayName";
+    public static final String ID_SHOWNAME = "showName";
 
     public static final ROIIdComparator idComparator = new ROIIdComparator();
     public static final ROINameComparator nameComparator = new ROINameComparator();
 
     public static final int DEFAULT_STROKE = 2;
     public static final Color DEFAULT_COLOR = Color.GREEN;
+    public static final float DEFAULT_OPACITY = 0.3f;
+
     /**
      * @deprecated Use {@link #DEFAULT_COLOR} instead.
      */
     @Deprecated
     public static final Color DEFAULT_NORMAL_COLOR = DEFAULT_COLOR;
-    public static final float DEFAULT_OPACITY = 0.3f;
 
     public static final String PROPERTY_NAME = ID_NAME;
     public static final String PROPERTY_ICON = "icon";
     public static final String PROPERTY_CREATING = "creating";
     public static final String PROPERTY_READONLY = ID_READONLY;
-    public static final String PROPERTY_DISPLAYNAME = ID_DISPLAYNAME;
+    public static final String PROPERTY_SHOWNAME = ID_SHOWNAME;
+    public static final String PROPERTY_COLOR = ID_COLOR;
+    public static final String PROPERTY_STROKE = ID_STROKE;
+    public static final String PROPERTY_OPACITY = ID_OPACITY;
 
     /**
      * Create a ROI from its class name or {@link PluginROI} class name.
@@ -602,6 +606,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             {
                 stroke = value;
                 painterChanged();
+                ROI.this.propertyChanged(PROPERTY_STROKE);
             }
         }
 
@@ -622,6 +627,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             {
                 opacity = value;
                 painterChanged();
+                ROI.this.propertyChanged(PROPERTY_OPACITY);
             }
         }
 
@@ -675,6 +681,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             {
                 color = value;
                 painterChanged();
+                ROI.this.propertyChanged(PROPERTY_COLOR);
             }
         }
 
@@ -769,7 +776,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                                     // result = canvas.getSequence().removeROI(ROI.this);
                                     // else
                                     // remove all selected ROI from the sequence
-                                    result = canvas.getSequence().removeSelectedROIs(false);
+                                    result = canvas.getSequence().removeSelectedROIs(false, true);
 
                                     if (result)
                                         e.consume();
@@ -778,7 +785,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                                 else if (isFocused())
                                 {
                                     // remove ROI from sequence
-                                    if (canvas.getSequence().removeROI(ROI.this))
+                                    if (canvas.getSequence().removeROI(ROI.this, true))
                                         e.consume();
                                 }
                             }
@@ -856,7 +863,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     protected boolean focused;
     protected boolean selected;
     protected boolean readOnly;
-    protected boolean displayName;
+    protected boolean showName;
 
     // attached ROI icon
     protected Image icon;
@@ -892,7 +899,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         creating = false;
         focused = false;
         selected = false;
-        displayName = false;
+        showName = false;
 
         cachedBounds = new Rectangle5D.Double();
         cachedNumberOfPoints = 0d;
@@ -1201,6 +1208,63 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     }
 
     /**
+     * Generic way to retrieve a ROI property value.<br>
+     * Returns <code>null</code> if property name is invalid.
+     * 
+     * @param propertyName
+     *        property name (for instance {@link #PROPERTY_COLOR})
+     */
+    public Object getPropertyValue(String propertyName)
+    {
+        if (StringUtil.equals(propertyName, PROPERTY_COLOR))
+            return getColor();
+        if (StringUtil.equals(propertyName, PROPERTY_CREATING))
+            return Boolean.valueOf(isCreating());
+        if (StringUtil.equals(propertyName, PROPERTY_ICON))
+            return getIcon();
+        if (StringUtil.equals(propertyName, PROPERTY_NAME))
+            return getName();
+        if (StringUtil.equals(propertyName, PROPERTY_OPACITY))
+            return Float.valueOf(getOpacity());
+        if (StringUtil.equals(propertyName, PROPERTY_READONLY))
+            return Boolean.valueOf(isReadOnly());
+        if (StringUtil.equals(propertyName, PROPERTY_SHOWNAME))
+            return Boolean.valueOf(getShowName());
+        if (StringUtil.equals(propertyName, PROPERTY_STROKE))
+            return Double.valueOf(getStroke());
+
+        return null;
+    }
+
+    /**
+     * Generic way to set ROI property value.
+     * 
+     * @param propertyName
+     *        property name (for instance {@value #PROPERTY_COLOR})
+     * @param value
+     *        the value to set in the property (for instance Color.red for {@link #PROPERTY_COLOR})
+     */
+    public void setPropertyValue(String propertyName, Object value)
+    {
+        if (StringUtil.equals(propertyName, PROPERTY_COLOR))
+            setColor((Color) value);
+        if (StringUtil.equals(propertyName, PROPERTY_CREATING))
+            setCreating(((Boolean) value).booleanValue());
+        if (StringUtil.equals(propertyName, PROPERTY_ICON))
+            setIcon((Image) value);
+        if (StringUtil.equals(propertyName, PROPERTY_NAME))
+            setName((String) value);
+        if (StringUtil.equals(propertyName, PROPERTY_OPACITY))
+            setOpacity(((Float) value).floatValue());
+        if (StringUtil.equals(propertyName, PROPERTY_READONLY))
+            setReadOnly(((Boolean) value).booleanValue());
+        if (StringUtil.equals(propertyName, PROPERTY_SHOWNAME))
+            setShowName(((Boolean) value).booleanValue());
+        if (StringUtil.equals(propertyName, PROPERTY_STROKE))
+            setStroke(((Double) value).doubleValue());
+    }
+
+    /**
      * @return the creating
      */
     public boolean isCreating()
@@ -1398,21 +1462,21 @@ public abstract class ROI implements ChangeListener, XMLPersistent
     /**
      * Return <code>true</code> if ROI should display its name at draw time.<br>
      */
-    public boolean getDisplayName()
+    public boolean getShowName()
     {
-        return displayName;
+        return showName;
     }
 
     /**
-     * Set the <i>display name</i> property of ROI.<br>
+     * Set the <i>show name</i> property of ROI.<br>
      * When set to <code>true</code> the ROI should display its name at draw time.
      */
-    public void setDisplayName(boolean value)
+    public void setShowName(boolean value)
     {
-        if (displayName != value)
+        if (showName != value)
         {
-            displayName = value;
-            propertyChanged(PROPERTY_DISPLAYNAME);
+            showName = value;
+            propertyChanged(PROPERTY_SHOWNAME);
         }
     }
 
@@ -2409,19 +2473,23 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         return result;
     }
 
-    // protected void copyFrom(ROI roi)
-    // {
-    // color = new Color(roi.getColor().getRGB());
-    // name = roi.getName();
-    // selectedColor = new Color(roi.getSelectedColor().getRGB());
-    // stroke = roi.getStroke();
-    //
-    // nameChanged();
-    // painterChanged();
-    // }
+    /**
+     * Copy all properties from the given ROI.<br>
+     * All compatible properties from the source ROI are copied into current ROI except the internal
+     * id.
+     */
+    public void copyFrom(ROI roi)
+    {
+        // use XML persistence for cloning
+        final Node node = XMLUtil.createDocument(true).getDocumentElement();
 
-    @Override
-    public boolean loadFromXML(Node node)
+        // save ROI properties in XML node
+        roi.saveToXML(node);
+        // restore it on current ROI
+        loadFromXML(node, true);
+    }
+
+    public boolean loadFromXML(Node node, boolean preserveId)
     {
         if (node == null)
             return false;
@@ -2430,11 +2498,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         try
         {
             // FIXME : this can make duplicate id but it is also important to preserve id
-            id = XMLUtil.getElementIntValue(node, ID_ID, 0);
+            if (!preserveId)
+                id = XMLUtil.getElementIntValue(node, ID_ID, 0);
             setName(XMLUtil.getElementValue(node, ID_NAME, ""));
             setSelected(XMLUtil.getElementBooleanValue(node, ID_SELECTED, false));
             setReadOnly(XMLUtil.getElementBooleanValue(node, ID_READONLY, false));
-            setDisplayName(XMLUtil.getElementBooleanValue(node, ID_DISPLAYNAME, false));
+            setShowName(XMLUtil.getElementBooleanValue(node, ID_SHOWNAME, false));
             painter.loadFromXML(node);
         }
         finally
@@ -2443,6 +2512,12 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         }
 
         return true;
+    }
+
+    @Override
+    public boolean loadFromXML(Node node)
+    {
+        return loadFromXML(node, false);
     }
 
     @Override
@@ -2456,7 +2531,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         XMLUtil.setElementValue(node, ID_NAME, getName());
         XMLUtil.setElementBooleanValue(node, ID_SELECTED, isSelected());
         XMLUtil.setElementBooleanValue(node, ID_READONLY, isReadOnly());
-        XMLUtil.setElementBooleanValue(node, ID_DISPLAYNAME, getDisplayName());
+        XMLUtil.setElementBooleanValue(node, ID_SHOWNAME, getShowName());
 
         painter.saveToXML(node);
 
@@ -2608,7 +2683,7 @@ public abstract class ROI implements ChangeListener, XMLPersistent
 
                 // painter can display name so repaint
                 if (StringUtil.isEmpty(property) || StringUtil.equals(property, PROPERTY_NAME)
-                        || StringUtil.equals(property, PROPERTY_DISPLAYNAME))
+                        || StringUtil.equals(property, PROPERTY_SHOWNAME))
                     painter.painterChanged();
                 break;
 

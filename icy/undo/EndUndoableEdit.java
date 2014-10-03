@@ -23,11 +23,16 @@ import javax.swing.undo.UndoableEdit;
 /**
  * Use this edit to force end edition collapsing.
  */
-public class EndUndoableEdit extends IcyUndoableEdit
+public class EndUndoableEdit extends AbstractIcyUndoableEdit
 {
     public EndUndoableEdit(Object source)
     {
         super(source);
+    }
+
+    public EndUndoableEdit()
+    {
+        this(null);
     }
 
     @Override

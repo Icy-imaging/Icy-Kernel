@@ -29,6 +29,48 @@ import java.util.Date;
  */
 public class DateUtil
 {
+    public static final long DAY_IN_MS = 1000 * 60 * 60 * 24;
+
+    /**
+     * Returns elapsed milli second from 01/01/1970 (same as {@link System#currentTimeMillis()})
+     */
+    public static long getTime()
+    {
+        return System.currentTimeMillis();
+    }
+
+    /**
+     * Keep only the day part information from the given time (elapsed milli second from
+     * 01/01/1970).
+     * 
+     * @see System#currentTimeMillis
+     */
+    public static long keepDay(long time)
+    {
+        return (time / DAY_IN_MS) * DAY_IN_MS;
+    }
+
+    /**
+     * Keep only the time information (hour, minute, second and milli second) from the given time
+     * (elapsed milli second from 01/01/1970).
+     * 
+     * @see System#currentTimeMillis
+     */
+    public static long keepTime(long time)
+    {
+        return time % DAY_IN_MS;
+    }
+
+    /**
+     * Return elapsed day from 01/01/1970
+     * 
+     * @see System#currentTimeMillis
+     */
+    public static long getDay()
+    {
+        return getTime() / DAY_IN_MS;
+    }
+
     /**
      * Return current date.
      */
