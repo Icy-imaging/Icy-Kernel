@@ -469,6 +469,37 @@ public class ImageUtil
     }
 
     /**
+     * Returns <code>true</code> if the specified image is a grayscale image whatever is the image
+     * type (GRAY, RGB, ARGB...)
+     */
+    public static boolean isGray(BufferedImage image)
+    {
+        if (image == null)
+            return false;
+
+        if (image.getType() == BufferedImage.TYPE_BYTE_GRAY)
+            return true;
+        if (image.getType() == BufferedImage.TYPE_USHORT_GRAY)
+            return true;
+
+        final int[] rgbArray = image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
+
+        for (int value : rgbArray)
+        {
+            final int c0 = (value >> 0) & 0xFF;
+            final int c1 = (value >> 8) & 0xFF;
+            if (c0 != c1)
+                return false;
+
+            final int c2 = (value >> 16) & 0xFF;
+            if (c0 != c2)
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Convert an image to grey image (<code>BufferedImage.TYPE_BYTE_GRAY</code>).
      */
     public static BufferedImage toGray(Image image)

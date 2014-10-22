@@ -24,6 +24,7 @@ import icy.type.TypeUtil;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -532,6 +533,17 @@ public class MetaDataUtil
     }
 
     /**
+     * Returns Color of specified channel image serie.
+     */
+    public static Color getChannelColor(OMEXMLMetadataImpl metaData, int serie, int channel)
+    {
+        // needed as LOCI does not initialize them on read
+        prepareMetaChannelName(metaData, serie, channel);
+
+        return OMEUtil.getJavaColor(metaData.getChannelColor(serie, channel));
+    }
+
+    /**
      * Create and return a default OME Metadata object with default image name.
      */
     public static OMEXMLMetadataImpl createDefaultMetadata(String name)
@@ -902,4 +914,5 @@ public class MetaDataUtil
     {
         return StringUtil.isEmpty(xmlAnnotation.getDescription()) && StringUtil.isEmpty(xmlAnnotation.getValue());
     }
+
 }

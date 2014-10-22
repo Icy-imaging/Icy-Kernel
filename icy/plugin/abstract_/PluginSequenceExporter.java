@@ -18,6 +18,8 @@
  */
 package icy.plugin.abstract_;
 
+import icy.plugin.interface_.PluginNoEDTConstructor;
+import icy.plugin.interface_.PluginThreaded;
 import icy.sequence.SequenceExporter;
 
 /**
@@ -26,7 +28,7 @@ import icy.sequence.SequenceExporter;
  * @see PluginSequenceFileExporter
  * @author Stephane
  */
-public abstract class PluginSequenceExporter extends Plugin implements SequenceExporter
+public abstract class PluginSequenceExporter extends Plugin implements SequenceExporter, PluginNoEDTConstructor
 {
 
 }

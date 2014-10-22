@@ -13,12 +13,15 @@ import icy.image.IcyBufferedImageUtil.FilterType;
 import icy.image.colormap.IcyColorMap;
 import icy.image.colormap.LinearColorMap;
 import icy.plugin.abstract_.PluginSequenceFileImporter;
+import icy.sequence.MetaDataUtil;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
 import icy.type.collection.array.Array2DUtil;
 import icy.type.collection.array.ByteArrayConvert;
+import icy.util.ColorUtil;
 import icy.util.StringUtil;
 
+import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -199,7 +202,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
             final String adjPath = new File(path).getAbsolutePath();
 
             // this method should not modify the current reader !
-            
+
             // no reader defined or not the same type --> try to obtain the reader for this file
             if ((reader == null) || (!reader.isThisType(adjPath, false) && !reader.isThisType(adjPath, true)))
                 mainReader.getReader(adjPath);
@@ -770,6 +773,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         final boolean indexed = reader.isIndexed();
         final boolean interleaved = reader.isInterleaved();
         final boolean little = reader.isLittleEndian();
+        final OMEXMLMetadataImpl metaData = (OMEXMLMetadataImpl) reader.getMetadataStore();
 
         // allocate internal image data array
         final Object data = Array1DUtil.createArray(dataType, sizeX * sizeY);
@@ -794,25 +798,40 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         // indexed color ?
         if (indexed)
         {
-            IcyColorMap map;
+            IcyColorMap map = null;
 
             // only 8 bits and 16 bits lookup table supported
             switch (dataType.getJavaType())
             {
                 case BYTE:
-                    map = new IcyColorMap("Channel " + c, reader.get8BitLookupTable());
+                    final byte[][] bmap = reader.get8BitLookupTable();
+                    if (bmap != null)
+                        map = new IcyColorMap("Channel " + c, bmap);
                     break;
 
                 case SHORT:
-                    map = new IcyColorMap("Channel " + c, reader.get16BitLookupTable());
+                    final short[][] smap = reader.get16BitLookupTable();
+                    if (smap != null)
+                        map = new IcyColorMap("Channel " + c, smap);
                     break;
 
                 default:
+                    break;
+            }
+
+            // colormap not set (or black) ? --> try to use metadata
+            if ((map == null) || map.isBlack())
+            {
+                final Color color = MetaDataUtil.getChannelColor(metaData, reader.getSeries(), c);
+
+                if ((color != null) && !ColorUtil.isBlack(color))
+                    map = new LinearColorMap("Channel " + c, color);
+                else
                     map = null;
             }
 
-            // sometime loci return black colormap map and we want to avoid them...
-            if ((map != null) && !map.isBlack())
+            // set colormap...
+            if (map != null)
                 result.setColorMap(0, map, true);
         }
 
@@ -867,6 +886,7 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
         final int sizeC = effSizeC * rgbChanCount;
         final boolean indexed = reader.isIndexed();
         final boolean little = reader.isLittleEndian();
+        final OMEXMLMetadataImpl metaData = (OMEXMLMetadataImpl) reader.getMetadataStore();
 
         // prepare internal image data array
         final Object[] data = Array2DUtil.createArray(dataType, sizeC);
@@ -913,16 +933,31 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                 switch (dataType.getJavaType())
                 {
                     case BYTE:
-                        colormaps[effC] = new IcyColorMap("Channel " + effC, reader.get8BitLookupTable());
+                        final byte[][] bmap = reader.get8BitLookupTable();
+                        if (bmap != null)
+                            colormaps[effC] = new IcyColorMap("Channel " + effC, bmap);
                         break;
 
                     case SHORT:
-                        colormaps[effC] = new IcyColorMap("Channel " + effC, reader.get16BitLookupTable());
+                        final short[][] smap = reader.get16BitLookupTable();
+                        if (smap != null)
+                            colormaps[effC] = new IcyColorMap("Channel " + effC, smap);
                         break;
 
                     default:
                         colormaps[effC] = null;
                         break;
+                }
+
+                // colormap not set (or black) ? --> try to use metadata
+                if ((colormaps[effC] == null) || colormaps[effC].isBlack())
+                {
+                    final Color color = MetaDataUtil.getChannelColor(metaData, reader.getSeries(), effC);
+
+                    if ((color != null) && !ColorUtil.isBlack(color))
+                        colormaps[effC] = new LinearColorMap("Channel " + effC, color);
+                    else
+                        colormaps[effC] = null;
                 }
             }
         }
@@ -946,8 +981,8 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                     // set colormaps
                     for (int comp = 0; comp < sizeC; comp++)
                     {
-                        // sometime loci return black colormap map and we want to avoid them...
-                        if ((colormaps[comp] != null) && !colormaps[comp].isBlack())
+                        // set colormap
+                        if (colormaps[comp] != null)
                             result.setColorMap(comp, colormaps[comp], true);
                     }
                 }

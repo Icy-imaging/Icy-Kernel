@@ -25,7 +25,7 @@ package icy.plugin.interface_;
  * 
  * @author Fabrice & Stephane
  */
-public interface PluginLibrary
+public interface PluginLibrary extends PluginNoEDTConstructor
 {
 
 }

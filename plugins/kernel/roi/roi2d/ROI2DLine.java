@@ -198,6 +198,13 @@ public class ROI2DLine extends ROI2DShape
         // this ROI doesn't support point add
         return false;
     }
+    
+    @Override
+    public boolean canRemovePoint()
+    {
+        // this ROI doesn't support point remove
+        return false;
+    }
 
     @Override
     protected boolean removePoint(IcyCanvas canvas, Anchor2D pt)

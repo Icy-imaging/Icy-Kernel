@@ -19,6 +19,7 @@
 package icy.plugin;
 
 import icy.common.EventHierarchicalChecker;
+import icy.file.Loader;
 import icy.gui.frame.progress.ProgressFrame;
 import icy.main.Icy;
 import icy.network.NetworkUtil;
@@ -161,7 +162,8 @@ public class PluginLoader
     public static void reload()
     {
         instance.processor.submit(instance.reloader);
-        ThreadUtil.sleep(10);
+        // ensure we don't miss the reloading
+        ThreadUtil.sleep(500);
         waitWhileLoading();
     }
 
@@ -638,7 +640,7 @@ public class PluginLoader
     public static void waitWhileLoading()
     {
         while (isLoading())
-            ThreadUtil.sleep(10);
+            ThreadUtil.sleep(100);
     }
 
     /**
@@ -861,6 +863,11 @@ public class PluginLoader
         startDaemons();
         // notify listener we have changed
         fireEvent(new PluginLoaderEvent());
+
+        // pre load the importers classes as they can be heavy...
+        Loader.getSequenceFileImporters();
+        Loader.getFileImporters();
+        Loader.getImporters();
     }
 
     // @Override

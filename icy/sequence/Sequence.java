@@ -62,7 +62,6 @@ import icy.type.collection.CollectionUtil;
 import icy.type.collection.array.Array1DUtil;
 import icy.type.dimension.Dimension5D;
 import icy.type.rectangle.Rectangle5D;
-import icy.undo.EndUndoableEdit;
 import icy.undo.IcyUndoManager;
 import icy.undo.IcyUndoableEdit;
 import icy.util.OMEUtil;
@@ -279,7 +278,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         overlays = new HashSet<Overlay>();
         rois = new HashSet<ROI>();
         persistent = new SequencePersistent(this);
-        undoManager = new IcyUndoManager(this);
+        undoManager = new IcyUndoManager(this, GeneralPreferences.getHistorySize());
 
         updater = new UpdateEventHandler(this, false);
         listeners = new EventListenerList();
@@ -550,34 +549,14 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      * 
      * @param edit
      *        the undoable edit to add
-     * @param collapsable
-     *        define if this edit can be collapsed with a previous similar edit (<code>true</code>
-     *        by default)
-     * @return <code>false</code> if the operation failed
-     */
-    public boolean addUndoableEdit(IcyUndoableEdit edit, boolean collapsable)
-    {
-        if (edit != null)
-        {
-            // for no collapse
-            if (!collapsable)
-                undoManager.addEdit(new EndUndoableEdit());
-
-            return undoManager.addEdit(edit);
-        }
-
-        return false;
-    }
-
-    /**
-     * Add an Undoable edit to the Sequence UndoManager
-     * 
      * @return <code>false</code> if the operation failed
      */
     public boolean addUndoableEdit(IcyUndoableEdit edit)
     {
-        // by default we try to collapse edits
-        return addUndoableEdit(edit, true);
+        if (edit != null)
+            return undoManager.addEdit(edit);
+
+        return false;
     }
 
     /**
@@ -864,7 +843,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Returns T time size (in second OME compatible)
+     * Returns T time interval (in second for OME compatibility)
      */
     public double getTimeInterval()
     {
@@ -1793,7 +1772,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         addOverlay(roi.getOverlay());
 
         if (canUndo)
-            addUndoableEdit(new ROIAddSequenceEdit(this, roi), true);
+            addUndoableEdit(new ROIAddSequenceEdit(this, roi));
 
         return true;
 
@@ -1838,7 +1817,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             roiChanged(roi, SequenceEventType.REMOVED);
 
             if (canUndo)
-                addUndoableEdit(new ROIRemoveSequenceEdit(this, roi), true);
+                addUndoableEdit(new ROIRemoveSequenceEdit(this, roi));
 
             return true;
         }
@@ -1959,7 +1938,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
             roiChanged(null, SequenceEventType.REMOVED);
 
             if (canUndo)
-                addUndoableEdit(new ROIRemovesSequenceEdit(this, allROIs), true);
+                addUndoableEdit(new ROIRemovesSequenceEdit(this, allROIs));
         }
     }
 

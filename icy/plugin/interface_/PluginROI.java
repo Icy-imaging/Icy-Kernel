@@ -28,7 +28,7 @@ import icy.type.point.Point5D;
  * 
  * @author Fab & Stephane
  */
-public interface PluginROI
+public interface PluginROI extends PluginNoEDTConstructor
 {
     /**
      * Return the ROI class name (ROIClass.getClassName())

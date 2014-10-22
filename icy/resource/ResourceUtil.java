@@ -108,6 +108,8 @@ public class ResourceUtil
     public static final Image ICON_WAIT = ResourceUtil.getAlphaIconAsImage("sand.png");
     public static final Image ICON_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_open.png");
     public static final Image ICON_NOT_VISIBLE = ResourceUtil.getAlphaIconAsImage("eye_close.png");
+    public static final Image ICON_UNDO = ResourceUtil.getAlphaIconAsImage("undo.png");
+    public static final Image ICON_REDO = ResourceUtil.getAlphaIconAsImage("redo.png");
 
     public static final Image ICON_CENTER_IMAGE = ResourceUtil.getAlphaIconAsImage("center.png");
     public static final Image ICON_CROP = ResourceUtil.getAlphaIconAsImage("crop.png");
@@ -191,6 +193,9 @@ public class ResourceUtil
     public static final Image ICON_SQUARE_PREV = ResourceUtil.getAlphaIconAsImage("sq_prev.png");
     public static final Image ICON_SQUARE_NEXT = ResourceUtil.getAlphaIconAsImage("sq_next.png");
 
+    public static final Image ICON_CLEAR_BEFORE = ResourceUtil.getAlphaIconAsImage("square_clear_before.png");
+    public static final Image ICON_CLEAR_AFTER = ResourceUtil.getAlphaIconAsImage("square_clear_after.png");
+
     public static final Image ICON_PANEL_EXPAND = ResourceUtil.getAlphaIconAsImage("br_next.png");
     public static final Image ICON_PANEL_COLLAPSE = ResourceUtil.getAlphaIconAsImage("br_down.png");
     public static final Image ICON_PIN = ResourceUtil.getAlphaIconAsImage("pin.png");
@@ -200,7 +205,7 @@ public class ResourceUtil
 
     public static final Image ICON_RESIZE = ResourceUtil.getAlphaIconAsImage("cursor_drag_arrow.png");
     public static final Image ICON_RESIZE_2 = ResourceUtil.getAlphaIconAsImage("cursor_drag_arrow_2.png");
-    
+
     public static final Image ICON_TEXT = ResourceUtil.getAlphaIconAsImage("text_letter_t.png");
 
     public static final Image ICON_SMILEY_HAPPY = ResourceUtil.getAlphaIconAsImage("emotion_smile.png");

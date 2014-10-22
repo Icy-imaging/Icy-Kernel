@@ -32,6 +32,9 @@ import icy.painter.VtkPainter;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.roi.ROIEvent;
+import icy.roi.edit.Point2DAddedROIEdit;
+import icy.roi.edit.Point2DMovedROIEdit;
+import icy.roi.edit.Point2DRemovedROIEdit;
 import icy.sequence.Sequence;
 import icy.type.point.Point3D;
 import icy.type.point.Point5D;
@@ -239,13 +242,25 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                             // specific action for ROI2DShape
                             if (!e.isConsumed())
                             {
+                                final Sequence sequence = canvas.getSequence();
+
                                 switch (e.getKeyCode())
                                 {
                                     case KeyEvent.VK_DELETE:
                                     case KeyEvent.VK_BACK_SPACE:
+                                        final Anchor2D selectedPoint = getSelectedPoint();
+
                                         // try to remove selected point
                                         if (removeSelectedPoint(canvas))
+                                        {
+                                            // consume event
                                             e.consume();
+
+                                            // add undo operation
+                                            if (sequence != null)
+                                                sequence.addUndoableEdit(new Point2DRemovedROIEdit(ROI2DShape.this,
+                                                        selectedPoint));
+                                        }
                                         break;
                                 }
                             }
@@ -325,9 +340,28 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                                     // ROI should not be focused to add point (for multi selection)
                                     if (!isFocused())
                                     {
-                                        // try to add point first
-                                        if (addPoint(imagePoint.toPoint2D(), EventUtil.isControlDown(e)))
-                                            e.consume();
+                                        final boolean insertMode = EventUtil.isControlDown(e);
+
+                                        // insertion mode or creating the ROI ? --> add a new point
+                                        if (insertMode || isCreating())
+                                        {
+                                            // try to add point
+                                            final Anchor2D point = addNewPoint(imagePoint.toPoint2D(), insertMode);
+
+                                            // point added ?
+                                            if (point != null)
+                                            {
+                                                // consume event
+                                                e.consume();
+
+                                                final Sequence sequence = canvas.getSequence();
+
+                                                // add undo operation
+                                                if (sequence != null)
+                                                    sequence.addUndoableEdit(new Point2DAddedROIEdit(ROI2DShape.this,
+                                                            point));
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -347,6 +381,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         @Override
         public void mouseReleased(MouseEvent e, Point5D.Double imagePoint, IcyCanvas canvas)
         {
+            // not anymore the first move
+            firstMove = false;
+
             if (isSelected() && !isReadOnly())
             {
                 // send event to controls points first
@@ -355,6 +392,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                     // check we can do the action
                     if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
+                        final Sequence sequence = canvas.getSequence();
+
                         ROI2DShape.this.beginUpdate();
                         try
                         {
@@ -369,6 +408,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                         {
                             ROI2DShape.this.endUpdate();
                         }
+
+                        // prevent undo operation merging
+                        if (sequence != null)
+                            sequence.getUndoManager().noMergeForNextEdit();
                     }
                 }
             }
@@ -445,6 +488,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                     // check we can do the action
                     if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
+                        final Sequence sequence = canvas.getSequence();
+
                         ROI2DShape.this.beginUpdate();
                         try
                         {
@@ -452,7 +497,22 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                             synchronized (controlPoints)
                             {
                                 for (Anchor2D pt : controlPoints)
+                                {
+                                    final Point2D savedPosition;
+
+                                    // don't want to undo position change on first creation movement
+                                    if ((sequence != null) && (!isCreating() || !firstMove))
+                                        savedPosition = pt.getPosition();
+                                    else
+                                        savedPosition = null;
+
                                     pt.mouseDrag(e, imagePoint, canvas);
+
+                                    // position changed and undo supported --> add undo operation
+                                    if ((savedPosition != null) && !savedPosition.equals(pt.getPosition()))
+                                        sequence.addUndoableEdit(new Point2DMovedROIEdit(ROI2DShape.this, pt,
+                                                savedPosition));
+                                }
                             }
                         }
                         finally
@@ -757,6 +817,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
      */
     protected final Anchor2DPositionListener anchor2DPositionListener;
     protected final OverlayListener anchor2DOverlayListener;
+    protected boolean firstMove;
 
     public ROI2DShape(Shape shape)
     {
@@ -764,6 +825,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
         this.shape = shape;
         controlPoints = new ArrayList<Anchor2D>();
+        firstMove = true;
 
         anchor2DPositionListener = new Anchor2DPositionListener()
         {
@@ -885,7 +947,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     }
 
     /**
-     * internal use only
+     * Internal use only
      */
     protected void addPoint(Anchor2D pt)
     {
@@ -893,9 +955,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape
     }
 
     /**
-     * internal use only
+     * Internal use only, use {@link #addNewPoint(Point2D, boolean)} instead.
      */
-    protected void addPoint(Anchor2D pt, int index)
+    public void addPoint(Anchor2D pt, int index)
     {
         pt.addPositionListener(anchor2DPositionListener);
         pt.addOverlayListener(anchor2DOverlayListener);
@@ -908,47 +970,54 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         roiChanged();
     }
 
+    /**
+     * @deprecated Use {@link #addNewPoint(Point2D, boolean)} instead.
+     */
+    @Deprecated
     public boolean addPoint(Point2D pos, boolean insert)
     {
-        if (!canAddPoint())
-            return false;
-
-        // insertion mode
-        if (insert)
-        {
-            final Anchor2D pt = createAnchor(pos);
-
-            // place the new point with closest points
-            addPoint(pt, getInsertPointPosition(pos));
-            // always select
-            pt.setSelected(true);
-
-            return true;
-        }
-
-        // creation mode
-        if (isCreating())
-        {
-            final Anchor2D pt = createAnchor(pos);
-
-            // just add the new point at last position
-            addPoint(pt);
-            // always select
-            pt.setSelected(true);
-
-            return true;
-        }
-
-        return false;
+        return (addNewPoint(pos, insert) != null);
     }
 
     /**
-     * @deprecated Use {@link #addPoint(Point2D, boolean)} instead.
+     * @deprecated Use {@link #addNewPoint(Point2D, boolean)} instead.
      */
     @Deprecated
     public boolean addPointAt(Point2D pos, boolean insert)
     {
-        return addPoint(pos, insert);
+        return (addNewPoint(pos, insert) != null);
+    }
+
+    /**
+     * Add a new point to this shape ROI.
+     * 
+     * @param pos
+     *        position of the new point
+     * @param insert
+     *        if set to <code>true</code> the new point will be inserted between the 2 closest
+     *        points (in pixels distance) else the new point is inserted at the end of the point
+     *        list
+     * @return the new created Anchor2D point if the operation succeed or <code>null</code>
+     *         otherwise (if the ROI does not support this operation for instance)
+     */
+    public Anchor2D addNewPoint(Point2D pos, boolean insert)
+    {
+        if (!canAddPoint())
+            return null;
+
+        final Anchor2D pt = createAnchor(pos);
+
+        if (insert)
+            // insert mode ? --> place the new point with closest points
+            addPoint(pt, getInsertPointPosition(pos));
+        else
+            // just add the new point at last position
+            addPoint(pt);
+
+        // always select
+        pt.setSelected(true);
+
+        return pt;
     }
 
     /**
@@ -975,6 +1044,15 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             roiChanged();
 
         return true;
+    }
+
+    /**
+     * This method give you lower level access on point remove operation but can be unsafe.<br/>
+     * Use {@link #removeSelectedPoint(IcyCanvas)} when possible.
+     */
+    public boolean removePoint(Anchor2D pt)
+    {
+        return removePoint(null, pt);
     }
 
     /**
@@ -1025,6 +1103,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         return removeSelectedPoint(canvas);
     }
 
+    /**
+     * Remove the current selected point.
+     */
     public boolean removeSelectedPoint(IcyCanvas canvas)
     {
         if (!canRemovePoint())
@@ -1043,10 +1124,8 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (!removePoint(canvas, selectedPoint))
                 return false;
 
-            // last control point removed --> delete ROI
-            if (controlPoints.size() == 0)
-                remove();
-            else
+            // still have control points
+            if (controlPoints.size() > 0)
             {
                 // save the point position
                 final Point2D imagePoint = selectedPoint.getPosition();

@@ -80,7 +80,7 @@ public class SequenceOperationTask extends RibbonTask
             convertButton = new IcyCommandButton("Conversion", new IcyIcon(ResourceUtil.ICON_BAND_RIGHT));
             convertButton.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
             convertButton.setPopupRichTooltip(new RichTooltip("Data type conversion",
-                    "Convert the sequence to the selected data type (values are scaled to fit the new type)."));
+                    "Convert the sequence to the selected data type (values are scaled to fit the new type)"));
             convertButton.setPopupCallback(new PopupPanelCallback()
             {
                 @Override
@@ -112,9 +112,8 @@ public class SequenceOperationTask extends RibbonTask
             convertButtonRaw = new IcyCommandButton("Raw conversion", new IcyIcon(ResourceUtil.ICON_BAND_RIGHT));
             convertButtonRaw.setCommandButtonKind(CommandButtonKind.POPUP_ONLY);
             convertButtonRaw
-                    .setPopupRichTooltip(new RichTooltip(
-                            "Raw data type conversion",
-                            "Convert the sequence to the selected data type (values remains unchanged so you have to take care about type change overflow)."));
+                    .setPopupRichTooltip(new RichTooltip("Raw data type conversion",
+                            "Convert the sequence to the selected data type (values remain unchanged or are clamped in case of overflow)"));
             convertButtonRaw.setPopupCallback(new PopupPanelCallback()
             {
                 @Override

@@ -86,6 +86,9 @@ public class PropertyROIsEdit extends AbstractROIsEdit
     @Override
     public boolean addEdit(UndoableEdit edit)
     {
+        if (!isMergeable())
+            return false;
+
         if (edit instanceof PropertyROIsEdit)
         {
             final PropertyROIsEdit propEdit = (PropertyROIsEdit) edit;

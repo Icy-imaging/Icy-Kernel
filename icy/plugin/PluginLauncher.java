@@ -21,11 +21,13 @@ package icy.plugin;
 import icy.main.Icy;
 import icy.plugin.abstract_.Plugin;
 import icy.plugin.interface_.PluginImageAnalysis;
+import icy.plugin.interface_.PluginNoEDTConstructor;
 import icy.plugin.interface_.PluginStartAsThread;
 import icy.plugin.interface_.PluginThreaded;
 import icy.system.IcyExceptionHandler;
 import icy.system.audit.Audit;
 import icy.system.thread.ThreadUtil;
+import icy.util.ClassUtil;
 
 import java.util.concurrent.Callable;
 
@@ -111,8 +113,25 @@ public class PluginLauncher
         }
     }
 
-    private static Plugin internalCreate(final PluginDescriptor descriptor) throws InterruptedException, Exception
+    private static Plugin internalCreate(final PluginDescriptor plugin) throws InterruptedException, Exception
     {
+        final Class<? extends Plugin> clazz = plugin.getPluginClass();
+
+        // use the special PluginNoEDTConstructor interface ?
+        if (ClassUtil.isSubClass(clazz, PluginNoEDTConstructor.class))
+        {
+            try
+            {
+                // try constructor with descriptor argument by default
+                return clazz.getConstructor(PluginDescriptor.class).newInstance(plugin);
+            }
+            catch (NoSuchMethodException e)
+            {
+                // then use default constructor
+                return clazz.newInstance();
+            }
+        }
+
         // create the plugin instance on the EDT
         return ThreadUtil.invokeNow(new Callable<Plugin>()
         {
@@ -122,25 +141,27 @@ public class PluginLauncher
                 try
                 {
                     // try constructor with descriptor argument by default
-                    return descriptor.getPluginClass().getConstructor(PluginDescriptor.class).newInstance(descriptor);
+                    return clazz.getConstructor(PluginDescriptor.class).newInstance(plugin);
                 }
                 catch (NoSuchMethodException e)
                 {
                     // then use default constructor
-                    return descriptor.getPluginClass().newInstance();
+                    return clazz.newInstance();
                 }
             }
         });
     }
 
     /**
-     * Start the specified plugin (catched exception version).<br>
+     * Starts the specified plugin (catched exception version).<br>
      * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin) or
-     * <code>null</code> if an error occured.
+     * <code>null</code> if an error occurred.
      * 
+     * @param plugin
+     *        descriptor of the plugin we want to start
      * @see #startSafe(PluginDescriptor)
      */
-    public static Plugin start(PluginDescriptor descriptor)
+    public static Plugin start(PluginDescriptor plugin)
     {
         final Plugin result;
 
@@ -149,17 +170,17 @@ public class PluginLauncher
             try
             {
                 // create plugin instance
-                result = internalCreate(descriptor);
+                result = internalCreate(plugin);
             }
             catch (IllegalAccessException e)
             {
-                System.err.println("Cannot start plugin " + descriptor.getName() + " :");
+                System.err.println("Cannot start plugin " + plugin.getName() + " :");
                 System.err.println(e.getMessage());
                 return null;
             }
             catch (InstantiationException e)
             {
-                System.err.println("Cannot start plugin " + descriptor.getName() + " :");
+                System.err.println("Cannot start plugin " + plugin.getName() + " :");
                 System.err.println(e.getMessage());
                 return null;
             }
@@ -179,7 +200,7 @@ public class PluginLauncher
         }
         catch (Throwable t)
         {
-            IcyExceptionHandler.handleException(descriptor, t, true);
+            IcyExceptionHandler.handleException(plugin, t, true);
         }
 
         return null;
@@ -190,6 +211,9 @@ public class PluginLauncher
      * Returns the plugin instance (only meaningful for {@link PluginThreaded} plugin) or
      * <code>null</code> if an error occurred or if the specified class name is not a valid plugin
      * class name.
+     * 
+     * @param pluginClassName
+     *        class name of the plugin we want to start
      */
     public static Plugin start(String pluginClassName)
     {
@@ -202,20 +226,24 @@ public class PluginLauncher
     }
 
     /**
-     * Same as {@link #start(PluginDescriptor)} except it throws {@link Exception} on error so user
+     * Same as {@link #start(PluginDescriptor)} except it throws {@link Exception} on error
+     * so user
      * can handle them.
      * 
+     * @param plugin
+     *        descriptor of the plugin we want to start
+     *        compatibility)
      * @throws InterruptedException
      *         if the current thread was interrupted while waiting for execution on EDT.
      * @throws Exception
      *         if the computation threw an exception (only when plugin is executed on EDT).
      */
-    public static Plugin startSafe(PluginDescriptor descriptor) throws InterruptedException, Exception
+    public static Plugin startSafe(PluginDescriptor plugin) throws InterruptedException, Exception
     {
         final Plugin result;
 
         // create plugin instance
-        result = internalCreate(descriptor);
+        result = internalCreate(plugin);
 
         // register plugin
         Icy.getMainInterface().registerPlugin(result);

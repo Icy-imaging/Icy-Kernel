@@ -55,6 +55,7 @@ public class GeneralPreferences
     public static final String ID_USER_LOGIN = "userLogin";
     public static final String ID_USER_NAME = "userName";
     public static final String ID_USER_EMAIL = "userEmail";
+    public static final String ID_HISTORY_SIZE = "historySize";
 
     /**
      * id confirm
@@ -189,6 +190,11 @@ public class GeneralPreferences
         return prefGeneral.get(ID_GUI_SKIN, LookAndFeelUtil.getDefaultSkin());
     }
 
+    public static int getHistorySize()
+    {
+        return prefGeneral.getInt(ID_HISTORY_SIZE, 50);
+    }
+
     public static void setExitConfirm(boolean value)
     {
         prefConfirms.putBoolean(ID_CONFIRM_EXIT, value);
@@ -244,16 +250,6 @@ public class GeneralPreferences
         prefGeneral.put(ID_RESULT_FOLDER, value);
     }
 
-    public static void setGuiFontSize(int value)
-    {
-        prefGeneral.putInt(ID_GUI_FONT_SIZE, value);
-    }
-
-    public static void setGuiSkin(String value)
-    {
-        prefGeneral.put(ID_GUI_SKIN, value);
-    }
-
     public static void setUserLogin(String value)
     {
         prefGeneral.put(ID_USER_LOGIN, value);
@@ -269,4 +265,18 @@ public class GeneralPreferences
         prefGeneral.put(ID_USER_EMAIL, value);
     }
 
+    public static void setGuiFontSize(int value)
+    {
+        prefGeneral.putInt(ID_GUI_FONT_SIZE, value);
+    }
+
+    public static void setGuiSkin(String value)
+    {
+        prefGeneral.put(ID_GUI_SKIN, value);
+    }
+
+    public static void setHistorySize(int value)
+    {
+        prefGeneral.putInt(ID_HISTORY_SIZE, value);
+    }
 }

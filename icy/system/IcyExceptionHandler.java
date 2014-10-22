@@ -34,6 +34,7 @@ import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Stephane
@@ -378,7 +379,7 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
         final String memory;
         final String pluginId;
         String pluginDepsId;
-        final HashMap<String, String> values = new HashMap<String, String>();
+        final Map<String, String> values = new HashMap<String, String>();
 
         values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
         values.put(NetworkUtil.ID_JAVANAME, SystemUtil.getJavaName());
@@ -409,9 +410,9 @@ public class IcyExceptionHandler implements UncaughtExceptionHandler
                     final PluginDescriptor installed = PluginLoader.getPlugin(ident.getClassName());
 
                     if (installed == null)
-                        pluginDepsId += "Plugin " + ident.toString() + " is not installed\n";
+                        pluginDepsId += "Class " + ident.getClassName() + " not found !\n";
                     else
-                        pluginDepsId += "Plugin " + installed.toString() + " installed\n";
+                        pluginDepsId += "Plugin " + installed.toString() + " is correctly installed\n";
                 }
                 pluginDepsId += "\n";
             }

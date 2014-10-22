@@ -151,6 +151,13 @@ public abstract class ROI2DRectShape extends ROI2DShape
     }
 
     @Override
+    public boolean canRemovePoint()
+    {
+        // this ROI doesn't support point remove
+        return false;
+    }
+
+    @Override
     protected boolean removePoint(IcyCanvas canvas, Anchor2D pt)
     {
         // this ROI doesn't support point remove

@@ -19,6 +19,8 @@
 package icy.plugin.abstract_;
 
 import icy.file.Importer;
+import icy.plugin.interface_.PluginNoEDTConstructor;
+import icy.plugin.interface_.PluginThreaded;
 
 /**
  * Plugin specialized for import operation (see the {@link Importer} interface)
@@ -29,7 +31,7 @@ import icy.file.Importer;
  * @see PluginSequenceIdImporter
  * @author Stephane
  */
-public abstract class PluginImporter extends Plugin implements Importer
+public abstract class PluginImporter extends Plugin implements Importer, PluginNoEDTConstructor
 {
 
 }

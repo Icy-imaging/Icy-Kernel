@@ -48,6 +48,9 @@ public class DefaultROIEdit extends AbstractROIEdit
     @Override
     public boolean addEdit(UndoableEdit edit)
     {
+        if (!isMergeable())
+            return false;
+
         if (edit instanceof DefaultROIEdit)
         {
             final DefaultROIEdit defEdit = (DefaultROIEdit) edit;

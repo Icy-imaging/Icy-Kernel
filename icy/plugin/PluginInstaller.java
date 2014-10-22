@@ -342,12 +342,26 @@ public class PluginInstaller implements Runnable
         while (!Thread.interrupted())
         {
             // process installations
-            while (!installFIFO.isEmpty())
-                installInternal();
+            if (!installFIFO.isEmpty())
+            {
+                // so list has sometime to fill-up
+                ThreadUtil.sleep(200);
+
+                do
+                    installInternal();
+                while (!installFIFO.isEmpty());
+            }
 
             // process deletions
             while (!removeFIFO.isEmpty())
-                desinstallInternal();
+            {
+                // so list has sometime to fill-up
+                ThreadUtil.sleep(200);
+
+                do
+                    desinstallInternal();
+                while (!removeFIFO.isEmpty());
+            }
 
             ThreadUtil.sleep(100);
         }
@@ -738,8 +752,9 @@ public class PluginInstaller implements Runnable
 
             // order dependencies
             dependencies = orderDependencies(dependencies);
-            // add dependencies to the installing list
-            installingPlugins.addAll(0, dependencies);
+            // add dependencies at the beginning of the installing list
+            for (PluginDescriptor plugin : dependencies)
+                PluginDescriptor.addToList(installingPlugins, plugin, 0);
 
             String error = "";
 

@@ -31,5 +31,4 @@ public abstract class AbstractROIEdit extends AbstractIcyUndoableEdit
     {
         return (ROI) getSource();
     }
-
 }

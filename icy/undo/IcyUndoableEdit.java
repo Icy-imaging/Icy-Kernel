@@ -23,4 +23,9 @@ public interface IcyUndoableEdit extends UndoableEdit
      * @return the icon
      */
     public IcyIcon getIcon();
+
+    /**
+     * @return <code>true</code> if this edit can be merged with a compatible edit
+     */
+    public boolean isMergeable();
 }

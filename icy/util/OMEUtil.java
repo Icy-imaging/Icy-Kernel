@@ -24,6 +24,9 @@ import icy.sequence.Sequence;
 import icy.system.IcyExceptionHandler;
 import icy.type.DataType;
 import icy.type.TypeUtil;
+
+import java.awt.Color;
+
 import loci.common.services.ServiceException;
 import loci.formats.MetadataTools;
 import loci.formats.meta.MetadataRetrieve;
@@ -93,6 +96,22 @@ public class OMEUtil
     public static PositiveInteger getPositiveInteger(int value)
     {
         return new PositiveInteger(Integer.valueOf(value));
+    }
+
+    /**
+     * Return a java Color object from a OME Color object
+     */
+    public static Color getJavaColor(ome.xml.model.primitives.Color value)
+    {
+        return new Color(value.getRed(), value.getGreen(), value.getBlue(), value.getAlpha());
+    }
+
+    /**
+     * Return a OME Color object from a java Color object
+     */
+    public static ome.xml.model.primitives.Color getOMEColor(Color value)
+    {
+        return new ome.xml.model.primitives.Color(value.getRed(), value.getGreen(), value.getBlue(), value.getAlpha());
     }
 
     /**

@@ -102,7 +102,7 @@ public class RoiActions
                     }
 
                     // add to undo manager
-                    sequence.getUndoManager().addEdit(new ROIAddsSequenceEdit(sequence, rois)
+                    sequence.addUndoableEdit(new ROIAddsSequenceEdit(sequence, rois)
                     {
                         @Override
                         public String getPresentationName()
@@ -298,7 +298,7 @@ public class RoiActions
                     }
 
                     // add to undo manager
-                    sequence.getUndoManager().addEdit(new ROIAddsSequenceEdit(sequence, rois)
+                    sequence.addUndoableEdit(new ROIAddsSequenceEdit(sequence, rois)
                     {
                         @Override
                         public String getPresentationName()
@@ -358,7 +358,7 @@ public class RoiActions
                     }
 
                     // add to undo manager
-                    sequence.getUndoManager().addEdit(new ROIAddsSequenceEdit(sequence, rois)
+                    sequence.addUndoableEdit(new ROIAddsSequenceEdit(sequence, rois)
                     {
                         @Override
                         public String getPresentationName()
@@ -538,7 +538,7 @@ public class RoiActions
                         sequence.setSelectedROI(mergeROI);
 
                         // add to undo manager
-                        sequence.getUndoManager().addEdit(new ROIAddSequenceEdit(sequence, mergeROI, "ROI Inverse"));
+                        sequence.addUndoableEdit(new ROIAddSequenceEdit(sequence, mergeROI, "ROI Inverse"));
                     }
                 }
                 catch (UnsupportedOperationException ex)
@@ -595,7 +595,7 @@ public class RoiActions
                         sequence.setSelectedROI(mergeROI);
 
                         // add to undo manager
-                        sequence.getUndoManager().addEdit(new ROIAddSequenceEdit(sequence, mergeROI, "ROI Union"));
+                        sequence.addUndoableEdit(new ROIAddSequenceEdit(sequence, mergeROI, "ROI Union"));
                     }
                 }
                 catch (UnsupportedOperationException ex)
@@ -653,8 +653,7 @@ public class RoiActions
                         sequence.setSelectedROI(mergeROI);
 
                         // add to undo manager
-                        sequence.getUndoManager().addEdit(
-                                new ROIAddSequenceEdit(sequence, mergeROI, "ROI Intersection"));
+                        sequence.addUndoableEdit(new ROIAddSequenceEdit(sequence, mergeROI, "ROI Intersection"));
                     }
                 }
                 catch (UnsupportedOperationException ex)
@@ -712,8 +711,7 @@ public class RoiActions
                         sequence.setSelectedROI(mergeROI);
 
                         // add to undo manager
-                        sequence.getUndoManager().addEdit(
-                                new ROIAddSequenceEdit(sequence, mergeROI, "ROI Exclusive Union"));
+                        sequence.addUndoableEdit(new ROIAddSequenceEdit(sequence, mergeROI, "ROI Exclusive Union"));
                     }
                 }
                 catch (UnsupportedOperationException ex)
@@ -785,8 +783,7 @@ public class RoiActions
                         sequence.setSelectedROIs(generatedROIs);
 
                         // add to undo manager
-                        sequence.getUndoManager().addEdit(
-                                new ROIAddsSequenceEdit(sequence, generatedROIs, "ROI Subtraction"));
+                        sequence.addUndoableEdit(new ROIAddsSequenceEdit(sequence, generatedROIs, "ROI Subtraction"));
                     }
                     finally
                     {

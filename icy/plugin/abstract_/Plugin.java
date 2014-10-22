@@ -28,6 +28,7 @@ import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginLoader;
 import icy.plugin.interface_.PluginBundled;
+import icy.plugin.interface_.PluginThreaded;
 import icy.preferences.PluginsPreferences;
 import icy.preferences.XMLPreferences;
 import icy.resource.ResourceUtil;
@@ -49,9 +50,9 @@ import java.util.List;
 import javax.swing.ImageIcon;
 
 /**
- * Base class for Plugin.<br>
- * <br>
- * Provide some helper methods.
+ * Base class for Plugin, provide some helper methods.<br>
+ * By default the constructor of a Plugin class is called in the EDT (Event Dispatch Thread).<br>
+ * If the plugin implements the {@link PluginThreaded} there is no more guarantee that is the case.
  * 
  * @author Fabrice de Chaumont & Stephane
  */

@@ -239,9 +239,14 @@ public class ROI2DPoint extends ROI2DShape
     @Override
     protected boolean removePoint(IcyCanvas canvas, Anchor2D pt)
     {
-        // remove point on this ROI remove the ROI
-        canvas.getSequence().removeROI(this);
-        return true;
+        if (canvas != null)
+        {
+            // remove point on this ROI remove the ROI from current sequence
+            canvas.getSequence().removeROI(this);
+            return true;
+        }
+
+        return false;
     }
 
     @Override

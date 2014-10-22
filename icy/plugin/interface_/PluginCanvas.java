@@ -28,7 +28,7 @@ import icy.gui.viewer.Viewer;
  * 
  * @author Fab & Stephane
  */
-public interface PluginCanvas
+public interface PluginCanvas extends PluginNoEDTConstructor
 {
     /**
      * Return the Canvas class name (CanvasClass.getClassName())

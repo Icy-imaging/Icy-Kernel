@@ -68,7 +68,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
     protected int indexOfNextAdd;
     protected int limit;
 
-    public IcyUndoManager(Object owner)
+    public IcyUndoManager(Object owner, int limit)
     {
         super();
 
@@ -76,7 +76,12 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
         this.owner = owner;
         listeners = new EventListenerList();
         indexOfNextAdd = 0;
-        limit = INITIAL_LIMIT;
+        this.limit = limit;
+    }
+
+    public IcyUndoManager(Object owner)
+    {
+        this(owner, INITIAL_LIMIT);
     }
 
     /**
@@ -106,24 +111,63 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
      * 
      * @see AbstractUndoableEdit#die
      */
-    public synchronized void discardAllEdits()
+    public void discardAllEdits()
     {
-        // send die to all edits
-        for (int i = edits.size(); i >= 0; i--)
-            edits.get(i).die();
-
-        clear();
-
+        trimEdits(0, edits.size() - 1);
         fireChangeEvent();
     }
 
     /**
-     * remove all edit from the undo manager
+     * Remove future edits (the ones to redo) from the undo manager sending each edit a
+     * <code>die</code> message
+     * in the process.
+     * 
+     * @param keep
+     *        number of future edits to keep (1 means we keep only the next edit)
+     * @see AbstractUndoableEdit#die
      */
-    private void clear()
+    public synchronized void discardFutureEdits(int keep)
     {
-        edits.clear();
-        indexOfNextAdd = 0;
+        trimEdits(indexOfNextAdd + keep, edits.size() - 1);
+        fireChangeEvent();
+    }
+
+    /**
+     * Remove future edits (the ones to redo) from the undo manager sending each edit a
+     * <code>die</code> message
+     * in the process.
+     * 
+     * @see AbstractUndoableEdit#die
+     */
+    public synchronized void discardFutureEdits()
+    {
+        discardFutureEdits(0);
+    }
+
+    /**
+     * Remove previous edits (the ones to undo) from the undo manager sending each edit a
+     * <code>die</code> message
+     * in the process.
+     * 
+     * @param keep
+     *        number of previous edits to keep (1 mean we keep only the last edit)
+     * @see AbstractUndoableEdit#die
+     */
+    public synchronized void discardOldEdits(int keep)
+    {
+        trimEdits(0, indexOfNextAdd - (1 + keep));
+        fireChangeEvent();
+    }
+
+    /**
+     * Empties the undo manager sending each edit a <code>die</code> message
+     * in the process.
+     * 
+     * @see AbstractUndoableEdit#die
+     */
+    public synchronized void discardOldEdits()
+    {
+        discardOldEdits(0);
     }
 
     /**
@@ -430,8 +474,8 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
     }
 
     /**
-     * Returns the last <code>AbstractIcyUndoableEdit</code> in <code>edits</code>, or <code>null</code> if
-     * <code>edits</code> is empty.
+     * Returns the last <code>AbstractIcyUndoableEdit</code> in <code>edits</code>, or
+     * <code>null</code> if <code>edits</code> is empty.
      */
     protected AbstractIcyUndoableEdit lastEdit()
     {
@@ -453,7 +497,8 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
     }
 
     /**
-     * Adds an <code>AbstractIcyUndoableEdit</code> to this <code>UndoManager</code>, if it's possible. This
+     * Adds an <code>AbstractIcyUndoableEdit</code> to this <code>UndoManager</code>, if it's
+     * possible. This
      * removes all edits from the index of the next edit to the end of the edits
      * list.
      * 
@@ -493,6 +538,17 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
 
         // notify change
         fireChangeEvent();
+    }
+
+    /**
+     * Prevent the last edit inserted in the UndoManager to be merged with the next inserted edit
+     * (even if they are compatible)
+     */
+    public void noMergeForNextEdit()
+    {
+        // set last edit to un-mergeable
+        if (indexOfNextAdd > 0)
+            edits.get(indexOfNextAdd - 1).setMergeable(false);
     }
 
     /**
@@ -624,6 +680,23 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
     }
 
     /**
+     * Get number of significant edit before the specified position in UndoManager
+     */
+    public int getSignificantEditsCountBefore(int index)
+    {
+        int result = 0;
+
+        synchronized (edits)
+        {
+            for (int i = 0; i < index; i++)
+                if (edits.get(i).isSignificant())
+                    result++;
+        }
+
+        return result;
+    }
+
+    /**
      * Get number of significant edit in UndoManager
      */
     public int getSignificantEditsCount()
@@ -638,6 +711,20 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
         }
 
         return result;
+    }
+
+    /**
+     * Get edit of specified index
+     */
+    public AbstractIcyUndoableEdit getEdit(int index)
+    {
+        synchronized (edits)
+        {
+            if (index < edits.size())
+                return edits.get(index);
+        }
+
+        return null;
     }
 
     /**
@@ -719,14 +806,15 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
 
             if (lastIndex != -1)
             {
-                final ArrayList<AbstractIcyUndoableEdit> validEdits = new ArrayList<AbstractIcyUndoableEdit>();
+                final List<AbstractIcyUndoableEdit> validEdits = new ArrayList<AbstractIcyUndoableEdit>();
 
                 // keep valid edits
                 for (int i = lastIndex + 1; i < edits.size(); i++)
                     validEdits.add(edits.get(i));
 
                 // remove all edits
-                clear();
+                edits.clear();
+                indexOfNextAdd = 0;
 
                 // add valid edits
                 for (AbstractIcyUndoableEdit edit : validEdits)
@@ -746,4 +834,5 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
     {
         addEdit(e.getEdit());
     }
+
 }

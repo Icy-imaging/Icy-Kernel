@@ -46,6 +46,9 @@ public class BoundsROIEdit extends AbstractROIEdit
     @Override
     public boolean addEdit(UndoableEdit edit)
     {
+        if (!isMergeable())
+            return false;
+
         if (edit instanceof BoundsROIEdit)
         {
             final BoundsROIEdit bndEdit = (BoundsROIEdit) edit;

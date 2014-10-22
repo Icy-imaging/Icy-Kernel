@@ -23,6 +23,7 @@ import icy.canvas.IcyCanvas2D;
 import icy.canvas.IcyCanvas3D;
 import icy.gui.util.FontUtil;
 import icy.preferences.GeneralPreferences;
+import icy.roi.edit.PositionROIEdit;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle5D;
@@ -221,8 +222,28 @@ public abstract class ROI2D extends ROI
                     dx = 0;
             }
 
+            // needed for undo operation
+            final Sequence sequence;
+            final Point5D savePosition;
+
+            // get canvas which modify the ROI --> get the sequence
+            if (canvas != null)
+                sequence = canvas.getSequence();
+            else
+                sequence = null;
+
+            if (sequence != null)
+                savePosition = getPosition5D();
+            else
+                savePosition = null;
+
             // set new position
             setPosition2D(new Point2D.Double(startDragROIPosition.getX() + dx, startDragROIPosition.getY() + dy));
+
+            // allow undo as the ROI position has been modified from canvas
+            if (savePosition != null)
+                // add position change to undo manager
+                sequence.addUndoableEdit(new PositionROIEdit(ROI2D.this, savePosition));
 
             return true;
         }

@@ -26,7 +26,7 @@ import icy.search.SearchResultProducer;
  * 
  * @author Stephane
  */
-public interface PluginSearchProvider
+public interface PluginSearchProvider extends PluginNoEDTConstructor
 {
     /**
      * Return the Search Provider.

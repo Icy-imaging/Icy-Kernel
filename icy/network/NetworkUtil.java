@@ -43,6 +43,9 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.ProxySelector;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -134,7 +137,11 @@ public class NetworkUtil
             {
                 try
                 {
-                    final Socket socket = new Socket(WEBSITE_HOST, 80);
+                    final Socket socket = new Socket();
+
+                    // timeout = 3 seconds
+                    socket.setSoTimeout(3000);
+                    socket.connect(new InetSocketAddress(WEBSITE_HOST, 80), 3000);
                     socket.close();
 
                     // we have internet access
@@ -589,7 +596,7 @@ public class NetworkUtil
         {
             if (displayError)
             {
-                System.out.println("Error while downloading from '" + uc.getURL() + "' :");
+                System.out.println("Error while downloading '" + uc.getURL() + "' :");
                 IcyExceptionHandler.showErrorMessage(e, false, false);
             }
 

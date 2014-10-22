@@ -36,12 +36,15 @@ import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceDataIterator;
 import icy.sequence.SequenceUtil;
+import icy.system.SystemUtil;
 import icy.system.thread.ThreadUtil;
 import icy.type.DataIteratorUtil;
 import icy.type.DataType;
+import icy.undo.IcyUndoManager;
 
 import java.awt.Image;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -1003,6 +1006,135 @@ public class SequenceOperationActions
                 return null;
         }
     }
+
+    public static IcyAbstractAction undoAction = new IcyAbstractAction("Undo", new IcyIcon(ResourceUtil.ICON_UNDO),
+            "Undo last operation", KeyEvent.VK_Z, SystemUtil.getMenuCtrlMask())
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 5773755313377178022L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            return Icy.getMainInterface().undo();
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction redoAction = new IcyAbstractAction("Redo", new IcyIcon(ResourceUtil.ICON_REDO),
+            "Redo last operation", KeyEvent.VK_Y, SystemUtil.getMenuCtrlMask())
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1288382252962040008L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            return Icy.getMainInterface().redo();
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction undoClearAction = new IcyAbstractAction("Clear history", new IcyIcon(
+            ResourceUtil.ICON_DELETE), "Clear all history (can release some memory)")
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1251314072585735122L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final IcyUndoManager undoManager = Icy.getMainInterface().getUndoManager();
+
+            if (undoManager != null)
+            {
+                undoManager.discardAllEdits();
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction undoClearOldsAction = new IcyAbstractAction("Clear olders", new IcyIcon(
+            ResourceUtil.ICON_CLEAR_BEFORE), "Clear all history except the last operation (can release some memory)")
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 5773755313377178022L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final IcyUndoManager undoManager = Icy.getMainInterface().getUndoManager();
+
+            if (undoManager != null)
+            {
+                undoManager.discardOldEdits(1);
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
+
+    public static IcyAbstractAction undoClearFuturesAction = new IcyAbstractAction("Clear futures", new IcyIcon(
+            ResourceUtil.ICON_CLEAR_AFTER), "Clear all future operations from history (can release some memory)")
+    {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -395525273305262280L;
+
+        @Override
+        public boolean doAction(ActionEvent e)
+        {
+            final IcyUndoManager undoManager = Icy.getMainInterface().getUndoManager();
+
+            if (undoManager != null)
+            {
+                undoManager.discardFutureEdits(0);
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean isEnabled()
+        {
+            return super.isEnabled() && (Icy.getMainInterface().getActiveSequence() != null);
+        }
+    };
 
     /**
      * Return all actions of this class

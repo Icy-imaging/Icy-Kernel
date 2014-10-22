@@ -20,6 +20,7 @@ package icy.gui.main;
 
 import icy.action.FileActions;
 import icy.action.GeneralActions;
+import icy.action.SequenceOperationActions;
 import icy.file.FileUtil;
 import icy.file.Loader;
 import icy.gui.component.ExternalizablePanel;
@@ -336,11 +337,15 @@ public class MainFrame extends JRibbonFrame
         imap.put(FileActions.openSequenceAction.getKeyStroke(), FileActions.openSequenceAction.getName());
         imap.put(FileActions.saveAsSequenceAction.getKeyStroke(), FileActions.saveAsSequenceAction.getName());
         imap.put(GeneralActions.onlineHelpAction.getKeyStroke(), GeneralActions.onlineHelpAction.getName());
+        imap.put(SequenceOperationActions.undoAction.getKeyStroke(), SequenceOperationActions.undoAction.getName());
+        imap.put(SequenceOperationActions.redoAction.getKeyStroke(), SequenceOperationActions.redoAction.getName());
 
         amap.put(GeneralActions.searchAction.getName(), GeneralActions.searchAction);
         amap.put(FileActions.openSequenceAction.getName(), FileActions.openSequenceAction);
         amap.put(FileActions.saveAsSequenceAction.getName(), FileActions.saveAsSequenceAction);
         amap.put(GeneralActions.onlineHelpAction.getName(), GeneralActions.onlineHelpAction);
+        amap.put(SequenceOperationActions.undoAction.getName(), SequenceOperationActions.undoAction);
+        amap.put(SequenceOperationActions.redoAction.getName(), SequenceOperationActions.redoAction);
     }
 
     public ApplicationMenu getApplicationMenu()

@@ -242,7 +242,7 @@ public class IcyBufferedImageUtil
             // no rescale ?
             if ((scaler == null) || scaler.isNull())
                 // simple type change
-                ArrayUtil.arrayToArray(source.getDataXY(c), result.getDataXY(c), srcSigned);
+                ArrayUtil.arrayToSafeArray(source.getDataXY(c), result.getDataXY(c), srcSigned);
             else
             {
                 // first we convert in double
@@ -250,7 +250,7 @@ public class IcyBufferedImageUtil
                 // then we scale data
                 scaler.scale(darray);
                 // and finally we convert in wanted datatype
-                Array1DUtil.doubleArrayToArray(darray, result.getDataXY(c));
+                Array1DUtil.doubleArrayToSafeArray(darray, result.getDataXY(c), result.isSignedDataType());
             }
         }
 

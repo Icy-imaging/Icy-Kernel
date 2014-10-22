@@ -941,7 +941,8 @@ public class Loader
 
     /**
      * Loads and returns metadata of the specified image file with given importer.<br>
-     * It returns <code>null</code> if the specified file is not a valid (or supported) image file.
+     * It can returns <code>null</code> if the specified file is not a valid or supported) image
+     * file.
      */
     public static OMEXMLMetadataImpl getMetaData(SequenceFileImporter importer, String path)
             throws UnsupportedFormatException, IOException
@@ -962,12 +963,12 @@ public class Loader
     }
 
     /**
-     * Loads and returns metadata of the specified image file.<br>
-     * It returns <code>null</code> if the specified file is not a valid (or supported) image file.
+     * Loads and returns metadata of the specified image file.
      */
     public static OMEXMLMetadataImpl getMetaData(String path) throws UnsupportedFormatException, IOException
     {
         OMEXMLMetadataImpl result;
+        UnsupportedFormatException lastError = null;
 
         for (SequenceFileImporter importer : getSequenceFileImporters(path))
         {
@@ -980,12 +981,11 @@ public class Loader
             }
             catch (UnsupportedFormatException e)
             {
-                // display it in console
-                IcyExceptionHandler.showErrorMessage(e, false);
+                lastError = e;
             }
         }
 
-        throw new UnsupportedFormatException("Image file '" + path + "' is not supported !");
+        throw new UnsupportedFormatException("Image file '" + path + "' is not supported :\n", lastError);
     }
 
     /**
@@ -1011,10 +1011,11 @@ public class Loader
     // }
 
     /**
-     * Returns a thumbnail of the specified image file path.
+     * Returns a thumbnail of the specified image file path.<br>
+     * It can return <code>null</code> if the specified file is not a valid or supported image file.
      * 
      * @param importer
-     *        Importer used to open and load the thumbnail from the image file.<br>
+     *        Importer used to open and load the thumbnail from the image file.
      * @param path
      *        image file path.
      * @param serie
@@ -1024,17 +1025,19 @@ public class Loader
     public static IcyBufferedImage loadThumbnail(SequenceFileImporter importer, String path, int serie)
             throws UnsupportedFormatException, IOException
     {
-        if ((importer == null) || !importer.open(path, 0))
-            throw new UnsupportedFormatException("Image file '" + path + "' is not supported !");
+        if (importer.open(path, 0))
+        {
+            try
+            {
+                return importer.getThumbnail(serie);
+            }
+            finally
+            {
+                importer.close();
+            }
+        }
 
-        try
-        {
-            return importer.getThumbnail(0);
-        }
-        finally
-        {
-            importer.close();
-        }
+        return null;
     }
 
     /**
@@ -1048,7 +1051,25 @@ public class Loader
      */
     public static IcyBufferedImage loadThumbnail(String path, int serie) throws UnsupportedFormatException, IOException
     {
-        return loadThumbnail(getSequenceFileImporter(path, true), path, serie);
+        IcyBufferedImage result;
+        UnsupportedFormatException lastError = null;
+
+        for (SequenceFileImporter importer : getSequenceFileImporters(path))
+        {
+            try
+            {
+                result = loadThumbnail(importer, path, serie);
+
+                if (result != null)
+                    return result;
+            }
+            catch (UnsupportedFormatException e)
+            {
+                lastError = e;
+            }
+        }
+
+        throw new UnsupportedFormatException("Image file '" + path + "' is not supported :\n", lastError);
     }
 
     /**

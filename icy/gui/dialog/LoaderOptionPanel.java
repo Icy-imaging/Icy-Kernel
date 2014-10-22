@@ -18,8 +18,10 @@
  */
 package icy.gui.dialog;
 
+import icy.common.exception.UnsupportedFormatException;
 import icy.file.FileUtil;
 import icy.file.Loader;
+import icy.file.SequenceFileImporter;
 import icy.gui.component.ThumbnailComponent;
 import icy.resource.ResourceUtil;
 import icy.sequence.MetaDataUtil;
@@ -28,6 +30,8 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.io.IOException;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
@@ -57,35 +61,80 @@ public class LoaderOptionPanel extends JPanel
         {
             try
             {
+                boolean metaDataDone = false;
+                boolean thumbnailDone = false;
+
                 preview.setImage(null);
                 preview.setTitle("loading...");
                 preview.setInfos("");
                 preview.setInfos2("");
 
-                try
+                final List<SequenceFileImporter> importers = Loader.getSequenceFileImporters(fileId);
+
+                for (SequenceFileImporter importer : importers)
                 {
-                    final OMEXMLMetadataImpl meta = Loader.getMetaData(fileId);
+                    try
+                    {
+                        if (importer.open(fileId, 0))
+                        {
+                            try
+                            {
+                                if (!metaDataDone)
+                                {
+                                    final OMEXMLMetadataImpl meta = importer.getMetaData();
 
-                    final int sizeC = MetaDataUtil.getSizeC(meta, 0);
+                                    final int sizeC = MetaDataUtil.getSizeC(meta, 0);
 
-                    // load metadata first
-                    preview.setTitle(FileUtil.getFileName(fileId));
-                    preview.setInfos(MetaDataUtil.getSizeX(meta, 0) + " x " + MetaDataUtil.getSizeY(meta, 0) + " - "
-                            + MetaDataUtil.getSizeZ(meta, 0) + "Z x " + MetaDataUtil.getSizeT(meta, 0) + "T");
-                    preview.setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
-                            + MetaDataUtil.getDataType(meta, 0) + ")");
+                                    // load metadata first
+                                    preview.setTitle(FileUtil.getFileName(fileId));
+                                    preview.setInfos(MetaDataUtil.getSizeX(meta, 0) + " x "
+                                            + MetaDataUtil.getSizeY(meta, 0) + " - " + MetaDataUtil.getSizeZ(meta, 0)
+                                            + "Z x " + MetaDataUtil.getSizeT(meta, 0) + "T");
+                                    preview.setInfos2(sizeC + ((sizeC > 1) ? " channels (" : " channel (")
+                                            + MetaDataUtil.getDataType(meta, 0) + ")");
 
-                    // then thumbnail
-                    preview.setImage(Loader.loadThumbnail(fileId, 0));
+                                    metaDataDone = true;
+                                }
+
+                                if (!thumbnailDone)
+                                {
+                                    // then thumbnail
+                                    preview.setImage(importer.getThumbnail(0));
+
+                                    thumbnailDone = true;
+                                }
+                            }
+                            finally
+                            {
+                                importer.close();
+                            }
+                        }
+                    }
+                    catch (UnsupportedFormatException e)
+                    {
+                        // try next importer...
+                    }
+                    catch (RuntimeException e)
+                    {
+                        // try next importer...
+                    }
+                    catch (IOException e)
+                    {
+                        // try next importer...
+                    }
+
+                    // we correctly loaded both metadata and thumbnail --> exit
+                    if (metaDataDone && thumbnailDone)
+                        break;
                 }
-                catch (Exception e)
-                {
-                    // error image, we just totally ignore error here...
-                    preview.setImage(ResourceUtil.ICON_DELETE);
+
+                // cannot read metadata
+                if (!metaDataDone)
                     preview.setTitle("Cannot read file");
-                    preview.setInfos("");
-                    preview.setInfos2("");
-                }
+                // cannot get thumbnail
+                if (!thumbnailDone)
+                    preview.setImage(ResourceUtil.ICON_DELETE);
+
             }
             catch (Throwable t)
             {

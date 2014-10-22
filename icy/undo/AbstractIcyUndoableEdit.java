@@ -66,6 +66,11 @@ public abstract class AbstractIcyUndoableEdit implements IcyUndoableEdit
     protected String presentationName;
 
     /**
+     * Mergeable property of this edit
+     */
+    protected boolean mergeable;
+
+    /**
      * Creates an <code>UndoableAction</code> which defaults <code>hasBeenDone</code> and
      * <code>alive</code> to <code>true</code>.
      */
@@ -83,6 +88,8 @@ public abstract class AbstractIcyUndoableEdit implements IcyUndoableEdit
         else
             this.icon = DEFAULT_ICON;
         presentationName = name;
+        // by default collapse operation is supported
+        mergeable = true;
     }
 
     /**
@@ -216,9 +223,21 @@ public abstract class AbstractIcyUndoableEdit implements IcyUndoableEdit
      * This default implementation returns true.
      */
     @Override
-    public boolean isSignificant()
+    final public boolean isSignificant()
     {
+        // should always returns true for easier UndoManager manipulation
         return true;
+    }
+
+    @Override
+    public boolean isMergeable()
+    {
+        return mergeable;
+    }
+
+    public void setMergeable(boolean value)
+    {
+        mergeable = value;
     }
 
     /**

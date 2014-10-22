@@ -6,6 +6,8 @@ package icy.plugin.abstract_;
 import icy.common.exception.UnsupportedFormatException;
 import icy.image.AbstractImageProvider;
 import icy.image.IcyBufferedImage;
+import icy.plugin.interface_.PluginNoEDTConstructor;
+import icy.plugin.interface_.PluginThreaded;
 import icy.sequence.SequenceIdImporter;
 
 import java.awt.Rectangle;
@@ -23,7 +25,7 @@ import loci.formats.ome.OMEXMLMetadataImpl;
  * @see PluginSequenceImporter
  * @author Stephane
  */
-public abstract class PluginSequenceIdImporter extends Plugin implements SequenceIdImporter
+public abstract class PluginSequenceIdImporter extends Plugin implements SequenceIdImporter, PluginNoEDTConstructor
 {
     // default helper
     protected class InternalImageProviderHelper extends AbstractImageProvider

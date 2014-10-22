@@ -235,6 +235,14 @@ public class ColorUtil
     }
 
     /**
+     * Returns <code>true</code> if the specified color is pure black (alpha is not verified)
+     */
+    public static boolean isBlack(Color color)
+    {
+        return (color.getRGB() & 0x00FFFFFF) == 0;
+    }
+
+    /**
      * Mix 2 colors with priority color
      */
     public static Color mixOver(Color backColor, Color frontColor)
@@ -682,4 +690,5 @@ public class ColorUtil
 
         return baseColors[maxInd];
     }
+
 }

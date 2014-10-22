@@ -3,6 +3,7 @@
  */
 package icy.plugin.abstract_;
 
+import icy.plugin.interface_.PluginNoEDTConstructor;
 import icy.sequence.SequenceImporter;
 
 /**
@@ -14,7 +15,7 @@ import icy.sequence.SequenceImporter;
  * @see PluginSequenceIdImporter
  * @author Stephane
  */
-public abstract class PluginSequenceImporter extends Plugin implements SequenceImporter
+public abstract class PluginSequenceImporter extends Plugin implements SequenceImporter, PluginNoEDTConstructor
 {
 
 }

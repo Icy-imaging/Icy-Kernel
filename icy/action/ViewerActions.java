@@ -3,7 +3,6 @@
  */
 package icy.action;
 
-import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.gui.viewer.Viewer;
 import icy.image.lut.LUT;
@@ -19,6 +18,8 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import plugins.kernel.canvas.VtkCanvas;
 
 /**
  * Viewer associated actions (Duplicate, externalize...)
@@ -55,7 +56,7 @@ public class ViewerActions
                         final LUT newLut = v.getLut();
 
                         // copy LUT
-                        if (canvas instanceof Canvas3D)
+                        if (canvas instanceof VtkCanvas)
                         {
                             // don't copy alpha colormap
                             newLut.setColorMaps(oldLut, false);

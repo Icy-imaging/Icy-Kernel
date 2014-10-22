@@ -26,6 +26,7 @@ import icy.resource.ResourceUtil;
 import icy.roi.BooleanMask2D;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
+import icy.roi.edit.Area2DChangeROIEdit;
 import icy.sequence.Sequence;
 import icy.type.point.Point5D;
 import icy.type.point.Point5D.Double;
@@ -43,7 +44,6 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -300,6 +300,11 @@ public class ROI2DArea extends ROI2D
                     // check we can do the action
                     if (!(canvas instanceof VtkCanvas) && (imagePoint != null))
                     {
+                        // keep trace of roi changes from user mouse action
+                        roiModifiedByMouse = false;
+                        // save current ROI
+                        undoSave = getBooleanMask(true);
+
                         ROI2DArea.this.beginUpdate();
                         try
                         {
@@ -308,6 +313,7 @@ public class ROI2DArea extends ROI2D
                             {
                                 // add point first
                                 addToMask(imagePoint.toPoint2D());
+                                roiModifiedByMouse = true;
                                 e.consume();
                             }
                             // right button action
@@ -315,6 +321,7 @@ public class ROI2DArea extends ROI2D
                             {
                                 // remove point
                                 removeFromMask(imagePoint.toPoint2D());
+                                roiModifiedByMouse = true;
                                 e.consume();
                             }
                         }
@@ -334,12 +341,41 @@ public class ROI2DArea extends ROI2D
             super.mouseReleased(e, imagePoint, canvas);
 
             // update only on release as it can be long
-            if (!isReadOnly() && boundsNeedUpdate)
+            if (!isReadOnly())
             {
-                optimizeBounds();
-                // empty ? delete ROI
-                if (bounds.isEmpty())
-                    ROI2DArea.this.remove();
+                if (boundsNeedUpdate)
+                {
+                    optimizeBounds();
+                    // empty ? delete ROI
+                    if (bounds.isEmpty())
+                    {
+                        ROI2DArea.this.remove();
+                        // nothing more to do
+                        return;
+                    }
+                }
+
+                if (roiModifiedByMouse)
+                {
+                    final Sequence sequence = canvas.getSequence();
+
+                    // add undo operation
+                    try
+                    {
+                        if ((sequence != null) && (undoSave != null))
+                            sequence.addUndoableEdit(new Area2DChangeROIEdit(ROI2DArea.this, undoSave));
+                    }
+                    catch (OutOfMemoryError err)
+                    {
+                        // can't create undo operation, show message and clear undo manager
+                        System.out.println("Warning: not enough memory to create undo point for ROI area change");
+                        sequence.clearUndoManager();
+                    }
+
+                    // release save
+                    undoSave = null;
+                    roiModifiedByMouse = false;
+                }
             }
         }
 
@@ -387,6 +423,7 @@ public class ROI2DArea extends ROI2D
                             {
                                 // add point first
                                 addToMask(imagePoint.toPoint2D());
+                                roiModifiedByMouse = true;
                                 e.consume();
                             }
                             // right button action
@@ -394,6 +431,7 @@ public class ROI2DArea extends ROI2D
                             {
                                 // remove point
                                 removeFromMask(imagePoint.toPoint2D());
+                                roiModifiedByMouse = true;
                                 e.consume();
                             }
                         }
@@ -596,9 +634,11 @@ public class ROI2DArea extends ROI2D
     protected final byte[] blue;
     protected IndexColorModel colorModel;
     protected byte[] maskData; // 0 = false, 1 = true
-    protected boolean boundsNeedUpdate;
     protected double translateX, translateY;
     protected Color previousColor;
+    protected boolean boundsNeedUpdate;
+    protected boolean roiModifiedByMouse;
+    protected BooleanMask2D undoSave;
 
     /**
      * Create a ROI2D Area type from the specified {@link BooleanMask2D}.
@@ -609,6 +649,8 @@ public class ROI2DArea extends ROI2D
 
         bounds = new Rectangle();
         boundsNeedUpdate = false;
+        roiModifiedByMouse = false;
+        undoSave = null;
         translateX = 0d;
         translateY = 0d;
 

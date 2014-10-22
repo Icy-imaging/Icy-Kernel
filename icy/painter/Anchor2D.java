@@ -18,7 +18,6 @@
  */
 package icy.painter;
 
-import icy.canvas.Canvas3D;
 import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvas2D;
 import icy.common.EventHierarchicalChecker;
@@ -753,7 +752,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (!isVisible())
             return;
 
-        // canvas3D not handled here
+        // VtkCanvas not handled here
         if (canvas instanceof IcyCanvas2D)
         {
             updateEllipse(canvas);
@@ -792,8 +791,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (!isVisible())
             return;
 
-        // canvas3D not handled here
-        if (canvas instanceof Canvas3D)
+        // VtkCanvas not handled here
+        if (canvas instanceof VtkCanvas)
             return;
         // no image position --> exit
         if (imagePoint == null)
@@ -812,8 +811,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (!isVisible())
             return;
 
-        // canvas3D not handled here
-        if (canvas instanceof Canvas3D)
+        // VtkCanvas not handled here
+        if (canvas instanceof VtkCanvas)
             return;
         // no image position --> exit
         if (imagePoint == null)
@@ -835,8 +834,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (e.isConsumed())
             return;
 
-        // canvas3D not handled here
-        if (canvas instanceof Canvas3D)
+        // VtkCanvas not handled here
+        if (canvas instanceof VtkCanvas)
             return;
         // no image position --> exit
         if (imagePoint == null)
@@ -875,8 +874,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (e.isConsumed())
             return;
 
-        // canvas3D not handled here
-        if (canvas instanceof Canvas3D)
+        // VtkCanvas not handled here
+        if (canvas instanceof VtkCanvas)
             return;
         // no image position --> exit
         if (imagePoint == null)
@@ -910,8 +909,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (!isVisible())
             return;
 
-        // canvas3D not handled here
-        if (canvas instanceof Canvas3D)
+        // VtkCanvas not handled here
+        if (canvas instanceof VtkCanvas)
             return;
         // no image position --> exit
         if (imagePoint == null)
@@ -938,8 +937,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (!isVisible())
             return;
 
-        // canvas3D not handled here
-        if (canvas instanceof Canvas3D)
+        // VtkCanvas not handled here
+        if (canvas instanceof VtkCanvas)
             return;
         // no image position --> exit
         if (imagePoint == null)
@@ -955,8 +954,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (!isVisible())
             return;
 
-        // canvas3D not handled here
-        if (canvas instanceof Canvas3D)
+        // VtkCanvas not handled here
+        if (canvas instanceof VtkCanvas)
             return;
         // no image position --> exit
         if (imagePoint == null)
@@ -975,8 +974,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (e.isConsumed())
             return;
 
-        // canvas3D not handled here
-        if (canvas instanceof Canvas3D)
+        // VtkCanvas not handled here
+        if (canvas instanceof VtkCanvas)
             return;
         // no image position --> exit
         if (imagePoint == null)
@@ -1009,8 +1008,8 @@ public class Anchor2D extends Overlay implements XMLPersistent
         if (e.isConsumed())
             return;
 
-        // canvas3D not handled here
-        if (canvas instanceof Canvas3D)
+        // VtkCanvas not handled here
+        if (canvas instanceof VtkCanvas)
             return;
         // no image position --> exit
         if (imagePoint == null)
