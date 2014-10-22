@@ -14,26 +14,26 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.menu.search"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.menu"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.searchprovider"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.lut"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.searchprovider"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.frame.sequence"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.math"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.colorspace"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.network"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.colorspace"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.vtk"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.inspector"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.imagej.patches"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.resource"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file.xml"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.util"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file.xml"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.lut"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.canvas"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.resource.icon"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.abstract_"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.search"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.common.exception"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.colormap"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.common.exception"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.classloader.exception"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.common.listener.weak"/>
@@ -51,8 +51,8 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.clipboard"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.frame.progress"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.profile"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.point"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.system.profile"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.dimension"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.importer"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.main"/>
@@ -61,21 +61,23 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.help"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.rectangle"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.interface_"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.viewer"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.sequence"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.viewer"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.roi"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.colormodel"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.roi.roi5d"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image.colormodel"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.sequence"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.file.xls"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.roi.edit"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.workspace"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.canvas"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.dialog"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.image"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.renderer"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.update"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.renderer"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.sequence.edit"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.model"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.action"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.preferences"/>
@@ -86,8 +88,8 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.button"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.sequence"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.frame.error"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.component.pool"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.frame.error"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.util"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.swimmingPool"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui"/>
@@ -96,14 +98,14 @@
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.undo"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.math"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.preferences"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.array"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.menu.tools"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.plugin.classloader"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.type.collection.array"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.itk"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.roi"/>
-        <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.roi.roi2d"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.script"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;icy.gui.lut.abstract_"/>
+        <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.roi.roi2d"/>
         <javaElement handleIdentifier="=Icy-Kernel/&lt;plugins.kernel.roi.roi2d.plugin"/>
     </selectedElements>
 </jardesc>
