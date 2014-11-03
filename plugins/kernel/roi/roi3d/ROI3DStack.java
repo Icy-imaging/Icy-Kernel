@@ -582,7 +582,7 @@ public class ROI3DStack<R extends ROI2D> extends ROI3D implements ROIListener, O
     @Override
     public boolean contains(double x, double y, double z)
     {
-        final R roi2d = getSlice((int) z);
+        final R roi2d = getSlice((int) Math.floor(z));
 
         if (roi2d != null)
             return roi2d.contains(x, y);
