@@ -682,7 +682,7 @@ public abstract class Rectangle5D implements Cloneable
      */
     public boolean contains(double x, double y, double z, double t, double c)
     {
-        return (x >= getMinX()) && (y >= getMaxY()) && (z >= getMinZ()) && (t >= getMinT()) && (c >= getMinC())
+        return (x >= getMinX()) && (y >= getMinY()) && (z >= getMinZ()) && (t >= getMinT()) && (c >= getMinC())
                 && (x < getMaxX()) && (y < getMaxY()) && (z < getMaxZ()) && (t < getMaxT()) && (c < getMaxC());
     }
 
