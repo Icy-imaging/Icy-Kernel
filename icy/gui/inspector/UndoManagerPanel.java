@@ -238,7 +238,8 @@ public class UndoManagerPanel extends JPanel implements ActiveSequenceListener, 
         Component horizontalGlue = Box.createHorizontalGlue();
         bottomPanel.add(horizontalGlue);
 
-        JLabel lblNewLabel = new JLabel("Limit");
+        JLabel lblNewLabel = new JLabel("History size");
+        lblNewLabel.setToolTipText("");
         bottomPanel.add(lblNewLabel);
 
         Component horizontalStrut = Box.createHorizontalStrut(8);

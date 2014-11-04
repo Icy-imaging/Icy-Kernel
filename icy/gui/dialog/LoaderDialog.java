@@ -74,7 +74,6 @@ public class LoaderDialog extends JFileChooser implements PropertyChangeListener
 
     private static final String ID_WIDTH = "width";
     private static final String ID_HEIGTH = "heigth";
-    private static final String ID_PATH = "path";
     private static final String ID_SEPARATE = "separate";
     private static final String ID_AUTOORDER = "autoOrder";
     private static final String ID_EXTENSION = "extension";

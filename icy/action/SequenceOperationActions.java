@@ -81,13 +81,31 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
 
-            if (sequence != null)
+            if (viewer != null)
             {
-                Icy.getMainInterface().addSequence(
-                        SequenceUtil.convertToType(Icy.getMainInterface().getActiveSequence(), dataType, scaled));
-                return true;
+                final Sequence sequence = viewer.getSequence();
+
+                if (sequence != null)
+                {
+                    final Sequence out = SequenceUtil.convertToType(Icy.getMainInterface().getActiveSequence(),
+                            dataType, scaled);
+
+                    ThreadUtil.invokeLater(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            // get output viewer
+                            final Viewer vout = new Viewer(out);
+                            // copy colormap from input viewer
+                            vout.getLut().copyFrom(viewer.getLut());
+                        }
+                    });
+
+                    return true;
+                }
             }
 
             return false;
@@ -311,15 +329,37 @@ public class SequenceOperationActions
         @Override
         public boolean doAction(ActionEvent e)
         {
-            final Sequence sequence = Icy.getMainInterface().getActiveSequence();
+            final Viewer viewer = Icy.getMainInterface().getActiveViewer();
+            if (viewer == null)
+                return false;
 
-            if (sequence != null)
+            final Sequence seq = viewer.getSequence();
+            if (seq == null)
+                return false;
+
+            ThreadUtil.bgRun(new Runnable()
             {
-                Icy.getMainInterface().addSequence(SequenceUtil.getCopy(sequence));
-                return true;
-            }
+                @Override
+                public void run()
+                {
+                    // create output sequence
+                    final Sequence out = SequenceUtil.getCopy(seq);
 
-            return false;
+                    ThreadUtil.invokeLater(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            // get output viewer
+                            final Viewer vout = new Viewer(out);
+                            // copy colormap from input viewer
+                            vout.getLut().copyFrom(viewer.getLut());
+                        }
+                    });
+                }
+            });
+
+            return true;
         }
 
         @Override
@@ -528,12 +568,34 @@ public class SequenceOperationActions
         public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getActiveViewer();
-            final int z = (viewer == null) ? -1 : viewer.getPositionZ();
 
-            if (z != -1)
+            if (viewer != null)
             {
-                Icy.getMainInterface().addSequence(SequenceUtil.extractSlice(viewer.getSequence(), z));
-                return true;
+                final Sequence sequence = viewer.getSequence();
+
+                if (sequence != null)
+                {
+                    final int z = viewer.getPositionZ();
+
+                    if (z != -1)
+                    {
+                        final Sequence out = SequenceUtil.extractSlice(sequence, z);
+
+                        ThreadUtil.invokeLater(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                // get output viewer
+                                final Viewer vout = new Viewer(out);
+                                // copy colormap from input viewer
+                                vout.getLut().copyFrom(viewer.getLut());
+                            }
+                        });
+
+                        return true;
+                    }
+                }
             }
 
             return false;
@@ -690,12 +752,34 @@ public class SequenceOperationActions
         public boolean doAction(ActionEvent e)
         {
             final Viewer viewer = Icy.getMainInterface().getActiveViewer();
-            final int t = (viewer == null) ? -1 : viewer.getPositionT();
 
-            if (t != -1)
+            if (viewer != null)
             {
-                Icy.getMainInterface().addSequence(SequenceUtil.extractFrame(viewer.getSequence(), t));
-                return true;
+                final Sequence sequence = viewer.getSequence();
+
+                if (sequence != null)
+                {
+                    final int t = viewer.getPositionT();
+
+                    if (t != -1)
+                    {
+                        final Sequence out = SequenceUtil.extractFrame(sequence, t);
+
+                        ThreadUtil.invokeLater(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                // get output viewer
+                                final Viewer vout = new Viewer(out);
+                                // copy colormap from input viewer
+                                vout.getLut().copyFrom(viewer.getLut());
+                            }
+                        });
+
+                        return true;
+                    }
+                }
             }
 
             return false;
@@ -810,7 +894,7 @@ public class SequenceOperationActions
 
     // ZT conversion
     public static IcyAbstractAction convertToSlicesAction = new IcyAbstractAction("Convert to stack", new IcyIcon(
-            ResourceUtil.ICON_LAYER_V1), "Convert to stack", "Put all images in Z dimension.", true,
+            ResourceUtil.ICON_LAYER_V1), "Convert to stack", "Set all images in Z dimension.", true,
             "Converting to stack...")
     {
         /**
@@ -846,9 +930,9 @@ public class SequenceOperationActions
         }
     };
 
-    public static IcyAbstractAction convertToFramesAction = new IcyAbstractAction("Convert to frames", new IcyIcon(
-            ResourceUtil.ICON_LAYER_H1), "Convert to frames", "Put all images in T dimension.", true,
-            "Converting to frames...")
+    public static IcyAbstractAction convertToFramesAction = new IcyAbstractAction("Convert to time", new IcyIcon(
+            ResourceUtil.ICON_LAYER_H1), "Convert to time sequence", "Set all images in T dimension.", true,
+            "Converting to time...")
     {
         /**
          * 

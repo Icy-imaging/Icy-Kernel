@@ -33,6 +33,7 @@ import icy.gui.viewer.ViewerAdapter;
 import icy.gui.viewer.ViewerEvent;
 import icy.gui.viewer.ViewerListener;
 import icy.image.IcyBufferedImage;
+import icy.image.lut.LUT;
 import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
 import icy.painter.Overlay;
@@ -290,6 +291,15 @@ public class MainInterfaceGui implements MainInterface
         }
 
         return result;
+    }
+
+    @Override
+    public LUT getActiveLUT()
+    {
+        if (activeViewer != null)
+            return activeViewer.getLut();
+
+        return null;
     }
 
     @Override

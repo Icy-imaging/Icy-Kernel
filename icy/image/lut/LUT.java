@@ -113,14 +113,46 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
             return LUT.this;
         }
 
+        /**
+         * Copy the colormap and scaler data from the specified source {@link LUTChannel}
+         */
+        public void copyFrom(LUTChannel source)
+        {
+            setColorMap(source.getColorMap(), true);
+            setScaler(source.getScaler());
+        }
+
         public Scaler getScaler()
         {
-            return scalers[channel];
+            return getScalers()[channel];
+        }
+
+        /**
+         * Set the specified scaler (do a copy).
+         * 
+         * @param source
+         *        source scaler to copy from
+         */
+        public void setScaler(Scaler source)
+        {
+            final Scaler scaler = getScaler();
+
+            scaler.beginUpdate();
+            try
+            {
+                scaler.setAbsLeftRightIn(source.getAbsLeftIn(), source.getAbsRightIn());
+                scaler.setLeftRightIn(source.getLeftIn(), source.getRightIn());
+                scaler.setLeftRightOut(source.getLeftOut(), source.getRightOut());
+            }
+            finally
+            {
+                scaler.endUpdate();
+            }
         }
 
         public IcyColorMap getColorMap()
         {
-            return colorSpace.getColorMap(channel);
+            return getColorSpace().getColorMap(channel);
         }
 
         /**
@@ -133,7 +165,7 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
          */
         public void setColorMap(IcyColorMap colorMap, boolean setAlpha)
         {
-            colorSpace.setColorMap(channel, colorMap, setAlpha);
+            getColorSpace().setColorMap(channel, colorMap, setAlpha);
         }
 
         /**
@@ -390,8 +422,16 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
      */
     public void copyFrom(LUT lut)
     {
-        setColorMaps(lut, true);
-        setScalers(lut);
+        beginUpdate();
+        try
+        {
+            setColorMaps(lut, true);
+            setScalers(lut);
+        }
+        finally
+        {
+            endUpdate();
+        }
     }
 
     /**

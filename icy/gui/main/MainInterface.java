@@ -27,6 +27,7 @@ import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.ToolRibbonTask;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
+import icy.image.lut.LUT;
 import icy.imagej.ImageJWrapper;
 import icy.painter.Overlay;
 import icy.painter.Painter;
@@ -110,6 +111,12 @@ public interface MainInterface
      * Returns <code>null</code> if there is no sequence opened.
      */
     public abstract Viewer getActiveViewer();
+
+    /**
+     * Returns the LUT from the active viewer window.
+     * Returns <code>null</code> if there is no sequence opened.
+     */
+    public abstract LUT getActiveLUT();
 
     /**
      * Returns the current active sequence.<br>

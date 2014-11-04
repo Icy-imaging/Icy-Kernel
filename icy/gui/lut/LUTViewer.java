@@ -62,6 +62,7 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
     private static final String PREF_ID_HISTO = "gui.histo";
 
     private static final String ID_AUTO_REFRESH = "autoRefresh";
+    private static final String ID_AUTO_BOUNDS = "autoBounds";
     private static final String ID_LOG_VIEW = "logView";
 
     /**
@@ -252,6 +253,8 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
                     autoRefreshHistoCheckBox.setSelected(refreshValue);
                     autoRefreshHistoCheckBox.setEnabled(true);
                 }
+
+                pref.putBoolean(ID_AUTO_BOUNDS, value);
             }
         });
 
@@ -319,6 +322,11 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
 
     private boolean getPreferredAutoBounds()
     {
+        boolean result = pref.getBoolean(ID_AUTO_BOUNDS, true);
+
+        if (!result)
+            return false;
+
         final Sequence sequence = getSequence();
 
         if (sequence != null)

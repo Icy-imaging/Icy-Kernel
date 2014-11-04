@@ -556,7 +556,7 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
     @Override
     public boolean contains(double x, double y, double z, double t)
     {
-        final R roi3d = getSlice((int) t);
+        final R roi3d = getSlice((int)Math.floor(t));
 
         if (roi3d != null)
             return roi3d.contains(x, y, z);
@@ -574,7 +574,8 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         if (!bounds.contains(x, y, z, t, sizeX, sizeY, sizeZ, sizeT))
             return false;
 
-        for (int tc = (int) t; tc < (int) (t + sizeT); tc++)
+        final int lim = (int) Math.floor(t + sizeT);
+        for (int tc = (int) Math.floor(t); tc < lim; tc++)
         {
             final R roi3d = getSlice(tc);
             if ((roi3d == null) || !roi3d.contains(x, y, z, sizeX, sizeY, sizeZ))
@@ -594,7 +595,8 @@ public class ROI4DStack<R extends ROI3D> extends ROI4D implements ROIListener, O
         if (!bounds.intersects(x, y, z, t, sizeX, sizeY, sizeZ, sizeT))
             return false;
 
-        for (int tc = (int) t; tc < (int) (t + sizeT); tc++)
+        final int lim = (int) Math.floor(t + sizeT);
+        for (int tc = (int) Math.floor(t); tc < lim; tc++)
         {
             final R roi3d = getSlice(tc);
             if ((roi3d != null) && roi3d.intersects(x, y, z, sizeX, sizeY, sizeZ))
