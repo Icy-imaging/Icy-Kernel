@@ -27,6 +27,7 @@ import icy.gui.menu.ApplicationMenu;
 import icy.gui.menu.ToolRibbonTask;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
+import icy.image.lut.LUT;
 import icy.imagej.ImageJWrapper;
 import icy.painter.Overlay;
 import icy.painter.Painter;
@@ -127,6 +128,12 @@ public class MainInterfaceBatch implements MainInterface
     public ArrayList<Plugin> getActivePlugins()
     {
         return CollectionUtil.createArrayList(activePlugin, false);
+    }
+
+    @Override
+    public LUT getActiveLUT()
+    {
+        return null;
     }
 
     @Override
@@ -703,5 +710,4 @@ public class MainInterfaceBatch implements MainInterface
     {
         return null;
     }
-
 }

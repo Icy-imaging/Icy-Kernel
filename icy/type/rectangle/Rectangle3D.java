@@ -521,7 +521,7 @@ public abstract class Rectangle3D implements Cloneable
         else
             maxZ = z + sizeZ;
 
-        return (x >= getMinX()) && (y >= getMaxY()) && (z >= getMinZ()) && (maxX <= getMaxX()) && (maxY <= getMaxY())
+        return (x >= getMinX()) && (y >= getMinY()) && (z >= getMinZ()) && (maxX <= getMaxX()) && (maxY <= getMaxY())
                 && (maxZ <= getMaxZ());
     }
 
@@ -580,7 +580,7 @@ public abstract class Rectangle3D implements Cloneable
         else
             maxZ = z + sizeZ;
 
-        return (maxX > getMinX()) && (maxY > getMaxY()) && (maxZ > getMinZ()) && (x < getMaxX()) && (y < getMaxY())
+        return (maxX > getMinX()) && (maxY > getMinY()) && (maxZ > getMinZ()) && (x < getMaxX()) && (y < getMaxY())
                 && (z < getMaxZ());
     }
 

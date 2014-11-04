@@ -705,7 +705,7 @@ public abstract class Rectangle4D implements Cloneable
         else
             maxT = t + sizeT;
 
-        return (maxX > getMinX()) && (maxY > getMaxY()) && (maxZ > getMinZ()) && (maxT > getMinT()) && (x < getMaxX())
+        return (maxX > getMinX()) && (maxY > getMinY()) && (maxZ > getMinZ()) && (maxT > getMinT()) && (x < getMaxX())
                 && (y < getMaxY()) && (z < getMaxZ()) && (t < getMaxT());
     }
 
