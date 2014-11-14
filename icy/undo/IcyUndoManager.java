@@ -113,14 +113,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
      */
     public void discardAllEdits()
     {
-        trimEdits(0, edits.size() - 1);
-        fireChangeEvent();
+        if (trimEdits(0, edits.size() - 1))
+            fireChangeEvent();
     }
 
     /**
      * Remove future edits (the ones to redo) from the undo manager sending each edit a
-     * <code>die</code> message
-     * in the process.
+     * <code>die</code> message in the process.
      * 
      * @param keep
      *        number of future edits to keep (1 means we keep only the next edit)
@@ -128,14 +127,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
      */
     public synchronized void discardFutureEdits(int keep)
     {
-        trimEdits(indexOfNextAdd + keep, edits.size() - 1);
-        fireChangeEvent();
+        if (trimEdits(indexOfNextAdd + keep, edits.size() - 1))
+            fireChangeEvent();
     }
 
     /**
      * Remove future edits (the ones to redo) from the undo manager sending each edit a
-     * <code>die</code> message
-     * in the process.
+     * <code>die</code> message in the process.
      * 
      * @see AbstractUndoableEdit#die
      */
@@ -155,13 +153,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
      */
     public synchronized void discardOldEdits(int keep)
     {
-        trimEdits(0, indexOfNextAdd - (1 + keep));
-        fireChangeEvent();
+        if (trimEdits(0, indexOfNextAdd - (1 + keep)))
+            fireChangeEvent();
     }
 
     /**
-     * Empties the undo manager sending each edit a <code>die</code> message
-     * in the process.
+     * Remove old edits (the ones to undo) from the undo manager sending each edit a
+     * <code>die</code> message in the process.
      * 
      * @see AbstractUndoableEdit#die
      */
@@ -174,8 +172,10 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
      * Reduces the number of queued edits to a range of size limit,
      * centered on the index of the next edit.
      */
-    protected void trimForLimit()
+    protected boolean trimForLimit()
     {
+        boolean result = false;
+
         if (limit >= 0)
         {
             final int size = edits.size();
@@ -208,10 +208,14 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
                     keepFrom += delta;
                 }
 
-                trimEdits(keepTo + 1, size - 1);
-                trimEdits(0, keepFrom - 1);
+                if (trimEdits(keepTo + 1, size - 1))
+                    result = true;
+                if (trimEdits(0, keepFrom - 1))
+                    result = true;
             }
         }
+
+        return result;
     }
 
     /**
@@ -224,14 +228,15 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
      *        the minimum index to remove
      * @param to
      *        the maximum index to remove
+     * @return <code>true</code> if some edits has been removed.
      */
-    protected void trimEdits(int from, int to)
+    protected boolean trimEdits(int from, int to)
     {
         if (from <= to)
         {
             synchronized (edits)
             {
-                for (int i = to; from <= i; i--)
+                for (int i = to; i >= from; i--)
                 {
                     edits.get(i).die();
                     edits.remove(i);
@@ -242,7 +247,11 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
                 indexOfNextAdd -= to - from + 1;
             else if (indexOfNextAdd >= from)
                 indexOfNextAdd = from;
+
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -262,7 +271,9 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
     public synchronized void setLimit(int l)
     {
         limit = l;
-        trimForLimit();
+
+        if (trimForLimit())
+            fireChangeEvent();
     }
 
     /**
@@ -321,6 +332,12 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
             final AbstractIcyUndoableEdit next = edits.get(--indexOfNextAdd);
             next.undo();
         }
+
+        // automatically remove useless edits
+        if (!canRedo())
+            discardFutureEdits();
+
+        fireChangeEvent();
     }
 
     /**
@@ -363,7 +380,10 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
 
         undoTo(edit);
 
-        // notify change
+        // automatically remove useless edits
+        if (!canRedo())
+            discardFutureEdits();
+
         fireChangeEvent();
     }
 
@@ -377,8 +397,8 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
     @Override
     public synchronized boolean canUndo()
     {
-        AbstractIcyUndoableEdit edit = editToBeUndone();
-        return edit != null && edit.canUndo();
+        final AbstractIcyUndoableEdit edit = editToBeUndone();
+        return (edit != null) && edit.canUndo();
     }
 
     /**
@@ -394,7 +414,7 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
 
         while (!done)
         {
-            AbstractIcyUndoableEdit next = edits.get(indexOfNextAdd++);
+            final AbstractIcyUndoableEdit next = edits.get(indexOfNextAdd++);
             next.redo();
             done = (next == edit);
         }
@@ -416,11 +436,16 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
     public synchronized void redo() throws CannotRedoException
     {
         AbstractIcyUndoableEdit edit = editToBeRedone();
+
         if (edit == null)
-        {
             throw new CannotRedoException();
-        }
+
         redoTo(edit);
+
+        // automatically remove useless edits
+        if (!canUndo())
+            discardOldEdits();
+
         fireChangeEvent();
     }
 
@@ -437,8 +462,8 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
     @Override
     public synchronized boolean canRedo()
     {
-        AbstractIcyUndoableEdit edit = editToBeRedone();
-        return edit != null && edit.canRedo();
+        final AbstractIcyUndoableEdit edit = editToBeRedone();
+        return (edit != null) && edit.canRedo();
     }
 
     /**
@@ -467,6 +492,12 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
                 AbstractIcyUndoableEdit next = edits.get(indexOfNextAdd++);
                 next.redo();
             }
+
+            // automatically remove useless edits
+            if (!canUndo())
+                discardOldEdits();
+            if (!canRedo())
+                discardFutureEdits();
 
             // notify change
             fireChangeEvent();

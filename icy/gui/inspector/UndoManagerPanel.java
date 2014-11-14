@@ -149,7 +149,7 @@ public class UndoManagerPanel extends JPanel implements ActiveSequenceListener, 
                     if (undoManager != null)
                         return "Initial state";
 
-                    return "No manager";
+                    return "No opened sequence";
                 }
 
                 if (undoManager != null)

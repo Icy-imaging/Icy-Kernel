@@ -388,7 +388,7 @@ public abstract class IcyColorModel extends ColorModel implements ScalerListener
      * @param component
      *        component we want to set the colormap
      * @param map
-     *        source colorspace to copy
+     *        source colormap to copy
      * @param setAlpha
      *        also set the alpha information
      */

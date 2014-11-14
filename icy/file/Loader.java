@@ -157,6 +157,11 @@ public class Loader
             return -1;
         }
 
+        public boolean isUnknowDim(DimensionId dim)
+        {
+            return getChunk(dim, false) == null;
+        }
+
         boolean removeChunk(DimensionId dim)
         {
             return removeChunk(getChunk(dim, true));
@@ -167,7 +172,7 @@ public class Loader
             return chunks.remove(chunk);
         }
 
-        private PositionChunk getChunk(DimensionId dim, boolean allowUnknown)
+        PositionChunk getChunk(DimensionId dim, boolean allowUnknown)
         {
             if (dim != null)
             {
@@ -2098,16 +2103,14 @@ public class Loader
             {
                 if (loadingFrame != null)
                 {
-                    loadingFrame.setLength(paths.size());
-                    loadingFrame.setPosition(0);
+                    // each file can contains several image so we use 100 "inter step"
+                    loadingFrame.setLength(paths.size() * 100d);
+                    loadingFrame.setPosition(0d);
                 }
 
                 // load each file in a separate sequence
                 for (String path : paths)
                 {
-                    if (loadingFrame != null)
-                        loadingFrame.incPosition();
-
                     // load the file
                     final List<Sequence> sequences = internalLoadSingle(importers, path, serie, loadingFrame);
 
@@ -2139,16 +2142,14 @@ public class Loader
                 if (loadingFrame != null)
                 {
                     loadingFrame.setAction("Loading");
-                    loadingFrame.setLength(filePositions.size());
-                    loadingFrame.setPosition(0);
+                    // each file can contains several image so we use 100 "inter step"
+                    loadingFrame.setLength(filePositions.size() * 100d);
+                    loadingFrame.setPosition(0d);
                 }
 
                 // load each file in a separate sequence
                 for (FilePosition filePos : filePositions)
                 {
-                    if (loadingFrame != null)
-                        loadingFrame.incPosition();
-
                     final String path = filePos.path;
                     // load the file
                     final List<Sequence> sequences = internalLoadSingle(importers, path, serie, loadingFrame);
@@ -2372,17 +2373,29 @@ public class Loader
     }
 
     /**
-     * Internal load a single file and return result as Sequence list (for multi serie).
+     * Internal load a single file and return result as Sequence list (for multi serie).<br>
+     * If <i>loadingFrame</i> is not <code>null</code> then it has 100 steps allocated to the
+     * loading of
+     * current path.
      * 
      * @throws IOException
      */
     static List<Sequence> internalLoadSingle(List<SequenceFileImporter> importers, String path, int serie,
             FileFrame loadingFrame) throws IOException
     {
+        final double endStep;
+
         if (loadingFrame != null)
+        {
             loadingFrame.setFilename(path);
 
-        List<Sequence> result = new ArrayList<Sequence>();
+            // 100 step reserved to load this image
+            endStep = loadingFrame.getPosition() + 100d;
+        }
+        else
+            endStep = 0d;
+
+        final List<Sequence> result = new ArrayList<Sequence>();
 
         for (SequenceFileImporter importer : importers)
         {
@@ -2415,56 +2428,50 @@ public class Loader
 
                 // user cancelled action in the serie selection ? null = cancel
                 if (selectedSeries.length == 0)
-                    result = null;
-                else
+                    return null;
+
+                for (int s : selectedSeries)
                 {
-                    for (int s : selectedSeries)
+                    final Sequence seq = createNewSequence(path, meta, s, serieCount > 1);
+                    final int sizeZ = MetaDataUtil.getSizeZ(meta, s);
+                    final int sizeT = MetaDataUtil.getSizeT(meta, s);
+                    // set local length for loader frame
+                    final int numImage = sizeZ * sizeT * selectedSeries.length;
+                    final double progressStep = 100d / numImage;
+                    double progress = 0d;
+
+                    if (loadingFrame != null)
+                        progress = loadingFrame.getPosition();
+
+                    seq.beginUpdate();
+                    try
                     {
-                        final Sequence seq = createNewSequence(path, meta, s, serieCount > 1);
-                        final int sizeZ = MetaDataUtil.getSizeZ(meta, s);
-                        final int sizeT = MetaDataUtil.getSizeT(meta, s);
-                        // set local length for loader frame
-                        final int numImage = sizeZ * sizeT;
-                        int progress = 0;
-
-                        if (loadingFrame != null)
+                        for (int t = 0; t < sizeT; t++)
                         {
-                            if (numImage > 5)
-                                loadingFrame.setLength(numImage);
-                        }
-
-                        seq.beginUpdate();
-                        try
-                        {
-                            for (int t = 0; t < sizeT; t++)
+                            for (int z = 0; z < sizeZ; z++)
                             {
-                                for (int z = 0; z < sizeZ; z++)
-                                {
-                                    if (loadingFrame != null)
-                                    {
-                                        // cancel requested ? --> return null to inform about cancel
-                                        if (loadingFrame.isCancelRequested())
-                                            return null;
+                                // cancel requested ? --> return null to inform about cancel
+                                if ((loadingFrame != null) && loadingFrame.isCancelRequested())
+                                    return null;
 
-                                        // notify progress to loader frame
-                                        // (only if sufficient image loaded)
-                                        if (numImage > 5)
-                                            loadingFrame.setPosition(progress++);
-                                    }
+                                // load image and add it to the sequence
+                                seq.setImage(t, z, importer.getImage(s, z, t));
 
-                                    // load image and add it to the sequence
-                                    seq.setImage(t, z, importer.getImage(s, z, t));
-                                }
+                                progress += progressStep;
+
+                                // notify progress to loader frame
+                                if (loadingFrame != null)
+                                    loadingFrame.setPosition(progress);
                             }
                         }
-                        finally
-                        {
-                            seq.endUpdate();
-                        }
-
-                        // add sequence to result
-                        result.add(seq);
                     }
+                    finally
+                    {
+                        seq.endUpdate();
+                    }
+
+                    // add sequence to result
+                    result.add(seq);
                 }
 
                 // no need to test with others importer
@@ -2481,6 +2488,9 @@ public class Loader
             {
                 // close importer
                 importer.close();
+
+                if (loadingFrame != null)
+                    loadingFrame.setPosition(endStep);
             }
         }
 
@@ -2657,6 +2667,75 @@ public class Loader
                     ;
                 while (cleanPositions(baseName, positions, DimensionId.C))
                     ;
+            }
+
+            boolean tSet = false;
+            boolean tCanChange = true;
+            boolean zSet = false;
+            boolean zCanChange = true;
+
+            for (Position position : positions)
+            {
+                if (position.getValue(DimensionId.T) != -1)
+                    tSet = true;
+                if (position.getValue(DimensionId.Z) != -1)
+                    zSet = true;
+
+                if (!position.isUnknowDim(DimensionId.T))
+                    tCanChange = false;
+                if (!position.isUnknowDim(DimensionId.Z))
+                    zCanChange = false;
+            }
+
+            // Z and T position are not fixed, try to open 1 image to get its size information
+            if (tCanChange && zCanChange && (filenames.size() > 0))
+            {
+                try
+                {
+                    final OMEXMLMetadataImpl metadata = getMetaData(filenames.get(0));
+
+                    final boolean tMulti = MetaDataUtil.getSizeT(metadata, 0) > 1;
+                    final boolean zMulti = MetaDataUtil.getSizeZ(metadata, 0) > 1;
+                    boolean swapZT = false;
+
+                    if (tMulti ^ zMulti)
+                    {
+                        // multi T but single Z
+                        if (tMulti)
+                        {
+                            // T position set but can be swapped with Z
+                            if (tSet && tCanChange && !zSet)
+                                swapZT = true;
+                        }
+                        else
+                        // multi Z but single T
+                        {
+                            // Z position set but can be swapped with T
+                            if (zSet && zCanChange && !tSet)
+                                swapZT = true;
+                        }
+                    }
+
+                    // swat T and Z dimension
+                    if (swapZT)
+                    {
+                        for (Position position : positions)
+                        {
+                            final PositionChunk zChunk = position.getChunk(DimensionId.Z, true);
+                            final PositionChunk tChunk = position.getChunk(DimensionId.T, true);
+
+                            // swap dim
+                            if (zChunk != null)
+                                zChunk.dim = DimensionId.T;
+                            if (tChunk != null)
+                                tChunk.dim = DimensionId.Z;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    // ignore...
+                }
             }
 
             // create FilePosition result array

@@ -25,6 +25,7 @@ import javax.swing.JSlider;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.border.EmptyBorder;
 
 /**
  * @author Stephane
@@ -60,7 +61,7 @@ public class LayerControlPanel extends JPanel implements ChangeListener
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 
         final JPanel actionPanel = new JPanel();
-        actionPanel.setBorder(new TitledBorder(null, "Action", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        actionPanel.setBorder(new EmptyBorder(2, 0, 0, 0));
         add(actionPanel);
         GridBagLayout gbl_actionPanel = new GridBagLayout();
         gbl_actionPanel.columnWidths = new int[] {0, 0, 0, 0};

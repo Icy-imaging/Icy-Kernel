@@ -2706,6 +2706,23 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             switch (e.getKeyCode())
             {
+                case KeyEvent.VK_R:
+                    // reset zoom and rotation
+                    setRotation(0, false);
+                    fitImageToCanvas(true);
+                    
+                    // also reset LUT
+                    if (EventUtil.isShiftDown(e, true))
+                    {
+                        final Sequence sequence = getSequence();
+                        final Viewer viewer = getViewer();
+                        if ((viewer != null) && (sequence != null))
+                            viewer.setLut(sequence.createCompatibleLUT());
+                    }
+
+                    e.consume();
+                    break;
+
                 case KeyEvent.VK_LEFT:
                     if (EventUtil.isMenuControlDown(e, true))
                         setPositionT(Math.max(getPositionT() - 5, 0));

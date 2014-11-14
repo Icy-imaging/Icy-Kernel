@@ -257,7 +257,7 @@ public class SequenceOperationActions
             if (sequence != null)
             {
                 // create undo point
-                final boolean canUndo = sequence.createUndoDataPoint("Channel " + channel + "removed");
+                final boolean canUndo = sequence.createUndoPoint("Channel " + channel + "removed");
 
                 // cannot backup
                 if (!canUndo)

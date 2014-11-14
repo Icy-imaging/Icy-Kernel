@@ -26,6 +26,7 @@ import icy.image.IcyBufferedImage;
 import icy.image.IcyBufferedImageEvent;
 import icy.image.IcyBufferedImageListener;
 import icy.image.IcyBufferedImageUtil;
+import icy.image.colormap.IcyColorMap;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colormodel.IcyColorModelEvent;
 import icy.image.colormodel.IcyColorModelListener;
@@ -2103,7 +2104,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
         synchronized (volumetricImages)
         {
-            volumetricImages.put(new Integer(t), volImg);
+            volumetricImages.put(Integer.valueOf(t), volImg);
         }
 
         return volImg;
@@ -2891,6 +2892,69 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
+     * Get the default colormap for the specified channel
+     * 
+     * @param channel
+     *        channel we want to set the colormap
+     * @see #getColorMap(int)
+     */
+    public IcyColorMap getDefaultColorMap(int channel)
+    {
+        return getDefaultLUT().getLutChannel(channel).getColorMap();
+    }
+
+    /**
+     * Set the default colormap for the specified channel
+     * 
+     * @param channel
+     *        channel we want to set the colormap
+     * @param map
+     *        source colormap to copy
+     * @param setAlpha
+     *        also copy the alpha information
+     * @see #getDefaultColorMap(int)
+     */
+    public void setDefaultColormap(int channel, IcyColorMap map, boolean setAlpha)
+    {
+        if (colorModel != null)
+            colorModel.setColorMap(channel, map, setAlpha);
+    }
+
+    /**
+     * Get the user colormap for the specified channel.<br>
+     * User colormap is saved in the XML persistent data and reloaded when opening the Sequence.
+     * 
+     * @param channel
+     *        channel we want to set the colormap
+     * @see #getDefaultColorMap(int)
+     */
+    public IcyColorMap getColorMap(int channel)
+    {
+        return getUserLUT().getLutChannel(channel).getColorMap();
+    }
+
+    /**
+     * Set the user colormap for the specified channel.<br>
+     * User colormap is saved in the XML persistent data and reloaded when opening the Sequence.
+     * 
+     * @param channel
+     *        channel we want to set the colormap
+     * @param map
+     *        source colormap to copy
+     * @param setAlpha
+     *        also copy the alpha information
+     * @see #getColorMap(int)
+     */
+    public void setColormap(int channel, IcyColorMap map, boolean setAlpha)
+    {
+        // at this point we need to set the user LUT
+        if (userLut == null)
+            userLut = getDefaultLUT();
+
+        userLut.getLutChannel(channel).setColorMap(map, setAlpha);
+    }
+
+    /**
      * Returns the data type of sequence
      */
     public DataType getDataType_()
@@ -2963,7 +3027,7 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
         if ((colorModel == null) || isEmpty())
             return;
 
-        final ArrayList<VolumetricImage> volumes = getAllVolumetricImage();
+        final List<VolumetricImage> volumes = getAllVolumetricImage();
 
         beginUpdate();
         try

@@ -457,6 +457,19 @@ public class MetaDataUtil
     /**
      * Ensure the channel at specified index exist for the specified image serie.
      */
+    public static Channel ensureChannel(OMEXMLMetadataImpl metaData, int serie, int index)
+    {
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return ensureChannel(pix, index);
+
+        return null;
+    }
+
+    /**
+     * Ensure the channel at specified index exist for the specified image serie.
+     */
     public static Channel ensureChannel(Pixels pix, int index)
     {
         // create missing channel
@@ -464,6 +477,26 @@ public class MetaDataUtil
             pix.addChannel(new Channel());
 
         return pix.getChannel(index);
+    }
+
+    /**
+     * Remove a channel for the specified image serie.
+     */
+    public static void removeChannel(OMEXMLMetadataImpl metaData, int serie, int index)
+    {
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            removeChannel(pix, index);
+    }
+
+    /**
+     * Remove a channel from the specified Pixels object.
+     */
+    public static void removeChannel(Pixels pix, int index)
+    {
+        if (pix.sizeOfChannelList() > index)
+            pix.removeChannel(pix.getChannel(index));
     }
 
     /**
@@ -488,7 +521,7 @@ public class MetaDataUtil
 
         // keep only desired number of image
         while (pix.sizeOfChannelList() > num)
-            pix.removeChannel(pix.getChannel(pix.sizeOfChannelList() - 1));
+            removeChannel(pix, pix.sizeOfChannelList() - 1);
 
         // create missing image
         ensureChannel(pix, num - 1);
@@ -762,7 +795,7 @@ public class MetaDataUtil
             if (i != num)
                 ome.removeImage(ome.getImage(i));
 
-        List<Object> toKeep = new ArrayList<Object>();
+        final List<Object> toKeep = new ArrayList<Object>();
 
         // try to keep associated dataset only
         toKeep.clear();
@@ -811,8 +844,11 @@ public class MetaDataUtil
         if (exp != null)
         {
             for (int i = ome.sizeOfExperimentList() - 1; i >= 0; i--)
-                if (ome.getExperiment(i) != exp)
-                    ome.removeExperiment(exp);
+            {
+                final Experiment obj = ome.getExperiment(i);
+                if (obj != exp)
+                    ome.removeExperiment(obj);
+            }
         }
         else if (ome.sizeOfExperimentList() == numSeries)
         {
@@ -826,8 +862,11 @@ public class MetaDataUtil
         if (expr != null)
         {
             for (int i = ome.sizeOfExperimenterList() - 1; i >= 0; i--)
-                if (ome.getExperimenter(i) != expr)
-                    ome.removeExperimenter(expr);
+            {
+                final Experimenter obj = ome.getExperimenter(i);
+                if (obj != expr)
+                    ome.removeExperimenter(obj);
+            }
         }
         else if (ome.sizeOfExperimenterList() == numSeries)
         {
@@ -841,8 +880,11 @@ public class MetaDataUtil
         if (exprGroup != null)
         {
             for (int i = ome.sizeOfExperimenterGroupList() - 1; i >= 0; i--)
-                if (ome.getExperimenterGroup(i) != exprGroup)
-                    ome.removeExperimenterGroup(exprGroup);
+            {
+                final ExperimenterGroup obj = ome.getExperimenterGroup(i);
+                if (obj != exprGroup)
+                    ome.removeExperimenterGroup(obj);
+            }
         }
         else if (ome.sizeOfExperimenterGroupList() == numSeries)
         {
@@ -856,8 +898,11 @@ public class MetaDataUtil
         if (instr != null)
         {
             for (int i = ome.sizeOfInstrumentList() - 1; i >= 0; i--)
-                if (ome.getInstrument(i) != instr)
-                    ome.removeInstrument(instr);
+            {
+                final Instrument obj = ome.getInstrument(i);
+                if (obj != instr)
+                    ome.removeInstrument(obj);
+            }
         }
         else if (ome.sizeOfInstrumentList() == numSeries)
         {

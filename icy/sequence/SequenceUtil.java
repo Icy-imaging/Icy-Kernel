@@ -44,6 +44,8 @@ import java.util.TreeMap;
 
 import javax.swing.SwingConstants;
 
+import loci.formats.ome.OMEXMLMetadataImpl;
+
 /**
  * {@link Sequence} utilities class.<br>
  * You can find here tools to manipulate the sequence organization, its data type, its size...
@@ -965,7 +967,7 @@ public class SequenceUtil
         sequence.beginUpdate();
         try
         {
-            final ArrayList<IcyBufferedImage> images = sequence.getAllImage();
+            final List<IcyBufferedImage> images = sequence.getAllImage();
 
             sequence.removeAllImages();
             for (int i = 0; i < images.size(); i++)
@@ -985,7 +987,7 @@ public class SequenceUtil
         sequence.beginUpdate();
         try
         {
-            final ArrayList<IcyBufferedImage> images = sequence.getAllImage();
+            final List<IcyBufferedImage> images = sequence.getAllImage();
 
             sequence.removeAllImages();
             for (int i = 0; i < images.size(); i++)
@@ -1039,6 +1041,9 @@ public class SequenceUtil
 
             // get back modified metadata
             source.setMetaData(tmp.getMetadata());
+            // and colormaps
+            for (int c = 0; c < tmp.getSizeC(); c++)
+                source.setDefaultColormap(c, tmp.getDefaultColorMap(c), false);
         }
         finally
         {
@@ -1482,6 +1487,26 @@ public class SequenceUtil
             outSequence.endUpdate();
         }
 
+        final OMEXMLMetadataImpl metadata = outSequence.getMetadata();
+
+        // remove channel metadata
+        for (int ch = MetaDataUtil.getNumChannel(metadata, 0) - 1; ch >= 0; ch--)
+        {
+            boolean remove = true;
+
+            for (int i : channels)
+            {
+                if (i == ch)
+                {
+                    remove = false;
+                    break;
+                }
+            }
+
+            if (remove)
+                MetaDataUtil.removeChannel(metadata, 0, ch);
+        }
+
         // sequence name
         if (channels.length > 1)
         {
@@ -1494,11 +1519,12 @@ public class SequenceUtil
         else if (channels.length == 1)
             outSequence.setName(source.getName() + " (" + source.getChannelName(channels[0]) + ")");
 
-        // channel name
+        // copy channel name and colormap
         int c = 0;
         for (int channel : channels)
         {
             outSequence.setChannelName(c, source.getChannelName(channel));
+            outSequence.setDefaultColormap(c, source.getDefaultColorMap(channel), false);
             c++;
         }
 
