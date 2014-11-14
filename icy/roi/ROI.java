@@ -1974,8 +1974,8 @@ public abstract class ROI implements ChangeListener, XMLPersistent
         final boolean iz1 = bounds1.isInfiniteZ();
         final boolean iz2 = bounds2.isInfiniteZ();
 
-        // cannot process subtraction when we have an infinite dimension on second ROI
-        // while having a finite one on the first ROI
+        // cannot process subtraction when we have an finite dimension on second ROI
+        // while having a infinite one on the first ROI
         if (ic1 && !ic2)
         {
             if (throwException)
@@ -1983,14 +1983,14 @@ public abstract class ROI implements ChangeListener, XMLPersistent
                         "Can't process subtraction: ROI 1 has infinite C dimension while ROI 2 has a finite one");
             return null;
         }
-        if (!it1 && it2)
+        if (it1 && !it2)
         {
             if (throwException)
                 throw new UnsupportedOperationException(
                         "Can't process subtraction: ROI 1 has infinite T dimension while ROI 2 has a finite one");
             return null;
         }
-        if (!iz1 && iz2)
+        if (iz1 && !iz2)
         {
             if (throwException)
                 throw new UnsupportedOperationException(

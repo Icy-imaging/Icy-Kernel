@@ -130,6 +130,7 @@ public class HistogramPanel extends BorderedPanel
      * Call this method to inform you start histogram computation (allow the panel to display
      * "computing" message).</br>
      * You need to call {@link #done()} when computation is done.
+     * 
      * @see #done()
      */
     public void reset()
@@ -353,36 +354,13 @@ public class HistogramPanel extends BorderedPanel
      */
     public void setMinMaxIntValues(double min, double max, boolean intType)
     {
+        // test with cached value first
         if ((minValue != min) || (maxValue != max) || (integer != intType))
             buildHistogram(min, max, intType);
-    }
-
-    /**
-     * Set the minimum allowed value of the histogram.
-     */
-    public void setMinValue(double value)
-    {
-        if (minValue != value)
-            buildHistogram(value, histogram.getMaxValue(), histogram.isIntegerType());
-    }
-
-    /**
-     * Set the maximum allowed value of the histogram.
-     */
-    public void setMaxValue(double value)
-    {
-        if (maxValue != value)
-            buildHistogram(histogram.getMinValue(), value, histogram.isIntegerType());
-    }
-
-    /**
-     * Set true if the input value are integer values only.<br>
-     * This is used to adapt the bin number of histogram.
-     */
-    public void setIntegerType(boolean value)
-    {
-        if (integer != value)
-            buildHistogram(histogram.getMinValue(), histogram.getMaxValue(), value);
+        // then test with uncached value (histo being updated)
+        else if ((histogram.getMinValue() != min) || (histogram.getMaxValue() != max)
+                || (histogram.isIntegerType() != intType))
+            buildHistogram(min, max, intType);
     }
 
     /**

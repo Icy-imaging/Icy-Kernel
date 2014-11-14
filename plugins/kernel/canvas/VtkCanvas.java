@@ -23,6 +23,7 @@ import icy.system.thread.ThreadUtil;
 import icy.type.TypeUtil;
 import icy.type.collection.array.Array1DUtil;
 import icy.util.ColorUtil;
+import icy.util.EventUtil;
 import icy.util.StringUtil;
 import icy.vtk.IcyVtkPanel;
 import icy.vtk.VtkImageVolume;
@@ -420,7 +421,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
             ThreadUtil.sleep(1);
 
         super.shutDown();
-        
+
         propertiesUpdater.interrupt();
         propertiesToUpdate.clear();
         try
@@ -974,10 +975,10 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         final int numComp = Math.min(srcLut.getNumChannel(), dstLut.getNumChannel());
 
         for (int c = 0; c < numComp; c++)
-            retoreOpacity(srcLut.getLutChannel(c), dstLut.getLutChannel(c));
+            restoreOpacity(srcLut.getLutChannel(c), dstLut.getLutChannel(c));
     }
 
-    protected void retoreOpacity(LUTChannel srcLutBand, LUTChannel dstLutBand)
+    protected void restoreOpacity(LUTChannel srcLutBand, LUTChannel dstLutBand)
     {
         dstLutBand.getColorMap().alpha.copyFrom(srcLutBand.getColorMap().alpha);
     }
@@ -1041,7 +1042,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     protected void updateBoundingBoxSize()
     {
         final double[] bounds = imageVolume.getVolume().GetBounds();
-        
+
         boundingBox.SetBounds(bounds);
         rulerBox.SetBounds(bounds);
     }
@@ -1959,6 +1960,43 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
             VtkCanvas.this.mouseWheelMoved(e, null);
 
             super.mouseWheelMoved(e);
+        }
+
+        @Override
+        public void keyPressed(KeyEvent e)
+        {
+            if (!e.isConsumed())
+            {
+                switch (e.getKeyCode())
+                {
+                    case KeyEvent.VK_R:
+                        // reset view
+                        resetCamera();
+                        
+                        // also reset LUT
+                        if (EventUtil.isShiftDown(e, true))
+                        {
+                            final Sequence sequence = getSequence();
+                            final Viewer viewer = getViewer();
+
+                            if ((viewer != null) && (sequence != null))
+                            {
+                                final LUT lut = sequence.createCompatibleLUT();
+
+                                // set default opacity for 3D display
+                                setDefaultOpacity(lut);
+                                viewer.setLut(lut);
+                            }
+                        }
+                        else
+                            Render();
+
+                        e.consume();
+                        break;
+                }
+            }
+
+            super.keyPressed(e);
         }
     }
 }

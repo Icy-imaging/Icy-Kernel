@@ -192,7 +192,7 @@ public class VolumetricImage
             // set the new image
             synchronized (images)
             {
-                images.put(new Integer(z), image);
+                images.put(Integer.valueOf(z), image);
             }
 
             // raise event on sequence

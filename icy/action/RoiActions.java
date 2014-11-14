@@ -56,6 +56,9 @@ import jxl.write.WritableWorkbook;
 import org.w3c.dom.Document;
 
 import plugins.kernel.roi.roi2d.ROI2DRectangle;
+import plugins.kernel.roi.roi3d.ROI3DRectangle;
+import plugins.kernel.roi.roi4d.ROI4DRectangle;
+import plugins.kernel.roi.roi5d.ROI5DRectangle;
 
 /**
  * Roi actions (open / save / copy / paste / merge...)
@@ -501,7 +504,7 @@ public class RoiActions
 
     public static IcyAbstractAction boolNotAction = new IcyAbstractAction("NOT",
             new IcyIcon(ResourceUtil.ICON_ROI_NOT), "Boolean NOT operation",
-            "Create a new ROI representing the inverse of selected ROI")
+            "Create a new ROI representing the inverse of selected ROI", true, "Computing inverse...")
     {
         /**
          * 
@@ -526,20 +529,52 @@ public class RoiActions
                     if (selectedROI.size() != 1)
                         return false;
 
-                    // we do the NOT operation by subtracting current ROI to sequence bounds ROI
-                    final ROI mergeROI = ROIUtil.subtract(new ROI2DRectangle(sequence.getBounds2D()),
-                            selectedROI.get(0));
+                    final ROI roi = selectedROI.get(0);
+                    final ROI seqROI;
 
-                    if (mergeROI != null)
+                    switch (roi.getDimension())
                     {
-                        mergeROI.setName("Inverse");
+                        case 2:
+                            seqROI = new ROI2DRectangle(sequence.getBounds2D());
+                            break;
 
-                        sequence.addROI(mergeROI);
-                        sequence.setSelectedROI(mergeROI);
+                        case 3:
+                            seqROI = new ROI3DRectangle(sequence.getBounds5D().toRectangle3D());
+                            break;
 
-                        // add to undo manager
-                        sequence.addUndoableEdit(new ROIAddSequenceEdit(sequence, mergeROI, "ROI Inverse"));
+                        case 4:
+                            seqROI = new ROI4DRectangle(sequence.getBounds5D().toRectangle4D());
+                            break;
+
+                        case 5:
+                            seqROI = new ROI5DRectangle(sequence.getBounds5D());
+                            break;
+
+                        default:
+                            seqROI = null;
+                            break;
+
                     }
+
+                    if (seqROI != null)
+                    {
+                        // we do the NOT operation by subtracting current ROI to sequence bounds ROI
+                        final ROI mergeROI = ROIUtil.subtract(seqROI, roi);
+
+                        if (mergeROI != null)
+                        {
+                            mergeROI.setName("Inverse");
+
+                            sequence.addROI(mergeROI);
+                            sequence.setSelectedROI(mergeROI);
+
+                            // add to undo manager
+                            sequence.addUndoableEdit(new ROIAddSequenceEdit(sequence, mergeROI, "ROI Inverse"));
+                        }
+                    }
+                    else
+                        MessageDialog.showDialog("Operation not supported", "Input ROI has incorrect dimension !",
+                                MessageDialog.ERROR_MESSAGE);
                 }
                 catch (UnsupportedOperationException ex)
                 {
@@ -565,7 +600,7 @@ public class RoiActions
     };
 
     public static IcyAbstractAction boolOrAction = new IcyAbstractAction("OR", new IcyIcon(ResourceUtil.ICON_ROI_OR),
-            "Boolean OR operation", "Create a new ROI representing the union of selected ROIs")
+            "Boolean OR operation", "Create a new ROI representing the union of selected ROIs", true, "Computing union...")
     {
         /**
          * 
@@ -623,7 +658,7 @@ public class RoiActions
 
     public static IcyAbstractAction boolAndAction = new IcyAbstractAction("AND",
             new IcyIcon(ResourceUtil.ICON_ROI_AND), "Boolean AND operation",
-            "Create a new ROI representing the intersection of selected ROIs")
+            "Create a new ROI representing the intersection of selected ROIs", true, "Computing intersection...")
     {
         /**
          * 
@@ -681,7 +716,7 @@ public class RoiActions
 
     public static IcyAbstractAction boolXorAction = new IcyAbstractAction("XOR",
             new IcyIcon(ResourceUtil.ICON_ROI_XOR), "Boolean XOR operation",
-            "Create a new ROI representing the exclusive union of selected ROIs")
+            "Create a new ROI representing the exclusive union of selected ROIs", true, "Computing exclusive union...")
     {
         /**
          * 
@@ -739,7 +774,7 @@ public class RoiActions
 
     public static IcyAbstractAction boolSubtractAction = new IcyAbstractAction("SUBTRACT", new IcyIcon(
             ResourceUtil.ICON_ROI_SUB), "Boolean subtraction",
-            "Create 2 ROIs representing the result of (A - B) and (B - A)")
+            "Create 2 ROIs representing the result of (A - B) and (B - A)", true, "Computing subtraction...")
     {
         /**
          * 
