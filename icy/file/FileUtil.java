@@ -57,11 +57,21 @@ public class FileUtil
 
     /**
      * Returns default temporary directory.
+     * ex:<br>
+     * <code>c:/temp</code><br>
+     * <code>/tmp</code><br>
      * Same as {@link SystemUtil#getTempDirectory()}
      */
     public static String getTempDirectory()
     {
-        return FileUtil.getGenericPath(SystemUtil.getProperty("java.io.tmpdir"));
+        final String result = FileUtil.getGenericPath(SystemUtil.getProperty("java.io.tmpdir"));
+        final int len = result.length();
+
+        // remove last separator
+        if ((len > 1) && (result.charAt(len - 1) == FileUtil.separatorChar))
+            return result.substring(0, len - 1);
+
+        return result;
     }
 
     /**

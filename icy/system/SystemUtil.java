@@ -709,7 +709,10 @@ public class SystemUtil
     }
 
     /**
-     * Returns default temporary directory.
+     * Returns default temporary directory.<br>
+     * ex:<br>
+     * <code>c:/temp</code><br>
+     * <code>/tmp</code><br>
      * Same as {@link FileUtil#getTempDirectory()}
      */
     public static String getTempDirectory()

@@ -35,7 +35,7 @@ public class SingleInstanceCheck
     public static FileLock lock(String id)
     {
         FileLock result;
-        final File f = new File(FileUtil.getGenericPath(FileUtil.getTempDirectory() + "/" + id + ".lock"));
+        final File f = new File(FileUtil.getTempDirectory() + FileUtil.separator + id + ".lock");
 
         try
         {

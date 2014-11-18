@@ -11,7 +11,7 @@ import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginLoader;
 import icy.plugin.abstract_.Plugin;
-import icy.system.SystemUtil;
+import icy.system.IcyExceptionHandler;
 import icy.util.DateUtil;
 import icy.util.XMLUtil;
 
@@ -44,20 +44,34 @@ public class AuditStorage implements XMLPersistent
 
         pluginStats = new HashMap<PluginIdent, PluginStorage>();
 
-        // load usage data from XML file
-        XMLPersistentHelper.loadFromXML(this, FileUtil.getDirectory(SystemUtil.getTempDirectory(), false) + "/"
-                + AUDIT_FILENAME);
-        // clean obsoletes data
-        clean();
+        try
+        {
+            // load usage data from XML file
+            XMLPersistentHelper.loadFromXML(this, FileUtil.getTempDirectory() + FileUtil.separator + AUDIT_FILENAME);
+            // clean obsoletes data
+            clean();
+        }
+        catch (Exception e)
+        {
+            System.out.println("Warning: can't reload usage statistics data.");
+            IcyExceptionHandler.showErrorMessage(e, false, false);
+        }
 
         lastSaveTime = System.currentTimeMillis();
     }
 
     public void save()
     {
-        // save XML data
-        XMLPersistentHelper.saveToXML(this, FileUtil.getDirectory(SystemUtil.getTempDirectory(), false) + "/"
-                + AUDIT_FILENAME);
+        try
+        {
+            // save XML data
+            XMLPersistentHelper.saveToXML(this, FileUtil.getTempDirectory() + FileUtil.separator + AUDIT_FILENAME);
+        }
+        catch (Exception e)
+        {
+            System.out.println("Warning: can't save usage statistics data.");
+            IcyExceptionHandler.showErrorMessage(e, false, false);
+        }
     }
 
     private void clean()
