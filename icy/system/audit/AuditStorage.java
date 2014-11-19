@@ -132,10 +132,12 @@ public class AuditStorage implements XMLPersistent
         // ignore if missing version info
         if (descriptor.getVersion().isEmpty())
             return;
-
         // ignore kernel plugins
-        if (!descriptor.isKernelPlugin())
-            getStorage(descriptor.getIdent(), true).incLaunch(DateUtil.keepDay(System.currentTimeMillis()));
+        if (descriptor.isKernelPlugin())
+            return;
+
+        // increment launch
+        getStorage(descriptor.getIdent(), true).incLaunch(DateUtil.keepDay(System.currentTimeMillis()));
 
         // save to disk if needed
         autoSave();
@@ -156,11 +158,12 @@ public class AuditStorage implements XMLPersistent
         // ignore if missing version info
         if (descriptor.getVersion().isEmpty())
             return;
-
         // ignore kernel plugins
-        if (!descriptor.isKernelPlugin())
-            getStorage(descriptor.getIdent(), true).incInstance(DateUtil.keepDay(System.currentTimeMillis()));
+        if (descriptor.isKernelPlugin())
+            return;
 
+        // increment instance
+        getStorage(descriptor.getIdent(), true).incInstance(DateUtil.keepDay(System.currentTimeMillis()));
         // save to disk if needed
         autoSave();
     }
@@ -358,6 +361,7 @@ public class AuditStorage implements XMLPersistent
                 params.put(ID_STATS_LAUNCH + "[" + offset + "][" + ID_DATE + "]", entry.getKey().toString());
                 // set value
                 params.put(ID_STATS_LAUNCH + "[" + offset + "][" + ID_VALUE + "]", entry.getValue().toString());
+                offset++;
             }
 
             offset = 0;
@@ -368,6 +372,7 @@ public class AuditStorage implements XMLPersistent
                 params.put(ID_STATS_INSTANCE + "[" + offset + "][" + ID_DATE + "]", entry.getKey().toString());
                 // set value
                 params.put(ID_STATS_INSTANCE + "[" + offset + "][" + ID_VALUE + "]", entry.getValue().toString());
+                offset++;
             }
 
             try
