@@ -11,7 +11,7 @@ import icy.plugin.PluginDescriptor;
 import icy.plugin.PluginDescriptor.PluginIdent;
 import icy.plugin.PluginLoader;
 import icy.plugin.abstract_.Plugin;
-import icy.system.SystemUtil;
+import icy.system.IcyExceptionHandler;
 import icy.util.DateUtil;
 import icy.util.XMLUtil;
 
@@ -44,20 +44,34 @@ public class AuditStorage implements XMLPersistent
 
         pluginStats = new HashMap<PluginIdent, PluginStorage>();
 
-        // load usage data from XML file
-        XMLPersistentHelper.loadFromXML(this, FileUtil.getDirectory(SystemUtil.getTempDirectory(), false) + "/"
-                + AUDIT_FILENAME);
-        // clean obsoletes data
-        clean();
+        try
+        {
+            // load usage data from XML file
+            XMLPersistentHelper.loadFromXML(this, FileUtil.getTempDirectory() + FileUtil.separator + AUDIT_FILENAME);
+            // clean obsoletes data
+            clean();
+        }
+        catch (Exception e)
+        {
+            System.out.println("Warning: can't reload usage statistics data.");
+            IcyExceptionHandler.showErrorMessage(e, false, false);
+        }
 
         lastSaveTime = System.currentTimeMillis();
     }
 
     public void save()
     {
-        // save XML data
-        XMLPersistentHelper.saveToXML(this, FileUtil.getDirectory(SystemUtil.getTempDirectory(), false) + "/"
-                + AUDIT_FILENAME);
+        try
+        {
+            // save XML data
+            XMLPersistentHelper.saveToXML(this, FileUtil.getTempDirectory() + FileUtil.separator + AUDIT_FILENAME);
+        }
+        catch (Exception e)
+        {
+            System.out.println("Warning: can't save usage statistics data.");
+            IcyExceptionHandler.showErrorMessage(e, false, false);
+        }
     }
 
     private void clean()
@@ -118,10 +132,12 @@ public class AuditStorage implements XMLPersistent
         // ignore if missing version info
         if (descriptor.getVersion().isEmpty())
             return;
-
         // ignore kernel plugins
-        if (!descriptor.isKernelPlugin())
-            getStorage(descriptor.getIdent(), true).incLaunch(DateUtil.keepDay(System.currentTimeMillis()));
+        if (descriptor.isKernelPlugin())
+            return;
+
+        // increment launch
+        getStorage(descriptor.getIdent(), true).incLaunch(DateUtil.keepDay(System.currentTimeMillis()));
 
         // save to disk if needed
         autoSave();
@@ -142,11 +158,12 @@ public class AuditStorage implements XMLPersistent
         // ignore if missing version info
         if (descriptor.getVersion().isEmpty())
             return;
-
         // ignore kernel plugins
-        if (!descriptor.isKernelPlugin())
-            getStorage(descriptor.getIdent(), true).incInstance(DateUtil.keepDay(System.currentTimeMillis()));
+        if (descriptor.isKernelPlugin())
+            return;
 
+        // increment instance
+        getStorage(descriptor.getIdent(), true).incInstance(DateUtil.keepDay(System.currentTimeMillis()));
         // save to disk if needed
         autoSave();
     }
@@ -344,6 +361,7 @@ public class AuditStorage implements XMLPersistent
                 params.put(ID_STATS_LAUNCH + "[" + offset + "][" + ID_DATE + "]", entry.getKey().toString());
                 // set value
                 params.put(ID_STATS_LAUNCH + "[" + offset + "][" + ID_VALUE + "]", entry.getValue().toString());
+                offset++;
             }
 
             offset = 0;
@@ -354,6 +372,7 @@ public class AuditStorage implements XMLPersistent
                 params.put(ID_STATS_INSTANCE + "[" + offset + "][" + ID_DATE + "]", entry.getKey().toString());
                 // set value
                 params.put(ID_STATS_INSTANCE + "[" + offset + "][" + ID_VALUE + "]", entry.getValue().toString());
+                offset++;
             }
 
             try
