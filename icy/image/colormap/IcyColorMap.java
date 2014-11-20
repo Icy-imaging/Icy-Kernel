@@ -1220,7 +1220,7 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
         {
             setName(XMLUtil.getElementValue(node, ID_NAME, ""));
             setEnabled(XMLUtil.getElementBooleanValue(node, ID_ENABLED, true));
-            setType(IcyColorMapType.valueOf(XMLUtil.getElementValue(node, ID_TYPE, "")));
+            setType(IcyColorMapType.valueOf(XMLUtil.getElementValue(node, ID_TYPE, IcyColorMapType.RGB.toString())));
 
             boolean result = true;
 

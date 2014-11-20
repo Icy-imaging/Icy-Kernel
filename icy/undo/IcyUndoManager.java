@@ -178,40 +178,43 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
 
         if (limit >= 0)
         {
-            final int size = edits.size();
-
-            if (size > limit)
+            synchronized (edits)
             {
-                final int halfLimit = limit / 2;
-                int keepFrom = indexOfNextAdd - 1 - halfLimit;
-                int keepTo = indexOfNextAdd - 1 + halfLimit;
+                final int size = edits.size();
 
-                // These are ints we're playing with, so dividing by two
-                // rounds down for odd numbers, so make sure the limit was
-                // honored properly. Note that the keep range is
-                // inclusive.
-                if (keepTo - keepFrom + 1 > limit)
-                    keepFrom++;
-
-                // The keep range is centered on indexOfNextAdd,
-                // but odds are good that the actual edits Vector
-                // isn't. Move the keep range to keep it legal.
-                if (keepFrom < 0)
+                if (size > limit)
                 {
-                    keepTo -= keepFrom;
-                    keepFrom = 0;
-                }
-                if (keepTo >= size)
-                {
-                    int delta = size - keepTo - 1;
-                    keepTo += delta;
-                    keepFrom += delta;
-                }
+                    final int halfLimit = limit / 2;
+                    int keepFrom = indexOfNextAdd - 1 - halfLimit;
+                    int keepTo = indexOfNextAdd - 1 + halfLimit;
 
-                if (trimEdits(keepTo + 1, size - 1))
-                    result = true;
-                if (trimEdits(0, keepFrom - 1))
-                    result = true;
+                    // These are ints we're playing with, so dividing by two
+                    // rounds down for odd numbers, so make sure the limit was
+                    // honored properly. Note that the keep range is
+                    // inclusive.
+                    if (keepTo - keepFrom + 1 > limit)
+                        keepFrom++;
+
+                    // The keep range is centered on indexOfNextAdd,
+                    // but odds are good that the actual edits Vector
+                    // isn't. Move the keep range to keep it legal.
+                    if (keepFrom < 0)
+                    {
+                        keepTo -= keepFrom;
+                        keepFrom = 0;
+                    }
+                    if (keepTo >= size)
+                    {
+                        int delta = size - keepTo - 1;
+                        keepTo += delta;
+                        keepFrom += delta;
+                    }
+
+                    if (trimEdits(keepTo + 1, size - 1))
+                        result = true;
+                    if (trimEdits(0, keepFrom - 1))
+                        result = true;
+                }
             }
         }
 
@@ -284,16 +287,18 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
      */
     protected AbstractIcyUndoableEdit editToBeUndone()
     {
-        int i = indexOfNextAdd;
-
-        while (i > 0)
+        synchronized (edits)
         {
-            final AbstractIcyUndoableEdit edit = edits.get(--i);
+            int i = indexOfNextAdd;
 
-            if (edit.isSignificant())
-                return edit;
+            while (i > 0)
+            {
+                final AbstractIcyUndoableEdit edit = edits.get(--i);
+
+                if (edit.isSignificant())
+                    return edit;
+            }
         }
-
         return null;
     }
 
@@ -305,15 +310,18 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
      */
     protected AbstractIcyUndoableEdit editToBeRedone()
     {
-        final int count = edits.size();
-        int i = indexOfNextAdd;
-
-        while (i < count)
+        synchronized (edits)
         {
-            final AbstractIcyUndoableEdit edit = edits.get(i++);
+            final int count = edits.size();
+            int i = indexOfNextAdd;
 
-            if (edit.isSignificant())
-                return edit;
+            while (i < count)
+            {
+                final AbstractIcyUndoableEdit edit = edits.get(i++);
+
+                if (edit.isSignificant())
+                    return edit;
+            }
         }
 
         return null;
@@ -510,10 +518,13 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
      */
     protected AbstractIcyUndoableEdit lastEdit()
     {
-        int count = edits.size();
+        synchronized (edits)
+        {
+            int count = edits.size();
 
-        if (count > 0)
-            return edits.get(count - 1);
+            if (count > 0)
+                return edits.get(count - 1);
+        }
 
         return null;
     }
@@ -539,33 +550,36 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
      */
     public synchronized void addEdit(AbstractIcyUndoableEdit anEdit)
     {
-        // Trim from the indexOfNextAdd to the end, as we'll
-        // never reach these edits once the new one is added.
-        trimEdits(indexOfNextAdd, edits.size() - 1);
-
-        final AbstractIcyUndoableEdit last = lastEdit();
-
-        // If this is the first edit received, just add it.
-        // Otherwise, give the last one a chance to absorb the new
-        // one. If it won't, give the new one a chance to absorb
-        // the last one.
-        if (last == null)
-            edits.add(anEdit);
-        else if (!last.addEdit(anEdit))
+        synchronized (edits)
         {
-            // try to replace current edit
-            if (anEdit.replaceEdit(last))
-                edits.set(edits.size() - 1, anEdit);
-            else
-                // simply add the new edit
+            // Trim from the indexOfNextAdd to the end, as we'll
+            // never reach these edits once the new one is added.
+            trimEdits(indexOfNextAdd, edits.size() - 1);
+
+            final AbstractIcyUndoableEdit last = lastEdit();
+
+            // If this is the first edit received, just add it.
+            // Otherwise, give the last one a chance to absorb the new
+            // one. If it won't, give the new one a chance to absorb
+            // the last one.
+            if (last == null)
                 edits.add(anEdit);
+            else if (!last.addEdit(anEdit))
+            {
+                // try to replace current edit
+                if (anEdit.replaceEdit(last))
+                    edits.set(edits.size() - 1, anEdit);
+                else
+                    // simply add the new edit
+                    edits.add(anEdit);
+            }
+
+            // make sure the indexOfNextAdd is pointed at the right place
+            indexOfNextAdd = edits.size();
+
+            // enforce the limit
+            trimForLimit();
         }
-
-        // make sure the indexOfNextAdd is pointed at the right place
-        indexOfNextAdd = edits.size();
-
-        // enforce the limit
-        trimForLimit();
 
         // notify change
         fireChangeEvent();
@@ -660,15 +674,10 @@ public class IcyUndoManager extends AbstractUndoableEdit implements UndoableEdit
      */
     public List<AbstractIcyUndoableEdit> getAllEdits()
     {
-        final List<AbstractIcyUndoableEdit> result = new ArrayList<AbstractIcyUndoableEdit>();
-
         synchronized (edits)
         {
-            for (AbstractIcyUndoableEdit edit : edits)
-                result.add(edit);
+            return new ArrayList<AbstractIcyUndoableEdit>(edits);
         }
-
-        return result;
     }
 
     /**

@@ -222,7 +222,7 @@ public class HistogramPanel extends BorderedPanel
         // cache
         final double[] data = histogramData;
 
-        if (index < data.length)
+        if ((index >= 0) && (index < data.length))
             return data[index];
 
         return 0d;

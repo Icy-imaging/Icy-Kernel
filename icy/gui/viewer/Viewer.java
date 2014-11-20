@@ -328,8 +328,8 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
 
         // AWT JDesktopPane keep reference on last closed JInternalFrame
         // it's good to free as much reference we can here
-        canvas.shutDown();
-
+        if (canvas != null)
+            canvas.shutDown();
         if (lutViewer != null)
             lutViewer.dispose();
         if (mainPanel != null)
