@@ -1019,6 +1019,10 @@ public class SequenceUtil
     public static void removeChannel(Sequence source, int channel)
     {
         final int sizeC = source.getSizeC();
+
+        if (channel >= sizeC)
+            return;
+
         final int[] keep = new int[sizeC - 1];
 
         int i = 0;
