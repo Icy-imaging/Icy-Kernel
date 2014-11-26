@@ -103,6 +103,9 @@ public class OMEUtil
      */
     public static Color getJavaColor(ome.xml.model.primitives.Color value)
     {
+        if (value == null)
+            return null;
+
         return new Color(value.getRed(), value.getGreen(), value.getBlue(), value.getAlpha());
     }
 

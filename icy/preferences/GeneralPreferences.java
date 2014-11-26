@@ -23,8 +23,6 @@ import icy.gui.dialog.IdConfirmDialog;
 import icy.gui.frame.progress.ToolTipFrame;
 import icy.gui.util.LookAndFeelUtil;
 
-import java.util.Date;
-
 /**
  * @author Stephane
  */
@@ -127,7 +125,7 @@ public class GeneralPreferences
 
     public static long getLastUpdateCheckTime()
     {
-        return prefGeneral.getLong(ID_LAST_UPDATECHECK_TIME, new Date().getTime());
+        return prefGeneral.getLong(ID_LAST_UPDATECHECK_TIME, 0);
     }
 
     public static boolean getRibbonMinimized()
