@@ -128,11 +128,10 @@ public class WindowPositionSaver
             {
                 if (extPanel != null)
                 {
+                    // event comes from panel itself
                     if (e.getSource() == extPanel)
-                        // event comes from panel itself
                         saver.run();
                     else
-                        // event comes from extern frame
                         checkPosition();
                 }
                 else
@@ -147,16 +146,18 @@ public class WindowPositionSaver
             {
                 if (extPanel != null)
                 {
-                    // event comes from extern frame
-                    if (e.getSource() != extPanel)
-                    {
+                    // event comes from panel itself
+                    if (e.getSource() == extPanel)
                         saver.run();
-                        checkPosition();
-                    }
+                	// REMOVED: multiple workspace (linux) don't like that
+                    //else
+                      //  checkPosition();
                 }
                 else
                 {
-                    checkPosition();
+                	// REMOVED: multiple workspace (linux) don't like that
+                    //checkPosition();
+                	
                     saver.run();
                 }
             }
