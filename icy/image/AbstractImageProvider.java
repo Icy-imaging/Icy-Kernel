@@ -23,30 +23,6 @@ public abstract class AbstractImageProvider implements ImageProvider
 {
     public static final int DEFAULT_THUMBNAIL_SIZE = 160;
 
-    // // default implementation, override it to provide better consecutive access performance
-    // @Override
-    // public String getOpened()
-    // {
-    // // just assume not opened
-    // return null;
-    // }
-    //
-    // // default implementation, override it to provide better consecutive access performance
-    // @Override
-    // public boolean open(String id) throws UnsupportedFormatException, IOException
-    // {
-    // // just assume ok
-    // return true;
-    // }
-    //
-    // // default implementation, override it to provide better consecutive access performance
-    // @Override
-    // public boolean close() throws IOException
-    // {
-    // // just assume ok
-    // return true;
-    // }
-
     // default implementation, override it if you need specific value for faster tile access
     @Override
     public int getTileWidth(int serie) throws UnsupportedFormatException, IOException

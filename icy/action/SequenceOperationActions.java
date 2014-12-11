@@ -99,8 +99,8 @@ public class SequenceOperationActions
                         {
                             // get output viewer
                             final Viewer vout = new Viewer(out);
-                            // copy colormap from input viewer
-                            vout.getLut().copyFrom(viewer.getLut());
+                            // restore colormap from input viewer
+                            vout.getLut().setColorMaps(viewer.getLut(), false);
                         }
                     });
 

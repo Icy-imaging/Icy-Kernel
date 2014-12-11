@@ -639,7 +639,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         if ((lut == null) || !sequence.isLutCompatible(lut))
         {
             // sequence type has changed, we need to recreate a compatible LUT
-            final LUT newLut = sequence.getDefaultLUT();
+            final LUT newLut = sequence.createCompatibleLUT();
 
             // keep the color map of previous LUT if they have the same number of channels
             if ((lut != null) && (lut.getNumChannel() == newLut.getNumChannel()))
@@ -1355,7 +1355,7 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
                 // // try to keep current LUT if possible
                 if (!sequence.isLutCompatible(lut))
                     // need to update the lut according to the colormodel change
-                    setLut(sequence.getDefaultLUT());
+                    setLut(sequence.createCompatibleLUT());
                 break;
 
             case SEQUENCE_COLORMAP:

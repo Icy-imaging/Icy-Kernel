@@ -26,6 +26,7 @@ import icy.image.ImageUtil;
 import icy.main.Icy;
 import icy.network.NetworkUtil;
 import icy.plugin.PluginDescriptor;
+import icy.plugin.PluginLauncher;
 import icy.plugin.PluginLoader;
 import icy.plugin.interface_.PluginBundled;
 import icy.plugin.interface_.PluginThreaded;
@@ -69,15 +70,16 @@ public abstract class Plugin
 
     private PluginDescriptor descriptor;
 
-    public Plugin(PluginDescriptor desc)
+    /**
+     * Default Plugin constructor.<br>
+     * The {@link PluginLauncher} is normally responsible of Plugin class instantiation.
+     */
+    public Plugin()
     {
         super();
 
         // get descriptor from loader
-        if (desc == null)
-            descriptor = PluginLoader.getPlugin(getClass().getName());
-        else
-            descriptor = desc;
+        descriptor = PluginLoader.getPlugin(getClass().getName());
 
         if (descriptor == null)
         {
@@ -96,11 +98,6 @@ public abstract class Plugin
 
         // audit
         Audit.pluginInstancied(this);
-    }
-
-    public Plugin()
-    {
-        this(null);
     }
 
     @Override

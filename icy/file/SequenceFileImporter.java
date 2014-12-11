@@ -55,8 +55,7 @@ public interface SequenceFileImporter extends SequenceIdImporter
 
     /**
      * Open the image designed by the specified file <code>path</code> to allow image data /
-     * metadata
-     * access.<br>
+     * metadata access.<br>
      * Calling this method will automatically close the previous opened image.<br>
      * Don't forget to call {@link #close()} to close the image when you're done.<br>
      * 

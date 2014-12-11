@@ -23,7 +23,7 @@ import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
 import icy.image.IcyBufferedImageEvent.IcyBufferedImageEventType;
 import icy.image.colormap.IcyColorMap;
-import icy.image.colormap.IcyColorMap.IcyColorMapType;
+import icy.image.colormap.LinearColorMap;
 import icy.image.colormodel.IcyColorModel;
 import icy.image.colormodel.IcyColorModelEvent;
 import icy.image.colormodel.IcyColorModelListener;
@@ -296,15 +296,29 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
         result.copyData(temp);
 
         // in some case we want to restore colormaps from source image
-        if ((type == BufferedImage.TYPE_BYTE_BINARY) || (type == BufferedImage.TYPE_BYTE_INDEXED)
-                || (numComponents == 2))
-            result.setColorMaps(image);
+        switch (type)
+        {
+            case BufferedImage.TYPE_BYTE_BINARY:
+            case BufferedImage.TYPE_BYTE_INDEXED:
+                if (numComponents == 2)
+                    result.setColorMaps(image);
+                break;
+
+            case BufferedImage.TYPE_INT_ARGB:
+            case BufferedImage.TYPE_INT_ARGB_PRE:
+            case BufferedImage.TYPE_4BYTE_ABGR_PRE:
+            case BufferedImage.TYPE_4BYTE_ABGR:
+                if (numComponents == 4)
+                    result.setColorMap(3, LinearColorMap.alpha_, true);
+                break;
+        }
 
         return result;
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getThumbnailCompatible(IFormatReader, int, int)} instead.
+     * @deprecated Use {@link LociImporterPlugin#getThumbnailCompatible(IFormatReader, int, int)}
+     *             instead.
      */
     @Deprecated
     public static IcyBufferedImage createCompatibleThumbnailFrom(IFormatReader reader, int z, int t)
@@ -335,7 +349,8 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
     }
 
     /**
-     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int)} instead.
+     * @deprecated Use {@link LociImporterPlugin#getImage(IFormatReader, Rectangle, int, int)}
+     *             instead.
      */
     @Deprecated
     public static IcyBufferedImage createFrom(IFormatReader reader, int z, int t) throws FormatException, IOException
@@ -1455,25 +1470,23 @@ public class IcyBufferedImage extends BufferedImage implements IcyColorModelList
      */
     public void updateChannelsBounds()
     {
-        final int sizeC = getSizeC();
         final IcyColorModel cm = getIcyColorModel();
 
-        for (int c = 0; c < sizeC; c++)
+        if (cm != null)
         {
-            // get data type bounds
-            final double[] bounds = getCalculatedChannelBounds(c);
+            final int sizeC = getSizeC();
 
-            cm.setComponentAbsBounds(c, adjustBoundsForDataType(bounds));
-
-            final IcyColorModel colorModel = getIcyColorModel();
-
-            if (colorModel != null)
+            for (int c = 0; c < sizeC; c++)
             {
-                final IcyColorMap colorMap = colorModel.getColorMap(c);
+                // get data type bounds
+                final double[] bounds = getCalculatedChannelBounds(c);
+
+                cm.setComponentAbsBounds(c, adjustBoundsForDataType(bounds));
+                cm.setComponentUserBounds(c, bounds);
 
                 // we do user bounds adjustment on "non ALPHA" component only
-                if (colorMap.getType() != IcyColorMapType.ALPHA)
-                    cm.setComponentUserBounds(c, bounds);
+                // if (cm.getColorMap(c).getType() != IcyColorMapType.ALPHA)
+                // cm.setComponentUserBounds(c, bounds);
             }
         }
     }

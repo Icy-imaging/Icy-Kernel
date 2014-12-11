@@ -2835,19 +2835,11 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * Creates and returns the default LUT for this sequence
+     * Same as {@link #createCompatibleLUT()}
      */
     public LUT getDefaultLUT()
     {
-        IcyColorModel cm = colorModel;
-
-        // not yet defined ? use default one
-        if (colorModel == null)
-            cm = IcyColorModel.createInstance();
-        else
-            cm = IcyColorModel.createInstance(colorModel, true, true);
-
-        return new LUT(cm);
+        return createCompatibleLUT();
     }
 
     /**
@@ -2860,14 +2852,18 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
 
     /**
      * Returns the users LUT.<br>
-     * If user LUT is not defined then the default LUT is returned.
+     * If user LUT is not defined then a new default LUT is returned.
      * 
      * @see #getDefaultLUT()
      */
     public LUT getUserLUT()
     {
-        if ((userLut != null) && !isLutCompatible(userLut))
-            userLut = null;
+        if (userLut != null)
+        {
+            // color model changed --> reset user LUT
+            if ((colorModel == null) || !userLut.isCompatible(colorModel))
+                userLut = null;
+        }
 
         if (userLut == null)
             return getDefaultLUT();
@@ -2884,11 +2880,20 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
     }
 
     /**
-     * @see #getDefaultLUT()
+     * Creates and returns the default LUT for this sequence.<br>
+     * If the sequence is empty it returns a default ARGB LUT.
      */
     public LUT createCompatibleLUT()
     {
-        return getDefaultLUT();
+        final IcyColorModel result;
+
+        // not yet defined ? use default one
+        if (colorModel == null)
+            result = IcyColorModel.createInstance();
+        else
+            result = IcyColorModel.createInstance(colorModel, true, true);
+
+        return new LUT(result);
     }
 
     /**
@@ -2900,6 +2905,9 @@ public class Sequence implements SequenceModel, IcyColorModelListener, IcyBuffer
      */
     public IcyColorMap getDefaultColorMap(int channel)
     {
+        if (colorModel != null)
+            return colorModel.getColorMap(channel);
+
         return getDefaultLUT().getLutChannel(channel).getColorMap();
     }
 

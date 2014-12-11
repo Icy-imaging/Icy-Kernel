@@ -134,7 +134,7 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
                     setColorMap(0, LinearColorMap.red_, true);
                     setColorMap(1, LinearColorMap.green_, true);
                     setColorMap(2, LinearColorMap.blue_, true);
-                    setColorMap(3, LinearColorMap.alpha_, true);
+                    setColorMap(3, LinearColorMap.cyan_, true);
                     break;
 
                 case 5:

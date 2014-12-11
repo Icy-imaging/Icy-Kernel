@@ -1925,25 +1925,32 @@ public class ArrayUtil
     //
 
     /**
-     * Safe convert and return the 'in' array in 'out' array type.<br>
+     * Safely converts the input array in the output array data type.<br>
      * Output value is limited to output type limit :<br>
      * unsigned int input = 1000 --> unsigned byte output = 255<br>
      * int input = -1000 --> byte output = -128<br>
      * 
      * @param in
-     *        input array
+     *        input array we want to convert
      * @param inOffset
      *        position where we start read data from
      * @param out
-     *        output array which is used to receive result (and so define wanted type)
+     *        output array which receive result and define the type in which we want to convert the
+     *        input array
      * @param outOffset
      *        position where we start to write data to
      * @param length
      *        number of value to convert (-1 means we will use the maximum possible length)
-     * @param signed
-     *        if input data are integer type then we assume them as signed data
+     * @param srcSigned
+     *        considers value from input array as signed (meaningful only for integer type array:
+     *        <code>byte, short, int, long</code>)
+     * @param dstSigned
+     *        considers output value as signed (meaningful only for integer type array:
+     *        <code>byte, short, int, long</code>)
+     * @return the output array
      */
-    public static Object arrayToSafeArray(Object in, int inOffset, Object out, int outOffset, int length, boolean signed)
+    public static Object arrayToSafeArray(Object in, int inOffset, Object out, int outOffset, int length,
+            boolean srcSigned, boolean dstSigned)
     {
         final ArrayType type = getArrayType(in);
         final int dim = type.getDim();
@@ -1959,7 +1966,7 @@ public class ArrayUtil
                         result,
                         i + outOffset,
                         arrayToSafeArray(Array.get(in, i + inOffset), 0, Array.get(result, i + outOffset), 0, -1,
-                                signed));
+                                srcSigned, dstSigned));
 
             return result;
         }
@@ -1970,10 +1977,12 @@ public class ArrayUtil
                 switch (dim)
                 {
                     case 1:
-                        return Array1DUtil.byteArrayToArray((byte[]) in, inOffset, out, outOffset, length, signed);
+                        return Array1DUtil.byteArrayToSafeArray((byte[]) in, inOffset, out, outOffset, length,
+                                srcSigned, dstSigned);
 
                     case 2:
-                        return Array2DUtil.byteArrayToArray((byte[][]) in, inOffset, out, outOffset, length, signed);
+                        return Array2DUtil.byteArrayToSafeArray((byte[][]) in, inOffset, out, outOffset, length,
+                                srcSigned, dstSigned);
                 }
                 break;
 
@@ -1981,12 +1990,12 @@ public class ArrayUtil
                 switch (dim)
                 {
                     case 1:
-                        return Array1DUtil
-                                .shortArrayToSafeArray((short[]) in, inOffset, out, outOffset, length, signed);
+                        return Array1DUtil.shortArrayToSafeArray((short[]) in, inOffset, out, outOffset, length,
+                                srcSigned, dstSigned);
 
                     case 2:
                         return Array2DUtil.shortArrayToSafeArray((short[][]) in, inOffset, out, outOffset, length,
-                                signed);
+                                srcSigned, dstSigned);
                 }
                 break;
 
@@ -1994,10 +2003,12 @@ public class ArrayUtil
                 switch (dim)
                 {
                     case 1:
-                        return Array1DUtil.intArrayToSafeArray((int[]) in, inOffset, out, outOffset, length, signed);
+                        return Array1DUtil.intArrayToSafeArray((int[]) in, inOffset, out, outOffset, length, srcSigned,
+                                dstSigned);
 
                     case 2:
-                        return Array2DUtil.intArrayToSafeArray((int[][]) in, inOffset, out, outOffset, length, signed);
+                        return Array2DUtil.intArrayToSafeArray((int[][]) in, inOffset, out, outOffset, length,
+                                srcSigned, dstSigned);
                 }
                 break;
 
@@ -2005,11 +2016,12 @@ public class ArrayUtil
                 switch (dim)
                 {
                     case 1:
-                        return Array1DUtil.longArrayToSafeArray((long[]) in, inOffset, out, outOffset, length, signed);
+                        return Array1DUtil.longArrayToSafeArray((long[]) in, inOffset, out, outOffset, length,
+                                srcSigned, dstSigned);
 
                     case 2:
-                        return Array2DUtil
-                                .longArrayToSafeArray((long[][]) in, inOffset, out, outOffset, length, signed);
+                        return Array2DUtil.longArrayToSafeArray((long[][]) in, inOffset, out, outOffset, length,
+                                srcSigned, dstSigned);
                 }
                 break;
 
@@ -2017,12 +2029,12 @@ public class ArrayUtil
                 switch (dim)
                 {
                     case 1:
-                        return Array1DUtil
-                                .floatArrayToSafeArray((float[]) in, inOffset, out, outOffset, length, signed);
+                        return Array1DUtil.floatArrayToSafeArray((float[]) in, inOffset, out, outOffset, length,
+                                dstSigned);
 
                     case 2:
                         return Array2DUtil.floatArrayToSafeArray((float[][]) in, inOffset, out, outOffset, length,
-                                signed);
+                                dstSigned);
                 }
                 break;
 
@@ -2031,11 +2043,11 @@ public class ArrayUtil
                 {
                     case 1:
                         return Array1DUtil.doubleArrayToSafeArray((double[]) in, inOffset, out, outOffset, length,
-                                signed);
+                                dstSigned);
 
                     case 2:
                         return Array2DUtil.doubleArrayToSafeArray((double[][]) in, inOffset, out, outOffset, length,
-                                signed);
+                                dstSigned);
                 }
                 break;
         }
@@ -2043,9 +2055,44 @@ public class ArrayUtil
         return out;
     }
 
+    /**
+     * @deprecated Use {@link #arrayToSafeArray(Object, int, Object, int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static Object arrayToSafeArray(Object in, int inOffset, Object out, int outOffset, int length, boolean signed)
+    {
+        return arrayToSafeArray(in, inOffset, out, outOffset, length, signed, signed);
+    }
+
+    /**
+     * Safely converts the input array in the output array data type.
+     * 
+     * @param in
+     *        input array we want to convert
+     * @param out
+     *        output array which receive result and define the type in which we want to convert the
+     *        input array
+     * @param srcSigned
+     *        considers value from input array as (un)signed (meaningful only for integer type
+     *        array: <code>byte, short, int, long</code>)
+     * @param dstSigned
+     *        considers output value as (un)signed (meaningful only for integer type array:
+     *        <code>byte, short, int, long</code>)
+     * @return the output array
+     */
+    public static Object arrayToSafeArray(Object in, Object out, boolean srcSigned, boolean dstSigned)
+    {
+        return arrayToSafeArray(in, 0, out, 0, -1, srcSigned, dstSigned);
+    }
+
+    /**
+     * @deprecated Use {@link #arrayToSafeArray(Object, Object, boolean, boolean)} instead.
+     */
+    @Deprecated
     public static Object arrayToSafeArray(Object in, Object out, boolean signed)
     {
-        return arrayToSafeArray(in, 0, out, 0, -1, signed);
+        return arrayToSafeArray(in, 0, out, 0, -1, signed, signed);
     }
 
     /**

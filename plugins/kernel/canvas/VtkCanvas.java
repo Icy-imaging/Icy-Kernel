@@ -7,6 +7,7 @@ import icy.canvas.IcyCanvasEvent;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.canvas.Layer;
 import icy.gui.component.button.IcyToggleButton;
+import icy.gui.dialog.MessageDialog;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
 import icy.image.lut.LUT;
@@ -209,10 +210,14 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         propertiesUpdater = new Thread(this, "VTK canvas properties updater");
         propertiesToUpdate = new LinkedBlockingQueue<VtkCanvas.Property>(256);
 
-        // all channel visible at once by default
-        posC = -1;
-
         final Sequence seq = getSequence();
+
+        // more than 4 channels ? can't use multi channel view --> display single channel
+        if ((seq != null) && (seq.getSizeC() > 4))
+            posC = 0;
+        else
+            // all channel visible at once by default
+            posC = -1;
 
         preferences = CanvasPreferences.getPreferences().node(PREF_ID);
 
@@ -281,7 +286,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         // processor.setKeepAliveTime(3, TimeUnit.SECONDS);
 
         // save lut and prepare for 3D visualization
-        lutSave = seq.getDefaultLUT();
+        lutSave = seq.createCompatibleLUT();
         final LUT lut = getLut();
 
         // save colormap
@@ -1411,6 +1416,18 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
                         @Override
                         public void run()
                         {
+                            // multi channel mapper does not support more than 4 channels
+                            if (VtkImageVolume.isMultiChannelVolumeMapper(type) && (getImageSizeC() > 4))
+                            {
+                                MessageDialog
+                                        .showDialog(
+                                                "Multi channel volume rendering is not supported on image with more than 4 channels !",
+                                                MessageDialog.INFORMATION_MESSAGE);
+                                // use the GPU texture 2D mapper instead
+                                setVolumeMapperType(VtkVolumeMapperType.TEXTURE2D_OPENGL);
+                                return;
+                            }
+
                             imageVolume.setVolumeMapperType(type);
 
                             // FIXME: this line actually make VTK to crash
@@ -1972,7 +1989,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
                     case KeyEvent.VK_R:
                         // reset view
                         resetCamera();
-                        
+
                         // also reset LUT
                         if (EventUtil.isShiftDown(e, true))
                         {

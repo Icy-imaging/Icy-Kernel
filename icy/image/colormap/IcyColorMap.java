@@ -1185,6 +1185,9 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     @Override
     public boolean equals(Object obj)
     {
+        if (obj == this)
+            return true;
+
         if (obj instanceof IcyColorMap)
         {
             final IcyColorMap colormap = (IcyColorMap) obj;

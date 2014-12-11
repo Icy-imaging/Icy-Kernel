@@ -2887,192 +2887,366 @@ public class Array1DUtil
     }
 
     public static Object longArrayToSafeArray(long[] in, int inOffset, Object out, int outOffset, int length,
-            boolean signed)
+            boolean srcSigned, boolean dstSigned)
     {
         switch (ArrayUtil.getDataType(out))
         {
             case BYTE:
-                return longArrayToSafeByteArray(in, inOffset, (byte[]) out, outOffset, length, signed);
+                return longArrayToSafeByteArray(in, inOffset, (byte[]) out, outOffset, length, srcSigned, dstSigned);
             case SHORT:
-                return longArrayToSafeShortArray(in, inOffset, (short[]) out, outOffset, length, signed);
+                return longArrayToSafeShortArray(in, inOffset, (short[]) out, outOffset, length, srcSigned, dstSigned);
             case INT:
-                return longArrayToSafeIntArray(in, inOffset, (int[]) out, outOffset, length, signed);
+                return longArrayToSafeIntArray(in, inOffset, (int[]) out, outOffset, length, srcSigned, dstSigned);
             case LONG:
-                return longArrayToLongArray(in, inOffset, (long[]) out, outOffset, length);
+                return longArrayToSafeLongArray(in, inOffset, (long[]) out, outOffset, length, srcSigned, dstSigned);
             case FLOAT:
-                return longArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, signed);
+                return longArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, srcSigned);
             case DOUBLE:
-                return longArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, signed);
+                return longArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, srcSigned);
             default:
                 return out;
         }
     }
 
+    public static Object longArrayToSafeArray(long[] in, Object out, boolean srcSigned, boolean dstSigned)
+    {
+        return longArrayToSafeArray(in, 0, out, 0, -1, srcSigned, dstSigned);
+    }
+
+    /**
+     * @deprecated Use
+     *             {@link #longArrayToSafeArray(long[], int, Object, int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static Object longArrayToSafeArray(long[] in, int inOffset, Object out, int outOffset, int length,
+            boolean signed)
+    {
+        return longArrayToSafeArray(in, inOffset, out, outOffset, length, signed, signed);
+
+    }
+
+    /**
+     * @deprecated Use {@link #longArrayToSafeArray(long[], Object, boolean, boolean)} instead.
+     */
+    @Deprecated
     public static Object longArrayToSafeArray(long[] in, Object out, boolean signed)
     {
-        return longArrayToSafeArray(in, 0, out, 0, -1, signed);
+        return longArrayToSafeArray(in, 0, out, 0, -1, signed, signed);
     }
 
     public static Object intArrayToSafeArray(int[] in, int inOffset, Object out, int outOffset, int length,
-            boolean signed)
+            boolean srcSigned, boolean dstSigned)
     {
         switch (ArrayUtil.getDataType(out))
         {
             case BYTE:
-                return intArrayToSafeByteArray(in, inOffset, (byte[]) out, outOffset, length, signed);
+                return intArrayToSafeByteArray(in, inOffset, (byte[]) out, outOffset, length, srcSigned, dstSigned);
             case SHORT:
-                return intArrayToSafeShortArray(in, inOffset, (short[]) out, outOffset, length, signed);
+                return intArrayToSafeShortArray(in, inOffset, (short[]) out, outOffset, length, srcSigned, dstSigned);
             case INT:
-                return intArrayToIntArray(in, inOffset, (int[]) out, outOffset, length);
+                return intArrayToSafeIntArray(in, inOffset, (int[]) out, outOffset, length, srcSigned, dstSigned);
             case LONG:
-                return intArrayToLongArray(in, inOffset, (long[]) out, outOffset, length, signed);
+                return intArrayToLongArray(in, inOffset, (long[]) out, outOffset, length, srcSigned);
             case FLOAT:
-                return intArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, signed);
+                return intArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, srcSigned);
             case DOUBLE:
-                return intArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, signed);
+                return intArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, srcSigned);
             default:
                 return out;
         }
     }
 
+    public static Object intArrayToSafeArray(int[] in, Object out, boolean srcSigned, boolean dstSigned)
+    {
+        return intArrayToSafeArray(in, 0, out, 0, -1, srcSigned, dstSigned);
+    }
+
+    /**
+     * @deprecated Use {@link #intArrayToSafeArray(int[], int, Object, int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static Object intArrayToSafeArray(int[] in, int inOffset, Object out, int outOffset, int length,
+            boolean signed)
+    {
+        return intArrayToSafeArray(in, inOffset, out, outOffset, length, signed, signed);
+    }
+
+    /**
+     * @deprecated Use {@link #intArrayToSafeArray(int[], Object, boolean, boolean)} instead.
+     */
+    @Deprecated
     public static Object intArrayToSafeArray(int[] in, Object out, boolean signed)
     {
-        return intArrayToSafeArray(in, 0, out, 0, -1, signed);
+        return intArrayToSafeArray(in, 0, out, 0, -1, signed, signed);
     }
 
     public static Object shortArrayToSafeArray(short[] in, int inOffset, Object out, int outOffset, int length,
-            boolean signed)
+            boolean srcSigned, boolean dstSigned)
     {
         switch (ArrayUtil.getDataType(out))
         {
             case BYTE:
-                return shortArrayToSafeByteArray(in, inOffset, (byte[]) out, outOffset, length, signed);
+                return shortArrayToSafeByteArray(in, inOffset, (byte[]) out, outOffset, length, srcSigned, dstSigned);
             case SHORT:
-                return shortArrayToShortArray(in, inOffset, (short[]) out, outOffset, length);
+                return shortArrayToSafeShortArray(in, inOffset, (short[]) out, outOffset, length, srcSigned, dstSigned);
             case INT:
-                return shortArrayToIntArray(in, inOffset, (int[]) out, outOffset, length, signed);
+                return shortArrayToIntArray(in, inOffset, (int[]) out, outOffset, length, srcSigned);
             case LONG:
-                return shortArrayToLongArray(in, inOffset, (long[]) out, outOffset, length, signed);
+                return shortArrayToLongArray(in, inOffset, (long[]) out, outOffset, length, srcSigned);
             case FLOAT:
-                return shortArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, signed);
+                return shortArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, srcSigned);
             case DOUBLE:
-                return shortArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, signed);
+                return shortArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, srcSigned);
             default:
                 return out;
         }
     }
 
+    public static Object shortArrayToSafeArray(short[] in, Object out, boolean srcSigned, boolean dstSigned)
+    {
+        return shortArrayToSafeArray(in, 0, out, 0, -1, srcSigned, dstSigned);
+    }
+
+    /**
+     * @deprecated Use
+     *             {@link #shortArrayToSafeArray(short[], int, Object, int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static Object shortArrayToSafeArray(short[] in, int inOffset, Object out, int outOffset, int length,
+            boolean signed)
+    {
+        return shortArrayToSafeArray(in, inOffset, out, outOffset, length, signed, signed);
+    }
+
+    /**
+     * @deprecated Use {@link #shortArrayToSafeArray(short[], Object, boolean, boolean)} instead.
+     */
+    @Deprecated
     public static Object shortArrayToSafeArray(short[] in, Object out, boolean signed)
     {
-        return shortArrayToSafeArray(in, 0, out, 0, -1, signed);
+        return shortArrayToSafeArray(in, 0, out, 0, -1, signed, signed);
+
+    }
+
+    public static Object byteArrayToSafeArray(byte[] in, int inOffset, Object out, int outOffset, int length,
+            boolean srcSigned, boolean dstSigned)
+    {
+        switch (ArrayUtil.getDataType(out))
+        {
+            case BYTE:
+                return byteArrayToSafeByteArray(in, inOffset, (byte[]) out, outOffset, length, srcSigned, dstSigned);
+            case SHORT:
+                return byteArrayToShortArray(in, inOffset, (short[]) out, outOffset, length, srcSigned);
+            case INT:
+                return byteArrayToIntArray(in, inOffset, (int[]) out, outOffset, length, srcSigned);
+            case LONG:
+                return byteArrayToLongArray(in, inOffset, (long[]) out, outOffset, length, srcSigned);
+            case FLOAT:
+                return byteArrayToFloatArray(in, inOffset, (float[]) out, outOffset, length, srcSigned);
+            case DOUBLE:
+                return byteArrayToDoubleArray(in, inOffset, (double[]) out, outOffset, length, srcSigned);
+            default:
+                return out;
+        }
+    }
+
+    public static Object byteArrayToSafeArray(byte[] in, Object out, boolean srcSigned, boolean dstSigned)
+    {
+        return byteArrayToSafeArray(in, 0, out, 0, -1, srcSigned, dstSigned);
     }
 
     public static long[] arrayToSafeLongArray(Object in, int inOffset, long[] out, int outOffset, int length,
-            boolean signed)
+            boolean srcSigned, boolean dstSigned)
     {
         switch (ArrayUtil.getDataType(in))
         {
             case BYTE:
-                return byteArrayToLongArray((byte[]) in, inOffset, out, outOffset, length, signed);
+                return byteArrayToLongArray((byte[]) in, inOffset, out, outOffset, length, srcSigned);
             case SHORT:
-                return shortArrayToLongArray((short[]) in, inOffset, out, outOffset, length, signed);
+                return shortArrayToLongArray((short[]) in, inOffset, out, outOffset, length, srcSigned);
             case INT:
-                return intArrayToLongArray((int[]) in, inOffset, out, outOffset, length, signed);
+                return intArrayToLongArray((int[]) in, inOffset, out, outOffset, length, srcSigned);
             case LONG:
-                return longArrayToLongArray((long[]) in, inOffset, out, outOffset, length);
+                return longArrayToSafeLongArray((long[]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
             case FLOAT:
-                return floatArrayToSafeLongArray((float[]) in, inOffset, out, outOffset, length, signed);
+                return floatArrayToSafeLongArray((float[]) in, inOffset, out, outOffset, length, dstSigned);
             case DOUBLE:
-                return doubleArrayToSafeLongArray((double[]) in, inOffset, out, outOffset, length, signed);
+                return doubleArrayToSafeLongArray((double[]) in, inOffset, out, outOffset, length, dstSigned);
             default:
                 return out;
         }
     }
 
+    public static long[] arrayToSafeLongArray(Object in, long[] out, boolean srcSigned, boolean dstSigned)
+    {
+        return arrayToSafeLongArray(in, 0, out, 0, -1, srcSigned, dstSigned);
+    }
+
+    /**
+     * @deprecated Use
+     *             {@link #arrayToSafeLongArray(Object, int, long[], int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static long[] arrayToSafeLongArray(Object in, int inOffset, long[] out, int outOffset, int length,
+            boolean signed)
+    {
+        return arrayToSafeLongArray(in, inOffset, out, outOffset, length, signed, signed);
+    }
+
+    /**
+     * @deprecated Use {@link #arrayToSafeLongArray(Object, long[], boolean, boolean)} instead.
+     */
+    @Deprecated
     public static long[] arrayToSafeLongArray(Object in, long[] out, boolean signed)
     {
-        return arrayToSafeLongArray(in, 0, out, 0, -1, signed);
+        return arrayToSafeLongArray(in, 0, out, 0, -1, signed, signed);
     }
 
     public static int[] arrayToSafeIntArray(Object in, int inOffset, int[] out, int outOffset, int length,
-            boolean signed)
+            boolean srcSigned, boolean dstSigned)
     {
         switch (ArrayUtil.getDataType(in))
         {
             case BYTE:
-                return byteArrayToIntArray((byte[]) in, inOffset, out, outOffset, length, signed);
+                return byteArrayToIntArray((byte[]) in, inOffset, out, outOffset, length, srcSigned);
             case SHORT:
-                return shortArrayToIntArray((short[]) in, inOffset, out, outOffset, length, signed);
+                return shortArrayToIntArray((short[]) in, inOffset, out, outOffset, length, srcSigned);
             case INT:
-                return intArrayToIntArray((int[]) in, inOffset, out, outOffset, length);
+                return intArrayToSafeIntArray((int[]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
             case LONG:
-                return longArrayToSafeIntArray((long[]) in, inOffset, out, outOffset, length, signed);
+                return longArrayToSafeIntArray((long[]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
             case FLOAT:
-                return floatArrayToSafeIntArray((float[]) in, inOffset, out, outOffset, length, signed);
+                return floatArrayToSafeIntArray((float[]) in, inOffset, out, outOffset, length, dstSigned);
             case DOUBLE:
-                return doubleArrayToSafeIntArray((double[]) in, inOffset, out, outOffset, length, signed);
+                return doubleArrayToSafeIntArray((double[]) in, inOffset, out, outOffset, length, dstSigned);
             default:
                 return out;
         }
     }
 
+    public static int[] arrayToSafeIntArray(Object in, int[] out, boolean srcSigned, boolean dstSigned)
+    {
+        return arrayToSafeIntArray(in, 0, out, 0, -1, srcSigned, dstSigned);
+    }
+
+    /**
+     * @deprecated Use {@link #arrayToSafeIntArray(Object, int, int[], int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static int[] arrayToSafeIntArray(Object in, int inOffset, int[] out, int outOffset, int length,
+            boolean signed)
+    {
+        return arrayToSafeIntArray(in, inOffset, out, outOffset, length, signed, signed);
+    }
+
+    /**
+     * @deprecated Use {@link #arrayToSafeIntArray(Object, int[], boolean, boolean)} instead.
+     */
+    @Deprecated
     public static int[] arrayToSafeIntArray(Object in, int[] out, boolean signed)
     {
-        return arrayToSafeIntArray(in, 0, out, 0, -1, signed);
+        return arrayToSafeIntArray(in, 0, out, 0, -1, signed, signed);
     }
 
     public static short[] arrayToSafeShortArray(Object in, int inOffset, short[] out, int outOffset, int length,
-            boolean signed)
+            boolean srcSigned, boolean dstSigned)
     {
         switch (ArrayUtil.getDataType(in))
         {
             case BYTE:
-                return byteArrayToShortArray((byte[]) in, inOffset, out, outOffset, length, signed);
+                return byteArrayToShortArray((byte[]) in, inOffset, out, outOffset, length, srcSigned);
             case SHORT:
-                return shortArrayToShortArray((short[]) in, inOffset, out, outOffset, length);
+                return shortArrayToSafeShortArray((short[]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
             case INT:
-                return intArrayToSafeShortArray((int[]) in, inOffset, out, outOffset, length, signed);
+                return intArrayToSafeShortArray((int[]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
             case LONG:
-                return longArrayToSafeShortArray((long[]) in, inOffset, out, outOffset, length, signed);
+                return longArrayToSafeShortArray((long[]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
             case FLOAT:
-                return floatArrayToSafeShortArray((float[]) in, inOffset, out, outOffset, length, signed);
+                return floatArrayToSafeShortArray((float[]) in, inOffset, out, outOffset, length, dstSigned);
             case DOUBLE:
-                return doubleArrayToSafeShortArray((double[]) in, inOffset, out, outOffset, length, signed);
+                return doubleArrayToSafeShortArray((double[]) in, inOffset, out, outOffset, length, dstSigned);
             default:
                 return out;
         }
     }
 
+    public static short[] arrayToSafeShortArray(Object in, short[] out, boolean srcSigned, boolean dstSigned)
+    {
+        return arrayToSafeShortArray(in, 0, out, 0, -1, srcSigned, dstSigned);
+    }
+
+    /**
+     * @deprecated Use
+     *             {@link #arrayToSafeShortArray(Object, int, short[], int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static short[] arrayToSafeShortArray(Object in, int inOffset, short[] out, int outOffset, int length,
+            boolean signed)
+    {
+        return arrayToSafeShortArray(in, inOffset, out, outOffset, length, signed, signed);
+    }
+
+    /**
+     * @deprecated Use {@link #arrayToSafeShortArray(Object, short[], boolean, boolean)} instead.
+     */
+    @Deprecated
     public static short[] arrayToSafeShortArray(Object in, short[] out, boolean signed)
     {
-        return arrayToSafeShortArray(in, 0, out, 0, -1, signed);
+        return arrayToSafeShortArray(in, 0, out, 0, -1, signed, signed);
     }
 
     public static byte[] arrayToSafeByteArray(Object in, int inOffset, byte[] out, int outOffset, int length,
-            boolean signed)
+            boolean srcSigned, boolean dstSigned)
     {
         switch (ArrayUtil.getDataType(in))
         {
             case BYTE:
-                return byteArrayToByteArray((byte[]) in, inOffset, out, outOffset, length);
+                return byteArrayToSafeByteArray((byte[]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
             case SHORT:
-                return shortArrayToSafeByteArray((short[]) in, inOffset, out, outOffset, length, signed);
+                return shortArrayToSafeByteArray((short[]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
             case INT:
-                return intArrayToSafeByteArray((int[]) in, inOffset, out, outOffset, length, signed);
+                return intArrayToSafeByteArray((int[]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
             case LONG:
-                return longArrayToSafeByteArray((long[]) in, inOffset, out, outOffset, length, signed);
+                return longArrayToSafeByteArray((long[]) in, inOffset, out, outOffset, length, srcSigned, dstSigned);
             case FLOAT:
-                return floatArrayToSafeByteArray((float[]) in, inOffset, out, outOffset, length, signed);
+                return floatArrayToSafeByteArray((float[]) in, inOffset, out, outOffset, length, dstSigned);
             case DOUBLE:
-                return doubleArrayToSafeByteArray((double[]) in, inOffset, out, outOffset, length, signed);
+                return doubleArrayToSafeByteArray((double[]) in, inOffset, out, outOffset, length, dstSigned);
             default:
                 return out;
         }
     }
 
+    public static byte[] arrayToSafeByteArray(Object in, byte[] out, boolean srcSigned, boolean dstSigned)
+    {
+        return arrayToSafeByteArray(in, 0, out, 0, -1, srcSigned, dstSigned);
+    }
+
+    /**
+     * @deprecated Use
+     *             {@link #arrayToSafeByteArray(Object, int, byte[], int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static byte[] arrayToSafeByteArray(Object in, int inOffset, byte[] out, int outOffset, int length,
+            boolean signed)
+    {
+        return arrayToSafeByteArray(in, inOffset, out, outOffset, length, signed, signed);
+    }
+
+    /**
+     * @deprecated Use {@link #arrayToSafeByteArray(Object, byte[], boolean, boolean)} instead.
+     */
+    @Deprecated
     public static byte[] arrayToSafeByteArray(Object in, byte[] out, boolean signed)
     {
-        return arrayToSafeByteArray(in, 0, out, 0, -1, signed);
+        return arrayToSafeByteArray(in, 0, out, 0, -1, signed, signed);
     }
 
     //
@@ -3418,8 +3592,38 @@ public class Array1DUtil
         return outArray;
     }
 
+    public static long[] longArrayToSafeLongArray(long[] in, int inOffset, long[] out, int outOffset, int length,
+            boolean srcSigned, boolean dstSigned)
+    {
+        // same sign ?
+        if (srcSigned == dstSigned)
+            return longArrayToLongArray(in, inOffset, in, outOffset, length);
+
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final long[] outArray = allocIfNull(out, outOffset + len);
+        final long maxValue = Long.MAX_VALUE;
+
+        for (int i = 0; i < len; i++)
+        {
+            long value = in[i + inOffset];
+
+            // signed and unsigned on other side --> need to clamp
+            if (value < 0)
+            {
+                if (srcSigned)
+                    value = 0;
+                else
+                    value = maxValue;
+            }
+
+            outArray[i + outOffset] = value;
+        }
+
+        return outArray;
+    }
+
     public static int[] longArrayToSafeIntArray(long[] in, int inOffset, int[] out, int outOffset, int length,
-            boolean signed)
+            boolean srcSigned, boolean dstSigned)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final int[] outArray = allocIfNull(out, outOffset + len);
@@ -3427,7 +3631,7 @@ public class Array1DUtil
         final long minValue;
         final long maxValue;
 
-        if (signed)
+        if (dstSigned)
         {
             minValue = (long) DataType.INT.getMinValue();
             maxValue = (long) DataType.INT.getMaxValue();
@@ -3446,7 +3650,9 @@ public class Array1DUtil
             final long value = in[i + inOffset];
             final int result;
 
-            if (value >= maxValue)
+            if ((!srcSigned) && (value < 0))
+                result = maxValueT;
+            else if (value >= maxValue)
                 result = maxValueT;
             else if (value <= minValue)
                 result = minValueT;
@@ -3460,7 +3666,7 @@ public class Array1DUtil
     }
 
     public static short[] longArrayToSafeShortArray(long[] in, int inOffset, short[] out, int outOffset, int length,
-            boolean signed)
+            boolean srcSigned, boolean dstSigned)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final short[] outArray = allocIfNull(out, outOffset + len);
@@ -3468,7 +3674,7 @@ public class Array1DUtil
         final long minValue;
         final long maxValue;
 
-        if (signed)
+        if (dstSigned)
         {
             minValue = (long) DataType.SHORT.getMinValue();
             maxValue = (long) DataType.SHORT.getMaxValue();
@@ -3487,7 +3693,9 @@ public class Array1DUtil
             final long value = in[i + inOffset];
             final short result;
 
-            if (value >= maxValue)
+            if ((!srcSigned) && (value < 0))
+                result = maxValueT;
+            else if (value >= maxValue)
                 result = maxValueT;
             else if (value <= minValue)
                 result = minValueT;
@@ -3501,7 +3709,7 @@ public class Array1DUtil
     }
 
     public static byte[] longArrayToSafeByteArray(long[] in, int inOffset, byte[] out, int outOffset, int length,
-            boolean signed)
+            boolean srcSigned, boolean dstSigned)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final byte[] outArray = allocIfNull(out, outOffset + len);
@@ -3509,7 +3717,7 @@ public class Array1DUtil
         final long minValue;
         final long maxValue;
 
-        if (signed)
+        if (dstSigned)
         {
             minValue = (long) DataType.BYTE.getMinValue();
             maxValue = (long) DataType.BYTE.getMaxValue();
@@ -3528,7 +3736,9 @@ public class Array1DUtil
             final long value = in[i + inOffset];
             final byte result;
 
-            if (value >= maxValue)
+            if ((!srcSigned) && (value < 0))
+                result = maxValueT;
+            else if (value >= maxValue)
                 result = maxValueT;
             else if (value <= minValue)
                 result = minValueT;
@@ -3541,8 +3751,74 @@ public class Array1DUtil
         return outArray;
     }
 
-    public static short[] intArrayToSafeShortArray(int[] in, int inOffset, short[] out, int outOffset, int length,
+    /**
+     * @deprecated Use
+     *             {@link #longArrayToSafeIntArray(long[], int, int[], int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static int[] longArrayToSafeIntArray(long[] in, int inOffset, int[] out, int outOffset, int length,
             boolean signed)
+    {
+        return longArrayToSafeIntArray(in, inOffset, out, outOffset, length, signed, signed);
+    }
+
+    /**
+     * @deprecated Use
+     *             {@link #longArrayToSafeShortArray(long[], int, short[], int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static short[] longArrayToSafeShortArray(long[] in, int inOffset, short[] out, int outOffset, int length,
+            boolean signed)
+    {
+        return longArrayToSafeShortArray(in, inOffset, out, outOffset, length, signed, signed);
+    }
+
+    /**
+     * @deprecated Use
+     *             {@link #longArrayToSafeByteArray(long[], int, byte[], int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static byte[] longArrayToSafeByteArray(long[] in, int inOffset, byte[] out, int outOffset, int length,
+            boolean signed)
+    {
+        return longArrayToSafeByteArray(in, inOffset, out, outOffset, length, signed, signed);
+    }
+
+    public static int[] intArrayToSafeIntArray(int[] in, int inOffset, int[] out, int outOffset, int length,
+            boolean srcSigned, boolean dstSigned)
+    {
+        // same sign ?
+        if (srcSigned == dstSigned)
+            return intArrayToIntArray(in, inOffset, in, outOffset, length);
+
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final int[] outArray = allocIfNull(out, outOffset + len);
+        final int maxValue = Integer.MAX_VALUE;
+
+        for (int i = 0; i < len; i++)
+        {
+            int value = in[i + inOffset];
+
+            // signed and unsigned on other side --> need to clamp
+            if (value < 0)
+            {
+                if (srcSigned)
+                    value = 0;
+                else
+                    value = maxValue;
+            }
+
+            outArray[i + outOffset] = value;
+        }
+
+        return outArray;
+    }
+
+    public static short[] intArrayToSafeShortArray(int[] in, int inOffset, short[] out, int outOffset, int length,
+            boolean srcSigned, boolean dstSigned)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final short[] outArray = allocIfNull(out, outOffset + len);
@@ -3550,7 +3826,7 @@ public class Array1DUtil
         final int minValue;
         final int maxValue;
 
-        if (signed)
+        if (dstSigned)
         {
             minValue = (int) DataType.SHORT.getMinValue();
             maxValue = (int) DataType.SHORT.getMaxValue();
@@ -3569,7 +3845,9 @@ public class Array1DUtil
             final int value = in[i + inOffset];
             final short result;
 
-            if (value >= maxValue)
+            if ((!srcSigned) && (value < 0))
+                result = maxValueT;
+            else if (value >= maxValue)
                 result = maxValueT;
             else if (value <= minValue)
                 result = minValueT;
@@ -3583,7 +3861,7 @@ public class Array1DUtil
     }
 
     public static byte[] intArrayToSafeByteArray(int[] in, int inOffset, byte[] out, int outOffset, int length,
-            boolean signed)
+            boolean srcSigned, boolean dstSigned)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final byte[] outArray = allocIfNull(out, outOffset + len);
@@ -3591,7 +3869,7 @@ public class Array1DUtil
         final int minValue;
         final int maxValue;
 
-        if (signed)
+        if (dstSigned)
         {
             minValue = (int) DataType.BYTE.getMinValue();
             maxValue = (int) DataType.BYTE.getMaxValue();
@@ -3610,7 +3888,9 @@ public class Array1DUtil
             final int value = in[i + inOffset];
             final byte result;
 
-            if (value >= maxValue)
+            if ((!srcSigned) && (value < 0))
+                result = maxValueT;
+            else if (value >= maxValue)
                 result = maxValueT;
             else if (value <= minValue)
                 result = minValueT;
@@ -3623,8 +3903,63 @@ public class Array1DUtil
         return outArray;
     }
 
-    public static byte[] shortArrayToSafeByteArray(short[] in, int inOffset, byte[] out, int outOffset, int length,
+    /**
+     * @deprecated Use
+     *             {@link #intArrayToSafeShortArray(int[], int, short[], int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static short[] intArrayToSafeShortArray(int[] in, int inOffset, short[] out, int outOffset, int length,
             boolean signed)
+    {
+        return intArrayToSafeShortArray(in, inOffset, out, outOffset, length, signed, signed);
+
+    }
+
+    /**
+     * @deprecated Use
+     *             {@link #intArrayToSafeByteArray(int[], int, byte[], int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static byte[] intArrayToSafeByteArray(int[] in, int inOffset, byte[] out, int outOffset, int length,
+            boolean signed)
+    {
+        return intArrayToSafeByteArray(in, inOffset, out, outOffset, length, signed, signed);
+    }
+
+    public static short[] shortArrayToSafeShortArray(short[] in, int inOffset, short[] out, int outOffset, int length,
+            boolean srcSigned, boolean dstSigned)
+    {
+        // same sign ?
+        if (srcSigned == dstSigned)
+            return shortArrayToShortArray(in, inOffset, in, outOffset, length);
+
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final short[] outArray = allocIfNull(out, outOffset + len);
+        final short maxValue = Short.MAX_VALUE;
+
+        for (int i = 0; i < len; i++)
+        {
+            short value = in[i + inOffset];
+
+            // signed and unsigned on other side --> need to clamp
+            if (value < 0)
+            {
+                if (srcSigned)
+                    value = 0;
+                else
+                    value = maxValue;
+            }
+
+            outArray[i + outOffset] = value;
+        }
+
+        return outArray;
+    }
+
+    public static byte[] shortArrayToSafeByteArray(short[] in, int inOffset, byte[] out, int outOffset, int length,
+            boolean srcSigned, boolean dstSigned)
     {
         final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
         final byte[] outArray = allocIfNull(out, outOffset + len);
@@ -3632,7 +3967,7 @@ public class Array1DUtil
         final short minValue;
         final short maxValue;
 
-        if (signed)
+        if (dstSigned)
         {
             minValue = (short) DataType.BYTE.getMinValue();
             maxValue = (short) DataType.BYTE.getMaxValue();
@@ -3651,7 +3986,9 @@ public class Array1DUtil
             final short value = in[i + inOffset];
             final byte result;
 
-            if (value >= maxValue)
+            if ((!srcSigned) && (value < 0))
+                result = maxValueT;
+            else if (value >= maxValue)
                 result = maxValueT;
             else if (value <= minValue)
                 result = minValueT;
@@ -3659,6 +3996,48 @@ public class Array1DUtil
                 result = (byte) value;
 
             outArray[i + outOffset] = result;
+        }
+
+        return outArray;
+    }
+
+    /**
+     * @deprecated Use
+     *             {@link #shortArrayToSafeByteArray(short[], int, byte[], int, int, boolean, boolean)}
+     *             instead.
+     */
+    @Deprecated
+    public static byte[] shortArrayToSafeByteArray(short[] in, int inOffset, byte[] out, int outOffset, int length,
+            boolean signed)
+    {
+        return shortArrayToSafeByteArray(in, inOffset, out, outOffset, length, signed, signed);
+    }
+
+    public static byte[] byteArrayToSafeByteArray(byte[] in, int inOffset, byte[] out, int outOffset, int length,
+            boolean srcSigned, boolean dstSigned)
+    {
+        // same sign ?
+        if (srcSigned == dstSigned)
+            return byteArrayToByteArray(in, inOffset, in, outOffset, length);
+
+        final int len = ArrayUtil.getCopyLength(in, inOffset, out, outOffset, length);
+        final byte[] outArray = allocIfNull(out, outOffset + len);
+        final byte maxValue = Byte.MAX_VALUE;
+
+        for (int i = 0; i < len; i++)
+        {
+            byte value = in[i + inOffset];
+
+            // signed and unsigned on other side --> need to clamp
+            if (value < 0)
+            {
+                if (srcSigned)
+                    value = 0;
+                else
+                    value = maxValue;
+            }
+
+            outArray[i + outOffset] = value;
         }
 
         return outArray;
@@ -3714,32 +4093,32 @@ public class Array1DUtil
 
     public static int[] longArrayToSafeIntArray(long[] array, boolean signed)
     {
-        return longArrayToSafeIntArray(array, 0, null, 0, array.length, signed);
+        return longArrayToSafeIntArray(array, 0, null, 0, array.length, signed, signed);
     }
 
     public static short[] longArrayToSafeShortArray(long[] array, boolean signed)
     {
-        return longArrayToSafeShortArray(array, 0, null, 0, array.length, signed);
+        return longArrayToSafeShortArray(array, 0, null, 0, array.length, signed, signed);
     }
 
     public static byte[] longArrayToSafeByteArray(long[] array, boolean signed)
     {
-        return longArrayToSafeByteArray(array, 0, null, 0, array.length, signed);
+        return longArrayToSafeByteArray(array, 0, null, 0, array.length, signed, signed);
     }
 
     public static short[] intArrayToSafeShortArray(int[] array, boolean signed)
     {
-        return intArrayToSafeShortArray(array, 0, null, 0, array.length, signed);
+        return intArrayToSafeShortArray(array, 0, null, 0, array.length, signed, signed);
     }
 
     public static byte[] intArrayToSafeByteArray(int[] array, boolean signed)
     {
-        return intArrayToSafeByteArray(array, 0, null, 0, array.length, signed);
+        return intArrayToSafeByteArray(array, 0, null, 0, array.length, signed, signed);
     }
 
     public static byte[] shortArrayToSafeByteArray(short[] array, boolean signed)
     {
-        return shortArrayToSafeByteArray(array, 0, null, 0, array.length, signed);
+        return shortArrayToSafeByteArray(array, 0, null, 0, array.length, signed, signed);
     }
 
     //

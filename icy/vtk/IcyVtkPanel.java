@@ -61,6 +61,15 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
     }
 
     @Override
+    public void Delete()
+    {
+        super.Delete();
+
+        // important to release timer here
+        timer.cancel();
+    }
+
+    @Override
     public void removeNotify()
     {
         super.removeNotify();
@@ -251,17 +260,16 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
             @Override
             public void run()
             {
+                // no parent --> exit
+                if (getParent() == null)
+                    return;
+
                 // set back quality rendering
                 GetRenderWindow().SetDesiredUpdateRate(0.01);
                 // request repaint
                 repaint();
             }
         }, 1000);
-
-        // // set back quality rendering
-        // rw.SetDesiredUpdateRate(0.01);
-        // // request repaint
-        // repaint();
     }
 
     @Override
