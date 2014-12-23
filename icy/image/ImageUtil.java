@@ -577,7 +577,7 @@ public class ImageUtil
      */
     public static BufferedImage getCopy(Image in)
     {
-        return convertImage(in, null);
+        return convert(in, null);
     }
 
     /**

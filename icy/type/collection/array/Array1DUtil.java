@@ -1348,46 +1348,6 @@ public class Array1DUtil
     }
 
     /**
-     * Return the 'in' array as a single dimension byte array.
-     */
-    public static byte[] toByteArray1D(byte[] in)
-    {
-        return toByteArray1D(in, null, 0);
-    }
-
-    /**
-     * Return the 'in' array as a single dimension short array.
-     */
-    public static short[] toShortArray1D(short[] in)
-    {
-        return toShortArray1D(in, null, 0);
-    }
-
-    /**
-     * Return the 'in' array as a single dimension int array.
-     */
-    public static int[] toIntArray1D(int[] in)
-    {
-        return toIntArray1D(in, null, 0);
-    }
-
-    /**
-     * Return the 'in' array as a single dimension float array.
-     */
-    public static float[] toFloatArray1D(float[] in)
-    {
-        return toFloatArray1D(in, null, 0);
-    }
-
-    /**
-     * Return the 'in' array as a single dimension double array.
-     */
-    public static double[] toDoubleArray1D(double[] in)
-    {
-        return toDoubleArray1D(in, null, 0);
-    }
-
-    /**
      * Return the 'in' array as a single dimension array.<br>
      * The resulting array is returned in 'out' at specified offset.<br>
      * If (out == null) a new array is allocated.

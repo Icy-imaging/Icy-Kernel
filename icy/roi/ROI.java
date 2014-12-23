@@ -186,6 +186,11 @@ public abstract class ROI implements ChangeListener, XMLPersistent
             IcyExceptionHandler.handleException(new NoSuchMethodException("Default constructor not found in class '"
                     + className + "', cannot create the ROI."), true);
         }
+        catch (ClassNotFoundException e)
+        {
+            IcyExceptionHandler.handleException(new ClassNotFoundException("Cannot find '" + className
+                    + "' class, cannot create the ROI."), true);
+        }
         catch (Exception e)
         {
             IcyExceptionHandler.handleException(e, true);

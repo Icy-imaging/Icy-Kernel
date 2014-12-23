@@ -68,6 +68,8 @@ import vtk.vtkPropPicker;
 import vtk.vtkRenderWindow;
 import vtk.vtkRenderWindowInteractor;
 import vtk.vtkRenderer;
+import vtk.vtkTextActor;
+import vtk.vtkTextProperty;
 import vtk.vtkUnsignedCharArray;
 
 /**
@@ -171,6 +173,8 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     protected vtkAxesActor axes;
     protected vtkCubeAxesActor boundingBox;
     protected vtkCubeAxesActor rulerBox;
+    protected vtkTextActor textInfo;
+    protected vtkTextProperty textProperty;
     protected vtkOrientationMarkerWidget widget;
 
     /**
@@ -377,12 +381,24 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         rulerBox.SetYAxisLabelVisibility(0);
         rulerBox.SetZAxisLabelVisibility(0);
 
+        // initialize text info actor
+        textInfo = new vtkTextActor();
+        textInfo.SetInput("No enough memory to display this 3D image !");
+        textInfo.SetPosition(10, 10);
+        // not visible by default
+        textInfo.SetVisibility(0);
+
+        // change text properties
+        textProperty = textInfo.GetTextProperty();
+        textProperty.SetFontFamilyToArial();
+
         // add volume to renderer
         // TODO : add option to remove volume rendering
         renderer.AddVolume(imageVolume.getVolume());
         // add bounding box & ruler
         renderer.AddViewProp(boundingBox);
         renderer.AddViewProp(rulerBox);
+        renderer.AddViewProp(textInfo);
         // then vtkPainter actors to the renderer
         for (Layer l : getLayers(false))
             addLayerActors(l);
@@ -391,7 +407,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         resetCamera();
 
         // restore settings
-        setBackgroundColor(new Color(preferences.getInt(ID_BGCOLOR, 0xFFFFFF)));
+        setBackgroundColor(new Color(preferences.getInt(ID_BGCOLOR, 0x000000)));
         setVolumeMapperType(VtkVolumeMapperType.values()[preferences.getInt(ID_MAPPER,
                 VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT.ordinal())]);
         setVolumeInterpolation(preferences.getInt(ID_INTERPOLATION, VtkUtil.VTK_LINEAR_INTERPOLATION));
@@ -706,6 +722,8 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         rulerBox.GetZAxesGridpolysProperty().SetColor(r, g, b);
         rulerBox.GetZAxesInnerGridlinesProperty().SetColor(r, g, b);
         rulerBox.GetZAxesLinesProperty().SetColor(r, g, b);
+
+        textProperty.SetColor(r, g, b);
     }
 
     /**
@@ -1065,17 +1083,43 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         final int posC = getPositionC();
 
         final Object data;
+        long size;
 
-        if (posC == -1)
+        try
         {
-            data = sequence.getDataCopyCXYZ(posT);
-            return VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
-                    sequence.getSizeZ(), sequence.getSizeC());
-        }
+            if (posC == -1)
+            {
+                size = sequence.getSizeX();
+                size *= sequence.getSizeY();
+                size *= sequence.getSizeZ();
+                size *= sequence.getSizeC();
 
-        data = sequence.getDataCopyXYZ(posT, posC);
-        return VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
-                sequence.getSizeZ(), 1);
+                // can't allocate
+                if (size > Integer.MAX_VALUE)
+                    return null;
+
+                data = sequence.getDataCopyCXYZ(posT);
+                return VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
+                        sequence.getSizeZ(), sequence.getSizeC());
+            }
+
+            size = sequence.getSizeX();
+            size *= sequence.getSizeY();
+            size *= sequence.getSizeZ();
+
+            // can't allocate
+            if (size > Integer.MAX_VALUE)
+                return null;
+
+            data = sequence.getDataCopyXYZ(posT, posC);
+            return VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
+                    sequence.getSizeZ(), 1);
+        }
+        catch (OutOfMemoryError e)
+        {
+            // just not enough memory
+            return null;
+        }
     }
 
     /**
@@ -1087,10 +1131,24 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         {
             imageVolume.setVolumeData(data);
             imageVolume.getVolume().SetVisibility(1);
+
+            if (textInfo != null)
+                textInfo.SetVisibility(0);
         }
         else
+        {
             // no data --> hide volume
             imageVolume.getVolume().SetVisibility(0);
+
+            if (textInfo != null)
+            {
+                final Sequence seq = getSequence();
+
+                // we have an image --> not enough memory to display it (show message)
+                if ((seq != null) && !seq.isEmpty())
+                    textInfo.SetVisibility(1);
+            }
+        }
     }
 
     protected void updateLut()

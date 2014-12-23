@@ -25,6 +25,7 @@ import icy.main.Icy;
 import icy.math.MathUtil;
 import icy.preferences.ApplicationPreferences;
 import icy.preferences.GeneralPreferences;
+import icy.system.SystemUtil;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -119,6 +120,7 @@ public class GeneralPreferencePanel extends PreferencePanel
 
         load();
 
+        String maxMemoryMess;
         final JPanel topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.PAGE_AXIS));
 
@@ -135,8 +137,14 @@ public class GeneralPreferencePanel extends PreferencePanel
         topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" GUI font size  "), uiFontSizeSpinner,
                 Box.createHorizontalGlue()));
         topPanel.add(Box.createVerticalStrut(12));
-        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Max memory  "), maxMemoryMBSpinner, new JLabel(" MB  (<= "
-                + maxMemLimit + " MB)"), Box.createHorizontalGlue()));
+
+        maxMemoryMess = " MB  (max = " + maxMemLimit + " MB";
+        if (SystemUtil.is32bits() && ((SystemUtil.getTotalMemory() / (1024 * 1024)) >= 1500))
+            maxMemoryMess += " - use 64bit JVM to allow more)";
+        else
+            maxMemoryMess += ")";
+        topPanel.add(GuiUtil.createLineBoxPanel(new JLabel(" Max memory  "), maxMemoryMBSpinner, new JLabel(
+                maxMemoryMess), Box.createHorizontalGlue()));
         topPanel.add(Box.createVerticalStrut(6));
 
         final JPanel bottomPanel = new JPanel();
