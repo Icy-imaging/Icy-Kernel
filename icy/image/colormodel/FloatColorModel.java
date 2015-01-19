@@ -62,7 +62,7 @@ public class FloatColorModel extends IcyColorModel
         final int[] scaledData = new int[numComponents];
 
         for (int comp = 0; comp < numComponents; comp++)
-            scaledData[comp] = (int) lut.getLutBand(comp).getScaler().scale(pix[comp]);
+            scaledData[comp] = (int) lut.getLutChannel(comp).getScaler().scale(pix[comp]);
 
         return lut.getColorSpace().toRGBUnnorm(scaledData);
     }

@@ -63,49 +63,6 @@ public abstract class IcyAbstractAction extends AbstractAction
         }
     }
 
-    private class ActionRunner implements Runnable
-    {
-        final ActionEvent event;
-
-        public ActionRunner(ActionEvent e)
-        {
-            super();
-
-            event = e;
-        }
-
-        @Override
-        public void run()
-        {
-            final String mess = getProcessMessage();
-
-            if (isBgProcess() && !StringUtil.isEmpty(mess) && !Icy.getMainInterface().isHeadLess())
-                progressFrame = new ProgressFrame(mess);
-            else
-                progressFrame = null;
-
-            try
-            {
-                doAction(event);
-            }
-            finally
-            {
-                if (progressFrame != null)
-                    progressFrame.close();
-
-                // need to be done on the EDT (can change the enabled state)
-                ThreadUtil.invokeLater(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        setProcessing(false);
-                    }
-                });
-            }
-        }
-    }
-
     /**
      * 
      */
@@ -462,12 +419,56 @@ public abstract class IcyAbstractAction extends AbstractAction
     {
         setProcessing(true);
 
-        final ActionRunner runner = new ActionRunner(e);
-
+        // background execution ?
         if (isBgProcess())
-            ThreadUtil.bgRun(runner);
+        {
+            final ActionEvent event = e;
+
+            ThreadUtil.bgRun(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    final String mess = getProcessMessage();
+
+                    if (!StringUtil.isEmpty(mess) && !Icy.getMainInterface().isHeadLess())
+                        progressFrame = new ProgressFrame(mess);
+                    else
+                        progressFrame = null;
+
+                    try
+                    {
+                        doAction(event);
+                    }
+                    finally
+                    {
+                        if (progressFrame != null)
+                            progressFrame.close();
+
+                        // need to be done on the EDT (can change the enabled state)
+                        ThreadUtil.invokeLater(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                setProcessing(false);
+                            }
+                        });
+                    }
+                }
+            });
+        }
         else
-            runner.run();
+        {
+            try
+            {
+                doAction(e);
+            }
+            finally
+            {
+                setProcessing(false);
+            }
+        }
     }
 
     /**
@@ -495,5 +496,8 @@ public abstract class IcyAbstractAction extends AbstractAction
         return doAction(new ActionEvent(this, 0, ""));
     }
 
+    /**
+     * Action implementation
+     */
     protected abstract boolean doAction(ActionEvent e);
 }

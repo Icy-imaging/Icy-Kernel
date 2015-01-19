@@ -145,17 +145,49 @@ public class ComponentUtil
     /**
      * Center specified windows relative to its parent
      */
-    public static void center(Window w)
+    public static void center(Window window)
     {
-        w.setLocationRelativeTo(w.getParent());
+        window.setLocationRelativeTo(window.getParent());
     }
 
     /**
      * Center specified JInternalFrame
      */
-    public static void center(JInternalFrame f)
+    public static void center(JInternalFrame frame)
     {
-        center((Component) f);
+        center((Component) frame);
+    }
+
+    /**
+     * Center the Window on specified point
+     */
+    public static void centerOn(Window window, Point position)
+    {
+        final int x = position.x - (window.getWidth() / 2);
+        final int y = position.y - (window.getHeight() / 2);
+
+        // avoid negative coordinates when centering
+        window.setLocation((x < 0) ? 0 : x, (y < 0) ? 0 : y);
+    }
+
+    /**
+     * Center the JInternalFrame on specified point
+     */
+    public static void centerOn(JInternalFrame f, Point position)
+    {
+        centerOn((Component) f, position);
+    }
+
+    /**
+     * Center specified component relative to its parent
+     */
+    public static void centerOn(Component comp, Point position)
+    {
+        final int x = position.x - (comp.getWidth() / 2);
+        final int y = position.y - (comp.getHeight() / 2);
+
+        // avoid negative coordinates when centering
+        comp.setLocation((x < 0) ? 0 : x, (y < 0) ? 0 : y);
     }
 
     /**

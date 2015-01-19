@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.event.EventListenerList;
 
@@ -209,14 +210,18 @@ public class PluginRepositoryLoader
     {
         String address = repos.getLocation();
         final boolean networkAddr = URLUtil.isNetworkURL(address);
+        final boolean betaAllowed = PluginPreferences.getAllowBeta();
 
         if (networkAddr && repos.getSupportParam())
         {
             // prepare parameters for plugin list request
-            final HashMap<String, String> values = new HashMap<String, String>();
+            final Map<String, String> values = new HashMap<String, String>();
 
-            values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
             // add kernel information parameter
+            values.put(NetworkUtil.ID_KERNELVERSION, Icy.version.toString());
+            // add beta allowed information parameter
+            values.put(NetworkUtil.ID_BETAALLOWED, Boolean.toString(betaAllowed));
+            // concat to address
             address += "?" + NetworkUtil.getContentString(values);
         }
 
@@ -239,8 +244,6 @@ public class PluginRepositoryLoader
         // plugins node found
         if (pluginsNode != null)
         {
-            // flag for beta version allowed
-            final boolean betaAllowed = PluginPreferences.getAllowBeta();
             // ident nodes
             final List<Node> nodes = XMLUtil.getChildren(pluginsNode, ID_PLUGIN);
 
@@ -257,7 +260,6 @@ public class PluginRepositoryLoader
                     if (ident.getRequiredKernelVersion().isLowerOrEqual(Icy.version)
                             && (betaAllowed || (!ident.getVersion().isBeta())))
                     {
-
                         // check if we have several version of the same plugin
                         final int ind = PluginIdent.getIndex(result, ident.getClassName());
                         // other version found ?

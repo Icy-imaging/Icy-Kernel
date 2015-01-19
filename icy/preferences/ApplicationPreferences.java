@@ -168,7 +168,7 @@ public class ApplicationPreferences
      */
     public static int getStackSizeKB()
     {
-        // 2MB by default for VTK on 32 systems
+        // 2MB by default for VTK
         return preferences.getInt(ID_STACK_SIZE, 2048);
     }
 

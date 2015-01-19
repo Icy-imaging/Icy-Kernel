@@ -108,69 +108,40 @@ public class IcyColorSpace extends ColorSpace implements ChangeListener, IcyColo
         beginUpdate();
         try
         {
-            // define default colormaps depending the number of component
-            switch (numComponents)
+            // single component: gray colormap
+            if (numComponents == 1)
+                setColorMap(0, LinearColorMap.white_, true);
+            else
             {
-                case 1:
-                    // Gray
-                    setColorMap(0, LinearColorMap.white_, true);
-                    break;
-
-                case 2:
-                    // Red / Green
-                    setColorMap(0, LinearColorMap.red_, true);
-                    setColorMap(1, LinearColorMap.green_, true);
-                    break;
-
-                case 3:
-                    // RGB
-                    setColorMap(0, LinearColorMap.red_, true);
-                    setColorMap(1, LinearColorMap.green_, true);
-                    setColorMap(2, LinearColorMap.blue_, true);
-                    break;
-
-                case 4:
-                    // ARGB
-                    setColorMap(0, LinearColorMap.red_, true);
-                    setColorMap(1, LinearColorMap.green_, true);
-                    setColorMap(2, LinearColorMap.blue_, true);
-                    setColorMap(3, LinearColorMap.cyan_, true);
-                    break;
-
-                case 5:
-                    // RGB CM
-                    setColorMap(0, LinearColorMap.red_, true);
-                    setColorMap(1, LinearColorMap.green_, true);
-                    setColorMap(2, LinearColorMap.blue_, true);
-                    setColorMap(3, LinearColorMap.cyan_, true);
-                    setColorMap(4, LinearColorMap.magenta_, true);
-                    break;
-
-                case 6:
-                    // RGB CMY
-                    setColorMap(0, LinearColorMap.red_, true);
-                    setColorMap(1, LinearColorMap.green_, true);
-                    setColorMap(2, LinearColorMap.blue_, true);
-                    setColorMap(3, LinearColorMap.cyan_, true);
-                    setColorMap(4, LinearColorMap.magenta_, true);
-                    setColorMap(5, LinearColorMap.yellow_, true);
-                    break;
-
-                default:
-                    // RGB CMY W
-                    setColorMap(0, LinearColorMap.red_, true);
-                    setColorMap(1, LinearColorMap.green_, true);
-                    setColorMap(2, LinearColorMap.blue_, true);
-                    setColorMap(3, LinearColorMap.cyan_, true);
-                    setColorMap(4, LinearColorMap.magenta_, true);
-                    setColorMap(5, LinearColorMap.yellow_, true);
-                    setColorMap(6, LinearColorMap.white_, true);
-                    break;
+                // define default colormaps depending the number of component
+                for (int i = 0; i < numComponents; i++)
+                {
+                    switch (i % 7)
+                    {
+                        case 0:
+                            setColorMap(i, LinearColorMap.red_, true);
+                            break;
+                        case 1:
+                            setColorMap(i, LinearColorMap.green_, true);
+                            break;
+                        case 2:
+                            setColorMap(i, LinearColorMap.blue_, true);
+                            break;
+                        case 3:
+                            setColorMap(i, LinearColorMap.cyan_, true);
+                            break;
+                        case 4:
+                            setColorMap(i, LinearColorMap.magenta_, true);
+                            break;
+                        case 5:
+                            setColorMap(i, LinearColorMap.yellow_, true);
+                            break;
+                        case 6:
+                            setColorMap(i, LinearColorMap.white_, true);
+                            break;
+                    }
+                }
             }
-
-            // black map for the rest
-            for (int i = 7; i < numComponents; i++)
-                setColorMap(i, LinearColorMap.black_, true);
         }
         finally
         {

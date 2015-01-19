@@ -171,7 +171,6 @@ public abstract class AbstractIcyUndoableEdit implements IcyUndoableEdit
     @Override
     public boolean canUndo()
     {
-        // checkIsAlive();
         return alive && hasBeenDone;
     }
 
@@ -197,7 +196,6 @@ public abstract class AbstractIcyUndoableEdit implements IcyUndoableEdit
     @Override
     public boolean canRedo()
     {
-        // checkIsAlive();
         return alive && !hasBeenDone;
     }
 

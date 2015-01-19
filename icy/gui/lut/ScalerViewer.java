@@ -52,6 +52,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -61,7 +63,9 @@ import java.awt.geom.Point2D;
 import java.lang.reflect.Array;
 import java.util.EventListener;
 
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.event.EventListenerList;
 
 /**
@@ -69,9 +73,9 @@ import javax.swing.event.EventListenerList;
  */
 public class ScalerViewer extends JPanel implements SequenceListener, LUTChannelListener, ViewerListener
 {
-    private static enum actionType
+    protected static enum actionType
     {
-        NULL, MODIFY_LOWBOUND, MODIFY_HIGHBOUND
+        NULL, MODIFY_LOWBOUND, MODIFY_HIGHBOUND, MODIFY_MIDDLE
     }
 
     public static interface ScalerPositionListener extends EventListener
@@ -79,7 +83,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
         public void positionChanged(double index, int value, double normalizedValue);
     }
 
-    private class ScalerHistogramPanel extends HistogramPanel implements MouseListener, MouseMotionListener,
+    public class ScalerHistogramPanel extends HistogramPanel implements MouseListener, MouseMotionListener,
             MouseWheelListener
     {
         /**
@@ -123,7 +127,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
 
             if (action != actionType.NULL)
                 cursor = Cursor.W_RESIZE_CURSOR;
-            else if (isOverX(pos, getLowBoundPos()) || isOverX(pos, getHighBoundPos()))
+            else if (isOverX(pos, getLowBoundPos()) || isOverX(pos, getHighBoundPos()) || isOverX(pos, getMiddlePos()))
                 cursor = Cursor.HAND_CURSOR;
             else
                 cursor = Cursor.DEFAULT_CURSOR;
@@ -191,6 +195,11 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
             return dataToPixel(getHighBound());
         }
 
+        public int getMiddlePos()
+        {
+            return (getHighBoundPos() + getLowBoundPos()) / 2;
+        }
+
         private void setLowBoundPos(int pos)
         {
             setLowBound(pixelToData(pos));
@@ -254,21 +263,33 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
             final int y = getClientY();
             final int lowBound = getLowBoundPos();
             final int highBound = getHighBoundPos();
+            final int middle = getMiddlePos();
 
             g.setColor(ColorUtil.mix(Color.blue, Color.white, false));
-            g.drawRect(lowBound - 2, y, 3, h);
+            g.drawRect(lowBound - 2, y, 2, h);
             g.setColor(Color.blue);
-            g.fillRect(lowBound - 1, y + 1, 2, h - 1);
+            g.fillRect(lowBound - 1, y + 1, 1, h - 1);
             g.setColor(ColorUtil.mix(Color.red, Color.white, false));
-            g.drawRect(highBound - 1, y, 3, h);
+            g.drawRect(highBound - 1, y, 2, h);
             g.setColor(Color.red);
-            g.fillRect(highBound, y + 1, 2, h - 1);
+            g.fillRect(highBound, y + 1, 1, h - 1);
+            g.setColor(ColorUtil.mix(Color.green, Color.white, false));
+            g.drawRect(middle - 1, y + 10, 1, h - 10);
+            g.setColor(Color.green);
+            g.fillRect(middle, y + 11, 0, h - 11);
         }
 
         @Override
         public void mouseClicked(MouseEvent e)
         {
+            if (e.isConsumed())
+                return;
 
+            if (e.getClickCount() == 2)
+            {
+                showBoundsSettingDialog();
+                e.consume();
+            }
         }
 
         @Override
@@ -291,6 +312,9 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
         @Override
         public void mousePressed(MouseEvent e)
         {
+            if (e.isConsumed())
+                return;
+
             final Point pos = e.getPoint();
 
             if (EventUtil.isLeftMouseButton(e))
@@ -299,6 +323,8 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                     action = actionType.MODIFY_LOWBOUND;
                 else if (isOverX(pos, getHighBoundPos()))
                     action = actionType.MODIFY_HIGHBOUND;
+                else if (isOverX(pos, getMiddlePos()))
+                    action = actionType.MODIFY_MIDDLE;
 
                 // show message
                 if (action != actionType.NULL)
@@ -310,10 +336,12 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                 }
 
                 updateCursor(e.getPoint());
+                e.consume();
             }
             else if (EventUtil.isRightMouseButton(e))
             {
-                // showPopupMenu(pos);
+                showSettingPopup(pos);
+                e.consume();
             }
         }
 
@@ -333,11 +361,13 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
         @Override
         public void mouseDragged(MouseEvent e)
         {
+            if (e.isConsumed())
+                return;
+
             final Point pos = e.getPoint();
+            final boolean shift = EventUtil.isShiftDown(e);
 
             mouseOnLeft = pos.x < (getWidth() / 2);
-
-            final boolean shift = EventUtil.isShiftDown(e);
 
             switch (action)
             {
@@ -350,6 +380,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                         for (LUTChannel lc : lutChannel.getLut().getLutChannels())
                             lc.setMin(newLowBound);
                     }
+                    e.consume();
                     break;
 
                 case MODIFY_HIGHBOUND:
@@ -361,6 +392,36 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                         for (LUTChannel lc : lutChannel.getLut().getLutChannels())
                             lc.setMax(newHighBound);
                     }
+                    e.consume();
+                    break;
+
+                case MODIFY_MIDDLE:
+                    final double width = (getHighBound() - getLowBound()) / 2d;
+                    final double value = pixelToData(pos.x);
+                    final double min = value - width;
+                    final double max = value + width;
+
+                    // global change
+                    if (shift)
+                    {
+                        for (LUTChannel lc : lutChannel.getLut().getLutChannels())
+                        {
+                            if ((min >= lc.getMinBound()) && (max <= lc.getMaxBound()))
+                            {
+                                lc.setMin(min);
+                                lc.setMax(max);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if ((min >= lutChannel.getMinBound()) && (max <= lutChannel.getMaxBound()))
+                        {
+                            setLowBound(min);
+                            setHighBound(max);
+                        }
+                    }
+                    e.consume();
                     break;
             }
 
@@ -448,8 +509,6 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
      * histogram
      */
     private ScalerHistogramPanel histogram;
-    private boolean autoRefresh;
-    private boolean autoBounds;
     private boolean histoNeedRefresh;
 
     /**
@@ -503,8 +562,6 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
             }
         });
         histoNeedRefresh = false;
-        autoRefresh = true;
-        autoBounds = false;
 
         setLayout(new BorderLayout());
         add(histogram, BorderLayout.CENTER);
@@ -701,7 +758,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
     void onSequenceDataChanged()
     {
         // update histogram
-        if (autoRefresh)
+        if (viewer.getLutViewer().getAutoRefreshHistogram())
             requestHistoDataRefresh();
     }
 
@@ -711,7 +768,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
     private void onPositionChanged()
     {
         // update histogram
-        if (autoRefresh)
+        if (viewer.getLutViewer().getAutoRefreshHistogram())
             requestHistoDataRefresh();
     }
 
@@ -737,104 +794,61 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
     }
 
     /**
-     * @return the autoBounds
+     * Should be called when histogram scaling type changed
      */
-    public boolean getAutoBounds()
+    public void scaleTypeChanged(boolean log)
     {
-        return autoBounds;
-    }
-
-    /**
-     * Set the autoBounds
-     */
-    public void setAutoBounds(boolean value)
-    {
-        if (autoBounds != value)
-        {
-            autoBounds = value;
-            histogram.repaint();
-        }
-    }
-
-    /**
-     * @return the autoRefresh
-     */
-    public boolean getAutoRefresh()
-    {
-        return autoRefresh;
-    }
-
-    /**
-     * Set the autoRefresh
-     */
-    public void setAutoRefresh(boolean value)
-    {
-        if (autoRefresh != value)
-        {
-            if (value)
-                requestHistoDataRefresh();
-            autoRefresh = value;
-        }
-    }
-
-    /**
-     * @return the logScale
-     */
-    public boolean getLogScale()
-    {
-        return histogram.getLogScaling();
-    }
-
-    /**
-     * @param value
-     *        the logScale to set
-     */
-    public void setLogScale(boolean value)
-    {
-        histogram.setLogScaling(value);
+        if (log)
+            histogram.setLogScaling(true);
+        else
+            histogram.setLogScaling(false);
     }
 
     /**
      * show popup menu
      */
-    // private void showPopupMenu(final Point pos)
-    // {
-    // // rebuild menu
-    // final JPopupMenu menu = new JPopupMenu();
-    //
-    // final JMenu scaleMenu = new JMenu("Scaling");
-    //
-    // final JCheckBoxMenuItem logItem = new JCheckBoxMenuItem("Log", logScale);
-    // logItem.addActionListener(new ActionListener()
-    // {
-    // @Override
-    // public void actionPerformed(ActionEvent e)
-    // {
-    // setLogScale(true);
-    // }
-    // });
-    //
-    // final JCheckBoxMenuItem linearItem = new JCheckBoxMenuItem("Linear", !logScale);
-    // linearItem.addActionListener(new ActionListener()
-    // {
-    // @Override
-    // public void actionPerformed(ActionEvent e)
-    // {
-    // setLogScale(false);
-    // }
-    // });
-    //
-    // scaleMenu.add(logItem);
-    // scaleMenu.add(linearItem);
-    //
-    // menu.add(scaleMenu);
-    //
-    // menu.pack();
-    // menu.validate();
-    //
-    // // display menu
-    // menu.show(this, pos.x, pos.y);
-    // }
+    protected void showSettingPopup(final Point pos)
+    {
+        // rebuild menu
+        final JPopupMenu menu = new JPopupMenu("Actions");
+
+        final JMenuItem refreshItem = new JMenuItem("Refresh now");
+        refreshItem.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                requestHistoDataRefresh();
+            }
+        });
+        final JMenuItem setBoundsItem = new JMenuItem("Set bounds");
+        setBoundsItem.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                showBoundsSettingDialog();
+            }
+        });
+
+        menu.add(refreshItem);
+        menu.add(setBoundsItem);
+
+        menu.pack();
+        menu.validate();
+
+        // display menu
+        menu.show(this, pos.x, pos.y);
+    }
+
+    void showBoundsSettingDialog()
+    {
+        final ScalerBoundsSettingDialog boundsSettingDialog = new ScalerBoundsSettingDialog(lutChannel);
+
+        boundsSettingDialog.pack();
+        boundsSettingDialog.setLocationRelativeTo(this);
+        boundsSettingDialog.setVisible(true);
+    }
 
     /**
      * Add a listener

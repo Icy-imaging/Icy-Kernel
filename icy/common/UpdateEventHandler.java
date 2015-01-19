@@ -137,16 +137,13 @@ public class UpdateEventHandler
     {
         synchronized (pendingChanges)
         {
-            boolean found = false;
-
             // test if we already have an including object in the list
             for (EventHierarchicalChecker cmp : pendingChanges)
                 if (cmp.isEventRedundantWith(include))
-                    found = true;
+                    return;
 
             // we add it only if it isn't already existing
-            if (!found)
-                pendingChanges.add(include);
+            pendingChanges.add(include);
         }
     }
 

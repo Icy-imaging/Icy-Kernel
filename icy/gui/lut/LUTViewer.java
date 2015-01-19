@@ -226,11 +226,13 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
             public void actionPerformed(ActionEvent e)
             {
                 final boolean value = autoRefreshHistoCheckBox.isSelected();
-                autoRefreshHistogramInternal(value);
+                if (value)
+                    refreshAllHistogram();
                 pref.putBoolean(ID_AUTO_REFRESH, value);
             }
         });
-        autoRefreshHistogramInternal(autoRefreshHistoCheckBox.isSelected());
+        if (autoRefreshHistoCheckBox.isSelected())
+            refreshAllHistogram();
 
         autoBoundsCheckBox = new JCheckBox("Auto bounds", getPreferredAutoBounds());
         autoBoundsCheckBox.setToolTipText("Automatically ajdust bounds when data is modified");
@@ -244,14 +246,15 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
                 if (value)
                 {
                     ThreadUtil.runSingle(boundsUpdater);
-                    autoRefreshHistogramInternal(true);
+                    refreshAllHistogram();
                     autoRefreshHistoCheckBox.setSelected(true);
                     autoRefreshHistoCheckBox.setEnabled(false);
                 }
                 else
                 {
                     final boolean refreshValue = pref.getBoolean(ID_AUTO_REFRESH, true);
-                    autoRefreshHistogramInternal(refreshValue);
+                    if (refreshValue)
+                        refreshAllHistogram();
                     autoRefreshHistoCheckBox.setSelected(refreshValue);
                     autoRefreshHistoCheckBox.setEnabled(true);
                 }
@@ -266,7 +269,7 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
         if (!userLut && autoBoundsCheckBox.isSelected())
         {
             ThreadUtil.runSingle(boundsUpdater);
-            autoRefreshHistogramInternal(true);
+            refreshAllHistogram();
             autoRefreshHistoCheckBox.setSelected(true);
             autoRefreshHistoCheckBox.setEnabled(false);
         }
@@ -279,8 +282,7 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                setLogScale(true);
-                pref.putBoolean(ID_LOG_VIEW, true);
+                scaleTypeChanged(true);
             }
         });
         linearButton = new JRadioButton("linear");
@@ -290,8 +292,7 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                setLogScale(false);
-                pref.putBoolean(ID_LOG_VIEW, false);
+                scaleTypeChanged(false);
             }
         });
 
@@ -299,9 +300,7 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
         scaleGroup.add(linearButton);
 
         // default
-        final boolean b = pref.getBoolean(ID_LOG_VIEW, true);
-        setLogScale(b);
-        if (b)
+        if (pref.getBoolean(ID_LOG_VIEW, true))
             logButton.setSelected(true);
         else
             linearButton.setSelected(true);
@@ -398,16 +397,31 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
         autoRefreshHistoCheckBox.setSelected(value);
     }
 
-    void autoRefreshHistogramInternal(boolean value)
+    public boolean getLogScale()
     {
-        for (int i = 0; i < lutChannelViewers.size(); i++)
-            lutChannelViewers.get(i).getScalerPanel().getScalerViewer().setAutoRefresh(value);
+        return logButton.isSelected();
     }
 
-    void setLogScale(boolean value)
+    public void setLogScale(boolean value)
+    {
+        if (value)
+            logButton.setSelected(true);
+        else
+            linearButton.setSelected(true);
+    }
+
+    void refreshAllHistogram()
     {
         for (int i = 0; i < lutChannelViewers.size(); i++)
-            lutChannelViewers.get(i).getScalerPanel().getScalerViewer().setLogScale(value);
+            lutChannelViewers.get(i).getScalerPanel().refreshHistogram();
+    }
+
+    void scaleTypeChanged(boolean log)
+    {
+        pref.putBoolean(ID_LOG_VIEW, log);
+        // change histogram scale type
+        for (int i = 0; i < lutChannelViewers.size(); i++)
+            lutChannelViewers.get(i).getScalerPanel().getScalerViewer().scaleTypeChanged(log);
     }
 
     @Override
