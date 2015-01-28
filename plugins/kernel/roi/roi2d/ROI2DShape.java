@@ -36,7 +36,6 @@ import icy.roi.edit.Point2DAddedROIEdit;
 import icy.roi.edit.Point2DMovedROIEdit;
 import icy.roi.edit.Point2DRemovedROIEdit;
 import icy.sequence.Sequence;
-import icy.type.point.Point3D;
 import icy.type.point.Point5D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
@@ -62,7 +61,6 @@ import java.util.List;
 
 import plugins.kernel.canvas.VtkCanvas;
 import vtk.vtkActor;
-import vtk.vtkPointSet;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
 import vtk.vtkProp;
@@ -110,7 +108,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         }
 
         /**
-         * update 3D painter for 3D canvas (called only when vtk is loaded).
+         * update 3D painter for 3D canvas (called only when VTK is loaded).
          */
         protected void rebuild3DPainter(VtkCanvas canvas)
         {
@@ -124,13 +122,9 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (actor == null)
                 initVTKObjects();
 
-            final List<Point3D.Double> point3DList = new ArrayList<Point3D.Double>();
-            final List<Poly3D> polyList = new ArrayList<Poly3D>();
+            final List<double[]> point3DList = new ArrayList<double[]>();
+            final List<int[]> polyList = new ArrayList<int[]>();
             final double[] coords = new double[6];
-
-            final double nbSlice = seq.getSizeZ(canvas.getPositionT());
-            // use flat path
-            final PathIterator path = getPathIterator(null, 0.5d);
 
             // starting position
             double xm = 0d;
@@ -139,14 +133,33 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             double y0 = 0d;
             double x1 = 0d;
             double y1 = 0d;
+            double z0, z1;
             int ind;
+
+            final double curZ = getZ();
+
+            // all slices ?
+            if (curZ == -1)
+            {
+                // set object depth on whole volume
+                z0 = 0;
+                z1 = seq.getSizeZ() * scaling[2];
+            }
+            // fixed Z position
+            else
+            {
+                // set Z position
+                z0 = (curZ - 0.5) * scaling[2];
+                z1 = (curZ + 0.5) * scaling[2];
+            }
+
+            // use flat path
+            final PathIterator path = getPathIterator(null, 0.5d);
 
             // build point data
             while (!path.isDone())
             {
-                int segType = path.currentSegment(coords);
-
-                switch (segType)
+                switch (path.currentSegment(coords))
                 {
                     case PathIterator.SEG_MOVETO:
                         x0 = xm = coords[0];
@@ -159,12 +172,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
                         ind = point3DList.size();
 
-                        point3DList.add(new Point3D.Double(x0 * scaling[0], y0 * scaling[1], 0));
-                        point3DList.add(new Point3D.Double(x1 * scaling[0], y1 * scaling[1], 0));
-                        point3DList.add(new Point3D.Double(x0 * scaling[0], y0 * scaling[1], nbSlice * scaling[2]));
-                        point3DList.add(new Point3D.Double(x1 * scaling[0], y1 * scaling[1], nbSlice * scaling[2]));
-                        polyList.add(new Poly3D(1 + ind, 2 + ind, 0 + ind));
-                        polyList.add(new Poly3D(3 + ind, 2 + ind, 1 + ind));
+                        point3DList.add(new double[] {x0 * scaling[0], y0 * scaling[1], z0});
+                        point3DList.add(new double[] {x1 * scaling[0], y1 * scaling[1], z0});
+                        point3DList.add(new double[] {x0 * scaling[0], y0 * scaling[1], z1});
+                        point3DList.add(new double[] {x1 * scaling[0], y1 * scaling[1], z1});
+                        polyList.add(new int[] {1 + ind, 2 + ind, 0 + ind});
+                        polyList.add(new int[] {3 + ind, 2 + ind, 1 + ind});
 
                         x0 = x1;
                         y0 = y1;
@@ -176,12 +189,12 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
                         ind = point3DList.size();
 
-                        point3DList.add(new Point3D.Double(x0 * scaling[0], y0 * scaling[1], 0));
-                        point3DList.add(new Point3D.Double(x1 * scaling[0], y1 * scaling[1], 0));
-                        point3DList.add(new Point3D.Double(x0 * scaling[0], y0 * scaling[1], nbSlice * scaling[2]));
-                        point3DList.add(new Point3D.Double(x1 * scaling[0], y1 * scaling[1], nbSlice * scaling[2]));
-                        polyList.add(new Poly3D(1 + ind, 2 + ind, 0 + ind));
-                        polyList.add(new Poly3D(3 + ind, 2 + ind, 1 + ind));
+                        point3DList.add(new double[] {x0 * scaling[0], y0 * scaling[1], z0});
+                        point3DList.add(new double[] {x1 * scaling[0], y1 * scaling[1], z0});
+                        point3DList.add(new double[] {x0 * scaling[0], y0 * scaling[1], z1});
+                        point3DList.add(new double[] {x1 * scaling[0], y1 * scaling[1], z1});
+                        polyList.add(new int[] {1 + ind, 2 + ind, 0 + ind});
+                        polyList.add(new int[] {3 + ind, 2 + ind, 1 + ind});
 
                         x0 = x1;
                         y0 = y1;
@@ -195,28 +208,23 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             final double[][] vertices = new double[point3DList.size()][3];
             final int[][] indexes = new int[polyList.size()][3];
 
-            int pointIndex = 0;
-            for (Point3D.Double p3D : point3DList)
-            {
-                vertices[pointIndex][0] = p3D.x;
-                vertices[pointIndex][1] = p3D.y;
-                vertices[pointIndex][2] = p3D.z;
-                pointIndex++;
-            }
+            ind = 0;
+            for (double[] pt3D : point3DList)
+                vertices[ind++] = pt3D;
 
-            int polyIndex = 0;
-            for (Poly3D poly : polyList)
-            {
-                indexes[polyIndex][0] = poly.p1;
-                indexes[polyIndex][1] = poly.p2;
-                indexes[polyIndex][2] = poly.p3;
-                polyIndex++;
-            }
+            ind = 0;
+            for (int[] poly : polyList)
+                indexes[ind++] = poly;
 
             ((vtkPolyData) polyData).SetPolys(VtkUtil.getCells(polyList.size(), VtkUtil.prepareCells(indexes)));
-            ((vtkPointSet) polyData).SetPoints(VtkUtil.getPoints(vertices));
-
+            ((vtkPolyData) polyData).SetPoints(VtkUtil.getPoints(vertices));
             ((vtkPolyDataMapper) polyMapper).Update();
+
+            final Color color = getColor();
+            ((vtkActor) actor).GetProperty().SetColor(color.getRed() / 255d, color.getGreen() / 255d,
+                    color.getBlue() / 255d);
+            // opacity is for interior only, contour can be done with layer opacity information
+            // ((vtkActor) actor).GetProperty().SetOpacity(getOpacity());
         }
 
         @Override
@@ -710,6 +718,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                     rebuild3DPainter(canvas3d);
                     needRebuild = false;
                 }
+
+                // update visibility
+                if (actor != null)
+                    ((vtkActor) actor).SetVisibility(canvas.isVisible(this) ? 1 : 0);
             }
         }
 
@@ -755,14 +767,15 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         @Override
         public void setColor(Color value)
         {
-            super.setColor(value);
-
-            final Color color = getColor();
-            final Color focusedColor = getFocusedColor();
-
             beginUpdate();
             try
             {
+                super.setColor(value);
+
+                // also change colors of controls points
+                final Color color = getColor();
+                final Color focusedColor = getFocusedColor();
+
                 synchronized (controlPoints)
                 {
                     for (Anchor2D anchor : controlPoints)
@@ -771,11 +784,25 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                         anchor.setSelectedColor(focusedColor);
                     }
                 }
+
+                if (actor != null)
+                    ((vtkActor) actor).GetProperty().SetColor(color.getRed() / 255d, color.getGreen() / 255d,
+                            color.getBlue() / 255d);
             }
             finally
             {
                 endUpdate();
             }
+        }
+
+        @Override
+        public void setOpacity(float value)
+        {
+            // opacity is for interior only, contour can be done with layer opacity information
+            // if (actor != null)
+            // ((vtkActor) actor).GetProperty().SetOpacity(value);
+
+            super.setOpacity(value);
         }
 
         @Override

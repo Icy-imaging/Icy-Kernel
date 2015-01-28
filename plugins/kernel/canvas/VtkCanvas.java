@@ -3,6 +3,7 @@ package plugins.kernel.canvas;
 import icy.canvas.Canvas3D;
 import icy.canvas.CanvasLayerEvent;
 import icy.canvas.CanvasLayerEvent.LayersEventType;
+import icy.canvas.IcyCanvas;
 import icy.canvas.IcyCanvasEvent;
 import icy.canvas.IcyCanvasEvent.IcyCanvasEventType;
 import icy.canvas.Layer;
@@ -36,6 +37,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -54,6 +56,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.JToolBar;
 
 import vtk.vtkActor;
+import vtk.vtkActor2D;
 import vtk.vtkAxesActor;
 import vtk.vtkCamera;
 import vtk.vtkColorTransferFunction;
@@ -298,8 +301,6 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         // adjust LUT alpha level for 3D view (this make lutChanged() to be called)
         setDefaultOpacity(lut);
 
-        // initialize volume data
-        imageVolume = new VtkImageVolume();
         // rebuild volume image
         updateImageData(getImageData());
         // setup volume scaling
@@ -430,6 +431,9 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         // start the properties updater thread
         propertiesUpdater.start();
 
+        // listen for the layers visible property change
+        addPropertyChangeListener(PROPERTY_LAYERS_VISIBLE, this);
+
         initialized = true;
     }
 
@@ -523,6 +527,12 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         toolBar.add(rulerLabelButton);
         toolBar.addSeparator();
         toolBar.add(shadingButton);
+    }
+
+    @Override
+    protected Overlay createImageOverlay()
+    {
+        return new VtkCanvasImageOverlay();
     }
 
     /**
@@ -1841,10 +1851,56 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
 
         // layer visibility property modified ?
         if ((event.getType() == LayersEventType.CHANGED) && Layer.isPaintProperty(event.getProperty()))
+            refreshLayerProperties(event.getSource());
+    }
+
+    /**
+     * Refresh VTK actor properties from layer properties (alpha and visible)
+     */
+    protected void refreshLayerProperties(Layer layer)
+    {
+        final boolean lv = isLayersVisible();
+
+        // refresh all layers
+        if (layer == null)
         {
-            // TODO: refresh actor properties from layers properties (alpha and visible)
-            // refresh();
+            for (Layer l : getLayers())
+            {
+                for (vtkProp prop : getLayerActors(l))
+                {
+                    // image layer is not impacted by global layer visibility
+                    if (l == getImageLayer())
+                        prop.SetVisibility(l.isVisible() ? 1 : 0);
+                    else
+                        prop.SetVisibility((lv && l.isVisible()) ? 1 : 0);
+
+                    // opacity seems to not be correctly handled in VTK ??
+                    if (prop instanceof vtkActor)
+                        ((vtkActor) prop).GetProperty().SetOpacity(l.getOpacity());
+                    else if (prop instanceof vtkActor2D)
+                        ((vtkActor2D) prop).GetProperty().SetOpacity(l.getOpacity());
+                }
+            }
         }
+        else
+        {
+            for (vtkProp prop : getLayerActors(layer))
+            {
+                if (layer == getImageLayer())
+                    prop.SetVisibility(layer.isVisible() ? 1 : 0);
+                else
+                    prop.SetVisibility((lv && layer.isVisible()) ? 1 : 0);
+
+                // opacity seems to not be correctly handled in VTK ??
+                if (prop instanceof vtkActor)
+                    ((vtkActor) prop).GetProperty().SetOpacity(layer.getOpacity());
+                else if (prop instanceof vtkActor2D)
+                    ((vtkActor2D) prop).GetProperty().SetOpacity(layer.getOpacity());
+            }
+        }
+
+        // redraw the scene
+        refresh();
     }
 
     @Override
@@ -1895,7 +1951,11 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     @Override
     public void propertyChange(PropertyChangeEvent evt)
     {
-        propertyChange(evt.getPropertyName(), evt.getNewValue());
+        // global layers visibility changed ?
+        if (evt.getPropertyName().equals(PROPERTY_LAYERS_VISIBLE))
+            refreshLayerProperties(null);
+        else
+            propertyChange(evt.getPropertyName(), evt.getNewValue());
     }
 
     protected class EDTTask<T> implements Callable<T>
@@ -2072,6 +2132,33 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
             }
 
             super.keyPressed(e);
+        }
+    }
+
+    /**
+     * Image overlay to encapsulate VTK image volume in a canvas layer
+     */
+    protected class VtkCanvasImageOverlay extends IcyCanvasImageOverlay implements VtkPainter
+    {
+        public VtkCanvasImageOverlay()
+        {
+            super();
+
+            // create image volume
+            imageVolume = new VtkImageVolume();
+        }
+
+        @Override
+        public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+
+        }
+
+        @Override
+        public vtkProp[] getProps()
+        {
+            // return the image volume as prop
+            return new vtkProp[] {imageVolume.getVolume()};
         }
     }
 }

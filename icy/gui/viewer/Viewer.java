@@ -1401,16 +1401,17 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         }
     }
 
-    /**
-     * called when Canvas property "layer visible" changed
-     */
     @Override
     public void propertyChange(PropertyChangeEvent evt)
     {
         super.propertyChange(evt);
 
-        refreshToolBar();
-        updateSystemMenu();
+        // Canvas property "layer visible" changed ?
+        if (StringUtil.equals(evt.getPropertyName(), IcyCanvas.PROPERTY_LAYERS_VISIBLE))
+        {
+            refreshToolBar();
+            updateSystemMenu();
+        }
     }
 
     @Override

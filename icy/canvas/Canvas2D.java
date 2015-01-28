@@ -1323,10 +1323,10 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         {
             if (layer.isVisible())
             {
-                final float alpha = layer.getAlpha();
+                final float opacity = layer.getOpacity();
 
-                if (alpha != 1f)
-                    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+                if (opacity != 1f)
+                    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity));
                 else
                     g.setComposite(AlphaComposite.SrcOver);
 

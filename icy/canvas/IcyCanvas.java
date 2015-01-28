@@ -4154,6 +4154,19 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
+     * Returns <code>true</code> if the specified overlay is visible in the canvas.<br>
+     */
+    public boolean isVisible(Overlay overlay)
+    {
+        final Layer layer = getLayer(overlay);
+
+        if (layer != null)
+            return layer.isVisible();
+
+        return false;
+    }
+
+    /**
      * @deprecated Use {@link #addLayerListener(CanvasLayerListener)} instead.
      */
     @Deprecated

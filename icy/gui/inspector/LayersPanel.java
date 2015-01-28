@@ -640,7 +640,7 @@ public class LayersPanel extends JPanel implements ActiveViewerListener, CanvasL
             case CHANGED:
                 final String property = event.getProperty();
 
-                if (Layer.PROPERTY_NAME.equals(property) || Layer.PROPERTY_ALPHA.equals(property)
+                if (Layer.PROPERTY_NAME.equals(property) || Layer.PROPERTY_OPACITY.equals(property)
                         || Layer.PROPERTY_VISIBLE.equals(property))
                     // refresh table data
                     ThreadUtil.runSingle(tableDataRefresher);

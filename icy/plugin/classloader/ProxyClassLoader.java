@@ -54,8 +54,10 @@ public abstract class ProxyClassLoader implements Comparable<ProxyClassLoader>
 
     /**
      * Loads the class and returns it.
+     * 
+     * @throws ClassNotFoundException
      */
-    public abstract Class loadClass(String className, boolean resolveIt);
+    public abstract Class loadClass(String className, boolean resolveIt) throws ClassNotFoundException;
 
     /**
      * Loads the resource and returns an input stream for reading it.
