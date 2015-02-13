@@ -14,6 +14,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.util.EventListener;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
@@ -341,11 +343,40 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         volumeSpecularField.setNumericValue(value);
     }
 
+    /**
+     * Add a SettingChange listener
+     */
+    public void addSettingChangeListener(SettingChangeListener listener)
+    {
+        listenerList.add(SettingChangeListener.class, listener);
+    }
+
+    /**
+     * Remove a SettingChange listener
+     */
+    public void removeSettingChangeListener(SettingChangeListener listener)
+    {
+        listenerList.remove(SettingChangeListener.class, listener);
+    }
+
+    public void fireSettingChange(Object source, String propertyName, Object oldValue, Object newValue)
+    {
+
+        if ((oldValue != null) && (newValue != null) && oldValue.equals(newValue))
+            return;
+        
+        final PropertyChangeEvent event = new PropertyChangeEvent(source, propertyName, oldValue, newValue);
+        final SettingChangeListener[] listeners = getListeners(SettingChangeListener.class);
+        
+        for (int i = 0; i < listeners.length; i++)
+                listeners[i].settingChange(event);
+    }
+
     @Override
     public void colorChanged(ColorChooserButton source)
     {
         if (source == bgColorButton)
-            firePropertyChange(PROPERTY_BG_COLOR, null, source.getColor());
+            fireSettingChange(source, PROPERTY_BG_COLOR, null, source.getColor());
     }
 
     @Override
@@ -354,13 +385,13 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
         final Object source = e.getSource();
 
         if (source == volumeMapperComboBox)
-            firePropertyChange(PROPERTY_MAPPER, null, volumeMapperComboBox.getSelectedItem());
+            fireSettingChange(source, PROPERTY_MAPPER, null, volumeMapperComboBox.getSelectedItem());
         else if (source == volumeBlendingComboBox)
-            firePropertyChange(PROPERTY_BLENDING, null, volumeBlendingComboBox.getSelectedItem());
+            fireSettingChange(source, PROPERTY_BLENDING, null, volumeBlendingComboBox.getSelectedItem());
         else if (source == volumeSampleComboBox)
-            firePropertyChange(PROPERTY_SAMPLE, -1, volumeSampleComboBox.getSelectedIndex());
+            fireSettingChange(source, PROPERTY_SAMPLE, Integer.valueOf(-1), Integer.valueOf(volumeSampleComboBox.getSelectedIndex()));
         else if (source == volumeInterpolationComboBox)
-            firePropertyChange(PROPERTY_INTERPOLATION, -1, volumeInterpolationComboBox.getSelectedIndex());
+            fireSettingChange(source, PROPERTY_INTERPOLATION, Integer.valueOf(-1), Integer.valueOf(volumeInterpolationComboBox.getSelectedIndex()));
 
         updateState();
     }
@@ -372,12 +403,17 @@ public class VtkSettingPanel extends JPanel implements ActionListener, TextChang
             return;
 
         if (source == volumeAmbientField)
-            firePropertyChange(PROPERTY_AMBIENT, -1d, volumeAmbientField.getNumericValue());
+            fireSettingChange(source, PROPERTY_AMBIENT, Double.valueOf(-1d), Double.valueOf(volumeAmbientField.getNumericValue()));
         else if (source == volumeDiffuseField)
-            firePropertyChange(PROPERTY_DIFFUSE, -1d, volumeDiffuseField.getNumericValue());
+            fireSettingChange(source, PROPERTY_DIFFUSE, Double.valueOf(-1d), Double.valueOf(volumeDiffuseField.getNumericValue()));
         else if (source == volumeSpecularField)
-            firePropertyChange(PROPERTY_SPECULAR, -1d, volumeSpecularField.getNumericValue());
+            fireSettingChange(source, PROPERTY_SPECULAR, Double.valueOf(-1d), Double.valueOf(volumeSpecularField.getNumericValue()));
 
         updateState();
+    }
+
+    public static interface SettingChangeListener extends EventListener
+    {
+        public void settingChange(PropertyChangeEvent evt);
     }
 }

@@ -157,73 +157,14 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
         }
 
         if (EventUtil.isRightMouseButton(e) || (EventUtil.isLeftMouseButton(e) && EventUtil.isShiftDown(e)))
-        {
             // translation mode
-            double FPoint[];
-            double PPoint[];
-            double APoint[] = new double[3];
-            double RPoint[];
-            double focalDepth;
-
-            // get the current focal point and position
-            FPoint = cam.GetFocalPoint();
-            PPoint = cam.GetPosition();
-
-            // calculate the focal depth since we'll be using it a lot
-            ren.SetWorldPoint(FPoint[0], FPoint[1], FPoint[2], 1.0);
-            ren.WorldToDisplay();
-            focalDepth = ren.GetDisplayPoint()[2];
-
-            APoint[0] = rw.GetSize()[0] / 2.0 - deltaX;
-            APoint[1] = rw.GetSize()[1] / 2.0 + deltaY;
-            APoint[2] = focalDepth;
-            ren.SetDisplayPoint(APoint);
-            ren.DisplayToWorld();
-            RPoint = ren.GetWorldPoint();
-            if (RPoint[3] != 0.0)
-            {
-                RPoint[0] = RPoint[0] / RPoint[3];
-                RPoint[1] = RPoint[1] / RPoint[3];
-                RPoint[2] = RPoint[2] / RPoint[3];
-            }
-
-            /*
-             * Compute a translation vector, moving everything 1/2 the distance
-             * to the cursor. (Arbitrary scale factor)
-             */
-            cam.SetFocalPoint((FPoint[0] - RPoint[0]) / 2.0 + FPoint[0], (FPoint[1] - RPoint[1]) / 2.0 + FPoint[1],
-                    (FPoint[2] - RPoint[2]) / 2.0 + FPoint[2]);
-            cam.SetPosition((FPoint[0] - RPoint[0]) / 2.0 + PPoint[0], (FPoint[1] - RPoint[1]) / 2.0 + PPoint[1],
-                    (FPoint[2] - RPoint[2]) / 2.0 + PPoint[2]);
-            resetCameraClippingRange();
-        }
+            translateView(-deltaX, deltaY);
         else if (EventUtil.isLeftMouseButton(e))
-        {
             // rotation mode
-            cam.Azimuth(deltaX);
-            cam.Elevation(-deltaY);
-            cam.OrthogonalizeViewUp();
-            resetCameraClippingRange();
-
-            if (LightFollowCamera == 1)
-            {
-                lgt.SetPosition(cam.GetPosition());
-                lgt.SetFocalPoint(cam.GetFocalPoint());
-            }
-        }
+            rotateView(deltaX, -deltaY);
         else
-        {
             // zoom mode
-            final double zoomFactor = Math.pow(1.02, -deltaY);
-
-            if (cam.GetParallelProjection() == 1)
-                cam.SetParallelScale(cam.GetParallelScale() / zoomFactor);
-            else
-            {
-                cam.Dolly(zoomFactor);
-                resetCameraClippingRange();
-            }
-        }
+            zoomView(Math.pow(1.02, -deltaY));
 
         // save mouse position
         lastX = x;
@@ -240,36 +181,15 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
         if (ren.VisibleActorCount() == 0)
             return;
 
-        // cancel pending task
-        timer.cancel();
-
         // want fast update
-        rw.SetDesiredUpdateRate(10.0);
+        setCoarseRendering(0);
     }
 
     @Override
     public void mouseReleased(MouseEvent e)
     {
-        // cancel pending task
-        timer.cancel();
-
-        // schedule quality restoration
-        timer = new Timer();
-        timer.schedule(new TimerTask()
-        {
-            @Override
-            public void run()
-            {
-                // no parent --> exit
-                if (getParent() == null)
-                    return;
-
-                // set back quality rendering
-                GetRenderWindow().SetDesiredUpdateRate(0.01);
-                // request repaint
-                repaint();
-            }
-        }, 1000);
+        // restore quality rendering
+        setFineRendering(1000);
     }
 
     @Override
@@ -279,11 +199,8 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
         if (cam == null)
             return;
 
-        // cancel pending task
-        timer.cancel();
-
         // want fast update
-        rw.SetDesiredUpdateRate(10.0);
+        setCoarseRendering(0);
 
         // get delta
         double delta = e.getWheelRotation() * CanvasPreferences.getMouseWheelSensitivity();
@@ -294,32 +211,13 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
         if (EventUtil.isControlDown(e))
             delta *= 3d;
 
-        final double zoomFactor = Math.pow(1.02, delta);
-
-        if (cam.GetParallelProjection() == 1)
-            cam.SetParallelScale(cam.GetParallelScale() / zoomFactor);
-        else
-        {
-            cam.Dolly(zoomFactor);
-            resetCameraClippingRange();
-        }
+        zoomView(Math.pow(1.02, delta));
 
         // request repaint
         repaint();
 
-        // schedule quality restoration
-        timer = new Timer();
-        timer.schedule(new TimerTask()
-        {
-            @Override
-            public void run()
-            {
-                // set back quality rendering
-                GetRenderWindow().SetDesiredUpdateRate(0.01);
-                // request repaint
-                repaint();
-            }
-        }, 1000);
+        // restore quality rendering
+        setFineRendering(1000);
     }
 
     @Override
@@ -380,5 +278,129 @@ public class IcyVtkPanel extends vtkPanel implements MouseWheelListener
         UnLock();
 
         return picker.GetActor();
+    }
+
+    /**
+     * Translate current camera view
+     */
+    public void translateView(double dx, double dy)
+    {
+        // translation mode
+        double FPoint[];
+        double PPoint[];
+        double APoint[] = new double[3];
+        double RPoint[];
+        double focalDepth;
+
+        // get the current focal point and position
+        FPoint = cam.GetFocalPoint();
+        PPoint = cam.GetPosition();
+
+        // calculate the focal depth since we'll be using it a lot
+        ren.SetWorldPoint(FPoint[0], FPoint[1], FPoint[2], 1.0);
+        ren.WorldToDisplay();
+        focalDepth = ren.GetDisplayPoint()[2];
+
+        APoint[0] = rw.GetSize()[0] / 2.0 + dx;
+        APoint[1] = rw.GetSize()[1] / 2.0 + dy;
+        APoint[2] = focalDepth;
+        ren.SetDisplayPoint(APoint);
+        ren.DisplayToWorld();
+        RPoint = ren.GetWorldPoint();
+        if (RPoint[3] != 0.0)
+        {
+            RPoint[0] = RPoint[0] / RPoint[3];
+            RPoint[1] = RPoint[1] / RPoint[3];
+            RPoint[2] = RPoint[2] / RPoint[3];
+        }
+
+        /*
+         * Compute a translation vector, moving everything 1/2 the distance
+         * to the cursor. (Arbitrary scale factor)
+         */
+        cam.SetFocalPoint((FPoint[0] - RPoint[0]) / 2.0 + FPoint[0], (FPoint[1] - RPoint[1]) / 2.0 + FPoint[1],
+                (FPoint[2] - RPoint[2]) / 2.0 + FPoint[2]);
+        cam.SetPosition((FPoint[0] - RPoint[0]) / 2.0 + PPoint[0], (FPoint[1] - RPoint[1]) / 2.0 + PPoint[1],
+                (FPoint[2] - RPoint[2]) / 2.0 + PPoint[2]);
+        resetCameraClippingRange();
+    }
+
+    /**
+     * Rotate current camera view
+     */
+    public void rotateView(int dx, int dy)
+    {
+        // rotation mode
+        cam.Azimuth(dx);
+        cam.Elevation(dy);
+        cam.OrthogonalizeViewUp();
+        resetCameraClippingRange();
+
+        if (LightFollowCamera == 1)
+        {
+            lgt.SetPosition(cam.GetPosition());
+            lgt.SetFocalPoint(cam.GetFocalPoint());
+        }
+    }
+
+    /**
+     * Zoom current view by specified factor (negative value means unzoom)
+     */
+    public void zoomView(double factor)
+    {
+        if (cam.GetParallelProjection() == 1)
+            cam.SetParallelScale(cam.GetParallelScale() / factor);
+        else
+        {
+            cam.Dolly(factor);
+            resetCameraClippingRange();
+        }
+    }
+
+    /**
+     * Set coarse and fast rendering for the specified amount of time (in ms, always when set to 0)
+     */
+    public void setCoarseRendering(long time)
+    {
+        // cancel pending task
+        timer.cancel();
+        // want fast update
+        rw.SetDesiredUpdateRate(10.0);
+
+        if (time > 0)
+            setFineRendering(time);
+    }
+
+    /**
+     * Set fine (and possibily slow) rendering after specified time delay (in ms)
+     */
+    public void setFineRendering(long delay)
+    {
+        // cancel pending task
+        timer.cancel();
+
+        if (delay > 0)
+        {
+            // schedule quality restoration
+            timer = new Timer();
+            timer.schedule(new TimerTask()
+            {
+                @Override
+                public void run()
+                {
+                    // no parent --> exit
+                    if (getParent() == null)
+                        return;
+
+                    // set back quality rendering
+                    GetRenderWindow().SetDesiredUpdateRate(0.01);
+                    // request repaint
+                    repaint();
+                }
+            }, delay);
+        }
+        else
+            // set back quality rendering
+            rw.SetDesiredUpdateRate(0.01);
     }
 }

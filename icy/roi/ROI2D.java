@@ -748,11 +748,11 @@ public abstract class ROI2D extends ROI
         if (getZ() == -1)
             zok = true;
         else
-            zok = (z > getZ()) && (z < (getZ() + 1d));
+            zok = (z >= getZ()) && (z < (getZ() + 1d));
         if (getT() == -1)
             tok = true;
         else
-            tok = (t > getT()) && (t < (getT() + 1d));
+            tok = (t >= getT()) && (t < (getT() + 1d));
         if (getC() == -1)
             cok = true;
         else
@@ -938,6 +938,9 @@ public abstract class ROI2D extends ROI
     public Rectangle5D computeBounds5D()
     {
         final Rectangle2D bounds2D = computeBounds2D();
+        if (bounds2D == null)
+            return new Rectangle5D.Double();
+
         final Rectangle5D.Double result = new Rectangle5D.Double(bounds2D.getX(), bounds2D.getY(), 0d, 0d, 0d,
                 bounds2D.getWidth(), bounds2D.getHeight(), 0d, 0d, 0d);
 

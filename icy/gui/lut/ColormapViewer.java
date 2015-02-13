@@ -404,8 +404,14 @@ public class ColormapViewer extends BorderedPanel implements MouseListener, Mous
 
         // define color
         final Color color = getColor(cmc);
+        final List<ControlPoint> controlPoints;
 
-        for (ControlPoint controlPoint : cmc.getControlPoints())
+        synchronized (cmc.getControlPoints())
+        {
+            controlPoints = new ArrayList<IcyColorMapComponent.ControlPoint>(cmc.getControlPoints());
+        }
+
+        for (ControlPoint controlPoint : controlPoints)
         {
             final int x = getPixelPosX(controlPoint);
             final int y = getPixelPosY(controlPoint);

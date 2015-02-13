@@ -11,6 +11,7 @@ import icy.gui.component.button.IcyToggleButton;
 import icy.gui.dialog.MessageDialog;
 import icy.gui.viewer.Viewer;
 import icy.image.IcyBufferedImage;
+import icy.image.colormodel.IcyColorModel;
 import icy.image.lut.LUT;
 import icy.image.lut.LUT.LUTChannel;
 import icy.painter.Overlay;
@@ -47,7 +48,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -55,6 +55,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JToolBar;
 
+import plugins.kernel.canvas.VtkSettingPanel.SettingChangeListener;
 import vtk.vtkActor;
 import vtk.vtkActor2D;
 import vtk.vtkAxesActor;
@@ -81,7 +82,7 @@ import vtk.vtkUnsignedCharArray;
  * @author Stephane
  */
 @SuppressWarnings("deprecation")
-public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runnable, ActionListener
+public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, SettingChangeListener
 {
     /**
      * 
@@ -233,7 +234,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
 
         // default background color set to white
         settingPanel.setBackgroundColor(Color.WHITE);
-        settingPanel.addPropertyChangeListener(this);
+        settingPanel.addSettingChangeListener(this);
 
         // initialize VTK components & main GUI
         panel3D = new CustomVtkPanel();
@@ -293,7 +294,10 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         // processor.setKeepAliveTime(3, TimeUnit.SECONDS);
 
         // save lut and prepare for 3D visualization
-        lutSave = seq.createCompatibleLUT();
+        if (seq != null)
+            lutSave = seq.createCompatibleLUT();
+        else
+            lutSave = new LUT(IcyColorModel.createInstance());
         final LUT lut = getLut();
 
         // save colormap
@@ -304,7 +308,8 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         // rebuild volume image
         updateImageData(getImageData());
         // setup volume scaling
-        imageVolume.setScale(seq.getPixelSizeX(), seq.getPixelSizeY(), seq.getPixelSizeZ());
+        if (seq != null)
+            imageVolume.setScale(seq.getPixelSizeX(), seq.getPixelSizeY(), seq.getPixelSizeZ());
         // setup volume LUT
         imageVolume.setLUT(getLut());
 
@@ -430,9 +435,6 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
 
         // start the properties updater thread
         propertiesUpdater.start();
-
-        // listen for the layers visible property change
-        addPropertyChangeListener(PROPERTY_LAYERS_VISIBLE, this);
 
         initialized = true;
     }
@@ -1140,7 +1142,7 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         if (data != null)
         {
             imageVolume.setVolumeData(data);
-            imageVolume.getVolume().SetVisibility(1);
+            imageVolume.getVolume().SetVisibility(getImageLayer().isVisible() ? 1 : 0);
 
             if (textInfo != null)
                 textInfo.SetVisibility(0);
@@ -1276,6 +1278,64 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
 
         // forward to view
         panel3D.keyPressed(e);
+
+        if (!e.isConsumed())
+        {
+            switch (e.getKeyCode())
+            {
+                case KeyEvent.VK_LEFT:
+                    if (EventUtil.isMenuControlDown(e, true))
+                        setPositionT(Math.max(getPositionT() - 5, 0));
+                    else
+                        setPositionT(Math.max(getPositionT() - 1, 0));
+                    e.consume();
+                    break;
+
+                case KeyEvent.VK_RIGHT:
+                    if (EventUtil.isMenuControlDown(e, true))
+                        setPositionT(getPositionT() + 5);
+                    else
+                        setPositionT(getPositionT() + 1);
+                    e.consume();
+                    break;
+
+                case KeyEvent.VK_NUMPAD2:
+                    if (EventUtil.isMenuControlDown(e, true))
+                        panel3D.translateView(0, -50);
+                    else
+                        panel3D.translateView(0, -10);
+                    refresh();
+                    e.consume();
+                    break;
+
+                case KeyEvent.VK_NUMPAD4:
+                    if (EventUtil.isMenuControlDown(e, true))
+                        panel3D.translateView(-50, 0);
+                    else
+                        panel3D.translateView(-10, 0);
+                    refresh();
+                    e.consume();
+                    break;
+
+                case KeyEvent.VK_NUMPAD6:
+                    if (EventUtil.isMenuControlDown(e, true))
+                        panel3D.translateView(50, 0);
+                    else
+                        panel3D.translateView(10, 0);
+                    refresh();
+                    e.consume();
+                    break;
+
+                case KeyEvent.VK_NUMPAD8:
+                    if (EventUtil.isMenuControlDown(e, true))
+                        panel3D.translateView(0, 50);
+                    else
+                        panel3D.translateView(0, 10);
+                    refresh();
+                    e.consume();
+                    break;
+            }
+        }
     }
 
     @Override
@@ -1381,6 +1441,8 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     @Override
     public void run()
     {
+        long lastRefreshTime = 0;
+
         while (!propertiesUpdater.isInterrupted())
         {
             Property prop;
@@ -1710,6 +1772,19 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
                         }
                     });
                 }
+                else if (StringUtil.equals(name, PROPERTY_LAYERS_VISIBLE))
+                {
+                    final Layer layer = (Layer) value;
+
+                    invokeOnEDT(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            refreshLayerProperties(layer);
+                        }
+                    });
+                }
             }
             catch (InterruptedException e)
             {
@@ -1851,7 +1926,31 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
 
         // layer visibility property modified ?
         if ((event.getType() == LayersEventType.CHANGED) && Layer.isPaintProperty(event.getProperty()))
-            refreshLayerProperties(event.getSource());
+            propertyChange(PROPERTY_LAYERS_VISIBLE, event.getSource());
+    }
+
+    @Override
+    protected void layerAdded(Layer layer)
+    {
+        super.layerAdded(layer);
+
+        addLayerActors(layer);
+    }
+
+    @Override
+    protected void layerRemoved(Layer layer)
+    {
+        super.layerRemoved(layer);
+
+        removeLayerActors(layer);
+    }
+
+    @Override
+    protected void layersVisibleChanged()
+    {
+        // super.layersVisibleChanged();
+
+        propertyChange(PROPERTY_LAYERS_VISIBLE, null);
     }
 
     /**
@@ -1870,7 +1969,14 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
                 {
                     // image layer is not impacted by global layer visibility
                     if (l == getImageLayer())
-                        prop.SetVisibility(l.isVisible() ? 1 : 0);
+                    {
+                        final Sequence seq = getSequence();
+                        // we have a no empty image --> display it if layer is visible
+                        if (l.isVisible() && (seq != null) && !seq.isEmpty())
+                            prop.SetVisibility(1);
+                        else
+                            prop.SetVisibility(0);
+                    }
                     else
                         prop.SetVisibility((lv && l.isVisible()) ? 1 : 0);
 
@@ -1887,7 +1993,14 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
             for (vtkProp prop : getLayerActors(layer))
             {
                 if (layer == getImageLayer())
-                    prop.SetVisibility(layer.isVisible() ? 1 : 0);
+                {
+                    final Sequence seq = getSequence();
+                    // we have a no empty image --> display it if layer is visible
+                    if (layer.isVisible() && (seq != null) && !seq.isEmpty())
+                        prop.SetVisibility(1);
+                    else
+                        prop.SetVisibility(0);
+                }
                 else
                     prop.SetVisibility((lv && layer.isVisible()) ? 1 : 0);
 
@@ -1898,25 +2011,6 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
                     ((vtkActor2D) prop).GetProperty().SetOpacity(layer.getOpacity());
             }
         }
-
-        // redraw the scene
-        refresh();
-    }
-
-    @Override
-    protected void layerAdded(Layer layer)
-    {
-        super.layerAdded(layer);
-
-        addLayerActors(layer);
-    }
-
-    @Override
-    protected void layerRemoved(Layer layer)
-    {
-        super.layerRemoved(layer);
-
-        removeLayerActors(layer);
     }
 
     @Override
@@ -1943,19 +2037,25 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
     {
         final Property prop = new Property(name, value);
 
-        // add the property to update list if not already present
-        if (!propertiesToUpdate.contains(prop))
-            propertiesToUpdate.add(prop);
+        // remove previous property of same name
+        if (propertiesToUpdate.remove(prop))
+        {
+            // if we already had a layers visible update then we update all layers
+            if (name.equals(PROPERTY_LAYERS_VISIBLE))
+                prop.value = null;
+        }
+
+        // add the property
+        propertiesToUpdate.add(prop);
     }
 
+    /*
+     * Called when one of the value in setting panel has changed
+     */
     @Override
-    public void propertyChange(PropertyChangeEvent evt)
+    public void settingChange(PropertyChangeEvent evt)
     {
-        // global layers visibility changed ?
-        if (evt.getPropertyName().equals(PROPERTY_LAYERS_VISIBLE))
-            refreshLayerProperties(null);
-        else
-            propertyChange(evt.getPropertyName(), evt.getNewValue());
+        propertyChange(evt.getPropertyName(), evt.getNewValue());
     }
 
     protected class EDTTask<T> implements Callable<T>
@@ -1983,10 +2083,13 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
          */
         private static final long serialVersionUID = -7399887230624608711L;
 
+        long lastRefreshTime;
+
         public CustomVtkPanel()
         {
             super();
 
+            lastRefreshTime = 0L;
             // key events should be forwarded from the viewer
             removeKeyListener(this);
         }
@@ -1994,6 +2097,10 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
         @Override
         public void paint(Graphics g)
         {
+            // several repaint in a short period of time --> set fast rendering for 1 second
+            if ((lastRefreshTime != 0) && ((System.currentTimeMillis() - lastRefreshTime) < 250))
+                setCoarseRendering(1000);
+
             // call paint on overlays first
             if (isLayersVisible())
             {
@@ -2014,6 +2121,8 @@ public class VtkCanvas extends Canvas3D implements PropertyChangeListener, Runna
 
             // then do 3D rendering
             super.paint(g);
+
+            lastRefreshTime = System.currentTimeMillis();
         }
 
         /**

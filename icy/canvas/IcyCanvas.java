@@ -670,13 +670,17 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
         if (layersVisible != value)
         {
             layersVisible = value;
+            layersVisibleChanged();
             firePropertyChange(PROPERTY_LAYERS_VISIBLE, !value, value);
-
-            final Component comp = getViewComponent();
-
-            if (comp != null)
-                comp.repaint();
         }
+    }
+    
+    protected void layersVisibleChanged()
+    {
+        final Component comp = getViewComponent();
+
+        if (comp != null)
+            comp.repaint();
     }
 
     /**
@@ -3463,12 +3467,6 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     @Override
-    public void keyTyped(KeyEvent e)
-    {
-
-    }
-
-    @Override
     public void keyPressed(KeyEvent e)
     {
         final boolean globalVisible = isLayersVisible();
@@ -3688,6 +3686,12 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             if ((globalVisible && layer.isVisible()) || layer.getReceiveKeyEventOnHidden())
                 layer.getOverlay().keyReleased(e, pt, this);
         }
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e)
+    {
+
     }
 
     /**

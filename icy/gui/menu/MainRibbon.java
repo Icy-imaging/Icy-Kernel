@@ -226,6 +226,11 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
         return sequenceOperationTask;
     }
 
+    public ImageJTask getImageJTask()
+    {
+        return ijTask;
+    }
+
     public ImageJWrapper getImageJ()
     {
         return ijTask.getImageJ();

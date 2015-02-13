@@ -21,8 +21,9 @@ package icy.plugin.interface_;
 /**
  * The Interface PluginStartAsThread.
  * 
- * @deprecated Use {@link PluginThreaded} instead
+ * @deprecated Use {@link PluginThreaded} or {@link PluginNoEDTConstructor} instead
  */
+@Deprecated
 public interface PluginStartAsThread
 {
 

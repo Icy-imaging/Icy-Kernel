@@ -693,13 +693,29 @@ public class Icy
                     while (!ThreadUtil.isShutdownAndTerminated() && !exitFrame.isForced())
                         ThreadUtil.sleep(1);
 
-                    // can close the exit frame now
-                    exitFrame.dispose();
+                    // need to dispose the exit frame in EDT (else we can have deadlock)
+                    ThreadUtil.invokeNow(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            // can close the exit frame now
+                            exitFrame.dispose();
+                        }
+                    });
                 }
 
-                // finally close the main frame
-                if (mainFrame != null)
-                    mainFrame.dispose();
+                // need to dispose the main frame in EDT (else we can have deadlock)
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        // finally close the main frame
+                        if (mainFrame != null)
+                            mainFrame.dispose();
+                    }
+                });
 
                 // save preferences
                 IcyPreferences.save();
@@ -723,7 +739,7 @@ public class Icy
             }
         });
 
-        terminer.setName("Icy Terminer");
+        terminer.setName("Icy Shutdown");
         terminer.start();
 
         return true;

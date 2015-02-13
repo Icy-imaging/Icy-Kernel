@@ -549,11 +549,19 @@ public class SearchResultPanel extends JWindow implements ListSelectionListener
     {
         if (isVisible())
         {
-            // only update the specified result
-            final int rowIndex = getRowIndex(result);
+            try
+            {
+                // only update the specified result
+                final int rowIndex = getRowIndex(result);
 
-            if (rowIndex != -1)
-                tableModel.fireTableRowsUpdated(rowIndex, rowIndex);
+                if (rowIndex != -1)
+                    tableModel.fireTableRowsUpdated(rowIndex, rowIndex);
+            }
+            catch (Exception e)
+            {
+                // ignore possible exception here
+            }
+            
             // refresh toolTip if needed
             if (result == getSelectedResult())
             {

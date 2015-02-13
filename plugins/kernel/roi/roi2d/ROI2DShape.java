@@ -36,6 +36,7 @@ import icy.roi.edit.Point2DAddedROIEdit;
 import icy.roi.edit.Point2DMovedROIEdit;
 import icy.roi.edit.Point2DRemovedROIEdit;
 import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
 import icy.type.point.Point5D;
 import icy.util.EventUtil;
 import icy.util.GraphicsUtil;
@@ -64,28 +65,30 @@ import vtk.vtkActor;
 import vtk.vtkPolyData;
 import vtk.vtkPolyDataMapper;
 import vtk.vtkProp;
+import vtk.vtkSphereSource;
 
 /**
  * @author Stephane
  */
 public abstract class ROI2DShape extends ROI2D implements Shape
 {
-    public class ROI2DShapePainter extends ROI2DPainter implements VtkPainter
+    public class ROI2DShapePainter extends ROI2DPainter implements VtkPainter, Runnable
     {
         // VTK 3D objects, we use Object to prevent UnsatisfiedLinkError
-        Object polyData;
+        Object vtkSource;
         Object polyMapper;
         Object actor;
         // 3D internal
         boolean needRebuild;
         double scaling[];
+        VtkCanvas canvas3d;
 
         public ROI2DShapePainter()
         {
             super();
 
             // don't create VTK object on constructor
-            polyData = null;
+            vtkSource = null;
             polyMapper = null;
             actor = null;
 
@@ -93,34 +96,36 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             Arrays.fill(scaling, 1d);
 
             needRebuild = true;
+            canvas3d = null;
         }
 
-        protected void initVTKObjects()
+        protected void initVtkObjects()
         {
             // init 3D painters stuff
-            polyData = new vtkPolyData();
+            vtkSource = new vtkPolyData();
 
             polyMapper = new vtkPolyDataMapper();
-            ((vtkPolyDataMapper) polyMapper).SetInputData((vtkPolyData) polyData);
+            ((vtkPolyDataMapper) polyMapper).SetInputData((vtkPolyData) vtkSource);
 
             actor = new vtkActor();
             ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
+            ((vtkActor) actor).GetProperty().SetFrontfaceCulling(1);
         }
 
         /**
          * update 3D painter for 3D canvas (called only when VTK is loaded).
          */
-        protected void rebuild3DPainter(VtkCanvas canvas)
+        protected void rebuildVtkObjects()
         {
-            final Sequence seq = canvas.getSequence();
+            final VtkCanvas canvas = canvas3d;
+            // nothing to update
+            if (canvas == null)
+                return;
 
+            final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
                 return;
-
-            // initialize VTK objects if not yet done
-            if (actor == null)
-                initVTKObjects();
 
             final List<double[]> point3DList = new ArrayList<double[]>();
             final List<int[]> polyList = new ArrayList<int[]>();
@@ -143,14 +148,14 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             {
                 // set object depth on whole volume
                 z0 = 0;
-                z1 = seq.getSizeZ() * scaling[2];
+                z1 = seq.getSizeZ();
             }
             // fixed Z position
             else
             {
                 // set Z position
-                z0 = (curZ - 0.5) * scaling[2];
-                z1 = (curZ + 0.5) * scaling[2];
+                z0 = curZ - 0.5;
+                z1 = curZ + 0.5;
             }
 
             // use flat path
@@ -172,10 +177,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
                         ind = point3DList.size();
 
-                        point3DList.add(new double[] {x0 * scaling[0], y0 * scaling[1], z0});
-                        point3DList.add(new double[] {x1 * scaling[0], y1 * scaling[1], z0});
-                        point3DList.add(new double[] {x0 * scaling[0], y0 * scaling[1], z1});
-                        point3DList.add(new double[] {x1 * scaling[0], y1 * scaling[1], z1});
+                        point3DList.add(new double[] {x0, y0, z0});
+                        point3DList.add(new double[] {x1, y1, z0});
+                        point3DList.add(new double[] {x0, y0, z1});
+                        point3DList.add(new double[] {x1, y1, z1});
                         polyList.add(new int[] {1 + ind, 2 + ind, 0 + ind});
                         polyList.add(new int[] {3 + ind, 2 + ind, 1 + ind});
 
@@ -189,10 +194,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
 
                         ind = point3DList.size();
 
-                        point3DList.add(new double[] {x0 * scaling[0], y0 * scaling[1], z0});
-                        point3DList.add(new double[] {x1 * scaling[0], y1 * scaling[1], z0});
-                        point3DList.add(new double[] {x0 * scaling[0], y0 * scaling[1], z1});
-                        point3DList.add(new double[] {x1 * scaling[0], y1 * scaling[1], z1});
+                        point3DList.add(new double[] {x0, y0, z0});
+                        point3DList.add(new double[] {x1, y1, z0});
+                        point3DList.add(new double[] {x0, y0, z1});
+                        point3DList.add(new double[] {x1, y1, z1});
                         polyList.add(new int[] {1 + ind, 2 + ind, 0 + ind});
                         polyList.add(new int[] {3 + ind, 2 + ind, 1 + ind});
 
@@ -216,15 +221,30 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             for (int[] poly : polyList)
                 indexes[ind++] = poly;
 
-            ((vtkPolyData) polyData).SetPolys(VtkUtil.getCells(polyList.size(), VtkUtil.prepareCells(indexes)));
-            ((vtkPolyData) polyData).SetPoints(VtkUtil.getPoints(vertices));
-            ((vtkPolyDataMapper) polyMapper).Update();
+            // actor can be accessed in canvas3d for rendering so we need to synchronize access
+            canvas3d.lock();
+            try
+            {
+                ((vtkPolyData) vtkSource).SetPolys(VtkUtil.getCells(polyList.size(), VtkUtil.prepareCells(indexes)));
+                ((vtkPolyData) vtkSource).SetPoints(VtkUtil.getPoints(vertices));
+                ((vtkPolyDataMapper) polyMapper).Update();
 
-            final Color color = getColor();
-            ((vtkActor) actor).GetProperty().SetColor(color.getRed() / 255d, color.getGreen() / 255d,
-                    color.getBlue() / 255d);
-            // opacity is for interior only, contour can be done with layer opacity information
-            // ((vtkActor) actor).GetProperty().SetOpacity(getOpacity());
+                ((vtkActor) actor).SetScale(scaling);
+                ((vtkActor) actor).GetProperty().SetPointSize(getStroke());
+                final Color color = getColor();
+                ((vtkActor) actor).GetProperty().SetColor(color.getRed() / 255d, color.getGreen() / 255d,
+                        color.getBlue() / 255d);
+                // opacity is for interior only, contour can be done with layer opacity information
+                // ((vtkActor) actor).GetProperty().SetOpacity(getOpacity());
+            }
+            finally
+            {
+                canvas3d.unlock();
+            }
+
+            // no more pending request
+            if (!ThreadUtil.hasWaitingSingleTask(this))
+                canvas3d = null;
         }
 
         @Override
@@ -571,6 +591,7 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         /**
          * Draw the ROI
          */
+        @Override
         protected void drawROI(Graphics2D g, Sequence sequence, IcyCanvas canvas)
         {
             if (canvas instanceof IcyCanvas2D)
@@ -698,10 +719,10 @@ public abstract class ROI2DShape extends ROI2D implements Shape
             if (canvas instanceof VtkCanvas)
             {
                 // 3D canvas
-                final VtkCanvas canvas3d = (VtkCanvas) canvas;
+                final VtkCanvas cnv = (VtkCanvas) canvas;
 
                 // FIXME : need a better implementation
-                final double[] s = canvas3d.getVolumeScale();
+                final double[] s = cnv.getVolumeScale();
 
                 // scaling changed ?
                 if (!Arrays.equals(scaling, s))
@@ -715,13 +736,28 @@ public abstract class ROI2DShape extends ROI2D implements Shape
                 // need to rebuild 3D data structures ?
                 if (needRebuild)
                 {
-                    rebuild3DPainter(canvas3d);
+                    // initialize VTK objects if not yet done
+                    if (actor == null)
+                        initVtkObjects();
+
+                    // request rebuild 3D objects
+                    canvas3d = cnv;
+                    ThreadUtil.runSingle(this);
                     needRebuild = false;
                 }
 
-                // update visibility
-                if (actor != null)
-                    ((vtkActor) actor).SetVisibility(canvas.isVisible(this) ? 1 : 0);
+                // actor can be accessed in canvas3d for rendering so we need to synchronize access
+                cnv.lock();
+                try
+                {
+                    // update visibility
+                    if (actor != null)
+                        ((vtkActor) actor).SetVisibility(canvas.isVisible(this) ? 1 : 0);
+                }
+                finally
+                {
+                    cnv.unlock();
+                }
             }
         }
 
@@ -810,9 +846,15 @@ public abstract class ROI2DShape extends ROI2D implements Shape
         {
             // initialize VTK objects if not yet done
             if (actor == null)
-                initVTKObjects();
+                initVtkObjects();
 
             return new vtkProp[] {(vtkProp) actor};
+        }
+
+        @Override
+        public void run()
+        {
+            rebuildVtkObjects();
         }
     }
 

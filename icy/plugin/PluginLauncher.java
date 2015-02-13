@@ -170,7 +170,8 @@ public class PluginLauncher
             // audit
             Audit.pluginLaunched(result);
             // execute plugin
-            internalExecute(result);
+            if (result instanceof PluginImageAnalysis)
+                internalExecute(result);
 
             return result;
         }
@@ -227,7 +228,8 @@ public class PluginLauncher
         // register plugin
         Icy.getMainInterface().registerPlugin(result);
         // execute plugin
-        internalExecute(result);
+        if (result instanceof PluginImageAnalysis)
+            internalExecute(result);
 
         return result;
     }

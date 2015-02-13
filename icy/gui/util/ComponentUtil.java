@@ -256,11 +256,7 @@ public class ComponentUtil
 
     public static Point convertPoint(Component src, Point p, Component dst)
     {
-        final Point result = new Point(p);
-
-        SwingUtilities.convertPoint(src, result, dst);
-
-        return result;
+        return SwingUtilities.convertPoint(src, p, dst);
     }
 
     public static Point convertPointFromScreen(Point p, Component c)

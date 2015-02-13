@@ -1013,10 +1013,18 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             @Override
             public void run()
             {
-                final int rowCount = table.getRowCount();
+                try
+                {
+                    final int rowCount = table.getRowCount();
 
-                if (rowCount > 0)
-                    tableModel.fireTableRowsUpdated(0, rowCount - 1);
+                    // we use RowsUpdated event to keep selection (DataChanged remove selection)
+                    if (rowCount > 0)
+                        tableModel.fireTableRowsUpdated(0, rowCount - 1);
+                }
+                catch (Exception e)
+                {
+                    // ignore possible exception here
+                }
             }
         });
 

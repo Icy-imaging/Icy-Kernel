@@ -350,31 +350,38 @@ public class MouseImageInfosPanel extends JPanel
 
             if ((image != null) && (image.isInside(xi, yi)))
             {
-                // FIXME : should take C value in account to retrieve single component color
-                colorComp.setColor(image.getRGB(xi, yi, canvas.getLut()));
-
-                if (ci == -1)
+                try
                 {
-                    // all components values
-                    dataValue.setText(ArrayUtil.array1DToString(image.getDataCopyC(xi, yi), image.getDataType_()
-                            .isSigned(), false, " : ", 5));
-                }
-                else
-                {
-                    // single component value
-                    final double v = image.getData(xi, yi, ci);
-                    final int vi = (int) v;
-                    final String vs;
+                    // FIXME : should take C value in account to retrieve single component color
+                    colorComp.setColor(image.getRGB(xi, yi, canvas.getLut()));
 
-                    if (v == vi)
-                        vs = Integer.toString(vi);
+                    if (ci == -1)
+                    {
+                        // all components values
+                        dataValue.setText(ArrayUtil.array1DToString(image.getDataCopyC(xi, yi), image.getDataType_()
+                                .isSigned(), false, " : ", 5));
+                    }
                     else
-                        vs = Double.toString(MathUtil.roundSignificant(v, SIGNIFICANT_DIGIT, true));
+                    {
+                        // single component value
+                        final double v = image.getData(xi, yi, ci);
+                        final int vi = (int) v;
+                        final String vs;
 
-                    dataValue.setText(vs);
+                        if (v == vi)
+                            vs = Integer.toString(vi);
+                        else
+                            vs = Double.toString(MathUtil.roundSignificant(v, SIGNIFICANT_DIGIT, true));
+
+                        dataValue.setText(vs);
+                    }
+                }
+                catch (Exception e)
+                {
+                    // ignore exception as we can have unsync update
                 }
 
-                dataValue.setToolTipText(dataLabel.getText());
+                dataValue.setToolTipText(dataValue.getText());
             }
             else
             {

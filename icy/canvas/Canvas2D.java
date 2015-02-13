@@ -712,7 +712,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
         double curScaleX;
         double curScaleY;
         private double startRotationZ;
-        private Cursor previousCursor;
+//        private Cursor previousCursor;
         boolean moving;
         boolean rotating;
         boolean hasMouseFocus;
@@ -729,7 +729,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
             startOffset = null;
             curScaleX = -1;
             curScaleY = -1;
-            previousCursor = getCursor();
+//            previousCursor = getCursor();
             moving = false;
             rotating = false;
             hasMouseFocus = false;
@@ -2710,7 +2710,7 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     // reset zoom and rotation
                     setRotation(0, false);
                     fitImageToCanvas(true);
-                    
+
                     // also reset LUT
                     if (EventUtil.isShiftDown(e, true))
                     {
@@ -2759,22 +2759,12 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     if (!canvasView.moving)
                     {
                         final Point startPos = new Point(getOffsetX(), getOffsetY());
-                        final Point delta = new Point(0, -getCanvasSizeY() / 4);
+                        final Point delta = new Point(0, getCanvasSizeY() / 4);
                         canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
                         e.consume();
                     }
                     break;
                 case KeyEvent.VK_NUMPAD4:
-                    if (!canvasView.moving)
-                    {
-                        final Point startPos = new Point(getOffsetX(), getOffsetY());
-                        final Point delta = new Point(getCanvasSizeX() / 4, 0);
-                        canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
-                        e.consume();
-                    }
-                    break;
-
-                case KeyEvent.VK_NUMPAD6:
                     if (!canvasView.moving)
                     {
                         final Point startPos = new Point(getOffsetX(), getOffsetY());
@@ -2784,11 +2774,21 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
                     }
                     break;
 
+                case KeyEvent.VK_NUMPAD6:
+                    if (!canvasView.moving)
+                    {
+                        final Point startPos = new Point(getOffsetX(), getOffsetY());
+                        final Point delta = new Point(getCanvasSizeX() / 4, 0);
+                        canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
+                        e.consume();
+                    }
+                    break;
+
                 case KeyEvent.VK_NUMPAD8:
                     if (!canvasView.moving)
                     {
                         final Point startPos = new Point(getOffsetX(), getOffsetY());
-                        final Point delta = new Point(0, getCanvasSizeY() / 4);
+                        final Point delta = new Point(0, -getCanvasSizeY() / 4);
                         canvasView.translate(startPos, delta, EventUtil.isControlDown(e));
                         e.consume();
                     }

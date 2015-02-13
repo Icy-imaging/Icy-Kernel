@@ -24,6 +24,7 @@ import icy.math.ArrayMath;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
 import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
 import icy.type.collection.array.Array2DUtil;
@@ -40,9 +41,11 @@ import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import ij.measure.Calibration;
+import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -191,12 +194,41 @@ public class ImageJUtil
                 }
             }
 
-            // convert ROI
-            final Roi roi = image.getRoi();
-            if (roi != null)
+            // convert ROI(s)
+            RoiManager roiManager = RoiManager.getInstance();
+            if (roiManager == null)
             {
-                for (ROI r : convertToIcyRoi(roi))
-                    result.addROI(r);
+                ThreadUtil.invokeNow(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        // need to do it on EDT
+                        new RoiManager();
+                    }
+                });
+            }
+
+            roiManager = RoiManager.getInstance();
+            final Roi[] rois = roiManager.getRoisAsArray();
+
+            if (rois.length > 0)
+            {
+                for (Roi ijRoi : rois)
+                {
+                    // can happen
+                    if (ijRoi != null)
+                        for (ROI icyRoi : convertToIcyRoi(ijRoi))
+                            result.addROI(icyRoi);
+                }
+            }
+            else
+            {
+                final Roi roi = image.getRoi();
+
+                if (roi != null)
+                    for (ROI icyRoi : convertToIcyRoi(roi))
+                        result.addROI(icyRoi);
             }
 
             // calibrate
@@ -214,7 +246,6 @@ public class ImageJUtil
      * Convert the specified Icy {@link Sequence} object to ImageJ {@link ImagePlus}.<br>
      * Image data is shared so modifying one image impact on the other.
      */
-    @SuppressWarnings("unchecked")
     public static ImagePlus convertToImageJImage(Sequence sequence, ProgressListener progressListener)
     {
         final int sizeX = sequence.getSizeX();
@@ -246,21 +277,40 @@ public class ImageJUtil
 
         // create the image
         final ImagePlus result = new ImagePlus(sequence.getName(), stack);
-
-        // convert ROI
-        final List<? extends ROI> points = sequence.getROIs(ROI2DPoint.class);
-        // multiple points --> converting to ImageJ multi point roi
-        if (points.size() > 1)
-            result.setRoi(convertToImageJRoiPoint((List<ROI2DPoint>) points));
-        else
-        {
-            final ArrayList<ROI2D> rois = sequence.getROI2Ds();
-            sequence.getROICount(ROI2DPoint.class);
-            if (rois.size() > 0)
-                result.setRoi(convertToImageJRoi(rois.get(0)));
-        }
         // calibrate
         calibrateImageJImage(result, sequence);
+
+        // convert ROI
+        final List<Roi> ijRois = new ArrayList<Roi>();
+        for (ROI2D roi : sequence.getROI2Ds())
+            ijRois.add(convertToImageJRoi(roi));
+
+        if (ijRois.size() > 0)
+        {
+            if (ijRois.size() > 1)
+            {
+                RoiManager roiManager = RoiManager.getInstance();
+                if (roiManager == null)
+                {
+                    ThreadUtil.invokeNow(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            // need to do it on EDT
+                            new RoiManager();
+                        }
+                    });
+                }
+
+                roiManager = RoiManager.getInstance();
+                int n = 0;
+                for (Roi roi : ijRois)
+                    roiManager.add(result, roi, n++);
+            }
+
+            result.setRoi(ijRois.get(0));
+        }
 
         if (result.getNChannels() > 4)
             return new CompositeImage(result, CompositeImage.COLOR);
@@ -273,7 +323,7 @@ public class ImageJUtil
     /**
      * Convert the specified ImageJ {@link Roi} object to Icy {@link ROI}.
      */
-    public static ArrayList<ROI2D> convertToIcyRoi(Roi roi)
+    public static List<ROI2D> convertToIcyRoi(Roi roi)
     {
         final List<ROI2D> result = new ArrayList<ROI2D>();
         final List<Point2D> pts = new ArrayList<Point2D>();
@@ -345,15 +395,25 @@ public class ImageJUtil
                 break;
         }
 
+        int ind = 0;
         for (ROI2D r : result)
         {
             r.setC(roi.getCPosition() - 1);
             r.setZ(roi.getZPosition() - 1);
             r.setT(roi.getTPosition() - 1);
             r.setSelected(false);
+            if (result.size() > 1)
+                r.setName(roi.getName() + " " + ind);
+            else
+                r.setName(roi.getName());
+            Color c = roi.getStrokeColor();
+            if (c == null)
+                c = roi.getFillColor();
+            if (c != null)
+                r.setColor(c);
         }
 
-        return (ArrayList<ROI2D>) result;
+        return (List<ROI2D>) result;
     }
 
     /**
@@ -365,7 +425,7 @@ public class ImageJUtil
 
         if (roi instanceof ROI2DShape)
         {
-            final ArrayList<Point2D> pts = ((ROI2DShape) roi).getPoints();
+            final List<Point2D> pts = ((ROI2DShape) roi).getPoints();
 
             if (roi instanceof ROI2DPoint)
             {
@@ -419,13 +479,15 @@ public class ImageJUtil
         result.setPosition(roi.getC() + 1, roi.getZ() + 1, roi.getT() + 1);
         result.setName(roi.getName());
         result.setStrokeColor(roi.getColor());
+        // result.setStrokeWidth(roi.getStroke());
 
         return result;
     }
 
     /**
-     * Convert the specified list of Icy {@link ROI2DPoint} object to ImageJ {@link PointRoi}.
+     * @deprecated Use {@link #convertToImageJRoi(ROI2D)} instead.
      */
+    @Deprecated
     public static PointRoi convertToImageJRoiPoint(List<ROI2DPoint> points)
     {
         final int size = points.size();
