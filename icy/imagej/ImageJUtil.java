@@ -33,7 +33,6 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.LookUpTable;
-import ij.gui.ImageRoi;
 import ij.gui.Line;
 import ij.gui.OvalRoi;
 import ij.gui.PointRoi;
@@ -47,6 +46,8 @@ import ij.process.ImageProcessor;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -69,6 +70,54 @@ import plugins.kernel.roi.roi2d.ROI2DShape;
  */
 public class ImageJUtil
 {
+    /**
+     * Append the specified {@link IcyBufferedImage} to the given ImageJ {@link ImageStack}.<br>
+     * If input {@link ImageStack} is <code>null</code> then a new {@link ImageStack} is returned.
+     */
+    private static ImageStack appendToStack(IcyBufferedImage img, ImageStack stack)
+    {
+        final ImageStack result;
+
+        if (stack == null)
+            result = new ImageStack(img.getSizeX(), img.getSizeY(), LookUpTable.createGrayscaleColorModel(false));
+        else
+            result = stack;
+
+        for (int c = 0; c < img.getSizeC(); c++)
+            result.addSlice(null, Array1DUtil.copyOf(img.getDataXY(c)));
+
+        return result;
+    }
+
+    /**
+     * Convert the specified Icy {@link Sequence} object to {@link ImagePlus}.
+     */
+    private static ImagePlus createImagePlus(Sequence sequence, ProgressListener progressListener)
+    {
+        final int sizeZ = sequence.getSizeZ();
+        final int sizeT = sequence.getSizeT();
+        final int len = sizeZ * sizeT;
+
+        int position = 0;
+        ImageStack stack = null;
+
+        for (int t = 0; t < sizeT; t++)
+        {
+            for (int z = 0; z < sizeZ; z++)
+            {
+                if (progressListener != null)
+                    progressListener.notifyProgress(position, len);
+
+                stack = appendToStack(sequence.getImage(t, z), stack);
+
+                position++;
+            }
+        }
+
+        // return the image
+        return new ImagePlus(sequence.getName(), stack);
+    }
+
     /**
      * Calibrate the specified Icy {@link Sequence} from the specified ImageJ {@link Calibration}
      * object.
@@ -127,8 +176,7 @@ public class ImageJUtil
     }
 
     /**
-     * Convert the specified ImageJ {@link ImagePlus} object to Icy {@link Sequence}.<br>
-     * Data can be shared between source and result image so modify one can impact on the other.
+     * Convert the specified ImageJ {@link ImagePlus} object to Icy {@link Sequence}
      */
     public static Sequence convertToIcySequence(ImagePlus image, ProgressListener progressListener)
     {
@@ -243,40 +291,12 @@ public class ImageJUtil
     }
 
     /**
-     * Convert the specified Icy {@link Sequence} object to ImageJ {@link ImagePlus}.<br>
-     * Image data is shared so modifying one image impact on the other.
+     * Convert the specified Icy {@link Sequence} object to ImageJ {@link ImagePlus}
      */
     public static ImagePlus convertToImageJImage(Sequence sequence, ProgressListener progressListener)
     {
-        final int sizeX = sequence.getSizeX();
-        final int sizeY = sequence.getSizeY();
-        final int sizeC = sequence.getSizeC();
-        final int sizeZ = sequence.getSizeZ();
-        final int sizeT = sequence.getSizeT();
-
-        final int len = sizeZ * sizeT * sizeC;
-        int position = 0;
-
-        final ImageStack stack = new ImageStack(sizeX, sizeY, LookUpTable.createGrayscaleColorModel(false));
-
-        for (int t = 0; t < sizeT; t++)
-        {
-            for (int z = 0; z < sizeZ; z++)
-            {
-                for (int c = 0; c < sizeC; c++)
-                {
-                    if (progressListener != null)
-                        progressListener.notifyProgress(position, len);
-
-                    stack.addSlice(null, Array1DUtil.copyOf(sequence.getDataXY(t, z, c)));
-
-                    position++;
-                }
-            }
-        }
-
         // create the image
-        final ImagePlus result = new ImagePlus(sequence.getName(), stack);
+        final ImagePlus result = createImagePlus(sequence, progressListener);
         // calibrate
         calibrateImageJImage(result, sequence);
 
@@ -413,7 +433,7 @@ public class ImageJUtil
                 r.setColor(c);
         }
 
-        return (List<ROI2D>) result;
+        return result;
     }
 
     /**
@@ -465,9 +485,13 @@ public class ImageJUtil
         else if (roi instanceof ROI2DArea)
         {
             final ROI2DArea roiArea = (ROI2DArea) roi;
-            final Point p = roiArea.getPosition();
-            result = new ImageRoi(p.x, p.y, roiArea.getImageMask());
-            ((ImageRoi) result).setOpacity(ROI.DEFAULT_OPACITY);
+            final Point[] points = roiArea.getBooleanMask(true).getPoints();
+
+            final Area area = new Area();
+            for (Point pt : points)
+                area.add(new Area(new Rectangle(pt.x, pt.y, 1, 1)));
+
+            result = new ShapeRoi(area);
         }
         else
         {
@@ -479,6 +503,7 @@ public class ImageJUtil
         result.setPosition(roi.getC() + 1, roi.getZ() + 1, roi.getT() + 1);
         result.setName(roi.getName());
         result.setStrokeColor(roi.getColor());
+        // result.setFillColor(roi.getColor());
         // result.setStrokeWidth(roi.getStroke());
 
         return result;

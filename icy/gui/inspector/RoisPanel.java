@@ -1339,31 +1339,34 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                     if (sequence != null)
                     {
                         // calculate intensity infos
-                        final Rectangle5D bounds = roi.getBounds5D().createIntersection(sequence.getBounds5D());
-
-                        final int minC = (int) bounds.getC();
-                        final int sizeC = (int) bounds.getSizeC();
+                        final Rectangle5D roiBounds = roi.getBounds5D();
+                        final int sizeC = sequence.getSizeC();
 
                         final double[] sd = new double[sizeC];
                         final IntensityInfo[] iis = new IntensityInfo[sizeC];
 
                         for (int c = 0; c < sizeC; c++)
                         {
-                            final IntensityInfo ii = ROIUtil.getIntensityInfo(sequence, roi, -1, -1, minC + c);
+                            iis[c] = new IntensityInfo();
+                            sd[c] = 0d;
 
-                            if (ii != null)
+                            if ((c >= roiBounds.getMinC()) && (c < roiBounds.getMaxC()))
                             {
-                                // round values
-                                ii.minIntensity = MathUtil.roundSignificant(ii.minIntensity, 5, true);
-                                ii.meanIntensity = MathUtil.roundSignificant(ii.meanIntensity, 5, true);
-                                ii.maxIntensity = MathUtil.roundSignificant(ii.maxIntensity, 5, true);
+                                final IntensityInfo ii = ROIUtil.getIntensityInfo(sequence, roi, -1, -1, c);
 
-                                iis[c] = ii;
+                                if (ii != null)
+                                {
+                                    // round values
+                                    ii.minIntensity = MathUtil.roundSignificant(ii.minIntensity, 5, true);
+                                    ii.meanIntensity = MathUtil.roundSignificant(ii.meanIntensity, 5, true);
+                                    ii.maxIntensity = MathUtil.roundSignificant(ii.maxIntensity, 5, true);
+
+                                    iis[c] = ii;
+                                }
+
+                                sd[c] = MathUtil.roundSignificant(
+                                        ROIUtil.getStandardDeviation(sequence, roi, -1, -1, c), 5, true);
                             }
-                            else
-                                iis[c] = new IntensityInfo();
-
-                            sd[c] = ROIUtil.getStandardDeviation(sequence, roi, -1, -1, minC + c);
                         }
 
                         intensityInfos = iis;
