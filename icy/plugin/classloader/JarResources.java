@@ -84,19 +84,25 @@ public class JarResources
 
             if (url != null)
             {
-                try
-                {
-                    // load content and return it
-                    loadContent(name, url);
-                    content = entryContents.get(name);
-                }
-                catch (IOException e)
-                {
-                    // content cannot be loaded, remove the URL entry
-                    entryUrls.remove(name);
-                    // and throw exception
-                    throw e;
-                }
+                // load content and return it
+                loadContent(name, url);
+                content = entryContents.get(name);
+
+//                try
+//                {
+//                    // load content and return it
+//                    loadContent(name, url);
+//                    content = entryContents.get(name);
+//                }
+//                catch (IOException e)
+//                {
+//                    // content cannot be loaded, remove the URL entry
+//                    // better to not remove it after all, so we know why it failed next time
+//                    // entryUrls.remove(name);
+//                    
+//                    // and throw exception
+//                    throw e;
+//                }
             }
         }
 

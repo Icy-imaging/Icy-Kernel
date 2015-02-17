@@ -1129,7 +1129,7 @@ public class Workspace implements XMLPersistent, Comparable<Workspace>
             // wait installation completion
             PluginInstaller.waitInstall();
 
-            final ArrayList<PluginDescriptor> installedPlugins = PluginLoader.getPlugins(false);
+            final List<PluginDescriptor> installedPlugins = PluginLoader.getPlugins(false);
 
             // get number of correctly installed plugins
             int numberOfInstalledPlugin = 0;

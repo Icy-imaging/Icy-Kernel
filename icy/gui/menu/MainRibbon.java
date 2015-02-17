@@ -226,6 +226,11 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
         return sequenceOperationTask;
     }
 
+    public ImageJTask getImageJTask()
+    {
+        return ijTask;
+    }
+
     public ImageJWrapper getImageJ()
     {
         return ijTask.getImageJ();
@@ -1023,7 +1028,7 @@ public class MainRibbon implements PluginLoaderListener, ActiveSequenceListener
         ribbon.addTaskbarComponent(helpAndInfoButton);
 
         // LINK
-//        ribbon.addTaskbarComponent(new IcyCommandButton(GeneralActions.linkAction));
+        ribbon.addTaskbarComponent(new IcyCommandButton(GeneralActions.linkAction));
     }
 
     private void checkPluginsMenuCoherence()

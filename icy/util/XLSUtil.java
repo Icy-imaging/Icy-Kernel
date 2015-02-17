@@ -63,9 +63,33 @@ public class XLSUtil
     }
 
     /**
-     * Loads and returns Workbook from an existing file.<br>
-     * If the file does not exist a new empty Workbook is returned.
+     * Loads and returns Workbook from an existing file (read operation only)
      */
+    public static Workbook loadWorkbookForRead(File file) throws IOException, BiffException
+    {
+        return Workbook.getWorkbook(file);
+    }
+
+    /**
+     * Loads and returns Workbook from an existing file (for write operation).<br>
+     * If the file does not exist a new empty Workbook is returned.<br>
+     * <br>
+     * WARNING: don't forget to end by {@link #saveAndClose(WritableWorkbook)} even if you don't
+     * change the Workbook else you lost all previous data already present.
+     */
+    public static WritableWorkbook loadWorkbookForWrite(File file) throws IOException, BiffException
+    {
+        if (!file.exists())
+            return createWorkbook(file);
+
+        return Workbook.createWorkbook(file, Workbook.getWorkbook(file));
+    }
+
+    /**
+     * @deprecated Use {@link #loadWorkbookForRead(File)} or {@link #loadWorkbookForWrite(File)}
+     *             depending your needs.
+     */
+    @Deprecated
     public static WritableWorkbook loadWorkbook(File file) throws IOException, BiffException
     {
         if (!file.exists())

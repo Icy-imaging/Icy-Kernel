@@ -54,7 +54,8 @@ public abstract class AbstractClassLoader extends ClassLoader
     public AbstractClassLoader(ClassLoader parent)
     {
         super(parent);
-        addDefaultLoader();
+        
+        addDefaultLoaders();
     }
 
     public void addLoader(ProxyClassLoader loader)
@@ -64,7 +65,7 @@ public abstract class AbstractClassLoader extends ClassLoader
         Collections.sort(loaders);
     }
 
-    protected void addDefaultLoader()
+    protected void addDefaultLoaders()
     {
         // always add this one
         loaders.add(systemLoader);

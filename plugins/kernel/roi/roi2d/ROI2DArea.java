@@ -497,8 +497,12 @@ public class ROI2DArea extends ROI2D
                     else
                     {
                         final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
+                        float newAlpha = prevAlpha.getAlpha() * getOpacity();
+                        newAlpha = Math.min(1f, newAlpha);
+                        newAlpha = Math.max(0f, newAlpha);
+
                         // show content with an alpha factor
-                        g2.setComposite(prevAlpha.derive(prevAlpha.getAlpha() * getOpacity()));
+                        g2.setComposite(prevAlpha.derive(newAlpha));
 
                         // draw mask
                         g2.drawImage(imageMask, null, bounds.x, bounds.y);
@@ -581,7 +585,6 @@ public class ROI2DArea extends ROI2D
                     else
                     {
                         final AlphaComposite prevAlpha = (AlphaComposite) g2.getComposite();
-
                         float newAlpha = prevAlpha.getAlpha() * getOpacity() * 2f;
                         newAlpha = Math.min(1f, newAlpha);
                         newAlpha = Math.max(0f, newAlpha);

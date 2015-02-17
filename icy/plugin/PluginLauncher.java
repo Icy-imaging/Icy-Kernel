@@ -119,18 +119,7 @@ public class PluginLauncher
 
         // use the special PluginNoEDTConstructor interface ?
         if (ClassUtil.isSubClass(clazz, PluginNoEDTConstructor.class))
-        {
-            try
-            {
-                // try constructor with descriptor argument by default
-                return clazz.getConstructor(PluginDescriptor.class).newInstance(plugin);
-            }
-            catch (NoSuchMethodException e)
-            {
-                // then use default constructor
-                return clazz.newInstance();
-            }
-        }
+            return clazz.newInstance();
 
         // create the plugin instance on the EDT
         return ThreadUtil.invokeNow(new Callable<Plugin>()
@@ -138,16 +127,7 @@ public class PluginLauncher
             @Override
             public Plugin call() throws Exception
             {
-                try
-                {
-                    // try constructor with descriptor argument by default
-                    return clazz.getConstructor(PluginDescriptor.class).newInstance(plugin);
-                }
-                catch (NoSuchMethodException e)
-                {
-                    // then use default constructor
-                    return clazz.newInstance();
-                }
+                return clazz.newInstance();
             }
         });
     }
@@ -190,7 +170,8 @@ public class PluginLauncher
             // audit
             Audit.pluginLaunched(result);
             // execute plugin
-            internalExecute(result);
+            if (result instanceof PluginImageAnalysis)
+                internalExecute(result);
 
             return result;
         }
@@ -227,8 +208,7 @@ public class PluginLauncher
 
     /**
      * Same as {@link #start(PluginDescriptor)} except it throws {@link Exception} on error
-     * so user
-     * can handle them.
+     * so user can handle them.
      * 
      * @param plugin
      *        descriptor of the plugin we want to start
@@ -248,7 +228,8 @@ public class PluginLauncher
         // register plugin
         Icy.getMainInterface().registerPlugin(result);
         // execute plugin
-        internalExecute(result);
+        if (result instanceof PluginImageAnalysis)
+            internalExecute(result);
 
         return result;
     }

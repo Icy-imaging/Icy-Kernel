@@ -53,9 +53,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
- * Abstract class defining a generic 4D ROI as a stack of individual 3D ROI slices.<br>
- * A stack having a single slice set at position Z = -1 means the slice apply on the whole Z
- * dimension.
+ * Abstract class defining a generic 4D ROI as a stack of individual 3D ROI slices.
  * 
  * @author Alexandre Dufour
  * @author Stephane Dallongeville

@@ -211,7 +211,7 @@ public class VtkImageVolume
     /**
      * Return the number of channel contained in image data.
      */
-    protected int getChannelNumber()
+    protected int getChannelCount()
     {
         if (imageData != null)
             return imageData.GetNumberOfScalarComponents();
@@ -259,7 +259,7 @@ public class VtkImageVolume
      */
     public void setLUT(LUT value)
     {
-        for (int channel = 0; channel < value.getNumChannel(); channel++)
+        for (int channel = 0; channel < Math.min(value.getNumChannel(), getChannelCount()); channel++)
             setLUT(value.getLutChannel(channel), channel);
     }
 
@@ -454,7 +454,7 @@ public class VtkImageVolume
      */
     public void setShade(boolean value)
     {
-        final int num = getChannelNumber();
+        final int num = getChannelCount();
         for (int ch = 0; ch < num; ch++)
             volumeProperty.SetShade(ch, value ? 1 : 0);
 
@@ -490,7 +490,7 @@ public class VtkImageVolume
      */
     public void setAmbient(double value)
     {
-        final int num = getChannelNumber();
+        final int num = getChannelCount();
         for (int ch = 0; ch < num; ch++)
             volumeProperty.SetAmbient(ch, value);
 
@@ -526,7 +526,7 @@ public class VtkImageVolume
      */
     public void setDiffuse(double value)
     {
-        final int num = getChannelNumber();
+        final int num = getChannelCount();
         for (int ch = 0; ch < num; ch++)
             volumeProperty.SetDiffuse(ch, value);
 
@@ -562,7 +562,7 @@ public class VtkImageVolume
      */
     public void setSpecular(double value)
     {
-        final int num = getChannelNumber();
+        final int num = getChannelCount();
         for (int ch = 0; ch < num; ch++)
             volumeProperty.SetSpecular(ch, value);
 
@@ -598,7 +598,7 @@ public class VtkImageVolume
      */
     public void setSpecularPower(double value)
     {
-        final int num = getChannelNumber();
+        final int num = getChannelCount();
         for (int ch = 0; ch < num; ch++)
             volumeProperty.SetSpecularPower(ch, value);
 
@@ -652,7 +652,7 @@ public class VtkImageVolume
     /**
      * Returns <code>true</code> if the specified volume mapper support multi channel rendering.
      */
-    public boolean isMultiChannelVolumeMapper(VtkVolumeMapperType mapperType)
+    public static boolean isMultiChannelVolumeMapper(VtkVolumeMapperType mapperType)
     {
         switch (mapperType)
         {

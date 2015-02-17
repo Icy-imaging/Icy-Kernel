@@ -51,7 +51,11 @@ public class Layer implements OverlayListener, Comparable<Layer>
     public final static String PROPERTY_CANBEREMOVED = Overlay.PROPERTY_CANBEREMOVED;
     public final static String PROPERTY_RECEIVEKEYEVENTONHIDDEN = Overlay.PROPERTY_RECEIVEKEYEVENTONHIDDEN;
     public final static String PROPERTY_RECEIVEMOUSEEVENTONHIDDEN = Overlay.PROPERTY_RECEIVEMOUSEEVENTONHIDDEN;
+    /**
+     * @deprecated Use {@link #PROPERTY_OPACITY} instead
+     */
     public final static String PROPERTY_ALPHA = "alpha";
+    public final static String PROPERTY_OPACITY = "opacity";
     public final static String PROPERTY_VISIBLE = "visible";
 
     public final static String DEFAULT_NAME = "layer";
@@ -64,7 +68,7 @@ public class Layer implements OverlayListener, Comparable<Layer>
         if (propertyName == null)
             return false;
 
-        return propertyName.equals(PROPERTY_ALPHA) || propertyName.equals(PROPERTY_PRIORITY)
+        return propertyName.equals(PROPERTY_OPACITY) || propertyName.equals(PROPERTY_PRIORITY)
                 || propertyName.equals(PROPERTY_VISIBLE);
     }
 
@@ -318,24 +322,39 @@ public class Layer implements OverlayListener, Comparable<Layer>
     }
 
     /**
-     * @return the alpha
+     * @return the layer opacity
      */
-    public float getAlpha()
+    public float getOpacity()
     {
         return alpha;
     }
 
     /**
-     * @param value
-     *        the alpha to set
+     * Set the layer opacity
      */
-    public void setAlpha(float value)
+    public void setOpacity(float value)
     {
         if (alpha != value)
         {
             alpha = value;
-            changed(PROPERTY_ALPHA);
+            changed(PROPERTY_OPACITY);
         }
+    }
+
+    /**
+     * @deprecated Use {@link #getOpacity()} instead
+     */
+    public float getAlpha()
+    {
+        return getOpacity();
+    }
+
+    /**
+     * @deprecated Use {@link #setOpacity(float)} instead.
+     */
+    public void setAlpha(float value)
+    {
+        setOpacity(value);
     }
 
     /**

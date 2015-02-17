@@ -431,10 +431,16 @@ public class PluginInstaller implements Runnable
             return result;
 
         // download and save icon & image files
-        url = URLUtil.buildURL(basePath, plugin.getIconUrl());
-        downloadAndSave(url, plugin.getIconFilename(), login, pass, false, taskFrame);
-        url = URLUtil.buildURL(basePath, plugin.getImageUrl());
-        downloadAndSave(url, plugin.getImageFilename(), login, pass, false, taskFrame);
+        if (!StringUtil.isEmpty(plugin.getIconUrl()))
+        {
+            url = URLUtil.buildURL(basePath, plugin.getIconUrl());
+            downloadAndSave(url, plugin.getIconFilename(), login, pass, false, taskFrame);
+        }
+        if (!StringUtil.isEmpty(plugin.getImageUrl()))
+        {
+            url = URLUtil.buildURL(basePath, plugin.getImageUrl());
+            downloadAndSave(url, plugin.getImageFilename(), login, pass, false, taskFrame);
+        }
 
         return "";
     }
@@ -556,7 +562,7 @@ public class PluginInstaller implements Runnable
         for (PluginIdent ident : plugin.getRequired())
         {
             // already in our dependences ? --> pass to the next one
-            if (PluginDescriptor.getPlugin(result, ident, true) != null)
+            if ((ident == null) || (PluginDescriptor.getPlugin(result, ident, true) != null))
                 continue;
 
             // find sources dependent plugin

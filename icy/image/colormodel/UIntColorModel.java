@@ -63,7 +63,7 @@ public class UIntColorModel extends IcyColorModel
         final int[] scaledData = new int[numComponents];
 
         for (int comp = 0; comp < numComponents; comp++)
-            scaledData[comp] = (int) lut.getLutBand(comp).getScaler().scale(TypeUtil.unsign(pix[comp]));
+            scaledData[comp] = (int) lut.getLutChannel(comp).getScaler().scale(TypeUtil.unsign(pix[comp]));
 
         return lut.getColorSpace().toRGBUnnorm(scaledData);
     }

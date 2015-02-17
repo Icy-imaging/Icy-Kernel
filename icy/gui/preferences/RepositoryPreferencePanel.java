@@ -339,8 +339,15 @@ public class RepositoryPreferencePanel extends PreferencePanel implements ListSe
 
         if (!new EditRepositoryDialog("Edit repository", reposInf).isCanceled())
         {
-            // notify data changed
-            tableModel.fireTableRowsUpdated(ind, ind);
+            try
+            {
+                // notify data changed
+                tableModel.fireTableRowsUpdated(ind, ind);
+            }
+            catch (Exception e)
+            {
+                // ignore possible exception here
+            }
 
             return true;
         }

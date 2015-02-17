@@ -290,6 +290,7 @@ public class MainInterfaceBatch implements MainInterface
             activeSequence = null;
     }
 
+    @Deprecated
     @Override
     public void closeViewersOfSequence(Sequence sequence)
     {

@@ -34,16 +34,20 @@ import icy.gui.menu.search.SearchBar;
 import icy.gui.util.ComponentUtil;
 import icy.gui.util.WindowPositionSaver;
 import icy.gui.viewer.Viewer;
+import icy.imagej.ImageJWrapper;
 import icy.main.Icy;
 import icy.math.HungarianAlgorithm;
 import icy.preferences.GeneralPreferences;
 import icy.resource.ResourceUtil;
 import icy.resource.icon.IcyApplicationIcon;
 import icy.system.FileDrop;
+import icy.system.FileDrop.FileDropExtListener;
 import icy.system.FileDrop.FileDropListener;
 import icy.system.SystemUtil;
+import icy.system.thread.ThreadUtil;
 import icy.type.collection.CollectionUtil;
 import icy.util.StringUtil;
+import ij.IJ;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -55,6 +59,7 @@ import java.awt.HeadlessException;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
@@ -196,7 +201,7 @@ public class MainFrame extends JRibbonFrame
         centerPanel.add(desktopPane, BorderLayout.CENTER);
 
         // action on file drop
-        final FileDropListener fileDropListener = new FileDropListener()
+        final FileDropListener desktopFileDropListener = new FileDropListener()
         {
             @Override
             public void filesDropped(File[] files)
@@ -204,10 +209,46 @@ public class MainFrame extends JRibbonFrame
                 Loader.load(CollectionUtil.asList(FileUtil.toPaths(files)), false, true, true);
             }
         };
+        final FileDropExtListener bandFileDropListener = new FileDropExtListener()
+        {
+            @Override
+            public void filesDropped(DropTargetDropEvent evt, File[] files)
+            {
+                if (getRibbon().getSelectedTask() == mainRibbon.getImageJTask())
+                {
+                    final ImageJWrapper imageJ = mainRibbon.getImageJTask().getImageJ();
+                    final JPanel imageJPanel = imageJ.getSwingPanel();
+
+                    // drop point was inside ImageJ ?
+                    if (imageJPanel.contains(ComponentUtil.convertPoint(getRibbon(), evt.getLocation(), imageJPanel)))
+                    {
+                        if (files.length > 0)
+                        {
+                            final String file = files[0].getAbsolutePath();
+
+                            ThreadUtil.bgRun(new Runnable()
+                            {
+                                @Override
+                                public void run()
+                                {
+                                    IJ.open(file);
+                                }
+                            });
+                        }
+
+                        return;
+                    }
+                }
+
+                // classic file loading
+                Loader.load(CollectionUtil.asList(FileUtil.toPaths(files)), false, true, true);
+            }
+        };
 
         // handle file drop in desktop pane and in ribbon pane
-        new FileDrop(desktopPane, BorderFactory.createLineBorder(Color.blue.brighter(), 2), false, fileDropListener);
-        new FileDrop(getRibbon(), BorderFactory.createLineBorder(Color.blue.brighter(), 1), false, fileDropListener);
+        new FileDrop(desktopPane, BorderFactory.createLineBorder(Color.blue.brighter(), 2), false,
+                desktopFileDropListener);
+        new FileDrop(getRibbon(), BorderFactory.createLineBorder(Color.blue.brighter(), 1), false, bandFileDropListener);
 
         // listen ribbon minimization event
         getRibbon().addPropertyChangeListener(JRibbon.PROPERTY_MINIMIZED, new PropertyChangeListener()

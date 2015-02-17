@@ -23,10 +23,12 @@ import icy.canvas.IcyCanvas2D;
 import icy.painter.Anchor2D;
 import icy.resource.ResourceUtil;
 import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
 import icy.type.point.Point5D;
 import icy.type.point.Point5D.Double;
 import icy.util.XMLUtil;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
@@ -38,6 +40,9 @@ import java.util.Arrays;
 import org.w3c.dom.Node;
 
 import plugins.kernel.canvas.VtkCanvas;
+import vtk.vtkActor;
+import vtk.vtkPolyDataMapper;
+import vtk.vtkSphereSource;
 
 /**
  * ROI 2D Point class.<br>
@@ -110,10 +115,10 @@ public class ROI2DPoint extends ROI2DShape
             if (canvas instanceof VtkCanvas)
             {
                 // 3D canvas
-                final VtkCanvas canvas3d = (VtkCanvas) canvas;
+                final VtkCanvas cnv = (VtkCanvas) canvas;
 
                 // FIXME : need a better implementation
-                final double[] s = canvas3d.getVolumeScale();
+                final double[] s = cnv.getVolumeScale();
 
                 // scaling changed ?
                 if (!Arrays.equals(scaling, s))
@@ -127,10 +132,95 @@ public class ROI2DPoint extends ROI2DShape
                 // need to rebuild 3D data structures ?
                 if (needRebuild)
                 {
-                    rebuild3DPainter(canvas3d);
+                    // initialize VTK objects if not yet done
+                    if (actor == null)
+                        initVtkObjects();
+
+                    // request rebuild 3D objects
+                    canvas3d = cnv;
+                    ThreadUtil.runSingle(this);
                     needRebuild = false;
                 }
+
+                // actor can be accessed in canvas3d for rendering so we need to synchronize access
+                cnv.lock();
+                try
+                {
+                    // update visibility
+                    if (actor != null)
+                        ((vtkActor) actor).SetVisibility(canvas.isVisible(this) ? 1 : 0);
+                }
+                finally
+                {
+                    cnv.unlock();
+                }
             }
+        }
+
+        @Override
+        protected void initVtkObjects()
+        {
+            // init 3D painters stuff
+            vtkSource = new vtkSphereSource();
+            ((vtkSphereSource) vtkSource).SetRadius(2);
+            ((vtkSphereSource) vtkSource).SetThetaResolution(12);
+            ((vtkSphereSource) vtkSource).SetPhiResolution(12);
+
+            polyMapper = new vtkPolyDataMapper();
+            ((vtkPolyDataMapper) polyMapper).SetInputConnection(((vtkSphereSource) vtkSource).GetOutputPort());
+
+            actor = new vtkActor();
+            ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
+            ((vtkActor) actor).GetProperty().SetFrontfaceCulling(1);
+        }
+
+        /**
+         * update 3D painter for 3D canvas (called only when VTK is loaded).
+         */
+        @Override
+        protected void rebuildVtkObjects()
+        {
+            final VtkCanvas canvas = canvas3d;
+            // nothing to update
+            if (canvas == null)
+                return;
+
+            final Sequence seq = canvas.getSequence();
+            // nothing to update
+            if (seq == null)
+                return;
+
+            final Point2D pos = getPoint();
+            double curZ = getZ();
+
+            // all slices ?
+            if (curZ == -1)
+                // set object at middle of the volume
+                curZ = seq.getSizeZ() / 2d;
+
+            // actor can be accessed in canvas3d for rendering so we need to synchronize access
+            canvas3d.lock();
+            try
+            {
+                ((vtkSphereSource) vtkSource).SetRadius(getStroke());
+                ((vtkSphereSource) vtkSource).SetCenter(pos.getX(), pos.getY(), curZ);
+                ((vtkPolyDataMapper) polyMapper).Update();
+
+                ((vtkActor) actor).SetScale(scaling);
+                final Color color = getColor();
+                ((vtkActor) actor).GetProperty().SetColor(color.getRed() / 255d, color.getGreen() / 255d,
+                        color.getBlue() / 255d);
+                // opacity is for interior only, contour can be done with layer opacity information
+                // ((vtkActor) actor).GetProperty().SetOpacity(getOpacity());
+            }
+            finally
+            {
+                canvas3d.unlock();
+            }
+
+            // no more pending request
+            if (!ThreadUtil.hasWaitingSingleTask(this))
+                canvas3d = null;
         }
     }
 

@@ -41,7 +41,6 @@ import loci.formats.gui.AWTImageTools;
 import loci.formats.gui.ExtensionFileFilter;
 import loci.formats.in.APNGReader;
 import loci.formats.in.JPEG2000Reader;
-import loci.formats.in.TiffJAIReader;
 import loci.formats.ome.OMEXMLMetadataImpl;
 
 /**
@@ -266,16 +265,11 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
     }
 
     @Override
-    public boolean close() throws IOException
+    public void close() throws IOException
     {
         // something to close ?
         if (getOpened() != null)
-        {
             reader.close();
-            return true;
-        }
-
-        return false;
     }
 
     /**
@@ -987,16 +981,17 @@ public class LociImporterPlugin extends PluginSequenceFileImporter
                     }
                 }
             }
-            // special case of 4 channels image, try to set 4th channel colormap
+            // special case of 4 channels image, try to restore alpha channel
             else if (sizeC == 4)
             {
                 // assume real alpha channel depending from the reader we use
                 final boolean alpha = (reader instanceof PNGReader) || (reader instanceof APNGReader)
-                        || (reader instanceof TiffJAIReader) || (reader instanceof JPEG2000Reader);
+                        || (reader instanceof JPEG2000Reader);
+                // || (reader instanceof TiffJAIReader);
 
-                // replace alpha with Cyan color
-                if (!alpha)
-                    result.setColorMap(3, LinearColorMap.cyan_, true);
+                // restore alpha channel
+                if (alpha)
+                    result.setColorMap(3, LinearColorMap.alpha_, true);
             }
         }
         finally

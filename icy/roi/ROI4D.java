@@ -349,6 +349,9 @@ public abstract class ROI4D extends ROI
     public Rectangle5D computeBounds5D()
     {
         final Rectangle4D bounds4D = computeBounds4D();
+        if (bounds4D == null)
+            return new Rectangle5D.Double();
+
         final Rectangle5D.Double result = new Rectangle5D.Double(bounds4D.getX(), bounds4D.getY(), bounds4D.getZ(),
                 bounds4D.getT(), 0d, bounds4D.getSizeX(), bounds4D.getSizeY(), bounds4D.getSizeZ(),
                 bounds4D.getSizeT(), 0d);
@@ -700,8 +703,14 @@ public abstract class ROI4D extends ROI
     @Override
     public double computeNumberOfPoints()
     {
-        // approximation by using number of point of boolean mask
-        return getBooleanMask(true).getPointsAsIntArray().length / getDimension();
+        double numPoints = 0;
+        
+        // approximation by using number of point of boolean mask with and without border
+        numPoints += getBooleanMask(true).getPointsAsIntArray().length;
+        numPoints += getBooleanMask(false).getPointsAsIntArray().length;
+        numPoints /= 2d;
+        
+        return numPoints / getDimension();
     }
 
     /**

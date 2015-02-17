@@ -19,6 +19,7 @@
 package icy.gui.lut;
 
 import icy.canvas.IcyCanvas3D;
+import icy.file.FileUtil;
 import icy.file.xml.XMLPersistentHelper;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
@@ -46,6 +47,7 @@ import icy.resource.icon.IcyIcon;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +71,8 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
 
     private static final String DEFAULT_COLORMAP_DIR = "colormap";
     private static final String DEFAULT_COLORMAP_NAME = "colormap.xml";
+
+    private static List<IcyColorMap> customMaps = null;
 
     /**
      * gui
@@ -212,7 +216,25 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         colormaps.add(new JETColorMap());
         colormaps.add(new GlowColorMap(true));
 
-        // this is the custom colormap
+        if (customMaps == null)
+        {
+            // load custom maps
+            customMaps = new ArrayList<IcyColorMap>();
+
+            // add saved colormap
+            for (File f : FileUtil.getFiles(new File(DEFAULT_COLORMAP_DIR), null, false, false, false))
+            {
+                final IcyColorMap map = new IcyColorMap();
+                if (XMLPersistentHelper.loadFromXML(map, f))
+                    customMaps.add(map);
+            }
+        }
+
+        // add custom maps
+        for (IcyColorMap map : customMaps)
+            colormaps.add(map);
+
+        // this is the user customized colormap
         colormaps.add(colormap);
 
         // build colormap selector
@@ -252,8 +274,9 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
                 if (filename != null)
                 {
                     final IcyColorMap map = new IcyColorMap();
-                    XMLPersistentHelper.loadFromXML(map, filename);
-                    setColorMap(map);
+
+                    if (XMLPersistentHelper.loadFromXML(map, filename))
+                        setColorMap(map);
                 }
             }
         });
@@ -349,7 +372,8 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
         if (colormap == src)
             return;
 
-        colormap.setName(src.getName());
+        // we want to preserve the "custom" colormap name
+        // colormap.setName(src.getName());
 
         if (viewer.getCanvas() instanceof IcyCanvas3D)
         {

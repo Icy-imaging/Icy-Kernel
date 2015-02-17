@@ -662,7 +662,7 @@ public class Loader
     }
 
     /**
-     * Returns a Map containing the appropriate sequence file importer for the specified file.<br>
+     * Returns a Map containing the appropriate sequence file importer for the specified files.<br>
      * A file can be absent from the returned Map when no importer support it.<br>
      * 
      * @param importers

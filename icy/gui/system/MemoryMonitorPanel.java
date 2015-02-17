@@ -23,6 +23,7 @@ import icy.math.UnitUtil;
 import icy.network.NetworkUtil;
 import icy.resource.ResourceUtil;
 import icy.system.SystemUtil;
+import icy.system.thread.ThreadUtil;
 import icy.util.ColorUtil;
 import icy.util.GraphicsUtil;
 
@@ -71,9 +72,9 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     private final BasicStroke memStroke = new BasicStroke(3);
     private final Font textFont = new Font("Arial", Font.BOLD, 9);
     private BufferedImage background = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
-	private final Image networkImage = ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_NETWORK, Color.gray);
-	private final Image deleteImage = ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_DELETE, Color.red);
-    
+    private final Image networkImage = ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_NETWORK, Color.gray);
+    private final Image deleteImage = ImageUtil.getColorImageFromAlphaImage(ResourceUtil.ICON_DELETE, Color.red);
+
     boolean displayHelpMessage = false;
 
     public MemoryMonitorPanel()
@@ -99,7 +100,7 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
 
         setMinimumSize(new Dimension(120, 50));
         setPreferredSize(new Dimension(140, 55));
-      
+
         addMouseListener(this);
 
         updateTimer.scheduleAtFixedRate(new TimerTask()
@@ -117,15 +118,15 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     {
         final int w = getWidth();
         final int h = getHeight();
-        
+
         if ((background.getWidth() != w) || (background.getHeight() != h))
         {
-        	background = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-    		Graphics2D background_g2 = background.createGraphics();
+            background = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+            Graphics2D background_g2 = background.createGraphics();
             GraphicsUtil.paintIcyBackGround(w, h, background_g2);
         }
 
-		g.drawImage(background, 0, 0, null);
+        g.drawImage(background, 0, 0, null);
 
         final Graphics2D g2 = (Graphics2D) g.create();
 
@@ -267,13 +268,25 @@ public class MemoryMonitorPanel extends JPanel implements MouseListener
     @Override
     public void mouseClicked(MouseEvent arg0)
     {
-        final double freeBefore = SystemUtil.getJavaFreeMemory();
-        System.gc();
-        final double freeAfter = SystemUtil.getJavaFreeMemory();
-        final double released = freeAfter - freeBefore;
+        ThreadUtil.bgRun(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                final double totalMemory = SystemUtil.getJavaTotalMemory();
+                final double freeBefore = SystemUtil.getJavaFreeMemory();
+                System.gc();
 
-        System.out.println("Memory free by Garbage Collector : "
-                + UnitUtil.getBytesString((released > 0) ? released : 0));
+                final double freeAfter = SystemUtil.getJavaFreeMemory();
+                final double released = freeAfter - freeBefore;
+                final double usedMemory = totalMemory - freeAfter;
+                final double maxFree = SystemUtil.getJavaMaxMemory() - usedMemory;
+
+                System.out.println("Free / used memory: " + UnitUtil.getBytesString((maxFree > 0) ? maxFree : 0) + " / "
+                        + UnitUtil.getBytesString((usedMemory > 0) ? usedMemory : 0) + " (released by GC: "
+                        + UnitUtil.getBytesString((released > 0) ? released : 0) + ")");
+            }
+        });
     }
 
     @Override

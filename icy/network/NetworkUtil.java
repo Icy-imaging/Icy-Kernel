@@ -192,6 +192,7 @@ public class NetworkUtil
      * Parameters id
      */
     public static final String ID_KERNELVERSION = "kernelVersion";
+    public static final String ID_BETAALLOWED = "betaAllowed";
     public static final String ID_JAVANAME = "javaName";
     public static final String ID_JAVAVERSION = "javaVersion";
     public static final String ID_JAVABITS = "javaBits";

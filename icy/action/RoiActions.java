@@ -56,9 +56,9 @@ import jxl.write.WritableWorkbook;
 import org.w3c.dom.Document;
 
 import plugins.kernel.roi.roi2d.ROI2DRectangle;
-import plugins.kernel.roi.roi3d.ROI3DRectangle;
-import plugins.kernel.roi.roi4d.ROI4DRectangle;
-import plugins.kernel.roi.roi5d.ROI5DRectangle;
+import plugins.kernel.roi.roi3d.ROI3DStackRectangle;
+import plugins.kernel.roi.roi4d.ROI4DStackRectangle;
+import plugins.kernel.roi.roi5d.ROI5DStackRectangle;
 
 /**
  * Roi actions (open / save / copy / paste / merge...)
@@ -539,15 +539,15 @@ public class RoiActions
                             break;
 
                         case 3:
-                            seqROI = new ROI3DRectangle(sequence.getBounds5D().toRectangle3D());
+                            seqROI = new ROI3DStackRectangle(sequence.getBounds5D().toRectangle3D());
                             break;
 
                         case 4:
-                            seqROI = new ROI4DRectangle(sequence.getBounds5D().toRectangle4D());
+                            seqROI = new ROI4DStackRectangle(sequence.getBounds5D().toRectangle4D());
                             break;
 
                         case 5:
-                            seqROI = new ROI5DRectangle(sequence.getBounds5D());
+                            seqROI = new ROI5DStackRectangle(sequence.getBounds5D());
                             break;
 
                         default:

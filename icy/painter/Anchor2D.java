@@ -799,7 +799,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
             return;
 
         // just for the shift key state change
-        updateDrag(e, imagePoint.getX(), imagePoint.getY());
+        updateDrag(e, imagePoint);
     }
 
     /*
@@ -819,7 +819,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
             return;
 
         // just for the shift key state change
-        updateDrag(e, imagePoint.getX(), imagePoint.getY());
+        updateDrag(e, imagePoint);
     }
 
     /*
@@ -893,7 +893,7 @@ public class Anchor2D extends Overlay implements XMLPersistent
                     startDragPainterPosition = getPosition();
                 }
 
-                updateDrag(e, imagePoint.getX(), imagePoint.getY());
+                updateDrag(e, imagePoint);
 
                 e.consume();
             }

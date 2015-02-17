@@ -381,12 +381,19 @@ public class PluginOnlinePreferencePanel extends PluginListPreferencePanel imple
 
             if (ind != -1)
             {
-                ThreadUtil.invokeLater(new Runnable()
+                ThreadUtil.invokeNow(new Runnable()
                 {
                     @Override
                     public void run()
                     {
-                        tableModel.fireTableRowsUpdated(ind, ind);
+                        try
+                        {
+                            tableModel.fireTableRowsUpdated(ind, ind);
+                        }
+                        catch (Exception e)
+                        {
+                            // ignore possible exception here
+                        }
                     }
                 });
             }

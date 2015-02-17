@@ -6,16 +6,16 @@ import java.awt.geom.Rectangle2D;
 
 import plugins.kernel.roi.roi2d.ROI2DRectangle;
 
-public class ROI3DRectangle extends ROI3DStack<ROI2DRectangle>
+public class ROI3DStackRectangle extends ROI3DStack<ROI2DRectangle>
 {
-    public ROI3DRectangle()
+    public ROI3DStackRectangle()
     {
         super(ROI2DRectangle.class);
 
         setName("3D rectangle");
     }
 
-    public ROI3DRectangle(Rectangle3D rect)
+    public ROI3DStackRectangle(Rectangle3D rect)
     {
         this();
 

@@ -63,7 +63,8 @@ public class JarClassLoader extends AbstractClassLoader
 
         classpathResources = new ClasspathResources();
         loadedClasses = Collections.synchronizedMap(new HashMap<String, Class>());
-        initialize();
+        
+        addLoader(localLoader);
     }
 
     public JarClassLoader()
@@ -79,6 +80,7 @@ public class JarClassLoader extends AbstractClassLoader
     public JarClassLoader(Object[] sources)
     {
         this();
+        
         addAll(sources);
     }
 
@@ -90,15 +92,8 @@ public class JarClassLoader extends AbstractClassLoader
     public JarClassLoader(List sources)
     {
         this();
+        
         addAll(sources);
-    }
-
-    /**
-     * Some initialisations
-     */
-    public void initialize()
-    {
-        addLoader(localLoader);
     }
 
     /**
@@ -190,19 +185,11 @@ public class JarClassLoader extends AbstractClassLoader
      * 
      * @param className
      * @return byte[]
-     * @throws ClassNotFoundException
+     * @throws IOException
      */
-    protected byte[] getClassBytes(String className)
+    protected byte[] getClassBytes(String className) throws IOException
     {
-        try
-        {
-            return classpathResources.getResourceContent(formatClassName(className));
-        }
-        catch (IOException e)
-        {
-            IcyExceptionHandler.showErrorMessage(e, false, true);
-            return null;
-        }
+        return classpathResources.getResourceContent(formatClassName(className));
     }
 
     /**
@@ -284,7 +271,7 @@ public class JarClassLoader extends AbstractClassLoader
         }
 
         @Override
-        public Class loadClass(String className, boolean resolveIt)
+        public Class loadClass(String className, boolean resolveIt) throws ClassNotFoundException
         {
             Class result = null;
             byte[] classBytes;
@@ -297,7 +284,15 @@ public class JarClassLoader extends AbstractClassLoader
                 return result;
             }
 
-            classBytes = getClassBytes(className);
+            try
+            {
+                classBytes = getClassBytes(className);
+            }
+            catch (IOException e)
+            {
+                // we got a severe error here --> throw an exception
+                throw new ClassNotFoundException(className, e);
+            }
             if (classBytes == null)
                 return null;
 

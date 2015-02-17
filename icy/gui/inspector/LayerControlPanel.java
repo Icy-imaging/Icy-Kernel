@@ -135,7 +135,7 @@ public class LayerControlPanel extends JPanel implements ChangeListener
             {
                 if (hasSelected)
                 {
-                    opacitySlider.setValue((int) (firstSelected.getAlpha() * 100f));
+                    opacitySlider.setValue((int) (firstSelected.getOpacity() * 100f));
                     opacitySlider.setEnabled(true);
                     deleteButton.setEnabled(canRemovef);
                 }
@@ -184,7 +184,7 @@ public class LayerControlPanel extends JPanel implements ChangeListener
                     {
                         // set layer transparency
                         for (Layer layer : selectedLayers)
-                            layer.setAlpha(value / 100f);
+                            layer.setOpacity(value / 100f);
                     }
                     finally
                     {

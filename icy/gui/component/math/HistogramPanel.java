@@ -33,6 +33,8 @@ import java.util.EventListener;
 import javax.swing.BorderFactory;
 
 /**
+ * Histogram component.
+ * 
  * @author Stephane
  */
 public class HistogramPanel extends BorderedPanel

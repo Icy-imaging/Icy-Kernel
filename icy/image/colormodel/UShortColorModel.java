@@ -61,7 +61,7 @@ public class UShortColorModel extends IcyColorModel
         final int[] scaledData = new int[numComponents];
 
         for (int comp = 0; comp < numComponents; comp++)
-            scaledData[comp] = (int) lut.getLutBand(comp).getScaler().scale(pix[comp] & 0xFFFF);
+            scaledData[comp] = (int) lut.getLutChannel(comp).getScaler().scale(pix[comp] & 0xFFFF);
 
         return lut.getColorSpace().toRGBUnnorm(scaledData);
     }

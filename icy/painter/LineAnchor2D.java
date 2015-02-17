@@ -38,7 +38,7 @@ public abstract class LineAnchor2D extends Anchor2D
     }
 
     @Override
-    protected boolean updateDrag(InputEvent e, Point2D imagePoint)
+    protected boolean updateDrag(InputEvent e, double x, double y)
     {
         // not dragging --> exit
         if (startDragMousePosition == null)
@@ -51,20 +51,20 @@ public abstract class LineAnchor2D extends Anchor2D
         {
             final Point2D pos = anchor.getPosition();
 
-            double dx = imagePoint.getX() - pos.getX();
-            double dy = imagePoint.getY() - pos.getY();
+            double dx = x - pos.getX();
+            double dy = y - pos.getY();
 
             final double absDx = Math.abs(dx);
             final double absDy = Math.abs(dy);
-            final double x;
+            final double dist;
 
             if ((absDx != 0) && (absDy != 0))
-                x = absDx / absDy;
+                dist = absDx / absDy;
             else
-                x = 0;
+                dist = 0;
 
             // square drag
-            if ((x > 0.5) && (x < 1.5))
+            if ((dist > 0.5) && (dist < 1.5))
             {
                 // align to DY
                 if (absDx > absDy)
@@ -99,8 +99,8 @@ public abstract class LineAnchor2D extends Anchor2D
         }
         else
         {
-            final double dx = imagePoint.getX() - startDragMousePosition.getX();
-            final double dy = imagePoint.getY() - startDragMousePosition.getY();
+            final double dx = x - startDragMousePosition.getX();
+            final double dy = y - startDragMousePosition.getY();
 
             // set new position
             setPosition(new Point2D.Double(startDragPainterPosition.getX() + dx, startDragPainterPosition.getY() + dy));

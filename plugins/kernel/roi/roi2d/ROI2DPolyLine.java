@@ -25,6 +25,7 @@ import icy.painter.LineAnchor2D;
 import icy.resource.ResourceUtil;
 import icy.roi.ROI;
 import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
 import icy.type.point.Point5D;
 import icy.util.GraphicsUtil;
 import icy.util.ShapeUtil;
@@ -41,10 +42,14 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+
+import plugins.kernel.canvas.VtkCanvas;
+import vtk.vtkActor;
 
 /**
  * @author Stephane
@@ -179,6 +184,50 @@ public class ROI2DPolyLine extends ROI2DShape
                 }
 
                 g2.dispose();
+            }
+
+            if (canvas instanceof VtkCanvas)
+            {
+                // 3D canvas
+                final VtkCanvas cnv = (VtkCanvas) canvas;
+
+                // FIXME : need a better implementation
+                final double[] s = cnv.getVolumeScale();
+
+                // scaling changed ?
+                if (!Arrays.equals(scaling, s))
+                {
+                    // update scaling
+                    scaling = s;
+                    // need rebuild
+                    needRebuild = true;
+                }
+
+                // need to rebuild 3D data structures ?
+                if (needRebuild)
+                {
+                    // initialize VTK objects if not yet done
+                    if (actor == null)
+                        initVtkObjects();
+
+                    // request rebuild 3D objects
+                    canvas3d = cnv;
+                    ThreadUtil.runSingle(this);
+                    needRebuild = false;
+                }
+
+                // actor can be accessed in canvas3d for rendering so we need to synchronize access
+                cnv.lock();
+                try
+                {
+                    // update visibility
+                    if (actor != null)
+                        ((vtkActor) actor).SetVisibility(canvas.isVisible(this) ? 1 : 0);
+                }
+                finally
+                {
+                    cnv.unlock();
+                }
             }
         }
     }

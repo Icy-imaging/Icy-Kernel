@@ -274,8 +274,14 @@ public abstract class ROI5D extends ROI
     @Override
     public double computeNumberOfPoints()
     {
-        // approximation by using number of point of boolean mask
-        return getBooleanMask(true).getPointsAsIntArray().length / getDimension();
+        double numPoints = 0;
+        
+        // approximation by using number of point of boolean mask with and without border
+        numPoints += getBooleanMask(true).getPointsAsIntArray().length;
+        numPoints += getBooleanMask(false).getPointsAsIntArray().length;
+        numPoints /= 2d;
+        
+        return numPoints / getDimension();
     }
 
 }

@@ -204,7 +204,7 @@ public class SequenceDataIterator implements DataIterator
 
         if ((sequence != null) && (roi != null))
         {
-            Rectangle5D bounds5D = roi.getBounds5D();
+            final Rectangle5D bounds5D = roi.getBounds5D();
 
             // force Z position
             if (z != -1)
@@ -303,7 +303,29 @@ public class SequenceDataIterator implements DataIterator
 
         // get the 2D mask for specified C
         if (roi != null)
-            imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(z, t, c, inclusive), c);
+        {
+            switch(roi.getDimension())
+            {
+                case 2:
+                    // ignore Z, T and C roi informations (wanted for fixed Z, T and C positions)
+                    imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(-1, -1, -1, inclusive), c);
+                    break;
+                    
+                case 3:
+                    // ignore T and C roi informations (wanted for fixed T and C positions)
+                    imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(z, -t, -1, inclusive), c);
+                    break;
+                    
+                case 4:
+                    // ignore C roi information (wanted for fixed C position)
+                    imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(z, t, -1, inclusive), c);
+                    break;
+                    
+                // assume 5D
+                default:                    
+                    imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(z, t, c, inclusive), c);
+            }
+        }
         else
             imageIterator = new ImageDataIterator(img, XYBounds, c);
     }

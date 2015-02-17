@@ -23,6 +23,7 @@ import icy.file.SequenceFileImporter;
 import icy.image.AbstractImageProvider;
 import icy.image.ImageProvider;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
@@ -37,7 +38,7 @@ import java.io.IOException;
  * 
  * @author Stephane
  */
-public interface SequenceIdImporter extends ImageProvider
+public interface SequenceIdImporter extends ImageProvider, Closeable
 {
     /**
      * @return The <code>id</code> of the image currently opened or <code>null</code> otherwise.
@@ -63,8 +64,7 @@ public interface SequenceIdImporter extends ImageProvider
 
     /**
      * Close the image which has been previously opened with {@link #open(String, int)} method.<br>
-     * 
-     * @return <code>true</code> if the operation has succeeded and <code>false</code> otherwise.
      */
-    public boolean close() throws IOException;
+    @Override
+    public void close() throws IOException;
 }

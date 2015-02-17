@@ -188,7 +188,7 @@ public abstract class ROI3D extends ROI
         if (getT() == -1)
             tok = true;
         else
-            tok = (t > getT()) && (t < (getT() + 1d));
+            tok = (t >= getT()) && (t < (getT() + 1d));
         if (getC() == -1)
             cok = true;
         else
@@ -362,6 +362,9 @@ public abstract class ROI3D extends ROI
     public Rectangle5D computeBounds5D()
     {
         final Rectangle3D bounds3D = computeBounds3D();
+        if (bounds3D == null)
+            return new Rectangle5D.Double();
+
         final Rectangle5D.Double result = new Rectangle5D.Double(bounds3D.getX(), bounds3D.getY(), bounds3D.getZ(), 0d,
                 0d, bounds3D.getSizeX(), bounds3D.getSizeY(), bounds3D.getSizeZ(), 0d, 0d);
         
@@ -772,8 +775,14 @@ public abstract class ROI3D extends ROI
     @Override
     public double computeNumberOfPoints()
     {
-        // approximation by using number of point of boolean mask
-        return getBooleanMask(true).getPointsAsIntArray().length / getDimension();
+        double numPoints = 0;
+        
+        // approximation by using number of point of boolean mask with and without border
+        numPoints += getBooleanMask(true).getPointsAsIntArray().length;
+        numPoints += getBooleanMask(false).getPointsAsIntArray().length;
+        numPoints /= 2d;
+        
+        return numPoints / getDimension();
     }
     
     /**

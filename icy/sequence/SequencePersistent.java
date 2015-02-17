@@ -193,7 +193,7 @@ public class SequencePersistent implements XMLPersistent
     {
         final Node nodeMeta = XMLUtil.getElement(node, ID_META);
 
-        // new node --> nothing to load...
+        // no node --> nothing to load...
         if (nodeMeta == null)
             return true;
 
@@ -215,7 +215,7 @@ public class SequencePersistent implements XMLPersistent
     {
         final Node roisNode = XMLUtil.getElement(node, ID_ROIS);
 
-        // new node --> nothing to load...
+        // no node --> nothing to load...
         if (roisNode == null)
             return true;
 
@@ -234,7 +234,7 @@ public class SequencePersistent implements XMLPersistent
     {
         final Node nodeLut = XMLUtil.getElement(node, ID_LUT);
 
-        // new node --> nothing to load...
+        // no node --> nothing to load...
         if (nodeLut == null)
             return true;
 
