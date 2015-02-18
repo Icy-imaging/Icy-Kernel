@@ -18,6 +18,7 @@
  */
 package icy.search;
 
+import icy.system.IcyExceptionHandler;
 import icy.system.thread.SingleProcessor;
 import icy.system.thread.ThreadUtil;
 import icy.util.StringUtil;
@@ -51,7 +52,17 @@ public abstract class SearchResultProducer implements Comparable<SearchResultPro
         {
             // perform search if we have at least one not empty keyword
             if ((words.length > 1) || !StringUtil.isEmpty(words[0]))
-                doSearch(words, consumer);
+            {
+                try
+                {
+                    doSearch(words, consumer);
+                }
+                catch (Exception e)
+                {
+                    // just display the exception and continue
+                    IcyExceptionHandler.showErrorMessage(e, true, true);
+                }
+            }
             else
             {
                 final boolean notEmpty;

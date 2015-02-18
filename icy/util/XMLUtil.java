@@ -164,7 +164,7 @@ public class XMLUtil
 
         try
         {
-            return docBuilder.parse(new InputSource(new StringReader(xmlString)));
+            return docBuilder.parse(new InputSource(new StringReader(filterString(xmlString))));
         }
         catch (Exception e)
         {
@@ -189,7 +189,7 @@ public class XMLUtil
         if (docBuilder == null)
             return null;
 
-        return docBuilder.parse(new InputSource(new StringReader(xmlString)));
+        return docBuilder.parse(new InputSource(new StringReader(filterString(xmlString))));
     }
 
     /**
@@ -1492,7 +1492,8 @@ public class XMLUtil
         // final String xml11pattern = "[^" + "\u0001-\uD7FF" + "\uE000-\uFFFD" +
         // "\ud800\udc00-\udbff\udfff" + "]+";
 
-        return text.replaceAll(xml10pattern, "");
+        // some OME generate incorrect "&#" sequence so we just replace them with "#"
+        return text.replaceAll(xml10pattern, "").replaceAll("&#", "#");
     }
 
     /**

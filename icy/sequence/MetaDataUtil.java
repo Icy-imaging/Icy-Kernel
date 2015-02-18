@@ -23,6 +23,7 @@ import icy.type.DataType;
 import icy.type.TypeUtil;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
+import icy.util.XMLUtil;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -551,7 +552,15 @@ public class MetaDataUtil
         // needed as LOCI does not initialize them on read
         prepareMetaChannelName(metaData, serie, channel);
 
-        return StringUtil.getValue(metaData.getChannelName(serie, channel), getDefaultChannelName(channel));
+        final String result = StringUtil.getValue(metaData.getChannelName(serie, channel),
+                getDefaultChannelName(channel));
+        final String cleaned = XMLUtil.filterString(result);
+
+        // cleaned string != original value --> set it
+        if (!cleaned.equals(result))
+            setChannelName(metaData, serie, channel, cleaned);
+
+        return cleaned;
     }
 
     /**
