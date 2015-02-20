@@ -778,7 +778,7 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
         {
             alpha.removeAllControlPoint();
             alpha.setControlPoint(0, 0f);
-            alpha.setControlPoint(32, 0.02f);
+            alpha.setControlPoint(32, 0f);
             alpha.setControlPoint(255, 0.4f);
         }
         finally
@@ -1210,6 +1210,13 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
         }
 
         return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return red.map.hashCode() ^ green.map.hashCode() ^ blue.map.hashCode() ^ gray.map.hashCode()
+                ^ alpha.map.hashCode() ^ type.ordinal();
     }
 
     @Override
