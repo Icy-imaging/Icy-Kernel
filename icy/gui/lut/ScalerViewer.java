@@ -757,8 +757,10 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
      */
     void onSequenceDataChanged()
     {
+        final LUTViewer lutViewer = viewer.getLutViewer();
+
         // update histogram
-        if (viewer.getLutViewer().getAutoRefreshHistogram())
+        if ((lutViewer != null) && lutViewer.getAutoRefreshHistogram())
             requestHistoDataRefresh();
     }
 
@@ -767,8 +769,10 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
      */
     private void onPositionChanged()
     {
+        final LUTViewer lutViewer = viewer.getLutViewer();
+
         // update histogram
-        if (viewer.getLutViewer().getAutoRefreshHistogram())
+        if ((lutViewer != null) && lutViewer.getAutoRefreshHistogram())
             requestHistoDataRefresh();
     }
 
