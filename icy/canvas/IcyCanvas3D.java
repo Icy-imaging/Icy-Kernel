@@ -39,6 +39,9 @@ public abstract class IcyCanvas3D extends IcyCanvas
         posY = -1;
         posZ = -1;
         posT = 0;
+        
+        // adjust LUT alpha level for 3D view
+        lut.setAlphaToLinear3D();
     }
 
     @Override

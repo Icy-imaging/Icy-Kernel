@@ -166,7 +166,7 @@ public class BooleanMask2D implements Cloneable
      * 
      * <pre>
      *        mask1          +       mask2        =      result
-     *
+     * 
      *     ################     ################     ################
      *     ##############         ##############     ################
      *     ############             ############     ################
@@ -257,7 +257,7 @@ public class BooleanMask2D implements Cloneable
      * 
      * <pre>
      *        mask1     intersect     mask2      =        result
-     *
+     * 
      *     ################     ################     ################
      *     ##############         ##############       ############
      *     ############             ############         ########
@@ -345,7 +345,7 @@ public class BooleanMask2D implements Cloneable
      * 
      * <pre>
      *          mask1       xor      mask2        =       result
-     *
+     * 
      *     ################     ################
      *     ##############         ##############     ##            ##
      *     ############             ############     ####        ####
@@ -420,7 +420,7 @@ public class BooleanMask2D implements Cloneable
      * 
      * <pre>
      *        mask1          -        mask2       =  result
-     *
+     * 
      *     ################     ################
      *     ##############         ##############     ##
      *     ############             ############     ####
@@ -693,6 +693,14 @@ public class BooleanMask2D implements Cloneable
     public boolean[] mask;
 
     /**
+     * Create an empty BooleanMask2D
+     */
+    public BooleanMask2D()
+    {
+        this(new Rectangle(), new boolean[0]);
+    }
+
+    /**
      * @param bounds
      * @param mask
      */
@@ -796,14 +804,6 @@ public class BooleanMask2D implements Cloneable
                 mask[((y - minY) * bounds.width) + (x - minX)] = true;
             }
         }
-    }
-
-    /**
-     * Create an empty BooleanMask2D
-     */
-    public BooleanMask2D()
-    {
-        this(new Rectangle(), new boolean[0]);
     }
 
     /**
@@ -1068,7 +1068,7 @@ public class BooleanMask2D implements Cloneable
      * @param sorted
      *        When true points are returned in ascending XY order :
      * 
-     * <pre>
+     *        <pre>
      * Ymin  12 
      *      3456
      *       78
@@ -1471,6 +1471,72 @@ public class BooleanMask2D implements Cloneable
     public Point[] getEdgePoints()
     {
         return TypeUtil.toPoint(getContourPointsAsIntArray());
+    }
+
+    /**
+     * Computes and returns the length of the contour.<br/>
+     * This is different from the number of contour point as it takes care of approximating
+     * correctly distance between each contour point.
+     * 
+     * @author Alexandre Dufour
+     * @return the length of the contour
+     */
+    public double getContourLength()
+    {
+        double perimeter = 0;
+
+        final int[] edge = getContourPointsAsIntArray();
+        final int baseX = bounds.x;
+        final int baseY = bounds.y;
+        final int width = bounds.width;
+        final int height = bounds.height;
+
+        // count the edges and corners in 2D/3D
+        double sideEdges = 0, cornerEdges = 0;
+
+        for (int i = 0; i < edge.length; i += 2)
+        {
+            final int x = edge[i + 0] - baseX;
+            final int y = edge[i + 1] - baseY;
+            final int xy = x + (y * width);
+
+            // count the edges in 4-connectivity
+            int nbEdges = 0;
+
+            if (x == 0 || !mask[xy - 1])
+                nbEdges++; // left
+            if (x == width - 1 || !mask[xy + 1])
+                nbEdges++; // right
+            if (y == 0 || !mask[xy - width])
+                nbEdges++; // north
+            if (y == height - 1 || !mask[xy + width])
+                nbEdges++; // south
+
+            switch (nbEdges)
+            {
+                case 0:
+                    break;
+                case 1: // "side" edge
+                    sideEdges++;
+                    perimeter++;
+                    break;
+                case 2: // "corner" edge
+                    cornerEdges++;
+                    perimeter += Math.sqrt(2);
+                    break;
+                case 3: // "salient" point
+                    cornerEdges += 2;
+                    perimeter += 2 * Math.sqrt(2);
+                    break;
+                default: // single pixel, weird, but happens...
+                    perimeter++;
+            }
+        }
+
+        // adjust the perimeter empirically according to the edge distribution
+        double overShoot = Math.min(sideEdges / 10, cornerEdges);
+
+        return perimeter - overShoot;
     }
 
     /**

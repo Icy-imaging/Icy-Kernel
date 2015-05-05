@@ -89,13 +89,11 @@ public class UnitUtil
      * By best unit we adapt the output unit so the value stay between 0.1 --> 100 range (for
      * dimension 1).<br>
      * Be careful, this method is supposed to be used with unit in <b>decimal</b>
-     * system. For sexagesimal system, please use {@link TimeUnit} methods.<br/>
-     * <b>Example:</b><br/>
-     * <ul>
-     * <li>value = 0.01</li>
-     * <li>currentUnit = {@link UnitPrefix#MILLI}</li>
-     * <li>returns: {@link UnitPrefix#MICRO}</li>
-     * </ul>
+     * system. For sexagesimal system, please use {@link #getBestTimeUnit(double)} or
+     * {@link TimeUnit} methods.<br/>
+     * <br/>
+     * Example: <code>getBestUnit(0.01, UnitPrefix.MILLI, 1)</code> will return
+     * <code>UnitPrefix.MICRO</code><br/>
      * 
      * @param value
      *        : value used to get the best unit.
@@ -133,17 +131,13 @@ public class UnitUtil
     }
 
     /**
-     * Get the best unit with the given value and {@link UnitPrefix}.
-     * By best unit we adapt the output unit so the value stay between 0.1 --> 100 range (for
-     * dimension 1).<br>
+     * Get the best unit with the given value and {@link UnitPrefix}. By best unit we adapt the
+     * output unit so the value stay between 0.1 --> 100 range (for dimension 1).<br>
      * Be careful, this method is supposed to be used with unit in <b>decimal</b>
-     * system. For sexagesimal system, please use {@link TimeUnit} methods.<br/>
-     * <b>Example:</b><br/>
-     * <ul>
-     * <li>value = 0.01</li>
-     * <li>currentUnit = {@link UnitPrefix#MILLI}</li>
-     * <li>returns: {@link UnitPrefix#MICRO}</li>
-     * </ul>
+     * system. For sexagesimal system, please use {@link #getBestTimeUnit(double)} or
+     * {@link TimeUnit} methods.<br/>
+     * Example: <code>getBestUnit(0.01, UnitPrefix.MILLI, 1)</code> will return
+     * <code>UnitPrefix.MICRO</code><br/>
      * 
      * @param value
      *        : value used to get the best unit.
@@ -158,9 +152,10 @@ public class UnitUtil
     }
 
     /**
-     * Return the value from a specific unit to another unit. Be careful, this
-     * method is supposed to be used with unit in <b>decimal</b> system. For
-     * sexagesimal system, please use {@link TimeUnit} methods.<br/>
+     * Return the value from a specific unit to another unit.<br/>
+     * Be careful, this method is supposed to be used with unit in <b>decimal</b>
+     * system. For sexagesimal system, please use {@link #getBestTimeUnit(double)} or
+     * {@link TimeUnit} methods.<br/>
      * <b>Example:</b><br/>
      * <ul>
      * <li>value = 0.01</li>
@@ -201,6 +196,28 @@ public class UnitUtil
         return result;
     }
 
+    /**
+     * Return the value from a specific unit to another unit.<br/>
+     * Be careful, this method is supposed to be used with unit in <b>decimal</b>
+     * system. For sexagesimal system, please use {@link #getBestTimeUnit(double)} or
+     * {@link TimeUnit} methods.<br/>
+     * <b>Example:</b><br/>
+     * <ul>
+     * <li>value = 0.01</li>
+     * <li>currentUnit = {@link UnitPrefix#MILLI}</li>
+     * <li>wantedUnit = {@link UnitPrefix#MICRO}</li>
+     * <li>returns: 10</li>
+     * </ul>
+     * 
+     * @param value
+     *        : Original value.
+     * @param currentUnit
+     *        : current unit
+     * @param wantedUnit
+     *        : wanted unit
+     * @return Return a double value in the <code>wantedUnit</code> unit.
+     * @see #getBestUnit(double, UnitPrefix)
+     */
     public static double getValueInUnit(double value, UnitPrefix currentUnit, UnitPrefix wantedUnit)
     {
         return getValueInUnit(value, currentUnit, wantedUnit, 1);

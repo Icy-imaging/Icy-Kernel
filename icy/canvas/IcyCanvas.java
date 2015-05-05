@@ -265,51 +265,40 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
 
     /**
      * Create a {@link IcyCanvas} object from its class name or {@link PluginCanvas} class name.<br>
-     * Return <code>null</code> if the specified canvas classname does not exist or if an error
-     * occured.
+     * Throws an exception if an error occurred (canvas class was not found or it could not be
+     * creatd).
      * 
      * @param viewer
      *        {@link Viewer} to which to canvas is attached.
+     * @throws ClassCastException
+     *         if the specified class name is not a canvas plugin or canvas class name
+     * @throws Exception
+     *         if the specified canvas cannot be created for some reasons
      */
-    public static IcyCanvas create(String className, Viewer viewer)
+    public static IcyCanvas create(String className, Viewer viewer) throws ClassCastException, Exception
     {
-        IcyCanvas result = null;
+        // search for the specified className
+        final Class<?> clazz = ClassUtil.findClass(className);
+        final Class<? extends PluginCanvas> pluginCanvasClazz;
 
         try
         {
-            // search for the specified className
-            final Class<?> clazz = ClassUtil.findClass(className);
-
-            // class found
-            if (clazz != null)
-            {
-                try
-                {
-                    // we first check if we have a IcyCanvas Plugin class here
-                    final Class<? extends PluginCanvas> canvasClazz = clazz.asSubclass(PluginCanvas.class);
-                    // create canvas
-                    result = canvasClazz.newInstance().createCanvas(viewer);
-                }
-                catch (ClassCastException e0)
-                {
-                    // check if this is a IcyCanvas class
-                    final Class<? extends IcyCanvas> canvasClazz = clazz.asSubclass(IcyCanvas.class);
-
-                    // get constructor (Viewer)
-                    final Constructor<? extends IcyCanvas> constructor = canvasClazz
-                            .getConstructor(new Class[] {Viewer.class});
-                    // build canvas
-                    result = constructor.newInstance(new Object[] {viewer});
-                }
-            }
+            // we first check if we have a IcyCanvas Plugin class here
+            pluginCanvasClazz = clazz.asSubclass(PluginCanvas.class);
         }
-        catch (Exception e)
+        catch (ClassCastException e0)
         {
-            IcyExceptionHandler.showErrorMessage(e, true);
-            result = null;
+            // check if this is a IcyCanvas class
+            final Class<? extends IcyCanvas> canvasClazz = clazz.asSubclass(IcyCanvas.class);
+
+            // get constructor (Viewer)
+            final Constructor<? extends IcyCanvas> constructor = canvasClazz.getConstructor(new Class[] {Viewer.class});
+            // build canvas
+            return constructor.newInstance(new Object[] {viewer});
         }
 
-        return result;
+        // create canvas from plugin
+        return pluginCanvasClazz.newInstance().createCanvas(viewer);
     }
 
     public static void addVisibleLayerToList(final Layer layer, ArrayList<Layer> list)
@@ -567,7 +556,9 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
     }
 
     /**
-     * Called by the viewer when canvas is closed.
+     * Called by the viewer when canvas is closed to release some resources.<br/>
+     * Be careful to not restore previous state here (as the colormap) because generally
+     * <code>shutdown</code> is called <b>after</b> the creation of the other canvas.
      */
     public void shutDown()
     {
@@ -674,7 +665,7 @@ public abstract class IcyCanvas extends JPanel implements KeyListener, ViewerLis
             firePropertyChange(PROPERTY_LAYERS_VISIBLE, !value, value);
         }
     }
-    
+
     protected void layersVisibleChanged()
     {
         final Component comp = getViewComponent();

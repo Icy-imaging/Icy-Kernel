@@ -287,7 +287,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
 
             if (e.getClickCount() == 2)
             {
-                showBoundsSettingDialog();
+                showRangeSettingDialog();
                 e.consume();
             }
         }
@@ -825,13 +825,13 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
                 requestHistoDataRefresh();
             }
         });
-        final JMenuItem setBoundsItem = new JMenuItem("Set bounds");
+        final JMenuItem setBoundsItem = new JMenuItem("Set range");
         setBoundsItem.addActionListener(new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                showBoundsSettingDialog();
+                showRangeSettingDialog();
             }
         });
 
@@ -845,7 +845,7 @@ public class ScalerViewer extends JPanel implements SequenceListener, LUTChannel
         menu.show(this, pos.x, pos.y);
     }
 
-    void showBoundsSettingDialog()
+    void showRangeSettingDialog()
     {
         final ScalerBoundsSettingDialog boundsSettingDialog = new ScalerBoundsSettingDialog(lutChannel);
 

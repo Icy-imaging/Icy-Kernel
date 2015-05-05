@@ -28,6 +28,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.DataBuffer;
 
 import loci.formats.FormatTools;
+import ome.units.quantity.Time;
 import ome.xml.model.enums.PixelType;
 
 /**

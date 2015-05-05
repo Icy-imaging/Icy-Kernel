@@ -24,6 +24,7 @@ import icy.gui.component.IcyTextField;
 import icy.gui.component.IcyTextField.TextChangeListener;
 import icy.gui.component.renderer.ImageTableCellRenderer;
 import icy.gui.main.ActiveSequenceListener;
+import icy.gui.util.GuiUtil;
 import icy.gui.util.LookAndFeelUtil;
 import icy.image.IntensityInfo;
 import icy.main.Icy;
@@ -58,8 +59,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
 import javax.swing.ActionMap;
+import javax.swing.Box;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
@@ -67,16 +70,14 @@ import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
 
-import org.jdesktop.swingx.JXTable;
+import org.jdesktop.swingx.JXTreeTable;
 import org.jdesktop.swingx.decorator.HighlighterFactory;
-import org.jdesktop.swingx.sort.TableSortController;
 import org.jdesktop.swingx.table.ColumnControlButton;
 import org.jdesktop.swingx.table.TableColumnExt;
 import org.jdesktop.swingx.table.TableColumnModelExt;
+import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 import org.pushingpixels.substance.api.skin.SkinChangeListener;
 
 /**
@@ -160,10 +161,11 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                     true)};
 
     // GUI
-    AbstractTableModel tableModel;
+    AbstractTreeTableModel tableModel;
     ListSelectionModel tableSelectionModel;
-    JXTable table;
+    JXTreeTable table;
     IcyTextField nameFilter;
+    JLabel roiNumberLabel;
     RoiControlPanel roiControlPanel;
 
     // ROI info list cache
@@ -238,13 +240,8 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         });
 
         // build table model
-        tableModel = new AbstractTableModel()
+        tableModel = new AbstractTreeTableModel()
         {
-            /**
-             * 
-             */
-            private static final long serialVersionUID = -8573364273165723214L;
-
             @Override
             public int getColumnCount()
             {
@@ -269,100 +266,100 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                 return "";
             }
 
-            @Override
-            public int getRowCount()
-            {
-                return filteredRois.size();
-            }
-
-            @Override
-            public Object getValueAt(int row, int column)
-            {
-                // substance occasionally do not check size before getting value
-                if (row >= filteredRois.size())
-                    return null;
-
-                final ROIInfo roiInfo = filteredRois.get(row);
-                final ROI roi = roiInfo.getROI();
-                final int columnInd = getTableColumnInfoIndex(column);
-                final int channelInd = getTableChannelIndex(column);
-
-                switch (columnInd)
-                {
-                    case 0: // icon
-                        return roi.getIcon();
-                    case 1: // name
-                        return roi.getName();
-                    case 2: // type
-                        return roi.getSimpleClassName();
-                    case 3: // position X
-                        return Double.valueOf(roiInfo.getPositionX());
-                    case 4: // position Y
-                        return Double.valueOf(roiInfo.getPositionY());
-                    case 5: // position Z
-                        return Double.valueOf(roiInfo.getPositionZ());
-                    case 6: // position T
-                        return Double.valueOf(roiInfo.getPositionT());
-                    case 7: // position C
-                        return Double.valueOf(roiInfo.getPositionC());
-                    case 8: // size X
-                        return Double.valueOf(roiInfo.getSizeX());
-                    case 9: // size Y
-                        return Double.valueOf(roiInfo.getSizeY());
-                    case 10: // size Z
-                        return Double.valueOf(roiInfo.getSizeZ());
-                    case 11: // size T
-                        return Double.valueOf(roiInfo.getSizeT());
-                    case 12: // size C
-                        return Double.valueOf(roiInfo.getSizeC());
-                    case 13: // contour points
-                        return Double.valueOf(roiInfo.getNumberOfContourPoints());
-                    case 14: // points
-                        return Double.valueOf(roiInfo.getNumberOfPoints());
-                    case 15: // perimeter
-                        return roiInfo.getPerimeter();
-                    case 16: // area
-                        return roiInfo.getArea();
-                    case 17: // surface area
-                        return roiInfo.getSurfaceArea();
-                    case 18: // volume
-                        return roiInfo.getVolume();
-                    case 19: // min intensity
-                        return Double.valueOf(roiInfo.getMinIntensities(channelInd));
-                    case 20: // mean intensity
-                        return Double.valueOf(roiInfo.getMeanIntensities(channelInd));
-                    case 21: // max intensity
-                        return Double.valueOf(roiInfo.getMaxIntensities(channelInd));
-                    case 22: // standard deviation
-                        return Double.valueOf(roiInfo.getStandardDeviation(channelInd));
-                }
-
-                return "";
-            }
-
-            @Override
-            public void setValueAt(Object value, int row, int column)
-            {
-                // substance occasionally do not check size before getting value
-                if (row >= filteredRois.size())
-                    return;
-
-                final ROIInfo roiInfo = filteredRois.get(row);
-                final ROI roi = roiInfo.getROI();
-
-                switch (column)
-                {
-                    case 1: // name
-                        roi.setName((String) value);
-                        break;
-                }
-            }
-
-            @Override
-            public boolean isCellEditable(int row, int column)
-            {
-                return (column == 1);
-            }
+            // @Override
+            // public int getRowCount()
+            // {
+            // return filteredRois.size();
+            // }
+            //
+            // @Override
+            // public Object getValueAt(int row, int column)
+            // {
+            // // substance occasionally do not check size before getting value
+            // if (row >= filteredRois.size())
+            // return null;
+            //
+            // final ROIInfo roiInfo = filteredRois.get(row);
+            // final ROI roi = roiInfo.getROI();
+            // final int columnInd = getTableColumnInfoIndex(column);
+            // final int channelInd = getTableChannelIndex(column);
+            //
+            // switch (columnInd)
+            // {
+            // case 0: // icon
+            // return roi.getIcon();
+            // case 1: // name
+            // return roi.getName();
+            // case 2: // type
+            // return roi.getSimpleClassName();
+            // case 3: // position X
+            // return Double.valueOf(roiInfo.getPositionX());
+            // case 4: // position Y
+            // return Double.valueOf(roiInfo.getPositionY());
+            // case 5: // position Z
+            // return Double.valueOf(roiInfo.getPositionZ());
+            // case 6: // position T
+            // return Double.valueOf(roiInfo.getPositionT());
+            // case 7: // position C
+            // return Double.valueOf(roiInfo.getPositionC());
+            // case 8: // size X
+            // return Double.valueOf(roiInfo.getSizeX());
+            // case 9: // size Y
+            // return Double.valueOf(roiInfo.getSizeY());
+            // case 10: // size Z
+            // return Double.valueOf(roiInfo.getSizeZ());
+            // case 11: // size T
+            // return Double.valueOf(roiInfo.getSizeT());
+            // case 12: // size C
+            // return Double.valueOf(roiInfo.getSizeC());
+            // case 13: // contour points
+            // return Double.valueOf(roiInfo.getNumberOfContourPoints());
+            // case 14: // points
+            // return Double.valueOf(roiInfo.getNumberOfPoints());
+            // case 15: // perimeter
+            // return roiInfo.getPerimeter();
+            // case 16: // area
+            // return roiInfo.getArea();
+            // case 17: // surface area
+            // return roiInfo.getSurfaceArea();
+            // case 18: // volume
+            // return roiInfo.getVolume();
+            // case 19: // min intensity
+            // return Double.valueOf(roiInfo.getMinIntensities(channelInd));
+            // case 20: // mean intensity
+            // return Double.valueOf(roiInfo.getMeanIntensities(channelInd));
+            // case 21: // max intensity
+            // return Double.valueOf(roiInfo.getMaxIntensities(channelInd));
+            // case 22: // standard deviation
+            // return Double.valueOf(roiInfo.getStandardDeviation(channelInd));
+            // }
+            //
+            // return "";
+            // }
+            //
+            // @Override
+            // public void setValueAt(Object value, int row, int column)
+            // {
+            // // substance occasionally do not check size before getting value
+            // if (row >= filteredRois.size())
+            // return;
+            //
+            // final ROIInfo roiInfo = filteredRois.get(row);
+            // final ROI roi = roiInfo.getROI();
+            //
+            // switch (column)
+            // {
+            // case 1: // name
+            // roi.setName((String) value);
+            // break;
+            // }
+            // }
+            //
+            // @Override
+            // public boolean isCellEditable(int row, int column)
+            // {
+            // return (column == 1);
+            // }
 
             @Override
             public Class<?> getColumnClass(int column)
@@ -374,13 +371,41 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
 
                 return String.class;
             }
+
+            @Override
+            public Object getValueAt(Object node, int column)
+            {
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            public Object getChild(Object parent, int index)
+            {
+
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            public int getChildCount(Object parent)
+            {
+                // TODO Auto-generated method stub
+                return 0;
+            }
+
+            @Override
+            public int getIndexOfChild(Object parent, Object child)
+            {
+                // TODO Auto-generated method stub
+                return 0;
+            }
         };
 
         // set table model
-        table.setModel(tableModel);
+        table.setTreeTableModel(tableModel);
         // modify column properties
         buildTableColumns();
-        table.getTableHeader();
         // alternate highlight
         table.setHighlighters(HighlighterFactory.createSimpleStriping());
         // disable extra actions from column control
@@ -409,8 +434,10 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         nameFilter.setToolTipText("Enter a string sequence to filter ROI on name");
         nameFilter.addTextChangeListener(this);
 
+        roiNumberLabel = new JLabel("No ROI");
+
         // build table
-        table = new JXTable();
+        table = new JXTreeTable();
         table.setAutoStartEditOnKeyStroke(false);
         table.setRowHeight(24);
         table.setShowVerticalLines(false);
@@ -430,7 +457,8 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         roiControlPanel = new RoiControlPanel(this);
 
         setLayout(new BorderLayout());
-        add(nameFilter, BorderLayout.NORTH);
+        add(GuiUtil.createLineBoxPanel(nameFilter, Box.createHorizontalStrut(8), roiNumberLabel,
+                Box.createHorizontalStrut(4)), BorderLayout.NORTH);
         add(middlePanel, BorderLayout.CENTER);
         add(roiControlPanel, BorderLayout.SOUTH);
 
@@ -543,7 +571,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         }
 
         // set row sorter back
-        table.setRowSorter(new TableSortController<TableModel>(tableModel));
+        // table.setRowSorter(new TableSortController<TableModel>(tableModel));
         // and store new number of column
         columnCount = newColCount;
 
@@ -574,6 +602,31 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             return " (" + sequence.getChannelName(ind) + ")";
 
         return "";
+    }
+
+    /**
+     * Returns the minimum width for the specified column index
+     */
+    public int getMinColumnWidth(int ind)
+    {
+        return getDefaultColumnWidth(ind) / 2;
+    }
+
+    /**
+     * Returns the default width for the specified column index
+     */
+    public int getDefaultColumnWidth(int ind)
+    {
+//        final Class<?> type = getColumnType(ind);
+//
+//        if (type == Integer.class)
+//            return 60;
+//        if (type == Double.class)
+//            return 80;
+//        if (type == String.class)
+//            return 100;
+
+        return 80;
     }
 
     /**
@@ -879,6 +932,18 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         return result;
     }
 
+    void refreshRoiNumber()
+    {
+        final int rowCount = table.getRowCount();
+
+        if (rowCount == 0)
+            roiNumberLabel.setText("No ROI");
+        else if (rowCount == 1)
+            roiNumberLabel.setText("1 ROI");
+        else
+            roiNumberLabel.setText(rowCount + " ROIs");
+    }
+
     /**
      * refresh ROI list
      */
@@ -977,11 +1042,13 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                     // rebuild columns
                     if (!buildTableColumns())
                         // notify table data changed
-                        tableModel.fireTableDataChanged();
-
+                        // tableModel.fireTableDataChanged();
+                        ;
                     // selection to restore ?
                     if (!newSelectedRois.isEmpty())
                         setSelectedRoisInternal(newSelectedRois);
+
+                    refreshRoiNumber();
                 }
                 catch (Exception e)
                 {
@@ -1018,14 +1085,17 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
                     final int rowCount = table.getRowCount();
 
                     // we use RowsUpdated event to keep selection (DataChanged remove selection)
-                    if (rowCount > 0)
-                        tableModel.fireTableRowsUpdated(0, rowCount - 1);
+                    // if (rowCount > 0)
+                    // tableModel.fireTableRowsUpdated(0, rowCount - 1);
+
+                    refreshRoiNumber();
                 }
                 catch (Exception e)
                 {
                     // ignore possible exception here
                 }
             }
+
         });
 
         // notify the ROI control panel that selection changed (force data refresh)
@@ -1148,7 +1218,8 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
     {
         // Check to ensure we have selected only a contiguous block of cells
         final int numcols = tableModel.getColumnCount();
-        final int numrows = tableModel.getRowCount();
+        // final int numrows = tableModel.getRowCount();
+        final int numrows = tableModel.getChildCount(tableModel.getRoot());
 
         // table is empty --> returns empty string
         if (numrows == 0)
@@ -1813,7 +1884,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         }
     }
 
-    static class ColumnInfo
+    public static class ColumnInfo
     {
         final String id;
         final String name;
@@ -1824,7 +1895,7 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
         final boolean defVisible;
         final boolean channelInfo;
 
-        ColumnInfo(String name, String id, String toolTip, Class<?> type, int minSize, int preferredSize,
+        public ColumnInfo(String name, String id, String toolTip, Class<?> type, int minSize, int preferredSize,
                 boolean defVisible, boolean channelInfo)
         {
             super();
@@ -1838,5 +1909,12 @@ public class RoisPanel extends ExternalizablePanel implements ActiveSequenceList
             this.defVisible = defVisible;
             this.channelInfo = channelInfo;
         }
+
+        public ColumnInfo(ColumnInfo info)
+        {
+            this(info.name, info.id, info.toolTip, info.type, info.minSize, info.preferredSize, info.defVisible,
+                    info.channelInfo);
+        }
+
     }
 }

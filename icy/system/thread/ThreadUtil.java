@@ -274,7 +274,7 @@ public class ThreadUtil
      * @throws Exception
      *         if the computation threw an exception
      */
-    public static <T> T invokeNow(Callable<T> callable) throws InterruptedException, Exception
+    public static <T> T invokeNow(Callable<T> callable) throws Exception
     {
         if (SwingUtilities.isEventDispatchThread())
             return callable.call();

@@ -237,6 +237,36 @@ public abstract class ROI5D extends ROI
     }
 
     /**
+     * Returns the {@link BooleanMask4D} object representing the XYZT space content at specified Z
+     * and C position.
+     * 
+     * @param z
+     *        Z position we want to retrieve the boolean mask
+     * @param t
+     *        T position we want to retrieve the boolean mask
+     * @param inclusive
+     *        If true then all partially contained (intersected) pixels are included in the mask.
+     */
+    public BooleanMask5D getBooleanMask5D(int z, int t, boolean inclusive)
+    {
+        final Rectangle4D bounds4d = getBounds4D();
+        final Rectangle4D.Integer bounds4di = bounds4d.toInteger();
+        final BooleanMask3D masks[] = new BooleanMask3D[bounds4di.sizeT];
+
+        // define 3D bounds
+        final Rectangle3D.Integer bounds3d = bounds4d.toRectangle3D().toInteger();
+
+        bounds3d.setZ(z);
+        bounds3d.setSizeZ(1);
+
+        for (int t = 0; t < masks.length; t++)
+            masks[t] = new BooleanMask3D((Rectangle3D.Integer) bounds3d.clone(), new BooleanMask2D[] {getBooleanMask2D(
+                    z, bounds4di.t + t, c, inclusive)});
+
+        return new BooleanMask4D(bounds4di, masks);
+    }
+    
+    /**
      * Get the {@link BooleanMask5D} object representing the roi.<br>
      * It contains the 5D rectangle mask bounds and the associated boolean array mask.<br>
      * 

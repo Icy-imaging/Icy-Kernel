@@ -35,18 +35,6 @@ public interface PluginROI extends PluginNoEDTConstructor
      */
     public String getROIClassName();
 
-    // /**
-    // * Create and return a new ROI
-    // *
-    // * @param pt
-    // * location of the creation point
-    // * @param cm
-    // * "create mode" flag, specifying true here means the first point will be<br>
-    // * created in "selected" state (so will support direct drag operation)
-    // * @return the new created ROI
-    // */
-    // public ROI createROI(Point2D pt, boolean cm);
-
     /**
      * Create and return a new ROI for <i>interactive</i> mode.<br>
      * The first point will be created in <i>selected</i> state so will support direct drag

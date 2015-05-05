@@ -31,7 +31,6 @@ import icy.common.listener.ProgressListener;
 import icy.gui.component.button.IcyButton;
 import icy.gui.component.button.IcyToggleButton;
 import icy.gui.component.renderer.LabelComboBoxRenderer;
-import icy.gui.dialog.MessageDialog;
 import icy.gui.frame.IcyFrame;
 import icy.gui.frame.IcyFrameAdapter;
 import icy.gui.frame.IcyFrameEvent;
@@ -52,6 +51,7 @@ import icy.sequence.DimensionId;
 import icy.sequence.Sequence;
 import icy.sequence.SequenceEvent;
 import icy.sequence.SequenceListener;
+import icy.system.IcyExceptionHandler;
 import icy.system.thread.ThreadUtil;
 import icy.util.Random;
 import icy.util.StringUtil;
@@ -662,57 +662,66 @@ public class Viewer extends IcyFrame implements KeyListener, SequenceListener, I
         // not the same canvas ?
         if ((canvas == null) || !canvas.getClass().getName().equals(IcyCanvas.getCanvasClassName(pluginClassName)))
         {
-            final int saveX;
-            final int saveY;
-            final int saveZ;
-            final int saveT;
-            final int saveC;
-
-            if (canvas != null)
+            try
             {
-                // save position
-                saveX = canvas.getPositionX();
-                saveY = canvas.getPositionY();
-                saveZ = canvas.getPositionZ();
-                saveT = canvas.getPositionT();
-                saveC = canvas.getPositionC();
+                // create new canvas
+                final IcyCanvas newCanvas = IcyCanvas.create(pluginClassName, this);
 
-                canvas.removePropertyChangeListener(IcyCanvas.PROPERTY_LAYERS_VISIBLE, this);
-                canvas.removeCanvasListener(this);
-                canvas.shutDown();
-                // remove from mainPanel
-                mainPanel.remove(canvas);
-            }
-            else
-                saveX = saveY = saveZ = saveT = saveC = -1;
+                final int saveX;
+                final int saveY;
+                final int saveZ;
+                final int saveT;
+                final int saveC;
 
-            // set new canvas
-            canvas = IcyCanvas.create(pluginClassName, this);
+                // save properties and shutdown previous canvas
+                if (canvas != null)
+                {
+                    // save position
+                    saveX = canvas.getPositionX();
+                    saveY = canvas.getPositionY();
+                    saveZ = canvas.getPositionZ();
+                    saveT = canvas.getPositionT();
+                    saveC = canvas.getPositionC();
 
-            if (canvas != null)
-            {
-                canvas.addCanvasListener(this);
-                canvas.addPropertyChangeListener(IcyCanvas.PROPERTY_LAYERS_VISIBLE, this);
+                    canvas.removePropertyChangeListener(IcyCanvas.PROPERTY_LAYERS_VISIBLE, this);
+                    canvas.removeCanvasListener(this);
+                    // --> this actually can do some restore operation (as the palette) after creation of the new canvas
+                    canvas.shutDown();
+                    // remove from mainPanel
+                    mainPanel.remove(canvas);
+                }
+                else
+                    saveX = saveY = saveZ = saveT = saveC = -1;
+
+                // prepare new canvas
+                newCanvas.addCanvasListener(this);
+                newCanvas.addPropertyChangeListener(IcyCanvas.PROPERTY_LAYERS_VISIBLE, this);
                 // add to mainPanel
-                mainPanel.add(canvas, BorderLayout.CENTER);
+                mainPanel.add(newCanvas, BorderLayout.CENTER);
 
                 // restore position
                 if (saveX != -1)
-                    canvas.setPositionX(saveX);
+                    newCanvas.setPositionX(saveX);
                 if (saveY != -1)
-                    canvas.setPositionY(saveY);
+                    newCanvas.setPositionY(saveY);
                 if (saveZ != -1)
-                    canvas.setPositionZ(saveZ);
+                    newCanvas.setPositionZ(saveZ);
                 if (saveT != -1)
-                    canvas.setPositionT(saveT);
+                    newCanvas.setPositionT(saveT);
                 if (saveC != -1)
-                    canvas.setPositionC(saveC);
+                    newCanvas.setPositionC(saveC);
+                
+                // canvas set :)
+                canvas = newCanvas;
             }
-            else
+            catch (ClassCastException e)
             {
-                // new canvas not created ?
-                MessageDialog.showDialog("Cannot create Canvas from plugin " + pluginClassName + " !",
-                        MessageDialog.ERROR_MESSAGE);
+                IcyExceptionHandler.handleException(new ClassNotFoundException("Cannot find '" + pluginClassName
+                        + "' class --> cannot create the canvas.", e), true);
+            }
+            catch (Exception e)
+            {
+                IcyExceptionHandler.handleException(e, true);
             }
 
             mainPanel.revalidate();

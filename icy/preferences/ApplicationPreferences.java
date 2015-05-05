@@ -44,6 +44,7 @@ public class ApplicationPreferences
     public static final String ID_APP_FOLDER = "appFolder";
     public static final String ID_APP_PARAMS = "appParams";
     public static final String ID_VERSION = "version";
+    public static final String ID_SINGLE_INSTANCE = "singleInstance";
 
     private final static String DEFAULT_UPDATE_REPOSITORY_BASE = NetworkUtil.WEBSITE_URL + "update/";
     private final static String DEFAULT_UPDATE_REPOSITORY_FILE = "update.php";

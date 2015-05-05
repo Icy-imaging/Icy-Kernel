@@ -840,7 +840,6 @@ public class PluginLoader
     /**
      * @deprecated
      */
-    @SuppressWarnings("unused")
     @Deprecated
     public static void setLogError(boolean value)
     {
@@ -864,18 +863,18 @@ public class PluginLoader
         // notify listener we have changed
         fireEvent(new PluginLoaderEvent());
 
-        // pre load the importers classes as they can be heavy...
-        Loader.getSequenceFileImporters();
-        Loader.getFileImporters();
-        Loader.getImporters();
+        ThreadUtil.bgRun(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // pre load the importers classes as they can be heavy
+                Loader.getSequenceFileImporters();
+                Loader.getFileImporters();
+                Loader.getImporters();
+            }
+        });
     }
-
-    // @Override
-    // public void onChanged(EventHierarchicalChecker e)
-    // {
-    // final PluginLoaderEvent event = (PluginLoaderEvent) e;
-    //
-    // }
 
     /**
      * Check for missing plugins and install them if needed.

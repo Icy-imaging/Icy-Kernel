@@ -769,9 +769,45 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
     }
 
     /**
-     * Set default alpha colormap for 3D representation
+     * Set the alpha channel to opaque
      */
-    public void setDefaultAlphaFor3D()
+    public void setAlphaToOpaque()
+    {
+        alpha.beginUpdate();
+        try
+        {
+            alpha.removeAllControlPoint();
+            alpha.setControlPoint(0, 1f);
+            alpha.setControlPoint(255, 1f);
+        }
+        finally
+        {
+            alpha.endUpdate();
+        }
+    }
+
+    /**
+     * Set the alpha channel to linear opacity (0 to 1)
+     */
+    public void setAlphaToLinear()
+    {
+        alpha.beginUpdate();
+        try
+        {
+            alpha.removeAllControlPoint();
+            alpha.setControlPoint(0, 0f);
+            alpha.setControlPoint(255, 1f);
+        }
+        finally
+        {
+            alpha.endUpdate();
+        }
+    }
+
+    /**
+     * Set the alpha channel to an optimized linear transparency for 3D volume display
+     */
+    public void setAlphaToLinear3D()
     {
         alpha.beginUpdate();
         try
@@ -785,6 +821,15 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
         {
             alpha.endUpdate();
         }
+    }
+
+    /**
+     * @deprecated Use {@link #setAlphaToLinear3D()} instead
+     */
+    @Deprecated
+    public void setDefaultAlphaFor3D()
+    {
+        setAlphaToLinear3D();
     }
 
     /**

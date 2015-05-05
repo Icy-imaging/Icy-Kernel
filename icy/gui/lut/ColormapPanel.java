@@ -383,7 +383,7 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
             try
             {
                 colormap.copyFrom(src, false);
-                colormap.setDefaultAlphaFor3D();
+                colormap.setAlphaToLinear3D();
             }
             finally
             {

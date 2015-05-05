@@ -1478,12 +1478,15 @@ public class SequenceUtil
     public static Sequence extractChannels(Sequence source, int... channels)
     {
         final Sequence outSequence = new Sequence(OMEUtil.createOMEMetadata(source.getMetadata()));
+        final int sizeT = source.getSizeT();
+        final int sizeZ = source.getSizeZ();
+        final int sizeC = source.getSizeC();
 
         outSequence.beginUpdate();
         try
         {
-            for (int t = 0; t < source.getSizeT(); t++)
-                for (int z = 0; z < source.getSizeZ(); z++)
+            for (int t = 0; t < sizeT; t++)
+                for (int z = 0; z < sizeZ; z++)
                     outSequence.setImage(t, z, IcyBufferedImageUtil.extractChannels(source.getImage(t, z), channels));
         }
         finally
@@ -1527,8 +1530,12 @@ public class SequenceUtil
         int c = 0;
         for (int channel : channels)
         {
-            outSequence.setChannelName(c, source.getChannelName(channel));
-            outSequence.setDefaultColormap(c, source.getDefaultColorMap(channel), false);
+            if (channel < sizeC)
+            {
+                outSequence.setChannelName(c, source.getChannelName(channel));
+                outSequence.setDefaultColormap(c, source.getDefaultColorMap(channel), false);
+            }
+
             c++;
         }
 

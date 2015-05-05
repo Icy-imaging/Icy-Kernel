@@ -33,6 +33,9 @@ import loci.formats.meta.MetadataRetrieve;
 import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
 import loci.formats.services.OMEXMLServiceImpl;
+import ome.units.UNITS;
+import ome.units.quantity.Length;
+import ome.units.quantity.Time;
 import ome.xml.model.OME;
 import ome.xml.model.StructuredAnnotations;
 import ome.xml.model.XMLAnnotation;
@@ -83,6 +86,30 @@ public class OMEUtil
     }
 
     /**
+     * Convert specified Length to double value in µm (for backward compatibility).<br>
+     * Return defaultValue if specified object is <code>null</code>.
+     */
+    public static double getValue(Length obj, double defaultValue)
+    {
+        if (obj == null)
+            return defaultValue;
+
+        return obj.value(UNITS.MICROM).doubleValue();
+    }
+
+    /**
+     * Convert specified Time to double value in second (for backward compatibility).<br>
+     * Return defaultValue if specified object is <code>null</code>.
+     */
+    public static double getValue(Time obj, double defaultValue)
+    {
+        if (obj == null)
+            return defaultValue;
+
+        return obj.value(UNITS.SECOND).doubleValue();
+    }
+
+    /**
      * Return a PositiveFloat object representing the specified value
      */
     public static PositiveFloat getPositiveFloat(double value)
@@ -96,6 +123,22 @@ public class OMEUtil
     public static PositiveInteger getPositiveInteger(int value)
     {
         return new PositiveInteger(Integer.valueOf(value));
+    }
+
+    /**
+     * Return a Length object representing the specified value (in µm)
+     */
+    public static Length getLength(double value)
+    {
+        return new Length(Double.valueOf(value), UNITS.MICROM);
+    }
+
+    /**
+     * Return a Time object representing the specified value (in second)
+     */
+    public static Time getTime(double value)
+    {
+        return new Time(Double.valueOf(value), UNITS.SECOND);
     }
 
     /**
@@ -307,4 +350,5 @@ public class OMEUtil
 
         return false;
     }
+
 }

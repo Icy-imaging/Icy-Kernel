@@ -20,7 +20,6 @@ package icy.sequence;
 
 import icy.image.IcyBufferedImage;
 import icy.type.DataType;
-import icy.type.TypeUtil;
 import icy.util.OMEUtil;
 import icy.util.StringUtil;
 import icy.util.XMLUtil;
@@ -345,7 +344,7 @@ public class MetaDataUtil
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return OMEUtil.getValue(pix.getPhysicalSizeX(), defaultValue, false);
+            return OMEUtil.getValue(pix.getPhysicalSizeX(), defaultValue);
 
         return 1d;
     }
@@ -358,7 +357,7 @@ public class MetaDataUtil
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return OMEUtil.getValue(pix.getPhysicalSizeY(), defaultValue, false);
+            return OMEUtil.getValue(pix.getPhysicalSizeY(), defaultValue);
 
         return 1d;
     }
@@ -371,7 +370,7 @@ public class MetaDataUtil
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return OMEUtil.getValue(pix.getPhysicalSizeZ(), defaultValue, false);
+            return OMEUtil.getValue(pix.getPhysicalSizeZ(), defaultValue);
 
         return 1d;
     }
@@ -384,7 +383,7 @@ public class MetaDataUtil
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return TypeUtil.getDouble(pix.getTimeIncrement(), defaultValue, false);
+            return OMEUtil.getValue(pix.getTimeIncrement(), defaultValue);
 
         return 1d;
     }
@@ -394,7 +393,7 @@ public class MetaDataUtil
      */
     public static void setPixelSizeX(OMEXMLMetadataImpl metaData, int serie, double value)
     {
-        metaData.setPixelsPhysicalSizeX(OMEUtil.getPositiveFloat(value), serie);
+        metaData.setPixelsPhysicalSizeX(OMEUtil.getLength(value), serie);
     }
 
     /**
@@ -402,7 +401,7 @@ public class MetaDataUtil
      */
     public static void setPixelSizeY(OMEXMLMetadataImpl metaData, int serie, double value)
     {
-        metaData.setPixelsPhysicalSizeY(OMEUtil.getPositiveFloat(value), serie);
+        metaData.setPixelsPhysicalSizeY(OMEUtil.getLength(value), serie);
     }
 
     /**
@@ -410,7 +409,7 @@ public class MetaDataUtil
      */
     public static void setPixelSizeZ(OMEXMLMetadataImpl metaData, int serie, double value)
     {
-        metaData.setPixelsPhysicalSizeZ(OMEUtil.getPositiveFloat(value), serie);
+        metaData.setPixelsPhysicalSizeZ(OMEUtil.getLength(value), serie);
     }
 
     /**
@@ -418,7 +417,7 @@ public class MetaDataUtil
      */
     public static void setTimeInterval(OMEXMLMetadataImpl metaData, int serie, double value)
     {
-        metaData.setPixelsTimeIncrement(Double.valueOf(value), serie);
+        metaData.setPixelsTimeIncrement(OMEUtil.getTime(value), serie);
     }
 
     /**
@@ -674,10 +673,10 @@ public class MetaDataUtil
         metadata.setPixelsSizeT(OMEUtil.getPositiveInteger(sizeT), 0);
 
         // restore pixel size and time interval informations
-        metadata.setPixelsPhysicalSizeX(OMEUtil.getPositiveFloat(pixelSizeX), 0);
-        metadata.setPixelsPhysicalSizeY(OMEUtil.getPositiveFloat(pixelSizeY), 0);
-        metadata.setPixelsPhysicalSizeZ(OMEUtil.getPositiveFloat(pixelSizeZ), 0);
-        metadata.setPixelsTimeIncrement(Double.valueOf(timeInterval), 0);
+        metadata.setPixelsPhysicalSizeX(OMEUtil.getLength(pixelSizeX), 0);
+        metadata.setPixelsPhysicalSizeY(OMEUtil.getLength(pixelSizeY), 0);
+        metadata.setPixelsPhysicalSizeZ(OMEUtil.getLength(pixelSizeZ), 0);
+        metadata.setPixelsTimeIncrement(OMEUtil.getTime(timeInterval), 0);
 
         if (separateChannel)
         {

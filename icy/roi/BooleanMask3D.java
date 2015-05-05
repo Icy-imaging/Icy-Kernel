@@ -83,7 +83,7 @@ public class BooleanMask3D implements Cloneable
      * 
      * <pre>
      *        mask1          +       mask2        =      result
-     *
+     * 
      *     ################     ################     ################
      *     ##############         ##############     ################
      *     ############             ############     ################
@@ -141,7 +141,7 @@ public class BooleanMask3D implements Cloneable
      * 
      * <pre>
      *        mask1     intersect     mask2      =        result
-     *
+     * 
      *     ################     ################     ################
      *     ##############         ##############       ############
      *     ############             ############         ########
@@ -199,7 +199,7 @@ public class BooleanMask3D implements Cloneable
      * 
      * <pre>
      *          mask1       xor      mask2        =       result
-     *
+     * 
      *     ################     ################
      *     ##############         ##############     ##            ##
      *     ############             ############     ####        ####
@@ -257,7 +257,7 @@ public class BooleanMask3D implements Cloneable
      * 
      * <pre>
      *        mask1          -        mask2       =  result
-     *
+     * 
      *     ################     ################
      *     ##############         ##############     ##
      *     ############             ############     ####
@@ -801,6 +801,34 @@ public class BooleanMask3D implements Cloneable
     }
 
     /**
+     * Return an array of {@link icy.type.point.Point3D.Integer} representing all points of the
+     * current 3D mask.<br>
+     * Points are returned in ascending XYZ order.
+     */
+    public Point3D.Integer[] getPoints()
+    {
+        return Point3D.Integer.toPoint3D(getPointsAsIntArray());
+    }
+
+    /**
+     * Return an array of integer representing all points of the current 3D mask.<br>
+     * <code>result.length</code> = number of point * 3<br>
+     * <code>result[(pt * 3) + 0]</code> = X coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 3) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
+     * <code>result[(pt * 3) + 2]</code> = Z coordinate for point <i>pt</i>.<br>
+     * Points are returned in ascending XYZ order.
+     */
+    public int[] getPointsAsIntArray()
+    {
+        final DynamicArray.Int result = new DynamicArray.Int(8);
+
+        for (Entry<Integer, BooleanMask2D> entry : mask.entrySet())
+            result.add(toInt3D(entry.getValue().getPointsAsIntArray(), entry.getKey().intValue()));
+
+        return result.asArray();
+    }
+
+    /**
      * Return an array of {@link icy.type.point.Point3D.Integer} containing the contour/surface
      * points
      * of the 3D mask.<br>
@@ -863,31 +891,78 @@ public class BooleanMask3D implements Cloneable
     }
 
     /**
-     * Return an array of {@link icy.type.point.Point3D.Integer} representing all points of the
-     * current 3D mask.<br>
-     * Points are returned in ascending XYZ order.
+     * Computes and returns the length of the contour.<br/>
+     * This is different from the number of contour point as it takes care of approximating
+     * correctly distance between each contour point.
+     * 
+     * @author Alexandre Dufour
+     * @return the length of the contour
      */
-    public Point3D.Integer[] getPoints()
+    public double getContourLength()
     {
-        return Point3D.Integer.toPoint3D(getPointsAsIntArray());
-    }
+        double perimeter = 0;
 
-    /**
-     * Return an array of integer representing all points of the current 3D mask.<br>
-     * <code>result.length</code> = number of point * 3<br>
-     * <code>result[(pt * 3) + 0]</code> = X coordinate for point <i>pt</i>.<br>
-     * <code>result[(pt * 3) + 1]</code> = Y coordinate for point <i>pt</i>.<br>
-     * <code>result[(pt * 3) + 2]</code> = Z coordinate for point <i>pt</i>.<br>
-     * Points are returned in ascending XYZ order.
-     */
-    public int[] getPointsAsIntArray()
-    {
-        final DynamicArray.Int result = new DynamicArray.Int(8);
+        final int[] edge = getContourPointsAsIntArray();
+        final int baseX = bounds.x;
+        final int baseY = bounds.y;
+        final int baseZ = bounds.z;
+        final int width = bounds.sizeX;
+        final int height = bounds.sizeY;
+        final int depth = bounds.sizeZ;
 
-        for (Entry<Integer, BooleanMask2D> entry : mask.entrySet())
-            result.add(toInt3D(entry.getValue().getPointsAsIntArray(), entry.getKey().intValue()));
+        // count the edges and corners in 2D/3D
+        double sideEdges = 0, cornerEdges = 0;
 
-        return result.asArray();
+        for (int i = 0; i < edge.length; i += 3)
+        {
+            final int x = edge[i + 0] - baseX;
+            final int y = edge[i + 1] - baseY;
+            final int z = edge[i + 2] - baseZ;
+            final int xy = x + (y * width);
+            final BooleanMask2D mask2D = getMask2D(z);
+
+            // count the edges in 4-connectivity
+            int nbEdges = 0;
+
+            if (x == 0 || !mask2D.mask[xy - 1])
+                nbEdges++; // left
+            if (x == width - 1 || !mask2D.mask[xy + 1])
+                nbEdges++; // right
+            if (y == 0 || !mask2D.mask[xy - width])
+                nbEdges++; // north
+            if (y == height - 1 || !mask2D.mask[xy + width])
+                nbEdges++; // south
+            if (z == 0 || !getMask2D(z - 1).mask[xy])
+                nbEdges++;
+            if (z == depth - 1 || !getMask2D(z + 1).mask[xy])
+                nbEdges++;
+
+            switch (nbEdges)
+            {
+                case 0:
+                    break;
+                case 1:
+                    sideEdges++;
+                    perimeter++;
+                    break;
+                case 2:
+                    cornerEdges++;
+                    perimeter += Math.sqrt(2);
+                    break;
+                case 3:
+                    cornerEdges += 2;
+                    perimeter += 2 * Math.sqrt(2);
+                    break;
+                default:
+                    cornerEdges += 3;
+                    perimeter += Math.sqrt(3);
+            }
+        }
+
+        // adjust the perimeter empirically according to the edge distribution
+        double overShoot = Math.min(sideEdges / 10, cornerEdges);
+
+        return perimeter - overShoot;
     }
 
     @Override

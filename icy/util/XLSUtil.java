@@ -115,18 +115,34 @@ public class XLSUtil
     }
 
     /**
+     * Searches for the specified page in workbook and returns it.<br>
+     * If the page does not exists it creates and returns a new page.<br>
+     * 
+     * @see #createNewPage(WritableWorkbook, String)
+     */
+    public static WritableSheet getPage(WritableWorkbook workbook, String title)
+    {
+        WritableSheet result = workbook.getSheet(title);
+
+        if (result == null)
+            result = workbook.createSheet(title, workbook.getNumberOfSheets() + 1);
+
+        return result;
+    }
+
+    /**
      * Creates and returns a new page for the specified workbook.<br>
      * If the page already exists, add an incremented number for distinction.
+     * 
+     * @see #getPage(WritableWorkbook, String)
      */
     public static WritableSheet createNewPage(WritableWorkbook workbook, String title)
     {
         if (workbook.getSheet(title) == null)
             return workbook.createSheet(title, workbook.getNumberOfSheets() + 1);
 
-        boolean ok = false;
         int counter = 2;
-
-        while (!ok)
+        while (true)
         {
             final String pageName = title + " " + counter;
 
@@ -135,14 +151,30 @@ public class XLSUtil
 
             counter++;
         }
+    }
 
-        return null;
+    /**
+     * Clear the specified workbook (remove all pages).
+     */
+    public static void clear(WritableWorkbook workbook)
+    {
+        while (workbook.getNumberOfSheets() > 0)
+            workbook.removeSheet(workbook.getNumberOfSheets() - 1);
+    }
+
+    /**
+     * Clear the specified page (remove all rows)
+     */
+    public static void clearPage(WritableSheet sheet, String name)
+    {
+        while (sheet.getRows() > 0)
+            sheet.removeRow(sheet.getRows() - 1);
     }
 
     /**
      * Sets name of specified Sheet
      */
-    public void setPageName(WritableSheet sheet, String name)
+    public static void setPageName(WritableSheet sheet, String name)
     {
         sheet.setName(name);
     }
@@ -151,7 +183,7 @@ public class XLSUtil
      * Adds an image to the specified Sheet.<br>
      * Returns false if the operation failed.
      */
-    public boolean addImage(WritableSheet sheet, WritableImage image)
+    public static boolean addImage(WritableSheet sheet, WritableImage image)
     {
         try
         {

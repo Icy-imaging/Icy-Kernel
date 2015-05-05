@@ -21,6 +21,8 @@ package icy.type.collection.array;
 import icy.type.DataType;
 
 /**
+ * Utilities class to convert any data array from/to byte array.
+ * 
  * @author Stephane
  */
 public class ByteArrayConvert
@@ -377,9 +379,9 @@ public class ByteArrayConvert
     public static short[] byteArrayToShortArray(byte[] in, int inOffset, int inStep, short[] out, int outOffset,
             int outStep, int byteLength, boolean little)
     {
-        final int adjInStep = inStep * 2;
-        final int len = getCopyLengthInBytes(in, inOffset, adjInStep, out, outOffset, outStep, byteLength) / 2;
+        final int len = getCopyLengthInBytes(in, inOffset, inStep, out, outOffset, outStep, byteLength) / 2;
         final short[] result = Array1DUtil.allocIfNull(out, outOffset + (len * outStep));
+        final int adjInStep = inStep * 2;
 
         int inOff = inOffset;
         int outOff = outOffset;
@@ -467,9 +469,9 @@ public class ByteArrayConvert
     public static int[] byteArrayToIntArray(byte[] in, int inOffset, int inStep, int[] out, int outOffset, int outStep,
             int byteLength, boolean little)
     {
-        final int adjInStep = inStep * 4;
-        final int len = getCopyLengthInBytes(in, inOffset, adjInStep, out, outOffset, outStep, byteLength) / 4;
+        final int len = getCopyLengthInBytes(in, inOffset, inStep, out, outOffset, outStep, byteLength) / 4;
         final int[] result = Array1DUtil.allocIfNull(out, outOffset + (len * outStep));
+        final int adjInStep = inStep * 4;
 
         int inOff = inOffset;
         int outOff = outOffset;
@@ -557,9 +559,9 @@ public class ByteArrayConvert
     public static long[] byteArrayToLongArray(byte[] in, int inOffset, int inStep, long[] out, int outOffset,
             int outStep, int byteLength, boolean little)
     {
-        final int adjInStep = inStep * 8;
-        final int len = getCopyLengthInBytes(in, inOffset, adjInStep, out, outOffset, outStep, byteLength) / 8;
+        final int len = getCopyLengthInBytes(in, inOffset, inStep, out, outOffset, outStep, byteLength) / 8;
         final long[] result = Array1DUtil.allocIfNull(out, outOffset + (len * outStep));
+        final int adjInStep = inStep * 8;
 
         int inOff = inOffset;
         int outOff = outOffset;
@@ -647,9 +649,9 @@ public class ByteArrayConvert
     public static float[] byteArrayToFloatArray(byte[] in, int inOffset, int inStep, float[] out, int outOffset,
             int outStep, int byteLength, boolean little)
     {
-        final int adjInStep = inStep * 4;
-        final int len = getCopyLengthInBytes(in, inOffset, adjInStep, out, outOffset, outStep, byteLength) / 4;
+        final int len = getCopyLengthInBytes(in, inOffset, inStep, out, outOffset, outStep, byteLength) / 4;
         final float[] result = Array1DUtil.allocIfNull(out, outOffset + (len * outStep));
+        final int adjInStep = inStep * 4;
 
         int inOff = inOffset;
         int outOff = outOffset;
@@ -737,9 +739,9 @@ public class ByteArrayConvert
     public static double[] byteArrayToDoubleArray(byte[] in, int inOffset, int inStep, double[] out, int outOffset,
             int outStep, int byteLength, boolean little)
     {
-        final int adjInStep = inStep * 8;
-        final int len = getCopyLengthInBytes(in, inOffset, adjInStep, out, outOffset, outStep, byteLength) / 8;
+        final int len = getCopyLengthInBytes(in, inOffset, inStep, out, outOffset, outStep, byteLength) / 8;
         final double[] result = Array1DUtil.allocIfNull(out, outOffset + (len * outStep));
+        final int adjInStep = inStep * 8;
 
         int inOff = inOffset;
         int outOff = outOffset;

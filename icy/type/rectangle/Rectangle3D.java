@@ -371,7 +371,7 @@ public abstract class Rectangle3D implements Cloneable
         if (isInfiniteX())
             return 0d;
 
-        return (getX() + getSizeX()) / 2d;
+        return getX() + (getSizeX() / 2d);
     }
 
     /**
@@ -383,7 +383,7 @@ public abstract class Rectangle3D implements Cloneable
         if (isInfiniteY())
             return 0d;
 
-        return (getY() + getSizeY()) / 2d;
+        return getY() + (getSizeY() / 2d);
     }
 
     /**
@@ -395,7 +395,7 @@ public abstract class Rectangle3D implements Cloneable
         if (isInfiniteZ())
             return 0d;
 
-        return (getZ() + getSizeZ()) / 2d;
+        return getZ() + (getSizeZ() / 2d);
     }
 
     /**
@@ -685,6 +685,9 @@ public abstract class Rectangle3D implements Cloneable
     @Override
     public boolean equals(Object obj)
     {
+        if (obj == this)
+            return true;
+
         if (obj instanceof Rectangle3D)
         {
             final Rectangle3D rect = (Rectangle3D) obj;
@@ -694,6 +697,18 @@ public abstract class Rectangle3D implements Cloneable
         }
 
         return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        long bits = java.lang.Double.doubleToLongBits(getX());
+        bits ^= java.lang.Double.doubleToLongBits(getY());
+        bits ^= java.lang.Double.doubleToLongBits(getZ());
+        bits ^= java.lang.Double.doubleToLongBits(getSizeX());
+        bits ^= java.lang.Double.doubleToLongBits(getSizeY());
+        bits ^= java.lang.Double.doubleToLongBits(getSizeZ());
+        return (((int) bits) ^ ((int) (bits >> 32)));
     }
 
     /**

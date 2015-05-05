@@ -290,7 +290,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
 
         colorButton = new ColorChooserButton();
         GridBagConstraints gbc_colorButton = new GridBagConstraints();
-        gbc_colorButton.anchor = GridBagConstraints.WEST;
+        gbc_colorButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_colorButton.insets = new Insets(0, 0, 5, 5);
         gbc_colorButton.gridx = 1;
         gbc_colorButton.gridy = 2;
@@ -306,6 +306,7 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         actionPanel.add(lblContentOpacity, gbc_lblContentOpacity);
 
         alphaSlider = new JSlider();
+        alphaSlider.setFocusable(false);
         GridBagConstraints gbc_alphaSlider = new GridBagConstraints();
         gbc_alphaSlider.fill = GridBagConstraints.HORIZONTAL;
         gbc_alphaSlider.insets = new Insets(0, 0, 5, 0);
@@ -315,7 +316,6 @@ public class RoiControlPanel extends JPanel implements ColorChangeListener, Text
         alphaSlider.setPreferredSize(new Dimension(80, 20));
         alphaSlider.setMaximumSize(new Dimension(32767, 20));
         alphaSlider.setMinimumSize(new Dimension(36, 20));
-        alphaSlider.setFocusable(false);
         alphaSlider.setToolTipText("ROI content opacity");
 
         JLabel lblNewLabel = new JLabel("Stroke");

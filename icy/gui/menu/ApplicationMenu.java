@@ -27,7 +27,7 @@ import icy.file.Loader;
 import icy.gui.component.button.IcyCommandButton;
 import icy.gui.component.menu.IcyRibbonApplicationMenuEntryPrimary;
 import icy.gui.component.menu.IcyRibbonApplicationMenuEntrySecondary;
-import icy.gui.plugin.PluginApplicationMenuEntrySecondary;
+import icy.gui.plugin.PluginCommandButton;
 import icy.gui.util.ComponentUtil;
 import icy.main.Icy;
 import icy.plugin.PluginDescriptor;
@@ -51,13 +51,13 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
+import org.pushingpixels.flamingo.api.common.AbstractCommandButton;
 import org.pushingpixels.flamingo.api.common.CommandButtonDisplayState;
 import org.pushingpixels.flamingo.api.common.JCommandButton;
 import org.pushingpixels.flamingo.api.common.JCommandButton.CommandButtonKind;
@@ -78,8 +78,13 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
     /**
      * Secondary panel management for "Open Recent File"
      */
-    class OpenRecentFilePrimaryRollOverCallBack implements RibbonApplicationMenuEntryPrimary.PrimaryRolloverCallback
+    private class OpenRecentFileRollOverCallBack implements RibbonApplicationMenuEntryPrimary.PrimaryRolloverCallback
     {
+        public OpenRecentFileRollOverCallBack()
+        {
+            super();
+        }
+
         @Override
         public void menuEntryActivated(JPanel targetPanel)
         {
@@ -159,10 +164,154 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
     }
 
     /**
+     * Secondary panel management for "Import"
+     * Display all other importers (anything which is not "openable" from File)
+     */
+    private class ImportResourceRollOverCallBack implements RibbonApplicationMenuEntryPrimary.PrimaryRolloverCallback
+    {
+        public ImportResourceRollOverCallBack()
+        {
+            super();
+        }
+
+        @Override
+        public void menuEntryActivated(JPanel targetPanel)
+        {
+            ComponentUtil.setPreferredWidth(targetPanel, 480);
+
+            final JCommandButtonPanel importPanel = new JCommandButtonPanel(CommandButtonDisplayState.MEDIUM);
+
+            // set to 1 column maximum
+            importPanel.setMaxButtonColumns(1);
+            importPanel.setLayoutKind(LayoutKind.ROW_FILL);
+
+            // add Sequence importers
+            final List<PluginDescriptor> sequenceImporterPlugins = PluginLoader.getPlugins(SequenceImporter.class);
+            if (!sequenceImporterPlugins.isEmpty())
+            {
+                importPanel.addButtonGroup("Sequence importer");
+                for (PluginDescriptor plugin : sequenceImporterPlugins)
+                {
+                    final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false);
+
+                    button.addActionListener(new ActionListener()
+                    {
+                        @Override
+                        public void actionPerformed(ActionEvent event)
+                        {
+                            final AbstractCommandButton button = (AbstractCommandButton) event.getSource();
+                            final PluginDescriptor pluginDescriptor = PluginLoader.getPlugin(button.getName());
+
+                            if (pluginDescriptor != null)
+                            {
+                                try
+                                {
+                                    final SequenceImporter importer = (SequenceImporter) PluginLauncher
+                                            .startSafe(pluginDescriptor);
+
+                                    // asynchronous loading
+                                    ThreadUtil.bgRun(new Runnable()
+                                    {
+                                        @Override
+                                        public void run()
+                                        {
+
+                                            try
+                                            {
+                                                // plugin correctly started ? --> do load operation
+                                                importer.load();
+                                            }
+                                            catch (Exception exc)
+                                            {
+                                                IcyExceptionHandler.handleException(exc, false);
+                                            }
+                                        }
+                                    });
+                                }
+                                catch (Exception exc)
+                                {
+                                    IcyExceptionHandler.handleException(exc, false);
+                                }
+                            }
+                        }
+                    });
+
+                    importPanel.addButtonToLastGroup(button);
+                }
+            }
+
+            // add Sequence importers
+            final List<PluginDescriptor> importerPlugins = PluginLoader.getPlugins(Importer.class);
+            if (!importerPlugins.isEmpty())
+            {
+                importPanel.addButtonGroup("General importer");
+
+                for (PluginDescriptor plugin : importerPlugins)
+                {
+                    final AbstractCommandButton button = PluginCommandButton.createButton(plugin, false, false);
+
+                    button.addActionListener(new ActionListener()
+                    {
+                        @Override
+                        public void actionPerformed(ActionEvent event)
+                        {
+                            final AbstractCommandButton button = (AbstractCommandButton) event.getSource();
+                            final PluginDescriptor pluginDescriptor = PluginLoader.getPlugin(button.getName());
+
+                            if (pluginDescriptor != null)
+                            {
+                                try
+                                {
+                                    final Importer importer = (Importer) PluginLauncher.startSafe(pluginDescriptor);
+
+                                    // asynchronous loading
+                                    ThreadUtil.bgRun(new Runnable()
+                                    {
+                                        @Override
+                                        public void run()
+                                        {
+
+                                            try
+                                            {
+                                                // plugin correctly started ? --> do load operation
+                                                importer.load();
+                                            }
+                                            catch (Exception exc)
+                                            {
+                                                IcyExceptionHandler.handleException(exc, false);
+                                            }
+                                        }
+                                    });
+                                }
+                                catch (Exception exc)
+                                {
+                                    IcyExceptionHandler.handleException(exc, false);
+                                }
+                            }
+                        }
+                    });
+
+                    importPanel.addButtonToLastGroup(button);
+                }
+            }
+
+            targetPanel.removeAll();
+            targetPanel.setLayout(new BorderLayout());
+            targetPanel.add(new JScrollPane(importPanel), BorderLayout.CENTER);
+            targetPanel.validate();
+        }
+    }
+
+    /**
      * Default roll callback
      */
-    class DefaultRollOverCallBack implements RibbonApplicationMenuEntryPrimary.PrimaryRolloverCallback
+    private class EmptyRollOverCallBack implements RibbonApplicationMenuEntryPrimary.PrimaryRolloverCallback
     {
+        public EmptyRollOverCallBack()
+        {
+            super();
+        }
+
         @Override
         public void menuEntryActivated(JPanel targetPanel)
         {
@@ -204,7 +353,6 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
         recentFileList = new RecentFileList(IcyPreferences.applicationRoot().node("loader"));
 
         // NEW FILE
-
         amepNew = new IcyRibbonApplicationMenuEntryPrimary(FileActions.newSequenceAction);
 
         amesNewGraySequence = new IcyRibbonApplicationMenuEntrySecondary(FileActions.newGraySequenceAction);
@@ -214,16 +362,14 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
         amepNew.addSecondaryMenuGroup("New image", amesNewGraySequence, amesNewRGBSequence, amesNewRGBASequence);
 
         // OPEN & IMPORT
-
         amepOpen = new IcyRibbonApplicationMenuEntryPrimary(FileActions.openSequenceAction);
-        amepOpen.setRolloverCallback(new OpenRecentFilePrimaryRollOverCallBack());
+        amepOpen.setRolloverCallback(new OpenRecentFileRollOverCallBack());
 
         amepImport = new IcyRibbonApplicationMenuEntryPrimary(new IcyIcon(ResourceUtil.ICON_DOC_IMPORT), "Import",
                 null, CommandButtonKind.POPUP_ONLY);
-        amepImport.addSecondaryMenuGroup("Import a sequence", getImportEntries());
+        amepImport.setRolloverCallback(new ImportResourceRollOverCallBack());
 
         // SAVE & EXPORT
-
         amepSaveDefault = new IcyRibbonApplicationMenuEntryPrimary(FileActions.saveDefaultSequenceAction);
 
         amepSave = new IcyRibbonApplicationMenuEntrySecondary(FileActions.saveSequenceAction);
@@ -245,7 +391,6 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
         // amepExport.setRolloverCallback(new DefaultRollOverCallBack());
 
         // CLOSE
-
         amepClose = new IcyRibbonApplicationMenuEntryPrimary(FileActions.closeSequenceAction);
 
         amesCloseCurrent = new IcyRibbonApplicationMenuEntrySecondary(FileActions.closeCurrentSequenceAction);
@@ -255,13 +400,11 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
         amepClose.addSecondaryMenuGroup("Close Sequence", amesCloseCurrent, amesCloseOthers, amesCloseAll);
 
         // PREFERENCES
-
         amepPreferences = new IcyRibbonApplicationMenuEntryPrimary(PreferencesActions.preferencesAction);
 
         // EXIT
-
         amepExit = new IcyRibbonApplicationMenuEntryPrimary(GeneralActions.exitApplicationAction);
-        amepExit.setRolloverCallback(new DefaultRollOverCallBack());
+        amepExit.setRolloverCallback(new EmptyRollOverCallBack());
 
         // build menu
 
@@ -271,110 +414,32 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
 
         addMenuSeparator();
         addMenuEntry(amepImport);
-
         // addMenuEntry(amepExport);
 
         addMenuSeparator();
-
         addMenuEntry(amepClose);
 
         addMenuSeparator();
-
         addMenuEntry(amepPreferences);
 
         addMenuSeparator();
-
         addMenuEntry(amepExit);
 
-        setDefaultCallback(new OpenRecentFilePrimaryRollOverCallBack());
-        // setDefaultCallback(new DefaultRollOverCallBack());
+        setDefaultCallback(new OpenRecentFileRollOverCallBack());
 
         refreshState();
 
         PluginLoader.addListener(this);
     }
 
-    private RibbonApplicationMenuEntrySecondary[] getImportEntries()
-    {
-        final List<PluginDescriptor> importers = PluginLoader.getPlugins(Importer.class);
-        final List<PluginDescriptor> sequenceImporters = PluginLoader.getPlugins(SequenceImporter.class);
-        final List<RibbonApplicationMenuEntrySecondary> result = new ArrayList<RibbonApplicationMenuEntrySecondary>();
-
-        for (int i = 0; i < importers.size(); i++)
-        {
-            final PluginDescriptor plugin = importers.get(i);
-
-            result.add(new PluginApplicationMenuEntrySecondary(plugin, new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    // asynchronous loading
-                    ThreadUtil.bgRun(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            try
-                            {
-                                final Importer importer = (Importer) PluginLauncher.start(plugin);
-
-                                // plugin correctly started ? --> do load operation
-                                if (importer != null)
-                                    importer.load();
-                            }
-                            catch (Exception exc)
-                            {
-                                IcyExceptionHandler.handleException(exc, false);
-                            }
-                        }
-                    });
-                }
-            }));
-        }
-        for (int i = 0; i < sequenceImporters.size(); i++)
-        {
-            final PluginDescriptor plugin = sequenceImporters.get(i);
-
-            result.add(new PluginApplicationMenuEntrySecondary(plugin, new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    // asynchronous loading
-                    ThreadUtil.bgRun(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            try
-                            {
-                                final SequenceImporter importer = (SequenceImporter) PluginLauncher.start(plugin);
-
-                                // plugin correctly started ? --> do load operation
-                                if (importer != null)
-                                    importer.load();
-                            }
-                            catch (Exception exc)
-                            {
-                                IcyExceptionHandler.handleException(exc, false);
-                            }
-                        }
-                    });
-                }
-            }));
-        }
-
-        // TODO: add sort here from plugin importer preferences
-
-        return result.toArray(new RibbonApplicationMenuEntrySecondary[result.size()]);
-    }
-
     private void refreshState()
     {
         final Sequence focusedSequence = Icy.getMainInterface().getActiveSequence();
 
-        amepImport.setEnabled(getImportEntries().length > 0);
+        final boolean hasImporter = (!PluginLoader.getPlugins(SequenceImporter.class).isEmpty())
+                || (!PluginLoader.getPlugins(Importer.class).isEmpty());
+
+        amepImport.setEnabled(hasImporter);
         amepSaveDefault.setEnabled(focusedSequence != null);
         amepSave.setEnabled((focusedSequence != null) && !StringUtil.isEmpty(focusedSequence.getFilename()));
         amepSaveAs.setEnabled(focusedSequence != null);
@@ -432,6 +497,7 @@ public class ApplicationMenu extends RibbonApplicationMenu implements PluginLoad
     @Override
     public void pluginLoaderChanged(PluginLoaderEvent e)
     {
+        // amepImport.addSecondaryMenuGroup("Import a sequence", getImportEntries());
         refreshState();
     }
 }

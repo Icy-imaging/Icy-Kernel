@@ -96,16 +96,25 @@ public class PluginLauncher
      * @throws Exception
      *         if the computation threw an exception (only when plugin is executed on EDT).
      */
-    private static void internalExecute(final Plugin plugin) throws InterruptedException, Exception
+    private static void internalExecute(final Plugin plugin) throws Exception
     {
         if (plugin instanceof PluginThreaded)
-            new Thread((PluginThreaded) plugin, plugin.getName()).start();
+        {
+            // headless mode --> command line direct execution
+            if (Icy.getMainInterface().isHeadLess())
+                ((PluginThreaded) plugin).run();
+            else
+                new Thread((PluginThreaded) plugin, plugin.getName()).start();
+        }
         else
         {
             final PluginExecutor executor = new PluginExecutor(plugin);
 
+            // headless mode --> command line direct execution
+            if (Icy.getMainInterface().isHeadLess())
+                executor.call();
             // keep backward compatibility
-            if (plugin instanceof PluginStartAsThread)
+            else if (plugin instanceof PluginStartAsThread)
                 new Thread(executor, plugin.getName()).start();
             // direct launch in EDT now (no thread creation)
             else
@@ -113,12 +122,12 @@ public class PluginLauncher
         }
     }
 
-    private static Plugin internalCreate(final PluginDescriptor plugin) throws InterruptedException, Exception
+    private static Plugin internalCreate(final PluginDescriptor plugin) throws Exception
     {
         final Class<? extends Plugin> clazz = plugin.getPluginClass();
 
-        // use the special PluginNoEDTConstructor interface ?
-        if (ClassUtil.isSubClass(clazz, PluginNoEDTConstructor.class))
+        // use the special PluginNoEDTConstructor interface or headless mode ?
+        if (ClassUtil.isSubClass(clazz, PluginNoEDTConstructor.class) || Icy.getMainInterface().isHeadLess())
             return clazz.newInstance();
 
         // create the plugin instance on the EDT
@@ -218,7 +227,7 @@ public class PluginLauncher
      * @throws Exception
      *         if the computation threw an exception (only when plugin is executed on EDT).
      */
-    public static Plugin startSafe(PluginDescriptor plugin) throws InterruptedException, Exception
+    public static Plugin startSafe(PluginDescriptor plugin) throws Exception
     {
         final Plugin result;
 
@@ -243,7 +252,7 @@ public class PluginLauncher
      * @throws Exception
      *         if the computation threw an exception (only when plugin is executed on EDT).
      */
-    public static Plugin startSafe(String pluginClassName) throws InterruptedException, Exception
+    public static Plugin startSafe(String pluginClassName) throws Exception
     {
         final PluginDescriptor plugin = PluginLoader.getPlugin(pluginClassName);
 

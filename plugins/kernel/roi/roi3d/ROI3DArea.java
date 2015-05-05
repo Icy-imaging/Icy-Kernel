@@ -18,18 +18,22 @@
  */
 package plugins.kernel.roi.roi3d;
 
-import icy.main.Icy;
+import icy.canvas.IcyCanvas;
+import icy.common.EventHierarchicalChecker;
 import icy.painter.VtkPainter;
 import icy.roi.BooleanMask2D;
 import icy.roi.BooleanMask3D;
 import icy.roi.ROI;
 import icy.roi.ROI2D;
+import icy.roi.ROIEvent;
 import icy.sequence.Sequence;
+import icy.system.thread.ThreadUtil;
 import icy.type.point.Point3D;
 import icy.type.point.Point5D;
 import icy.type.rectangle.Rectangle3D;
 import icy.vtk.VtkUtil;
 
+import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,60 +55,63 @@ import vtk.vtkStructuredGridOutlineFilter;
  */
 public class ROI3DArea extends ROI3DStack<ROI2DArea>
 {
-    public class ROI3DAreaPainter extends ROI3DStackPainter implements VtkPainter
+    public class ROI3DAreaPainter extends ROI3DStackPainter implements VtkPainter, Runnable
     {
         // VTK 3D objects, we use Object to prevent UnsatisfiedLinkError
-        final Object grid;
-        final Object gridOutline;
+        Object grid;
+        Object gridOutline;
         // final Object polyData;
-        final Object polyMapper;
-        final Object actor;
+        Object polyMapper;
+        Object actor;
         // 3D internal
         boolean needRebuild;
         double scaling[];
+        VtkCanvas canvas3d;
 
         public ROI3DAreaPainter()
         {
-            // avoid to use vtk objects when vtk library is missing.
-            if (Icy.isVtkLibraryLoaded())
-            {
-                // init 3D painters stuff
-                // polyData = new vtkPolyData();
-                grid = new vtkStructuredGrid();
-                gridOutline = new vtkStructuredGridOutlineFilter();
-
-                ((vtkStructuredGridOutlineFilter) gridOutline).SetInputData((vtkStructuredGrid) grid);
-
-                polyMapper = new vtkPolyDataMapper();
-                // ((vtkPolyDataMapper) polyMapper).SetInput((vtkPolyData) polyData);
-                ((vtkPolyDataMapper) polyMapper).SetInputConnection(((vtkStructuredGridOutlineFilter) gridOutline)
-                        .GetOutputPort());
-
-                actor = new vtkActor();
-                ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
-            }
-            else
-            {
-                // polyData = null;
-                grid = null;
-                gridOutline = null;
-                polyMapper = null;
-                actor = null;
-            }
+            // polyData = null;
+            grid = null;
+            gridOutline = null;
+            polyMapper = null;
+            actor = null;
 
             scaling = new double[3];
             Arrays.fill(scaling, 1d);
 
             needRebuild = true;
+            canvas3d = null;
+        }
+
+        protected void initVtkObjects()
+        {
+            // init 3D painters stuff
+            // polyData = new vtkPolyData();
+            grid = new vtkStructuredGrid();
+            gridOutline = new vtkStructuredGridOutlineFilter();
+
+            ((vtkStructuredGridOutlineFilter) gridOutline).SetInputData((vtkStructuredGrid) grid);
+
+            polyMapper = new vtkPolyDataMapper();
+            // ((vtkPolyDataMapper) polyMapper).SetInput((vtkPolyData) polyData);
+            ((vtkPolyDataMapper) polyMapper).SetInputConnection(((vtkStructuredGridOutlineFilter) gridOutline)
+                    .GetOutputPort());
+
+            actor = new vtkActor();
+            ((vtkActor) actor).SetMapper((vtkPolyDataMapper) polyMapper);
         }
 
         /**
-         * update 3D painter for 3D canvas (called only when VTK is loaded).
+         * rebuild VTK objects (called only when VTK canvas is selected).
          */
-        protected void rebuild3DPainter(VtkCanvas canvas)
+        protected void rebuildVtkObjects()
         {
-            final Sequence seq = canvas.getSequence();
+            final VtkCanvas canvas = canvas3d;
+            // nothing to update
+            if (canvas == null)
+                return;
 
+            final Sequence seq = canvas.getSequence();
             // nothing to update
             if (seq == null)
                 return;
@@ -112,7 +119,7 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
             int width = seq.getSizeX();
             int height = seq.getSizeY();
 
-            final ArrayList<double[]> verticesArray = new ArrayList<double[]>(0);
+            final ArrayList<double[]> verticesArray = new ArrayList<double[]>();
 
             for (ROI2DArea area : ROI3DArea.this)
             {
@@ -121,29 +128,91 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
                 verticesArray.ensureCapacity(verticesArray.size() + width * height);
 
                 boolean[] mask = area.getBooleanMask(0, 0, width, height, true);
+
                 int offset = 0;
                 for (int j = 0; j < height; j++)
+                {
                     for (int i = 0; i < width; i++, offset++)
                     {
                         if (mask[offset])
                             verticesArray.add(new double[] {i, j, k});
                     }
+                }
             }
 
             double[][] points = new double[verticesArray.size()][3];
             verticesArray.toArray(points);
 
-            ((vtkStructuredGrid) grid).SetDimensions(width, height, getSizeZ());
-            ((vtkStructuredGrid) grid).SetPoints(VtkUtil.getPoints(points));
+            // actor can be accessed in canvas3d for rendering so we need to synchronize access
+            canvas3d.lock();
+            try
+            {
+                ((vtkStructuredGrid) grid).SetDimensions(width, height, getSizeZ());
+                ((vtkStructuredGrid) grid).SetPoints(VtkUtil.getPoints(points));
 
-            ((vtkStructuredGridOutlineFilter) gridOutline).Update();
-            ((vtkPolyDataMapper) polyMapper).Update();
+                ((vtkStructuredGridOutlineFilter) gridOutline).Update();
+                ((vtkPolyDataMapper) polyMapper).Update();
+            }
+            finally
+            {
+                canvas3d.unlock();
+            }
+
+            // no more pending request
+            if (!ThreadUtil.hasWaitingSingleTask(this))
+                canvas3d = null;
+        }
+
+        @Override
+        public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas)
+        {
+            if (isActiveFor(canvas))
+            {
+                if (canvas instanceof VtkCanvas)
+                {
+                    // 3D canvas
+                    final VtkCanvas cnv = (VtkCanvas) canvas;
+
+                    // FIXME : need a better implementation
+                    final double[] s = cnv.getVolumeScale();
+
+                    // scaling changed ?
+                    if (!Arrays.equals(scaling, s))
+                    {
+                        // update scaling
+                        scaling = s;
+                        // need rebuild
+                        needRebuild = true;
+                    }
+
+                    // need to rebuild 3D data structures ?
+                    if (needRebuild)
+                    {
+                        // initialize VTK objects if not yet done
+                        if (actor == null)
+                            initVtkObjects();
+
+                        // request rebuild 3D objects
+                        canvas3d = cnv;
+                        ThreadUtil.runSingle(this);
+                        needRebuild = false;
+                    }
+                }
+                else
+                    super.paint(g, sequence, canvas);
+            }
         }
 
         @Override
         public vtkProp[] getProps()
         {
             return new vtkActor[] {(vtkActor) actor};
+        }
+
+        @Override
+        public void run()
+        {
+            rebuildVtkObjects();
         }
     }
 
@@ -415,5 +484,25 @@ public class ROI3DArea extends ROI3DStack<ROI2DArea>
         {
             endUpdate();
         }
+    }
+
+    /**
+     * roi changed
+     */
+    @Override
+    public void onChanged(EventHierarchicalChecker object)
+    {
+        final ROIEvent event = (ROIEvent) object;
+
+        // do here global process on ROI change
+        switch (event.getType())
+        {
+            case ROI_CHANGED:
+                // the painter need to be rebuild
+                ((ROI3DAreaPainter) painter).needRebuild = true;
+                break;
+        }
+
+        super.onChanged(object);
     }
 }

@@ -395,11 +395,18 @@ public class Loader
 
         for (PluginDescriptor plugin : plugins)
         {
-            final Importer importer = (Importer) PluginLauncher.start(plugin);
-
-            // plugin correctly started ? --> add the importer
-            if (importer != null)
-                result.add(importer);
+            try
+            {
+                // add the importer
+                result.add((Importer) PluginLauncher.startSafe(plugin));
+            }
+            catch (Exception e)
+            {
+                // show a message in the output console
+                IcyExceptionHandler.showErrorMessage(e, false, true);
+                // and send an error report (silent as we don't want a dialog appearing here)
+                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(e, true));
+            }
         }
 
         return result;
@@ -415,11 +422,18 @@ public class Loader
 
         for (PluginDescriptor plugin : plugins)
         {
-            final FileImporter importer = (FileImporter) PluginLauncher.start(plugin);
-
-            // plugin correctly started ? --> add the importer
-            if (importer != null)
-                result.add(importer);
+            try
+            {
+                // add the importer
+                result.add((FileImporter) PluginLauncher.startSafe(plugin));
+            }
+            catch (Exception e)
+            {
+                // show a message in the output console
+                IcyExceptionHandler.showErrorMessage(e, false, true);
+                // and send an error report (silent as we don't want a dialog appearing here)
+                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(e, true));
+            }
         }
 
         return result;
@@ -602,7 +616,7 @@ public class Loader
     }
 
     /**
-     * Returns all available sequence importer.
+     * Returns all available sequence importer (different from {@link SequenceIdImporter}).
      */
     public static List<SequenceImporter> getSequenceImporters()
     {
@@ -611,11 +625,18 @@ public class Loader
 
         for (PluginDescriptor plugin : plugins)
         {
-            final SequenceImporter importer = (SequenceImporter) PluginLauncher.start(plugin);
-
-            // plugin correctly started ? --> add the importer
-            if (importer != null)
-                result.add(importer);
+            try
+            {
+                // add the importer
+                result.add((SequenceImporter) PluginLauncher.startSafe(plugin));
+            }
+            catch (Exception e)
+            {
+                // show a message in the output console
+                IcyExceptionHandler.showErrorMessage(e, false, true);
+                // and send an error report (silent as we don't want a dialog appearing here)
+                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(e, true));
+            }
         }
 
         return result;
@@ -631,11 +652,18 @@ public class Loader
 
         for (PluginDescriptor plugin : plugins)
         {
-            final SequenceIdImporter importer = (SequenceIdImporter) PluginLauncher.start(plugin);
-
-            // plugin correctly started ? --> add the importer
-            if (importer != null)
-                result.add(importer);
+            try
+            {
+                // add the importer
+                result.add((SequenceIdImporter) PluginLauncher.startSafe(plugin));
+            }
+            catch (Exception e)
+            {
+                // show a message in the output console
+                IcyExceptionHandler.showErrorMessage(e, false, true);
+                // and send an error report (silent as we don't want a dialog appearing here)
+                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(e, true));
+            }
         }
 
         return result;
@@ -651,11 +679,18 @@ public class Loader
 
         for (PluginDescriptor plugin : plugins)
         {
-            final SequenceFileImporter importer = (SequenceFileImporter) PluginLauncher.start(plugin);
-
-            // plugin correctly started ? --> add the importer
-            if (importer != null)
-                result.add(importer);
+            try
+            {
+                // add the importer
+                result.add((SequenceFileImporter) PluginLauncher.startSafe(plugin));
+            }
+            catch (Exception e)
+            {
+                // show a message in the output console
+                IcyExceptionHandler.showErrorMessage(e, false, true);
+                // and send an error report (silent as we don't want a dialog appearing here)
+                IcyExceptionHandler.report(plugin, IcyExceptionHandler.getErrorMessage(e, true));
+            }
         }
 
         return result;

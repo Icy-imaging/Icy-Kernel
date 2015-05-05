@@ -1252,7 +1252,7 @@ public abstract class ROI2D extends ROI
     {
         // not on the correct Z, T, C position --> return empty mask
         if (!isActiveFor(z, t, c))
-            return new BooleanMask2D(new Rectangle(), new boolean[0]);
+            return new BooleanMask2D();
 
         return getBooleanMask(inclusive);
     }
@@ -1348,69 +1348,7 @@ public abstract class ROI2D extends ROI
     @Override
     public double computeNumberOfContourPoints()
     {
-        // approximation by using number of point of the edge of boolean mask
-        // return getBooleanMask(true).getContourPointsAsIntArray().length /
-        // getDimension();
-
-        // Modified Aug 19, 2014 by Alexandre Dufour
-        // Reason: provide a better approximation accounting for digitisation artifacts
-
-        double perimeter = 0;
-
-        BooleanMask2D mask2D = getBooleanMask(true);
-        int[] edge = mask2D.getContourPointsAsIntArray();
-        int width = mask2D.bounds.width;
-        int height = mask2D.bounds.height;
-
-        // count the edges and corners in 2D/3D
-        double sideEdges = 0, cornerEdges = 0;
-
-        for (int i = 0; i < edge.length; i += 2)
-        {
-            int x = edge[i] - mask2D.bounds.x;
-            int y = edge[i + 1] - mask2D.bounds.y;
-
-            int xy = x + y * width;
-
-            // count the edges in 4-connectivity
-            int nbEdges = 0;
-
-            if (x == 0 || !mask2D.mask[xy - 1])
-                nbEdges++; // left
-            if (x == width - 1 || !mask2D.mask[xy + 1])
-                nbEdges++; // right
-            if (y == 0 || !mask2D.mask[xy - width])
-                nbEdges++; // north
-            if (y == height - 1 || !mask2D.mask[xy + width])
-                nbEdges++; // south
-
-            switch (nbEdges)
-            {
-                case 0:
-                    break;
-                case 1: // "side" edge
-                    sideEdges++;
-                    perimeter++;
-                    break;
-                case 2: // "corner" edge
-                    cornerEdges++;
-                    perimeter += Math.sqrt(2);
-                    break;
-                case 3: // "salient" point
-                    cornerEdges += 2;
-                    perimeter += 2 * Math.sqrt(2);
-                    break;
-                default: // single pixel, weird, but happens...
-                    perimeter++;
-            }
-        }
-
-        // adjust the perimeter empirically according to the edge distribution
-        double overShoot = Math.min(sideEdges / 10, cornerEdges);
-
-        perimeter -= overShoot;
-
-        return perimeter;
+        return getBooleanMask(true).getContourLength();
     }
 
     /**
@@ -1422,12 +1360,12 @@ public abstract class ROI2D extends ROI
     public double computeNumberOfPoints()
     {
         double numPoints = 0;
-        
+
         // approximation by using number of point of boolean mask with and without border
         numPoints += getBooleanMask(true).getPointsAsIntArray().length;
         numPoints += getBooleanMask(false).getPointsAsIntArray().length;
         numPoints /= 2d;
-        
+
         return numPoints / getDimension();
     }
 

@@ -27,7 +27,6 @@ import icy.util.StringUtil;
 import icy.util.XMLUtil;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 
 import org.w3c.dom.Document;
@@ -140,27 +139,18 @@ public class SequencePersistent implements XMLPersistent
      * Save XML persistent data.<br>
      * Return true if XML data has been correctly saved.
      */
-    public boolean saveXMLData()
+    public boolean saveXMLData() throws Exception
     {
         final String xmlFilename = getXMLFileName();
 
         if (xmlFilename == null)
             return false;
 
-        try
-        {
-            // rebuild document
-            refreshXMLData();
+        // rebuild document
+        refreshXMLData();
 
-            // save xml file
-            return XMLUtil.saveDocument(document, xmlFilename);
-        }
-        catch (Exception e)
-        {
-            System.err.println("Error while saving Sequence XML persistent data :");
-            IcyExceptionHandler.showErrorMessage(e, true);
-            return false;
-        }
+        // save xml file
+        return XMLUtil.saveDocument(document, xmlFilename);
     }
 
     public void refreshXMLData()

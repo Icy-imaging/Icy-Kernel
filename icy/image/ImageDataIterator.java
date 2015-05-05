@@ -277,7 +277,7 @@ public class ImageDataIterator implements DataIterator
     }
 
     /**
-     * Return current X position.
+     * Returns current X position.
      */
     public int getPositionX()
     {
@@ -285,7 +285,7 @@ public class ImageDataIterator implements DataIterator
     }
 
     /**
-     * Return current Y position.
+     * Returns current Y position.
      */
     public int getPositionY()
     {
@@ -293,9 +293,8 @@ public class ImageDataIterator implements DataIterator
     }
 
     /**
-     * @deprecated fixed C position, not useful
+     * Returns C position (fixed)
      */
-    @Deprecated
     public int getPositionC()
     {
         return fixedC;

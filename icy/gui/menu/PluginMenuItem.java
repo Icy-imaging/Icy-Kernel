@@ -29,8 +29,6 @@ import javax.swing.JMenuItem;
 
 /**
  * This class represent a MenuItem which launch a plugin when pressed.
- * 
- * @author Fabrice de Chaumont
  */
 public class PluginMenuItem extends JMenuItem implements ActionListener
 {

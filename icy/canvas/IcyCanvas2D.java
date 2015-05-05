@@ -73,6 +73,9 @@ public abstract class IcyCanvas2D extends IcyCanvas
         transform = new AffineTransform();
         inverseTransform = new AffineTransform();
         transformChanged = false;
+        
+        // adjust LUT alpha level for 2D view
+        lut.setAlphaToOpaque();
     }
 
     @Override

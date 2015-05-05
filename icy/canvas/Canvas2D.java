@@ -2326,9 +2326,9 @@ public class Canvas2D extends IcyCanvas2D implements ToolRibbonTaskListener
     {
         toolBar.addSeparator();
         toolBar.add(zoomFitCanvasButton);
-        toolBar.addSeparator();
-        toolBar.add(zoomFitImageButton);
-        toolBar.add(centerImageButton);
+//        toolBar.addSeparator();
+//        toolBar.add(zoomFitImageButton);
+//        toolBar.add(centerImageButton);
     }
 
     @Override
