@@ -216,13 +216,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         propertiesUpdater = new Thread(this, "VTK canvas properties updater");
         propertiesToUpdate = new LinkedBlockingQueue<VtkCanvas.Property>(256);
 
-        // more than 4 channels ? can't use multi channel view --> display single channel
-        if (getImageSizeC() > 4)
-            posC = 0;
-        else
-            // all channel visible at once by default
-            posC = -1;
-
         preferences = CanvasPreferences.getPreferences().node(PREF_ID);
 
         settingPanel = new VtkSettingPanel();
@@ -271,6 +264,40 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         // set camera properties
         // camera.Azimuth(20.0);
         // camera.Dolly(1.60);
+
+        // get volume mapper from preferences
+        VtkVolumeMapperType mapperType = VtkVolumeMapperType.values()[preferences.getInt(ID_MAPPER,
+                VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT.ordinal())];
+        // by default we assume all channel visible at once
+        int channelPos = -1;
+
+        // more than 4 channels ?
+        if (getImageSizeC() > 4)
+        {
+            // can't use multi channel view --> display single channel
+            channelPos = 0;
+            // multi channel mapper does not support more than 4 channels
+            if (VtkImageVolume.isMultiChannelVolumeMapper(mapperType))
+                // use the GPU texture 2D mapper instead
+                mapperType = VtkVolumeMapperType.TEXTURE2D_OPENGL;
+        }
+        else
+            channelPos = -1;
+
+        // single channel mapper selected ?
+        if (!VtkImageVolume.isMultiChannelVolumeMapper(mapperType))
+        {
+            // find channel pos from enabled channel
+            final int c = getChannelPos();
+
+            if (c == -1)
+                channelPos = 0;
+            else
+                channelPos = c;
+        }
+
+        // set new channel position
+        setPositionC(channelPos);
 
         // rebuild volume image
         updateImageData(getImageData());
@@ -354,12 +381,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         settingPanel.setVolumeBlendingMode(VtkVolumeBlendType.values()[preferences.getInt(ID_BLENDING,
                 VtkVolumeBlendType.COMPOSITE.ordinal())]);
         // volume mapper
-        VtkVolumeMapperType mapperType = VtkVolumeMapperType.values()[preferences.getInt(ID_MAPPER,
-                VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT.ordinal())];
-        // multi channel mapper does not support more than 4 channels
-        if (VtkImageVolume.isMultiChannelVolumeMapper(mapperType) && (getImageSizeC() > 4))
-            // use the GPU texture 2D mapper instead
-            mapperType = VtkVolumeMapperType.TEXTURE2D_OPENGL;
         settingPanel.setVolumeMapperType(mapperType);
         settingPanel.setVolumeInterpolation(preferences.getInt(ID_INTERPOLATION, VtkUtil.VTK_LINEAR_INTERPOLATION));
         settingPanel.setVolumeSample(preferences.getInt(ID_SAMPLE, 0));
@@ -926,7 +947,7 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     {
         camera.SetViewUp(0, -1, 0);
         renderer.ResetCamera();
-        camera.Elevation(180);
+        camera.Elevation(210);
         renderer.ResetCameraClippingRange();
     }
 
@@ -1039,9 +1060,11 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
      */
     protected vtkImageData getImageData()
     {
+        vtkImageData result = null;
+
         final Sequence sequence = getSequence();
         if ((sequence == null) || sequence.isEmpty())
-            return null;
+            return result;
 
         final int posT = getPositionT();
         final int posC = getPositionC();
@@ -1063,27 +1086,31 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                     return null;
 
                 data = sequence.getDataCopyCXYZ(posT);
-                return VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
+                result = VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
                         sequence.getSizeZ(), sequence.getSizeC());
             }
+            else
+            {
+                size = sequence.getSizeX();
+                size *= sequence.getSizeY();
+                size *= sequence.getSizeZ();
 
-            size = sequence.getSizeX();
-            size *= sequence.getSizeY();
-            size *= sequence.getSizeZ();
+                // can't allocate
+                if (size > Integer.MAX_VALUE)
+                    return null;
 
-            // can't allocate
-            if (size > Integer.MAX_VALUE)
-                return null;
-
-            data = sequence.getDataCopyXYZ(posT, posC);
-            return VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
-                    sequence.getSizeZ(), 1);
+                data = sequence.getDataCopyXYZ(posT, posC);
+                result = VtkUtil.getImageData(data, sequence.getDataType_(), sequence.getSizeX(), sequence.getSizeY(),
+                        sequence.getSizeZ(), 1);
+            }
         }
         catch (OutOfMemoryError e)
         {
             // just not enough memory
             return null;
         }
+
+        return result;
     }
 
     /**
@@ -1108,7 +1135,8 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
             {
                 final Sequence seq = getSequence();
 
-                // we have an image --> not enough memory to display it (show message)
+                // we have an image --> not enough memory to display it (show
+                // message)
                 if ((seq != null) && !seq.isEmpty())
                     textInfo.SetVisibility(1);
             }
@@ -1307,6 +1335,16 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     }
 
     @Override
+    protected void setPositionCInternal(int c)
+    {
+        // all channel is not possible for single channel mapper
+        if ((c == -1) && !imageVolume.isMultiChannelVolumeMapper())
+            return;
+
+        super.setPositionCInternal(c);
+    }
+
+    @Override
     public BufferedImage getRenderedImage(int t, int c)
     {
         // save position
@@ -1338,10 +1376,13 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                     // render now !
                     panel3D.paint(panel3D.getGraphics());
 
-                    // NOTE: in vtk the [0,0] pixel is bottom left, so a vertical flip is required
-                    // NOTE: GetRGBACharPixelData gives problematic results depending on the
+                    // NOTE: in vtk the [0,0] pixel is bottom left, so a
+                    // vertical flip is required
+                    // NOTE: GetRGBACharPixelData gives problematic results
+                    // depending on the
                     // platform
-                    // (see comment about alpha and platform-dependence in the doc for
+                    // (see comment about alpha and platform-dependence in the
+                    // doc for
                     // vtkWindowToImageFilter)
                     // Since the canvas is opaque, simply use GetPixelData.
                     renderWindow.GetPixelData(0, 0, w - 1, h - 1, 1, array);
@@ -1914,7 +1955,8 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                     if (l == getImageLayer())
                     {
                         final Sequence seq = getSequence();
-                        // we have a no empty image --> display it if layer is visible
+                        // we have a no empty image --> display it if layer is
+                        // visible
                         if (l.isVisible() && (seq != null) && !seq.isEmpty())
                             prop.SetVisibility(1);
                         else
@@ -1938,7 +1980,8 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                 if (layer == getImageLayer())
                 {
                     final Sequence seq = getSequence();
-                    // we have a no empty image --> display it if layer is visible
+                    // we have a no empty image --> display it if layer is
+                    // visible
                     if (layer.isVisible() && (seq != null) && !seq.isEmpty())
                         prop.SetVisibility(1);
                     else
@@ -1983,7 +2026,8 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         // remove previous property of same name
         if (propertiesToUpdate.remove(prop))
         {
-            // if we already had a layers visible update then we update all layers
+            // if we already had a layers visible update then we update all
+            // layers
             if (name.equals(PROPERTY_LAYERS_VISIBLE))
                 prop.value = null;
         }
@@ -2040,7 +2084,8 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         @Override
         public void paint(Graphics g)
         {
-            // several repaint in a short period of time --> set fast rendering for 1 second
+            // several repaint in a short period of time --> set fast rendering
+            // for 1 second
             if ((lastRefreshTime != 0) && ((System.currentTimeMillis() - lastRefreshTime) < 250))
                 setCoarseRendering(1000);
 

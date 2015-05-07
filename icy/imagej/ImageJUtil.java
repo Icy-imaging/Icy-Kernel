@@ -3,18 +3,14 @@
  * 
  * This file is part of Icy.
  * 
- * Icy is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Icy is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  * 
- * Icy is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * Icy is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
- * You should have received a copy of the GNU General Public License
- * along with Icy. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with Icy. If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 package icy.imagej;
 
@@ -119,8 +115,7 @@ public class ImageJUtil
     }
 
     /**
-     * Calibrate the specified Icy {@link Sequence} from the specified ImageJ {@link Calibration}
-     * object.
+     * Calibrate the specified Icy {@link Sequence} from the specified ImageJ {@link Calibration} object.
      */
     private static void calibrateIcySequence(Sequence sequence, Calibration cal)
     {
@@ -243,22 +238,13 @@ public class ImageJUtil
             }
 
             // convert ROI(s)
-            RoiManager roiManager = RoiManager.getInstance();
-            if (roiManager == null)
-            {
-                ThreadUtil.invokeNow(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        // need to do it on EDT
-                        new RoiManager();
-                    }
-                });
-            }
+            final RoiManager roiManager = RoiManager.getInstance();
+            final Roi[] rois;
 
-            roiManager = RoiManager.getInstance();
-            final Roi[] rois = roiManager.getRoisAsArray();
+            if (roiManager != null)
+                rois = roiManager.getRoisAsArray();
+            else
+                rois = new Roi[] {};
 
             if (rois.length > 0)
             {
@@ -293,7 +279,8 @@ public class ImageJUtil
     /**
      * Convert the specified Icy {@link Sequence} object to ImageJ {@link ImagePlus}
      */
-    public static ImagePlus convertToImageJImage(Sequence sequence, ProgressListener progressListener)
+    public static ImagePlus convertToImageJImage(Sequence sequence, boolean useRoiManager,
+            ProgressListener progressListener)
     {
         // create the image
         final ImagePlus result = createImagePlus(sequence, progressListener);
@@ -307,7 +294,7 @@ public class ImageJUtil
 
         if (ijRois.size() > 0)
         {
-            if (ijRois.size() > 1)
+            if ((ijRois.size() > 1) && useRoiManager)
             {
                 RoiManager roiManager = RoiManager.getInstance();
                 if (roiManager == null)
@@ -338,6 +325,14 @@ public class ImageJUtil
             return new CompositeImage(result, CompositeImage.COMPOSITE);
 
         return result;
+    }
+
+    /**
+     * Convert the specified Icy {@link Sequence} object to ImageJ {@link ImagePlus}
+     */
+    public static ImagePlus convertToImageJImage(Sequence sequence, ProgressListener progressListener)
+    {
+        return convertToImageJImage(sequence, false, progressListener);
     }
 
     /**
