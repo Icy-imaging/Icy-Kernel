@@ -11,21 +11,20 @@ import icy.gui.viewer.Viewer;
 import icy.main.Icy;
 import icy.system.thread.ThreadUtil;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.List;
 
-import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
-import javax.swing.border.TitledBorder;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.border.EmptyBorder;
 
 /**
  * @author Stephane
@@ -38,12 +37,12 @@ public class LayerControlPanel extends JPanel implements ChangeListener
     private static final long serialVersionUID = 6501341338561271486L;
 
     // GUI
-    JScrollPane scrollPane;
     JSlider opacitySlider;
     IcyButton deleteButton;
 
     // internal
     final LayersPanel layerPanel;
+    private JPanel optionsPanel;
 
     public LayerControlPanel(LayersPanel layerPanel)
     {
@@ -58,27 +57,32 @@ public class LayerControlPanel extends JPanel implements ChangeListener
 
     private void initialize()
     {
-        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+        setBorder(null);
+        setLayout(new BorderLayout(0, 0));
+
+        JScrollPane scrollPane = new JScrollPane();
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        add(scrollPane, BorderLayout.CENTER);
 
         final JPanel actionPanel = new JPanel();
-        actionPanel.setBorder(new EmptyBorder(2, 0, 0, 0));
-        add(actionPanel);
+        scrollPane.setViewportView(actionPanel);
+        scrollPane.setMaximumSize(new Dimension(32767, 100));
         GridBagLayout gbl_actionPanel = new GridBagLayout();
         gbl_actionPanel.columnWidths = new int[] {0, 0, 0, 0};
         gbl_actionPanel.rowHeights = new int[] {0, 0, 0};
-        gbl_actionPanel.columnWeights = new double[] {0.0, 1.0, 0.0, Double.MIN_VALUE};
+        gbl_actionPanel.columnWeights = new double[] {1.0, 1.0, 0.0, Double.MIN_VALUE};
         gbl_actionPanel.rowWeights = new double[] {1.0, 0.0, Double.MIN_VALUE};
         actionPanel.setLayout(gbl_actionPanel);
 
-        scrollPane = new JScrollPane();
-        scrollPane.setMaximumSize(new Dimension(32767, 400));
-        GridBagConstraints gbc_scrollPane = new GridBagConstraints();
-        gbc_scrollPane.gridwidth = 3;
-        gbc_scrollPane.insets = new Insets(0, 0, 5, 5);
-        gbc_scrollPane.fill = GridBagConstraints.BOTH;
-        gbc_scrollPane.gridx = 0;
-        gbc_scrollPane.gridy = 0;
-        actionPanel.add(scrollPane, gbc_scrollPane);
+        optionsPanel = new JPanel();
+        GridBagConstraints gbc_optionsPanel = new GridBagConstraints();
+        gbc_optionsPanel.gridwidth = 3;
+        gbc_optionsPanel.insets = new Insets(0, 0, 5, 5);
+        gbc_optionsPanel.fill = GridBagConstraints.BOTH;
+        gbc_optionsPanel.gridx = 0;
+        gbc_optionsPanel.gridy = 0;
+        actionPanel.add(optionsPanel, gbc_optionsPanel);
+        optionsPanel.setLayout(new BorderLayout(0, 0));
 
         final JLabel lblOpacity = new JLabel(" Opacity  ");
         GridBagConstraints gbc_lblOpacity = new GridBagConstraints();
@@ -145,20 +149,21 @@ public class LayerControlPanel extends JPanel implements ChangeListener
                     deleteButton.setEnabled(false);
                 }
 
+                optionsPanel.setVisible(false);
+                optionsPanel.removeAll();
+
                 if (singleSelected)
                 {
                     final JPanel panel = firstSelected.getOverlay().getOptionsPanel();
-
-                    scrollPane.setViewportView(panel);
-                    scrollPane.setVisible(panel != null);
-                }
-                else
-                {
-                    scrollPane.setVisible(false);
-                    scrollPane.setViewportView(null);
+                    if (panel != null)
+                    {
+                        optionsPanel.add(panel);
+                        optionsPanel.setVisible(true);
+                    }
                 }
 
-                revalidate();
+                if (getParent() != null) getParent().revalidate();
+                else revalidate();
             }
         });
     }
