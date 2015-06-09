@@ -358,6 +358,20 @@ public class Processor extends ThreadPoolExecutor
     }
 
     /**
+     * Create a new Processor with specified number of processing thread.
+     * 
+     * @param threadName
+     *        The name of the threads (useful for debugging purposes)
+     * @param numThread
+     *        The maximum number of processing thread.
+     */
+    public Processor(String threadName, int numThread)
+    {
+        this(-1, numThread, NORM_PRIORITY);
+        setThreadName(threadName);
+    }
+
+    /**
      * Create a new Processor with default number of maximum waiting and processing tasks.
      */
     public Processor()
