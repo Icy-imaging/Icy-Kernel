@@ -313,7 +313,7 @@ public class SequenceDataIterator implements DataIterator
                     
                 case 3:
                     // ignore T and C roi informations (wanted for fixed T and C positions)
-                    imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(z, -t, -1, inclusive), c);
+                    imageIterator = new ImageDataIterator(img, roi.getBooleanMask2D(z, -1, -1, inclusive), c);
                     break;
                     
                 case 4:
