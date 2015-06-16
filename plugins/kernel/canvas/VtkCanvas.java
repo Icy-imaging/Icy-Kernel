@@ -268,36 +268,35 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
         // get volume mapper from preferences
         VtkVolumeMapperType mapperType = VtkVolumeMapperType.values()[preferences.getInt(ID_MAPPER,
                 VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT.ordinal())];
-        // by default we assume all channel visible at once
-        int channelPos = -1;
+        // by default we find channel pos from enabled channel(s)
+        int channelPos = getChannelPos();
 
         // more than 4 channels ?
         if (getImageSizeC() > 4)
         {
-            // can't use multi channel view --> display single channel
-            channelPos = 0;
             // multi channel mapper does not support more than 4 channels
             if (VtkImageVolume.isMultiChannelVolumeMapper(mapperType))
                 // use the GPU texture 2D mapper instead
                 mapperType = VtkVolumeMapperType.TEXTURE2D_OPENGL;
+
+            // can't use multi channel view so display channel 0 by default
+            if (channelPos == -1)
+                channelPos = 0;
         }
-        else
+        // more than 1 channel ?
+        else if (getImageSizeC() > 1)
+        {
+            // more than 1 channel selected --> use the multi channel view
+            if (channelPos == -1)
+                mapperType = VtkVolumeMapperType.RAYCAST_CPU_FIXEDPOINT;
+        }
+
+        // multi channel view ? --> set channel position to -1 (so we can select channel by channel)
+        if (VtkImageVolume.isMultiChannelVolumeMapper(mapperType))
             channelPos = -1;
 
-        // single channel mapper selected ?
-        if (!VtkImageVolume.isMultiChannelVolumeMapper(mapperType))
-        {
-            // find channel pos from enabled channel
-            final int c = getChannelPos();
-
-            if (c == -1)
-                channelPos = 0;
-            else
-                channelPos = c;
-        }
-
-        // set new channel position
-        setPositionC(channelPos);
+        // set new channel position (don't use setPositionC as setPositionCInternal may fail here)
+        posC = channelPos;
 
         // rebuild volume image
         updateImageData(getImageData());
@@ -433,6 +432,8 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
 
         // reset camera
         resetCamera();
+        // apply lut depending channel configuration
+        updateLut();
 
         // we can now listen for setting changes
         settingPanel.addSettingChangeListener(this);
@@ -1146,7 +1147,6 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     protected void updateLut()
     {
         final LUT lut = getLut();
-        final int posC = getPositionC();
 
         // multi channel volume rendering mapper ?
         if (imageVolume.isMultiChannelVolumeMapper())
@@ -1155,9 +1155,16 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
             for (int c = 0; c < lut.getNumChannel(); c++)
                 updateLut(lut.getLutChannel(c), c);
         }
-        // single channel mapper, always set channel 0
-        else if (posC != -1)
-            updateLut(lut.getLutChannel(posC), 0);
+        // single channel mapper
+        else
+        {
+            // find current selected channel
+            final int c = getPositionC();
+
+            // always set on channel 0 if we have a fixed channel position
+            if (c != -1)
+                updateLut(lut.getLutChannel(c), 0);
+        }
     }
 
     protected void updateLut(LUTChannel lutChannel, int channel)
@@ -1337,9 +1344,18 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
     @Override
     protected void setPositionCInternal(int c)
     {
-        // all channel is not possible for single channel mapper
-        if ((c == -1) && !imageVolume.isMultiChannelVolumeMapper())
-            return;
+        if (imageVolume.isMultiChannelVolumeMapper())
+        {
+            // single channel is not possible for multi channel mapper
+            if (c != -1)
+                return;
+        }
+        else
+        {
+            // all channel is not possible for single channel mapper
+            if (c == -1)
+                return;
+        }
 
         super.setPositionCInternal(c);
     }
@@ -1551,9 +1567,11 @@ public class VtkCanvas extends Canvas3D implements Runnable, ActionListener, Set
                         // changed to single channel mapper ?
                         else
                         {
-                            // find channel pos from enabled channel
+                            // try to find channel pos from enabled channel
                             final int c = getChannelPos();
 
+                            // no or several channels enabled ? --> by default we select first
+                            // channel
                             if (c == -1)
                                 setPositionC(0);
                             else

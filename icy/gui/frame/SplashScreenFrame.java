@@ -18,6 +18,8 @@
  */
 package icy.gui.frame;
 
+import icy.file.FileUtil;
+import icy.image.ImageUtil;
 import icy.resource.ResourceUtil;
 
 import java.awt.Dimension;
@@ -43,7 +45,7 @@ public class SplashScreenFrame extends JFrame
     {
         private static final long serialVersionUID = -6955085853269659076L;
 
-        private static final String SPLASH_PATH = "splash/";
+        private static final String SPLASH_FOLDER = ResourceUtil.IMAGE_PATH + "splash";
         private static final int DEFAULT_WIDTH = 960;
         private static final int DEFAULT_HEIGTH = 300;
 
@@ -51,9 +53,15 @@ public class SplashScreenFrame extends JFrame
 
         public SplashPanel()
         {
-            final String fileName = (int) (Math.random() * 11) + ".png";
+            final String[] files = FileUtil.getFiles(SPLASH_FOLDER, null, false, false, false);
 
-            image = ResourceUtil.getImage(SPLASH_PATH + fileName);
+            if (files.length > 0)
+            {
+                final String fileName = files[(int) Math.round(Math.random() * (files.length - 1))];
+                image = ImageUtil.load(fileName);
+            }
+            else
+                image = null;
 
             if (image != null)
                 setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
@@ -83,7 +91,6 @@ public class SplashScreenFrame extends JFrame
         splash = new SplashPanel();
 
         setUndecorated(true);
-//        setAlwaysOnTop(true);
 
         add(splash);
         pack();

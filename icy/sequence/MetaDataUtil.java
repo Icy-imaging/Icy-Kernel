@@ -29,10 +29,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import loci.common.services.ServiceException;
+import loci.formats.FormatTools;
 import loci.formats.MetadataTools;
 import loci.formats.meta.MetadataRetrieve;
 import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.ome.OMEXMLMetadataImpl;
+import ome.units.quantity.Time;
 import ome.xml.model.Channel;
 import ome.xml.model.Dataset;
 import ome.xml.model.Experiment;
@@ -42,6 +44,7 @@ import ome.xml.model.Image;
 import ome.xml.model.Instrument;
 import ome.xml.model.OME;
 import ome.xml.model.Pixels;
+import ome.xml.model.Plane;
 import ome.xml.model.ROI;
 import ome.xml.model.StructuredAnnotations;
 import ome.xml.model.XMLAnnotation;
@@ -169,6 +172,27 @@ public class MetaDataUtil
     }
 
     /**
+     * Return plane object for the specified T, Z, C position.
+     */
+    public static Plane getPlane(Pixels pix, int t, int z, int c)
+    {
+        final int sizeT = OMEUtil.getValue(pix.getSizeT(), 0);
+        final int sizeZ = OMEUtil.getValue(pix.getSizeZ(), 0);
+        final int sizeC = OMEUtil.getValue(pix.getSizeC(), 0);
+
+        try
+        {
+            final int index = FormatTools.getIndex(pix.getDimensionOrder().getValue(), sizeZ, sizeC, sizeT,
+                    pix.sizeOfPlaneList(), z, c, t);
+            return pix.getPlane(index);
+        }
+        catch (IllegalArgumentException e)
+        {
+            return null;
+        }
+    }
+
+    /**
      * Returns the data type of the specified image serie.
      */
     public static DataType getDataType(OMEXMLMetadataImpl metaData, int serie)
@@ -234,6 +258,14 @@ public class MetaDataUtil
     }
 
     /**
+     * Returns the number of frame (sizeT) of the specified Pixels object.
+     */
+    private static int getSizeT(Pixels pix)
+    {
+        return OMEUtil.getValue(pix.getSizeT(), 0);
+    }
+
+    /**
      * Returns the number of frame (sizeT) of the specified image serie.
      */
     public static int getSizeT(OMEXMLMetadataImpl metaData, int serie)
@@ -241,7 +273,7 @@ public class MetaDataUtil
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return OMEUtil.getValue(pix.getSizeT(), 0);
+            return getSizeT(pix);
 
         return 0;
     }
@@ -346,7 +378,7 @@ public class MetaDataUtil
         if (pix != null)
             return OMEUtil.getValue(pix.getPhysicalSizeX(), defaultValue);
 
-        return 1d;
+        return defaultValue;
     }
 
     /**
@@ -359,7 +391,7 @@ public class MetaDataUtil
         if (pix != null)
             return OMEUtil.getValue(pix.getPhysicalSizeY(), defaultValue);
 
-        return 1d;
+        return defaultValue;
     }
 
     /**
@@ -372,7 +404,7 @@ public class MetaDataUtil
         if (pix != null)
             return OMEUtil.getValue(pix.getPhysicalSizeZ(), defaultValue);
 
-        return 1d;
+        return defaultValue;
     }
 
     /**
@@ -383,9 +415,145 @@ public class MetaDataUtil
         final Pixels pix = getPixels(metaData, serie);
 
         if (pix != null)
-            return OMEUtil.getValue(pix.getTimeIncrement(), defaultValue);
+        {
+            final Time timeInc = pix.getTimeIncrement();
+            if (timeInc != null)
+                return OMEUtil.getValue(timeInc, defaultValue);
 
-        return 1d;
+            // try to compute time interval from time position
+            final double result = computeTimeInternalFromTimePosition(pix);
+            if (!Double.isNaN(result))
+            {
+                // we set the time interval
+                setTimeInterval(metaData, serie, result);
+                return result;
+            }
+        }
+
+        return defaultValue;
+    }
+
+    /**
+     * Returns the X field position (in µm) for the image at the specified Z, T, C position.
+     */
+    public static double getPositionX(OMEXMLMetadataImpl metaData, int serie, int t, int z, int c, double defaultValue)
+    {
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+        {
+            final Plane plane = getPlane(pix, t, z, c);
+
+            if (plane != null)
+                return OMEUtil.getValue(plane.getPositionX(), defaultValue);
+        }
+
+        return defaultValue;
+    }
+
+    /**
+     * Returns the Y field position (in µm) for the image at the specified Z, T, C position.
+     */
+    public static double getPositionY(OMEXMLMetadataImpl metaData, int serie, int t, int z, int c, double defaultValue)
+    {
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+        {
+            final Plane plane = getPlane(pix, t, z, c);
+
+            if (plane != null)
+                return OMEUtil.getValue(plane.getPositionY(), defaultValue);
+        }
+
+        return defaultValue;
+    }
+
+    /**
+     * Returns the Z field position (in µm) for the image at the specified Z, T, C position.
+     */
+    public static double getPositionZ(OMEXMLMetadataImpl metaData, int serie, int t, int z, int c, double defaultValue)
+    {
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+        {
+            final Plane plane = getPlane(pix, t, z, c);
+
+            if (plane != null)
+                return OMEUtil.getValue(plane.getPositionZ(), defaultValue);
+        }
+
+        return defaultValue;
+    }
+
+    /**
+     * Returns the time position (in second) for the Pixels object at the specified Z, T, C
+     * position.
+     */
+    private static double getTimePosition(Pixels pix, int t, int z, int c, double defaultValue)
+    {
+        final Plane plane = getPlane(pix, t, z, c);
+
+        if (plane != null)
+            return OMEUtil.getValue(plane.getDeltaT(), defaultValue);
+
+        return defaultValue;
+    }
+
+    /**
+     * Returns the time position (in second) for the image at the specified Z, T, C position.
+     */
+    public static double getTimePosition(OMEXMLMetadataImpl metaData, int serie, int t, int z, int c,
+            double defaultValue)
+    {
+        final Pixels pix = getPixels(metaData, serie);
+
+        if (pix != null)
+            return getTimePosition(pix, t, z, c, defaultValue);
+
+        return defaultValue;
+    }
+
+    /**
+     * Computes time interval from the time position informations.<br>
+     * Returns <code>Double.Nan</code> if time position information are missing.
+     */
+    private static double computeTimeInternalFromTimePosition(Pixels pix)
+    {
+        final int sizeT = getSizeT(pix);
+
+        double result = 0d;
+        double last = -1d;
+        int num = 0;
+
+        for (int t = 0; t < sizeT; t++)
+        {
+            final Plane plane = getPlane(pix, t, 0, 0);
+
+            if (plane != null)
+            {
+                final double timePos = OMEUtil.getValue(plane.getDeltaT(), Double.NaN);
+
+                if (!Double.isNaN(timePos))
+                {
+                    if (last != -1d)
+                    {
+                        // get delta
+                        result += timePos - last;
+                        num++;
+                    }
+
+                    last = timePos;
+                }
+            }
+        }
+
+        // we need at least 1 delta
+        if (num == 0)
+            return Double.NaN;
+
+        return result / num;
     }
 
     /**

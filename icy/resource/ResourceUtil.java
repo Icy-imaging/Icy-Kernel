@@ -31,16 +31,19 @@ import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 
+/**
+ * Resources (images, icons...) utilities class.
+ * 
+ * @author Stephane
+ */
 public class ResourceUtil
 {
-    public static final String separator = "/";
-
     // image and icon path
-    private static final String ICON_PATH = "res/icon/";
-    private static final String IMAGE_PATH = "res/image/";
+    public static final String ICON_PATH = "res/icon/";
+    public static final String IMAGE_PATH = "res/image/";
 
-    private static final String ALPHA_ICON_PATH = "alpha/";
-    private static final String COLOR_ICON_PATH = "color/";
+    public static final String ALPHA_ICON_PATH = "alpha/";
+    public static final String COLOR_ICON_PATH = "color/";
 
     // default icon size
     public static final int DEFAULT_ICON_SIZE = IcyIcon.DEFAULT_SIZE;

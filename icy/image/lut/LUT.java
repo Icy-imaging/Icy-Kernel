@@ -231,11 +231,17 @@ public class LUT implements IcyColorSpaceListener, ScalerListener, ChangeListene
             getScaler().setAbsRightIn(value);
         }
 
+        /**
+         * Returns the <i>enabled</i> state of this channel LUT
+         */
         public boolean isEnabled()
         {
             return getColorMap().isEnabled();
         }
 
+        /**
+         * Enable/disable specified channel LUT
+         */
         public void setEnabled(boolean value)
         {
             getColorMap().setEnabled(value);

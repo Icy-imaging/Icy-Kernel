@@ -1171,7 +1171,7 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
 
         switch (event.getType())
         {
-        // refresh RGB cache
+            // refresh RGB cache
             case MAP_CHANGED:
             case TYPE_CHANGED:
                 updateRGBCache();

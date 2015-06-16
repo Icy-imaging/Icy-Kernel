@@ -3,11 +3,15 @@
  * 
  * This file is part of Icy.
  * 
- * Icy is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * Icy is free software: you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License as
+ * published by the Free Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  * 
- * Icy is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * Icy is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+ * implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  * 
  * You should have received a copy of the GNU General Public License along with Icy. If not, see
  * <http://www.gnu.org/licenses/>.
@@ -195,24 +199,34 @@ public class LUTViewer extends IcyLutViewer implements IcyColorMapListener, Sequ
             @Override
             public void stateChanged(ChangeEvent e)
             {
-                boolean enabledState[] = new boolean[lutChannelViewers.size()];
+                final int size = lutChannelViewers.size();
+                boolean changedState[] = new boolean[size];
+                boolean enabledState[] = new boolean[size];
 
-                for (int i = 0; i < lutChannelViewers.size(); i++)
+                for (int i = 0; i < size; i++)
                 {
                     try
                     {
                         // null pointer exception can sometime happen here, normal
                         enabledState[i] = bottomPane.isTabChecked(i);
+                        changedState[i] = lutChannelViewers.get(i).getLutChannel().isEnabled() != enabledState[i];
                     }
                     catch (Exception exc)
                     {
                         enabledState[i] = true;
+                        changedState[i] = false;
                     }
                 }
 
-                //better to do it in a second step "setEnabled" send events
-                for (int i = 0; i < lutChannelViewers.size(); i++)
-                    lutChannelViewers.get(i).getLutChannel().setEnabled(enabledState[i]);
+                // we really want to only set state which changed here and not the one which has
+                // been set from a "setEnabled" event
+                for (int i = 0; i < size; i++)
+                {
+                    if (changedState[i])
+                    {
+                        lutChannelViewers.get(i).getLutChannel().setEnabled(enabledState[i]);
+                    }
+                }
             }
         });
 
