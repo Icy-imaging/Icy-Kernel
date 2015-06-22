@@ -162,7 +162,7 @@ public class LayerControlPanel extends JPanel implements ChangeListener
                     }
                 }
 
-                if (getParent() != null) getParent().revalidate();
+                if (getParent() != null) getParent().validate();
                 else revalidate();
             }
         });

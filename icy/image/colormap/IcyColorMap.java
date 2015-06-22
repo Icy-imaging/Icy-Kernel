@@ -21,13 +21,18 @@ package icy.image.colormap;
 import icy.common.EventHierarchicalChecker;
 import icy.common.UpdateEventHandler;
 import icy.common.listener.ChangeListener;
+import icy.file.FileUtil;
 import icy.file.xml.XMLPersistent;
+import icy.file.xml.XMLPersistentHelper;
 import icy.image.colormap.IcyColorMapEvent.IcyColorMapEventType;
 import icy.util.ColorUtil;
 import icy.util.XMLUtil;
 
 import java.awt.Color;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.event.EventListenerList;
 
@@ -63,6 +68,103 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
      */
     public static final int SIZE = 256;
     public static final int MAX_INDEX = SIZE - 1;
+
+    /**
+     * default colormap directory
+     */
+    public static final String DEFAULT_COLORMAP_DIR = "colormap";
+
+    /**
+     * Custom (user) colormap
+     */
+    private static List<IcyColorMap> customMaps = null;
+
+    /**
+     * Returns the list of default linear colormap:<br/>
+     * GRAY, [GRAY_INV,] RED, GREEN, BLUE, MAGENTA, YELLOW, CYAN, [ALPHA]
+     * 
+     * @param wantGrayInverse
+     *        specify if we want the gray inverse colormap
+     * @param wantAlpha
+     *        specify if we want the alpha colormap
+     */
+    public static List<IcyColorMap> getLinearColorMaps(boolean wantGrayInverse, boolean wantAlpha)
+    {
+        final List<IcyColorMap> result = new ArrayList<IcyColorMap>();
+
+        result.add(LinearColorMap.gray_);
+        if (wantGrayInverse)
+            result.add(LinearColorMap.gray_inv_);
+        result.add(LinearColorMap.red_);
+        result.add(LinearColorMap.green_);
+        result.add(LinearColorMap.blue_);
+        result.add(LinearColorMap.magenta_);
+        result.add(LinearColorMap.yellow_);
+        result.add(LinearColorMap.cyan_);
+        if (wantAlpha)
+            result.add(LinearColorMap.alpha_);
+
+        return result;
+    }
+
+    /**
+     * Returns the list of special colormap:<br/>
+     * ICE, FIRE, HSV, JET, GLOW
+     */
+    public static List<IcyColorMap> getSpecialColorMaps()
+    {
+        final List<IcyColorMap> result = new ArrayList<IcyColorMap>();
+
+        result.add(new IceColorMap());
+        result.add(new FireColorMap());
+        result.add(new HSVColorMap());
+        result.add(new JETColorMap());
+        result.add(new GlowColorMap(true));
+
+        return result;
+    }
+
+    /**
+     * Returns the list of custom colormap available in the Icy "colormap" folder
+     */
+    public static synchronized List<IcyColorMap> getCustomColorMaps()
+    {
+        if (customMaps == null)
+        {
+            // load custom maps
+            customMaps = new ArrayList<IcyColorMap>();
+
+            // add saved colormap
+            for (File f : FileUtil.getFiles(new File(DEFAULT_COLORMAP_DIR), null, false, false, false))
+            {
+                final IcyColorMap map = new IcyColorMap();
+                if (XMLPersistentHelper.loadFromXML(map, f))
+                    customMaps.add(map);
+            }
+        }
+
+        return new ArrayList<IcyColorMap>(customMaps);
+    }
+
+    /**
+     * Returns the list of all available colormaps.<br/>
+     * The order of returned colormap map is Linear, Special and Custom.
+     * 
+     * @param wantGrayInverse
+     *        specify if we want the gray inverse colormap
+     * @param wantAlpha
+     *        specify if we want the alpha colormap
+     */
+    public static synchronized List<IcyColorMap> getAllColorMaps(boolean wantGrayInverse, boolean wantAlpha)
+    {
+        final List<IcyColorMap> result = new ArrayList<IcyColorMap>();
+
+        result.addAll(getLinearColorMaps(false, false));
+        result.addAll(getSpecialColorMaps());
+        result.addAll(getCustomColorMaps());
+
+        return result;
+    }
 
     /**
      * colormap name
@@ -1171,7 +1273,7 @@ public class IcyColorMap implements ChangeListener, XMLPersistent
 
         switch (event.getType())
         {
-            // refresh RGB cache
+        // refresh RGB cache
             case MAP_CHANGED:
             case TYPE_CHANGED:
                 updateRGBCache();

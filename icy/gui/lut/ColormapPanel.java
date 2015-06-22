@@ -69,10 +69,8 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
      */
     private static final long serialVersionUID = -4042084504553770641L;
 
-    private static final String DEFAULT_COLORMAP_DIR = "colormap";
+    private static final String DEFAULT_COLORMAP_DIR = IcyColorMap.DEFAULT_COLORMAP_DIR;
     private static final String DEFAULT_COLORMAP_NAME = "colormap.xml";
-
-    private static List<IcyColorMap> customMaps = null;
 
     /**
      * gui
@@ -186,53 +184,13 @@ public class ColormapPanel extends JPanel implements IcyColorMapListener
             defaultColormap.copyFrom(colormap);
         }
 
-        // build colormap list
-        final List<IcyColorMap> colormaps = new ArrayList<IcyColorMap>();
+        // get colormap list
+        final List<IcyColorMap> colormaps = IcyColorMap.getAllColorMaps(true, true);
 
-        colormaps.add(defaultColormap);
-
-        if (!defaultColormap.equals(LinearColorMap.gray_))
-            colormaps.add(LinearColorMap.gray_);
-        if (!defaultColormap.equals(LinearColorMap.gray_inv_))
-            colormaps.add(LinearColorMap.gray_inv_);
-        if (!defaultColormap.equals(LinearColorMap.red_))
-            colormaps.add(LinearColorMap.red_);
-        if (!defaultColormap.equals(LinearColorMap.green_))
-            colormaps.add(LinearColorMap.green_);
-        if (!defaultColormap.equals(LinearColorMap.blue_))
-            colormaps.add(LinearColorMap.blue_);
-        if (!defaultColormap.equals(LinearColorMap.magenta_))
-            colormaps.add(LinearColorMap.magenta_);
-        if (!defaultColormap.equals(LinearColorMap.yellow_))
-            colormaps.add(LinearColorMap.yellow_);
-        if (!defaultColormap.equals(LinearColorMap.cyan_))
-            colormaps.add(LinearColorMap.cyan_);
-        if (!defaultColormap.equals(LinearColorMap.alpha_))
-            colormaps.add(LinearColorMap.alpha_);
-
-        colormaps.add(new IceColorMap());
-        colormaps.add(new FireColorMap());
-        colormaps.add(new HSVColorMap());
-        colormaps.add(new JETColorMap());
-        colormaps.add(new GlowColorMap(true));
-
-        if (customMaps == null)
-        {
-            // load custom maps
-            customMaps = new ArrayList<IcyColorMap>();
-
-            // add saved colormap
-            for (File f : FileUtil.getFiles(new File(DEFAULT_COLORMAP_DIR), null, false, false, false))
-            {
-                final IcyColorMap map = new IcyColorMap();
-                if (XMLPersistentHelper.loadFromXML(map, f))
-                    customMaps.add(map);
-            }
-        }
-
-        // add custom maps
-        for (IcyColorMap map : customMaps)
-            colormaps.add(map);
+        // remove the default colormap if already present in the list
+        colormaps.remove(defaultColormap);
+        // and set it at position 0
+        colormaps.add(0,defaultColormap);
 
         // this is the user customized colormap
         colormaps.add(colormap);
